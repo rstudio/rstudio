@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -58,6 +59,7 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -85,7 +87,6 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsExpression;
-import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
@@ -217,186 +218,6 @@ public class GenerateJavaAST {
    */
   private static class JavaASTGenerationVisitor {
 
-    private class JsniRefResolver extends JsModVisitor {
-      private final AbstractMethodDeclaration methodDecl;
-      private final JsniMethodBody nativeMethodBody;
-
-      private JsniRefResolver(AbstractMethodDeclaration methodDecl,
-          JsniMethodBody nativeMethodBody) {
-        this.methodDecl = methodDecl;
-        this.nativeMethodBody = nativeMethodBody;
-      }
-
-      @Override
-      public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
-        String ident = x.getIdent();
-        if (ident.charAt(0) == '@') {
-          processNameRef(x, ctx);
-        }
-      }
-
-      private HasEnclosingType parseJsniRef(SourceInfo info, String ident) {
-        JsniRef parsed = JsniRef.parse(ident);
-        if (parsed == null) {
-          reportJsniError(info, methodDecl,
-              "Badly formatted native reference '" + ident + "'");
-          return null;
-        }
-
-        String className = parsed.className();
-        JReferenceType type = null;
-        if (!className.equals("null")) {
-          type = program.getFromTypeMap(className);
-          if (type == null) {
-            reportJsniError(info, methodDecl,
-                "Unresolvable native reference to type '" + className + "'");
-            return null;
-          }
-        }
-
-        if (!parsed.isMethod()) {
-          // look for a field
-          String fieldName = parsed.memberName();
-          if (type == null) {
-            if (fieldName.equals("nullField")) {
-              return program.getNullField();
-            }
-          } else {
-            for (int i = 0; i < type.fields.size(); ++i) {
-              JField field = type.fields.get(i);
-              if (field.getName().equals(fieldName)) {
-                return field;
-              }
-            }
-          }
-
-          reportJsniError(info, methodDecl,
-              "Unresolvable native reference to field '" + fieldName
-                  + "' in type '" + className + "'");
-          return null;
-        } else {
-          // look for a method
-          String almostMatches = null;
-          String methodName = parsed.memberName();
-          String jsniSig = parsed.memberSignature();
-          if (type == null) {
-            if (jsniSig.equals("nullMethod()")) {
-              return program.getNullMethod();
-            }
-          } else {
-            for (int i = 0; i < type.methods.size(); ++i) {
-              JMethod method = type.methods.get(i);
-              if (method.getName().equals(methodName)) {
-                String sig = JProgram.getJsniSig(method);
-                if (sig.equals(jsniSig)) {
-                  return method;
-                } else if (almostMatches == null) {
-                  almostMatches = "'" + sig + "'";
-                } else {
-                  almostMatches += ", '" + sig + "'";
-                }
-              }
-            }
-          }
-
-          if (almostMatches == null) {
-            reportJsniError(info, methodDecl,
-                "Unresolvable native reference to method '" + methodName
-                    + "' in type '" + className + "'");
-            return null;
-          } else {
-            reportJsniError(info, methodDecl,
-                "Unresolvable native reference to method '" + methodName
-                    + "' in type '" + className + "' (did you mean "
-                    + almostMatches + "?)");
-            return null;
-          }
-        }
-      }
-
-      private void processField(JsNameRef nameRef, SourceInfo info,
-          JField field, JsContext<JsExpression> ctx) {
-        if (field.getEnclosingType() != null) {
-          if (field.isStatic() && nameRef.getQualifier() != null) {
-            reportJsniError(info, methodDecl,
-                "Cannot make a qualified reference to the static field "
-                    + field.getName());
-          } else if (!field.isStatic() && nameRef.getQualifier() == null) {
-            reportJsniError(info, methodDecl,
-                "Cannot make an unqualified reference to the instance field "
-                    + field.getName());
-          }
-        }
-
-        /*
-         * We must replace any compile-time constants with the constant value of
-         * the field.
-         */
-        if (field.isCompileTimeConstant()) {
-          JLiteral initializer = field.getConstInitializer();
-          JType type = initializer.getType();
-          if (type instanceof JPrimitiveType
-              || type == program.getTypeJavaLangString()) {
-            GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals(
-                jsProgram);
-            generator.accept(initializer);
-            JsExpression result = generator.peek();
-            assert (result != null);
-            ctx.replaceMe(result);
-            return;
-          }
-        }
-
-        // Normal: create a jsniRef.
-        JsniFieldRef fieldRef = new JsniFieldRef(program, info,
-            nameRef.getIdent(), field, currentClass);
-        nativeMethodBody.jsniFieldRefs.add(fieldRef);
-      }
-
-      private void processMethod(JsNameRef nameRef, SourceInfo info,
-          JMethod method) {
-        if (method.getEnclosingType() != null) {
-          if (method.isStatic() && nameRef.getQualifier() != null) {
-            reportJsniError(info, methodDecl,
-                "Cannot make a qualified reference to the static method "
-                    + method.getName());
-          } else if (!method.isStatic() && nameRef.getQualifier() == null) {
-            reportJsniError(info, methodDecl,
-                "Cannot make an unqualified reference to the instance method "
-                    + method.getName());
-          }
-        }
-
-        JsniMethodRef methodRef = new JsniMethodRef(program, info,
-            nameRef.getIdent(), method);
-        nativeMethodBody.jsniMethodRefs.add(methodRef);
-      }
-
-      private void processNameRef(JsNameRef nameRef, JsContext<JsExpression> ctx) {
-        SourceInfo info = nativeMethodBody.getSourceInfo();
-        // TODO: make this tighter when we have real source info
-        // JSourceInfo info = translateInfo(nameRef.getInfo());
-        String ident = nameRef.getIdent();
-        HasEnclosingType node = program.jsniMap.get(ident);
-        if (node == null) {
-          node = parseJsniRef(info, ident);
-          if (node == null) {
-            return; // already reported error
-          }
-          program.jsniMap.put(ident, node);
-        }
-
-        if (node instanceof JField) {
-          processField(nameRef, info, (JField) node, ctx);
-        } else if (node instanceof JMethod) {
-          processMethod(nameRef, info, (JMethod) node);
-        } else {
-          throw new InternalCompilerException((HasSourceInfo) node,
-              "JSNI reference to something other than a field or method?", null);
-        }
-      }
-    }
-
     private static InternalCompilerException translateException(JNode node,
         Throwable e) {
       InternalCompilerException ice;
@@ -426,7 +247,7 @@ public class GenerateJavaAST {
 
     private boolean enableAsserts;
 
-    private final JsProgram jsProgram;
+    private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = new HashMap<JsniMethodBody, AbstractMethodDeclaration>();
 
     private final Map<JMethod, Map<String, JLabel>> labelMap = new IdentityHashMap<JMethod, Map<String, JLabel>>();
 
@@ -435,10 +256,9 @@ public class GenerateJavaAST {
     private final TypeMap typeMap;
 
     public JavaASTGenerationVisitor(TypeMap typeMap, JProgram program,
-        JsProgram jsProgram, boolean enableAsserts) {
+        boolean enableAsserts) {
       this.typeMap = typeMap;
       this.program = program;
-      this.jsProgram = jsProgram;
       this.enableAsserts = enableAsserts;
     }
 
@@ -684,6 +504,10 @@ public class GenerateJavaAST {
         stmt = (JStatement) dispatch("processStatement", x);
       }
       return stmt;
+    }
+
+    Map<JsniMethodBody, AbstractMethodDeclaration> getJsniMethodMap() {
+      return jsniMethodMap;
     }
 
     JBooleanLiteral processConstant(BooleanConstant x) {
@@ -1595,14 +1419,8 @@ public class GenerateJavaAST {
 
     void processNativeMethod(AbstractMethodDeclaration x,
         JsniMethodBody nativeMethodBody) {
-
-      JsFunction func = nativeMethodBody.getFunc();
-      if (func == null) {
-        return;
-      }
-
-      // resolve jsni refs
-      new JsniRefResolver(x, nativeMethodBody).accept(func);
+      // Squirrel away a reference to the JDT node to enable error reporting.
+      jsniMethodMap.put(nativeMethodBody, x);
     }
 
     JStatement processStatement(AssertStatement x) {
@@ -2651,17 +2469,232 @@ public class GenerateJavaAST {
   }
 
   /**
+   * Resolve JSNI refs; replace with compile-time constants where appropriate.
+   */
+  private static class JsniRefGenerationVisitor extends JModVisitor {
+
+    private class JsniRefResolver extends JsModVisitor {
+      private final AbstractMethodDeclaration methodDecl;
+      private final JsniMethodBody nativeMethodBody;
+
+      private JsniRefResolver(AbstractMethodDeclaration methodDecl,
+          JsniMethodBody nativeMethodBody) {
+        this.methodDecl = methodDecl;
+        this.nativeMethodBody = nativeMethodBody;
+      }
+
+      @Override
+      public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
+        String ident = x.getIdent();
+        if (ident.charAt(0) == '@') {
+          processNameRef(x, ctx);
+        }
+      }
+
+      private HasEnclosingType parseJsniRef(SourceInfo info, String ident) {
+        JsniRef parsed = JsniRef.parse(ident);
+        if (parsed == null) {
+          reportJsniError(info, methodDecl,
+              "Badly formatted native reference '" + ident + "'");
+          return null;
+        }
+
+        String className = parsed.className();
+        JReferenceType type = null;
+        if (!className.equals("null")) {
+          type = program.getFromTypeMap(className);
+          if (type == null) {
+            reportJsniError(info, methodDecl,
+                "Unresolvable native reference to type '" + className + "'");
+            return null;
+          }
+        }
+
+        if (!parsed.isMethod()) {
+          // look for a field
+          String fieldName = parsed.memberName();
+          if (type == null) {
+            if (fieldName.equals("nullField")) {
+              return program.getNullField();
+            }
+          } else {
+            for (int i = 0; i < type.fields.size(); ++i) {
+              JField field = type.fields.get(i);
+              if (field.getName().equals(fieldName)) {
+                return field;
+              }
+            }
+          }
+
+          reportJsniError(info, methodDecl,
+              "Unresolvable native reference to field '" + fieldName
+                  + "' in type '" + className + "'");
+          return null;
+        } else {
+          // look for a method
+          String almostMatches = null;
+          String methodName = parsed.memberName();
+          String jsniSig = parsed.memberSignature();
+          if (type == null) {
+            if (jsniSig.equals("nullMethod()")) {
+              return program.getNullMethod();
+            }
+          } else {
+            for (int i = 0; i < type.methods.size(); ++i) {
+              JMethod method = type.methods.get(i);
+              if (method.getName().equals(methodName)) {
+                String sig = JProgram.getJsniSig(method);
+                if (sig.equals(jsniSig)) {
+                  return method;
+                } else if (almostMatches == null) {
+                  almostMatches = "'" + sig + "'";
+                } else {
+                  almostMatches += ", '" + sig + "'";
+                }
+              }
+            }
+          }
+
+          if (almostMatches == null) {
+            reportJsniError(info, methodDecl,
+                "Unresolvable native reference to method '" + methodName
+                    + "' in type '" + className + "'");
+            return null;
+          } else {
+            reportJsniError(info, methodDecl,
+                "Unresolvable native reference to method '" + methodName
+                    + "' in type '" + className + "' (did you mean "
+                    + almostMatches + "?)");
+            return null;
+          }
+        }
+      }
+
+      private void processField(JsNameRef nameRef, SourceInfo info,
+          JField field, JsContext<JsExpression> ctx) {
+        if (field.getEnclosingType() != null) {
+          if (field.isStatic() && nameRef.getQualifier() != null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make a qualified reference to the static field "
+                    + field.getName());
+          } else if (!field.isStatic() && nameRef.getQualifier() == null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make an unqualified reference to the instance field "
+                    + field.getName());
+          }
+        }
+
+        /*
+         * We must replace any compile-time constants with the constant value of
+         * the field.
+         */
+        if (field.isCompileTimeConstant()) {
+          JLiteral initializer = field.getConstInitializer();
+          JType type = initializer.getType();
+          if (type instanceof JPrimitiveType
+              || type == program.getTypeJavaLangString()) {
+            GenerateJavaScriptLiterals generator = new GenerateJavaScriptLiterals(
+                jsProgram);
+            generator.accept(initializer);
+            JsExpression result = generator.peek();
+            assert (result != null);
+            ctx.replaceMe(result);
+            return;
+          }
+        }
+
+        // Normal: create a jsniRef.
+        JsniFieldRef fieldRef = new JsniFieldRef(program, info,
+            nameRef.getIdent(), field, currentClass);
+        nativeMethodBody.jsniFieldRefs.add(fieldRef);
+      }
+
+      private void processMethod(JsNameRef nameRef, SourceInfo info,
+          JMethod method) {
+        if (method.getEnclosingType() != null) {
+          if (method.isStatic() && nameRef.getQualifier() != null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make a qualified reference to the static method "
+                    + method.getName());
+          } else if (!method.isStatic() && nameRef.getQualifier() == null) {
+            reportJsniError(info, methodDecl,
+                "Cannot make an unqualified reference to the instance method "
+                    + method.getName());
+          }
+        }
+
+        JsniMethodRef methodRef = new JsniMethodRef(program, info,
+            nameRef.getIdent(), method);
+        nativeMethodBody.jsniMethodRefs.add(methodRef);
+      }
+
+      private void processNameRef(JsNameRef nameRef, JsContext<JsExpression> ctx) {
+        SourceInfo info = nativeMethodBody.getSourceInfo();
+        // TODO: make this tighter when we have real source info
+        // JSourceInfo info = translateInfo(nameRef.getInfo());
+        String ident = nameRef.getIdent();
+        HasEnclosingType node = program.jsniMap.get(ident);
+        if (node == null) {
+          node = parseJsniRef(info, ident);
+          if (node == null) {
+            return; // already reported error
+          }
+          program.jsniMap.put(ident, node);
+        }
+
+        if (node instanceof JField) {
+          processField(nameRef, info, (JField) node, ctx);
+        } else if (node instanceof JMethod) {
+          processMethod(nameRef, info, (JMethod) node);
+        } else {
+          throw new InternalCompilerException((HasSourceInfo) node,
+              "JSNI reference to something other than a field or method?", null);
+        }
+      }
+    }
+
+    private JReferenceType currentClass;
+
+    private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap;
+
+    private final JsProgram jsProgram;
+
+    private final JProgram program;
+
+    public JsniRefGenerationVisitor(JProgram program, JsProgram jsProgram,
+        Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap) {
+      this.program = program;
+      this.jsProgram = jsProgram;
+      this.jsniMethodMap = jsniMethodMap;
+    }
+
+    public void endVisit(JClassType x, Context ctx) {
+      currentClass = null;
+    }
+
+    @Override
+    public void endVisit(JsniMethodBody x, Context ctx) {
+      new JsniRefResolver(jsniMethodMap.get(x), x).accept(x.getFunc());
+    }
+  }
+
+  /**
    * Combines the information from the JDT type nodes and the type map to create
    * a JProgram structure.
    */
   public static void exec(TypeDeclaration[] types, TypeMap typeMap,
       JProgram jprogram, JsProgram jsProgram, boolean enableAsserts) {
+    // Construct the basic AST.
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
-        jprogram, jsProgram, enableAsserts);
+        jprogram, enableAsserts);
     for (int i = 0; i < types.length; ++i) {
       v.processType(types[i]);
     }
     Collections.sort(jprogram.getDeclaredTypes(), new HasNameSort());
+
+    // Process JSNI.
+    Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
+    new JsniRefGenerationVisitor(jprogram, jsProgram, jsniMethodMap).accept(jprogram);
   }
 
   public static void reportJsniError(SourceInfo info,
