@@ -23,6 +23,7 @@ import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.ast.ParameterizedQualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.ParameterizedSingleTypeReference;
+import org.eclipse.jdt.internal.compiler.ast.QualifiedNameReference;
 import org.eclipse.jdt.internal.compiler.ast.QualifiedTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.SingleTypeReference;
 import org.eclipse.jdt.internal.compiler.ast.Wildcard;
@@ -31,6 +32,9 @@ import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
+import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
+import org.eclipse.jdt.internal.compiler.lookup.RawTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
@@ -88,6 +92,13 @@ public abstract class TypeRefVisitor extends ASTVisitor {
   }
 
   @Override
+  public void endVisit(QualifiedNameReference x, BlockScope scope) {
+    if (x.binding instanceof FieldBinding) {
+      maybeDispatch(scope, x, x.fieldBinding().declaringClass);
+    }
+  }
+
+  @Override
   public void endVisit(QualifiedTypeReference x, BlockScope scope) {
     maybeDispatch(scope, x, x.resolvedType);
   }
@@ -137,6 +148,9 @@ public abstract class TypeRefVisitor extends ASTVisitor {
 
   private void maybeDispatch(Scope referencedFrom, Expression expression,
       TypeBinding binding) {
+    assert (referencedFrom != null);
+    assert (binding != null);
+
     if (binding instanceof SourceTypeBinding) {
       SourceTypeBinding type = (SourceTypeBinding) binding;
       CompilationUnitScope from = findUnitScope(referencedFrom);
@@ -148,6 +162,14 @@ public abstract class TypeRefVisitor extends ASTVisitor {
       CompilationUnitScope from = findUnitScope(referencedFrom);
       onBinaryTypeRef((BinaryTypeBinding) binding, from.referenceContext,
           expression);
+    } else if (binding instanceof ParameterizedTypeBinding) {
+      // Make sure that we depend on the generic version of the class.
+      ParameterizedTypeBinding ptBinding = (ParameterizedTypeBinding) binding;
+      maybeDispatch(referencedFrom, expression, ptBinding.genericType());
+    } else if (binding instanceof RawTypeBinding) {
+      // Make sure that we depend on the generic version of the class.
+      RawTypeBinding rawTypeBinding = (RawTypeBinding) binding;
+      maybeDispatch(referencedFrom, expression, rawTypeBinding.genericType());
     } else {
       // We don't care about other cases.
     }

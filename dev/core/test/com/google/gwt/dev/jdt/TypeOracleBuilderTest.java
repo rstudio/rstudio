@@ -13,11 +13,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.typeinfo.test;
+package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.BinaryOnlyAnnotation;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -28,12 +27,12 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -130,20 +129,6 @@ public class TypeOracleBuilderTest extends TestCase {
       StringBuffer sb = new StringBuffer();
       sb.append("package test.assim;\n");
       sb.append("class AfterAssimilate extends BeforeAssimilate { }");
-      return sb.toString().toCharArray();
-    }
-  };
-
-  protected TestCup CU_Annotation = new TestCup("java.lang.annotation",
-      "Annotation") {
-    @Override
-    public void check(JClassType type) {
-    }
-
-    public char[] getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package java.lang.annotation;\n");
-      sb.append("interface Annotation { }\n");
       return sb.toString().toCharArray();
     }
   };
@@ -279,6 +264,21 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
+  protected TestCup CU_ExtendsGenericList = new TestCup("test.refresh",
+      "ExtendsGenericList") {
+
+    @Override
+    public void check(JClassType type) throws NotFoundException {
+    }
+
+    public char[] getSource() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package test.refresh;\n");
+      sb.append("class ExtendsGenericList extends GenericList<Object> {}");
+      return sb.toString().toCharArray();
+    }
+  };
+
   protected TestCup CU_ExtendsParameterizedType = new TestCup(
       "parameterized.type.build.dependency", "Class2") {
     @Override
@@ -405,15 +405,17 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  protected TestCup CU_File = new TestCup("java.io", "File") {
+  protected TestCup CU_GenericList = new TestCup("test.refresh", "GenericList") {
     @Override
-    public void check(JClassType type) {
+    public void check(JClassType type) throws NotFoundException {
     }
 
-    public char[] getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package java.io;");
-      sb.append("public class File { }\n");
+    public char[] getSource() throws UnableToCompleteException {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package test.refresh;\n");
+      sb.append("class GenericList<T> {\n");
+      sb.append("  public static final int CONSTANT = 0;\n");
+      sb.append("}");
       return sb.toString().toCharArray();
     }
   };
@@ -652,75 +654,18 @@ public class TypeOracleBuilderTest extends TestCase {
     }
   };
 
-  /**
-   * This compilation unit references a binary only annotation. Note that the
-   * the fact that we do not use java.io.File outside the context of an
-   * annotation does not cause the test to break.
-   */
-  protected TestCup CU_ReferencesBinaryOnlyAnnotation = new TestCup(
-      "references.binary.annotation", "Test") {
+  protected TestCup CU_ReferencesGenericListConstant = new TestCup(
+      "test.refresh", "ReferencesGenericListConstant") {
     @Override
-    public void check(JClassType type) {
+    public void check(JClassType type) throws NotFoundException {
     }
 
-    public char[] getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package references.binary.annotation;");
-      sb.append("import java.io.File;");
-      sb.append("import com.google.gwt.core.ext.typeinfo.BinaryOnlyAnnotation;\n");
-      sb.append("@BinaryOnlyAnnotation(jreClassLiteralReference=File.class)");
-      sb.append("public interface Test { }\n");
-      return sb.toString().toCharArray();
-    }
-  };
-
-  protected TestCup CU_ReferencesBinaryOnlyClassAsMemberType = new TestCup(
-      "references.binary.clazz.member", "Test") {
-    @Override
-    public void check(JClassType type) {
-    }
-
-    public char[] getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package references.binary.clazz.member;");
-      sb.append("import com.google.gwt.core.ext.typeinfo.BinaryOnlyClass;\n");
-      sb.append("public class Test {\n");
-      sb.append("  BinaryOnlyClass binaryOnlyClass;");
-      sb.append("}\n");
-      return sb.toString().toCharArray();
-    }
-  };
-
-  protected TestCup CU_ReferencesBinaryOnlyClassAsSuperType = new TestCup(
-      "references.binary.clazz.supertype", "Test") {
-    @Override
-    public void check(JClassType type) {
-    }
-
-    public char[] getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package references.binary.class.supertype;");
-      sb.append("import com.google.gwt.core.ext.typeinfo.BinaryOnlyClass;\n");
-      sb.append("public class Test extends BinaryOnlyClass {}\n");
-      return sb.toString().toCharArray();
-    }
-  };
-
-  protected TestCup CU_ReferencesBinaryOnlyClassInExpression = new TestCup(
-      "references.binary.clazz.expression", "Test") {
-    @Override
-    public void check(JClassType type) {
-    }
-
-    public char[] getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package references.binary.class.expression;");
-      sb.append("public class Test extends BinaryOnlyClass {\n");
-      sb.append("  public void doStuff(Object) {}\n");
-      sb.append("  public void stuff() {\n");
-      sb.append("    doStuff(new BinaryOnlyClass());\n");
-      sb.append("  }\n");
-      sb.append("}\n");
+    public char[] getSource() throws UnableToCompleteException {
+      StringBuilder sb = new StringBuilder();
+      sb.append("package test.refresh;\n");
+      sb.append("class ReferencesGenericListConstant {\n");
+      sb.append("  public static final int MY_CONSTANT = GenericList.CONSTANT;\n");
+      sb.append("}");
       return sb.toString().toCharArray();
     }
   };
@@ -883,7 +828,7 @@ public class TypeOracleBuilderTest extends TestCase {
    * CU_DeclaresInnerGenericType.
    */
   public void testParameterizedTypeBuildDependencies()
-      throws UnableToCompleteException, NotFoundException {
+      throws UnableToCompleteException {
     TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
 
     tiob.addCompilationUnit(CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed);
@@ -896,65 +841,52 @@ public class TypeOracleBuilderTest extends TestCase {
   }
 
   /**
-   * Using a binary only annotation should not cause the type to error out.
+   * Test that modifying a type will cause any types that depend on it to be
+   * rebuilt by the TypeOracleBuilder during a refresh.
+   * 
+   * @throws UnableToCompleteException
+   * @throws NotFoundException
+   * @throws IOException
    */
-  public void testReferencesBinaryOnlyAnnotation()
-      throws UnableToCompleteException, NotFoundException {
+  public void testRefresh() throws UnableToCompleteException, NotFoundException {
     TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
 
-    tiob.addCompilationUnit(CU_Annotation);
-    tiob.addCompilationUnit(CU_File);
     tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_ReferencesBinaryOnlyAnnotation);
+    tiob.addCompilationUnit(CU_ExtendsGenericList);
+    tiob.addCompilationUnit(CU_GenericList);
+    tiob.addCompilationUnit(CU_ReferencesGenericListConstant);
 
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType type = tio.getType("references.binary.annotation.Test");
-    assertNull(type.getAnnotation(BinaryOnlyAnnotation.class));
-  }
+    TreeLogger logger = createTreeLogger();
+    TypeOracle to = tiob.build(logger);
 
-  /*
-   * If a type references a binary only type then it should not end up in the
-   * TypeOracle.
-   */
-  public void testReferencesBinaryOnlyClassAsMemberType()
-      throws UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_ReferencesBinaryOnlyClassAsMemberType);
+    // Get the types produced by the TypeOracle
+    JClassType extendsGenericListType = to.getType("test.refresh.ExtendsGenericList");
+    JClassType genericListType = to.getType("test.refresh.GenericList");
+    JClassType objectType = to.getJavaLangObject();
+    JClassType referencesGenericListConstantType = to.getType("test.refresh.ReferencesGenericListConstant");
+    
+    /*
+     * Add the CU_GenericList again and simulate a refresh. This should cause
+     * anything that depends on GenericList to be rebuilt by the type oracle.
+     */
+    tiob.addCompilationUnit(CU_GenericList);
+    refreshTypeOracle(tiob, to);
+    to = tiob.build(logger);
 
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType type = tio.findType("references.binary.clazz.member.Test");
-    assertNull(type);
-  }
+    assertNotSame(genericListType.getQualifiedSourceName() + "; ",
+        to.getType("test.refresh.GenericList"), genericListType);
+    assertNotSame(extendsGenericListType.getQualifiedSourceName() + "; ",
+        to.getType("test.refresh.ExtendsGenericList"), extendsGenericListType);
+    assertSame(objectType.getQualifiedSourceName() + "; ",
+        to.getJavaLangObject(), objectType);
 
-  /*
-   * If a type references a binary only type then it should not end up in the
-   * TypeOracle.
-   */
-  public void testReferencesBinaryOnlyTypeAsSuperType()
-      throws UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_ReferencesBinaryOnlyClassAsMemberType);
-
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType type = tio.findType("references.binary.clazz.supertype.Test");
-    assertNull(type);
-  }
-
-  /*
-   * If a type references a binary only type then it should not end up in the
-   * TypeOracle.
-   */
-  public void testReferencesBinaryOnlyTypeInExpression()
-      throws UnableToCompleteException {
-    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
-    tiob.addCompilationUnit(CU_Object);
-    tiob.addCompilationUnit(CU_ReferencesBinaryOnlyClassInExpression);
-
-    TypeOracle tio = tiob.build(createTreeLogger());
-    JClassType type = tio.findType("references.binary.clazz.expression.Test");
-    assertNull(type);
+    /*
+     * Make sure that referencing a constant field will cause a type to be
+     * rebuilt if the constant changes.
+     */
+    assertNotSame(referencesGenericListConstantType.getQualifiedSourceName(),
+        to.getType("test.refresh.ReferencesGenericListConstant"),
+        referencesGenericListConstantType);
   }
 
   public void testSyntaxErrors() throws TypeOracleException,
@@ -1002,5 +934,10 @@ public class TypeOracleBuilderTest extends TestCase {
 
   private TypeOracleBuilder createTypeInfoOracleBuilder() {
     return new TypeOracleBuilder();
+  }
+
+  private void refreshTypeOracle(TypeOracleBuilder tiob, TypeOracle to) {
+    CacheManager cacheManager = tiob.getCacheManager();
+    cacheManager.invalidateOnRefresh(to);
   }
 }

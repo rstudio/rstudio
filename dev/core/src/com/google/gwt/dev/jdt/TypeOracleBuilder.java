@@ -626,6 +626,13 @@ public class TypeOracleBuilder {
     return oracle;
   }
 
+  /**
+   * Used for testing purposes only.
+   */
+  final CacheManager getCacheManager() {
+    return cacheManager;
+  }
+
   private Object createAnnotationInstance(TreeLogger logger,
       Expression expression) {
     Annotation annotation = (Annotation) expression;
