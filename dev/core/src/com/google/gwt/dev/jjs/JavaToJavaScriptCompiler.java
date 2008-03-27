@@ -334,7 +334,6 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = new JProgram(logger, rebindOracle);
       JsProgram jsProgram = new JsProgram();
 
-      // Use a lexical scope to allow gc on typeMap and allTypeDeclarations
       {
         /*
          * (1) Build a flattened map of TypeDeclarations => JType. The resulting
@@ -357,6 +356,10 @@ public class JavaToJavaScriptCompiler {
 
         // GenerateJavaAST can uncover semantic JSNI errors; report & abort
         checkForErrors(logger, true);
+
+        // Enable GC.
+        typeMap = null;
+        allTypeDeclarations = null;
       }
 
       /*
