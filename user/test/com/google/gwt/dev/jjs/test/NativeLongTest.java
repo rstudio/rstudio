@@ -60,6 +60,13 @@ public class NativeLongTest extends GWTTestCase {
     assertEquals(-1089359682551557853L, LONG_DEADBEEF % LONG_1234);
   }
 
+  public void testArrayInitializer() {
+    long[] longs = new long[3];
+    assertEquals(longs[1], 0L);
+    long[][] longs2 = new long[3][3];
+    assertEquals(longs2[1][1], 0L);
+  }
+
   public void testCasts() {
     assertEquals(0x12341234, (int) LONG_1234);
     assertEquals(0x1234, (short) LONG_1234);
@@ -102,14 +109,6 @@ public class NativeLongTest extends GWTTestCase {
     assertTrue(15 == l);
   }
 
-  public void testModifyingOps() {
-    long l = 20;
-    l += 10;
-    assertEquals(31, ++l);
-    assertEquals(31, l++);
-    assertEquals(32, l);
-  }
-
   public void testLogicalAnd() {
     assertEquals(LONG_1234, LONG_1234 & -LONG_ONE);
     assertEquals(0x12341234L, LONG_1234 & LONG_FFFFFFFF);
@@ -131,6 +130,14 @@ public class NativeLongTest extends GWTTestCase {
     assertEquals(0x0000123400001234L, LONG_1234 ^ LONG_1234000012340000);
     assertEquals(1L, LONG_ONE ^ LONG_ZERO);
     assertEquals(2L, LONG_ONE ^ LONG_THREE);
+  }
+
+  public void testModifyingOps() {
+    long l = 20;
+    l += 10;
+    assertEquals(31, ++l);
+    assertEquals(31, l++);
+    assertEquals(32, l);
   }
 
   public void testShift() {

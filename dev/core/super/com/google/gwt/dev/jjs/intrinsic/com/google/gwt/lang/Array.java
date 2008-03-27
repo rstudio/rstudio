@@ -27,6 +27,8 @@ public final class Array {
 
   static final int FALSE_SEED_TYPE = 2;
 
+  static final int LONG_SEED_TYPE = 3;
+
   static final int NULL_SEED_TYPE = 0;
 
   static final int ZERO_SEED_TYPE = 1;
@@ -90,9 +92,9 @@ public final class Array {
    * @return the new array
    */
   public static Array initDims(Class arrayClasses[], int[] typeIdExprs,
-      int[] queryIdExprs, int[] dimExprs, int seedType) {
+      int[] queryIdExprs, int[] dimExprs, int count, int seedType) {
     return initDims(arrayClasses, typeIdExprs, queryIdExprs, dimExprs, 0,
-        dimExprs.length, seedType);
+        count, seedType);
   }
 
   /**
@@ -161,7 +163,7 @@ public final class Array {
    * @return the new JSON array
    */
   private static native Array createFromSeed(int seedType, int length) /*-{
-    var seedArray = [null, 0, false];
+    var seedArray = [null, 0, false, [0, 0]];
     var value = seedArray[seedType];
     var array = new Array(length);
     for (var i = 0; i < length; ++i) {
@@ -173,10 +175,6 @@ public final class Array {
   private static Array initDims(Class arrayClasses[], int[] typeIdExprs,
       int[] queryIdExprs, int[] dimExprs, int index, int count, int seedType) {
     int length = dimExprs[index];
-    if (length < 0) {
-      throw new NegativeArraySizeException();
-    }
-
     boolean isLastDim = (index == (count - 1));
 
     Array result = createFromSeed(isLastDim ? seedType : NULL_SEED_TYPE, length);

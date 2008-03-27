@@ -80,10 +80,20 @@ public class ArrayNormalizer {
 
       if (x.initializers != null) {
         processInitializers(x, ctx, type);
-      } else if (type.getDims() == 1) {
-        processDim(x, ctx, type);
       } else {
-        processDims(x, ctx, type);
+        int realDims = 0;
+        for (JExpression dim : x.dims) {
+          if (dim instanceof JAbsentArrayDimension) {
+            break;
+          }
+          ++realDims;
+        }
+        assert (realDims >= 1);
+        if (realDims == 1) {
+          processDim(x, ctx, type);
+        } else {
+          processDims(x, ctx, type, realDims);
+        }
       }
     }
 
@@ -92,7 +102,10 @@ public class ArrayNormalizer {
      */
     private JIntLiteral getSeedTypeLiteralFor(JType type) {
       if (type instanceof JPrimitiveType) {
-        if (type == program.getTypePrimitiveBoolean()) {
+        if (type == program.getTypePrimitiveLong()) {
+          // The long type, thus 0L (index 3)
+          return program.getLiteralInt(3);
+        } else if (type == program.getTypePrimitiveBoolean()) {
           // The boolean type, thus false (index 2)
           return program.getLiteralInt(2);
         } else {
@@ -111,18 +124,18 @@ public class ArrayNormalizer {
       JLiteral classLit = program.getLiteralClass(arrayType);
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
-      JType leafType = arrayType.getLeafType();
       JExpression dim = x.dims.get(0);
-
+      JType elementType = arrayType.getElementType();
       call.getArgs().add(classLit);
       call.getArgs().add(typeIdLit);
       call.getArgs().add(queryIdLit);
       call.getArgs().add(dim);
-      call.getArgs().add(getSeedTypeLiteralFor(leafType));
+      call.getArgs().add(getSeedTypeLiteralFor(elementType));
       ctx.replaceMe(call);
     }
 
-    private void processDims(JNewArray x, Context ctx, JArrayType arrayType) {
+    private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
+        int dims) {
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
           initDims, arrayType);
@@ -130,48 +143,29 @@ public class ArrayNormalizer {
       JsonArray typeIdList = new JsonArray(program);
       JsonArray queryIdList = new JsonArray(program);
       JsonArray dimList = new JsonArray(program);
-      JType leafType = arrayType.getLeafType();
-      int outstandingDims = arrayType.getDims();
-      for (int i = 0; i < x.dims.size(); ++i) {
-        JExpression dim = x.dims.get(i);
-        if (dim instanceof JAbsentArrayDimension) {
-          break;
-        }
-
-        /*
-         * For each non-empty dimension, reduce the number of dims on the end
-         * type.
-         * 
-         * new int[2][ ][ ]->int[][]
-         * 
-         * new int[2][3][ ]->int[]
-         * 
-         * new int[2][3][4]->int
-         * 
-         */
-        JArrayType cur = program.getTypeArray(leafType, outstandingDims--);
+      JType cur = arrayType;
+      for (int i = 0; i < dims; ++i) {
+        // Walk down each type from most dims to least.
+        JArrayType curArrayType = (JArrayType) cur;
 
         JLiteral classLit = program.getLiteralClass(cur);
         classLitList.exprs.add(classLit);
 
-        JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(cur));
+        JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(curArrayType));
         typeIdList.exprs.add(typeIdLit);
 
-        JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(cur));
+        JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(curArrayType));
         queryIdList.exprs.add(queryIdLit);
 
-        dimList.exprs.add(dim);
+        dimList.exprs.add(x.dims.get(i));
+        cur = curArrayType.getElementType();
       }
-      JType targetType = leafType;
-      if (outstandingDims > 0) {
-        targetType = program.getTypeArray(targetType, outstandingDims);
-      }
-
       call.getArgs().add(classLitList);
       call.getArgs().add(typeIdList);
       call.getArgs().add(queryIdList);
       call.getArgs().add(dimList);
-      call.getArgs().add(getSeedTypeLiteralFor(targetType));
+      call.getArgs().add(program.getLiteralInt(dims));
+      call.getArgs().add(getSeedTypeLiteralFor(cur));
       ctx.replaceMe(call);
     }
 
