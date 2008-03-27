@@ -584,12 +584,15 @@ public class TypeTightener {
         assert (instance != null);
         JReferenceType instanceType = (JReferenceType) instance.getType();
         Set<JMethod> myOverriders = overriders.get(target);
-        for (JMethod override : myOverriders) {
-          JReferenceType overrideType = override.getEnclosingType();
-          if (program.typeOracle.canTheoreticallyCast(instanceType, overrideType)) {
-            // This call is truly polymorphic.
-            // TODO: composite types! :)
-            return;
+        if (myOverriders != null) {
+          for (JMethod override : myOverriders) {
+            JReferenceType overrideType = override.getEnclosingType();
+            if (program.typeOracle.canTheoreticallyCast(instanceType,
+                overrideType)) {
+              // This call is truly polymorphic.
+              // TODO: composite types! :)
+              return;
+            }
           }
         }
         x.setCannotBePolymorphic();
