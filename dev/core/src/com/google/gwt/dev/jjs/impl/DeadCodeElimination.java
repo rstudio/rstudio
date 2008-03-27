@@ -257,7 +257,19 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
-      lvalues.remove(x.getVariableRef());
+      JVariableRef variableRef = x.getVariableRef();
+      lvalues.remove(variableRef);
+
+      /*
+       * If the field (now) has a literal initializer, remove the unneeded
+       * declaration, which can remove the need for a clinit.
+       */
+      if (variableRef instanceof JFieldRef) {
+        JFieldRef fieldRef = (JFieldRef) variableRef;
+        if (fieldRef.getField().getLiteralInitializer() != null) {
+          removeMe(x, ctx);
+        }
+      }
     }
 
     /**

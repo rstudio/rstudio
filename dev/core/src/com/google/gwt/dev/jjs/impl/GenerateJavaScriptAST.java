@@ -565,7 +565,8 @@ public class GenerateJavaScriptAST {
       JsNameRef localRef = (JsNameRef) pop(); // localRef
 
       JVariable target = x.getVariableRef().getTarget();
-      if (target instanceof JField && target.getConstInitializer() != null) {
+      if (target instanceof JField
+          && ((JField) target).getLiteralInitializer() != null) {
         // Will initialize at top scope; no need to double-initialize.
         push(null);
         return;
@@ -598,9 +599,9 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JField x, Context ctx) {
       // if we need an initial value, create an assignment
-      if (x.getConstInitializer() != null) {
+      if (x.getLiteralInitializer() != null) {
         // setup the constant value
-        accept(x.getConstInitializer());
+        accept(x.getLiteralInitializer());
       } else if (x == program.getIndexedField("Cast.typeIdArray")) {
         // magic: setup the type id table
         push(generateTypeTable());

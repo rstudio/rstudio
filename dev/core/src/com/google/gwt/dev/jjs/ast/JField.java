@@ -42,6 +42,13 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
     return enclosingType;
   }
 
+  public JValueLiteral getLiteralInitializer() {
+    if (initializer instanceof JValueLiteral) {
+      return (JValueLiteral) initializer;
+    }
+    return null;
+  }
+
   public boolean isCompileTimeConstant() {
     return isCompileTimeConstant;
   }

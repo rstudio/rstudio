@@ -217,9 +217,9 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JField x, Context ctx) {
-      if (x.getConstInitializer() != null) {
+      if (x.getLiteralInitializer() != null) {
         // TODO: do I still need this?
-        addAssignment(x, x.getConstInitializer());
+        addAssignment(x, x.getLiteralInitializer());
       }
       currentMethod = null;
     }

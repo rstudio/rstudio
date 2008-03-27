@@ -17,7 +17,7 @@ package com.google.gwt.core.client;
 
 final class Impl {
 
-  private static int sNextHashId;
+  private static int sNextHashId = 0;
 
   protected static int getNextHashId() {
     return ++sNextHashId;

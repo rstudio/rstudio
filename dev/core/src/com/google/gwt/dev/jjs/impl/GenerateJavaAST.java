@@ -1362,11 +1362,15 @@ public class GenerateJavaAST {
 
         if (initializer != null) {
           SourceInfo info = makeSourceInfo(declaration);
+          // JDeclarationStatement's ctor sets up the field's initializer.
           JStatement decl = new JDeclarationStatement(program, info,
               createVariableRef(info, field), initializer);
 
-          // will either be init or clinit
-          currentMethodBody.getStatements().add(decl);
+          // A field with a non-literal initializer needs a declaration.
+          if (field.getLiteralInitializer() == null) {
+            // will either be init or clinit
+            currentMethodBody.getStatements().add(decl);
+          }
         }
       } catch (Throwable e) {
         throw translateException(field, e);
