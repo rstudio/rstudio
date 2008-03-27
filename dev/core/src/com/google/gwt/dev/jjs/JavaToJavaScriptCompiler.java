@@ -27,8 +27,6 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -97,9 +95,6 @@ public class JavaToJavaScriptCompiler {
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
-    JLocal tossLocal = program.createLocal(null, "statsToss".toCharArray(),
-        program.getTypePrimitiveBoolean(), false, body);
-
     for (int i = 0; i < mainClassNames.length; ++i) {
       String mainClassName = mainClassNames[i];
       JReferenceType referenceType = program.getFromTypeMap(mainClassName);
@@ -185,8 +180,7 @@ public class JavaToJavaScriptCompiler {
       JMethodCall onModuleLoadCall = new JMethodCall(program, null, qualifier,
           mainMethod);
 
-      body.getStatements().add(
-          makeStatsAssignment(program, mainClassName, tossLocal));
+      body.getStatements().add(makeStatsCalls(program, mainClassName));
       body.getStatements().add(onModuleLoadCall.makeStatement());
     }
     program.addEntryMethod(bootStrapMethod);
@@ -216,13 +210,15 @@ public class JavaToJavaScriptCompiler {
 
   /**
    * Create a variable assignment to invoke a call to the statistics collector.
+   * 
+   * <pre>
+   * Stats.isStatsAvailable() &&
+   *   Stats.stats(GWT.getModuleName(), "startup",
+   *     "onModuleLoadStart:<className>", Stats.makeTimeStat());
+   * </pre>
    */
-  /*
-   * tossLocal = Stats.isStatsAvailable() && Stats.stats(GWT.getModuleName(),
-   * "startup", "onModuleLoadStart:<className>", Stats.makeTimeStat());
-   */
-  private static JStatement makeStatsAssignment(JProgram program,
-      String mainClassName, JLocal tossLocal) {
+  private static JStatement makeStatsCalls(JProgram program,
+      String mainClassName) {
 
     // Trim to the unqualified name for brevity
     if (mainClassName.contains(".")) {
@@ -252,8 +248,7 @@ public class JavaToJavaScriptCompiler {
         program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
         statsCall);
 
-    return program.createAssignmentStmt(null, new JLocalRef(program, null,
-        tossLocal), amp);
+    return amp.makeStatement();
   }
 
   private final String[] declEntryPoints;
