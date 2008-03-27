@@ -1275,11 +1275,10 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
-      JsFunction gwtOnLoad = new JsFunction(topScope);
-      globalStmts.add(gwtOnLoad.makeStmt());
       JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
       gwtOnLoadName.setObfuscatable(false);
-      gwtOnLoad.setName(gwtOnLoadName);
+      JsFunction gwtOnLoad = new JsFunction(topScope, gwtOnLoadName, true);
+      globalStmts.add(gwtOnLoad.makeStmt());
       JsBlock body = new JsBlock();
       gwtOnLoad.setBody(body);
       JsScope fnScope = gwtOnLoad.getScope();
@@ -1335,7 +1334,7 @@ public class GenerateJavaScriptAST {
 
     private void generateNullFunc(List<JsStatement> globalStatements) {
       // handle null method
-      JsFunction nullFunc = new JsFunction(topScope, nullMethodName);
+      JsFunction nullFunc = new JsFunction(topScope, nullMethodName, true);
       nullFunc.setBody(new JsBlock());
       globalStatements.add(nullFunc.makeStmt());
     }
@@ -1347,7 +1346,7 @@ public class GenerateJavaScriptAST {
 
         // seed function
         // function com_example_foo_Foo() { }
-        JsFunction seedFunc = new JsFunction(topScope, seedFuncName);
+        JsFunction seedFunc = new JsFunction(topScope, seedFuncName, true);
         JsBlock body = new JsBlock();
         seedFunc.setBody(body);
         globalStmts.add(seedFunc.makeStmt());
