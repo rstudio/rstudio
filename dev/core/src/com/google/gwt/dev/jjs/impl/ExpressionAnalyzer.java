@@ -42,6 +42,7 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
  */
 public class ExpressionAnalyzer extends JVisitor {
   private boolean accessesField;
+  private boolean accessesFieldNonFinal;
   private boolean accessesLocal;
   private boolean accessesParameter;
   private boolean assignmentToField;
@@ -57,6 +58,14 @@ public class ExpressionAnalyzer extends JVisitor {
    */
   public boolean accessesField() {
     return accessesField;
+  }
+
+  /**
+   * Does this expression read or write non-final fields within the scope of the
+   * expression?
+   */
+  public boolean accessesFieldNonFinal() {
+    return accessesFieldNonFinal;
   }
 
   /**
@@ -117,8 +126,14 @@ public class ExpressionAnalyzer extends JVisitor {
   @Override
   public void endVisit(JFieldRef x, Context ctx) {
     accessesField = true;
+    if (!x.getTarget().isFinal()) {
+      accessesFieldNonFinal = true;
+    }
 
     JExpression instance = x.getInstance();
+    if (instance == null) {
+      return;
+    }
 
     // Field references using this are always safe
     if (instance instanceof JThisRef) {
