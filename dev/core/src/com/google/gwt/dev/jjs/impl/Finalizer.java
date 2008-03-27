@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
@@ -54,7 +55,7 @@ public class Finalizer {
    * program. But if it wasn't implemented, then the enclosing class should have
    * come up as not instantiated and been culled. So I think it's not possible.
    */
-  private class FinalizeVisitor extends JVisitor {
+  private class FinalizeVisitor extends JModVisitor {
 
     private boolean didChange = false;
 
