@@ -624,15 +624,6 @@ public class CompilerTest extends GWTTestCase {
     }
 
     try {
-      f.field = null;
-      fail();
-    } catch (NullPointerException e) {
-      // hosted mode
-    } catch (JavaScriptException e) {
-      // web mode
-    }
-
-    try {
       UninstantiableType[] fa = null;
       fa[4] = null;
       fail();
