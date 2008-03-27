@@ -33,72 +33,72 @@ import java.util.Comparator;
  * TODO(jat): consider whether we want to support the following methods;
  * 
  * <ul>
- * <li>deprecated methods dealing with bytes (I assume not since I can't see much use for them)
- *   <ul>
- *    <li>String(byte[] ascii, int hibyte)
- *    <li>String(byte[] ascii, int hibyte, int offset, int count)
- *    <li>getBytes(int srcBegin, int srcEnd, byte[] dst, int dstBegin)
- *   </ul>
- * <li>methods which in JS will essentially do nothing or be the same as other methods
- *   <ul>
- *    <li>copyValueOf(char[] data)
- *    <li>copyValueOf(char[] data, int offset, int count)
- *   </ul>
- * <li>methods added in Java 1.6 (the issue is how will it impact users building against Java 1.5)
- *   <ul>
- *    <li>isEmpty()
- *   </ul>
- * <li>other methods which are not straightforward in JS
- *   <ul>
- *    <li>format(String format, Object... args)
- *   </ul>
+ * <li>deprecated methods dealing with bytes (I assume not since I can't see
+ * much use for them)
+ * <ul>
+ * <li>String(byte[] ascii, int hibyte)
+ * <li>String(byte[] ascii, int hibyte, int offset, int count)
+ * <li>getBytes(int srcBegin, int srcEnd, byte[] dst, int dstBegin)
  * </ul>
- *  
- * Also, in general, we need to improve our support of non-ASCII characters.  The problem is
- * that correct support requires large tables, and we don't want to make users who aren't going
- * to use that pay for it.  There are two ways to do that:
- * <ol>
- *    <li>construct the tables in such a way that if the corresponding method is not called the
- *       table will be elided from the output.
- *    <li>provide a deferred binding target selecting the level of compatibility required.  Those
- *       that only need ASCII (or perhaps a different relatively small subset such as Latin1-5)
- *       will not pay for large tables, even if they do call toLowercase(), for example.
- * </ol>
- *       
- * Also, if we ever add multi-locale support, there are a number of other methods such as
- * toLowercase(Locale) we will want to consider supporting.  This is probably rare, but there
- * will be some apps (such as a translation tool) which cannot be written without this support.
+ * <li>methods which in JS will essentially do nothing or be the same as other
+ * methods
+ * <ul>
+ * <li>copyValueOf(char[] data)
+ * <li>copyValueOf(char[] data, int offset, int count)
+ * </ul>
+ * <li>methods added in Java 1.6 (the issue is how will it impact users
+ * building against Java 1.5)
+ * <ul>
+ * <li>isEmpty()
+ * </ul>
+ * <li>other methods which are not straightforward in JS
+ * <ul>
+ * <li>format(String format, Object... args)
+ * </ul>
+ * </ul>
  * 
- * Another category of incomplete support is that we currently just use the JS regex support,
- * which is not exactly the same as Java.  We should support Java syntax by mapping it into
- * equivalent JS patterns, or emulating them.
+ * Also, in general, we need to improve our support of non-ASCII characters. The
+ * problem is that correct support requires large tables, and we don't want to
+ * make users who aren't going to use that pay for it. There are two ways to do
+ * that:
+ * <ol>
+ * <li>construct the tables in such a way that if the corresponding method is
+ * not called the table will be elided from the output.
+ * <li>provide a deferred binding target selecting the level of compatibility
+ * required. Those that only need ASCII (or perhaps a different relatively small
+ * subset such as Latin1-5) will not pay for large tables, even if they do call
+ * toLowercase(), for example.
+ * </ol>
+ * 
+ * Also, if we ever add multi-locale support, there are a number of other
+ * methods such as toLowercase(Locale) we will want to consider supporting. This
+ * is probably rare, but there will be some apps (such as a translation tool)
+ * which cannot be written without this support.
+ * 
+ * Another category of incomplete support is that we currently just use the JS
+ * regex support, which is not exactly the same as Java. We should support Java
+ * syntax by mapping it into equivalent JS patterns, or emulating them.
  */
 public final class String implements Comparable<String>, CharSequence,
     Serializable {
 
-  public static final Comparator<String> CASE_INSENSITIVE_ORDER = new Comparator<String>() {
-    public int compare(String a, String b) {
-      return a.compareToIgnoreCase(b);
-    }
-  };
-
   static final class HashCache {
-    /**
-     * Pulled this number out of thin air.
-     */
-    static final int MAX_CACHE = 256;
     /**
      * The "old" cache; it will be dumped when front is full.
      */
     static JavaScriptObject back = JavaScriptObject.createObject();
     /**
+     * Tracks the number of entries in front.
+     */
+    static int count = 0;
+    /**
      * The "new" cache; it will become back when it becomes full.
      */
     static JavaScriptObject front = JavaScriptObject.createObject();
     /**
-     * Tracks the number of entries in front.
+     * Pulled this number out of thin air.
      */
-    static int count = 0;
+    static final int MAX_CACHE = 256;
 
     public static native int getHashCode(String str) /*-{
       // Accesses must to be prefixed with ':' to prevent conflict with built-in
@@ -122,7 +122,7 @@ public final class String implements Comparable<String>, CharSequence,
       @java.lang.String.HashCache::increment()();
       return @java.lang.String.HashCache::front[key] = result;
     }-*/;
-    
+
     static int compute(String str) {
       /*
        * In our hash code calculation, only 32 characters will actually affect
@@ -154,7 +154,13 @@ public final class String implements Comparable<String>, CharSequence,
       ++count;
     }
   }
-  
+
+  public static final Comparator<String> CASE_INSENSITIVE_ORDER = new Comparator<String>() {
+    public int compare(String a, String b) {
+      return a.compareToIgnoreCase(b);
+    }
+  };
+
   public static String valueOf(boolean x) {
     return "" + x;
   };
@@ -288,6 +294,13 @@ public final class String implements Comparable<String>, CharSequence,
   /**
    * @skip
    */
+  static String _String(String other) {
+    return other;
+  }
+
+  /**
+   * @skip
+   */
   static String _String(StringBuffer sb) {
     return valueOf(sb);
   }
@@ -297,13 +310,6 @@ public final class String implements Comparable<String>, CharSequence,
    */
   static String _String(StringBuilder sb) {
     return valueOf(sb);
-  }
-
-  /**
-   * @skip
-   */
-  static String _String(String other) {
-    return other;
   }
 
   private static native boolean __equals(String me, Object other) /*-{
@@ -325,7 +331,7 @@ public final class String implements Comparable<String>, CharSequence,
   private static native String fromCharCode(char ch) /*-{
     return String.fromCharCode(ch);
   }-*/;
-  
+
   private static String fromCodePoint(int codePoint) {
     if (codePoint >= Character.MIN_SUPPLEMENTARY_CODE_POINT) {
       char hiSurrogate = Character.getHighSurrogate(codePoint);
@@ -337,8 +343,8 @@ public final class String implements Comparable<String>, CharSequence,
     }
   }
 
-  private static native boolean regionMatches(String thisStr, boolean ignoreCase, int toffset,
-      String other, int ooffset, int len) /*-{
+  private static native boolean regionMatches(String thisStr,
+      boolean ignoreCase, int toffset, String other, int ooffset, int len) /*-{
     if (toffset < 0 || ooffset < 0 || len <= 0) {
       return false;
     }
@@ -357,7 +363,6 @@ public final class String implements Comparable<String>, CharSequence,
 
     return left == right;
   }-*/;
-
 
   public String() {
     // magic delegation to _String
@@ -557,14 +562,13 @@ public final class String implements Comparable<String>, CharSequence,
   // TODO(jat): fails on Safari 2 -- to be fixed for 1.5RC1
   public String replace(CharSequence from, CharSequence to) {
     // Escape regex special characters from literal replacement string.
-    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
-        "\\\\$1");
-    // Escape $ since it is for match backrefs and \ since it is used to escape $.
-    String replacement = to.toString().replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$",
-        "\\\\$");
+    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])", "\\\\$1");
+    // Escape $ since it is for match backrefs and \ since it is used to escape
+    // $.
+    String replacement = to.toString().replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$", "\\\\$");
     return replaceAll(regex, replacement);
   }
-  
+
   /**
    * Regular expressions vary from the standard implementation. The
    * <code>regex</code> parameter is interpreted by JavaScript as a JavaScript
