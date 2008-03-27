@@ -331,33 +331,33 @@ public class JavaToJavaScriptCompiler {
 
     try {
 
-      // (1) Build a flattened map of TypeDeclarations => JType.
-      //
-
-      // Note that all reference types (even nested and local ones) are in the
-      // resulting type map. BuildTypeMap also parses all JSNI.
-      //
       JProgram jprogram = new JProgram(logger, rebindOracle);
-      TypeMap typeMap = new TypeMap(jprogram);
       JsProgram jsProgram = new JsProgram();
-      TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
-          goldenCuds, jsProgram);
 
-      // BuildTypeMap can uncover syntactic JSNI errors; report & abort
-      checkForErrors(logger, true);
+      // Use a lexical scope to allow gc on typeMap and allTypeDeclarations
+      {
+        /*
+         * (1) Build a flattened map of TypeDeclarations => JType. The resulting
+         * map contains entries for all reference types. BuildTypeMap also
+         * parses all JSNI.
+         */
+        TypeMap typeMap = new TypeMap(jprogram);
+        TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
+            goldenCuds, jsProgram);
 
-      // Compute all super type/sub type info
-      jprogram.typeOracle.computeBeforeAST();
+        // BuildTypeMap can uncover syntactic JSNI errors; report & abort
+        checkForErrors(logger, true);
 
-      // (3) Create a normalized Java AST using our own notation.
-      //
+        // Compute all super type/sub type info
+        jprogram.typeOracle.computeBeforeAST();
 
-      // Create the tree from JDT
-      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
-          options.isEnableAssertions());
+        // (2) Create our own Java AST from the JDT AST.
+        GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
+            options.isEnableAssertions());
 
-      // GenerateJavaAST can uncover semantic JSNI errors; report & abort
-      checkForErrors(logger, true);
+        // GenerateJavaAST can uncover semantic JSNI errors; report & abort
+        checkForErrors(logger, true);
+      }
 
       /*
        * TODO: If we defer this until later, we could maybe use the results of
@@ -371,7 +371,7 @@ public class JavaToJavaScriptCompiler {
         AssertionRemover.exec(jprogram);
       }
 
-      // Fix up GWT.create() into new operations
+      // (3) Resolve all rebinds through GWT.create().
       ReplaceRebinds.exec(jprogram);
 
       if (options.isValidateOnly()) {
@@ -379,7 +379,7 @@ public class JavaToJavaScriptCompiler {
         return null;
       }
 
-      // Rebind each entry point.
+      // Also rebind all non-static entry points.
       findEntryPoints(logger, rebindOracle, declEntryPoints, jprogram);
 
       // Replace references to JSO subtypes with JSO itself.
