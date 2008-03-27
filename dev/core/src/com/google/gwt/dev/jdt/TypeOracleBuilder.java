@@ -696,14 +696,15 @@ public class TypeOracleBuilder {
       // JClassType for java.lang.Object. The reason is that the TypeOracle
       // has not been constructed as yet, so we cannot simply call
       // TypeOracle.getJavaLangObject().
-      JClassType jupperBound = (JClassType) resolveType(logger,
+      JClassType jimplicitUpperBound = (JClassType) resolveType(logger,
           tvBinding.superclass);
-
-      if (Object.class.getName().equals(jupperBound.getQualifiedSourceName())) {
-        return new JClassType[] {jupperBound};
-      } else {
-        return null;
+      if (jimplicitUpperBound != null) {
+        assert (Object.class.getName().equals(jimplicitUpperBound.getQualifiedSourceName()));
+        return new JClassType[] {jimplicitUpperBound};
       }
+
+      // Failed to resolve the implicit upper bound.
+      return null;
     }
 
     List<JClassType> bounds = new ArrayList<JClassType>();
@@ -1538,8 +1539,11 @@ public class TypeOracleBuilder {
     if (binding instanceof TypeVariableBinding) {
       TypeVariableBinding tvBinding = (TypeVariableBinding) binding;
       JTypeParameter typeParameter = (JTypeParameter) cacheManager.getTypeForBinding(tvBinding);
-      assert (typeParameter != null);
-      return typeParameter;
+      if (typeParameter != null) {
+        return typeParameter;
+      }
+      
+      // Fall-through to failure
     }
 
     if (binding instanceof WildcardBinding) {
@@ -1573,7 +1577,11 @@ public class TypeOracleBuilder {
           return null;
       }
 
-      return oracle.getWildcardType(boundType, typeBound);
+      if (boundType != null) {
+        return oracle.getWildcardType(boundType, typeBound);
+      }
+      
+      // Fall-through to failure
     }
 
     // Log other cases we know about that don't make sense.
