@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,33 +72,37 @@ public class RequestBuilder {
 
   private static final HTTPRequestImpl httpRequest = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
 
-  /*
+  private RequestCallback callback;
+
+  /**
    * Map of header name to value that will be added to the JavaScript
    * XmlHttpRequest object before sending a request.
    */
   private Map<String, String> headers;
 
-  /*
+  /**
    * HTTP method to use when opening an JavaScript XmlHttpRequest object
    */
-  private String httpMethod;
+  private final String httpMethod;
 
-  /*
+  /**
    * Password to use when opening an JavaScript XmlHttpRequest object
    */
   private String password;
 
-  /*
+  private String requestData;
+
+  /**
    * Timeout in milliseconds before the request timeouts and fails.
    */
   private int timeoutMillis;
 
-  /*
+  /**
    * URL to use when opening an JavaScript XmlHttpRequest object.
    */
-  private String url;
+  private final String url;
 
-  /*
+  /**
    * User to use when opening an JavaScript XmlHttpRequest object
    */
   private String user;
@@ -147,48 +151,52 @@ public class RequestBuilder {
   /**
    * Sends an HTTP request based on the current builder configuration. If no
    * request headers have been set, the header "Content-Type" will be used with
-   * a value of "text/plain; charset=utf-8".
+   * a value of "text/plain; charset=utf-8". You must call
+   * {@link #setRequestData(String)} and {@link #setCallback(RequestCallback)}
+   * before calling this method.
+   * 
+   * @return a {@link Request} object that can be used to track the request
+   * @throws RequestException if the call fails to initiate
+   * @throws NullPointerException if a request callback has not been set
+   */
+  public Request send() throws RequestException {
+    StringValidator.throwIfNull("callback", callback);
+    return doSend(requestData, callback);
+  }
+
+  /**
+   * Sends an HTTP request based on the current builder configuration with the
+   * specified data and callback. If no request headers have been set, the
+   * header "Content-Type" will be used with a value of "text/plain;
+   * charset=utf-8". This method does not cache <code>requestData</code> or
+   * <code>callback</code>.
    * 
    * @param requestData the data to send as part of the request
    * @param callback the response handler to be notified when the request fails
    *          or completes
    * @return a {@link Request} object that can be used to track the request
+   * @throws NullPointerException if <code>callback</code> <code>null</code>
    */
   public Request sendRequest(String requestData, RequestCallback callback)
       throws RequestException {
+    StringValidator.throwIfNull("callback", callback);
+    return doSend(requestData, callback);
+  }
 
-    if (user == null && password != null) {
-      throw new IllegalStateException("A password is set, but no user is set");
-    }
+  /**
+   * Sets the response handler for this request. This method <b>must</b> be
+   * called before calling {@link #send()}.
+   * 
+   * @param callback the response handler to be notified when the request fails
+   *          or completes
+   * 
+   * @throws NullPointerException if <code>callback</code> is
+   *           <code>null</code>
+   */
+  public void setCallback(RequestCallback callback) {
+    StringValidator.throwIfNull("callback", callback);
 
-    JavaScriptObject xmlHttpRequest = httpRequest.createXmlHTTPRequest();
-    String openError;
-    if (password != null) {
-      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
-          user, password);
-    } else if (user != null) {
-      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
-          user);
-    } else {
-      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true);
-    }
-    if (openError != null) {
-      RequestPermissionException requestPermissionException = new RequestPermissionException(url);
-      requestPermissionException.initCause(new RequestException(openError));
-      throw requestPermissionException;
-    }
-
-    setHeaders(xmlHttpRequest);
-
-    Request request = new Request(xmlHttpRequest, timeoutMillis, callback);
-
-    String sendError = XMLHTTPRequest.send(xmlHttpRequest, request,
-        requestData, callback);
-    if (sendError != null) {
-      throw new RequestException(sendError);
-    }
-
-    return request;
+    this.callback = callback;
   }
 
   /**
@@ -229,6 +237,16 @@ public class RequestBuilder {
   }
 
   /**
+   * Sets the data to send as part of this request. This method <b>must</b> be
+   * called before calling {@link #send()}.
+   * 
+   * @param requestData the data to send as part of the request
+   */
+  public void setRequestData(String requestData) {
+    this.requestData = requestData;
+  }
+
+  /**
    * Sets the number of milliseconds to wait for a request to complete. Should
    * the request timeout, the
    * {@link com.google.gwt.http.client.RequestCallback#onError(Request, Throwable)}
@@ -262,6 +280,49 @@ public class RequestBuilder {
     StringValidator.throwIfEmptyOrNull("user", user);
 
     this.user = user;
+  }
+
+  /**
+   * Sends an HTTP request based on the current builder configuration. If no
+   * request headers have been set, the header "Content-Type" will be used with
+   * a value of "text/plain; charset=utf-8".
+   * 
+   * @return a {@link Request} object that can be used to track the request
+   * @throws RequestException if the call fails to initiate
+   * @throws NullPointerException if request data has not been set
+   * @throws NullPointerException if a request callback has not been set
+   */
+  private Request doSend(String requestData, RequestCallback callback)
+      throws RequestException {
+    JavaScriptObject xmlHttpRequest = httpRequest.createXmlHTTPRequest();
+    String openError;
+    if (user != null && password != null) {
+      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
+          user, password);
+    } else if (user != null) {
+      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
+          user);
+    } else {
+      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true);
+    }
+    if (openError != null) {
+      RequestPermissionException requestPermissionException = new RequestPermissionException(
+          url);
+      requestPermissionException.initCause(new RequestException(openError));
+      throw requestPermissionException;
+    }
+
+    setHeaders(xmlHttpRequest);
+
+    Request request = new Request(xmlHttpRequest, timeoutMillis, callback);
+
+    String sendError = XMLHTTPRequest.send(xmlHttpRequest, request,
+        requestData, callback);
+    if (sendError != null) {
+      throw new RequestException(sendError);
+    }
+
+    return request;
   }
 
   /*

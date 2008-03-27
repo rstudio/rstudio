@@ -51,6 +51,10 @@ public class RequestBuilderTestServlet extends HttpServlet {
       } else {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
+    } else if (pathInfo.equals(getPathInfoBase() + "send_GET")) {
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().write("<html><body>hello</body></html>");
+      response.setContentType("text/html");
     } else if (pathInfo.equals(getPathInfoBase() + "sendRequest_GET")) {
       response.setStatus(HttpServletResponse.SC_OK);
       response.getWriter().write("<html><body>hello</body></html>");

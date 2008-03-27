@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,11 +57,11 @@ final class StringValidator {
    * Throws a {@link NullPointerException} if the value is <code>null</code>.
    * 
    * @param name the name of the value, used in error messages
-   * @param value the string value that needs to be validated
+   * @param value the value that needs to be validated
    * 
    * @throws NullPointerException if the value is <code>null</code>
    */
-  public static void throwIfNull(String name, String value) {
+  public static void throwIfNull(String name, Object value) {
     if (null == value) {
       throw new NullPointerException(name + " cannot be null");
     }

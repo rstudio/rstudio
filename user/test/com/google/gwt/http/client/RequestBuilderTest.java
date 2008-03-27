@@ -144,6 +144,51 @@ public class RequestBuilderTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
    */
+  public void testSend_GET() throws RequestException {
+    delayTestFinish(TEST_FINISH_DELAY);
+
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+        getTestBaseURL() + "send_GET");
+    builder.setCallback(new RequestCallback() {
+      public void onError(Request request, Throwable exception) {
+        fail(exception.getMessage());
+      }
+
+      public void onResponseReceived(Request request, Response response) {
+        assertEquals(200, response.getStatusCode());
+        finishTest();
+      }
+    });
+    builder.send();
+  }
+
+  /**
+   * Test method for {@link com.google.gwt.http.client.RequestBuilder#send()}.
+   */
+  public void testSend_POST() throws RequestException {
+    delayTestFinish(TEST_FINISH_DELAY);
+
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.POST,
+        getTestBaseURL() + "sendRequest_POST");
+    builder.setHeader("Content-Type", "application/x-www-form-urlencoded");
+    builder.setCallback(new RequestCallback() {
+      public void onError(Request request, Throwable exception) {
+        fail(exception.getMessage());
+      }
+
+      public void onResponseReceived(Request request, Response response) {
+        assertEquals(200, response.getStatusCode());
+        finishTest();
+      }
+    });
+    builder.setRequestData("method=test+request");
+    builder.send();
+  }
+
+  /**
+   * Test method for
+   * {@link com.google.gwt.http.client.RequestBuilder#sendRequest(java.lang.String, com.google.gwt.http.client.RequestCallback)}.
+   */
   public void testSendRequest_GET() throws RequestException {
     delayTestFinish(TEST_FINISH_DELAY);
 
@@ -183,20 +228,38 @@ public class RequestBuilderTest extends GWTTestCase {
     });
   }
 
+  public void testSetCallback() {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+        getTestBaseURL());
+    try {
+      builder.setCallback(null);
+      fail("Expected NullPointerException");
+    } catch (NullPointerException expected) {
+    }
+  }
+
   public void testSetPassword() {
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
         getTestBaseURL());
     try {
       builder.setPassword(null);
-    } catch (NullPointerException ex) {
-      // Correct behavior, exception was thrown
+      fail("Expected NullPointerException");
+    } catch (NullPointerException expected) {
     }
 
     try {
       builder.setPassword("");
-    } catch (IllegalArgumentException ex) {
-      // Correct behavior, exception was thrown
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
     }
+  }
+
+  public void testSetRequestData() {
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+        getTestBaseURL());
+    // Legal.
+    builder.setRequestData(null);
+    builder.setRequestData("");
   }
 
   /**
@@ -219,29 +282,25 @@ public class RequestBuilderTest extends GWTTestCase {
     try {
       builder.setHeader(null, "bar");
       fail("setRequestHeader(null, \"bar\")");
-    } catch (NullPointerException ex) {
-      // purposely ignored
+    } catch (NullPointerException expected) {
     }
 
     try {
       builder.setHeader("", "bar");
       fail("setRequestHeader(\"\", \"bar\")");
-    } catch (IllegalArgumentException ex) {
-      // purposely ignored
+    } catch (IllegalArgumentException expected) {
     }
 
     try {
       builder.setHeader("foo", null);
       fail("setRequestHeader(\"foo\", null)");
-    } catch (NullPointerException ex) {
-      // purposely ignored
+    } catch (NullPointerException expected) {
     }
 
     try {
       builder.setHeader("foo", "");
       fail("setRequestHeader(\"foo\", \"\")");
-    } catch (IllegalArgumentException ex) {
-      // purposely ignored
+    } catch (IllegalArgumentException expected) {
     }
 
     delayTestFinish(TEST_FINISH_DELAY);
@@ -326,14 +385,14 @@ public class RequestBuilderTest extends GWTTestCase {
         getTestBaseURL());
     try {
       builder.setUser(null);
-    } catch (NullPointerException ex) {
-      // Correct behavior, exception was thrown
+      fail("Expected NullPointerException");
+    } catch (NullPointerException expected) {
     }
 
     try {
       builder.setUser("");
-    } catch (IllegalArgumentException ex) {
-      // Correct behavior, exception was thrown
+      fail("Expected IllegalArgumentException");
+    } catch (IllegalArgumentException expected) {
     }
   }
 }
