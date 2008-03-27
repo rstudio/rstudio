@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,13 +32,21 @@ import javax.servlet.http.HttpServletResponse;
 public class RPCServletUtils {
   private static final String ACCEPT_ENCODING = "Accept-Encoding";
 
+  private static final String ATTACHMENT = "attachment";
+
   private static final String CHARSET_UTF8 = "UTF-8";
+
+  private static final String CONTENT_DISPOSITION = "Content-Disposition";
 
   private static final String CONTENT_ENCODING = "Content-Encoding";
 
   private static final String CONTENT_ENCODING_GZIP = "gzip";
 
-  private static final String CONTENT_TYPE_TEXT_PLAIN_UTF8 = "text/plain; charset=utf-8";
+  private static final String CONTENT_TYPE_APPLICATION_JSON_UTF8 = "application/json; charset=utf-8";
+
+  private static final String EXPECTED_CHARSET = "charset=utf-8";
+
+  private static final String EXPECTED_CONTENT_TYPE = "text/x-gwt-rpc";
 
   private static final String GENERIC_FAILURE_MSG = "The call failed on the server; see server log for details";
 
@@ -90,8 +98,8 @@ public class RPCServletUtils {
    * @throws IOException if the requests input stream cannot be accessed, read
    *           from or closed
    * @throws ServletException if the content length of the request is not
-   *           specified of if the request's content type is not 'text/plain' or
-   *           'charset=utf-8'
+   *           specified of if the request's content type is not
+   *           'text/x-gwt-rpc' and 'charset=utf-8'
    */
   public static String readContentAsUtf8(HttpServletRequest request)
       throws IOException, ServletException {
@@ -106,21 +114,17 @@ public class RPCServletUtils {
     // Content-Type must be specified.
     if (contentType != null) {
       contentType = contentType.toLowerCase();
-      // The type must be plain text.
-      if (contentType.startsWith("text/plain")) {
-        // And it must be UTF-8 encoded (or unspecified, in which case we assume
-        // that it's either UTF-8 or ASCII).
-        if (contentType.indexOf("charset=") == -1) {
-          contentTypeIsOkay = true;
-        } else if (contentType.indexOf("charset=utf-8") != -1) {
+      // The type must be be distinct
+      if (contentType.startsWith(EXPECTED_CONTENT_TYPE)) {
+        if (contentType.indexOf(EXPECTED_CHARSET) != -1) {
           contentTypeIsOkay = true;
         }
       }
     }
 
     if (!contentTypeIsOkay) {
-      throw new ServletException(
-          "Content-Type must be 'text/plain' with 'charset=utf-8' (or unspecified charset)");
+      throw new ServletException("Content-Type must be '"
+          + EXPECTED_CONTENT_TYPE + "' with '" + EXPECTED_CHARSET + "'.");
     }
 
     InputStream in = request.getInputStream();
@@ -215,8 +219,9 @@ public class RPCServletUtils {
     // Send the reply.
     //
     response.setContentLength(responseBytes.length);
-    response.setContentType(CONTENT_TYPE_TEXT_PLAIN_UTF8);
+    response.setContentType(CONTENT_TYPE_APPLICATION_JSON_UTF8);
     response.setStatus(HttpServletResponse.SC_OK);
+    response.setHeader(CONTENT_DISPOSITION, ATTACHMENT);
     response.getOutputStream().write(responseBytes);
   }
 

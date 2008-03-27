@@ -233,6 +233,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
         this, methodName, invocationCount, callback, responseReader);
     RequestBuilder rb = new RequestBuilder(RequestBuilder.POST,
         getServiceEntryPoint());
+    rb.setHeader("Content-Type", "text/x-gwt-rpc; charset=utf-8");
+
     try {
       return rb.sendRequest(requestData, responseHandler);
     } catch (RequestException ex) {

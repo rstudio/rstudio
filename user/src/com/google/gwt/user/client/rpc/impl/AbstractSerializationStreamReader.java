@@ -83,4 +83,8 @@ public abstract class AbstractSerializationStreamReader extends
     seenArray.add(o);
   }
 
+  protected final void replaceRememberedObject(Object old, Object replacement) {
+    seenArray.set(seenArray.indexOf(old), replacement);
+  }
+
 }

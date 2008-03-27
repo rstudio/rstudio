@@ -18,6 +18,7 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -303,6 +304,13 @@ public class TestSetValidator {
     }
 
     return actual.getValue() == 1;
+  }
+  
+  /**
+   * We want to assert that the two fields have object identity.
+   */
+  public static boolean isValid(SerializableWithTwoArrays node) {
+    return node.one == node.two;
   }
 
   public static boolean isValid(Vector expected, Vector actual) {

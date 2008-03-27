@@ -19,6 +19,7 @@ import com.google.gwt.user.client.rpc.ObjectGraphTestService;
 import com.google.gwt.user.client.rpc.TestSetValidator;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
 /**
  * TODO: document me.
@@ -55,6 +56,15 @@ public class ObjectGraphTestServiceImpl extends RemoteServiceServlet implements
 
   public SerializablePrivateNoArg echo_PrivateNoArg(
       SerializablePrivateNoArg node) {
+    if (!TestSetValidator.isValid(node)) {
+      throw new RuntimeException();
+    }
+
+    return node;
+  }
+
+  public SerializableWithTwoArrays echo_SerializableWithTwoArrays(
+      SerializableWithTwoArrays node) {
     if (!TestSetValidator.isValid(node)) {
       throw new RuntimeException();
     }

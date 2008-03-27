@@ -196,6 +196,11 @@ public class TestSetFactory {
   public static class SerializableVector extends Vector implements
       IsSerializable {
   }
+  
+  public static class SerializableWithTwoArrays implements IsSerializable {
+    String[] one;
+    String[] two;
+  }
 
   /**
    * TODO: document me.
@@ -391,6 +396,12 @@ public class TestSetFactory {
     n4.setRightChild(n1);
 
     return n1;
+  }
+
+  static SerializableWithTwoArrays createDoublyReferencedArray() {
+    SerializableWithTwoArrays o = new SerializableWithTwoArrays();
+    o.two = o.one = createStringArray();
+    return o;
   }
 
   static SerializableClass createSerializableClass() {

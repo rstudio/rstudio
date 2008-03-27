@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
+import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
 
 /**
  * TODO: document me.
@@ -79,6 +80,24 @@ public class ObjectGraphTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValidComplexCyclicGraph((SerializableDoublyLinkedNode) result));
+        finishTest();
+      }
+    });
+  }
+  
+  public void testDoublyReferencedArray() {
+    delayTestFinish(TEST_DELAY);
+
+    ObjectGraphTestServiceAsync service = getServiceAsync();
+    final SerializableWithTwoArrays node = TestSetFactory.createDoublyReferencedArray();
+    service.echo_SerializableWithTwoArrays(node, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.isValid((SerializableWithTwoArrays) result));
         finishTest();
       }
     });
