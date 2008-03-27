@@ -820,6 +820,10 @@ public class GenerateJavaScriptAST {
         jsFunc.getBody().getStatements().add(0, jsInvocation.makeStmt());
       }
 
+      if (x.isTrace()) {
+        jsFunc.setTrace();
+      }
+
       push(jsFunc);
       currentMethod = null;
     }
@@ -975,7 +979,7 @@ public class GenerateJavaScriptAST {
       JsVars vars = new JsVars();
       vars.add(new JsVar(globalTemp));
       globalStmts.add(0, vars);
-      
+
       /*
        * Long lits must got at the top, they can serve as constant field
        * initializers.

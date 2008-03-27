@@ -740,7 +740,9 @@ public class JProgram extends JNode {
   public void putStaticImpl(JMethod method, JMethod staticImpl) {
     instanceToStaticMap.put(method, staticImpl);
     staticToInstanceMap.put(staticImpl, method);
-    staticImpl.copyTraceStatusFrom(method);
+    if (method.isTrace()) {
+      staticImpl.setTrace();
+    }
   }
 
   public JClassType rebind(JType type) {

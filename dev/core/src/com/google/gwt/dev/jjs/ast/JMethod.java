@@ -146,6 +146,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     return isStatic;
   }
 
+  public boolean isTrace() {
+    return trace;
+  }
+
   public void setBody(JAbstractMethodBody body) {
     if (body != null) {
       body.setMethod(null);
@@ -158,6 +162,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     isFinal = true;
   }
 
+  public void setTrace() {
+    this.trace = true;
+  }
+
   public void setType(JType newType) {
     returnType = newType;
   }
@@ -168,7 +176,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
       before = this.toSource();
       if (traceFirst) {
         traceFirst = false;
-        trace("Initial", before);
+        trace("JAVA INITIAL", before);
       }
     }
     if (visitor.visit(this, ctx)) {
@@ -185,9 +193,5 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
         trace(title, after);
       }
     }
-  }
-
-  void copyTraceStatusFrom(JMethod x) {
-    this.trace = x.trace;
   }
 }
