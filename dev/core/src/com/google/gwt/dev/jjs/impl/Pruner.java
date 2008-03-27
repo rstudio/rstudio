@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
@@ -44,7 +45,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
-import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -99,15 +99,13 @@ public class Pruner {
       // The LHS of assignments may have been pruned.
       if (x.getOp() == JBinaryOperator.ASG) {
         JExpression lhs = x.getLhs();
-        if (lhs.hasSideEffects()) {
-          return;
-        }
-        if (lhs instanceof JFieldRef || lhs instanceof JLocalRef
-            || lhs instanceof JParameterRef) {
-          JVariable var = ((JVariableRef) lhs).getTarget();
-          if (!referencedNonTypes.contains(var)) {
-            // Just replace with my RHS
-            ctx.replaceMe(x.getRhs());
+        if (lhs instanceof JVariableRef) {
+          JVariableRef variableRef = (JVariableRef) lhs;
+          if (!referencedNonTypes.contains(variableRef.getTarget())) {
+            // TODO: better null tracking; we might be missing some NPEs here.
+            JExpression replacement = makeReplacementForAssignment(
+                x.getSourceInfo(), variableRef, x.getRhs());
+            ctx.replaceMe(replacement);
           }
         }
       }
@@ -116,27 +114,9 @@ public class Pruner {
     public void endVisit(JDeclarationStatement x, Context ctx) {
       // The variable may have been pruned.
       if (!referencedNonTypes.contains(x.getVariableRef().getTarget())) {
-        // Replace with a multi, which may wind up empty.
-        JMultiExpression multi = new JMultiExpression(program,
-            x.getSourceInfo());
-
-        // If the lhs is a field ref, evaluate it first.
-        JVariableRef variableRef = x.getVariableRef();
-        if (variableRef instanceof JFieldRef) {
-          JFieldRef fieldRef = (JFieldRef) variableRef;
-          JExpression instance = fieldRef.getInstance();
-          if (instance != null) {
-            multi.exprs.add(instance);
-          }
-        }
-
-        // If there is an initializer, evaluate it second.
-        JExpression initializer = x.getInitializer();
-        if (initializer != null) {
-          multi.exprs.add(initializer);
-        }
-
-        ctx.replaceMe(multi.makeStatement());
+        JExpression replacement = makeReplacementForAssignment(
+            x.getSourceInfo(), x.getVariableRef(), x.getInitializer());
+        ctx.replaceMe(replacement.makeStatement());
       }
     }
 
@@ -231,6 +211,31 @@ public class Pruner {
       JReferenceType enclosingType = node.getEnclosingType();
       return !node.isStatic() && enclosingType != null
           && !program.typeOracle.isInstantiatedType(enclosingType);
+    }
+
+    private JExpression makeReplacementForAssignment(SourceInfo info,
+        JVariableRef variableRef, JExpression rhs) {
+      // Replace with a multi, which may wind up empty.
+      JMultiExpression multi = new JMultiExpression(program, info);
+
+      // If the lhs is a field ref, evaluate it first.
+      if (variableRef instanceof JFieldRef) {
+        JFieldRef fieldRef = (JFieldRef) variableRef;
+        JExpression instance = fieldRef.getInstance();
+        if (instance != null) {
+          multi.exprs.add(instance);
+        }
+      }
+
+      // If there is an initializer, evaluate it second.
+      if (rhs != null) {
+        multi.exprs.add(rhs);
+      }
+      if (multi.exprs.size() == 1) {
+        return multi.exprs.get(0);
+      } else {
+        return multi;
+      }
     }
   }
 
@@ -487,21 +492,12 @@ public class Pruner {
           // parameters are ok to skip
           doSkip = true;
         } else if (lhs instanceof JFieldRef) {
+          // fields must rescue the qualifier
+          doSkip = true;
           JFieldRef fieldRef = (JFieldRef) lhs;
-          /*
-           * Whether we can skip depends on what the qualifier is; we have to be
-           * certain the qualifier cannot be a null pointer (in which case we'd
-           * fail to throw the appropriate exception.
-           * 
-           * TODO: better non-null tracking!
-           */
           JExpression instance = fieldRef.getInstance();
-          if (fieldRef.getField().isStatic()) {
-            // statics are always okay
-            doSkip = true;
-          } else if (instance instanceof JThisRef) {
-            // a this ref cannot be null
-            doSkip = true;
+          if (instance != null) {
+            accept(instance);
           }
         }
 
