@@ -514,6 +514,16 @@ public class Pruner {
     }
 
     @Override
+    public boolean visit(JCastOperation x, Context ctx) {
+      // Rescue any JavaScriptObject type that is the target of a cast.
+      JType targetType = x.getCastType();
+      if (program.isJavaScriptObject(targetType)) {
+        rescue((JReferenceType) targetType, true, true);
+      }
+      return true;
+    }
+
+    @Override
     public boolean visit(JClassType type, Context ctx) {
       assert (referencedTypes.contains(type));
       boolean isInstantiated = instantiatedTypes.contains(type);
@@ -543,6 +553,27 @@ public class Pruner {
         rescue(intfType, false, isInstantiated);
       }
 
+      return false;
+    }
+
+    public boolean visit(JDeclarationStatement x, Context ctx) {
+      /*
+       * A declaration by itself doesn't rescue a local (even if it has an
+       * initializer). Writes don't count, only reads.
+       */
+      if (x.getInitializer() != null) {
+        accept(x.getInitializer());
+      }
+
+      // If the lhs is a field ref, we have to visit its qualifier.
+      JVariableRef variableRef = x.getVariableRef();
+      if (variableRef instanceof JFieldRef) {
+        JFieldRef fieldRef = (JFieldRef) variableRef;
+        JExpression instance = fieldRef.getInstance();
+        if (instance != null) {
+          accept(instance);
+        }
+      }
       return false;
     }
 
@@ -588,27 +619,6 @@ public class Pruner {
       return false;
     }
 
-    public boolean visit(JDeclarationStatement x, Context ctx) {
-      /*
-       * A declaration by itself doesn't rescue a local (even if it has an
-       * initializer). Writes don't count, only reads.
-       */
-      if (x.getInitializer() != null) {
-        accept(x.getInitializer());
-      }
-
-      // If the lhs is a field ref, we have to visit its qualifier.
-      JVariableRef variableRef = x.getVariableRef();
-      if (variableRef instanceof JFieldRef) {
-        JFieldRef fieldRef = (JFieldRef) variableRef;
-        JExpression instance = fieldRef.getInstance();
-        if (instance != null) {
-          accept(instance);
-        }
-      }
-      return false;
-    }
-
     @Override
     public boolean visit(JLocalRef ref, Context ctx) {
       JLocal target = ref.getLocal();
@@ -640,16 +650,6 @@ public class Pruner {
         }.accept(func);
       }
 
-      return true;
-    }
-
-    @Override
-    public boolean visit(JCastOperation x, Context ctx) {
-      // Rescue any JavaScriptObject type that is the target of a cast.
-      JType targetType = x.getCastType();
-      if (program.isJavaScriptObject(targetType)) {
-        rescue((JReferenceType) targetType, true, true);
-      }
       return true;
     }
 
