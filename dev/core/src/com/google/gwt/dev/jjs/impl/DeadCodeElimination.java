@@ -379,11 +379,30 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
+      // Restore ignored expressions.
       JMethod target = x.getTarget();
+      if (target.isStatic() && x.getInstance() != null) {
+        ignoringExpressionOutput.remove(x.getInstance());
+      }
+      List<JExpression> args = x.getArgs();
+      int paramCount = target.params.size();
+      List<JExpression> ignoredArgs = args.subList(paramCount, args.size());
+      ignoringExpressionOutput.removeAll(ignoredArgs);
+
+      for (int i = 0; i < ignoredArgs.size(); ++i) {
+        JExpression arg = ignoredArgs.get(i);
+        if (!arg.hasSideEffects()) {
+          ignoredArgs.remove(i);
+          --i;
+          didChange = true;
+        }
+      }
+
+      // Normal optimizations.
       JReferenceType targetType = target.getEnclosingType();
       if (targetType == program.getTypeJavaLangString()) {
         tryOptimizeStringCall(x, ctx, target);
-      } else if (program.isClinit(target)) {
+      } else if (JProgram.isClinit(target)) {
         // Eliminate the call if the target is now empty.
         if (!program.typeOracle.hasClinit(targetType)) {
           ctx.replaceMe(program.getLiteralNull());
@@ -403,15 +422,12 @@ public class DeadCodeElimination {
         ignoringExpressionOutput.removeAll(nonFinalChildren);
       }
 
-      /*
-       * If we're ignoring the output of this expression, we don't need to
-       * maintain the final multi value.
-       */
-      for (int i = 0; i < numRemovableExpressions(x); i++) {
+      for (int i = 0; i < numRemovableExpressions(x); ++i) {
         JExpression expr = x.exprs.get(i);
         if (!expr.hasSideEffects()) {
           x.exprs.remove(i);
-          i--;
+          --i;
+          didChange = true;
           continue;
         }
 
@@ -420,6 +436,7 @@ public class DeadCodeElimination {
           x.exprs.remove(i);
           x.exprs.addAll(i, ((JMultiExpression) expr).exprs);
           i--;
+          didChange = true;
           continue;
         }
       }
@@ -542,6 +559,7 @@ public class DeadCodeElimination {
             || type == program.getTypeNull()) {
           itA.remove();
           itB.remove();
+          didChange = true;
         }
       }
 
@@ -610,9 +628,22 @@ public class DeadCodeElimination {
     }
 
     @Override
+    public boolean visit(JMethodCall x, Context ctx) {
+      JMethod target = x.getTarget();
+      if (target.isStatic() && x.getInstance() != null) {
+        ignoringExpressionOutput.add(x.getInstance());
+      }
+      List<JExpression> args = x.getArgs();
+      List<JExpression> ignoredArgs = args.subList(target.params.size(),
+          args.size());
+      ignoringExpressionOutput.addAll(ignoredArgs);
+      return true;
+    }
+
+    @Override
     public boolean visit(JMultiExpression x, Context ctx) {
       List<JExpression> exprs = x.exprs;
-      if (exprs.size() > 1) {
+      if (exprs.size() > 0) {
         List<JExpression> nonFinalChildren = exprs.subList(0, exprs.size() - 1);
         ignoringExpressionOutput.addAll(nonFinalChildren);
       }
@@ -757,7 +788,7 @@ public class DeadCodeElimination {
           && program.typeOracle.checkClinit(currentClass,
               field.getEnclosingType())) {
         JMethod clinit = field.getEnclosingType().methods.get(0);
-        assert (program.isClinit(clinit));
+        assert (JProgram.isClinit(clinit));
         call = new JMethodCall(program, x.getSourceInfo(), null, clinit);
       } else {
         call = null;
@@ -767,7 +798,7 @@ public class DeadCodeElimination {
 
     private int numRemovableExpressions(JMultiExpression x) {
       if (ignoringExpressionOutput.contains(x)) {
-        // All expressions can be removed.
+        // The result doesn't matter: all expressions can be removed.
         return x.exprs.size();
       } else {
         // The last expression cannot be removed.
@@ -786,6 +817,7 @@ public class DeadCodeElimination {
         boolean isBreak = isUnconditionalBreak(statement);
         if (isBreak && lastWasBreak) {
           it.remove();
+          didChange = true;
         }
         lastWasBreak = isBreak;
       }
@@ -793,6 +825,7 @@ public class DeadCodeElimination {
       // Remove a trailing break statement from a case block
       if (lastWasBreak && body.statements.size() > 0) {
         body.statements.remove(body.statements.size() - 1);
+        didChange = true;
       }
     }
 
@@ -825,6 +858,7 @@ public class DeadCodeElimination {
       if (noOpCaseStatements.size() > 0) {
         for (JStatement statement : noOpCaseStatements) {
           body.statements.remove(statement);
+          didChange = true;
         }
       }
     }
