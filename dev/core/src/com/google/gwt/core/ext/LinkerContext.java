@@ -44,6 +44,12 @@ public interface LinkerContext {
   SortedSet<SelectionProperty> getProperties();
 
   /**
+   * Returns <code>true</code> if the output should be as compact is possible
+   * and <code>false</code> if the output should be human-readable.
+   */
+  boolean isOutputCompact();
+
+  /**
    * Applies optimizations to a JavaScript program. This method is intended to
    * be applied to bootstrap scripts in order to apply context-specific
    * transformations to the program, based on the compiler's configuration. The

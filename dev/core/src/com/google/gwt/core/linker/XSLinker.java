@@ -43,7 +43,7 @@ public class XSLinker extends SelectionScriptLinker {
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
-    DefaultTextOutput out = new DefaultTextOutput(true);
+    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     out.print("(function(){");
     out.newlineOpt();
@@ -70,11 +70,11 @@ public class XSLinker extends SelectionScriptLinker {
   @Override
   protected String getModuleSuffix(TreeLogger logger, LinkerContext context)
       throws UnableToCompleteException {
-    DefaultTextOutput out = new DefaultTextOutput(true);
+    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
-    out.newlineOpt();
     out.print("$stats && $stats('" + context.getModuleName()
         + "', 'startup', 'moduleEvalEnd', {millis:(new Date()).getTime()});");
+
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
     out.print("if (" + context.getModuleFunctionName() + ") {");

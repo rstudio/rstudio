@@ -228,6 +228,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return propertiesByName.get(name);
   }
 
+  public boolean isOutputCompact() {
+    return jjsOptions.getOutput().shouldMinimize();
+  }
+
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {

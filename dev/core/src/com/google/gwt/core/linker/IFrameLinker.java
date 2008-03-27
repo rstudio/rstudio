@@ -66,7 +66,7 @@ public class IFrameLinker extends SelectionScriptLinker {
 
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context) {
-    DefaultTextOutput out = new DefaultTextOutput(true);
+    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
     out.print("<html>");
     out.newlineOpt();
 
@@ -101,12 +101,13 @@ public class IFrameLinker extends SelectionScriptLinker {
 
   @Override
   protected String getModuleSuffix(TreeLogger logger, LinkerContext context) {
-    DefaultTextOutput out = new DefaultTextOutput(true);
+    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
+
+    out.print("$stats && $stats('" + context.getModuleName()
+        + "', 'startup', 'moduleEvalEnd', {millis:(new Date()).getTime()});");
 
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
-    out.print("$stats && $stats('" + context.getModuleName()
-        + "', 'startup', 'moduleEvalEnd', {millis:(new Date()).getTime()});");
     out.print("if ($wnd." + context.getModuleFunctionName() + ") $wnd."
         + context.getModuleFunctionName() + ".onScriptLoad();");
     out.newline();
