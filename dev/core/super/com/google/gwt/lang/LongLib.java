@@ -81,7 +81,7 @@ public class LongLib {
    * Set this to false before calling any methods when using this class outside
    * of GWT!
    */
-  public static volatile boolean RUN_IN_JVM = false;
+  public static boolean RUN_IN_JVM = false;
 
   /**
    * Index of the high bits in a 2-double array.
