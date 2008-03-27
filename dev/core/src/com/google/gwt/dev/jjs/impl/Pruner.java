@@ -238,7 +238,7 @@ public class Pruner {
    * Remove any unreferenced classes and interfaces from JProgram. Remove any
    * unreferenced methods and fields from their containing classes.
    */
-  private class PruneVisitor extends JVisitor {
+  private class PruneVisitor extends JModVisitor {
 
     private boolean didChange = false;
 
@@ -414,8 +414,11 @@ public class Pruner {
       return false;
     }
 
-    private boolean pruneViaNoninstantiability(boolean isInstantiated,
-        CanBeStatic it) {
+    private <T extends CanBeStatic & HasEnclosingType> boolean pruneViaNoninstantiability(
+        boolean isInstantiated, T it) {
+      if (it.getEnclosingType() == program.getIndexedType("Array")) {
+        return false;
+      }
       return (!isInstantiated && !it.isStatic());
     }
   }
@@ -910,8 +913,6 @@ public class Pruner {
     boolean madeChanges = false;
     while (true) {
       RescueVisitor rescuer = new RescueVisitor();
-      // Always rescue and instantiate the "base" array type
-      rescuer.rescue(program.getIndexedType("Array"), true, true);
       for (JReferenceType type : program.codeGenTypes) {
         rescuer.rescue(type, true, saveCodeGenTypes);
       }
