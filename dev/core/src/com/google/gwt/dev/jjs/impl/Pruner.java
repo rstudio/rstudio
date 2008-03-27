@@ -376,6 +376,9 @@ public class Pruner {
 
     @Override
     public boolean visit(JProgram program, Context ctx) {
+      for (JMethod method : program.entryMethods) {
+        accept(method);
+      }
       for (Iterator<JReferenceType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
         JReferenceType type = it.next();
         if (referencedTypes.contains(type)
