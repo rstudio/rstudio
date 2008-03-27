@@ -28,6 +28,8 @@ import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 
+import java.util.Set;
+
 /**
  * A Linker for producing a single JavaScript file from a GWT module. The use of
  * this Linker requires that the module has exactly one distinct compilation
@@ -37,6 +39,16 @@ import com.google.gwt.dev.util.Util;
 public class SingleScriptLinker extends SelectionScriptLinker {
   public String getDescription() {
     return "Single Script";
+  }
+
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException {
+    ArtifactSet toReturn = new ArtifactSet(artifacts);
+
+    toReturn.add(emitSelectionScript(logger, context, artifacts));
+
+    return toReturn;
   }
 
   @Override
@@ -66,19 +78,19 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
+    out.print("var $stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null;");
+    out.newlineOpt();
 
-    CompilationResult result = null;
-    for (CompilationResult artifact : artifacts.find(CompilationResult.class)) {
-      if (result == null) {
-        result = artifact;
-      } else {
-        logger = logger.branch(TreeLogger.ERROR,
-            "The module must have exactly one distinct"
-                + " permutation when using the " + getDescription()
-                + " Linker.", null);
-        throw new UnableToCompleteException();
-      }
+    // Find the single CompilationResult
+    Set<CompilationResult> results = artifacts.find(CompilationResult.class);
+    if (results.size() != 1) {
+      logger = logger.branch(TreeLogger.ERROR,
+          "The module must have exactly one distinct"
+              + " permutation when using the " + getDescription() + " Linker.",
+          null);
+      throw new UnableToCompleteException();
     }
+    CompilationResult result = results.iterator().next();
 
     out.print(result.getJavaScript());
 

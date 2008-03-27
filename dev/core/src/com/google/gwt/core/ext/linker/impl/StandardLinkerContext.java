@@ -351,7 +351,12 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
           "Invoking Linker " + linker.getDescription(), null);
 
       workingArtifacts.freeze();
-      workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
+      try {
+        workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
+      } catch (Exception e) {
+        linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
+        throw new UnableToCompleteException();
+      }
     }
 
     // Pop the primary linker off of the stack
@@ -365,10 +370,16 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       // See if the Linker should be run in the current phase
       Order order = linkerType.getAnnotation(LinkerOrder.class).value();
       if (phasePost.contains(order)) {
+        TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
+            "Invoking Linker " + linker.getDescription(), null);
+
         workingArtifacts.freeze();
-        workingArtifacts = linker.link(logger.branch(TreeLogger.TRACE,
-            "Invoking Linker " + linker.getDescription(), null), this,
-            workingArtifacts);
+        try {
+          workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
+        } catch (Exception e) {
+          linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
+          throw new UnableToCompleteException();
+        }
       }
     }
 
