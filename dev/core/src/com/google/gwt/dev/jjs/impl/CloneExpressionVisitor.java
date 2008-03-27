@@ -182,6 +182,9 @@ public class CloneExpressionVisitor extends JVisitor {
   public boolean visit(JMethodCall x, Context ctx) {
     JMethodCall newMethodCall = new JMethodCall(program, x.getSourceInfo(),
         cloneExpression(x.getInstance()), x.getTarget());
+    if (!x.canBePolymorphic()) {
+      newMethodCall.setCannotBePolymorphic();
+    }
 
     for (JExpression arg : x.getArgs()) {
       newMethodCall.getArgs().add(cloneExpression(arg));

@@ -567,13 +567,33 @@ public class TypeTightener {
      */
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JMethod concreteMethod = getSingleConcreteMethod(x.getTarget());
+      JMethod target = x.getTarget();
+      JMethod concreteMethod = getSingleConcreteMethod(target);
       if (concreteMethod != null) {
         JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
             x.getInstance(), concreteMethod);
         newCall.getArgs().addAll(x.getArgs());
-
         ctx.replaceMe(newCall);
+        target = concreteMethod;
+        x = newCall;
+      }
+
+      if (x.canBePolymorphic()) {
+        // See if we can remove virtualization from this call.
+        JExpression instance = x.getInstance();
+        assert (instance != null);
+        JReferenceType instanceType = (JReferenceType) instance.getType();
+        Set<JMethod> myOverriders = overriders.get(target);
+        for (JMethod override : myOverriders) {
+          JReferenceType overrideType = override.getEnclosingType();
+          if (program.typeOracle.canTheoreticallyCast(instanceType, overrideType)) {
+            // This call is truly polymorphic.
+            // TODO: composite types! :)
+            return;
+          }
+        }
+        x.setCannotBePolymorphic();
+        didChange = true;
       }
     }
 

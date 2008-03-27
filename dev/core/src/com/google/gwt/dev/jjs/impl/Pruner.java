@@ -141,6 +141,9 @@ public class Pruner {
 
         JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
             x.getInstance(), method);
+        if (!x.canBePolymorphic()) {
+          newCall.setCannotBePolymorphic();
+        }
 
         ArrayList<JExpression> args = x.getArgs();
         ArrayList<JParameter> originalParams = methodToOriginalParamsMap.get(method);

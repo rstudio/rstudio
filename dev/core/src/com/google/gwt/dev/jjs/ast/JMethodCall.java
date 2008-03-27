@@ -25,6 +25,7 @@ import java.util.ArrayList;
 public class JMethodCall extends JExpression {
 
   private ArrayList<JExpression> args = new ArrayList<JExpression>();
+  private boolean cannotBePolymorphic = false;
   private JExpression instance;
   private final JMethod method;
   private final JType overrideReturnType;
@@ -38,6 +39,15 @@ public class JMethodCall extends JExpression {
     this.instance = instance;
     this.method = method;
     this.staticDispatchOnly = false;
+    this.overrideReturnType = null;
+  }
+
+  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
+      JMethod method, boolean staticDispatchOnly) {
+    super(program, info);
+    this.instance = instance;
+    this.method = method;
+    this.staticDispatchOnly = staticDispatchOnly;
     this.overrideReturnType = null;
   }
 
@@ -61,17 +71,9 @@ public class JMethodCall extends JExpression {
     this.overrideReturnType = overrideReturnType;
   }
 
-  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
-      JMethod method, boolean staticDispatchOnly) {
-    super(program, info);
-    this.instance = instance;
-    this.method = method;
-    this.staticDispatchOnly = staticDispatchOnly;
-    this.overrideReturnType = null;
-  }
-
   public boolean canBePolymorphic() {
-    return !staticDispatchOnly && !method.isFinal() && !method.isStatic();
+    return !cannotBePolymorphic && !staticDispatchOnly && !method.isFinal()
+        && !method.isStatic();
   }
 
   public ArrayList<JExpression> getArgs() {
@@ -102,6 +104,10 @@ public class JMethodCall extends JExpression {
 
   public boolean isStaticDispatchOnly() {
     return staticDispatchOnly;
+  }
+
+  public void setCannotBePolymorphic() {
+    this.cannotBePolymorphic = true;
   }
 
   public void setStaticDispatchOnly() {
