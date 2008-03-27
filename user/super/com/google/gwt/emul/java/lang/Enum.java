@@ -100,7 +100,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
 
   @Override
   public final int hashCode() {
-    return System.identityHashCode(this);
+    return super.hashCode();
   }
 
   public final String name() {
