@@ -86,18 +86,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   }
 
   @Override
-  public boolean visit(JField x, Context ctx) {
-    super.visit(x, ctx);
-
-    if (x.getConstInitializer() != null) {
-      print(" = ");
-      accept(x.getConstInitializer());
-    }
-    semi();
-    return false;
-  }
-
-  @Override
   public boolean visit(JInterfaceType x, Context ctx) {
     super.visit(x, ctx);
 
