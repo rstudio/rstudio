@@ -50,6 +50,11 @@ public class JsniMethodRef extends JMethodCall {
     return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
   }
 
+  @Override
+  public boolean hasSideEffects() {
+    return false;
+  }
+
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
     }
