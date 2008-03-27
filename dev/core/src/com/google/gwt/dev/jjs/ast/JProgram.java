@@ -108,6 +108,16 @@ public class JProgram extends JNode {
     return sb.toString();
   }
 
+  public static boolean isClinit(JMethod method) {
+    JReferenceType enclosingType = method.getEnclosingType();
+    if ((enclosingType != null) && (method == enclosingType.methods.get(0))) {
+      assert (method.getName().equals("$clinit"));
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
     // static methods cannot match each other
     if (method1.isStatic() || method2.isStatic()) {
@@ -706,16 +716,6 @@ public class JProgram extends JNode {
       typeIdMap.put(classes.get(i), new Integer(i));
     }
     this.jsonTypeTable = jsonObjects;
-  }
-
-  public boolean isClinit(JMethod method) {
-    JReferenceType enclosingType = method.getEnclosingType();
-    if ((enclosingType != null) && (method == enclosingType.methods.get(0))) {
-      assert (method.getName().equals("$clinit"));
-      return true;
-    } else {
-      return false;
-    }
   }
 
   public boolean isJavaScriptObject(JType type) {

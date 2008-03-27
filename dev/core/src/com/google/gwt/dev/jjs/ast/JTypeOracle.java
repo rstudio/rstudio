@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +29,77 @@ import java.util.Set;
  * Oracle that can answer questions regarding the types in a program.
  */
 public class JTypeOracle {
+
+  private static final class CheckClinitVisitor extends JVisitor {
+
+    private final Set<JReferenceType> clinitTargets = new HashSet<JReferenceType>();
+    private boolean hasNonClinitCalls = false;
+
+    public JReferenceType[] getClinitTargets() {
+      return clinitTargets.toArray(new JReferenceType[clinitTargets.size()]);
+    }
+
+    public boolean hasNonClinitCalls() {
+      return hasNonClinitCalls;
+    }
+
+    @Override
+    public boolean visit(JBlock x, Context ctx) {
+      for (JStatement stmt : x.statements) {
+        if (canContainClinitCalls(stmt)) {
+          accept(stmt);
+        } else {
+          hasNonClinitCalls = true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public boolean visit(JExpressionStatement x, Context ctx) {
+      JExpression expr = x.getExpr();
+      if (canContainClinitCalls(expr)) {
+        accept(expr);
+      } else {
+        hasNonClinitCalls = true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean visit(JMethodCall x, Context ctx) {
+      JMethod target = x.getTarget();
+      if (JProgram.isClinit(target)) {
+        clinitTargets.add(target.getEnclosingType());
+      } else {
+        hasNonClinitCalls = true;
+      }
+      return false;
+    }
+
+    @Override
+    public boolean visit(JMultiExpression x, Context ctx) {
+      for (JExpression expr : x.exprs) {
+        // Only a JMultiExpression or JMethodCall can contain clinit calls.
+        if (canContainClinitCalls(expr)) {
+          accept(expr);
+        } else {
+          hasNonClinitCalls = true;
+        }
+      }
+      return false;
+    }
+
+    private boolean canContainClinitCalls(JExpression expr) {
+      // Must have a visit method for every subtype that answers yes!
+      return expr instanceof JMultiExpression || expr instanceof JMethodCall;
+    }
+
+    private boolean canContainClinitCalls(JStatement stmt) {
+      // Must have a visit method for every subtype that answers yes!
+      return stmt instanceof JBlock || stmt instanceof JExpressionStatement;
+    }
+  }
 
   private final Map<JInterfaceType, Set<JClassType>> couldBeImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
@@ -327,9 +400,10 @@ public class JTypeOracle {
 
   public void recomputeClinits() {
     hasClinitSet.clear();
+    Set<JReferenceType> computed = new HashSet<JReferenceType>();
     for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
       JReferenceType type = program.getDeclaredTypes().get(i);
-      computeHasClinit(type);
+      computeHasClinit(type, computed);
     }
   }
 
@@ -365,12 +439,49 @@ public class JTypeOracle {
     }
   }
 
-  private void computeHasClinit(JReferenceType type) {
-    JMethod method = type.methods.get(0);
-    JMethodBody body = (JMethodBody) method.getBody();
-    if (!body.getStatements().isEmpty()) {
+  private void computeHasClinit(JReferenceType type,
+      Set<JReferenceType> computed) {
+    if (computeHasClinitRecursive(type, computed, new HashSet<JReferenceType>())) {
       hasClinitSet.add(type);
     }
+    computed.add(type);
+  }
+
+  private boolean computeHasClinitRecursive(JReferenceType type,
+      Set<JReferenceType> computed, Set<JReferenceType> alreadySeen) {
+    // Track that we've been seen.
+    alreadySeen.add(type);
+
+    // If we've been computed, hasClinitSet is accurate for me.
+    if (computed.contains(type)) {
+      return hasClinitSet.contains(type);
+    }
+
+    JMethod method = type.methods.get(0);
+    CheckClinitVisitor v = new CheckClinitVisitor();
+    v.accept(method);
+    if (v.hasNonClinitCalls()) {
+      return true;
+    }
+    for (JReferenceType target : v.getClinitTargets()) {
+      if (target == null) {
+        // Has an actual clinit.
+        return true;
+      }
+      if (alreadySeen.contains(target)) {
+        // Ignore this call for now.
+        continue;
+      }
+
+      if (computeHasClinitRecursive(target, computed, alreadySeen)) {
+        // Calling a non-empty clinit means I am a real clinit.
+        return true;
+      } else {
+        // This clinit is okay, keep going.
+        continue;
+      }
+    }
+    return false;
   }
 
   /**
