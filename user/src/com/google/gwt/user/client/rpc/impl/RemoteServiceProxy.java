@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -49,9 +50,9 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   /**
    * Indicates if RPC statistics should be gathered.
    */
-  public static native boolean isStatsAvailable() /*-{
-    return !!$stats;
-  }-*/;
+  public static boolean isStatsAvailable() {
+    return GWT.isScript() && isStatsAvailable0();
+  }
 
   /**
    * Always use this as {@link #isStatsAvailable()} &amp;&amp;
@@ -116,6 +117,13 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
 
     return encodedResponse;
   }
+
+  /**
+   * Indicates if RPC statistics should be gathered.
+   */
+  private static native boolean isStatsAvailable0() /*-{
+    return @com.google.gwt.core.client.GWT::isScript()() && !!$stats;
+  }-*/;
 
   /**
    * The module base URL as specified during construction.

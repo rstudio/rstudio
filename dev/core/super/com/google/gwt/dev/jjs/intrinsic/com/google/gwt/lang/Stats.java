@@ -15,6 +15,7 @@
  */
 package com.google.gwt.lang;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
@@ -22,7 +23,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * by the compiler. The typical use case is:
  * 
  * <pre>
- *   isStatsAvailable() && stats()
+ * isStatsAvailable() &amp;&amp; stats()
  * </pre>
  */
 final class Stats {
@@ -31,9 +32,9 @@ final class Stats {
     return $moduleName;
   }-*/;
 
-  static native boolean isStatsAvailable() /*-{
-    return !!$stats;
-  }-*/;
+  static boolean isStatsAvailable() {
+    return GWT.isScript() && isStatsAvailable0();
+  }
 
   static native JavaScriptObject makeTimeStat() /*-{
     return {millis : (new Date()).getTime()};
@@ -42,5 +43,9 @@ final class Stats {
   static native boolean stats(String moduleName, String system, String event,
       JavaScriptObject data) /*-{
     return $stats(moduleName, system, event, data);
+  }-*/;
+
+  private static native boolean isStatsAvailable0() /*-{
+    return !!$stats;
   }-*/;
 }
