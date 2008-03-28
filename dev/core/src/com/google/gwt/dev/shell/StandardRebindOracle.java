@@ -18,12 +18,12 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.Util;
@@ -54,7 +54,7 @@ public class StandardRebindOracle implements RebindOracle {
     public Rebinder(TypeOracle typeOracle, PropertyOracle propOracle,
         PublicOracle publicOracle) {
       genCtx = new StandardGeneratorContext(typeOracle, propOracle,
-          publicOracle, genDir, outDir, cacheManager);
+          publicOracle, genDir, outDir, cacheManager, artifactSet);
     }
 
     public String rebind(TreeLogger logger, String typeName)
@@ -133,6 +133,8 @@ public class StandardRebindOracle implements RebindOracle {
     }
   }
 
+  private final ArtifactSet artifactSet;
+
   private final CacheManager cacheManager;
 
   private final File genDir;
@@ -149,7 +151,7 @@ public class StandardRebindOracle implements RebindOracle {
 
   public StandardRebindOracle(TypeOracle typeOracle, PropertyOracle propOracle,
       PublicOracle publicOracle, Rules rules, File genDir, File moduleOutDir,
-      CacheManager cacheManager) {
+      CacheManager cacheManager, ArtifactSet artifactSet) {
     this.typeOracle = typeOracle;
     this.propOracle = propOracle;
     this.publicOracle = publicOracle;
@@ -161,14 +163,7 @@ public class StandardRebindOracle implements RebindOracle {
     } else {
       this.cacheManager = new CacheManager(typeOracle);
     }
-  }
-
-  public StandardRebindOracle(TypeOracle typeOracle,
-      StaticPropertyOracle propOracle, PublicOracle publicOracle, Rules rules,
-      File genDir, File moduleOutDir) {
-    // This is a path used for non-hosted mode execution; therefore no caching.
-    this(typeOracle, propOracle, publicOracle, rules, genDir, moduleOutDir,
-        null);
+    this.artifactSet = artifactSet;
   }
 
   public String rebind(TreeLogger logger, String typeName)

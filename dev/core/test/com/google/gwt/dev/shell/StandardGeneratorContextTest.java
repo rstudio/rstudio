@@ -16,9 +16,15 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.Generator;
+import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.jdt.CacheManager;
@@ -42,6 +48,28 @@ import java.util.List;
  */
 public class StandardGeneratorContextTest extends TestCase {
 
+  private static class MockArtifact extends Artifact<MockArtifact> {
+
+    public MockArtifact() {
+      super(Linker.class);
+    }
+
+    @Override
+    protected int compareToComparableArtifact(MockArtifact o) {
+      return 0;
+    }
+
+    @Override
+    protected Class<MockArtifact> getComparableArtifactType() {
+      return MockArtifact.class;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+  }
+
   private static class MockCacheManager extends CacheManager {
   }
 
@@ -54,6 +82,14 @@ public class StandardGeneratorContextTest extends TestCase {
     public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
         throws BadPropertyValueException {
       return new String[] {};
+    }
+  }
+
+  private static class MockGenerator extends Generator {
+    @Override
+    public String generate(TreeLogger logger, GeneratorContext context,
+        String typeName) throws UnableToCompleteException {
+      return typeName;
     }
   }
 
@@ -93,6 +129,8 @@ public class StandardGeneratorContextTest extends TestCase {
   private static class MockTypeOracle extends TypeOracle {
   }
 
+  private final ArtifactSet artifactSet = new ArtifactSet();
+
   /**
    * Stores the File objects to delete in the order they were created. Delete
    * them in reverse order.
@@ -112,7 +150,7 @@ public class StandardGeneratorContextTest extends TestCase {
     tempGenDir = createTempDir("gwt-gen-");
     tempOutDir = createTempDir("gwt-out-");
     genCtx = new StandardGeneratorContext(mockTypeOracle, mockPropOracle,
-        mockPublicOracle, tempGenDir, tempOutDir, mockCacheManager);
+        mockPublicOracle, tempGenDir, tempOutDir, mockCacheManager, artifactSet);
   }
 
   public void testTryCreateResource_badFileName() {
@@ -165,9 +203,16 @@ public class StandardGeneratorContextTest extends TestCase {
     String path = createTempOutFilename();
     OutputStream os = genCtx.tryCreateResource(mockLogger, path);
     os.write("going to call commit twice after this...".getBytes(Util.DEFAULT_ENCODING));
-    genCtx.commitResource(mockLogger, os);
+    genCtx.setCurrentGenerator(MockGenerator.class);
+    GeneratedResource res = genCtx.commitResource(mockLogger, os);
+    assertEquals(path, res.getPartialPath());
+    assertEquals(MockGenerator.class, res.getGenerator());
     File createdFile = new File(tempOutDir, path);
     assertTrue(createdFile.exists());
+    assertEquals(1, artifactSet.size());
+    GeneratedResource generatedResource = (GeneratedResource) artifactSet.iterator().next();
+    assertEquals(path, generatedResource.getPartialPath());
+    assertEquals(MockGenerator.class, generatedResource.getGenerator());
     rememberToDelete(createdFile);
     try {
       genCtx.commitResource(mockLogger, os);
@@ -175,6 +220,8 @@ public class StandardGeneratorContextTest extends TestCase {
     } catch (UnableToCompleteException e) {
       // Success
     }
+    // Didn't change the artifactSet
+    assertEquals(1, artifactSet.size());
   }
 
   public void testTryCreateResource_commitNotCalled()
@@ -189,6 +236,7 @@ public class StandardGeneratorContextTest extends TestCase {
 
     File wouldBeCreatedFile = new File(tempOutDir, path);
     assertFalse(wouldBeCreatedFile.exists());
+    assertEquals(0, artifactSet.size());
   }
 
   public void testTryCreateResource_commitWithBadStream() {
@@ -198,6 +246,7 @@ public class StandardGeneratorContextTest extends TestCase {
     } catch (UnableToCompleteException e) {
       // Success
     }
+    assertEquals(0, artifactSet.size());
 
     try {
       OutputStream os = new ByteArrayOutputStream();
@@ -206,6 +255,7 @@ public class StandardGeneratorContextTest extends TestCase {
     } catch (UnableToCompleteException e) {
       // Success
     }
+    assertEquals(0, artifactSet.size());
   }
 
   /**
@@ -287,11 +337,13 @@ public class StandardGeneratorContextTest extends TestCase {
     assertNull(
         "tryCreateResource() should return null when the target file is already on the public path",
         os);
+    assertEquals(0, artifactSet.size());
   }
 
   @Override
   protected void setUp() throws Exception {
     mockCacheManager.invalidateVolatileFiles();
+    artifactSet.clear();
   }
 
   @Override

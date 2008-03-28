@@ -42,6 +42,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -102,7 +103,7 @@ public class ModuleDef implements PublicOracle {
 
   private TypeOracle lazyTypeOracle;
 
-  private final Map<String, Class<? extends Linker>> linkersTypesByName = new HashMap<String, Class<? extends Linker>>();
+  private final Map<String, Class<? extends Linker>> linkerTypesByName = new LinkedHashMap<String, Class<? extends Linker>>();
 
   private final long moduleDefCreationTime = System.currentTimeMillis();
 
@@ -219,7 +220,7 @@ public class ModuleDef implements PublicOracle {
   }
 
   public void defineLinker(String name, Class<? extends Linker> linker) {
-    linkersTypesByName.put(name, linker);
+    linkerTypesByName.put(name, linker);
   }
 
   public synchronized URL findPublicFile(String partialPath) {
@@ -285,7 +286,11 @@ public class ModuleDef implements PublicOracle {
   }
 
   public Class<? extends Linker> getLinker(String name) {
-    return linkersTypesByName.get(name);
+    return linkerTypesByName.get(name);
+  }
+
+  public Map<String, Class<? extends Linker>> getLinkers() {
+    return linkerTypesByName;
   }
 
   public synchronized String getName() {

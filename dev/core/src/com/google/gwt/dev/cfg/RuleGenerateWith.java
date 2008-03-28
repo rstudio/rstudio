@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.shell.StandardGeneratorContext;
 
 /**
  * A rule to replace the type being rebound with a class whose name is
@@ -38,6 +39,10 @@ public class RuleGenerateWith extends Rule {
 
     String msg = "Invoking " + toString();
     logger = logger.branch(TreeLogger.DEBUG, msg, null);
+
+    if (context instanceof StandardGeneratorContext) {
+      ((StandardGeneratorContext) context).setCurrentGenerator(generator.getClass());
+    }
 
     long before = System.currentTimeMillis();
     String className = generator.generate(logger, context, typeName);

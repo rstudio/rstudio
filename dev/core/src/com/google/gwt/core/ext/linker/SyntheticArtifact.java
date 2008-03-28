@@ -15,27 +15,29 @@
  */
 package com.google.gwt.core.ext.linker;
 
-import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.Linker;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 
 /**
- * A resource created by a {@link Generator} invoking
- * {@link com.google.gwt.core.ext.GeneratorContext#tryCreateResource(com.google.gwt.core.ext.TreeLogger, String)}
- * during the compilation process.
+ * Artifacts created by {@link AbstractLinker}.
  */
-public abstract class GeneratedResource extends EmittedArtifact {
-  private final Class<? extends Generator> generatorType;
+public class SyntheticArtifact extends EmittedArtifact {
+  private final byte[] data;
 
-  protected GeneratedResource(Class<? extends Linker> linkerType,
-      Class<? extends Generator> generatorType, String partialPath) {
+  SyntheticArtifact(Class<? extends Linker> linkerType, String partialPath,
+      byte[] data) {
     super(linkerType, partialPath);
-    this.generatorType = generatorType;
+    assert data != null;
+    this.data = data;
   }
 
-  /**
-   * The type of Generator that created the resource.
-   */
-  public final Class<? extends Generator> getGenerator() {
-    return generatorType;
+  @Override
+  public InputStream getContents(TreeLogger logger)
+      throws UnableToCompleteException {
+    return new ByteArrayInputStream(data);
   }
 }

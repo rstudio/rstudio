@@ -20,7 +20,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.Util;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
@@ -28,26 +27,6 @@ import java.io.InputStream;
  * Provides basic functions common to all Linker implementations.
  */
 public abstract class AbstractLinker extends Linker {
-  /**
-   * Internal type to wrap a byte array.
-   */
-  private static class SyntheticArtifact extends EmittedArtifact {
-    private final byte[] data;
-
-    public SyntheticArtifact(Class<? extends Linker> linkerType,
-        String partialPath, byte[] data) {
-      super(linkerType, partialPath);
-      assert data != null;
-      this.data = data;
-    }
-
-    @Override
-    public InputStream getContents(TreeLogger logger)
-        throws UnableToCompleteException {
-      return new ByteArrayInputStream(data);
-    }
-  }
-
   /**
    * A helper method to create an artifact from an array of bytes.
    * 
@@ -57,8 +36,7 @@ public abstract class AbstractLinker extends Linker {
    * @return an artifact that contains the given data
    * @throws UnableToCompleteException
    */
-  @SuppressWarnings("unused")
-  protected final EmittedArtifact emitBytes(TreeLogger logger, byte[] what,
+  protected final SyntheticArtifact emitBytes(TreeLogger logger, byte[] what,
       String partialPath) throws UnableToCompleteException {
     return new SyntheticArtifact(getClass(), partialPath, what);
   }
@@ -72,7 +50,7 @@ public abstract class AbstractLinker extends Linker {
    * @param partialPath the partial path of the emitted resource
    * @return an artifact that contains the contents of the InputStream
    */
-  protected final EmittedArtifact emitInputStream(TreeLogger logger,
+  protected final SyntheticArtifact emitInputStream(TreeLogger logger,
       InputStream what, String partialPath) throws UnableToCompleteException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Util.copy(logger, what, out);
@@ -87,8 +65,8 @@ public abstract class AbstractLinker extends Linker {
    * @param partialPath the partial path of the emitted resource
    * @return an artifact that contains the contents of the given String
    */
-  protected final EmittedArtifact emitString(TreeLogger logger,
-      String what, String partialPath) throws UnableToCompleteException {
+  protected final SyntheticArtifact emitString(TreeLogger logger, String what,
+      String partialPath) throws UnableToCompleteException {
     return emitBytes(logger, Util.getBytes(what), partialPath);
   }
 
@@ -104,7 +82,7 @@ public abstract class AbstractLinker extends Linker {
    *          Artifact's partial path
    * @return an artifact that contains the given data
    */
-  protected final EmittedArtifact emitWithStrongName(TreeLogger logger,
+  protected final SyntheticArtifact emitWithStrongName(TreeLogger logger,
       byte[] what, String prefix, String suffix)
       throws UnableToCompleteException {
     String strongName = prefix + Util.computeStrongName(what) + suffix;

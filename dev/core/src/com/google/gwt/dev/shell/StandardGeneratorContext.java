@@ -15,10 +15,15 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.Artifact;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.GeneratedResource;
+import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
@@ -154,9 +159,13 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
   }
 
+  private final ArtifactSet artifactSet;
+
   private final CacheManager cacheManager;
 
   private final Set<GeneratedCompilationUnitProvider> committedGeneratedCups = new HashSet<GeneratedCompilationUnitProvider>();
+
+  private Class<? extends Generator> currentGenerator;
 
   private final File genDir;
 
@@ -180,13 +189,14 @@ public class StandardGeneratorContext implements GeneratorContext {
    */
   public StandardGeneratorContext(TypeOracle typeOracle,
       PropertyOracle propOracle, PublicOracle publicOracle, File genDir,
-      File outDir, CacheManager cacheManager) {
+      File outDir, CacheManager cacheManager, ArtifactSet artifactSet) {
     this.typeOracle = typeOracle;
     this.propOracle = propOracle;
     this.publicOracle = publicOracle;
     this.genDir = genDir;
     this.outDir = outDir;
     this.cacheManager = cacheManager;
+    this.artifactSet = artifactSet;
   }
 
   /**
@@ -204,7 +214,19 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
   }
 
-  public void commitResource(TreeLogger logger, OutputStream os)
+  /**
+   * Adds an Artifact to the ArtifactSet if one has been provided to the
+   * context.
+   */
+  public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
+      throws UnableToCompleteException {
+    // The artifactSet will be null in hosted mode, since we never run Linkers
+    if (artifactSet != null) {
+      artifactSet.replace(artifact);
+    }
+  }
+
+  public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
       throws UnableToCompleteException {
 
     // Find the pending resource using its output stream as a key.
@@ -214,11 +236,27 @@ public class StandardGeneratorContext implements GeneratorContext {
       pendingResource.commit(logger);
       cacheManager.addGeneratedResource(pendingResource.getPartialPath());
 
-      // The resource is now no longer pending, so remove it from the map.
-      // If the commit above throws an exception, it's okay to leave the entry
-      // in the map because it will be reported later as not having been
-      // committed, which is accurate.
-      pendingResourcesByOutputStream.remove(os);
+      // Add the GeneratedResource to the ArtifactSet
+      GeneratedResource toReturn;
+      try {
+        toReturn = new StandardGeneratedResource(currentGenerator,
+            pendingResource.getPartialPath(), pendingResource.getFile().toURL());
+        commitArtifact(logger, toReturn);
+
+        /*
+         * The resource is now no longer pending, so remove it from the map. If
+         * the commit above throws an exception, it's okay to leave the entry in
+         * the map because it will be reported later as not having been
+         * committed, which is accurate.
+         */
+        pendingResourcesByOutputStream.remove(os);
+
+        return toReturn;
+      } catch (MalformedURLException e) {
+        // This is very unlikely, since the file already exists
+        logger.log(TreeLogger.ERROR, "Unable to commit artifact", e);
+        throw new UnableToCompleteException();
+      }
     } else {
       logger.log(TreeLogger.WARN,
           "Generator attempted to commit an unknown OutputStream", null);
@@ -318,6 +356,10 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   public final TypeOracle getTypeOracle() {
     return typeOracle;
+  }
+
+  public void setCurrentGenerator(Class<? extends Generator> currentGenerator) {
+    this.currentGenerator = currentGenerator;
   }
 
   public final PrintWriter tryCreate(TreeLogger logger, String packageName,

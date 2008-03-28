@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.linker.NoDeployResourcesLinker;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.module.client.NoDeployTest;
 
@@ -36,9 +35,8 @@ public class NoDeployGenerator extends Generator {
       String typeName) throws UnableToCompleteException {
 
     try {
-      createFile(logger, context, "deploy/exists.txt");
-      createFile(logger, context, NoDeployResourcesLinker.PREFIX
-          + "inGenerated.txt");
+      createFile(logger, context, "publicFile.txt", false);
+      createFile(logger, context, "privateFile.txt", true);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to create test file", e);
       throw new UnableToCompleteException();
@@ -48,7 +46,8 @@ public class NoDeployGenerator extends Generator {
   }
 
   private void createFile(TreeLogger logger, GeneratorContext context,
-      String path) throws UnableToCompleteException, IOException {
+      String path, boolean isPrivate) throws UnableToCompleteException,
+      IOException {
 
     OutputStream out = context.tryCreateResource(logger, path);
     if (out == null) {
@@ -56,6 +55,6 @@ public class NoDeployGenerator extends Generator {
     }
 
     out.write(Util.getBytes(NoDeployTest.TEST_TEXT));
-    context.commitResource(logger, out);
+    context.commitResource(logger, out).setPrivate(isPrivate);
   }
 }

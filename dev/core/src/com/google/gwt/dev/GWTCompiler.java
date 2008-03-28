@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
@@ -120,9 +121,9 @@ public class GWTCompiler extends ToolBase {
 
     private final Map<String, String> cache = new HashMap<String, String>();
 
-    public CompilationRebindOracle() {
+    public CompilationRebindOracle(ArtifactSet generatorArtifacts) {
       super(typeOracle, propOracle, module, rules, genDir,
-          generatorResourcesDir, cacheManager);
+          generatorResourcesDir, cacheManager, generatorArtifacts);
     }
 
     /**
@@ -175,21 +176,25 @@ public class GWTCompiler extends ToolBase {
   private class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
 
-    private final StandardRebindOracle rebindOracle = new StandardRebindOracle(
-        typeOracle, propOracle, module, rules, genDir, generatorResourcesDir,
-        cacheManager) {
+    private final StandardRebindOracle rebindOracle;
 
-      /**
-       * Record generated types.
-       */
-      @Override
-      protected void onGeneratedTypes(String result, JClassType[] genTypes) {
-        List<JClassType> list = new ArrayList<JClassType>();
-        Util.addAll(list, genTypes);
-        Object existing = generatedTypesByResultTypeName.put(result, list);
-        assert (existing == null) : "Internal error: redundant notification of generated types";
-      }
-    };
+    public DistillerRebindPermutationOracle(ArtifactSet generatorArtifacts) {
+      rebindOracle = new StandardRebindOracle(typeOracle, propOracle, module,
+          rules, genDir, generatorResourcesDir, cacheManager,
+          generatorArtifacts) {
+
+        /**
+         * Record generated types.
+         */
+        @Override
+        protected void onGeneratedTypes(String result, JClassType[] genTypes) {
+          List<JClassType> list = new ArrayList<JClassType>();
+          Util.addAll(list, genTypes);
+          Object existing = generatedTypesByResultTypeName.put(result, list);
+          assert (existing == null) : "Internal error: redundant notification of generated types";
+        }
+      };
+    }
 
     public String[] getAllPossibleRebindAnswers(TreeLogger logger,
         String requestTypeName) throws UnableToCompleteException {
@@ -382,7 +387,9 @@ public class GWTCompiler extends ToolBase {
       // Use the real entry points.
       declEntryPts = module.getEntryPointTypeNames();
     }
-    rebindPermOracle = new DistillerRebindPermutationOracle();
+
+    ArtifactSet generatorArtifacts = new ArtifactSet();
+    rebindPermOracle = new DistillerRebindPermutationOracle(generatorArtifacts);
     properties = module.getProperties();
     perms = new PropertyPermutations(properties);
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
@@ -392,7 +399,7 @@ public class GWTCompiler extends ToolBase {
 
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, outDir, generatorResourcesDir, jjsOptions);
-    compilePermutations(logger, linkerContext);
+    compilePermutations(logger, linkerContext, generatorArtifacts);
 
     if (jjsOptions.isValidateOnly()) {
       logger.log(TreeLogger.INFO, "Validation succeeded", null);
@@ -400,7 +407,7 @@ public class GWTCompiler extends ToolBase {
     }
 
     logger.log(TreeLogger.INFO, "Compilation succeeded", null);
-
+    linkerContext.addOrReplaceArtifacts(generatorArtifacts);
     linkerContext.link(logger, linkerContext, null);
   }
 
@@ -468,7 +475,8 @@ public class GWTCompiler extends ToolBase {
   }
 
   private void compilePermutations(TreeLogger logger,
-      StandardLinkerContext linkerContext) throws UnableToCompleteException {
+      StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts)
+      throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, "Compiling permutations", null);
     Property[] orderedProps = perms.getOrderedProperties();
     int permNumber = 1;
@@ -476,7 +484,7 @@ public class GWTCompiler extends ToolBase {
 
       String[] orderedPropValues = iter.next();
       String js = realizePermutation(logger, orderedProps, orderedPropValues,
-          permNumber);
+          permNumber, generatedArtifacts);
 
       // This is the case in validateOnly mode, which doesn't produce output
       if (js == null) {
@@ -523,7 +531,8 @@ public class GWTCompiler extends ToolBase {
    * </ul>
    */
   private String realizePermutation(TreeLogger logger, Property[] currentProps,
-      String[] currentValues, int permNumber) throws UnableToCompleteException {
+      String[] currentValues, int permNumber, ArtifactSet generatorArtifacts)
+      throws UnableToCompleteException {
     String msg = "Analyzing permutation #" + permNumber;
     logger = logger.branch(TreeLogger.TRACE, msg, null);
 
@@ -532,7 +541,8 @@ public class GWTCompiler extends ToolBase {
     // Create a rebind oracle that will record decisions so that we can cache
     // them and avoid future computations.
     //
-    CompilationRebindOracle rebindOracle = new CompilationRebindOracle();
+    CompilationRebindOracle rebindOracle = new CompilationRebindOracle(
+        generatorArtifacts);
 
     // Tell the property provider above about the current property values.
     // Note that the rebindOracle is actually sensitive to these values because

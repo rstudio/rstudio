@@ -113,7 +113,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     //
     Rules rules = module.getRules();
     rebindOracle = new StandardRebindOracle(typeOracle, propOracle, module,
-        rules, genDir, shellDir, module.getCacheManager());
+        rules, genDir, shellDir, module.getCacheManager(), null);
 
     // Create a completely isolated class loader which owns all classes
     // associated with a particular module. This effectively builds a

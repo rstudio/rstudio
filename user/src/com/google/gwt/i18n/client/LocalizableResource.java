@@ -105,12 +105,14 @@ public interface LocalizableResource extends Localizable {
      * A platform-specific filename for output. If not present, the file will be
      * named based on the fully-qualified name of the annotated interface. File
      * names without a slash are given a relative name based on the
-     * fully-qualified package name of the annotated interface. Relative pathnames
-     * are generated in the directory specified by the "-out" flag to the
-     * compiler, or the current directory if not present.  Unless exactly one locale
-     * is specified for locales (not just only one locale happened to be compiled for),
-     * the locale will be appended to the name (such as _default [for the default
-     * locale], _en_US, etc) as well as the proper extension for the specified format.
+     * fully-qualified package name of the annotated interface. Relative
+     * pathnames are generated in the auxiliary module directory (moduleName-aux
+     * in the output directory, which is specified by the "-out" flag to the
+     * compiler, or the current directory if not present) -- absolute path names
+     * are not allowed. Unless exactly one locale is specified for locales (not
+     * just only one locale happened to be compiled for), the locale will be
+     * appended to the name (such as _default [for the default locale], _en_US,
+     * etc) as well as the proper extension for the specified format.
      * 
      * Note that if multiple generators are used, they will have the same base
      * filename so the extensions must be different.

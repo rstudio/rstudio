@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
+import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
@@ -29,8 +30,9 @@ import java.net.URL;
 public class StandardGeneratedResource extends GeneratedResource {
   private final URL url;
 
-  public StandardGeneratedResource(String partialPath, URL url) {
-    super(StandardLinkerContext.class, partialPath);
+  public StandardGeneratedResource(Class<? extends Generator> generatorType,
+      String partialPath, URL url) {
+    super(StandardLinkerContext.class, generatorType, partialPath);
     this.url = url;
   }
 

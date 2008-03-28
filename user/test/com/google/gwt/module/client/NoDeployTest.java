@@ -49,7 +49,7 @@ public class NoDeployTest extends GWTTestCase {
 
     // Try fetching a file that should exist
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        GWT.getHostPageBaseURL() + "deploy/exists.txt");
+        GWT.getHostPageBaseURL() + "publicFile.txt");
     delayTestFinish(500);
     builder.sendRequest("", new RequestCallback() {
 
@@ -74,7 +74,7 @@ public class NoDeployTest extends GWTTestCase {
 
     // Try fetching a file that shouldn't exist
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
-        GWT.getHostPageBaseURL() + "no-deploy/inGenerated.txt");
+        GWT.getHostPageBaseURL() + "privateFile.txt");
     delayTestFinish(500);
     builder.sendRequest("", new RequestCallback() {
 

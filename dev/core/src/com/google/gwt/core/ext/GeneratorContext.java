@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext;
 
+import com.google.gwt.core.ext.linker.Artifact;
+import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.io.OutputStream;
@@ -32,14 +34,33 @@ public interface GeneratorContext {
   void commit(TreeLogger logger, PrintWriter pw);
 
   /**
+   * Add an Artifact to the {@link com.google.gwt.core.ext.linker.ArtifactSet}
+   * that will be presented to the {@link Linker} chain at the end of the
+   * compilation cycle. Custom sub-classes of Artifact can be used to write
+   * cooperating Generator and Linker combinations. This method is semantically
+   * equivalent to calling
+   * {@link com.google.gwt.core.ext.linker.ArtifactSet#replace(Artifact)} if an
+   * equivalent Artifact had previously been committed.
+   * 
+   * @param logger a logger; normally the logger passed into
+   *          {@link Generator#generate(TreeLogger, GeneratorContext, String)}
+   *          or a branch thereof
+   * @param artifact the Artifact to provide to the Linker chain.
+   */
+  void commitArtifact(TreeLogger logger, Artifact<?> artifact)
+      throws UnableToCompleteException;
+
+  /**
    * Commits resource generation begun with
    * {@link #tryCreateResource(TreeLogger, String)}.
    * 
+   * @return the GeneratedResource that was created as a result of committing
+   *         the OutputStream.
    * @throws UnableToCompleteException if the resource cannot be written to
    *           disk, if the specified stream is unknown, or if the stream has
    *           already been committed
    */
-  void commitResource(TreeLogger logger, OutputStream os)
+  GeneratedResource commitResource(TreeLogger logger, OutputStream os)
       throws UnableToCompleteException;
 
   /**

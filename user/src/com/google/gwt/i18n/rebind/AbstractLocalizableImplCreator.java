@@ -134,7 +134,7 @@ abstract class AbstractLocalizableImplCreator extends
     Generate generate = targetClass.getAnnotation(Generate.class);
     if (generate != null) {
       try {
-        String path = "no-deploy" + File.separatorChar + generate.fileName();
+        String path = generate.fileName();
         if (Generate.DEFAULT.equals(path)) {
           path = targetClass.getPackage().getName() + "."
           + targetClass.getName().replace('.', '_');
@@ -175,7 +175,7 @@ abstract class AbstractLocalizableImplCreator extends
                   new OutputStreamWriter(outStr, "UTF-8")), false);
               msgWriter.write(logger, resource, out, targetClass);
               out.flush();
-              context.commitResource(logger, outStr);
+              context.commitResource(logger, outStr).setPrivate(true);
             }
           }
         }

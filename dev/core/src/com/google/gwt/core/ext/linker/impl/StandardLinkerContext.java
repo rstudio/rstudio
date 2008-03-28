@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
-import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
@@ -55,7 +54,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -102,6 +100,12 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   private final File compilationsDir;
   private final JJSOptions jjsOptions;
   private final List<Class<? extends Linker>> linkerClasses;
+  private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
+
+  /**
+   * This is the output directory for private files.
+   */
+  private final File moduleAuxDir;
   private final String moduleFunctionName;
   private final String moduleName;
 
@@ -136,9 +140,28 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       compilationsDir.mkdirs();
       logger.log(TreeLogger.SPAM, "compilationsDir: "
           + compilationsDir.getPath(), null);
+
+      this.moduleAuxDir = new File(moduleOutDir.getParentFile(), moduleName
+          + "-aux");
+      if (moduleAuxDir.exists()) {
+        Util.recursiveDelete(moduleAuxDir, false);
+      }
+      logger.log(TreeLogger.SPAM, "mouduleAuxDir: " + moduleAuxDir.getPath(),
+          null);
     } else {
       compilationsDir = null;
+      moduleAuxDir = null;
     }
+
+    for (Map.Entry<String, Class<? extends Linker>> entry : module.getLinkers().entrySet()) {
+      linkerShortNames.put(entry.getValue(), entry.getKey());
+    }
+
+    /*
+     * This will make all private PublicResources and GeneratedResources appear
+     * in the root of the module auxiliary directory.
+     */
+    linkerShortNames.put(this.getClass(), "");
 
     // Always return the properties in the same order as a convenience
     SortedSet<SelectionProperty> mutableProperties = new TreeSet<SelectionProperty>(
@@ -164,22 +187,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       logger.log(TreeLogger.SPAM, "Added style " + style, null);
     }
 
-    if (generatorDir != null) {
-      for (String path : Util.recursiveListPartialPaths(generatorDir, false)) {
-        String partialPath = path.replace(File.separatorChar, '/');
-        try {
-          GeneratedResource resource = new StandardGeneratedResource(
-              partialPath, (new File(generatorDir, path)).toURL());
-          artifacts.add(resource);
-          logger.log(TreeLogger.SPAM, "Added generated resource " + resource,
-              null);
-        } catch (MalformedURLException e) {
-          // This won't happen unless there's a bad partial path from Util
-          logger.log(TreeLogger.ERROR,
-              "Unable to convert generated resource to URL", e);
-        }
-      }
-    }
+    // Generated files should be passed in via addArtifacts()
 
     for (String path : module.getAllPublicFiles()) {
       String partialPath = path.replace(File.separatorChar, '/');
@@ -190,10 +198,25 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
   }
 
+  /**
+   * Adds or replaces Artifacts in the ArtifactSet that will be passed into the
+   * Linkers invoked.
+   */
+  public void addOrReplaceArtifacts(ArtifactSet artifacts) {
+    this.artifacts.removeAll(artifacts);
+    this.artifacts.addAll(artifacts);
+  }
+
+  /**
+   * Returns the ArtifactSet that will passed into the invoke Linkers.
+   */
   public ArtifactSet getArtifacts() {
     return artifacts;
   }
 
+  /**
+   * Gets or creates a CompilationResult for the given JavaScript program.
+   */
   public StandardCompilationResult getCompilation(TreeLogger logger, String js)
       throws UnableToCompleteException {
 
@@ -245,7 +268,14 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
           "Emitting resource " + artifact.getPartialPath(), null);
 
-      File outFile = new File(moduleOutDir, artifact.getPartialPath());
+      File outFile;
+      if (artifact.isPrivate()) {
+        outFile = new File(getLinkerAuxDir(artifact.getLinker()),
+            artifact.getPartialPath());
+      } else {
+        outFile = new File(moduleOutDir, artifact.getPartialPath());
+      }
+
       assert !outFile.exists() : "Attempted to overwrite " + outFile.getPath();
       Util.copy(logger, artifact.getContents(artifactLogger), outFile);
     }
@@ -307,6 +337,24 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
     v.accept(jsProgram);
     return out.toString();
+  }
+
+  /**
+   * Creates a linker-specific subdirectory in the module's auxiliary output
+   * directory.
+   */
+  private File getLinkerAuxDir(Class<? extends Linker> linkerType) {
+    // The auxiliary directory is create lazily
+    if (!moduleAuxDir.exists()) {
+      moduleAuxDir.mkdirs();
+    }
+    assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
+        + " unknown";
+    File toReturn = new File(moduleAuxDir, linkerShortNames.get(linkerType));
+    if (!toReturn.exists()) {
+      toReturn.mkdirs();
+    }
+    return toReturn;
   }
 
   /**
