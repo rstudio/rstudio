@@ -29,6 +29,8 @@ import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
 
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceIdentityMap;
 import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.File;
@@ -93,7 +95,7 @@ public class GWTShellServlet extends HttpServlet {
    */
   @SuppressWarnings("unchecked")
   private final Map<String, ModuleDef> loadedModulesByName = new ReferenceMap(
-      ReferenceMap.HARD, ReferenceMap.WEAK);
+      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
 
   /**
    * The lifetime of the module pins the lifetime of the associated servlet;
@@ -101,8 +103,8 @@ public class GWTShellServlet extends HttpServlet {
    * through its context. When the module dies, the servlet needs to die also.
    */
   @SuppressWarnings("unchecked")
-  private final Map<ModuleDef, Map<String, HttpServlet>> loadedServletsByModuleAndClassName = new ReferenceMap(
-      ReferenceMap.WEAK, ReferenceMap.HARD, true);
+  private final Map<ModuleDef, Map<String, HttpServlet>> loadedServletsByModuleAndClassName = new ReferenceIdentityMap(
+      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
 
   private final Map<String, String> mimeTypes = new HashMap<String, String>();
 
@@ -111,7 +113,7 @@ public class GWTShellServlet extends HttpServlet {
    */
   @SuppressWarnings("unchecked")
   private final Map<String, ModuleDef> modulesByServletPath = new ReferenceMap(
-      ReferenceMap.HARD, ReferenceMap.WEAK);
+      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
 
   private int nextRequestId;
 

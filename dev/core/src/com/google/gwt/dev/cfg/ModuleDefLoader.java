@@ -21,6 +21,7 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.ReflectiveParser;
 import com.google.gwt.util.tools.Utility;
 
+import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.File;
@@ -59,7 +60,7 @@ public final class ModuleDefLoader {
    */
   @SuppressWarnings("unchecked")
   private static final Map<String, ModuleDef> loadedModules = new ReferenceMap(
-      ReferenceMap.HARD, ReferenceMap.SOFT);
+      AbstractReferenceMap.HARD, AbstractReferenceMap.SOFT);
 
   /**
    * Creates a module in memory that is not associated with a
