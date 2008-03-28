@@ -197,6 +197,9 @@ public class TestSetFactory {
       IsSerializable {
   }
   
+  /**
+   * TODO: document me.
+   */
   public static class SerializableWithTwoArrays implements IsSerializable {
     String[] one;
     String[] two;
