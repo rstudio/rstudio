@@ -193,6 +193,7 @@ public class IntegerTest extends GWTTestCase {
     // two-complement bugs?
     assertEquals(0x84218421, Integer.reverseBytes(0x21842184));
     assertEquals(0x12481248, Integer.reverseBytes(0x48124812));
+    assertEquals(0x21436587, Integer.reverseBytes(0x87654321));
   }
 
   public void testRotateLeft() {

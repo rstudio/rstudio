@@ -127,7 +127,7 @@ public final class Integer extends Number implements Comparable<Integer> {
 
   public static int reverseBytes(int i) {
     return ((i & 0xff) << 24) | ((i & 0xff00) << 8) | ((i & 0xff0000) >> 8)
-        | ((i & 0xff000000) >> 24);
+        | ((i & 0xff000000) >>> 24);
   }
 
   public static int rotateLeft(int i, int distance) {

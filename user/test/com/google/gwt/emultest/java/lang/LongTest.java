@@ -101,6 +101,11 @@ public class LongTest extends GWTTestCase {
   }
 
   public void testReverseBytes() {
+    assertEquals(0, Long.reverseBytes(0));
+    assertEquals(-1, Long.reverseBytes(-1));
+    assertEquals(0x80L, Long.reverseBytes(Long.MIN_VALUE));
+    assertEquals(Long.MIN_VALUE, Long.reverseBytes(0x80L));
+    assertEquals(0xf0debc9a78563412L, Long.reverseBytes(0x123456789abcdef0L));
   }
 
   public void testRotateLeft() {
