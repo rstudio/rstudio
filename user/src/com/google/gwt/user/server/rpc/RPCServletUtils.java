@@ -114,10 +114,25 @@ public class RPCServletUtils {
     // Content-Type must be specified.
     if (contentType != null) {
       contentType = contentType.toLowerCase();
-      // The type must be be distinct
+      /*
+       * The Content-Type must be text/x-gwt-rpc.
+       * 
+       * NOTE:We use startsWith because some servlet engines, i.e. Tomcat, do
+       * not remove the charset component but others do.
+       */
       if (contentType.startsWith(EXPECTED_CONTENT_TYPE)) {
-        if (contentType.indexOf(EXPECTED_CHARSET) != -1) {
-          contentTypeIsOkay = true;
+        String characterEncoding = request.getCharacterEncoding();
+        if (characterEncoding != null) {
+          /*
+           * TODO: It would seem that we should be able to use equalsIgnoreCase
+           * here instead of indexOf. Need to be sure that servlet engines
+           * return a properly parsed character encoding string if we decide to
+           * make this change.
+           */
+          if (characterEncoding.toLowerCase().indexOf(
+              CHARSET_UTF8.toLowerCase()) != -1) {
+            contentTypeIsOkay = true;
+          }
         }
       }
     }
