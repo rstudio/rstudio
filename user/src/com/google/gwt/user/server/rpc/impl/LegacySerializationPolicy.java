@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,27 +55,27 @@ public class LegacySerializationPolicy extends SerializationPolicy {
    * be serializable via a custom serializer.
    */
   private static final Class<?>[] JRE_BLACKLIST = {
-      java.lang.ArrayStoreException.class, java.lang.AssertionError.class,
-      java.lang.Boolean.class, java.lang.Byte.class, java.lang.Character.class,
-      java.lang.Class.class, java.lang.ClassCastException.class,
-      java.lang.Double.class, java.lang.Error.class, java.lang.Exception.class,
-      java.lang.Float.class, java.lang.IllegalArgumentException.class,
-      java.lang.IllegalStateException.class,
-      java.lang.IndexOutOfBoundsException.class, java.lang.Integer.class,
-      java.lang.Long.class, java.lang.NegativeArraySizeException.class,
-      java.lang.NullPointerException.class, java.lang.Number.class,
-      java.lang.NumberFormatException.class, java.lang.RuntimeException.class,
-      java.lang.Short.class, java.lang.StackTraceElement.class,
-      java.lang.String.class, java.lang.StringBuffer.class,
-      java.lang.StringIndexOutOfBoundsException.class,
-      java.lang.Throwable.class, java.lang.UnsupportedOperationException.class,
-      java.util.ArrayList.class,
-      java.util.ConcurrentModificationException.class, java.util.Date.class,
-      java.util.EmptyStackException.class, java.util.EventObject.class,
-      java.util.HashMap.class, java.util.HashSet.class,
-      java.util.MissingResourceException.class,
-      java.util.NoSuchElementException.class, java.util.Stack.class,
-      java.util.TooManyListenersException.class, java.util.Vector.class};
+    java.lang.ArrayStoreException.class, java.lang.AssertionError.class,
+    java.lang.Boolean.class, java.lang.Byte.class, java.lang.Character.class,
+    java.lang.Class.class, java.lang.ClassCastException.class,
+    java.lang.Double.class, java.lang.Error.class,
+    java.lang.Float.class, java.lang.IllegalArgumentException.class,
+    java.lang.IllegalStateException.class,
+    java.lang.IndexOutOfBoundsException.class, java.lang.Integer.class,
+    java.lang.Long.class, java.lang.NegativeArraySizeException.class,
+    java.lang.NullPointerException.class, java.lang.Number.class,
+    java.lang.NumberFormatException.class,
+    java.lang.Short.class, java.lang.StackTraceElement.class,
+    java.lang.String.class, java.lang.StringBuffer.class,
+    java.lang.StringIndexOutOfBoundsException.class,
+    java.lang.UnsupportedOperationException.class,
+    java.util.ArrayList.class,
+    java.util.ConcurrentModificationException.class, java.util.Date.class,
+    java.util.EmptyStackException.class, java.util.EventObject.class,
+    java.util.HashMap.class, java.util.HashSet.class,
+    java.util.MissingResourceException.class,
+    java.util.NoSuchElementException.class, java.util.Stack.class,
+    java.util.TooManyListenersException.class, java.util.Vector.class};
 
   private static final Set<Class<?>> JRE_BLACKSET = new HashSet<Class<?>>(
       Arrays.asList(JRE_BLACKLIST));
