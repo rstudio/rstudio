@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
@@ -130,6 +131,17 @@ public class FieldSerializerCreator {
         packageName, className);
 
     return composerFactory.createSourceWriter(ctx, printWriter);
+  }
+
+  private void maybeSuppressLongWarnings(JType fieldType) {
+    if (fieldType == JPrimitiveType.LONG) {
+      /**
+       * Accessing long from JSNI causes a warning, but field serializers need
+       * to be able to do just that in order to bypass java accessibility
+       * restrictions.
+       */
+      sourceWriter.println("@SuppressWarnings(\"restriction\")");
+    }
   }
 
   private void maybeWriteInstatiateMethod() {
@@ -360,6 +372,7 @@ public class FieldSerializerCreator {
     String fieldTypeQualifiedSourceName = fieldType.getQualifiedSourceName();
     String fieldName = serializableField.getName();
 
+    maybeSuppressLongWarnings(fieldType);
     sourceWriter.print("private static native ");
     sourceWriter.print(fieldTypeQualifiedSourceName);
     sourceWriter.print(" get");
@@ -389,6 +402,7 @@ public class FieldSerializerCreator {
     String serializableClassQualifedName = serializableClass.getQualifiedSourceName();
     String fieldName = serializableField.getName();
 
+    maybeSuppressLongWarnings(fieldType);
     sourceWriter.print("private static native void ");
     sourceWriter.print(" set");
     sourceWriter.print(Shared.capitalize(fieldName));
