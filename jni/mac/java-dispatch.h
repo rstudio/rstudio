@@ -23,11 +23,11 @@
 namespace gwt {
 
 /*
- * Initializes static members needed by DispatchObjects and DispatchMethods.
- * This should be called before before calling either DispatchMethodCreate or
- * DispatchObjectCreate.
+ * Initializes static members needed by DispatchObject, DispatchMethod,
+ * and LowLevelSaf.  This should be called before before calling anything
+ * else.
  */
-bool Initialize(JNIEnv*, jclass, jclass);
+bool Initialize(JNIEnv*, jclass, jclass, jclass);
 
 /*
  * Returns a shared reference to the DispatchObject class

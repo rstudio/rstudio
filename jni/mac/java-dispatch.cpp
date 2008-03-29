@@ -54,6 +54,12 @@ namespace gwt {
   void DispatchMethodFinalize(JSObjectRef);
 
   /*
+   * Call this when an underlying Java Object should be freed.
+   */
+  void ReleaseJavaObject(jobject jObject);
+
+
+  /*
    * The class definition stuct for DispatchObjects.
    */
   static JSClassDefinition _dispatchObjectClassDef = { 0,
@@ -85,10 +91,12 @@ namespace gwt {
   static JNIEnv* _javaEnv;
   static jclass _javaDispatchObjectClass;
   static jclass _javaDispatchMethodClass;
+  static jclass _lowLevelSafClass;
   static jmethodID _javaDispatchObjectSetFieldMethod;
   static jmethodID _javaDispatchObjectGetFieldMethod;
   static jmethodID _javaDispatchMethodInvokeMethod;
   static jmethodID _javaDispatchObjectToStringMethod;
+  static jmethodID _lowLevelSafReleaseObject;
 
   /*
    * Structure to hold DispatchMethod private data.
@@ -100,7 +108,7 @@ namespace gwt {
     DispatchMethodData(jobject jObject, std::string& utf8Name)
         : _jObject(jObject), _utf8Name(utf8Name) { }
     ~DispatchMethodData() {
-       _javaEnv->DeleteGlobalRef(_jObject);
+      ReleaseJavaObject(_jObject);
     }
     jobject _jObject;
     std::string _utf8Name;
@@ -293,7 +301,7 @@ bool DispatchObjectSetProperty(JSContextRef jsContext, JSObjectRef jsObject,
 void DispatchObjectFinalize(JSObjectRef jsObject) {
   TR_ENTER();
   jobject jObject = reinterpret_cast<jobject>(JSObjectGetPrivate(jsObject));
-  _javaEnv->DeleteGlobalRef(jObject);
+  ReleaseJavaObject(jObject);
   TR_LEAVE();
 }
 
@@ -445,9 +453,10 @@ JSValueRef DispatchMethodGetToString(JSContextRef jsContext,
  *
  */
 bool Initialize(JNIEnv* javaEnv, jclass javaDispatchObjectClass,
-    jclass javaDispatchMethodClass) {
+    jclass javaDispatchMethodClass, jclass lowLevelSafClass) {
   TR_ENTER();
-  if (!javaEnv || !javaDispatchObjectClass || !javaDispatchMethodClass) {
+  if (!javaEnv || !javaDispatchObjectClass || !javaDispatchMethodClass
+      || !lowLevelSafClass) {
     return false;
   }
 
@@ -456,6 +465,8 @@ bool Initialize(JNIEnv* javaEnv, jclass javaDispatchObjectClass,
       javaEnv->NewGlobalRef(javaDispatchObjectClass));
   _javaDispatchMethodClass = static_cast<jclass>(
       javaEnv->NewGlobalRef(javaDispatchMethodClass));
+  _lowLevelSafClass = static_cast<jclass>(
+      javaEnv->NewGlobalRef(lowLevelSafClass));
   _javaDispatchObjectSetFieldMethod = javaEnv->GetMethodID(
       javaDispatchObjectClass, "setField", "(ILjava/lang/String;I)V");
   _javaDispatchObjectGetFieldMethod = javaEnv->GetMethodID(
@@ -464,15 +475,28 @@ bool Initialize(JNIEnv* javaEnv, jclass javaDispatchObjectClass,
       javaDispatchMethodClass, "invoke", "(II[I[I)I");
   _javaDispatchObjectToStringMethod = javaEnv->GetMethodID(
       javaDispatchObjectClass, "toString", "()Ljava/lang/String;");
+  _lowLevelSafReleaseObject = javaEnv->GetStaticMethodID(
+      lowLevelSafClass, "releaseObject", "(Ljava/lang/Object;)V");
 
   if (!_javaDispatchObjectSetFieldMethod || !_javaDispatchObjectGetFieldMethod
       || !_javaDispatchMethodInvokeMethod || !_javaDispatchObjectToStringMethod
-      || javaEnv->ExceptionCheck()) {
+      || !_lowLevelSafReleaseObject || javaEnv->ExceptionCheck()) {
     return false;
   }
 
   TR_LEAVE();
   return true;
+}
+
+void ReleaseJavaObject(jobject jObject) {
+  // Tell the Java code we're done with this object.
+  _javaEnv->CallStaticVoidMethod(_lowLevelSafClass, _lowLevelSafReleaseObject,
+      jObject);
+  if (_javaEnv->ExceptionCheck()) {
+    TR_FAIL();
+    return;
+  }
+  _javaEnv->DeleteGlobalRef(jObject);
 }
 
 } // namespace gwt

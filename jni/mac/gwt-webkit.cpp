@@ -677,10 +677,10 @@ JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_unwrapD
  */
 JNIEXPORT jboolean JNICALL Java_com_google_gwt_dev_shell_mac_LowLevelSaf_initImpl
     (JNIEnv *env, jclass klass, jclass dispatchObjectClass,
-    jclass dispatchMethodClass) {
+    jclass dispatchMethodClass, jclass lowLevelSafClass) {
   TR_ENTER();
   TR_LEAVE();
-  return static_cast<jboolean>(gwt::Initialize(env, dispatchObjectClass, dispatchMethodClass));
+  return static_cast<jboolean>(gwt::Initialize(env, dispatchObjectClass, dispatchMethodClass, lowLevelSafClass));
 }
 
 /*
