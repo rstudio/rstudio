@@ -14,7 +14,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/catalina-optional-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-beanutils-1.6.jar"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-collections-3.1.jar" sourcepath="/GWT_TOOLS/lib/tomcat/commons-collections-3.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-digester-1.5.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-el-1.0.jar"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/commons-logging-1.0.jar"/>
