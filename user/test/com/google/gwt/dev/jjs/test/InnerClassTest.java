@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -26,49 +25,93 @@ import java.util.List;
  */
 public class InnerClassTest extends GWTTestCase {
 
-  /**
-   * TODO: document me.
-   */
-  public class InnerClass {
+  class InnerClass {
+    {
+      callInner();
+    }
+
     void callInner() {
       testAppend.append("a");
       class ReallyInnerClass {
-        void callReallyInner() {
-          testAppend.append("b");
-        }
-
         {
           callReallyInner();
+        }
+
+        void callReallyInner() {
+          testAppend.append("b");
         }
       }
       new ReallyInnerClass();
     }
+  }
 
-    {
-      callInner();
+  static class P1<T1> {
+    class P2<T2> extends P1<T1> {
+      class P3<T3> extends P2<T2> {
+        P3() {
+          this(1);
+        }
+
+        P3(int i) {
+          P2.this.super(i);
+        }
+      }
+
+      P2() {
+        this(1);
+      }
+
+      P2(int i) {
+        super(i);
+      }
+    }
+
+    final int value;
+
+    P1() {
+      this(1);
+    }
+
+    P1(int i) {
+      value = i;
     }
   }
+
+  private StringBuffer testAppend;
 
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  public void testInnerClassCtors() {
+    P1<?> p1 = new P1<Object>();
+    assertEquals(1, p1.value);
+    assertEquals(2, new P1<Object>(2).value);
+    P1<?>.P2<?> p2 = p1.new P2<Object>();
+    assertEquals(1, p2.value);
+    assertEquals(2, p1.new P2<Object>(2).value);
+    assertEquals(1, p2.new P3<Object>().value);
+    assertEquals(2, p2.new P3<Object>(2).value);
+  }
+
   public void testInnerClassInitialization() {
+    testAppend = new StringBuffer();
+    new InnerClass();
     assertEquals("ab", testAppend.toString());
   }
 
   public void testInnerClassLoop() {
     final StringBuffer b = new StringBuffer();
-    List results = new ArrayList();
     abstract class AppendToStringBuffer {
+      int num;
+
       public AppendToStringBuffer(int i) {
         this.num = i;
       }
 
       public abstract void act();
-
-      int num;
     }
+    List<AppendToStringBuffer> results = new ArrayList<AppendToStringBuffer>();
     for (int i = 0; i < 10; i++) {
       AppendToStringBuffer ap = new AppendToStringBuffer(i) {
         public void act() {
@@ -77,18 +120,10 @@ public class InnerClassTest extends GWTTestCase {
       };
       results.add(ap);
     }
-    for (Iterator it = results.iterator(); it.hasNext();) {
-      AppendToStringBuffer theAp = (AppendToStringBuffer) it.next();
+    for (AppendToStringBuffer theAp : results) {
       theAp.act();
     }
     assertEquals("0123456789", b.toString());
   }
-
-  protected void setUp() throws Exception {
-    testAppend = new StringBuffer();
-    new InnerClass();
-  }
-
-  private StringBuffer testAppend;
 
 }

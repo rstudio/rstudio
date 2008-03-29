@@ -607,7 +607,7 @@ public class GenerateJavaAST {
         if (!hasExplicitThis) {
           ReferenceBinding declaringClass = x.binding.declaringClass;
           if (declaringClass instanceof NestedTypeBinding) {
-            Iterator<JParameter> paramIt = getSyntheticsIterator(ctor);
+            Iterator<JParameter> paramIt = getSyntheticsIterator();
             NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
             if (nestedBinding.enclosingInstances != null) {
               for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
@@ -1166,7 +1166,7 @@ public class GenerateJavaAST {
       // Synthetic args for inner classes
       ReferenceBinding targetBinding = b.declaringClass;
       if (targetBinding.isNestedType() && !targetBinding.isStatic()) {
-        NestedTypeBinding nestedBinding = (NestedTypeBinding) targetBinding;
+        NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(targetBinding);
         // Synthetic this args for inner classes
         if (nestedBinding.enclosingInstances != null) {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
@@ -1789,7 +1789,7 @@ public class GenerateJavaAST {
                * check each one to see if any will make a suitable this ref.
                */
               List<JExpression> workList = new ArrayList<JExpression>();
-              Iterator<JParameter> paramIt = getSyntheticsIterator(currentMethod);
+              Iterator<JParameter> paramIt = getSyntheticsIterator();
               for (ReferenceBinding b : myBinding.syntheticEnclosingInstanceTypes()) {
                 workList.add(createVariableRef(info, paramIt.next()));
               }
@@ -1838,9 +1838,9 @@ public class GenerateJavaAST {
 
       // All synthetics must be passed through to the target ctor
       ReferenceBinding declaringClass = x.binding.declaringClass;
-      if (declaringClass instanceof NestedTypeBinding) {
-        Iterator<JParameter> paramIt = getSyntheticsIterator(currentMethod);
-        NestedTypeBinding nestedBinding = (NestedTypeBinding) declaringClass;
+      if (declaringClass.isNestedType() && !declaringClass.isStatic()) {
+        Iterator<JParameter> paramIt = getSyntheticsIterator();
+        NestedTypeBinding nestedBinding = (NestedTypeBinding) erasure(declaringClass);
         if (nestedBinding.enclosingInstances != null) {
           for (int i = 0; i < nestedBinding.enclosingInstances.length; ++i) {
             call.getArgs().add(createVariableRef(info, paramIt.next()));
@@ -2181,6 +2181,18 @@ public class GenerateJavaAST {
       } else {
         return null;
       }
+    }
+
+    /**
+     * Gets a JParameter iterator for a constructor method over its synthetic
+     * parameters.
+     */
+    private Iterator<JParameter> getSyntheticsIterator() {
+      Iterator<JParameter> it = currentMethod.params.iterator();
+      for (int i = 0, c = currentMethod.getOriginalParamTypes().size(); i < c; ++i) {
+        it.next();
+      }
+      return it;
     }
 
     private void implementMethod(JMethod method, JExpression returnValue) {
@@ -2736,18 +2748,6 @@ public class GenerateJavaAST {
   public static SourceInfo translateInfo(JsSourceInfo info) {
     // TODO implement this
     return null;
-  }
-
-  /**
-   * Gets a JParameter iterator for a constructor method over its synthetic
-   * parameters.
-   */
-  private static Iterator<JParameter> getSyntheticsIterator(JMethod method) {
-    Iterator<JParameter> it = method.params.iterator();
-    for (int i = 0, c = method.getOriginalParamTypes().size(); i < c; ++i) {
-      it.next();
-    }
-    return it;
   }
 
   /**
