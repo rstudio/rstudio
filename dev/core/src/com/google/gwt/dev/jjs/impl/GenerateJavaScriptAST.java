@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
-import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JAssertStatement;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
@@ -90,7 +89,6 @@ import com.google.gwt.dev.js.ast.JsCatch;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsExprStmt;
@@ -105,6 +103,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
@@ -131,6 +130,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1207,40 +1207,13 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateClassLiterals(JsVars vars) {
-      Set<JType> alreadyGenerated = new HashSet<JType>();
       for (JType type : classLits.keySet()) {
-        generateClassLiteralsRecursive(alreadyGenerated, type, vars);
+        JsName jsName = classLits.get(type);
+        JsExpression classObjectAlloc = classObjects.get(jsName);
+        JsVar var = new JsVar(jsName);
+        var.setInitExpr(classObjectAlloc);
+        vars.add(var);
       }
-    }
-
-    private void generateClassLiteralsRecursive(Set<JType> alreadyGenerated,
-        JType type, JsVars vars) {
-      if (alreadyGenerated.contains(type)) {
-        return;
-      }
-      alreadyGenerated.add(type);
-
-      if (type instanceof JClassType && !(type instanceof JArrayType)) {
-        /*
-         * If this type is a regular class or an enum, then ensure that its
-         * superclass's class literal is generated before its own.
-         * 
-         * NOTE: JInterfaceTypes can have their JReferenceType.extnds member set
-         * to its first implemented interface. JArrayTypes always have Object as
-         * their superclass so there is no need to explicitly set it here.
-         */
-        JClassType classType = (JClassType) type;
-        if (classType.extnds != null) {
-          generateClassLiteralsRecursive(alreadyGenerated, classType.extnds,
-              vars);
-        }
-      }
-
-      JsName jsName = classLits.get(type);
-      JsExpression classObjectAlloc = classObjects.get(jsName);
-      JsVar var = new JsVar(jsName);
-      var.setInitExpr(classObjectAlloc);
-      vars.add(var);
     }
 
     private void generateClassSetup(JClassType x, List<JsStatement> globalStmts) {
@@ -1640,10 +1613,9 @@ public class GenerateJavaScriptAST {
   private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
 
   /**
-   * Sorted to avoid nondeterministic iteration.
+   * Must preserve order so that superclass literals generate before subclasses.
    */
-  private final Map<JType, JsName> classLits = new TreeMap<JType, JsName>(
-      new HasNameSort());
+  private final Map<JType, JsName> classLits = new LinkedHashMap<JType, JsName>();
 
   private final Map<JsName, JsExpression> classObjects = new IdentityHashMap<JsName, JsExpression>();
   private final Map<JClassType, JsScope> classScopes = new IdentityHashMap<JClassType, JsScope>();
