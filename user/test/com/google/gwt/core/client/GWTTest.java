@@ -23,7 +23,6 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class GWTTest extends GWTTestCase {
 
   private static volatile int seven = 7;
-
   private static volatile int zero = 0;
 
   private static native boolean canCallNativeMethod() /*-{
@@ -71,12 +70,11 @@ public class GWTTest extends GWTTestCase {
     assertTrue(canCallNativeMethod());
   }
 
+  @SuppressWarnings("unused")
   public void testIsScript() {
     try {
       double d = seven / zero;
-      if (GWT.isScript()) {
-        assertEquals(Double.NaN, d);
-      } else {
+      if (!GWT.isScript()) {
         fail("Expected ArithmeticException");
       }
     } catch (ArithmeticException expected) {
