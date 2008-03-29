@@ -144,6 +144,18 @@ public class HostedTest extends GWTTestCase {
     return s.length;
   }-*/;
 
+  private static native boolean jsIdentical(Object o1, Object o2) /*-{
+    return o1 === o2;
+  }-*/;
+
+  private static native boolean jsniInstanceFunctionsIdentical(Object o) /*-{
+    return o.@java.lang.Object::toString() === o.@java.lang.Object::toString();
+  }-*/;
+
+  private static native boolean jsniStaticFunctionsIdentical() /*-{
+    return @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;) === @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
+  }-*/;
+
   private static native int passThroughInt(int val) /*-{
     return val;
   }-*/;
@@ -200,7 +212,7 @@ public class HostedTest extends GWTTestCase {
       assertTrue(HostedTest.class.desiredAssertionStatus());
     }
   }
-  
+
   /*
    * Test that returning JavaScript boxed primitives works as expected. Note
    * that Boolean and Number cannot be supported properly in web mode, so we do
@@ -320,6 +332,13 @@ public class HostedTest extends GWTTestCase {
     A.B b = new A.B();
     assertEquals(1, b.getUsingSourceRef());
     assertEquals(1, b.getUsingBinaryRef());
+  }
+
+  public void testJavaObjectIdentityInJS() {
+    Object o = new Object();
+    assertTrue(jsIdentical(o, o));
+    assertTrue(jsniInstanceFunctionsIdentical(o));
+    assertTrue(jsniStaticFunctionsIdentical());
   }
 
   public void testJsniFormats() {

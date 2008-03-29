@@ -23,6 +23,7 @@ import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.Variant;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -114,10 +115,11 @@ class MethodDispatch extends IDispatchImpl {
             throw new RuntimeException(
                 "Failed to get Object.toString() method", e);
           }
-          IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getMethodDispatch(toStringMethod);
-          if (dispMethod == null) {
+          AccessibleObject obj = toStringMethod.getUnderlyingObject();
+          IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getWrapperForObject(obj);
+          if (dispMethod == null || dispMethod.refCount < 1) {
             dispMethod = new MethodDispatch(classLoader, toStringMethod);
-            classLoader.putMethodDispatch(toStringMethod, dispMethod);
+            classLoader.putWrapperForObject(obj, dispMethod);
           }
           IDispatch disp = new IDispatch(dispMethod.getAddress());
           disp.AddRef();

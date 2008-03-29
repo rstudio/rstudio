@@ -26,6 +26,7 @@ import org.eclipse.swt.internal.ole.win32.COM;
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.Variant;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 
@@ -154,10 +155,11 @@ class IDispatchProxy extends IDispatchImpl {
             return callMethod(classLoader, getTarget(), params, method);
           } else if (flags == COM.DISPATCH_PROPERTYGET) {
             // The function is being accessed as a property.
-            IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getMethodDispatch(method);
+            AccessibleObject obj = method.getUnderlyingObject();
+            IDispatchImpl dispMethod = (IDispatchImpl) classLoader.getWrapperForObject(obj);
             if (dispMethod == null || dispMethod.refCount < 1) {
               dispMethod = new MethodDispatch(classLoader, method);
-              classLoader.putMethodDispatch(method, dispMethod);
+              classLoader.putWrapperForObject(obj, dispMethod);
             }
             IDispatch disp = new IDispatch(dispMethod.getAddress());
             disp.AddRef();

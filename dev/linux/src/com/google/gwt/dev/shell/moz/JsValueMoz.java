@@ -562,11 +562,15 @@ public class JsValueMoz extends JsValue {
     if (val instanceof DispatchObject) {
       dispObj = (DispatchObject) val;
     } else {
-      dispObj = new GeckoDispatchAdapter(cl, val);
+      dispObj = (DispatchObject) cl.getWrapperForObject(val);
+      if (dispObj == null) {
+        dispObj = new GeckoDispatchAdapter(cl, val);
+        cl.putWrapperForObject(val, dispObj);
+      }
     }
-    Integer jsval = LowLevelMoz.sObjectToJsval.get(dispObj);
-    if (jsval != null) {
-      _setJsval(jsRootedValue, jsval);
+    Integer cached = LowLevelMoz.sObjectToJsval.get(dispObj);
+    if (cached != null) {
+      _setJsval(jsRootedValue, cached);
     } else {
       _setWrappedJavaObject(jsRootedValue, dispObj);
       LowLevelMoz.sObjectToJsval.put(dispObj, _getJsval(jsRootedValue));

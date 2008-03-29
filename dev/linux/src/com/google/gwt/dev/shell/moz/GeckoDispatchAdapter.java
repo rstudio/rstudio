@@ -24,6 +24,7 @@ import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.moz.LowLevelMoz.DispatchMethod;
 import com.google.gwt.dev.shell.moz.LowLevelMoz.DispatchObject;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 
 /**
@@ -85,10 +86,11 @@ class GeckoDispatchAdapter implements DispatchObject {
       return;
     } else {
       MethodAdaptor method = javaDispatch.getMethod(dispId);
-      DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
+      AccessibleObject obj = method.getUnderlyingObject();
+      DispatchMethod dispMethod = (DispatchMethod) classLoader.getWrapperForObject(obj);
       if (dispMethod == null) {
         dispMethod = new MethodDispatch(classLoader, method);
-        classLoader.putMethodDispatch(method, dispMethod);
+        classLoader.putWrapperForObject(obj, dispMethod);
       }
       jsValue.setWrappedFunction(method.toString(), dispMethod);
     }

@@ -20,7 +20,6 @@ import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
-import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for Safari.
@@ -104,20 +103,5 @@ public class ModuleSpaceSaf extends ModuleSpace {
   @Override
   protected Object getStaticDispatcher() {
     return new WebKitDispatchAdapter(getIsolatedClassLoader());
-  }
-
-  protected int wrapObjectAsJSObject(Object o) {
-    if (o == null) {
-      return LowLevelSaf.getJsNull(LowLevelSaf.getCurrentJsContext());
-    }
-
-    DispatchObject dispObj;
-    if (o instanceof DispatchObject) {
-      dispObj = (DispatchObject) o;
-    } else {
-      dispObj = new WebKitDispatchAdapter(getIsolatedClassLoader(), o);
-    }
-    return LowLevelSaf.wrapDispatchObject(LowLevelSaf.getCurrentJsContext(),
-        dispObj);
   }
 }

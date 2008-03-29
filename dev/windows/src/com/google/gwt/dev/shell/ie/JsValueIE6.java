@@ -496,7 +496,11 @@ public class JsValueIE6 extends JsValue {
     } else if (val instanceof IDispatchImpl) {
       dispObj = (IDispatchImpl) val;
     } else {
-      dispObj = new IDispatchProxy(cl, val);
+      dispObj = (IDispatchImpl) cl.getWrapperForObject(val);
+      if (dispObj == null || dispObj.refCount < 1) {
+        dispObj = new IDispatchProxy(cl, val);
+        cl.putWrapperForObject(val, dispObj);
+      }
     }
     IDispatch disp = new IDispatch(dispObj.getAddress());
     disp.AddRef();

@@ -92,11 +92,8 @@ public class JsValueSaf extends JsValue {
 
   @Override
   public int getJavaScriptObjectPointer() {
-    if (isJavaScriptObject()) {
-      return jsval;
-    } else {
-      return 0;
-    }
+    assert isJavaScriptObject();
+    return jsval;
   }
 
   public int getJsValue() {
@@ -196,17 +193,6 @@ public class JsValueSaf extends JsValue {
     setJsVal(LowLevelSaf.toJsNumber(LowLevelSaf.getCurrentJsContext(), val));
   }
 
-  /**
-   * Set a new value. Unlock the previous value, but do *not* lock the new value
-   * (see class comment).
-   * 
-   * @param jsval the new value to set
-   */
-  public void setJsVal(int jsval) {
-    LowLevelSaf.gcUnprotect(LowLevelSaf.getCurrentJsContext(), this.jsval);
-    init(jsval);
-  }
-
   @Override
   public void setNull() {
     setJsVal(LowLevelSaf.getJsNull(LowLevelSaf.getCurrentJsContext()));
@@ -247,7 +233,11 @@ public class JsValueSaf extends JsValue {
     } else if (val instanceof DispatchObject) {
       dispObj = (DispatchObject) val;
     } else {
-      dispObj = new WebKitDispatchAdapter(cl, val);
+      dispObj = (DispatchObject) cl.getWrapperForObject(val);
+      if (dispObj == null) {
+        dispObj = new WebKitDispatchAdapter(cl, val);
+        cl.putWrapperForObject(val, dispObj);
+      }
     }
     setJsVal(LowLevelSaf.wrapDispatchObject(LowLevelSaf.getCurrentJsContext(),
         dispObj));
@@ -275,6 +265,17 @@ public class JsValueSaf extends JsValue {
           + LowLevelSaf.getTypeString(LowLevelSaf.getCurrentJsContext(), jsval)
           + ")");
     }
+  }
+
+  /**
+   * Set a new value. Unlock the previous value, but do *not* lock the new value
+   * (see class comment).
+   * 
+   * @param jsval the new value to set
+   */
+  private void setJsVal(int jsval) {
+    LowLevelSaf.gcUnprotect(LowLevelSaf.getCurrentJsContext(), this.jsval);
+    init(jsval);
   }
 
 }

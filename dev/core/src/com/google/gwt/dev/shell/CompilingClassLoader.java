@@ -28,6 +28,8 @@ import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMa
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.util.tools.Utility;
 
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceIdentityMap;
 import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.IOException;
@@ -327,13 +329,15 @@ public final class CompilingClassLoader extends ClassLoader {
 
   private final TreeLogger logger;
 
-  private final Map<MethodAdaptor, Object> methodToDispatch = new HashMap<MethodAdaptor, Object>();
-
   private final TypeOracle typeOracle;
 
   @SuppressWarnings("unchecked")
+  private final Map<Object, Object> weakJavaWrapperCache = new ReferenceIdentityMap(
+      AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK);
+
+  @SuppressWarnings("unchecked")
   private final Map<Integer, Object> weakJsoCache = new ReferenceMap(
-      ReferenceMap.HARD, ReferenceMap.WEAK);
+      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
 
   public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler,
       TypeOracle typeOracle) throws UnableToCompleteException {
@@ -434,10 +438,16 @@ public final class CompilingClassLoader extends ClassLoader {
     return dispClassInfoOracle.getDispId(jsniMemberRef);
   }
 
-  public Object getMethodDispatch(MethodAdaptor method) {
-    synchronized (methodToDispatch) {
-      return methodToDispatch.get(method);
-    }
+  /**
+   * Retrieves the mapped wrapper for a given Java Object, provided the wrapper
+   * was previously cached and has not been garbage collected.
+   * 
+   * @param javaObject the Object being wrapped
+   * @return the mapped wrapper, or <code>null</code> if the Java object
+   *         mapped or if the wrapper has been garbage collected
+   */
+  public Object getWrapperForObject(Object javaObject) {
+    return weakJavaWrapperCache.get(javaObject);
   }
 
   /**
@@ -451,10 +461,14 @@ public final class CompilingClassLoader extends ClassLoader {
     weakJsoCache.put(uniqueId, jso);
   }
 
-  public void putMethodDispatch(MethodAdaptor method, Object methodDispatch) {
-    synchronized (methodToDispatch) {
-      methodToDispatch.put(method, methodDispatch);
-    }
+  /**
+   * Weakly caches a wrapper for a given Java Object.
+   * 
+   * @param javaObject the Object being wrapped
+   * @param wrapper the mapped wrapper
+   */
+  public void putWrapperForObject(Object javaObject, Object wrapper) {
+    weakJavaWrapperCache.put(javaObject, wrapper);
   }
 
   @Override
@@ -499,11 +513,8 @@ public final class CompilingClassLoader extends ClassLoader {
 
   void clear() {
     weakJsoCache.clear();
+    weakJavaWrapperCache.clear();
     dispClassInfoOracle.clear();
-
-    synchronized (methodToDispatch) {
-      methodToDispatch.clear();
-    }
   }
 
   private String getBinaryName(JClassType type) {

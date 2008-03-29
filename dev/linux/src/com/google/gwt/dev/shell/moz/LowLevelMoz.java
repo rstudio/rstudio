@@ -17,7 +17,6 @@ package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.LowLevel;
 
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -80,10 +79,11 @@ public class LowLevelMoz {
   }
 
   /**
-   * Stores a map from DispatchObject/DispatchMethod to the live underlying jsval.  This is used to
-   * both preserve identity for the same Java Object and also prevent GC.
+   * Stores a map from DispatchObject/DispatchMethod to the live underlying
+   * jsval. This is used to both preserve identity for the same Java Object and
+   * also prevent GC.
    */
-  static Map<Object, Integer> sObjectToJsval = Collections.synchronizedMap(new IdentityHashMap<Object, Integer>());
+  static Map<Object, Integer> sObjectToJsval = new IdentityHashMap<Object, Integer>();
 
   private static Vector<ExternalFactory> sExternalFactories = new Vector<ExternalFactory>();
   private static boolean sInitialized = false;

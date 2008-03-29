@@ -24,6 +24,7 @@ import com.google.gwt.dev.shell.MethodAdaptor;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchMethod;
 import com.google.gwt.dev.shell.mac.LowLevelSaf.DispatchObject;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 
 /**
@@ -79,10 +80,11 @@ class WebKitDispatchAdapter implements DispatchObject {
         return jsval;
       } else {
         MethodAdaptor method = javaDispatch.getMethod(dispId);
-        DispatchMethod dispMethod = (DispatchMethod) classLoader.getMethodDispatch(method);
+        AccessibleObject obj = method.getUnderlyingObject();
+        DispatchMethod dispMethod = (DispatchMethod) classLoader.getWrapperForObject(obj);
         if (dispMethod == null) {
           dispMethod = new MethodDispatch(classLoader, method);
-          classLoader.putMethodDispatch(method, dispMethod);
+          classLoader.putWrapperForObject(obj, dispMethod);
         }
         // Native code eats the same ref it gave us.
         return LowLevelSaf.wrapDispatchMethod(jsContext, method.toString(),

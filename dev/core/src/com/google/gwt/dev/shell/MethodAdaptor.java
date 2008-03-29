@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell;
 
+import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -84,6 +85,10 @@ public class MethodAdaptor {
 
   public Class<?> getReturnType() {
     return returnType;
+  }
+
+  public AccessibleObject getUnderlyingObject() {
+    return (method != null) ? method : constructor;
   }
 
   @Override
