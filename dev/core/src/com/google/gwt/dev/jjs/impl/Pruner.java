@@ -889,6 +889,11 @@ public class Pruner {
     }
 
     @Override
+    public boolean visit(JClassType x, Context ctx) {
+      return rescuer.instantiatedTypes.contains(x);
+    }
+
+    @Override
     public boolean visit(JProgram x, Context ctx) {
       didRescue = false;
       return true;
