@@ -17,6 +17,9 @@ package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.dev.shell.LowLevel;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -75,6 +78,12 @@ public class LowLevelMoz {
   interface ExternalObject {
     boolean gwtOnLoad(int scriptGlobalObject, String moduleName);
   }
+
+  /**
+   * Stores a map from DispatchObject/DispatchMethod to the live underlying jsval.  This is used to
+   * both preserve identity for the same Java Object and also prevent GC.
+   */
+  static Map<Object, Integer> sObjectToJsval = Collections.synchronizedMap(new IdentityHashMap<Object, Integer>());
 
   private static Vector<ExternalFactory> sExternalFactories = new Vector<ExternalFactory>();
   private static boolean sInitialized = false;
@@ -186,6 +195,13 @@ public class LowLevelMoz {
     System.out.flush();
   }
 
+  /**
+   * Native code accessor to remove the mapping upon GC.
+   */
+  static void removeJsvalForObject(Object o) {
+    sObjectToJsval.remove(o);
+  }
+
   // CHECKSTYLE_NAMING_OFF: Non JSNI native code may have leading '_'s.
 
   private static native boolean _executeScriptWithInfo(int scriptObject,
@@ -220,7 +236,8 @@ public class LowLevelMoz {
    * @param jsthis the JS object with the named method
    * @param jsargs an array of arguments to the method
    */
-  @SuppressWarnings("unused") // kept for future debugging purposes
+  @SuppressWarnings("unused")
+  // kept for future debugging purposes
   private static void printInvocationParams(String methodName,
       JsValueMoz jsthis, JsValueMoz[] jsargs) {
     System.out.println("LowLevelMoz.invoke:");

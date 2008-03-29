@@ -382,18 +382,17 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getNumber
 
 /**
  * Class:     com_google_gwt_dev_shell_moz_JsValueMoz
- * Method:    _getObjectPointer()
+ * Method:    _getJsval()
  * Signature: (I)I
  */
 extern "C" JNIEXPORT jint JNICALL
-Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getObjectPointer
+Java_com_google_gwt_dev_shell_moz_JsValueMoz__1getJsval
   (JNIEnv* jniEnv, jclass, jint jsRootedValueInt)
 {
   JsRootedValue* jsRootedValue = reinterpret_cast<JsRootedValue*>
       (jsRootedValueInt);
   Tracer tracer("JsValueMoz._getObjectPointer", jsRootedValue);
-  JSObject* ptr = jsRootedValue->getObject();
-  int val = reinterpret_cast<int>(ptr);
+  int val = jsRootedValue->getValue();
   tracer.log("value=%d", val);
   return val;
 }
@@ -733,6 +732,23 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setJsRootedValue
 }
 
 /*
+ * Set the Javascript value to a specific jsval.
+ * 
+ * Class:     com_google_gwt_dev_shell_moz_JsValueMoz
+ * Method:    _setJsval()
+ * Signature: (II)V
+ */
+extern "C" JNIEXPORT void JNICALL
+Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setJsval
+  (JNIEnv* jniEnv, jclass, jint jsRootedValueInt, jint jsval)
+{
+  JsRootedValue* jsRootedValue = reinterpret_cast<JsRootedValue*>
+      (jsRootedValueInt);
+  Tracer tracer("JsValueMoz._setJsval", jsRootedValue);
+  jsRootedValue->setValue(jsval);
+}
+
+/*
  * Set the JavaScript value to be null.
  * 
  * Class:     com_google_gwt_dev_shell_moz_JsValueMoz
@@ -821,7 +837,7 @@ Java_com_google_gwt_dev_shell_moz_JsValueMoz__1setWrappedJavaObject
   jsRootedValue->setObject(newObj); 
   tracer.log("jsobject=%08x", unsigned(newObj));
   
-  // TODO(jat): how does this globalref get freed?
+  // This is collected when the gwt_nativewrapper_class destructor runs.
   jobject dispObjRef = jniEnv->NewGlobalRef(obj);
   if (!dispObjRef || jniEnv->ExceptionCheck()) {
     tracer.throwHostedModeException(jniEnv,

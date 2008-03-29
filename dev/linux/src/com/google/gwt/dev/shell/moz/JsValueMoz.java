@@ -154,9 +154,9 @@ public class JsValueMoz extends JsValue {
 
   protected static native int _getInt(int jsRootedValue);
 
-  protected static native double _getNumber(int jsRootedValue);
+  protected static native int _getJsval(int jsRootedValue);
 
-  protected static native int _getObjectPointer(int jsRootedValue);
+  protected static native double _getNumber(int jsRootedValue);
 
   protected static native String _getString(int jsRootedValue);
 
@@ -190,6 +190,8 @@ public class JsValueMoz extends JsValue {
 
   protected static native void _setJsRootedValue(int jsRootedValue,
       int jsOtherRootedValue);
+
+  protected static native void _setJsval(int jsRootedValue, int jsval);
 
   protected static native void _setNull(int jsRootedValue);
 
@@ -294,7 +296,8 @@ public class JsValueMoz extends JsValue {
 
   @Override
   public int getJavaScriptObjectPointer() {
-    return _getObjectPointer(jsRootedValue);
+    assert isJavaScriptObject();
+    return _getJsval(jsRootedValue);
   }
 
   /**
@@ -555,7 +558,13 @@ public class JsValueMoz extends JsValue {
     } else {
       dispObj = new GeckoDispatchAdapter(cl, val);
     }
-    _setWrappedJavaObject(jsRootedValue, dispObj);
+    Integer jsval = LowLevelMoz.sObjectToJsval.get(dispObj);
+    if (jsval != null) {
+      _setJsval(jsRootedValue, jsval);
+    } else {
+      _setWrappedJavaObject(jsRootedValue, dispObj);
+      LowLevelMoz.sObjectToJsval.put(dispObj, _getJsval(jsRootedValue));
+    }
   }
 
   /**

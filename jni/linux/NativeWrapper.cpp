@@ -158,9 +158,23 @@ static JSBool JS_DLL_CALLBACK gwt_nativewrapper_getProperty(JSContext *cx,
 static void JS_DLL_CALLBACK gwt_nativewrapper_finalize(JSContext *cx,
     JSObject *obj)
 {
+  Tracer tracer("gwt_nativewrapper_finalize");
   jobject dispObj = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
-  if (dispObj)
+  if (dispObj) {
+    // Remove this pairing from the global map.
+    jmethodID removeMethod = savedJNIEnv->GetStaticMethodID(lowLevelMozClass, "removeJsvalForObject",
+      "(Ljava/lang/Object;)V");
+    if (!removeMethod || savedJNIEnv->ExceptionCheck()) {
+      tracer.setFail("Cannot GetMethodID for removeJsvalForObject");
+      return;
+    }
+    savedJNIEnv->CallStaticVoidMethod(lowLevelMozClass, removeMethod, dispObj);
+    if (savedJNIEnv->ExceptionCheck()) {
+      tracer.setFail("Exception calling removeJsvalForObject");
+      return;
+    }
     savedJNIEnv->DeleteGlobalRef(dispObj);
+  }
 }
 
 static JSBool JS_DLL_CALLBACK gwt_nativewrapper_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
