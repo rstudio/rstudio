@@ -537,7 +537,13 @@ public class JsValueMoz extends JsValue {
    */
   public void setWrappedFunction(String methodName,
       DispatchMethod dispatchMethod) {
-    _setWrappedFunction(jsRootedValue, methodName, dispatchMethod);
+    Integer jsval = LowLevelMoz.sObjectToJsval.get(dispatchMethod);
+    if (jsval != null) {
+      _setJsval(jsRootedValue, jsval);
+    } else {
+      _setWrappedFunction(jsRootedValue, methodName, dispatchMethod);
+      LowLevelMoz.sObjectToJsval.put(dispatchMethod, _getJsval(jsRootedValue));
+    }
   }
 
   /*
