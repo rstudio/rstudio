@@ -443,8 +443,8 @@ public class BuildTypeMap {
           args.add(new JParameterRef(program, null, enclosingInstance));
         } else {
           JParameter syntheticParam = program.createParameter(null,
-              param.getName().toCharArray(), param.getType(), param.isFinal(),
-              param.isThis(), synthetic);
+              param.getName().toCharArray(), param.getType(), true, false,
+              synthetic);
           args.add(new JParameterRef(program, null, syntheticParam));
         }
       }
