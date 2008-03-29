@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -57,6 +56,7 @@ public class JProgram extends JNode {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
           "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Enum",
           "java.lang.Iterable", "java.util.Iterator",
+          "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject"}));
 
   private static final int IS_ARRAY = 2;
@@ -222,8 +222,6 @@ public class JProgram extends JNode {
   private JMethod nullMethod;
 
   private Map<JReferenceType, Integer> queryIds;
-
-  private JMethod rebindCreateMethod;
 
   private final RebindOracle rebindOracle;
 
@@ -415,11 +413,7 @@ public class JProgram extends JNode {
       x.setBody(new JMethodBody(this, info));
     }
 
-    if (sname.equals(FindDeferredBindingSitesVisitor.REBIND_MAGIC_METHOD)
-        && enclosingType.getName().equals(
-            FindDeferredBindingSitesVisitor.REBIND_MAGIC_CLASS)) {
-      rebindCreateMethod = x;
-    } else if (!isPrivate && indexedTypes.containsValue(enclosingType)) {
+    if (!isPrivate && indexedTypes.containsValue(enclosingType)) {
       indexedMethods.put(enclosingType.getShortName() + '.' + sname, x);
     }
 
@@ -602,10 +596,6 @@ public class JProgram extends JNode {
     }
 
     return integer.intValue();
-  }
-
-  public JMethod getRebindCreateMethod() {
-    return rebindCreateMethod;
   }
 
   public JMethod getStaticImpl(JMethod method) {

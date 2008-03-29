@@ -31,7 +31,6 @@ import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
@@ -374,28 +373,20 @@ public class GenerateJavaAST {
             currentClass.methods.remove(2);
           } else {
             tryFindUpRefs(method);
-            JMethodBody body = (JMethodBody) method.getBody();
-            JClassLiteral classLit = program.getLiteralClass(currentClass);
-            body.getStatements().add(
-                new JReturnStatement(program, null, classLit));
+            implementMethod(method, program.getLiteralClass(currentClass));
           }
+        }
+
+        // Reimplement GWT.isClient() to return true
+        if (currentClass == program.getIndexedType("GWT")) {
+          JMethod method = program.getIndexedMethod("GWT.isClient");
+          implementMethod(method, program.getLiteralBoolean(true));
         }
 
         // Implement Class.desiredAssertionStatus
         if (currentClass == program.getTypeJavaLangClass()) {
           JMethod method = program.getIndexedMethod("Class.desiredAssertionStatus");
-          assert method != null;
-          JMethodBody body = (JMethodBody) method.getBody();
-          List<JStatement> statements = body.getStatements();
-
-          // There must always be at least 1 statement, because the method
-          // has a non-void return type.
-          assert statements.size() > 0;
-
-          SourceInfo info = statements.get(0).getSourceInfo();
-          statements.clear();
-          statements.add(new JReturnStatement(program, info,
-              program.getLiteralBoolean(enableAsserts)));
+          implementMethod(method, program.getLiteralBoolean(enableAsserts));
         }
 
         if (currentClass instanceof JEnumType) {
@@ -2190,6 +2181,22 @@ public class GenerateJavaAST {
       } else {
         return null;
       }
+    }
+
+    private void implementMethod(JMethod method, JExpression returnValue) {
+      assert method != null;
+      JMethodBody body = (JMethodBody) method.getBody();
+      List<JStatement> statements = body.getStatements();
+
+      SourceInfo info;
+      if (statements.size() > 0) {
+        info = statements.get(0).getSourceInfo();
+      } else {
+        info = method.getSourceInfo();
+      }
+
+      statements.clear();
+      statements.add(new JReturnStatement(program, info, returnValue));
     }
 
     private SourceInfo makeSourceInfo(Statement x) {

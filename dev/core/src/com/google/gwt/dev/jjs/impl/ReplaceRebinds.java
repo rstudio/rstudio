@@ -33,10 +33,16 @@ public class ReplaceRebinds {
 
   private class RebindVisitor extends JModVisitor {
 
+    private final JMethod rebindCreateMethod;
+
+    public RebindVisitor(JMethod rebindCreateMethod) {
+      this.rebindCreateMethod = rebindCreateMethod;
+    }
+
     // @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      if (method == program.getRebindCreateMethod()) {
+      if (method == rebindCreateMethod) {
         assert (x.getArgs().size() == 1);
         JExpression arg = x.getArgs().get(0);
         assert (arg instanceof JClassLiteral);
@@ -78,7 +84,8 @@ public class ReplaceRebinds {
   }
 
   private boolean execImpl() {
-    RebindVisitor rebinder = new RebindVisitor();
+    RebindVisitor rebinder = new RebindVisitor(
+        program.getIndexedMethod("GWT.create"));
     rebinder.accept(program);
     return rebinder.didChange();
   }

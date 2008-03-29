@@ -57,6 +57,7 @@ public final class GWT {
    *          instantiated
    * @return the new instance, which must be typecast to the requested class.
    */
+  @SuppressWarnings("unused")
   public static <T> T create(Class<?> classLiteral) {
     /*
      * In web mode, the compiler directly replaces calls to this method with a
@@ -128,16 +129,29 @@ public final class GWT {
   }-*/;
 
   /**
+   * Returns <code>true</code> when running inside the normal GWT environment,
+   * either in hosted mode or web mode. Returns <code>false</code> if this
+   * code is running in a plain JVM. This might happen when running shared code
+   * on the server, or during the bootstrap sequence of a GWTTestCase test.
+   */
+  public static boolean isClient() {
+    // Replaced with "true" by compiler and hosted mode.
+    return false;
+  }
+
+  /**
    * Determines whether or not the running program is script or bytecode.
    */
   public static boolean isScript() {
-    return true;
+    // Will return false in hosted mode.
+    return isClient() && true;
   }
 
   /**
    * Logs a message to the development shell logger in hosted mode. Calls are
    * optimized out in web mode.
    */
+  @SuppressWarnings("unused")
   public static void log(String message, Throwable e) {
     // intentionally empty in web mode.
   }
