@@ -37,6 +37,7 @@ import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -52,11 +53,9 @@ import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLabel;
 import com.google.gwt.dev.jjs.ast.JLabeledStatement;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -81,7 +80,6 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
-import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
@@ -585,35 +583,21 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       if (x.isStatic()) {
         print(CHARS_STATIC);
       }
-      if (shouldPrintMethodBody()) {
-        accept(x.getBody());
-      } else {
-        print("{ ... }");
-        newlineOpt();
+      if (!shouldPrintMethodBody()) {
+        print("{...}");
       }
     } else {
       printMethodHeader(x);
-      if (shouldPrintMethodBody() && !x.isAbstract()) {
-        space();
-        accept(x.getBody());
-      } else {
-        semi();
-        newlineOpt();
-      }
+    }
+
+    if (x.isAbstract() || !shouldPrintMethodBody()) {
+      semi();
+      newlineOpt();
+    } else {
+      accept(x.getBody());
     }
 
     return false;
-  }
-
-  @Override
-  public boolean visit(JMethodBody x, Context ctx) {
-    if (shouldPrintMethodBody()) {
-      accept(x.getBlock());
-      return false;
-    } else {
-      visitCollectionWithCommas(x.locals.iterator());
-      return false;
-    }
   }
 
   @Override
@@ -748,16 +732,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JsniFieldRef x, Context ctx) {
     return visit(x.getField(), ctx);
-  }
-
-  @Override
-  public boolean visit(JsniMethodBody x, Context ctx) {
-    print("/*-{");
-    // don't visit my block
-    newline();
-    print("}-*/");
-    semi();
-    return false;
   }
 
   @Override
