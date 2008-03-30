@@ -676,11 +676,14 @@ public class JsInliner {
   private static class InliningVisitor extends JsModVisitor {
     private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
     private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
+    private final Map<JsFunction, Integer> invocationCounts;
     private final Stack<List<JsName>> newLocalVariableStack = new Stack<List<JsName>>();
     private final JsProgram program;
 
-    public InliningVisitor(JsProgram program) {
+    public InliningVisitor(JsProgram program,
+        Map<JsFunction, Integer> invocationCounts) {
       this.program = program;
+      this.invocationCounts = invocationCounts;
     }
 
     /**
@@ -922,7 +925,8 @@ public class JsInliner {
        */
       int originalComplexity = complexity(x);
       int inlinedComplexity = complexity(op);
-      if (((float) inlinedComplexity / originalComplexity) > MAX_COMPLEXITY_INCREASE) {
+      double ratio = ((double) originalComplexity) / inlinedComplexity;
+      if (ratio > MAX_COMPLEXITY_INCREASE && isInvokedMoreThanOnce(f)) {
         return;
       }
 
@@ -944,6 +948,37 @@ public class JsInliner {
       functionStack.push(x);
       newLocalVariableStack.push(new ArrayList<JsName>());
       return true;
+    }
+
+    private boolean isInvokedMoreThanOnce(JsFunction f) {
+      Integer count = invocationCounts.get(f);
+      return count == null || count > 1;
+    }
+  }
+
+  /**
+   * Counts the number of times a function is invoked. Functions that only have
+   * a single call site in the whole program are inlined, regardless of
+   * complexity.
+   */
+  private static class InvocationCountingVisitor extends JsVisitor {
+    private final Map<JsFunction, Integer> invocationCount = new IdentityHashMap<JsFunction, Integer>();
+
+    public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
+      JsFunction function = isFunction(x.getQualifier());
+      if (function != null) {
+        Integer count = invocationCount.get(function);
+        if (count == null) {
+          count = 1;
+        } else {
+          count += 1;
+        }
+        invocationCount.put(function, count);
+      }
+    }
+
+    public Map<JsFunction, Integer> getInvocationCounts() {
+      return invocationCount;
     }
   }
 
@@ -1073,7 +1108,7 @@ public class JsInliner {
         lvalue = true;
       }
     }
-    
+
     public boolean parameterAsLValue() {
       return lvalue;
     }
@@ -1298,7 +1333,10 @@ public class JsInliner {
     RecursionCollector rc = new RecursionCollector();
     rc.accept(program);
 
-    InliningVisitor v = new InliningVisitor(program);
+    InvocationCountingVisitor icv = new InvocationCountingVisitor();
+    icv.accept(program);
+
+    InliningVisitor v = new InliningVisitor(program, icv.getInvocationCounts());
     v.blacklist(d.getRedefined());
     v.blacklist(rc.getRecursive());
     v.accept(program);
@@ -1475,7 +1513,7 @@ public class JsInliner {
    * Given an expression, determine if it it is a JsNameRef that refers to a
    * statically-defined JsFunction.
    */
-  // Javac 1.6.0_01 barfs on if staticRef is a JsNode<?>
+  // Javac 1.6.0_01 barfs if staticRef is a JsNode<?>
   @SuppressWarnings("unchecked")
   private static JsFunction isFunction(JsExpression e) {
     if (e instanceof JsNameRef) {
