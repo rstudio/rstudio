@@ -362,6 +362,8 @@ public class JavaToJavaScriptCompiler {
         allTypeDeclarations = null;
       }
 
+      // (3) Perform Java AST normalizations.
+
       /*
        * TODO: If we defer this until later, we could maybe use the results of
        * the assertions to enable more optimizations.
@@ -374,7 +376,7 @@ public class JavaToJavaScriptCompiler {
         AssertionRemover.exec(jprogram);
       }
 
-      // (3) Resolve all rebinds through GWT.create().
+      // Resolve all rebinds through GWT.create().
       ReplaceRebinds.exec(jprogram);
 
       if (options.isValidateOnly()) {
@@ -443,13 +445,13 @@ public class JavaToJavaScriptCompiler {
       jprogram.typeOracle.recomputeClinits();
       GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
 
-      // (8) Fix invalid constructs created during JS AST gen
+      // (8) Normalize the JS AST.
+      // Fix invalid constructs created during JS AST gen.
       JsNormalizer.exec(jsProgram);
-
-      // (9) Resolve all unresolved JsNameRefs
+      // Resolve all unresolved JsNameRefs.
       JsSymbolResolver.exec(jsProgram);
 
-      // (10) Apply optimizations to JavaScript AST
+      // (9) Optimize the JS AST.
       if (options.isAggressivelyOptimize()) {
         do {
           didChange = false;
@@ -463,7 +465,7 @@ public class JavaToJavaScriptCompiler {
         } while (didChange);
       }
 
-      // (11) Obfuscate
+      // (10) Obfuscate
       switch (options.getOutput()) {
         case OBFUSCATED:
           JsStringInterner.exec(jsProgram);
@@ -481,10 +483,13 @@ public class JavaToJavaScriptCompiler {
           throw new InternalCompilerException("Unknown output mode");
       }
 
-      // (12) Work around an IE7 bug
+      // (11) Perform any post-obfuscation normalizations.
+
+      // Work around an IE7 bug,
       // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
       JsIEBlockSizeVisitor.exec(jsProgram);
 
+      // (12) Generate the final output text.
       DefaultTextOutput out = new DefaultTextOutput(
           options.getOutput().shouldMinimize());
       JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
