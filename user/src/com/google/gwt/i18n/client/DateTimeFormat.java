@@ -18,6 +18,7 @@ package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
+import com.google.gwt.i18n.client.impl.DateRecord;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -588,24 +589,24 @@ public class DateTimeFormat {
    * {@link IllegalArgumentException} is thrown if either the text is empty or
    * if the parse does not consume all characters of the text.
    * 
+   * Dates are parsed leniently, so invalid dates will be wrapped around as
+   * needed. For example, February 30 will wrap to March 2.
+   * 
    * @param text the string being parsed
    * @return a parsed date/time value
    * @throws IllegalArgumentException if the entire text could not be converted
    *           into a number
    */
-  public Date parse(String text) {
-    Date curDate = new Date();
-    Date date = new Date(curDate.getYear(), curDate.getMonth(),
-        curDate.getDate());
-    int charsConsumed = parse(text, 0, date);
-    if (charsConsumed == 0 || charsConsumed < text.length()) {
-      throw new IllegalArgumentException(text);
-    }
-    return date;
+  public Date parse(String text) throws IllegalArgumentException {
+    return parse(text, false);
   }
 
   /**
-   * This method parses the input string, fill its value into a {@link Date}.
+   * This method modifies a {@link Date} object to reflect the date that is
+   * parsed from an input string.
+   * 
+   * Dates are parsed leniently, so invalid dates will be wrapped around as
+   * needed. For example, February 30 will wrap to March 2.
    * 
    * @param text the string that need to be parsed
    * @param start the character position in "text" where parsing should start
@@ -614,93 +615,41 @@ public class DateTimeFormat {
    * @return 0 if parsing failed, otherwise the number of characters advanced
    */
   public int parse(String text, int start, Date date) {
-    DateRecord cal = new DateRecord();
-    int[] parsePos = {start};
+    return parse(text, start, date, false);
+  }
 
-    // For parsing abutting numeric fields. 'abutPat' is the
-    // offset into 'pattern' of the first of 2 or more abutting
-    // numeric fields. 'abutStart' is the offset into 'text'
-    // where parsing the fields begins. 'abutPass' starts off as 0
-    // and increments each time we try to parse the fields.
-    int abutPat = -1; // If >=0, we are in a run of abutting numeric fields.
-    int abutStart = 0;
-    int abutPass = 0;
+  /**
+   * Parses text to produce a {@link Date} value. An
+   * {@link IllegalArgumentException} is thrown if either the text is empty or
+   * if the parse does not consume all characters of the text.
+   * 
+   * Dates are parsed strictly, so invalid dates will result in an
+   * {@link IllegalArgumentException}.
+   * 
+   * @param text the string being parsed
+   * @return a parsed date/time value
+   * @throws IllegalArgumentException if the entire text could not be converted
+   *           into a number
+   */
+  public Date parseStrict(String text) throws IllegalArgumentException {
+    return parse(text, true);
+  }
 
-    for (int i = 0; i < patternParts.size(); ++i) {
-      PatternPart part = patternParts.get(i);
-
-      if (part.count > 0) {
-        if (abutPat < 0 && part.abutStart) {
-          abutPat = i;
-          abutStart = start;
-          abutPass = 0;
-        }
-
-        // Handle fields within a run of abutting numeric fields. Take
-        // the pattern "HHmmss" as an example. We will try to parse
-        // 2/2/2 characters of the input text, then if that fails,
-        // 1/2/2. We only adjust the width of the leftmost field; the
-        // others remain fixed. This allows "123456" => 12:34:56, but
-        // "12345" => 1:23:45. Likewise, for the pattern "yyyyMMdd" we
-        // try 4/2/2, 3/2/2, 2/2/2, and finally 1/2/2.
-        if (abutPat >= 0) {
-          // If we are at the start of a run of abutting fields, then
-          // shorten this field in each pass. If we can't shorten
-          // this field any more, then the parse of this set of
-          // abutting numeric fields has failed.
-          int count = part.count;
-          if (i == abutPat) {
-            count -= abutPass++;
-            if (count == 0) {
-              return 0;
-            }
-          }
-
-          if (!subParse(text, parsePos, part, count, cal)) {
-            // If the parse fails anywhere in the run, back up to the
-            // start of the run and retry.
-            i = abutPat - 1;
-            parsePos[0] = abutStart;
-            continue;
-          }
-        } else {
-          // Handle non-numeric fields and non-abutting numeric fields.
-          abutPat = -1;
-          if (!subParse(text, parsePos, part, 0, cal)) {
-            return 0;
-          }
-        }
-      } else {
-        // Handle literal pattern characters. These are any
-        // quoted characters and non-alphabetic unquoted characters.
-        abutPat = -1;
-        // A run of white space in the pattern matches a run
-        // of white space in the input text.
-        if (part.text.charAt(0) == ' ') {
-          // Advance over run in input text.
-          int s = parsePos[0];
-          skipSpace(text, parsePos);
-
-          // Must see at least one white space char in input.
-          if (parsePos[0] > s) {
-            continue;
-          }
-        } else if (text.startsWith(part.text, parsePos[0])) {
-          parsePos[0] += part.text.length();
-          continue;
-        }
-
-        // We fall through to this point if the match fails.
-        return 0;
-      }
-    }
-
-    if (!cal.calcDate(date)) {
-      return 0;
-    }
-
-    // Return progress.
-    return parsePos[0] - start;
+  /**
+   * This method modifies a {@link Date} object to reflect the date that is
+   * parsed from an input string.
+   * 
+   * Dates are parsed strictly, so invalid dates will return 0. For example,
+   * February 30 will return 0 because February only has 28 days.
+   * 
+   * @param text the string that need to be parsed
+   * @param start the character position in "text" where parsing should start
+   * @param date the date object that will hold parsed value
+   * 
+   * @return 0 if parsing failed, otherwise the number of characters advanced
+   */
+  public int parseStrict(String text, int start, Date date) {
+    return parse(text, start, date, true);
   }
 
   /**
@@ -1145,6 +1094,137 @@ public class DateTimeFormat {
       pos[0] = start + bestMatchLength;
     }
     return bestMatch;
+  }
+
+  /**
+   * Parses text to produce a {@link Date} value. An
+   * {@link IllegalArgumentException} is thrown if either the text is empty or
+   * if the parse does not consume all characters of the text.
+   * 
+   * If using lenient parsing, certain invalid dates and times will be parsed.
+   * For example, February 32nd would be parsed as March 4th in lenient mode,
+   * but would throw an exception in non-lenient mode.
+   * 
+   * @param text the string being parsed
+   * @param strict true to be strict when parsing, false to be lenient
+   * @return a parsed date/time value
+   * @throws IllegalArgumentException if the entire text could not be converted
+   *           into a number
+   */
+  private Date parse(String text, boolean strict) {
+    Date curDate = new Date();
+    Date date = new Date(curDate.getYear(), curDate.getMonth(),
+        curDate.getDate());
+    int charsConsumed = parse(text, 0, date, strict);
+    if (charsConsumed == 0 || charsConsumed < text.length()) {
+      throw new IllegalArgumentException(text);
+    }
+    return date;
+  }
+
+  /**
+   * This method parses the input string and fills its value into a {@link Date}.
+   * 
+   * If using lenient parsing, certain invalid dates and times will be parsed.
+   * For example, February 32nd would be parsed as March 4th in lenient mode,
+   * but would return 0 in non-lenient mode.
+   * 
+   * @param text the string that need to be parsed
+   * @param start the character position in "text" where parsing should start
+   * @param date the date object that will hold parsed value
+   * @param strict true to be strict when parsingm false to be lenient
+   * 
+   * @return 0 if parsing failed, otherwise the number of characters advanced
+   */
+  private int parse(String text, int start, Date date, boolean strict) {
+    DateRecord cal = new DateRecord();
+    int[] parsePos = {start};
+
+    // For parsing abutting numeric fields. 'abutPat' is the
+    // offset into 'pattern' of the first of 2 or more abutting
+    // numeric fields. 'abutStart' is the offset into 'text'
+    // where parsing the fields begins. 'abutPass' starts off as 0
+    // and increments each time we try to parse the fields.
+    int abutPat = -1; // If >=0, we are in a run of abutting numeric fields.
+    int abutStart = 0;
+    int abutPass = 0;
+
+    for (int i = 0; i < patternParts.size(); ++i) {
+      PatternPart part = patternParts.get(i);
+
+      if (part.count > 0) {
+        if (abutPat < 0 && part.abutStart) {
+          abutPat = i;
+          abutStart = start;
+          abutPass = 0;
+        }
+
+        // Handle fields within a run of abutting numeric fields. Take
+        // the pattern "HHmmss" as an example. We will try to parse
+        // 2/2/2 characters of the input text, then if that fails,
+        // 1/2/2. We only adjust the width of the leftmost field; the
+        // others remain fixed. This allows "123456" => 12:34:56, but
+        // "12345" => 1:23:45. Likewise, for the pattern "yyyyMMdd" we
+        // try 4/2/2, 3/2/2, 2/2/2, and finally 1/2/2.
+        if (abutPat >= 0) {
+          // If we are at the start of a run of abutting fields, then
+          // shorten this field in each pass. If we can't shorten
+          // this field any more, then the parse of this set of
+          // abutting numeric fields has failed.
+          int count = part.count;
+          if (i == abutPat) {
+            count -= abutPass++;
+            if (count == 0) {
+              return 0;
+            }
+          }
+
+          if (!subParse(text, parsePos, part, count, cal)) {
+            // If the parse fails anywhere in the run, back up to the
+            // start of the run and retry.
+            i = abutPat - 1;
+            parsePos[0] = abutStart;
+            continue;
+          }
+        } else {
+          // Handle non-numeric fields and non-abutting numeric fields.
+          abutPat = -1;
+          if (!subParse(text, parsePos, part, 0, cal)) {
+            return 0;
+          }
+        }
+      } else {
+        // Handle literal pattern characters. These are any
+        // quoted characters and non-alphabetic unquoted characters.
+        abutPat = -1;
+        // A run of white space in the pattern matches a run
+        // of white space in the input text.
+        if (part.text.charAt(0) == ' ') {
+          // Advance over run in input text.
+          int s = parsePos[0];
+          skipSpace(text, parsePos);
+
+          // Must see at least one white space char in input.
+          if (parsePos[0] > s) {
+            continue;
+          }
+        } else if (text.startsWith(part.text, parsePos[0])) {
+          parsePos[0] += part.text.length();
+          continue;
+        }
+
+        // We fall through to this point if the match fails.
+        return 0;
+      }
+    }
+
+    // Calculate the date from the parts
+    if (!cal.calcDate(date, strict)) {
+      return 0;
+    }
+
+    // Return progress.
+    return parsePos[0] - start;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import java.util.Date;
  */
 public class DateTimeParse_en_Test extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_en";
   }
@@ -448,6 +449,86 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertEquals(dateOnly.getHours(), 16);
     assertEquals(dateOnly.getMinutes(), 0);
     assertEquals(dateOnly.getSeconds(), 0);
+  }
+
+  public void testLenientParsing() {
+    Date date = new Date();
+    DateTimeFormat fmt = DateTimeFormat.getFormat("yyyy.MM.dd hh:mm:ss.SSS aa ZZZZ");
+
+    // Valid date
+    String dateStr = "2000.01.01 05:06:07.123 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertTrue(fmt.parseStrict(dateStr, 0, date) > 0);
+
+    // Invalid Month
+    dateStr = "2000.13.01 05:06:07.123 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, fmt.parseStrict(dateStr, 0, date));
+
+    // Invalid Day
+    dateStr = "2000.01.32 05:06:07.123 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, fmt.parseStrict(dateStr, 0, date));
+
+    // Invalid Hour
+    dateStr = "2000.01.01 24:06:07.123 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, fmt.parseStrict(dateStr, 0, date));
+
+    // Invalid Minute
+    dateStr = "2000.01.01 05:60:07.123 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, fmt.parseStrict(dateStr, 0, date));
+
+    // Invalid Second
+    dateStr = "2000.01.01 05:06:60.123 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, fmt.parseStrict(dateStr, 0, date));
+
+    // Invalid Millisecond
+    dateStr = "2000.01.01 05:06:07.9998 PM +000";
+    assertTrue(fmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, fmt.parseStrict(dateStr, 0, date));
+
+    // Two Digit Year, but valid date
+    DateTimeFormat yyFmt = DateTimeFormat.getFormat("yy.MM.dd");
+    dateStr = "97.01.01";
+    assertTrue(yyFmt.parse(dateStr, 0, date) > 0);
+    assertTrue(yyFmt.parseStrict(dateStr, 0, date) > 0);
+
+    // Two Digit Year, invalid date
+    dateStr = "97.01.40";
+    assertTrue(yyFmt.parse(dateStr, 0, date) > 0);
+    assertEquals(0, yyFmt.parseStrict(dateStr, 0, date));
+
+    // Invalid date, throwing an exception
+    dateStr = "97.01.40";
+    try {
+      yyFmt.parseStrict(dateStr);
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success
+    }
+
+    // Ambiguous next century, valid date
+    Date today = new Date();
+    Date ambNext = new Date(today.getTime() + 86400000);
+    ambNext.setYear(today.getYear() + 20);
+    String sAmbNext = yyFmt.format(ambNext);
+    assertTrue(yyFmt.parse(sAmbNext, 0, date) > 0);
+    assertTrue(yyFmt.parseStrict(sAmbNext, 0, date) > 0);
+
+    // Ambiguous previous century, valid date
+    Date ambPrev = new Date(today.getTime() - 86400000);
+    ambPrev.setYear(today.getYear() + 20);
+    String sAmbPrev = yyFmt.format(ambPrev);
+    assertTrue(yyFmt.parse(sAmbPrev, 0, date) > 0);
+    assertTrue(yyFmt.parseStrict(sAmbPrev, 0, date) > 0);
+
+    // Ambiguous Year, invalid date
+    sAmbNext = sAmbNext.substring(0, 6) + "32";
+    assertTrue(yyFmt.parse(sAmbPrev, 0, date) > 0);
+    assertEquals(0, yyFmt.parseStrict(sAmbNext, 0, date));
   }
 
   public void testRFC3339() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,17 +14,20 @@
  * the License.
  */
 
-package com.google.gwt.i18n.client;
+package com.google.gwt.i18n.client.impl;
 
 import java.util.Date;
 
 /**
+ * Implementation detail of DateTimeFormat -- not a public API and subject to
+ * change.
+ * 
  * DateRecord class exposes almost the same set of interface as Date class with
  * only a few exceptions. The main purpose is the record all the information
  * during parsing phase and resolve them in a later time when all information
  * can be processed together.
  */
-class DateRecord extends Date {
+public class DateRecord extends Date {
 
   /*
    * The serial version UID is only defined because this class is implicitly
@@ -74,14 +77,19 @@ class DateRecord extends Date {
   /**
    * calcDate uses all the field available so far to fill a Date object. For
    * those information that is not provided, the existing value in 'date' will
-   * be kept. Ambiguouse year will be resolved after the date/time value are
+   * be kept. Ambiguous year will be resolved after the date/time values are
    * resolved.
    * 
-   * @param date The Date object being filled. Its value should be set to a
-   *          accetable default before pass in to this method
-   * @return true if sucessful, otherwise false.
+   * If the strict option is set to true, calcDate will calculate certain
+   * invalid dates by wrapping around as needed. For example, February 30 will
+   * wrap to March 2.
+   * 
+   * @param date The Date object being filled. Its value should be set to an
+   *          acceptable default before pass in to this method
+   * @param strict true to be strict when parsing
+   * @return true if successful, otherwise false.
    */
-  public boolean calcDate(Date date) {
+  public boolean calcDate(Date date, boolean strict) {
     // Year 0 is 1 BC, and so on.
     if (this.era == 0 && this.year > 0) {
       this.year = -(this.year - 1);
@@ -132,6 +140,38 @@ class DateRecord extends Date {
 
     if (this.milliseconds >= 0) {
       date.setTime(date.getTime() / 1000 * 1000 + this.milliseconds);
+    }
+
+    // If strict, verify that the original date fields match the calculated date
+    // fields. We do this before we set the timezone offset, which will skew all
+    // of the dates.
+    //
+    // We don't need to check the day of week as it is guaranteed to be correct
+    // or return false below.
+    if (strict) {
+      if ((this.year > Integer.MIN_VALUE)
+          && ((this.year - JS_START_YEAR) != date.getYear())) {
+        return false;
+      }
+      if ((this.month >= 0) && (this.month != date.getMonth())) {
+        return false;
+      }
+      if ((this.dayOfMonth >= 0) && (this.dayOfMonth != date.getDate())) {
+        return false;
+      }
+      // Times have well defined maximums
+      if (this.hours >= 24) {
+        return false;
+      }
+      if (this.minutes >= 60) {
+        return false;
+      }
+      if (this.seconds >= 60) {
+        return false;
+      }
+      if (this.milliseconds >= 1000) {
+        return false;
+      }
     }
 
     // Adjust time zone.
