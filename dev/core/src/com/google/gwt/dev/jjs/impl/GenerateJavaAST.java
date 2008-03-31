@@ -80,6 +80,7 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
@@ -1982,7 +1983,7 @@ public class GenerateJavaAST {
         map.propInits.add(new JsonObject.JsonPropInit(program, key, value));
       }
       JField mapField = program.createField(null, "enum$map".toCharArray(),
-          type, map.getType(), true, true, false);
+          type, map.getType(), true, Disposition.FINAL);
 
       // Initialize in clinit.
       JMethodBody clinitBody = (JMethodBody) type.methods.get(0).getBody();

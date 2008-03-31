@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
@@ -353,14 +354,14 @@ public class JProgram extends JNode {
 
   public JField createField(SourceInfo info, char[] name,
       JReferenceType enclosingType, JType type, boolean isStatic,
-      boolean isFinal, boolean isCompileTimeConstant) {
+      Disposition disposition) {
     assert (name != null);
     assert (enclosingType != null);
     assert (type != null);
 
     String sname = String.valueOf(name);
     JField x = new JField(this, info, sname, enclosingType, type, isStatic,
-        isFinal, isCompileTimeConstant);
+        disposition);
 
     if (indexedTypes.containsValue(enclosingType)) {
       indexedFields.put(enclosingType.getShortName() + '.' + sname, x);
@@ -576,7 +577,7 @@ public class JProgram extends JNode {
   public JField getNullField() {
     if (nullField == null) {
       nullField = new JField(this, null, "nullField", null, typeNull, false,
-          true, false);
+          Disposition.FINAL);
     }
     return nullField;
   }

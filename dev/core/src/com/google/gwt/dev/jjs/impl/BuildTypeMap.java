@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.js.JsAbstractSymbolResolver;
 import com.google.gwt.dev.js.JsParser;
@@ -352,11 +353,20 @@ public class BuildTypeMap {
           && (binding.type.isBaseType());
       assert (type instanceof JPrimitiveType || !isCompileTimeConstant);
 
-      JField field = program.createField(info, binding.name, enclosingType,
-          type, binding.isStatic(), binding.isFinal(), isCompileTimeConstant);
-      if (binding.isVolatile()) {
-        field.setVolatile();
+      assert (!binding.isFinal() || !binding.isVolatile());
+      Disposition disposition;
+      if (isCompileTimeConstant) {
+        disposition = Disposition.COMPILE_TIME_CONSTANT;
+      } else if (binding.isFinal()) {
+        disposition = Disposition.FINAL;
+      } else if (binding.isVolatile()) {
+        disposition = Disposition.VOLATILE;
+      } else {
+        disposition = Disposition.NONE;
       }
+
+      JField field = program.createField(info, binding.name, enclosingType,
+          type, binding.isStatic(), disposition);
       typeMap.put(binding, field);
       return field;
     }
@@ -365,7 +375,7 @@ public class BuildTypeMap {
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
       JField field = program.createField(null, binding.name, enclosingType,
-          type, false, true, false);
+          type, false, Disposition.FINAL);
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
       }

@@ -73,7 +73,9 @@ public class Finalizer {
 
     @Override
     public void endVisit(JField x, Context ctx) {
-      maybeFinalize(x);
+      if (!x.isVolatile()) {
+        maybeFinalize(x);
+      }
     }
 
     @Override
@@ -107,9 +109,8 @@ public class Finalizer {
 
     private void setFinal(CanBeSetFinal x) {
       x.setFinal();
-      if (x.isFinal()) {
-        didChange = true;
-      }
+      assert x.isFinal();
+      didChange = true;
     }
   }
   /**

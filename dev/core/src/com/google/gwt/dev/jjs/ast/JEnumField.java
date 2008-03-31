@@ -26,7 +26,7 @@ public class JEnumField extends JField {
 
   public JEnumField(JProgram program, SourceInfo info, String name,
       int ordinal, JEnumType enclosingType, JClassType type) {
-    super(program, info, name, enclosingType, type, true, true, false);
+    super(program, info, name, enclosingType, type, true, Disposition.FINAL);
     this.ordinal = ordinal;
   }
 

@@ -23,6 +23,25 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
     CanHaveInitializer {
 
+  /**
+   * Determines whether the variable is final, volatile, or neither.
+   */
+  public static enum Disposition {
+    COMPILE_TIME_CONSTANT, FINAL, NONE, VOLATILE;
+
+    public boolean isFinal() {
+      return this == COMPILE_TIME_CONSTANT || this == FINAL;
+    }
+
+    private boolean isCompileTimeConstant() {
+      return this == COMPILE_TIME_CONSTANT;
+    }
+
+    private boolean isVolatile() {
+      return this == VOLATILE;
+    }
+  }
+
   private final JReferenceType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
@@ -30,12 +49,13 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
 
   JField(JProgram program, SourceInfo info, String name,
       JReferenceType enclosingType, JType type, boolean isStatic,
-      boolean isFinal, boolean isCompileTimeConstant) {
-    super(program, info, name, type, isFinal);
+      Disposition disposition) {
+    super(program, info, name, type, disposition.isFinal());
     this.enclosingType = enclosingType;
     this.isStatic = isStatic;
-    this.isCompileTimeConstant = isCompileTimeConstant;
-    assert (isFinal || !isCompileTimeConstant);
+    this.isCompileTimeConstant = disposition.isCompileTimeConstant();
+    this.isVolatile = disposition.isVolatile();
+    // Disposition is not cached because we can be set final later.
   }
 
   public JReferenceType getEnclosingType() {
@@ -53,21 +73,24 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
     return isCompileTimeConstant;
   }
 
-  @Override
-  public boolean isFinal() {
-    return !isVolatile && super.isFinal();
-  }
-
   public boolean isStatic() {
     return isStatic;
   }
 
-  public void setInitializer(JExpression initializer) {
-    this.initializer = initializer;
+  public boolean isVolatile() {
+    return isVolatile;
   }
 
-  public void setVolatile() {
-    isVolatile = true;
+  @Override
+  public void setFinal() {
+    if (isVolatile()) {
+      throw new IllegalStateException("Volatile fields cannot be set final");
+    }
+    super.setFinal();
+  }
+
+  public void setInitializer(JExpression initializer) {
+    this.initializer = initializer;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
