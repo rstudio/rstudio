@@ -53,7 +53,7 @@ public class WindowTest extends GWTTestCase {
    * Tests the ability of the Window to get the client size correctly with and
    * without visible scroll bars.
    */
-  public void disabledTestGetClientSize() {
+  public void testGetClientSize() {
     // Get the dimensions without any scroll bars
     Window.enableScrolling(false);
     final int oldClientHeight = Window.getClientHeight();
