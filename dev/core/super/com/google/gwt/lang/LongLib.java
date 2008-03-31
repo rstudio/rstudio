@@ -453,15 +453,6 @@ public class LongLib {
     return makeFromBits(highBits(a) ^ highBits(b), lowBits(a) ^ lowBits(b));
   }
 
-  /**
-   * Because this is a code gen type, this function will keep the double[] type
-   * from being pruned during optimizations. If double[] gets pruned, bad stuff
-   * happens.
-   */
-  static double[] saveDoubleArrayFromPruning() {
-    return new double[2];
-  }
-
   static long toLong(double[] a) {
     return (long) a[HIGH] + (long) a[LOW];
   }

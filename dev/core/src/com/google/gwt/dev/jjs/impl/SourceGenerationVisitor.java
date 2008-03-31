@@ -22,10 +22,8 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
-import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.util.TextOutput;
 
@@ -144,15 +142,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
   @Override
   protected void printMemberFinalFlag(CanBeFinal x) {
     // suppress final flags
-  }
-
-  @Override
-  protected void printTypeName(JType type) {
-    if (type instanceof JNullType) {
-      print("Object");
-    } else {
-      super.printTypeName(type);
-    }
   }
 
   @Override

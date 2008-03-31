@@ -425,11 +425,8 @@ public class Pruner {
       return false;
     }
 
-    private <T extends CanBeStatic & HasEnclosingType> boolean pruneViaNoninstantiability(
-        boolean isInstantiated, T it) {
-      if (it.getEnclosingType() == program.getIndexedType("Array")) {
-        return false;
-      }
+    private boolean pruneViaNoninstantiability(boolean isInstantiated,
+        CanBeStatic it) {
       return (!isInstantiated && !it.isStatic());
     }
   }
@@ -472,6 +469,8 @@ public class Pruner {
         }
       }
 
+      // Rescue the base Array type
+      rescue(program.getIndexedType("Array"), true, isInstantiated);
       return false;
     }
 
@@ -762,8 +761,24 @@ public class Pruner {
      * @see com.google.gwt.core.client.JavaScriptObject
      */
     private void maybeRescueJavaScriptObjectPassingIntoJava(JType type) {
+      boolean doIt = false;
       if (program.isJavaScriptObject(type)
-          || type == program.getTypeJavaLangObject()) {
+          || type == program.getTypeJavaLangString()) {
+        doIt = true;
+      } else if (type instanceof JArrayType) {
+        /*
+         * Hackish: in our own JRE we sometimes create "not quite baked" arrays
+         * in JavaScript for expediency.
+         */
+        JArrayType arrayType = (JArrayType) type;
+        JType elementType = arrayType.getElementType();
+        if (elementType instanceof JPrimitiveType
+            || elementType == program.getTypeJavaLangString()
+            || program.isJavaScriptObject(elementType)) {
+          doIt = true;
+        }
+      }
+      if (doIt) {
         rescue((JReferenceType) type, true, true);
       }
     }
@@ -821,12 +836,13 @@ public class Pruner {
     private void rescueByConcat(JType type) {
       JClassType stringType = program.getTypeJavaLangString();
       JPrimitiveType charType = program.getTypePrimitiveChar();
-      if (type instanceof JReferenceType && type != stringType) {
+      if (type instanceof JReferenceType && type != stringType
+          && type != program.getTypeNull()) {
         /*
          * Any reference types (except String, which works by default) that take
          * part in a concat must rescue java.lang.Object.toString().
          * 
-         * TODO: can we narrow the focus by walking up the type heirarchy or
+         * TODO: can we narrow the focus by walking up the type hierarchy or
          * doing explicit toString calls?
          */
         JMethod toStringMethod = program.getIndexedMethod("Object.toString");

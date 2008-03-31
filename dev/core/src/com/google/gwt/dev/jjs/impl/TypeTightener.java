@@ -17,18 +17,17 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
-import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -95,19 +94,6 @@ public class TypeTightener {
    * Replaces dangling null references with dummy calls.
    */
   public class FixDanglingRefsVisitor extends JModVisitor {
-
-    @Override
-    public void endVisit(JArrayRef x, Context ctx) {
-      JExpression instance = x.getInstance();
-      if (instance.getType() == typeNull) {
-        if (!instance.hasSideEffects()) {
-          instance = program.getLiteralNull();
-        }
-        JArrayRef arrayRef = new JArrayRef(program, x.getSourceInfo(),
-            instance, program.getLiteralInt(0));
-        ctx.replaceMe(arrayRef);
-      }
-    }
 
     @Override
     public void endVisit(JFieldRef x, Context ctx) {
