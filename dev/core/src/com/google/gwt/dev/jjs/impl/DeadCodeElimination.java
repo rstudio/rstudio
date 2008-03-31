@@ -140,13 +140,6 @@ public class DeadCodeElimination {
             evalConcat(lhs, rhs, ctx);
           }
           break;
-        case DIV:
-        case ASG_DIV:
-          if (x.getType() != program.getTypePrimitiveFloat()
-              && x.getType() != program.getTypePrimitiveDouble()) {
-            divToShift(x, lhs, rhs, ctx);
-          }
-          break;
         default:
           if (op.isAssignment()) {
             lvalues.remove(lhs);
@@ -698,40 +691,6 @@ public class DeadCodeElimination {
         }
       }
       return true;
-    }
-
-    private void divToShift(JBinaryOperation x, JExpression lhs,
-        JExpression rhs, Context ctx) {
-      long divisor;
-      if (rhs instanceof JIntLiteral) {
-        divisor = ((JIntLiteral) rhs).getValue();
-      } else if (rhs instanceof JLongLiteral) {
-        divisor = ((JLongLiteral) rhs).getValue();
-      } else {
-        return;
-      }
-
-      if (divisor == 1) {
-        ctx.replaceMe(lhs);
-        return;
-      } else if (divisor == -1 && !x.getOp().isAssignment()) {
-        JPrefixOperation negOp = new JPrefixOperation(program,
-            x.getSourceInfo(), JUnaryOperator.NEG, lhs);
-        ctx.replaceMe(negOp);
-        return;
-      }
-
-      if (divisor > 1 && divisor == Long.highestOneBit(divisor)) {
-        // It's a power of two, convert to a shift operation.
-        int shift = Long.numberOfTrailingZeros(divisor);
-        JBinaryOperator op = x.getOp().isAssignment() ? JBinaryOperator.ASG_SHR
-            : JBinaryOperator.SHR;
-        JBinaryOperation binOp = new JBinaryOperation(program,
-            x.getSourceInfo(), lhs.getType(), op, lhs,
-            program.getLiteralInt(shift));
-        ctx.replaceMe(binOp);
-        return;
-      }
     }
 
     private void evalConcat(JExpression lhs, JExpression rhs, Context ctx) {
