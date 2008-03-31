@@ -30,9 +30,29 @@ import java.util.Set;
  */
 public class JTypeOracle {
 
+  /**
+   * Checks a clinit method to find out a few things.
+   * 
+   * <ol>
+   * <li>What other clinits it calls.</li>
+   * <li>If it runs any code other than clinit calls.</li>
+   * </ol>
+   * 
+   * This is used to remove "dead clinit cycles" where self-referential cycles
+   * of empty clinits can keep each other alive.
+   */
   private static final class CheckClinitVisitor extends JVisitor {
 
     private final Set<JReferenceType> clinitTargets = new HashSet<JReferenceType>();
+
+    /**
+     * Tracks whether any non-clinit code is run in this clinit. This is only
+     * reliable because we explicitly visit all AST structures that might
+     * contain non-clinit-calling code.
+     * 
+     * @see #canContainClinitCalls(JExpression)
+     * @see #canContainClinitCalls(JStatement)
+     */
     private boolean hasNonClinitCalls = false;
 
     public JReferenceType[] getClinitTargets() {
@@ -458,16 +478,13 @@ public class JTypeOracle {
     }
 
     JMethod method = type.methods.get(0);
+    assert (JProgram.isClinit(method));
     CheckClinitVisitor v = new CheckClinitVisitor();
     v.accept(method);
     if (v.hasNonClinitCalls()) {
       return true;
     }
     for (JReferenceType target : v.getClinitTargets()) {
-      if (target == null) {
-        // Has an actual clinit.
-        return true;
-      }
       if (alreadySeen.contains(target)) {
         // Ignore this call for now.
         continue;
