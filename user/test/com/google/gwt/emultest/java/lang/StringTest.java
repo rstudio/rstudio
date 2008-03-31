@@ -26,6 +26,17 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class StringTest extends GWTTestCase {
 
+  /**
+   * TODO(jat): use volatile fields instead of this.
+   */
+  private static <T> T hideFromCompiler(T value) {
+    int i = 7;
+    while (i > 0) {
+      i -= 2;
+    }
+    return (i & 1) != 0 ? value : null;
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
@@ -41,42 +52,49 @@ public class StringTest extends GWTTestCase {
   public void testCodePoint() {
     String testPlain = hideFromCompiler("CAT");
     String testUnicode = hideFromCompiler("C\uD801\uDF00T");
-    assertEquals("CAT", new String(new int[] { 'C', 'A', 'T' }, 0, 3));
-    assertEquals("C\uD801\uDF00T", new String(new int[] { 'C', 67328, 'T' }, 0, 3));
-    assertEquals("\uD801\uDF00", new String(new int[] { 'C', 67328, 'T' }, 1, 1));
+    assertEquals("CAT", new String(new int[] {'C', 'A', 'T'}, 0, 3));
+    assertEquals("C\uD801\uDF00T",
+        new String(new int[] {'C', 67328, 'T'}, 0, 3));
+    assertEquals("\uD801\uDF00", new String(new int[] {'C', 67328, 'T'}, 1, 1));
     assertEquals(65, testPlain.codePointAt(1));
-    assertEquals("codePointAt fails on surrogate pair", 67328, testUnicode.codePointAt(1));
+    assertEquals("codePointAt fails on surrogate pair", 67328,
+        testUnicode.codePointAt(1));
     assertEquals(65, testPlain.codePointBefore(2));
-    assertEquals("codePointBefore fails on surrogate pair", 67328, testUnicode.codePointBefore(3));
+    assertEquals("codePointBefore fails on surrogate pair", 67328,
+        testUnicode.codePointBefore(3));
     assertEquals("codePointCount(plain): ", 3, testPlain.codePointCount(0, 3));
-    assertEquals("codePointCount(unicode): ", 3, testUnicode.codePointCount(0, 4));
+    assertEquals("codePointCount(unicode): ", 3, testUnicode.codePointCount(0,
+        4));
     assertEquals(1, testPlain.codePointCount(1, 2));
     assertEquals(1, testUnicode.codePointCount(1, 2));
     assertEquals(2, testUnicode.codePointCount(2, 4));
     assertEquals(1, testUnicode.offsetByCodePoints(0, 1));
-    assertEquals("offsetByCodePoints(1,1): ", 3, testUnicode.offsetByCodePoints(1, 1));
-    assertEquals("offsetByCodePoints(2,1): ", 3, testUnicode.offsetByCodePoints(2, 1));
+    assertEquals("offsetByCodePoints(1,1): ", 3,
+        testUnicode.offsetByCodePoints(1, 1));
+    assertEquals("offsetByCodePoints(2,1): ", 3,
+        testUnicode.offsetByCodePoints(2, 1));
     assertEquals(4, testUnicode.offsetByCodePoints(3, 1));
     assertEquals(1, testUnicode.offsetByCodePoints(2, -1));
     assertEquals(1, testUnicode.offsetByCodePoints(3, -1));
-    assertEquals("offsetByCodePoints(4.-1): ", 3, testUnicode.offsetByCodePoints(4, -1));
+    assertEquals("offsetByCodePoints(4.-1): ", 3,
+        testUnicode.offsetByCodePoints(4, -1));
     assertEquals(0, testUnicode.offsetByCodePoints(3, -2));
     /*
      * The next line contains a Unicode character outside the base multilingual
-     * plane -- it may not show properly depending on your fonts, etc.  The
-     * character is the Gothic letter Faihu, or U+10346.  We use it to verify
+     * plane -- it may not show properly depending on your fonts, etc. The
+     * character is the Gothic letter Faihu, or U+10346. We use it to verify
      * that multi-char UTF16 characters are handled properly.
      * 
-     * In Windows 2000, registry changes are required to support non-BMP characters
-     * (or surrogates in general) -- surrogates are not supported before Win2k and
-     * they are enabled by default in WinXP and later.
+     * In Windows 2000, registry changes are required to support non-BMP
+     * characters (or surrogates in general) -- surrogates are not supported
+     * before Win2k and they are enabled by default in WinXP and later.
      * 
-     * [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\LanguagePack]
-     *     SURROGATE=(REG_DWORD)0x00000002
-     *     
-     * [HKEY_CURRENT_USER\Software\Microsoft\Internet Explorer\International\Scripts\42]
-     *     IEFixedFontName=[Surrogate Font Face Name]
-     *     IEPropFontName=[Surrogate Font Face Name] 
+     * [HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows
+     * NT\CurrentVersion\LanguagePack] SURROGATE=(REG_DWORD)0x00000002
+     * 
+     * [HKEY_CURRENT_USER\Software\Microsoft\Internet
+     * Explorer\International\Scripts\42] IEFixedFontName=[Surrogate Font Face
+     * Name] IEPropFontName=[Surrogate Font Face Name]
      */
     String nonBmpChar = hideFromCompiler("𐍆");
     assertEquals("\uD800\uDF46", nonBmpChar);
@@ -101,7 +119,7 @@ public class StringTest extends GWTTestCase {
     s += c;
     assertEquals("abcd", s);
   }
-  
+
   public void testConstructor() {
     char[] chars = {'a', 'b', 'c', 'd', 'e', 'f'};
     String constant = String.valueOf(new char[] {'a', 'b', 'c', 'd', 'e', 'f'});
@@ -110,7 +128,8 @@ public class StringTest extends GWTTestCase {
     assertEquals(constant, new String(chars), constant);
     assertEquals(shortString, new String(chars, 2, 3), shortString);
     assertEquals("", new String(hideFromCompiler("")));
-    assertEquals("", new String(new String(new String(new String(hideFromCompiler(""))))));
+    assertEquals("", new String(new String(new String(new String(
+        hideFromCompiler(""))))));
     assertEquals("", new String(new char[] {}));
     StringBuffer buf = new StringBuffer();
     buf.append('c');
@@ -125,8 +144,8 @@ public class StringTest extends GWTTestCase {
   }
 
   /*
-   * TODO: needs rewriting to avoid compiler optimizations.
-   *     (StringBuffer tests are ok)
+   * TODO: needs rewriting to avoid compiler optimizations. (StringBuffer tests
+   * are ok)
    */
   public void testContains() {
     // at the beginning
@@ -239,7 +258,7 @@ public class StringTest extends GWTTestCase {
     assertEquals(10, x.lastIndexOf("f"));
     assertEquals(-1, x.lastIndexOf("f", 1));
   }
-  
+
   public void testLength() {
     String abc = String.valueOf(new char[] {'a', 'b', 'c'});
     assertEquals(3, abc.length());
@@ -319,30 +338,32 @@ public class StringTest extends GWTTestCase {
       assertEquals(toS(to), toS(from).replace(from, to));
     }
     // issue 1480
-    String exampleXd
-        = String.valueOf(new char[] {'e', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'x', 'd'});
+    String exampleXd = String.valueOf(new char[] {
+        'e', 'x', 'a', 'm', 'p', 'l', 'e', ' ', 'x', 'd'});
     assertEquals("example xd", exampleXd.replace('\r', ' ').replace('\n', ' '));
-    String dogFood = String.valueOf(new char[] {'d', 'o', 'g', '\u0120', 'f', 'o', 'o', 'd'});
+    String dogFood = String.valueOf(new char[] {
+        'd', 'o', 'g', '\u0120', 'f', 'o', 'o', 'd'});
     assertEquals("dog food", dogFood.replace('\u0120', ' '));
-    String testStr = String.valueOf(new char[] {'\u1111', 'B', '\u1111', 'B', '\u1111', 'B'});
+    String testStr = String.valueOf(new char[] {
+        '\u1111', 'B', '\u1111', 'B', '\u1111', 'B'});
     assertEquals("ABABAB", testStr.replace('\u1111', 'A'));
   }
 
   public void testReplaceAll() {
-    String regex = hideFromCompiler("*[").replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])",
-        "\\\\$1");
+    String regex = hideFromCompiler("*[").replaceAll(
+        "([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])", "\\\\$1");
     assertEquals("\\*\\[", regex);
-    String replacement = hideFromCompiler("\\").replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$",
-        "\\\\$");
+    String replacement = hideFromCompiler("\\").replaceAll("\\\\", "\\\\\\\\").replaceAll(
+        "\\$", "\\\\$");
     assertEquals("\\\\", replacement);
     assertEquals("+1", hideFromCompiler("*[1").replaceAll(regex, "+"));
-    String x1 = String.valueOf(new char[] {'x', 'x', 'x', 'a', 'b', 'c', 'x', 'x', 'd', 'e', 'x',
-    'f'});
+    String x1 = String.valueOf(new char[] {
+        'x', 'x', 'x', 'a', 'b', 'c', 'x', 'x', 'd', 'e', 'x', 'f'});
     assertEquals("abcdef", x1.replaceAll("x*", ""));
-    String x2 = String.valueOf(new char[] {'1', 'a', 'b', 'c', '1', '2', '3', 'd', 'e', '1', '2',
-        '3', '4', 'f'});
-    assertEquals("1\\1abc123\\123de1234\\1234f", x2.replaceAll(
-        "([1234]+)", "$1\\\\$1"));
+    String x2 = String.valueOf(new char[] {
+        '1', 'a', 'b', 'c', '1', '2', '3', 'd', 'e', '1', '2', '3', '4', 'f'});
+    assertEquals("1\\1abc123\\123de1234\\1234f", x2.replaceAll("([1234]+)",
+        "$1\\\\$1"));
     String x3 = String.valueOf(new char[] {'x', ' ', ' ', 'x'});
     assertEquals("\n  \n", x3.replaceAll("x", "\n"));
     String x4 = String.valueOf(new char[] {'\n', ' ', ' ', '\n'});
@@ -381,7 +402,7 @@ public class StringTest extends GWTTestCase {
     assertEquals("\\$1bar", hideFromCompiler("foobar").replace("foo", "\\$1"));
     assertEquals("\\1", hideFromCompiler("*[)1").replace("*[)", "\\"));
   }
-  
+
   public void testStartsWith() {
     String haystack = "abcdefghi";
     assertTrue(haystack.startsWith("abc"));

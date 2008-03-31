@@ -221,23 +221,6 @@ public abstract class GWTTestCase extends TestCase {
           "This test case does not support asynchronous mode.");
     }
   }
-
-  /**
-   * Wrap a constant in such a way as to prevent the compiler from inlining it.
-   * 
-   * NOTE: if you change this, update the one in gwt-user/core/src as well.
-   * 
-   * @param <T>
-   * @param value to wrap
-   * @return same value, 
-   */
-  protected <T> T hideFromCompiler(T value) {
-    int i = 7;
-    while (i > 0) {
-      i -= 2;
-    }
-    return (i & 1) != 0 ? value : null;
-  }
   
   protected boolean supportsAsync() {
     return true;
