@@ -24,32 +24,28 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class NativeLongTest extends GWTTestCase {
   /*
-   * These silly looking constants are made into public fields so that the
-   * compiler will not constant fold them. The problem is that if you write
-   * assertEquals(2L, 4L/2L), the compiler will emit assertEquals(2L, 2L).
+   * These constants are done as volatile fields so that the compiler will not
+   * constant fold them. The problem is that if you write assertEquals(2L,
+   * 4L/2L), the compiler will emit assertEquals(2L, 2L).
    */
-  private static long LONG_1234 = 0x1234123412341234L;
-  private static long LONG_1234_DECIMAL = 1234123412341234L;
-  private static long LONG_1234000012340000 = 0x1234000012340000L;
-  private static long LONG_5DEECE66D = 0x5DEECE66DL;
-  private static long LONG_B = 0xBL;
-  private static long LONG_DEADBEEF = 0xdeadbeefdeadbeefL;
-  private static long LONG_DEADBEEF12341234 = 0xdeadbeef12341234L;
-  private static long LONG_FFFFFFFF = 0xFFFFFFFFL;
-  private static long LONG_ONE = 1L;
-  private static long LONG_THREE = 3L;
-  private static long LONG_TWO = 2L;
-  private static long LONG_TWO_PWR_32 = 0x100000000L;
-  private static long LONG_ZERO = 0L;
+  private static volatile long LONG_100 = 100L;
+  private static volatile long LONG_1234 = 0x1234123412341234L;
+  private static volatile long LONG_1234_DECIMAL = 1234123412341234L;
+  private static volatile long LONG_1234000012340000 = 0x1234000012340000L;
+  private static volatile long LONG_5DEECE66D = 0x5DEECE66DL;
+  private static volatile long LONG_B = 0xBL;
+  private static volatile long LONG_DEADBEEF = 0xdeadbeefdeadbeefL;
+  private static volatile long LONG_DEADBEEF12341234 = 0xdeadbeef12341234L;
+  private static volatile long LONG_FFFFFFFF = 0xFFFFFFFFL;
+  private static volatile long LONG_ONE = 1L;
+  private static volatile long LONG_THREE = 3L;
+  private static volatile long LONG_TWO = 2L;
+  private static volatile long LONG_TWO_PWR_32 = 0x100000000L;
+  private static volatile long LONG_ZERO = 0L;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
-  }
-
-  @Override
-  public void setUp() {
-    pretendToChangeTheConstants();
   }
 
   public void testArithmetic() {
@@ -83,7 +79,6 @@ public class NativeLongTest extends GWTTestCase {
 
   public void testFor64Bits() {
     long x = LONG_1234;
-    pretendToChangeTheConstants();
     long y = LONG_1234 + LONG_ONE;
     long z = y - x;
     // with longs implemented as doubles, z will be 0 instead of 1
@@ -150,6 +145,12 @@ public class NativeLongTest extends GWTTestCase {
     assertEquals(1L, LONG_TWO_PWR_32 >>> 32);
   }
 
+  public void testStringAppend() {
+    long x = LONG_100;
+    assertEquals("100 is a long", x + " is a long");
+    assertEquals("a long: 100", "a long: " + x);
+  }
+
   // Issue 1198
   public void testToHexString() {
     assertEquals("deadbeef12341234", Long.toHexString(LONG_DEADBEEF12341234));
@@ -157,34 +158,5 @@ public class NativeLongTest extends GWTTestCase {
 
   public void testToString() {
     assertEquals("1234123412341234", "" + LONG_1234_DECIMAL);
-  }
-
-  /**
-   * This method tries to trick the compiler into thinking the global constants
-   * are not fixed.
-   */
-  private void pretendToChangeTheConstants() {
-    int i = 10;
-    while (i > 1) {
-      i /= 2;
-    }
-    if (i == 1) {
-      return;
-    }
-
-    // not reached
-    ++LONG_1234;
-    ++LONG_1234_DECIMAL;
-    ++LONG_1234000012340000;
-    ++LONG_5DEECE66D;
-    ++LONG_B;
-    ++LONG_DEADBEEF;
-    ++LONG_DEADBEEF12341234;
-    ++LONG_FFFFFFFF;
-    ++LONG_ONE;
-    ++LONG_THREE;
-    ++LONG_TWO;
-    ++LONG_TWO_PWR_32;
-    ++LONG_ZERO;
   }
 }
