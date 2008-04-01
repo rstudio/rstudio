@@ -19,10 +19,37 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Test Case for {@link Cookies}.
  */
 public class WindowTest extends GWTTestCase {
+
+  private static native String getNodeName(Element elem) /*-{
+     return (elem.nodeName || "").toLowerCase();
+   }-*/;
+
+  /**
+   * Removes all elements in the body, except scripts and iframes.
+   */
+  private static void clearBodyContent() {
+    Element bodyElem = RootPanel.getBodyElement();
+
+    List<Element> toRemove = new ArrayList<Element>();
+    for (int i = 0, n = DOM.getChildCount(bodyElem); i < n; ++i) {
+      Element elem = DOM.getChild(bodyElem, i);
+      String nodeName = getNodeName(elem);
+      if (!"script".equals(nodeName) && !"iframe".equals(nodeName)) {
+        toRemove.add(elem);
+      }
+    }
+
+    for (int i = 0, n = toRemove.size(); i < n; ++i) {
+      DOM.removeChild(bodyElem, toRemove.get(i));
+    }
+  }
 
   @Override
   public String getModuleName() {
@@ -30,8 +57,8 @@ public class WindowTest extends GWTTestCase {
   }
 
   public void testLocation() {
-    // testing reload, replace, and assign seemed to hang our junit harness. Therefore
-    // only testing subset of Location that is testable.
+    // testing reload, replace, and assign seemed to hang our junit harness.
+    // Therefore only testing subset of Location that is testable.
 
     // As we have no control over these values we cannot assert much about them.
     String hash = Window.Location.getHash();
@@ -53,7 +80,12 @@ public class WindowTest extends GWTTestCase {
    * Tests the ability of the Window to get the client size correctly with and
    * without visible scroll bars.
    */
-  public void disabledTestGetClientSize() {
+  public void testGetClientSize() {
+
+    // NOTE: We must clear the DOM here so that previous tests do not pollute
+    // our results.
+    clearBodyContent();
+
     // Get the dimensions without any scroll bars
     Window.enableScrolling(false);
     final int oldClientHeight = Window.getClientHeight();
