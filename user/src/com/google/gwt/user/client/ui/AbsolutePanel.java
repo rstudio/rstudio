@@ -52,7 +52,7 @@ public class AbsolutePanel extends ComplexPanel {
    */
   public AbsolutePanel() {
     this(DOM.createDiv());
-    
+
     // Setting the panel's position style to 'relative' causes it to be treated
     // as a new positioning context for its children.
     DOM.setStyleAttribute(getElement(), "position", "relative");
@@ -60,12 +60,13 @@ public class AbsolutePanel extends ComplexPanel {
   }
 
   /**
-   * Creates an AbsolutePanel with the given element. This is package-protected
-   * so that it can be used by {@link RootPanel}.
+   * Creates an AbsolutePanel with the given element. This is protected so that
+   * it can be used by {@link RootPanel} or a subclass that wants to substitute
+   * another element. The element is presumed to be a &lt;div&gt;.
    * 
-   * @param elem the element to be used for this panel
+   * @param elem the element to be used for this panel.
    */
-  AbsolutePanel(Element elem) {
+  protected AbsolutePanel(Element elem) {
     setElement(elem);
   }
 
