@@ -23,7 +23,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public abstract class JVariable extends JNode implements CanBeSetFinal,
     CanHaveInitializer, HasName, HasSettableType {
 
-  protected JExpression initializer = null;
+  protected JDeclarationStatement declStmt = null;
   private boolean isFinal;
   private final String name;
   private JType type;
@@ -37,6 +37,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
   }
 
   public JLiteral getConstInitializer() {
+    JExpression initializer = getInitializer();
     if (isFinal() && initializer instanceof JLiteral) {
       return (JLiteral) initializer;
     }
@@ -52,7 +53,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
   }
 
   public boolean hasInitializer() {
-    return initializer != null;
+    return declStmt != null;
   }
 
   public boolean isFinal() {
@@ -65,6 +66,13 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
 
   public void setType(JType newType) {
     type = newType;
+  }
+
+  protected JExpression getInitializer() {
+    if (declStmt != null) {
+      return declStmt.getInitializer();
+    }
+    return null;
   }
 
 }

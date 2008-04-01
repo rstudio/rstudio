@@ -63,6 +63,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
   }
 
   public JValueLiteral getLiteralInitializer() {
+    JExpression initializer = getInitializer();
     if (initializer instanceof JValueLiteral) {
       return (JValueLiteral) initializer;
     }
@@ -89,12 +90,13 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
     super.setFinal();
   }
 
-  public void setInitializer(JExpression initializer) {
-    this.initializer = initializer;
+  public void setInitializer(JDeclarationStatement declStmt) {
+    this.declStmt = declStmt;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      // Do not visit declStmt, it gets visited within its own code block.
     }
     visitor.endVisit(this, ctx);
   }

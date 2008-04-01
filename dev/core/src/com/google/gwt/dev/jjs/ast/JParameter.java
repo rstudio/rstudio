@@ -44,7 +44,7 @@ public class JParameter extends JVariable implements HasEnclosingMethod {
     return isThis;
   }
 
-  public void setInitializer(JExpression expression) {
+  public void setInitializer(JDeclarationStatement declStmt) {
     throw new UnsupportedOperationException(
         "A JParameter cannot have an initializer");
   }

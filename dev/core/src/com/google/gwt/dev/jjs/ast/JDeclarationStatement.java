@@ -31,7 +31,7 @@ public class JDeclarationStatement extends JStatement {
     this.variableRef = variableRef;
     this.initializer = intializer;
     CanHaveInitializer variable = variableRef.getTarget();
-    variable.setInitializer(intializer);
+    variable.setInitializer(this);
   }
 
   public JExpression getInitializer() {

@@ -35,12 +35,13 @@ public class JLocal extends JVariable implements HasEnclosingMethod,
     return enclosingMethodBody.method;
   }
 
-  public void setInitializer(JExpression initializer) {
-    this.initializer = initializer;
+  public void setInitializer(JDeclarationStatement declStmt) {
+    this.declStmt = declStmt;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      // Do not visit declStmt, it gets visited within its own code block.
     }
     visitor.endVisit(this, ctx);
   }
