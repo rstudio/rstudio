@@ -24,7 +24,7 @@ import com.google.gwt.core.ext.TreeLogger;
  * can be useful for situations where it is not practical to pass in a logger as
  * a parameter, such as when interfacing with third-party classes.
  */
-public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
+public final class ThreadLocalTreeLoggerProxy extends TreeLogger {
 
   private static final ThreadLocal<TreeLogger> perThreadLogger = new ThreadLocal<TreeLogger>();
 
@@ -40,10 +40,12 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    * Delegates the branch to the thread-local logger if one is present.
    * Otherwise, the log entry is discarded and <code>this</code> is returned.
    */
-  public TreeLogger branch(Type type, String msg, Throwable caught) {
+  @Override
+  public TreeLogger branch(Type type, String msg, Throwable caught,
+      HelpInfo helpInfo) {
     TreeLogger logger = perThreadLogger.get();
     if (logger != null) {
-      return logger.branch(type, msg, caught);
+      return logger.branch(type, msg, caught, helpInfo);
     } else {
       return this;
     }
@@ -68,10 +70,11 @@ public final class ThreadLocalTreeLoggerProxy implements TreeLogger {
    * Delegates the log to the thread-local logger if one is present. Otherwise,
    * the log entry is discarded.
    */
-  public void log(Type type, String msg, Throwable caught) {
+  @Override
+  public void log(Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     TreeLogger logger = perThreadLogger.get();
     if (logger != null) {
-      logger.log(type, msg, caught);
+      logger.log(type, msg, caught, helpInfo);
     }
   }
 

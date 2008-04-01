@@ -112,20 +112,6 @@ public class StandardGeneratorContextTest extends TestCase {
 
   }
 
-  private static class MockTreeLogger implements TreeLogger {
-
-    public TreeLogger branch(Type type, String msg, Throwable caught) {
-      return this;
-    }
-
-    public boolean isLoggable(Type type) {
-      return false;
-    }
-
-    public void log(Type type, String msg, Throwable caught) {
-    }
-  }
-
   private static class MockTypeOracle extends TypeOracle {
   }
 
@@ -142,7 +128,7 @@ public class StandardGeneratorContextTest extends TestCase {
   private final File tempGenDir;
   private final File tempOutDir;
   private final CacheManager mockCacheManager = new MockCacheManager();
-  private final TreeLogger mockLogger = new MockTreeLogger();
+  private final TreeLogger mockLogger = TreeLogger.NULL;
   private final StandardGeneratorContext genCtx;
   private int tempFileCounter;
 

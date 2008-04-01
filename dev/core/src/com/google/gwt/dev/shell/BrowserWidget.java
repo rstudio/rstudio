@@ -153,8 +153,7 @@ public abstract class BrowserWidget extends Composite {
     }
   }
 
-  static void launchExternalBrowser(TreeLogger logger, String location) {
-
+  public static void launchExternalBrowser(TreeLogger logger, String location) {
     // check GWT_EXTERNAL_BROWSER first, it overrides everything else
     LowLevel.init();
     String browserCmd = LowLevel.getEnv("GWT_EXTERNAL_BROWSER");

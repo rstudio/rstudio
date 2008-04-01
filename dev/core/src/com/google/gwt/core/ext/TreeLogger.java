@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,33 @@
  */
 package com.google.gwt.core.ext;
 
+import java.net.URL;
+
 /**
  * An interface used to log messages in deferred binding generators.
  */
-public interface TreeLogger {
+public abstract class TreeLogger {
+
+  /**
+   * Provides extra information to the user, generally details of what caused
+   * the problem or what the user should do to fix the problem. How this
+   * information is interpreted and displayed is implementation-dependent.
+   */
+  public abstract static class HelpInfo {
+    /**
+     * If non-null, provides a URL containing extra information about the
+     * problem.
+     */
+    public URL getURL() {
+      return null;
+    }
+  }
 
   /**
    * A type-safe enum of all possible logging severity types.
    */
   @SuppressWarnings("hiding")
-  enum Type {
+  public enum Type {
 
     /**
      * Logs an error.
@@ -116,45 +133,47 @@ public interface TreeLogger {
   /**
    * Logs an error.
    */
-  Type ERROR = Type.ERROR;
+  public static final Type ERROR = Type.ERROR;
 
   /**
    * Logs a warning.
    */
-  Type WARN = Type.WARN;
+  public static final Type WARN = Type.WARN;
 
   /**
    * Logs information.
    */
-  Type INFO = Type.INFO;
+  public static final Type INFO = Type.INFO;
 
   /**
    * Logs information related to lower-level operation.
    */
-  Type TRACE = Type.TRACE;
+  public static final Type TRACE = Type.TRACE;
 
   /**
    * Logs detailed information that could be useful during debugging.
    */
-  Type DEBUG = Type.DEBUG;
+  public static final Type DEBUG = Type.DEBUG;
 
   /**
    * Logs extremely verbose and detailed information that is typically useful
    * only to product implementors.
    */
-  Type SPAM = Type.SPAM;
+  public static final Type SPAM = Type.SPAM;
 
   /**
    * Logs everything -- quite a bit of stuff.
    */
-  Type ALL = Type.ALL;
+  public static final Type ALL = Type.ALL;
 
   /**
    * A valid logger that ignores all messages. Occasionally useful when calling
    * methods that require a logger parameter.
    */
-  TreeLogger NULL = new TreeLogger() {
-    public TreeLogger branch(Type type, String msg, Throwable caught) {
+  public static final TreeLogger NULL = new TreeLogger() {
+    @Override
+    public TreeLogger branch(Type type, String msg, Throwable caught,
+        HelpInfo helpInfo) {
       return this;
     }
 
@@ -162,10 +181,21 @@ public interface TreeLogger {
       return false;
     }
 
-    public void log(Type type, String msg, Throwable caught) {
+    @Override
+    public void log(Type type, String msg, Throwable caught, HelpInfo helpInfo) {
       // nothing
     }
   };
+
+  /**
+   * Calls
+   * {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
+   * with a <code>null</code> <code>helpInfo</code>.
+   */
+  public final TreeLogger branch(TreeLogger.Type type, String msg,
+      Throwable caught) {
+    return branch(type, msg, caught, null);
+  }
 
   /**
    * Produces a branched logger, which can be used to write messages that are
@@ -191,32 +221,49 @@ public interface TreeLogger {
    * </p>
    * 
    * @param type
-   * @param msg An optional message to log, which can be <code>null</code> if
+   * @param msg an optional message to log, which can be <code>null</code> if
    *          only an exception is being logged
-   * @param caught An optional exception to log, which can be <code>null</code>
+   * @param caught an optional exception to log, which can be <code>null</code>
    *          if only a message is being logged
+   * @param helpInfo extra information that might be used by the logger to
+   *          provide extended information to the user
    * @return an instance of {@link TreeLogger} representing the new branch of
-   *         the log. May be the same instance on which this method is called
+   *         the log; may be the same instance on which this method is called
    */
-  TreeLogger branch(TreeLogger.Type type, String msg, Throwable caught);
+  public abstract TreeLogger branch(TreeLogger.Type type, String msg,
+      Throwable caught, HelpInfo helpInfo);
 
   /**
    * Determines whether or not a log entry of the specified type would actually
    * be logged. Caller use this method to avoid constructing log messages that
    * would be thrown away.
    */
-  boolean isLoggable(TreeLogger.Type type);
+  public abstract boolean isLoggable(TreeLogger.Type type);
 
   /**
-   * Logs a message and/or an exception. It is also legal to call this method
-   * using <code>null</code> arguments for <i>both</i> <code>msg</code> and
-   * <code>caught</code>, in which case the log event can be ignored.
+   * Calls
+   * {@link #log(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
+   * with a <code>null</code> <code>helpInfo</code>.
+   */
+  public final void log(TreeLogger.Type type, String msg, Throwable caught) {
+    log(type, msg, caught, null);
+  }
+
+  /**
+   * Logs a message and/or an exception, with optional help info. It is also
+   * legal to call this method using <code>null</code> arguments for <i>both</i>
+   * <code>msg</code> and <code>caught</code>, in which case the log event
+   * can be ignored. The <code>info</code> can provide extra information to
+   * the logger; a logger may choose to ignore this info.
    * 
    * @param type
-   * @param msg An optional message to log, which can be <code>null</code> if
+   * @param msg an optional message to log, which can be <code>null</code> if
    *          only an exception is being logged
-   * @param caught An optional exception to log, which can be <code>null</code>
+   * @param caught an optional exception to log, which can be <code>null</code>
    *          if only a message is being logged
+   * @param helpInfo extra information that might be used by the logger to
+   *          provide extended information to the user
    */
-  void log(TreeLogger.Type type, String msg, Throwable caught);
+  public abstract void log(TreeLogger.Type type, String msg, Throwable caught,
+      HelpInfo helpInfo);
 }

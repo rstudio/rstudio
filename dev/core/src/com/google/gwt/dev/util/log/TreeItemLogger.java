@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.TreeItem;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +43,8 @@ public final class TreeItemLogger extends AbstractTreeLogger {
   public static class LogEvent {
     public final Throwable caught;
 
+    public final HelpInfo helpInfo;
+
     public final int index;
 
     public final boolean isBranchCommit;
@@ -53,13 +56,14 @@ public final class TreeItemLogger extends AbstractTreeLogger {
     public final TreeLogger.Type type;
 
     public LogEvent(TreeItemLogger logger, boolean isBranchCommit, int index,
-        Type type, String message, Throwable caught) {
+        Type type, String message, Throwable caught, HelpInfo helpInfo) {
       this.logger = logger;
       this.isBranchCommit = isBranchCommit;
       this.index = index;
       this.type = type;
       this.message = message;
       this.caught = caught;
+      this.helpInfo = helpInfo;
     }
 
     @Override
@@ -166,6 +170,19 @@ public final class TreeItemLogger extends AbstractTreeLogger {
         }
       }
       treeItem.setText(label);
+
+      if (helpInfo != null) {
+        URL url = helpInfo.getURL();
+        if (url != null) {
+          TreeItem helpItem = new TreeItem(treeItem, SWT.NONE);
+          helpItem.setImage(imageLink);
+          helpItem.setText("More info: " + url.toString());
+          helpItem.setForeground(helpItem.getDisplay().getSystemColor(
+              SWT.COLOR_BLUE));
+          helpItem.setData(helpInfo);
+          treeItem.setExpanded(true);
+        }
+      }
 
       // This LogEvent object becomes the tree item's custom data.
       //
@@ -306,6 +323,7 @@ public final class TreeItemLogger extends AbstractTreeLogger {
   private static final Image imageDebug = tryLoadImage("log-item-debug.gif");
   private static final Image imageError = tryLoadImage("log-item-error.gif");
   private static final Image imageInfo = tryLoadImage("log-item-info.gif");
+  private static final Image imageLink = tryLoadImage("log-link.gif");
   private static final Image imageSpam = tryLoadImage("log-item-spam.gif");
   private static final Image imageTrace = tryLoadImage("log-item-trace.gif");
   private static final Image imageWarning = tryLoadImage("log-item-warning.gif");
@@ -374,24 +392,25 @@ public final class TreeItemLogger extends AbstractTreeLogger {
 
   @Override
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
-      Type type, String msg, Throwable caught) {
+      Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     if (isLoggerDead()) {
       return;
     }
 
     TreeItemLogger commitChild = (TreeItemLogger) childBeingCommitted;
     sharedPendingUpdates.add(new LogEvent(commitChild, true,
-        commitChild.getBranchedIndex(), type, msg, caught));
+        commitChild.getBranchedIndex(), type, msg, caught, helpInfo));
   }
 
   @Override
-  protected void doLog(int index, TreeLogger.Type type, String msg,
-      Throwable caught) {
+  protected void doLog(int index, Type type, String msg, Throwable caught,
+      HelpInfo helpInfo) {
     if (isLoggerDead()) {
       return;
     }
 
-    sharedPendingUpdates.add(new LogEvent(this, false, index, type, msg, caught));
+    sharedPendingUpdates.add(new LogEvent(this, false, index, type, msg,
+        caught, helpInfo));
   }
 
   /**

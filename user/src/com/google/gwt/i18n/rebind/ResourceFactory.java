@@ -200,11 +200,11 @@ public abstract class ResourceFactory {
   }
 
   public static AbstractResource getBundle(Class<?> clazz, String locale, boolean isConstants) {
-    return getBundle(createNullTreeLogger(), clazz, locale, isConstants);
+    return getBundle(TreeLogger.NULL, clazz, locale, isConstants);
   }
 
   public static AbstractResource getBundle(String path, String locale, boolean isConstants) {
-    return getBundle(createNullTreeLogger(), path, locale, isConstants);
+    return getBundle(TreeLogger.NULL, path, locale, isConstants);
   }
 
   /**
@@ -279,21 +279,6 @@ public abstract class ResourceFactory {
       name = name.replace('.', '$');
     }
     return name;
-  }
-
-  private static TreeLogger createNullTreeLogger() {
-    return new TreeLogger() {
-      public TreeLogger branch(Type type, String msg, Throwable caught) {
-        return null;
-      }
-
-      public boolean isLoggable(Type type) {
-        return false;
-      }
-
-      public void log(Type type, String msg, Throwable caught) {
-      }
-    };
   }
 
   private static List<AbstractResource> findAlternativeParents(TreeLogger logger,

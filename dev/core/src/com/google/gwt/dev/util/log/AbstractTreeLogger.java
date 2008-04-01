@@ -23,25 +23,27 @@ import java.util.HashSet;
 /**
  * Abstract base class for TreeLoggers.
  */
-public abstract class AbstractTreeLogger implements TreeLogger {
-
-  // This message is package-protected so that the unit test can access it.
-  static final String OUT_OF_MEMORY_MSG = "Out of memory; to increase the "
-      + "amount of memory, use the -Xmx flag at startup (java -Xmx128M ...)";
+public abstract class AbstractTreeLogger extends TreeLogger {
 
   private static class UncommittedBranchData {
 
     public final Throwable caught;
-
     public final String message;
     public final TreeLogger.Type type;
+    private final HelpInfo helpInfo;
 
-    public UncommittedBranchData(Type type, String message, Throwable exception) {
-      caught = exception;
+    public UncommittedBranchData(Type type, String message, Throwable caught,
+        HelpInfo helpInfo) {
+      this.caught = caught;
       this.message = message;
       this.type = type;
+      this.helpInfo = helpInfo;
     }
   }
+
+  // This message is package-protected so that the unit test can access it.
+  static final String OUT_OF_MEMORY_MSG = "Out of memory; to increase the "
+      + "amount of memory, use the -Xmx flag at startup (java -Xmx128M ...)";
 
   public static String getStackTraceAsString(Throwable e) {
     // For each cause, print the requested number of entries of its stack trace,
@@ -120,7 +122,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
    * branched loggers.
    */
   public final synchronized TreeLogger branch(TreeLogger.Type type, String msg,
-      Throwable caught) {
+      Throwable caught, HelpInfo helpInfo) {
 
     if (msg == null) {
       msg = "(Null branch message)";
@@ -148,7 +150,8 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     // child (or grandchild) tries to log something that is loggable,
     // in which case there will be cascading commits of the parent branches.
     //
-    childLogger.uncommitted = new UncommittedBranchData(type, msg, caught);
+    childLogger.uncommitted = new UncommittedBranchData(type, msg, caught,
+        helpInfo);
 
     // This logic is intertwined with log(). If a log message is associated
     // with an out-of-memory condition, then we turn it into a branch,
@@ -191,7 +194,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
    * parent branches may be lazily created before the log can take place.
    */
   public final synchronized void log(TreeLogger.Type type, String msg,
-      Throwable caught) {
+      Throwable caught, HelpInfo helpInfo) {
 
     if (msg == null) {
       msg = "(Null log message)";
@@ -207,14 +210,14 @@ public abstract class AbstractTreeLogger implements TreeLogger {
     int childIndex = allocateNextChildIndex();
     if (isLoggable(type)) {
       commitMyBranchEntryInMyParentLogger();
-      doLog(childIndex, type, msg, caught);
+      doLog(childIndex, type, msg, caught, helpInfo);
     }
   }
 
   /**
    * @param type the log type representing the most detailed level of logging
-   *            that the caller is interested in, or <code>null</code> to
-   *            choose the default level.
+   *          that the caller is interested in, or <code>null</code> to choose
+   *          the default level.
    */
   public final synchronized void setMaxDetail(TreeLogger.Type type) {
     if (type == null) {
@@ -234,20 +237,42 @@ public abstract class AbstractTreeLogger implements TreeLogger {
   protected abstract AbstractTreeLogger doBranch();
 
   /**
+   * @deprecated This method has been deprecated; override
+   *             {@link #doCommitBranch(AbstractTreeLogger, com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
+   *             instead.
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  protected final void doCommitBranch(AbstractTreeLogger childBeingCommitted,
+      TreeLogger.Type type, String msg, Throwable caught) {
+  }
+
+  /**
    * Derived classes should override this method to actually commit the
    * specified message associated with this the root of this branch.
    */
   protected abstract void doCommitBranch(
       AbstractTreeLogger childBeingCommitted, TreeLogger.Type type, String msg,
-      Throwable caught);
+      Throwable caught, HelpInfo helpInfo);
 
   /**
-   * Dervied classes should override this method to actually write a log
+   * @deprecated This method has been deprecated; override
+   *             {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
+   *             instead.
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  protected final void doLog(int indexOfLogEntryWithinParentLogger,
+      TreeLogger.Type type, String msg, Throwable caught) {
+  }
+
+  /**
+   * Derived classes should override this method to actually write a log
    * message. Note that {@link #isLoggable(TreeLogger.Type)} will have already
    * been called.
    */
   protected abstract void doLog(int indexOfLogEntryWithinParentLogger,
-      TreeLogger.Type type, String msg, Throwable caught);
+      TreeLogger.Type type, String msg, Throwable caught, HelpInfo helpInfo);
 
   private int allocateNextChildIndex() {
     synchronized (nextChildIndexLock) {
@@ -291,7 +316,7 @@ public abstract class AbstractTreeLogger implements TreeLogger {
         // Let the subclass do its thing to commit this branch.
         //
         parent.doCommitBranch(this, uncommitted.type, uncommitted.message,
-            uncommitted.caught);
+            uncommitted.caught, uncommitted.helpInfo);
 
         // Release the uncommitted state.
         //

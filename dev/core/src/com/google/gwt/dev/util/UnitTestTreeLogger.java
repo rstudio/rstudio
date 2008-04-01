@@ -27,7 +27,7 @@ import java.util.List;
  * A {@link TreeLogger} implementation that can be used during JUnit tests to
  * check for a specified sequence of log events.
  */
-public class UnitTestTreeLogger implements TreeLogger {
+public class UnitTestTreeLogger extends TreeLogger {
 
   /**
    * Simplifies the creation of a {@link UnitTestTreeLogger} by providing
@@ -168,7 +168,8 @@ public class UnitTestTreeLogger implements TreeLogger {
     Assert.assertEquals("Logs do not match", expected, actual);
   }
 
-  public TreeLogger branch(Type type, String msg, Throwable caught) {
+  public TreeLogger branch(Type type, String msg, Throwable caught,
+      HelpInfo helpInfo) {
     log(type, msg, caught);
     return this;
   }
@@ -177,7 +178,7 @@ public class UnitTestTreeLogger implements TreeLogger {
     return loggableTypes.contains(type);
   }
 
-  public void log(Type type, String msg, Throwable caught) {
+  public void log(Type type, String msg, Throwable caught, HelpInfo helpInfo) {
     if (!isLoggable(type)) {
       return;
     }

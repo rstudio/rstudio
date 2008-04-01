@@ -16,15 +16,16 @@
 package com.google.gwt.dev.util.log;
 
 import java.io.PrintWriter;
+import java.net.URL;
 
 /**
  * Tree logger that logs to a print writer.
  */
 public final class PrintWriterTreeLogger extends AbstractTreeLogger {
 
-  private final PrintWriter out;
-
   private final String indent;
+
+  private final PrintWriter out;
 
   public PrintWriterTreeLogger() {
     this(new PrintWriter(System.out, true));
@@ -43,13 +44,15 @@ public final class PrintWriterTreeLogger extends AbstractTreeLogger {
     return new PrintWriterTreeLogger(out, indent + "   ");
   }
 
+  @Override
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
-      Type type, String msg, Throwable caught) {
-    doLog(childBeingCommitted.getBranchedIndex(), type, msg, caught);
+      Type type, String msg, Throwable caught, HelpInfo helpInfo) {
+    doLog(childBeingCommitted.getBranchedIndex(), type, msg, caught, helpInfo);
   }
 
+  @Override
   protected void doLog(int indexOfLogEntryWithinParentLogger, Type type,
-      String msg, Throwable caught) {
+      String msg, Throwable caught, HelpInfo helpInfo) {
     out.print(indent);
     if (type.needsAttention()) {
       out.print("[");
@@ -58,6 +61,13 @@ public final class PrintWriterTreeLogger extends AbstractTreeLogger {
     }
 
     out.println(msg);
+    if (helpInfo != null) {
+      URL url = helpInfo.getURL();
+      if (url != null) {
+        out.print(indent);
+        out.println("For additional info see: " + url.toString());
+      }
+    }
     if (caught != null) {
       caught.printStackTrace(out);
     }
