@@ -33,12 +33,12 @@ public class ServletContextTreeLogger extends AbstractTreeLogger {
   }
 
   protected void doCommitBranch(AbstractTreeLogger childBeingCommitted,
-      Type type, String msg, Throwable caught) {
-    doLog(childBeingCommitted.getBranchedIndex(), type, msg, caught);
+      Type type, String msg, Throwable caught, HelpInfo helpInfo) {
+    doLog(childBeingCommitted.getBranchedIndex(), type, msg, caught, helpInfo);
   }
 
   protected void doLog(int indexOfLogEntryWithinParentLogger, Type type,
-      String msg, Throwable caught) {
+      String msg, Throwable caught, HelpInfo helpInfo) {
     if (caught != null) {
       ctx.log(msg, caught);
     } else {
