@@ -56,6 +56,7 @@ import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
@@ -379,14 +380,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JField x, Context ctx) {
-    // Due to our wacky construction model, only constant fields may be final
-    // when generating source
-    if (x.getConstInitializer() != null) {
-      printFinalFlag(x);
-    } else {
-      printMemberFinalFlag(x);
-    }
-
+    printFinalFlag(x);
     printStaticFlag(x);
     printType(x);
     space();
@@ -597,6 +591,12 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
       accept(x.getBody());
     }
 
+    return false;
+  }
+
+  @Override
+  public boolean visit(JMethodBody x, Context ctx) {
+    accept(x.getBlock());
     return false;
   }
 
@@ -979,12 +979,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     print('L');
   }
 
-  protected void printMemberFinalFlag(CanBeFinal x) {
-    if (x.isFinal()) {
-      print(CHARS_FINAL);
-    }
-  }
-
   protected void printMethodHeader(JMethod x) {
     // Modifiers
     if (x.isPrivate()) {
@@ -995,7 +989,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printStaticFlag(x);
     printAbstractFlag(x);
     printNativeFlag(x);
-    printMemberFinalFlag(x);
+    printFinalFlag(x);
     printType(x);
     space();
     if (x.isStatic()) {

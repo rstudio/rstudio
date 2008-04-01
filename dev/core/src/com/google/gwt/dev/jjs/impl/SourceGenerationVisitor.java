@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.ast.CanBeFinal;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -137,11 +136,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     print("-*/");
     semi();
     return false;
-  }
-
-  @Override
-  protected void printMemberFinalFlag(CanBeFinal x) {
-    // suppress final flags
   }
 
   @Override
