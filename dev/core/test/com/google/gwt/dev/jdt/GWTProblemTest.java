@@ -25,7 +25,7 @@ import org.eclipse.jdt.internal.compiler.ast.Wildcard;
 /**
  * 
  */
-public class SharedTest extends TestCase {
+public class GWTProblemTest extends TestCase {
   public void testRecordError() {
     String fileName = "TestCompilationUnit.java";
     String errorMessage = "Unit has errors";
@@ -35,7 +35,7 @@ public class SharedTest extends TestCase {
         compilationResult, 0);
 
     // Pick an Expression subtype to pass in
-    Shared.recordError(new Wildcard(Wildcard.EXTENDS), cud, errorMessage);
+    GWTProblem.recordInCud(new Wildcard(Wildcard.EXTENDS), cud, errorMessage);
 
     CategorizedProblem[] errors = compilationResult.getErrors();
     assertEquals(1, errors.length);

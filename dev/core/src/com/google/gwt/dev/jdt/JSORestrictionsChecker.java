@@ -198,7 +198,7 @@ class JSORestrictionsChecker {
   }
 
   private void errorOn(ASTNode node, String error) {
-    Shared.recordError(node, cud, error);
+    GWTProblem.recordInCud(node, cud, error);
   }
 
   private boolean isForJSOSubclass(Scope scope) {

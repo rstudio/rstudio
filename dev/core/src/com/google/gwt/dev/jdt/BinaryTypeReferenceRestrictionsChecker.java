@@ -121,7 +121,8 @@ class BinaryTypeReferenceRestrictionsChecker {
       String qualifiedTypeName = binaryTypeBinding.debugName();
       String error = formatBinaryTypeRefErrorMessage(qualifiedTypeName);
 
-      Shared.recordError(binaryTypeReferenceSite.getExpression(), cud, error);
+      GWTProblem.recordInCud(binaryTypeReferenceSite.getExpression(), cud,
+          error);
     }
   }
 

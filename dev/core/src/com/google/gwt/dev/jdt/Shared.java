@@ -23,16 +23,9 @@ import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 
-import org.eclipse.jdt.core.compiler.IProblem;
-import org.eclipse.jdt.internal.compiler.CompilationResult;
-import org.eclipse.jdt.internal.compiler.ast.ASTNode;
-import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.jdt.internal.compiler.problem.DefaultProblem;
-import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
-import org.eclipse.jdt.internal.compiler.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -137,19 +130,5 @@ class Shared {
     }
 
     return strings.toArray(NO_STRINGS);
-  }
-
-  static void recordError(ASTNode node, CompilationUnitDeclaration cud,
-      String error) {
-    CompilationResult compResult = cud.compilationResult();
-    int[] lineEnds = compResult.getLineSeparatorPositions();
-    int startLine = Util.getLineNumber(node.sourceStart(), lineEnds, 0,
-        lineEnds.length - 1);
-    int startColumn = Util.searchColumnNumber(lineEnds, startLine,
-        node.sourceStart());
-    DefaultProblem problem = new DefaultProblem(compResult.fileName, error,
-        IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
-        node.sourceStart(), node.sourceEnd(), startLine, startColumn);
-    compResult.record(problem, cud);
   }
 }
