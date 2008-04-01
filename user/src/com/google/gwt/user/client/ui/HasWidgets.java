@@ -21,7 +21,7 @@ import java.util.Iterator;
  * A widget that implements this interface contains
  * {@link com.google.gwt.user.client.ui.Widget widgets} and can enumerate them.
  */
-public interface HasWidgets {
+public interface HasWidgets extends Iterable<Widget> {
 
   /**
    * Adds a child widget.

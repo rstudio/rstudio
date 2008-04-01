@@ -31,7 +31,7 @@ import java.util.NoSuchElementException;
  * supports removal of widgets.
  * </p>
  */
-public class WidgetCollection {
+public class WidgetCollection implements Iterable<Widget> {
 
   private class WidgetIterator implements Iterator<Widget> {
 
