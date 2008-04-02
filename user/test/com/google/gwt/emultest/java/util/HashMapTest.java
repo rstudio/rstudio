@@ -15,8 +15,6 @@
  */
 package com.google.gwt.emultest.java.util;
 
-import com.google.gwt.core.client.GWT;
-
 import org.apache.commons.collections.TestMap;
 
 import java.util.Collection;
@@ -75,10 +73,13 @@ public class HashMapTest extends TestMap {
   private static final String VALUE_4 = "val4";
   private static final String VALUE_TEST_CONTAINS_DOES_NOT_EXIST = "does not exist";
   private static final Integer VALUE_TEST_CONTAINS_KEY = new Integer(5);
-  private static final String VALUE_TEST_ENTRY_SET_1 = KEY_TEST_ENTRY_SET + " - value1";
-  private static final String VALUE_TEST_ENTRY_SET_2 = KEY_TEST_ENTRY_SET + " - value2";
+  private static final String VALUE_TEST_ENTRY_SET_1 = KEY_TEST_ENTRY_SET
+      + " - value1";
+  private static final String VALUE_TEST_ENTRY_SET_2 = KEY_TEST_ENTRY_SET
+      + " - value2";
   private static final String VALUE_TEST_GET = KEY_TEST_GET + " - Value";
-  private static final String VALUE_TEST_KEY_SET = KEY_TEST_KEY_SET + " - value";
+  private static final String VALUE_TEST_KEY_SET = KEY_TEST_KEY_SET
+      + " - value";
   private static final String VALUE_TEST_PUT_1 = KEY_TEST_PUT + " - value 1";
   private static final String VALUE_TEST_PUT_2 = KEY_TEST_PUT + " - value 2";
   private static final String VALUE_TEST_REMOVE = KEY_TEST_REMOVE + " - value";
@@ -107,7 +108,7 @@ public class HashMapTest extends TestMap {
 
     assertNotNull(hashMap.entrySet().iterator());
     assertFalse(hashMap.entrySet().iterator().hasNext());
-}
+  }
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
@@ -121,14 +122,14 @@ public class HashMapTest extends TestMap {
 
   public void testAddEqualKeys() {
     final HashMap expected = new HashMap();
-    assertEquals(expected.size(),0);
+    assertEquals(expected.size(), 0);
     iterateThrough(expected);
     expected.put(new Long(45), new Object());
-    assertEquals(expected.size(),1);
+    assertEquals(expected.size(), 1);
     iterateThrough(expected);
     expected.put(new Integer(45), new Object());
     assertNotSame(new Integer(45), new Long(45));
-    assertEquals(expected.size(),2);
+    assertEquals(expected.size(), 2);
     iterateThrough(expected);
   }
 
@@ -200,10 +201,13 @@ public class HashMapTest extends TestMap {
     HashMap hashMap = new HashMap();
     checkEmptyHashMapAssumptions(hashMap);
 
-    assertFalse("check contains of empty map", hashMap.containsValue(VALUE_TEST_CONTAINS_KEY));
+    assertFalse("check contains of empty map",
+        hashMap.containsValue(VALUE_TEST_CONTAINS_KEY));
     hashMap.put(KEY_TEST_CONTAINS_VALUE, VALUE_TEST_CONTAINS_KEY);
-    assertTrue("check contains of map with element", hashMap.containsValue(VALUE_TEST_CONTAINS_KEY));
-    assertFalse("check contains of map other element", hashMap.containsValue(VALUE_TEST_CONTAINS_DOES_NOT_EXIST));
+    assertTrue("check contains of map with element",
+        hashMap.containsValue(VALUE_TEST_CONTAINS_KEY));
+    assertFalse("check contains of map other element",
+        hashMap.containsValue(VALUE_TEST_CONTAINS_DOES_NOT_EXIST));
 
     assertFalse(hashMap.containsValue(null));
     hashMap.put(KEY_TEST_CONTAINS_VALUE, null);
@@ -243,19 +247,19 @@ public class HashMapTest extends TestMap {
     checkEmptyHashMapAssumptions(hashMap);
   }
 
-  /* 
+  /*
    * Used to test the entrySet remove method.
    */
   public void testEntrySetRemove() {
     HashMap hashMap = new HashMap();
-    hashMap.put("A","B");
+    hashMap.put("A", "B");
     HashMap dummy = new HashMap();
     dummy.put("A", "b");
     Entry bogus = (Entry) dummy.entrySet().iterator().next();
     Set entrySet = hashMap.entrySet();
     boolean removed = entrySet.remove(bogus);
     assertEquals(removed, false);
-    assertEquals(hashMap.get("A"), "B");    
+    assertEquals(hashMap.get("A"), "B");
   }
 
   /*
@@ -287,7 +291,7 @@ public class HashMapTest extends TestMap {
   public void testGet() {
     HashMap hashMap = new HashMap();
     checkEmptyHashMapAssumptions(hashMap);
-    
+
     assertNull(hashMap.get(KEY_TEST_GET));
     hashMap.put(KEY_TEST_GET, VALUE_TEST_GET);
     assertNotNull(hashMap.get(KEY_TEST_GET));
@@ -295,7 +299,7 @@ public class HashMapTest extends TestMap {
     assertNull(hashMap.get(null));
     hashMap.put(null, VALUE_TEST_GET);
     assertNotNull(hashMap.get(null));
-    
+
     hashMap.put(null, null);
     assertNull(hashMap.get(null));
   }
@@ -403,7 +407,7 @@ public class HashMapTest extends TestMap {
     srcMap.put(INTEGER_2, INTEGER_22);
     srcMap.put(INTEGER_3, INTEGER_33);
 
-    HashMap hashMap = cloneHashMap(srcMap);
+    HashMap hashMap = new HashMap(srcMap);
     assertFalse(hashMap.isEmpty());
     assertTrue(hashMap.size() == SIZE_THREE);
 
@@ -440,9 +444,9 @@ public class HashMapTest extends TestMap {
   }
 
   public void testKeysConflict() {
-    HashMap hashMap = new HashMap(); 
-    
-    hashMap.put(STRING_ZERO_KEY,STRING_ZERO_VALUE);
+    HashMap hashMap = new HashMap();
+
+    hashMap.put(STRING_ZERO_KEY, STRING_ZERO_VALUE);
     hashMap.put(INTEGER_ZERO_KEY, INTEGER_ZERO_VALUE);
     hashMap.put(ODD_ZERO_KEY, ODD_ZERO_VALUE);
     assertEquals(hashMap.get(INTEGER_ZERO_KEY), INTEGER_ZERO_VALUE);
@@ -462,7 +466,7 @@ public class HashMapTest extends TestMap {
     assertEquals(hashMap.get(STRING_ZERO_KEY), null);
     assertEquals(hashMap.size(), 0);
   }
-  
+
   /*
    * Test method for 'java.util.HashMap.keySet()'
    */
@@ -528,7 +532,8 @@ public class HashMapTest extends TestMap {
     assertFalse(dstMap.containsKey(KEY_3.toUpperCase()));
     assertFalse(dstMap.containsValue(VALUE_3.toUpperCase()));
 
-    // Check that an empty map does not blow away the contents of the destination map
+    // Check that an empty map does not blow away the contents of the
+    // destination map
     HashMap emptyMap = new HashMap();
     checkEmptyHashMapAssumptions(emptyMap);
     dstMap.putAll(emptyMap);
@@ -604,7 +609,7 @@ public class HashMapTest extends TestMap {
     hashMap.put(KEY_1, VALUE_1);
     hashMap.put(KEY_2, VALUE_2);
     hashMap.put(KEY_3, VALUE_3);
-    HashMap srcMap = cloneHashMap(hashMap);
+    HashMap srcMap = new HashMap(hashMap);
     hashMap.putAll(srcMap);
     assertEquals(hashMap.size(), SIZE_THREE);
 
@@ -643,33 +648,15 @@ public class HashMapTest extends TestMap {
     String val = (String) itVal.next();
     assertEquals(val, VALUE_VAL);
   }
-  
+
   protected Map makeEmptyMap() {
     return new HashMap();
-  }
-  
-  /**
-   * This method exists because java 1.5 no longer has HashMap(HashMap), replacing
-   * it with HashMap(Map<? extends K, ? extends V> m).  Nevertheless, we want 
-   * to use it in web mode to test that web mode function.
-   * 
-   * @param hashMap the HashMap to be copied 
-   * @return the copy
-   */
-  private HashMap cloneHashMap(HashMap hashMap) {
-    if (GWT.isScript()) {
-      return new HashMap(hashMap);
-    } else {
-      HashMap m = new HashMap();
-      m.putAll(hashMap);
-      return m;
-    }
   }
 
   private Iterator iterateThrough(final HashMap expected) {
     Iterator iter = expected.entrySet().iterator();
     for (int i = 0; i < expected.size(); i++) {
-      iter.next(); 
+      iter.next();
     }
     return iter;
   }
