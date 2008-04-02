@@ -19,21 +19,36 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Custom field serializer for {@link java.util.HashMap}.
  */
-public final class HashMap_CustomFieldSerializer {
+public final class Map_CustomFieldSerializerBase {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      HashMap instance) throws SerializationException {
-    Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
+      Map instance) throws SerializationException {
+    int size = streamReader.readInt();
+
+    for (int i = 0; i < size; ++i) {
+      Object key = streamReader.readObject();
+      Object value = streamReader.readObject();
+
+      instance.put(key, value);
+    }
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      HashMap instance) throws SerializationException {
-    Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
+      Map instance) throws SerializationException {
+    int size = instance.size();
+    streamWriter.writeInt(size);
+
+    for (Entry entry : (Set<Entry>) instance.entrySet()) {
+      streamWriter.writeObject(entry.getKey());
+      streamWriter.writeObject(entry.getValue());
+    }
   }
 
 }

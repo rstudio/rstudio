@@ -19,20 +19,20 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
-import java.util.HashMap;
+import java.util.IdentityHashMap;
 
 /**
  * Custom field serializer for {@link java.util.HashMap}.
  */
-public final class HashMap_CustomFieldSerializer {
+public final class IdentityHashMap_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      HashMap instance) throws SerializationException {
+      IdentityHashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      HashMap instance) throws SerializationException {
+      IdentityHashMap instance) throws SerializationException {
     Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 

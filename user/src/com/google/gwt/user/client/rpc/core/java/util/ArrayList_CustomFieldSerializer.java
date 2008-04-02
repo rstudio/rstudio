@@ -28,19 +28,11 @@ public final class ArrayList_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
       ArrayList instance) throws SerializationException {
-    int size = streamReader.readInt();
-    for (int i = 0; i < size; ++i) {
-      Object obj = streamReader.readObject();
-      instance.add(obj);
-    }
+    Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
       ArrayList instance) throws SerializationException {
-    int size = instance.size();
-    streamWriter.writeInt(size);
-    for (Object obj : instance) {
-      streamWriter.writeObject(obj);
-    }
+    Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 }

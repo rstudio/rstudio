@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,21 +19,28 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
-import java.util.HashMap;
+import java.util.Collection;
 
 /**
- * Custom field serializer for {@link java.util.HashMap}.
+ * Custom field serializer for {@link java.util.ArrayList}.
  */
-public final class HashMap_CustomFieldSerializer {
+public final class Collection_CustomFieldSerializerBase {
 
   public static void deserialize(SerializationStreamReader streamReader,
-      HashMap instance) throws SerializationException {
-    Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
+      Collection instance) throws SerializationException {
+    int size = streamReader.readInt();
+    for (int i = 0; i < size; ++i) {
+      Object obj = streamReader.readObject();
+      instance.add(obj);
+    }
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
-      HashMap instance) throws SerializationException {
-    Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
+      Collection instance) throws SerializationException {
+    int size = instance.size();
+    streamWriter.writeInt(size);
+    for (Object obj : instance) {
+      streamWriter.writeObject(obj);
+    }
   }
-
 }

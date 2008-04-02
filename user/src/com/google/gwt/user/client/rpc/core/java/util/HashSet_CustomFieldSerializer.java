@@ -28,17 +28,11 @@ public final class HashSet_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
       HashSet instance) throws SerializationException {
-    int size = streamReader.readInt();
-    for (int i = 0; i < size; ++i) {
-      instance.add(streamReader.readObject());
-    }
+    Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
       HashSet instance) throws SerializationException {
-    streamWriter.writeInt(instance.size());
-    for (Object obj : instance) {
-      streamWriter.writeObject(obj);
-    }
+    Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 }
