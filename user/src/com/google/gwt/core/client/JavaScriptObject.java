@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client;
 
+import com.google.gwt.core.client.impl.Impl;
+
 /**
  * An opaque handle to a native JavaScript object. A
  * <code>JavaScriptObject</code> cannot be created directly.

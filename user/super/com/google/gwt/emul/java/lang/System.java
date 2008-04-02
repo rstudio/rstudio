@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.impl.Impl;
+
 import java.io.PrintStream;
 
 /**
@@ -97,9 +99,10 @@ public final class System {
   public static void gc() {
   };
 
-  public static native int identityHashCode(Object o) /*-{
-    return (o == null) ? 0 : @com.google.gwt.core.client.Impl::getHashCode(Ljava/lang/Object;)(o);
-  }-*/;
+  public static int identityHashCode(Object o) {
+    return (o == null) ? 0 : (!(o instanceof String)) ? Impl.getHashCode(o)
+        : String.HashCache.getHashCode((String) o);
+  }
 
   public static native void setErr(PrintStream err) /*-{
     @java.lang.System::err = err;

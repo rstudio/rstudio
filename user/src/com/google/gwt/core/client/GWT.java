@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.client;
 
+import com.google.gwt.core.client.impl.Impl;
+
 /**
  * Supports core functionality that in some cases requires direct support from
  * the compiler and runtime systems such as runtime type information and

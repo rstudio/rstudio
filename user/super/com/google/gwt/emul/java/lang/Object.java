@@ -15,6 +15,8 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.impl.Impl;
+
 /**
  * The superclass of all other types. The GWT emulation library supports a
  * limited subset of methods on <code>Object</code> due to browser
@@ -41,7 +43,7 @@ public class Object {
   }
 
   /*
-   * Magic; unlike the real JDT, we don't spec this method as final.  The
+   * Magic; unlike the real JRE, we don't spec this method as final. The
    * compiler will generate a polymorphic override on every other class which
    * will return the correct class object.
    */
@@ -49,16 +51,16 @@ public class Object {
     return Object.class;
   }
 
-  public native int hashCode() /*-{
-    return @com.google.gwt.core.client.Impl::getHashCode(Ljava/lang/Object;)(this);
-  }-*/;
+  public int hashCode() {
+    return Impl.getHashCode(this);
+  }
 
   public String toString() {
     return getClass().getName() + '@' + Integer.toHexString(hashCode());
   }
 
   /**
-   * Never called.
+   * Never called; here for compatibility.
    * 
    * @skip
    */
