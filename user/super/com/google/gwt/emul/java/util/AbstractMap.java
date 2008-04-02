@@ -60,16 +60,17 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
       return false;
     }
     Map<?, ?> otherMap = (Map<?, ?>) obj;
-    Set<K> keys = keySet();
-    Set<?> otherKeys = otherMap.keySet();
-    if (!keys.equals(otherKeys)) {
+    if (size() != otherMap.size()) {
       return false;
     }
-    for (Iterator<K> iter = keys.iterator(); iter.hasNext();) {
-      K key = iter.next();
-      V value = get(key);
-      Object otherValue = otherMap.get(key);
-      if (value == null ? otherValue != null : !value.equals(otherValue)) {
+
+    for (Entry<?, ?> entry : otherMap.entrySet()) {
+      Object otherKey = entry.getKey();
+      Object otherValue = entry.getValue();
+      if (!containsKey(otherKey)) {
+        return false;
+      }
+      if (!Utility.equalsWithNullCheck(otherValue, get(otherKey))) {
         return false;
       }
     }
@@ -84,8 +85,7 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   @Override
   public int hashCode() {
     int hashCode = 0;
-    for (Iterator<Entry<K, V>> iter = entrySet().iterator(); iter.hasNext();) {
-      Entry<K, V> entry = iter.next();
+    for (Entry<K, V> entry : entrySet()) {
       hashCode += entry.hashCode();
     }
     return hashCode;

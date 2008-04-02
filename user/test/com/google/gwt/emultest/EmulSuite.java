@@ -38,6 +38,7 @@ import com.google.gwt.emultest.java.util.EnumMapTest;
 import com.google.gwt.emultest.java.util.EnumSetTest;
 import com.google.gwt.emultest.java.util.HashMapTest;
 import com.google.gwt.emultest.java.util.HashSetTest;
+import com.google.gwt.emultest.java.util.IdentityHashMapTest;
 import com.google.gwt.emultest.java.util.StackTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -77,6 +78,7 @@ public class EmulSuite {
     suite.addTestSuite(EnumSetTest.class);
     suite.addTestSuite(HashMapTest.class);
     suite.addTestSuite(HashSetTest.class);
+    suite.addTestSuite(IdentityHashMapTest.class);
     suite.addTestSuite(StackTest.class);
     // $JUnit-END$
 

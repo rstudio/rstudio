@@ -282,6 +282,10 @@ public abstract class TestMap extends TestObject{
      */
     protected abstract Map makeEmptyMap();
 
+    protected Map makeConfirmedMap() {
+      return new HashMap();
+    }
+
     /**
      *  Return a new, populated map.  The mappings in the map should match the
      *  keys and values returned from {@link #getSampleKeys()} and {@link
@@ -882,7 +886,7 @@ public abstract class TestMap extends TestObject{
     protected void resetEmpty() {
         this.map = makeEmptyMap();
         views();
-        this.confirmed = new HashMap();
+        this.confirmed = makeConfirmedMap();
     }
 
 
@@ -893,7 +897,7 @@ public abstract class TestMap extends TestObject{
     protected void resetFull() {
         this.map = makeFullMap();
         views();
-        this.confirmed = new HashMap();
+        this.confirmed = makeConfirmedMap();
         Object[] k = getSampleKeys();
         Object[] v = getSampleValues();
         for (int i = 0; i < k.length; i++) {

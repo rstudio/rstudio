@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,10 @@
  */
 package java.util;
 
+import com.google.gwt.core.client.impl.Impl;
+
 import java.io.Serializable;
+import java.util.Map.Entry;
 
 /**
  * Map using reference equality on keys. <a
@@ -25,45 +28,71 @@ import java.io.Serializable;
  * @param <K> key type
  * @param <V> value type
  */
-public class IdentityHashMap<K, V> extends AbstractMap<K, V> implements
+public class IdentityHashMap<K, V> extends AbstractHashMap<K, V> implements
     Map<K, V>, Cloneable, Serializable {
 
   public IdentityHashMap() {
-    this(10);
   }
 
-  public IdentityHashMap(int expectedMaxSize) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("IdentityHashMap not implemented");
+  public IdentityHashMap(int ignored) {
+    // This implementation of HashMap has no need of load factors or capacities.
+    if (ignored < 0) {
+      throw new IllegalArgumentException("initial capacity was negative");
+    }
   }
 
-  public IdentityHashMap(Map<? extends K, ? extends V> map) {
-    this(map.size());
-    putAll(map);
-  }
-
-  @Override
-  public Set<java.util.Map.Entry<K, V>> entrySet() {
-    // TODO(jat): implement
-    return null;
+  public IdentityHashMap(Map<? extends K, ? extends V> toBeCopied) {
+    super(toBeCopied);
   }
 
   @Override
-  public V get(Object key) {
-    // TODO(jat): implement
-    return null;
+  public Object clone() {
+    return new IdentityHashMap<K, V>(this);
   }
 
   @Override
-  public V put(K key, V value) {
-    // TODO(jat): implement
-    return null;
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof Map)) {
+      return false;
+    }
+    Map<?, ?> otherMap = (Map<?, ?>) obj;
+    if (size() != otherMap.size()) {
+      return false;
+    }
+
+    for (Entry<?, ?> entry : otherMap.entrySet()) {
+      Object otherKey = entry.getKey();
+      Object otherValue = entry.getValue();
+      if (!containsKey(otherKey)) {
+        return false;
+      }
+      if (otherValue != get(otherKey)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
-  public V remove(Object key) {
-    // TODO(jat): implement
-    return null;
+  public int hashCode() {
+    int hashCode = 0;
+    for (Entry<K, V> entry : entrySet()) {
+      hashCode += System.identityHashCode(entry.getKey());
+      hashCode += System.identityHashCode(entry.getValue());
+    }
+    return hashCode;
   }
 
+  @Override
+  protected boolean equals(Object value1, Object value2) {
+    return value1 == value2;
+  }
+
+  @Override
+  protected int getHashCode(Object key) {
+    return Impl.getHashCode(key);
+  }
 }
