@@ -192,7 +192,7 @@ public class LongFromJSNIChecker {
         return null;
       }
 
-      JField field = type.getField(jsniRef.memberName());
+      JField field = type.findField(jsniRef.memberName());
       if (field != null) {
         return field;
       }
