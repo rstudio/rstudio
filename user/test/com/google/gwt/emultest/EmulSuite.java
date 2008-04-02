@@ -80,6 +80,7 @@ public class EmulSuite {
     suite.addTestSuite(HashSetTest.class);
     suite.addTestSuite(IdentityHashMapTest.class);
     suite.addTestSuite(StackTest.class);
+    suite.addTest(TreeMapSuite.suite());
     // $JUnit-END$
 
     return suite;

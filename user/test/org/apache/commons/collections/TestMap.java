@@ -15,6 +15,8 @@
  */
 package org.apache.commons.collections;
 
+import junit.framework.AssertionFailedError;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -262,15 +264,20 @@ public abstract class TestMap extends TestObject{
                            "if either the key or value is null.", 
                            keys[i] == null || values[i] == null);
                 
-                assertTrue("NullPointerException on null key, but " +
-                           "useNullKey is not overridden to return false.", 
-                           keys[i] == null || !useNullKey());
-                
-                assertTrue("NullPointerException on null value, but " +
-                           "useNullValue is not overridden to return false.",
-                           values[i] == null || !useNullValue());
-                
-                assertTrue("Unknown reason for NullPointer.", false);
+                if (keys[i] == null) {
+                  if (useNullKey()) {
+                    throw new Error("NullPointerException on null key, but " +
+                        "useNullKey is not overridden to return false.", exception);
+                  }
+                } else if (values[i] == null) {
+                  if (useNullValue()) {
+                    throw new Error("NullPointerException on null value, but " +
+                        "useNullValue is not overridden to return false.", exception);
+                  }
+                } else {
+                  // Unknown reason for NullPointer.
+                  throw exception;
+                }
             }
         }
         assertEquals("size must reflect number of mappings added.",
@@ -520,35 +527,35 @@ public abstract class TestMap extends TestObject{
      *  Tests Map.get(Object)
      **/
     public void testMapGet() {
-        resetEmpty();
+      resetEmpty();
 
-        Object[] keys = getSampleKeys();
-        Object[] values = getSampleValues();
+      Object[] keys = getSampleKeys();
+      Object[] values = getSampleValues();
 
-        for (int i = 0; i < keys.length; i++) {
-            assertTrue("Empty map.get() should return null.", 
-		       map.get(keys[i]) == null);
-        }
-        verify();
+      for (int i = 0; i < keys.length; i++) {
+        assertTrue("Empty map.get() should return null.", 
+            map.get(keys[i]) == null);
+      }
+      verify();
 
-        resetFull();
-        for (int i = 0; i < keys.length; i++) {
-	    assertEquals("Full map.get() should return value from mapping.", 
-			 values[i], map.get(keys[i]));
-        }
+      resetFull();
+      for (int i = 0; i < keys.length; i++) {
+        assertEquals("Full map.get() should return value from mapping.", 
+            values[i], map.get(keys[i]));
+      }
     }
 
     /**
      *  Tests Map.hashCode()
      **/
     public void testMapHashCode() {
-        resetEmpty();
-        assertTrue("Empty maps have different hashCodes.", 
-		   map.hashCode() == confirmed.hashCode());
+      resetEmpty();
+      assertTrue("Empty maps have different hashCodes.", 
+          map.hashCode() == confirmed.hashCode());
 
-        resetFull();
-        assertTrue("Equal maps have different hashCodes.", 
-		   map.hashCode() == confirmed.hashCode());
+      resetFull();
+      assertTrue("Equal maps have different hashCodes.", 
+          map.hashCode() == confirmed.hashCode());
     }
 
     /**
@@ -561,131 +568,131 @@ public abstract class TestMap extends TestObject{
      *  not return null.
      **/
     public void testMapToString() {
-        resetEmpty();
-        assertTrue("Empty map toString() should not return null", 
-                   map.toString() != null);
-        verify();
+      resetEmpty();
+      assertTrue("Empty map toString() should not return null", 
+          map.toString() != null);
+      verify();
 
-        resetFull();
-        assertTrue("Empty map toString() should not return null", 
-                   map.toString() != null);
-        verify();
+      resetFull();
+      assertTrue("Empty map toString() should not return null", 
+          map.toString() != null);
+      verify();
     }
 
 
-     
-    
+
+
 
     /**
      *  Tests Map.put(Object, Object)
      **/
     public void testMapPut() {
-        if (!isAddRemoveModifiable()) return;
+      if (!isAddRemoveModifiable()) return;
 
-        resetEmpty();
+      resetEmpty();
 
-	Object[] keys = getSampleKeys();
-	Object[] values = getSampleValues();
-	Object[] newValues = getNewSampleValues();
+      Object[] keys = getSampleKeys();
+      Object[] values = getSampleValues();
+      Object[] newValues = getNewSampleValues();
 
-        for(int i = 0; i < keys.length; i++) {
-            Object o = map.put(keys[i], values[i]);
-            confirmed.put(keys[i], values[i]);
-            verify();
-	    assertTrue("First map.put should return null", o == null);
-	    assertTrue("Map should contain key after put", 
-		       map.containsKey(keys[i]));
-	    assertTrue("Map should contain value after put", 
-		       map.containsValue(values[i]));
-	}
-	
-	for(int i = 0; i < keys.length; i++) {
-	    Object o = map.put(keys[i], newValues[i]);
-            confirmed.put(keys[i], newValues[i]);
-            verify();
-	    assertEquals("Second map.put should return previous value",
-			 values[i], o);
-	    assertTrue("Map should still contain key after put",
-		       map.containsKey(keys[i]));
-	    assertTrue("Map should contain new value after put",
-		       map.containsValue(newValues[i]));
+      for(int i = 0; i < keys.length; i++) {
+        Object o = map.put(keys[i], values[i]);
+        confirmed.put(keys[i], values[i]);
+        verify();
+        assertTrue("First map.put should return null", o == null);
+        assertTrue("Map should contain key after put", 
+            map.containsKey(keys[i]));
+        assertTrue("Map should contain value after put", 
+            map.containsValue(values[i]));
+      }
 
-	    // if duplicates are allowed, we're not guarunteed that the value
-	    // no longer exists, so don't try checking that.
-	    if(!useDuplicateValues()) {
-		assertTrue("Map should not contain old value after second put",
-			   !map.containsValue(values[i]));
-	    }
-	}
+      for(int i = 0; i < keys.length; i++) {
+        Object o = map.put(keys[i], newValues[i]);
+        confirmed.put(keys[i], newValues[i]);
+        verify();
+        assertEquals("Second map.put should return previous value",
+            values[i], o);
+        assertTrue("Map should still contain key after put",
+            map.containsKey(keys[i]));
+        assertTrue("Map should contain new value after put",
+            map.containsValue(newValues[i]));
+
+        // if duplicates are allowed, we're not guarunteed that the value
+        // no longer exists, so don't try checking that.
+        if(!useDuplicateValues()) {
+          assertTrue("Map should not contain old value after second put",
+              !map.containsValue(values[i]));
+        }
+      }
     }
 
     /**
      *  Tests Map.putAll(Collection)
      **/
     public void testMapPutAll() {
-        if (!isAddRemoveModifiable()) return;
+      if (!isAddRemoveModifiable()) return;
 
-        resetEmpty();
+      resetEmpty();
 
-        Map m2 = makeFullMap();
+      Map m2 = makeFullMap();
 
-        map.putAll(m2);
-        confirmed.putAll(m2);
-        verify();
+      map.putAll(m2);
+      confirmed.putAll(m2);
+      verify();
 
-        resetEmpty();
+      resetEmpty();
 
-	m2 = new HashMap();
-	Object[] keys = getSampleKeys();
-	Object[] values = getSampleValues();
-	for(int i = 0; i < keys.length; i++) {
-	    m2.put(keys[i], values[i]);
-	}
+      m2 = new HashMap();
+      Object[] keys = getSampleKeys();
+      Object[] values = getSampleValues();
+      for(int i = 0; i < keys.length; i++) {
+        m2.put(keys[i], values[i]);
+      }
 
-	map.putAll(m2);
-        confirmed.putAll(m2);
-        verify();
+      map.putAll(m2);
+      confirmed.putAll(m2);
+      verify();
     }
 
     /**
      *  Tests Map.remove(Object)
      **/
     public void testMapRemove() {
-        if (!isAddRemoveModifiable()) return;
+      if (!isAddRemoveModifiable()) return;
 
-        resetEmpty();
+      resetEmpty();
 
-	Object[] keys = getSampleKeys();
-	Object[] values = getSampleValues();
-	for(int i = 0; i < keys.length; i++) {
-	    Object o = map.remove(keys[i]);
-	    assertTrue("First map.remove should return null", o == null);
-	}
+      Object[] keys = getSampleKeys();
+      Object[] values = getSampleValues();
+      for(int i = 0; i < keys.length; i++) {
+        Object o = map.remove(keys[i]);
+        assertTrue("First map.remove should return null", o == null);
+      }
+      verify();
+
+      resetFull();
+
+      for(int i = 0; i < keys.length; i++) {
+        Object o = map.remove(keys[i]);
+        confirmed.remove(keys[i]);
         verify();
 
-        resetFull();
+        assertEquals("map.remove with valid key should return value",
+            values[i], o);
+      }
 
-	for(int i = 0; i < keys.length; i++) {
-	    Object o = map.remove(keys[i]);
-            confirmed.remove(keys[i]);
-            verify();
+      Object[] other = getOtherKeys();
 
-	    assertEquals("map.remove with valid key should return value",
-			 values[i], o);
-	}
-
-        Object[] other = getOtherKeys();
-
-        resetFull();
-        int size = map.size();
-        for (int i = 0; i < other.length; i++) {
-            Object o = map.remove(other[i]);
-            assertEquals("map.remove for nonexistent key should return null",
-                         o, null);
-            assertEquals("map.remove for nonexistent key should not " +
-                         "shrink map", size, map.size());
-        }
-        verify();
+      resetFull();
+      int size = map.size();
+      for (int i = 0; i < other.length; i++) {
+        Object o = map.remove(other[i]);
+        assertEquals("map.remove for nonexistent key should return null",
+            o, null);
+        assertEquals("map.remove for nonexistent key should not " +
+            "shrink map", size, map.size());
+      }
+      verify();
     }
 
 
