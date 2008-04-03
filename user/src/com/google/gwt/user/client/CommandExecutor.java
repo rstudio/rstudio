@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 
@@ -130,7 +131,7 @@ class CommandExecutor {
     private void setLast(int last) {
       this.last = last;
     }
-    
+
     private boolean wasRemoved() {
       return last == -1;
     }
@@ -142,13 +143,13 @@ class CommandExecutor {
    * may need to acquire this value based on a rebind decision. For now, we
    * chose the smallest value known to cause an SSW.
    */
-  private static final long DEFAULT_CANCELLATION_TIMEOUT_MILLIS = 10000;
+  private static final int DEFAULT_CANCELLATION_TIMEOUT_MILLIS = 10000;
 
   /**
    * Default amount of time to spend dispatching commands before we yield to the
    * system.
    */
-  private static final long DEFAULT_TIME_SLICE_MILLIS = 100;
+  private static final int DEFAULT_TIME_SLICE_MILLIS = 100;
 
   /**
    * Returns true the end time has been reached or exceeded.
@@ -157,9 +158,9 @@ class CommandExecutor {
    * @param startTimeMillis end time in milliseconds
    * @return true if the end time has been reached
    */
-  private static boolean hasTimeSliceExpired(long currentTimeMillis,
-      long startTimeMillis) {
-    return Math.abs(currentTimeMillis - startTimeMillis) >= DEFAULT_TIME_SLICE_MILLIS;
+  private static boolean hasTimeSliceExpired(double currentTimeMillis,
+      double startTimeMillis) {
+    return currentTimeMillis - startTimeMillis >= DEFAULT_TIME_SLICE_MILLIS;
   }
 
   /**
@@ -202,7 +203,7 @@ class CommandExecutor {
 
       setExecutionTimerPending(false);
 
-      doExecuteCommands(System.currentTimeMillis());
+      doExecuteCommands(Duration.currentTimeMillis());
     }
   };
 
@@ -273,17 +274,18 @@ class CommandExecutor {
    * This method will dispatch commands from the command queue. It will dispatch
    * commands until one of the following conditions is <code>true</code>:
    * <ul>
-   * <li>It consumed its dispatching time slice {@value #DEFAULT_TIME_SLICE_MILLIS}</li>
+   * <li>It consumed its dispatching time slice
+   * {@value #DEFAULT_TIME_SLICE_MILLIS}</li>
    * <li>It encounters a <code>null</code> in the command queue</li>
    * <li>All commands which were present at the start of the dispatching have
    * been removed from the command queue</li>
-   * <li>The command that it was processing was canceled due to a false 
-   * cancellation -- in this case we exit without updating any state</li> 
+   * <li>The command that it was processing was canceled due to a false
+   * cancellation -- in this case we exit without updating any state</li>
    * </ul>
    * 
    * @param startTimeMillis the time when this method started
    */
-  protected void doExecuteCommands(long startTimeMillis) {
+  protected void doExecuteCommands(double startTimeMillis) {
     assert (!isExecutionTimerPending());
 
     boolean wasCanceled = false;
@@ -292,7 +294,7 @@ class CommandExecutor {
 
       iterator.setEnd(commands.size());
 
-      cancellationTimer.schedule((int) DEFAULT_CANCELLATION_TIMEOUT_MILLIS);
+      cancellationTimer.schedule(DEFAULT_CANCELLATION_TIMEOUT_MILLIS);
 
       while (iterator.hasNext()) {
         Object element = iterator.next();
@@ -316,18 +318,18 @@ class CommandExecutor {
           wasCanceled = iterator.wasRemoved();
           if (wasCanceled) {
             /*
-             * The iterator may have already had its remove method called, if
-             * it has, then we need to exit without updating any state 
+             * The iterator may have already had its remove method called, if it
+             * has, then we need to exit without updating any state
              */
             return;
           }
-          
+
           if (removeCommand) {
             iterator.remove();
           }
         }
 
-        if (hasTimeSliceExpired(System.currentTimeMillis(), startTimeMillis)) {
+        if (hasTimeSliceExpired(Duration.currentTimeMillis(), startTimeMillis)) {
           // the time slice has expired
           return;
         }
@@ -335,9 +337,9 @@ class CommandExecutor {
     } finally {
       if (!wasCanceled) {
         cancellationTimer.cancel();
-  
+
         setExecuting(false);
-  
+
         maybeStartExecutionTimer();
       }
     }

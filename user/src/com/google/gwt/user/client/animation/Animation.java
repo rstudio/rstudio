@@ -15,11 +15,11 @@
  */
 package com.google.gwt.user.client.animation;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -36,7 +36,7 @@ public abstract class Animation {
     protected void cancel(Animation anim) {
     }
 
-    protected void run(Animation anim, int duration, long startTime) {
+    protected void run(Animation anim, int duration, double startTime) {
       anim.onRunWhenDisabled();
     }
   }
@@ -76,7 +76,7 @@ public abstract class Animation {
     }
 
     @Override
-    protected void run(Animation anim, int duration, long startTime) {
+    protected void run(Animation anim, int duration, double startTime) {
       // Cancel the animation if it is running
       anim.cancel();
 
@@ -85,7 +85,7 @@ public abstract class Animation {
       anim.startTime = startTime;
 
       // Start synchronously if start time has passed
-      if (anim.update((new Date()).getTime())) {
+      if (anim.update(Duration.currentTimeMillis())) {
         return;
       }
 
@@ -112,7 +112,7 @@ public abstract class Animation {
      */
     private void updateAnimations() {
       // Iterator through the animations
-      long curTime = (new Date()).getTime();
+      double curTime = Duration.currentTimeMillis();
       for (int i = 0; i < animations.size(); i++) {
         Animation animation = animations.get(i);
         if (animation.update(curTime)) {
@@ -146,7 +146,7 @@ public abstract class Animation {
   /**
    * The start time of the {@link Animation}.
    */
-  private long startTime = -1;
+  private double startTime = -1;
 
   /**
    * Immediately cancel this animation.
@@ -187,7 +187,7 @@ public abstract class Animation {
    * @param duration the duration of the animation in milliseconds
    */
   public void run(int duration) {
-    run(duration, (new Date()).getTime());
+    run(duration, Duration.currentTimeMillis());
   }
 
   /**
@@ -198,7 +198,7 @@ public abstract class Animation {
    * @param duration the duration of the animation in milliseconds
    * @param startTime the synchronized start time in milliseconds
    */
-  public void run(int duration, long startTime) {
+  public void run(int duration, double startTime) {
     impl.run(this, duration, startTime);
   }
 
@@ -229,7 +229,7 @@ public abstract class Animation {
    * @param curTime the current time
    * @return true if the animation is complete, false if still running
    */
-  private boolean update(long curTime) {
+  private boolean update(double curTime) {
     // Start the animation
     if (!started && curTime >= startTime) {
       started = true;

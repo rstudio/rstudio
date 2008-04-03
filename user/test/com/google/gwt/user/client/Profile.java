@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -29,27 +30,27 @@ public abstract class Profile extends GWTTestCase {
   public static String REPORT_TO_WIKI = "Report to Wiki";
   private static String browser;
   private static String reportType = REPORT_TO_WIKI;
-  private static long time;
+  private static double time;
 
   public static void setReportType(String s) {
     reportType = s;
   }
 
   private void browserTiming(String s) {
-    long elapsed = System.currentTimeMillis() - time;
+    double elapsed = Duration.currentTimeMillis() - time;
     RootPanel.get().add(
         new Label("|" + browser + "|" + s + "|" + elapsed + " milliseconds|"));
   }
 
   protected void resetTimer() {
-    time = System.currentTimeMillis();
+    time = Duration.currentTimeMillis();
     if (browser == null) {
       browser = getBrowser();
     }
   }
 
   protected void timing(String s) {
-    long elapsed = System.currentTimeMillis() - time;
+    double elapsed = Duration.currentTimeMillis() - time;
     if (reportType == REPORT_TO_BROWSER) {
       browserTiming(s);
     } else if (reportType == REPORT_TO_WIKI) {

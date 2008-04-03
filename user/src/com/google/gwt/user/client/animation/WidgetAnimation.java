@@ -33,7 +33,7 @@ public abstract class WidgetAnimation extends Animation {
     protected void cancel(WidgetAnimation anim) {
     }
 
-    protected void run(WidgetAnimation anim, int duration, long startTime) {
+    protected void run(WidgetAnimation anim, int duration, double startTime) {
       anim.onRunWhenDisabled();
     }
   }
@@ -49,7 +49,7 @@ public abstract class WidgetAnimation extends Animation {
     }
 
     @Override
-    protected void run(WidgetAnimation anim, int duration, long startTime) {
+    protected void run(WidgetAnimation anim, int duration, double startTime) {
       Animation.impl.run(anim, duration, startTime);
     }
   }
@@ -82,7 +82,7 @@ public abstract class WidgetAnimation extends Animation {
    * @param startTime the synchronized start time in milliseconds
    */
   @Override
-  public void run(int duration, long startTime) {
+  public void run(int duration, double startTime) {
     widgetImpl.run(this, duration, startTime);
   }
 

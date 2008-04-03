@@ -17,8 +17,6 @@ package com.google.gwt.user.client.animation;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
-import java.util.Date;
-
 /**
  * Tests the {@link WidgetAnimation} class.
  */
@@ -81,7 +79,6 @@ public class WidgetAnimationTest extends GWTTestCase {
     TestWidgetAnimation anim = new TestWidgetAnimation();
 
     // Run animations
-    long curTime = (new Date()).getTime();
     anim.run(300);
 
     // Check the results

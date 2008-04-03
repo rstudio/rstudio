@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.core.client.Duration;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -121,7 +122,7 @@ public class CommandExecutorTest extends GWTTestCase {
         });
 
         delayTestFinish(TEST_FINISH_DELAY_MILLIS);
-        ce.doExecuteCommands(System.currentTimeMillis());
+        ce.doExecuteCommands(Duration.currentTimeMillis());
       }
     };
 
@@ -172,13 +173,13 @@ public class CommandExecutorTest extends GWTTestCase {
    * Test method for
    * {@link com.google.gwt.user.client.CommandExecutor#doExecuteCommands(int)}.
    * 
-   * Checks that calling {@link CommandExecutor#doExecuteCommands(long)} with no
+   * Checks that calling {@link CommandExecutor#doExecuteCommands(double)} with no
    * items in the queue is safe
    */
   public void testDoExecuteCommands_emptyQueue() {
     final CommandExecutor ce = new NonRestartingCommandExecutor();
 
-    ce.doExecuteCommands(System.currentTimeMillis());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
   }
 
   /**
@@ -234,7 +235,7 @@ public class CommandExecutorTest extends GWTTestCase {
 
     tic.setDone(true);
     ce.submit(tic);
-    ce.doExecuteCommands(System.currentTimeMillis());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
     assertTrue(tic.getExecuteCount() > 0);
     assertTrue(ce.getPendingCommands().isEmpty());
   }
@@ -255,7 +256,7 @@ public class CommandExecutorTest extends GWTTestCase {
     ce.submit((Command) null);
     ce.submit(tc2);
 
-    ce.doExecuteCommands(System.currentTimeMillis());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
 
     assertTrue(tc1.didExecute() && !tc2.didExecute());
     assertEquals(1, ce.getPendingCommands().size());
@@ -277,7 +278,7 @@ public class CommandExecutorTest extends GWTTestCase {
 
     TestIncrementalCommand tic = new TestIncrementalCommand();
     ce.submit(tic);
-    ce.doExecuteCommands(System.currentTimeMillis());
+    ce.doExecuteCommands(Duration.currentTimeMillis());
 
     assertEquals(1, ce.getPendingCommands().size());
     assertTrue(ce.getPendingCommands().contains(tic));
