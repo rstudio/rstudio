@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -23,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.dev.jdt.LongFromJSNIChecker;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -136,11 +138,11 @@ public class FieldSerializerCreator {
   private void maybeSuppressLongWarnings(JType fieldType) {
     if (fieldType == JPrimitiveType.LONG) {
       /**
-       * Accessing long from JSNI causes a warning, but field serializers need
+       * Accessing long from JSNI causes a error, but field serializers need
        * to be able to do just that in order to bypass java accessibility
        * restrictions.
        */
-      sourceWriter.println("@SuppressWarnings(\"restriction\")");
+      sourceWriter.println("@" + UnsafeNativeLong.class.getName());
     }
   }
 

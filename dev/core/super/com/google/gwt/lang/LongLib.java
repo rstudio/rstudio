@@ -24,6 +24,8 @@ import static com.google.gwt.lang.LongLib.Const.TWO;
 import static com.google.gwt.lang.LongLib.Const.TWO_PWR_24;
 import static com.google.gwt.lang.LongLib.Const.ZERO;
 
+import com.google.gwt.core.client.UnsafeNativeLong;
+
 /**
  * Implements a Java <code>long</code> in a way that can be translated to
  * JavaScript.
@@ -670,7 +672,7 @@ public class LongLib {
   /**
    * Web mode implementation; the long is already the right object.
    */
-  @SuppressWarnings("restriction")
+  @UnsafeNativeLong
   private static native double[] typeChange0(long value) /*-{
     return value;
   }-*/;

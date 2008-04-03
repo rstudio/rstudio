@@ -617,10 +617,6 @@ public class TypeOracleBuilder {
     Util.invokeInaccessableMethod(TypeOracle.class, "refresh",
         new Class[] {TreeLogger.class}, oracle, new Object[] {logger});
 
-    for (CompilationUnitDeclaration cud : cudsByFileName.values()) {
-      LongFromJSNIChecker.check(oracle, cud, logger);
-    }
-
     PerfLogger.end();
 
     return oracle;

@@ -122,6 +122,7 @@ public class AstCompiler extends AbstractCompiler {
   protected void doCompilationUnitDeclarationValidation(
       CompilationUnitDeclaration cud, TreeLogger logger) {
     JSORestrictionsChecker.check(cud);
+    LongFromJSNIChecker.check(cud);
     BinaryTypeReferenceRestrictionsChecker.check(cud);
   }
 }

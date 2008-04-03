@@ -17,7 +17,7 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
@@ -34,10 +34,8 @@ public class LongFromJSNITest extends TestCase {
     code.append("  $wnd.alert(\"x is: \"+this.@Buggy::x); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(
-        code,
-        3,
-        "Referencing field 'Buggy.x': 'long' is an opaque, non-numeric value in JS code");
+    shouldGenerateError(code, 3,
+        "Referencing field 'Buggy.x': type 'long' is not safe to access in JSNI code");
   }
 
   public void testLongArray() throws UnableToCompleteException {
@@ -48,10 +46,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m()()); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(
+    shouldGenerateError(
         code,
         3,
-        "Referencing method \'Buggy.m\': return type \'long[]\' is an opaque, non-numeric value in JS code");
+        "Referencing method \'Buggy.m\': return type 'long[]' is not safe to access in JSNI code");
   }
 
   public void testLongParameter() throws UnableToCompleteException {
@@ -60,8 +58,8 @@ public class LongFromJSNITest extends TestCase {
     code.append("  native void jsniMeth(long x) /*-{ return; }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 2,
-        "Parameter 'x': 'long' is an opaque, non-numeric value in JS code");
+    shouldGenerateError(code, 2,
+        "Parameter 'x': type 'long' is not safe to access in JSNI code");
   }
 
   public void testLongReturn() throws UnableToCompleteException {
@@ -70,8 +68,8 @@ public class LongFromJSNITest extends TestCase {
     code.append("  native long jsniMeth() /*-{ return 0; }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(code, 2,
-        "Return value of type 'long' is an opaque, non-numeric value in JS code");
+    shouldGenerateError(code, 2,
+        "Type 'long' may not be returned from a JSNI method");
   }
 
   public void testMethodArgument() throws UnableToCompleteException {
@@ -81,10 +79,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("  native void jsniMeth() /*-{ this.@Buggy::print(J)(0); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(
+    shouldGenerateError(
         code,
         3,
-        "Referencing method \'Buggy.print\': parameter \'x\': \'long\' is an opaque, non-numeric value in JS code");
+        "Parameter 1 of method \'Buggy.print\': type 'long' may not be passed out of JSNI code");
   }
 
   public void testMethodReturn() throws UnableToCompleteException {
@@ -95,10 +93,10 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m()()); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(
+    shouldGenerateError(
         code,
         3,
-        "Referencing method 'Buggy.m': return type 'long' is an opaque, non-numeric value in JS code");
+        "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
   public void testOverloadedMethodWithNoWarning()
@@ -111,7 +109,7 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m(Ljava/lang/String;)(\"hello\")); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateNoWarning(code);
+    shouldGenerateNoError(code);
   }
 
   public void testOverloadedMethodWithWarning()
@@ -124,53 +122,70 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m(I)(10)); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateWarning(
+    shouldGenerateError(
         code,
         4,
-        "Referencing method 'Buggy.m': return type 'long' is an opaque, non-numeric value in JS code");
+        "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
-  public void testSuppressWarnings() throws UnableToCompleteException {
+  public void testUnsafeAnnotation() throws UnableToCompleteException {
     {
       StringBuffer code = new StringBuffer();
+      code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
       code.append("class Buggy {\n");
       code.append("  void print(long x) { }\n");
-      code.append("  @SuppressWarnings(\"restriction\")\n");
+      code.append("  @UnsafeNativeLong\n");
       code.append("  native void jsniMeth() /*-{ this.@Buggy::print(J)(0); }-*/;\n");
       code.append("}\n");
 
-      shouldGenerateNoWarning(code);
+      shouldGenerateNoError(code);
     }
+  }
 
+  private void addLongCheckingCups(TypeOracleBuilder builder)
+      throws UnableToCompleteException {
     {
-      StringBuffer code = new StringBuffer();
-      code.append("@SuppressWarnings(\"restriction\")\n");
-      code.append("class Buggy {\n");
-      code.append("  void print(long x) { }\n");
-      code.append("  native void jsniMeth() /*-{ this.@Buggy::print(J)(0); }-*/;\n");
+      StringBuilder code = new StringBuilder();
+      code.append("package com.google.gwt.core.client;\n");
+      code.append("public @interface UnsafeNativeLong {\n");
       code.append("}\n");
 
-      shouldGenerateNoWarning(code);
+      TypeOracleTestingUtils.addCup(builder,
+          "com.google.gwt.core.client.UnsafeNativeLong", code);
     }
   }
 
-  private void shouldGenerateNoWarning(StringBuffer code)
-      throws UnableToCompleteException {
-    shouldGenerateWarning(code, -1, null);
+  private TypeOracle buildOracleWithCode(CharSequence code,
+      UnitTestTreeLogger logger) throws UnableToCompleteException {
+    TypeOracleBuilder builder = new TypeOracleBuilder();
+    TypeOracleTestingUtils.addStandardCups(builder);
+    addLongCheckingCups(builder);
+    TypeOracleTestingUtils.addCup(builder, "Buggy", code);
+    return builder.build(logger);
   }
 
-  private void shouldGenerateWarning(CharSequence code, int line, String message)
+  private void shouldGenerateError(CharSequence code, int line, String message)
       throws UnableToCompleteException {
-    Type logType = TreeLogger.WARN;
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.setLowestLogLevel(logType);
+    b.setLowestLogLevel(TreeLogger.ERROR);
     if (message != null) {
-      final String fullMessage = "transient source for Buggy(" + line + "): "
-          + message;
-      b.expect(logType, fullMessage, null);
+      b.expect(TreeLogger.ERROR, "Errors in 'transient source for Buggy'", null);
+      final String fullMessage = "Line " + line + ":  " + message;
+      b.expect(TreeLogger.ERROR, fullMessage, null);
+      b.expect(TreeLogger.ERROR,
+          "Compilation problem due to 'transient source for Buggy'", null);
     }
     UnitTestTreeLogger logger = b.createLogger();
-    TypeOracleTestingUtils.buildTypeOracleForCode("Buggy", code, logger);
+    TypeOracle oracle = buildOracleWithCode(code, logger);
     logger.assertCorrectLogEntries();
+    if (message != null) {
+      assertEquals("Buggy compilation unit not removed from type oracle", null,
+          oracle.findType("Buggy"));
+    }
+  }
+
+  private void shouldGenerateNoError(StringBuffer code)
+      throws UnableToCompleteException {
+    shouldGenerateError(code, -1, null);
   }
 }

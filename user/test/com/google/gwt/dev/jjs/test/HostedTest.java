@@ -22,6 +22,7 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.AbstractList;
@@ -160,7 +161,7 @@ public class HostedTest extends GWTTestCase {
     return val;
   }-*/;
 
-  @SuppressWarnings("restriction")
+  @UnsafeNativeLong
   private static native long passThroughLong(long val) /*-{
     return val;
   }-*/;
