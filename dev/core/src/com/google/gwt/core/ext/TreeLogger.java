@@ -190,6 +190,15 @@ public abstract class TreeLogger {
   /**
    * Calls
    * {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
+   * with a <code>null</code> <code>caught</code> and <code>helpInfo</code>.
+   */
+  public final TreeLogger branch(TreeLogger.Type type, String msg) {
+    return branch(type, msg, null, null);
+  }
+
+  /**
+   * Calls
+   * {@link #branch(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)}
    * with a <code>null</code> <code>helpInfo</code>.
    */
   public final TreeLogger branch(TreeLogger.Type type, String msg,
@@ -239,6 +248,15 @@ public abstract class TreeLogger {
    * would be thrown away.
    */
   public abstract boolean isLoggable(TreeLogger.Type type);
+
+  /**
+   * Calls
+   * {@link #log(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
+   * with a <code>null</code> <code>caught</code> and <code>helpInfo</code>.
+   */
+  public final void log(TreeLogger.Type type, String msg) {
+    log(type, msg, null, null);
+  }
 
   /**
    * Calls
