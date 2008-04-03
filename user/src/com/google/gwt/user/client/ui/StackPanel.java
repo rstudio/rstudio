@@ -400,7 +400,7 @@ public class StackPanel extends ComplexPanel implements HasAnimation {
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
 
-    int numHeaders = DOM.getChildCount(body) / 2;
+    int numHeaders = DOM.getChildCount(body) >> 1;
     for (int i = 0; i < numHeaders; i++) {
       Element headerElem = DOM.getFirstChild(DOM.getChild(body, 2 * i));
       Element bodyElem = DOM.getFirstChild(DOM.getChild(body, 2 * i + 1));

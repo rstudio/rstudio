@@ -150,8 +150,8 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
       int height = (int) (progress * offsetHeight);
       int width = (int) (progress * offsetWidth);
       if (curPanel.animType == AnimationType.CENTER) {
-        top = (offsetHeight - height) / 2;
-        left = (offsetWidth - width) / 2;
+        top = (offsetHeight - height) >> 1;
+        left = (offsetWidth - width) >> 1;
       }
       right = left + width;
       bottom = top + height;
@@ -314,8 +314,8 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
       show();
     }
 
-    int left = (Window.getClientWidth() - getOffsetWidth()) / 2;
-    int top = (Window.getClientHeight() - getOffsetHeight()) / 2;
+    int left = (Window.getClientWidth() - getOffsetWidth()) >> 1;
+    int top = (Window.getClientHeight() - getOffsetHeight()) >> 1;
     setPopupPosition(Window.getScrollLeft() + left, Window.getScrollTop() + top);
 
     if (!initiallyShowing) {

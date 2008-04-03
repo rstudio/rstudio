@@ -315,7 +315,7 @@ class PrefixTree extends AbstractCollection<String> {
       if (subtrees.hasOwnProperty(prefix)) {
         theTree = subtrees[prefix];
       } else {
-        theTree = @com.google.gwt.user.client.ui.PrefixTree::createPrefixTree(I)(prefixLength * 2);
+        theTree = @com.google.gwt.user.client.ui.PrefixTree::createPrefixTree(I)(prefixLength << 1);
         subtrees[prefix] = theTree;
       }
 

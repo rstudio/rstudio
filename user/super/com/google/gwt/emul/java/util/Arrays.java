@@ -49,7 +49,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final byte midVal = sortedArray[mid];
 
       if (midVal < key) {
@@ -80,7 +80,7 @@ public class Arrays {
     int high = a.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final char midVal = a[mid];
 
       if (midVal < key) {
@@ -111,7 +111,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final double midVal = sortedArray[mid];
 
       if (midVal < key) {
@@ -147,7 +147,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final float midVal = sortedArray[mid];
 
       if (midVal < key) {
@@ -178,7 +178,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final int midVal = sortedArray[mid];
 
       if (midVal < key) {
@@ -215,7 +215,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final long midVal = sortedArray[mid];
 
       if (midVal < key) {
@@ -262,7 +262,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final short midVal = sortedArray[mid];
 
       if (midVal < key) {
@@ -303,7 +303,7 @@ public class Arrays {
     int high = sortedArray.length - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final T midVal = sortedArray[mid];
       final int compareResult = comparator.compare(midVal, key);
 
@@ -1243,7 +1243,7 @@ public class Arrays {
     // recursively sort both halves, using the array as temp space
     int tempLow = low + ofs;
     int tempHigh = high + ofs;
-    int tempMid = tempLow + ((tempHigh - tempLow) / 2);
+    int tempMid = tempLow + ((tempHigh - tempLow) >> 1);
     mergeSort(array, temp, tempLow, tempMid, -ofs, comp);
     mergeSort(array, temp, tempMid, tempHigh, -ofs, comp);
 

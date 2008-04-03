@@ -74,7 +74,7 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     heap.add(e);
     while (node > 0) {
       int childNode = node;
-      node = (node - 1) / 2; // get parent of current node
+      node = (node - 1) >> 1; // get parent of current node
       if (cmp.compare(heap.get(node), heap.get(childNode)) <= 0) {
         // parent is smaller, so we have a valid heap
         heap.set(childNode, e);

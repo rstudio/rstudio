@@ -189,7 +189,7 @@ public class Collections {
     int high = sortedList.size() - 1;
 
     while (low <= high) {
-      final int mid = low + ((high - low) / 2);
+      final int mid = low + ((high - low) >> 1);
       final T midVal = sortedList.get(mid);
       final int compareResult = comparator.compare(midVal, key);
 
