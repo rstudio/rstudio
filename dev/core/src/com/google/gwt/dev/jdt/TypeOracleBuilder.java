@@ -1063,7 +1063,6 @@ public class TypeOracleBuilder {
     cacheManager.setTypeForBinding(binding, jrealClassType);
   }
 
-  @SuppressWarnings("unchecked")
   private boolean resolveAnnotation(
       TreeLogger logger,
       Annotation jannotation,
@@ -1075,9 +1074,8 @@ public class TypeOracleBuilder {
 
     // Determine the annotation class
     TypeBinding resolvedType = jannotation.resolvedType;
-    Class<? extends java.lang.annotation.Annotation> clazz = (Class<? extends java.lang.annotation.Annotation>) getClassLiteral(
-        logger, resolvedType);
-    if (clazz == null) {
+    Class<?> classLiteral = getClassLiteral(logger, resolvedType);
+    if (classLiteral == null) {
       return false;
     }
 
@@ -1087,6 +1085,7 @@ public class TypeOracleBuilder {
       return false;
     }
 
+    Class<? extends java.lang.annotation.Annotation> clazz = classLiteral.asSubclass(java.lang.annotation.Annotation.class);
     declaredAnnotations.put(clazz, annotation);
     return true;
   }
