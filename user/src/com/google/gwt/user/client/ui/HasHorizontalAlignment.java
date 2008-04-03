@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.i18n.client.LocaleInfo;
+
 /**
  * Characteristic interface which indicates that a widget can be aligned
  * horizontally.
@@ -60,6 +62,14 @@ public interface HasHorizontalAlignment {
       "right");
 
   /**
+   * In a RTL layout, specifies that the widget's contents should be aligned
+   * to the right. In a LTR layout, specifies that the widget's constants 
+   * should be aligned to the left.
+   */
+  HorizontalAlignmentConstant ALIGN_DEFAULT = 
+      (LocaleInfo.getCurrentLocale().isRTL()) ? ALIGN_RIGHT : ALIGN_LEFT;
+      
+  /**
    * Gets the horizontal alignment.
    * 
    * @return the current horizontal alignment.
@@ -71,8 +81,9 @@ public interface HasHorizontalAlignment {
    * 
    * @param align the horizontal alignment (
    *          {@link HasHorizontalAlignment#ALIGN_LEFT},
-   *          {@link HasHorizontalAlignment#ALIGN_CENTER}, or
-   *          {@link HasHorizontalAlignment#ALIGN_RIGHT}).
+   *          {@link HasHorizontalAlignment#ALIGN_CENTER},
+   *          {@link HasHorizontalAlignment#ALIGN_RIGHT}), or
+   *          {@link HasHorizontalAlignment#ALIGN_DEFAULT}).
    */
   void setHorizontalAlignment(HorizontalAlignmentConstant align);
 }

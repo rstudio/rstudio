@@ -135,8 +135,8 @@ public class Panels extends Sink {
     tabs.selectTab(0);
 
     HorizontalSplitPanel hSplit = new HorizontalSplitPanel();
-    hSplit.setLeftWidget(tabs);
-    hSplit.setRightWidget(new HTML(
+    hSplit.setStartOfLineWidget(tabs);
+    hSplit.setEndOfLineWidget(new HTML(
       "This is some text to make the right side of this " +
       "splitter look a bit more interesting... " +
       "This is some text to make the right side of this " +

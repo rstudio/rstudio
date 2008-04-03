@@ -373,27 +373,14 @@ a:visited {
   top: 8px;
 }
 
-.ks-List .ks-SinkItem a {
+.ks-List .ks-SinkItem a,
+.ks-List .ks-SinkItem-rtl a {
   text-decoration: none;
   color: white;
 }
 
-.ks-List .ks-SinkItem-selected a {
-  text-decoration: none;
-  color: white;
-}
-
-.ks-List .ks-FirstSinkItem a {
-  text-decoration: none;
-  color: white;
-}
-
-.ks-List .ks-FirstSinkItem-selected a {
-  text-decoration: none;
-  color: white;
-}
-
-.ks-List .ks-SinkItem {
+.ks-List .ks-SinkItem,
+.ks-List .ks-SinkItem-rtl {
   background: #c6cab7;
   padding: 4px;
   padding-left: 16px;
@@ -404,33 +391,19 @@ a:visited {
   cursor: hand;
 }
 
-.ks-List .ks-SinkItem-selected {
-  background: #c6cab7;
-  padding: 4px;
-  padding-left: 16px;
-  padding-right: 16px;
-  margin-right: 3px;
+.ks-List .ks-SinkItem-selected,
+.ks-List .ks-SinkItem-rtl-selected {
   padding-bottom: 7px;
+  border-bottom: none;
+  cursor: auto;  
 }
 
-.ks-List .ks-FirstSinkItem {
+.ks-List .ks-SinkItem-first {
   background: #c6cab7 url(images/corner.gif) no-repeat top left;
-  padding: 4px;
-  padding-left: 16px;
-  padding-right: 16px;
-  margin-right: 3px;
-  border-bottom: 3px solid white;
-  cursor: pointer;
-  cursor: hand;
 }
 
-.ks-List .ks-FirstSinkItem-selected {
-  background: #c3d9ff url(images/corner.gif) no-repeat top left;
-  padding: 4px;
-  padding-left: 16px;
-  padding-right: 16px;
-  margin-right: 3px;
-  padding-bottom: 7px;
+.ks-List .ks-SinkItem-rtl-first {
+ background: #c6cab7 url( images/corner_rtl.gif ) no-repeat top right; 
 }
 
 .ks-images-Image {

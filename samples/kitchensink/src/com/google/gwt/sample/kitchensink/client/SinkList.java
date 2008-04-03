@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.ArrayList;
 
@@ -129,13 +130,27 @@ public class SinkList extends Composite {
   }
 
   private void styleSink(int index, boolean selected) {
-    String style = (index == 0) ? "ks-FirstSinkItem" : "ks-SinkItem";
-    if (selected) {
-      style += "-selected";
+    Widget w = list.getWidget(index + 1);
+
+    String primaryStyleName = "ks-SinkItem";
+
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      primaryStyleName += "-rtl";
     }
 
-    Widget w = list.getWidget(index + 1);
-    w.setStyleName(style);
+    w.setStylePrimaryName(primaryStyleName);
+
+    if (index == 0) {
+      w.addStyleDependentName("first");
+    } else {
+      w.removeStyleDependentName("first");
+    }
+
+    if (selected) {
+      w.addStyleDependentName("selected");
+    } else {
+      w.removeStyleDependentName("selected");
+    }
 
     colorSink(index, selected);
   }

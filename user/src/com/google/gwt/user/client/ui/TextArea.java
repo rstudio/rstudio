@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.i18n.client.BidiUtils;
 
 /**
  * A text box that allows multiple lines of text to be entered.
@@ -34,7 +36,7 @@ import com.google.gwt.user.client.DOM;
  * <h3>Example</h3> {@example com.google.gwt.examples.TextBoxExample}
  * </p>
  */
-public class TextArea extends TextBoxBase {
+public class TextArea extends TextBoxBase implements HasDirection {
 
   /**
    * Creates an empty text area.
@@ -59,6 +61,10 @@ public class TextArea extends TextBoxBase {
     return getImpl().getTextAreaCursorPos(getElement());
   }
 
+  public Direction getDirection() {
+    return BidiUtils.getDirectionOnElement(getElement());
+  }
+  
   @Override
   public int getSelectionLength() {
     return getImpl().getSelectionLength(getElement());
@@ -81,6 +87,10 @@ public class TextArea extends TextBoxBase {
    */
   public void setCharacterWidth(int width) {
     DOM.setElementPropertyInt(getElement(), "cols", width);
+  }
+
+  public void setDirection(Direction direction) {
+    BidiUtils.setDirectionOnElement(getElement(), direction);
   }
 
   /**

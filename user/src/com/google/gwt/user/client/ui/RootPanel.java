@@ -19,6 +19,9 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.WindowCloseListener;
+import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.i18n.client.BidiUtils;
+import com.google.gwt.i18n.client.HasDirection;
 
 import java.util.HashMap;
 
@@ -70,8 +73,19 @@ public class RootPanel extends AbsolutePanel {
       }
     }
 
+    // Note that the code in this if block only happens once - 
+    // on the first RootPanel.get(String) or RootPanel.get() 
+    // call.
+    
     if (rootPanels.size() == 0) {
       hookWindowClosing();
+      
+      // If we're in a RTL locale, set the RTL directionality
+      // on the entire document.
+      
+      if (LocaleInfo.getCurrentLocale().isRTL()) {
+        BidiUtils.setDirectionOnElement(getRootElement(), HasDirection.Direction.RTL);
+      }      
     }
 
     // Create the panel and put it in the map.
@@ -92,6 +106,16 @@ public class RootPanel extends AbsolutePanel {
     return $doc.body;
   }-*/;
 
+  /**
+   * Convenience method for getting the document's root 
+   * (<html>) element.
+   *
+   * @return the document's root element
+   */
+  private static native Element getRootElement() /*-{
+    return $doc;
+  }-*/;
+  
   private static void hookWindowClosing() {
     // Catch the window closing event.
     Window.addWindowCloseListener(new WindowCloseListener() {

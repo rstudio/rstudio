@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,14 +126,14 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    */
   private final Map<Widget, TreeItem> childWidgets = new HashMap<Widget, TreeItem>();
   private TreeItem curSelection;
-  private final Element focusable;
+  private Element focusable;
   private FocusListenerCollection focusListeners;
   private TreeImages images;
   private boolean isAnimationEnabled = true;
   private KeyboardListenerCollection keyboardListeners;
   private TreeListenerCollection listeners;
   private MouseListenerCollection mouseListeners = null;
-  private final TreeItem root;
+  private TreeItem root;
 
   /**
    * Keeps track of the last event type seen. We do this to determine if we have
@@ -144,7 +145,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Constructs an empty tree.
    */
   public Tree() {
-    this(GWT.<TreeImages>create(TreeImages.class));
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      init(GWT.<TreeImagesRTL>create(TreeImagesRTL.class));      
+    } else {
+      init(GWT.<TreeImages>create(TreeImages.class));
+    }
   }
 
   /**
@@ -183,7 +188,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         getChildren().add(item);
 
         // Use no margin on top-most items.
-        DOM.setIntStyleAttribute(item.getElement(), "marginLeft", 0);
+        if (LocaleInfo.getCurrentLocale().isRTL()) {
+          DOM.setIntStyleAttribute(item.getElement(), "marginRight", 0);
+        } else {
+          DOM.setIntStyleAttribute(item.getElement(), "marginLeft", 0);
+        }        
       }
 
       @Override
@@ -471,31 +480,24 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
               break;
             }
             case KeyboardListener.KEY_LEFT: {
-              TreeItem topClosedParent = getTopClosedParent(curSelection);
-              if (topClosedParent != null) {
-                // Select the first visible parent if curSelection is hidden
-                setSelectedItem(topClosedParent);
-              } else if (curSelection.getState()) {
-                curSelection.setState(false);
+              
+              if (LocaleInfo.getCurrentLocale().isRTL()) {
+                maybeExpandTreeItem();
               } else {
-                TreeItem parent = curSelection.getParentItem();
-                if (parent != null) {
-                  setSelectedItem(parent);
-                }
+                maybeCollapseTreeItem();
               }
+              
               DOM.eventPreventDefault(event);
               break;
             }
             case KeyboardListener.KEY_RIGHT: {
-              TreeItem topClosedParent = getTopClosedParent(curSelection);
-              if (topClosedParent != null) {
-                // Select the first visible parent if curSelection is hidden
-                setSelectedItem(topClosedParent);
-              } else if (!curSelection.getState()) {
-                curSelection.setState(true);
-              } else if (curSelection.getChildCount() > 0) {
-                setSelectedItem(curSelection.getChild(0));
+              
+              if (LocaleInfo.getCurrentLocale().isRTL()) {
+                maybeCollapseTreeItem();
+              } else {
+                maybeExpandTreeItem();
               }
+              
               DOM.eventPreventDefault(event);
               break;
             }
@@ -803,7 +805,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   /**
    * Get the top parent above this {@link TreeItem} that is in closed state.  In
    * other words, get the parent that is guaranteed to be visible.
-   * 
+   *
    * @param item
    * @return the closed parent, or null if all parents are opened
    */
@@ -818,7 +820,96 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     }
     return topClosedParent;
   }
+
+  private void init(TreeImages images) {
+    this.images = images;
+    setElement(DOM.createDiv());
+    DOM.setStyleAttribute(getElement(), "position", "relative");
+    focusable = FocusPanel.impl.createFocusable();
+    DOM.setStyleAttribute(focusable, "fontSize", "0");
+    DOM.setStyleAttribute(focusable, "position", "absolute");
+    DOM.setIntStyleAttribute(focusable, "zIndex", -1);
+    DOM.appendChild(getElement(), focusable);
+
+    sinkEvents(Event.MOUSEEVENTS | Event.ONCLICK | Event.KEYEVENTS);
+    DOM.sinkEvents(focusable, Event.FOCUSEVENTS);
+
+    // The 'root' item is invisible and serves only as a container
+    // for all top-level items.
+    root = new TreeItem() {
+      @Override
+      public void addItem(TreeItem item) {
+        // If this element already belongs to a tree or tree item, remove it.
+        if ((item.getParentItem() != null) || (item.getTree() != null)) {
+          item.remove();
+        }
+        DOM.appendChild(Tree.this.getElement(), item.getElement());
+
+        item.setTree(this.getTree());
+
+        // Explicitly set top-level items' parents to null.
+        item.setParentItem(null);
+        getChildren().add(item);
+
+        // Use no margin on top-most items.
+        if (LocaleInfo.getCurrentLocale().isRTL()) {
+          DOM.setIntStyleAttribute(item.getElement(), "marginRight", 0);
+        } else {
+          DOM.setIntStyleAttribute(item.getElement(), "marginLeft", 0);
+        }
+      }
+
+      @Override
+      public void removeItem(TreeItem item) {
+        if (!getChildren().contains(item)) {
+          return;
+        }
+
+        // Update Item state.
+        item.setTree(null);
+        item.setParentItem(null);
+        getChildren().remove(item);
+
+        DOM.removeChild(Tree.this.getElement(), item.getElement());
+      }
+    };
+    root.setTree(this);
+    setStyleName("gwt-Tree");
+
+    // Add a11y role "tree"
+    Accessibility.setRole(getElement(), Accessibility.ROLE_TREE);
+    Accessibility.setRole(focusable, Accessibility.ROLE_TREEITEM);
+  }
   
+  private void maybeCollapseTreeItem() {
+
+    TreeItem topClosedParent = getTopClosedParent(curSelection);
+    if (topClosedParent != null) {
+      // Select the first visible parent if curSelection is hidden
+      setSelectedItem(topClosedParent);
+    } else if (curSelection.getState()) {
+      curSelection.setState(false);
+    } else {
+      TreeItem parent = curSelection.getParentItem();
+      if (parent != null) {
+        setSelectedItem(parent);
+      }
+    }
+  }
+
+  private void maybeExpandTreeItem() {
+
+    TreeItem topClosedParent = getTopClosedParent(curSelection);
+    if (topClosedParent != null) {
+      // Select the first visible parent if curSelection is hidden
+      setSelectedItem(topClosedParent);
+    } else if (!curSelection.getState()) {
+      curSelection.setState(true);
+    } else if (curSelection.getChildCount() > 0) {
+      setSelectedItem(curSelection.getChild(0));
+    }
+  }
+
   /**
    * Move the tree focus to the specified selected item.
    * 

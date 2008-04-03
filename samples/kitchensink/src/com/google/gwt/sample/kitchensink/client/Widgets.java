@@ -112,7 +112,7 @@ public class Widgets extends Sink implements Command {
     MenuBar menu0 = new MenuBar(true);
     menu0.addItem("<b>Bold</b>", true, this);
     menu0.addItem("<i>Italicized</i>", true, this);
-    menu0.addItem("More &#187;", true, subMenu);
+    menu0.addItem("More", true, subMenu);
     MenuBar menu1 = new MenuBar(true);
     menu1.addItem("<font color='#FF0000'><b>Apple</b></font>", true, this);
     menu1.addItem("<font color='#FFFF00'><b>Banana</b></font>", true, this);

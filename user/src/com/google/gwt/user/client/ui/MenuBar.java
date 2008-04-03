@@ -21,6 +21,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 
 import java.util.ArrayList;
@@ -68,6 +69,26 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
   }
 
   /**
+   * A bundle containing the RTL versions of the images for MenuBar.
+   * 
+   * Notice that this interface is package protected. This interface need not be
+   * publicly exposed, as it is only used by the MenuBar class to provide RTL
+   * versions of the images in the case the the user does not pass in their own
+   * bundle. However, we cannot make this class private, because the generated
+   * class needs to be able to extend this class.
+   */
+  interface MenuBarImagesRTL extends MenuBarImages {
+    /**
+     * An image indicating a {@link MenuItem} has an associated submenu for
+     * a RTL context.
+     * 
+     * @return a prototype of this image
+     */
+    @Resource("menuBarSubMenuIcon_rtl.gif")
+    AbstractImagePrototype menuBarSubMenuIcon();    
+  }
+
+  /**
    * List of all {@link MenuItem}s and {@link MenuItemSeparator}s.
    */
   private ArrayList<UIObject> allItems = new ArrayList<UIObject>();
@@ -95,39 +116,38 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
   }
 
   /**
+   * Creates an empty horizontal menu bar that uses the specified image bundle
+   * for menu images.
+   *
+   * @param images a bundle that provides images for this menu
+   */
+  public MenuBar(MenuBarImages images) {
+    this(false, images);
+  }
+
+  /**
    * Creates an empty menu bar.
-   * 
+   *
    * @param vertical <code>true</code> to orient the menu bar vertically
    */
   public MenuBar(boolean vertical) {
     super();
-
-    Element table = DOM.createTable();
-    body = DOM.createTBody();
-    DOM.appendChild(table, body);
-
-    if (!vertical) {
-      Element tr = DOM.createTR();
-      DOM.appendChild(body, tr);
-    }
-
-    this.vertical = vertical;
-
-    Element outer = FocusPanel.impl.createFocusable();
-    DOM.appendChild(outer, table);
-    setElement(outer);
-
-    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUBAR);
-
-    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
-        | Event.ONFOCUS |  Event.ONKEYDOWN);
-
-    setStyleName("gwt-MenuBar");
-    if (vertical) {
-      addStyleDependentName("vertical");
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      init(vertical, GWT.<MenuBarImagesRTL>create(MenuBarImagesRTL.class));
     } else {
-      addStyleDependentName("horizontal");
+      init(vertical, GWT.<MenuBarImages>create(MenuBarImages.class));
     }
+  }
+
+  /**
+   * Creates an empty menu bar that uses the specified image bundle
+   * for menu images.
+   *
+   * @param vertical <code>true</code> to orient the menu bar vertically
+   * @param images   a bundle that provides images for this menu
+   */
+  public MenuBar(boolean vertical, MenuBarImages images) {
+    init(vertical, images);
   }
 
   /**
@@ -305,10 +325,18 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
         int keyCode = DOM.eventGetKeyCode(event);
         switch (keyCode) {
           case KeyboardListener.KEY_LEFT:
-            moveLeft();
+            if (LocaleInfo.getCurrentLocale().isRTL()) {
+              moveToNextItem();
+            } else {
+              moveToPrevItem();
+            }
             break;
           case KeyboardListener.KEY_RIGHT:
-            moveRight();
+            if (LocaleInfo.getCurrentLocale().isRTL()) {
+              moveToPrevItem();
+            } else {
+              moveToNextItem();
+            }
             break;
           case KeyboardListener.KEY_UP:
             moveUp();
@@ -524,15 +552,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     popup.setStyleName("gwt-MenuBarPopup");
     popup.addPopupListener(this);
 
-    if (vertical) {
-      popup.setPopupPosition(
-          this.getAbsoluteLeft() + this.getOffsetWidth() - 1,
-          item.getAbsoluteTop());
-    } else {
-      popup.setPopupPosition(item.getAbsoluteLeft(), this.getAbsoluteTop()
-          + this.getOffsetHeight() - 1);
-    }
-
     shownChildMenu = item.getSubMenu();
     item.getSubMenu().parentMenu = this;
 
@@ -547,7 +566,32 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
 
     // Show the popup, ensuring that the menubar's event preview remains on top
     // of the popup's.
-    popup.show();
+    popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
+          
+      public void setPosition(int offsetWidth, int offsetHeight) {
+        
+        // depending on the bidi direction position a menu on the left or right
+        // of its base item
+        if (LocaleInfo.getCurrentLocale().isRTL()) {                    
+          int popableWidth = item.getSubMenu().getOffsetWidth();                
+          if (vertical) {
+            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - popableWidth + 1,
+                item.getAbsoluteTop());
+          } else {
+            popup.setPopupPosition(item.getAbsoluteLeft() + item.getOffsetWidth() - popableWidth,
+                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight() - 1);
+          }
+        } else {
+          if (vertical) {
+            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() + MenuBar.this.getOffsetWidth() - 1,
+                item.getAbsoluteTop());
+          } else {
+            popup.setPopupPosition(item.getAbsoluteLeft(), 
+                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight() - 1);
+          }
+        }
+      }
+    });
     shownChildMenu.focus();
   }
 
@@ -651,9 +695,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       setItemColSpan(item, 2);
     } else if (tdCount == 1) {
       // Show the submenu indicator
-      if (images == null) {
-        images = GWT.create(MenuBarImages.class);
-      }
       setItemColSpan(item, 1);
       Element td = DOM.createTD();
       DOM.setElementProperty(td, "vAlign", "middle");
@@ -709,7 +750,38 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       return DOM.getChild(body, 0);
     }
   }
+  
+  private void init(boolean vertical, MenuBarImages images) {    
+    this.images = images;
+    
+    Element table = DOM.createTable();
+    body = DOM.createTBody();
+    DOM.appendChild(table, body);
 
+    if (!vertical) {
+      Element tr = DOM.createTR();
+      DOM.appendChild(body, tr);
+    }
+
+    this.vertical = vertical;
+
+    Element outer = FocusPanel.impl.createFocusable();
+    DOM.appendChild(outer, table);
+    setElement(outer);
+
+    Accessibility.setRole(getElement(), Accessibility.ROLE_MENUBAR);
+
+    sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
+        | Event.ONFOCUS |  Event.ONKEYDOWN);
+
+    setStyleName("gwt-MenuBar");
+    if (vertical) {
+      addStyleDependentName("vertical");
+    } else {
+      addStyleDependentName("horizontal");
+    }    
+  }
+  
   private void moveDown() {
     if (selectFirstItemIfNoneSelected()) {
       return;
@@ -729,8 +801,28 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       }
     }
   }
+  
+  private void moveToNextItem() {
+    if (selectFirstItemIfNoneSelected()) {
+      return;
+    }
 
-  private void moveLeft() {
+    if (!vertical) {
+      selectNextItem();
+    } else {
+      if ((shownChildMenu == null) && (selectedItem.getSubMenu() != null)) {
+        doItemAction(selectedItem, false);
+      } else if (parentMenu != null) {
+        if (!parentMenu.vertical) {
+          parentMenu.selectNextItem();
+        } else {
+          parentMenu.moveToNextItem();
+        }
+      }
+    }
+  }
+
+  private void moveToPrevItem() {
     if (selectFirstItemIfNoneSelected()) {
       return;
     }
@@ -745,27 +837,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       }
     }
   }
-
-  private void moveRight() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if (!vertical) {
-      selectNextItem();
-    } else {
-      if ((shownChildMenu == null) && (selectedItem.getSubMenu() != null)) {
-        doItemAction(selectedItem, false);
-      } else if (parentMenu != null) {
-        if (!parentMenu.vertical) {
-          parentMenu.selectNextItem();
-        } else {
-          parentMenu.moveRight();
-        }
-      }
-    }
-  }
-
+  
   private void moveUp() {
     if (selectFirstItemIfNoneSelected()) {
       return;

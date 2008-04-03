@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -217,37 +218,88 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     // Set the position of the popup right before it is shown.
     setPopupPositionAndShow(new PositionCallback() {
       public void setPosition(int offsetWidth, int offsetHeight) {
-        // Calculate left position for the popup.
+        
+        // Calculate left position for the popup. The computation for
+        // the left position is bidi-sensitive.
+       
+        int textBoxOffsetWidth = box.getOffsetWidth();
+               
+        // Compute the difference between the popup's width and the
+        // textbox's width
+        int offsetWidthDiff = offsetWidth - textBoxOffsetWidth;
+        
+        int left;
+        
+        if (LocaleInfo.getCurrentLocale().isRTL()) {   // RTL case
+          
+          int textBoxAbsoluteLeft = box.getAbsoluteLeft();
+          
+          // Right-align the popup. Note that this computation is
+          // valid in the case where offsetWidthDiff is negative.
+          left = textBoxAbsoluteLeft - offsetWidthDiff;
 
-        int left = box.getAbsoluteLeft();
-        int offsetWidthDiff = offsetWidth - box.getOffsetWidth();
+          // If the suggestion popup is not as wide as the text box, always align
+          // to the right edge of the text box. Otherwise, figure out whether to
+          // right-align or left-align the popup.
+          if (offsetWidthDiff > 0) {
+            
+            // Make sure scrolling is taken into account, since box.getAbsoluteLeft()
+            // takes scrolling into account.
+            int windowRight = Window.getClientWidth() + Window.getScrollLeft();
+            int windowLeft = Window.getScrollLeft();
 
-        // If the suggestion popup is not as wide as the text box, always align
-        // to the left edge of the text box. Otherwise, figure out whether to
-        // left-align or right-align the popup.
-        if (offsetWidthDiff > 0) {
-          // Make sure scrolling is taken into account, since box.getAbsoluteLeft()
-          // takes scrolling into account.
-          int windowRight = Window.getClientWidth() + Window.getScrollLeft();
-          int windowLeft = Window.getScrollLeft();
+            // Compute the left value for the right edge of the textbox
+            int textBoxLeftValForRightEdge = textBoxAbsoluteLeft + textBoxOffsetWidth;
+                
+            // Distance from the right edge of the text box to the right edge of the
+            // window
+            int distanceToWindowRight = windowRight - textBoxLeftValForRightEdge;
 
-          // Distance from the left edge of the text box to the right edge of the
-          // window
-          int distanceToWindowRight = windowRight - left;
+            // Distance from the right edge of the text box to the left edge of the
+            // window
+            int distanceFromWindowLeft = textBoxLeftValForRightEdge - windowLeft; 
 
-          // Distance from the left edge of the text box to the left edge of the
-          // window
-          int distanceFromWindowLeft = left - windowLeft;
+            // If there is not enough space for the overflow of the popup's width to
+            // the right of the text box and there IS enough space for the overflow
+            // to the right of the text box, then left-align the popup. However, if
+            // there is not enough space on either side, stick with right-alignment.
+            if (distanceFromWindowLeft < offsetWidth &&
+                distanceToWindowRight >= offsetWidthDiff) {
+              // Align with the left edge of the text box.
+              left = textBoxAbsoluteLeft;
+            }
+          }
+        } else {  // LTR case
+          
+          // Left-align the popup.
+          left = box.getAbsoluteLeft();
 
-          // If there is not enough space for the popup's width overflow to the
-          // right of the text box and there IS enough space for the popup's
-          // width overflow to the left of the text box, then right-align
-          // the popup. However, if there is not enough space on either side,
-          // then stick with left-alignment.
-          if (distanceToWindowRight < offsetWidth &&
-              distanceFromWindowLeft >= (offsetWidth - box.getOffsetWidth())) {
-            // Align with the right edge of the text box.
-            left -= offsetWidthDiff;
+          // If the suggestion popup is not as wide as the text box, always align
+          // to the left edge of the text box. Otherwise, figure out whether to
+          // left-align or right-align the popup.
+          if (offsetWidthDiff > 0) {
+            // Make sure scrolling is taken into account, since box.getAbsoluteLeft()
+            // takes scrolling into account.
+            int windowRight = Window.getClientWidth() + Window.getScrollLeft();
+            int windowLeft = Window.getScrollLeft();
+
+            // Distance from the left edge of the text box to the right edge of the
+            // window
+            int distanceToWindowRight = windowRight - left;
+
+            // Distance from the left edge of the text box to the left edge of the
+            // window
+            int distanceFromWindowLeft = left - windowLeft;
+
+            // If there is not enough space for the overflow of the popup's width to 
+            // the right of hte text box, and there IS enough space for the overflow
+            // to the left of the text box, then right-align the popup. However, if
+            // there is not enough space on either side, then stick with left-alignment.
+            if (distanceToWindowRight < offsetWidth &&
+                distanceFromWindowLeft >= offsetWidthDiff) {
+              // Align with the right edge of the text box.
+              left -= offsetWidthDiff;
+            }
           }
         }
 

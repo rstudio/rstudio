@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,9 +27,6 @@ import java.util.Map;
  * A panel that lays its child widgets out "docked" at its outer edges, and
  * allows its last widget to take up the remaining space in its center.
  * 
- * <p>
- * <img class='gallery' src='DockPanel.png'/>
- * </p>
  */
 public class DockPanel extends CellPanel implements HasAlignment {
 
@@ -46,10 +44,10 @@ public class DockPanel extends CellPanel implements HasAlignment {
    */
   static class LayoutData {
     public DockLayoutConstant direction;
-    public String hAlign = "left";
+    public String hAlign = ALIGN_DEFAULT.getTextAlignString();
     public String height = "";
     public Element td;
-    public String vAlign = "top";
+    public String vAlign = ALIGN_TOP.getVerticalAlignString();
     public String width = "";
 
     public LayoutData(DockLayoutConstant dir) {
@@ -66,6 +64,18 @@ public class DockPanel extends CellPanel implements HasAlignment {
    * Specifies that a widget be added at the center of the dock.
    */
   public static final DockLayoutConstant CENTER = new DockLayoutConstant();
+
+  /**
+   * Specifies that a widget be added at the beginning of the line direction
+   * for the layout.
+   */
+  public static final DockLayoutConstant LINE_START = new DockLayoutConstant();
+
+  /**
+   * Specifies that a widget be added at the end of the line direction
+   * for the layout.
+   */
+  public static final DockLayoutConstant LINE_END = new DockLayoutConstant();
 
   /**
    * Specifies that a widget be added at the east edge of the dock.
@@ -103,12 +113,16 @@ public class DockPanel extends CellPanel implements HasAlignment {
       return "west" + count;
     } else if (direction == EAST) {
       return "east" + count;
-    } else {
+    } else if (direction == LINE_START) {
+        return "linestart" + count;      
+    } else if (direction == LINE_END) {
+        return "lineend" + count;      
+    } else {    
       return "center";
     }
   }
-
-  private HorizontalAlignmentConstant horzAlign = ALIGN_LEFT;
+  
+  private HorizontalAlignmentConstant horzAlign = ALIGN_DEFAULT;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
   private Widget center;
 
@@ -214,7 +228,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     LayoutData data = (LayoutData) w.getLayoutData();
     data.hAlign = align.getTextAlignString();
     if (data.td != null) {
-      DOM.setElementProperty(data.td, "align", data.hAlign);
+      setCellHorizontalAlignment(data.td, align);
     }
   }
 
@@ -223,7 +237,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
     LayoutData data = (LayoutData) w.getLayoutData();
     data.vAlign = align.getVerticalAlignString();
     if (data.td != null) {
-      DOM.setStyleAttribute(data.td, "verticalAlign", data.vAlign);
+      setCellVerticalAlignment(data.td, align);
     }
   }
 
@@ -318,7 +332,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
       DockLayoutConstant dir = ((LayoutData) child.getLayoutData()).direction;
       if ((dir == NORTH) || (dir == SOUTH)) {
         ++rowCount;
-      } else if ((dir == EAST) || (dir == WEST)) {
+      } else if ((dir == EAST) || (dir == WEST) || (dir == LINE_START) || (dir == LINE_END)) {
         ++colCount;
       }
     }
@@ -330,7 +344,7 @@ public class DockPanel extends CellPanel implements HasAlignment {
       DOM.appendChild(bodyElem, rows[i].tr);
     }
 
-    int westCol = 0, eastCol = colCount - 1;
+    int logicalLeftCol = 0, logicalRightCol = colCount - 1;
     int northRow = 0, southRow = rowCount - 1;
     Element centerTd = null;
 
@@ -348,30 +362,30 @@ public class DockPanel extends CellPanel implements HasAlignment {
       if (layout.direction == NORTH) {
         DOM.insertChild(rows[northRow].tr, td, rows[northRow].center);
         DOM.appendChild(td, child.getElement());
-        DOM.setElementPropertyInt(td, "colSpan", eastCol - westCol + 1);
+        DOM.setElementPropertyInt(td, "colSpan", logicalRightCol - logicalLeftCol + 1);
         ++northRow;
       } else if (layout.direction == SOUTH) {
         DOM.insertChild(rows[southRow].tr, td, rows[southRow].center);
         DOM.appendChild(td, child.getElement());
-        DOM.setElementPropertyInt(td, "colSpan", eastCol - westCol + 1);
+        DOM.setElementPropertyInt(td, "colSpan", logicalRightCol - logicalLeftCol + 1);
         --southRow;
-      } else if (layout.direction == WEST) {
+      } else if (layout.direction == CENTER) {
+        // Defer adding the center widget, so that it can be added after all
+        // the others are complete.
+        centerTd = td; 
+      } else if (shouldAddToLogicalLeftOfTable(layout.direction)) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center++);
         DOM.appendChild(td, child.getElement());
         DOM.setElementPropertyInt(td, "rowSpan", southRow - northRow + 1);
-        ++westCol;
-      } else if (layout.direction == EAST) {
+        ++logicalLeftCol;
+      } else if (shouldAddToLogicalRightOfTable(layout.direction)) {
         TmpRow row = rows[northRow];
         DOM.insertChild(row.tr, td, row.center);
         DOM.appendChild(td, child.getElement());
         DOM.setElementPropertyInt(td, "rowSpan", southRow - northRow + 1);
-        --eastCol;
-      } else if (layout.direction == CENTER) {
-        // Defer adding the center widget, so that it can be added after all
-        // the others are complete.
-        centerTd = td;
-      }
+        --logicalRightCol;
+      } 
     }
 
     // If there is a center widget, add it at the end (centerTd is guaranteed
@@ -382,5 +396,52 @@ public class DockPanel extends CellPanel implements HasAlignment {
       DOM.insertChild(row.tr, centerTd, row.center);
       DOM.appendChild(centerTd, center.getElement());
     }
+  }
+  
+  private boolean shouldAddToLogicalLeftOfTable(DockLayoutConstant widgetDirection) {
+    
+    assert (widgetDirection == LINE_START || widgetDirection == LINE_END || 
+        widgetDirection == EAST || widgetDirection == WEST);
+    
+    // In a bidi-sensitive environment, adding a widget to the logical left
+    // column (think DOM order) means that it will be displayed at the start
+    // of the line direction for the current layout. This is because HTML
+    // tables are bidi-sensitive; the column order switches depending on 
+    // the line direction.
+    if (widgetDirection == LINE_START) {  
+      return true;
+    }
+    
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      // In an RTL layout, the logical left columns will be displayed on the right hand 
+      // side. When the direction for the widget is EAST, adding the widget to the logical 
+      // left columns will have the desired effect of displaying the widget on the 'eastern' 
+      // side of the screen.
+      return (widgetDirection == EAST);          
+    }
+    
+    // In an LTR layout, the logical left columns are displayed on the left hand
+    // side. When the direction for the widget is WEST, adding the widget to the
+    // logical left columns will have the desired effect of displaying the widget on the
+    // 'western' side of the screen.
+    return (widgetDirection == WEST);
+  }
+
+  private boolean shouldAddToLogicalRightOfTable(DockLayoutConstant widgetDirection) {
+    
+    // See comments for shouldAddToLogicalLeftOfTable for clarification
+    
+    assert (widgetDirection == LINE_START || widgetDirection == LINE_END ||
+        widgetDirection == EAST || widgetDirection == WEST);
+
+    if (widgetDirection == LINE_END) {
+      return true;
+    }
+
+    if (LocaleInfo.getCurrentLocale().isRTL()) {   
+      return (widgetDirection == WEST);
+    }
+    
+    return (widgetDirection == EAST);
   }
 }

@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 /**
  * Demonstrates {@link com.google.gwt.user.client.ui.PopupPanel} and
@@ -120,13 +121,23 @@ public class Popups extends Sink implements ClickListener {
     initWidget(panel);
   }
 
-  public void onClick(Widget sender) {
+  public void onClick(final Widget sender) {
     if (sender == popupButton) {
-      MyPopup p = new MyPopup();
-      int left = sender.getAbsoluteLeft() + 10;
-      int top = sender.getAbsoluteTop() + 10;
-      p.setPopupPosition(left, top);
-      p.show();
+      
+      final MyPopup p = new MyPopup();
+      
+      // Set the position relative to the button
+      p.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
+        public void setPosition(int offsetWidth, int offsetHeight) {
+          int left = popupButton.getAbsoluteLeft() + 10;
+          int top = popupButton.getAbsoluteTop() + 10;
+          if (LocaleInfo.getCurrentLocale().isRTL()) {
+            left = popupButton.getAbsoluteLeft() + 
+                popupButton.getOffsetWidth() - offsetWidth - 10;
+          }
+          p.setPopupPosition(left, top);
+        }
+      });
     } else if (sender == dialogButton) {
       DialogBox dlg = new MyDialog();
       dlg.center();

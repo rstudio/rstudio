@@ -20,6 +20,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.animation.WidgetAnimation;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -247,6 +248,9 @@ public final class DisclosurePanel extends Composite implements
   private static ContentAnimation contentAnimation;
 
   private static DisclosurePanelImages createDefaultImages() {
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      return GWT.create(DisclosurePanelImagesRTL.class); 
+    }
     return GWT.create(DisclosurePanelImages.class);
   }
 

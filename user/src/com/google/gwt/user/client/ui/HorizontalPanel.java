@@ -27,7 +27,7 @@ import com.google.gwt.user.client.Element;
  */
 public class HorizontalPanel extends CellPanel implements HasAlignment {
 
-  private HorizontalAlignmentConstant horzAlign = ALIGN_LEFT;
+  private HorizontalAlignmentConstant horzAlign = ALIGN_DEFAULT;
   private Element tableRow;
   private VerticalAlignmentConstant vertAlign = ALIGN_TOP;
 

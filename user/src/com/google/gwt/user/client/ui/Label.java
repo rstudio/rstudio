@@ -18,6 +18,8 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.i18n.client.BidiUtils;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
@@ -34,7 +36,7 @@ import com.google.gwt.user.client.Event;
  */
 public class Label extends Widget implements SourcesClickEvents,
     SourcesMouseEvents, SourcesMouseWheelEvents, HasHorizontalAlignment,
-    HasText, HasWordWrap {
+    HasText, HasWordWrap, HasDirection {
 
   private ClickListenerCollection clickListeners;
   private HorizontalAlignmentConstant horzAlign;
@@ -103,6 +105,10 @@ public class Label extends Widget implements SourcesClickEvents,
     mouseWheelListeners.add(listener);
   }
 
+  public Direction getDirection() {
+    return BidiUtils.getDirectionOnElement(getElement());
+  }
+  
   public HorizontalAlignmentConstant getHorizontalAlignment() {
     return horzAlign;
   }
@@ -159,7 +165,11 @@ public class Label extends Widget implements SourcesClickEvents,
       mouseWheelListeners.remove(listener);
     }
   }
-
+  
+  public void setDirection(Direction direction) {
+    BidiUtils.setDirectionOnElement(getElement(), direction);
+  }
+  
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
     horzAlign = align;
     DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());

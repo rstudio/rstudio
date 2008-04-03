@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.i18n.client.BidiUtils;
 
 /**
  * A standard single-line text box.
@@ -36,7 +38,7 @@ import com.google.gwt.user.client.Element;
  * {@example com.google.gwt.examples.TextBoxExample}
  * </p>
  */
-public class TextBox extends TextBoxBase {
+public class TextBox extends TextBoxBase implements HasDirection {
 
   /**
    * Creates an empty text box.
@@ -54,6 +56,10 @@ public class TextBox extends TextBoxBase {
     super(element); 
   }
 
+  public Direction getDirection() {
+    return BidiUtils.getDirectionOnElement(getElement());    
+  }
+  
   /**
    * Gets the maximum allowable length of the text box.
    * 
@@ -72,6 +78,10 @@ public class TextBox extends TextBoxBase {
     return DOM.getElementPropertyInt(getElement(), "size");
   }
 
+  public void setDirection(Direction direction) {
+    BidiUtils.setDirectionOnElement(getElement(), direction);
+  }
+    
   /**
    * Sets the maximum allowable length of the text box.
    * 

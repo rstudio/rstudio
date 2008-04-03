@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.animation.WidgetAnimation;
 
 import java.util.ArrayList;
@@ -223,7 +224,12 @@ public class TreeItem extends UIObject implements HasHTML {
     children.add(item);
 
     // Physical attach.
-    DOM.setStyleAttribute(item.getElement(), "marginLeft", "16px");
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      DOM.setStyleAttribute(item.getElement(), "marginRight", "16px");      
+    } else {
+      DOM.setStyleAttribute(item.getElement(), "marginLeft", "16px");      
+    }
+  
     DOM.appendChild(childSpanElem, item.getElement());
 
     // Adopt.
