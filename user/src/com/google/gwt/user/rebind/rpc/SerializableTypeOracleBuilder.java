@@ -914,7 +914,7 @@ public class SerializableTypeOracleBuilder {
            * their state automatically or manually serialized. So, consider it
            * serializable but do not check its fields.
            */
-          return true;
+          return !type.isPrivate();
         }
       }
 
