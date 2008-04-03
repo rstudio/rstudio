@@ -1,9 +1,53 @@
 <html>
-  <head>
-    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <title>Restrictions on subclasses of JavaScriptObject</title>
-  </head>
-  <body>
-    TODO(spoon): write some doc!
-  </body>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Restrictions on subclasses of JavaScriptObject</title>
+</head>
+<body>
+
+<p>Subclasses of JavaScriptObject  represent a view of a JavaScript object
+from Java.  Such classes must conform to a number of restrictions so
+that the compiler can implement them.  This page lists those restrictions.
+
+<p>In the following,  "JSO class" means any subclass of
+<code>JavaScriptObject</code>.  Rationales are written <em>like
+this</em>.
+
+<ol>
+
+  <li> All instance methods on JSO classes must be explicitly marked
+  final.  <em>This enforces on the developer the restriction of no
+  polymorphism, because all final instance methods can be dispatched
+  statically.</em>
+
+  <li> JSO classes cannot implement interfaces that define
+  methods. <em>This prevents virtual calls that would arise by
+  upcasting to the interface and then calling through the interface.
+  The programmer should instead use a wrapper, for example using
+  <code>Comparator</code> instead of implementing
+  <code>Comparable</code>.</em>
+
+  <li> No instance methods on JSO classes may override another
+  method. <em>This catches accidents where JSO itself did not finalize
+  some method from its superclass.</em>
+
+  <li> JSO classes cannot have instance fields.  <em>The fields would
+  have no place to live in web mode.  Programmers should instead make
+  an explicit wrapper class and put the fields there.</em>
+
+  <li> Nested JSO classes must be static.  <em>The implicit
+  <code>this</code> fields of a non-static inner class has the same
+  problems as an explicit field.</em>
+
+  <li> "new" operations cannot be used with JSO classes.  <em>This
+  avoids ever being able to try to instantiate JSO objects using the
+  new keyword. New JSO instances can only come from JSNI, as in
+  previous versions of GWT.</em>
+
+  <li> Every JSO class must have precisely one constructor, and it must
+  be protected, empty, and no-argument.
+
+</ol>
+
+</body>
 </html>
