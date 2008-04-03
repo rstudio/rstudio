@@ -26,7 +26,7 @@ import junit.framework.Test;
 /**
  * Tests <code>TreeMap</code>.
  */
-public class TreeMapSuite {
+public class TreeMapSuiteSub {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite("Tests for com.google.gwt.emul.java.util.TreeMap");
     suite.addTestSuite(TreeMapStringStringTest.class);

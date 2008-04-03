@@ -82,7 +82,7 @@ public class EmulSuite {
     suite.addTestSuite(IdentityHashMapTest.class);
     suite.addTestSuite(LinkedListTest.class);
     suite.addTestSuite(StackTest.class);
-    suite.addTest(TreeMapSuite.suite());
+    suite.addTest(TreeMapSuiteSub.suite());
     // $JUnit-END$
 
     return suite;
