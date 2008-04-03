@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,9 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.SerializationException;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * For internal use only. Used for server call serialization.
@@ -36,28 +35,9 @@ public final class ClientSerializationStreamWriter extends
 
   private final String moduleBaseURL;
 
-  private int objectCount;
-
-  /*
-   * Accessed from JSNI code, so ignore unused warning.
-   */
-  @SuppressWarnings("unused")
-  private JavaScriptObject objectMap;
-
   private final String serializationPolicyStrongName;
 
   private final Serializer serializer;
-
-  /*
-   * Accesses need to be prefixed with ':' to prevent conflict with built-in
-   * JavaScript properties.
-   * 
-   * Accessed from JSNI code, so ignore unused warning.
-   */
-  @SuppressWarnings("unused")
-  private JavaScriptObject stringMap;
-
-  private ArrayList<String> stringTable = new ArrayList<String>();
 
   /**
    * Constructs a <code>ClientSerializationStreamWriter</code> that does not
@@ -94,10 +74,7 @@ public final class ClientSerializationStreamWriter extends
    * implementation <b>must</b> be called by any overridden version.
    */
   public void prepareToWrite() {
-    objectCount = 0;
-    objectMap = JavaScriptObject.createObject();
-    stringMap = JavaScriptObject.createObject();
-    stringTable.clear();
+    super.prepareToWrite();
     encodeBuffer = new StringBuffer();
 
     if (hasSerializationPolicyInfo()) {
@@ -119,34 +96,12 @@ public final class ClientSerializationStreamWriter extends
     append(Long.toString(fieldValue, 16));
   }
 
-  @Override
-  protected int addString(String string) {
-    if (string == null) {
-      return 0;
-    }
-
-    int index = getIntForString(string);
-    if (index > 0) {
-      return index;
-    }
-    stringTable.add(string);
-    // index is 1-based (that's why we're taking the size AFTER add)
-    index = stringTable.size();
-    setIntForString(string, index);
-    return index;
-  }
-
   /**
    * Appends a token to the end of the buffer.
    */
   @Override
   protected void append(String token) {
     append(encodeBuffer, token);
-  }
-
-  @Override
-  protected int getIndexForObject(Object instance) {
-    return getIntForInt(System.identityHashCode(instance));
   }
 
   @Override
@@ -159,7 +114,7 @@ public final class ClientSerializationStreamWriter extends
     }
 
     String typeName = clazz.getName();
-    
+
     String serializationSignature = serializer.getSerializationSignature(typeName);
     if (serializationSignature != null) {
       typeName += "/" + serializationSignature;
@@ -168,35 +123,10 @@ public final class ClientSerializationStreamWriter extends
   }
 
   @Override
-  protected void saveIndexForObject(Object instance) {
-    setIntForInt(System.identityHashCode(instance), objectCount++);
-  }
-
-  @Override
   protected void serialize(Object instance, String typeSignature)
       throws SerializationException {
     serializer.serialize(this, instance, typeSignature);
   }
-
-  private native int getIntForInt(int key) /*-{
-    var result = this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::objectMap[key];
-    return (result == null) ? -1 : result;
-  }-*/;
-
-  // prefix needed to prevent conflict with built-in JavaScript properties.
-  private native int getIntForString(String key) /*-{
-    var result = this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::stringMap[':' + key];
-    return (result == null) ? 0 : result;
-  }-*/;
-
-  private native void setIntForInt(int key, int value) /*-{
-    this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::objectMap[key] = value;
-  }-*/;
-
-  // prefix needed to prevent conflict with built-in JavaScript properties.
-  private native void setIntForString(String key, int value) /*-{
-    this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::stringMap[':' + key] = value;
-  }-*/;
 
   private void writeHeader(StringBuffer buffer) {
     append(buffer, String.valueOf(getVersion()));
@@ -208,10 +138,10 @@ public final class ClientSerializationStreamWriter extends
   }
 
   private StringBuffer writeStringTable(StringBuffer buffer) {
-    int stringTableSize = stringTable.size();
-    append(buffer, String.valueOf(stringTableSize));
-    for (int i = 0; i < stringTableSize; ++i) {
-      append(buffer, stringTable.get(i));
+    List<String> stringTable = getStringTable();
+    append(buffer, String.valueOf(stringTable.size()));
+    for (String s : stringTable) {
+      append(buffer, s);
     }
     return buffer;
   }

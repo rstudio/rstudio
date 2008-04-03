@@ -25,8 +25,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -330,13 +330,13 @@ public final class ServerSerializationStreamWriter extends
   }
 
   /**
-   * Returns the {@link Class} instance to use for serialization.  Enumerations 
-   * are serialized as their declaring class while all others are serialized 
+   * Returns the {@link Class} instance to use for serialization. Enumerations
+   * are serialized as their declaring class while all others are serialized
    * using their true class instance.
    */
   private static Class<?> getClassForSerialization(Object instance) {
     assert (instance != null);
-    
+
     if (instance instanceof Enum) {
       Enum<?> e = (Enum<?>) instance;
       return e.getDeclaringClass();
@@ -436,14 +436,6 @@ public final class ServerSerializationStreamWriter extends
     }
   }
 
-  private int objectCount;
-
-  private IdentityHashMap<Object, Integer> objectMap = new IdentityHashMap<Object, Integer>();
-
-  private HashMap<String, Integer> stringMap = new HashMap<String, Integer>();
-
-  private ArrayList<String> stringTable = new ArrayList<String>();
-
   private ArrayList<String> tokenList = new ArrayList<String>();
 
   private int tokenListCharCount;
@@ -454,13 +446,11 @@ public final class ServerSerializationStreamWriter extends
     this.serializationPolicy = serializationPolicy;
   }
 
+  @Override
   public void prepareToWrite() {
-    objectCount = 0;
-    objectMap.clear();
+    super.prepareToWrite();
     tokenList.clear();
     tokenListCharCount = 0;
-    stringMap.clear();
-    stringTable.clear();
   }
 
   public void serializeValue(Object value, Class<?> type)
@@ -505,22 +495,6 @@ public final class ServerSerializationStreamWriter extends
   }
 
   @Override
-  protected int addString(String string) {
-    if (string == null) {
-      return 0;
-    }
-    Integer o = stringMap.get(string);
-    if (o != null) {
-      return o;
-    }
-    stringTable.add(string);
-    // index is 1-based
-    int index = stringTable.size();
-    stringMap.put(string, index);
-    return index;
-  }
-
-  @Override
   protected void append(String token) {
     tokenList.add(token);
     if (token != null) {
@@ -529,29 +503,15 @@ public final class ServerSerializationStreamWriter extends
   }
 
   @Override
-  protected int getIndexForObject(Object instance) {
-    Integer o = objectMap.get(instance);
-    if (o != null) {
-      return o;
-    }
-    return -1;
-  }
-
-  @Override
   protected String getObjectTypeSignature(Object instance) {
     assert (instance != null);
-    
+
     Class<?> clazz = getClassForSerialization(instance);
     if (shouldEnforceTypeVersioning()) {
       return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
     } else {
       return SerializabilityUtil.getSerializedTypeName(clazz);
     }
-  }
-
-  @Override
-  protected void saveIndexForObject(Object instance) {
-    objectMap.put(instance, objectCount++);
   }
 
   @Override
@@ -691,6 +651,7 @@ public final class ServerSerializationStreamWriter extends
   }
 
   private void writeStringTable(StringBuffer buffer) {
+    List<String> stringTable = getStringTable();
     if (tokenList.size() > 0) {
       buffer.append(",");
     }

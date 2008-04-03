@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,13 +18,35 @@ package com.google.gwt.user.client.rpc.impl;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Base class for the client and server serialization streams. This class
  * handles the basic serialization and deserialization formatting for primitive
- * types since these are common between the client and the server.
+ * types since these are common between the client and the server. It also
+ * handles Object- and String-tracking for building graph references.
  */
 public abstract class AbstractSerializationStreamWriter extends
     AbstractSerializationStream implements SerializationStreamWriter {
+
+  private int objectCount;
+
+  private Map<Object, Integer> objectMap = new IdentityHashMap<Object, Integer>();
+
+  private Map<String, Integer> stringMap = new HashMap<String, Integer>();
+
+  private List<String> stringTable = new ArrayList<String>();
+
+  public void prepareToWrite() {
+    objectCount = 0;
+    objectMap.clear();
+    stringMap.clear();
+    stringTable.clear();
+  }
 
   @Override
   public abstract String toString();
@@ -97,7 +119,20 @@ public abstract class AbstractSerializationStreamWriter extends
    * @param string the string to add
    * @return the index to the string
    */
-  protected abstract int addString(String string);
+  protected int addString(String string) {
+    if (string == null) {
+      return 0;
+    }
+    Integer o = stringMap.get(string);
+    if (o != null) {
+      return o;
+    }
+    stringTable.add(string);
+    // index is 1-based
+    int index = stringTable.size();
+    stringMap.put(string, index);
+    return index;
+  }
 
   /**
    * Append a token to the underlying output buffer.
@@ -114,7 +149,9 @@ public abstract class AbstractSerializationStreamWriter extends
    * @return the index associated with this object, or -1 if this object hasn't
    *         been seen before
    */
-  protected abstract int getIndexForObject(Object instance);
+  protected int getIndexForObject(Object instance) {
+    return objectMap.containsKey(instance) ? objectMap.get(instance) : -1;
+  }
 
   /**
    * Compute and return the type signature for an object.
@@ -125,11 +162,20 @@ public abstract class AbstractSerializationStreamWriter extends
   protected abstract String getObjectTypeSignature(Object instance);
 
   /**
+   * Gets the string table.
+   */
+  protected List<String> getStringTable() {
+    return stringTable;
+  }
+
+  /**
    * Remember this object as having been seen before.
    * 
    * @param instance the object to remember
    */
-  protected abstract void saveIndexForObject(Object instance);
+  protected void saveIndexForObject(Object instance) {
+    objectMap.put(instance, objectCount++);
+  }
 
   /**
    * Serialize an object into the stream.
