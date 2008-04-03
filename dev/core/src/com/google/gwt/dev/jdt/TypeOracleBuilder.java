@@ -238,6 +238,7 @@ public class TypeOracleBuilder {
     return true;
   }
 
+  @SuppressWarnings("deprecation")
   private static void finishTag(HasMetaData hasMetaData, String tagName,
       List<String> tagValues) {
     // Add the values even if the list is empty, because the presence of the
@@ -769,6 +770,7 @@ public class TypeOracleBuilder {
    * 
    * @return annotation element value as defined in JLS 3.0 section 9.7
    */
+  @SuppressWarnings("unchecked")
   private Object getAnnotationElementValue(TreeLogger logger,
       TypeBinding expectedElementValueType, Expression elementValueExpression) {
 
@@ -1072,8 +1074,8 @@ public class TypeOracleBuilder {
 
     // Determine the annotation class
     TypeBinding resolvedType = jannotation.resolvedType;
-    Class<? extends java.lang.annotation.Annotation> clazz = (Class<? extends java.lang.annotation.Annotation>) getClassLiteral(
-        logger, resolvedType);
+    Class<? extends java.lang.annotation.Annotation> clazz = getClassLiteral(
+        logger, resolvedType).asSubclass(java.lang.annotation.Annotation.class);
     if (clazz == null) {
       return false;
     }
@@ -1538,7 +1540,7 @@ public class TypeOracleBuilder {
       if (typeParameter != null) {
         return typeParameter;
       }
-      
+
       // Fall-through to failure
     }
 
@@ -1576,7 +1578,7 @@ public class TypeOracleBuilder {
       if (boundType != null) {
         return oracle.getWildcardType(boundType, typeBound);
       }
-      
+
       // Fall-through to failure
     }
 
