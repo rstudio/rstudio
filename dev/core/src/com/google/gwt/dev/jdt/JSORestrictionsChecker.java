@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jdt;
 
 import com.google.gwt.dev.shell.JsValueGlue;
+import com.google.gwt.dev.util.InstalledHelpInfo;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
@@ -198,7 +199,8 @@ class JSORestrictionsChecker {
   }
 
   private void errorOn(ASTNode node, String error) {
-    GWTProblem.recordInCud(node, cud, error);
+    GWTProblem.recordInCud(node, cud, error, new InstalledHelpInfo(
+        "jsoRestrictions.html"));
   }
 
   private boolean isForJSOSubclass(Scope scope) {

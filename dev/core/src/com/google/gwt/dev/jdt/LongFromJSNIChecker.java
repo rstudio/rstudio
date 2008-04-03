@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.client.UnsafeNativeLong;
+import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.JsniRef;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
@@ -224,7 +225,8 @@ public class LongFromJSNIChecker {
     }
 
     private void longAccessError(ASTNode node, String message) {
-      GWTProblem.recordInCud(node, cud, message);
+      GWTProblem.recordInCud(node, cud, message, new InstalledHelpInfo(
+          "longJsniRestriction.html"));
     }
 
     private boolean paramTypesMatch(MethodBinding method, JsniRef jsniRef) {

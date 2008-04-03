@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jdt;
 
+import com.google.gwt.core.ext.TreeLogger.HelpInfo;
+
 import junit.framework.TestCase;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -34,14 +36,19 @@ public class GWTProblemTest extends TestCase {
     CompilationUnitDeclaration cud = new CompilationUnitDeclaration(null,
         compilationResult, 0);
 
+    HelpInfo info = new HelpInfo() {
+    };
+
     // Pick an Expression subtype to pass in
-    GWTProblem.recordInCud(new Wildcard(Wildcard.EXTENDS), cud, errorMessage);
+    GWTProblem.recordInCud(new Wildcard(Wildcard.EXTENDS), cud, errorMessage,
+        info);
 
     CategorizedProblem[] errors = compilationResult.getErrors();
     assertEquals(1, errors.length);
-    CategorizedProblem problem = errors[0];
+    GWTProblem problem = (GWTProblem) errors[0];
     assertTrue(problem.isError());
     assertEquals(1, problem.getSourceLineNumber());
     assertEquals(errorMessage, problem.getMessage());
+    assertSame(info, problem.getHelpInfo());
   }
 }

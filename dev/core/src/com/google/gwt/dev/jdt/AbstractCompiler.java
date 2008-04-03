@@ -17,6 +17,7 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
@@ -272,7 +273,13 @@ public abstract class AbstractCompiler {
             msgBuf.append(": ");
           }
           msgBuf.append(msg);
-          branch.log(TreeLogger.ERROR, msgBuf.toString(), null);
+
+          HelpInfo helpInfo = null;
+          if (error instanceof GWTProblem) {
+            GWTProblem gwtProblem = (GWTProblem) error;
+            helpInfo = gwtProblem.getHelpInfo();
+          }
+          branch.log(TreeLogger.ERROR, msgBuf.toString(), null, helpInfo);
         }
       }
 
