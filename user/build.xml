@@ -85,7 +85,7 @@
 			Run hosted and web mode tests for the platform on which this build
 			is executing
 		-->
-		<limit failonerror="true" hours="1">
+		<limit failonerror="true" hours="2">
 		<parallel threadsPerProcessor="1">
 			<!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
 			<antcall target="remoteweb-test"/>
