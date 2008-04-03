@@ -15,8 +15,6 @@
  */
 package java.util;
 
-import java.io.Serializable;
-
 /**
  * Implements a TreeMap using a red-black tree. This guarantees O(log n)
  * performance on lookups, inserts, and deletes while maintaining linear
@@ -27,7 +25,7 @@ import java.io.Serializable;
  * @param <V> value type
  */
 public class TreeMap<K extends Comparable<K>, V> extends AbstractMap<K, V>
-    implements SortedMap<K, V>, Serializable {
+    implements SortedMap<K, V> {
   /*
    * Implementation derived from public domain C implementation as of 5
    * September 2007 at:
@@ -35,6 +33,8 @@ public class TreeMap<K extends Comparable<K>, V> extends AbstractMap<K, V>
    * written by Julienne Walker.
    * 
    * This version does not require a parent pointer kept in each node.
+   * 
+   * TODO: should this class be serializable? What to do about the comparator?
    */
 
   /**
@@ -892,7 +892,8 @@ public class TreeMap<K extends Comparable<K>, V> extends AbstractMap<K, V>
         } else if (!isRed(node.child[otherChild(dir)])) {
           Node<K, V> sibling = parent.child[otherChild(last)];
           if (sibling != null) {
-            if (!isRed(sibling.child[otherChild(last)]) && !isRed(sibling.child[last])) {
+            if (!isRed(sibling.child[otherChild(last)])
+                && !isRed(sibling.child[last])) {
               parent.isRed = false;
               sibling.isRed = true;
               node.isRed = true;
