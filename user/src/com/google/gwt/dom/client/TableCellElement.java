@@ -37,6 +37,8 @@ public class TableCellElement extends Element {
   /**
    * The index of this cell in the row, starting from 0. This index is in
    * document tree order and not display order.
+   * 
+   * Note: This method always returns 0 on Safari 2 (bug 3295).
    */
   public final native int getCellIndex() /*-{
      return this.cellIndex;

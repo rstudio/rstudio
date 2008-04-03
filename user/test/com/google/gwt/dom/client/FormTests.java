@@ -33,6 +33,7 @@ public class FormTests extends GWTTestCase {
   public void testGetElements() {
     Document doc = Document.get();
     FormElement form = doc.createFormElement();
+    doc.getBody().appendChild(form);
     form.setInnerHTML("<div>" + "<input name='text' id='text' type='text'>"
         + "<input name='hidden' id='hidden' type='hidden'>"
         + "<textarea name='textarea' id='textarea'>" + "</div>");
