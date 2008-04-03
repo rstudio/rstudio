@@ -15,13 +15,13 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplSafari extends DOMImplStandard {
+
   @Override
   public native int eventGetClientX(Event evt) /*-{
     // In Safari2: clientX is wrong and pageX is returned instead.
@@ -38,100 +38,4 @@ class DOMImplSafari extends DOMImplStandard {
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return Math.round(-evt.wheelDelta / 40) || -1;
   }-*/;
-
-  @Override
-  public native int getAbsoluteLeft(Element elem) /*-{
-    // Unattached elements and elements (or their ancestors) with style
-    // 'display: none' have no offsetLeft.
-    if (elem.offsetLeft == null) {
-      return 0;
-    }
-
-    var left = 0;
-    var curr = elem.parentNode;
-    if (curr) {
-      // This intentionally excludes body which has a null offsetParent.
-      while (curr.offsetParent) {
-        left -= curr.scrollLeft;
-        curr = curr.parentNode;
-      }
-    }
-    
-    while (elem) {
-      left += elem.offsetLeft;
-
-      // Safari bug: a top-level absolutely positioned element includes the
-      // body's offset position already.
-      var parent = elem.offsetParent;
-      if (parent && (parent.tagName == 'BODY') &&
-          (elem.style.position == 'absolute')) {
-        break;
-      }
-
-      elem = parent;
-    }
-    return left;
-  }-*/;
-
-  @Override
-  public native int getAbsoluteTop(Element elem) /*-{
-    // Unattached elements and elements (or their ancestors) with style
-    // 'display: none' have no offsetTop.
-    if (elem.offsetTop == null) {
-      return 0;
-    }
-
-    var top = 0;
-    var curr = elem.parentNode;
-    if (curr) {
-      // This intentionally excludes body which has a null offsetParent.
-      while (curr.offsetParent) {
-        top -= curr.scrollTop;
-        curr = curr.parentNode;
-      }
-    }
-    
-    while (elem) {
-      top += elem.offsetTop;
-
-      // Safari bug: a top-level absolutely positioned element includes the
-      // body's offset position already.
-      var parent = elem.offsetParent;
-      if (parent && (parent.tagName == 'BODY') &&
-          (elem.style.position == 'absolute')) {
-        break;
-      }
-
-      elem = parent;
-    }
-    return top;
-  }-*/;
-
-  @Override
-  public native void insertListItem(Element select, String text, String value,
-      int index) /*-{
-    // We can't use the 'options' array due to a bug in Safari.
-    // Read the comment above com.google.gwt.user.client.ui.ListBox.ImplSafari
-    // for more information.
-    var newOption = new Option(text, value);
-    if (index == -1 || index > select.children.length - 1) {
-      select.appendChild(newOption);
-    } else{
-      select.insertBefore(newOption, select.children[index]);
-    }
-  }-*/;
-  
-  @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
-    while (child) {
-      if (parent == child) {
-        return true;
-      }
-      child = child.parentNode;
-      if (child && (child.nodeType != 1)) {
-        child = null;
-      }
-    }
-    return false;
-  }-*/; 
 }

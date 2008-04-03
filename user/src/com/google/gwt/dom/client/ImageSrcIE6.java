@@ -13,10 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.impl;
+package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Element;
 
 /**
  * Works around an IE problem where multiple images trying to load at the same
@@ -207,7 +206,7 @@ class ImageSrcIE6 {
     if (img = kids[0]) {
       // Try to elect a new top node.
       img.__pendingSrc = null;
-      @com.google.gwt.user.client.impl.ImageSrcIE6::addTop(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/user/client/Element;Ljava/lang/String;)(srcImgMap, img, src);
+      @com.google.gwt.dom.client.ImageSrcIE6::addTop(Lcom/google/gwt/core/client/JavaScriptObject;Lcom/google/gwt/dom/client/Element;Ljava/lang/String;)(srcImgMap, img, src);
       if (img.__pendingSrc) {
         // It became a top node, add the rest as children.
         kids.splice(0, 1);

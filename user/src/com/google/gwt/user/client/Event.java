@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
@@ -148,23 +149,260 @@ public final class Event extends JavaScriptObject {
    * not click, dblclick, or wheel events.
    */
   public static final int MOUSEEVENTS = ONMOUSEDOWN | ONMOUSEUP | ONMOUSEMOVE
-    | ONMOUSEOVER | ONMOUSEOUT;
+      | ONMOUSEOVER | ONMOUSEOUT;
 
   /**
    * Error code returned by DOM.getEventXXX methods when the actual integer
-   * value is undefined.  For example, DOM.getEventKeyCode returns UNDEFINED
-   * for some non-keyboard events.
+   * value is undefined. For example, DOM.getEventKeyCode returns UNDEFINED for
+   * some non-keyboard events.
    * 
    * For some events, some browsers return undefined while others return data
    * for certain events.
    */
   public static final int UNDEFINED = -1;
-  
+
   /**
-   * Not directly instantiable.  Subclasses should also define a protected
-   * no-arg constructor to prevent client code from directly instantiating
-   * the class.
+   * Gets the current event that is being fired. The current event is only
+   * available within the lifetime of the onBrowserEvent function. Once the
+   * onBrowserEvent method returns, the current event is reset to null.
+   * 
+   * @return the current event
+   */
+  public static Event getCurrentEvent() {
+    return DOM.eventGetCurrentEvent();
+  }
+
+  /**
+   * TODO
+   */
+  public static void sinkEvents(Element elem, int eventBits) {
+    DOM.sinkEvents((com.google.gwt.user.client.Element)elem, eventBits);
+  }
+
+  /**
+   * TODO
+   */
+  public static int getEventsSunk(Element elem) {
+    return DOM.getEventsSunk((com.google.gwt.user.client.Element)elem);
+  }
+
+  /**
+   * Not directly instantiable. Subclasses should also define a protected no-arg
+   * constructor to prevent client code from directly instantiating the class.
    */
   protected Event() {
+  }
+
+  /**
+   * Gets the current target element of this event. This is the element whose
+   * listener fired last, not the element which fired the event initially.
+   * 
+   * @return the event's current target element
+   */
+  public final Element getCurrentTarget() {
+    return DOM.eventGetCurrentTarget(this);
+  }
+
+  /**
+   * Gets the enumerated type of this event, as defined by {@link #ONCLICK},
+   * {@link #ONMOUSEDOWN}, and so forth.
+   * 
+   * @return the event's enumerated type
+   */
+  public final int getTypeInt() {
+    return DOM.eventGetType(this);
+  }
+
+  /**
+   * Cancels bubbling for the given event. This will stop the event from being
+   * propagated to parent elements.
+   * 
+   * @param cancel <code>true</code> to cancel bubbling
+   */
+  public final void cancelBubble(boolean cancel) {
+    DOM.eventCancelBubble(this, cancel);
+  }
+
+  /**
+   * Gets whether the ALT key was depressed when the given event occurred.
+   * 
+   * @return <code>true</code> if ALT was depressed when the event occurred
+   */
+  public final boolean getAltKey() {
+    return DOM.eventGetAltKey(this);
+  }
+
+  /**
+   * Gets the mouse buttons that were depressed when the given event occurred.
+   * 
+   * @return a bit-field, defined by {@link Event#BUTTON_LEFT},
+   *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
+   */
+  public final int getButton() {
+    return DOM.eventGetButton(this);
+  }
+
+  /**
+   * Gets the mouse x-position within the browser window's client area.
+   * 
+   * @return the mouse x-position
+   */
+  public final int getClientX() {
+    return DOM.eventGetClientX(this);
+  }
+
+  /**
+   * Gets the mouse y-position within the browser window's client area.
+   * 
+   * @return the mouse y-position
+   */
+  public final int getClientY() {
+    return DOM.eventGetClientY(this);
+  }
+
+  /**
+   * Gets whether the CTRL key was depressed when the given event occurred.
+   * 
+   * @return <code>true</code> if CTRL was depressed when the event occurred
+   */
+  public final boolean getCtrlKey() {
+    return DOM.eventGetCtrlKey(this);
+  }
+
+  /**
+   * Gets the element from which the mouse pointer was moved (only valid for
+   * {@link Event#ONMOUSEOVER}).
+   * 
+   * @return the element from which the mouse pointer was moved
+   */
+  public final Element getFromElement() {
+    return DOM.eventGetFromElement(this);
+  }
+
+  /**
+   * Gets the key code associated with this event.
+   * 
+   * <p>
+   * For {@link Event#ONKEYPRESS}, this method returns the Unicode value of the
+   * character generated. For {@link Event#ONKEYDOWN} and {@link Event#ONKEYUP},
+   * it returns the code associated with the physical key.
+   * </p>
+   * 
+   * @return the Unicode character or key code.
+   * @see com.google.gwt.user.client.ui.KeyboardListener
+   */
+  public final int getKeyCode() {
+    return DOM.eventGetKeyCode(this);
+  }
+
+  /**
+   * Gets whether the META key was depressed when the given event occurred.
+   * 
+   * @return <code>true</code> if META was depressed when the event occurred
+   */
+  public final boolean getMetaKey() {
+    return DOM.eventGetMetaKey(this);
+  }
+
+  /**
+   * Gets the velocity of the mouse wheel associated with the event along the Y
+   * axis.
+   * <p>
+   * The velocity of the event is an artifical measurement for relative
+   * comparisons of wheel activity. It is affected by some non-browser factors,
+   * including choice of input hardware and mouse acceleration settings. The
+   * sign of the velocity measurement agrees with the screen coordinate system;
+   * negative values are towards the origin and positive values are away from
+   * the origin. Standard scrolling speed is approximately ten units per event.
+   * </p>
+   * 
+   * @return The velocity of the mouse wheel.
+   */
+  public final int getMouseWheelVelocityY() {
+    return DOM.eventGetMouseWheelVelocityY(this);
+  }
+
+  /**
+   * Gets the key-repeat state of this event.
+   * 
+   * @return <code>true</code> if this key event was an auto-repeat
+   */
+  public final boolean getRepeat() {
+    return DOM.eventGetRepeat(this);
+  }
+
+  /**
+   * Gets the mouse x-position on the user's display.
+   * 
+   * @return the mouse x-position
+   */
+  public final int getScreenX() {
+    return DOM.eventGetScreenX(this);
+  }
+
+  /**
+   * Gets the mouse y-position on the user's display.
+   * 
+   * @return the mouse y-position
+   */
+  public final int getScreenY() {
+    return DOM.eventGetScreenY(this);
+  }
+
+  /**
+   * Gets whether the shift key was depressed when the given event occurred.
+   * 
+   * @return <code>true</code> if shift was depressed when the event occurred
+   */
+  public final boolean getShiftKey() {
+    return DOM.eventGetShiftKey(this);
+  }
+
+  /**
+   * Returns the element that was the actual target of the given event.
+   * 
+   * @return the target element
+   */
+  public final Element getTarget() {
+    return DOM.eventGetTarget(this);
+  }
+
+  /**
+   * Gets the element to which the mouse pointer was moved (only valid for
+   * {@link Event#ONMOUSEOUT}).
+   * 
+   * @return the element to which the mouse pointer was moved
+   */
+  public final Element getToElement() {
+    return DOM.eventGetToElement(this);
+  }
+
+  /**
+   * Gets the enumerated type of this event (as defined in {@link Event}).
+   * 
+   * @param evt the event to be tested
+   * @return the event's enumerated type
+   */
+  public final String getType() {
+    return DOM.eventGetTypeString(this);
+  }
+
+  /**
+   * Prevents the browser from taking its default action for the given event.
+   */
+  public final void preventDefault() {
+    DOM.eventPreventDefault(this);
+  }
+
+  /**
+   * Gets a string representation of this event.
+   * 
+   * We do not override {@link #toString()} because it is final in
+   * {@link JavaScriptObject}.
+   * 
+   * @return the string representation of this event
+   */
+  public final String getString() {
+    return DOM.eventToString(this);
   }
 }

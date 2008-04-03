@@ -16,7 +16,6 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 
@@ -175,7 +174,7 @@ public class Widget extends UIObject implements EventListener {
   }
 
   @Override
-  void replaceElement(Element elem) {
+  void replaceElement(com.google.gwt.dom.client.Element elem) {
     if (isAttached()) {
       // Remove old event listener to avoid leaking. onDetach will not do this
       // for us, because it is only called when the widget itself is detached
@@ -184,11 +183,12 @@ public class Widget extends UIObject implements EventListener {
     }
 
     super.replaceElement(elem);
+
     if (isAttached()) {
       // Hook the event listener back up on the new element. onAttach will not
       // do this for us, because it is only called when the widget itself is
       // attached to the document.
-      DOM.setEventListener(elem, this);
+      DOM.setEventListener(getElement(), this);
     }
   }
 

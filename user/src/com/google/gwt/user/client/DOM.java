@@ -15,11 +15,15 @@
  */
 package com.google.gwt.user.client;
 
+import java.util.ArrayList;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.OptionElement;
+import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.user.client.impl.DOMImpl;
-
-import java.util.ArrayList;
 
 /**
  * This class provides a set of static methods that allow you to manipulate the
@@ -33,8 +37,6 @@ public class DOM {
   private static Event currentEvent = null;
   private static final DOMImpl impl = GWT.create(DOMImpl.class);
   private static Element sCaptureElem;
-  // Used to generate unique DOM ids.
-  private static int nextDOMId = 0;
 
   // <BrowserEventPreview>
   private static ArrayList<EventPreview> sEventPreviewStack;
@@ -64,7 +66,7 @@ public class DOM {
    * @param child its new child
    */
   public static void appendChild(Element parent, Element child) {
-    impl.appendChild(parent, child);
+    parent.appendChild(child);
   }
 
   /**
@@ -74,11 +76,11 @@ public class DOM {
    * @param deep should children be cloned as well?
    */
   public static Element clone(Element elem, boolean deep) {
-    return impl.clone(elem, deep);
+    return elem.cloneNode(deep).cast();
   }
 
   /**
-   * Compares two elements for equality.  Note that this method is now deprecated
+   * Compares two elements for equality. Note that this method is now deprecated
    * because reference identity accurately reports equality.
    * 
    * @param elem1 the first element to be compared
@@ -96,7 +98,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createAnchor() {
-    return impl.createElement("A");
+    return Document.get().createAnchorElement().cast();
   }
 
   /**
@@ -105,7 +107,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createButton() {
-    return impl.createElement("button");
+    return Document.get().createButtonElement().cast();
   }
 
   /**
@@ -114,7 +116,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createCaption() {
-    return impl.createElement("caption");
+    return Document.get().createCaptionElement().cast();
   }
 
   /**
@@ -123,7 +125,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createCol() {
-    return impl.createElement("col");
+    return Document.get().createColElement().cast();
   }
 
   /**
@@ -132,7 +134,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createColGroup() {
-    return impl.createElement("colgroup");
+    return Document.get().createColGroupElement().cast();
   }
 
   /**
@@ -141,7 +143,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createDiv() {
-    return impl.createElement("div");
+    return Document.get().createDivElement().cast();
   }
 
   /**
@@ -151,7 +153,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createElement(String tagName) {
-    return impl.createElement(tagName);
+    return Document.get().createElement(tagName).cast();
   }
 
   /**
@@ -160,7 +162,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createFieldSet() {
-    return impl.createElement("fieldset");
+    return Document.get().createFieldSetElement().cast();
   }
 
   /**
@@ -169,7 +171,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createForm() {
-    return impl.createElement("form");
+    return Document.get().createFormElement().cast();
   }
 
   /**
@@ -178,7 +180,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createIFrame() {
-    return impl.createElement("iframe");
+    return Document.get().createIFrameElement().cast();
   }
 
   /**
@@ -187,7 +189,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createImg() {
-    return impl.createElement("img");
+    return Document.get().createImageElement().cast();
   }
 
   /**
@@ -196,7 +198,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createInputCheck() {
-    return impl.createInputElement("checkbox");
+    return Document.get().createCheckInputElement().cast();
   }
 
   /**
@@ -205,7 +207,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createInputPassword() {
-    return impl.createInputElement("password");
+    return Document.get().createPasswordInputElement().cast();
   }
 
   /**
@@ -216,7 +218,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createInputRadio(String name) {
-    return impl.createInputRadioElement(name);
+    return Document.get().createRadioInputElement(name).cast();
   }
 
   /**
@@ -225,7 +227,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createInputText() {
-    return impl.createInputElement("text");
+    return Document.get().createTextInputElement().cast();
   }
 
   /**
@@ -234,7 +236,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createLabel() {
-    return impl.createElement("label");
+    return Document.get().createLabelElement().cast();
   }
 
   /**
@@ -243,16 +245,28 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createLegend() {
-    return impl.createElement("legend");
+    return Document.get().createLegendElement().cast();
+  }
+
+  /**
+   * Creates an HTML OPTION element.
+   * 
+   * @return the newly-created element
+   */
+  public static Element createOption() {
+    return Document.get().createOptionElement().cast();
   }
 
   /**
    * Creates an HTML OPTIONS element.
    * 
    * @return the newly-created element
+   * @deprecated there is no "options" element; use {@link #createOption()}
+   *             instead
    */
+  @Deprecated
   public static Element createOptions() {
-    return impl.createElement("options");
+    return Document.get().createElement("options").cast();
   }
 
   /**
@@ -265,7 +279,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createSelect() {
-    return DOM.createSelect(false);
+    return Document.get().createSelectElement().cast();
   }
 
   /**
@@ -275,7 +289,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createSelect(boolean multiple) {
-    return impl.createSelectElement(multiple);
+    return Document.get().createSelectElement(multiple).cast();
   }
 
   /**
@@ -284,7 +298,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createSpan() {
-    return impl.createElement("span");
+    return Document.get().createSpanElement().cast();
   }
 
   /**
@@ -293,7 +307,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTable() {
-    return impl.createElement("table");
+    return Document.get().createTableElement().cast();
   }
 
   /**
@@ -302,7 +316,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTBody() {
-    return impl.createElement("tbody");
+    return Document.get().createTBodyElement().cast();
   }
 
   /**
@@ -311,7 +325,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTD() {
-    return impl.createElement("td");
+    return Document.get().createTDElement().cast();
   }
 
   /**
@@ -320,7 +334,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTextArea() {
-    return impl.createElement("textarea");
+    return Document.get().createTextAreaElement().cast();
   }
 
   /**
@@ -329,7 +343,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTFoot() {
-    return impl.createElement("tfoot");
+    return Document.get().createTFootElement().cast();
   }
 
   /**
@@ -338,7 +352,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTH() {
-    return impl.createElement("th");
+    return Document.get().createTHElement().cast();
   }
 
   /**
@@ -347,7 +361,7 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTHead() {
-    return impl.createElement("thead");
+    return Document.get().createTHeadElement().cast();
   }
 
   /**
@@ -356,16 +370,17 @@ public class DOM {
    * @return the newly-created element
    */
   public static Element createTR() {
-    return impl.createElement("tr");
+    return Document.get().createTRElement().cast();
   }
 
   /**
-   * Generates a unique DOM id. The id is of the form "gwt-id-<unique integer>".
-   *
+   * Generates a unique DOM id. The id is of the form "gwt-id-<unique
+   * integer>".
+   * 
    * @return a unique DOM id
    */
   public static String createUniqueId() {
-    return "gwt-id-" + nextDOMId++;
+    return Document.get().createUniqueId();
   }
 
   /**
@@ -618,7 +633,7 @@ public class DOM {
    * @return a string form of the event
    */
   public static String eventToString(Event evt) {
-    return impl.eventToString(evt);
+    return evt.getString();
   }
 
   /**
@@ -629,7 +644,7 @@ public class DOM {
    * @return the element's absolute left coordinate
    */
   public static int getAbsoluteLeft(Element elem) {
-    return impl.getAbsoluteLeft(elem);
+    return elem.getAbsoluteLeft();
   }
 
   /**
@@ -640,7 +655,7 @@ public class DOM {
    * @return the element's absolute top coordinate
    */
   public static int getAbsoluteTop(Element elem) {
-    return impl.getAbsoluteTop(elem);
+    return elem.getAbsoluteTop();
   }
 
   /**
@@ -654,7 +669,7 @@ public class DOM {
    */
   @Deprecated
   public static String getAttribute(Element elem, String attr) {
-    return getElementProperty(elem, attr);
+    return elem.getPropertyString(attr);
   }
 
   /**
@@ -668,7 +683,7 @@ public class DOM {
    */
   @Deprecated
   public static boolean getBooleanAttribute(Element elem, String attr) {
-    return getElementPropertyBoolean(elem, attr);
+    return elem.getPropertyBoolean(attr);
   }
 
   /**
@@ -722,7 +737,7 @@ public class DOM {
    * @return the value of the attribute
    */
   public static String getElementAttribute(Element elem, String attr) {
-    return impl.getElementAttribute(elem, attr);
+    return elem.getAttribute(attr);
   }
 
   /**
@@ -733,7 +748,7 @@ public class DOM {
    * @return the associated element, or <code>null</code> if none is found
    */
   public static Element getElementById(String id) {
-    return impl.getElementById(id);
+    return Document.get().getElementById(id).cast();
   }
 
   /**
@@ -744,7 +759,7 @@ public class DOM {
    * @return the property's value
    */
   public static String getElementProperty(Element elem, String prop) {
-    return impl.getElementProperty(elem, prop);
+    return elem.getPropertyString(prop);
   }
 
   /**
@@ -755,7 +770,7 @@ public class DOM {
    * @return the property's value as a boolean
    */
   public static boolean getElementPropertyBoolean(Element elem, String prop) {
-    return impl.getElementPropertyBoolean(elem, prop);
+    return elem.getPropertyBoolean(prop);
   }
 
   /**
@@ -766,7 +781,7 @@ public class DOM {
    * @return the property's value as an int
    */
   public static int getElementPropertyInt(Element elem, String prop) {
-    return impl.getElementPropertyInt(elem, prop);
+    return elem.getPropertyInt(prop);
   }
 
   /**
@@ -787,7 +802,7 @@ public class DOM {
    * @return the child element
    */
   public static Element getFirstChild(Element elem) {
-    return impl.getFirstChild(elem);
+    return elem.getFirstChildElement().cast();
   }
 
   /**
@@ -799,7 +814,7 @@ public class DOM {
    * @return the src url of the img
    */
   public static String getImgSrc(Element img) {
-    return impl.getImgSrc(img);
+    return img.<ImageElement> cast().getSrc();
   }
 
   /**
@@ -809,7 +824,7 @@ public class DOM {
    * @return the HTML representation of the element's children
    */
   public static String getInnerHTML(Element elem) {
-    return impl.getInnerHTML(elem);
+    return elem.getInnerHTML();
   }
 
   /**
@@ -820,7 +835,7 @@ public class DOM {
    * @return the text inside this element
    */
   public static String getInnerText(Element elem) {
-    return impl.getInnerText(elem);
+    return elem.getInnerText();
   }
 
   /**
@@ -834,7 +849,7 @@ public class DOM {
    */
   @Deprecated
   public static int getIntAttribute(Element elem, String attr) {
-    return getElementPropertyInt(elem, attr);
+    return elem.getPropertyInt(attr);
   }
 
   /**
@@ -845,7 +860,7 @@ public class DOM {
    * @return the style attribute's value as an integer
    */
   public static int getIntStyleAttribute(Element elem, String attr) {
-    return impl.getIntStyleAttribute(elem, attr);
+    return Integer.parseInt(elem.getStyle().getProperty(attr));
   }
 
   /**
@@ -855,7 +870,7 @@ public class DOM {
    * @return the sibling element
    */
   public static Element getNextSibling(Element elem) {
-    return impl.getNextSibling(elem);
+    return elem.getNextSibling().cast();
   }
 
   /**
@@ -865,7 +880,7 @@ public class DOM {
    * @return the parent element
    */
   public static Element getParent(Element elem) {
-    return impl.getParent(elem);
+    return elem.getParentElement().cast();
   }
 
   /**
@@ -876,7 +891,7 @@ public class DOM {
    * @return the style attribute's value
    */
   public static String getStyleAttribute(Element elem, String attr) {
-    return impl.getStyleAttribute(elem, attr);
+    return elem.getStyle().getProperty(attr);
   }
 
   /**
@@ -889,7 +904,7 @@ public class DOM {
    *          which <code>child</code> will be inserted
    */
   public static void insertBefore(Element parent, Element child, Element before) {
-    impl.insertBefore(parent, child, before);
+    parent.insertBefore(child, before);
   }
 
   /**
@@ -917,9 +932,19 @@ public class DOM {
    *          <code>&lt;option&gt;</code>; cannot be <code>null</code>
    * @param index the index at which to insert the child
    */
-  public static void insertListItem(Element select, String item, String value,
+  public static void insertListItem(Element selectElem, String item, String value,
       int index) {
-    impl.insertListItem(select, item, value, index);
+    SelectElement select = selectElem.<SelectElement> cast();
+    OptionElement option = Document.get().createOptionElement();
+    option.setText(item);
+    option.setValue(value);
+
+    if ((index == -1) || (index == select.getLength())) {
+      select.add(option, null);
+    } else {
+      OptionElement before = select.getOptions().getItem(index);
+      select.add(option, before);
+    }
   }
 
   /**
@@ -928,10 +953,9 @@ public class DOM {
    * @param parent the potential parent element
    * @param child the potential child element
    * @return <code>true</code> if the relationship holds
-   * @see #compare(Element, Element)
    */
   public static boolean isOrHasChild(Element parent, Element child) {
-    return impl.isOrHasChild(parent, child);
+    return parent.isOrHasChild(child);
   }
 
   /**
@@ -955,7 +979,7 @@ public class DOM {
    * @param child the child element to be removed
    */
   public static void removeChild(Element parent, Element child) {
-    impl.removeChild(parent, child);
+    parent.removeChild(child);
   }
 
   /**
@@ -965,7 +989,7 @@ public class DOM {
    * @param attr the name of the element to remove
    */
   public static void removeElementAttribute(Element elem, String attr) {
-    impl.removeElementAttribute(elem, attr);
+    elem.removeAttribute(attr);
   }
 
   /**
@@ -996,7 +1020,7 @@ public class DOM {
    * @param elem the element to be made visible
    */
   public static void scrollIntoView(Element elem) {
-    impl.scrollIntoView(elem);
+    elem.scrollIntoView();
   }
 
   /**
@@ -1048,7 +1072,7 @@ public class DOM {
    * @param value the value to which the attribute should be set
    */
   public static void setElementAttribute(Element elem, String attr, String value) {
-    impl.setElementAttribute(elem, attr, value);
+    elem.setAttribute(attr, value);
   }
 
   /**
@@ -1059,7 +1083,7 @@ public class DOM {
    * @param value the new property value
    */
   public static void setElementProperty(Element elem, String prop, String value) {
-    impl.setElementProperty(elem, prop, value);
+    elem.setPropertyString(prop, value);
   }
 
   /**
@@ -1071,7 +1095,7 @@ public class DOM {
    */
   public static void setElementPropertyBoolean(Element elem, String prop,
       boolean value) {
-    impl.setElementPropertyBoolean(elem, prop, value);
+    elem.setPropertyBoolean(prop, value);
   }
 
   /**
@@ -1082,7 +1106,7 @@ public class DOM {
    * @param value the new property value as an int
    */
   public static void setElementPropertyInt(Element elem, String prop, int value) {
-    impl.setElementPropertyInt(elem, prop, value);
+    elem.setPropertyInt(prop, value);
   }
 
   /**
@@ -1104,7 +1128,7 @@ public class DOM {
    * @param src a non-null url for the img
    */
   public static void setImgSrc(Element img, String src) {
-    impl.setImgSrc(img, src);
+    img.<ImageElement> cast().setSrc(src);
   }
 
   /**
@@ -1114,7 +1138,7 @@ public class DOM {
    * @param html the new html
    */
   public static void setInnerHTML(Element elem, String html) {
-    impl.setInnerHTML(elem, html);
+    elem.setInnerHTML(html);
   }
 
   /**
@@ -1125,7 +1149,7 @@ public class DOM {
    * @param text the new text
    */
   public static void setInnerText(Element elem, String text) {
-    impl.setInnerText(elem, text);
+    elem.setInnerText(text);
   }
 
   /**
@@ -1150,7 +1174,7 @@ public class DOM {
    * @param value the style attribute's new integer value
    */
   public static void setIntStyleAttribute(Element elem, String attr, int value) {
-    impl.setIntStyleAttribute(elem, attr, value);
+    elem.getStyle().setProperty(attr, Integer.toString(value));
   }
 
   /**
@@ -1161,7 +1185,7 @@ public class DOM {
    * @param index the index of the option whose text should be set
    */
   public static void setOptionText(Element select, String text, int index) {
-    impl.setOptionText(select, text, index);
+    select.<SelectElement> cast().getOptions().getItem(index).setText(text);
   }
 
   /**
@@ -1172,7 +1196,7 @@ public class DOM {
    * @param value the style attribute's new value
    */
   public static void setStyleAttribute(Element elem, String attr, String value) {
-    impl.setStyleAttribute(elem, attr, value);
+    elem.getStyle().setProperty(attr, value);
   }
 
   /**
@@ -1196,11 +1220,11 @@ public class DOM {
    * @return a string form of the element
    */
   public static String toString(Element elem) {
-    return impl.toString(elem);
+    return elem.getString();
   }
 
   /**
-   * @deprecated  As of GWT 1.5, replaced by {@link Window#getClientHeight()}
+   * @deprecated As of GWT 1.5, replaced by {@link Window#getClientHeight()}
    */
   @Deprecated
   public static int windowGetClientHeight() {
@@ -1208,7 +1232,7 @@ public class DOM {
   }
 
   /**
-   * @deprecated  As of GWT 1.5, replaced by {@link Window#getClientWidth()}
+   * @deprecated As of GWT 1.5, replaced by {@link Window#getClientWidth()}
    */
   @Deprecated
   public static int windowGetClientWidth() {

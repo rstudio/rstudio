@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 /**
  * An opaque handle to a native DOM Element. An <code>Element</code> cannot be
  * created directly. Instead, use the <code>Element</code> type when returning
@@ -26,12 +24,11 @@ import com.google.gwt.core.client.JavaScriptObject;
  * typically done by calling methods in the
  * {@link com.google.gwt.user.client.DOM} class.
  */
-public final class Element extends JavaScriptObject {
+public final class Element extends com.google.gwt.dom.client.Element {
 
   /**
-   * Not directly instantiable.  Subclasses should also define a protected
-   * no-arg constructor to prevent client code from directly instantiating
-   * the class.
+   * Not directly instantiable. Subclasses should also define a protected no-arg
+   * constructor to prevent client code from directly instantiating the class.
    */
   protected Element() {
   }

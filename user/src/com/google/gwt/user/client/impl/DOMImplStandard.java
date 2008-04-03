@@ -26,14 +26,6 @@ import com.google.gwt.user.client.Event;
 abstract class DOMImplStandard extends DOMImpl {
 
   @Override
-  public native Element createInputRadioElement(String name) /*-{
-    var elem = $doc.createElement("INPUT");
-    elem.type = 'radio';
-    elem.name = name;
-    return elem;
-  }-*/;
-
-  @Override
   public native int eventGetButton(Event evt) /*-{
     // Standard browsers and IE disagree on what the button codes for buttons
     // should be.  Translating to match IE standard.
@@ -122,37 +114,6 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   @Override
-  public native Element getFirstChild(Element elem) /*-{
-    var child = elem.firstChild;
-    while (child && child.nodeType != 1)
-      child = child.nextSibling;
-    return child || null;
-  }-*/;
-
-  @Override
-  public native Element getNextSibling(Element elem) /*-{
-    var sib = elem.nextSibling;
-    while (sib && sib.nodeType != 1)
-      sib = sib.nextSibling;
-    return sib || null;
-  }-*/;
-
-  @Override
-  public native Element getParent(Element elem) /*-{
-    var parent = elem.parentNode;
-    if(parent == null) {
-      return null;
-    }
-    if (parent.nodeType != 1)
-      parent = null;
-    return parent || null;
-  }-*/;
-
-  public native String iframeGetSrc(Element elem) /*-{
-    return elem.src;
-  }-*/;
-
-  @Override
   public native void insertChild(Element parent, Element toAdd, int index) /*-{
     var count = 0, child = parent.firstChild, before = null;
     while (child) {
@@ -167,11 +128,6 @@ abstract class DOMImplStandard extends DOMImpl {
     }
 
     parent.insertBefore(toAdd, before);
-  }-*/;
-
-  @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
-    return parent.contains(child);  
   }-*/;
 
   @Override
@@ -291,6 +247,5 @@ abstract class DOMImplStandard extends DOMImpl {
         $wnd.__dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
         $wnd.__dispatchEvent : null;
-   
   }-*/;
 }

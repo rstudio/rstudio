@@ -17,7 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * The superclass for all user-interface objects. It simply wraps a DOM element,
@@ -140,7 +140,8 @@ public abstract class UIObject {
   protected static void ensureDebugId(Element elem, String baseID, String id) {
     assert baseID != null;
     baseID = (baseID.length() > 0) ? baseID + "-" : "";
-    DOM.setElementProperty(elem, "id", DEBUG_ID_PREFIX + baseID + id);
+    DOM.setElementProperty(elem.<com.google.gwt.user.client.Element> cast(),
+        "id", DEBUG_ID_PREFIX + baseID + id);
   }
 
   /**
@@ -150,7 +151,8 @@ public abstract class UIObject {
    * @return the objects's space-separated style names
    */
   protected static String getStyleName(Element elem) {
-    return DOM.getElementProperty(elem, "className");
+    return DOM.getElementProperty(
+        elem.<com.google.gwt.user.client.Element> cast(), "className");
   }
 
   /**
@@ -179,7 +181,8 @@ public abstract class UIObject {
    * @param styleName the new style name
    */
   protected static void setStyleName(Element elem, String styleName) {
-    DOM.setElementProperty(elem, "className", styleName);
+    DOM.setElementProperty(elem.<com.google.gwt.user.client.Element> cast(),
+        "className", styleName);
   }
 
   /**
@@ -227,7 +230,9 @@ public abstract class UIObject {
         if (oldStyle.length() > 0) {
           oldStyle += " ";
         }
-        DOM.setElementProperty(elem, "className", oldStyle + style);
+        DOM.setElementProperty(
+            elem.<com.google.gwt.user.client.Element> cast(), "className",
+            oldStyle + style);
       }
     } else {
       // Don't try to remove the style if it's not there.
@@ -246,7 +251,9 @@ public abstract class UIObject {
           newClassName = begin + " " + end;
         }
 
-        DOM.setElementProperty(elem, "className", newClassName);
+        DOM.setElementProperty(
+            elem.<com.google.gwt.user.client.Element> cast(), "className",
+            newClassName);
       }
     }
   }
@@ -452,13 +459,14 @@ public abstract class UIObject {
    * This method should not be overridden. It is non-final solely to support
    * legacy code that depends upon overriding it. If it is overridden, the
    * subclass implementation must not return a different element than was
-   * previously set using {@link #setElement(Element)}.
+   * previously set using
+   * {@link #setElement(com.google.gwt.user.client.Element)}.
    * 
    * @return the object's browser element
    */
-  public Element getElement() {
+  public com.google.gwt.user.client.Element getElement() {
     assert (element != null) : MISSING_ELEMENT_ERROR;
-    return element;
+    return (com.google.gwt.user.client.Element)element;
   }
 
   /**
@@ -733,7 +741,21 @@ public abstract class UIObject {
    * 
    * @param elem the object's element
    */
-  protected void setElement(Element elem) {
+  protected final void setElement(Element elem) {
+    setElement((com.google.gwt.user.client.Element)elem);
+  }
+
+  /**
+   * Sets this object's browser element. UIObject subclasses must call this
+   * method before attempting to call any other methods, and it may only be
+   * called once.
+   * 
+   * This method exists for backwards compatibility with pre-1.5 code.
+   * As of GWT 1.5, {@link #setElement(Element)} is the preferred method.
+   * 
+   * @param elem the object's element
+   */
+  protected void setElement(com.google.gwt.user.client.Element elem) {
     assert (element == null) : SETELEMENT_TWICE_ERROR;
     this.element = elem;
   }

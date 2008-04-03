@@ -31,24 +31,6 @@ class DOMImplIE6 extends DOMImpl {
   private static Element currentEventTarget;
 
   @Override
-  public native Element createInputRadioElement(String name) /*-{
-    return $doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
-  }-*/;
-
-  /**
-   * Supports creating a select control with the multiple attribute to work
-   * around a bug in IE6 where changing the multiple attribute in a setAttribute
-   * call can cause subsequent setSelected calls to misbehave. Although this bug
-   * is fixed in IE7, this DOMImpl specialization is used for both IE6 and IE7,
-   * but it should be harmless.
-   */
-  @Override
-  public native Element createSelectElement(boolean multiple) /*-{
-    var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
-    return $doc.createElement(html);
-  }-*/;
-
-  @Override
   public native int eventGetClientX(Event evt) /*-{
     return evt.clientX -
         @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
@@ -97,20 +79,6 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native int getAbsoluteLeft(Element elem) /*-{
-    return elem.getBoundingClientRect().left
-        + @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft
-        - @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
-  }-*/;
-
-  @Override
-  public native int getAbsoluteTop(Element elem) /*-{
-    return elem.getBoundingClientRect().top
-        + @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop
-        - @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
-  }-*/;
-
-  @Override
   public native Element getChild(Element elem, int index) /*-{
     var child = elem.children[index];
     return child || null;
@@ -130,42 +98,6 @@ class DOMImplIE6 extends DOMImpl {
       }
     }
     return -1;
-  }-*/;
-
-  @Override
-  public native Element getFirstChild(Element elem) /*-{
-    var child = elem.firstChild;
-    return child || null;
-  }-*/;
-
-  /*
-   * The src may not be set yet because of funky logic in setImgSrc(). See
-   * setImgSrc().
-   */
-  @Override
-  public String getImgSrc(Element img) {
-    return ImageSrcIE6.getImgSrc(img);
-  }
-
-  @Override
-  public native String getInnerText(Element elem) /*-{
-    var ret = elem.innerText;
-    return (ret == null) ? null : ret;
-  }-*/;
-
-  @Override
-  public native Element getNextSibling(Element elem) /*-{
-    return elem.nextSibling || null;
-  }-*/;
-
-  @Override
-  public native Element getParent(Element elem) /*-{
-    var parent = elem.parentElement;
-    return parent || null;
-  }-*/;
-
-  public native String iframeGetSrc(Element elem) /*-{
-    return elem.src;
   }-*/;
 
   @Override
@@ -226,26 +158,6 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native void insertListItem(Element select, String text, String value,
-      int index) /*-{
-    // When we try to pass the populated option into this method, IE
-    // chokes, so we create the option here instead.
-    var newOption = new Option(text, value);
-    if (index == -1 || index > select.options.length - 1) {
-      select.add(newOption);
-    } else{
-      select.add(newOption, index);
-    }
-  }-*/;
-
-  @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
-    // An extra equality check is required due to the fact that
-    // elem.contains(elem) is false if elem is not attached to the DOM.
-    return (parent === child) || parent.contains(child);
-  }-*/;
-
-  @Override
   public void releaseCapture(Element elem) {
     maybeInitializeEventSystem();
     releaseCaptureImpl(elem);
@@ -256,23 +168,6 @@ class DOMImplIE6 extends DOMImpl {
     maybeInitializeEventSystem();
     setCaptureImpl(elem);
   }
-
-  /**
-   * Works around an IE problem where multiple images trying to load at the same
-   * time will generate a request per image. We fix this by only allowing the
-   * first image of a given URL to set its source immediately, but simultaneous
-   * requests for the same URL don't actually get their source set until the
-   * original load is complete.
-   */
-  @Override
-  public void setImgSrc(Element img, String src) {
-    ImageSrcIE6.setImgSrc(img, src);
-  }
-
-  @Override
-  public native void setInnerText(Element elem, String text) /*-{
-    elem.innerText = text || '';
-  }-*/;
 
   @Override
   public void sinkEvents(Element elem, int bits) {
@@ -332,5 +227,4 @@ class DOMImplIE6 extends DOMImpl {
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
         $wnd.__dispatchEvent : null;
   }-*/;
-
 }
