@@ -136,20 +136,13 @@ public class LongFromJSNIChecker {
     }
 
     /**
-     * Check whether the argument type is long or an array of (arrays of...)
-     * long. If the argument is <code>null</code>, returns <code>false</code>.
+     * Check whether the argument type is the <code>long</code> primitive
+     * type. If the argument is <code>null</code>, returns <code>false</code>.
      */
     private boolean containsLong(TypeBinding type) {
       if (type instanceof BaseTypeBinding) {
         BaseTypeBinding btb = (BaseTypeBinding) type;
         if (btb.id == TypeIds.T_long) {
-          return true;
-        }
-      }
-
-      if (type instanceof ArrayBinding) {
-        ArrayBinding ab = (ArrayBinding) type;
-        if (containsLong(ab.elementsType())) {
           return true;
         }
       }

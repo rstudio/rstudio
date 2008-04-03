@@ -38,6 +38,11 @@ public class LongFromJSNITest extends TestCase {
         "Referencing field 'Buggy.x': type 'long' is not safe to access in JSNI code");
   }
 
+  /**
+   * The proper behavior here is a close call. In hosted mode, Java arrays are
+   * completely unusable in JavaScript, so the current reasoning is to allow
+   * them.
+   */
   public void testLongArray() throws UnableToCompleteException {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
@@ -46,10 +51,7 @@ public class LongFromJSNITest extends TestCase {
     code.append("    $wnd.alert(this.@Buggy::m()()); }-*/;\n");
     code.append("}\n");
 
-    shouldGenerateError(
-        code,
-        3,
-        "Referencing method \'Buggy.m\': return type 'long[]' is not safe to access in JSNI code");
+    shouldGenerateNoError(code);
   }
 
   public void testLongParameter() throws UnableToCompleteException {
