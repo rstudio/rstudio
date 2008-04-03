@@ -66,7 +66,7 @@ public abstract class TypeRefVisitor extends ASTVisitor {
 
   @Override
   public void endVisit(MessageSend messageSend, BlockScope scope) {
-    if (messageSend.binding.isStatic()) {
+    if (messageSend.binding != null && messageSend.binding.isStatic()) {
       maybeDispatch(scope, messageSend, messageSend.actualReceiverType);
     }
   }
