@@ -16,10 +16,13 @@
 package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
 
 /**
  * TODO: document me.
  */
 public interface RemoteServiceServletTestServiceAsync {
-  Request test(AsyncCallback callback);
+  Request test(AsyncCallback<Void> callback);
+
+  RequestBuilder testExpectCustomHeader(AsyncCallback<Void> callback);
 }

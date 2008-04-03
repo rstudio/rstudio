@@ -28,6 +28,8 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
@@ -312,12 +314,24 @@ class ProxyCreator {
         + getProxySimpleName() + "." + syncMethod.getName()
         + "\", getRequestId()));");
 
-    if (asyncReturnType != JPrimitiveType.VOID) {
-      w.print("return ");
+    /*
+     * Depending on the return type for the async method, return a
+     * RequestBuilder, a Request, or nothing at all.
+     */
+    if (asyncReturnType == JPrimitiveType.VOID) {
+      w.print("doInvoke(");
+    } else if (asyncReturnType.getQualifiedSourceName().equals(
+        RequestBuilder.class.getName())) {
+      w.print("return doPrepareRequestBuilder(");
+    } else if (asyncReturnType.getQualifiedSourceName().equals(
+        Request.class.getName())) {
+      w.print("return doInvoke(");
+    } else {
+      // This method should have been caught by RemoteServiceAsyncValidator
+      throw new RuntimeException("Unhandled return type "
+          + asyncReturnType.getQualifiedSourceName());
     }
 
-    // Call the doInvoke method to actually send the request.
-    w.print("doInvoke(");
     JType returnType = syncMethod.getReturnType();
     w.print("ResponseReader." + getResponseReaderFor(returnType).name());
     w.print(", \"" + getProxySimpleName() + "." + syncMethod.getName()

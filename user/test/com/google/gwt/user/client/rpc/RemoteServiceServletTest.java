@@ -17,6 +17,8 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestException;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -33,8 +35,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * </p>
  */
 public class RemoteServiceServletTest extends GWTTestCase {
-  private static final int TEST_DELAY = Integer.MAX_VALUE;
-  private Request req;
+  private static final int TEST_DELAY = 10000;
 
   private static RemoteServiceServletTestServiceAsync getAsyncService() {
     RemoteServiceServletTestServiceAsync service = (RemoteServiceServletTestServiceAsync) GWT.create(RemoteServiceServletTestService.class);
@@ -45,8 +46,32 @@ public class RemoteServiceServletTest extends GWTTestCase {
     return service;
   }
 
+  private Request req;
+
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
+  }
+
+  public void testManualSend() throws RequestException {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+
+    delayTestFinish(TEST_DELAY);
+
+    RequestBuilder builder = service.testExpectCustomHeader(new AsyncCallback<Void>() {
+
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Void result) {
+        assertTrue(!req.isPending());
+        finishTest();
+      }
+    });
+
+    builder.setHeader("X-Custom-Header", "true");
+    req = builder.send();
+    assertTrue(req.isPending());
   }
 
   public void testServiceInterfaceLocation() {
@@ -54,13 +79,13 @@ public class RemoteServiceServletTest extends GWTTestCase {
 
     delayTestFinish(TEST_DELAY);
 
-    req = service.test(new AsyncCallback<Object>() {
+    req = service.test(new AsyncCallback<Void>() {
 
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Void result) {
         assertTrue(!req.isPending());
         finishTest();
       }

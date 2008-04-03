@@ -228,10 +228,77 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
    * 
    * @return a {@link Request} object that can be used to track the request
    */
-  @SuppressWarnings("unused")
   protected <T> Request doInvoke(ResponseReader responseReader,
       String methodName, int invocationCount, String requestData,
       AsyncCallback<T> callback) {
+
+    RequestBuilder rb = doPrepareRequestBuilderImpl(responseReader, methodName,
+        invocationCount, requestData, callback);
+
+    try {
+      return rb.send();
+    } catch (RequestException ex) {
+      InvocationException iex = new InvocationException(
+          "Unable to initiate the asynchronous service invocation -- check the network connection",
+          ex);
+      callback.onFailure(iex);
+    } finally {
+      if (RemoteServiceProxy.isStatsAvailable()
+          && RemoteServiceProxy.stats(methodName + ":" + invocationCount
+              + ":requestSent", RemoteServiceProxy.bytesStat(methodName,
+              invocationCount, requestData.length()))) {
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Configures a RequestBuilder to send an RPC request when the RequestBuilder
+   * is intended to be returned through the asynchronous proxy interface.
+   * 
+   * @param <T> return type for the AsyncCallback
+   * @param responseReader instance used to read the return value of the
+   *          invocation
+   * @param requestData payload that encodes the addressing and arguments of the
+   *          RPC call
+   * @param callback callback handler
+   * 
+   * @return a RequestBuilder object that is ready to have its
+   *         {@link RequestBuilder#send()} method invoked.
+   */
+  protected <T> RequestBuilder doPrepareRequestBuilder(
+      ResponseReader responseReader, String methodName, int invocationCount,
+      String requestData, AsyncCallback<T> callback) {
+
+    RequestBuilder rb = doPrepareRequestBuilderImpl(responseReader, methodName,
+        invocationCount, requestData, callback);
+
+    // We'll record when the request was configured...
+    if (RemoteServiceProxy.isStatsAvailable()
+        && RemoteServiceProxy.stats(methodName + ":" + invocationCount
+            + ":requestPrepared", RemoteServiceProxy.bytesStat(methodName,
+            invocationCount, requestData.length()))) {
+    }
+
+    return rb;
+  }
+
+  /**
+   * Configures a RequestBuilder to send an RPC request.
+   * 
+   * @param <T> return type for the AsyncCallback
+   * @param responseReader instance used to read the return value of the
+   *          invocation
+   * @param requestData payload that encodes the addressing and arguments of the
+   *          RPC call
+   * @param callback callback handler
+   * 
+   * @return a RequestBuilder object that is ready to have its
+   *         {@link RequestBuilder#send()} method invoked.
+   */
+  private <T> RequestBuilder doPrepareRequestBuilderImpl(
+      ResponseReader responseReader, String methodName, int invocationCount,
+      String requestData, AsyncCallback<T> callback) {
 
     if (getServiceEntryPoint() == null) {
       throw new NoServiceEntryPointSpecifiedException();
@@ -239,22 +306,13 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
 
     RequestCallbackAdapter<T> responseHandler = new RequestCallbackAdapter<T>(
         this, methodName, invocationCount, callback, responseReader);
+
     RequestBuilder rb = new RequestBuilder(RequestBuilder.POST,
         getServiceEntryPoint());
-    rb.setHeader("Content-Type", "text/x-gwt-rpc; charset=utf-8");
 
-    try {
-      return rb.sendRequest(requestData, responseHandler);
-    } catch (RequestException ex) {
-      InvocationException iex = new InvocationException(
-          "Unable to initiate the asynchronous service invocation -- check the network connection",
-          ex);
-      callback.onFailure(iex);
-    } finally {
-      boolean toss = isStatsAvailable()
-          && stats(methodName + ":" + invocationCount + ":requestSent",
-              bytesStat(methodName, invocationCount, requestData.length()));
-    }
-    return null;
+    rb.setHeader("Content-Type", "text/x-gwt-rpc; charset=utf-8");
+    rb.setCallback(responseHandler);
+    rb.setRequestData(requestData);
+    return rb;
   }
 }

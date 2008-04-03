@@ -17,6 +17,8 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.RemoteServiceServletTestService;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * TODO: document me.
  */
@@ -24,5 +26,12 @@ public class RemoteServiceServletTestServiceImplBase extends
     RemoteServiceServlet implements RemoteServiceServletTestService {
 
   public void test() {
+  }
+
+  public void testExpectCustomHeader() {
+    HttpServletRequest req = getThreadLocalRequest();
+    if (!Boolean.parseBoolean(req.getHeader("X-Custom-Header"))) {
+      throw new RuntimeException("Missing header");
+    }
   }
 }

@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import java.util.HashMap;
@@ -145,6 +146,11 @@ class RemoteServiceAsyncValidator {
   private final JClassType asyncCallbackClass;
 
   /**
+   * {@link JClassType} for the {@link RequestBuilder} class.
+   */
+  private final JClassType requestBuilderType;
+
+  /**
    * {@link JClassType} for the {@link Request} class.
    */
   private final JClassType requestType;
@@ -154,6 +160,7 @@ class RemoteServiceAsyncValidator {
     try {
       asyncCallbackClass = typeOracle.getType(AsyncCallback.class.getName());
       requestType = typeOracle.getType(Request.class.getCanonicalName());
+      requestBuilderType = typeOracle.getType(RequestBuilder.class.getCanonicalName());
     } catch (NotFoundException e) {
       logger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
@@ -212,12 +219,14 @@ class RemoteServiceAsyncValidator {
         // TODO if async param is parameterized make sure that the sync return
         // type is assignable to the first type argument
         JType returnType = asyncMethod.getReturnType();
-        if (returnType != JPrimitiveType.VOID && returnType != requestType) {
+        if (returnType != JPrimitiveType.VOID && returnType != requestType
+            && returnType != requestBuilderType) {
           branch.branch(TreeLogger.ERROR,
               "The asynchronous version of the synchronous method '"
                   + syncMethod.getReadableDeclaration()
                   + "' must have a return type of 'void' or '"
-                  + Request.class.getCanonicalName() + "'", null);
+                  + Request.class.getCanonicalName() + "' or '"
+                  + RequestBuilder.class.getCanonicalName() + "'", null);
           failed = true;
         } else {
           syncMethodToAsyncMethodMap.put(syncMethod, asyncMethod);
