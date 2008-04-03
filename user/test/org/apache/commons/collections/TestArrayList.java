@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+// MODIFIED BY GOOGLE
 package org.apache.commons.collections;
- import java.util.ArrayList;
+ import java.util.List;
 
 /**
  * @author <a href="mailto:jvanzyl@apache.org">Jason van Zyl</a>
@@ -24,8 +25,8 @@ public abstract class TestArrayList extends TestList
 { 
   
  
-    
-    protected ArrayList list = (ArrayList)makeEmptyList();
+    // GOOGLE
+    protected List list = makeEmptyList();
 
 
     public void testNewArrayList()

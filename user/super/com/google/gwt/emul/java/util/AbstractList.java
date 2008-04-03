@@ -73,7 +73,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     private ListIteratorImpl(int start) {
       int size = AbstractList.this.size();
       if (start < 0 || start > size) {
-        AbstractList.this.indexOutOfBounds(start);
+        indexOutOfBounds(start, size);
       }
       i = start;
     }
@@ -108,6 +108,19 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
       }
       AbstractList.this.set(last, o);
     }
+  }
+
+  protected static void checkIndex(int index, int size) {
+    if (index < 0 || index >= size) {
+      indexOutOfBounds(index, size);
+    }
+  }
+
+  /**
+   * Throws an <code>indexOutOfBoundsException</code>.
+   */
+  protected static void indexOutOfBounds(int index, int size) {
+    throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
   }
 
   protected AbstractList() {
@@ -223,14 +236,6 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
   public List<E> subList(int fromIndex, int toIndex) {
     // TODO Implement me.
     throw new UnsupportedOperationException("subList");
-  }
-
-  /**
-   * Throws an <code>indexOutOfBoundsException</code>.
-   */
-  protected void indexOutOfBounds(int i) {
-    throw new IndexOutOfBoundsException("Index: " + i + ", Size: "
-        + this.size());
   }
 
   protected void removeRange(int fromIndex, int endIndex) {

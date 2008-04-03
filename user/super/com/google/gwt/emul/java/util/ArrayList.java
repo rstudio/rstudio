@@ -45,10 +45,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     array.splice(index, 0, o);
   }-*/;
 
-  private static boolean equals(Object a, Object b) {
-    return a == b || (a != null && a.equals(b));
-  }
-
   private static native <E> E getImpl(JavaScriptObject array, int index) /*-{
     return array[index];
   }-*/;
@@ -91,22 +87,23 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
    * There is no speed advantage to pre-allocating array sizes in JavaScript.
    * This constructor is only present for compatibility with the JRE.
    */
+  @SuppressWarnings("unused")
   public ArrayList(int ignoredInitialCapacity) {
-  }
-
-  @Override
-  public void add(int index, E o) {
-    if (index < 0 || index > size) {
-      indexOutOfBounds(index);
-    }
-    addImpl(array, index, o);
-    ++size;
   }
 
   @Override
   public boolean add(E o) {
     setImpl(array, size++, o);
     return true;
+  }
+
+  @Override
+  public void add(int index, E o) {
+    if (index < 0 || index > size) {
+      indexOutOfBounds(index, size);
+    }
+    addImpl(array, index, o);
+    ++size;
   }
 
   @Override
@@ -135,11 +132,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public E get(int index) {
-    if (index < 0 || index >= size) {
-      indexOutOfBounds(index);
-    }
+    checkIndex(index, size);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
-    return ArrayList.<E>getImpl(array, index);
+    return ArrayList.<E> getImpl(array, index);
   }
 
   @Override
@@ -187,12 +182,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return size;
   }
 
-  @Override
-  public List<E> subList(int fromIndex, int toIndex) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("subList not implemented");
-  }
-
   /*
    * Faster than the iterator-based implementation in AbstractCollection.
    */
@@ -203,7 +192,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     }
     for (int i = 0; i < size; ++i) {
       // implicit type arg not inferred (as of JDK 1.5.0_07)
-      a[i] = ArrayList.<T>getImpl(array, i);
+      a[i] = ArrayList.<T> getImpl(array, i);
     }
     if (a.length > size) {
       a[size] = null;
@@ -212,18 +201,17 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   }
 
   /**
-   * Currently ignored.
+   * Does nothing.
    */
   public void trimToSize() {
-    // TODO(jat): implement
   }
 
   protected int indexOf(Object o, int index) {
     if (index < 0) {
-      indexOutOfBounds(index);
+      indexOutOfBounds(index, size);
     }
     for (; index < size; ++index) {
-      if (equals(o, getImpl(array, index))) {
+      if (Utility.equalsWithNullCheck(o, getImpl(array, index))) {
         return index;
       }
     }
@@ -232,10 +220,10 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   protected int lastIndexOf(Object o, int index) {
     if (index >= size) {
-      indexOutOfBounds(index);
+      indexOutOfBounds(index, size);
     }
     for (; index >= 0; --index) {
-      if (equals(o, getImpl(array, index))) {
+      if (Utility.equalsWithNullCheck(o, getImpl(array, index))) {
         return index;
       }
     }
@@ -244,11 +232,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   protected void removeRange(int fromIndex, int endIndex) {
-    if (fromIndex < 0 || fromIndex >= size) {
-      indexOutOfBounds(fromIndex);
-    }
+    checkIndex(fromIndex, size);
     if (endIndex < fromIndex || endIndex > size) {
-      indexOutOfBounds(endIndex);
+      indexOutOfBounds(endIndex, size);
     }
     int count = endIndex - fromIndex;
     removeRangeImpl(array, fromIndex, count);
@@ -260,7 +246,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
    */
   protected void setSize(int newSize) {
     if (newSize < 0) {
-      indexOutOfBounds(newSize);
+      indexOutOfBounds(newSize, size);
     }
     setSizeImpl(array, newSize);
     // null fill any new slots if size < newSize
@@ -269,6 +255,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     }
     // assignment necessary when size > newSize
     size = newSize;
+  }
+
+  @SuppressWarnings("unused")
+  List<E> subListUnimplemented(int fromIndex, int toIndex) {
+    // TODO(jat): implement
+    throw new UnsupportedOperationException("subList not implemented");
   }
 
   private void clearImpl() {
