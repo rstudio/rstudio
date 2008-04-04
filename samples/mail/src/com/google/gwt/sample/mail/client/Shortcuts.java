@@ -15,9 +15,6 @@
  */
 package com.google.gwt.sample.mail.client;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.StackPanel;
@@ -39,28 +36,13 @@ public class Shortcuts extends Composite {
   public interface Images extends Contacts.Images, Mailboxes.Images {
     AbstractImagePrototype contactsgroup();
 
-    AbstractImagePrototype leftCorner();
-
     AbstractImagePrototype mailgroup();
-
-    AbstractImagePrototype rightCorner();
 
     AbstractImagePrototype tasksgroup();
   }
 
   private int nextHeaderIndex = 0;
-
-  private StackPanel stackPanel = new StackPanel() {
-    @Override
-    public void onBrowserEvent(Event event) {
-      int oldIndex = getSelectedIndex();
-      super.onBrowserEvent(event);
-      int newIndex = getSelectedIndex();
-      if (oldIndex != newIndex) {
-        updateSelectedStyles(oldIndex, newIndex);
-      }
-    }
-  };
+  private StackPanel stackPanel = new StackPanel();
 
   /**
    * Constructs a new shortcuts widget using the specified images.
@@ -80,17 +62,12 @@ public class Shortcuts extends Composite {
   protected void onLoad() {
     // Show the mailboxes group by default.
     stackPanel.showStack(0);
-    updateSelectedStyles(-1, 0);
   }
 
   private void add(Images images, Widget widget,
       AbstractImagePrototype imageProto, String caption) {
     widget.addStyleName("mail-StackContent");
-    stackPanel.add(widget, createHeaderHTML(images, imageProto, caption), true);
-  }
-
-  private String computeHeaderId(int index) {
-    return "header-" + this.hashCode() + "-" + index;
+    stackPanel.add(widget, createHeaderHTML(imageProto, caption), true);
   }
 
   /**
@@ -101,11 +78,8 @@ public class Shortcuts extends Composite {
    * @param caption the group caption
    * @return the header HTML fragment
    */
-  private String createHeaderHTML(Images images,
-      AbstractImagePrototype imageProto, String caption) {
-
-    boolean isTop = (nextHeaderIndex == 0);
-    String cssId = computeHeaderId(nextHeaderIndex);
+  private String createHeaderHTML(AbstractImagePrototype imageProto,
+      String caption) {
     nextHeaderIndex++;
 
     String captionHTML = "<table class='caption' cellpadding='0' cellspacing='0'>"
@@ -114,34 +88,6 @@ public class Shortcuts extends Composite {
         + "</td><td class='rcaption'><b style='white-space:nowrap'>"
         + caption
         + "</b></td></tr></table>";
-
-    return "<table id='" + cssId
-        + "' align='left' cellpadding='0' cellspacing='0'"
-        + (isTop ? " class='is-top'" : "") + "><tbody>"
-        + "<tr><td class='box-00'>" + images.leftCorner().getHTML() + "</td>"
-        + "<td class='box-10'>&nbsp;</td>" + "<td class='box-20'>"
-        + images.rightCorner().getHTML() + "</td>" + "</tr><tr>"
-        + "<td class='box-01'>&nbsp;</td>" + "<td class='box-11'>"
-        + captionHTML + "</td>" + "<td class='box-21'>&nbsp;</td>"
-        + "</tr></tbody></table>";
-  }
-
-  /**
-   * Example of using the DOM class to do CSS class name tricks that have become
-   * common to AJAX apps. In this case we add CSS class name for the stack panel
-   * item that is below the selected item.
-   */
-  private void updateSelectedStyles(int oldIndex, int newIndex) {
-    oldIndex++;
-    if (oldIndex > 0 && oldIndex < stackPanel.getWidgetCount()) {
-      Element elem = DOM.getElementById(computeHeaderId(oldIndex));
-      DOM.setElementProperty(elem, "className", "");
-    }
-
-    newIndex++;
-    if (newIndex > 0 && newIndex < stackPanel.getWidgetCount()) {
-      Element elem = DOM.getElementById(computeHeaderId(newIndex));
-      DOM.setElementProperty(elem, "className", "is-beneath-selected");
-    }
+    return captionHTML;
   }
 }

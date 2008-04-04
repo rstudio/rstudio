@@ -49,7 +49,6 @@ a:visited {
 }
 
 .gwt-MenuItem {
-  font-size: 80%;
   margin: 1px;
   cursor: default;
 }
@@ -66,7 +65,6 @@ a:visited {
 }
 
 .gwt-Tree .gwt-TreeItem {
-  font-size: 80%;
   cursor: default;
 }
 
@@ -100,47 +98,52 @@ a:visited {
 
 .gwt-StackPanel .rcaption {
   padding: 0 0 4px 5px;
-} 
+}
 
-.gwt-StackPanel .box-20 {
+.gwt-StackPanelItem .topRight {
   text-align: right;
 }
 
-.box-00, .box-20 {
+.gwt-StackPanelItem .topLeft {
+  background-image: url(leftCorner.gif);
+}
+
+.gwt-StackPanelItem .topRight {
+  background-image: url(rightCorner.gif);
+}
+
+.gwt-StackPanelItem .topLeft, .gwt-StackPanelItem .topRight {
   width: 4px;
+  height: 4px;
   background-color: #b6edbc;
 }
 
-.is-top .box-00, .is-top .box-20,
-.is-beneath-selected .box-00, .is-beneath-selected .box-20 {
+.gwt-StackPanelItem-first .topLeft, .gwt-StackPanelItem-first .topRight,
+.gwt-StackPanelItem-below-selected .topLeft, .gwt-StackPanelItem-below-selected .topRight {
   background-color: #fff;
 }
 
-.box-10 {
+.gwt-StackPanelItem .topCenter {
   font-size: 2px;
   border-top: 1px solid #666;
   background-color: #deefe1;
 }
-/* CSS3 hack to target Opera8+ */
-@media all and (min-width: 0px) {
-    body .box-10 { line-height: 0px; }
-}
 
-.box-01, .box-11, .box-21 {
+.gwt-StackPanelItem .middleLeft, .gwt-StackPanelItem .middleCenter, .gwt-StackPanelItem .middleRight {
   background: url(gradient.gif) repeat-x top left;
 }
 
-.box-01, .box-00 {
+.gwt-StackPanelItem .middleLeft, .gwt-StackPanelItem .topLeft {
   font-size: 2px;
   border-left: 1px solid #666;
 }
 
-.box-21, .box-20 {
+.gwt-StackPanelItem .middleRight, .gwt-StackPanelItem .topRight {
   font-size: 2px;
   border-right: 1px solid #666;
 }
 
-.is-top .box-00, .is-top .box-20 {
+.gwt-StackPanelItem-first .topLeft, .gwt-StackPanelItem-first .topRight {
   border-right: none;
   border-left: none;
 }
@@ -154,7 +157,6 @@ a:visited {
 }
 
 .mail-TopPanel table {
-  font-size: 80%;
 }
 
 .mail-TopPanel .gwt-Image {
@@ -163,12 +165,10 @@ a:visited {
 }
 
 .mail-TopPanelLinks {
-  font-size: 80%;
 }
 
 .mail-AboutText {
   width: 24em;
-  font-size: 80%;
   padding: 10px;
   text-align: left;
 }
@@ -178,18 +178,15 @@ a:visited {
 }
 
 .mail-Contacts table {
-  font-size: 80%;
 }
 
 .mail-Tasks table {
-  font-size: 80%;
 }
 
 .mail-List {
   border-left: 1px solid #666;
   border-right: 1px solid #666;
   border-bottom: 1px solid #666;
-  font-size: 80%;
   cursor: pointer;
   cursor: hand;
 }
@@ -220,7 +217,6 @@ a:visited {
 }
 
 .mail-ListNavBar table {
-  font-size: 80%;
 }
 
 .mail-ListNavBar td {
@@ -244,7 +240,6 @@ a:visited {
 }
 
 .mail-ToolButton {
-  font-size: 80%;
   width: 10em;
 }
 
@@ -265,7 +260,6 @@ a:visited {
 
 .mail-DetailInner {
   background-color: white;
-  font-size: 80%;
 }
 
 .mail-DetailSubject {
@@ -274,12 +268,10 @@ a:visited {
 }
 
 .mail-DetailSender {
-  font-size: 80%;
   padding: 2px 10px;
 }
 
 .mail-DetailRecipient {
-  font-size: 80%;
   padding: 2px 10px;
 }
 
@@ -296,12 +288,10 @@ a:visited {
 }
 
 .mail-ContactPopupName {
-  font-size: 80%;
   font-weight: bold;
 }
 
 .mail-ContactPopupEmail {
-  font-size: 80%;
   font-style: italic;
 }
 
