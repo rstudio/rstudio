@@ -17,15 +17,21 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 
 /**
  * Utilities for tests that build a type oracle and watch for errors.
  * 
  */
 public class TypeOracleTestingUtils {
-
   public static void addCup(TypeOracleBuilder builder, String typeName,
       CharSequence code) throws UnableToCompleteException {
+    CompilationUnitProvider cup = createCup(typeName, code);
+    builder.addCompilationUnit(cup);
+  }
+
+  public static CompilationUnitProvider createCup(String typeName,
+      CharSequence code) {
     String packageName;
     String className;
     int pos = typeName.lastIndexOf('.');
@@ -38,7 +44,7 @@ public class TypeOracleTestingUtils {
     }
     StaticCompilationUnitProvider cup = new StaticCompilationUnitProvider(
         packageName, className, code.toString().toCharArray());
-    builder.addCompilationUnit(cup);
+    return cup;
   }
 
   /**
