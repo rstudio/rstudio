@@ -689,11 +689,11 @@ html>body .gwt-PopupPanel .bottomRight {
 }
 html>body .gwt-StackPanelItem .topLeft {
   background: #d3def6 url(images/corner.png) no-repeat 0px -49px;
-  border-right: 1px solid #bbbbbb;
+  border-left: 1px solid #bbbbbb;
 }
 html>body .gwt-StackPanelItem .topRight {
   background: #d3def6 url(images/corner.png) no-repeat -6px -49px;
-  border-left: 1px solid #bbbbbb;
+  border-right: 1px solid #bbbbbb;
 }
 .gwt-StackPanelItem .topLeftInner,
 .gwt-StackPanelItem .topRightInner {
@@ -705,7 +705,7 @@ html>body .gwt-StackPanelItem .topRight {
   height: 55px;
   margin-top: -49px;
   overflow: hidden;
-  border-right: 1px solid #bbbbbb;
+  border-left: 1px solid #bbbbbb;
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
 }
@@ -715,7 +715,7 @@ html>body .gwt-StackPanelItem .topRight {
   margin-top: -49px;
   margin-right: -6px;
   overflow: hidden;
-  border-left: 1px solid #bbbbbb;
+  border-right: 1px solid #bbbbbb;
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
 }
@@ -724,7 +724,7 @@ html>body .gwt-StackPanelItem .topRight {
 }
 .gwt-StackPanelItem .middleLeft {
   background: #d3def6 url(images/bg_stackpanel.png) repeat-x;
-  border-right: 1px solid #bbbbbb;
+  border-left: 1px solid #bbbbbb;
 }
 .gwt-StackPanelItem .middleLeftInner,
 .gwt-StackPanelItem .middleRightInner {
@@ -733,7 +733,7 @@ html>body .gwt-StackPanelItem .topRight {
 }
 .gwt-StackPanelItem .middleRight {
   background: #d3def6 url(images/bg_stackpanel.png) repeat-x;
-  border-left: 1px solid #bbbbbb;
+  border-right: 1px solid #bbbbbb;
 }
 .gwt-StackPanelItem .middleCenter {
   font-weight: bold;
