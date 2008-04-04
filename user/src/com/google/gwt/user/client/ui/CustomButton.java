@@ -408,7 +408,7 @@ public abstract class CustomButton extends ButtonBase {
     // Use FocusPanel.impl rather than FocusWidget because only FocusPanel.impl
     // works across browsers to create a focusable element.
     super(FocusPanel.impl.createFocusable());
-    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS);
+    sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.FOCUSEVENTS | Event.KEYEVENTS);
     setUpFace(createFace(null, "up", UP));
     setStyleName(STYLENAME_DEFAULT);
 
