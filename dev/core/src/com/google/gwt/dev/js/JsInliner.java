@@ -839,6 +839,22 @@ public class JsInliner {
 
       boolean sawReturnStatement = false;
       for (JsStatement statement : statements) {
+        if (sawReturnStatement) {
+          /*
+           * We've already seen a return statement, but there are still more
+           * statements. The target is unsafe to inline, so bail. Note: in most
+           * cases JsStaticEval will have removed any statements following a
+           * return statement.
+           * 
+           * The reason we have to bail is that the return statement's
+           * expression MUST be the last thing evaluated.
+           * 
+           * TODO(bobv): maybe it could still be inlined with smart
+           * transformation?
+           */
+          return;
+        }
+
         /*
          * Create replacement expressions to use in place of the original
          * statements. It is important that the replacement is newly-minted and
@@ -857,7 +873,6 @@ public class JsInliner {
 
         if (isReturnStatement(statement)) {
           sawReturnStatement = true;
-          break;
         }
       }
 
@@ -1461,6 +1476,9 @@ public class JsInliner {
       // Extract the return value
       JsReturn ret = (JsReturn) statement;
       expression = ret.getExpr();
+      if (expression == null) {
+        expression = program.getUndefinedLiteral();
+      }
 
     } else if (statement instanceof JsVars) {
       // Create a comma expression for variable initializers

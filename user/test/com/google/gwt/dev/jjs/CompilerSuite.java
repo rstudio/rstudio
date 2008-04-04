@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.test.EnumsTest;
 import com.google.gwt.dev.jjs.test.HostedTest;
 import com.google.gwt.dev.jjs.test.InnerClassTest;
 import com.google.gwt.dev.jjs.test.InnerOuterSuperTest;
+import com.google.gwt.dev.jjs.test.JsStaticEvalTest;
 import com.google.gwt.dev.jjs.test.JsniConstructorTest;
 import com.google.gwt.dev.jjs.test.JsoTest;
 import com.google.gwt.dev.jjs.test.MemberShadowingTest;
@@ -63,6 +64,7 @@ public class CompilerSuite {
     suite.addTestSuite(InnerOuterSuperTest.class);
     suite.addTestSuite(JsniConstructorTest.class);
     suite.addTestSuite(JsoTest.class);
+    suite.addTestSuite(JsStaticEvalTest.class);
     suite.addTestSuite(MemberShadowingTest.class);
     suite.addTestSuite(MethodBindTest.class);
     suite.addTestSuite(MethodCallTest.class);
