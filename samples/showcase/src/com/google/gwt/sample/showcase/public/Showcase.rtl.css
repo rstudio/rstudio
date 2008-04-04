@@ -61,14 +61,14 @@
 /**
  * Applied to widgets in the content area.
  */
-.Application-content-decorator .topRightInner, 
-.Application-content-decorator .middleRightInner, 
-.Application-content-decorator .bottomRightInner { 
+.Application-content-decorator .topLeftInner, 
+.Application-content-decorator .middleLeftInner, 
+.Application-content-decorator .bottomLeftInner { 
 	display: none;
 }
-.Application-content-decorator .middleCenter .topRightInner, 
-.Application-content-decorator .middleCenter .middleRightInner, 
-.Application-content-decorator .middleCenter .bottomRightInner { 
+.Application-content-decorator .middleCenter .topLeftInner, 
+.Application-content-decorator .middleCenter .middleLeftInner, 
+.Application-content-decorator .middleCenter .bottomLeftInner { 
   display: block;
 }
 .Application-content-title {

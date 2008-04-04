@@ -221,10 +221,11 @@ public class Application extends Composite implements WindowResizeListener {
     windowWidth = width;
     int menuWidth = mainMenu.getOffsetWidth();
     int contentWidth = width - menuWidth - 30;
+    int contentWidthInner = width - menuWidth - 10;
     bottomPanel.setCellWidth(mainMenu, menuWidth + "px");
-    contentLayout.setWidth(contentWidth + "px");
-    contentLayout.getCellFormatter().setWidth(0, 0, contentWidth + "px");
-    contentLayout.getCellFormatter().setWidth(1, 0, contentWidth + "px");
+    bottomPanel.setCellWidth(contentLayout, contentWidth + "px");
+    contentLayout.getCellFormatter().setWidth(0, 0, contentWidthInner + "px");
+    contentLayout.getCellFormatter().setWidth(1, 0, contentWidthInner + "px");
   }
 
   /**

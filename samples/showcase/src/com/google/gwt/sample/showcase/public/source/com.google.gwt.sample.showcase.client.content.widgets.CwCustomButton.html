@@ -39,6 +39,7 @@
     PushButton normalPushButton = new PushButton(
         Showcase.images.gwtLogo().createImage());
     normalPushButton.ensureDebugId("cwCustomButton-push-normal");
+    normalPushButton.addKeyboardListener(new KeyboardListenerAdapter());
     pushPanel.add(normalPushButton);
 
     // Add a disabled PushButton
@@ -52,6 +53,7 @@
     ToggleButton normalToggleButton = new ToggleButton(
         Showcase.images.gwtLogo().createImage());
     normalToggleButton.ensureDebugId("cwCustomButton-toggle-normal");
+    normalToggleButton.addKeyboardListener(new KeyboardListenerAdapter());
     togglePanel.add(normalToggleButton);
 
     // Add a disabled ToggleButton

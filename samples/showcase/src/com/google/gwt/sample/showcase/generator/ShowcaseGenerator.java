@@ -236,7 +236,9 @@ public class ShowcaseGenerator {
       // Recurse the directory
       File[] subFiles = root.listFiles();
       for (int i = 0; i < subFiles.length; i++) {
-        generateRawFiles(subFiles[i]);
+        if (!subFiles[i].getName().equals(".svn")) {
+          generateRawFiles(subFiles[i]);
+        }
       }
     } else if (root.isFile()) {
       String fileContents = getFileContents(root);
