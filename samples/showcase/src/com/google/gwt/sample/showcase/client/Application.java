@@ -159,8 +159,15 @@ public class Application extends Composite implements WindowResizeListener {
     contentDecorator.setWidget(contentLayout);
     contentDecorator.addStyleName(DEFAULT_STYLE_NAME + "-content-decorator");
     bottomPanel.add(contentDecorator);
-    bottomPanel.setCellHorizontalAlignment(contentDecorator,
-        HasHorizontalAlignment.ALIGN_RIGHT);
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      bottomPanel.setCellHorizontalAlignment(contentDecorator,
+          HasHorizontalAlignment.ALIGN_LEFT);
+      contentDecorator.getElement().setAttribute("align", "LEFT");
+    } else {
+      bottomPanel.setCellHorizontalAlignment(contentDecorator,
+          HasHorizontalAlignment.ALIGN_RIGHT);
+      contentDecorator.getElement().setAttribute("align", "RIGHT");
+    }
     CellFormatter formatter = contentLayout.getCellFormatter();
 
     // Add the content title
@@ -221,7 +228,7 @@ public class Application extends Composite implements WindowResizeListener {
     windowWidth = width;
     int menuWidth = mainMenu.getOffsetWidth();
     int contentWidth = width - menuWidth - 30;
-    int contentWidthInner = width - menuWidth - 10;
+    int contentWidthInner = contentWidth - 10;
     bottomPanel.setCellWidth(mainMenu, menuWidth + "px");
     bottomPanel.setCellWidth(contentLayout, contentWidth + "px");
     contentLayout.getCellFormatter().setWidth(0, 0, contentWidthInner + "px");
@@ -299,6 +306,7 @@ public class Application extends Composite implements WindowResizeListener {
     // Setup the main menu
     ApplicationImages treeImages = GWT.create(ApplicationImages.class);
     mainMenu = new Tree(treeImages);
+    mainMenu.setWidth("180px");
     mainMenu.addStyleName(DEFAULT_STYLE_NAME + "-menu");
     mainMenu.addTreeListener(new TreeListener() {
       public void onTreeItemSelected(TreeItem item) {
