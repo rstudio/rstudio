@@ -20,6 +20,7 @@ import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -99,6 +100,7 @@ public class CwCustomButton extends ContentWidget {
     PushButton normalPushButton = new PushButton(
         Showcase.images.gwtLogo().createImage());
     normalPushButton.ensureDebugId("cwCustomButton-push-normal");
+    normalPushButton.addKeyboardListener(new KeyboardListenerAdapter());
     pushPanel.add(normalPushButton);
 
     // Add a disabled PushButton
@@ -112,6 +114,7 @@ public class CwCustomButton extends ContentWidget {
     ToggleButton normalToggleButton = new ToggleButton(
         Showcase.images.gwtLogo().createImage());
     normalToggleButton.ensureDebugId("cwCustomButton-toggle-normal");
+    normalToggleButton.addKeyboardListener(new KeyboardListenerAdapter());
     togglePanel.add(normalToggleButton);
 
     // Add a disabled ToggleButton

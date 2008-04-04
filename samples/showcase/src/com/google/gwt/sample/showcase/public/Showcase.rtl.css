@@ -1,93 +1,112 @@
 /**
  * Applied to the main layout of the page.
  */
-.Application-title {
-	top: 6px;
-	right: 10px;
+.Application-top {
+	width: 100%;
+	margin-bottom: 10px;
 }
-.Application-title td {
+.Application-title {
   padding: 0px 10px 0px 0px;
 }
 .Application-title h1 {
   color: #67A7E3;
   margin: 0px;
-  padding: 0px;
-  line-height: 1.3em;
+  padding: 0px 4px 0px 0px;
+  font-size: 22px;
 }
 .Application-title h2 {
   color: #888;
   margin: 0px;
-  padding: 0px;
+  padding: 0px 4px 0px 0px;
+  font-size: 16px;
 }
 .Application-links {
-  top: 6px;
-  left: 10px;
+  padding: 2px 0px 2px 13px;
+  background: #C3D9FF;
 }
-.Application-menu-title {
-  padding: 3px 4px 3px 0px;
-	background: #e3e8f3 url(images/bg_headergradient.png) repeat-x;
-  font-weight: bold;
-  border: 1px solid #BBBBBB;
-  white-space: nowrap;
-  overflow: hidden;
-  right: 14px;
-  width: 250px;
+.Application-links .gwt-HTML{
+  font-size: 12px;
 }
-.Application-menu-wrapper {
-  padding: 2px 4px 0px 0px;
-  background: white;
-  border-right: 1px solid #BBBBBB;
-  border-left: 1px solid #BBBBBB;
-  right: 14px;
-  width: 250px;
+.Application-options {
+  padding: 6px 0px 0px 10px;
 }
-.Application-content-title {
-  background: #e3e8f3 url(images/bg_headergradient.png) repeat-x;
-  font-weight: bold;
-	border: 1px solid #BBBBBB;
-  border-left: 0px;
-  right: 284px;
-  left: 1px;
+.Application-options .gwt-ListBox {
+	width: 150px;
+  font-size: 11px;
+  color: blue;
+  margin-right: 4px;
 }
-.Application-content-wrapper {
-  padding: 2px 0px 0px 0px;
-  background: white;
-  border-right: 1px solid #BBBBBB;
-  right: 284px;
-  left: 1px;
+.Application-options td {
+  font-size: 12px;
+}
+.Application-options .gwt-PushButton {
+	width: 36px;
+	height: 16px;
+	margin: 3px 10px 0px 0px;
+}
+.Application-options .sc-ThemeButton-default {
+	background: url(images/bg_listgradient.png) repeat-x;
+}
+.Application-options .sc-ThemeButton-chrome {
+  background: url(images/bg_headergradient.png) repeat-x;
+}
+.Application-options .sc-ThemeButton-black {
+  background: #222222;
+}
+.Application-menu {
+	width: 180px;
+  text-align: right;
 }
 
 /**
  * Applied to widgets in the content area.
  */
-.sc-ContentWidgetTabBar .gwt-TabBarItem {
-  cursor: pointer;
-  cursor: hand;
-  margin-right: 10px;
-  border-collapse: collapse;
+.Application-content-decorator .topRightInner, 
+.Application-content-decorator .middleRightInner, 
+.Application-content-decorator .bottomRightInner { 
+	display: none;
 }
-.sc-ContentWidgetTabBar .gwt-TabBarItem .gwt-Label {
-  padding: 1px 0px;
-	color: #888888;
+.Application-content-decorator .middleCenter .topRightInner, 
+.Application-content-decorator .middleCenter .middleRightInner, 
+.Application-content-decorator .middleCenter .bottomRightInner { 
+  display: block;
 }
-.sc-ContentWidgetTabBar .gwt-TabBarItem-selected .gwt-Label {
-  color: black;
+.Application-content-title {
+  padding: 4px 6px 3px 0px;
+  text-align: right;
+  background: url(images/bg_headergradient.png) repeat-x;
+  border-bottom: 2px solid #bbcdf3;
 }
-.sc-ContentWidgetTabPanelBottom {
-  border: 0px;
-  border-top: 20px solid white;
-  border-bottom: 5px solid white;
+.Application-content-title .gwt-TabBarItem .top,
+.Application-content-title .gwt-TabBarItem .topLeft,
+.Application-content-title .gwt-TabBarItem .topRight,
+.Application-content-title .gwt-TabBarItem .middleLeft,
+.Application-content-title .gwt-TabBarItem .middleRight {
+  display: none;
+}
+.Application-content-title .gwt-TabBarItem .middleCenter {
+  background: none;
   padding: 0px;
 }
-.sc-ContentWidget .sc-ContentWidgetContents {
-	padding: 0px 20px;
+.Application-content-title  .gwt-TabBarItem .gwt-Label {
+	padding-left: 20px;
+	color: #888888;
 }
-.sc-ContentWidgetName {
+.Application-content-title  .gwt-TabBarItem-selected .gwt-Label {
+  color: black;
+}
+.Application-content-wrapper {
+	text-align: right;
+}
+.sc-ContentWidget {
+  padding: 10px 20px;
+}
+.sc-ContentWidget-name {
 	font-size: 1.5em;
 	font-weight: bold;
 	padding-bottom: 15px;
 }
-.sc-ContentWidgetDescription {
+.sc-ContentWidget-description {
 	padding-bottom: 15px;
 	border-bottom: 1px solid #7aa5d6;
   margin-bottom: 15px;
@@ -95,8 +114,8 @@
 .sc-ContentWidget pre {
 	border: 1px solid #888;
 	background: #eeeeee;
-	margin: 0px 20px;
-	padding: 10px;
+	padding: 10px 2px;
+	margin: 10px 0px;
 	font-size: medium;
 }
 

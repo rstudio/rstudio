@@ -84,7 +84,7 @@ public class CwFrame extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a new frame
-    final Frame frame = new Frame("http://www.google.com");
+    final Frame frame = new Frame("GWT-default.css");
     frame.setSize("700px", "300px");
     frame.ensureDebugId("cwFrame");
 

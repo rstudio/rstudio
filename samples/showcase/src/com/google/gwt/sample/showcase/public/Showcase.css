@@ -3,9 +3,7 @@
  */
 .Application-top {
 	width: 100%;
-	background-color: #EBEBEB;
-	background: url(images/bg_headergradient.png) repeat-x #e3e8f3;
-	border-bottom: 2px solid #bbcdf3;
+	margin-bottom: 10px;
 }
 .Application-title {
   padding: 0px 0px 0px 10px;
@@ -14,34 +12,65 @@
   color: #67A7E3;
   margin: 0px;
   padding: 0px 0px 0px 4px;
-  font-size: 1.7em;
+  font-size: 22px;
 }
 .Application-title h2 {
   color: #888;
   margin: 0px;
   padding: 0px 0px 0px 4px;
-  font-size: 1.1em;
+  font-size: 16px;
 }
 .Application-links {
-  padding: 6px 10px;
+  padding: 2px 13px 2px 0px;
+  background: #C3D9FF;
 }
-.Application-menu-title {
-  padding: 4px 0px 3px 6px;
-  font-weight: bold;
-  white-space: nowrap;
-  text-align: left;
+.Application-links .gwt-HTML{
+  font-size: 12px;
+}
+.Application-options {
+  padding: 6px 10px 0px 0px;
+}
+.Application-options .gwt-ListBox {
+	width: 150px;
+  font-size: 11px;
+  color: blue;
+  margin-left: 4px;
+}
+.Application-options td {
+  font-size: 12px;
+}
+.Application-options .gwt-PushButton {
+	width: 36px;
+	height: 16px;
+	margin: 3px 0px 0px 10px;
+}
+.Application-options .sc-ThemeButton-default {
+	background: url(images/bg_listgradient.png) repeat-x;
+}
+.Application-options .sc-ThemeButton-chrome {
   background: url(images/bg_headergradient.png) repeat-x;
-  border-right: 2px solid #bbcdf3;
-  border-bottom: 2px solid #bbcdf3;
 }
-.Application-menu-wrapper {
-	border-right: 2px solid #bbcdf3;
-	text-align: left;
+.Application-options .sc-ThemeButton-black {
+  background: #222222;
+}
+.Application-menu {
+	width: 180px;
+  text-align: left;
 }
 
 /**
  * Applied to widgets in the content area.
  */
+.Application-content-decorator .topRightInner, 
+.Application-content-decorator .middleRightInner, 
+.Application-content-decorator .bottomRightInner { 
+	display: none;
+}
+.Application-content-decorator .middleCenter .topRightInner, 
+.Application-content-decorator .middleCenter .middleRightInner, 
+.Application-content-decorator .middleCenter .bottomRightInner { 
+  display: block;
+}
 .Application-content-title {
   padding: 4px 0px 3px 6px;
   text-align: left;
@@ -71,7 +100,6 @@
 }
 .sc-ContentWidget {
   padding: 10px 20px;
-  position: relative;
 }
 .sc-ContentWidget-name {
 	font-size: 1.5em;

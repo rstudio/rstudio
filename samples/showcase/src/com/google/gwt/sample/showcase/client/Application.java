@@ -16,24 +16,24 @@
 package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.WindowResizeListener;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.FlexTable;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.TreeListener;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
@@ -49,9 +49,8 @@ import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
  * <li>.Application-top { The top portion of the Application }</li>
  * <li>.Application-title { The title widget }</li>
  * <li>.Application-links { The main external links }</li>
+ * <li>.Application-options { The options widget }</li>
  * <li>.Application-menu { The main menu }</li>
- * <li>.Application-menu-title { The title above the main menu }</li>
- * <li>.Application-menu-wrapper { The scrollable element around the main menu }</li>
  * <li>.Application-content-wrapper { The scrollable element around the content }</li>
  * </ul>
  */
@@ -87,14 +86,24 @@ public class Application extends Composite implements WindowResizeListener {
   public static final String DEFAULT_STYLE_NAME = "Application";
 
   /**
-   * The wrapper around the content.
+   * The panel that contains the menu and content.
    */
-  private ScrollPanel contentWrapper;
+  private HorizontalPanel bottomPanel;
 
   /**
-   * The main wrapper around the menu and content.
+   * The decorator around the content.
    */
-  private FlexTable contentLayout;
+  private DecoratorPanel contentDecorator;
+
+  /**
+   * The main wrapper around the content and content title.
+   */
+  private Grid contentLayout;
+
+  /**
+   * The wrapper around the content.
+   */
+  private SimplePanel contentWrapper;
 
   /**
    * The panel that holds the main links.
@@ -112,59 +121,56 @@ public class Application extends Composite implements WindowResizeListener {
   private Tree mainMenu;
 
   /**
-   * The wrapper around the main menu.
+   * The last known width of the window.
    */
-  private ScrollPanel mainMenuWrapper;
+  private int windowWidth = -1;
 
   /**
    * The panel that contains the title widget and links.
    */
-  private Grid topPanel;
+  private FlexTable topPanel;
 
   /**
    * Constructor.
    */
   public Application() {
-    // Setup the main layout
-    VerticalPanel layout = new VerticalPanel();
+    // Setup the main layout widget
+    FlowPanel layout = new FlowPanel();
     initWidget(layout);
-    layout.setSize("100%", "100%");
 
     // Setup the top panel with the title and links
-    topPanel = createTopPanel();
+    createTopPanel();
     layout.add(topPanel);
 
-    // Create a DecoratorPanel to hold the menu and content
-    DecoratorPanel mainDecorator = new DecoratorPanel();
-    layout.add(mainDecorator);
-    layout.setCellHorizontalAlignment(mainDecorator,
-        HasHorizontalAlignment.ALIGN_CENTER);
-    layout.setCellVerticalAlignment(mainDecorator,
-        HasVerticalAlignment.ALIGN_MIDDLE);
+    // Add the main menu
+    bottomPanel = new HorizontalPanel();
+    bottomPanel.setWidth("100%");
+    bottomPanel.setSpacing(0);
+    bottomPanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+    layout.add(bottomPanel);
+    createMainMenu();
+    bottomPanel.add(mainMenu);
 
     // Setup the content layout
-    contentLayout = new FlexTable();
+    contentLayout = new Grid(2, 1);
     contentLayout.setCellPadding(0);
     contentLayout.setCellSpacing(0);
-    mainDecorator.setWidget(contentLayout);
-    FlexCellFormatter formatter = contentLayout.getFlexCellFormatter();
-
-    // Add the main menu title
-    setMainMenuTitle("Main Menu");
-    formatter.setStyleName(0, 0, DEFAULT_STYLE_NAME + "-menu-title");
-
-    // Add the main menu
-    contentLayout.setWidget(1, 0, createMainMenu());
-    formatter.setStyleName(1, 0, DEFAULT_STYLE_NAME + "-menu-wrapper");
+    contentDecorator = new DecoratorPanel();
+    contentDecorator.setWidget(contentLayout);
+    contentDecorator.addStyleName(DEFAULT_STYLE_NAME + "-content-decorator");
+    bottomPanel.add(contentDecorator);
+    bottomPanel.setCellHorizontalAlignment(contentDecorator,
+        HasHorizontalAlignment.ALIGN_RIGHT);
+    CellFormatter formatter = contentLayout.getCellFormatter();
 
     // Add the content title
     setContentTitle(new HTML("Content"));
-    formatter.setStyleName(0, 1, DEFAULT_STYLE_NAME + "-content-title");
+    formatter.setStyleName(0, 0, DEFAULT_STYLE_NAME + "-content-title");
 
     // Add the content wrapper
-    contentWrapper = new ScrollPanel();
-    contentLayout.setWidget(1, 1, contentWrapper);
-    formatter.setStyleName(1, 1, DEFAULT_STYLE_NAME + "-content-wrapper");
+    contentWrapper = new SimplePanel();
+    contentLayout.setWidget(1, 0, contentWrapper);
+    formatter.setStyleName(1, 0, DEFAULT_STYLE_NAME + "-content-wrapper");
     setContent(null);
   }
 
@@ -191,7 +197,7 @@ public class Application extends Composite implements WindowResizeListener {
    * @return the content title widget
    */
   public Widget getContentTitle() {
-    return contentLayout.getWidget(0, 1);
+    return contentLayout.getWidget(0, 0);
   }
 
   /**
@@ -202,13 +208,6 @@ public class Application extends Composite implements WindowResizeListener {
   }
 
   /**
-   * @return the title above the main menu
-   */
-  public String getMainMenuTitle() {
-    return contentLayout.getHTML(0, 0);
-  }
-
-  /**
    * @return the {@link Widget} used as the title
    */
   public Widget getTitleWidget() {
@@ -216,17 +215,16 @@ public class Application extends Composite implements WindowResizeListener {
   }
 
   public void onWindowResized(int width, int height) {
-    // Set the height of the main layout
-    getWidget().setHeight(height + "px");
-
-    // Set the size of the main wrappers
-    int contentTitleHeight = DOM.getElementPropertyInt(
-        contentLayout.getCellFormatter().getElement(0, 1), "offsetHeight");
-    int bottomHeight = height - topPanel.getOffsetHeight() - 50
-        - contentTitleHeight;
-    int bottomWidth = width - 50;
-    mainMenuWrapper.setSize("200px", bottomHeight + "px");
-    contentWrapper.setSize((bottomWidth - 200) + "px", bottomHeight + "px");
+    if (width == windowWidth) {
+      return;
+    }
+    windowWidth = width;
+    int menuWidth = mainMenu.getOffsetWidth();
+    int contentWidth = width - menuWidth - 30;
+    bottomPanel.setCellWidth(mainMenu, menuWidth + "px");
+    contentLayout.setWidth(contentWidth + "px");
+    contentLayout.getCellFormatter().setWidth(0, 0, contentWidth + "px");
+    contentLayout.getCellFormatter().setWidth(1, 0, contentWidth + "px");
   }
 
   /**
@@ -248,7 +246,7 @@ public class Application extends Composite implements WindowResizeListener {
    * @param title the content area title
    */
   public void setContentTitle(Widget title) {
-    contentLayout.setWidget(0, 1, title);
+    contentLayout.setWidget(0, 0, title);
   }
 
   /**
@@ -261,12 +259,13 @@ public class Application extends Composite implements WindowResizeListener {
   }
 
   /**
-   * Set the title of the main menu.
+   * Set the {@link Widget} to use as options, which appear to the right of the
+   * title bar.
    * 
-   * @param title the main menu title
+   * @param options the options widget
    */
-  public void setMainMenuTitle(String title) {
-    contentLayout.setHTML(0, 0, title);
+  public void setOptionsWidget(Widget options) {
+    topPanel.setWidget(1, 1, options);
   }
 
   /**
@@ -275,26 +274,27 @@ public class Application extends Composite implements WindowResizeListener {
    * @param title the title widget
    */
   public void setTitleWidget(Widget title) {
-    topPanel.setWidget(0, 0, title);
+    topPanel.setWidget(1, 0, title);
   }
 
   @Override
   protected void onLoad() {
+    super.onLoad();
     Window.addWindowResizeListener(this);
     onWindowResized(Window.getClientWidth(), Window.getClientHeight());
   }
 
   @Override
   protected void onUnload() {
+    super.onUnload();
     Window.removeWindowResizeListener(this);
+    windowWidth = -1;
   }
 
   /**
    * Create the main menu.
-   * 
-   * @return the main menu
    */
-  private Widget createMainMenu() {
+  private void createMainMenu() {
     // Setup the main menu
     ApplicationImages treeImages = GWT.create(ApplicationImages.class);
     mainMenu = new Tree(treeImages);
@@ -309,33 +309,47 @@ public class Application extends Composite implements WindowResizeListener {
       public void onTreeItemStateChanged(TreeItem item) {
       }
     });
-
-    // Add a wrapper around the menu
-    mainMenuWrapper = new ScrollPanel(mainMenu);
-    return mainMenuWrapper;
   }
 
   /**
    * Create the panel at the top of the page that contains the title and links.
-   * 
-   * @return the top panel
    */
-  private Grid createTopPanel() {
-    Grid grid = new Grid(1, 2);
-    grid.setStyleName(DEFAULT_STYLE_NAME + "-top");
-    grid.getRowFormatter().setVerticalAlign(0, HasVerticalAlignment.ALIGN_TOP);
-
-    // Setup the title cell
-    CellFormatter formatter = grid.getCellFormatter();
-    formatter.setStyleName(0, 0, DEFAULT_STYLE_NAME + "-title");
+  private void createTopPanel() {
+    boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();
+    topPanel = new FlexTable();
+    topPanel.setCellPadding(0);
+    topPanel.setCellSpacing(0);
+    topPanel.setStyleName(DEFAULT_STYLE_NAME + "-top");
+    FlexCellFormatter formatter = topPanel.getFlexCellFormatter();
 
     // Setup the links cell
     linksPanel = new HorizontalPanel();
-    grid.setWidget(0, 1, linksPanel);
-    formatter.setStyleName(0, 1, DEFAULT_STYLE_NAME + "-links");
-    formatter.setHorizontalAlignment(0, 1, HasHorizontalAlignment.ALIGN_RIGHT);
+    topPanel.setWidget(0, 0, linksPanel);
+    formatter.setStyleName(0, 0, DEFAULT_STYLE_NAME + "-links");
+    if (isRTL) {
+      formatter.setHorizontalAlignment(0, 0, HasHorizontalAlignment.ALIGN_LEFT);
+    } else {
+      formatter.setHorizontalAlignment(0, 0, HasHorizontalAlignment.ALIGN_RIGHT);
+    }
+    formatter.setColSpan(0, 0, 2);
 
-    // Return the panel
-    return grid;
+    // Setup the title cell
+    setTitleWidget(null);
+    formatter.setStyleName(1, 0, DEFAULT_STYLE_NAME + "-title");
+
+    // Setup the options cell
+    setOptionsWidget(null);
+    formatter.setStyleName(1, 1, DEFAULT_STYLE_NAME + "-options");
+    if (isRTL) {
+      formatter.setHorizontalAlignment(1, 1, HasHorizontalAlignment.ALIGN_LEFT);
+    } else {
+      formatter.setHorizontalAlignment(1, 1, HasHorizontalAlignment.ALIGN_RIGHT);
+    }
+
+    // Align the content to the top
+    topPanel.getRowFormatter().setVerticalAlign(0,
+        HasVerticalAlignment.ALIGN_TOP);
+    topPanel.getRowFormatter().setVerticalAlign(1,
+        HasVerticalAlignment.ALIGN_TOP);
   }
 }

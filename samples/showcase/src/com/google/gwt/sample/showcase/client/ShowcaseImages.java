@@ -45,4 +45,9 @@ public interface ShowcaseImages extends ImageBundle {
   AbstractImagePrototype jimmy();
 
   AbstractImagePrototype jimmyThumb();
+
+  /**
+   * Indicates the locale selection box.
+   */
+  AbstractImagePrototype locale();
 }

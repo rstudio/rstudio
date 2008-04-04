@@ -62,14 +62,18 @@ import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ChangeListener;
+import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.HashMap;
@@ -106,6 +110,11 @@ public class Showcase implements EntryPoint {
    */
   private static final String GWT_EXAMPLES = GWT_HOMEPAGE + "examples/";
 
+  /**
+   * The available style themes that the user can select.
+   */
+  private static final String[] STYLE_THEMES = {"default", "chrome", "black"};
+  
   /**
    * Convenience method for getting the document's head element.
    * 
@@ -163,11 +172,10 @@ public class Showcase implements EntryPoint {
     ShowcaseConstants constants = (ShowcaseConstants) GWT.create(ShowcaseConstants.class);
 
     // Create the application
-    Window.enableScrolling(false);
     app = new Application();
-    app.setMainMenuTitle(constants.mainMenuTitle());
     setupTitlePanel(constants);
     setupMainLinks(constants);
+    setupOptionsPanel(constants);
     setupMainMenu(constants);
     RootPanel.get().add(app);
 
@@ -285,31 +293,6 @@ public class Showcase implements EntryPoint {
    * @param constants the constants with text
    */
   private void setupMainLinks(ShowcaseConstants constants) {
-    // Change the locale
-    final ListBox localeBox = new ListBox();
-    String currentLocale = LocaleInfo.getCurrentLocale().getLocaleName();
-    if (currentLocale.equals("default")) {
-      currentLocale = "en";
-    }
-    String[] localeNames = LocaleInfo.getAvailableLocaleNames();
-    for (String localeName : localeNames) {
-      if (!localeName.equals("default")) {
-        String nativeName = LocaleInfo.getLocaleNativeDisplayName(localeName);
-        localeBox.addItem(nativeName, localeName);
-        if (localeName.equals(currentLocale)) {
-          localeBox.setSelectedIndex(localeBox.getItemCount() - 1);
-        }
-      }
-    }
-    localeBox.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
-        String localeName = localeBox.getValue(localeBox.getSelectedIndex());
-        Window.open(getHostPageLocation() + "?locale=" + localeName, "_self",
-            "");
-      }
-    });
-    app.addLink(localeBox);
-
     // Link to GWT Homepage
     app.addLink(new HTML("<a href=\"" + GWT_HOMEPAGE + "\">"
         + constants.mainLinkHomepage() + "</a>"));
@@ -434,6 +417,60 @@ public class Showcase implements EntryPoint {
     itemTokens.put(getContentWidgetToken(content), option);
   }
 
+  /**
+   * Create the options that appear next to the title.
+   * 
+   * @param constants the constant values to use
+   */
+  private void setupOptionsPanel(ShowcaseConstants constants) {
+    VerticalPanel vPanel = new VerticalPanel();
+    vPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+    app.setOptionsWidget(vPanel);
+    
+    // Add the option to change the locale
+    final ListBox localeBox = new ListBox();
+    String currentLocale = LocaleInfo.getCurrentLocale().getLocaleName();
+    if (currentLocale.equals("default")) {
+      currentLocale = "en";
+    }
+    String[] localeNames = LocaleInfo.getAvailableLocaleNames();
+    for (String localeName : localeNames) {
+      if (!localeName.equals("default")) {
+        String nativeName = LocaleInfo.getLocaleNativeDisplayName(localeName);
+        localeBox.addItem(nativeName, localeName);
+        if (localeName.equals(currentLocale)) {
+          localeBox.setSelectedIndex(localeBox.getItemCount() - 1);
+        }
+      }
+    }
+    localeBox.addChangeListener(new ChangeListener() {
+      public void onChange(Widget sender) {
+        String localeName = localeBox.getValue(localeBox.getSelectedIndex());
+        Window.open(getHostPageLocation() + "?locale=" + localeName, "_self",
+            "");
+      }
+    });
+    HorizontalPanel localeWrapper = new HorizontalPanel();
+    localeWrapper.add(images.locale().createImage());
+    localeWrapper.add(localeBox);
+    vPanel.add(localeWrapper);
+    
+    // Add the option to change the style
+    HorizontalPanel styleWrapper = new HorizontalPanel();
+    vPanel.add(styleWrapper);
+    for (int i = 0; i < STYLE_THEMES.length; i++) {
+      String theme = STYLE_THEMES[i];
+      PushButton button = new PushButton();
+      button.addStyleName("sc-ThemeButton-" + theme);
+      styleWrapper.add(button);
+      button.addClickListener(new ClickListener() {
+        public void onClick(Widget sender) {
+          Window.alert("Additional styles coming soon...");
+        }
+      });
+    }
+  }
+  
   /**
    * Create the title bar at the top of the application.
    * 

@@ -53,10 +53,10 @@ a, a:visited, a:hover {
 .gwt-DecoratorPanel .middleRight {
   background: url(images/vborder.png) repeat-y;
 }
-.gwt-DecoratorPanel .topLeft,
-.gwt-DecoratorPanel .topRight,
-.gwt-DecoratorPanel .bottomLeft,
-.gwt-DecoratorPanel .bottomRight {
+.gwt-DecoratorPanel .topLeftInner,
+.gwt-DecoratorPanel .topRightInner,
+.gwt-DecoratorPanel .bottomLeftInner,
+.gwt-DecoratorPanel .bottomRightInner {
   width: 5px;
   height: 5px;
   zoom: 1;
@@ -540,10 +540,8 @@ html>body .gwt-PopupPanel .bottomRight {
   border-bottom: 2px solid #625b54;
   cursor: default;
   opacity: 0.5;
-}
-
-.gwt-PushButton-up-disabled .gwt-Image {
   filter: alpha(opacity=30);
+  zoom: 1;
 }
 
 .gwt-PushButton-down {
@@ -574,6 +572,8 @@ html>body .gwt-PopupPanel .bottomRight {
   border-bottom: 2px solid #625b54;
   cursor: default;
   opacity: 0.5;
+  filter: alpha(opacity=30);
+  zoom: 1;  
 }
 
 .gwt-PushButton-down-disabled .gwt-Image {
@@ -1072,10 +1072,8 @@ html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
   border-bottom: 2px solid #625b54;
   cursor: default;
   opacity: 0.5;
-}
-
-.gwt-ToggleButton-up-disabled .gwt-Image {
-  filter: alpha(opacity=30);
+  filter: alpha(opacity=40);
+  zoom: 1;
 }
 
 .gwt-ToggleButton-down {
@@ -1106,10 +1104,8 @@ html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
   border-bottom: 2px solid #625b54;
   cursor: default;
   opacity: 0.5;
-}
-
-.gwt-ToggleButton-down-disabled .gwt-Image {
-  filter: alpha(opacity=30);
+  filter: alpha(opacity=40);
+  zoom: 1;
 }
 
 /**
