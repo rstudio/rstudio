@@ -72,6 +72,9 @@ public class RequestBuilder {
 
   private static final HTTPRequestImpl httpRequest = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
 
+  /**
+   * The callback to call when the request completes.
+   */
   private RequestCallback callback;
 
   /**
@@ -81,15 +84,18 @@ public class RequestBuilder {
   private Map<String, String> headers;
 
   /**
-   * HTTP method to use when opening an JavaScript XmlHttpRequest object
+   * HTTP method to use when opening a JavaScript XmlHttpRequest object.
    */
   private final String httpMethod;
 
   /**
-   * Password to use when opening an JavaScript XmlHttpRequest object
+   * Password to use when opening a JavaScript XmlHttpRequest object.
    */
   private String password;
 
+  /**
+   * Request data to use when sending a JavaScript XmlHttpRequest object.
+   */
   private String requestData;
 
   /**
@@ -98,12 +104,12 @@ public class RequestBuilder {
   private int timeoutMillis;
 
   /**
-   * URL to use when opening an JavaScript XmlHttpRequest object.
+   * URL to use when opening a JavaScript XmlHttpRequest object.
    */
   private final String url;
 
   /**
-   * User to use when opening an JavaScript XmlHttpRequest object
+   * User to use when opening a JavaScript XmlHttpRequest object.
    */
   private String user;
 
@@ -146,6 +152,75 @@ public class RequestBuilder {
 
     this.httpMethod = httpMethod;
     this.url = url;
+  }
+
+  /**
+   * Returns the callback previously set by
+   * {@link #setCallback(RequestCallback)}, or <code>null</code> if no
+   * callback was set.
+   */
+  public RequestCallback getCallback() {
+    return callback;
+  }
+
+  /**
+   * Returns the value of a header previous set by
+   * {@link #setHeader(String, String)}, or <code>null</code> if no such
+   * header was set.
+   * 
+   * @param header the name of the header
+   */
+  public String getHeader(String header) {
+    if (headers == null) {
+      return null;
+    }
+    return headers.get(header);
+  }
+
+  /**
+   * Returns the HTTP method specified in the constructor.
+   */
+  public String getHTTPMethod() {
+    return httpMethod;
+  }
+
+  /**
+   * Returns the password previously set by {@link #setPassword(String)}, or
+   * <code>null</code> if no password was set.
+   */
+  public String getPassword() {
+    return password;
+  }
+
+  /**
+   * Returns the requestData previously set by {@link #setRequestData(String)},
+   * or <code>null</code> if no requestData was set.
+   */
+  public String getRequestData() {
+    return requestData;
+  }
+
+  /**
+   * Returns the timeoutMillis previously set by {@link #setTimeoutMillis(int)},
+   * or <code>0</code> if no timeoutMillis was set.
+   */
+  public int getTimeoutMillis() {
+    return timeoutMillis;
+  }
+
+  /**
+   * Returns the HTTP URL specified in the constructor.
+   */
+  public String getUrl() {
+    return url;
+  }
+
+  /**
+   * Returns the user previously set by {@link #setUser(String)}, or
+   * <code>null</code> if no user was set.
+   */
+  public String getUser() {
+    return user;
   }
 
   /**
