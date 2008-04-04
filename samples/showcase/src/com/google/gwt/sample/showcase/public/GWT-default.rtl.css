@@ -1119,7 +1119,6 @@ html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
   cursor: pointer;
 }
 .gwt-Tree .gwt-TreeItem-selected {
-  padding: 0px;
-  border: 1px dotted #888;
+  padding: 1px;
   background: #93c2f1 url(images/bg_listgradient.png) repeat-x;
 }
