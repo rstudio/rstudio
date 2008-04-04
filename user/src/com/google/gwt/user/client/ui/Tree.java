@@ -387,6 +387,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         }
         break;
       }
+
       case Event.ONMOUSEDOWN: {
         if (mouseListeners != null) {
           mouseListeners.fireMouseEvent(this, event);
@@ -941,10 +942,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       
       // Set the focusable element's position and size to exactly underlap the
       // item's content element.
-      DOM.setIntStyleAttribute(focusable, "left", left);
-      DOM.setIntStyleAttribute(focusable, "top", top);
-      DOM.setIntStyleAttribute(focusable, "width", width);
-      DOM.setIntStyleAttribute(focusable, "height", height);
+      DOM.setStyleAttribute(focusable, "left", left + "px");
+      DOM.setStyleAttribute(focusable, "top", top + "px");
+      DOM.setStyleAttribute(focusable, "width", width + "px");
+      DOM.setStyleAttribute(focusable, "height", height + "px");
 
       // Scroll it into view.
       DOM.scrollIntoView(focusable);
