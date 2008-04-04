@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.showcase.client.content.other;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.user.client.ui.Button;
@@ -84,13 +85,14 @@ public class CwFrame extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a new frame
-    final Frame frame = new Frame("GWT-default.css");
+    String url = GWT.getModuleBaseURL();
+    final Frame frame = new Frame(url);
     frame.setSize("700px", "300px");
     frame.ensureDebugId("cwFrame");
 
     // Create a form to set the location of the frame
     final TextBox locationBox = new TextBox();
-    locationBox.setText(frame.getUrl());
+    locationBox.setText(url);
     Button setLocationButton = new Button(constants.cwFrameSetLocation());
     HorizontalPanel optionsPanel = new HorizontalPanel();
     optionsPanel.setSpacing(8);
