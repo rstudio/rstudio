@@ -54,17 +54,17 @@
   background: #222222;
 }
 .Application-menu {
+  width: 18em;
   text-align: left;
 }
 
 /**
  * Applied to widgets in the content area.
  */
-.Application-content-decorator .topRightInner, 
-.Application-content-decorator .middleRightInner, 
-.Application-content-decorator .bottomRightInner { 
-	display: none;
+.Application-content-decorator {
+  margin-right: 8px;
 }
+ 
 .Application-content-decorator .middleCenter .topRightInner, 
 .Application-content-decorator .middleCenter .middleRightInner, 
 .Application-content-decorator .middleCenter .bottomRightInner { 
