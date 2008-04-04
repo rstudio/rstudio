@@ -124,15 +124,9 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
 
   @Override
   public boolean visit(JsniMethodBody x, Context ctx) {
-    print("/*-");
-    String jsniCode = x.getFunc().getBody().toString();
-    String[] splits = jsniCode.split("\r|\n");
-    for (int i = 0, c = splits.length; i < c; ++i) {
-      if (i > 0) {
-        newline();
-      }
-      print(splits[i]);
-    }
+    print(" /*-");
+    String source = x.getFunc().getBody().toSource();
+    print(source.trim());
     print("-*/");
     semi();
     return false;
