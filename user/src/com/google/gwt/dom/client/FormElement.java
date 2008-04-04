@@ -30,18 +30,11 @@ public class FormElement extends Element {
    */
   public static FormElement as(Element elem) {
     assert elem.getTagName().equalsIgnoreCase("form");
-    return (FormElement)elem;
+    return (FormElement) elem;
   }
 
   protected FormElement() {
   }
-
-  /**
-   * Returns a collection of all form control elements in the form.
-   */
-  public final native NodeCollection<Element> getElements() /*-{
-    return this.elements;
-  }-*/;
 
   /**
    * List of character sets supported by the server.
@@ -59,6 +52,13 @@ public class FormElement extends Element {
    */
   public final native String getAction() /*-{
     return this.action;
+  }-*/;
+
+  /**
+   * Returns a collection of all form control elements in the form.
+   */
+  public final native NodeCollection<Element> getElements() /*-{
+    return this.elements;
   }-*/;
 
   /**

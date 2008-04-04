@@ -20,7 +20,7 @@ package com.google.gwt.dom.client;
  * 
  * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-BASE
  */
-public class BaseElement extends Element{
+public class BaseElement extends Element {
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
@@ -45,6 +45,15 @@ public class BaseElement extends Element{
    }-*/;
 
   /**
+   * The default target frame.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   */ 
+  public final native String getTarget() /*-{
+     return this.target;
+   }-*/;
+
+  /**
    * The base URI See the href attribute definition in HTML
    * 4.01.
    * 
@@ -52,15 +61,6 @@ public class BaseElement extends Element{
    */
   public final native void setHref(String href) /*-{
      this.href = href;
-   }-*/;
-
-  /**
-   * The default target frame.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
-   */ 
-  public final native String getTarget() /*-{
-     return this.target;
    }-*/;
 
   /**

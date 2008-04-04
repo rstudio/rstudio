@@ -137,6 +137,24 @@ public class TextAreaElement extends Element {
   }-*/;
 
   /**
+   * The control is unavailable in this context.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   */
+  public final native boolean isDisabled() /*-{
+    return this.disabled;
+  }-*/;
+
+  /**
+   * This control is read-only.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly
+   */
+  public final native boolean isReadOnly() /*-{
+    return this.readOnly;
+  }-*/;
+
+  /**
    * Select the contents of the TEXTAREA.
    */
   public final native void select() /*-{
@@ -175,15 +193,6 @@ public class TextAreaElement extends Element {
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
    */
-  public final native boolean isDisabled() /*-{
-    return this.disabled;
-  }-*/;
-
-  /**
-   * The control is unavailable in this context.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
-   */
   public final native void setDisabled(boolean disabled) /*-{
     this.disabled = disabled;
   }-*/;
@@ -195,15 +204,6 @@ public class TextAreaElement extends Element {
    */
   public final native void setName(String name) /*-{
     this.name = name;
-  }-*/;
-
-  /**
-   * This control is read-only.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly
-   */
-  public final native boolean isReadOnly() /*-{
-    return this.readOnly;
   }-*/;
 
   /**

@@ -44,21 +44,21 @@ public class OptGroupElement extends Element {
    }-*/;
 
   /**
-   * The control is unavailable in this context.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
-   */
-  public final native void setDisabled(String disabled) /*-{
-     this.disabled = disabled;
-   }-*/;
-
-  /**
    * Assigns a label to this option group.
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTGROUP
    */
   public final native String getLabel() /*-{
      return this.label;
+   }-*/;
+
+  /**
+   * The control is unavailable in this context.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   */
+  public final native void setDisabled(String disabled) /*-{
+     this.disabled = disabled;
    }-*/;
 
   /**

@@ -26,7 +26,7 @@ public class Text extends Node {
    */
   public static Text as(Node node) {
     assert node.getNodeType() == Node.TEXT_NODE;
-    return (Text)node;
+    return (Text) node;
   }
 
   protected Text() {
@@ -40,16 +40,16 @@ public class Text extends Node {
   }-*/;
 
   /**
-   * The character data of this text node.
-   */
-  public final native void setData(String data) /*-{
-    this.data = data;
-  }-*/;
-
-  /**
    * The number of characters available through the data property.
    */
   public final native int getLength() /*-{
     return this.length;
+  }-*/;
+
+  /**
+   * The character data of this text node.
+   */
+  public final native void setData(String data) /*-{
+    this.data = data;
   }-*/;
 }

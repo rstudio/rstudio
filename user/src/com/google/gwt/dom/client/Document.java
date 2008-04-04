@@ -305,11 +305,11 @@ public class Document extends Node {
      return this.URL;
    }-*/;
 
-  public final native void setTitle(String title) /*-{
-     this.title = title;
-   }-*/;
-
   public final native void importNode(Node node, boolean deep) /*-{
     this.importNode(node, deep);
   }-*/;
+
+  public final native void setTitle(String title) /*-{
+     this.title = title;
+   }-*/;
 }

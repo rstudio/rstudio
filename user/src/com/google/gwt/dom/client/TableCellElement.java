@@ -35,6 +35,15 @@ public class TableCellElement extends Element {
   }
 
   /**
+   * Horizontal alignment of data in cell.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   */
+  public final native String getAlign() /*-{
+     return this.align;
+   }-*/;
+
+  /**
    * The index of this cell in the row, starting from 0. This index is in
    * document tree order and not display order.
    * 
@@ -45,12 +54,57 @@ public class TableCellElement extends Element {
    }-*/;
 
   /**
-   * Horizontal alignment of data in cell.
+   * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
    */
-  public final native String getAlign() /*-{
-     return this.align;
+  public final native String getCh() /*-{
+     return this.ch;
+   }-*/;
+
+  /**
+   * Offset of alignment character.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   */
+  public final native String getChOff() /*-{
+     return this.chOff;
+   }-*/;
+
+  /**
+   * Number of columns spanned by cell.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan
+   */
+  public final native int getColSpan() /*-{
+     return this.colSpan;
+   }-*/;
+
+  /**
+   * List of id attribute values for header cells.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-headers
+   */
+  public final native String getHeaders() /*-{
+     return this.headers;
+   }-*/;
+
+  /**
+   * Number of rows spanned by cell.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan
+   */
+  public final native int getRowSpan() /*-{
+     return this.rowSpan;
+   }-*/;
+
+  /**
+   * Vertical alignment of data in cell.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   */
+  public final native String getVAlign() /*-{
+     return this.vAlign;
    }-*/;
 
   /**
@@ -67,26 +121,8 @@ public class TableCellElement extends Element {
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
    */
-  public final native String getCh() /*-{
-     return this.ch;
-   }-*/;
-
-  /**
-   * Alignment character for cells in a column.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
-   */
   public final native void setCh(String ch) /*-{
      this.ch = ch;
-   }-*/;
-
-  /**
-   * Offset of alignment character.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
-   */
-  public final native String getChOff() /*-{
-     return this.chOff;
    }-*/;
 
   /**
@@ -103,26 +139,8 @@ public class TableCellElement extends Element {
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan
    */
-  public final native int getColSpan() /*-{
-     return this.colSpan;
-   }-*/;
-
-  /**
-   * Number of columns spanned by cell.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan
-   */
   public final native void setColSpan(int colSpan) /*-{
      this.colSpan = colSpan;
-   }-*/;
-
-  /**
-   * List of id attribute values for header cells.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-headers
-   */
-  public final native String getHeaders() /*-{
-     return this.headers;
    }-*/;
 
   /**
@@ -139,26 +157,8 @@ public class TableCellElement extends Element {
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan
    */
-  public final native int getRowSpan() /*-{
-     return this.rowSpan;
-   }-*/;
-
-  /**
-   * Number of rows spanned by cell.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan
-   */
   public final native void setRowSpan(int rowSpan) /*-{
      this.rowSpan = rowSpan;
-   }-*/;
-
-  /**
-   * Vertical alignment of data in cell.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
-   */
-  public final native String getVAlign() /*-{
-     return this.vAlign;
    }-*/;
 
   /**

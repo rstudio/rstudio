@@ -232,15 +232,6 @@ public class InputElement extends Element {
   }-*/;
 
   /**
-   * Use client-side image map.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
-   */
-  public final native boolean useMap() /*-{
-    return this.useMap;
-  }-*/;
-
-  /**
    * Select the contents of the text area. For INPUT elements whose type
    * attribute has one of the following values: "text", "file", or "password".
    */
@@ -408,5 +399,14 @@ public class InputElement extends Element {
    */
   public final native void setValue(String value) /*-{
     this.value = value;
+  }-*/;
+
+  /**
+   * Use client-side image map.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   */
+  public final native boolean useMap() /*-{
+    return this.useMap;
   }-*/;
 }

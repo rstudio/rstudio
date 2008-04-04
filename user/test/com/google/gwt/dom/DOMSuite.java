@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dom;
 
-import junit.framework.Test;
-
 import com.google.gwt.dom.client.DocumentTest;
 import com.google.gwt.dom.client.ElementTest;
 import com.google.gwt.dom.client.FormTests;
@@ -26,6 +24,11 @@ import com.google.gwt.dom.client.SelectTests;
 import com.google.gwt.dom.client.TableTests;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
+import junit.framework.Test;
+
+/**
+ * Tests for the DOM package.
+ */
 public class DOMSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(

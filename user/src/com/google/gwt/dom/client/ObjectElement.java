@@ -107,15 +107,6 @@ public class ObjectElement extends Element {
    }-*/;
 
   /**
-   * Use client-side image map.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
-   */
-  public final native boolean useMap() /*-{
-     return this.useMap;
-   }-*/;
-
-  /**
    * Override width.
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG
@@ -192,5 +183,14 @@ public class ObjectElement extends Element {
    */
   public final native void setWidth(String width) /*-{
      this.width = width;
+   }-*/;
+
+  /**
+   * Use client-side image map.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   */
+  public final native boolean useMap() /*-{
+     return this.useMap;
    }-*/;
 }

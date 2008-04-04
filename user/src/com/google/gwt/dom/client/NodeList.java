@@ -24,6 +24,8 @@ import com.google.gwt.core.client.JavaScriptObject;
  * 
  * The items in the NodeList are accessible via an integral index, starting from
  * 0.
+ * 
+ * @param <T> the type of contained node
  */
 public class NodeList<T extends Node> extends JavaScriptObject {
 

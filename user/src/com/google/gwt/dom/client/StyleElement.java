@@ -44,6 +44,24 @@ public class StyleElement extends Element {
    }-*/;
 
   /**
+   * Designed for use with one or more target media.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
+   */
+  public final native String getMedia() /*-{
+     return this.media;
+   }-*/;
+
+  /**
+   * The content type of the style sheet language.
+   * 
+   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-type-STYLE
+   */
+  public final native String getType() /*-{
+     return this.type;
+   }-*/;
+
+  /**
    * Enables/disables the style sheet.
    */
   public final native void setDisabled(boolean disabled) /*-{
@@ -55,26 +73,8 @@ public class StyleElement extends Element {
    * 
    * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
    */
-  public final native String getMedia() /*-{
-     return this.media;
-   }-*/;
-
-  /**
-   * Designed for use with one or more target media.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
-   */
   public final native void setMedia(String media) /*-{
      this.media = media;
-   }-*/;
-
-  /**
-   * The content type of the style sheet language.
-   * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-type-STYLE
-   */
-  public final native String getType() /*-{
-     return this.type;
    }-*/;
 
   /**

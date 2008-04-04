@@ -23,18 +23,13 @@ import com.google.gwt.core.client.JavaScriptObject;
  * 
  * Note: Collections in the HTML DOM are assumed to be live meaning that they
  * are automatically updated when the underlying document is changed.
+ *
+ * @param <T> the type of contained node
  */
 public class NodeCollection<T extends Node> extends JavaScriptObject {
 
   protected NodeCollection() {
   }
-
-  /**
-   * This attribute specifies the length or size of the list.
-   */
-  public final native int getLength() /*-{
-    return this.length;
-  }-*/;
 
   /**
    * This method retrieves a node specified by ordinal index. Nodes are numbered
@@ -46,6 +41,13 @@ public class NodeCollection<T extends Node> extends JavaScriptObject {
    */
   public final native T getItem(int index) /*-{
     return this[index];
+  }-*/;
+
+  /**
+   * This attribute specifies the length or size of the list.
+   */
+  public final native int getLength() /*-{
+    return this.length;
   }-*/;
 
   /**

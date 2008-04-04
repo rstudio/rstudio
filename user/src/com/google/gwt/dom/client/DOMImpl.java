@@ -71,6 +71,13 @@ abstract class DOMImpl {
     return top;
   }-*/;
 
+  public native Element getFirstChildElement(Element elem) /*-{
+    var child = elem.firstChild;
+    while (child && child.nodeType != 1)
+      child = child.nextSibling;
+    return child || null;
+  }-*/;
+
   public native String getInnerHTML(Element elem) /*-{
     var ret = elem.innerHTML;
     return (ret == null) ? null : ret;
@@ -94,13 +101,6 @@ abstract class DOMImpl {
 
   public native int getIntStyleAttribute(Element elem, String attr) /*-{
     return parseInt(elem.style[attr]) || 0;
-  }-*/;
-
-  public native Element getFirstChildElement(Element elem) /*-{
-    var child = elem.firstChild;
-    while (child && child.nodeType != 1)
-      child = child.nextSibling;
-    return child || null;
   }-*/;
 
   public native Element getNextSiblingElement(Element elem) /*-{
@@ -171,17 +171,17 @@ abstract class DOMImpl {
     }
   }-*/;
 
+  public native void selectAdd(SelectElement select, OptionElement option,
+      OptionElement before) /*-{
+    select.add(option, before);
+  }-*/;
+
   public native int selectGetLength(SelectElement select) /*-{
     return select.options.length;
   }-*/;
 
   public native NodeList<OptionElement> selectGetOptions(SelectElement select) /*-{
     return select.options;
-  }-*/;
-
-  public native void selectAdd(SelectElement select, OptionElement option,
-      OptionElement before) /*-{
-    select.add(option, before);
   }-*/;
 
   public native void selectRemoveOption(SelectElement select, int index) /*-{

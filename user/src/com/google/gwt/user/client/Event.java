@@ -173,17 +173,17 @@ public final class Event extends JavaScriptObject {
   }
 
   /**
-   * TODO
+   * TODO: doc.
    */
-  public static void sinkEvents(Element elem, int eventBits) {
-    DOM.sinkEvents((com.google.gwt.user.client.Element)elem, eventBits);
+  public static int getEventsSunk(Element elem) {
+    return DOM.getEventsSunk((com.google.gwt.user.client.Element) elem);
   }
 
   /**
-   * TODO
+   * TODO: doc.
    */
-  public static int getEventsSunk(Element elem) {
-    return DOM.getEventsSunk((com.google.gwt.user.client.Element)elem);
+  public static void sinkEvents(Element elem, int eventBits) {
+    DOM.sinkEvents((com.google.gwt.user.client.Element) elem, eventBits);
   }
 
   /**
@@ -191,26 +191,6 @@ public final class Event extends JavaScriptObject {
    * constructor to prevent client code from directly instantiating the class.
    */
   protected Event() {
-  }
-
-  /**
-   * Gets the current target element of this event. This is the element whose
-   * listener fired last, not the element which fired the event initially.
-   * 
-   * @return the event's current target element
-   */
-  public final Element getCurrentTarget() {
-    return DOM.eventGetCurrentTarget(this);
-  }
-
-  /**
-   * Gets the enumerated type of this event, as defined by {@link #ONCLICK},
-   * {@link #ONMOUSEDOWN}, and so forth.
-   * 
-   * @return the event's enumerated type
-   */
-  public final int getTypeInt() {
-    return DOM.eventGetType(this);
   }
 
   /**
@@ -267,6 +247,16 @@ public final class Event extends JavaScriptObject {
    */
   public final boolean getCtrlKey() {
     return DOM.eventGetCtrlKey(this);
+  }
+
+  /**
+   * Gets the current target element of this event. This is the element whose
+   * listener fired last, not the element which fired the event initially.
+   * 
+   * @return the event's current target element
+   */
+  public final Element getCurrentTarget() {
+    return DOM.eventGetCurrentTarget(this);
   }
 
   /**
@@ -359,6 +349,18 @@ public final class Event extends JavaScriptObject {
   }
 
   /**
+   * Gets a string representation of this event.
+   * 
+   * We do not override {@link #toString()} because it is final in
+   * {@link JavaScriptObject}.
+   * 
+   * @return the string representation of this event
+   */
+  public final String getString() {
+    return DOM.eventToString(this);
+  }
+
+  /**
    * Returns the element that was the actual target of the given event.
    * 
    * @return the target element
@@ -380,7 +382,6 @@ public final class Event extends JavaScriptObject {
   /**
    * Gets the enumerated type of this event (as defined in {@link Event}).
    * 
-   * @param evt the event to be tested
    * @return the event's enumerated type
    */
   public final String getType() {
@@ -388,21 +389,19 @@ public final class Event extends JavaScriptObject {
   }
 
   /**
+   * Gets the enumerated type of this event, as defined by {@link #ONCLICK},
+   * {@link #ONMOUSEDOWN}, and so forth.
+   * 
+   * @return the event's enumerated type
+   */
+  public final int getTypeInt() {
+    return DOM.eventGetType(this);
+  }
+
+  /**
    * Prevents the browser from taking its default action for the given event.
    */
   public final void preventDefault() {
     DOM.eventPreventDefault(this);
-  }
-
-  /**
-   * Gets a string representation of this event.
-   * 
-   * We do not override {@link #toString()} because it is final in
-   * {@link JavaScriptObject}.
-   * 
-   * @return the string representation of this event
-   */
-  public final String getString() {
-    return DOM.eventToString(this);
   }
 }

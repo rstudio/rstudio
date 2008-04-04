@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client;
 
-import java.util.ArrayList;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
@@ -24,6 +22,8 @@ import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.user.client.impl.DOMImpl;
+
+import java.util.ArrayList;
 
 /**
  * This class provides a set of static methods that allow you to manipulate the
