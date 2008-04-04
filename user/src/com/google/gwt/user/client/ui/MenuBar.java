@@ -779,7 +779,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       addStyleDependentName("vertical");
     } else {
       addStyleDependentName("horizontal");
-    }    
+    }
+    DOM.setStyleAttribute(getElement(), "outline", "0px");
   }
   
   private void moveDown() {
