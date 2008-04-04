@@ -205,8 +205,9 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
   public void add(Widget w) {
     Element container = DOM.createDiv();
     DOM.appendChild(getElement(), container);
+    initChildWidget(w);
+    initWidgetContainer(container);
     super.add(w, container);
-    initWidgetContainer(w);
   }
 
   /**
@@ -229,8 +230,9 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
   public void insert(Widget w, int beforeIndex) {
     Element container = DOM.createDiv();
     DOM.insertChild(getElement(), container, beforeIndex);
+    initChildWidget(w);
+    initWidgetContainer(container);
     super.insert(w, container, beforeIndex, true);
-    initWidgetContainer(w);
   }
 
   /**
@@ -245,6 +247,8 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     Element container = getContainer(w);
     boolean removed = super.remove(w);
     if (removed) {
+      resetChildWidget(w);
+
       DOM.removeChild(getElement(), container);
       if (visibleWidget == w) {
         visibleWidget = null;
@@ -281,15 +285,28 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
   }
 
   /**
-   * Make the widget invisible, and set its width and height to full.
+   * Set the widget's width and height to full.
    */
-  private void initWidgetContainer(Widget w) {
-    Element container = getContainer(w);
+  private void initChildWidget(Widget w) {
+    w.setSize("100%", "100%");
+  }
+  
+  /**
+   * Setup the container around the widget.
+   */
+  private void initWidgetContainer(Element container) {
     DOM.setStyleAttribute(container, "width", "100%");
     DOM.setStyleAttribute(container, "height", "100%");
     DOM.setStyleAttribute(container, "overflow", "hidden");
     DOM.setStyleAttribute(container, "padding", "0px");
     DOM.setStyleAttribute(container, "margin", "0px");
     UIObject.setVisible(container, false);
+  }
+  
+  /**
+   * Reset the dimensions of the widget when it is removed.
+   */
+  private void resetChildWidget(Widget w) {
+    w.setSize("", "");
   }
 }
