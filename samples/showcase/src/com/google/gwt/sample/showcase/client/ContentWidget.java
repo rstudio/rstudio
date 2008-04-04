@@ -16,6 +16,8 @@
 package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.HTTPRequest;
 import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.ui.Composite;
@@ -298,6 +300,8 @@ public abstract class ContentWidget extends Composite implements TabListener {
     if (loadingImage == null) {
       loadingImage = new Image("images/loading.gif");
     }
+    target.setDirection(HasDirection.Direction.LTR);
+    DOM.setStyleAttribute(target.getElement(), "textAlign", "left");
     target.setHTML("&nbsp;&nbsp;" + loadingImage.toString());
 
     // Request the contents of the file
