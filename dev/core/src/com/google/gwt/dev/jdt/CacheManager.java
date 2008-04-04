@@ -701,6 +701,11 @@ public class CacheManager {
           new Class[] {CompilationUnitProvider.class}, typeOracle,
           new Object[] {cup});
     }
+
+    /*
+     * NOTE: It appears that invalidatedTypes is always empty. Therefore the
+     * AstCompiler may not be properly removing types from the changed files.
+     */
     astCompiler.invalidateChangedFiles(changedFiles, invalidatedTypes);
   }
 

@@ -352,7 +352,8 @@ public class TypeOracleBuilder {
   }
 
   private static void removeInfectedUnits(final TreeLogger logger,
-      final Map<String, CompilationUnitDeclaration> cudsByFileName) {
+      final Map<String, CompilationUnitDeclaration> changedCudsByFileName,
+      final Map<String, CompilationUnitDeclaration> unchangedCudsByFileName) {
 
     final Set<String> pendingRemovals = new HashSet<String>();
     TypeRefVisitor trv = new TypeRefVisitor() {
@@ -364,13 +365,13 @@ public class TypeOracleBuilder {
         // is referenced must also be removed.
         //
         String referencedFn = String.valueOf(referencedType.getFileName());
-        CompilationUnitDeclaration referencedCud = cudsByFileName.get(referencedFn);
-        if (referencedCud == null) {
+        if (!unchangedCudsByFileName.containsKey(referencedFn)
+            && !changedCudsByFileName.containsKey(referencedFn)) {
           // This is a referenced to a bad or non-existent unit.
           // So, remove the referrer's unit if it hasn't been already.
           //
           String referrerFn = String.valueOf(unitOfReferrer.getFileName());
-          if (cudsByFileName.containsKey(referrerFn)
+          if (changedCudsByFileName.containsKey(referrerFn)
               && !pendingRemovals.contains(referrerFn)) {
             TreeLogger branch = logger.branch(TreeLogger.TRACE,
                 "Cascaded removal of compilation unit '" + referrerFn + "'",
@@ -389,7 +390,7 @@ public class TypeOracleBuilder {
       //
       for (Iterator<String> iter = pendingRemovals.iterator(); iter.hasNext();) {
         String fnToRemove = iter.next();
-        Object removed = cudsByFileName.remove(fnToRemove);
+        Object removed = changedCudsByFileName.remove(fnToRemove);
         assert (removed != null);
       }
 
@@ -399,7 +400,7 @@ public class TypeOracleBuilder {
 
       // Find references to type in units that aren't valid.
       //
-      for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+      for (Iterator<CompilationUnitDeclaration> iter = changedCudsByFileName.values().iterator(); iter.hasNext();) {
         CompilationUnitDeclaration cud = iter.next();
         cud.traverse(trv, cud.scope);
       }
@@ -407,11 +408,12 @@ public class TypeOracleBuilder {
   }
 
   private static void removeUnitsWithErrors(TreeLogger logger,
-      Map<String, CompilationUnitDeclaration> cudsByFileName) {
+      Map<String, CompilationUnitDeclaration> changedCudsByFileName,
+      Map<String, CompilationUnitDeclaration> unchangedCudsByFileName) {
     // Start by removing units with a known problem.
     //
     boolean anyRemoved = false;
-    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+    for (Iterator<CompilationUnitDeclaration> iter = changedCudsByFileName.values().iterator(); iter.hasNext();) {
       CompilationUnitDeclaration cud = iter.next();
       CompilationResult result = cud.compilationResult;
       IProblem[] errors = result.getErrors();
@@ -431,7 +433,8 @@ public class TypeOracleBuilder {
     if (anyRemoved) {
       // Then removing anything else that won't compile as a result.
       //
-      removeInfectedUnits(logger, cudsByFileName);
+      removeInfectedUnits(logger, changedCudsByFileName,
+          unchangedCudsByFileName);
     }
   }
 
@@ -485,6 +488,7 @@ public class TypeOracleBuilder {
     for (Iterator<CompilationUnitProvider> iter = addedCups.iterator(); iter.hasNext();) {
       CompilationUnitProvider cup = iter.next();
       String location = cup.getLocation();
+      // TODO: Delegate to cup in order to check for deletification.
       if (!((location.indexOf("http://") != -1) || (location.indexOf("ftp://") != -1))) {
         location = Util.findFileName(location);
         if (!(new File(location).exists() || cup.isTransient())) {
@@ -523,28 +527,50 @@ public class TypeOracleBuilder {
     }
 
     PerfLogger.start("TypeOracleBuilder.build (compile)");
+    /*
+     * The assumption is that getting the changed CUDs will include anything
+     * that transitively depends on the changed CUDs.
+     */
     CompilationUnitDeclaration[] cuds = cacheManager.getAstCompiler().getChangedCompilationUnitDeclarations(
         logger, units);
     PerfLogger.end();
 
     // Build a list that makes it easy to remove problems.
     //
-    final Map<String, CompilationUnitDeclaration> cudsByFileName = new TreeMap<String, CompilationUnitDeclaration>();
+    final Map<String, CompilationUnitDeclaration> unchangedCudsByFileName = new TreeMap<String, CompilationUnitDeclaration>();
+    unchangedCudsByFileName.putAll(cacheManager.getCudsByFileName());
+    final Map<String, CompilationUnitDeclaration> changedCudsByFileName = new TreeMap<String, CompilationUnitDeclaration>();
     for (int i = 0; i < cuds.length; i++) {
       CompilationUnitDeclaration cud = cuds[i];
-      char[] location = cud.getFileName();
-      cudsByFileName.put(String.valueOf(location), cud);
+      String fileName = String.valueOf(cud.getFileName());
+      changedCudsByFileName.put(fileName, cud);
+      /*
+       * The CacheManager's cuds by file name may include the changed CUDs from
+       * a previous refresh.  So we remove them here to ensure that our sets
+       * do not overlap. 
+       */
+      unchangedCudsByFileName.remove(fileName);
     }
-    cacheManager.getCudsByFileName().putAll(cudsByFileName);
 
-    // Remove bad cuds and all the other cuds that are affected.
-    //
-    removeUnitsWithErrors(logger, cudsByFileName);
+    /*
+     * Note that the CacheManager can easily end up with bad CUDs if the newly
+     * compiled files have errors. However, this does not impact the TypeOracle.
+     */
+    cacheManager.getCudsByFileName().putAll(changedCudsByFileName);
+
+    /*
+     * At this point changedCudsByFileName contains only the CUDs which needed
+     * to be recompiled and unchangedCudsByFileName contains only the CUDs which
+     * were not recompiled. Now we can scan changedCudsByFileName an remove any
+     * CUDs which have errors and any CUDs that are infected by those errors.
+     */
+    removeUnitsWithErrors(logger, changedCudsByFileName,
+        unchangedCudsByFileName);
 
     // Perform a shallow pass to establish identity for new types.
     //
     final CacheManager.Mapper identityMapper = cacheManager.getIdentityMapper();
-    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+    for (Iterator<CompilationUnitDeclaration> iter = changedCudsByFileName.values().iterator(); iter.hasNext();) {
       CompilationUnitDeclaration cud = iter.next();
 
       cud.traverse(new ASTVisitor() {
@@ -574,7 +600,7 @@ public class TypeOracleBuilder {
 
     // Perform a deep pass to resolve all types in terms of our types.
     //
-    for (Iterator<CompilationUnitDeclaration> iter = cudsByFileName.values().iterator(); iter.hasNext();) {
+    for (Iterator<CompilationUnitDeclaration> iter = changedCudsByFileName.values().iterator(); iter.hasNext();) {
       CompilationUnitDeclaration cud = iter.next();
       String loc = String.valueOf(cud.getFileName());
       String processing = "Processing types in compilation unit: " + loc;

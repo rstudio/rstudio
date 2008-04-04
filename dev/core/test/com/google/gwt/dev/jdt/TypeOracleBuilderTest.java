@@ -37,7 +37,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TypeOracleBuilderTest extends TestCase {
-
   private static abstract class TestCup implements CompilationUnitProvider {
     private final String packageName;
 
@@ -91,6 +90,52 @@ public class TypeOracleBuilderTest extends TestCase {
   }
 
   private static Map<String, TestCup> publicTypeNameToTestCupMap = new HashMap<String, TestCup>();
+
+  /**
+   * Creates a non-transient {@link CompilationUnitProvider} and
+   * adds it the {@link TypeOracleBuilder}.
+   * 
+   * @throws UnableToCompleteException
+   */
+  private static void addNonTransientCompilationUnitProvider(
+      TypeOracleBuilder builder, String qualifiedTypeName, CharSequence code)
+      throws UnableToCompleteException {
+
+    final CompilationUnitProvider cup = TypeOracleTestingUtils.createCup(
+        qualifiedTypeName, code);
+
+    CompilationUnitProvider nonTransientCup = new CompilationUnitProvider() {
+      public long getLastModified() throws UnableToCompleteException {
+        return cup.getLastModified();
+      }
+
+      public String getLocation() {
+        /*
+         * Fake out TypeOracleBuilder so it does not look for a file at this
+         * location.
+         */
+        return "http://" + cup.getLocation();
+      }
+
+      public String getMainTypeName() {
+        return cup.getMainTypeName();
+      }
+
+      public String getPackageName() {
+        return cup.getPackageName();
+      }
+
+      public char[] getSource() throws UnableToCompleteException {
+        return cup.getSource();
+      }
+
+      public boolean isTransient() {
+        return false;
+      }
+    };
+
+    builder.addCompilationUnit(nonTransientCup);
+  }
 
   private static void assertEqualArraysUnordered(Object[] expected,
       Object[] actual) {
@@ -864,7 +909,7 @@ public class TypeOracleBuilderTest extends TestCase {
     JClassType genericListType = to.getType("test.refresh.GenericList");
     JClassType objectType = to.getJavaLangObject();
     JClassType referencesGenericListConstantType = to.getType("test.refresh.ReferencesGenericListConstant");
-    
+
     /*
      * Add the CU_GenericList again and simulate a refresh. This should cause
      * anything that depends on GenericList to be rebuilt by the type oracle.
@@ -887,6 +932,102 @@ public class TypeOracleBuilderTest extends TestCase {
     assertNotSame(referencesGenericListConstantType.getQualifiedSourceName(),
         to.getType("test.refresh.ReferencesGenericListConstant"),
         referencesGenericListConstantType);
+  }
+
+  /**
+   * Tests that refreshing with a unit that has errors does not cause new units
+   * that reference unchanged units to be removed. The strategy is to add some
+   * good units that reference each other and build a {@link TypeOracle}. Then
+   * we add some new units that have errors as well as some units that reference
+   * old units which did not have errors. This ensures that the correct units
+   * are pruned from the type oracle in the case where we encounter units with
+   * errors.
+   * 
+   * @throws UnableToCompleteException
+   * @throws IOException
+   */
+  public void testRefreshWithErrors() throws UnableToCompleteException {
+    TypeOracleBuilder tiob = createTypeInfoOracleBuilder();
+
+    // Add Object
+    StringBuffer sb = new StringBuffer();
+    sb.append("package java.lang;");
+    sb.append("public class Object { }");
+    addNonTransientCompilationUnitProvider(tiob, "java.lang.Object", sb);
+
+    // Add UnmodifiedClass that will never change.
+    sb = new StringBuffer();
+    sb.append("package test.refresh.with.errors;");
+    sb.append("public class UnmodifiedClass { }");
+    addNonTransientCompilationUnitProvider(tiob,
+        "test.refresh.with.errors.UnmodifiedClass", sb);
+
+    // Add GoodClass that references a class that will go bad.
+    sb = new StringBuffer();
+    sb.append("package test.refresh.with.errors;\n");
+    sb.append("public class GoodClass {\n");
+    sb.append("  ClassThatWillGoBad ctwgb;\n");
+    sb.append("}\n");
+    addNonTransientCompilationUnitProvider(tiob,
+        "test.refresh.with.errors.GoodClass", sb);
+
+    // Add ClassThatWillGoBad that goes bad on the next refresh.
+    StaticCompilationUnitProvider cupThatWillGoBad = new StaticCompilationUnitProvider(
+        "test.refresh.with.errors", "ClassThatWillGoBad", null) {
+      boolean goBad = false;
+
+      @Override
+      public char[] getSource() {
+        StringBuffer sb = new StringBuffer();
+
+        if (!goBad) {
+          sb.append("package test.refresh.with.errors;\n");
+          sb.append("public class ClassThatWillGoBad {\n");
+          sb.append("}\n");
+          goBad = true;
+        } else {
+          sb.append("This will cause a syntax error.");
+        }
+        return sb.toString().toCharArray();
+      }
+    };
+    tiob.addCompilationUnit(cupThatWillGoBad);
+
+    TreeLogger logger = createTreeLogger();
+    TypeOracle to = tiob.build(logger);
+    assertNotNull(to.findType("test.refresh.with.errors.UnmodifiedClass"));
+    assertNotNull(to.findType("test.refresh.with.errors.GoodClass"));
+    assertNotNull(to.findType("test.refresh.with.errors.ClassThatWillGoBad"));
+
+    // Add AnotherGoodClass that references a class that was not recompiled.
+    sb = new StringBuffer();
+    sb.append("package test.refresh.with.errors;\n");
+    sb.append("public class AnotherGoodClass {\n");
+    sb.append("  UnmodifiedClass uc; // This will cause the runaway pruning.\n");
+    sb.append("}\n");
+    addNonTransientCompilationUnitProvider(tiob,
+        "test.refresh.with.errors.AnotherGoodClass", sb);
+
+    // Add BadClass that has errors and originally forced issue 2238.
+    sb = new StringBuffer();
+    sb.append("package test.refresh.with.errors;\n");
+    sb.append("public class BadClass {\n");
+    sb.append("  This will trigger a syntax error.\n");
+    sb.append("}\n");
+    addNonTransientCompilationUnitProvider(tiob,
+        "test.refresh.with.errors.BadClass", sb);
+
+    // Now this cup should cause errors.
+    tiob.addCompilationUnit(cupThatWillGoBad);
+
+    refreshTypeOracle(tiob, to);
+    to = tiob.build(logger);
+
+    assertNotNull(to.findType("test.refresh.with.errors.UnmodifiedClass"));
+    assertNotNull(to.findType("test.refresh.with.errors.AnotherGoodClass"));
+    assertNull(to.findType("test.refresh.with.errors.BadClass"));
+    assertNull(to.findType("test.refresh.with.errors.ClassThatWillGoBad"));
+    assertNull(to.findType("test.refresh.with.errors.GoodClass"));
   }
 
   public void testSyntaxErrors() throws TypeOracleException,
