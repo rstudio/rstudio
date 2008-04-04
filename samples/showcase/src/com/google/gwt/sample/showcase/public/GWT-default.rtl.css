@@ -82,14 +82,14 @@ html>body .gwt-DecoratorPanel .bottomRight {
 * html .gwt-DecoratorPanel .topRightInner {
   width: 10px;
   height: 5px;
-  margin-right: -5px;
+  margin-left: -5px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
 }
 * html .gwt-DecoratorPanel .bottomLeftInner {
   width: 5px;
   height: 10px;
-  margin-right: 0px;
+  margin-left: 0px;
   margin-top: -5px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -97,7 +97,7 @@ html>body .gwt-DecoratorPanel .bottomRight {
 * html .gwt-DecoratorPanel .bottomRightInner {
   width: 10px;
   height: 10px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -5px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -177,7 +177,7 @@ html>body .gwt-DialogBox .bottomRight {
 * html .gwt-DialogBox .bottomRightInner {
   width: 13px;
   height: 23px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -15px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -393,7 +393,7 @@ html>body .gwt-MenuBarPopup .bottomRight {
 * html .gwt-MenuBarPopup .topRightInner {
   width: 13px;
   height: 41px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -36px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -408,7 +408,7 @@ html>body .gwt-MenuBarPopup .bottomRight {
 * html .gwt-MenuBarPopup .bottomRightInner {
   width: 13px;
   height: 49px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -41px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -487,7 +487,7 @@ html>body .gwt-PopupPanel .bottomRight {
 * html .gwt-PopupPanel .topRightInner {
   width: 13px;
   height: 15px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -10px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -502,7 +502,7 @@ html>body .gwt-PopupPanel .bottomRight {
 * html .gwt-PopupPanel .bottomRightInner {
   width: 13px;
   height: 23px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -15px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -713,7 +713,7 @@ html>body .gwt-StackPanelItem .topRight {
   width: 12px;
   height: 55px;
   margin-top: -49px;
-  margin-right: -6px;
+  margin-left: -6px;
   overflow: hidden;
   border-right: 1px solid #bbbbbb;
   background-color: #d3def6;
@@ -830,7 +830,7 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
 * html .gwt-SuggestBoxPopup .topRightInner {
   width: 13px;
   height: 28px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -23px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -845,7 +845,7 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
 * html .gwt-SuggestBoxPopup .bottomRightInner {
   width: 13px;
   height: 36px;
-  margin-right: -5px;
+  margin-left: -5px;
   margin-top: -28px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
@@ -898,7 +898,7 @@ html>body .gwt-TabBar .gwt-TabBarItem .topRight {
   width: 12px;
   height: 61px;
   margin-top: -55px;
-  margin-right: -6px;
+  margin-left: -6px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
 }
@@ -953,7 +953,7 @@ html>body .gwt-TabBar .gwt-TabBarItem .topRight {
   width: 12px;
   height: 61px;
   margin-top: -55px;
-  margin-right: -6px;
+  margin-left: -6px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
 }
@@ -996,7 +996,7 @@ html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
   width: 12px;
   height: 67px;
   margin-top: -61px;
-  margin-right: -6px;
+  margin-left: -6px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='images/corner.png',sizingMethod='crop');
 }
