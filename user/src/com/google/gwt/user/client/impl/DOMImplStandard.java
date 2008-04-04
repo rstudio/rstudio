@@ -196,17 +196,7 @@ abstract class DOMImplStandard extends DOMImpl {
     $wnd.__captureElem = null;
   }-*/;
 
-  private native void releaseCaptureImpl(Element elem) /*-{
-    if (elem === $wnd.__captureElem) {
-      $wnd.__captureElem = null;
-    }
-  }-*/;
-
-  private native void setCaptureImpl(Element elem) /*-{
-    $wnd.__captureElem = elem;
-  }-*/;
-
-  private native void sinkEventsImpl(Element elem, int bits) /*-{
+  protected native void sinkEventsImpl(Element elem, int bits) /*-{
     var chMask = (elem.__eventBits || 0) ^ bits;
     elem.__eventBits = bits;
     if (!chMask) return;
@@ -247,5 +237,15 @@ abstract class DOMImplStandard extends DOMImpl {
         $wnd.__dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
         $wnd.__dispatchEvent : null;
+  }-*/;
+
+  private native void releaseCaptureImpl(Element elem) /*-{
+    if (elem === $wnd.__captureElem) {
+      $wnd.__captureElem = null;
+    }
+  }-*/;
+
+  private native void setCaptureImpl(Element elem) /*-{
+    $wnd.__captureElem = elem;
   }-*/;
 }

@@ -33,7 +33,7 @@ public class DOMImplOpera extends DOMImplStandard {
    * events actually slows Opera down.
    */
   @Override
-  public native void sinkEvents(Element elem, int bits) /*-{
+  protected native void sinkEventsImpl(Element elem, int bits) /*-{
     elem.__eventBits = bits;
     elem.onclick       = (bits & 0x00001) ? $wnd.__dispatchEvent : null;
     elem.ondblclick    = (bits & 0x00002) ? $wnd.__dispatchEvent : null;
