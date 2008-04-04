@@ -83,6 +83,16 @@ import com.google.gwt.dom.client.Element;
  */
 public abstract class UIObject {
 
+  /*
+   * WARNING: For historical reasons, there are two Element classes being used
+   * in this code. The dom.Element (com.google.gwt.dom.client.Element) class is
+   * explicitly imported, while user.Element (com.google.gwt.user.client.Element)
+   * is fully-qualified in the code.
+   * 
+   * All new methods should use dom.Element, because user.Element extends it
+   * but adds no methods.
+   */
+
   /**
    * The implementation of the set debug id method, which does nothing by
    * default.
@@ -705,7 +715,7 @@ public abstract class UIObject {
    * 
    * @return the element to which style names will be applied
    */
-  protected Element getStyleElement() {
+  protected final com.google.gwt.user.client.Element getStyleElement() {
     return getElement();
   }
 
