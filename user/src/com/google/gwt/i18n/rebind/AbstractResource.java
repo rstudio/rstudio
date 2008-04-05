@@ -186,6 +186,8 @@ public abstract class AbstractResource {
     return extension == null ? getString(key) : null;
   }
 
+  public abstract Object handleGetObject(String key);
+
   /**
    * Keys associated with this resource.
    * 
@@ -302,8 +304,6 @@ public abstract class AbstractResource {
   AbstractResource getPrimaryParent() {
     return primaryParent;
   }
-
-  abstract Object handleGetObject(String key);
 
   void setLocaleName(String locale) {
     this.localeName = locale;

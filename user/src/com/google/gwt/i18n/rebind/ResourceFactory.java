@@ -138,12 +138,12 @@ public abstract class ResourceFactory {
   public static final AbstractResource NOT_FOUND = new AbstractResource() {
 
     @Override
-    void addToKeySet(Set<String> s) {
+    public Object handleGetObject(String key) {
       throw new IllegalStateException("Not found resource");
     }
 
     @Override
-    Object handleGetObject(String key) {
+    void addToKeySet(Set<String> s) {
       throw new IllegalStateException("Not found resource");
     }
   };

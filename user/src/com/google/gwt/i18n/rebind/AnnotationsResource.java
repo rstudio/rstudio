@@ -51,19 +51,18 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * AbstractResource implementation which looks up text annotations
- * on classes.
+ * AbstractResource implementation which looks up text annotations on classes.
  */
 public class AnnotationsResource extends AbstractResource {
 
   /**
    * An exception indicating there was some problem with an annotation.
    * 
-   * A caller receiving this exception should log the human-readable
-   * message and treat it as a fatal error.
+   * A caller receiving this exception should log the human-readable message and
+   * treat it as a fatal error.
    */
   public static class AnnotationsError extends Exception {
-    
+
     public AnnotationsError(String msg) {
       super(msg);
     }
@@ -77,36 +76,36 @@ public class AnnotationsResource extends AbstractResource {
     public boolean optional;
     public boolean isPluralCount;
     public String example;
-    
+
     public ArgumentInfo(String name) {
       this.name = name;
     }
   }
-  
+
   /**
    * Class to keep annotation information about a particular method.
    */
   private static class MethodEntry {
-    
+
     public String text;
     public String meaning;
     public String description;
     public Map<String, String> pluralText;
     public ArrayList<ArgumentInfo> arguments;
-    
+
     public MethodEntry(String text, String meaning) {
       this.text = text;
       this.meaning = meaning;
       pluralText = new HashMap<String, String>();
       arguments = new ArrayList<ArgumentInfo>();
     }
-    
+
     public ArgumentInfo addArgument(String argName) {
       ArgumentInfo argInfo = new ArgumentInfo(argName);
       arguments.add(argInfo);
       return argInfo;
     }
-    
+
     public void addPluralText(String form, String text) {
       pluralText.put(form, text);
     }
@@ -117,10 +116,11 @@ public class AnnotationsResource extends AbstractResource {
    * 
    * If null is returned, an error message has already been logged.
    * 
-   * @return null if unable to get or compute the key for this method,
-   *     otherwise the key is returned
+   * @return null if unable to get or compute the key for this method, otherwise
+   *         the key is returned
    */
-  public static String getKey(TreeLogger logger, KeyGenerator keyGenerator, JMethod method, boolean isConstants) {
+  public static String getKey(TreeLogger logger, KeyGenerator keyGenerator, JMethod method,
+      boolean isConstants) {
     Key key = method.getAnnotation(Key.class);
     if (key != null) {
       return key.value();
@@ -153,24 +153,23 @@ public class AnnotationsResource extends AbstractResource {
 
   /**
    * Returns a suitable key generator for the specified class.
-   * @throws AnnotationsError 
+   * 
+   * @throws AnnotationsError
    */
-  public static KeyGenerator getKeyGenerator(JClassType targetClass)
-      throws AnnotationsError {
+  public static KeyGenerator getKeyGenerator(JClassType targetClass) throws AnnotationsError {
     GenerateKeys generator = targetClass.getAnnotation(GenerateKeys.class);
     if (generator != null) {
       String className = generator.value();
       try {
-        Class<? extends KeyGenerator> keyGeneratorClass
-            = Class.forName(className).asSubclass(KeyGenerator.class);
+        Class<? extends KeyGenerator> keyGeneratorClass = Class.forName(className).asSubclass(
+            KeyGenerator.class);
         return keyGeneratorClass.newInstance();
       } catch (InstantiationException e) {
         throw new AnnotationsError("@GenerateKeys: unable to instantiate " + className);
       } catch (IllegalAccessException e) {
         throw new AnnotationsError("@GenerateKeys: unable to instantiate " + className);
       } catch (ClassNotFoundException e) {
-        throw new AnnotationsError("Invalid class specified to @GenerateKeys: "
-            + className);
+        throw new AnnotationsError("Invalid class specified to @GenerateKeys: " + className);
       }
     }
     return new MethodNameKeyGenerator();
@@ -186,13 +185,12 @@ public class AnnotationsResource extends AbstractResource {
    * @return the text value to use for this method, as if read from a properties
    *         file, or null if there are no annotations.
    */
-  private static String getTextString(JMethod method,
-      Map<String, MethodEntry> map, boolean isConstants) throws AnnotationsError {
+  private static String getTextString(JMethod method, Map<String, MethodEntry> map,
+      boolean isConstants) throws AnnotationsError {
     JType returnType = method.getReturnType();
     DefaultMessage defaultText = method.getAnnotation(DefaultMessage.class);
     DefaultStringValue stringValue = method.getAnnotation(DefaultStringValue.class);
-    DefaultStringArrayValue stringArrayValue = method.getAnnotation(
-        DefaultStringArrayValue.class);
+    DefaultStringArrayValue stringArrayValue = method.getAnnotation(DefaultStringArrayValue.class);
     DefaultStringMapValue stringMapValue = method.getAnnotation(DefaultStringMapValue.class);
     DefaultIntValue intValue = method.getAnnotation(DefaultIntValue.class);
     DefaultFloatValue floatValue = method.getAnnotation(DefaultFloatValue.class);
@@ -226,7 +224,7 @@ public class AnnotationsResource extends AbstractResource {
         if (paramType != null) {
           JType[] args = paramType.getTypeArgs();
           if (args.length != 2 || !args[0].getQualifiedSourceName().equals("java.lang.String")
-             || !args[1].getQualifiedSourceName().equals("java.lang.String")) {
+              || !args[1].getQualifiedSourceName().equals("java.lang.String")) {
             error = true;
           }
         }
@@ -240,8 +238,7 @@ public class AnnotationsResource extends AbstractResource {
       constantsCount++;
       JPrimitiveType primType = returnType.isPrimitive();
       if (primType != JPrimitiveType.INT) {
-        throw new AnnotationsError(
-        "@DefaultIntValue can only be used with a method returning int");
+        throw new AnnotationsError("@DefaultIntValue can only be used with a method returning int");
       }
     }
     if (floatValue != null) {
@@ -249,7 +246,7 @@ public class AnnotationsResource extends AbstractResource {
       JPrimitiveType primType = returnType.isPrimitive();
       if (primType != JPrimitiveType.FLOAT) {
         throw new AnnotationsError(
-        "@DefaultFloatValue can only be used with a method returning float");
+            "@DefaultFloatValue can only be used with a method returning float");
       }
     }
     if (doubleValue != null) {
@@ -257,7 +254,7 @@ public class AnnotationsResource extends AbstractResource {
       JPrimitiveType primType = returnType.isPrimitive();
       if (primType != JPrimitiveType.DOUBLE) {
         throw new AnnotationsError(
-        "@DefaultDoubleValue can only be used with a method returning double");
+            "@DefaultDoubleValue can only be used with a method returning double");
       }
     }
     if (booleanValue != null) {
@@ -265,13 +262,13 @@ public class AnnotationsResource extends AbstractResource {
       JPrimitiveType primType = returnType.isPrimitive();
       if (primType != JPrimitiveType.BOOLEAN) {
         throw new AnnotationsError(
-        "@DefaultBooleanValue can only be used with a method returning boolean");
+            "@DefaultBooleanValue can only be used with a method returning boolean");
       }
     }
     if (!isConstants) {
       if (constantsCount > 0) {
         throw new AnnotationsError(
-          "@Default*Value is not permitted on a Messages interface; see @DefaultText");
+            "@Default*Value is not permitted on a Messages interface; see @DefaultText");
       }
       if (defaultText != null) {
         return defaultText.value();
@@ -279,11 +276,11 @@ public class AnnotationsResource extends AbstractResource {
     } else {
       if (defaultText != null) {
         throw new AnnotationsError(
-          "@DefaultText is not permitted on a Constants interface; see @Default*Value");
+            "@DefaultText is not permitted on a Constants interface; see @Default*Value");
       }
       if (constantsCount > 1) {
         throw new AnnotationsError(
-          "No more than one @Default*Value annotation may be used on a method");
+            "No more than one @Default*Value annotation may be used on a method");
       }
       if (stringValue != null) {
         return stringValue.value();
@@ -319,13 +316,13 @@ public class AnnotationsResource extends AbstractResource {
         for (int i = 0; i < entries.length; i += 2) {
           String key = entries[i];
           String value = entries[i + 1];
-          
+
           if (map != null) {
             // add key=value part to map
             MethodEntry entry = new MethodEntry(value, null);
             map.put(key, entry);
           }
-          
+
           // add the key to the master entry
           key = key.replace("\\", "\\\\");
           key = key.replace(",", "\\,");
@@ -341,16 +338,17 @@ public class AnnotationsResource extends AbstractResource {
     }
     return null;
   }
-  
+
   private Map<String, MethodEntry> map;
 
   /**
    * Create a resource that supplies data from i18n-related annotations.
    * 
-   * @param logger 
+   * @param logger
    * @param clazz
-   * @param isConstants 
-   * @throws AnnotationsError if there is a fatal error while processing annotations
+   * @param isConstants
+   * @throws AnnotationsError if there is a fatal error while processing
+   *           annotations
    */
   public AnnotationsResource(TreeLogger logger, JClassType clazz, boolean isConstants)
       throws AnnotationsError {
@@ -424,7 +422,7 @@ public class AnnotationsResource extends AbstractResource {
     MethodEntry entry = map.get(key);
     return entry != null ? entry.arguments : null;
   }
-  
+
   public String getDescription(String key) {
     MethodEntry entry = map.get(key);
     return entry == null ? null : entry.description;
@@ -435,12 +433,12 @@ public class AnnotationsResource extends AbstractResource {
     MethodEntry entry = map.get(key);
     return entry == null ? new ArrayList<String>() : entry.pluralText.keySet();
   }
-  
+
   public String getMeaning(String key) {
     MethodEntry entry = map.get(key);
     return entry == null ? null : entry.meaning;
   }
-  
+
   @Override
   public String getStringExt(String key, String extension) {
     if (extension == null) {
@@ -449,11 +447,17 @@ public class AnnotationsResource extends AbstractResource {
     MethodEntry entry = map.get(key);
     return entry == null ? null : entry.pluralText.get(extension);
   }
-  
+
+  @Override
+  public Object handleGetObject(String key) {
+    MethodEntry entry = map.get(key);
+    return entry == null ? null : entry.text;
+  }
+
   public boolean notEmpty() {
     return !map.isEmpty();
   }
-  
+
   public void setParentResource(AnnotationsResource parent) {
     setPrimaryParent(parent);
   }
@@ -461,11 +465,5 @@ public class AnnotationsResource extends AbstractResource {
   @Override
   public String toString() {
     return "Annotations from class " + getPath();
-  }
-  
-  @Override
-  Object handleGetObject(String key) {
-    MethodEntry entry = map.get(key);
-    return entry == null ? null : entry.text;
   }
 }
