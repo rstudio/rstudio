@@ -67,6 +67,8 @@ public class TreeItem extends UIObject implements HasHTML {
         } else {
           UIObject.setVisible(curItem.childSpanElem, false);
         }
+        DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "visible");
+        DOM.setStyleAttribute(curItem.childSpanElem, "width", "auto");
         curItem = null;
       }
     }
@@ -79,6 +81,7 @@ public class TreeItem extends UIObject implements HasHTML {
 
     @Override
     public void onStart() {
+      DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "hidden");
       onUpdate(0.0);
       if (opening) {
         UIObject.setVisible(curItem.childSpanElem, true);
@@ -94,6 +97,11 @@ public class TreeItem extends UIObject implements HasHTML {
         height = scrollHeight - height;
       }
       DOM.setStyleAttribute(curItem.childSpanElem, "height", height + "px");
+
+      // We need to set the width explicitly of the item might be cropped
+      int scrollWidth = DOM.getElementPropertyInt(curItem.childSpanElem,
+          "scrollWidth");
+      DOM.setStyleAttribute(curItem.childSpanElem, "width", scrollWidth + "px");
     }
 
     /**
@@ -110,7 +118,7 @@ public class TreeItem extends UIObject implements HasHTML {
       curItem = item;
       opening = item.open;
       if (animate) {
-        run(350);
+        run(Math.min(200, 75 * curItem.getChildCount()));
       } else {
         onInstantaneousRun();
       }
@@ -169,7 +177,7 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.setStyleAttribute(contentElem, "display", "inline");
     DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
-    DOM.setStyleAttribute(childSpanElem, "overflow", "hidden");
+    DOM.setStyleAttribute(childSpanElem, "padding", "0px");
     setStyleName(contentElem, "gwt-TreeItem", true);
 
     Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
