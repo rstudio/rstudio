@@ -244,7 +244,7 @@ public class TreeItem extends UIObject implements HasHTML {
     item.setTree(tree);
 
     if (children.size() == 1) {
-      updateState(false);
+      updateState(false, false);
     }
   }
 
@@ -395,7 +395,7 @@ public class TreeItem extends UIObject implements HasHTML {
     children.remove(item);
 
     if (children.size() == 0) {
-      updateState(false);
+      updateState(false, false);
     }
   }
 
@@ -451,7 +451,7 @@ public class TreeItem extends UIObject implements HasHTML {
     // Only do the physical update if it changes
     if (this.open != open) {
       this.open = open;
-      updateState(true);
+      updateState(true, true);
     }
 
     if (fireEvents && tree != null) {
@@ -601,7 +601,7 @@ public class TreeItem extends UIObject implements HasHTML {
     for (int i = 0, n = children.size(); i < n; ++i) {
       children.get(i).setTree(newTree);
     }
-    updateState(false);
+    updateState(false, true);
 
     if (newTree != null) {
       if (widget != null) {
@@ -611,7 +611,7 @@ public class TreeItem extends UIObject implements HasHTML {
     }
   }
 
-  void updateState(boolean animate) {
+  void updateState(boolean animate, boolean updateTreeSelection) {
     // If the tree hasn't been set, there is no visual state to update.
     if (tree == null) {
       return;
@@ -642,12 +642,24 @@ public class TreeItem extends UIObject implements HasHTML {
     } else {
       images.treeClosed().applyTo(statusImage);
     }
+
+    // We may need to update the tree's selection in response to a tree state change. For
+    // example, if the tree's currently selected item is a descendant of an item whose
+    // branch was just collapsed, then the item itself should become the newly-selected item.
+    if (updateTreeSelection) {
+      tree.maybeUpdateSelection(this, this.open);
+    }
   }
 
   void updateStateRecursive() {
-    updateState(false);
+    updateStateRecursiveHelper();
+    tree.maybeUpdateSelection(this, this.open);
+  }
+
+  private void updateStateRecursiveHelper() {
+    updateState(false, false);
     for (int i = 0, n = children.size(); i < n; ++i) {
-      children.get(i).updateStateRecursive();
+      children.get(i).updateStateRecursiveHelper();
     }
   }
 }

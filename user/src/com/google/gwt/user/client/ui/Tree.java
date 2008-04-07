@@ -679,6 +679,23 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return images;
   }
 
+  void maybeUpdateSelection(TreeItem itemThatChangedState, boolean isItemOpening) {
+    /**
+     * If we just closed the item, let's check to see if this item is the parent of
+     * the currently selected item. If so, we should make this item the currently selected
+     * selected item.
+     */
+    if (!isItemOpening) {
+      TreeItem tempItem = curSelection;
+      while (tempItem != null) {
+        if (tempItem == itemThatChangedState) {
+          setSelectedItem(itemThatChangedState);
+          return;
+        }
+        tempItem = tempItem.getParentItem();
+      }
+    }
+  }
   void orphan(Widget widget) {
     // Validation should already be done.
     assert (widget.getParent() == this);
@@ -710,25 +727,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     if (item != null) {
       if (DOM.isOrHasChild(item.getImageElement(), hElem)) {
         item.setState(!item.getState(), true);
-
-        // If we just closed the item, let's check to see if this item is the parent of
-        // the currently selected item. If so, we should make this item the currently selected
-        // selected item. Note that we only need to do this check in the case where an element's
-        // state is changed due to a click; in the case of keyboard interaction, an item's state
-        // can only be changed if it is the currently selected item.
-        if (!item.getState()) {
-          if (curSelection != null) {
-            TreeItem tempItem = curSelection;
-            while (tempItem != null) {
-              if (tempItem == item) {
-                setSelectedItem(item);
-                break;
-              }
-              tempItem = tempItem.getParentItem();
-            }
-          }
-        }
-
         return true;
       } else if (DOM.isOrHasChild(item.getElement(), hElem)) {
         onSelection(item, true, !shouldTreeDelegateFocusToElement(hElem));
@@ -788,12 +786,23 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   private void init(TreeImages images) {
     this.images = images;
     setElement(DOM.createDiv());
+
     DOM.setStyleAttribute(getElement(), "position", "relative");
+    
+    // Fix rendering problem with relatively-positioned elements and their children by
+    // forcing the element that is positioned relatively to 'have layout'
     DOM.setStyleAttribute(getElement(), "zoom", "1");
+
     focusable = FocusPanel.impl.createFocusable();
     DOM.setStyleAttribute(focusable, "fontSize", "0");
     DOM.setStyleAttribute(focusable, "position", "absolute");
+
+    // Hide focus outline in Mozilla/Webkit/Opera
     DOM.setStyleAttribute(focusable, "outline", "0px");
+
+    // Hide focus outline in IE 6/7
+    DOM.setElementAttribute(focusable, "hideFocus", "true");
+
     DOM.setIntStyleAttribute(focusable, "zIndex", -1);
     DOM.appendChild(getElement(), focusable);
 
@@ -904,7 +913,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         DOM.setIntStyleAttribute(focusable, "top", 0);
         return;
       }
-      
+
       // Set the focusable element's position and size to exactly underlap the
       // item's content element.
       DOM.setStyleAttribute(focusable, "left", left + "px");
@@ -915,14 +924,14 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       // Scroll it into view.
       DOM.scrollIntoView(focusable);
 
-      // Update ARIA attributes to reflect the information from the newly-selected item.
-      updateAriaAttributes();
+        // Update ARIA attributes to reflect the information from the newly-selected item.
+        updateAriaAttributes();
       
-      // Ensure Focus is set, as focus may have been previously delegated by
-      // tree.
-      setFocus(true);
+        // Ensure Focus is set, as focus may have been previously delegated by
+        // tree.
+        setFocus(true);
+      }
     }
-  }
 
   /**
    * Moves to the next item, going into children as if dig is enabled.
@@ -1068,4 +1077,4 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     Accessibility.setState(focusable, Accessibility.STATE_ACTIVEDESCENDANT,
         DOM.getElementAttribute(curSelectionContentElem, "id"));
   }
-}
+    }
