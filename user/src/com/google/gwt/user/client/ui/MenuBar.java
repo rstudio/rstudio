@@ -572,13 +572,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
         
         // depending on the bidi direction position a menu on the left or right
         // of its base item
-        if (LocaleInfo.getCurrentLocale().isRTL()) {                    
-          int popableWidth = item.getSubMenu().getOffsetWidth();                
+        if (LocaleInfo.getCurrentLocale().isRTL()) {                                   
           if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - popableWidth + 1,
+            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - offsetWidth + 1,
                 item.getAbsoluteTop());
           } else {
-            popup.setPopupPosition(item.getAbsoluteLeft() + item.getOffsetWidth() - popableWidth,
+            popup.setPopupPosition(item.getAbsoluteLeft() + item.getOffsetWidth() - offsetWidth,
                 MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight() - 1);
           }
         } else {
