@@ -32,7 +32,6 @@ import com.google.gwt.sample.showcase.client.content.lists.CwSuggestBox;
 import com.google.gwt.sample.showcase.client.content.lists.CwTree;
 import com.google.gwt.sample.showcase.client.content.other.CwAnimation;
 import com.google.gwt.sample.showcase.client.content.other.CwCookies;
-import com.google.gwt.sample.showcase.client.content.other.CwFrame;
 import com.google.gwt.sample.showcase.client.content.panels.CwAbsolutePanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwDecoratorPanel;
 import com.google.gwt.sample.showcase.client.content.panels.CwDisclosurePanel;
@@ -403,7 +402,6 @@ public class Showcase implements EntryPoint {
     // Other
     TreeItem catOther = mainMenu.addItem(constants.categoryOther());
     setupMainMenuOption(catOther, new CwAnimation(constants), images.catOther());
-    setupMainMenuOption(catOther, new CwFrame(constants), images.catOther());
     setupMainMenuOption(catOther, new CwCookies(constants), images.catOther());
   }
 
