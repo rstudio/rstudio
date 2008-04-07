@@ -779,7 +779,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     } else {
       addStyleDependentName("horizontal");
     }
+
+    // Hide focus outline in Mozilla/Webkit/Opera
     DOM.setStyleAttribute(getElement(), "outline", "0px");
+
+    // Hide focus outline in IE 6/7
+    DOM.setElementAttribute(getElement(), "hideFocus", "true");   
   }
   
   private void moveDown() {
