@@ -23,6 +23,7 @@ import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.animation.WidgetAnimation;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
+import com.google.gwt.i18n.client.LocaleInfo;
 
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
@@ -152,6 +153,10 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
       if (curPanel.animType == AnimationType.CENTER) {
         top = (offsetHeight - height) >> 1;
         left = (offsetWidth - width) >> 1;
+      } else if (curPanel.animType == AnimationType.ONE_WAY_CORNER) {
+        if (LocaleInfo.getCurrentLocale().isRTL()) {
+          left = offsetWidth - width;
+        }
       }
       right = left + width;
       bottom = top + height;
