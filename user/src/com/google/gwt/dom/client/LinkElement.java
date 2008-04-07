@@ -27,9 +27,9 @@ public class LinkElement extends Element {
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
-  public static HeadElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("head");
-    return (HeadElement) elem;
+  public static LinkElement as(Element elem) {
+    assert elem.getTagName().equalsIgnoreCase("link");
+    return (LinkElement) elem;
   }
 
   protected LinkElement() {
