@@ -165,9 +165,6 @@ public class Showcase implements EntryPoint {
    * This is the entry point method.
    */
   public void onModuleLoad() {
-    // Immediately add the CSS files
-    includeStyleSheets();
-
     // Create the constants
     ShowcaseConstants constants = (ShowcaseConstants) GWT.create(ShowcaseConstants.class);
 
@@ -178,6 +175,16 @@ public class Showcase implements EntryPoint {
     setupOptionsPanel(constants);
     setupMainMenu(constants);
     RootPanel.get().add(app);
+
+    // Swap out the style sheets for the RTL versions if needed.  We need to do
+    // this after the app is loaded because the app will setup the layout based
+    // on the width of the main menu, which is defined in the style sheet.  If
+    // we swap the style sheets first, the app may load without any style sheet
+    // to define the main menu width, because the RTL version is still being
+    // loaded.  Note that we are basing the layout on the width defined in the
+    // LTR version, so both versions should use the same width for the main nav
+    // menu.
+    includeStyleSheets();
 
     // Add an listener that sets the content widget when a menu item is selected
     app.setListener(new ApplicationListener() {

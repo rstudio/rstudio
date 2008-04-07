@@ -64,12 +64,6 @@
 .Application-content-decorator {
   margin-left: 8px;
 }
- 
-.Application-content-decorator .middleCenter .topLeftInner, 
-.Application-content-decorator .middleCenter .middleLeftInner, 
-.Application-content-decorator .middleCenter .bottomLeftInner { 
-  display: block;
-}
 .Application-content-title {
   padding: 4px 6px 3px 0px;
   text-align: right;
