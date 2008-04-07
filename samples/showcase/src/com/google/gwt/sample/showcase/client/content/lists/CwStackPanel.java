@@ -23,6 +23,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeImages;
@@ -171,8 +172,7 @@ public class CwStackPanel extends ContentWidget {
     VerticalPanel contactsPanel = new VerticalPanel();
     contactsPanel.setSpacing(4);
     for (String contact : constants.cwStackPanelContacts()) {
-      contactsPanel.add(new HTML("<a href=\"javascript:void;\">" + contact
-          + "</a>"));
+      contactsPanel.add(new Label(contact));
     }
     String contactsHeader = getHeaderString(
         constants.cwStackPanelContactsHeader(), images.contactsgroup());
