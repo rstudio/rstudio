@@ -32,8 +32,8 @@ a:visited {
 }
 
 .gwt-DialogBox .content {
-	border: 1px solid #666;
-	border-top: 0;
+  border: 1px solid #666;
+  border-top: 0;
 }
 
 .gwt-DialogBox td {
@@ -50,6 +50,7 @@ a:visited {
 }
 
 .gwt-MenuItem {
+  font-size: 80%;
   margin: 1px;
   cursor: default;
 }
@@ -66,6 +67,7 @@ a:visited {
 }
 
 .gwt-Tree .gwt-TreeItem {
+  font-size: 80%;
   cursor: default;
 }
 
@@ -78,7 +80,7 @@ a:visited {
 }
 
 .gwt-StackPanel {
-	width: 15em;
+  width: 15em;
   border-bottom: 1px solid #666;
 }
 .gwt-StackPanel .lcaption {
@@ -177,6 +179,7 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-TopPanel table {
+  font-size: 80%;
 }
 
 .mail-TopPanel .gwt-Image {
@@ -185,10 +188,12 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-TopPanelLinks {
+  font-size: 80%;
 }
 
 .mail-AboutText {
   width: 24em;
+  font-size: 80%;
   padding: 10px;
   text-align: left;
 }
@@ -198,15 +203,18 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-Contacts table {
+  font-size: 80%;
 }
 
 .mail-Tasks table {
+  font-size: 80%;
 }
 
 .mail-List {
   border-left: 1px solid #666;
   border-right: 1px solid #666;
   border-bottom: 1px solid #666;
+  font-size: 80%;
   cursor: pointer;
   cursor: hand;
 }
@@ -237,6 +245,7 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-ListNavBar table {
+  font-size: 80%;
 }
 
 .mail-ListNavBar td {
@@ -260,6 +269,7 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-ToolButton {
+  font-size: 80%;
   width: 10em;
 }
 
@@ -280,6 +290,7 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 
 .mail-DetailInner {
   background-color: white;
+  font-size: 80%;
 }
 
 .mail-DetailSubject {
@@ -288,10 +299,12 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-DetailSender {
+  font-size: 80%;
   padding: 2px 10px;
 }
 
 .mail-DetailRecipient {
+  font-size: 80%;
   padding: 2px 10px;
 }
 
@@ -308,10 +321,12 @@ html>body .gwt-StackPanelItem-below-selected .topRight {
 }
 
 .mail-ContactPopupName {
+  font-size: 80%;
   font-weight: bold;
 }
 
 .mail-ContactPopupEmail {
+  font-size: 80%;
   font-style: italic;
 }
 
