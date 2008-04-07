@@ -43,6 +43,9 @@ public class Mailboxes extends Composite {
     AbstractImagePrototype templates();
 
     AbstractImagePrototype trash();
+    
+    @Resource("noimage.png")
+    AbstractImagePrototype treeLeaf();
   }
 
   private Tree tree;
