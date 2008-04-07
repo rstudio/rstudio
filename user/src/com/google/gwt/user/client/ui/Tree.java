@@ -158,63 +158,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * @param images a bundle that provides tree specific images
    */
   public Tree(TreeImages images) {
-    this.images = images;
-    setElement(DOM.createDiv());
-    DOM.setStyleAttribute(getElement(), "position", "relative");
-    focusable = FocusPanel.impl.createFocusable();
-    DOM.setStyleAttribute(focusable, "fontSize", "0");
-    DOM.setStyleAttribute(focusable, "position", "absolute");
-    DOM.setIntStyleAttribute(focusable, "zIndex", -1);
-    DOM.appendChild(getElement(), focusable);
-
-    sinkEvents(Event.MOUSEEVENTS | Event.ONCLICK | Event.KEYEVENTS);
-    DOM.sinkEvents(focusable, Event.FOCUSEVENTS);
-
-    // The 'root' item is invisible and serves only as a container
-    // for all top-level items.
-    root = new TreeItem() {
-      @Override
-      public void addItem(TreeItem item) {
-        // If this element already belongs to a tree or tree item, remove it.
-        if ((item.getParentItem() != null) || (item.getTree() != null)) {
-          item.remove();
-        }
-        DOM.appendChild(Tree.this.getElement(), item.getElement());
-
-        item.setTree(this.getTree());
-
-        // Explicitly set top-level items' parents to null.
-        item.setParentItem(null);
-        getChildren().add(item);
-
-        // Use no margin on top-most items.
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          DOM.setIntStyleAttribute(item.getElement(), "marginRight", 0);
-        } else {
-          DOM.setIntStyleAttribute(item.getElement(), "marginLeft", 0);
-        }        
-      }
-
-      @Override
-      public void removeItem(TreeItem item) {
-        if (!getChildren().contains(item)) {
-          return;
-        }
-
-        // Update Item state.
-        item.setTree(null);
-        item.setParentItem(null);
-        getChildren().remove(item);
-
-        DOM.removeChild(Tree.this.getElement(), item.getElement());
-      }
-    };
-    root.setTree(this);
-    setStyleName("gwt-Tree");
-    
-    // Add a11y role "tree"
-    Accessibility.setRole(getElement(), Accessibility.ROLE_TREE);
-    Accessibility.setRole(focusable, Accessibility.ROLE_TREEITEM);
+    init(images);
   }
 
   /**
@@ -826,9 +770,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     this.images = images;
     setElement(DOM.createDiv());
     DOM.setStyleAttribute(getElement(), "position", "relative");
+    DOM.setStyleAttribute(getElement(), "zoom", "1");
     focusable = FocusPanel.impl.createFocusable();
     DOM.setStyleAttribute(focusable, "fontSize", "0");
     DOM.setStyleAttribute(focusable, "position", "absolute");
+    DOM.setStyleAttribute(focusable, "outline", "0px");
     DOM.setIntStyleAttribute(focusable, "zIndex", -1);
     DOM.appendChild(getElement(), focusable);
 
