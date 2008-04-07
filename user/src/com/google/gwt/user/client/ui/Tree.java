@@ -710,6 +710,25 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     if (item != null) {
       if (DOM.isOrHasChild(item.getImageElement(), hElem)) {
         item.setState(!item.getState(), true);
+
+        // If we just closed the item, let's check to see if this item is the parent of
+        // the currently selected item. If so, we should make this item the currently selected
+        // selected item. Note that we only need to do this check in the case where an element's
+        // state is changed due to a click; in the case of keyboard interaction, an item's state
+        // can only be changed if it is the currently selected item.
+        if (!item.getState()) {
+          if (curSelection != null) {
+            TreeItem tempItem = curSelection;
+            while (tempItem != null) {
+              if (tempItem == item) {
+                setSelectedItem(item);
+                break;
+              }
+              tempItem = tempItem.getParentItem();
+            }
+          }
+        }
+
         return true;
       } else if (DOM.isOrHasChild(item.getElement(), hElem)) {
         onSelection(item, true, !shouldTreeDelegateFocusToElement(hElem));
