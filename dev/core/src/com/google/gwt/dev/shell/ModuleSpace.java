@@ -164,11 +164,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public String getModuleName() {
     return moduleName;
   }
-
+  
   public boolean invokeNativeBoolean(String name, Object jthis,
       Class<?>[] types, Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeBoolean(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a boolean");
     Boolean value = JsValueGlue.get(result, getIsolatedClassLoader(),
         boolean.class, msgPrefix);
     if (value == null) {
@@ -181,7 +181,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public byte invokeNativeByte(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeByte(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a byte");
     Byte value = JsValueGlue.get(result, null, Byte.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -193,7 +193,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public char invokeNativeChar(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeCharacter(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a char");
     Character value = JsValueGlue.get(result, null, Character.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -205,7 +205,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public double invokeNativeDouble(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeDouble(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a double");
     Double value = JsValueGlue.get(result, null, Double.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -217,7 +217,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public float invokeNativeFloat(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeFloat(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a float");
     Float value = JsValueGlue.get(result, null, Float.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -229,7 +229,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public int invokeNativeInt(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeInteger(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "an int");
     Integer value = JsValueGlue.get(result, null, Integer.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -241,7 +241,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public long invokeNativeLong(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeLong(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a long");
     Long value = JsValueGlue.get(result, null, Long.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -253,14 +253,15 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public Object invokeNativeObject(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a Java object");
     return JsValueGlue.get(result, getIsolatedClassLoader(), Object.class,
-        "invokeNativeObject(" + name + ")");
+        msgPrefix);
   }
 
   public short invokeNativeShort(String name, Object jthis, Class<?>[] types,
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
-    String msgPrefix = "invokeNativeShort(" + name + ")";
+    String msgPrefix = composeResultErrorMsgPrefix(name, "a short");
     Short value = JsValueGlue.get(result, null, Short.TYPE, msgPrefix);
     if (value == null) {
       throw new HostedModeException(msgPrefix
@@ -276,7 +277,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       getLogger().log(
           TreeLogger.WARN,
           "JSNI method '" + name + "' returned a value of type "
-              + result.getTypeString() + "; should not have returned a value",
+              + result.getTypeString() + " but was declared void; it should not have returned a value at all",
           null);
     }
   }
@@ -515,6 +516,10 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    */
   private void clearJavaScriptHost() {
     setJavaScriptHost(null, getIsolatedClassLoader());
+  }
+
+  private String composeResultErrorMsgPrefix(String name, String typePhrase) {
+    return "Something other than " + typePhrase + " was returned from JSNI method '" + name + "'";
   }
 
   /**

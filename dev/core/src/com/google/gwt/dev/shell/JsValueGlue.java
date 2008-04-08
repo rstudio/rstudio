@@ -49,7 +49,7 @@ public final class JsValueGlue {
     if (value.isUndefined()) {
       // undefined is never legal to return from JavaScript into Java
       throw new HostedModeException(msgPrefix
-          + ": JavaScript undefined, expected " + type.getName());
+          + ": attempt to use JavaScript 'undefined' as a value, expected " + type.getName());
     }
 
     if (type.isPrimitive()) {
