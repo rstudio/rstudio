@@ -222,9 +222,10 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
    */
   private String getClientId() {
     HttpServletRequest request = getThreadLocalRequest();
-    String agent = request.getHeader("User-Agent");
     String machine = request.getRemoteHost();
-    return machine + " / " + agent;
+    String servletPath = request.getServletPath();
+    String agent = request.getHeader("User-Agent");
+    return machine + " / " + servletPath + " / " + agent;
   }
 
   private String getModuleName(String requestURI) {

@@ -165,6 +165,7 @@ public class JUnitShell extends GWTShell {
         throw new RuntimeException("Invalid shell arguments");
       }
 
+      
       shell.messageQueue = new JUnitMessageQueue(shell.numClients);
 
       if (!shell.startUp()) {
@@ -213,6 +214,11 @@ public class JUnitShell extends GWTShell {
    * started the test.
    */
   private long testBeginTimeout;
+  
+  /**
+   * The time the test actually began.
+   */
+  private long testBeginTime;
 
   /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
@@ -350,9 +356,12 @@ public class JUnitShell extends GWTShell {
   protected boolean notDone() {
     if (!messageQueue.haveAllClientsRetrievedCurrentTest()
         && testBeginTimeout < System.currentTimeMillis()) {
+      double elapsed = (System.currentTimeMillis() - testBeginTime) / 1000.0;
       throw new TimeoutException(
           "The browser did not contact the server within "
-              + TEST_BEGIN_TIMEOUT_MILLIS + "ms.");
+              + TEST_BEGIN_TIMEOUT_MILLIS + "ms.\n"
+              + messageQueue.getUnretrievedClients()
+              + "\n Actual time elapsed: " + elapsed + " seconds.\n");
     }
 
     if (messageQueue.hasResult(currentModule.getName())) {
@@ -426,7 +435,8 @@ public class JUnitShell extends GWTShell {
     try {
       // Set a timeout period to automatically fail if the servlet hasn't been
       // contacted; something probably went wrong (the module failed to load?)
-      testBeginTimeout = System.currentTimeMillis() + TEST_BEGIN_TIMEOUT_MILLIS;
+      testBeginTime = System.currentTimeMillis();
+      testBeginTimeout = testBeginTime + TEST_BEGIN_TIMEOUT_MILLIS;
       pumpEventLoop();
     } catch (TimeoutException e) {
       lastLaunchFailed = true;

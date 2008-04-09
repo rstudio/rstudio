@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
@@ -23,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A message queue to pass data between {@link JUnitShell} and {@link
@@ -70,11 +72,6 @@ public class JUnitMessageQueue {
   private Object resultsLock = new Object();
 
   /**
-   * The name of the module to execute.
-   */
-  private String testModule;
-
-  /**
    * The name of the test class to execute.
    */
   private String testClass;
@@ -83,6 +80,11 @@ public class JUnitMessageQueue {
    * The name of the test method to execute.
    */
   private String testMethod;
+
+  /**
+   * The name of the module to execute.
+   */
+  private String testModule;
 
   /**
    * The results for the current test method.
@@ -119,6 +121,7 @@ public class JUnitMessageQueue {
   public TestInfo getNextTestInfo(String clientId, String moduleName,
       long timeout) {
     synchronized (readTestLock) {
+      long startTime = System.currentTimeMillis();
       long stopTime = System.currentTimeMillis() + timeout;
       while (!testIsAvailableFor(clientId, moduleName)) {
         long timeToWait = stopTime - System.currentTimeMillis();
@@ -128,8 +131,12 @@ public class JUnitMessageQueue {
         try {
           readTestLock.wait(timeToWait);
         } catch (InterruptedException e) {
-          // just abort
-          return null;
+          double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
+          throw new TimeoutException("The servlet did not respond to the "
+              + "next query to test within "
+              + timeout + "ms.\n" + " Module Name: " + moduleName + "\n"
+              + " Client id: " + clientId + "\n"
+              + " Actual time elapsed: " + elapsed + " seconds.\n");
         }
       }
 
@@ -172,6 +179,44 @@ public class JUnitMessageQueue {
   }
 
   /**
+   * Returns a pretty printed list of clients that have not retrieved the
+   * current test. Used for error reporting.
+   * 
+   * @return a string containing the list of clients that have not retrieved the
+   *         current test.
+   */
+  String getUnretrievedClients() {
+    int lineCount = 0;
+    StringBuilder buf = new StringBuilder();
+    synchronized (readTestLock) {
+      Set<String> keys = clientTestRequests.keySet();
+
+      for (String key : keys) {
+        if (lineCount > 0) {
+          buf.append('\n');
+        }
+        
+        if (clientTestRequests.get(key) <= currentTestIndex) {
+          buf.append(" - NO RESPONSE: ");
+          buf.append(key);
+        } else {
+          buf.append(" - (ok): ");
+          buf.append(key);
+        }
+        lineCount++;        
+      }
+      int difference = numClients - keys.size();
+      if (difference > 0) {
+        if (lineCount > 0) {
+          buf.append('\n');
+        }
+        buf.append(" - " + difference + " client(s) haven't responded back to the servlet at all since the start of the test.");
+      }
+    }
+    return buf.toString();
+  }
+
+  /**
    * Called by the shell to see if the currently-running test has completed.
    * 
    * @param moduleName the name of the test module
@@ -191,7 +236,7 @@ public class JUnitMessageQueue {
    */
   boolean haveAllClientsRetrievedCurrentTest() {
     synchronized (readTestLock) {
-      // If a client hasn't yet contacted, it will have no entry
+      // If a client hasn't yet been contacted, it will have no entry
       Collection<Integer> clientIndices = clientTestRequests.values();
       if (clientIndices.size() < numClients) {
         return false;
@@ -210,8 +255,9 @@ public class JUnitMessageQueue {
    * Called by the shell to set the name of the next method to run for this test
    * class.
    * 
-   * @param testClassName The name of the test class.
-   * @param testName The name of the method to run.
+   * @param testModule the name of the module to be run.
+   * @param testClass The name of the test class.
+   * @param testMethod The name of the method to run.
    */
   void setNextTestName(String testModule, String testClass, String testMethod) {
     synchronized (readTestLock) {
