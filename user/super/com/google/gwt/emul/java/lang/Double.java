@@ -19,13 +19,14 @@ package java.lang;
  * Wraps a primitive <code>double</code> as an object.
  */
 public final class Double extends Number implements Comparable<Double> {
-  public static final double MAX_VALUE = 1.7976931348623157e+308;
-  public static final double MIN_VALUE = 4.9e-324;
-  public static final double MIN_NORMAL = 2.2250738585072014e-308;
-  public static final int MAX_EXPONENT = 1023;
+  public static final int MAX_EXPONENT = 1023;  // a JDK 1.6 constant
                              // ==Math.getExponent(Double.MAX_VALUE);
-  public static final int MIN_EXPONENT = -1022; 
+  public static final double MAX_VALUE = 1.7976931348623157e+308;
+  public static final int MIN_EXPONENT = -1022; // a JDK 1.6 constant
                              // ==Math.getExponent(Double.MIN_NORMAL);;
+  public static final double MIN_NORMAL = 2.2250738585072014e-308;
+                             // a JDK 1.6 constant
+  public static final double MIN_VALUE = 4.9e-324;
 
   public static final double NaN = 0d / 0d;
   public static final double NEGATIVE_INFINITY = -1d / 0d;

@@ -34,6 +34,11 @@ public class DoubleTest extends GWTTestCase {
   private static final long TEST1_LONG_VALUE = 0x459dba0fc757e49cL;
   private static final long NEGTEST1_LONG_VALUE = 0xc59dba0fc757e49cL;
 
+  // TODO(fabbott): this constants are from the JDK 1.6 Double, so we can't rely on them
+  // when we build on 1.5! But when we *do* support 1.6, this def'n should go away
+  public static final double MIN_NORMAL = 2.2250738585072014e-308;
+  
+
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -69,10 +74,8 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(Double.MIN_VALUE < Double.MAX_VALUE);
     assertFalse(Double.NaN == Double.NaN);
     assertEquals(64, Double.SIZE);
-    // jdk1.6 assertEquals(Math.getExponent(Double.MAX_VALUE),
-    // Double.MAX_EXPONENT);
-    // jdk1.6 assertEquals(Math.getExponent(Double.MIN_NORMAL),
-    // Double.MIN_EXPONENT);
+    // jdk1.6  assertEquals(Math.getExponent(Double.MAX_VALUE), Double.MAX_EXPONENT);
+    // jdk1.6  assertEquals(Math.getExponent(Double.MIN_NORMAL), Double.MIN_EXPONENT);
   }
 
   public void testDoubleToLongBits() {
@@ -81,12 +84,12 @@ public class DoubleTest extends GWTTestCase {
     assertEquals(Double.doubleToLongBits(Double.NEGATIVE_INFINITY), NEGINF_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.MIN_NORMAL), MINNORM_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.MIN_NORMAL), MINNORM_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(TEST1_DOUBLE_VALUE), TEST1_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(-TEST1_DOUBLE_VALUE), NEGTEST1_LONG_VALUE);
+    // TODO(fabbott): swap back to Double.MIN_NORMAL when we use jdk 1.6
+    assertEquals(Double.doubleToLongBits(MIN_NORMAL), MINNORM_LONG_VALUE);
   }
   
   public void testLongBitsToDouble() {
@@ -95,9 +98,10 @@ public class DoubleTest extends GWTTestCase {
     assertTrue(Double.NEGATIVE_INFINITY == Double.longBitsToDouble(NEGINF_LONG_VALUE));
     assertTrue(Double.MAX_VALUE == Double.longBitsToDouble(MAXD_LONG_VALUE));
     assertTrue(Double.MIN_VALUE == Double.longBitsToDouble(MIND_LONG_VALUE));
-    assertTrue(Double.MIN_NORMAL == Double.longBitsToDouble(MINNORM_LONG_VALUE));
     assertTrue(TEST1_DOUBLE_VALUE == Double.longBitsToDouble(TEST1_LONG_VALUE));
     assertTrue(-TEST1_DOUBLE_VALUE == Double.longBitsToDouble(NEGTEST1_LONG_VALUE));
+    // TODO(fabbott): swap back to Double.MIN_NORMAL when we use jdk 1.6
+    assertTrue(MIN_NORMAL == Double.longBitsToDouble(MINNORM_LONG_VALUE));
   }
 
   public void testParse() {
