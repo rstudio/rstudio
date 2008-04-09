@@ -23,6 +23,17 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class DoubleTest extends GWTTestCase {
 
+  // Some actual results from JDK1.6 VM doubleToLongBits calls    
+  private static final long NAN_LONG_VALUE = 0x7ff8000000000000L;
+  private static final long POSINF_LONG_VALUE = 0x7ff0000000000000L;
+  private static final long NEGINF_LONG_VALUE = 0xfff0000000000000L;
+  private static final long MAXD_LONG_VALUE = 0x7fefffffffffffffL;
+  private static final long MIND_LONG_VALUE = 0x1L;
+  private static final long MINNORM_LONG_VALUE = 0x10000000000000L;
+  private static final double TEST1_DOUBLE_VALUE = 2.3e27;
+  private static final long TEST1_LONG_VALUE = 0x459dba0fc757e49cL;
+  private static final long NEGTEST1_LONG_VALUE = 0xc59dba0fc757e49cL;
+
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -62,6 +73,31 @@ public class DoubleTest extends GWTTestCase {
     // Double.MAX_EXPONENT);
     // jdk1.6 assertEquals(Math.getExponent(Double.MIN_NORMAL),
     // Double.MIN_EXPONENT);
+  }
+
+  public void testDoubleToLongBits() {
+    assertEquals(Double.doubleToLongBits(Double.NaN), NAN_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.POSITIVE_INFINITY), POSINF_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.NEGATIVE_INFINITY), NEGINF_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.MIN_NORMAL), MINNORM_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(Double.MIN_NORMAL), MINNORM_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(TEST1_DOUBLE_VALUE), TEST1_LONG_VALUE);
+    assertEquals(Double.doubleToLongBits(-TEST1_DOUBLE_VALUE), NEGTEST1_LONG_VALUE);
+  }
+  
+  public void testLongBitsToDouble() {
+    assertTrue(Double.isNaN(Double.longBitsToDouble(NAN_LONG_VALUE)));
+    assertTrue(Double.POSITIVE_INFINITY == Double.longBitsToDouble(POSINF_LONG_VALUE));
+    assertTrue(Double.NEGATIVE_INFINITY == Double.longBitsToDouble(NEGINF_LONG_VALUE));
+    assertTrue(Double.MAX_VALUE == Double.longBitsToDouble(MAXD_LONG_VALUE));
+    assertTrue(Double.MIN_VALUE == Double.longBitsToDouble(MIND_LONG_VALUE));
+    assertTrue(Double.MIN_NORMAL == Double.longBitsToDouble(MINNORM_LONG_VALUE));
+    assertTrue(TEST1_DOUBLE_VALUE == Double.longBitsToDouble(TEST1_LONG_VALUE));
+    assertTrue(-TEST1_DOUBLE_VALUE == Double.longBitsToDouble(NEGTEST1_LONG_VALUE));
   }
 
   public void testParse() {
