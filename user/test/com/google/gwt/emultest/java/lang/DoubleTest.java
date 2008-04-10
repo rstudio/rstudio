@@ -37,7 +37,6 @@ public class DoubleTest extends GWTTestCase {
   // TODO(fabbott): this constants are from the JDK 1.6 Double, so we can't rely on them
   // when we build on 1.5! But when we *do* support 1.6, this def'n should go away
   public static final double MIN_NORMAL = 2.2250738585072014e-308;
-  
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
@@ -80,23 +79,22 @@ public class DoubleTest extends GWTTestCase {
 
   public void testDoubleToLongBits() {
     assertEquals("NaN double->longbits test",
-        Double.doubleToLongBits(Double.NaN), NAN_LONG_VALUE);
+        NAN_LONG_VALUE, Double.doubleToLongBits(Double.NaN));
     assertEquals("posinf double->longbits test",
-        Double.doubleToLongBits(Double.POSITIVE_INFINITY), POSINF_LONG_VALUE);
+        POSINF_LONG_VALUE, Double.doubleToLongBits(Double.POSITIVE_INFINITY));
     assertEquals("neginf double->longbits test",
-        Double.doubleToLongBits(Double.NEGATIVE_INFINITY), NEGINF_LONG_VALUE);
+        NEGINF_LONG_VALUE, Double.doubleToLongBits(Double.NEGATIVE_INFINITY));
     assertEquals("maxvalue double->longbits test",
-        Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
+        MAXD_LONG_VALUE, Double.doubleToLongBits(Double.MAX_VALUE));
     assertEquals("minvalue double->longbits test",
-        Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
+        MIND_LONG_VALUE, Double.doubleToLongBits(Double.MIN_VALUE));
     assertEquals("test1 double->longbits test",
-        Double.doubleToLongBits(TEST1_DOUBLE_VALUE), TEST1_LONG_VALUE);
+        TEST1_LONG_VALUE, Double.doubleToLongBits(TEST1_DOUBLE_VALUE));
     assertEquals("-test1 double->longbits test",
-        Double.doubleToLongBits(-TEST1_DOUBLE_VALUE), NEGTEST1_LONG_VALUE);
+        NEGTEST1_LONG_VALUE, Double.doubleToLongBits(-TEST1_DOUBLE_VALUE));
     // TODO(fabbott): swap back to Double.MIN_NORMAL when we use jdk 1.6
     assertEquals("minnormal double->longbits test", 
-        Double.doubleToLongBits(MIN_NORMAL), MINNORM_LONG_VALUE);
+        MINNORM_LONG_VALUE, Double.doubleToLongBits(MIN_NORMAL));
   }
   
   public void testLongBitsToDouble() {

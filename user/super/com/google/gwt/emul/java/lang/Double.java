@@ -38,8 +38,8 @@ public final class Double extends Number implements Comparable<Double> {
   // the exponent is biased by one less than its midpoint, e.g. 2^11 / 2 - 1;
   static final int EXPONENT_BIAS = 1 << (EXPONENT_BITSIZE - 1) - 1;
   // the mask is all 1 bits in the exponent, e.g. 0x7ff shifted over by 52
-  static final long EXPONENT_MASK = (1L
-      << EXPONENT_BITSIZE - 1) << MANTISSA_BITSIZE;
+  static final long EXPONENT_MASK = ((1L
+      << EXPONENT_BITSIZE) - 1) << MANTISSA_BITSIZE;
   // place 1-bit in top position
   static final long NAN_MANTISSA = 1L << (MANTISSA_BITSIZE - 1);
   // sign bit is the MSB bit
@@ -74,7 +74,7 @@ public final class Double extends Number implements Comparable<Double> {
 
     if (Double.isNaN(d)) {
       // IEEE754, NaN exponent bits all 1s, and mantissa is non-zero
-      return (1L << (EXPONENT_BITSIZE -1)) | NAN_MANTISSA;
+      return EXPONENT_MASK | NAN_MANTISSA;
     }
     if (Double.isInfinite(d)) {
       // an infinite number is a number with a zero mantissa and all
