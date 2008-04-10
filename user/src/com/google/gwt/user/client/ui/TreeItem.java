@@ -26,22 +26,24 @@ import java.util.List;
 /**
  * An item that can be contained within a
  * {@link com.google.gwt.user.client.ui.Tree}.
- *
+ * 
  * Each tree item is assigned a unique DOM id in order to support ARIA. See
  * {@link com.google.gwt.user.client.ui.Accessibility} for more information.
- *
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TreeExample}
  * </p>
  */
 public class TreeItem extends UIObject implements HasHTML {
+
   /**
    * An {@link WidgetAnimation} used to open the child elements. If a
    * {@link TreeItem} is in the process of opening, it will immediately be
    * opened and the new {@link TreeItem} will use this animation.
    */
   private static class TreeItemAnimation extends WidgetAnimation {
+
     /**
      * The {@link TreeItem} currently being affected.
      */
@@ -92,10 +94,12 @@ public class TreeItem extends UIObject implements HasHTML {
     public void onUpdate(double progress) {
       int scrollHeight = DOM.getElementPropertyInt(curItem.childSpanElem,
           "scrollHeight");
+
       int height = (int) (progress * scrollHeight);
       if (!opening) {
         height = scrollHeight - height;
       }
+
       DOM.setStyleAttribute(curItem.childSpanElem, "height", height + "px");
 
       // We need to set the width explicitly of the item might be cropped
@@ -125,62 +129,74 @@ public class TreeItem extends UIObject implements HasHTML {
     }
   }
 
+  // By not overwriting the default tree padding and spacing, we traditionally
+  // added 7 pixels between our image and content.
+  // <2>|<1>image<1>|<2>|<1>content
+  // So to preserve the current spacing we must add a 7 pixel pad when no image
+  // is supplied.
+  static final int IMAGE_PAD = 7;
+
   /**
    * The static animation used to open {@link TreeItem}s.
    */
-  private static TreeItemAnimation itemAnimation;
+  private static TreeItemAnimation itemAnimation = new TreeItemAnimation();
 
-  private ArrayList<TreeItem> children = new ArrayList<TreeItem>();
-  private Element itemTable, contentElem, childSpanElem;
-  private final Image statusImage = new Image();
+  /**
+   * The structured table to hold images.
+   */
+
+  private static Element BASE_INTERNAL_ELEM;
+  /**
+   * The base tree item element that will be cloned.
+   */
+  private static Element BASE_BARE_ELEM;
+  /**
+   * Static constructor to set up clonable elements.
+   */
+  static {
+    // Create the base table element that will be cloned.
+    BASE_INTERNAL_ELEM = DOM.createTable();
+    setStyleName(BASE_INTERNAL_ELEM, "gwt-TreeItem");
+    Element contentElem = DOM.createSpan();
+    Element tbody = DOM.createTBody(), tr = DOM.createTR();
+    Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
+    DOM.appendChild(BASE_INTERNAL_ELEM, tbody);
+    DOM.appendChild(tbody, tr);
+    DOM.appendChild(tr, tdImg);
+    DOM.appendChild(tr, tdContent);
+    DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
+    DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
+    DOM.appendChild(tdContent, contentElem);
+    DOM.setStyleAttribute(contentElem, "display", "inline");
+    DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
+
+    // Create the base element that will be cloned
+    BASE_BARE_ELEM = DOM.createDiv();
+
+    // Simulates padding from table element.
+    DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "3px");
+    DOM.appendChild(BASE_BARE_ELEM, contentElem);
+    Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
+  }
+  private ArrayList<TreeItem> children;
+  private Element contentElem, childSpanElem, imageHolder;
   private boolean open;
   private TreeItem parent;
   private boolean selected;
+
   private Object userObject;
+
   private Tree tree;
+
   private Widget widget;
 
   /**
    * Creates an empty tree item.
    */
   public TreeItem() {
-    setElement(DOM.createDiv());
-    itemTable = DOM.createTable();
-    contentElem = DOM.createSpan();
-    childSpanElem = DOM.createDiv();
-
-    // Uses the following Element hierarchy:
-    // <div (handle)>
-    // <table (itemElem)>
-    // <tr>
-    // <td><img (imgElem)/></td>
-    // <td><span (contents)/></td>
-    // </tr>
-    // </table>
-    // <div (childSpanElem)> children </div>
-    // </div>
-
-    Element tbody = DOM.createTBody(), tr = DOM.createTR();
-    Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
-    DOM.appendChild(itemTable, tbody);
-    DOM.appendChild(tbody, tr);
-    DOM.appendChild(tr, tdImg);
-    DOM.appendChild(tr, tdContent);
-    DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
-    DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
-
-    DOM.appendChild(getElement(), itemTable);
-    DOM.appendChild(getElement(), childSpanElem);
-    DOM.appendChild(tdImg, statusImage.getElement());
-    DOM.appendChild(tdContent, contentElem);
-
-    DOM.setStyleAttribute(contentElem, "display", "inline");
-    DOM.setStyleAttribute(getElement(), "whiteSpace", "nowrap");
-    DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
-    DOM.setStyleAttribute(childSpanElem, "padding", "0px");
-    setStyleName(contentElem, "gwt-TreeItem", true);
-
-    Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
+    Element elem = DOM.clone(BASE_BARE_ELEM, true);
+    setElement(elem);
+    contentElem = DOM.getFirstChild(elem);
     DOM.setElementAttribute(contentElem, "id", DOM.createUniqueId());
   }
 
@@ -218,7 +234,7 @@ public class TreeItem extends UIObject implements HasHTML {
 
   /**
    * Adds another item as a child to this one.
-   *
+   * 
    * @param item the item to be added
    */
   public void addItem(TreeItem item) {
@@ -227,17 +243,21 @@ public class TreeItem extends UIObject implements HasHTML {
       item.remove();
     }
 
+    if (children == null) {
+      initChildren();
+    }
+
     // Logical attach.
     item.setParentItem(this);
     children.add(item);
 
     // Physical attach.
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      DOM.setStyleAttribute(item.getElement(), "marginRight", "16px");      
+      DOM.setStyleAttribute(item.getElement(), "marginRight", "16px");
     } else {
-      DOM.setStyleAttribute(item.getElement(), "marginLeft", "16px");      
+      DOM.setStyleAttribute(item.getElement(), "marginLeft", "16px");
     }
-  
+
     DOM.appendChild(childSpanElem, item.getElement());
 
     // Adopt.
@@ -268,7 +288,7 @@ public class TreeItem extends UIObject implements HasHTML {
    */
 
   public TreeItem getChild(int index) {
-    if ((index < 0) || (index >= children.size())) {
+    if ((index < 0) || (index >= getChildCount())) {
       return null;
     }
 
@@ -282,6 +302,9 @@ public class TreeItem extends UIObject implements HasHTML {
    */
 
   public int getChildCount() {
+    if (children == null) {
+      return 0;
+    }
     return children.size();
   }
 
@@ -293,6 +316,9 @@ public class TreeItem extends UIObject implements HasHTML {
    */
 
   public int getChildIndex(TreeItem child) {
+    if (children == null) {
+      return -1;
+    }
     return children.indexOf(child);
   }
 
@@ -380,7 +406,7 @@ public class TreeItem extends UIObject implements HasHTML {
 
   public void removeItem(TreeItem item) {
     // Validate.
-    if (!children.contains(item)) {
+    if (children == null || !children.contains(item)) {
       return;
     }
 
@@ -424,7 +450,7 @@ public class TreeItem extends UIObject implements HasHTML {
       return;
     }
     this.selected = selected;
-    setStyleName(contentElem, "gwt-TreeItem-selected", selected);
+    setStyleName(getContentElem(), "gwt-TreeItem-selected", selected);
   }
 
   /**
@@ -444,7 +470,7 @@ public class TreeItem extends UIObject implements HasHTML {
    *          fired
    */
   public void setState(boolean open, boolean fireEvents) {
-    if (open && children.size() == 0) {
+    if (open && getChildCount() == 0) {
       return;
     }
 
@@ -532,7 +558,6 @@ public class TreeItem extends UIObject implements HasHTML {
   /**
    * <b>Affected Elements:</b>
    * <ul>
-   * <li>-image = The status image.</li>
    * <li>-content = The text or {@link Widget} next to the image.</li>
    * <li>-child# = The child at the specified index.</li>
    * </ul>
@@ -542,18 +567,24 @@ public class TreeItem extends UIObject implements HasHTML {
   @Override
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
-    statusImage.ensureDebugId(baseID + "-image");
     ensureDebugId(contentElem, baseID, "content");
+    if (imageHolder != null) {
+      // The image itself may or may not exist.
+      ensureDebugId(imageHolder, baseID, "image");
+    }
 
-    int childCount = 0;
-    for (TreeItem child : children) {
-      child.ensureDebugId(baseID + "-child" + childCount);
-      childCount++;
+    if (children != null) {
+      int childCount = 0;
+      for (TreeItem child : children) {
+        child.ensureDebugId(baseID + "-child" + childCount);
+        childCount++;
+      }
     }
   }
 
   void addTreeItems(List<TreeItem> accum) {
-    for (int i = 0; i < children.size(); i++) {
+    int size = getChildCount();
+    for (int i = 0; i < size; i++) {
       TreeItem item = children.get(i);
       accum.add(item);
       item.addTreeItems(accum);
@@ -568,12 +599,24 @@ public class TreeItem extends UIObject implements HasHTML {
     return contentElem;
   }
 
-  int getContentHeight() {
-    return DOM.getElementPropertyInt(itemTable, "offsetHeight");
+  Element getImageElement() {
+    return DOM.getFirstChild(getImageHolderElement());
   }
 
-  Element getImageElement() {
-    return statusImage.getElement();
+  Element getImageHolderElement() {
+    if (imageHolder == null) {
+      convertToFullNode();
+    }
+    return imageHolder;
+  }
+
+  void initChildren() {
+    convertToFullNode();
+    childSpanElem = DOM.createDiv();
+    DOM.appendChild(getElement(), childSpanElem);
+    DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
+    DOM.setStyleAttribute(childSpanElem, "overflow", "hidden");
+    children = new ArrayList<TreeItem>();
   }
 
   void setParentItem(TreeItem parent) {
@@ -598,7 +641,7 @@ public class TreeItem extends UIObject implements HasHTML {
     }
 
     tree = newTree;
-    for (int i = 0, n = children.size(); i < n; ++i) {
+    for (int i = 0, n = getChildCount(); i < n; ++i) {
       children.get(i).setTree(newTree);
     }
     updateState(false, true);
@@ -613,23 +656,21 @@ public class TreeItem extends UIObject implements HasHTML {
 
   void updateState(boolean animate, boolean updateTreeSelection) {
     // If the tree hasn't been set, there is no visual state to update.
-    if (tree == null) {
+    // If the tree is not attached, then update will be called on attach.
+    if (tree == null || tree.isAttached() == false) {
       return;
     }
 
-    TreeImages images = tree.getImages();
-
-    if (children.size() == 0) {
-      UIObject.setVisible(childSpanElem, false);
-      images.treeLeaf().applyTo(statusImage);
+    if (getChildCount() == 0) {
+      if (childSpanElem != null) {
+        UIObject.setVisible(childSpanElem, false);
+      }
+      tree.showLeafImage(this);
       return;
     }
 
     // We must use 'display' rather than 'visibility' here,
     // or the children will always take up space.
-    if (itemAnimation == null) {
-      itemAnimation = new TreeItemAnimation();
-    }
     if (animate && (tree != null) && (tree.isAttached())) {
       itemAnimation.setItemState(this, tree.isAnimationEnabled());
     } else {
@@ -638,14 +679,15 @@ public class TreeItem extends UIObject implements HasHTML {
 
     // Change the status image
     if (open) {
-      images.treeOpen().applyTo(statusImage);
+      tree.showOpenImage(this);
     } else {
-      images.treeClosed().applyTo(statusImage);
+      tree.showClosedImage(this);
     }
 
     // We may need to update the tree's selection in response to a tree state change. For
     // example, if the tree's currently selected item is a descendant of an item whose
     // branch was just collapsed, then the item itself should become the newly-selected item.
+    // itself should become the newly-selected item.
     if (updateTreeSelection) {
       tree.maybeUpdateSelection(this, this.open);
     }
@@ -656,9 +698,26 @@ public class TreeItem extends UIObject implements HasHTML {
     tree.maybeUpdateSelection(this, this.open);
   }
 
+  private void convertToFullNode() {
+    if (imageHolder == null) {
+      // Extract the Elements from the object
+      Element itemTable = DOM.clone(BASE_INTERNAL_ELEM, true);
+      DOM.appendChild(getElement(), itemTable);
+      Element tr = DOM.getFirstChild(DOM.getFirstChild(itemTable));
+      Element tdImg = DOM.getFirstChild(tr);
+      Element tdContent = DOM.getNextSibling(tdImg);
+
+      // Undoes padding from table element.
+      DOM.setStyleAttribute(getElement(), "padding", "0px");
+      DOM.setStyleAttribute(getElement(), "paddingLeft", "0px");
+      DOM.appendChild(tdContent, contentElem);
+      imageHolder = tdImg;
+    }
+  }
+
   private void updateStateRecursiveHelper() {
     updateState(false, false);
-    for (int i = 0, n = children.size(); i < n; ++i) {
+    for (int i = 0, n = getChildCount(); i < n; ++i) {
       children.get(i).updateStateRecursiveHelper();
     }
   }

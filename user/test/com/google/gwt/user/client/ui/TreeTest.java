@@ -88,10 +88,13 @@ public class TreeTest extends GWTTestCase {
         bottom1.getElement());
     UIObjectTest.assertDebugId("myTree-root-child3-child2",
         bottom2.getElement());
-    
+
     // Check tree item sub elements
-    UIObjectTest.assertDebugId("myTree-root-child0-content", top0.getContentElem());
-    UIObjectTest.assertDebugId("myTree-root-child0-image", top0.getImageElement());
+    UIObjectTest.assertDebugId("myTree-root-child0-content",
+        top0.getContentElem());
+
+    UIObjectTest.assertDebugId("myTree-root-child3-image",
+        top3.getImageHolderElement());
   }
 
   public void testInsertSameItemRepeatedly() {
