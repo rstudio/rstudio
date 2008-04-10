@@ -79,39 +79,57 @@ public class DoubleTest extends GWTTestCase {
   }
 
   public void testDoubleToLongBits() {
-    assertEquals(Double.doubleToLongBits(Double.NaN), NAN_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.POSITIVE_INFINITY), POSINF_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.NEGATIVE_INFINITY), NEGINF_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
+    assertEquals("NaN double->longbits test",
+        Double.doubleToLongBits(Double.NaN), NAN_LONG_VALUE);
+    assertEquals("posinf double->longbits test",
+        Double.doubleToLongBits(Double.POSITIVE_INFINITY), POSINF_LONG_VALUE);
+    assertEquals("neginf double->longbits test",
+        Double.doubleToLongBits(Double.NEGATIVE_INFINITY), NEGINF_LONG_VALUE);
+    assertEquals("maxvalue double->longbits test",
+        Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
+    assertEquals("minvalue double->longbits test",
+        Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
     assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.MAX_VALUE), MAXD_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(Double.MIN_VALUE), MIND_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(TEST1_DOUBLE_VALUE), TEST1_LONG_VALUE);
-    assertEquals(Double.doubleToLongBits(-TEST1_DOUBLE_VALUE), NEGTEST1_LONG_VALUE);
+    assertEquals("test1 double->longbits test",
+        Double.doubleToLongBits(TEST1_DOUBLE_VALUE), TEST1_LONG_VALUE);
+    assertEquals("-test1 double->longbits test",
+        Double.doubleToLongBits(-TEST1_DOUBLE_VALUE), NEGTEST1_LONG_VALUE);
     // TODO(fabbott): swap back to Double.MIN_NORMAL when we use jdk 1.6
-    assertEquals(Double.doubleToLongBits(MIN_NORMAL), MINNORM_LONG_VALUE);
+    assertEquals("minnormal double->longbits test", 
+        Double.doubleToLongBits(MIN_NORMAL), MINNORM_LONG_VALUE);
   }
   
   public void testLongBitsToDouble() {
-    assertTrue(Double.isNaN(Double.longBitsToDouble(NAN_LONG_VALUE)));
-    assertTrue(Double.POSITIVE_INFINITY == Double.longBitsToDouble(POSINF_LONG_VALUE));
-    assertTrue(Double.NEGATIVE_INFINITY == Double.longBitsToDouble(NEGINF_LONG_VALUE));
-    assertTrue(Double.MAX_VALUE == Double.longBitsToDouble(MAXD_LONG_VALUE));
-    assertTrue(Double.MIN_VALUE == Double.longBitsToDouble(MIND_LONG_VALUE));
-    assertTrue(TEST1_DOUBLE_VALUE == Double.longBitsToDouble(TEST1_LONG_VALUE));
-    assertTrue(-TEST1_DOUBLE_VALUE == Double.longBitsToDouble(NEGTEST1_LONG_VALUE));
+    assertTrue("isNaN longbits->double test", 
+        Double.isNaN(Double.longBitsToDouble(NAN_LONG_VALUE)));
+    assertEquals("posinf longbits->double test", 
+        Double.POSITIVE_INFINITY, Double.longBitsToDouble(POSINF_LONG_VALUE));
+    assertEquals("neginf longbits->double test", 
+        Double.NEGATIVE_INFINITY, Double.longBitsToDouble(NEGINF_LONG_VALUE));
+    assertEquals("maxval longbits->double test", 
+        Double.MAX_VALUE, Double.longBitsToDouble(MAXD_LONG_VALUE));
+    assertEquals("minval longbits->double test", 
+        Double.MIN_VALUE, Double.longBitsToDouble(MIND_LONG_VALUE));
+    assertEquals("test1 longbits->double test", 
+        TEST1_DOUBLE_VALUE, Double.longBitsToDouble(TEST1_LONG_VALUE));
+    assertEquals("-test1 longbits->double test", 
+        -TEST1_DOUBLE_VALUE, Double.longBitsToDouble(NEGTEST1_LONG_VALUE));
     // TODO(fabbott): swap back to Double.MIN_NORMAL when we use jdk 1.6
-    assertTrue(MIN_NORMAL == Double.longBitsToDouble(MINNORM_LONG_VALUE));
+    assertEquals("minnormal longbits->double test", 
+        MIN_NORMAL, Double.longBitsToDouble(MINNORM_LONG_VALUE));
   }
 
   public void testParse() {
-    assertTrue(0 == Double.parseDouble("0"));
-    assertTrue(-1.5 == Double.parseDouble("-1.5"));
-    assertTrue(3.0 == Double.parseDouble("3."));
-    assertTrue(0.5 == Double.parseDouble(".5"));
-    assertTrue(2.98e8 == Double.parseDouble("2.98e8"));
-    assertTrue(-2.98e-8 == Double.parseDouble("-2.98e-8"));
-    assertTrue(+2.98E+8 == Double.parseDouble("+2.98E+8"));
+    assertEquals(0.0, Double.parseDouble("0"));
+    assertEquals(-1.5, Double.parseDouble("-1.5"));
+    assertEquals(3.0, Double.parseDouble("3."));
+    assertEquals(0.5, Double.parseDouble(".5"));
+    assertEquals("parse of 2.98e8", 
+        2.98e8, Double.parseDouble("2.98e8"));
+    assertEquals("parse of -2.98e-8", 
+        -2.98e-8, Double.parseDouble("-2.98e-8"));
+    assertEquals("parse of 2.08E+8", 
+        +2.98E+8, Double.parseDouble("+2.98E+8"));
     assertTrue(
         "Can't parse MIN_VALUE",
         Double.MIN_VALUE == Double.parseDouble(String.valueOf(Double.MIN_VALUE)));

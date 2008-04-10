@@ -74,7 +74,7 @@ public final class Double extends Number implements Comparable<Double> {
 
     if (Double.isNaN(d)) {
       // IEEE754, NaN exponent bits all 1s, and mantissa is non-zero
-      return EXPONENT_MASK | NAN_MANTISSA;
+      return (1L << (EXPONENT_BITSIZE -1)) | NAN_MANTISSA;
     }
     if (Double.isInfinite(d)) {
       // an infinite number is a number with a zero mantissa and all
