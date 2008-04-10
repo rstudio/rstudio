@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
+import com.google.gwt.user.client.rpc.StatusCodeException;
 
 /**
  * Adapter from a {@link RequestCallback} interface to an {@link AsyncCallback}
@@ -34,6 +35,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
  * @param <T> the type parameter for the {@link AsyncCallback}
  */
 public class RequestCallbackAdapter<T> implements RequestCallback {
+
   /**
    * Enumeration used to read specific return types out of a
    * {@link SerializationStreamReader}.
@@ -181,13 +183,18 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
     Throwable caught = null;
     try {
       String encodedResponse = response.getText();
-
+      int statusCode = response.getStatusCode();
       boolean toss = RemoteServiceProxy.isStatsAvailable()
           && RemoteServiceProxy.stats(methodName + ":" + requestId
               + ":responseReceived", RemoteServiceProxy.bytesStat(methodName,
               requestId, encodedResponse.length()));
 
-      if (RemoteServiceProxy.isReturnValue(encodedResponse)) {
+      if (statusCode != Response.SC_OK) {
+        caught = new StatusCodeException(statusCode, encodedResponse);
+      } else if (encodedResponse == null) {
+        // This can happen if the XHR is interrupted by the server dying
+        caught = new InvocationException("No response payload");
+      } else if (RemoteServiceProxy.isReturnValue(encodedResponse)) {
         result = (T) responseReader.read(streamFactory.createStreamReader(encodedResponse));
       } else if (RemoteServiceProxy.isThrownException(encodedResponse)) {
         caught = (Throwable) streamFactory.createStreamReader(encodedResponse).readObject();

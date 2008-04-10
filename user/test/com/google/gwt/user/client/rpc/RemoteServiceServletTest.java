@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -50,6 +51,29 @@ public class RemoteServiceServletTest extends GWTTestCase {
 
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
+  }
+
+  public void testAlternateStatusCode() {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+    ((ServiceDefTarget) service).setServiceEntryPoint(GWT.getModuleBaseURL()
+        + "404");
+
+    service.test(new AsyncCallback<Void>() {
+
+      public void onFailure(Throwable caught) {
+        if (caught instanceof StatusCodeException) {
+          assertEquals(Response.SC_NOT_FOUND,
+              ((StatusCodeException) caught).getStatusCode());
+          finishTest();
+        } else {
+          TestSetValidator.rethrowException(caught);
+        }
+      }
+
+      public void onSuccess(Void result) {
+        fail();
+      }
+    });
   }
 
   public void testManualSend() throws RequestException {
