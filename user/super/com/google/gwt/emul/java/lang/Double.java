@@ -34,8 +34,7 @@ public final class Double extends Number implements Comparable<Double> {
   public static final int SIZE = 64;
   static final int EXPONENT_BITSIZE = 11;
   // the extra -1 is for the sign bit
-  static final int MANTISSA_BITSIZE = SIZE - EXPONENT_BITSIZE
-      - 1;
+  static final int MANTISSA_BITSIZE = SIZE - EXPONENT_BITSIZE - 1;
   // the exponent is biased by one less than its midpoint, e.g. 2^11 / 2 - 1;
   static final int EXPONENT_BIAS = 1 << (EXPONENT_BITSIZE - 1) - 1;
   // the mask is all 1 bits in the exponent, e.g. 0x7ff shifted over by 52
@@ -48,8 +47,7 @@ public final class Double extends Number implements Comparable<Double> {
   // Zero represented in biased form
   static final int BIASED_ZERO_EXPONENT = EXPONENT_BIAS;
   // The maximum mantissa value, represented as a double
-  static final double MAX_MANTISSA_VALUE = Math
-      .pow(2, MANTISSA_BITSIZE);
+  static final double MAX_MANTISSA_VALUE = Math.pow(2, MANTISSA_BITSIZE);
   // The mantissa of size MANTISSA_BITSIZE with all bits set to 1_
   static final long MANTISSA_MASK = (1L << MANTISSA_BITSIZE) - 1;
 
@@ -178,8 +176,7 @@ public final class Double extends Number implements Comparable<Double> {
     // non-denormized numbers get 1.0 added back, since our first digit is 
     // always a 1
     // mantissa is divided by 2^52, and multiplied by 2^exponent
-    return sign * ((mantissa / MAX_MANTISSA_VALUE + (1 - denorm)) * Math
-        .pow(2, exp));
+    return sign * ((mantissa / MAX_MANTISSA_VALUE + (1 - denorm)) * Math.pow(2, exp));
   }
 
   public static double parseDouble(String s) throws NumberFormatException {
