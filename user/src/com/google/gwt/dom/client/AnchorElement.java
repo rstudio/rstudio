@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * The anchor element.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-A
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-A">W3C HTML Specification</a>
  */
 public class AnchorElement extends Element {
 
@@ -51,7 +51,7 @@ public class AnchorElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
     return this.accessKey;
@@ -60,7 +60,7 @@ public class AnchorElement extends Element {
   /**
    * The absolute URI of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
   public final native String getHref() /*-{
     return this.href;
@@ -69,7 +69,7 @@ public class AnchorElement extends Element {
   /**
    * Language code of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang">W3C HTML Specification</a>
    */
   public final native String getHreflang() /*-{
      return this.hreflang;
@@ -78,7 +78,7 @@ public class AnchorElement extends Element {
   /**
    * Anchor name.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-name-A
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-name-A">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -87,7 +87,7 @@ public class AnchorElement extends Element {
   /**
    * Forward link type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel">W3C HTML Specification</a>
    */
   public final native String getRel() /*-{
      return this.name;
@@ -96,7 +96,7 @@ public class AnchorElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native int getTabIndex() /*-{
     return this.tabIndex;
@@ -105,7 +105,7 @@ public class AnchorElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native String getTarget() /*-{
     return this.target;
@@ -114,7 +114,7 @@ public class AnchorElement extends Element {
   /**
    * Advisory content type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
      return this.type;
@@ -123,7 +123,7 @@ public class AnchorElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
     this.accessKey = accessKey;
@@ -132,7 +132,7 @@ public class AnchorElement extends Element {
   /**
    * The absolute URI of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
   public final native void setHref(String href) /*-{
     this.href = href;
@@ -141,7 +141,7 @@ public class AnchorElement extends Element {
   /**
    * Language code of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang">W3C HTML Specification</a>
    */
   public final native void setHreflang(String hreflang) /*-{
      this.hreflang = hreflang;
@@ -150,7 +150,7 @@ public class AnchorElement extends Element {
   /**
    * Anchor name.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-name-A
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-name-A">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;
@@ -159,7 +159,7 @@ public class AnchorElement extends Element {
   /**
    * Forward link type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel">W3C HTML Specification</a>
    */
   public final native void setRel(String name) /*-{
      this.name = name;
@@ -168,7 +168,7 @@ public class AnchorElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native void setTabIndex(int tabIndex) /*-{
     this.tabIndex = tabIndex;
@@ -177,7 +177,7 @@ public class AnchorElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native void setTarget(String target) /*-{
     this.target = target;
@@ -186,7 +186,7 @@ public class AnchorElement extends Element {
   /**
    * Advisory content type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A">W3C HTML Specification</a>
    */
   public final native void setType(String type) /*-{
      this.type = type;

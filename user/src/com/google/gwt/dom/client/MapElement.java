@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Client-side image map.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-MAP
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-MAP">W3C HTML Specification</a>
  */
 public class MapElement extends Element {
 
@@ -44,7 +44,7 @@ public class MapElement extends Element {
   /**
    * Names the map (for use with usemap).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-MAP
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-MAP">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -53,7 +53,7 @@ public class MapElement extends Element {
   /**
    * Names the map (for use with usemap).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-MAP
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-MAP">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;

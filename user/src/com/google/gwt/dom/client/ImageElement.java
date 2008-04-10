@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Embedded image.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-IMG
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-IMG">W3C HTML Specification</a>
  */
 public class ImageElement extends Element {
 
@@ -38,7 +38,7 @@ public class ImageElement extends Element {
    * Alternate text for user agents not rendering the normal content of this
    * element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt">W3C HTML Specification</a>
    */
   public final native String getAlt() /*-{
     return this.alt;
@@ -47,7 +47,7 @@ public class ImageElement extends Element {
   /**
    * Height of the image in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG">W3C HTML Specification</a>
    */
   public final native int getHeight() /*-{
     return this.height;
@@ -56,7 +56,7 @@ public class ImageElement extends Element {
   /**
    * URI designating the source of this image.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-src-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-src-IMG">W3C HTML Specification</a>
    */
   public final String getSrc() {
     return DOMImpl.impl.imgGetSrc(this);
@@ -65,7 +65,7 @@ public class ImageElement extends Element {
   /**
    * The width of the image in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG">W3C HTML Specification</a>
    */
   public final native int getWidth() /*-{
     return this.width;
@@ -74,7 +74,7 @@ public class ImageElement extends Element {
   /**
    * Use server-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-ismap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-ismap">W3C HTML Specification</a>
    */
   public final native boolean isMap() /*-{
      return this.isMap;
@@ -84,7 +84,7 @@ public class ImageElement extends Element {
    * Alternate text for user agents not rendering the normal content of this
    * element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt">W3C HTML Specification</a>
    */
   public final native void setAlt(String alt) /*-{
     this.alt = alt;
@@ -93,7 +93,7 @@ public class ImageElement extends Element {
   /**
    * Height of the image in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG">W3C HTML Specification</a>
    */
   public final native void setHeight(int height) /*-{
     this.height = height;
@@ -102,7 +102,7 @@ public class ImageElement extends Element {
   /**
    * Use server-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-ismap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-ismap">W3C HTML Specification</a>
    */
   public final native void setIsMap(boolean isMap) /*-{
      this.isMap = isMap;
@@ -111,7 +111,7 @@ public class ImageElement extends Element {
   /**
    * URI designating the source of this image.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-src-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-src-IMG">W3C HTML Specification</a>
    */
   public final void setSrc(String src) {
     DOMImpl.impl.imgSetSrc(this, src);
@@ -120,7 +120,7 @@ public class ImageElement extends Element {
   /**
    * Use client-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native void setUseMap(boolean useMap) /*-{
      this.useMap = useMap;
@@ -129,7 +129,7 @@ public class ImageElement extends Element {
   /**
    * The width of the image in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG">W3C HTML Specification</a>
    */
   public final native void setWidth(int width) /*-{
       this.width = width;
@@ -138,7 +138,7 @@ public class ImageElement extends Element {
   /**
    * Use client-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native boolean useMap() /*-{
      return this.useMap;

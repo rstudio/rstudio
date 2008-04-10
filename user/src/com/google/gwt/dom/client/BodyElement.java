@@ -19,7 +19,7 @@ package com.google.gwt.dom.client;
  * The HTML document body. This element is always present in the DOM API, even
  * if the tags are not present in the source document.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-BODY
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-BODY">W3C HTML Specification</a>
  */
 public class BodyElement extends Element {
 

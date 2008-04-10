@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * This contains generic meta-information about the document.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-META
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-META">W3C HTML Specification</a>
  */
 public class MetaElement extends Element {
 
@@ -37,7 +37,7 @@ public class MetaElement extends Element {
   /**
    * Associated information.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-content
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-content">W3C HTML Specification</a>
    */
   public final native String getContent() /*-{
      return this.content;
@@ -46,7 +46,7 @@ public class MetaElement extends Element {
   /**
    * HTTP response header name [IETF RFC 2616].
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-http-equiv
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-http-equiv">W3C HTML Specification</a>
    */
   public final native String getHttpEquiv() /*-{
      return this.httpEquiv;
@@ -55,7 +55,7 @@ public class MetaElement extends Element {
   /**
    * Meta information name.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-name-META
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-name-META">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -64,7 +64,7 @@ public class MetaElement extends Element {
   /**
    * Associated information.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-content
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-content">W3C HTML Specification</a>
    */
   public final native void setContent(String content) /*-{
      this.content = content;
@@ -73,7 +73,7 @@ public class MetaElement extends Element {
   /**
    * HTTP response header name [IETF RFC 2616].
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-http-equiv
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-http-equiv">W3C HTML Specification</a>
    */
   public final native void setHttpEquiv(String httpEquiv) /*-{
      this.httpEquiv = httpEquiv;
@@ -82,7 +82,7 @@ public class MetaElement extends Element {
   /**
    * Meta information name.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-name-META
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-name-META">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * For the H1 to H6 elements.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-H1
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-H1">W3C HTML Specification</a>
  */
 public class HeadingElement extends Element {
 

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Regroups the COL and COLGROUP elements.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-COL
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-COL">W3C HTML Specification</a>
  */
 public class TableColElement extends Element {
 
@@ -38,7 +38,7 @@ public class TableColElement extends Element {
   /**
    * Horizontal alignment of cell data in column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
    */
   public final native String getAlign() /*-{
     return this.align;
@@ -47,7 +47,7 @@ public class TableColElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native String getCh() /*-{
      return this.ch;
@@ -56,7 +56,7 @@ public class TableColElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native String getChOff() /*-{
      return this.chOff;
@@ -65,7 +65,7 @@ public class TableColElement extends Element {
   /**
    * Indicates the number of columns in a group or affected by a grouping.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-span-COL
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-span-COL">W3C HTML Specification</a>
    */
   public final native int getSpan() /*-{
     return this.span;
@@ -74,7 +74,7 @@ public class TableColElement extends Element {
   /**
    * Vertical alignment of cell data in column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign">W3C HTML Specification</a>
    */
   public final native String getVAlign() /*-{
     return this.vAlign;
@@ -83,7 +83,7 @@ public class TableColElement extends Element {
   /**
    * Default column width.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-COL
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-COL">W3C HTML Specification</a>
    */
   public final native String getWidth() /*-{
     return this.width;
@@ -92,7 +92,7 @@ public class TableColElement extends Element {
   /**
    * Horizontal alignment of cell data in column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
    */
   public final native void setAlign(String align) /*-{
     this.align = align;
@@ -101,7 +101,7 @@ public class TableColElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native void setCh(String ch) /*-{
      this.ch = ch;
@@ -110,7 +110,7 @@ public class TableColElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native void setChOff(String chOff) /*-{
      this.chOff = chOff;
@@ -119,7 +119,7 @@ public class TableColElement extends Element {
   /**
    * Indicates the number of columns in a group or affected by a grouping.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-span-COL
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-span-COL">W3C HTML Specification</a>
    */
   public final native void setSpan(int span) /*-{
     this.span = span;
@@ -128,7 +128,7 @@ public class TableColElement extends Element {
   /**
    * Vertical alignment of cell data in column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign">W3C HTML Specification</a>
    */
   public final native void setVAlign(String vAlign) /*-{
     this.vAlign = vAlign;
@@ -137,7 +137,7 @@ public class TableColElement extends Element {
   /**
    * Default column width.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-COL
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-COL">W3C HTML Specification</a>
    */
   public final native void setWidth(String width) /*-{
     this.width = width;

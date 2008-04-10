@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * List item.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-LI
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-LI">W3C HTML Specification</a>
  */
 public class LIElement extends Element {
 

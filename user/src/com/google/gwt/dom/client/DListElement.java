@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Definition list.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-DL
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-DL">W3C HTML Specification</a>
  */
 public class DListElement extends Element {
 

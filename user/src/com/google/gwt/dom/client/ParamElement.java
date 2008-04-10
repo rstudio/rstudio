@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Parameters fed to the OBJECT element.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-PARAM
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-PARAM">W3C HTML Specification</a>
  */
 public class ParamElement extends Element {
 
@@ -37,7 +37,7 @@ public class ParamElement extends Element {
   /**
    * The name of a run-time parameter.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-PARAM
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-PARAM">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -46,7 +46,7 @@ public class ParamElement extends Element {
   /**
    * The value of a run-time parameter.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-value-PARAM
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-value-PARAM">W3C HTML Specification</a>
    */
   public final native String getValue() /*-{
      return this.value;
@@ -55,7 +55,7 @@ public class ParamElement extends Element {
   /**
    * The name of a run-time parameter.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-PARAM
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-name-PARAM">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;
@@ -64,7 +64,7 @@ public class ParamElement extends Element {
   /**
    * The value of a run-time parameter.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-value-PARAM
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-value-PARAM">W3C HTML Specification</a>
    */
   public final native void setValue(String value) /*-{
      this.value = value;

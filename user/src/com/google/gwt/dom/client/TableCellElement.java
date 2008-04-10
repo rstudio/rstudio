@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * The object used to represent the TH and TD elements.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TD
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TD">W3C HTML Specification</a>
  */
 public class TableCellElement extends Element {
 
@@ -37,7 +37,7 @@ public class TableCellElement extends Element {
   /**
    * Horizontal alignment of data in cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
    */
   public final native String getAlign() /*-{
      return this.align;
@@ -56,7 +56,7 @@ public class TableCellElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native String getCh() /*-{
      return this.ch;
@@ -65,7 +65,7 @@ public class TableCellElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native String getChOff() /*-{
      return this.chOff;
@@ -74,7 +74,7 @@ public class TableCellElement extends Element {
   /**
    * Number of columns spanned by cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan">W3C HTML Specification</a>
    */
   public final native int getColSpan() /*-{
      return this.colSpan;
@@ -83,7 +83,7 @@ public class TableCellElement extends Element {
   /**
    * List of id attribute values for header cells.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-headers
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-headers">W3C HTML Specification</a>
    */
   public final native String getHeaders() /*-{
      return this.headers;
@@ -92,7 +92,7 @@ public class TableCellElement extends Element {
   /**
    * Number of rows spanned by cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan">W3C HTML Specification</a>
    */
   public final native int getRowSpan() /*-{
      return this.rowSpan;
@@ -101,7 +101,7 @@ public class TableCellElement extends Element {
   /**
    * Vertical alignment of data in cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign">W3C HTML Specification</a>
    */
   public final native String getVAlign() /*-{
      return this.vAlign;
@@ -110,7 +110,7 @@ public class TableCellElement extends Element {
   /**
    * Horizontal alignment of data in cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
    */
   public final native void setAlign(String align) /*-{
      this.align = align;
@@ -119,7 +119,7 @@ public class TableCellElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native void setCh(String ch) /*-{
      this.ch = ch;
@@ -128,7 +128,7 @@ public class TableCellElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native void setChOff(String chOff) /*-{
      this.chOff = chOff;
@@ -137,7 +137,7 @@ public class TableCellElement extends Element {
   /**
    * Number of columns spanned by cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-colspan">W3C HTML Specification</a>
    */
   public final native void setColSpan(int colSpan) /*-{
      this.colSpan = colSpan;
@@ -146,7 +146,7 @@ public class TableCellElement extends Element {
   /**
    * List of id attribute values for header cells.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-headers
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-headers">W3C HTML Specification</a>
    */
   public final native void setHeaders(String headers) /*-{
      this.headers = headers;
@@ -155,7 +155,7 @@ public class TableCellElement extends Element {
   /**
    * Number of rows spanned by cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rowspan">W3C HTML Specification</a>
    */
   public final native void setRowSpan(int rowSpan) /*-{
      this.rowSpan = rowSpan;
@@ -164,7 +164,7 @@ public class TableCellElement extends Element {
   /**
    * Vertical alignment of data in cell.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign">W3C HTML Specification</a>
    */
   public final native void setVAlign(String vAlign) /*-{
      this.vAlign = vAlign;

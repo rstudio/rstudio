@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * For the Q and BLOCKQUOTE elements.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-Q
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-Q">W3C HTML Specification</a>
  */
 public class QuoteElement extends Element {
 
@@ -37,7 +37,7 @@ public class QuoteElement extends Element {
   /**
    * A URI designating a source document or message.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q">W3C HTML Specification</a>
    */
   public final native String getCite() /*-{
     return this.cite;
@@ -46,7 +46,7 @@ public class QuoteElement extends Element {
   /**
    * A URI designating a source document or message.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-cite-Q">W3C HTML Specification</a>
    */
   public final native void setCite(String cite) /*-{
     this.cite = cite;

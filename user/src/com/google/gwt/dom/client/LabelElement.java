@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Form field label text.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-LABEL
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-LABEL">W3C HTML Specification</a>
  */
 public class LabelElement extends Element {
 
@@ -37,7 +37,7 @@ public class LabelElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
     return this.accessKey;
@@ -54,7 +54,7 @@ public class LabelElement extends Element {
   /**
    * This attribute links this label with another form control by id attribute.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-for
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-for">W3C HTML Specification</a>
    */
   public final native String getHtmlFor() /*-{
     return this.htmlFor;
@@ -63,7 +63,7 @@ public class LabelElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
     this.accessKey = accessKey;
@@ -72,7 +72,7 @@ public class LabelElement extends Element {
   /**
    * This attribute links this label with another form control by id attribute.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-for
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-for">W3C HTML Specification</a>
    */
   public final native void setHtmlFor(String htmlFor) /*-{
     this.htmlFor = htmlFor;

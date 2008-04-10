@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Document base URI.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-BASE
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-BASE">W3C HTML Specification</a>
  */
 public class BaseElement extends Element {
 
@@ -38,7 +38,7 @@ public class BaseElement extends Element {
    * The base URI See the href attribute definition in HTML
    * 4.01.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href-BASE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href-BASE">W3C HTML Specification</a>
    */
   public final native String getHref() /*-{
      return this.href;
@@ -47,7 +47,7 @@ public class BaseElement extends Element {
   /**
    * The default target frame.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */ 
   public final native String getTarget() /*-{
      return this.target;
@@ -57,7 +57,7 @@ public class BaseElement extends Element {
    * The base URI See the href attribute definition in HTML
    * 4.01.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href-BASE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href-BASE">W3C HTML Specification</a>
    */
   public final native void setHref(String href) /*-{
      this.href = href;
@@ -66,7 +66,7 @@ public class BaseElement extends Element {
   /**
    * The default target frame.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */ 
   public final native void setTarget(String target) /*-{
      this.target = target;

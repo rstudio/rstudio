@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Push button.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-BUTTON
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-BUTTON">W3C HTML Specification</a>
  */
 public class ButtonElement extends Element {
 
@@ -44,7 +44,7 @@ public class ButtonElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
      return this.accessKey;
@@ -53,7 +53,7 @@ public class ButtonElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native String getDisabled() /*-{
      return this.disabled;
@@ -70,7 +70,7 @@ public class ButtonElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-BUTTON
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-BUTTON">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -79,7 +79,7 @@ public class ButtonElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native int getTabIndex() /*-{
      return this.tabIndex;
@@ -88,7 +88,7 @@ public class ButtonElement extends Element {
   /**
    * The type of button (all lower case).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-type-BUTTON
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-type-BUTTON">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
      return this.type;
@@ -97,7 +97,7 @@ public class ButtonElement extends Element {
   /**
    * The current form control value.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-BUTTON
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-BUTTON">W3C HTML Specification</a>
    */
   public final native String getValue() /*-{
      return this.value;
@@ -106,7 +106,7 @@ public class ButtonElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
      this.accessKey = accessKey;
@@ -115,7 +115,7 @@ public class ButtonElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(String disabled) /*-{
      this.disabled = disabled;
@@ -124,7 +124,7 @@ public class ButtonElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-BUTTON
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-BUTTON">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;
@@ -133,7 +133,7 @@ public class ButtonElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native void setTabIndex(int tabIndex) /*-{
      this.tabIndex = tabIndex;
@@ -142,7 +142,7 @@ public class ButtonElement extends Element {
   /**
    * The current form control value.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-BUTTON
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-BUTTON">W3C HTML Specification</a>
    */
   public final native void setValue(String value) /*-{
      this.value = value;

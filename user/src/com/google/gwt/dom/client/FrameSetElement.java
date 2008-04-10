@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Create a grid of frames.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#edef-FRAMESET
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#edef-FRAMESET">W3C HTML Specification</a>
  */
 public class FrameSetElement extends Element {
 
@@ -37,7 +37,7 @@ public class FrameSetElement extends Element {
   /**
    * The number of columns of frames in the frameset.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-cols-FRAMESET
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-cols-FRAMESET">W3C HTML Specification</a>
    */
   public final native String getCols() /*-{
      return this.cols;
@@ -46,7 +46,7 @@ public class FrameSetElement extends Element {
   /**
    * The number of rows of frames in the frameset.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-rows-FRAMESET
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-rows-FRAMESET">W3C HTML Specification</a>
    */
   public final native String getRows() /*-{
      return this.rows;
@@ -55,7 +55,7 @@ public class FrameSetElement extends Element {
   /**
    * The number of columns of frames in the frameset.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-cols-FRAMESET
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-cols-FRAMESET">W3C HTML Specification</a>
    */
   public final native void setCols(String cols) /*-{
      this.cols = cols;
@@ -64,7 +64,7 @@ public class FrameSetElement extends Element {
   /**
    * The number of rows of frames in the frameset.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-rows-FRAMESET
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-rows-FRAMESET">W3C HTML Specification</a>
    */
   public final native void setRows(String rows) /*-{
      this.rows = rows;

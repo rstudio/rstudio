@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Provides a caption for a FIELDSET grouping.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-LEGEND
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-LEGEND">W3C HTML Specification</a>
  */
 public class LegendElement extends Element {
 
@@ -37,7 +37,7 @@ public class LegendElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
     return this.accessKey;
@@ -54,7 +54,7 @@ public class LegendElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
     this.accessKey = accessKey;

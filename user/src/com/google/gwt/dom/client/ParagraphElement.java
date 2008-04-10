@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Paragraphs.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-P
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-P">W3C HTML Specification</a>
  */
 public class ParagraphElement extends Element {
 

@@ -19,7 +19,7 @@ package com.google.gwt.dom.client;
  * The LINK element specifies a link to an external resource, and defines this
  * document's relationship to that resource (or vice versa).
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-LINK
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-LINK">W3C HTML Specification</a>
  */
 public class LinkElement extends Element {
 
@@ -46,7 +46,7 @@ public class LinkElement extends Element {
   /**
    * The URI of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
   public final native String getHref() /*-{
      return this.href;
@@ -55,7 +55,7 @@ public class LinkElement extends Element {
   /**
    * Language code of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang">W3C HTML Specification</a>
    */
   public final native String getHreflang() /*-{
      return this.hreflang;
@@ -64,7 +64,7 @@ public class LinkElement extends Element {
   /**
    * Designed for use with one or more target media.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media">W3C HTML Specification</a>
    */
   public final native String getMedia() /*-{
      return this.media;
@@ -73,7 +73,7 @@ public class LinkElement extends Element {
   /**
    * Forward link type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel">W3C HTML Specification</a>
    */
   public final native String getRel() /*-{
      return this.rel;
@@ -82,7 +82,7 @@ public class LinkElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native String getTarget() /*-{
      return this.target;
@@ -91,7 +91,7 @@ public class LinkElement extends Element {
   /**
    * Advisory content type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
      return this.type;
@@ -108,7 +108,7 @@ public class LinkElement extends Element {
   /**
    * The URI of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
   public final native void setHref(String href) /*-{
      this.href = href;
@@ -117,7 +117,7 @@ public class LinkElement extends Element {
   /**
    * Language code of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-hreflang">W3C HTML Specification</a>
    */
   public final native void setHreflang(String hreflang) /*-{
      this.hreflang = hreflang;
@@ -126,7 +126,7 @@ public class LinkElement extends Element {
   /**
    * Designed for use with one or more target media.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media">W3C HTML Specification</a>
    */
   public final native void setMedia(String media) /*-{
      this.media = media;
@@ -135,7 +135,7 @@ public class LinkElement extends Element {
   /**
    * Forward link type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-rel">W3C HTML Specification</a>
    */
   public final native void setRel(String rel) /*-{
      this.rel = rel;
@@ -144,7 +144,7 @@ public class LinkElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native void setTarget(String target) /*-{
      this.target = target;
@@ -153,7 +153,7 @@ public class LinkElement extends Element {
   /**
    * Advisory content type.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-type-A">W3C HTML Specification</a>
    */
   public final native void setType(String type) /*-{
      this.type = type;

@@ -23,7 +23,7 @@ package com.google.gwt.dom.client;
  * "password" input type, the actual value returned may be masked to prevent
  * unauthorized use.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-INPUT
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-INPUT">W3C HTML Specification</a>
  */
 public class InputElement extends Element {
 
@@ -65,7 +65,7 @@ public class InputElement extends Element {
    * A comma-separated list of content types that a server processing this form
    * will handle correctly.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept">W3C HTML Specification</a>
    */
   public final native String getAccept() /*-{
     return this.accept;
@@ -74,7 +74,7 @@ public class InputElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
     return this.accessKey;
@@ -84,7 +84,7 @@ public class InputElement extends Element {
    * Alternate text for user agents not rendering the normal content of this
    * element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt">W3C HTML Specification</a>
    */
   public final native String getAlt() /*-{
     return this.alt;
@@ -96,7 +96,7 @@ public class InputElement extends Element {
    * value of this attribute does not change if the contents of the
    * corresponding form control, in an interactive user agent, changes.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT">W3C HTML Specification</a>
    */
   public final native String getDefaultValue() /*-{
     return this.defaultValue;
@@ -114,7 +114,7 @@ public class InputElement extends Element {
    * Maximum number of characters for text fields, when type has the value
    * "text" or "password".
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-maxlength
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-maxlength">W3C HTML Specification</a>
    */
   public final native int getMaxLength() /*-{
     return this.maxLength;
@@ -123,7 +123,7 @@ public class InputElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
     return this.name;
@@ -132,7 +132,7 @@ public class InputElement extends Element {
   /**
    * Size information. The precise meaning is specific to each type of field.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-INPUT">W3C HTML Specification</a>
    */
   public final native int getSize() /*-{
     return this.size;
@@ -142,7 +142,7 @@ public class InputElement extends Element {
    * When the type attribute has the value "image", this attribute specifies the
    * location of the image to be used to decorate the graphical submit button.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-src
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-src">W3C HTML Specification</a>
    */
   public final native String getSrc() /*-{
     return this.src;
@@ -151,7 +151,7 @@ public class InputElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native int getTabIndex() /*-{
     return this.tabIndex;
@@ -160,7 +160,7 @@ public class InputElement extends Element {
   /**
    * The type of control created (all lower case).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-type-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-type-INPUT">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
     return this.type;
@@ -175,7 +175,7 @@ public class InputElement extends Element {
    * the value "button", "hidden", "submit", "reset", "image", "checkbox" or
    * "radio", this represents the HTML value attribute of the element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT">W3C HTML Specification</a>
    */
   public final native String getValue() /*-{
     return this.value;
@@ -206,7 +206,7 @@ public class InputElement extends Element {
    * change if the state of the corresponding form control, in an interactive
    * user agent, changes.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-checked
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-checked">W3C HTML Specification</a>
    */
   public final native boolean isDefaultChecked() /*-{
     return this.defaultChecked;
@@ -215,7 +215,7 @@ public class InputElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native boolean isDisabled() /*-{
     return this.disabled;
@@ -225,7 +225,7 @@ public class InputElement extends Element {
    * This control is read-only. Relevant only when type has the value "text" or
    * "password".
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly">W3C HTML Specification</a>
    */
   public final native boolean isReadOnly() /*-{
     return this.readOnly;
@@ -243,7 +243,7 @@ public class InputElement extends Element {
    * A comma-separated list of content types that a server processing this form
    * will handle correctly.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept">W3C HTML Specification</a>
    */
   public final native void setAccept(String accept) /*-{
     this.accept = accept;
@@ -252,7 +252,7 @@ public class InputElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
     this.accessKey = accessKey;
@@ -262,7 +262,7 @@ public class InputElement extends Element {
    * Alternate text for user agents not rendering the normal content of this
    * element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt">W3C HTML Specification</a>
    */
   public final native void setAlt(String alt) /*-{
     this.alt = alt;
@@ -293,7 +293,7 @@ public class InputElement extends Element {
    * change if the state of the corresponding form control, in an interactive
    * user agent, changes.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-checked
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-checked">W3C HTML Specification</a>
    */
   public final native void setDefaultChecked(boolean defaultChecked) /*-{
     this.defaultChecked = defaultChecked;
@@ -305,7 +305,7 @@ public class InputElement extends Element {
    * value of this attribute does not change if the contents of the
    * corresponding form control, in an interactive user agent, changes.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT">W3C HTML Specification</a>
    */
   public final native void setDefaultValue(String defaultValue) /*-{
     this.defaultValue = defaultValue;
@@ -314,7 +314,7 @@ public class InputElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(boolean disabled) /*-{
     this.disabled = disabled;
@@ -324,7 +324,7 @@ public class InputElement extends Element {
    * Maximum number of characters for text fields, when type has the value
    * "text" or "password".
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-maxlength
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-maxlength">W3C HTML Specification</a>
    */
   public final native void setMaxLength(int maxLength) /*-{
     this.maxLength = maxLength;
@@ -333,7 +333,7 @@ public class InputElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
     this.name = name;
@@ -343,7 +343,7 @@ public class InputElement extends Element {
    * This control is read-only. Relevant only when type has the value "text" or
    * "password".
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly">W3C HTML Specification</a>
    */
   public final native void setReadOnly(boolean readOnly) /*-{
     this.readOnly = readOnly;
@@ -352,7 +352,7 @@ public class InputElement extends Element {
   /**
    * Size information. The precise meaning is specific to each type of field.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-INPUT">W3C HTML Specification</a>
    */
   public final native void setSize(int size) /*-{
     this.size = size;
@@ -362,7 +362,7 @@ public class InputElement extends Element {
    * When the type attribute has the value "image", this attribute specifies the
    * location of the image to be used to decorate the graphical submit button.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-src
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-src">W3C HTML Specification</a>
    */
   public final native void setSrc(String src) /*-{
     this.src = src;
@@ -371,7 +371,7 @@ public class InputElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native void setTabIndex(int tabIndex) /*-{
     this.tabIndex = tabIndex;
@@ -380,7 +380,7 @@ public class InputElement extends Element {
   /**
    * Use client-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native void setUseMap(boolean useMap) /*-{
     this.useMap = useMap;
@@ -395,7 +395,7 @@ public class InputElement extends Element {
    * the value "button", "hidden", "submit", "reset", "image", "checkbox" or
    * "radio", this represents the HTML value attribute of the element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-INPUT">W3C HTML Specification</a>
    */
   public final native void setValue(String value) /*-{
     this.value = value;
@@ -404,7 +404,7 @@ public class InputElement extends Element {
   /**
    * Use client-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native boolean useMap() /*-{
     return this.useMap;

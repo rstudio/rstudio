@@ -22,7 +22,7 @@ package com.google.gwt.dom.client;
  * the createTHead() or createTFoot() method is called, the method returns the
  * existing THead or TFoot element.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TABLE
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TABLE">W3C HTML Specification</a>
  */
 public class TableElement extends Element {
 
@@ -101,7 +101,7 @@ public class TableElement extends Element {
   /**
    * The width of the border around the table.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-border-TABLE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-border-TABLE">W3C HTML Specification</a>
    */
   public final native int getBorder() /*-{
     return this.border;
@@ -118,7 +118,7 @@ public class TableElement extends Element {
    * Specifies the horizontal and vertical space between cell content and cell
    * borders.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellpadding
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellpadding">W3C HTML Specification</a>
    */
   public final native int getCellPadding() /*-{
     return this.cellPadding;
@@ -127,7 +127,7 @@ public class TableElement extends Element {
   /**
    * Specifies the horizontal and vertical separation between cells.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellspacing
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellspacing">W3C HTML Specification</a>
    */
   public final native int getCellSpacing() /*-{
     return this.cellSpacing;
@@ -136,7 +136,7 @@ public class TableElement extends Element {
   /**
    * Specifies which external table borders to render.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-frame
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-frame">W3C HTML Specification</a>
    */
   public final native String getFrame() /*-{
     return this.frame;
@@ -153,7 +153,7 @@ public class TableElement extends Element {
   /**
    * Specifies which internal table borders to render.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rules
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rules">W3C HTML Specification</a>
    */
   public final native String getRules() /*-{
     return this.rules;
@@ -183,7 +183,7 @@ public class TableElement extends Element {
   /**
    * Specifies the desired table width.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-TABLE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-TABLE">W3C HTML Specification</a>
    */
   public final native String getWidth() /*-{
      return this.width;
@@ -210,7 +210,7 @@ public class TableElement extends Element {
   /**
    * The width of the border around the table.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-border-TABLE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-border-TABLE">W3C HTML Specification</a>
    */
   public final native void setBorder(int border) /*-{
     this.border = border;
@@ -227,7 +227,7 @@ public class TableElement extends Element {
    * Specifies the horizontal and vertical space between cell content and cell
    * borders.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellpadding
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellpadding">W3C HTML Specification</a>
    */
   public final native void setCellPadding(int cellPadding) /*-{
     this.cellPadding = cellPadding;
@@ -236,7 +236,7 @@ public class TableElement extends Element {
   /**
    * Specifies the horizontal and vertical separation between cells.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellspacing
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-cellspacing">W3C HTML Specification</a>
    */
   public final native void setCellSpacing(int cellSpacing) /*-{
     this.cellSpacing = cellSpacing;
@@ -245,7 +245,7 @@ public class TableElement extends Element {
   /**
    * Specifies which external table borders to render.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-frame
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-frame">W3C HTML Specification</a>
    */
   public final native void setFrame(String frame) /*-{
     this.frame = frame;
@@ -254,7 +254,7 @@ public class TableElement extends Element {
   /**
    * Specifies which internal table borders to render.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rules
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-rules">W3C HTML Specification</a>
    */
   public final native void setRules(String rules) /*-{
     this.rules = rules;
@@ -277,7 +277,7 @@ public class TableElement extends Element {
   /**
    * Specifies the desired table width.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-TABLE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-width-TABLE">W3C HTML Specification</a>
    */
   public final native void setWidth(String width) /*-{
      this.width = width;

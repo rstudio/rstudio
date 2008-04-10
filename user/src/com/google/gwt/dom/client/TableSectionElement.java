@@ -56,7 +56,7 @@ public class TableSectionElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native String getCh() /*-{
      return this.ch;
@@ -65,7 +65,7 @@ public class TableSectionElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native String getChOff() /*-{
      return this.chOff;
@@ -111,7 +111,7 @@ public class TableSectionElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native void setCh(String ch) /*-{
      this.ch = ch;
@@ -120,7 +120,7 @@ public class TableSectionElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native void setChOff(String chOff) /*-{
      this.chOff = chOff;

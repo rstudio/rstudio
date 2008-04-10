@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Multi-line text field.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-TEXTAREA
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-TEXTAREA">W3C HTML Specification</a>
  */
 public class TextAreaElement extends Element {
 
@@ -51,7 +51,7 @@ public class TextAreaElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
     return this.accessKey;
@@ -60,7 +60,7 @@ public class TextAreaElement extends Element {
   /**
    * Width of control (in characters).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-cols-TEXTAREA
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-cols-TEXTAREA">W3C HTML Specification</a>
    */
   public final native int getCols() /*-{
     return this.cols;
@@ -90,7 +90,7 @@ public class TextAreaElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-TEXTAREA
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-TEXTAREA">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
     return this.name;
@@ -103,7 +103,7 @@ public class TextAreaElement extends Element {
   /**
    * Number of text rows.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-rows-TEXTAREA
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-rows-TEXTAREA">W3C HTML Specification</a>
    */
   public final native int getRows() /*-{
     return this.rows;
@@ -112,7 +112,7 @@ public class TextAreaElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native int getTabIndex() /*-{
     return this.tabIndex;
@@ -139,7 +139,7 @@ public class TextAreaElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native boolean isDisabled() /*-{
     return this.disabled;
@@ -148,7 +148,7 @@ public class TextAreaElement extends Element {
   /**
    * This control is read-only.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly">W3C HTML Specification</a>
    */
   public final native boolean isReadOnly() /*-{
     return this.readOnly;
@@ -164,7 +164,7 @@ public class TextAreaElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
     this.accessKey = accessKey;
@@ -173,7 +173,7 @@ public class TextAreaElement extends Element {
   /**
    * Width of control (in characters).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-cols-TEXTAREA
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-cols-TEXTAREA">W3C HTML Specification</a>
    */
   public final native void setCols(int cols) /*-{
     this.cols = cols;
@@ -191,7 +191,7 @@ public class TextAreaElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(boolean disabled) /*-{
     this.disabled = disabled;
@@ -200,7 +200,7 @@ public class TextAreaElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-TEXTAREA
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-TEXTAREA">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
     this.name = name;
@@ -209,7 +209,7 @@ public class TextAreaElement extends Element {
   /**
    * This control is read-only.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly">W3C HTML Specification</a>
    */
   public final native void setReadOnly(boolean readOnly) /*-{
     this.readOnly = readOnly;
@@ -218,7 +218,7 @@ public class TextAreaElement extends Element {
   /**
    * Number of text rows.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-rows-TEXTAREA
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-rows-TEXTAREA">W3C HTML Specification</a>
    */
   public final native void setRows(int rows) /*-{
     this.rows = rows;
@@ -227,7 +227,7 @@ public class TextAreaElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native void setTabIndex(int tabIndex) /*-{
     this.tabIndex = tabIndex;

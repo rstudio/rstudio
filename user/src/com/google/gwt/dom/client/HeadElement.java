@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Document head information.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-HEAD
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-HEAD">W3C HTML Specification</a>
  */
 public class HeadElement extends Element {
 

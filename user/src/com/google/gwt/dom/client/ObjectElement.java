@@ -22,7 +22,7 @@ package com.google.gwt.dom.client;
  * in some environments some properties may be read-only once the underlying
  * object is instantiated.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-OBJECT
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-OBJECT">W3C HTML Specification</a>
  */
 public class ObjectElement extends Element {
 
@@ -56,7 +56,7 @@ public class ObjectElement extends Element {
   /**
    * A URI specifying the location of the object's data.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-data
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-data">W3C HTML Specification</a>
    */
   public final native String getData() /*-{
      return this.data;
@@ -73,7 +73,7 @@ public class ObjectElement extends Element {
   /**
    * Override height.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG">W3C HTML Specification</a>
    */
   public final native String getHeight() /*-{
      return this.height;
@@ -82,7 +82,7 @@ public class ObjectElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -91,7 +91,7 @@ public class ObjectElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native int getTabIndex() /*-{
      return this.tabIndex;
@@ -100,7 +100,7 @@ public class ObjectElement extends Element {
   /**
    * Content type for data downloaded via data attribute.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-type-OBJECT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-type-OBJECT">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
      return this.type;
@@ -109,7 +109,7 @@ public class ObjectElement extends Element {
   /**
    * Override width.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG">W3C HTML Specification</a>
    */
   public final native String getWidth() /*-{
      return this.width;
@@ -125,7 +125,7 @@ public class ObjectElement extends Element {
   /**
    * A URI specifying the location of the object's data.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-data
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-data">W3C HTML Specification</a>
    */
   public final native void setData(String data) /*-{
      this.data = data;
@@ -134,7 +134,7 @@ public class ObjectElement extends Element {
   /**
    * Override height.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-height-IMG">W3C HTML Specification</a>
    */
   public final native void setHeight(String height) /*-{
      this.height = height;
@@ -143,7 +143,7 @@ public class ObjectElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-INPUT">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;
@@ -152,7 +152,7 @@ public class ObjectElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native void setTabIndex(int tabIndex) /*-{
      this.tabIndex = tabIndex;
@@ -161,7 +161,7 @@ public class ObjectElement extends Element {
   /**
    * Content type for data downloaded via data attribute.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-type-OBJECT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-type-OBJECT">W3C HTML Specification</a>
    */
   public final native void setType(String type) /*-{
      this.type = type;
@@ -170,7 +170,7 @@ public class ObjectElement extends Element {
   /**
    * Use client-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native void setUseMap(boolean useMap) /*-{
      this.useMap = useMap;
@@ -179,7 +179,7 @@ public class ObjectElement extends Element {
   /**
    * Override width.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-width-IMG">W3C HTML Specification</a>
    */
   public final native void setWidth(String width) /*-{
      this.width = width;
@@ -188,7 +188,7 @@ public class ObjectElement extends Element {
   /**
    * Use client-side image map.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native boolean useMap() /*-{
      return this.useMap;

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Organizes form controls into logical groups.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-FIELDSET
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-FIELDSET">W3C HTML Specification</a>
  */
 public class FieldSetElement extends Element {
 

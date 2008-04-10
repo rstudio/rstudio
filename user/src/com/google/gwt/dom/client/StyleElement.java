@@ -18,9 +18,9 @@ package com.google.gwt.dom.client;
 /**
  * Style information.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#edef-STYLE
- * @see http://www.w3.org/TR/DOM-Level-2-HTML/references.html#DOMStyle
- * @see http://www.w3.org/TR/DOM-Level-2-HTML/references.html#DOMStyle-inf
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#edef-STYLE">W3C HTML Specification</a>
+ * @see <a href="http://www.w3.org/TR/DOM-Level-2-HTML/references.html#DOMStyle">W3C HTML Specification</a>
+ * @see <a href="http://www.w3.org/TR/DOM-Level-2-HTML/references.html#DOMStyle-inf">W3C HTML Specification</a>
  */
 public class StyleElement extends Element {
 
@@ -46,7 +46,7 @@ public class StyleElement extends Element {
   /**
    * Designed for use with one or more target media.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media">W3C HTML Specification</a>
    */
   public final native String getMedia() /*-{
      return this.media;
@@ -55,7 +55,7 @@ public class StyleElement extends Element {
   /**
    * The content type of the style sheet language.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-type-STYLE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-type-STYLE">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
      return this.type;
@@ -71,7 +71,7 @@ public class StyleElement extends Element {
   /**
    * Designed for use with one or more target media.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-media">W3C HTML Specification</a>
    */
   public final native void setMedia(String media) /*-{
      this.media = media;
@@ -80,7 +80,7 @@ public class StyleElement extends Element {
   /**
    * The content type of the style sheet language.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-type-STYLE
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/styles.html#adef-type-STYLE">W3C HTML Specification</a>
    */
   public final native void setType(String type) /*-{
      this.type = type;

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Preformatted text.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-PRE
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-PRE">W3C HTML Specification</a>
  */
 public class PreElement extends Element {
 

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Group options together in logical subdivisions.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-OPTGROUP
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-OPTGROUP">W3C HTML Specification</a>
  */
 public class OptGroupElement extends Element {
 
@@ -37,7 +37,7 @@ public class OptGroupElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native String getDisabled() /*-{
      return this.disabled;
@@ -46,7 +46,7 @@ public class OptGroupElement extends Element {
   /**
    * Assigns a label to this option group.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTGROUP
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTGROUP">W3C HTML Specification</a>
    */
   public final native String getLabel() /*-{
      return this.label;
@@ -55,7 +55,7 @@ public class OptGroupElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(String disabled) /*-{
      this.disabled = disabled;
@@ -64,7 +64,7 @@ public class OptGroupElement extends Element {
   /**
    * Assigns a label to this option group.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTGROUP
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTGROUP">W3C HTML Specification</a>
    */
   public final native void setLabel(String label) /*-{
      this.label = label;

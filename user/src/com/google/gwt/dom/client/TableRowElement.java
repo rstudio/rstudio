@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * A row in a table.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TR
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TR">W3C HTML Specification</a>
  */
 public class TableRowElement extends Element {
 
@@ -41,7 +41,7 @@ public class TableRowElement extends Element {
   /**
    * Horizontal alignment of data within cells of this row.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
    */
   public final native String getAlign() /*-{
     return this.align;
@@ -57,7 +57,7 @@ public class TableRowElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native String getCh() /*-{
      return this.ch;
@@ -66,7 +66,7 @@ public class TableRowElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native String getChOff() /*-{
      return this.chOff;
@@ -93,7 +93,7 @@ public class TableRowElement extends Element {
   /**
    * Vertical alignment of data within cells of this row.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign">W3C HTML Specification</a>
    */
   public final native String getVAlign() /*-{
     return this.vAlign;
@@ -106,7 +106,7 @@ public class TableRowElement extends Element {
   /**
    * Horizontal alignment of data within cells of this row.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
    */
   public final native void setAlign(String align) /*-{
     this.align = align;
@@ -115,7 +115,7 @@ public class TableRowElement extends Element {
   /**
    * Alignment character for cells in a column.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-char">W3C HTML Specification</a>
    */
   public final native void setCh(String ch) /*-{
      this.ch = ch;
@@ -124,7 +124,7 @@ public class TableRowElement extends Element {
   /**
    * Offset of alignment character.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-charoff">W3C HTML Specification</a>
    */
   public final native void setChOff(String chOff) /*-{
      this.chOff = chOff;
@@ -133,7 +133,7 @@ public class TableRowElement extends Element {
   /**
    * Vertical alignment of data within cells of this row.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-valign">W3C HTML Specification</a>
    */
   public final native void setVAlign(String vAlign) /*-{
     this.vAlign = vAlign;

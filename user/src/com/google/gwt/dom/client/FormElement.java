@@ -20,7 +20,7 @@ package com.google.gwt.dom.client;
  * It provides direct access to the contained form controls as well as the
  * attributes of the form element.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-FORM
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-FORM">W3C HTML Specification</a>
  */
 public class FormElement extends Element {
 
@@ -39,7 +39,7 @@ public class FormElement extends Element {
   /**
    * List of character sets supported by the server.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept-charset
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept-charset">W3C HTML Specification</a>
    */
   public final native String getAcceptCharset() /*-{
     return this.acceptCharset;
@@ -48,7 +48,7 @@ public class FormElement extends Element {
   /**
    * Server-side form handler.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C HTML Specification</a>
    */
   public final native String getAction() /*-{
     return this.action;
@@ -69,7 +69,7 @@ public class FormElement extends Element {
    * invoking this method. The behavior is inconsistent for historical reasons
    * and authors should not rely on a particular one.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-enctype
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-enctype">W3C HTML Specification</a>
    */
   public final native String getEnctype() /*-{
     return this.enctype;
@@ -78,7 +78,7 @@ public class FormElement extends Element {
   /**
    * HTTP method [IETF RFC 2616] used to submit form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-method
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-method">W3C HTML Specification</a>
    */
   public final native String getMethod() /*-{
     return this.method;
@@ -94,7 +94,7 @@ public class FormElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native String getTarget() /*-{
     return this.target;
@@ -111,7 +111,7 @@ public class FormElement extends Element {
   /**
    * List of character sets supported by the server.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept-charset
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accept-charset">W3C HTML Specification</a>
    */
   public final native void setAcceptCharset(String acceptCharset) /*-{
     this.acceptCharset = acceptCharset;
@@ -120,7 +120,7 @@ public class FormElement extends Element {
   /**
    * Server-side form handler.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-action">W3C HTML Specification</a>
    */
   public final native void setAction(String action) /*-{
     this.action = action;
@@ -134,7 +134,7 @@ public class FormElement extends Element {
    * invoking this method. The behavior is inconsistent for historical reasons
    * and authors should not rely on a particular one.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-enctype
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-enctype">W3C HTML Specification</a>
    */
   public final native void setEnctype(String enctype) /*-{
     this.enctype = enctype;
@@ -143,7 +143,7 @@ public class FormElement extends Element {
   /**
    * HTTP method [IETF RFC 2616] used to submit form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-method
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-method">W3C HTML Specification</a>
    */
   public final native void setMethod(String method) /*-{
     this.method = method;
@@ -159,7 +159,7 @@ public class FormElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native void setTarget(String target) /*-{
     this.target = target;

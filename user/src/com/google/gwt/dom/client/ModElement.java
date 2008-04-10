@@ -18,8 +18,8 @@ package com.google.gwt.dom.client;
 /**
  * Notice of modification to part of a document.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-ins
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-del
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-ins">W3C HTML Specification</a>
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-del">W3C HTML Specification</a>
  */
 public class ModElement extends Element {
 
@@ -39,7 +39,7 @@ public class ModElement extends Element {
   /**
    * A URI designating a document that describes the reason for the change.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/">W3C HTML Specification</a>
    */
   public final native String getCite() /*-{
     return this.cite;
@@ -48,7 +48,7 @@ public class ModElement extends Element {
   /**
    * The date and time of the change.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-datetime
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-datetime">W3C HTML Specification</a>
    */
   public final native String getDateTime() /*-{
     return this.dateTime;
@@ -57,7 +57,7 @@ public class ModElement extends Element {
   /**
    * A URI designating a document that describes the reason for the change.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/">W3C HTML Specification</a>
    */
   public final native void setCite(String cite) /*-{
     this.cite = cite;
@@ -66,7 +66,7 @@ public class ModElement extends Element {
   /**
    * The date and time of the change.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-datetime
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#adef-datetime">W3C HTML Specification</a>
    */
   public final native void setDateTime(String dateTime) /*-{
     this.dateTime = dateTime;

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Client-side image map area definition.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-AREA
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-AREA">W3C HTML Specification</a>
  */
 public class AreaElement extends Element {
 
@@ -37,7 +37,7 @@ public class AreaElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native String getAccessKey() /*-{
      return this.accessKey;
@@ -47,7 +47,7 @@ public class AreaElement extends Element {
    * Alternate text for user agents not rendering the normal content of this
    * element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt">W3C HTML Specification</a>
    */
   public final native String getAlt() /*-{
      return this.alt;
@@ -57,7 +57,7 @@ public class AreaElement extends Element {
    * Comma-separated list of lengths, defining an active region geometry. See
    * also shape for the shape of the region.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-coords
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-coords">W3C HTML Specification</a>
    */
   public final native String getCoords() /*-{
      return this.coords;
@@ -66,7 +66,7 @@ public class AreaElement extends Element {
   /**
    * The URI of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
   public final native String getHref() /*-{
      return this.href;
@@ -75,7 +75,7 @@ public class AreaElement extends Element {
   /**
    * The shape of the active area. The coordinates are given by coords.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-shape
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-shape">W3C HTML Specification</a>
    */
   public final native String getShape() /*-{
      return this.shape;
@@ -84,7 +84,7 @@ public class AreaElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native int getTabIndex() /*-{
      return this.tabIndex;
@@ -93,7 +93,7 @@ public class AreaElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native String getTarget() /*-{
      return this.target;
@@ -102,7 +102,7 @@ public class AreaElement extends Element {
   /**
    * A single character access key to give access to the form control.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
    */
   public final native void setAccessKey(String accessKey) /*-{
      this.accessKey = accessKey;
@@ -112,7 +112,7 @@ public class AreaElement extends Element {
    * Alternate text for user agents not rendering the normal content of this
    * element.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-alt">W3C HTML Specification</a>
    */
   public final native void setAlt(String alt) /*-{
      this.alt = alt;
@@ -122,7 +122,7 @@ public class AreaElement extends Element {
    * Comma-separated list of lengths, defining an active region geometry. See
    * also shape for the shape of the region.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-coords
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-coords">W3C HTML Specification</a>
    */
   public final native void setCoords(String coords) /*-{
      this.coords = coords;
@@ -131,7 +131,7 @@ public class AreaElement extends Element {
   /**
    * The URI of the linked resource.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#adef-href">W3C HTML Specification</a>
    */
   public final native void setHref(String href) /*-{
      this.href = href;
@@ -140,7 +140,7 @@ public class AreaElement extends Element {
   /**
    * The shape of the active area. The coordinates are given by coords.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-shape
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-shape">W3C HTML Specification</a>
    */
   public final native void setShape(String shape) /*-{
      this.shape = shape;
@@ -149,7 +149,7 @@ public class AreaElement extends Element {
   /**
    * Index that represents the element's position in the tabbing order.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-tabindex">W3C HTML Specification</a>
    */
   public final native void setTabIndex(int tabIndex) /*-{
      this.tabIndex = tabIndex;
@@ -158,7 +158,7 @@ public class AreaElement extends Element {
   /**
    * Frame to render the resource in.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-target">W3C HTML Specification</a>
    */
   public final native void setTarget(String target) /*-{
      this.target = target;

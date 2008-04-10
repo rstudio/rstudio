@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * A selectable choice.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-OPTION
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-OPTION">W3C HTML Specification</a>
  */
 public class OptionElement extends Element {
 
@@ -52,7 +52,7 @@ public class OptionElement extends Element {
   /**
    * Option label for use in hierarchical menus.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTION
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTION">W3C HTML Specification</a>
    */
   public final native String getLabel() /*-{
     return this.label;
@@ -68,7 +68,7 @@ public class OptionElement extends Element {
   /**
    * The current form control value.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-OPTION
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-OPTION">W3C HTML Specification</a>
    */
   public final native String getValue() /*-{
     return this.value;
@@ -79,7 +79,7 @@ public class OptionElement extends Element {
    * attribute does not change if the state of the corresponding form control,
    * in an interactive user agent, changes.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-selected
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-selected">W3C HTML Specification</a>
    */
   public final native boolean isDefaultSelected() /*-{
     return this.defaultSelected;
@@ -88,7 +88,7 @@ public class OptionElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @param see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native boolean isDisabled() /*-{
     return this.disabled;
@@ -109,7 +109,7 @@ public class OptionElement extends Element {
    * attribute does not change if the state of the corresponding form control,
    * in an interactive user agent, changes.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-selected
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-selected">W3C HTML Specification</a>
    */
   public final native void setDefaultSelected(boolean selected) /*-{
     this.defaultSelected = selected;
@@ -118,7 +118,7 @@ public class OptionElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(boolean disabled) /*-{
     return this.disabled = disabled;
@@ -127,7 +127,7 @@ public class OptionElement extends Element {
   /**
    * Option label for use in hierarchical menus.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTION
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-label-OPTION">W3C HTML Specification</a>
    */
   public final native void setLabel(String label) /*-{
     return this.label = label;
@@ -153,7 +153,7 @@ public class OptionElement extends Element {
   /**
    * The current form control value.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-OPTION
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-value-OPTION">W3C HTML Specification</a>
    */
   public final native void setValue(String value) /*-{
     this.value = value;

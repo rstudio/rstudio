@@ -64,7 +64,7 @@ public class Element extends Node {
    * The class attribute of the element. This attribute has been renamed due to
    * conflicts with the "class" keyword exposed by many languages.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class">W3C HTML Specification</a>
    */
   public final native String getClassName() /*-{
     return this.className;
@@ -102,7 +102,7 @@ public class Element extends Node {
   /**
    * The element's identifier.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id">W3C HTML Specification</a>
    */
   public final native String getId() /*-{
     return this.id;
@@ -255,7 +255,7 @@ public class Element extends Node {
    * Gets a string representation of this element (as outer HTML).
    * 
    * We do not override {@link #toString()} because it is final in
-   * {@link JavaScriptObject}.
+   * {@link com.google.gwt.core.client.JavaScriptObject}.
    * 
    * @return the string representation of this element
    */
@@ -330,7 +330,7 @@ public class Element extends Node {
    * The class attribute of the element. This attribute has been renamed due to
    * conflicts with the "class" keyword exposed by many languages.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class">W3C HTML Specification</a>
    */
   public final native void setClassName(String className) /*-{
     this.className = className;
@@ -347,7 +347,7 @@ public class Element extends Node {
   /**
    * The element's identifier.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id">W3C HTML Specification</a>
    */
   public final native void setId(String id) /*-{
     this.id = id;

@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Create a horizontal rule.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/graphics.html#edef-HR
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/graphics.html#edef-HR">W3C HTML Specification</a>
  */
 public class HRElement extends Element {
 

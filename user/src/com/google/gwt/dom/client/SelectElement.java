@@ -21,7 +21,7 @@ package com.google.gwt.dom.client;
  * The contained options can be directly accessed through the select element as
  * a collection.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-SELECT
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-SELECT">W3C HTML Specification</a>
  */
 public class SelectElement extends Element {
 
@@ -69,7 +69,7 @@ public class SelectElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native String getDisabled() /*-{
      return this.disabled;
@@ -93,7 +93,7 @@ public class SelectElement extends Element {
   /**
    * If true, multiple OPTION elements may be selected in this SELECT.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple">W3C HTML Specification</a>
    */
   public final native String getMultiple() /*-{
      return this.multiple;
@@ -102,7 +102,7 @@ public class SelectElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-SELECT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-SELECT">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
     return this.name;
@@ -127,7 +127,7 @@ public class SelectElement extends Element {
   /**
    * Number of visible rows.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-SELECT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-SELECT">W3C HTML Specification</a>
    */
   public final native int getSize() /*-{
     return this.size;
@@ -153,7 +153,7 @@ public class SelectElement extends Element {
   /**
    * If true, multiple OPTION elements may be selected in this SELECT.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple">W3C HTML Specification</a>
    */
   public final native boolean isMultiple() /*-{
      return this.multiple;
@@ -172,7 +172,7 @@ public class SelectElement extends Element {
   /**
    * The control is unavailable in this context.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native void setDisabled(String disabled) /*-{
      this.disabled = disabled;
@@ -181,7 +181,7 @@ public class SelectElement extends Element {
   /**
    * If true, multiple OPTION elements may be selected in this SELECT.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple">W3C HTML Specification</a>
    */
   public final native void setMultiple(boolean multiple) /*-{
      this.multiple = multiple;
@@ -190,7 +190,7 @@ public class SelectElement extends Element {
   /**
    * Form control or object name when submitted with a form.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-SELECT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-name-SELECT">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
     this.name = name;
@@ -208,7 +208,7 @@ public class SelectElement extends Element {
   /**
    * Number of visible rows.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-SELECT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-size-SELECT">W3C HTML Specification</a>
    */
   public final native void setSize(int size) /*-{
     this.size = size;

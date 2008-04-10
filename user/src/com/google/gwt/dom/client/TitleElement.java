@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * The document title.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-TITLE
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-TITLE">W3C HTML Specification</a>
  */
 public class TitleElement extends Element {
 

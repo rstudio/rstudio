@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Script statements.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#edef-SCRIPT
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#edef-SCRIPT">W3C HTML Specification</a>
  */
 public class ScriptElement extends Element {
 
@@ -37,7 +37,7 @@ public class ScriptElement extends Element {
   /**
    * Indicates that the user agent can defer processing of the script.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-defer
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-defer">W3C HTML Specification</a>
    */
   public final native String getDefer() /*-{
      return this.defer;
@@ -46,7 +46,7 @@ public class ScriptElement extends Element {
   /**
    * URI designating an external script.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-src-SCRIPT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-src-SCRIPT">W3C HTML Specification</a>
    */
   public final native String getSrc() /*-{
      return this.src;
@@ -62,7 +62,7 @@ public class ScriptElement extends Element {
   /**
    * The content type of the script language.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-type-SCRIPT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-type-SCRIPT">W3C HTML Specification</a>
    */
   public final native String getType() /*-{
      return this.type;
@@ -71,7 +71,7 @@ public class ScriptElement extends Element {
   /**
    * Indicates that the user agent can defer processing of the script.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-defer
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-defer">W3C HTML Specification</a>
    */
   public final native void setDefer(String defer) /*-{
      this.defer = defer;
@@ -80,7 +80,7 @@ public class ScriptElement extends Element {
   /**
    * URI designating an external script.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-src-SCRIPT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-src-SCRIPT">W3C HTML Specification</a>
    */
   public final native void setSrc(String src) /*-{
      this.src = src;
@@ -96,7 +96,7 @@ public class ScriptElement extends Element {
   /**
    * The content type of the script language.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-type-SCRIPT
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#adef-type-SCRIPT">W3C HTML Specification</a>
    */
   public final native void setType(String type) /*-{
      this.type = type;

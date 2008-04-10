@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Create a frame.
  * 
- * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#edef-FRAME
+ * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#edef-FRAME">W3C HTML Specification</a>
  */
 public class FrameElement extends Element {
 
@@ -45,7 +45,7 @@ public class FrameElement extends Element {
   /**
    * Request frame borders.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-frameborder
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-frameborder">W3C HTML Specification</a>
    */
   public final native int getFrameBorder() /*-{
      return this.frameBorder;
@@ -54,7 +54,7 @@ public class FrameElement extends Element {
   /**
    * URI designating a long description of this image or frame.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME">W3C HTML Specification</a>
    */
   public final native String getLongDesc() /*-{
      return this.longDesc;
@@ -63,7 +63,7 @@ public class FrameElement extends Element {
   /**
    * Frame margin height, in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginheight
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginheight">W3C HTML Specification</a>
    */
   public final native int getMarginHeight() /*-{
      return this.marginHeight;
@@ -72,7 +72,7 @@ public class FrameElement extends Element {
   /**
    * Frame margin width, in pixels.
    * 
-   * @see 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginwidth">W3C HTML Specification</a>
    */
   public final native int getMarginWidth() /*-{
      return this.marginWidth;
@@ -81,7 +81,7 @@ public class FrameElement extends Element {
   /**
    * The frame name (object of the target attribute).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-name-FRAME
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-name-FRAME">W3C HTML Specification</a>
    */
   public final native String getName() /*-{
      return this.name;
@@ -90,7 +90,7 @@ public class FrameElement extends Element {
   /**
    * Specify whether or not the frame should have scrollbars.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-scrolling
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-scrolling">W3C HTML Specification</a>
    */
   public final native String getScrolling() /*-{
      return this.scrolling;
@@ -99,7 +99,7 @@ public class FrameElement extends Element {
   /**
    * A URI designating the initial frame contents.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C HTML Specification</a>
    */
   public final native String getSrc() /*-{
      return this.src;
@@ -108,7 +108,7 @@ public class FrameElement extends Element {
   /**
    * When true, forbid user from resizing frame.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-noresize
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-noresize">W3C HTML Specification</a>
    */
   public final native boolean isNoResize() /*-{
      return this.noResize;
@@ -117,7 +117,7 @@ public class FrameElement extends Element {
   /**
    * Request frame borders.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-frameborder
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-frameborder">W3C HTML Specification</a>
    */
   public final native void setFrameBorder(int frameBorder) /*-{
      this.frameBorder = frameBorder;
@@ -126,7 +126,7 @@ public class FrameElement extends Element {
   /**
    * URI designating a long description of this image or frame.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-longdesc-FRAME">W3C HTML Specification</a>
    */
   public final native void setLongDesc(String longDesc) /*-{
      this.longDesc = longDesc;
@@ -135,7 +135,7 @@ public class FrameElement extends Element {
   /**
    * Frame margin height, in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginheight
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginheight">W3C HTML Specification</a>
    */
   public final native void setMarginHeight(int marginHeight) /*-{
      this.marginHeight = marginHeight;
@@ -144,7 +144,7 @@ public class FrameElement extends Element {
   /**
    * Frame margin width, in pixels.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginwidth
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-marginwidth">W3C HTML Specification</a>
    */
   public final native void setMarginWidth(int marginWidth) /*-{
      this.marginWidth = marginWidth;
@@ -153,7 +153,7 @@ public class FrameElement extends Element {
   /**
    * The frame name (object of the target attribute).
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-name-FRAME
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-name-FRAME">W3C HTML Specification</a>
    */
   public final native void setName(String name) /*-{
      this.name = name;
@@ -162,7 +162,7 @@ public class FrameElement extends Element {
   /**
    * When true, forbid user from resizing frame.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-noresize
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-noresize">W3C HTML Specification</a>
    */
   public final native void setNoResize(boolean noResize) /*-{
      this.noResize = noResize;
@@ -171,7 +171,7 @@ public class FrameElement extends Element {
   /**
    * Specify whether or not the frame should have scrollbars.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-scrolling
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-scrolling">W3C HTML Specification</a>
    */
   public final native void setScrolling(String scrolling) /*-{
      this.scrolling = scrolling;
@@ -180,7 +180,7 @@ public class FrameElement extends Element {
   /**
    * A URI designating the initial frame contents.
    * 
-   * @see http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-src-FRAME">W3C HTML Specification</a>
    */
   public final native void setSrc(String src) /*-{
      this.src = src;
