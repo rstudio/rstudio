@@ -64,6 +64,13 @@ public class TypeOracleTestingUtils {
     {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
+      code.append("public class Class<T> {\n");
+      code.append("}\n");
+      addCup(builder, "java.lang.Class", code);
+    }
+    {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.lang;\n");
       code.append("public final class String {\n");
       code.append("  public int length() { return 0; }\n");
       code.append("}\n");
@@ -74,6 +81,12 @@ public class TypeOracleTestingUtils {
       code.append("package java.lang;\n");
       code.append("public interface Serializable { }\n");
       addCup(builder, "java.lang.Serializable", code);
+    }
+    {
+      StringBuffer code = new StringBuffer();
+      code.append("package java.util;\n");
+      code.append("public interface Map<K,V> { }\n");
+      addCup(builder, "java.util.Map", code);
     }
     {
       StringBuffer code = new StringBuffer();
