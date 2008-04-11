@@ -243,15 +243,18 @@ class ProxyCreator {
     }
 
     w.println(") {");
-
     w.indent();
 
-    w.println("long requestId = getNextRequestId();");
+    String requestIdName = nameFactory.createName("requestId");
+    w.println("long " + requestIdName + " = getNextRequestId();");
+
     String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName()
         + ":\" + getRequestId() + \"";
-    w.println("boolean toss = isStatsAvailable() && stats(\"" + statsMethodExpr
-        + ":requestStart\", timeStat(\"" + getProxySimpleName() + "."
-        + syncMethod.getName() + "\", getRequestId()));");
+    String tossName = nameFactory.createName("toss");
+    w.println("boolean " + tossName + " = isStatsAvailable() && stats(\""
+        + statsMethodExpr + ":requestStart\", timeStat(\""
+        + getProxySimpleName() + "." + syncMethod.getName()
+        + "\", getRequestId()));");
 
     w.print(ClientSerializationStreamWriter.class.getSimpleName());
     w.print(" ");
@@ -307,12 +310,14 @@ class ProxyCreator {
     }
 
     w.println();
-    w.println("String payload = " + streamWriterName + ".toString();");
 
-    w.println("boolean toss2 = isStatsAvailable() && stats(\""
-        + statsMethodExpr + ":requestSerialized\", timeStat(\""
-        + getProxySimpleName() + "." + syncMethod.getName()
-        + "\", getRequestId()));");
+    String payloadName = nameFactory.createName("payload");
+    w.println("String " + payloadName + " = " + streamWriterName
+        + ".toString();");
+
+    w.println(tossName + " = isStatsAvailable() && stats(\"" + statsMethodExpr
+        + ":requestSerialized\", timeStat(\"" + getProxySimpleName() + "."
+        + syncMethod.getName() + "\", getRequestId()));");
 
     /*
      * Depending on the return type for the async method, return a
@@ -334,9 +339,8 @@ class ProxyCreator {
 
     JType returnType = syncMethod.getReturnType();
     w.print("ResponseReader." + getResponseReaderFor(returnType).name());
-    w.print(", \"" + getProxySimpleName() + "." + syncMethod.getName()
-        + "\", getRequestId(), payload, ");
-    w.println(callbackName + ");");
+    w.println(", \"" + getProxySimpleName() + "." + syncMethod.getName()
+        + "\", getRequestId(), " + payloadName + ", " + callbackName + ");");
     w.outdent();
     w.println("}");
   }
