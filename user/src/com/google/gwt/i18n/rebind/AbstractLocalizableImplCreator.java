@@ -163,13 +163,16 @@ abstract class AbstractLocalizableImplCreator extends
                 genClassName).asSubclass(MessageCatalogFormat.class);
             msgWriter = msgFormatClass.newInstance();
           } catch (InstantiationException e) {
-            logger.log(TreeLogger.WARN, "Error instantiating @Generate class " + genClassName, e);
+            logger.log(TreeLogger.ERROR, "Error instantiating @Generate class " + genClassName, e);
+            seenError = true;
             continue;
           } catch (IllegalAccessException e) {
-            logger.log(TreeLogger.WARN, "@Generate class " + genClassName + " illegal access", e);
+            logger.log(TreeLogger.ERROR, "@Generate class " + genClassName + " illegal access", e);
+            seenError = true;
             continue;
           } catch (ClassNotFoundException e) {
-            logger.log(TreeLogger.WARN, "@Generate class " + genClassName + " not found");
+            logger.log(TreeLogger.ERROR, "@Generate class " + genClassName + " not found");
+            seenError = true;
             continue;
           }
           // Make generator-specific changes to a temporary copy of the path.
