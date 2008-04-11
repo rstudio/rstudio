@@ -51,17 +51,17 @@ class MessagesMethodCreator extends AbstractMethodCreator {
   private static class StringGenerator {
 
     /**
-     * True if we are in the middle of a string literal
+     * True if we are in the middle of a string literal.
      */
     private boolean inString;
     
     /**
-     * True if we have produced any output
+     * True if we have produced any output.
      */
     private boolean producedOutput;
     
     /**
-     * Output string buffer
+     * Output string buffer.
      */
     private StringBuffer buf;
 

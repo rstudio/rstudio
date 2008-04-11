@@ -54,6 +54,7 @@ abstract class AbstractLocalizableImplCreator extends
     JClassType constantsClass;
     JClassType messagesClass;
     JClassType constantsWithLookupClass;
+    boolean seenError = false;
     try {
       constantsClass = oracle.getType(LocalizableGenerator.CONSTANTS_NAME);
       constantsWithLookupClass = oracle.getType(LocalizableGenerator.CONSTANTS_WITH_LOOKUP_NAME);
@@ -133,58 +134,78 @@ abstract class AbstractLocalizableImplCreator extends
     // Generate a translatable output file if requested.
     Generate generate = targetClass.getAnnotation(Generate.class);
     if (generate != null) {
-      try {
-        String path = generate.fileName();
-        if (Generate.DEFAULT.equals(path)) {
-          path = targetClass.getPackage().getName() + "."
-          + targetClass.getName().replace('.', '_');
-        } else if (path.endsWith(File.pathSeparator)) {
-          path = path + targetClass.getName().replace('.', '_');
-        }
-        String[] genLocales = generate.locales();
-        boolean found = false;
-        if (genLocales.length != 0) {
-          // verify the current locale is in the list
-          for (String genLocale : genLocales) {
-            if (genLocale.equals(locale)) {
-              found = true;
-              break;
-            }
+      String path = generate.fileName();
+      if (Generate.DEFAULT.equals(path)) {
+        path = targetClass.getPackage().getName() + "."
+        + targetClass.getName().replace('.', '_');
+      } else if (path.endsWith(File.pathSeparator)) {
+        path = path + targetClass.getName().replace('.', '_');
+      }
+      String[] genLocales = generate.locales();
+      boolean found = false;
+      if (genLocales.length != 0) {
+        // verify the current locale is in the list
+        for (String genLocale : genLocales) {
+          if (genLocale.equals(locale)) {
+            found = true;
+            break;
           }
-        } else {
-          // Since they want all locales, this is guaranteed to be one of them.
-          found = true;
         }
-        if (found) {
-          for (String genClassName : generate.format()) {
+      } else {
+        // Since they want all locales, this is guaranteed to be one of them.
+        found = true;
+      }
+      if (found) {
+        for (String genClassName : generate.format()) {
+          MessageCatalogFormat msgWriter = null;
+          try {
             Class<? extends MessageCatalogFormat> msgFormatClass = Class.forName(
                 genClassName).asSubclass(MessageCatalogFormat.class);
-            MessageCatalogFormat msgWriter = msgFormatClass.newInstance();
-            // Make generator-specific changes to a temporary copy of the path.
-            String genPath = path;
-            if (genLocales.length != 1) {
-              // If the user explicitly specified only one locale, do not add the locale.
-              genPath += '_' + locale;
-            }
-            genPath += msgWriter.getExtension();
-            OutputStream outStr = context.tryCreateResource(logger, genPath);
-            if (outStr != null) {
-              logger.log(TreeLogger.INFO, "Generating " + genPath + " from "
-                  + className + " for locale " + locale, null);
-              PrintWriter out = new PrintWriter(new BufferedWriter(
+            msgWriter = msgFormatClass.newInstance();
+          } catch (InstantiationException e) {
+            logger.log(TreeLogger.WARN, "Error instantiating @Generate class " + genClassName, e);
+            continue;
+          } catch (IllegalAccessException e) {
+            logger.log(TreeLogger.WARN, "@Generate class " + genClassName + " illegal access", e);
+            continue;
+          } catch (ClassNotFoundException e) {
+            logger.log(TreeLogger.WARN, "@Generate class " + genClassName + " not found");
+            continue;
+          }
+          // Make generator-specific changes to a temporary copy of the path.
+          String genPath = path;
+          if (genLocales.length != 1) {
+            // If the user explicitly specified only one locale, do not add the locale.
+            genPath += '_' + locale;
+          }
+          genPath += msgWriter.getExtension();
+          OutputStream outStr = context.tryCreateResource(logger, genPath);
+          if (outStr != null) {
+            TreeLogger branch = logger.branch(TreeLogger.INFO, "Generating " + genPath
+                + " from " + className + " for locale " + locale, null);
+            PrintWriter out = null;
+            try {
+              out = new PrintWriter(new BufferedWriter(
                   new OutputStreamWriter(outStr, "UTF-8")), false);
-              msgWriter.write(logger, resource, out, targetClass);
+            } catch (UnsupportedEncodingException e) {
+              throw error(logger, e.getMessage());
+            }
+            try {
+              msgWriter.write(branch, resource, out, targetClass);
               out.flush();
               context.commitResource(logger, outStr).setPrivate(true);
+            } catch (UnableToCompleteException e) {
+              // msgWriter should have already logged an error message.
+              // Keep going for now so we can find other errors.
+              seenError = true;
             }
           }
         }
-      } catch (InstantiationException e) {
-      } catch (IllegalAccessException e) {
-      } catch (ClassNotFoundException e) {
-      } catch (UnsupportedEncodingException e) {
-        throw error(logger, e.getMessage());
       }
+    }
+    if (seenError) {
+      // If one of our generators had a fatal error, don't complete normally.
+      throw new UnableToCompleteException();
     }
     return packageName + "." + className;
   }
@@ -208,7 +229,7 @@ abstract class AbstractLocalizableImplCreator extends
    * True if the class being generated uses Constants-style annotations/quoting.
    */
   private boolean isConstants;
-  
+
   /**
    * Constructor for <code>AbstractLocalizableImplCreator</code>.
    * 

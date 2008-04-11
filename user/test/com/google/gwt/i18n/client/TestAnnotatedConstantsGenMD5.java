@@ -27,7 +27,7 @@ import java.util.Map;
  */
 @DefaultLocale("en-US")
 @GenerateKeys // ("com.google.gwt.i18n.rebind.MD5") - default
-@Generate(format = "com.google.gwt.i18n.rebind.format.Properties")
+@Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
 public interface TestAnnotatedConstantsGenMD5 extends Constants {
 
   @DefaultIntValue(14)

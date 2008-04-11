@@ -27,7 +27,7 @@ import java.util.Map;
  */
 @DefaultLocale("en-US")
 @GenerateKeys("com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator") // default
-@Generate(format = "com.google.gwt.i18n.rebind.format.Properties")
+@Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
 public interface TestAnnotatedConstants extends Constants {
 
   @DefaultIntValue(14)

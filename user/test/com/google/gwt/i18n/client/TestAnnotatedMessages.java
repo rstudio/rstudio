@@ -28,7 +28,7 @@ import java.util.Date;
 @DefaultLocale("en-US")
 //@GenerateKeys("com.google.gwt.i18n.rebind.keygen.MD5KeyGenerator")
 @GenerateKeys("com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator") // default
-@Generate(format = "com.google.gwt.i18n.rebind.format.Properties")
+@Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
 public interface TestAnnotatedMessages extends Messages {
 
   @DefaultMessage("Test me")

@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.rebind.format;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.i18n.rebind.AbstractResource;
 
@@ -43,9 +44,12 @@ public interface MessageCatalogFormat {
    * @param out the PrintWriter to generate output on
    * @param messageInterface the interface to create (so additional
    *     annotations may be accessed)
+   * @throws UnableToCompleteException if a fatal error prevents generating
+   *     the output file.  In this case, the implementation must have already
+   *     logged an appropriate ERROR message to the logger.
    */
   void write(TreeLogger logger, AbstractResource resource, PrintWriter out,
-      JClassType messageInterface);
+      JClassType messageInterface) throws UnableToCompleteException;
   
   /**
    * @return the extension to use for this file type, including the dot

@@ -16,26 +16,19 @@
 
 package com.google.gwt.i18n.client.impl.plurals;
 
+
 /**
- * Plural forms for Arabic are 0, 1, 2, x03-x10, x11-x99.
+ * Plural forms for Sami are 1, 2, and n.
  */
-public class DefaultRule_ar extends DefaultRule {
+public class DefaultRule_smi extends DefaultRule {
 
   @Override
   public PluralForm[] pluralForms() {
-    return new PluralForm[] {
-        new PluralForm("other", "Default plural form"),
-        new PluralForm("none", "Count is 0"),
-        new PluralForm("one", "Count is 1"),
-        new PluralForm("two", "Count is 2"),
-        new PluralForm("few", "Count is between x03 and x10"),
-        new PluralForm("many", "Count is between x11 and x99"),
-    };
+    return DefaultRule_1_2_n.pluralForms();
   }
 
   @Override
   public int select(int n) {
-    return n == 0 ? 1 : n == 1 ? 2 : n == 2 ? 3 : n % 100 >= 3 && n % 100 <= 10 ? 4 : n % 100 >= 11
-        && n % 100 <= 99 ? 5 : 0;
+    return DefaultRule_1_2_n.select(n);
   }
 }
