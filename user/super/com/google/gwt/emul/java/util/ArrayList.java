@@ -83,12 +83,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     addAll(c);
   }
 
-  /**
-   * There is no speed advantage to pre-allocating array sizes in JavaScript.
-   * This constructor is only present for compatibility with the JRE.
-   */
-  @SuppressWarnings("unused")
-  public ArrayList(int ignoredInitialCapacity) {
+  public ArrayList(int initialCapacity) {
+    assert (initialCapacity >= 0);
+    ensureCapacity(initialCapacity);
   }
 
   @Override
@@ -128,6 +125,12 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @Override
   public boolean contains(Object o) {
     return (indexOf(o) != -1);
+  }
+
+  public void ensureCapacity(int capacity) {
+    if (capacity > size) {
+      setSizeImpl(array, capacity);
+    }
   }
 
   @Override
@@ -200,10 +203,8 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return a;
   }
 
-  /**
-   * Does nothing.
-   */
   public void trimToSize() {
+    setSizeImpl(array, size);
   }
 
   protected int indexOf(Object o, int index) {
