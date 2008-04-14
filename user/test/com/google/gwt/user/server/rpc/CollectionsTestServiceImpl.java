@@ -181,8 +181,13 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public int[] echo(int[] actual) throws CollectionsTestServiceException {
     int[] expected = TestSetFactory.createPrimitiveIntegerArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+
+      // It could be the very large array
+      expected = TestSetFactory.createVeryLargeArray();
+      if (!TestSetValidator.equals(expected, actual)) {
+        throw new CollectionsTestServiceException("expected:"
+            + expected.toString() + " actual:" + actual.toString());
+      }
     }
 
     return actual;

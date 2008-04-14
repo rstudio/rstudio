@@ -196,7 +196,7 @@ public class TestSetFactory {
   public static class SerializableVector extends Vector implements
       IsSerializable {
   }
-  
+
   /**
    * TODO: document me.
    */
@@ -319,7 +319,7 @@ public class TestSetFactory {
     return new short[] {
         Short.MAX_VALUE, Short.MIN_VALUE, Short.MAX_VALUE, Short.MIN_VALUE};
   }
-  
+
   public static SerializablePrivateNoArg createPrivateNoArg() {
     return new SerializablePrivateNoArg(1);
   }
@@ -328,6 +328,10 @@ public class TestSetFactory {
     return new Short[] {
         new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE),
         new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
+  }
+
+  public static int[] createVeryLargeArray() {
+    return new int[1 << 20];
   }
 
   /*

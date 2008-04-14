@@ -104,10 +104,7 @@ public final class ClientSerializationStreamReader extends
   @Override
   protected native String getString(int index) /*-{ 
     // index is 1-based
-    if (!index) {
-      return null;
-    }
-    return this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::stringTable[index - 1];
+    return index > 0 ? this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::stringTable[index - 1] : null;
   }-*/;
 
   private native JavaScriptObject readJavaScriptObject() /*-{

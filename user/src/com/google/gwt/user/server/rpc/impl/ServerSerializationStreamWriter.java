@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
-import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 /**
@@ -35,6 +35,64 @@ import java.util.Map;
  */
 public final class ServerSerializationStreamWriter extends
     AbstractSerializationStreamWriter {
+
+  /**
+   * Builds a string that evaluates into an array containing the given elements.
+   * This class exists to work around a bug in IE6/7 that limits the size of
+   * array literals.
+   */
+  public static class LengthConstrainedArray {
+    public static final int MAXIMUM_ARRAY_LENGTH = 1 << 15;
+    private static final String POSTLUDE = "])";
+    private static final String PRELUDE = "].concat([";
+
+    private final StringBuffer buffer;
+    private int count = 0;
+    private boolean needsComma = false;
+    private int total = 0;
+
+    public LengthConstrainedArray() {
+      buffer = new StringBuffer();
+    }
+
+    public LengthConstrainedArray(int capacityGuess) {
+      buffer = new StringBuffer(capacityGuess);
+    }
+
+    public void addToken(CharSequence token) {
+      total++;
+      if (count++ == MAXIMUM_ARRAY_LENGTH) {
+        if (total == MAXIMUM_ARRAY_LENGTH + 1) {
+          buffer.append(PRELUDE);
+        } else {
+          buffer.append("],[");
+        }
+        count = 0;
+        needsComma = false;
+      }
+
+      if (needsComma) {
+        buffer.append(",");
+      } else {
+        needsComma = true;
+      }
+
+      buffer.append(token);
+    }
+
+    public void addToken(int i) {
+      addToken(String.valueOf(i));
+    }
+
+    @Override
+    public String toString() {
+      if (total > MAXIMUM_ARRAY_LENGTH) {
+        return "[" + buffer.toString() + POSTLUDE;
+      } else {
+        return "[" + buffer.toString() + "]";
+      }
+    }
+  }
 
   /**
    * Enumeration used to provided typed instance writers.
@@ -216,7 +274,15 @@ public final class ServerSerializationStreamWriter extends
         throws SerializationException;
   }
 
-  private static final char NON_BREAKING_HYPHEN = '\u2011';
+  /**
+   * Map of {@link Class} objects to {@link ValueWriter}s.
+   */
+  private static final Map<Class<?>, ValueWriter> CLASS_TO_VALUE_WRITER = new IdentityHashMap<Class<?>, ValueWriter>();
+
+  /**
+   * Map of {@link Class} vector objects to {@link VectorWriter}s.
+   */
+  private static final Map<Class<?>, VectorWriter> CLASS_TO_VECTOR_WRITER = new IdentityHashMap<Class<?>, VectorWriter>();
 
   /**
    * Number of escaped JS Chars.
@@ -249,15 +315,7 @@ public final class ServerSerializationStreamWriter extends
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
 
-  /**
-   * Map of {@link Class} objects to {@link ValueWriter}s.
-   */
-  private static final Map<Class<?>, ValueWriter> CLASS_TO_VALUE_WRITER = new IdentityHashMap<Class<?>, ValueWriter>();
-
-  /**
-   * Map of {@link Class} vector objects to {@link VectorWriter}s.
-   */
-  private static final Map<Class<?>, VectorWriter> CLASS_TO_VECTOR_WRITER = new IdentityHashMap<Class<?>, VectorWriter>();
+  private static final char NON_BREAKING_HYPHEN = '\u2011';
 
   static {
     /*
@@ -436,11 +494,11 @@ public final class ServerSerializationStreamWriter extends
     }
   }
 
+  private final SerializationPolicy serializationPolicy;
+
   private ArrayList<String> tokenList = new ArrayList<String>();
 
   private int tokenListCharCount;
-
-  private final SerializationPolicy serializationPolicy;
 
   public ServerSerializationStreamWriter(SerializationPolicy serializationPolicy) {
     this.serializationPolicy = serializationPolicy;
@@ -477,13 +535,12 @@ public final class ServerSerializationStreamWriter extends
     // We take a guess at how big to make to buffer to avoid numerous resizes.
     //
     int capacityGuess = 2 * tokenListCharCount + 2 * tokenList.size();
-    StringBuffer buffer = new StringBuffer(capacityGuess);
-    buffer.append("[");
-    writePayload(buffer);
-    writeStringTable(buffer);
-    writeHeader(buffer);
-    buffer.append("]");
-    return buffer.toString();
+    LengthConstrainedArray stream = new LengthConstrainedArray(capacityGuess);
+    writePayload(stream);
+    writeStringTable(stream);
+    writeHeader(stream);
+
+    return stream.toString();
   }
 
   public void writeLong(long fieldValue) {
@@ -633,35 +690,23 @@ public final class ServerSerializationStreamWriter extends
    * Notice that the field are written in reverse order that the client can just
    * pop items out of the stream.
    */
-  private void writeHeader(StringBuffer buffer) {
-    buffer.append(",");
-    buffer.append(getFlags());
-    buffer.append(",");
-    buffer.append(getVersion());
+  private void writeHeader(LengthConstrainedArray stream) {
+    stream.addToken(getFlags());
+    stream.addToken(getVersion());
   }
 
-  private void writePayload(StringBuffer buffer) {
-    for (int i = tokenList.size() - 1; i >= 0; --i) {
-      String token = tokenList.get(i);
-      buffer.append(token);
-      if (i > 0) {
-        buffer.append(",");
-      }
+  private void writePayload(LengthConstrainedArray stream) {
+    ListIterator<String> tokenIterator = tokenList.listIterator(tokenList.size());
+    while (tokenIterator.hasPrevious()) {
+      stream.addToken(tokenIterator.previous());
     }
   }
 
-  private void writeStringTable(StringBuffer buffer) {
-    List<String> stringTable = getStringTable();
-    if (tokenList.size() > 0) {
-      buffer.append(",");
+  private void writeStringTable(LengthConstrainedArray stream) {
+    LengthConstrainedArray tableStream = new LengthConstrainedArray();
+    for (String s : getStringTable()) {
+      tableStream.addToken(escapeString(s));
     }
-    buffer.append("[");
-    for (int i = 0, c = stringTable.size(); i < c; ++i) {
-      if (i > 0) {
-        buffer.append(",");
-      }
-      buffer.append(escapeString(stringTable.get(i)));
-    }
-    buffer.append("]");
+    stream.addToken(tableStream.toString());
   }
 }
