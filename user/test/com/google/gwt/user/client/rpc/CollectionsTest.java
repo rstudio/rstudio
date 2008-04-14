@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,10 @@ import java.util.Vector;
  * TODO: document me.
  */
 public class CollectionsTest extends GWTTestCase {
+  /**
+   * Used by testVeryLargeArray() because the serialization takes a while.
+   */
+  private static final int LONG_TEST_DELAY = 120000;
   private static final int TEST_DELAY = 10000;
 
   private CollectionsTestServiceAsync collectionsTestService;
@@ -481,7 +485,7 @@ public class CollectionsTest extends GWTTestCase {
    * with IE6/7.
    */
   public void testVeryLargeArray() {
-    delayTestFinish(TEST_DELAY);
+    delayTestFinish(LONG_TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final int[] expected = TestSetFactory.createVeryLargeArray();
