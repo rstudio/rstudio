@@ -176,6 +176,8 @@ abstract class DOMImplStandard extends DOMImpl {
     $wnd.addEventListener('mousedown', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('mouseup', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('mousemove', $wnd.__dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mouseover', $wnd.__dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mouseout', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('mousewheel', $wnd.__dispatchCapturedMouseEvent, true);
     $wnd.addEventListener('keydown', $wnd.__dispatchCapturedEvent, true);
     $wnd.addEventListener('keyup', $wnd.__dispatchCapturedEvent, true);
