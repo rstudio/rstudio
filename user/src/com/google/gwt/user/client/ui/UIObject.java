@@ -715,7 +715,7 @@ public abstract class UIObject {
    * 
    * @return the element to which style names will be applied
    */
-  protected final com.google.gwt.user.client.Element getStyleElement() {
+  protected com.google.gwt.user.client.Element getStyleElement() {
     return getElement();
   }
 
