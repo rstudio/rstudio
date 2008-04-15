@@ -165,7 +165,6 @@ public class JUnitShell extends GWTShell {
         throw new RuntimeException("Invalid shell arguments");
       }
 
-      
       shell.messageQueue = new JUnitMessageQueue(shell.numClients);
 
       if (!shell.startUp()) {
@@ -214,7 +213,7 @@ public class JUnitShell extends GWTShell {
    * started the test.
    */
   private long testBeginTimeout;
-  
+
   /**
    * The time the test actually began.
    */

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit.client.impl;
 
+import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.client.rpc.RemoteService;
 
@@ -49,7 +50,7 @@ public interface JUnitHost extends RemoteService {
     public String getTestMethod() {
       return testMethod;
     }
-    
+
     @Override
     public String toString() {
       return testClass + "." + testMethod;
@@ -61,8 +62,9 @@ public interface JUnitHost extends RemoteService {
    * 
    * @param moduleName the module name of this client
    * @return the next test to run
+   * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo getFirstMethod(String moduleName);
+  TestInfo getFirstMethod(String moduleName) throws TimeoutException;
 
   /**
    * Reports results for the last method run and gets the name of next method to
@@ -71,6 +73,8 @@ public interface JUnitHost extends RemoteService {
    * @param moduleName the module name of this client
    * @param result the results of executing the test
    * @return the next test to run
+   * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo reportResultsAndGetNextMethod(String moduleName, JUnitResult result);
+  TestInfo reportResultsAndGetNextMethod(String moduleName, JUnitResult result)
+      throws TimeoutException;
 }

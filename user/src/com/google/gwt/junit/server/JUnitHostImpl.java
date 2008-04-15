@@ -18,6 +18,7 @@ package com.google.gwt.junit.server;
 import com.google.gwt.junit.JUnitFatalLaunchException;
 import com.google.gwt.junit.JUnitMessageQueue;
 import com.google.gwt.junit.JUnitShell;
+import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.ExceptionWrapper;
 import com.google.gwt.junit.client.impl.JUnitHost;
 import com.google.gwt.junit.client.impl.JUnitResult;
@@ -79,13 +80,13 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     fld.set(obj, value);
   }
 
-  public TestInfo getFirstMethod(String moduleName) {
+  public TestInfo getFirstMethod(String moduleName) throws TimeoutException {
     return getHost().getNextTestInfo(getClientId(), moduleName,
         TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   public TestInfo reportResultsAndGetNextMethod(String moduleName,
-      JUnitResult result) {
+      JUnitResult result) throws TimeoutException {
     initResult(getThreadLocalRequest(), result);
     ExceptionWrapper ew = result.getExceptionWrapper();
     result.setException(deserialize(ew));
@@ -223,9 +224,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   private String getClientId() {
     HttpServletRequest request = getThreadLocalRequest();
     String machine = request.getRemoteHost();
-    String servletPath = request.getServletPath();
     String agent = request.getHeader("User-Agent");
-    return machine + " / " + servletPath + " / " + agent;
+    return machine + " / " + agent;
   }
 
   private String getModuleName(String requestURI) {

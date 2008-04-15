@@ -119,29 +119,40 @@ public class JUnitMessageQueue {
    *         <code>testClassName</code>
    */
   public TestInfo getNextTestInfo(String clientId, String moduleName,
-      long timeout) {
+      long timeout) throws TimeoutException {
     synchronized (readTestLock) {
       long startTime = System.currentTimeMillis();
-      long stopTime = System.currentTimeMillis() + timeout;
+      long stopTime = startTime + timeout;
       while (!testIsAvailableFor(clientId, moduleName)) {
         long timeToWait = stopTime - System.currentTimeMillis();
         if (timeToWait < 1) {
-          return null;
+          double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
+          throw new TimeoutException("The servlet did not respond to the "
+              + "next query to test within " + timeout + "ms.\n"
+              + " Module Name: " + moduleName + "\n" + " Client id: "
+              + clientId + "\n" + " Actual time elapsed: " + elapsed
+              + " seconds.\n");
         }
         try {
           readTestLock.wait(timeToWait);
         } catch (InterruptedException e) {
-          double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
-          throw new TimeoutException("The servlet did not respond to the "
-              + "next query to test within "
-              + timeout + "ms.\n" + " Module Name: " + moduleName + "\n"
-              + " Client id: " + clientId + "\n"
-              + " Actual time elapsed: " + elapsed + " seconds.\n");
+          /*
+           * Should never happen; but if it does, just send a null back to the
+           * client, which will cause it to stop running tests.
+           * 
+           * TODO: something intelligent, log?
+           */
+          System.err.println("Unexpected thread interruption");
+          e.printStackTrace();
+          return null;
         }
       }
 
       if (!moduleName.equals(testModule)) {
-        // it's an old client that is now done
+        /*
+         * When a module finishes, clients will continue to query for another
+         * test case; return null to indicate we're done.
+         */
         return null;
       }
 
@@ -195,7 +206,7 @@ public class JUnitMessageQueue {
         if (lineCount > 0) {
           buf.append('\n');
         }
-        
+
         if (clientTestRequests.get(key) <= currentTestIndex) {
           buf.append(" - NO RESPONSE: ");
           buf.append(key);
@@ -203,14 +214,16 @@ public class JUnitMessageQueue {
           buf.append(" - (ok): ");
           buf.append(key);
         }
-        lineCount++;        
+        lineCount++;
       }
       int difference = numClients - keys.size();
       if (difference > 0) {
         if (lineCount > 0) {
           buf.append('\n');
         }
-        buf.append(" - " + difference + " client(s) haven't responded back to the servlet at all since the start of the test.");
+        buf.append(" - "
+            + difference
+            + " client(s) haven't responded back to JUnitShell since the start of the test.");
       }
     }
     return buf.toString();
@@ -236,7 +249,8 @@ public class JUnitMessageQueue {
    */
   boolean haveAllClientsRetrievedCurrentTest() {
     synchronized (readTestLock) {
-      // If a client hasn't yet been contacted, it will have no entry
+      // If a client hasn't yet made contact back to JUnitShell, it will have
+      // no entry
       Collection<Integer> clientIndices = clientTestRequests.values();
       if (clientIndices.size() < numClients) {
         return false;
