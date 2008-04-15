@@ -57,42 +57,6 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
-  public void disabledTestLongArray() {
-    delayTestFinish(TEST_DELAY);
-
-    CollectionsTestServiceAsync service = getServiceAsync();
-    final Long[] expected = TestSetFactory.createLongArray();
-    service.echo(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
-
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Long[]) result));
-        finishTest();
-      }
-    });
-  }
-
-  public void disabledTestPrimitiveLongArray() {
-    delayTestFinish(TEST_DELAY);
-
-    CollectionsTestServiceAsync service = getServiceAsync();
-    final long[] expected = TestSetFactory.createPrimitiveLongArray();
-    service.echo(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
-
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (long[]) result));
-        finishTest();
-      }
-    });
-  }
-
   /**
    * This tests sending payloads that must be segmented to avoid problems with
    * IE6/7. This test is disabled since it sometimes fails on Safari, possibly
@@ -309,6 +273,24 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
+  public void testLongArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final Long[] expected = TestSetFactory.createLongArray();
+    service.echo(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, (Long[]) result));
+        finishTest();
+      }
+    });
+  }
+
   public void testPrimitiveBooleanArray() {
     delayTestFinish(TEST_DELAY);
 
@@ -410,6 +392,24 @@ public class CollectionsTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, (int[]) result));
+        finishTest();
+      }
+    });
+  }
+
+  public void testPrimitiveLongArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final long[] expected = TestSetFactory.createPrimitiveLongArray();
+    service.echo(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, (long[]) result));
         finishTest();
       }
     });
