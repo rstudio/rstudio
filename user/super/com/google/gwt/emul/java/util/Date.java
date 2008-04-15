@@ -53,6 +53,19 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   // CHECKSTYLE_ON
 
   /**
+   * Ensure a number is displayed with two digits.
+   * 
+   * @return a two-character base 10 representation of the number
+   */
+  protected static String padTwo(int number) {
+    if (number < 10) {
+      return "0" + number;
+    } else {
+      return String.valueOf(number);
+    }
+  }
+
+  /**
    *  Return the names for the days of the week as specified by the Date
    *  specification.
    */
@@ -68,19 +81,6 @@ public class Date implements Cloneable, Comparable<Date>, Serializable {
   @SuppressWarnings("unused") // called by JSNI
   private static String monthToString(int month) {
     return MONTHS[month];
-  }
-
-  /**
-   *  Ensure a number is displayed with two digits.
-   *  @return A two-character representation of the number.
-   */
-  @SuppressWarnings("unused") // called by JSNI
-  private static String padTwo(int number) {
-    if (number < 10) {
-      return "0" + number;
-    } else {
-      return String.valueOf(number);
-    }
   }
 
   private static native double parse0(String s) /*-{

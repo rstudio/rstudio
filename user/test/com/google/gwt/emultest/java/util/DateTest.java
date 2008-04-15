@@ -303,6 +303,18 @@ public class DateTest extends GWTTestCase {
 
   /** Testing for public static long java.util.Date.parse(java.lang.String). */
   public void testParse() {
+    try {
+      Date.parse(null);
+      fail("Should have thrown exception");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
+
+    try {
+      Date.parse("");
+    } catch (IllegalArgumentException e) {
+      // Expected
+    }
 
     // /////////////////////////////
     // Current

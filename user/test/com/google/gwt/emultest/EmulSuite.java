@@ -28,6 +28,9 @@ import com.google.gwt.emultest.java.lang.ShortTest;
 import com.google.gwt.emultest.java.lang.StringBufferTest;
 import com.google.gwt.emultest.java.lang.StringTest;
 import com.google.gwt.emultest.java.lang.SystemTest;
+import com.google.gwt.emultest.java.sql.SqlDateTest;
+import com.google.gwt.emultest.java.sql.SqlTimeTest;
+import com.google.gwt.emultest.java.sql.SqlTimestampTest;
 import com.google.gwt.emultest.java.util.ApacheMapTest;
 import com.google.gwt.emultest.java.util.ArrayListTest;
 import com.google.gwt.emultest.java.util.ArraysTest;
@@ -82,6 +85,9 @@ public class EmulSuite {
     suite.addTestSuite(IdentityHashMapTest.class);
     suite.addTestSuite(LinkedListTest.class);
     suite.addTestSuite(StackTest.class);
+    suite.addTestSuite(SqlDateTest.class);
+    suite.addTestSuite(SqlTimeTest.class);
+    suite.addTestSuite(SqlTimestampTest.class);
     suite.addTest(TreeMapSuiteSub.suite());
     // $JUnit-END$
 
