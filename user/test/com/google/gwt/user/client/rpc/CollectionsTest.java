@@ -91,6 +91,29 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
+  /**
+   * This tests sending payloads that must be segmented to avoid problems with
+   * IE6/7. This test is disabled since it sometimes fails on Safari, possibly
+   * due to SSW.
+   */
+  public void disabledTestVeryLargeArray() {
+    delayTestFinish(LONG_TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final int[] expected = TestSetFactory.createVeryLargeArray();
+    service.echo(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, (int[]) result));
+        finishTest();
+      }
+    });
+  }
+
   public String getModuleName() {
     return "com.google.gwt.user.RPCSuite";
   }
@@ -475,28 +498,6 @@ public class CollectionsTest extends GWTTestCase {
       public void onSuccess(Object result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.isValid(expected, (Vector) result));
-        finishTest();
-      }
-    });
-  }
-
-  /**
-   * This tests sending payloads that must be segmented to avoid problems
-   * with IE6/7.
-   */
-  public void testVeryLargeArray() {
-    delayTestFinish(LONG_TEST_DELAY);
-
-    CollectionsTestServiceAsync service = getServiceAsync();
-    final int[] expected = TestSetFactory.createVeryLargeArray();
-    service.echo(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
-
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (int[]) result));
         finishTest();
       }
     });
