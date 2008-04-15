@@ -39,7 +39,7 @@ public class Time extends java.util.Date {
 
   @Deprecated
   public Time(int hour, int minute, int second) {
-    super(0, 0, 0, hour, minute, second);
+    super(70, 0, 1, hour, minute, second);
   }
 
   public Time(long time) {
