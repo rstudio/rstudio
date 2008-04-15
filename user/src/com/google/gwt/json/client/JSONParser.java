@@ -44,7 +44,7 @@ public class JSONParser {
     if (jsonString == null) {
       throw new NullPointerException();
     }
-    if (jsonString == "") {
+    if (jsonString.length() == 0) {
       throw new IllegalArgumentException("empty argument");
     }
     try {
