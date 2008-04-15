@@ -451,42 +451,6 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
-  public void testStringArray() {
-    delayTestFinish(TEST_DELAY);
-
-    CollectionsTestServiceAsync service = getServiceAsync();
-    final String[] expected = TestSetFactory.createStringArray();
-    service.echo(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
-
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (String[]) result));
-        finishTest();
-      }
-    });
-  }
-
-  public void testStringArrayArray() {
-    delayTestFinish(TEST_DELAY);
-
-    CollectionsTestServiceAsync service = getServiceAsync();
-    final String[][] expected = new String[][] {
-        new String[] {"hello"}, new String[] {"bye"}};
-    service.echo(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
-
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        finishTest();
-      }
-    });
-  }
-
   public void testSqlDateArray() {
     delayTestFinish(TEST_DELAY);
 
@@ -536,6 +500,42 @@ public class CollectionsTest extends GWTTestCase {
       public void onSuccess(Timestamp[] result) {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, result));
+        finishTest();
+      }
+    });
+  }
+
+  public void testStringArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final String[] expected = TestSetFactory.createStringArray();
+    service.echo(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, (String[]) result));
+        finishTest();
+      }
+    });
+  }
+
+  public void testStringArrayArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final String[][] expected = new String[][] {
+        new String[] {"hello"}, new String[] {"bye"}};
+    service.echo(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
         finishTest();
       }
     });
