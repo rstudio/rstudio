@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -30,8 +32,7 @@ public interface CollectionsTestService extends RemoteService {
   /**
    * TODO: document me.
    */
-  public static class CollectionsTestServiceException extends
-      SerializableException {
+  public static class CollectionsTestServiceException extends Exception {
     public CollectionsTestServiceException() {
     }
 
@@ -56,6 +57,9 @@ public interface CollectionsTestService extends RemoteService {
   Character[] echo(Character[] value) throws CollectionsTestServiceException;
 
   Date[] echo(Date[] date) throws CollectionsTestServiceException;
+
+  java.sql.Date[] echo(java.sql.Date[] value)
+      throws CollectionsTestServiceException;
 
   double[] echo(double[] value) throws CollectionsTestServiceException;
 
@@ -86,6 +90,10 @@ public interface CollectionsTestService extends RemoteService {
   String[] echo(String[] value) throws CollectionsTestServiceException;
 
   String[][] echo(String[][] value) throws CollectionsTestServiceException;
+
+  Time[] echo(Time[] value) throws CollectionsTestServiceException;
+
+  Timestamp[] echo(Timestamp[] value) throws CollectionsTestServiceException;
 
   Vector<IsSerializable> echo(Vector<IsSerializable> value)
       throws CollectionsTestServiceException;

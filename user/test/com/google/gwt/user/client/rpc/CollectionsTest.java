@@ -18,6 +18,8 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -480,6 +482,60 @@ public class CollectionsTest extends GWTTestCase {
 
       public void onSuccess(Object result) {
         assertNotNull(result);
+        finishTest();
+      }
+    });
+  }
+
+  public void testSqlDateArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
+    service.echo(expected, new AsyncCallback<java.sql.Date[]>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(java.sql.Date[] result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, result));
+        finishTest();
+      }
+    });
+  }
+
+  public void testSqlTimeArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final Time[] expected = TestSetFactory.createSqlTimeArray();
+    service.echo(expected, new AsyncCallback<Time[]>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Time[] result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, result));
+        finishTest();
+      }
+    });
+  }
+
+  public void testSqlTimestampArray() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final Timestamp[] expected = TestSetFactory.createSqlTimestampArray();
+    service.echo(expected, new AsyncCallback<Timestamp[]>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Timestamp[] result) {
+        assertNotNull(result);
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });

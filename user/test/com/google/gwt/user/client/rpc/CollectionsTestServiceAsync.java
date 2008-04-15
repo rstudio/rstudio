@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -42,6 +44,8 @@ public interface CollectionsTestServiceAsync {
   void echo(Character[] value, AsyncCallback<Character[]> callback);
 
   void echo(Date[] date, AsyncCallback<Date[]> callback);
+
+  void echo(java.sql.Date[] value, AsyncCallback<java.sql.Date[]> callback);
 
   void echo(double[] value, AsyncCallback<double[]> callback);
 
@@ -72,6 +76,10 @@ public interface CollectionsTestServiceAsync {
   void echo(String[] value, AsyncCallback<String[]> callback);
 
   void echo(String[][] value, AsyncCallback<String[][]> callback);
+
+  void echo(Time[] value, AsyncCallback<Time[]> callback);
+
+  void echo(Timestamp[] value, AsyncCallback<Timestamp[]> callback);
 
   void echo(Vector<IsSerializable> value,
       AsyncCallback<Vector<IsSerializable>> callback);

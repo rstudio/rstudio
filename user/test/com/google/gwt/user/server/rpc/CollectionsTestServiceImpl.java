@@ -19,6 +19,8 @@ import com.google.gwt.user.client.rpc.CollectionsTestService;
 import com.google.gwt.user.client.rpc.TestSetFactory;
 import com.google.gwt.user.client.rpc.TestSetValidator;
 
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -37,6 +39,7 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return Arrays.asList(values).toString();
   }
 
+  @SuppressWarnings("unchecked")
   public ArrayList echo(ArrayList list) throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(list)) {
       throw new CollectionsTestServiceException();
@@ -49,8 +52,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
       throws CollectionsTestServiceException {
     boolean[] expected = TestSetFactory.createPrimitiveBooleanArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -60,8 +63,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
       throws CollectionsTestServiceException {
     Boolean[] expected = TestSetFactory.createBooleanArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -70,8 +73,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public byte[] echo(byte[] actual) throws CollectionsTestServiceException {
     byte[] expected = TestSetFactory.createPrimitiveByteArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -80,8 +83,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public Byte[] echo(Byte[] actual) throws CollectionsTestServiceException {
     Byte[] expected = TestSetFactory.createByteArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -90,8 +93,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public char[] echo(char[] actual) throws CollectionsTestServiceException {
     char[] expected = TestSetFactory.createPrimitiveCharArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -101,8 +104,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
       throws CollectionsTestServiceException {
     Character[] expected = TestSetFactory.createCharArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -111,8 +114,19 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public Date[] echo(Date[] actual) throws CollectionsTestServiceException {
     Date[] expected = TestSetFactory.createDateArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + toString(expected) + " actual:" + toString(actual));
+      throw new CollectionsTestServiceException("expected: "
+          + toString(expected) + " actual: " + toString(actual));
+    }
+
+    return actual;
+  }
+
+  public java.sql.Date[] echo(java.sql.Date[] actual)
+      throws CollectionsTestServiceException {
+    java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + toString(expected) + " actual: " + toString(actual));
     }
 
     return actual;
@@ -121,8 +135,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public double[] echo(double[] actual) throws CollectionsTestServiceException {
     double[] expected = TestSetFactory.createPrimitiveDoubleArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -131,8 +145,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public Double[] echo(Double[] actual) throws CollectionsTestServiceException {
     Double[] expected = TestSetFactory.createDoubleArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -141,8 +155,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public float[] echo(float[] actual) throws CollectionsTestServiceException {
     float[] expected = TestSetFactory.createPrimitiveFloatArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -151,28 +165,30 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public Float[] echo(Float[] actual) throws CollectionsTestServiceException {
     Float[] expected = TestSetFactory.createFloatArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
   }
 
+  @SuppressWarnings("unchecked")
   public HashMap echo(HashMap actual) throws CollectionsTestServiceException {
     HashMap expected = TestSetFactory.createHashMap();
     if (!TestSetValidator.isValid(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
   }
 
+  @SuppressWarnings("unchecked")
   public HashSet echo(HashSet actual) throws CollectionsTestServiceException {
     HashSet expected = TestSetFactory.createHashSet();
     if (!TestSetValidator.isValid(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -185,8 +201,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
       // It could be the very large array
       expected = TestSetFactory.createVeryLargeArray();
       if (!TestSetValidator.equals(expected, actual)) {
-        throw new CollectionsTestServiceException("expected:"
-            + expected.toString() + " actual:" + actual.toString());
+        throw new CollectionsTestServiceException("expected: "
+            + expected.toString() + " actual: " + actual.toString());
       }
     }
 
@@ -197,8 +213,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
       throws CollectionsTestServiceException {
     Integer[] expected = TestSetFactory.createIntegerArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -207,8 +223,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public long[] echo(long[] actual) throws CollectionsTestServiceException {
     long[] expected = TestSetFactory.createPrimitiveLongArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -217,8 +233,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public Long[] echo(Long[] actual) throws CollectionsTestServiceException {
     Long[] expected = TestSetFactory.createLongArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + toString(expected) + " actual:" + toString(actual));
+      throw new CollectionsTestServiceException("expected: "
+          + toString(expected) + " actual: " + toString(actual));
     }
 
     return actual;
@@ -227,8 +243,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public short[] echo(short[] actual) throws CollectionsTestServiceException {
     short[] expected = TestSetFactory.createPrimitiveShortArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -237,8 +253,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public Short[] echo(Short[] actual) throws CollectionsTestServiceException {
     Short[] expected = TestSetFactory.createShortArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -247,8 +263,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
   public String[] echo(String[] actual) throws CollectionsTestServiceException {
     String[] expected = TestSetFactory.createStringArray();
     if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -259,11 +275,33 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return value;
   }
 
+  public Time[] echo(Time[] actual) throws CollectionsTestServiceException {
+    Time[] expected = TestSetFactory.createSqlTimeArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + toString(expected) + " actual: " + toString(actual));
+    }
+
+    return actual;
+  }
+
+  public Timestamp[] echo(Timestamp[] actual)
+      throws CollectionsTestServiceException {
+    Timestamp[] expected = TestSetFactory.createSqlTimestampArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + toString(expected) + " actual: " + toString(actual));
+    }
+
+    return actual;
+  }
+
+  @SuppressWarnings("unchecked")
   public Vector echo(Vector actual) throws CollectionsTestServiceException {
     Vector expected = TestSetFactory.createVector();
     if (!TestSetValidator.isValid(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
     }
 
     return actual;
@@ -273,6 +311,7 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
    * Return the result of Arrays.asList(Object[]) to force an
    * InvocationException on the client.
    */
+  @SuppressWarnings("unchecked")
   public List getArraysAsList(List value) {
     Byte[] retVal = new Byte[10];
     for (byte i = 0; i < 10; ++i) {
