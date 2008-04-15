@@ -178,6 +178,8 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Selects all of the text in the box.
+   * 
+   * This will only work when the widget is attached to the document.
    */
   public void selectAll() {
     int length = getText().length();
@@ -231,10 +233,17 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   /**
    * Sets the range of text to be selected.
    * 
+   * This will only work when the widget is attached to the document.
+   * 
    * @param pos the position of the first character to be selected
    * @param length the number of characters to be selected
    */
   public void setSelectionRange(int pos, int length) {
+    // Setting the selection range will not work for unattached elements.
+    if (!isAttached()) {
+      return;
+    }
+
     if (length < 0) {
       throw new IndexOutOfBoundsException(
           "Length must be a positive integer. Length: " + length);
