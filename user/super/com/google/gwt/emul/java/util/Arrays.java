@@ -19,6 +19,8 @@ package java.util;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
+import java.io.Serializable;
+
 /**
  * Utility methods related to native arrays. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Arrays.html">[Sun
@@ -26,12 +28,69 @@ import com.google.gwt.lang.Array;
  */
 public class Arrays {
 
-  public static <T> List<T> asList(T... array) {
-    List<T> accum = new ArrayList<T>();
-    for (int i = 0; i < array.length; i++) {
-      accum.add(array[i]);
+  private static final class ArrayList<E> extends AbstractList<E> implements
+      RandomAccess, Serializable {
+    private final E[] array;
+
+    ArrayList(E[] array) {
+      assert (array != null);
+      this.array = array;
     }
-    return accum;
+
+    @Override
+    public boolean contains(Object o) {
+      return (indexOf(o) != -1);
+    }
+
+    @Override
+    public E get(int index) {
+      checkIndex(index, size());
+      return array[index];
+    }
+
+    @Override
+    public E set(int index, E value) {
+      checkIndex(index, size());
+      E was = array[index];
+      array[index] = value;
+      return was;
+    }
+
+    @Override
+    public int size() {
+      return array.length;
+    }
+
+    /*
+     * Semantics are to return an array of identical type.
+     */
+    @Override
+    public Object[] toArray() {
+      return toArray(Array.clonify(array, size()));
+    }
+
+    /*
+     * Faster than the iterator-based implementation in AbstractCollection.
+     */
+    @SuppressWarnings("unchecked")
+    @Override
+    public <T> T[] toArray(T[] out) {
+      int size = size();
+      if (out.length < size) {
+        out = Array.clonify(out, size);
+      }
+      for (int i = 0; i < size; ++i) {
+        out[i] = (T) array[i];
+      }
+      if (out.length > size) {
+        out[size] = null;
+      }
+      return out;
+    }
+  }
+
+  public static <T> List<T> asList(T... array) {
+    return new ArrayList<T>(array);
   }
 
   /**

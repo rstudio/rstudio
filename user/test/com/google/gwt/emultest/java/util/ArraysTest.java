@@ -17,7 +17,9 @@ package com.google.gwt.emultest.java.util;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Tests {@link Arrays}.
@@ -28,8 +30,8 @@ public class ArraysTest extends EmulTestBase {
    */
   private static class TestObject {
     private static int count = 0;
-    private int value;
     private int index;
+    private int value;
 
     public TestObject(int value) {
       this.value = value;
@@ -60,19 +62,80 @@ public class ArraysTest extends EmulTestBase {
   /**
    * Tests {@link Arrays#asList(Object[])}.
    */
+  @SuppressWarnings("unchecked")
   public void testAsList() {
     // 0
     Object[] test = {};
     List result = Arrays.asList(test);
     assertEquals(test, result);
     // n
-    Object[] test2 = {new Integer(0), new Integer(1), new Integer(2)};
+    Object[] test2 = {0, 1, 2};
     List result2 = Arrays.asList(test2);
     assertEquals(test2, result2);
     // 1
     Object[] test3 = {"Hello"};
     List result3 = Arrays.asList(test3);
     assertEquals(test3, result3);
+  }
+
+  /**
+   * Tests if changes to the list created by {@link Arrays#asList(Object[])} are
+   * reflected in the original array.
+   */
+  @SuppressWarnings("unchecked")
+  public void testAsListBacking() {
+    Object[] test1 = {0, 1, 2};
+    List result1 = Arrays.asList(test1);
+    test1[0] = 3;
+    assertEquals(test1, result1);
+
+    Object[] test2 = {"a", "b", "c"};
+    List result2 = Arrays.asList(test2);
+    result2.set(2, "x");
+    assertEquals(test2, result2);
+  }
+
+  /**
+   * Tests {@link Arrays#asList(Object[])}.
+   */
+  public void testAsListIsFixed() {
+    List<String> list = Arrays.asList("foo", "bar", "baz");
+
+    try {
+      list.add("bal");
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    try {
+      list.remove(0);
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    try {
+      list.clear();
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    Iterator<String> it = list.iterator();
+    it.next();
+    try {
+      it.remove();
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    ListIterator<String> lit = list.listIterator();
+    lit.next();
+    try {
+      lit.add("bal");
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException expected) {
+    }
+
+    assertEquals(3, list.size());
   }
 
   /**
@@ -303,6 +366,7 @@ public class ArraysTest extends EmulTestBase {
    *   Comparator uses natural ordering as a default
    * </pre>
    */
+  @SuppressWarnings("unchecked")
   public void testBinarySearchObjectComparator() {
     Comparator inverseSort = new Comparator() {
       public int compare(Object o1, Object o2) {
@@ -365,7 +429,7 @@ public class ArraysTest extends EmulTestBase {
    * Verifies that values are sorted numerically rather than as strings.
    */
   public void testNumericSort() {
-    Integer[] x = new Integer[] {new Integer(3), new Integer(11), new Integer(2), new Integer(1)};
+    Integer[] x = {3, 11, 2, 1};
     Arrays.sort(x);
     assertEquals(2, x[1].intValue());
     assertEquals(11, x[3].intValue());
@@ -375,7 +439,7 @@ public class ArraysTest extends EmulTestBase {
    * Tests sorting primitives.
    */
   public void testPrimitiveSort() {
-    int[] x = new int[] {3, 11, 2, 1, 22, 3};
+    int[] x = {3, 11, 2, 1, 22, 3};
     Arrays.sort(x);
     assertEquals(1, x[0]);
     assertEquals(2, x[1]);
@@ -389,7 +453,7 @@ public class ArraysTest extends EmulTestBase {
    * Tests sorting a subrange of a primitive array.
    */
   public void testPrimitiveSubrangeSort() {
-    int[] x = new int[] {3, 11, 2, 1, 22, 3};
+    int[] x = {3, 11, 2, 1, 22, 3};
     Arrays.sort(x, 1, 5);
     assertEquals(3, x[0]);
     assertEquals(1, x[1]);
@@ -408,12 +472,11 @@ public class ArraysTest extends EmulTestBase {
     Arrays.sort(test);
     assertEquals(test.length, 0);
     // array with one element
-    Integer[] test2 = {new Integer(1)};
+    Integer[] test2 = {1};
     Arrays.sort(test2);
     assertEquals(1, test2[0].intValue());
     // multiple elements
-    Number[] test3 = {
-        new Integer(3), new Integer(0), new Integer(2), new Integer(4), new Integer(1)};
+    Number[] test3 = {3, 0, 2, 4, 1};
     Arrays.sort(test3);
     for (int i = 0; i < test3.length; i++) {
       assertEquals(i, test3[i].intValue());
@@ -432,6 +495,7 @@ public class ArraysTest extends EmulTestBase {
     Object[] sorted = {"a", "b", "b", "c"};
     assertEquals(x, sorted);
     Comparator<Object> t = new Comparator<Object>() {
+      @SuppressWarnings("unchecked")
       public int compare(Object o1, Object o2) {
         return ((Comparable<Object>) o2).compareTo(o1);
       }
@@ -453,8 +517,9 @@ public class ArraysTest extends EmulTestBase {
    */
   public void testStableSort() {
     TestObject[] origData = new TestObject[] {
-        new TestObject(3), new TestObject(11), new TestObject(2), new TestObject(3),
-        new TestObject(1), new TestObject(3), new TestObject(22)};
+        new TestObject(3), new TestObject(11), new TestObject(2),
+        new TestObject(3), new TestObject(1), new TestObject(3),
+        new TestObject(22)};
     int[] permutation = new int[origData.length];
     while (validPermutation(permutation, origData.length)) {
       TestObject[] permutedArray = getPermutation(origData, permutation);

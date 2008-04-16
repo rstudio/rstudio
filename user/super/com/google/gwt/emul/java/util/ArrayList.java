@@ -189,18 +189,18 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
    * Faster than the iterator-based implementation in AbstractCollection.
    */
   @Override
-  public <T> T[] toArray(T[] a) {
-    if (a.length < size) {
-      a = Array.clonify(a, size);
+  public <T> T[] toArray(T[] out) {
+    if (out.length < size) {
+      out = Array.clonify(out, size);
     }
     for (int i = 0; i < size; ++i) {
       // implicit type arg not inferred (as of JDK 1.5.0_07)
-      a[i] = ArrayList.<T> getImpl(array, i);
+      out[i] = ArrayList.<T> getImpl(array, i);
     }
-    if (a.length > size) {
-      a[size] = null;
+    if (out.length > size) {
+      out[size] = null;
     }
-    return a;
+    return out;
   }
 
   public void trimToSize() {
