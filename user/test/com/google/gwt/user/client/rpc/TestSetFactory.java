@@ -18,9 +18,11 @@ package com.google.gwt.user.client.rpc;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -395,6 +397,10 @@ public class TestSetFactory {
     list.add(new SerializableSet());
     list.add(new SerializableVector());
     return list;
+  }
+
+  static List createArraysAsList() {
+    return Arrays.asList((byte) 0, (byte) 1, (byte) 2, (byte) 3);
   }
 
   static SerializableDoublyLinkedNode createComplexCyclicGraph() {

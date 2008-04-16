@@ -16,7 +16,6 @@
 package com.google.gwt.user.server.rpc.impl;
 
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamWriter;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
@@ -660,15 +659,16 @@ public final class ServerSerializationStreamWriter extends
   private void serializeWithCustomSerializer(Class<?> customSerializer,
       Object instance, Class<?> instanceClass) throws SerializationException {
 
-    Method serialize;
     try {
       assert (!instanceClass.isArray());
 
-      serialize = customSerializer.getMethod("serialize",
-          SerializationStreamWriter.class, instanceClass);
-
-      serialize.invoke(null, this, instance);
-
+      for (Method method : customSerializer.getMethods()) {
+        if ("serialize".equals(method.getName())) {
+          method.invoke(null, this, instance);
+          return;
+        }
+      }
+      throw new NoSuchMethodException("serialize");
     } catch (SecurityException e) {
       throw new SerializationException(e);
 

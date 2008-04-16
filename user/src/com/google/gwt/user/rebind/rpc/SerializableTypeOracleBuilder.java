@@ -33,8 +33,6 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.IsSerializable;
-import com.google.gwt.user.client.rpc.SerializationStreamReader;
-import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.io.Serializable;
 import java.text.MessageFormat;
@@ -546,16 +544,6 @@ public class SerializableTypeOracleBuilder {
    */
   private final JClassType serializableClass;
 
-  /**
-   * Cache of the {@link JClassType} for {@link SerializationStreamReader}.
-   */
-  private final JClassType streamReaderClass;
-
-  /**
-   * Cache of the {@link JClassType} for {@link SerializationStreamWriter}.
-   */
-  private final JClassType streamWriterClass;
-
   private final TypeOracle typeOracle;
 
   /**
@@ -587,8 +575,6 @@ public class SerializableTypeOracleBuilder {
       isSerializableClass = typeOracle.getType(IsSerializable.class.getName());
       mapClass = typeOracle.getType(Map.class.getName());
       serializableClass = typeOracle.getType(Serializable.class.getName());
-      streamReaderClass = typeOracle.getType(SerializationStreamReader.class.getName());
-      streamWriterClass = typeOracle.getType(SerializationStreamWriter.class.getName());
     } catch (NotFoundException e) {
       rootLogger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
@@ -892,8 +878,7 @@ public class SerializableTypeOracleBuilder {
 
     if (typeInfo.isManuallySerializable()) {
       List<String> failures = CustomFieldSerializerValidator.validate(
-          streamReaderClass, streamWriterClass, typeInfo.getManualSerializer(),
-          type);
+          typeInfo.getManualSerializer(), type);
       if (!failures.isEmpty()) {
         markAsUninstantiableAndLog(logger, isSpeculative, failures, tic);
         return false;

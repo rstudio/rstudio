@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
@@ -305,7 +306,7 @@ public class TestSetValidator {
 
     return actual.getValue() == 1;
   }
-  
+
   /**
    * We want to assert that the two fields have object identity.
    */
@@ -357,6 +358,19 @@ public class TestSetValidator {
     }
 
     return true;
+  }
+
+  public static boolean isValidAsList(List list) {
+    if (list == null) {
+      return false;
+    }
+
+    List reference = TestSetFactory.createArraysAsList();
+    if (reference.size() != list.size()) {
+      return false;
+    }
+
+    return reference.equals(list);
   }
 
   public static boolean isValidComplexCyclicGraph(

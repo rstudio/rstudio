@@ -98,5 +98,6 @@ public interface CollectionsTestService extends RemoteService {
   Vector<IsSerializable> echo(Vector<IsSerializable> value)
       throws CollectionsTestServiceException;
 
-  List<IsSerializable> getArraysAsList(List<IsSerializable> value);
+  List<IsSerializable> echoArraysAsList(List<IsSerializable> value)
+      throws CollectionsTestServiceException;
 }

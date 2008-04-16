@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.user.client.rpc.SerializationStreamReader;
+import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ class CustomFieldSerializerValidator {
   private static final String NO_DESERIALIZE_METHOD = "Custom Field Serializer ''{0}'' does not define a deserialize method: ''public static void deserialize({1} reader,{2} instance)''";
   private static final String NO_INSTANTIATE_METHOD = "Custom Field Serializer ''{0}'' does not define an instantiate method: ''public static {1} instantiate({2} reader)''; but ''{1}'' is not default instantiable";
   private static final String NO_SERIALIZE_METHOD = "Custom Field Serializer ''{0}'' does not define a serialize method: ''public static void serialize({1} writer,{2} instance)''";
+  private static final String TOO_MANY_METHODS = "Custom Field Serializer ''{0}'' defines too many methods named ''{1}''; please define only one method with that name";
 
   /**
    * Returns a list of error messages associated with the custom field
@@ -46,8 +49,8 @@ class CustomFieldSerializerValidator {
    * @return list of error messages, if any, associated with the custom field
    *         serializer
    */
-  public static List<String> validate(JClassType streamReaderClass,
-      JClassType streamWriterClass, JClassType serializer, JClassType serializee) {
+  public static List<String> validate(JClassType serializer,
+      JClassType serializee) {
     List<String> reasons = new ArrayList<String>();
 
     if (serializee.isEnum() != null) {
@@ -60,39 +63,49 @@ class CustomFieldSerializerValidator {
       return reasons;
     }
 
-    if (!hasSerializationMethod(streamReaderClass, "deserialize", serializer,
-        serializee)) {
+    if (!hasDeserializationMethod(serializer, serializee)) {
       // No valid deserialize method was found.
       reasons.add(MessageFormat.format(NO_DESERIALIZE_METHOD,
           serializer.getQualifiedSourceName(),
-          streamReaderClass.getQualifiedSourceName(),
+          SerializationStreamReader.class.getName(),
           serializee.getQualifiedSourceName()));
+    } else {
+      checkTooMany("deserialize", serializer, reasons);
     }
 
-    if (!hasSerializationMethod(streamWriterClass, "serialize", serializer,
-        serializee)) {
+    if (!hasSerializationMethod(serializer, serializee)) {
       // No valid serialize method was found.
       reasons.add(MessageFormat.format(NO_SERIALIZE_METHOD,
           serializer.getQualifiedSourceName(),
-          streamWriterClass.getQualifiedSourceName(),
+          SerializationStreamWriter.class.getName(),
           serializee.getQualifiedSourceName()));
+    } else {
+      checkTooMany("serialize", serializer, reasons);
     }
 
-    if (!serializee.isDefaultInstantiable() && !serializee.isAbstract()) {
-      if (!hasInstantiationMethod(streamReaderClass, serializer, serializee)) {
+    if (!hasInstantiationMethod(serializer, serializee)) {
+      if (!serializee.isDefaultInstantiable() && !serializee.isAbstract()) {
         // Not default instantiable and no instantiate method was found.
         reasons.add(MessageFormat.format(NO_INSTANTIATE_METHOD,
             serializer.getQualifiedSourceName(),
             serializee.getQualifiedSourceName(),
-            streamReaderClass.getQualifiedSourceName()));
+            SerializationStreamReader.class.getName()));
       }
+    } else {
+      checkTooMany("instantiate", serializer, reasons);
     }
 
     return reasons;
   }
 
-  private static boolean hasInstantiationMethod(JClassType streamReaderClass,
-      JClassType serializer, JClassType serializee) {
+  static JMethod getDeserializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getMethod("deserialize", SerializationStreamReader.class.getName(),
+        serializer, serializee);
+  }
+
+  static JMethod getInstantiationMethod(JClassType serializer,
+      JClassType serializee) {
     JMethod[] overloads = serializer.getOverloads("instantiate");
     for (JMethod overload : overloads) {
       JParameter[] parameters = overload.getParameters();
@@ -102,7 +115,8 @@ class CustomFieldSerializerValidator {
         continue;
       }
 
-      if (parameters[0].getType() != streamReaderClass) {
+      if (!parameters[0].getType().getQualifiedSourceName().equals(
+          SerializationStreamReader.class.getName())) {
         // First param is not a stream class
         continue;
       }
@@ -120,14 +134,46 @@ class CustomFieldSerializerValidator {
       // TODO: if isArray answered yes to isClass this cast would not be
       // necessary
       JClassType clazz = (JClassType) type;
-      return clazz.isAssignableFrom(serializee);
+      if (clazz.isAssignableFrom(serializee)) {
+        return overload;
+      }
     }
 
-    return false;
+    return null;
   }
 
-  private static boolean hasSerializationMethod(JClassType streamClass,
-      String methodName, JClassType serializer, JClassType serializee) {
+  static JMethod getSerializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getMethod("serialize", SerializationStreamWriter.class.getName(),
+        serializer, serializee);
+  }
+
+  static boolean hasDeserializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getDeserializationMethod(serializer, serializee) != null;
+  }
+
+  static boolean hasInstantiationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getInstantiationMethod(serializer, serializee) != null;
+  }
+
+  static boolean hasSerializationMethod(JClassType serializer,
+      JClassType serializee) {
+    return getSerializationMethod(serializer, serializee) != null;
+  }
+
+  private static void checkTooMany(String methodName, JClassType serializer,
+      List<String> reasons) {
+    JMethod[] overloads = serializer.getOverloads(methodName);
+    if (overloads.length > 1) {
+      reasons.add(MessageFormat.format(TOO_MANY_METHODS,
+          serializer.getQualifiedSourceName(), methodName));
+    }
+  }
+
+  private static JMethod getMethod(String methodName, String streamClassName,
+      JClassType serializer, JClassType serializee) {
     JMethod[] overloads = serializer.getOverloads(methodName);
     for (JMethod overload : overloads) {
       JParameter[] parameters = overload.getParameters();
@@ -137,7 +183,8 @@ class CustomFieldSerializerValidator {
         continue;
       }
 
-      if (parameters[0].getType() != streamClass) {
+      if (!parameters[0].getType().getQualifiedSourceName().equals(
+          streamClassName)) {
         // First param is not a stream class
         continue;
       }
@@ -155,12 +202,12 @@ class CustomFieldSerializerValidator {
       if (clazz.isAssignableFrom(serializee)) {
         if (isValidCustomFieldSerializerMethod(overload)
             && overload.getReturnType() == JPrimitiveType.VOID) {
-          return true;
+          return overload;
         }
       }
     }
 
-    return false;
+    return null;
   }
 
   private static boolean isValidCustomFieldSerializerMethod(JMethod method) {

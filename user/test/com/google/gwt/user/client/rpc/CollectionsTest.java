@@ -101,6 +101,25 @@ public class CollectionsTest extends GWTTestCase {
     });
   }
 
+  public void testArraysAsList() {
+    delayTestFinish(TEST_DELAY);
+
+    CollectionsTestServiceAsync service = getServiceAsync();
+    final List expected = TestSetFactory.createArraysAsList();
+
+    service.echoArraysAsList(expected, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Object result) {
+        assertNotNull(result);
+        assertEquals(expected, result);
+        finishTest();
+      }
+    });
+  }
+
   public void testBooleanArray() {
     delayTestFinish(TEST_DELAY);
 
@@ -169,34 +188,6 @@ public class CollectionsTest extends GWTTestCase {
         assertNotNull(result);
         assertTrue(TestSetValidator.equals(expected, (Double[]) result));
         finishTest();
-      }
-    });
-  }
-
-  /**
-   * This method checks that attempting to return
-   * {@link java.util.Arrays#asList(Object[])} from the server will result in an
-   * InvocationException on the client.
-   */
-  public void testFailureWhenReturningArraysAsList() {
-    delayTestFinish(TEST_DELAY);
-
-    CollectionsTestServiceAsync service = getServiceAsync();
-    final List expected = new ArrayList();
-    for (byte i = 0; i < 10; ++i) {
-      expected.add(new Byte(i));
-    }
-
-    service.getArraysAsList(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        assertTrue(caught.getClass().getName()
-            + " should have been an InvocationException",
-            caught instanceof InvocationException);
-        finishTest();
-      }
-
-      public void onSuccess(Object result) {
-        fail("Expected an InvocationException");
       }
     });
   }

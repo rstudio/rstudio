@@ -273,10 +273,10 @@ public class TypeSerializerCreator {
         srcWriter.println("[");
         {
           srcWriter.indent();
-
           String serializerName = serializationOracle.getFieldSerializerName(type);
+
+          // First the initialization method
           {
-            // First the initialization method
             srcWriter.print("@");
             if (needsCreateMethod(type)) {
               srcWriter.print(serializationOracle.getTypeSerializerQualifiedName(getServiceInterface()));
@@ -292,22 +292,39 @@ public class TypeSerializerCreator {
             srcWriter.println(",");
           }
 
-          String jsniSignature = type.getJNISignature();
+          JClassType customSerializer = serializationOracle.hasCustomFieldSerializer(type);
 
+          // Now the deserialization method
           {
-            // Now the deserialization method
+            // Assume param type is the concrete type of the serialized type.
+            JType paramType = type;
+            if (customSerializer != null) {
+              // But a custom serializer may specify a looser type.
+              JMethod deserializationMethod = CustomFieldSerializerValidator.getDeserializationMethod(
+                  customSerializer, (JClassType) type);
+              paramType = deserializationMethod.getParameters()[1].getType();
+            }
             srcWriter.print("@" + serializerName);
             srcWriter.print("::deserialize(L"
                 + SerializationStreamReader.class.getName().replace('.', '/')
-                + ";" + jsniSignature + ")");
+                + ";" + paramType.getJNISignature() + ")");
             srcWriter.println(",");
           }
+
+          // Now the serialization method
           {
-            // Now the serialization method
+            // Assume param type is the concrete type of the serialized type.
+            JType paramType = type;
+            if (customSerializer != null) {
+              // But a custom serializer may specify a looser type.
+              JMethod serializationMethod = CustomFieldSerializerValidator.getSerializationMethod(
+                  customSerializer, (JClassType) type);
+              paramType = serializationMethod.getParameters()[1].getType();
+            }
             srcWriter.print("@" + serializerName);
             srcWriter.print("::serialize(L"
                 + SerializationStreamWriter.class.getName().replace('.', '/')
-                + ";" + jsniSignature + ")");
+                + ";" + paramType.getJNISignature() + ")");
             srcWriter.println();
           }
           srcWriter.outdent();

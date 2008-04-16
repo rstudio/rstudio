@@ -16,7 +16,6 @@
 package com.google.gwt.user.server.rpc.impl;
 
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
@@ -596,9 +595,13 @@ public final class ServerSerializationStreamReader extends
       InvocationTargetException {
     assert (!instanceClass.isArray());
 
-    Method deserialize = customSerializer.getMethod("deserialize",
-        SerializationStreamReader.class, instanceClass);
-    deserialize.invoke(null, this, instance);
+    for (Method method : customSerializer.getMethods()) {
+      if ("deserialize".equals(method.getName())) {
+        method.invoke(null, this, instance);
+        return;
+      }
+    }
+    throw new NoSuchMethodException("deserialize");
   }
 
   private String extract() {
@@ -610,13 +613,12 @@ public final class ServerSerializationStreamReader extends
       IllegalArgumentException, InvocationTargetException,
       NoSuchMethodException {
     if (customSerializer != null) {
-      try {
-        Method instantiate = customSerializer.getMethod("instantiate",
-            SerializationStreamReader.class);
-        return instantiate.invoke(null, this);
-      } catch (NoSuchMethodException e) {
-        // purposely ignored
+      for (Method method : customSerializer.getMethods()) {
+        if ("instantiate".equals(method.getName())) {
+          return method.invoke(null, this);
+        }
       }
+      // Ok to not have one.
     }
 
     if (instanceClass.isArray()) {

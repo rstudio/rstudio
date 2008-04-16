@@ -312,12 +312,12 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
    * InvocationException on the client.
    */
   @SuppressWarnings("unchecked")
-  public List getArraysAsList(List value) {
-    Byte[] retVal = new Byte[10];
-    for (byte i = 0; i < 10; ++i) {
-      retVal[i] = (Byte) value.get(i);
+  public List echoArraysAsList(List value)
+      throws CollectionsTestServiceException {
+    if (!TestSetValidator.isValidAsList(value)) {
+      throw new CollectionsTestServiceException();
     }
 
-    return Arrays.asList(retVal);
+    return value;
   }
 }

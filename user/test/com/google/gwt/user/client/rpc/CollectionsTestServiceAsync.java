@@ -84,6 +84,6 @@ public interface CollectionsTestServiceAsync {
   void echo(Vector<IsSerializable> value,
       AsyncCallback<Vector<IsSerializable>> callback);
 
-  void getArraysAsList(List<IsSerializable> value,
+  void echoArraysAsList(List<IsSerializable> value,
       AsyncCallback<List<IsSerializable>> callback);
 }
