@@ -146,24 +146,6 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
   }
 
   /**
-   * Sets the html inside the caption.
-   * 
-   * @param html the caption html
-   */
-  public void setCaptionHTML(String html) {
-    setHTML(html);
-  }
-
-  /**
-   * Sets the text inside the caption.
-   * 
-   * @param text the caption text
-   */
-  public void setCaptionText(String text) {
-    setText(text);
-  }
-
-  /**
    * Sets the html string inside the caption.
    * 
    * Use {@link #setWidget(Widget)} to set the contents inside the
