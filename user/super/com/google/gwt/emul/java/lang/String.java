@@ -489,6 +489,10 @@ public final class String implements Comparable<String>, CharSequence,
     return String(this);
   }-*/;
 
+  public native boolean isEmpty() /*-{
+    return !this.length;
+  }-*/;
+
   public int lastIndexOf(int codePoint) {
     return lastIndexOf(fromCodePoint(codePoint));
   }
