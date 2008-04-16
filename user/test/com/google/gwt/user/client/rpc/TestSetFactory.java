@@ -348,18 +348,15 @@ public class TestSetFactory {
 
   public static java.sql.Date[] createSqlDateArray() {
     return new java.sql.Date[] {
-        new java.sql.Date(1992 - 1900, 9, 18),
-        new java.sql.Date(1997 - 1900, 6, 6)};
+        new java.sql.Date(500L), new java.sql.Date(500000000L)};
   }
 
   public static Time[] createSqlTimeArray() {
-    return new Time[] {new Time(13, 01, 30), new Time(01, 23, 45)};
+    return new Time[] {new Time(500L), new Time(5000000L)};
   }
 
   public static Timestamp[] createSqlTimestampArray() {
-    return new Timestamp[] {
-        new Timestamp(1992 - 1900, 9, 18, 13, 01, 30, 200),
-        new Timestamp(1997 - 1900, 6, 6, 01, 23, 45, 201)};
+    return new Timestamp[] {new Timestamp(500L), new Timestamp(5000000L)};
   }
 
   public static Vector createVector() {
