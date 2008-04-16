@@ -32,6 +32,10 @@ public class TestSetFactory {
    * TODO: document me.
    */
   public static class SerializableClass implements IsSerializable {
+    IsSerializable elementRef;
+
+    IsSerializable[] elements;
+
     public IsSerializable getElementRef() {
       return elementRef;
     }
@@ -47,16 +51,18 @@ public class TestSetFactory {
     public void setElements(IsSerializable[] elements) {
       this.elements = elements;
     }
-
-    IsSerializable elementRef;
-
-    IsSerializable[] elements;
   }
 
   /**
    * TODO: document me.
    */
   public static class SerializableDoublyLinkedNode implements IsSerializable {
+    protected String data;
+
+    protected SerializableDoublyLinkedNode leftChild;
+
+    protected SerializableDoublyLinkedNode rightChild;
+
     public String getData() {
       return data;
     }
@@ -80,10 +86,6 @@ public class TestSetFactory {
     public void setRightChild(SerializableDoublyLinkedNode rightChild) {
       this.rightChild = rightChild;
     }
-
-    protected String data;
-    protected SerializableDoublyLinkedNode leftChild;
-    protected SerializableDoublyLinkedNode rightChild;
   }
 
   /**
@@ -104,6 +106,10 @@ public class TestSetFactory {
    */
   public static class SerializableNode extends UnserializableNode implements
       IsSerializable {
+
+    protected String data;
+
+    protected SerializableNode next;
 
     public boolean equals(Object obj) {
       if (this == obj) {
@@ -162,10 +168,6 @@ public class TestSetFactory {
     public void setNext(SerializableNode next) {
       this.next = next;
     }
-
-    protected String data;
-
-    protected SerializableNode next;
   }
 
   /**
@@ -174,11 +176,11 @@ public class TestSetFactory {
   public static class SerializablePrivateNoArg implements IsSerializable {
     private int value;
 
-    private SerializablePrivateNoArg() {
-    }
-
     public SerializablePrivateNoArg(int value) {
       this.value = value;
+    }
+
+    private SerializablePrivateNoArg() {
     }
 
     public int getValue() {
@@ -332,20 +334,6 @@ public class TestSetFactory {
         new Short(Short.MAX_VALUE), new Short(Short.MIN_VALUE)};
   }
 
-  public static int[] createVeryLargeArray() {
-    return new int[1 << 20];
-  }
-
-  /*
-   * Check names that collide with JS properties inherited from Object.prototype
-   * to make sure they are handled properly.
-   */
-  public static String[] createStringArray() {
-    return new String[] {
-        null, "", "one", "two", "toString", "watch", "prototype", "eval",
-        "valueOf", "constructor", "__proto__"};
-  }
-
   public static java.sql.Date[] createSqlDateArray() {
     return new java.sql.Date[] {
         new java.sql.Date(500L), new java.sql.Date(500000000L)};
@@ -359,6 +347,16 @@ public class TestSetFactory {
     return new Timestamp[] {new Timestamp(500L), new Timestamp(5000000L)};
   }
 
+  /*
+   * Check names that collide with JS properties inherited from Object.prototype
+   * to make sure they are handled properly.
+   */
+  public static String[] createStringArray() {
+    return new String[] {
+        null, "", "one", "two", "toString", "watch", "prototype", "eval",
+        "valueOf", "constructor", "__proto__"};
+  }
+
   public static Vector createVector() {
     Vector vector = new Vector();
     vector.add(new SerializableNode());
@@ -367,6 +365,10 @@ public class TestSetFactory {
     vector.add(new SerializableSet());
     vector.add(new SerializableVector());
     return vector;
+  }
+
+  public static int[] createVeryLargeArray() {
+    return new int[1 << 20];
   }
 
   static SerializableDoublyLinkedNode createAcyclicGraph() {
