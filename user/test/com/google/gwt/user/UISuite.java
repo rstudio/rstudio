@@ -20,6 +20,7 @@ import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
+import com.google.gwt.user.client.ui.CaptionPanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CompositeTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
@@ -54,7 +55,6 @@ import com.google.gwt.user.client.ui.StackPanelTest;
 import com.google.gwt.user.client.ui.TabBarTest;
 import com.google.gwt.user.client.ui.TabPanelTest;
 import com.google.gwt.user.client.ui.TextAreaTest;
-import com.google.gwt.user.client.ui.TitledPanelTest;
 import com.google.gwt.user.client.ui.TreeTest;
 import com.google.gwt.user.client.ui.UIObjectTest;
 import com.google.gwt.user.client.ui.VerticalPanelTest;
@@ -76,6 +76,7 @@ public class UISuite {
         "Test for suite for the com.google.gwt.ui module");
 
     suite.addTestSuite(AbsolutePanelTest.class);
+//    suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
     suite.addTestSuite(CommandExecutorTest.class);
@@ -116,7 +117,6 @@ public class UISuite {
     suite.addTestSuite(TabBarTest.class);
     suite.addTestSuite(TabPanelTest.class);
     suite.addTestSuite(TextAreaTest.class);
-    suite.addTestSuite(TitledPanelTest.class);
     suite.addTestSuite(TreeTest.class);
     suite.addTestSuite(UIObjectTest.class);
     suite.addTestSuite(VerticalPanelTest.class);
