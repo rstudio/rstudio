@@ -15,17 +15,17 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.i18n.client.LocaleInfo;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
 
 /**
  * A standard hierarchical tree widget. The tree contains a hierarchy of
@@ -110,6 +110,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       return baseUrl;
     }
   }
+  
+  private static final int OTHER_KEY_UP = 63232;
+  private static final int OTHER_KEY_DOWN = 63233;
+  private static final int OTHER_KEY_LEFT = 63234;
+  private static final int OTHER_KEY_RIGHT = 63235;
 
   static native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
     var name = elem.nodeName;
@@ -120,6 +125,51 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         (name == "BUTTON") ||
         (name == "LABEL"));
     }-*/;
+  
+  private static boolean isArrowKey(int code) {
+    switch (code) {
+      case OTHER_KEY_DOWN:
+      case OTHER_KEY_RIGHT:
+      case OTHER_KEY_UP:
+      case OTHER_KEY_LEFT:
+      case KeyboardListener.KEY_DOWN:
+      case KeyboardListener.KEY_RIGHT:
+      case KeyboardListener.KEY_UP:
+      case KeyboardListener.KEY_LEFT:
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Normalized key codes. Also switches KEY_RIGHT and KEY_LEFT in RTL
+   * languages.
+   */
+  private static int standardizeKeycode(int code) {
+    switch (code) {
+      case OTHER_KEY_DOWN:
+        code = KeyboardListener.KEY_DOWN;
+        break;
+      case OTHER_KEY_RIGHT:
+        code = KeyboardListener.KEY_RIGHT;
+        break;
+      case OTHER_KEY_UP:
+        code = KeyboardListener.KEY_UP;
+        break;
+      case OTHER_KEY_LEFT:
+        code = KeyboardListener.KEY_LEFT;
+        break;
+    }
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      if (code == KeyboardListener.KEY_RIGHT) {
+        code = KeyboardListener.KEY_LEFT;
+      } else if (code == KeyboardListener.KEY_LEFT) {
+        code = KeyboardListener.KEY_RIGHT;
+      }
+    }
+    return code;
+  }
 
   /**
    * Map of TreeItem.widget -> TreeItem.
@@ -134,16 +184,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   private TreeListenerCollection listeners;
   private MouseListenerCollection mouseListeners = null;
   private TreeItem root;
+  private boolean lastWasKeyDown;
 
-  /**
-   * Keeps track of the last event type seen. We do this to determine if we have
-   * a duplicate key down.
-   */
-  private int lastEventType;
   private Image leafImage;
   private Image openImage;
   private Image closedImage;
-
   private String indentValue;
 
   /**
@@ -334,8 +379,33 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   @Override
+  @SuppressWarnings("fallthrough")
   public void onBrowserEvent(Event event) {
     int eventType = DOM.eventGetType(event);
+    
+    switch (eventType) {
+      case Event.ONKEYDOWN: {
+        // If nothing's selected, select the first item.
+        if (curSelection == null) {
+          if (root.getChildCount() > 0) {
+            onSelection(root.getChild(0), true, true);
+          }
+          super.onBrowserEvent(event);
+          return;
+        }
+      }
+ 
+      // Intentional fallthrough.
+      case Event.ONKEYPRESS:
+      case Event.ONKEYUP:
+        // Issue 1890: Do not block history navigation via alt+left/right
+        if (DOM.eventGetAltKey(event) || DOM.eventGetMetaKey(event)) {
+          super.onBrowserEvent(event);
+          return;
+        }
+        break;
+    }
+    
     switch (eventType) {
       case Event.ONCLICK: {
         Element e = DOM.eventGetTarget(event);
@@ -404,87 +474,46 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
         break;
       }
-
+      
+      case Event.ONKEYDOWN: {
+        keyboardNavigation(event);
+        lastWasKeyDown = true;  
+        break;
+      }
+      
+      case Event.ONKEYPRESS: {
+        if (!lastWasKeyDown) {
+          keyboardNavigation(event);
+        }
+        lastWasKeyDown = false;
+        break;
+      }
+        
+      case Event.ONKEYUP: {
+        if (DOM.eventGetKeyCode(event) == KeyboardListener.KEY_TAB) {
+          ArrayList<Element> chain = new ArrayList<Element>();
+          collectElementChain(chain, getElement(), DOM.eventGetTarget(event));
+          TreeItem item = findItemByChain(chain, 0, root);
+          if (item != getSelectedItem()) {
+            setSelectedItem(item, true);
+          }
+        }
+      
+        lastWasKeyDown = false;
+        break;
+      }
+    }
+    
+    switch (eventType) {
       case Event.ONKEYDOWN:
-        // Issue 1890: Do not block history navigation via alt+left/right
-        if (DOM.eventGetAltKey(event) || DOM.eventGetMetaKey(event)) {
-          super.onBrowserEvent(event);
-          return;
-        }
-
-        // If nothing's selected, select the first item.
-        if (curSelection == null) {
-          if (root.getChildCount() > 0) {
-            onSelection(root.getChild(0), true, true);
-          }
-          super.onBrowserEvent(event);
-          return;
-        }
-
-        if (lastEventType == Event.ONKEYDOWN) {
-          // Two key downs in a row signal a duplicate event. Multiple key
-          // downs can be triggered in the current configuration independent
-          // of the browser.
-          return;
-        }
-
-        // Handle keyboard events if keyboard navigation is enabled
-        if (isKeyboardNavigationEnabled(curSelection)) {
-          switch (DOM.eventGetKeyCode(event)) {
-            case KeyboardListener.KEY_UP: {
-              moveSelectionUp(curSelection);
-              DOM.eventPreventDefault(event);
-              break;
-            }
-            case KeyboardListener.KEY_DOWN: {
-              moveSelectionDown(curSelection, true);
-              DOM.eventPreventDefault(event);
-              break;
-            }
-            case KeyboardListener.KEY_LEFT: {
-
-              if (LocaleInfo.getCurrentLocale().isRTL()) {
-                maybeExpandTreeItem();
-              } else {
-                maybeCollapseTreeItem();
-              }
-
-              DOM.eventPreventDefault(event);
-              break;
-            }
-            case KeyboardListener.KEY_RIGHT: {
-
-              if (LocaleInfo.getCurrentLocale().isRTL()) {
-                maybeCollapseTreeItem();
-              } else {
-                maybeExpandTreeItem();
-              }
-
-              DOM.eventPreventDefault(event);
-              break;
-            }
-          }
-        }
-
-        // Intentional fallthrough.
       case Event.ONKEYUP:
-        if (eventType == Event.ONKEYUP) {
-          // If we got here because of a key tab, then we need to make sure the
-          // current tree item is selected.
-          if (DOM.eventGetKeyCode(event) == KeyboardListener.KEY_TAB) {
-            ArrayList<Element> chain = new ArrayList<Element>();
-            collectElementChain(chain, getElement(), DOM.eventGetTarget(event));
-            TreeItem item = findItemByChain(chain, 0, root);
-            if (item != getSelectedItem()) {
-              setSelectedItem(item, true);
-            }
-          }
-        }
-
-        // Intentional fallthrough.
       case Event.ONKEYPRESS: {
         if (keyboardListeners != null) {
           keyboardListeners.fireKeyboardEvent(this, event);
+        }
+        if (isArrowKey(DOM.eventGetKeyCode(event))) {
+          DOM.eventCancelBubble(event, true);
+          DOM.eventPreventDefault(event);
         }
         break;
       }
@@ -492,9 +521,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     // We must call SynthesizedWidget's implementation for all other events.
     super.onBrowserEvent(event);
-    lastEventType = eventType;
   }
-
+  
   public boolean remove(Widget w) {
     // Validate.
     TreeItem item = childWidgets.get(w);
@@ -911,6 +939,35 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     Accessibility.setRole(focusable, Accessibility.ROLE_TREEITEM);
   }
 
+  private void keyboardNavigation(Event event) {
+    // Handle keyboard events if keyboard navigation is enabled
+    if (isKeyboardNavigationEnabled(curSelection)) {
+      int code = DOM.eventGetKeyCode(event);
+      
+      switch (standardizeKeycode(code)) {
+        case KeyboardListener.KEY_UP: {
+          moveSelectionUp(curSelection);
+          break;
+        }
+        case KeyboardListener.KEY_DOWN: {
+          moveSelectionDown(curSelection, true);
+          break;
+        }
+        case KeyboardListener.KEY_LEFT: {
+          maybeCollapseTreeItem();
+          break;
+        }
+        case KeyboardListener.KEY_RIGHT: {
+          maybeExpandTreeItem();
+          break;
+        }
+        default: {
+          return;
+        }
+      }
+    }
+  }
+
   private void maybeCollapseTreeItem() {
 
     TreeItem topClosedParent = getTopClosedParent(curSelection);
@@ -1100,8 +1157,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     Element curSelectionContentElem = curSelection.getContentElem();
 
     // Set the 'aria-level' state. To do this, we need to compute the level of
-    // the
-    // currently selected item.
+    // the currently selected item.
 
     // We initialize itemLevel to -1 because the level value is zero-based.
     // Note that the root node is not a part of the TreeItem hierachy, and we
@@ -1121,8 +1177,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     // Set the 'aria-setsize' and 'aria-posinset' states. To do this, we need to
     // compute the the number of siblings that the currently selected item has,
-    // and
-    // the item's position among its siblings.
+    // and the item's position among its siblings.
 
     TreeItem curSelectionParent = curSelection.getParentItem();
     if (curSelectionParent == null) {
@@ -1161,10 +1216,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         Accessibility.STATE_SELECTED, "true");
 
     // Update the 'aria-activedescendant' state for the focusable element to
-    // match the id
-    // of the currently selected item
+    // match the id of the currently selected item
 
     Accessibility.setState(focusable, Accessibility.STATE_ACTIVEDESCENDANT,
         DOM.getElementAttribute(curSelectionContentElem, "id"));
   }
 }
+  
