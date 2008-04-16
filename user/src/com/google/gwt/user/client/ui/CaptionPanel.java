@@ -22,17 +22,17 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 
 /**
- * A panel that wraps its contents in a border with a title that appears in the
+ * A panel that wraps its contents in a border with a caption that appears in the
  * upper left corner of the border. This is an implementation of the fieldset
  * HTML element.
  */
-public class TitledPanel extends SimplePanel {
+public class CaptionPanel extends SimplePanel {
   /**
-   * Implementation class for TitledPanel.
+   * Implementation class without browser-specific hacks.
    */
-  public static class TitledPanelImpl {
+  public static class CaptionPanelImpl {
     public void setCaption(Element fieldset, Element legend, String caption) {
-      if ((caption != "") && (caption != null)) {
+      if (caption != null && !"".equals(caption)) {
         DOM.setInnerHTML(legend, caption);
         DOM.insertChild(fieldset, legend, 0);
       } else if (DOM.getParent(legend) != null) {
@@ -42,9 +42,9 @@ public class TitledPanel extends SimplePanel {
   }
 
   /**
-   * Implementation class for TitledPanel that handles Mozilla rendering issues.
+   * Implementation class that handles Mozilla rendering issues.
    */
-  public static class TitledPanelImplMozilla extends TitledPanelImpl {
+  public static class CaptionPanelImplMozilla extends CaptionPanelImpl {
     @Override
     public void setCaption(final Element fieldset, Element legend, String caption) {
       DOM.setStyleAttribute(fieldset, "display", "none");
@@ -54,9 +54,9 @@ public class TitledPanel extends SimplePanel {
   }
   
   /**
-   * Implementation class for TitledPanel that handles Safari rendering issues.
+   * Implementation class that handles Safari rendering issues.
    */
-  public static class TitledPanelImplSafari extends TitledPanelImpl {
+  public static class CaptionPanelImplSafari extends CaptionPanelImpl {
     @Override
     public void setCaption(final Element fieldset, Element legend, String caption) {
       DOM.setStyleAttribute(fieldset, "visibility", "hidden");
@@ -72,24 +72,24 @@ public class TitledPanel extends SimplePanel {
   /**
    * The implementation instance.
    */
-  private static TitledPanelImpl impl = (TitledPanelImpl) GWT.create(TitledPanelImpl.class);
+  private static CaptionPanelImpl impl = (CaptionPanelImpl) GWT.create(CaptionPanelImpl.class);
 
   /**
-   * The legend used as the title.
+   * The legend element used as the caption.
    */
   private Element legend;
 
   /**
-   * The title at the top of the border.
+   * The caption at the top of the border.
    */
   private String caption;
 
   /**
-   * Constructor.
+   * Constructs a CaptionPanel having the specified caption.
    * 
-   * @param caption the title to display
+   * @param caption the caption to display
    */
-  public TitledPanel(String caption) {
+  public CaptionPanel(String caption) {
     super(DOM.createElement("fieldset"));
     legend = DOM.createElement("legend");
     DOM.appendChild(getElement(), legend);
@@ -99,26 +99,26 @@ public class TitledPanel extends SimplePanel {
   /**
    * Constructor.
    * 
-   * @param caption the title to display
+   * @param caption the caption to display
    * @param w the widget to add to the panel
    */
-  public TitledPanel(String caption, Widget w) {
+  public CaptionPanel(String caption, Widget w) {
     this(caption);
     setWidget(w);
   }
 
   /**
-   * @return the title on top of the border
+   * @return the caption on top of the border
    */
   public String getCaption() {
     return this.caption;
   }
 
   /**
-   * Set the title in the border. Pass in null or an empty string to remove the
-   * title completely, leaving just a box.
+   * Set the caption in the border. Pass in null or an empty string to remove the
+   * caption completely, leaving just a box.
    * 
-   * @param caption the new title
+   * @param caption the new caption
    */
   public void setCaption(String caption) {
     this.caption = caption;
