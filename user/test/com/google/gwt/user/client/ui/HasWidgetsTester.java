@@ -20,8 +20,8 @@ import com.google.gwt.user.client.DOM;
 import junit.framework.Assert;
 
 /**
- * All Widgets that implement HasWidgets should derive from this test case, and
- * make sure to run all of its test templates.
+ * All test cases for widgets that implement HasWidgets should derive from this
+ * test case, and make sure to run all of its test templates.
  */
 public abstract class HasWidgetsTester {
 
@@ -58,15 +58,13 @@ public abstract class HasWidgetsTester {
       // During onLoad, isAttached must be true, and the element be a descendant
       // of the body element.
       Assert.assertTrue(isAttached());
-      Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-          getElement()));
+      Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(), getElement()));
     }
 
     protected void onUnload() {
       // During onUnload, everything must *still* be attached.
       Assert.assertTrue(isAttached());
-      Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(),
-          getElement()));
+      Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(), getElement()));
     }
   }
 
@@ -123,12 +121,13 @@ public abstract class HasWidgetsTester {
     // onUnload order.
     TestWidget widget = new TestWidget();
     adder.addChild(container, widget);
+    Assert.assertTrue(widget.isAttached());
+    Assert.assertTrue(DOM.isOrHasChild(RootPanel.getBodyElement(), widget.getElement()));
     container.remove(widget);
 
     // After removal, the widget should be detached.
     Assert.assertFalse(widget.isAttached());
-    Assert.assertFalse(DOM.isOrHasChild(RootPanel.getBodyElement(),
-        widget.getElement()));
+    Assert.assertFalse(DOM.isOrHasChild(RootPanel.getBodyElement(), widget.getElement()));
   }
 
   /**

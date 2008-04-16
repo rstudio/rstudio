@@ -16,7 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -54,8 +54,7 @@ public class SimplePanel extends Panel {
   public void add(Widget w) {
     // Can't add() more than one widget to a SimplePanel.
     if (getWidget() != null) {
-      throw new IllegalStateException(
-          "SimplePanel can only contain one child widget");
+      throw new IllegalStateException("SimplePanel can only contain one child widget");
     }
     setWidget(w);
   }
@@ -107,7 +106,7 @@ public class SimplePanel extends Panel {
     orphan(w);
 
     // Physical detach.
-    DOM.removeChild(getContainerElement(), w.getElement());
+    getContainerElement().removeChild(w.getElement());
 
     // Logical detach.
     widget = null;
@@ -151,9 +150,13 @@ public class SimplePanel extends Panel {
    * be the container for the panel's child widget. This can be useful when you
    * want to create a simple panel that decorates its contents.
    * 
+   * Note that this method continues to return the
+   * {@link com.google.gwt.user.client.Element} class defined in the
+   * <code>User</code> module to maintain backwards compatibility.
+   * 
    * @return the element to be used as the panel's container
    */
-  protected Element getContainerElement() {
+  protected com.google.gwt.user.client.Element getContainerElement() {
     return getElement();
   }
 }

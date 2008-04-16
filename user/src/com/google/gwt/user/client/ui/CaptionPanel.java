@@ -16,27 +16,44 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.FieldSetElement;
+import com.google.gwt.dom.client.LegendElement;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Element;
+
+import java.util.Iterator;
 
 /**
- * A panel that wraps its contents in a border with a caption that appears in the
- * upper left corner of the border. This is an implementation of the fieldset
- * HTML element.
+ * A panel that wraps its contents in a border with a caption that appears in
+ * the upper left corner of the border. This is an implementation of the
+ * fieldset HTML element.
  */
-public class CaptionPanel extends SimplePanel {
+public class CaptionPanel extends Composite implements HasWidgets {
   /**
    * Implementation class without browser-specific hacks.
    */
   public static class CaptionPanelImpl {
-    public void setCaption(Element fieldset, Element legend, String caption) {
-      if (caption != null && !"".equals(caption)) {
-        DOM.setInnerHTML(legend, caption);
-        DOM.insertChild(fieldset, legend, 0);
-      } else if (DOM.getParent(legend) != null) {
-        DOM.removeChild(fieldset, legend);
+    public void setCaption(FieldSetElement fieldset, Element legend, String caption, boolean asHTML) {
+      // TODO(bruce): rewrite to be inlinable
+      assert (caption != null);
+
+      if (asHTML) {
+        legend.setInnerHTML(caption);
+      } else {
+        legend.setInnerText(caption);
+      }
+
+      if (!"".equals(caption)) {
+        // This is formulated to become an append (if there's no widget), an
+        // insertion at index 0 (if there is a widget but no legend already), or
+        // a no-op (if the legend is already in place).
+        fieldset.insertBefore(legend, fieldset.getFirstChild());
+      } else if (legend.getParentNode() != null) {
+        // We remove the legend from the DOM because leaving it in with an empty
+        // string renders as an ugly gap in the top border on some browsers.
+        fieldset.removeChild(legend);
       }
     }
   }
@@ -46,24 +63,26 @@ public class CaptionPanel extends SimplePanel {
    */
   public static class CaptionPanelImplMozilla extends CaptionPanelImpl {
     @Override
-    public void setCaption(final Element fieldset, Element legend, String caption) {
-      DOM.setStyleAttribute(fieldset, "display", "none");
-      super.setCaption(fieldset, legend, caption);
-      DOM.setStyleAttribute(fieldset, "display", "");
+    public void setCaption(final FieldSetElement fieldset, Element legend, String caption,
+        boolean asHTML) {
+      fieldset.getStyle().setProperty("display", "none");
+      super.setCaption(fieldset, legend, caption, asHTML);
+      fieldset.getStyle().setProperty("display", "");
     }
   }
-  
+
   /**
    * Implementation class that handles Safari rendering issues.
    */
   public static class CaptionPanelImplSafari extends CaptionPanelImpl {
     @Override
-    public void setCaption(final Element fieldset, Element legend, String caption) {
-      DOM.setStyleAttribute(fieldset, "visibility", "hidden");
-      super.setCaption(fieldset, legend, caption);
+    public void setCaption(final FieldSetElement fieldset, Element legend, String caption,
+        boolean asHTML) {
+      fieldset.getStyle().setProperty("visibility", "hidden");
+      super.setCaption(fieldset, legend, caption, asHTML);
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          DOM.setStyleAttribute(fieldset, "visibility", "");
+          fieldset.getStyle().setProperty("visibility", "");
         }
       });
     }
@@ -77,51 +96,133 @@ public class CaptionPanel extends SimplePanel {
   /**
    * The legend element used as the caption.
    */
-  private Element legend;
+  private LegendElement legend;
 
   /**
-   * The caption at the top of the border.
+   * Constructs a CaptionPanel with an empty caption.
    */
-  private String caption;
+  public CaptionPanel() {
+    this("", false);
+  }
+
+  /**
+   * Constructs a CaptionPanel with specified caption text.
+   * 
+   * @param caption the text of the caption, which is automatically escaped
+   */
+  public CaptionPanel(String captionText) {
+    this(captionText, false);
+  }
 
   /**
    * Constructs a CaptionPanel having the specified caption.
    * 
    * @param caption the caption to display
+   * @param asHTML if <code>true</code>, the <code>caption</code> param is
+   *            interpreted as HTML; otherwise, <code>caption</code> is
+   *            treated as text and automatically escaped
    */
-  public CaptionPanel(String caption) {
-    super(DOM.createElement("fieldset"));
-    legend = DOM.createElement("legend");
-    DOM.appendChild(getElement(), legend);
-    setCaption(caption);
+  public CaptionPanel(String caption, boolean asHTML) {
+    FieldSetElement fieldSet = Document.get().createFieldSetElement();
+    initWidget(new SimplePanel(fieldSet));
+    legend = Document.get().createLegendElement();
+    fieldSet.appendChild(legend);
+    if (asHTML) {
+      setCaptionHTML(caption);
+    } else {
+      setCaptionText(caption);
+    }
+  }
+
+  public void add(Widget w) {
+    ((SimplePanel) getWidget()).add(w);
   }
 
   /**
-   * Constructor.
+   * @return the caption as HTML; note that if the caption was previously set
+   *         using {@link #setCaptionText(String)}, the return value is
+   *         undefined
+   */
+  public String getCaptionHTML() {
+    String html = legend.getInnerHTML();
+    assert (html != null);
+    return html;
+  }
+
+  /**
+   * @return the caption as text; note that if the caption was previously set
+   *         using {@link #setCaptionHTML(String)}, the return value is
+   *         undefined
+   */
+  public String getCaptionText() {
+    String text = legend.getInnerText();
+    assert (text != null);
+    return text;
+  }
+
+  /**
+   * Accesses the content widget, if present.
    * 
-   * @param caption the caption to display
-   * @param w the widget to add to the panel
+   * @return the content widget specified previously in
+   *         {@link #setContentWidget(Widget)}
    */
-  public CaptionPanel(String caption, Widget w) {
-    this(caption);
-    setWidget(w);
+  public Widget getContentWidget() {
+    return ((SimplePanel) getWidget()).getWidget();
   }
 
   /**
-   * @return the caption on top of the border
+   * Iterates over the singular content widget, if present.
    */
-  public String getCaption() {
-    return this.caption;
+  public Iterator<Widget> iterator() {
+    return ((SimplePanel) getWidget()).iterator();
   }
 
   /**
-   * Set the caption in the border. Pass in null or an empty string to remove the
-   * caption completely, leaving just a box.
+   * Removes the specified widget, although in practice the specified widget
+   * must be the content widget.
    * 
-   * @param caption the new caption
+   * @param w the widget to remove; note that anything other than the Widget
+   *            returned by {@link #getContentWidget()} will have no effect
    */
-  public void setCaption(String caption) {
-    this.caption = caption;
-    impl.setCaption(getElement(), legend, caption);
+  public boolean remove(Widget w) {
+    return ((SimplePanel) getWidget()).remove(w);
+  }
+
+  /**
+   * Sets the caption for the panel. Pass in empty string to remove the caption
+   * completely, leaving just the unadorned panel.
+   * 
+   * @param html HTML for the new caption; must not be <code>null</code>
+   */
+  public void setCaptionHTML(String html) {
+    assert (html != null);
+    impl.setCaption(FieldSetElement.as(getElement()), legend, html, true);
+  }
+
+  /**
+   * Sets the caption for the panel. Pass in empty string to remove the caption
+   * completely, leaving just the unadorned panel.
+   * 
+   * @param html HTML for the new caption; must not be <code>null</code>
+   */
+  public void setCaptionText(String text) {
+    assert (text != null);
+    impl.setCaption(FieldSetElement.as(getElement()), legend, text, false);
+  }
+
+  /**
+   * Sets or replaces the content widget within the CaptionPanel.
+   * 
+   * @param w the content widget to be set
+   */
+  public void setContentWidget(Widget w) {
+    ((SimplePanel) getWidget()).setWidget(w);
+  }
+
+  /**
+   * Removes the content widget.
+   */
+  public void clear() {
+    ((SimplePanel) getWidget()).clear();
   }
 }

@@ -162,11 +162,11 @@ public class Node extends JavaScriptObject {
 
   /**
    * Inserts the node newChild before the existing child node refChild. If
-   * refChild is null, insert newChild at the end of the list of children.
+   * refChild is <code>null</code>, insert newChild at the end of the list of children.
    * 
    * @param newChild The node to insert
-   * @param refChild The reference node, i.e., the node before which the new
-   *          node must be inserted
+   * @param refChild The reference node (that is, the node before which the new
+   *          node must be inserted), or <code>null</code> 
    * @return The node being inserted
    */
   public final native Node insertBefore(Node newChild, Node refChild) /*-{

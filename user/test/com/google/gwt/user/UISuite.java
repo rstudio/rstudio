@@ -76,7 +76,7 @@ public class UISuite {
         "Test for suite for the com.google.gwt.ui module");
 
     suite.addTestSuite(AbsolutePanelTest.class);
-//    suite.addTestSuite(CaptionPanelTest.class);
+    suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
     suite.addTestSuite(CommandExecutorTest.class);
