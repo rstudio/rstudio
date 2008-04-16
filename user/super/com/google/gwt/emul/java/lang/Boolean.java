@@ -21,6 +21,9 @@ import java.io.Serializable;
  * Wraps native <code>boolean</code> as an object.
  */
 public final class Boolean implements Comparable<Boolean>, Serializable {
+  /*
+   * TODO: figure out how to not clinit this class on direct field access.
+   */
 
   // CHECKSTYLE_OFF: These have to be created somewhere.
   public static Boolean FALSE = new Boolean(false);
@@ -28,11 +31,8 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
 
   // CHECKSTYLE_ON
 
-  public static Boolean parseString(String s) {
-    if (s != null && s.equalsIgnoreCase("true")) {
-      return TRUE;
-    }
-    return FALSE;
+  public static boolean parseBoolean(String s) {
+    return "true".equalsIgnoreCase(s);
   }
 
   public static String toString(boolean x) {
@@ -44,11 +44,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   public static Boolean valueOf(String s) {
-    if (s != null && s.equalsIgnoreCase("true")) {
-      return TRUE;
-    } else {
-      return FALSE;
-    }
+    return valueOf(parseBoolean(s));
   }
 
   private final transient boolean value;
@@ -58,7 +54,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   public Boolean(String s) {
-    this((s != null) && s.equalsIgnoreCase("true"));
+    this(parseBoolean(s));
   }
 
   public boolean booleanValue() {
@@ -66,11 +62,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   }
 
   public int compareTo(Boolean other) {
-    if (!value) {
-      return other.value ? -1 : 0;
-    } else {
-      return other.value ? 0 : 1;
-    }
+    return (this.value == other.value) ? 0 : (this.value ? 1 : -1);
   }
 
   @Override
@@ -81,9 +73,7 @@ public final class Boolean implements Comparable<Boolean>, Serializable {
   @Override
   public int hashCode() {
     // The Java API doc defines these magic numbers.
-    final int hashCodeForTrue = 1231;
-    final int hashCodeForFalse = 1237;
-    return value ? hashCodeForTrue : hashCodeForFalse;
+    return value ? 1231 : 1237;
   }
 
   @Override
