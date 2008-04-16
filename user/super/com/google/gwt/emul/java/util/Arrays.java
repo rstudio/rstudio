@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -927,7 +927,8 @@ public class Arrays {
     mergeSort(x, 0, x.length, c != null ? c : Comparators.natural());
   }
 
-  public static <T> void sort(T[] x, int fromIndex, int toIndex, Comparator<? super T> c) {
+  public static <T> void sort(T[] x, int fromIndex, int toIndex,
+      Comparator<? super T> c) {
     // Commented out implementation that uses the native sort with a fixup.
 
     verifySortIndices(fromIndex, toIndex, x.length);
@@ -1146,8 +1147,10 @@ public class Arrays {
    *         stable. The comparator has a property <code>swap</code> which is
    *         true if any elements were discovered to be out of order.
    */
-  @SuppressWarnings("unused") // see above
-  private static native JavaScriptObject getNativeComparator(Object array, Comparator<?> comp) /*-{
+  @SuppressWarnings("unused")
+  // see above
+  private static native JavaScriptObject getNativeComparator(Object array,
+      Comparator<?> comp) /*-{
     function compare(a,b) {
       var elementCompare = comp.@java.util.Comparator::compare(Ljava/lang/Object;Ljava/lang/Object;)(array[a], array[b]);
       var indexCompare = a - b;
@@ -1171,7 +1174,8 @@ public class Arrays {
    * @param high upper bound of range to sort
    * @param comp comparator to use
    */
-  private static void insertionSort(Object[] array, int low, int high, Comparator<Object> comp) {
+  private static void insertionSort(Object[] array, int low, int high,
+      Comparator<Object> comp) {
     for (int i = low + 1; i < high; ++i) {
       for (int j = i; j > low && comp.compare(array[j - 1], array[j]) > 0; --j) {
         Object t = array[j];
@@ -1195,12 +1199,13 @@ public class Arrays {
    * @param destHigh upper bound of destination
    * @param comp comparator to use
    */
-  private static void merge(Object[] src, int srcLow, int srcMid, int srcHigh, Object[] dest,
-      int destLow, int destHigh, Comparator<Object> comp) {
+  private static void merge(Object[] src, int srcLow, int srcMid, int srcHigh,
+      Object[] dest, int destLow, int destHigh, Comparator<Object> comp) {
     // can't destroy srcMid because we need it as a bound on the lower half
     int topIdx = srcMid;
     while (destLow < destHigh) {
-      if (topIdx >= srcHigh || (srcLow < srcMid && comp.compare(src[srcLow], src[topIdx]) <= 0)) {
+      if (topIdx >= srcHigh
+          || (srcLow < srcMid && comp.compare(src[srcLow], src[topIdx]) <= 0)) {
         dest[destLow++] = src[srcLow++];
       } else {
         dest[destLow++] = src[topIdx++];
@@ -1213,25 +1218,29 @@ public class Arrays {
    * 
    * Uses O(n) temporary space to perform the merge, but is stable.
    */
-  private static void mergeSort(Object[] x, int fromIndex, int toIndex, Comparator<?> comp) {
+  @SuppressWarnings("unchecked")
+  private static void mergeSort(Object[] x, int fromIndex, int toIndex,
+      Comparator<?> comp) {
     Object[] temp = Array.cloneSubrange(x, fromIndex, toIndex);
-    mergeSort(temp, x, fromIndex, toIndex, -fromIndex, (Comparator<Object>) comp);
+    mergeSort(temp, x, fromIndex, toIndex, -fromIndex,
+        (Comparator<Object>) comp);
   }
 
   /**
    * Recursive helper function for
    * {@link mergeSort(Object[],int,int,Comparator<?>)}.
    * 
-   * @param temp temporary space, as large as the range of elements being sorted.  On
-   *   entry, temp should contain a copy of the sort range from array.
+   * @param temp temporary space, as large as the range of elements being
+   *          sorted. On entry, temp should contain a copy of the sort range
+   *          from array.
    * @param array array to sort
    * @param low lower bound of range to sort
    * @param high upper bound of range to sort
    * @param ofs offset to convert an array index into a temp index
    * @param comp comparison function
    */
-  private static void mergeSort(Object[] temp, Object[] array, int low, int high, int ofs,
-      Comparator<Object> comp) {
+  private static void mergeSort(Object[] temp, Object[] array, int low,
+      int high, int ofs, Comparator<Object> comp) {
     int length = high - low;
 
     // insertion sort for small arrays
@@ -1271,7 +1280,8 @@ public class Arrays {
   /**
    * Sort a subset of an array of number primitives.
    */
-  private static native void nativeNumberSort(Object array, int fromIndex, int toIndex) /*-{
+  private static native void nativeNumberSort(Object array, int fromIndex,
+      int toIndex) /*-{
     var temp = array.slice(fromIndex, toIndex);
     temp.sort(function(a,b) { return a - b; });
     var n = toIndex - fromIndex;
@@ -1303,9 +1313,10 @@ public class Arrays {
    *          comparison function must also have a property swap which is true
    *          if any elements were out of order.
    */
-  @SuppressWarnings("unused") // see above
-  private static native void nativeObjSort(Object array, int fromIndex, int toIndex,
-      JavaScriptObject comp) /*-{
+  @SuppressWarnings("unused")
+  // Currently unused, but useful for future; see above comment.
+  private static native void nativeObjSort(Object array, int fromIndex,
+      int toIndex, JavaScriptObject comp) /*-{
     var n = toIndex - fromIndex;
     var indexArray = new Array(n);
     var arrayIdx = fromIndex;
@@ -1335,11 +1346,12 @@ public class Arrays {
    */
   private static void verifySortIndices(int fromIndex, int toIndex, int length) {
     if (fromIndex > toIndex) {
-      throw new IllegalArgumentException("fromIndex(" + fromIndex + ") > toIndex(" + toIndex + ")");
+      throw new IllegalArgumentException("fromIndex(" + fromIndex
+          + ") > toIndex(" + toIndex + ")");
     }
     if (fromIndex < 0 || toIndex > length) {
-      throw new ArrayIndexOutOfBoundsException("fromIndex(" + fromIndex + ") or toIndex(" + toIndex
-          + ") out of bounds (0 - " + length + ")");
+      throw new ArrayIndexOutOfBoundsException("fromIndex(" + fromIndex
+          + ") or toIndex(" + toIndex + ") out of bounds (0 - " + length + ")");
     }
   }
 }
