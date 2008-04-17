@@ -56,7 +56,7 @@ public class JSONObject extends JSONValue {
    * @return <code>true</code> if the JSONObject contains the specified property
    */
   public native boolean containsKey(String key) /*-{
-    return this.@com.google.gwt.json.client.JSONObject::jsObject[key] !== undefined;
+    return key in this.@com.google.gwt.json.client.JSONObject::jsObject;
   }-*/;
 
   /**
@@ -176,9 +176,7 @@ public class JSONObject extends JSONValue {
   private native void addAllKeys(Collection<String> s) /*-{
     var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
     for (var key in jsObject) {
-      if (jsObject[key] !== undefined) {
-        s.@java.util.Collection::add(Ljava/lang/Object;)(key);
-      }
+      s.@java.util.Collection::add(Ljava/lang/Object;)(key);
     }
   }-*/;
 
@@ -189,12 +187,11 @@ public class JSONObject extends JSONValue {
   }-*/;
 
   private native void put0(String key, JSONValue value) /*-{
-    if (value === null) {
-      value = undefined;
-    } else {
+    if (value) {
       var func = value.@com.google.gwt.json.client.JSONValue::getUnwrapper()();
-      value = func(value);
+      this.@com.google.gwt.json.client.JSONObject::jsObject[key] = func(value);
+    } else {
+      delete this.@com.google.gwt.json.client.JSONObject::jsObject[key];
     }
-    this.@com.google.gwt.json.client.JSONObject::jsObject[key] = value;
   }-*/;
 }

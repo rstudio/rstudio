@@ -173,9 +173,7 @@ class FastStringMap<T> extends AbstractMap<String, T> {
 
   // Prepend ':' to avoid conflicts with built-in Object properties.
   public native T get(String key) /*-{
-    var value
-        = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
-    return (value == null) ? null : value;
+    return this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
   }-*/;
 
   @Override
@@ -207,11 +205,12 @@ class FastStringMap<T> extends AbstractMap<String, T> {
 
   // Prepend ':' to avoid conflicts with built-in Object properties.
   @Override
-  public native T put(String key, T widget) /*-{
-    var previous
-        = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
-    this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key] = widget;
-    return (previous == null) ? null : previous;
+  public native T put(String key, T value) /*-{
+    key = ':' + key;
+    var map = this.@com.google.gwt.user.client.ui.FastStringMap::map;
+    var previous = map[key];
+    map[key] = value;
+    return previous;
   }-*/;
 
   @Override
@@ -265,7 +264,7 @@ class FastStringMap<T> extends AbstractMap<String, T> {
 
   // Prepend ':' to avoid conflicts with built-in Object properties.
   private native boolean containsKey(String key, JavaScriptObject obj)/*-{
-    return obj[':' + key] !== undefined;
+    return (':' + key) in obj;
   }-*/;
 
   private native void init() /*-{
@@ -283,9 +282,10 @@ class FastStringMap<T> extends AbstractMap<String, T> {
 
   // Prepend ':' to avoid conflicts with built-in Object properties.
   private native T remove(String key) /*-{
-    var previous
-        = this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
-    delete this.@com.google.gwt.user.client.ui.FastStringMap::map[':' + key];
-    return (previous == null) ? null : previous;
+    key = ':' + key;
+    var map = this.@com.google.gwt.user.client.ui.FastStringMap::map;
+    var previous = map[key];
+    delete map[key];
+    return previous;
   }-*/;
 }

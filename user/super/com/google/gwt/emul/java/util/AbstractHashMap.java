@@ -379,7 +379,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * <code>null</code> if the specified key does not exist.
    */
   private native V getStringValue(String key) /*-{
-    return (_ = this.@java.util.AbstractHashMap::stringMap[':' + key]) == null ? null : _ ;
+    return this.@java.util.AbstractHashMap::stringMap[':' + key];
   }-*/;
 
   /**
@@ -451,11 +451,15 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * key did not exist.
    */
   private native V putStringValue(String key, V value) /*-{
+    var result, stringMap = this.@java.util.AbstractHashMap::stringMap;
     key = ':' + key;
-    var result = this.@java.util.AbstractHashMap::stringMap[key];
-    this.@java.util.AbstractHashMap::stringMap[key] = value;
-    return (result === undefined) ? 
-      (++this.@java.util.AbstractHashMap::size, null) : result;
+    if (key in stringMap) {
+      result = stringMap[key];
+    } else {
+      ++this.@java.util.AbstractHashMap::size;
+    }
+    stringMap[key] = value;
+    return result;
   }-*/;
 
   /**
@@ -502,11 +506,13 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * exist.
    */
   private native V removeStringValue(String key) /*-{
+    var result, stringMap = this.@java.util.AbstractHashMap::stringMap;
     key = ':' + key;
-    var result = this.@java.util.AbstractHashMap::stringMap[key];
-    return (result === undefined) ? null :
-      (--this.@java.util.AbstractHashMap::size,
-       delete this.@java.util.AbstractHashMap::stringMap[key],
-       result);
+    if (key in stringMap) {
+      result = stringMap[key];
+      --this.@java.util.AbstractHashMap::size;
+      delete stringMap[key];
+    }
+    return result;
   }-*/;
 }

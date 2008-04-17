@@ -142,11 +142,12 @@ public class JSONArray extends JSONValue {
   }-*/;
 
   private native void set0(int index, JSONValue value) /*-{
-    if (value === null) {
-      value = undefined;
-    } else {
+    if (value) {
       var func = value.@com.google.gwt.json.client.JSONValue::getUnwrapper()();
       value = func(value);
+    } else {
+      // Coerce Java null to undefined; there's a JSONNull for null.
+      value = undefined;
     }
     this.@com.google.gwt.json.client.JSONArray::jsArray[index] = value;
   }-*/;
