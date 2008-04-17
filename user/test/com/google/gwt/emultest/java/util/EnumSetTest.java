@@ -1,12 +1,12 @@
 /*
- * Copyright 2007 Google Inc.
- *
+ * Copyright 2008 Google Inc.
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -29,91 +29,19 @@ import java.util.EnumSet;
 public class EnumSetTest extends GWTTestCase {
 
   enum FalseEnum {
+    Zero, One,
+  }
 
-    Zero,
-    One, }
-
-  // Falls into SimpleEnumSet
-  enum Number {
-
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Eleven,
-    Twelve,
-    Thirteen,
-    Fourteen,
-    Fifteen,
-    Sixteen,
-    Seventeen,
-    Eighteen,
-    Nineteen,
-    Twenty,
-    TwentyOne,
-    TwentyTwo,
-    TwentyThree,
-    TwentyFour,
-    TwentyFive,
-    TwentySix,
-    TwentySeven,
-    TwentyEight,
-    TwentyNine,
-    Thirty, }
-
-  // Requires LargeEnumSet
-  enum Number2 {
-
-    Zero,
-    One,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Eleven,
-    Twelve,
-    Thirteen,
-    Fourteen,
-    Fifteen,
-    Sixteen,
-    Seventeen,
-    Eighteen,
-    Nineteen,
-    Twenty,
-    TwentyOne,
-    TwentyTwo,
-    TwentyThree,
-    TwentyFour,
-    TwentyFive,
-    TwentySix,
-    TwentySeven,
-    TwentyEight,
-    TwentyNine,
-    Thirty,
-    ThirtyOne, }
+  enum Numbers {
+    Zero, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen, Fourteen, Fifteen, Sixteen, Seventeen, Eighteen, Nineteen, Twenty, TwentyOne, TwentyTwo, TwentyThree, TwentyFour, TwentyFive, TwentySix, TwentySeven, TwentyEight, TwentyNine, Thirty, ThirtyOne, ThirtyTwo, ThirtyThree, Thirtyfour,
+  }
 
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  public void testFastEnums() {
-    enumTest(Number.class);
-  }
-
-  public void testLargeEnums() {
-    enumTest(Number2.class);
+  public void testNumbers() {
+    enumTest(Numbers.class);
   }
 
   private <E extends Enum<E>> void enumTest(Class<E> e) {
@@ -211,13 +139,12 @@ public class EnumSetTest extends GWTTestCase {
 
     try {
       numbers.add(null);
-      fail("EnumSet shouldn't allow null.");
-    } catch (NullPointerException ex) {
+      fail("Expected NullPointerException");
+    } catch (NullPointerException expected) {
     }
 
     // Try testing for null
-    assertFalse("EnumSet should allow testing for null",
-        numbers.contains(null));
+    assertFalse("EnumSet should allow testing for null", numbers.contains(null));
 
     // Try testing for an Enum that looks the same, but has different type
     numbers.clear();

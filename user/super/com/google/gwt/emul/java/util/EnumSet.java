@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import com.google.gwt.lang.Array;
+
 /**
  * A {@link java.util.Set} of {@link Enum}s. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/EnumSet.html">[Sun
@@ -25,279 +27,165 @@ package java.util;
 public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
   /**
-   * An implementation of EnumSet that works for Enums with arbitrarily large
-   * numbers of values.
+   * Implemented via sparse array since the set size is finite. Iteration takes
+   * linear time with respect to the set of the enum rather than the number of
+   * items in the set.
    * 
-   * TODO(tobyr) Consider implementing this like SimpleEnumSet, but backed by
-   * int[]'s instead of ints.
+   * Note: Implemented as a subclass instead of a concrete final EnumSet class.
+   * This is because declaring an EnumSet.add(E) causes hosted mode to bind to
+   * the tighter method rather than the bridge method; but the tighter method
+   * isn't available in the real JRE.
    */
-  static class LargeEnumSet<E extends Enum<E>> extends EnumSet<E> {
+  static final class EnumSetImpl<E extends Enum<E>> extends EnumSet<E> {
+    private class IteratorImpl implements Iterator<E> {
+      /*
+       * i is the index of the item that will be returned on the next call to
+       * next() last is the index of the item that was returned on the previous
+       * call to next(), -1 if no such item exists.
+       */
 
-    HashSet<E> set = new HashSet<E>();
+      int i = -1, last = -1;
 
-    private E[] allEnums; // Must not be modified
+      {
+        findNext();
+      }
 
-    LargeEnumSet(E first, E... rest) {
-      allEnums = getEnums(first.getDeclaringClass());
-      add(first);
-      for (E e : rest) {
-        add(e);
+      public boolean hasNext() {
+        return i < all.length;
+      }
+
+      public E next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        last = i;
+        findNext();
+        return set[last];
+      }
+
+      public void remove() {
+        if (last < 0) {
+          throw new IllegalStateException();
+        }
+        assert (set[last] != null);
+        set[last] = null;
+        --size;
+        last = -1;
+      }
+
+      private void findNext() {
+        ++i;
+        for (int c = all.length; i < c; ++i) {
+          if (set[i] != null) {
+            return;
+          }
+        }
       }
     }
 
-    LargeEnumSet(E[] allValues) {
-      this.allEnums = allValues;
+    /**
+     * All enums; reference to the class's copy; must not be modified.
+     */
+    private final E[] all;
+
+    /**
+     * Live enums in the set.
+     */
+    private E[] set;
+
+    /**
+     * Count of enums in the set.
+     */
+    private int size;
+
+    /**
+     * Constructs an empty set.
+     */
+    public EnumSetImpl(E[] all) {
+      this(all, Array.clonify(all, all.length), 0);
+    }
+
+    /**
+     * Constructs a set taking ownership of the specified set. The size must
+     * accurately reflect the number of non-null items in set.
+     */
+    public EnumSetImpl(E[] all, E[] set, int size) {
+      this.all = all;
+      this.set = set;
+      this.size = size;
     }
 
     @Override
     public boolean add(E e) {
       if (e == null) {
-        throw new NullPointerException("Can't add null to an EnumSet");
+        throw new NullPointerException();
       }
-      return set.add(e);
+      int ordinal = e.ordinal();
+      if (set[ordinal] == null) {
+        set[ordinal] = e;
+        ++size;
+        return true;
+      }
+      return false;
     }
 
-    public LargeEnumSet<E> clone() {
-      LargeEnumSet<E> newSet = new LargeEnumSet<E>(this.allEnums);
-      newSet.set = new HashSet<E>(this.set);
-      return newSet;
+    public EnumSet<E> clone() {
+      E[] clonedSet = Array.cloneSubrange(set, 0, set.length);
+      return new EnumSetImpl<E>(all, clonedSet, size);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public boolean contains(Object object) {
-      return set.contains(object);
+    public boolean contains(Object o) {
+      if (o instanceof Enum) {
+        Enum e = (Enum) o;
+        return set[e.ordinal()] == e;
+      }
+      return false;
     }
 
     @Override
     public Iterator<E> iterator() {
-      return set.iterator();
+      return new IteratorImpl();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean remove(Object o) {
-      return set.remove(o);
+      if (o instanceof Enum) {
+        Enum e = (Enum) o;
+        if (set[e.ordinal()] == e) {
+          set[e.ordinal()] = null;
+          --size;
+          return true;
+        }
+      }
+      return false;
     }
 
     @Override
     public int size() {
-      return set.size();
-    }
-
-    @Override
-    void addRange(E from, E to) {
-      for (int i = from.ordinal(), end = to.ordinal(); i <= end; ++i) {
-        add(allEnums[i]);
-      }
-    }
-
-    @Override
-    void complement() {
-      for (int i = 0; i < allEnums.length; ++i) {
-        E e = allEnums[i];
-        if (set.contains(e)) {
-          set.remove(e);
-        } else {
-          set.add(e);
-        }
-      }
-    }
-  }
-
-  /**
-   * A fast implementation of EnumSet for enums with less than 32 values. A Java
-   * EnumSet can support 63 bits easily with a primitive long, but JavaScript
-   * generally represents long values as floating point numbers.
-   * 
-   * LargeEnumSet is used to support enums with > 31 values using a map-backed
-   * implementation.
-   */
-  static class SimpleEnumSet<E extends Enum<E>> extends EnumSet<E> {
-
-    // TODO(tobyr)
-    // Consider optimizing this iterator by walking the values using a
-    // combination of lowestOneBit and numberOfLeadingZeros.
-    // This is low priority as iterating over enums is not the common usecase.
-    class SimpleIterator implements Iterator<E> {
-
-      private Iterator<E> iterator;
-
-      private E value;
-
-      SimpleIterator() {
-        List<E> values = new ArrayList<E>();
-        for (int i = 0; i < 31; ++i) {
-          int mask = 0x1 << i;
-          if ((enumValues & mask) != 0) {
-            values.add(allEnums[i]);
-          }
-        }
-
-        iterator = values.iterator();
-      }
-
-      public boolean hasNext() {
-        return iterator.hasNext();
-      }
-
-      public E next() {
-        value = iterator.next();
-        return value;
-      }
-
-      public void remove() {
-        SimpleEnumSet.this.remove(value);
-      }
-    }
-
-    private static int ALL_BITS_SET = 0x7FFFFFFF;
-
-    static <E extends Enum<E>> SimpleEnumSet<E> all(Class<E> enumClass) {
-      SimpleEnumSet<E> set = new SimpleEnumSet<E>(enumClass);
-      set.enumValues = ALL_BITS_SET;
-      return set;
-    }
-
-    static <E extends Enum<E>> SimpleEnumSet<E> none(Class<E> enumClass) {
-      return new SimpleEnumSet<E>(enumClass);
-    }
-
-    private E[] allEnums;
-
-    private Class<E> declaringClass;
-
-    private int enumValues;
-
-    SimpleEnumSet(Class<E> enumClass) {
-      declaringClass = enumClass;
-      allEnums = getEnums(declaringClass);
-    }
-
-    SimpleEnumSet(E first, E... rest) {
-      declaringClass = first.getDeclaringClass();
-      allEnums = getEnums(declaringClass);
-      add(first);
-      for (E e : rest) {
-        add(e);
-      }
-    }
-
-    SimpleEnumSet(List<E> enums) {
-      declaringClass = enums.get(0).getDeclaringClass();
-      allEnums = getEnums(declaringClass);
-      for (E e : enums) {
-        add(e);
-      }
-    }
-
-    // For use only by clone
-    private SimpleEnumSet() {
-    }
-
-    @Override
-    public boolean add(E o) {
-      if (o == null) {
-        throw new NullPointerException("Can't add null to an EnumSet");
-      }
-      int value = 1 << o.ordinal();
-      boolean exists = (enumValues & value) != 0;
-      enumValues |= value;
-      return exists;
-    }
-
-    @Override
-    public void addRange(E from, E to) {
-      for (int i = from.ordinal(), end = to.ordinal(); i <= end; ++i) {
-        add(allEnums[i]);
-      }
-    }
-
-    public SimpleEnumSet<E> clone() {
-      SimpleEnumSet<E> set = new SimpleEnumSet<E>();
-      set.declaringClass = this.declaringClass;
-      set.enumValues = this.enumValues;
-      set.allEnums = this.allEnums;
-      return set;
-    }
-
-    @Override
-    public void complement() {
-      enumValues ^= ALL_BITS_SET;
-    }
-
-    @Override
-    public boolean contains(Object obj) {
-      return contains(asE(obj));
-    }
-
-    @Override
-    public Iterator<E> iterator() {
-      return new SimpleIterator();
-    }
-
-    @Override
-    public boolean remove(Object obj) {
-      return remove(asE(obj));
-    }
-
-    @Override
-    public int size() {
-      return Integer.bitCount(enumValues);
-    }
-
-    boolean contains(E e) {
-      if (e == null) {
-        return false;
-      }
-      int value = 1 << e.ordinal();
-      return (enumValues & value) != 0;
-    }
-
-    boolean remove(E e) {
-      if (e == null) {
-        return false;
-      }
-
-      int value = 1 << e.ordinal();
-      boolean exists = (enumValues & value) != 0;
-      if (exists) {
-        enumValues ^= value;
-      }
-      return exists;
-    }
-
-    /**
-     * Returns <code>obj</code> as an E if it is an E. Otherwise, returns
-     * null.
-     */
-    @SuppressWarnings("unchecked")
-    private E asE(Object obj) {
-      if (!(obj instanceof Enum)) {
-        return null;
-      }
-      Enum e = (Enum) obj;
-      return e.getDeclaringClass() == declaringClass ? (E) e : null;
+      return size;
     }
   }
 
   public static <E extends Enum<E>> EnumSet<E> allOf(Class<E> elementType) {
-    E[] enums = getEnums(elementType);
-
-    if (enums.length < 32) {
-      return SimpleEnumSet.all(elementType);
-    }
-
-    EnumSet<E> largeEnumSet = new LargeEnumSet<E>(enums);
-    for (E e : enums) {
-      largeEnumSet.add(e);
-    }
-
-    return largeEnumSet;
+    E[] all = elementType.getEnumConstants();
+    E[] set = Array.cloneSubrange(all, 0, all.length);
+    return new EnumSetImpl<E>(all, set, all.length);
   }
 
-  public static <E extends Enum<E>> EnumSet<E> complementOf(EnumSet<E> s) {
-    EnumSet<E> set = copyOf(s);
-    set.complement();
-    return set;
+  public static <E extends Enum<E>> EnumSet<E> complementOf(EnumSet<E> other) {
+    EnumSetImpl<E> s = (EnumSetImpl<E>) other;
+    E[] all = s.all;
+    E[] oldSet = s.set;
+    E[] newSet = Array.clonify(oldSet, oldSet.length);
+    for (int i = 0, c = oldSet.length; i < c; ++i) {
+      if (oldSet[i] == null) {
+        newSet[i] = all[i];
+      }
+    }
+    return new EnumSetImpl<E>(all, newSet, all.length - s.size);
   }
 
   public static <E extends Enum<E>> EnumSet<E> copyOf(Collection<E> c) {
@@ -310,11 +198,9 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
     Class<E> clazz = first.getDeclaringClass();
     EnumSet<E> set = EnumSet.noneOf(clazz);
     set.add(first);
-
     while (it.hasNext()) {
       set.add(it.next());
     }
-
     return set;
   }
 
@@ -323,45 +209,48 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
   }
 
   public static <E extends Enum<E>> EnumSet<E> noneOf(Class<E> elementType) {
-    E[] enums = getEnums(elementType);
+    E[] all = elementType.getEnumConstants();
+    return new EnumSetImpl<E>(all, Array.clonify(all, all.length), 0);
+  }
 
-    if (enums.length < 32) {
-      return SimpleEnumSet.none(elementType);
-    }
-    return new LargeEnumSet<E>(enums);
+  public static <E extends Enum<E>> EnumSet<E> of(E first) {
+    E[] all = first.getDeclaringClass().getEnumConstants();
+    E[] set = Array.clonify(all, all.length);
+    set[first.ordinal()] = first;
+    return new EnumSetImpl<E>(all, set, 1);
   }
 
   public static <E extends Enum<E>> EnumSet<E> of(E first, E... rest) {
-    Class<E> c = first.getDeclaringClass();
-    EnumSet<E> set = noneOf(c);
-    set.add(first);
-
+    E[] all = first.getDeclaringClass().getEnumConstants();
+    E[] set = Array.clonify(all, all.length);
+    set[first.ordinal()] = first;
     for (E e : rest) {
-      set.add(e);
+      set[e.ordinal()] = e;
     }
-
-    return set;
+    return new EnumSetImpl<E>(all, set, rest.length + 1);
   }
 
   public static <E extends Enum<E>> EnumSet<E> range(E from, E to) {
     if (from.compareTo(to) > 0) {
       throw new IllegalArgumentException(from + " > " + to);
     }
-    EnumSet<E> set = noneOf(from.getDeclaringClass());
-    set.addRange(from, to);
-    return set;
+    E[] all = from.getDeclaringClass().getEnumConstants();
+    E[] set = Array.clonify(all, all.length);
+
+    // Inclusive
+    int start = from.ordinal();
+    int end = to.ordinal() + 1;
+    for (int i = start; i < end; ++i) {
+      set[i] = all[i];
+    }
+    return new EnumSetImpl<E>(all, set, end - start);
   }
 
-  private static <T extends Enum<T>> T[] getEnums(Class<T> clazz) {
-    return clazz.getEnumConstants();
-  }
-
-  protected EnumSet() {
+  /**
+   * Single implementation only.
+   */
+  EnumSet() {
   }
 
   public abstract EnumSet<E> clone();
-
-  abstract void addRange(E from, E to);
-
-  abstract void complement();
 }
