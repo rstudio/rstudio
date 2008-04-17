@@ -46,14 +46,11 @@ public final class JsValueGlue {
   public static <T> T get(JsValue value, CompilingClassLoader cl,
       Class<T> type, String msgPrefix) {
 
-    if (value.isUndefined()) {
-      // undefined is never legal to return from JavaScript into Java
-      throw new HostedModeException(msgPrefix
-          + ": attempt to use JavaScript 'undefined' as a value, expected " + type.getName());
-    }
-
     if (type.isPrimitive()) {
-      if (value.isNull()) {
+      if (value.isUndefined()) {
+        throw new HostedModeException("Expected primitive type " + type
+            + "; actual value was undefined");
+      } else if (value.isNull()) {
         throw new HostedModeException("Expected primitive type " + type
             + "; actual value was null");
       }
@@ -118,7 +115,7 @@ public final class JsValueGlue {
       }
     }
 
-    if (value.isNull()) {
+    if (value.isNull() || value.isUndefined()) {
       return null;
     }
     if (value.isWrappedJavaObject()) {
