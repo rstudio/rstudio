@@ -1,5 +1,0 @@
-<project name="kitchensink" default="build" basedir=".">
-	<property name="sample.root" value="kitchensink" />
-	<property name="sample.module" value="KitchenSink" />
-	<import file="../common.ant.xml" />
-</project>

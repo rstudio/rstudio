@@ -206,37 +206,37 @@ unpack the package with a command like <pre class="code">tar xvzf gwt-mac-@GWT_V
 
 <h3>Running in Hosted Mode</h3>
 
-<p>To run the Kitchen Sink sample in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a>, navigate to the <code>samples/KitchenSink/</code> directory and run the <code>KitchenSink-shell</code> script. This will open the GWT browser with the Kitchen Sink application running inside:</p>
+<p>To run the Mail sample in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a>, navigate to the <code>samples/Mail/</code> directory and run the <code>Mail-shell</code> script. This will open the GWT browser with the Mail application running inside:</p>
 
-<div class="screenshot"><img src="./kitchensink-hosted.jpg" alt="Screenshot"/></div>
+<div class="screenshot"><img src="./mail-hosted.png" alt="Screenshot"/></div>
 
 <p>Since you're running in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a>, the application is running in the Java Virtual Machine (JVM).  This is typically the mode you'll use to debug your applications.</p>
 
 <h3>Running in Web Mode</h3>
 
-<p>To run the application in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.WebMode.html">web mode</a>, compile the application by running the <code>KitchenSink-compile</code> script. The GWT compiler will generate a number of JavaScript and HTML files from the Kitchen Sink Java source code in the <code>www/</code> subdirectory.  To see the application, open the file <code>www/com.google.gwt.sample.kitchensink.KitchenSink/KitchenSink.html</code> in your favorite web browser.</p>
+<p>To run the application in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.WebMode.html">web mode</a>, compile the application by running the <code>Mail-compile</code> script. The GWT compiler will generate a number of JavaScript and HTML files from the Mail Java source code in the <code>www/</code> subdirectory.  To see the application, open the file <code>www/com.google.gwt.sample.mail.Mail/Mail.html</code> in your favorite web browser.</p>
 
-<div class="screenshot"><img src="./kitchensink-web.jpg" alt="Screenshot"/></div>
+<div class="screenshot"><img src="./mail-web.png" alt="Screenshot"/></div>
 
-<p>Since you've compiled the project, you're now running pure JavaScript and HTML that should work in IE, Firefox, or Safari. If you were to deploy the Kitchen Sink example project in production, you would distribute the files in your <code>www/com.google.com.google.gwt.sample.kitchensink.KitchenSink/</code> directory to your web servers.</p>
+<p>Since you've compiled the project, you're now running pure JavaScript and HTML that should work in IE, Firefox, or Safari. If you were to deploy the Mail example project in production, you would distribute the files in your <code>www/com.google.com.google.gwt.sample.mail.Mail/</code> directory to your web servers.</p>
 
 <h3>Make a Few Changes</h3>
 
-<p>The source code for Kitchen Sink is in the <code>src/</code> subdirectory. Try closing your browser windows, and open the file 
-<code>src/com/google/gwt/sample/kitchensink/client/Info.java</code> in a text editor.  Line 26 of the file is the first line of the 
-static initialization method for the first tab in the Kitchen Sink application (&quot;Intro&quot;):</p>
+<p>The source code for Mail sample is in the <code>src/</code> subdirectory. Try closing your browser windows, and open the file 
+<code>src/com/google/gwt/sample/mail/client/Shortcuts.java</code> in a text editor.  Line 55 of the file adds a new &quot;Tasks&quot;
+section to the main StackPanel on the left side of the application:</p>
 
-<pre class="code">return new SinkInfo(&quot;Intro&quot;, &quot;&lt;h2&gt;Introduction to the Kitchen Sink.&lt;/h2&gt;&quot;) {</pre>
+<pre class="code">add(images, new Tasks(), images.tasksgroup(), &quot;Tasks&quot;);</pre>
 
-<p>Change the second string from <code>&quot;&lt;h2&gt;Introduction to the Kitchen Sink.&lt;/h2&gt;&quot;</code> to <code>&quot;&lt;h2&gt;Foo bar&lt;/h2&gt;&quot;</code>:</p>
+<p>Change the string from <code>&quot;Tasks&quot;</code> to <code>&quot;To-Do List&quot;</code>:</p>
 
-<pre class="code">return new SinkInfo(&quot;Intro&quot;, <ins>&quot;&lt;h2&gt;Foo bar&lt;/h2&gt;&quot;</ins>) {</pre>
+<pre class="code">add(images, new Tasks(), images.tasksgroup(), &quot;To-Do List&quot;);</pre>
 
 <p>Now, save the file and simply click "Refresh" in the hosted mode application to see your recent change (if you previously closed 
-hosted mode, go ahead and re-run the <code>KitchenSink-shell</code> script). The header should now say &quot;Foo 
-bar&quot; instead of &quot;Introduction to the Kitchen Sink.&quot;:</p>
+hosted mode, go ahead and re-run the <code>Mail-shell</code> script). The second item in the main StackPanel should now say
+&quot;To-Do List&quot; instead of &quot;Tasks&quot;:</p>
 
-<div class="screenshot"><img src="./kitchensink-modified.jpg" alt="Screenshot" style="border: 1px solid silver"/></div>
+<div class="screenshot"><img src="./mail-modified.png" alt="Screenshot" style="border: 1px solid silver"/></div>
 
 <a name="New"></a>
 <h2>Creating an Application from Scratch (without Eclipse)</h2>

@@ -22,10 +22,6 @@
 		<gwt.ant dir="json" />
 	</target>
 
-	<target name="kitchensink" description="Build kitchensink">
-		<gwt.ant dir="kitchensink" />
-	</target>
-
 	<target name="mail" description="Build mail">
 		<gwt.ant dir="mail" />
 	</target>
@@ -43,7 +39,6 @@
 		<antcall target="hello" />
 		<antcall target="i18n" />
 		<antcall target="json" />
-		<antcall target="kitchensink" />
 		<antcall target="mail" />
 		<antcall target="showcase" />
 		<antcall target="simplexml" />

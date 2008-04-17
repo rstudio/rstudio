@@ -116,7 +116,7 @@ Set the location to "settings/code-style/gwt-checkstyle-tests.xml".
   Select 'gwt-user'
   Select any of the GWT samples as you want.  The most useful ones are:
     - Hello: very simple project useful as a little playground
-    - KitchenSink: complex UI application
+    - Showcase: complex UI application
     - DynaTable: uses RPC
   Then press the Finish button.
   
