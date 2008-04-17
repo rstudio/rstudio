@@ -40,6 +40,13 @@ public final class Array {
   private static Array protoTypeArray;
 
   /**
+   * Creates a copy of the specified array.
+   */
+  public static <T> T[] clone(T[] array) {
+    return cloneSubrange(array, 0, array.length);
+  }
+
+  /**
    * Creates a copy of a subrange of the specified array.
    */
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
@@ -47,11 +54,18 @@ public final class Array {
     Array result = arraySlice(a, fromIndex, toIndex);
     initValues(a.getClass(), a.typeId, a.queryId, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
-    return Array.<T>asArray(result);
+    return Array.<T> asArray(result);
   }
 
   /**
-   * Creates a new array of the exact same type as a given array but with the
+   * Creates a new array of the exact same type and length as a given array.
+   */
+  public static <T> T[] clonify(T[] array) {
+    return clonify(array, array.length);
+  }
+
+  /**
+   * Creates an empty array of the exact same type as a given array, with the
    * specified length.
    */
   public static <T> T[] clonify(T[] array, int length) {
@@ -59,7 +73,7 @@ public final class Array {
     Array result = createFromSeed(NULL_SEED_TYPE, length);
     initValues(a.getClass(), a.typeId, a.queryId, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
-    return Array.<T>asArray(result);
+    return Array.<T> asArray(result);
   }
 
   /**

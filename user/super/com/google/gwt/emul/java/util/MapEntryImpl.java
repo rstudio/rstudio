@@ -40,9 +40,9 @@ class MapEntryImpl<K, V> extends AbstractMapEntry<K, V> {
     return value;
   }
 
-  public V setValue(V object) {
-    V old = value;
-    value = object;
+  public V setValue(V value) {
+    V old = getValue();
+    this.value = value;
     return old;
   }
 }
