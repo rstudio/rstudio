@@ -42,6 +42,7 @@ import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
 import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
+import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
@@ -436,6 +437,7 @@ public class JavaToJavaScriptCompiler {
       LongEmulationNormalizer.exec(jprogram);
       CastNormalizer.exec(jprogram);
       ArrayNormalizer.exec(jprogram);
+      EqualityNormalizer.exec(jprogram);
 
       // (6) Perform further post-normalization optimizations
       // Prune everything

@@ -78,6 +78,18 @@ final class Cast {
     return src.typeMarker != getNullMethod() && src.typeId != 2;
   }
 
+  static native boolean jsEquals(Object a, Object b) /*-{
+    return a == b;
+  }-*/;
+
+  static native boolean jsNotEquals(Object a, Object b) /*-{
+    return a != b;
+  }-*/;
+
+  static native Object maskUndefined(Object src) /*-{
+    return (src == null) ? null : src;
+  }-*/;
+
   /**
    * See JLS 5.1.3.
    */
