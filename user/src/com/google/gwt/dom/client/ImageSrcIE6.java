@@ -168,7 +168,7 @@ class ImageSrcIE6 {
    * has no pending src URL.
    */
   private static native String getPendingSrc(Element img) /*-{
-    return img.__pendingSrc || null;
+    return img.__pendingSrc;
   }-*/;
 
   /**
@@ -176,7 +176,7 @@ class ImageSrcIE6 {
    * there is no pending parent for the specified URL.
    */
   private static native Element getTop(JavaScriptObject srcImgMap, String src) /*-{
-    return srcImgMap[src] || null;
+    return srcImgMap[src];
   }-*/;
 
   /**

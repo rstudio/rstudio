@@ -37,10 +37,7 @@ public final class JavaScriptException extends RuntimeException {
   }
 
   private static native String getDescription0(JavaScriptObject e) /*-{
-    if (e == null) {
-      return null;
-    }
-    return e.message == null ? null : e.message;
+    return (e == null) ? null : e.message;
   }-*/;
 
   private static JavaScriptObject getException(Object e) {
@@ -64,18 +61,12 @@ public final class JavaScriptException extends RuntimeException {
   }
 
   private static native String getName0(JavaScriptObject e) /*-{
-    if (e == null) {
-      return null;
-    }
-    return e.name == null ? null : e.name;
+    return (e == null) ? null : e.name;
   }-*/;
 
   private static String getProperties(Object e) {
-    if (e instanceof JavaScriptObject) {
-      return getProperties0((JavaScriptObject) e);
-    } else {
-      return "";
-    }
+    return (e instanceof JavaScriptObject)
+        ? getProperties0((JavaScriptObject) e) : "";
   }
 
   /**

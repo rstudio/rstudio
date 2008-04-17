@@ -41,23 +41,23 @@ abstract class DOMImplStandard extends DOMImpl {
   @Override
   public native Element eventGetFromElement(Event evt) /*-{
     if (evt.type == "mouseover")
-     return evt.relatedTarget || null;
+      return evt.relatedTarget;
     if (evt.type == "mouseout")
-      return evt.target || null;
+      return evt.target;
     return null;  
   }-*/;
 
   @Override
   public native Element eventGetTarget(Event evt) /*-{
-    return evt.target || null;
+    return evt.target;
   }-*/;
 
   @Override
   public native Element eventGetToElement(Event evt) /*-{
     if (evt.type == "mouseover")
-      return evt.target || null;
+      return evt.target;
     if (evt.type == "mouseout")
-      return evt.relatedTarget || null;
+      return evt.relatedTarget;
     return null;
   }-*/;
 

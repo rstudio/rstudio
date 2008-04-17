@@ -75,12 +75,11 @@ abstract class DOMImpl {
     var child = elem.firstChild;
     while (child && child.nodeType != 1)
       child = child.nextSibling;
-    return child || null;
+    return child;
   }-*/;
 
   public native String getInnerHTML(Element elem) /*-{
-    var ret = elem.innerHTML;
-    return (ret == null) ? null : ret;
+    return elem.innerHTML;
   }-*/;
 
   public native String getInnerText(Element node) /*-{
@@ -107,7 +106,7 @@ abstract class DOMImpl {
     var sib = elem.nextSibling;
     while (sib && sib.nodeType != 1)
       sib = sib.nextSibling;
-    return sib || null;
+    return sib;
   }-*/;
 
   public native Element getParentElement(Element elem) /*-{
@@ -117,12 +116,11 @@ abstract class DOMImpl {
     }
     if (parent.nodeType != 1)
       parent = null;
-    return parent || null;
+    return parent;
   }-*/;
 
   public native String getStyleAttribute(Element elem, String attr) /*-{
-    var ret = elem.style[attr];
-    return (ret == null) ? null : ret;
+    return elem.style[attr];
   }-*/;
 
   public native String imgGetSrc(Element img) /*-{

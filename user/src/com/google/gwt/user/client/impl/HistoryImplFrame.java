@@ -24,19 +24,16 @@ import com.google.gwt.user.client.Element;
 abstract class HistoryImplFrame extends HistoryImpl {
 
   private static native Element findHistoryFrame() /*-{
-    var historyFrame = $doc.getElementById('__gwt_historyFrame');
-    return historyFrame || null;
+    return $doc.getElementById('__gwt_historyFrame');
   }-*/;
 
   private static native Element getTokenElement(Element historyFrame) /*-{
     // Initialize the history iframe.  If '__gwt_historyToken' already exists, then
     // we're probably backing into the app, so _don't_ set the iframe's location.
-    var tokenElement = null;
     if (historyFrame.contentWindow) {
       var doc = historyFrame.contentWindow.document;
-      tokenElement = doc.getElementById('__gwt_historyToken') || null;
+      return doc.getElementById('__gwt_historyToken');
     }
-    return tokenElement;
   }-*/;
 
   private Element historyFrame;

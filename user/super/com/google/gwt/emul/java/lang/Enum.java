@@ -65,7 +65,7 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
 
   private static native <T extends Enum<T>> T valueOf0(JavaScriptObject map,
       String name) /*-{
-    return map[name] || null;
+    return map[name];
   }-*/;
 
   private final String name;

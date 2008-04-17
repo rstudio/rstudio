@@ -305,9 +305,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * @return the element
      */
     private native Element getCellElement(Element table, int row, int col) /*-{
-     var out = table.rows[row].cells[col];
-     return (out == null ? null : out);
-     }-*/;
+      return table.rows[row].cells[col];
+    }-*/;
 
     /**
      * Gets the TD element representing the specified cell unsafely (meaning

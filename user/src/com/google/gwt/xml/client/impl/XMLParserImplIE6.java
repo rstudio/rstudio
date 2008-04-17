@@ -34,8 +34,7 @@ class XMLParserImplIE6 extends XMLParserImpl {
   @Override
   protected native JavaScriptObject getElementByIdImpl(JavaScriptObject o,
       String elementId) /*-{
-    var out = o.nodeFromID(elementId);
-    return (out == null) ? null : out;
+    return o.nodeFromID(elementId);
   }-*/;
 
   @Override

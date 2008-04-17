@@ -131,7 +131,7 @@ public class LocaleInfoGenerator extends Generator {
       writer.println();
       writer.println("public native String getLocaleNativeDisplayName(String localeName) /*-{");
       writer.println("  this.@" + qualName + "::ensureNativeDisplayNames()();");
-      writer.println("  return this.@" + qualName + "::nativeDisplayNames[localeName] || null;");
+      writer.println("  return this.@" + qualName + "::nativeDisplayNames[localeName];");
       writer.println("}-*/;");
       writer.println();
       writer.println("private native void ensureNativeDisplayNames() /*-{");

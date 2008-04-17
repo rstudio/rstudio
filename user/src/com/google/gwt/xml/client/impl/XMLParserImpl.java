@@ -34,8 +34,7 @@ public abstract class XMLParserImpl {
 
   static native JavaScriptObject appendChild(JavaScriptObject jsObject,
       JavaScriptObject newChildJs) /*-{
-    var out = jsObject.appendChild(newChildJs);
-    return (out == null) ? null : out;
+    return jsObject.appendChild(newChildJs);
   }-*/;
 
   static native void appendData(JavaScriptObject jsObject, String arg) /*-{
@@ -44,44 +43,37 @@ public abstract class XMLParserImpl {
 
   static native JavaScriptObject cloneNode(JavaScriptObject jsObject,
       boolean deep) /*-{
-    var out = jsObject.cloneNode(deep);
-    return (out == null) ? null : out;
+    return jsObject.cloneNode(deep);
   }-*/;
 
   static native JavaScriptObject createCDATASection(JavaScriptObject jsObject,
       String data) /*-{
-    var out = jsObject.createCDATASection(data);
-    return (out == null) ? null : out;
+    return jsObject.createCDATASection(data);
   }-*/;
 
   static native JavaScriptObject createComment(JavaScriptObject jsObject,
       String data) /*-{
-    var out = jsObject.createComment(data);
-    return (out == null) ? null : out;
+    return jsObject.createComment(data);
   }-*/;
 
   static native JavaScriptObject createDocumentFragment(
       JavaScriptObject jsObject) /*-{
-    var out = jsObject.createDocumentFragment();
-    return (out == null) ? null : out;
+    return jsObject.createDocumentFragment();
   }-*/;
 
   static native JavaScriptObject createElement(JavaScriptObject jsObject,
       String tagName) /*-{
-    var out = jsObject.createElement(tagName);
-    return (out == null) ? null : out;
+    return jsObject.createElement(tagName);
   }-*/;
 
   static native JavaScriptObject createProcessingInstruction(
       JavaScriptObject jsObject, String target, String data) /*-{
-    var out = jsObject.createProcessingInstruction(target, data);
-    return (out == null) ? null : out;
+    return jsObject.createProcessingInstruction(target, data);
   }-*/;
 
   static native JavaScriptObject createTextNode(JavaScriptObject jsObject,
       String data) /*-{
-    var out = jsObject.createTextNode(data);
-    return (out == null) ? null : out;
+    return jsObject.createTextNode(data);
   }-*/;
 
   static native void deleteData(JavaScriptObject jsObject, int offset, int count) /*-{
@@ -94,8 +86,7 @@ public abstract class XMLParserImpl {
 
   static native JavaScriptObject getAttributeNode(JavaScriptObject o,
       String name) /*-{
-    var out = o.getAttributeNode(name);
-    return (out == null) ? null : out;
+    return o.getAttributeNode(name);
   }-*/;
 
   static native JavaScriptObject getAttributes(JavaScriptObject t) /*-{
@@ -103,8 +94,7 @@ public abstract class XMLParserImpl {
   }-*/;
 
   static native JavaScriptObject getChildNodes(JavaScriptObject t) /*-{
-    var out = t.childNodes;
-    return (out == null) ? null : out;
+    return t.childNodes;
   }-*/;
 
   static native String getData(JavaScriptObject o) /*-{
@@ -133,23 +123,19 @@ public abstract class XMLParserImpl {
   }-*/;
 
   static native JavaScriptObject getNamedItem(JavaScriptObject t, String name) /*-{
-    var out = t.getNamedItem(name);
-    return (out == null) ? null : out;
+    return t.getNamedItem(name);
   }-*/;
 
   static native String getNamespaceURI(JavaScriptObject jsObject) /*-{
-    var out = jsObject.namespaceURI;
-    return (out == null) ? null : out;
+    return jsObject.namespaceURI;
   }-*/;
 
   static native JavaScriptObject getNextSibling(JavaScriptObject o) /*-{
-    var out = o.nextSibling;
-    return (out == null) ? null : out;
+    return o.nextSibling;
   }-*/;
 
   static native String getNodeName(JavaScriptObject o) /*-{
-    var out = o.nodeName;
-    return (out == null) ? null : out;
+    return o.nodeName;
   }-*/;
 
   static native short getNodeType(JavaScriptObject jsObject) /*-{
@@ -166,8 +152,7 @@ public abstract class XMLParserImpl {
   }-*/;
 
   static native JavaScriptObject getParentNode(JavaScriptObject o) /*-{
-    var out = o.parentNode;
-    return (out == null) ? null : out;    
+    return o.parentNode;
   }-*/;
 
   static String getPrefix(JavaScriptObject jsObject) {
@@ -209,8 +194,7 @@ public abstract class XMLParserImpl {
 
   static native JavaScriptObject insertBefore(JavaScriptObject jsObject,
       JavaScriptObject newChildJs, JavaScriptObject refChildJs) /*-{
-    var out = jsObject.insertBefore(newChildJs, refChildJs);
-    return (out == null) ? null : out;
+    return jsObject.insertBefore(newChildJs, refChildJs);
   }-*/;
 
   static native void insertData(JavaScriptObject jsObject, int offset,
@@ -222,8 +206,7 @@ public abstract class XMLParserImpl {
     if (index >= t.length) {
       return null;
     }
-    var out = t.item(index);   
-    return (out == null) ? null : out;
+    return t.item(index);   
   }-*/;
 
   static native void normalize(JavaScriptObject jsObject) /*-{
@@ -236,20 +219,17 @@ public abstract class XMLParserImpl {
 
   static native JavaScriptObject removeChild(JavaScriptObject jsObject,
       JavaScriptObject oldChildJs) /*-{
-    var out = jsObject.removeChild(oldChildJs);
-    return (out == null) ? null : out;
+    return jsObject.removeChild(oldChildJs);
   }-*/;
 
   static native JavaScriptObject removeNamedItem(JavaScriptObject jsObject,
       String name) /*-{
-    var out = jsObject.removeNamedItem(name);
-    return (out == null) ? null : out;
+    return jsObject.removeNamedItem(name);
   }-*/;
 
   static native JavaScriptObject replaceChild(JavaScriptObject jsObject,
       JavaScriptObject newChildJs, JavaScriptObject oldChildJs) /*-{
-    var out = jsObject.replaceChild(newChildJs, oldChildJs);
-    return (out == null) ? null : out;
+    return jsObject.replaceChild(newChildJs, oldChildJs);
   }-*/;
 
   static native void replaceData(JavaScriptObject jsObject, int offset,
@@ -268,8 +248,7 @@ public abstract class XMLParserImpl {
 
   static native JavaScriptObject setNamedItem(JavaScriptObject jsObject,
       JavaScriptObject arg) /*-{
-    var out = jsObject.setNamedItem(arg);
-    return (out == null) ? null : out;
+    return jsObject.setNamedItem(arg);
   }-*/;
 
   static native void setNodeValue(JavaScriptObject jsObject, String nodeValue) /*-{
@@ -277,8 +256,7 @@ public abstract class XMLParserImpl {
   }-*/;
 
   static native JavaScriptObject splitText(JavaScriptObject jsObject, int offset) /*-{
-    var out = jsObject.splitText(offset);
-    return (out == null) ? null : out;
+    return jsObject.splitText(offset);
   }-*/;
 
   static native String substringData(JavaScriptObject o, int offset, int count) /*-{

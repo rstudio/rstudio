@@ -55,14 +55,12 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native String getInnerText(Element elem) /*-{
-    var ret = elem.innerText;
-    return (ret == null) ? null : ret;
+    return elem.innerText;
   }-*/;
 
   @Override
   public native Element getParentElement(Element elem) /*-{
-    var parent = elem.parentElement;
-    return parent || null;
+    return elem.parentElement;
   }-*/;
 
   /*

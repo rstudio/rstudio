@@ -59,12 +59,12 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element eventGetTarget(Event evt) /*-{
-    return evt.srcElement || null;
+    return evt.srcElement;
   }-*/;
 
   @Override
   public native Element eventGetToElement(Event evt) /*-{
-    return evt.toElement || null;
+    return evt.toElement;
   }-*/;
 
   @Override
@@ -80,8 +80,7 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element getChild(Element elem, int index) /*-{
-    var child = elem.children[index];
-    return child || null;
+    return elem.children[index];
   }-*/;
 
   @Override

@@ -426,9 +426,8 @@ public class TypeSerializerCreator {
       String serializerTypeName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
       srcWriter.println("public native String getSerializationSignature(String typeName) /*-" + '{');
       srcWriter.indent();
-      srcWriter.println("var signature = @" + serializerTypeName
+      srcWriter.println("return @" + serializerTypeName
           + "::signatureMap[typeName];");
-      srcWriter.println("return signature || null;");
       srcWriter.outdent();
       srcWriter.println("}-*/;");
     }

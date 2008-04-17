@@ -58,8 +58,7 @@ class XMLParserImplStandard extends XMLParserImpl {
   @Override
   protected native JavaScriptObject importNodeImpl(JavaScriptObject jsObject,
       JavaScriptObject importedNode, boolean deep) /*-{
-    var out = jsObject.importNode(importedNode, deep);
-    return (out == null) ? null : out;
+    return jsObject.importNode(importedNode, deep);
   }-*/;
 
   @Override
