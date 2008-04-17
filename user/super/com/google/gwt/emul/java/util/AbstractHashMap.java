@@ -93,11 +93,10 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     public EntrySetIterator() {
       List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>();
       if (nullSlotLive) {
-        MapEntryImpl<K, V> entryImpl = new MapEntryImpl<K, V>(null, nullSlot);
-        list.add(entryImpl);
+        list.add(new MapEntryNull());
       }
-      addAllStringEntries(stringMap, list);
-      addAllHashEntries(hashCodeMap, list);
+      addAllStringEntries(list);
+      addAllHashEntries(list);
       this.iter = list.iterator();
     }
 
@@ -120,34 +119,50 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     }
   }
 
-  private static native void addAllHashEntries(JavaScriptObject hashCodeMap,
-      Collection<?> dest) /*-{
-    for (var hashCode in hashCodeMap) {
-      // sanity check that it's really an integer
-      if (hashCode == parseInt(hashCode)) {
-        var array = hashCodeMap[hashCode];
-        for (var i = 0, c = array.length; i < c; ++i) {
-          dest.@java.util.Collection::add(Ljava/lang/Object;)(array[i]);
-        }
-      }
-    }
-  }-*/;
+  private final class MapEntryNull extends AbstractMapEntry<K, V> {
 
-  private static native void addAllStringEntries(JavaScriptObject stringMap,
-      Collection<?> dest) /*-{
-    for (var key in stringMap) {
-      // only keys that start with a colon ':' count
-      if (key.charCodeAt(0) == 58) {
-        var value = stringMap[key];
-        var entry = @java.util.MapEntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key.substring(1), value);
-        dest.@java.util.Collection::add(Ljava/lang/Object;)(entry);
-      }
+    public K getKey() {
+      return null;
     }
-  }-*/;
+
+    public V getValue() {
+      return nullSlot;
+    }
+
+    public V setValue(V object) {
+      return putNullSlot(object);
+    }
+  }
+
+  // Instantiated from JSNI
+  @SuppressWarnings("unused")
+  private final class MapEntryString extends AbstractMapEntry<K, V> {
+
+    private final String key;
+
+    public MapEntryString(String key) {
+      this.key = key;
+    }
+
+    @SuppressWarnings("unchecked")
+    public K getKey() {
+      return (K) key;
+    }
+
+    public V getValue() {
+      return getStringValue(key);
+    }
+
+    public V setValue(V object) {
+      return putStringValue(key, object);
+    }
+  }
 
   /**
    * A map of integral hashCodes onto entries.
    */
+  // Used from JSNI.
+  @SuppressWarnings("unused")
   private transient JavaScriptObject hashCodeMap;
 
   /**
@@ -162,6 +177,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   /**
    * A map of Strings onto values.
    */
+  // Used from JSNI.
+  @SuppressWarnings("unused")
   private transient JavaScriptObject stringMap;
 
   {
@@ -197,8 +214,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public boolean containsKey(Object key) {
-    return (key == null) ? nullSlotLive : (!(key instanceof String) ? hasHashValue(
-        key, getHashCode(key)) : hasStringValue((String) key));
+    return (key == null) ? nullSlotLive : (!(key instanceof String)
+        ? hasHashValue(key, getHashCode(key)) : hasStringValue((String) key));
   }
 
   @Override
@@ -233,8 +250,9 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   @Override
   public V remove(Object key) {
-    return (key == null) ? removeNullSlot() : (!(key instanceof String) ? removeHashValue(
-        key, getHashCode(key)) : removeStringValue((String) key));
+    return (key == null) ? removeNullSlot() : (!(key instanceof String)
+        ? removeHashValue(key, getHashCode(key))
+        : removeStringValue((String) key));
   }
 
   @Override
@@ -253,6 +271,30 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
    * guaranteed to be non-null and not a String.
    */
   protected abstract int getHashCode(Object key);
+
+  private native void addAllHashEntries(Collection<?> dest) /*-{
+    var hashCodeMap = this.@java.util.AbstractHashMap::hashCodeMap;
+    for (var hashCode in hashCodeMap) {
+      // sanity check that it's really an integer
+      if (hashCode == parseInt(hashCode)) {
+        var array = hashCodeMap[hashCode];
+        for (var i = 0, c = array.length; i < c; ++i) {
+          dest.@java.util.Collection::add(Ljava/lang/Object;)(array[i]);
+        }
+      }
+    }
+  }-*/;
+
+  private native void addAllStringEntries(Collection<?> dest) /*-{
+    var stringMap = this.@java.util.AbstractHashMap::stringMap;
+    for (var key in stringMap) {
+      // only keys that start with a colon ':' count
+      if (key.charCodeAt(0) == 58) {
+        var entry = @java.util.AbstractHashMap$MapEntryString::new(Ljava/util/AbstractHashMap;Ljava/lang/String;)(this, key.substring(1));
+        dest.@java.util.Collection::add(Ljava/lang/Object;)(entry);
+      }
+    }
+  }-*/;
 
   private void clearImpl() {
     hashCodeMap = JavaScriptObject.createArray();
@@ -339,7 +381,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private native V getStringValue(String key) /*-{
     return (_ = this.@java.util.AbstractHashMap::stringMap[':' + key]) == null ? null : _ ;
   }-*/;
-  
+
   /**
    * Returns true if the a key exists in the hashCodeMap that is Object equal to
    * <code>key</code>, provided that <code>key</code>'s hash code is
@@ -365,7 +407,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
   private native boolean hasStringValue(String key) /*-{
     return (':' + key) in this.@java.util.AbstractHashMap::stringMap;
   }-*/;
-  
+
   /**
    * Sets the specified key to the specified value in the hashCodeMap. Returns
    * the value previously at that key. Returns <code>null</code> if the
@@ -387,7 +429,7 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
     } else {
       array = this.@java.util.AbstractHashMap::hashCodeMap[hashCode] = [];
     }
-    var entry = @java.util.MapEntryImpl::create(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
+    var entry = @java.util.MapEntryImpl::new(Ljava/lang/Object;Ljava/lang/Object;)(key, value);
     array.push(entry);
     ++this.@java.util.AbstractHashMap::size;
     return null;
@@ -456,8 +498,8 @@ abstract class AbstractHashMap<K, V> extends AbstractMap<K, V> {
 
   /**
    * Removes the specified key from the stringMap and returns the value that was
-   * previously there. Returns <code>null</code> if the specified key
-   * does not exist.
+   * previously there. Returns <code>null</code> if the specified key does not
+   * exist.
    */
   private native V removeStringValue(String key) /*-{
     key = ':' + key;

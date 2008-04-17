@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,10 @@
  */
 package java.util;
 
-import static java.util.Utility.equalsWithNullCheck;
-
 /**
  * An {@link Map.Entry} shared by several {@link Map} implementations.
  */
-class MapEntryImpl<K, V> implements Map.Entry<K, V> {
-
-  /**
-   * Helper method for constructing Map.Entry objects from JSNI code.
-   */
-  static <K, V> Map.Entry<K, V> create(K key, V value) {
-    return new MapEntryImpl<K, V>(key, value);
-  }
+class MapEntryImpl<K, V> extends AbstractMapEntry<K, V> {
 
   private K key;
 
@@ -41,18 +32,6 @@ class MapEntryImpl<K, V> implements Map.Entry<K, V> {
     this.value = value;
   }
 
-  @Override
-  public boolean equals(Object other) {
-    if (other instanceof Map.Entry) {
-      Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;
-      if (equalsWithNullCheck(key, entry.getKey())
-          && equalsWithNullCheck(value, entry.getValue())) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public K getKey() {
     return key;
   }
@@ -61,30 +40,9 @@ class MapEntryImpl<K, V> implements Map.Entry<K, V> {
     return value;
   }
 
-  /**
-   * Calculate the hash code using Sun's specified algorithm.
-   */
-  @Override
-  public int hashCode() {
-    int keyHash = 0;
-    int valueHash = 0;
-    if (key != null) {
-      keyHash = key.hashCode();
-    }
-    if (value != null) {
-      valueHash = value.hashCode();
-    }
-    return keyHash ^ valueHash;
-  }
-
   public V setValue(V object) {
     V old = value;
     value = object;
     return old;
-  }
-
-  @Override
-  public String toString() {
-    return getKey() + "=" + getValue();
   }
 }

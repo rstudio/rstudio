@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -114,12 +114,6 @@ public class HashMapTest extends TestMap {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  public void testAddWatch() {
-    HashMap m = new HashMap();
-    m.put("watch", "watch");
-    assertEquals(m.get("watch"), "watch");
-  }
-
   public void testAddEqualKeys() {
     final HashMap expected = new HashMap();
     assertEquals(expected.size(), 0);
@@ -131,6 +125,12 @@ public class HashMapTest extends TestMap {
     assertNotSame(new Integer(45), new Long(45));
     assertEquals(expected.size(), 2);
     iterateThrough(expected);
+  }
+
+  public void testAddWatch() {
+    HashMap m = new HashMap();
+    m.put("watch", "watch");
+    assertEquals(m.get("watch"), "watch");
   }
 
   /*
@@ -245,6 +245,60 @@ public class HashMapTest extends TestMap {
     // Check that entries are updated on removes
     hashMap.remove(KEY_TEST_ENTRY_SET);
     checkEmptyHashMapAssumptions(hashMap);
+  }
+
+  /*
+   * Used to test the entrySet entry's set method.
+   */
+  public void testEntrySetEntrySetterNonString() {
+    HashMap hashMap = new HashMap();
+    hashMap.put(1, 2);
+    Set entrySet = hashMap.entrySet();
+    Entry entry = (Entry) entrySet.iterator().next();
+
+    entry.setValue(3);
+    assertEquals(3, hashMap.get(1));
+
+    hashMap.put(1, 4);
+    assertEquals(4, entry.getValue());
+
+    assertEquals(1, hashMap.size());
+  }
+
+  /*
+   * Used to test the entrySet entry's set method.
+   */
+  public void testEntrySetEntrySetterNull() {
+    HashMap hashMap = new HashMap();
+    hashMap.put(null, 2);
+    Set entrySet = hashMap.entrySet();
+    Entry entry = (Entry) entrySet.iterator().next();
+
+    entry.setValue(3);
+    assertEquals(3, hashMap.get(null));
+
+    hashMap.put(null, 4);
+    assertEquals(4, entry.getValue());
+
+    assertEquals(1, hashMap.size());
+  }
+
+  /*
+   * Used to test the entrySet entry's set method.
+   */
+  public void testEntrySetEntrySetterString() {
+    HashMap hashMap = new HashMap();
+    hashMap.put("A", "B");
+    Set entrySet = hashMap.entrySet();
+    Entry entry = (Entry) entrySet.iterator().next();
+
+    entry.setValue("C");
+    assertEquals("C", hashMap.get("A"));
+
+    hashMap.put("A", "D");
+    assertEquals("D", entry.getValue());
+
+    assertEquals(1, hashMap.size());
   }
 
   /*
