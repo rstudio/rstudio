@@ -124,7 +124,7 @@ public class CaptionPanelTest extends GWTTestCase {
     {
       CaptionPanel panel = new CaptionPanel(s, true);
       assertEquals("this is not null", panel.getCaptionText());
-      assertEquals(s, panel.getCaptionHTML());
+      assertEqualsIgnoreCase(s, panel.getCaptionHTML());
     }
   }
 
