@@ -49,7 +49,7 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element eventGetFromElement(Event evt) /*-{
-    return evt.fromElement ? evt.fromElement : null;
+    return evt.fromElement;
   }-*/;
 
   @Override
