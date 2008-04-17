@@ -68,44 +68,45 @@ public class CaptionPanelTest extends GWTTestCase {
     }
   }
 
-  /**
-   * When the caption is null, it needs to be actually removed from the DOM (to
-   * compensate for browser bugs). This formulation requires no widget to have
-   * been set first.
-   */
-  public void testCaptionAssertsAgainstNull() {
-    // Ctor.
-    {
-      try {
-        new CaptionPanel(null);
-        fail("Should've asserted!");
-      } catch (AssertionError e) {
-        // good to make it here
-      }
-    }
-
-    // Setter/HTML.
-    {
-      try {
-        CaptionPanel panel = new CaptionPanel("stuff");
-        panel.setCaptionHTML(null);
-        fail("Should've asserted!");
-      } catch (AssertionError e) {
-        // good to make it here
-      }
-    }
-
-    // Setter/Text.
-    {
-      try {
-        CaptionPanel panel = new CaptionPanel("stuff");
-        panel.setCaptionText(null);
-        fail("Should've asserted!");
-      } catch (AssertionError e) {
-        // good to make it here
-      }
-    }
-  }
+// TODO(bruce): re-active when we ensure that assertions are enabled during unit test runs
+//  /**
+//   * When the caption is null, it needs to be actually removed from the DOM (to
+//   * compensate for browser bugs). This formulation requires no widget to have
+//   * been set first.
+//   */
+//  public void testCaptionAssertsAgainstNull() {
+//    // Ctor.
+//    {
+//      try {
+//        new CaptionPanel(null);
+//        fail("Should've asserted!");
+//      } catch (AssertionError e) {
+//        // good to make it here
+//      }
+//    }
+//
+//    // Setter/HTML.
+//    {
+//      try {
+//        CaptionPanel panel = new CaptionPanel("stuff");
+//        panel.setCaptionHTML(null);
+//        fail("Should've asserted!");
+//      } catch (AssertionError e) {
+//        // good to make it here
+//      }
+//    }
+//
+//    // Setter/Text.
+//    {
+//      try {
+//        CaptionPanel panel = new CaptionPanel("stuff");
+//        panel.setCaptionText(null);
+//        fail("Should've asserted!");
+//      } catch (AssertionError e) {
+//        // good to make it here
+//      }
+//    }
+//  }
 
   public void testCtorAsHtmlFlag() {
     String s = "this is <b>not</b> null";
@@ -113,8 +114,10 @@ public class CaptionPanelTest extends GWTTestCase {
     // Ctor/Text.
     {
       CaptionPanel panel = new CaptionPanel(s, false);
-      assertEquals(s, panel.getCaptionText());
-      assertFalse(s.equals(panel.getCaptionHTML()));
+      // Check without regard to the case of tags; some browsers change tag case
+      // against your will.
+      assertEqualsIgnoreCase(s, panel.getCaptionText());
+      assertNotEquals(s, panel.getCaptionHTML());
     }
 
     // Ctor/HTML.
@@ -123,6 +126,22 @@ public class CaptionPanelTest extends GWTTestCase {
       assertEquals("this is not null", panel.getCaptionText());
       assertEquals(s, panel.getCaptionHTML());
     }
+  }
+
+  private void assertEqualsIgnoreCase(String expected, String actual) {
+    String expectedLc = expected != null ? expected.toLowerCase() : null;
+    String actualLc = actual != null ? actual.toLowerCase() : null;
+    assertEquals(expectedLc, actualLc);
+  }
+
+  /**
+   * Browsers all seem escape text differently, so we use this function to deal
+   * with cases where we can't say exactly *what* reading element HTML will
+   * return, but we can say for sure that at least it's different somehow than
+   * some original text (due to escaping).
+   */
+  private void assertNotEquals(String mustNotBe, String actual) {
+    assertFalse(mustNotBe != null ? mustNotBe.equals(actual) : actual == null);
   }
 
   public void testDefaultCaptionIsEmptyString() {
@@ -137,7 +156,7 @@ public class CaptionPanelTest extends GWTTestCase {
   public void testGetSetHTMLCaption() {
     CaptionPanel panel = new CaptionPanel();
     panel.setCaptionHTML("<b>bold</b>");
-    assertEquals("<b>bold</b>", panel.getCaptionHTML());
+    assertEqualsIgnoreCase("<b>bold</b>", panel.getCaptionHTML());
     assertEquals("bold", panel.getCaptionText());
   }
 
@@ -146,14 +165,14 @@ public class CaptionPanelTest extends GWTTestCase {
     CaptionPanel panel = new CaptionPanel();
     panel.setCaptionText(s);
     assertEquals(s, panel.getCaptionText());
-    assertFalse(s.equals(panel.getCaptionHTML()));
+    assertNotEquals(s, panel.getCaptionHTML());
   }
 
   public void testOneArgCtorIsTextCaption() {
     String s = "this is <b>not</b> null";
     CaptionPanel panel = new CaptionPanel(s);
     assertEquals(s, panel.getCaptionText());
-    assertFalse(s.equals(panel.getCaptionHTML()));
+    assertNotEquals(s, panel.getCaptionHTML());
   }
 
   public void testGetSetContentWidget() {
@@ -212,39 +231,44 @@ public class CaptionPanelTest extends GWTTestCase {
     assertSame(widget, panel.getContentWidget());
 
     {
-      // Set the caption to an empty string and verify that the legend element is removed
+      // Set the caption to an empty string and verify that the legend element
+      // is removed
       panel.setCaptionText("");
       assertEquals("", panel.getCaptionText());
       assertSame(widget, panel.getContentWidget());
       Element panelFirstChild = panel.getElement().getFirstChildElement();
       // The legend element ought to be removed from the DOM at this point.
-      assertFalse("legend".equalsIgnoreCase(panelFirstChild.getTagName()));
+      assertNotEquals("legend", panelFirstChild.getTagName().toLowerCase());
       // (Perhaps redundantly) check that the one child is the content widget.
       assertSame(panelFirstChild, widget.getElement());
       assertNull(panelFirstChild.getNextSibling());
     }
 
     {
-      // Set the caption to a non-empty string and verify that the legend element is readded to the
+      // Set the caption to a non-empty string and verify that the legend
+      // element is readded to the
       // 0th index
       panel.setCaptionText("new caption");
       assertEquals("new caption", panel.getCaptionText());
       assertSame(widget, panel.getContentWidget());
       Element panelFirstChild = panel.getElement().getFirstChildElement();
-      // The legend element ought to be the 0th element in the DOM at this point.
+      // The legend element ought to be the 0th element in the DOM at this
+      // point.
       assertTrue("legend".equalsIgnoreCase(panelFirstChild.getTagName()));
       // Check that the second child is the content widget.
       assertSame(panelFirstChild.getNextSibling(), widget.getElement());
     }
 
     {
-      // Set the caption to a non-empty string and verify that the legend element remains at the 0th
+      // Set the caption to a non-empty string and verify that the legend
+      // element remains at the 0th
       // index
       panel.setCaptionText("newer caption");
       assertEquals("newer caption", panel.getCaptionText());
       assertSame(widget, panel.getContentWidget());
       Element panelFirstChild = panel.getElement().getFirstChildElement();
-      // The legend element ought to be the 0th element in the DOM at this point.
+      // The legend element ought to be the 0th element in the DOM at this
+      // point.
       assertTrue("legend".equalsIgnoreCase(panelFirstChild.getTagName()));
       // Check that the second child is the content widget.
       assertSame(panelFirstChild.getNextSibling(), widget.getElement());
@@ -256,7 +280,8 @@ public class CaptionPanelTest extends GWTTestCase {
       assertEquals("newer caption", panel.getCaptionText());
       assertNull(panel.getContentWidget());
       Element panelFirstChild = panel.getElement().getFirstChildElement();
-      // The legend element ought to be the 0th element in the DOM at this point.
+      // The legend element ought to be the 0th element in the DOM at this
+      // point.
       assertTrue("legend".equalsIgnoreCase(panelFirstChild.getTagName()));
       // (Perhaps redundantly) check that the one child is the legend element.
       assertNull(panelFirstChild.getNextSibling());

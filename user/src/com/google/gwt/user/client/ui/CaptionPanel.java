@@ -139,6 +139,13 @@ public class CaptionPanel extends Composite implements HasWidgets {
   }
 
   /**
+   * Removes the content widget.
+   */
+  public void clear() {
+    ((SimplePanel) getWidget()).clear();
+  }
+
+  /**
    * @return the caption as HTML; note that if the caption was previously set
    *         using {@link #setCaptionText(String)}, the return value is
    *         undefined
@@ -189,8 +196,8 @@ public class CaptionPanel extends Composite implements HasWidgets {
   }
 
   /**
-   * Sets the caption for the panel. Pass in empty string to remove the caption
-   * completely, leaving just the unadorned panel.
+   * Sets the caption for the panel using an HTML fragment. Pass in empty string
+   * to remove the caption completely, leaving just the unadorned panel.
    * 
    * @param html HTML for the new caption; must not be <code>null</code>
    */
@@ -200,10 +207,11 @@ public class CaptionPanel extends Composite implements HasWidgets {
   }
 
   /**
-   * Sets the caption for the panel. Pass in empty string to remove the caption
-   * completely, leaving just the unadorned panel.
+   * Sets the caption for the panel using text that will be automatically
+   * escaped. Pass in empty string to remove the caption completely, leaving
+   * just the unadorned panel.
    * 
-   * @param html HTML for the new caption; must not be <code>null</code>
+   * @param text text for the new caption; must not be <code>null</code>
    */
   public void setCaptionText(String text) {
     assert (text != null);
@@ -217,12 +225,5 @@ public class CaptionPanel extends Composite implements HasWidgets {
    */
   public void setContentWidget(Widget w) {
     ((SimplePanel) getWidget()).setWidget(w);
-  }
-
-  /**
-   * Removes the content widget.
-   */
-  public void clear() {
-    ((SimplePanel) getWidget()).clear();
   }
 }
