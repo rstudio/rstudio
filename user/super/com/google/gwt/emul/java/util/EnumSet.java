@@ -51,7 +51,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       }
 
       public boolean hasNext() {
-        return i < all.length;
+        return i < capacity();
       }
 
       public E next() {
@@ -75,7 +75,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
       private void findNext() {
         ++i;
-        for (int c = all.length; i < c; ++i) {
+        for (int c = capacity(); i < c; ++i) {
           if (set[i] != null) {
             return;
           }
@@ -102,7 +102,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
      * Constructs an empty set.
      */
     public EnumSetImpl(E[] all) {
-      this(all, Array.clonify(all, all.length), 0);
+      this(all, Array.createFrom(all), 0);
     }
 
     /**
@@ -130,7 +130,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
     }
 
     public EnumSet<E> clone() {
-      E[] clonedSet = Array.cloneSubrange(set, 0, set.length);
+      E[] clonedSet = Array.clone(set);
       return new EnumSetImpl<E>(all, clonedSet, size);
     }
 
@@ -167,11 +167,16 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
     public int size() {
       return size;
     }
+
+    @Override
+    int capacity() {
+      return all.length;
+    }
   }
 
   public static <E extends Enum<E>> EnumSet<E> allOf(Class<E> elementType) {
     E[] all = elementType.getEnumConstants();
-    E[] set = Array.cloneSubrange(all, 0, all.length);
+    E[] set = Array.clone(all);
     return new EnumSetImpl<E>(all, set, all.length);
   }
 
@@ -179,7 +184,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
     EnumSetImpl<E> s = (EnumSetImpl<E>) other;
     E[] all = s.all;
     E[] oldSet = s.set;
-    E[] newSet = Array.clonify(oldSet, oldSet.length);
+    E[] newSet = Array.createFrom(oldSet);
     for (int i = 0, c = oldSet.length; i < c; ++i) {
       if (oldSet[i] == null) {
         newSet[i] = all[i];
@@ -210,19 +215,19 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
 
   public static <E extends Enum<E>> EnumSet<E> noneOf(Class<E> elementType) {
     E[] all = elementType.getEnumConstants();
-    return new EnumSetImpl<E>(all, Array.clonify(all, all.length), 0);
+    return new EnumSetImpl<E>(all, Array.createFrom(all), 0);
   }
 
   public static <E extends Enum<E>> EnumSet<E> of(E first) {
     E[] all = first.getDeclaringClass().getEnumConstants();
-    E[] set = Array.clonify(all, all.length);
+    E[] set = Array.createFrom(all);
     set[first.ordinal()] = first;
     return new EnumSetImpl<E>(all, set, 1);
   }
 
   public static <E extends Enum<E>> EnumSet<E> of(E first, E... rest) {
     E[] all = first.getDeclaringClass().getEnumConstants();
-    E[] set = Array.clonify(all, all.length);
+    E[] set = Array.createFrom(all);
     set[first.ordinal()] = first;
     for (E e : rest) {
       set[e.ordinal()] = e;
@@ -235,7 +240,7 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
       throw new IllegalArgumentException(from + " > " + to);
     }
     E[] all = from.getDeclaringClass().getEnumConstants();
-    E[] set = Array.clonify(all, all.length);
+    E[] set = Array.createFrom(all);
 
     // Inclusive
     int start = from.ordinal();
@@ -253,4 +258,6 @@ public abstract class EnumSet<E extends Enum<E>> extends AbstractSet<E> {
   }
 
   public abstract EnumSet<E> clone();
+
+  abstract int capacity();
 }

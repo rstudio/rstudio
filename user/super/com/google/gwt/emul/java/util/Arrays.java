@@ -66,7 +66,7 @@ public class Arrays {
      */
     @Override
     public Object[] toArray() {
-      return toArray(Array.clonify(array));
+      return toArray(Array.createFrom(array));
     }
 
     /*
@@ -77,7 +77,7 @@ public class Arrays {
     public <T> T[] toArray(T[] out) {
       int size = size();
       if (out.length < size) {
-        out = Array.clonify(out, size);
+        out = Array.createFrom(out, size);
       }
       for (int i = 0; i < size; ++i) {
         out[i] = (T) array[i];

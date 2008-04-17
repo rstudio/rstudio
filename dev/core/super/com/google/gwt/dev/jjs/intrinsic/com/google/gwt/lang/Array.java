@@ -60,15 +60,15 @@ public final class Array {
   /**
    * Creates a new array of the exact same type and length as a given array.
    */
-  public static <T> T[] clonify(T[] array) {
-    return clonify(array, array.length);
+  public static <T> T[] createFrom(T[] array) {
+    return createFrom(array, array.length);
   }
 
   /**
    * Creates an empty array of the exact same type as a given array, with the
    * specified length.
    */
-  public static <T> T[] clonify(T[] array, int length) {
+  public static <T> T[] createFrom(T[] array, int length) {
     Array a = asArrayType(array);
     Array result = createFromSeed(NULL_SEED_TYPE, length);
     initValues(a.getClass(), a.typeId, a.queryId, result);

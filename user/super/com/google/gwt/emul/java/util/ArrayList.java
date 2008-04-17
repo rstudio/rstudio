@@ -197,7 +197,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @Override
   public <T> T[] toArray(T[] out) {
     if (out.length < size) {
-      out = Array.clonify(out, size);
+      out = Array.createFrom(out, size);
     }
     for (int i = 0; i < size; ++i) {
       // implicit type arg not inferred (as of JDK 1.5.0_07)
