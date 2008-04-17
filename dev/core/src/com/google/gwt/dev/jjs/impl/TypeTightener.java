@@ -426,7 +426,9 @@ public class TypeTightener {
 
     @Override
     public void endVisit(JField x, Context ctx) {
-      tighten(x);
+      if (!x.isVolatile()) {
+        tighten(x);
+      }
     }
 
     @Override
