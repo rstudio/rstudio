@@ -457,9 +457,11 @@ public final class ServerSerializationStreamReader extends
 
       Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
 
+      int index = reserveDecodedObjectIndex();
+
       instance = instantiate(customSerializer, instanceClass);
 
-      rememberDecodedObject(instance);
+      rememberDecodedObject(index, instance);
 
       Object replacement = deserializeImpl(customSerializer, instanceClass,
           instance);
@@ -467,7 +469,7 @@ public final class ServerSerializationStreamReader extends
       // It's possible that deserializing an object requires the original proxy
       // object to be replaced.
       if (instance != replacement) {
-        replaceRememberedObject(instance, replacement);
+        rememberDecodedObject(index, replacement);
         instance = replacement;
       }
 

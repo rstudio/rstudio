@@ -95,8 +95,9 @@ public final class ClientSerializationStreamReader extends
   @Override
   protected Object deserialize(String typeSignature)
       throws SerializationException {
+    int id = reserveDecodedObjectIndex();
     Object instance = serializer.instantiate(this, typeSignature);
-    rememberDecodedObject(instance);
+    rememberDecodedObject(id, instance);
     serializer.deserialize(this, instance, typeSignature);
     return instance;
   }

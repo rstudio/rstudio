@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.util.Date;
+
 /**
  * Generated test data for the
  * {@link com.google.gwt.user.client.rpc.CustomFieldSerializerTest CustomFieldSerializerTest}
@@ -44,6 +46,12 @@ public class CustomFieldSerializerTestSetFactory {
    * automatically or manually serializable.
    */
   public static class UnserializableSubclass extends ManuallySerializedClass {
+  }
+
+  public static ManuallySerializedImmutableClass[] createSerializableImmutablesArray() {
+    ManuallySerializedImmutableClass immutable = new ManuallySerializedImmutableClass(
+        new Date(12345L), new Date(54321L));
+    return new ManuallySerializedImmutableClass[] {immutable, immutable};
   }
 
   public static SerializableSubclass createSerializableSubclass() {

@@ -34,6 +34,20 @@ public class CustomFieldSerializerTestSetValidator {
         && manuallySerializedClass.getObj().equals("bye");
   }
 
+  // Must be a non-null array with two == elements
+  public static boolean isValid(
+      ManuallySerializedImmutableClass[] manuallySerializedImmutables) {
+    if (manuallySerializedImmutables == null) {
+      return false;
+    }
+
+    if (manuallySerializedImmutables.length != 2) {
+      return false;
+    }
+
+    return manuallySerializedImmutables[0] == manuallySerializedImmutables[1];
+  }
+
   public static boolean isValid(SerializableSubclass serializableSubclass) {
     if (serializableSubclass == null) {
       return false;

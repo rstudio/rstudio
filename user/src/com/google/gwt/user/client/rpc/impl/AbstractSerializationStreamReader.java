@@ -79,12 +79,17 @@ public abstract class AbstractSerializationStreamReader extends
    */
   protected abstract String getString(int index);
 
-  protected final void rememberDecodedObject(Object o) {
-    seenArray.add(o);
+  protected final void rememberDecodedObject(int index, Object o) {
+
+    // index is 1-based
+    seenArray.set(index - 1, o);
   }
 
-  protected final void replaceRememberedObject(Object old, Object replacement) {
-    seenArray.set(seenArray.indexOf(old), replacement);
+  protected final int reserveDecodedObjectIndex() {
+    seenArray.add(null);
+
+    // index is 1-based
+    return seenArray.size();
   }
 
 }
