@@ -192,9 +192,10 @@ public class LongCastNormalizer {
       if (targetType != longType && argType != longType) {
         return arg;
       }
-      if (arg instanceof JValueLiteral) {
+      if (arg instanceof JValueLiteral && targetType instanceof JPrimitiveType) {
         // Attempt to coerce the literal.
-        JValueLiteral coerced = longType.coerceLiteral((JValueLiteral) arg);
+        JPrimitiveType primitiveType = (JPrimitiveType) targetType;
+        JValueLiteral coerced = primitiveType.coerceLiteral((JValueLiteral) arg);
         if (coerced != null) {
           return coerced;
         }
