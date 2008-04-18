@@ -46,42 +46,56 @@ public class JTypeOracle {
     private final Set<JReferenceType> clinitTargets = new HashSet<JReferenceType>();
 
     /**
-     * Tracks whether any non-clinit code is run in this clinit. This is only
-     * reliable because we explicitly visit all AST structures that might
-     * contain non-clinit-calling code.
+     * Tracks whether any live code is run in this clinit. This is only reliable
+     * because we explicitly visit all AST structures that might contain
+     * non-clinit-calling code.
      * 
-     * @see #canContainClinitCalls(JExpression)
-     * @see #canContainClinitCalls(JStatement)
+     * @see #mightBeDeadCode(JExpression)
+     * @see #mightBeDeadCode(JStatement)
      */
-    private boolean hasNonClinitCalls = false;
+    private boolean hasLiveCode = false;
 
     public JReferenceType[] getClinitTargets() {
       return clinitTargets.toArray(new JReferenceType[clinitTargets.size()]);
     }
 
-    public boolean hasNonClinitCalls() {
-      return hasNonClinitCalls;
+    public boolean hasLiveCode() {
+      return hasLiveCode;
     }
 
     @Override
     public boolean visit(JBlock x, Context ctx) {
       for (JStatement stmt : x.statements) {
-        if (canContainClinitCalls(stmt)) {
+        if (mightBeDeadCode(stmt)) {
           accept(stmt);
         } else {
-          hasNonClinitCalls = true;
+          hasLiveCode = true;
         }
       }
       return false;
     }
 
     @Override
+    public boolean visit(JDeclarationStatement x, Context ctx) {
+      JVariable target = x.getVariableRef().getTarget();
+      if (target instanceof JField) {
+        JField field = (JField) target;
+        if (field.getLiteralInitializer() != null) {
+          // Top level initializations generate no code.
+          return false;
+        }
+      }
+      hasLiveCode = true;
+      return false;
+    }
+    
+    @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       JExpression expr = x.getExpr();
-      if (canContainClinitCalls(expr)) {
+      if (mightBeDeadCode(expr)) {
         accept(expr);
       } else {
-        hasNonClinitCalls = true;
+        hasLiveCode = true;
       }
       return false;
     }
@@ -92,7 +106,7 @@ public class JTypeOracle {
       if (JProgram.isClinit(target)) {
         clinitTargets.add(target.getEnclosingType());
       } else {
-        hasNonClinitCalls = true;
+        hasLiveCode = true;
       }
       return false;
     }
@@ -101,23 +115,24 @@ public class JTypeOracle {
     public boolean visit(JMultiExpression x, Context ctx) {
       for (JExpression expr : x.exprs) {
         // Only a JMultiExpression or JMethodCall can contain clinit calls.
-        if (canContainClinitCalls(expr)) {
+        if (mightBeDeadCode(expr)) {
           accept(expr);
         } else {
-          hasNonClinitCalls = true;
+          hasLiveCode = true;
         }
       }
       return false;
     }
 
-    private boolean canContainClinitCalls(JExpression expr) {
+    private boolean mightBeDeadCode(JExpression expr) {
       // Must have a visit method for every subtype that answers yes!
       return expr instanceof JMultiExpression || expr instanceof JMethodCall;
     }
 
-    private boolean canContainClinitCalls(JStatement stmt) {
+    private boolean mightBeDeadCode(JStatement stmt) {
       // Must have a visit method for every subtype that answers yes!
-      return stmt instanceof JBlock || stmt instanceof JExpressionStatement;
+      return stmt instanceof JBlock || stmt instanceof JExpressionStatement
+          || stmt instanceof JDeclarationStatement;
     }
   }
 
@@ -481,7 +496,7 @@ public class JTypeOracle {
     assert (JProgram.isClinit(method));
     CheckClinitVisitor v = new CheckClinitVisitor();
     v.accept(method);
-    if (v.hasNonClinitCalls()) {
+    if (v.hasLiveCode()) {
       return true;
     }
     for (JReferenceType target : v.getClinitTargets()) {

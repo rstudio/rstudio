@@ -1357,12 +1357,8 @@ public class GenerateJavaAST {
           // JDeclarationStatement's ctor sets up the field's initializer.
           JStatement decl = new JDeclarationStatement(program, info,
               createVariableRef(info, field), initializer);
-
-          // A field with a non-literal initializer needs a declaration.
-          if (field.getLiteralInitializer() == null) {
-            // will either be init or clinit
-            currentMethodBody.getStatements().add(decl);
-          }
+          // will either be init or clinit
+          currentMethodBody.getStatements().add(decl);
         }
       } catch (Throwable e) {
         throw translateException(field, e);
