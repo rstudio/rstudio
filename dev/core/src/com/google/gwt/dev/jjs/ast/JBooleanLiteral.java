@@ -30,6 +30,11 @@ public class JBooleanLiteral extends JValueLiteral {
     this.value = value;
   }
 
+  @Override
+  public JValueLiteral cloneFrom(JValueLiteral value) {
+    return value instanceof JBooleanLiteral ? value : null;
+  }
+
   public JType getType() {
     return program.getTypePrimitiveBoolean();
   }

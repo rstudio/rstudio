@@ -30,6 +30,11 @@ public class JStringLiteral extends JValueLiteral {
     this.value = value;
   }
 
+  @Override
+  public JValueLiteral cloneFrom(JValueLiteral value) {
+    throw new UnsupportedOperationException();
+  }
+
   public JType getType() {
     return program.getTypeJavaLangString();
   }

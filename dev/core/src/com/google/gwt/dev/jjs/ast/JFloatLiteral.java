@@ -30,6 +30,19 @@ public class JFloatLiteral extends JValueLiteral {
     this.value = value;
   }
 
+  @Override
+  public JValueLiteral cloneFrom(JValueLiteral value) {
+    Object valueObj = value.getValueObj();
+    if (valueObj instanceof Character) {
+      Character character = (Character) valueObj;
+      return program.getLiteralFloat(character.charValue());
+    } else if (valueObj instanceof Number) {
+      Number number = (Number) valueObj;
+      return program.getLiteralFloat(number.floatValue());
+    }
+    return null;
+  }
+
   public JType getType() {
     return program.getTypePrimitiveFloat();
   }

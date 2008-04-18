@@ -33,6 +33,19 @@ public class JPrimitiveType extends JType {
     this.wrapperTypeName = wrapperTypeName;
   }
 
+  /**
+   * Returns a literal which has been coerced to this type, or <code>null</code>
+   * if no such coercion is possible.
+   */
+  public JValueLiteral coerceLiteral(JValueLiteral value) {
+    JLiteral defaultValue = getDefaultValue();
+    if (defaultValue instanceof JValueLiteral) {
+      JValueLiteral defaultValueLiteral = (JValueLiteral) defaultValue;
+      return defaultValueLiteral.cloneFrom(value);
+    }
+    return null;
+  }
+
   @Override
   public String getClassLiteralFactoryMethod() {
     return "Class.createForPrimitive";

@@ -30,6 +30,18 @@ public class JCharLiteral extends JValueLiteral {
     this.value = value;
   }
 
+  @Override
+  public JValueLiteral cloneFrom(JValueLiteral value) {
+    Object valueObj = value.getValueObj();
+    if (valueObj instanceof Character) {
+      return value;
+    } else if (valueObj instanceof Number) {
+      Number number = (Number) valueObj;
+      return program.getLiteralChar((char) number.intValue());
+    }
+    return null;
+  }
+
   public JType getType() {
     return program.getTypePrimitiveChar();
   }

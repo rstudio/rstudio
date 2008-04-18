@@ -22,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JBooleanLiteral;
 import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
@@ -46,6 +47,7 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -192,6 +194,20 @@ public class DeadCodeElimination {
       if (ctx.canRemove() && x.statements.size() == 0) {
         // Remove blocks with no effect
         ctx.removeMe();
+      }
+    }
+
+    @Override
+    public void endVisit(JCastOperation x, Context ctx) {
+      // Statically evaluate casting literals.
+      if (x.getCastType() instanceof JPrimitiveType
+          && x.getExpr() instanceof JValueLiteral) {
+        JPrimitiveType type = (JPrimitiveType) x.getCastType();
+        JValueLiteral lit = (JValueLiteral) x.getExpr();
+        lit = type.coerceLiteral(lit);
+        if (lit != null) {
+          ctx.replaceMe(lit);
+        }
       }
     }
 

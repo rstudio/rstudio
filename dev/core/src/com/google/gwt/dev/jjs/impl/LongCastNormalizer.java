@@ -30,6 +30,7 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JValueLiteral;
 
 import java.util.List;
 
@@ -190,6 +191,13 @@ public class LongCastNormalizer {
       }
       if (targetType != longType && argType != longType) {
         return arg;
+      }
+      if (arg instanceof JValueLiteral) {
+        // Attempt to coerce the literal.
+        JValueLiteral coerced = longType.coerceLiteral((JValueLiteral) arg);
+        if (coerced != null) {
+          return coerced;
+        }
       }
       // Synthesize a cast to long to force explicit conversion.
       JCastOperation cast = new JCastOperation(program, arg.getSourceInfo(),

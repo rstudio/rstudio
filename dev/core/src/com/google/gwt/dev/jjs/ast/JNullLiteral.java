@@ -27,6 +27,11 @@ public class JNullLiteral extends JValueLiteral {
     super(program);
   }
 
+  @Override
+  JValueLiteral cloneFrom(JValueLiteral value) {
+    throw new UnsupportedOperationException();
+  }
+
   public JType getType() {
     return program.getTypeNull();
   }

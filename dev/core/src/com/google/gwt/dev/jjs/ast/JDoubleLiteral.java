@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 /**
- * Java double literal expression. 
+ * Java double literal expression.
  */
 public class JDoubleLiteral extends JValueLiteral {
 
@@ -28,6 +28,19 @@ public class JDoubleLiteral extends JValueLiteral {
   JDoubleLiteral(JProgram program, double value) {
     super(program);
     this.value = value;
+  }
+
+  @Override
+  public JValueLiteral cloneFrom(JValueLiteral value) {
+    Object valueObj = value.getValueObj();
+    if (valueObj instanceof Character) {
+      Character character = (Character) valueObj;
+      return program.getLiteralDouble(character.charValue());
+    } else if (valueObj instanceof Number) {
+      Number number = (Number) valueObj;
+      return program.getLiteralDouble(number.doubleValue());
+    }
+    return null;
   }
 
   public JType getType() {
