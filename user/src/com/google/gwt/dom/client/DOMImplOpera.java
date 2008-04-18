@@ -63,4 +63,10 @@ public class DOMImplOpera extends DOMImplStandard {
     }
     return top;
   }-*/;
+  
+  @Override
+  public native void scrollIntoView(Element elem) /*-{
+    elem.scrollIntoView();
+  }-*/;
+
 }
