@@ -1206,13 +1206,24 @@ public class GenerateJavaScriptAST {
       return new JsBinaryOperation(JsBinaryOperator.COMMA, lhs, rhs);
     }
 
+    private void generateClassLiteral(JType type, JsVars vars) {
+      JsName jsName = classLits.get(type);
+      JsExpression classObjectAlloc = classObjects.get(jsName);
+      JsVar var = new JsVar(jsName);
+      var.setInitExpr(classObjectAlloc);
+      vars.add(var);
+    }
+
     private void generateClassLiterals(JsVars vars) {
+      // Object must go first; arrays depend on it.
+      JClassType objType = program.getTypeJavaLangObject();
+      if (classLits.containsKey(objType)) {
+        generateClassLiteral(objType, vars);
+      }
       for (JType type : classLits.keySet()) {
-        JsName jsName = classLits.get(type);
-        JsExpression classObjectAlloc = classObjects.get(jsName);
-        JsVar var = new JsVar(jsName);
-        var.setInitExpr(classObjectAlloc);
-        vars.add(var);
+        if (type != objType) {
+          generateClassLiteral(type, vars);
+        }
       }
     }
 
