@@ -271,6 +271,11 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
+  public boolean isFinal() {
+    return baseType.isFinal();
+  }
+
+  @Override
   public JClassType isInterface() {
     if (baseType.isInterface() != null) {
       return this;

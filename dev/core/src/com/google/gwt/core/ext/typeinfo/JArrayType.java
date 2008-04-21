@@ -306,6 +306,12 @@ public class JArrayType extends JClassType {
     return null;
   }
 
+  // Refer the documentation for java.lang.Class::getModifiers()
+  @Override
+  public boolean isFinal() {
+    return true;
+  }
+
   @Override
   public JGenericType isGenericType() {
     return null;

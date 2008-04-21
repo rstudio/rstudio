@@ -29,7 +29,8 @@ public class JMethod extends JAbstractMethod {
 
   public JMethod(JClassType enclosingType, String name, int declStart,
       int declEnd, int bodyStart, int bodyEnd) {
-    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null, null);
+    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null,
+        null);
   }
 
   public JMethod(JClassType enclosingType, String name, int declStart,
@@ -129,7 +130,11 @@ public class JMethod extends JAbstractMethod {
       toStringTypeParams(sb);
       sb.append(" ");
     }
-    sb.append(returnType.getParameterizedQualifiedSourceName());
+    if (returnType == null) {
+      sb.append("NULL");
+    } else {
+      sb.append(returnType.getParameterizedQualifiedSourceName());
+    }
     sb.append(" ");
     sb.append(getName());
 

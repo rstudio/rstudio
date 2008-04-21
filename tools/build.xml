@@ -10,7 +10,11 @@
                 <gwt.ant dir="benchmark-viewer" />
         </target>
 
-	<target name="-do" depends="benchmark-viewer" description="Run all subfolders" />
+        <target name="api-checker" depends="" description="Compile api-checker">
+                <gwt.ant dir="api-checker" />
+        </target>
+        
+	<target name="-do" depends="benchmark-viewer,api-checker" description="Run all subfolders" />
 
 	<target name="build" description="Build each subfolder">
 		<antcall target="-do">

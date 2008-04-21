@@ -353,6 +353,11 @@ public class JRealClassType extends JClassType {
   }
 
   @Override
+  public boolean isFinal() {
+    return 0 != (getModifierBits() & TypeOracle.MOD_FINAL);
+  }
+
+  @Override
   public JGenericType isGenericType() {
     return null;
   }

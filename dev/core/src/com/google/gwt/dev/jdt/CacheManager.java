@@ -611,6 +611,10 @@ public class CacheManager {
    * null, caching across reloads will be disabled.
    */
   public CacheManager(String cacheDir, TypeOracle oracle) {
+    this(cacheDir, oracle, false); 
+  }
+  
+  public CacheManager(String cacheDir, TypeOracle oracle, boolean disableChecks) {
     if (oracle == null) {
       this.oracle = new TypeOracle();
     } else {
@@ -627,7 +631,7 @@ public class CacheManager {
       byteCodeCache = new DiskCache(null);
     }
     SourceOracleOnTypeOracle sooto = new SourceOracleOnTypeOracle(this.oracle);
-    astCompiler = new AstCompiler(sooto);
+    astCompiler = new AstCompiler(sooto, disableChecks);
 
     astCompiler.setCachePolicy(new AstCompiler.CachePolicy() {
       public boolean shouldProcess(CompilationUnitDeclaration cud) {

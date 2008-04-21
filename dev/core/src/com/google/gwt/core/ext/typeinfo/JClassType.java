@@ -467,6 +467,8 @@ public abstract class JClassType extends JType implements HasAnnotations,
    */
   public abstract boolean isDefaultInstantiable();
 
+  public abstract boolean isFinal();
+
   public abstract JGenericType isGenericType();
 
   @Override

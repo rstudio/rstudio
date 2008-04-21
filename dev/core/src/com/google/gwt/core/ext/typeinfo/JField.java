@@ -149,7 +149,11 @@ public class JField implements HasAnnotations, HasMetaData {
     if (names.length > 0) {
       sb.append(" ");
     }
-    sb.append(type.getQualifiedSourceName());
+    if (type == null) {
+      sb.append("NULL");
+    } else {
+      sb.append(type.getQualifiedSourceName());
+    }
     sb.append(" ");
     sb.append(getName());
     return sb.toString();
