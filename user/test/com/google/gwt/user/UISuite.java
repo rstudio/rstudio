@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CompositeTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
 import com.google.gwt.user.client.ui.DOMTest;
+import com.google.gwt.user.client.ui.DeckPanelTest;
 import com.google.gwt.user.client.ui.DecoratorPanelTest;
 import com.google.gwt.user.client.ui.DelegatingKeyboardListenerCollectionTest;
 import com.google.gwt.user.client.ui.DialogBoxTest;
@@ -83,6 +84,7 @@ public class UISuite {
     suite.addTestSuite(CompositeTest.class);
     suite.addTestSuite(CookieTest.class);
     suite.addTestSuite(CustomButtonTest.class);
+    suite.addTestSuite(DeckPanelTest.class);
     suite.addTestSuite(DecoratorPanelTest.class);
     suite.addTestSuite(DelegatingKeyboardListenerCollectionTest.class);
     suite.addTestSuite(DialogBoxTest.class);

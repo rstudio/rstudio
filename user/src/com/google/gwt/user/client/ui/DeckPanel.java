@@ -203,11 +203,20 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
    */
   @Override
   public void add(Widget w) {
-    Element container = DOM.createDiv();
+    Element container = createWidgetContainer();
     DOM.appendChild(getElement(), container);
-    initChildWidget(w);
-    initWidgetContainer(container);
+
+    // The order of these methods is very important. In order to preserve
+    // backward compatibility, the offsetWidth and offsetHeight of the child
+    // widget should be defined (greater than zero) when w.onLoad() is called.
+    // As a result, we first initialize the container with a height of 0px, then
+    // we attach the child widget to the container. See Issue 2321 for more
+    // details.
     super.add(w, container);
+
+    // After w.onLoad is called, it is safe to make the container invisible and
+    // set the height of the container and widget to 100%.
+    finishWidgetInitialization(container, w);
   }
 
   /**
@@ -228,11 +237,12 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
    *           range
    */
   public void insert(Widget w, int beforeIndex) {
-    Element container = DOM.createDiv();
+    Element container = createWidgetContainer();
     DOM.insertChild(getElement(), container, beforeIndex);
-    initChildWidget(w);
-    initWidgetContainer(container);
+
+    // See add(Widget) for important comments
     super.insert(w, container, beforeIndex, true);
+    finishWidgetInitialization(container, w);
   }
 
   /**
@@ -285,22 +295,25 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
   }
 
   /**
-   * Set the widget's width and height to full.
-   */
-  private void initChildWidget(Widget w) {
-    w.setSize("100%", "100%");
-  }
-  
-  /**
    * Setup the container around the widget.
    */
-  private void initWidgetContainer(Element container) {
+  private Element createWidgetContainer() {
+    Element container = DOM.createDiv();
     DOM.setStyleAttribute(container, "width", "100%");
-    DOM.setStyleAttribute(container, "height", "100%");
+    DOM.setStyleAttribute(container, "height", "0px");
     DOM.setStyleAttribute(container, "overflow", "hidden");
     DOM.setStyleAttribute(container, "padding", "0px");
     DOM.setStyleAttribute(container, "margin", "0px");
+    return container;
+  }
+
+  /**
+   * Setup the container around the widget.
+   */
+  private void finishWidgetInitialization(Element container, Widget w) {
     UIObject.setVisible(container, false);
+    DOM.setStyleAttribute(container, "height", "100%");
+    w.setSize("100%", "100%");
   }
   
   /**
