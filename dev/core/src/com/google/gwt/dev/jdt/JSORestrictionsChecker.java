@@ -145,15 +145,15 @@ class JSORestrictionsChecker {
 
   protected static final char[][] JSO_CLASS_CHARS = CharOperation.splitOn('.',
       JsValueGlue.JSO_CLASS.toCharArray());
-  static final String ERR_CONSTRUCTOR_WITH_PARAMETERS = "JavaScriptObject constructors should have no parameters";
-  static final String ERR_INSTANCE_FIELD = "JavaScriptObject classes cannot have fields";
-  static final String ERR_INSTANCE_METHOD_NONFINAL = "JavaScriptObject methods must be final";
-  static final String ERR_IS_NONSTATIC_NESTED = "Nested JavaScriptObject classes must be static";
-  static final String ERR_NEW_JSO = "JavaScriptObject classes cannot be instantiated with new";
-  static final String ERR_NONEMPTY_CONSTRUCTOR = "JavaScriptObject constructors must be empty";
-  static final String ERR_NONPROTECTED_CONSTRUCTOR = "JavaScriptObject constructors must be protected";
 
-  static final String ERR_OVERRIDDEN_METHOD = "JavaScriptObject classes cannot override methods";
+  static final String ERR_CONSTRUCTOR_WITH_PARAMETERS = "Constructors must not have parameters in subclasses of JavaScriptObject";
+  static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
+  static final String ERR_INSTANCE_METHOD_NONFINAL = "Instance methods must be 'final' in subclasses of JavaScriptObject";
+  static final String ERR_IS_NONSTATIC_NESTED = "Nested classes must be 'static' if they extend JavaScriptObject";
+  static final String ERR_NEW_JSO = "'new' cannot be used to create instances of JavaScriptObject subclasses; instances must originate in JavaScript";
+  static final String ERR_NONEMPTY_CONSTRUCTOR = "Constructors must be totally empty in subclasses of JavaScriptObject";
+  static final String ERR_NONPROTECTED_CONSTRUCTOR = "Constructors must be 'protected' in subclasses of JavaScriptObject";
+  static final String ERR_OVERRIDDEN_METHOD = "Methods cannot be overridden in JavaScriptObject subclasses";
 
   /**
    * Checks an entire
