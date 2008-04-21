@@ -6,4 +6,5 @@
 	<!-- Specify the app entry point class.                   -->
 	<entry-point class='com.google.gwt.museum.client.Museum'/>
   
+  <stylesheet src="Museum.css"/>
 </module>

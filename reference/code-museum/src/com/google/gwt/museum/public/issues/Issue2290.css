@@ -1,0 +1,6 @@
+.gwt-TreeItem {
+  background-color: green;
+}
+.gwt-TreeItem-selected {
+  background-color: red;
+}

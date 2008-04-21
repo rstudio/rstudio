@@ -1,0 +1,6 @@
+.deckPanel {
+  border: 1px solid blue;
+}
+.deckPanel-content {
+	background: red;
+}
