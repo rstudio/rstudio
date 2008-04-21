@@ -46,24 +46,33 @@ import java.util.Set;
  * @see WriteJsoImpl
  */
 public class HostedModeClassRewriter {
+  /*
+   * Note: this rewriter operates on a class-by-class basis and has no global
+   * view on the entire system. However, its operation requires certain global
+   * state information. Therefore, all such global state must be passed into the
+   * constructor.
+   */
 
   /**
-   * Maps instance methods to the class in which they are declared.
+   * Maps instance methods to the class in which they are declared. This must be
+   * provided by the caller since it requires global program state.
    */
-  public interface InstanceMethodMapper {
+  public interface InstanceMethodOracle {
 
     /**
-     * For a given instance method and declared qualifying class, find the class
-     * in which that method was first declared. Methods declared on Object will
-     * return "java/lang/Object". Static methods will always return
-     * <code>declaredClass</code>.
+     * For a given instance method and declared enclosing class (which must be a
+     * JSO subtype), find the class in which that method was originally
+     * declared. Methods declared on Object will return "java/lang/Object".
+     * Static methods will always return <code>declaredClass</code>.
      * 
-     * @param desc a descriptor of the static type of the qualifier
+     * @param declaredClass a descriptor of the static type of the qualifier
      * @param signature the binary signature of the method
-     * @return the descriptor of the class in which that method was declared
+     * @return the descriptor of the class in which that method was declared,
+     *         which will either be <code>declaredClass</code> or some
+     *         superclass
      * @throws IllegalArgumentException if the method could not be found
      */
-    String findDeclaringClass(String desc, String signature);
+    String findOriginalDeclaringClass(String declaredClass, String signature);
   }
 
   static final String REFERENCE_FIELD = JsValueGlue.HOSTED_MODE_REFERENCE;
@@ -97,7 +106,7 @@ public class HostedModeClassRewriter {
   /**
    * Maps methods to the class in which they are declared.
    */
-  private InstanceMethodMapper mapper;
+  private InstanceMethodOracle mapper;
 
   /**
    * Creates a new {@link HostedModeClassRewriter} for a specified set of
@@ -108,7 +117,7 @@ public class HostedModeClassRewriter {
    * @param mapper maps methods to the class in which they are declared
    */
   public HostedModeClassRewriter(Set<String> jsoSubtypes,
-      InstanceMethodMapper mapper) {
+      InstanceMethodOracle mapper) {
     Set<String> buildJsoIntfDescriptors = new HashSet<String>();
     Set<String> buildJsoImplDescriptors = new HashSet<String>();
     for (String jsoSubtype : jsoSubtypes) {

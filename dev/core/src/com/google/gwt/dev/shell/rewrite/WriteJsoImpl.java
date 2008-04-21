@@ -20,7 +20,7 @@ import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.FieldVisitor;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -49,7 +49,7 @@ class WriteJsoImpl extends ClassAdapter {
   /**
    * Maps methods to the class in which they are declared.
    */
-  private InstanceMethodMapper mapper;
+  private InstanceMethodOracle mapper;
 
   /**
    * The original name of the class being visited.
@@ -65,7 +65,7 @@ class WriteJsoImpl extends ClassAdapter {
    * @param mapper maps methods to the class in which they are declared
    */
   public WriteJsoImpl(ClassVisitor cv, Set<String> jsoDescriptors,
-      InstanceMethodMapper mapper) {
+      InstanceMethodOracle mapper) {
     super(cv);
     this.jsoDescriptors = jsoDescriptors;
     this.mapper = mapper;
@@ -119,7 +119,7 @@ class WriteJsoImpl extends ClassAdapter {
   }
 
   private boolean isObjectMethod(String signature) {
-    return "java/lang/Object".equals(mapper.findDeclaringClass(originalName,
+    return "java/lang/Object".equals(mapper.findOriginalDeclaringClass(originalName,
         signature));
   }
 

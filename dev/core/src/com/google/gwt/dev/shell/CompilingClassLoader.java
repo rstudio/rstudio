@@ -24,7 +24,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.CacheManager;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
-import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.util.tools.Utility;
 
@@ -245,11 +245,15 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
-  private class MyMethodDeclarationMapper implements InstanceMethodMapper {
+  /**
+   * Implements {@link InstanceMethodOracle} on behalf of the
+   * {@link HostedModeClassRewriter}. Implemented using {@link TypeOracle}.
+   */
+  private class MyInstanceMethodOracle implements InstanceMethodOracle {
 
     private final Map<String, Set<JClassType>> signatureToDeclaringClasses = new HashMap<String, Set<JClassType>>();
 
-    public MyMethodDeclarationMapper(Set<JClassType> jsoTypes,
+    public MyInstanceMethodOracle(Set<JClassType> jsoTypes,
         JClassType javaLangObject) {
       // Populate the map.
       for (JClassType type : jsoTypes) {
@@ -276,7 +280,7 @@ public final class CompilingClassLoader extends ClassLoader {
       }
     }
 
-    public String findDeclaringClass(String desc, String signature) {
+    public String findOriginalDeclaringClass(String desc, String signature) {
       // Lookup the method.
       Set<JClassType> declaringClasses = signatureToDeclaringClasses.get(signature);
       if (declaringClasses.size() == 1) {
@@ -396,8 +400,8 @@ public final class CompilingClassLoader extends ClassLoader {
         jsoTypeNames.add(getBinaryName(type));
       }
 
-      MyMethodDeclarationMapper mapper = new MyMethodDeclarationMapper(
-          jsoTypes, typeOracle.getJavaLangObject());
+      MyInstanceMethodOracle mapper = new MyInstanceMethodOracle(jsoTypes,
+          typeOracle.getJavaLangObject());
       classRewriter = new HostedModeClassRewriter(jsoTypeNames, mapper);
     } else {
       // If we couldn't find the JSO class, we don't need to do any rewrites.

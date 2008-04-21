@@ -21,7 +21,7 @@ import com.google.gwt.dev.asm.MethodAdapter;
 import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.Remapper;
-import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodMapper;
+import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 
 import java.util.Set;
 
@@ -80,7 +80,7 @@ class RewriteRefsToJsoClasses extends ClassAdapter {
       if (jsoDescriptors.contains(owner)) {
         // Find the class that actually declared the method.
         if (opcode == Opcodes.INVOKEVIRTUAL) {
-          owner = mapper.findDeclaringClass(owner, name + desc);
+          owner = mapper.findOriginalDeclaringClass(owner, name + desc);
         }
         if (!owner.equals("java/lang/Object")) {
           if (opcode == Opcodes.INVOKEVIRTUAL
@@ -121,7 +121,7 @@ class RewriteRefsToJsoClasses extends ClassAdapter {
   /**
    * Maps methods to the class in which they are declared.
    */
-  private InstanceMethodMapper mapper;
+  private InstanceMethodOracle mapper;
 
   /**
    * Construct a new rewriter instance.
@@ -132,7 +132,7 @@ class RewriteRefsToJsoClasses extends ClassAdapter {
    * @param mapper maps methods to the class in which they are declared
    */
   public RewriteRefsToJsoClasses(ClassVisitor cv, Set<String> jsoDescriptors,
-      InstanceMethodMapper mapper) {
+      InstanceMethodOracle mapper) {
     super(cv);
     this.jsoDescriptors = jsoDescriptors;
     this.mapper = mapper;
