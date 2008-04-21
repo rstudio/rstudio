@@ -611,9 +611,9 @@ public class CacheManager {
    * null, caching across reloads will be disabled.
    */
   public CacheManager(String cacheDir, TypeOracle oracle) {
-    this(cacheDir, oracle, false); 
+    this(cacheDir, oracle, false);
   }
-  
+
   public CacheManager(String cacheDir, TypeOracle oracle, boolean disableChecks) {
     if (oracle == null) {
       this.oracle = new TypeOracle();

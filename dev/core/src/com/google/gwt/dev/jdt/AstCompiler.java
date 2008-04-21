@@ -77,15 +77,15 @@ public class AstCompiler extends AbstractCompiler {
 
   private final CompilationUnitDeclarationCache cachedResults = new CompilationUnitDeclarationCache();
   private final boolean disableChecks;
-  
-  public AstCompiler(SourceOracle sourceOracle, boolean disableChecks) {
-    super(sourceOracle, false);
-    this.disableChecks = disableChecks;
-  }
-  
+
   public AstCompiler(SourceOracle sourceOracle) {
     super(sourceOracle, false);
     this.disableChecks = false;
+  }
+
+  public AstCompiler(SourceOracle sourceOracle, boolean disableChecks) {
+    super(sourceOracle, false);
+    this.disableChecks = disableChecks;
   }
 
   public CompilationUnitDeclaration[] getChangedCompilationUnitDeclarations(

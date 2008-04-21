@@ -130,11 +130,7 @@ public class JMethod extends JAbstractMethod {
       toStringTypeParams(sb);
       sb.append(" ");
     }
-    if (returnType == null) {
-      sb.append("NULL");
-    } else {
-      sb.append(returnType.getParameterizedQualifiedSourceName());
-    }
+    sb.append(returnType.getParameterizedQualifiedSourceName());
     sb.append(" ");
     sb.append(getName());
 
