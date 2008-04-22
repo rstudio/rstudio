@@ -49,6 +49,10 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     return array[index];
   }-*/;
 
+  private static native void insertImpl(JavaScriptObject array, int index, Object[] o) /*-{
+    Array.prototype.splice.apply(array, [index, 0].concat(o));
+  }-*/;
+
   private static native void removeRangeImpl(JavaScriptObject array, int index,
       int count) /*-{
     array.splice(index, count);
@@ -105,12 +109,24 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean addAll(Collection<? extends E> c) {
-    Iterator<? extends E> iter = c.iterator();
-    boolean changed = iter.hasNext();
-    while (iter.hasNext()) {
-      setImpl(array, size++, iter.next());
+    if (c.isEmpty()) {
+      return false;
     }
-    return changed;
+    insertImpl(array, 0, c.toArray());
+    size += c.size();
+    return true;
+  }
+
+  public boolean addAll(int index, Collection<? extends E> c) {
+    if (c.isEmpty()) {
+      return false;
+    }
+    if (index < 0 || index > size) {
+      indexOutOfBounds(index, size);
+    }
+    insertImpl(array, index, c.toArray());
+    size += c.size();
+    return true;
   }
 
   @Override

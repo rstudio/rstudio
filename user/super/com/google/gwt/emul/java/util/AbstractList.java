@@ -139,8 +139,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
   public boolean addAll(int index, Collection<? extends E> c) {
     Iterator<? extends E> iter = c.iterator();
     while (iter.hasNext()) {
-      add(index, iter.next());
-      ++index;
+      add(index++, iter.next());
     }
     return !c.isEmpty();
   }
