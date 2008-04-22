@@ -156,7 +156,6 @@ public class TreeItem extends UIObject implements HasHTML {
   static {
     // Create the base table element that will be cloned.
     BASE_INTERNAL_ELEM = DOM.createTable();
-    setStyleName(BASE_INTERNAL_ELEM, "gwt-TreeItem");
     Element contentElem = DOM.createSpan();
     Element tbody = DOM.createTBody(), tr = DOM.createTR();
     Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
@@ -168,6 +167,7 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
     DOM.appendChild(tdContent, contentElem);
     DOM.setStyleAttribute(contentElem, "display", "inline");
+    setStyleName(contentElem, "gwt-TreeItem");
     DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
 
     // Create the base element that will be cloned
