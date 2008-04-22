@@ -112,7 +112,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (c.isEmpty()) {
       return false;
     }
-    insertImpl(array, 0, c.toArray());
+    insertImpl(array, size, c.toArray());
     size += c.size();
     return true;
   }
