@@ -15,7 +15,6 @@
  */
 package java.util;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.lang.Array;
 
 import java.io.Serializable;
@@ -41,35 +40,28 @@ import java.io.Serializable;
 public class ArrayList<E> extends AbstractList<E> implements List<E>,
     Cloneable, RandomAccess, Serializable {
 
-  private static native void addImpl(JavaScriptObject array, int index, Object o) /*-{
-    array.splice(index, 0, o);
-  }-*/;
-
-  private static native <E> E getImpl(JavaScriptObject array, int index) /*-{
-    return array[index];
-  }-*/;
-
-  private static native void insertImpl(JavaScriptObject array, int index, Object[] o) /*-{
-    Array.prototype.splice.apply(array, [index, 0].concat(o));
-  }-*/;
-
-  private static native void removeRangeImpl(JavaScriptObject array, int index,
-      int count) /*-{
-    array.splice(index, count);
-  }-*/;
-
-  private static native <E> void setImpl(JavaScriptObject array, int index, E o) /*-{
-    array[index] = o;
-  }-*/;
-
-  private static native void setSizeImpl(JavaScriptObject array, int newSize) /*-{
+  private static native void setCapacity(Object[] array, int newSize) /*-{
     array.length = newSize;
+  }-*/;
+
+  private static native void splice(Object[] array, int index, int deleteCount) /*-{
+    array.splice(index, deleteCount);
+  }-*/;
+
+  private static native void splice(Object[] array, int index, int deleteCount,
+      Object value) /*-{
+    array.splice(index, deleteCount, value);
+  }-*/;
+
+  private static native void spliceArray(Object[] array, int index,
+      int deleteCount, Object[] values) /*-{
+    Array.prototype.splice.apply(array, [index, deleteCount].concat(values));
   }-*/;
 
   /**
    * This field holds a JavaScript array.
    */
-  private transient JavaScriptObject array;
+  private transient E[] array;
 
   /**
    * The size of the array.
@@ -94,7 +86,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean add(E o) {
-    setImpl(array, size++, o);
+    array[size++] = o;
     return true;
   }
 
@@ -103,7 +95,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (index < 0 || index > size) {
       indexOutOfBounds(index, size);
     }
-    addImpl(array, index, o);
+    splice(array, index, 0, o);
     ++size;
   }
 
@@ -112,7 +104,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (c.isEmpty()) {
       return false;
     }
-    insertImpl(array, size, c.toArray());
+    spliceArray(array, size, 0, c.toArray());
     size += c.size();
     return true;
   }
@@ -124,7 +116,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (index < 0 || index > size) {
       indexOutOfBounds(index, size);
     }
-    insertImpl(array, index, c.toArray());
+    spliceArray(array, index, 0, c.toArray());
     size += c.size();
     return true;
   }
@@ -145,15 +137,14 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   public void ensureCapacity(int capacity) {
     if (capacity > size) {
-      setSizeImpl(array, capacity);
+      setCapacity(array, capacity);
     }
   }
 
   @Override
   public E get(int index) {
     checkIndex(index, size);
-    // implicit type arg not inferred (as of JDK 1.5.0_07)
-    return ArrayList.<E> getImpl(array, index);
+    return array[index];
   }
 
   @Override
@@ -174,7 +165,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @Override
   public E remove(int index) {
     E previous = get(index);
-    removeRangeImpl(array, index, 1);
+    splice(array, index, 1);
     --size;
     return previous;
   }
@@ -192,7 +183,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   @Override
   public E set(int index, E o) {
     E previous = get(index);
-    setImpl(array, index, o);
+    array[index] = o;
     return previous;
   }
 
@@ -206,18 +197,18 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     // TODO: Array.clone() variant
     return super.toArray();
   }
-  
+
   /*
    * Faster than the iterator-based implementation in AbstractCollection.
    */
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T[] toArray(T[] out) {
     if (out.length < size) {
       out = Array.createFrom(out, size);
     }
     for (int i = 0; i < size; ++i) {
-      // implicit type arg not inferred (as of JDK 1.5.0_07)
-      out[i] = ArrayList.<T> getImpl(array, i);
+      out[i] = (T) array[i];
     }
     if (out.length > size) {
       out[size] = null;
@@ -226,7 +217,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   }
 
   public void trimToSize() {
-    setSizeImpl(array, size);
+    setCapacity(array, size);
   }
 
   protected int indexOf(Object o, int index) {
@@ -234,7 +225,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
       indexOutOfBounds(index, size);
     }
     for (; index < size; ++index) {
-      if (Utility.equalsWithNullCheck(o, getImpl(array, index))) {
+      if (Utility.equalsWithNullCheck(o, array[index])) {
         return index;
       }
     }
@@ -246,7 +237,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
       indexOutOfBounds(index, size);
     }
     for (; index >= 0; --index) {
-      if (Utility.equalsWithNullCheck(o, getImpl(array, index))) {
+      if (Utility.equalsWithNullCheck(o, array[index])) {
         return index;
       }
     }
@@ -260,7 +251,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
       indexOutOfBounds(endIndex, size);
     }
     int count = endIndex - fromIndex;
-    removeRangeImpl(array, fromIndex, count);
+    splice(array, fromIndex, count);
     size -= count;
   }
 
@@ -271,12 +262,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     if (newSize < 0) {
       indexOutOfBounds(newSize, size);
     }
-    setSizeImpl(array, newSize);
-    // null fill any new slots if size < newSize
-    for (; size < newSize; ++size) {
-      setImpl(array, size, null);
-    }
-    // assignment necessary when size > newSize
+    setCapacity(array, newSize);
     size = newSize;
   }
 
@@ -286,8 +272,9 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     throw new UnsupportedOperationException("subList not implemented");
   }
 
+  @SuppressWarnings("unchecked")
   private void clearImpl() {
-    array = JavaScriptObject.createArray();
+    array = (E[]) new Object[0];
     size = 0;
   }
 }
