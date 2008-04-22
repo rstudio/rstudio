@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -53,6 +54,7 @@ import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
@@ -403,6 +405,33 @@ public class GenerateJavaScriptAST {
       JsExpression rhs = (JsExpression) pop(); // rhs
       JsExpression lhs = (JsExpression) pop(); // lhs
       JsBinaryOperator myOp = JavaToJsOperatorMap.get(x.getOp());
+
+      /*
+       * Optimize null tests. We cannot do this with strings, however, because
+       * in JavaScript the empty string evaluates to boolean false.
+       * 
+       * (foo == null) => !foo
+       * 
+       * (foo != null) => !!foo (coerces to boolean)
+       */
+      if ((x.getOp() == JBinaryOperator.EQ)
+          || (x.getOp() == JBinaryOperator.NEQ)) {
+        boolean lhsNull = x.getLhs() instanceof JNullLiteral;
+        boolean rhsNull = x.getRhs() instanceof JNullLiteral;
+        if (lhsNull || rhsNull) {
+          JExpression toUse = lhsNull ? x.getRhs() : x.getLhs();
+          JsExpression toUseJs = lhsNull ? rhs : lhs;
+          if (!couldBeString(toUse)) {
+            if ((x.getOp() == JBinaryOperator.EQ)) {
+              push(new JsPrefixOperation(JsUnaryOperator.NOT, toUseJs));
+            } else {
+              push(new JsPrefixOperation(JsUnaryOperator.NOT,
+                  new JsPrefixOperation(JsUnaryOperator.NOT, toUseJs)));
+            }
+            return;
+          }
+        }
+      }
 
       /*
        * Use === and !== on reference types, or else you can get wrong answers
@@ -1189,6 +1218,18 @@ public class GenerateJavaScriptAST {
       }
 
       push(jsSwitch);
+      return false;
+    }
+
+    /**
+     * Return whether the expression could possibly evaluate to a string.
+     */
+    private boolean couldBeString(JExpression x) {
+      JType type = x.getType();
+      if (type instanceof JReferenceType) {
+        return typeOracle.canTheoreticallyCast((JReferenceType) type,
+            program.getTypeJavaLangString());
+      }
       return false;
     }
 

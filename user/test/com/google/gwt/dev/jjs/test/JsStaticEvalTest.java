@@ -19,11 +19,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Tests that declarations in pruned code still happen. NOTE: this test does not
- * run in hosted mode due to browser inconsistencies; however it should run in
- * web mode due to our normalizations.
+ * Most of these tests (the "do" ones guarded by isScript tests) verify that
+ * declarations in pruned code still happen. Those tests do not run reliably in
+ * hosted mode due to browser inconsistencies; however it should run in web mode
+ * due to our normalizations.
  */
 public class JsStaticEvalTest extends GWTTestCase {
+  @SuppressWarnings("unused")
+  private static volatile boolean TRUE = true;
 
   @Override
   public String getModuleName() {
@@ -89,6 +92,11 @@ public class JsStaticEvalTest extends GWTTestCase {
       doTestShortCircuitOr();
     }
   }
+
+  public native void testTripleNegate() /*-{
+    @junit.framework.Assert::assertFalse(Z)(
+      !!!@com.google.gwt.dev.jjs.test.JsStaticEvalTest::TRUE);
+  }-*/;
 
   public void testWhileFalse() {
     if (GWT.isScript()) {

@@ -55,6 +55,7 @@ import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JUnaryOperation;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -77,10 +78,15 @@ import java.util.Set;
 public class DeadCodeElimination {
 
   /**
-   * Eliminates dead or unreachable code when possible.
+   * Eliminates dead or unreachable code when possible, and makes local
+   * simplifications like changing "<code>x || true</code>" to "<code>x</code>".
    * 
    * TODO: leverage ignoring expression output more to remove intermediary
    * operations in favor of pure side effects.
+   * 
+   * TODO(spoon): move more simplifications into methods like
+   * {@link #simplifyCast(JExpression, JType, JExpression) simplifyCast}, so
+   * that more simplifications can be made on a single pass through a tree.
    */
   public class DeadCodeVisitor extends JModVisitor {
 
@@ -116,6 +122,11 @@ public class DeadCodeElimination {
       JBinaryOperator op = x.getOp();
       JExpression lhs = x.getLhs();
       JExpression rhs = x.getRhs();
+      if ((lhs instanceof JValueLiteral) && (rhs instanceof JValueLiteral)) {
+        if (evalOpOnLiterals(op, (JValueLiteral) lhs, (JValueLiteral) rhs, ctx)) {
+          return;
+        }
+      }
       switch (op) {
         case AND:
           shortCircuitAnd(lhs, rhs, ctx);
@@ -123,23 +134,48 @@ public class DeadCodeElimination {
         case OR:
           shortCircuitOr(lhs, rhs, ctx);
           break;
+        case BIT_XOR:
+          simplifyXor(lhs, rhs, ctx);
+          break;
         case EQ:
           // simplify: null == null -> true
           if (lhs.getType() == program.getTypeNull()
               && rhs.getType() == program.getTypeNull() && !x.hasSideEffects()) {
             ctx.replaceMe(program.getLiteralBoolean(true));
+            return;
           }
+          simplifyEq(lhs, rhs, ctx, false);
           break;
         case NEQ:
           // simplify: null != null -> false
           if (lhs.getType() == program.getTypeNull()
               && rhs.getType() == program.getTypeNull() && !x.hasSideEffects()) {
             ctx.replaceMe(program.getLiteralBoolean(false));
+            return;
           }
+          simplifyEq(lhs, rhs, ctx, true);
           break;
         case ADD:
           if (x.getType() == program.getTypeJavaLangString()) {
             evalConcat(lhs, rhs, ctx);
+            break;
+          }
+          simplifyAdd(lhs, rhs, ctx, x.getType());
+          break;
+        case SUB:
+          simplifySub(lhs, rhs, ctx, x.getType());
+          break;
+        case MUL:
+          simplifyMul(lhs, rhs, ctx, x.getType());
+          break;
+        case DIV:
+          simplifyDiv(lhs, rhs, ctx, x.getType());
+          break;
+        case SHL:
+        case SHR:
+        case SHRU:
+          if (isLiteralZero(rhs)) {
+            ctx.replaceMe(lhs);
           }
           break;
         default:
@@ -199,15 +235,9 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      // Statically evaluate casting literals.
-      if (x.getCastType() instanceof JPrimitiveType
-          && x.getExpr() instanceof JValueLiteral) {
-        JPrimitiveType type = (JPrimitiveType) x.getCastType();
-        JValueLiteral lit = (JValueLiteral) x.getExpr();
-        lit = type.coerceLiteral(lit);
-        if (lit != null) {
-          ctx.replaceMe(lit);
-        }
+      JExpression updated = simplifyCast(x, x.getCastType(), x.getExpr());
+      if (updated != x) {
+        ctx.replaceMe(updated);
       }
     }
 
@@ -260,6 +290,14 @@ public class DeadCodeElimination {
               x.getSourceInfo(), x.getType(), JBinaryOperator.AND, condExpr,
               thenExpr);
           ctx.replaceMe(binOp);
+        }
+      } else {
+        // e.g. (!cond ? then : else) -> (cond ? else : then)
+        JExpression unflipped = maybeUnflipBoolean(condExpr);
+        if (unflipped != null) {
+          ctx.replaceMe(new JConditional(program, x.getSourceInfo(),
+              x.getType(), unflipped, elseExpr, thenExpr));
+          return;
         }
       }
     }
@@ -370,8 +408,22 @@ public class DeadCodeElimination {
           // just prune me
           removeMe(x, ctx);
         }
-      } else if (isEmpty(thenStmt) && isEmpty(elseStmt)) {
+        return;
+      }
+
+      if (isEmpty(thenStmt) && isEmpty(elseStmt)) {
         ctx.replaceMe(expr.makeStatement());
+        return;
+      }
+
+      if (!isEmpty(elseStmt)) {
+        // if (!cond) foo else bar -> if (cond) bar else foo
+        JExpression unflipped = maybeUnflipBoolean(expr);
+        if (unflipped != null) {
+          ctx.replaceMe(new JIfStatement(program, x.getSourceInfo(), unflipped,
+              elseStmt, thenStmt));
+          return;
+        }
       }
     }
 
@@ -488,13 +540,14 @@ public class DeadCodeElimination {
       if (x.getOp().isModifying()) {
         lvalues.remove(x.getArg());
       }
+      if (x.getArg() instanceof JValueLiteral) {
+        if (evalOpOnLiteral(x.getOp(), (JValueLiteral) x.getArg(), ctx)) {
+          return;
+        }
+      }
       if (x.getOp() == JUnaryOperator.NOT) {
         JExpression arg = x.getArg();
-        if (arg instanceof JBooleanLiteral) {
-          // e.g. !true -> false; !false -> true
-          JBooleanLiteral booleanLiteral = (JBooleanLiteral) arg;
-          ctx.replaceMe(program.getLiteralBoolean(!booleanLiteral.getValue()));
-        } else if (arg instanceof JBinaryOperation) {
+        if (arg instanceof JBinaryOperation) {
           // try to invert the binary operator
           JBinaryOperation argOp = (JBinaryOperation) arg;
           JBinaryOperator op = argOp.getOp();
@@ -533,12 +586,18 @@ public class DeadCodeElimination {
             ctx.replaceMe(argOp.getArg());
           }
         }
+      } else if (x.getOp() == JUnaryOperator.NEG) {
+        JExpression updated = simplifyNegate(x, x.getArg());
+        if (updated != x) {
+          ctx.replaceMe(updated);
+        }
       }
     }
 
     /**
      * Optimize switch statements.
      */
+    @Override
     public void endVisit(JSwitchStatement x, Context ctx) {
       switchBlocks.remove(x.getBody());
 
@@ -707,6 +766,329 @@ public class DeadCodeElimination {
       }
     }
 
+    /**
+     * Evaluate <code>lhs == rhs</code>.
+     * 
+     * @param lhs Any literal other than null.
+     * @param rhs Any literal other than null.
+     * @return Whether <code>lhs == rhs</code> will evaluate to
+     *         <code>true</code> at run time.
+     */
+    private boolean evalEq(JValueLiteral lhs, JValueLiteral rhs) {
+      if (isTypeBoolean(lhs)) {
+        return toBoolean(lhs) == toBoolean(rhs);
+      }
+      if (isTypeDouble(lhs) || isTypeDouble(rhs)) {
+        return toDouble(lhs) == toDouble(rhs);
+      }
+      if (isTypeFloat(lhs) || isTypeFloat(rhs)) {
+        return toFloat(lhs) == toFloat(rhs);
+      }
+      if (isTypeLong(lhs) || isTypeLong(rhs)) {
+        return toLong(lhs) == toLong(rhs);
+      }
+      return toInt(lhs) == toInt(rhs);
+    }
+
+    /**
+     * Static evaluation of a unary operation on a literal.
+     * 
+     * @return Whether a change was made
+     */
+    private boolean evalOpOnLiteral(JUnaryOperator op, JValueLiteral exp,
+        Context ctx) {
+      switch (op) {
+        case BIT_NOT: {
+          long value = toLong(exp);
+          long res = ~value;
+          if (isTypeLong(exp)) {
+            ctx.replaceMe(program.getLiteralLong(res));
+          } else {
+            ctx.replaceMe(program.getLiteralInt((int) res));
+          }
+          return true;
+        }
+
+        case NEG:
+          if (isTypeLong(exp)) {
+            ctx.replaceMe(program.getLiteralLong(-toLong(exp)));
+            return true;
+          }
+          if (isTypeIntegral(exp)) {
+            ctx.replaceMe(program.getLiteralInt(-toInt(exp)));
+            return true;
+          }
+          if (isTypeDouble(exp)) {
+            ctx.replaceMe(program.getLiteralDouble(-toDouble(exp)));
+            return true;
+          }
+          if (isTypeFloat(exp)) {
+            ctx.replaceMe(program.getLiteralFloat(-toFloat(exp)));
+            return true;
+          }
+          return false;
+
+        case NOT: {
+          JBooleanLiteral booleanLit = (JBooleanLiteral) exp;
+          ctx.replaceMe(program.getLiteralBoolean(!booleanLit.getValue()));
+          return true;
+        }
+
+        default:
+          return false;
+      }
+    }
+
+    /**
+     * Static evaluation of a binary operation on two literals.
+     * 
+     * @return Whether a change was made
+     */
+    private boolean evalOpOnLiterals(JBinaryOperator op, JValueLiteral lhs,
+        JValueLiteral rhs, Context ctx) {
+      if (isTypeString(lhs) || isTypeString(rhs) || isTypeNull(lhs)
+          || isTypeNull(rhs)) {
+        // String simplifications are handled elsewhere.
+        // Null can only be used with String append, and with
+        // comparison with EQ and NEQ, and those simplifications
+        // are also handled elsewhere.
+        return false;
+      }
+      switch (op) {
+        case EQ: {
+          ctx.replaceMe(program.getLiteralBoolean(evalEq(lhs, rhs)));
+          return true;
+        }
+
+        case NEQ: {
+          ctx.replaceMe(program.getLiteralBoolean(!evalEq(lhs, rhs)));
+          return true;
+        }
+
+        case ADD:
+        case SUB:
+        case MUL:
+        case DIV:
+        case MOD: {
+          if (isTypeDouble(lhs) || isTypeFloat(rhs) || isTypeDouble(lhs)
+              || isTypeFloat(rhs)) {
+            // do the op on doubles and cast back
+            double left = toDouble(lhs);
+            double right = toDouble(rhs);
+            double res;
+            switch (op) {
+              case ADD:
+                res = left + right;
+                break;
+              case SUB:
+                res = left - right;
+                break;
+              case MUL:
+                res = left * right;
+                break;
+              case DIV:
+                res = left / right;
+                break;
+              case MOD:
+                res = left % right;
+                break;
+              default:
+                assert false;
+                return false;
+            }
+            if (isTypeDouble(lhs) || isTypeDouble(rhs)) {
+              ctx.replaceMe(program.getLiteralDouble(res));
+            } else {
+              ctx.replaceMe(program.getLiteralFloat((float) res));
+            }
+            return true;
+          } else {
+            // do the op on longs and cast to the correct
+            // result type at the end
+            long left = toLong(lhs);
+            long right = toLong(rhs);
+
+            long res;
+            switch (op) {
+              case ADD:
+                res = left + right;
+                break;
+              case SUB:
+                res = left - right;
+                break;
+              case MUL:
+                res = left * right;
+                break;
+              case DIV:
+                res = left / right;
+                break;
+              case MOD:
+                res = left % right;
+                break;
+              default:
+                assert false;
+                return false;
+            }
+            if (isTypeLong(lhs) || isTypeLong(rhs)) {
+              ctx.replaceMe(program.getLiteralLong(res));
+            } else {
+              ctx.replaceMe(program.getLiteralInt((int) res));
+            }
+            return true;
+          }
+        }
+
+        case LT:
+        case LTE:
+        case GT:
+        case GTE: {
+          if (isTypeDouble(lhs) || isTypeDouble(rhs) || isTypeFloat(lhs)
+              || isTypeFloat(rhs)) {
+            // operate on doubles
+            double left = toDouble(lhs);
+            double right = toDouble(rhs);
+            boolean res;
+            switch (op) {
+              case LT:
+                res = left < right;
+                break;
+              case LTE:
+                res = left <= right;
+                break;
+              case GT:
+                res = left > right;
+                break;
+              case GTE:
+                res = left >= right;
+                break;
+              default:
+                assert false;
+                return false;
+            }
+            ctx.replaceMe(program.getLiteralBoolean(res));
+            return true;
+          } else {
+            // operate on longs
+            long left = toLong(lhs);
+            long right = toLong(rhs);
+            boolean res;
+            switch (op) {
+              case LT:
+                res = left < right;
+                break;
+              case LTE:
+                res = left <= right;
+                break;
+              case GT:
+                res = left > right;
+                break;
+              case GTE:
+                res = left >= right;
+                break;
+              default:
+                assert false;
+                return false;
+            }
+            ctx.replaceMe(program.getLiteralBoolean(res));
+            return true;
+          }
+        }
+
+        case BIT_AND:
+        case BIT_OR:
+        case BIT_XOR:
+          if (isTypeBoolean(lhs)) {
+            // TODO: maybe eval non-short-circuit boolean operators.
+            return false;
+          } else {
+            // operate on longs and then cast down
+            long left = toLong(lhs);
+            long right = toLong(rhs);
+            long res;
+            switch (op) {
+              case BIT_AND:
+                res = left & right;
+                break;
+
+              case BIT_OR:
+                res = left | right;
+                break;
+
+              case BIT_XOR:
+                res = left ^ right;
+                break;
+
+              default:
+                assert false;
+                return false;
+            }
+            if (isTypeLong(lhs) || isTypeLong(rhs)) {
+              ctx.replaceMe(program.getLiteralLong(res));
+            } else {
+              ctx.replaceMe(program.getLiteralInt((int) res));
+            }
+            return true;
+          }
+
+        case SHL:
+        case SHR:
+        case SHRU: {
+          if (isTypeLong(lhs)) {
+            long left = toLong(lhs);
+            int right = toInt(rhs);
+            long res;
+            switch (op) {
+              case SHL:
+                res = left << right;
+                break;
+
+              case SHR:
+                res = left >> right;
+                break;
+
+              case SHRU:
+                res = left >>> right;
+                break;
+
+              default:
+                assert false;
+                return false;
+            }
+
+            ctx.replaceMe(program.getLiteralLong(res));
+            return true;
+          } else {
+            int left = toInt(lhs);
+            int right = toInt(rhs);
+            int res;
+            switch (op) {
+              case SHL:
+                res = left << right;
+                break;
+
+              case SHR:
+                res = left >> right;
+                break;
+
+              case SHRU:
+                res = left >>> right;
+                break;
+
+              default:
+                assert false;
+                return false;
+            }
+
+            ctx.replaceMe(program.getLiteralInt(res));
+            return true;
+          }
+        }
+
+        default:
+          return false;
+      }
+    }
+
     private boolean hasNoDefaultCase(JSwitchStatement x) {
       JBlock body = x.getBody();
       boolean inDefault = false;
@@ -740,6 +1122,123 @@ public class DeadCodeElimination {
       return (stmt instanceof JBlock && ((JBlock) stmt).statements.isEmpty());
     }
 
+    private boolean isLiteralNegativeOne(JExpression exp) {
+      if (exp instanceof JValueLiteral) {
+        JValueLiteral lit = (JValueLiteral) exp;
+        if (isTypeIntegral(lit)) {
+          if (toLong(lit) == -1) {
+            return true;
+          }
+        }
+        if (isTypeFloatOrDouble(lit)) {
+          if (toDouble(lit) == -1.0) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private boolean isLiteralOne(JExpression exp) {
+      if (exp instanceof JValueLiteral) {
+        JValueLiteral lit = (JValueLiteral) exp;
+        if (isTypeIntegral(lit)) {
+          if (toLong(lit) == 1) {
+            return true;
+          }
+        }
+        if (isTypeFloatOrDouble(lit)) {
+          if (toDouble(lit) == 1.0) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    private boolean isLiteralZero(JExpression exp) {
+      if (exp instanceof JValueLiteral) {
+        JValueLiteral lit = (JValueLiteral) exp;
+        if (toDouble(lit) == 0.0) {
+          // Using toDouble only is safe even for integer types. All types but
+          // long will keep full precision. Longs will lose precision, but
+          // it will not affect whether the resulting double is zero or not.
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean isTypeBoolean(JExpression lhs) {
+      return lhs.getType() == program.getTypePrimitiveBoolean();
+    }
+
+    private boolean isTypeDouble(JExpression exp) {
+      return isTypeDouble(exp.getType());
+    }
+
+    private boolean isTypeDouble(JType type) {
+      return type == program.getTypePrimitiveDouble();
+    }
+
+    private boolean isTypeFloat(JExpression exp) {
+      return isTypeFloat(exp.getType());
+    }
+
+    private boolean isTypeFloat(JType type) {
+      return type == program.getTypePrimitiveFloat();
+    }
+
+    /**
+     * Return whether the type of the expression is float or double.
+     */
+    private boolean isTypeFloatOrDouble(JExpression exp) {
+      return isTypeFloatOrDouble(exp.getType());
+    }
+
+    private boolean isTypeFloatOrDouble(JType type) {
+      return ((type == program.getTypePrimitiveDouble()) || (type == program.getTypePrimitiveFloat()));
+    }
+
+    /**
+     * Return whether the type of the expression is byte, char, short, int, or
+     * long.
+     */
+    private boolean isTypeIntegral(JExpression exp) {
+      return isTypeIntegral(exp.getType());
+    }
+
+    private boolean isTypeIntegral(JType type) {
+      return ((type == program.getTypePrimitiveInt())
+          || (type == program.getTypePrimitiveLong())
+          || (type == program.getTypePrimitiveChar())
+          || (type == program.getTypePrimitiveByte()) || (type == program.getTypePrimitiveShort()));
+    }
+
+    private boolean isTypeLong(JExpression exp) {
+      return isTypeLong(exp.getType());
+    }
+
+    private boolean isTypeLong(JType type) {
+      return type == program.getTypePrimitiveLong();
+    }
+
+    private boolean isTypeNull(JExpression exp) {
+      return isTypeNull(exp.getType());
+    }
+
+    private boolean isTypeNull(JType type) {
+      return type == program.getTypeNull();
+    }
+
+    private boolean isTypeString(JExpression exp) {
+      return isTypeString(exp.getType());
+    }
+
+    private boolean isTypeString(JType type) {
+      return type == program.getTypeJavaLangString();
+    }
+
     private boolean isUnconditionalBreak(JStatement statement) {
       if (statement instanceof JBreakStatement) {
         return true;
@@ -770,6 +1269,20 @@ public class DeadCodeElimination {
         call = null;
       }
       return call;
+    }
+
+    /**
+     * Negate the supplied expression if negating it makes the expression
+     * shorter. Otherwise, return null.
+     */
+    private JExpression maybeUnflipBoolean(JExpression expr) {
+      if (expr instanceof JUnaryOperation) {
+        JUnaryOperation unop = (JUnaryOperation) expr;
+        if (unop.getOp() == JUnaryOperator.NOT) {
+          return unop.getArg();
+        }
+      }
+      return null;
     }
 
     private int numRemovableExpressions(JMultiExpression x) {
@@ -905,6 +1418,274 @@ public class DeadCodeElimination {
         } else if (!lhs.hasSideEffects()) {
           ctx.replaceMe(rhs);
         }
+      }
+    }
+
+    private boolean simplifyAdd(JExpression lhs, JExpression rhs, Context ctx,
+        JType type) {
+      if (isLiteralZero(rhs)) {
+        ctx.replaceMe(simplifyCast(type, lhs));
+        return true;
+      }
+      if (isLiteralZero(lhs)) {
+        ctx.replaceMe(simplifyCast(type, rhs));
+        return true;
+      }
+
+      return false;
+    }
+
+    /**
+     * Simplify <code>exp == bool</code>, where <code>bool</code> is a
+     * boolean literal.
+     */
+    private void simplifyBooleanEq(JExpression exp, boolean bool, Context ctx) {
+      if (bool) {
+        ctx.replaceMe(exp);
+      } else {
+        ctx.replaceMe(new JPrefixOperation(program, exp.getSourceInfo(),
+            JUnaryOperator.NOT, exp));
+      }
+    }
+
+    /**
+     * Simplify <code>lhs == rhs</code>, where <code>lhs</code> and
+     * <code>rhs</code> are known to be boolean. If <code>negate</code> is
+     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead
+     * of <code>lhs == rhs</code>. Assumes that the case where both sides are
+     * literals has already been checked.
+     */
+    private void simplifyBooleanEq(JExpression lhs, JExpression rhs,
+        Context ctx, boolean negate) {
+      if (lhs instanceof JBooleanLiteral) {
+        boolean left = ((JBooleanLiteral) lhs).getValue();
+        simplifyBooleanEq(rhs, left ^ negate, ctx);
+        return;
+      }
+      if (rhs instanceof JBooleanLiteral) {
+        boolean right = ((JBooleanLiteral) rhs).getValue();
+        simplifyBooleanEq(lhs, right ^ negate, ctx);
+        return;
+      }
+    }
+
+    /**
+     * Simplify a cast operation. Return <code>original</code> if it is
+     * equivalent to the desired return value.
+     * 
+     * TODO: Simplify casts of casts, e.g. (int)(long)foo.
+     * 
+     * @param original Either <code>null</code>, or a cast from
+     *          <code>exp</code> to <code>type</code>
+     * @param type The type to cast to
+     * @param exp The expression being cast
+     * @return An expression equivalent to a cast from <code>exp</code> to
+     *         <code>type</code>, but possibly simplified
+     */
+    private JExpression simplifyCast(JExpression original, JType type,
+        JExpression exp) {
+      if (type == exp.getType()) {
+        return exp;
+      }
+      if ((type instanceof JPrimitiveType) && (exp instanceof JValueLiteral)) {
+        // Statically evaluate casting literals.
+        JPrimitiveType typePrim = (JPrimitiveType) type;
+        JValueLiteral expLit = (JValueLiteral) exp;
+        JValueLiteral casted = typePrim.coerceLiteral(expLit);
+        if (casted != null) {
+          return casted;
+        }
+      }
+
+      if (type == program.getTypePrimitiveInt()) {
+        JType expType = exp.getType();
+        if ((expType == program.getTypePrimitiveShort())
+            || (expType == program.getTypePrimitiveChar())
+            || (expType == program.getTypePrimitiveByte())) {
+          // Discard casts from char, byte, or short to int, because
+          // such casts re always implicit anyway.
+          return exp;
+        }
+      }
+
+      // no simplification made
+      if (original != null) {
+        return original;
+      }
+      return new JCastOperation(program, exp.getSourceInfo(), type, exp);
+    }
+
+    private JExpression simplifyCast(JType type, JExpression exp) {
+      return simplifyCast(null, type, exp);
+    }
+
+    private boolean simplifyDiv(JExpression lhs, JExpression rhs, Context ctx,
+        JType type) {
+      if (isLiteralOne(rhs)) {
+        ctx.replaceMe(simplifyCast(type, lhs));
+        return true;
+      }
+      if (isLiteralNegativeOne(rhs)) {
+        ctx.replaceMe(simplifyNegate(lhs));
+        return true;
+      }
+
+      return false;
+    }
+
+    /**
+     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true,
+     * then it's actually static evaluation of <code>lhs != rhs</code>.
+     */
+    private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx,
+        boolean negated) {
+      if (isTypeBoolean(lhs) && isTypeBoolean(rhs)) {
+        simplifyBooleanEq(lhs, rhs, ctx, negated);
+        return;
+      }
+    }
+
+    private boolean simplifyMul(JExpression lhs, JExpression rhs, Context ctx,
+        JType type) {
+      if (isLiteralOne(rhs)) {
+        ctx.replaceMe(simplifyCast(type, lhs));
+        return true;
+      }
+      if (isLiteralOne(lhs)) {
+        ctx.replaceMe(simplifyCast(type, rhs));
+        return true;
+      }
+      if (isLiteralNegativeOne(rhs)) {
+        ctx.replaceMe(simplifyNegate(simplifyCast(type, lhs)));
+        return true;
+      }
+      if (isLiteralNegativeOne(lhs)) {
+        ctx.replaceMe(simplifyNegate(simplifyCast(type, rhs)));
+        return true;
+      }
+      if (isLiteralZero(rhs) && !lhs.hasSideEffects()) {
+        ctx.replaceMe(simplifyCast(type, rhs));
+        return true;
+      }
+      if (isLiteralZero(lhs) && !rhs.hasSideEffects()) {
+        ctx.replaceMe(simplifyCast(type, lhs));
+        return true;
+      }
+      return false;
+    }
+
+    private JExpression simplifyNegate(JExpression exp) {
+      return simplifyNegate(null, exp);
+    }
+
+    /**
+     * Simplify the expression <code>-exp</code>.
+     * 
+     * @param exp The expression to negate.
+     * @param An expression equivalent to <code>-exp</code>.
+     * 
+     * @return A simplified expression equivalent to <code>- exp</code>.
+     */
+    private JExpression simplifyNegate(JExpression original, JExpression exp) {
+      // - -x -> x
+      if (exp instanceof JPrefixOperation) {
+        JPrefixOperation prefarg = (JPrefixOperation) exp;
+        if (prefarg.getOp() == JUnaryOperator.NEG) {
+          return prefarg.getArg();
+        }
+      }
+
+      // no change
+      if (original != null) {
+        return original;
+      }
+      return new JPrefixOperation(program, exp.getSourceInfo(),
+          JUnaryOperator.NEG, exp);
+    }
+
+    private boolean simplifySub(JExpression lhs, JExpression rhs, Context ctx,
+        JType type) {
+      if (isLiteralZero(rhs)) {
+        ctx.replaceMe(simplifyCast(type, lhs));
+        return true;
+      }
+      if (isLiteralZero(lhs)) {
+        ctx.replaceMe(simplifyNegate(simplifyCast(type, rhs)));
+        return true;
+      }
+      return false;
+    }
+
+    private void simplifyXor(JExpression lhs, JBooleanLiteral rhs, Context ctx) {
+      if (rhs.getValue()) {
+        ctx.replaceMe(new JPrefixOperation(program, lhs.getSourceInfo(),
+            JUnaryOperator.NOT, lhs));
+      } else {
+        ctx.replaceMe(lhs);
+      }
+    }
+
+    /**
+     * Simplify XOR expressions.
+     * 
+     * <pre>
+     * true ^ x     -> !x
+     * false ^ x    ->  x
+     * y ^ true     -> !y
+     * y ^ false    -> y
+     * </pre>
+     */
+    private void simplifyXor(JExpression lhs, JExpression rhs, Context ctx) {
+      if (lhs instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) lhs;
+        simplifyXor(rhs, booleanLiteral, ctx);
+      } else if (rhs instanceof JBooleanLiteral) {
+        JBooleanLiteral booleanLiteral = (JBooleanLiteral) rhs;
+        simplifyXor(lhs, booleanLiteral, ctx);
+      }
+    }
+
+    private boolean toBoolean(JValueLiteral x) {
+      return ((JBooleanLiteral) x).getValue();
+    }
+
+    /**
+     * Cast a Java wrapper class (Integer, Double, Float, etc.) to a double.
+     */
+    private double toDouble(JValueLiteral literal) {
+      Object valueObj = literal.getValueObj();
+      if (valueObj instanceof Number) {
+        return ((Number) valueObj).doubleValue();
+      } else {
+        return ((Character) valueObj).charValue();
+      }
+    }
+
+    private float toFloat(JValueLiteral x) {
+      return (float) toDouble(x);
+    }
+
+    /**
+     * Cast a Java wrapper class (Integer, Double, Float, etc.) to a long.
+     */
+    private int toInt(JValueLiteral literal) {
+      Object valueObj = literal.getValueObj();
+      if (valueObj instanceof Number) {
+        return ((Number) valueObj).intValue();
+      } else {
+        return ((Character) valueObj).charValue();
+      }
+    }
+
+    /**
+     * Cast a Java wrapper class (Integer, Double, Float, etc.) to a long.
+     */
+    private long toLong(JValueLiteral literal) {
+      Object valueObj = literal.getValueObj();
+      if (valueObj instanceof Number) {
+        return ((Number) valueObj).longValue();
+      } else {
+        return ((Character) valueObj).charValue();
       }
     }
 

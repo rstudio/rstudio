@@ -30,8 +30,10 @@ import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
 import com.google.gwt.dev.js.ast.JsModVisitor;
+import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
@@ -215,10 +217,10 @@ public class JsStaticEval {
    * TODO: borrow more concepts from
    * {@link com.google.gwt.dev.jjs.impl.DeadCodeElimination}, such as ignored
    * expression results.
-   * 
-   * TODO: remove silly stuff like !! coercion in a boolean context.
    */
   private class StaticEvalVisitor extends JsModVisitor {
+
+    private Set<JsExpression> evalBooleanContext = new HashSet<JsExpression>();
 
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
@@ -283,6 +285,8 @@ public class JsStaticEval {
 
     @Override
     public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
+      evalBooleanContext.remove(x.getTestExpression());
+
       JsExpression condExpr = x.getTestExpression();
       JsExpression thenExpr = x.getThenExpression();
       JsExpression elseExpr = x.getElseExpression();
@@ -307,6 +311,8 @@ public class JsStaticEval {
      */
     @Override
     public void endVisit(JsDoWhile x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.remove(x.getCondition());
+
       JsExpression expr = x.getCondition();
       if (expr instanceof CanBooleanEval) {
         CanBooleanEval cond = (CanBooleanEval) expr;
@@ -342,6 +348,8 @@ public class JsStaticEval {
      */
     @Override
     public void endVisit(JsFor x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.remove(x.getCondition());
+
       JsExpression expr = x.getCondition();
       if (expr instanceof CanBooleanEval) {
         CanBooleanEval cond = (CanBooleanEval) expr;
@@ -370,6 +378,8 @@ public class JsStaticEval {
      */
     @Override
     public void endVisit(JsIf x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.remove(x.getIfExpr());
+
       JsExpression expr = x.getIfExpr();
       JsStatement thenStmt = x.getThenStmt();
       JsStatement elseStmt = x.getElseStmt();
@@ -405,10 +415,33 @@ public class JsStaticEval {
     }
 
     /**
+     * Change !!x to x in a boolean context.
+     */
+    @Override
+    public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+      if (x.getOperator() == JsUnaryOperator.NOT) {
+        evalBooleanContext.remove(x.getArg());
+      }
+
+      if (evalBooleanContext.contains(x)) {
+        if ((x.getOperator() == JsUnaryOperator.NOT)
+            && (x.getArg() instanceof JsPrefixOperation)) {
+          JsPrefixOperation arg = (JsPrefixOperation) x.getArg();
+          if (arg.getOperator() == JsUnaryOperator.NOT) {
+            ctx.replaceMe(arg.getArg());
+            return;
+          }
+        }
+      }
+    }
+
+    /**
      * Prune while (false) statements.
      */
     @Override
     public void endVisit(JsWhile x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.remove(x.getCondition());
+
       JsExpression expr = x.getCondition();
       if (expr instanceof CanBooleanEval) {
         CanBooleanEval cond = (CanBooleanEval) expr;
@@ -424,6 +457,44 @@ public class JsStaticEval {
           ctx.replaceMe(accept(block));
         }
       }
+    }
+
+    @Override
+    public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
+      evalBooleanContext.add(x.getTestExpression());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsDoWhile x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.add(x.getCondition());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsFor x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.add(x.getCondition());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.add(x.getIfExpr());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
+      if (x.getOperator() == JsUnaryOperator.NOT) {
+        evalBooleanContext.add(x.getArg());
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsWhile x, JsContext<JsStatement> ctx) {
+      evalBooleanContext.add(x.getCondition());
+      return true;
     }
 
     /**
