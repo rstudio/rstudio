@@ -1,6 +1,5 @@
+@import url("MasterIssue.css");
+
 .deckPanel {
-  border: 1px solid blue;
-}
-.deckPanel-content {
-	background: red;
+    border: 1px solid blue;
 }

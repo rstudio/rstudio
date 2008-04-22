@@ -1,6 +1,9 @@
+@import url("MasterIssue.css");
+
 .gwt-TreeItem {
-  background-color: green;
+    background-color: green;
 }
+
 .gwt-TreeItem-selected {
-  background-color: red;
+    background-color: red;
 }
