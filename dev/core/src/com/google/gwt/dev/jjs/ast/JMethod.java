@@ -28,6 +28,8 @@ import java.util.Set;
 public final class JMethod extends JNode implements HasEnclosingType, HasName,
     HasSettableType, CanBeAbstract, CanBeSetFinal, CanBeNative, CanBeStatic {
 
+  private static final String TRACE_METHOD_WILDCARD = "*";
+
   private static void trace(String title, String code) {
     System.out.println("---------------------------");
     System.out.println(title + ":");
@@ -86,13 +88,15 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     if (enclosingType != null) {
       String jsniSig = JProgram.getJsniSig(this);
       Set<String> set = JProgram.traceMethods.get(enclosingType.getName());
-      if (set != null && (set.contains(name) || set.contains(jsniSig))) {
+      if (set != null
+          && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
         trace = true;
       }
       // Try the short name.
       if (!trace && enclosingType != null) {
         set = JProgram.traceMethods.get(enclosingType.getShortName());
-        if (set != null && (set.contains(name) || set.contains(jsniSig))) {
+        if (set != null
+            && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
           trace = true;
         }
       }
