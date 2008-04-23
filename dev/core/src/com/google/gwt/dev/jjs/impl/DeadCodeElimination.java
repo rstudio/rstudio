@@ -420,6 +420,10 @@ public class DeadCodeElimination {
         // if (!cond) foo else bar -> if (cond) bar else foo
         JExpression unflipped = maybeUnflipBoolean(expr);
         if (unflipped != null) {
+          // Force sub-parts to blocks, otherwise we break else-if chains.
+          // TODO: this goes away when we normalize the Java AST properly.
+          thenStmt = ensureBlock(thenStmt);
+          elseStmt = ensureBlock(elseStmt);
           ctx.replaceMe(new JIfStatement(program, x.getSourceInfo(), unflipped,
               elseStmt, thenStmt));
           return;
@@ -755,6 +759,15 @@ public class DeadCodeElimination {
         }
       }
       return true;
+    }
+
+    private JStatement ensureBlock(JStatement stmt) {
+      if (!(stmt instanceof JBlock)) {
+        JBlock block = new JBlock(program, stmt.getSourceInfo());
+        block.statements.add(stmt);
+        stmt = block;
+      }
+      return stmt;
     }
 
     private void evalConcat(JExpression lhs, JExpression rhs, Context ctx) {
