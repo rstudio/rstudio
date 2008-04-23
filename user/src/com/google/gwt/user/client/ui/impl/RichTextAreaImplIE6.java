@@ -35,6 +35,9 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
     var _this = this;
     _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
     window.setTimeout(function() {
+      if(_this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing == false) {
+        return;
+      } 
       var elem = _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
       var doc = elem.contentWindow.document;
       doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
