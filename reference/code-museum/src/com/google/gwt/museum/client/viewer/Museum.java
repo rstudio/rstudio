@@ -103,10 +103,7 @@ public class Museum implements EntryPoint {
 
   /**
    * Add an issue to the list of issues.
-   * 
-   * @param issue the issue to add
    */
-
   private final Poller poller = new Poller();
 
   /**
@@ -174,7 +171,7 @@ public class Museum implements EntryPoint {
       public void requestSuggestions(Request request, Callback callback) {
         String ofInterest = ("(.* )*" + request.getQuery() + ".*").toLowerCase();
         ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
-        HashSet s = new HashSet();
+        HashSet<AbstractIssue> s = new HashSet<AbstractIssue>();
         for (AbstractIssue issue : issues) {
           if (issue.getHeadline().toLowerCase().matches(ofInterest)) {
             s.add(issue);
