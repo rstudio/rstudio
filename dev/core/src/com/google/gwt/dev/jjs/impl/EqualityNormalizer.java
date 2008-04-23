@@ -93,19 +93,40 @@ public class EqualityNormalizer {
             x.getSourceInfo(), x.getType(), x.getOp(), lhs, rhs);
         ctx.replaceMe(binOp);
       } else {
-        // Replace with a call to Cast.jsEquals, which does a == internally.
-        String methodName;
-        if (op == JBinaryOperator.EQ) {
-          methodName = "Cast.jsEquals";
+        boolean lhsNullLit = lhs == program.getLiteralNull();
+        boolean rhsNullLit = rhs == program.getLiteralNull();
+        if ((lhsNullLit && rhsStatus == StringStatus.NOTSTRING)
+            || (rhsNullLit && lhsStatus == StringStatus.NOTSTRING)) {
+          /*
+           * If either side is a null literal and the other is non-String,
+           * replace with a null-check.
+           */
+          String methodName;
+          if (op == JBinaryOperator.EQ) {
+            methodName = "Cast.isNull";
+          } else {
+            methodName = "Cast.isNotNull";
+          }
+          JMethod isNullMethod = program.getIndexedMethod(methodName);
+          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+              isNullMethod);
+          call.getArgs().add(lhsNullLit ? rhs : lhs);
+          ctx.replaceMe(call);
         } else {
-          methodName = "Cast.jsNotEquals";
+          // Replace with a call to Cast.jsEquals, which does a == internally.
+          String methodName;
+          if (op == JBinaryOperator.EQ) {
+            methodName = "Cast.jsEquals";
+          } else {
+            methodName = "Cast.jsNotEquals";
+          }
+          JMethod eqMethod = program.getIndexedMethod(methodName);
+          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+              eqMethod);
+          call.getArgs().add(lhs);
+          call.getArgs().add(rhs);
+          ctx.replaceMe(call);
         }
-        JMethod eqMethod = program.getIndexedMethod(methodName);
-        JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-            eqMethod);
-        call.getArgs().add(lhs);
-        call.getArgs().add(rhs);
-        ctx.replaceMe(call);
       }
     }
 

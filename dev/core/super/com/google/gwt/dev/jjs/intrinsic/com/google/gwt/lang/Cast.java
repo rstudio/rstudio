@@ -78,6 +78,23 @@ final class Cast {
     return src.typeMarker != getNullMethod() && src.typeId != 2;
   }
 
+  /**
+   * Uses the not operator to perform a null-check; do NOT use on anything that
+   * could be a String.
+   */
+  static native boolean isNotNull(Object src) /*-{
+    // Coerce to boolean.
+    return !!src;
+  }-*/;
+
+  /**
+   * Uses the not operator to perform a null-check; do NOT use on anything that
+   * could be a String.
+   */
+  static native boolean isNull(Object src) /*-{
+    return !src;
+  }-*/;
+
   static native boolean jsEquals(Object a, Object b) /*-{
     return a == b;
   }-*/;
