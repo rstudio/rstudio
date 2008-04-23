@@ -194,8 +194,7 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public Object[] toArray() {
-    // TODO: Array.clone() variant
-    return super.toArray();
+    return Array.clone(array);
   }
 
   /*

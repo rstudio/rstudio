@@ -66,7 +66,7 @@ public class Arrays {
      */
     @Override
     public Object[] toArray() {
-      return toArray(Array.createFrom(array));
+      return Array.clone(array);
     }
 
     /*
