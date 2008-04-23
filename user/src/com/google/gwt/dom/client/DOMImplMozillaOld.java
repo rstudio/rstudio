@@ -22,7 +22,7 @@ package com.google.gwt.dom.client;
  * https://bugzilla.mozilla.org/show_bug.cgi?id=328881
  * https://bugzilla.mozilla.org/show_bug.cgi?id=330619
  */
-public class DOMImplMozillaOld extends DOMImplMozilla {
+ class DOMImplMozillaOld extends DOMImplMozilla {
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{

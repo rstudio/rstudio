@@ -18,7 +18,7 @@ package com.google.gwt.dom.client;
 /**
  * Opera implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
-public class DOMImplOpera extends DOMImplStandard {
+class DOMImplOpera extends DOMImplStandard {
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
