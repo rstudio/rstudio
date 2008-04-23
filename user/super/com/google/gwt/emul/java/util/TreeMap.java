@@ -24,8 +24,7 @@ package java.util;
  * @param <K> key type
  * @param <V> value type
  */
-public class TreeMap<K extends Comparable<K>, V> extends AbstractMap<K, V>
-    implements SortedMap<K, V> {
+public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> {
   /*
    * Implementation derived from public domain C implementation as of 5
    * September 2007 at:
