@@ -31,6 +31,7 @@ class MetaData implements HasMetaData {
    * @param dest
    * @param src
    */
+  @SuppressWarnings("deprecation")
   static void copy(HasMetaData dest, HasMetaData src) {
     String[] tagNames = src.getMetaDataTags();
     for (String tagName : tagNames) {

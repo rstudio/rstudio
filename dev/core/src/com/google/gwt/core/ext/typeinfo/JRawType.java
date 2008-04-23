@@ -28,18 +28,12 @@ public class JRawType extends JMaybeParameterizedType {
     }
   };
 
-  private final JClassType enclosingType;
-
   private List<JClassType> interfaces;
 
   private final AbstractMembers members;
 
-  public JRawType(JGenericType genericType, JClassType enclosingType) {
+  public JRawType(JGenericType genericType) {
     super.setBaseType(genericType);
-    this.enclosingType = enclosingType;
-
-    // NOTE: this instance is not considered a nested type of the enclosing type
-
     members = new DelegateMembers(this, getBaseType(), ERASURE_SUBSTITUTION);
   }
 

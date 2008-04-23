@@ -74,7 +74,7 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
 
   public JRawType getRawType() {
     if (lazyRawType == null) {
-      lazyRawType = new JRawType(this, getEnclosingType());
+      lazyRawType = new JRawType(this);
     }
 
     return lazyRawType;

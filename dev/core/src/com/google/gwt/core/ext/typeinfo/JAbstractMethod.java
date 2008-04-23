@@ -82,6 +82,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     }
   }
 
+  @SuppressWarnings("deprecation")
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
   }
@@ -128,10 +129,12 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
    */
   public abstract JClassType getEnclosingType();
 
+  @SuppressWarnings("deprecation")
   public String[][] getMetaData(String tagName) {
     return metaData.getMetaData(tagName);
   }
 
+  @SuppressWarnings("deprecation")
   public String[] getMetaDataTags() {
     return metaData.getMetaDataTags();
   }

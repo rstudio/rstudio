@@ -59,6 +59,7 @@ public class JField implements HasAnnotations, HasMetaData {
     MetaData.copy(this, srcField);
   }
 
+  @SuppressWarnings("deprecation")
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
   }
@@ -75,10 +76,12 @@ public class JField implements HasAnnotations, HasMetaData {
     return enclosingType;
   }
 
+  @SuppressWarnings("deprecation")
   public String[][] getMetaData(String tagName) {
     return metaData.getMetaData(tagName);
   }
 
+  @SuppressWarnings("deprecation")
   public String[] getMetaDataTags() {
     return metaData.getMetaDataTags();
   }

@@ -57,6 +57,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
     MetaData.copy(this, srcParam);
   }
 
+  @SuppressWarnings("deprecation")
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
   }
@@ -69,10 +70,12 @@ public class JParameter implements HasAnnotations, HasMetaData {
     return enclosingMethod;
   }
 
+  @SuppressWarnings("deprecation")
   public String[][] getMetaData(String tagName) {
     return metaData.getMetaData(tagName);
   }
 
+  @SuppressWarnings("deprecation")
   public String[] getMetaDataTags() {
     return metaData.getMetaDataTags();
   }

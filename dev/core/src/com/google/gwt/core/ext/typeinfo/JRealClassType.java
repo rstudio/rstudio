@@ -122,6 +122,7 @@ public class JRealClassType extends JClassType {
     interfaces.add(intf);
   }
 
+  @SuppressWarnings("deprecation")
   public void addMetaData(String tagName, String[] values) {
     metaData.addMetaData(tagName, values);
   }
@@ -210,10 +211,12 @@ public class JRealClassType extends JClassType {
     return "L" + packageName + typeName + ";";
   }
 
+  @SuppressWarnings("deprecation")
   public String[][] getMetaData(String tagName) {
     return metaData.getMetaData(tagName);
   }
 
+  @SuppressWarnings("deprecation")
   public String[] getMetaDataTags() {
     return metaData.getMetaDataTags();
   }

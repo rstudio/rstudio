@@ -69,7 +69,7 @@ class Annotations implements HasAnnotations {
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     initializeAnnotations();
-    return (T) lazyAnnotations.get(annotationClass);
+    return annotationClass.cast(lazyAnnotations.get(annotationClass));
   }
 
   public Annotation[] getAnnotations() {
