@@ -16,11 +16,11 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.animation.WidgetAnimation;
-import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -100,6 +100,7 @@ public final class DisclosurePanel extends Composite implements
       if (!opening) {
         height = scrollHeight - height;
       }
+      height = Math.max(height, 1);
       DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
           height + "px");
       DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "width",
@@ -249,7 +250,7 @@ public final class DisclosurePanel extends Composite implements
 
   private static DisclosurePanelImages createDefaultImages() {
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      return GWT.create(DisclosurePanelImagesRTL.class); 
+      return GWT.create(DisclosurePanelImagesRTL.class);
     }
     return GWT.create(DisclosurePanelImages.class);
   }
@@ -407,9 +408,6 @@ public final class DisclosurePanel extends Composite implements
     return (widget instanceof HasText) ? (HasText) widget : null;
   }
 
-  /**
-   * @see HasAnimation#isAnimationEnabled()
-   */
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -447,10 +445,7 @@ public final class DisclosurePanel extends Composite implements
     }
     handlers.remove(handler);
   }
-
-  /**
-   * @see HasAnimation#setAnimationEnabled(boolean)
-   */
+ 
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }
