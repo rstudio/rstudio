@@ -17,6 +17,7 @@ package com.google.gwt.emultest.java.util;
 
 import org.apache.commons.collections.TestArrayList;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -110,7 +111,17 @@ public abstract class ListTestBase extends TestArrayList {
   public void testListIteratorRemove() {
     // TODO(jat): implement
   }
-  
+
+  public void testRemoveAllDuplicates() {
+    Collection c = makeCollection();
+    c.add("a");
+    c.add("a");
+    Collection d = makeCollection();
+    d.add("a");
+    assertTrue(c.removeAll(d));
+    assertEquals(0, c.size());
+  }
+
   public void testToArray() {
     List l = makeEmptyList();
     for (int i = 0; i < 10; i++) {
