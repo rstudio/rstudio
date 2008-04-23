@@ -57,8 +57,8 @@ public class ApiPackageDiffGenerator {
   public void computeApiDiff() throws NotFoundException {
     HashSet<String> newClassNames = newPackage.getApiClassNames();
     missingClassNames = oldPackage.getApiClassNames();
-    HashSet<String> intersection = ApiDiffGenerator.findCommonElements(
-        newClassNames, missingClassNames, name);
+    HashSet<String> intersection = ApiDiffGenerator.extractCommonElements(
+        newClassNames, missingClassNames);
 
     /* Inspect each of the classes in each of the packages in the intersection */
     Iterator<String> tempIterator = intersection.iterator();

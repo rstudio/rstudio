@@ -33,8 +33,8 @@ public class ApiDiffGenerator {
   public static final String DELIMITER = " ";
 
   @SuppressWarnings("unchecked")
-  public static HashSet<String> findCommonElements(HashSet<String> s1,
-      HashSet<String> s2, String name) {
+  public static HashSet<String> extractCommonElements(HashSet<String> s1,
+      HashSet<String> s2) {
     HashSet<String> intersection = (HashSet<String>) s1.clone();
     intersection.retainAll(s2);
     s1.removeAll(intersection);
@@ -96,8 +96,8 @@ public class ApiDiffGenerator {
   public void computeApiDiff() throws NotFoundException {
     HashSet<String> newApiPackageNames = newApi.getApiPackageNames();
     missingPackageNames = oldApi.getApiPackageNames();
-    HashSet<String> intersection = findCommonElements(newApiPackageNames,
-        missingPackageNames, "ROOT");
+    HashSet<String> intersection = extractCommonElements(newApiPackageNames,
+        missingPackageNames);
     // Inspect each of the classes in each of the packages in the intersection
     Iterator<String> tempIterator = intersection.iterator();
     while (tempIterator.hasNext()) {

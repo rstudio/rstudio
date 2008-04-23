@@ -31,6 +31,7 @@ import junit.framework.TestCase;
  * Test ApiContainer.
  */
 public class ApiContainerTest extends TestCase {
+  @SuppressWarnings("unused")
   class TestA {
     public TestA(String args) {
     }

@@ -224,16 +224,16 @@ public class ApiClassDiffGenerator {
   public void computeApiDiff() {
     HashSet<String> newFieldNames = newClass.getApiFieldNames();
     HashSet<String> oldFieldNames = oldClass.getApiFieldNames();
-    HashSet<String> intersection = ApiDiffGenerator.findCommonElements(
-        newFieldNames, oldFieldNames, className);
+    HashSet<String> intersection = ApiDiffGenerator.extractCommonElements(
+        newFieldNames, oldFieldNames);
     missingFields = oldClass.getApiFieldsBySet(oldFieldNames);
     processFieldsInIntersection(intersection);
 
     for (ApiClass.MethodType methodType : ApiClass.MethodType.values()) {
       HashSet<String> newMethodNames = newClass.getApiMemberNames(methodType);
       HashSet<String> oldMethodNames = oldClass.getApiMemberNames(methodType);
-      intersection = ApiDiffGenerator.findCommonElements(newMethodNames,
-          oldMethodNames, className);
+      intersection = ApiDiffGenerator.extractCommonElements(newMethodNames,
+          oldMethodNames);
       missingMethods.add(methodType.getId(),
           getAbstractMethodObjects(oldClass.getApiMembersBySet(oldMethodNames,
               methodType)));
