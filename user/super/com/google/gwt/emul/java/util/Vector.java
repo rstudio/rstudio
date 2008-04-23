@@ -39,13 +39,16 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     addAll(c);
   }
 
-  /**
-   * There is no speed advantage to pre-allocating array sizes in JavaScript, so
-   * the <code>intialCapacity</code> parameter is ignored. This constructor is
-   * only present for compatibility with JDK 1.5's API.
-   */
   public Vector(int initialCapacity) {
     arrayList = new ArrayList<E>(initialCapacity);
+  }
+
+  /**
+   * Capacity increment is ignored.
+   */
+  @SuppressWarnings("unused")
+  public Vector(int initialCapacity, int ignoredCapacityIncrement) {
+    this(initialCapacity);
   }
 
   @Override
@@ -72,6 +75,10 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     add(o);
   }
 
+  public int capacity() {
+    return arrayList.capacity();
+  }
+
   @Override
   public void clear() {
     arrayList.clear();
@@ -88,8 +95,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean containsAll(Collection<?> c) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("containsAll not implemented");
+    return arrayList.containsAll(c);
   }
 
   public void copyInto(Object[] objs) {
@@ -105,15 +111,11 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   public Enumeration<E> elements() {
-    // TODO(jat): implement
-    return null;
+    return Collections.enumeration(arrayList);
   }
 
-  /**
-   * There is no speed advantage to pre-allocating array sizes in JavaScript.
-   * This method is only present for compatibility with the JRE.
-   */
-  public void ensureCapacity(int ignoredCapacity) {
+  public void ensureCapacity(int capacity) {
+   arrayList.ensureCapacity(capacity);
   }
 
   public E firstElement() {
@@ -131,6 +133,9 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   public int indexOf(Object elem, int index) {
+    if (index < 0) {
+      indexOutOfBounds(index, size());
+    }
     return arrayList.indexOf(elem, index);
   }
 
@@ -162,6 +167,9 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   public int lastIndexOf(Object o, int index) {
+    if (index >= size()) {
+      indexOutOfBounds(index, size());
+    }
     return arrayList.lastIndexOf(o, index);
   }
 
@@ -172,8 +180,7 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
 
   @Override
   public boolean removeAll(Collection<?> c) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("removeAll not implemented");
+    return arrayList.removeAll(c);
   }
 
   public void removeAllElements() {
@@ -198,6 +205,9 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
   }
 
   public void setSize(int size) {
+    if (size < 0) {
+      throw new ArrayIndexOutOfBoundsException();
+    }
     arrayList.setSize(size);
   }
 

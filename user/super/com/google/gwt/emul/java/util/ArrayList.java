@@ -219,30 +219,6 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     setCapacity(array, size);
   }
 
-  protected int indexOf(Object o, int index) {
-    if (index < 0) {
-      indexOutOfBounds(index, size);
-    }
-    for (; index < size; ++index) {
-      if (Utility.equalsWithNullCheck(o, array[index])) {
-        return index;
-      }
-    }
-    return -1;
-  }
-
-  protected int lastIndexOf(Object o, int index) {
-    if (index >= size) {
-      indexOutOfBounds(index, size);
-    }
-    for (; index >= 0; --index) {
-      if (Utility.equalsWithNullCheck(o, array[index])) {
-        return index;
-      }
-    }
-    return -1;
-  }
-
   @Override
   protected void removeRange(int fromIndex, int endIndex) {
     checkIndex(fromIndex, size);
@@ -255,12 +231,40 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   }
 
   /**
-   * This function sets the size of the array, and is used by Vector.
+   * Used by Vector.
    */
-  protected void setSize(int newSize) {
-    if (newSize < 0) {
-      indexOutOfBounds(newSize, size);
+  int capacity() {
+    return array.length;
+  }
+
+  /**
+   * Used by Vector.
+   */
+  int indexOf(Object o, int index) {
+    for (; index < size; ++index) {
+      if (Utility.equalsWithNullCheck(o, array[index])) {
+        return index;
+      }
     }
+    return -1;
+  }
+
+  /**
+   * Used by Vector.
+   */
+  int lastIndexOf(Object o, int index) {
+    for (; index >= 0; --index) {
+      if (Utility.equalsWithNullCheck(o, array[index])) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Used by Vector.
+   */
+  void setSize(int newSize) {
     setCapacity(array, newSize);
     size = newSize;
   }

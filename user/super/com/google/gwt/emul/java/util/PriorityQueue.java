@@ -62,6 +62,10 @@ public class PriorityQueue<E> extends AbstractQueue<E> {
     addAll(c);
   }
 
+  public Comparator<? super E> comparator() {
+    return cmp;
+  }
+
   @Override
   public Iterator<E> iterator() {
     // TODO(jat): perhaps a better way to do this
