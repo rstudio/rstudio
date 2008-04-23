@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ public class RichTextAreaImplMozilla extends RichTextAreaImplStandard {
     // fully loaded.
     var _this = this;
     var iframe = _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
+    _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
 
     iframe.onload = function() {
       // Some Mozillae have the nasty habit of calling onload again when you set

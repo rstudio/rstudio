@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import com.google.gwt.user.client.Timer;
  */
 public class RichTextAreaTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -41,6 +42,7 @@ public class RichTextAreaTest extends GWTTestCase {
     // finish initializing (on some browsers).
     this.delayTestFinish(1000);
     new Timer() {
+      @Override
       public void run() {
         RootPanel.get().remove(area);
         RootPanel.get().add(area);
@@ -54,6 +56,16 @@ public class RichTextAreaTest extends GWTTestCase {
   }
 
   /**
+   * Test that adding and removing an RTA before initialization completes
+   * doesn't throw an exception.
+   */
+  public void testAddRemoveBeforeInit() {
+    final RichTextArea richTextArea = new RichTextArea();
+    RootPanel.get().add(richTextArea);
+    RootPanel.get().remove(richTextArea);
+  }
+
+  /**
    * Test that a delayed set of HTML is reflected. Some platforms have timing
    * subtleties that need to be tested.
    */
@@ -61,6 +73,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     RootPanel.get().add(richTextArea);
     new Timer() {
+      @Override
       public void run() {
         richTextArea.setHTML("<b>foo</b>");
         assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
@@ -80,6 +93,7 @@ public class RichTextAreaTest extends GWTTestCase {
     richTextArea.setHTML("<b>foo</b>");
     assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
     new Timer() {
+      @Override
       public void run() {
         assertEquals("<b>foo</b>", richTextArea.getHTML().toLowerCase());
         finishTest();
@@ -96,6 +110,7 @@ public class RichTextAreaTest extends GWTTestCase {
     final RichTextArea richTextArea = new RichTextArea();
     RootPanel.get().add(richTextArea);
     new Timer() {
+      @Override
       public void run() {
         richTextArea.setText("foo");
         assertEquals("foo", richTextArea.getText());
@@ -115,6 +130,7 @@ public class RichTextAreaTest extends GWTTestCase {
     richTextArea.setText("foo");
     assertEquals("foo", richTextArea.getText());
     new Timer() {
+      @Override
       public void run() {
         assertEquals("foo", richTextArea.getText());
         finishTest();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,14 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
    * text area is fully initialized.  Becomes <code>null</code> after init.
    */
   private Element beforeInitPlaceholder = DOM.createDiv();
+
+  /**
+   * Set to true when the {@link RichTextArea} is attached to the page and
+   * {@link #initElement()} is called.  If the {@link RichTextArea} is detached
+   * before {@link #onElementInitialized()} is called, this will be set to
+   * false.  See issue 1897 for details.
+   */
+  protected boolean initializing;
 
   @Override
   public native Element createElement() /*-{
@@ -66,6 +74,7 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
     // the iframe becomes attached to the DOM. Any non-zero timeout will do
     // just fine.
     var _this = this;
+    _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::initializing = true;
     setTimeout(function() {
       // Turn on design mode.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem.contentWindow.document.designMode = 'On';
@@ -224,6 +233,14 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
   @Override
   public void uninitElement() {
+    // Issue 1897: initElement uses a timeout, so its possible to call this
+    // method after calling initElement, but before the event system is in
+    // place.
+    if (initializing) {
+      initializing = false;
+      return;
+    }
+
     // Unhook all custom event handlers when the element is detached.
     unhookEvents();
 
@@ -288,6 +305,13 @@ public abstract class RichTextAreaImplStandard extends RichTextAreaImpl implemen
 
   @Override
   protected void onElementInitialized() {
+    // Issue 1897: This method is called after a timeout, during which time the
+    // element might by detached.
+    if (!initializing) {
+      return;
+    }
+    initializing = false;
+
     super.onElementInitialized();
 
     // When the iframe is ready, ensure cached content is set.
