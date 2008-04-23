@@ -138,6 +138,6 @@ public class Issue2321 extends AbstractIssue {
 
   @Override
   public boolean hasCSS() {
-    return true;
+    return false;
   }
 }

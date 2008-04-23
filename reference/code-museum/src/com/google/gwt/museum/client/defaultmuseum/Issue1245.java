@@ -13,41 +13,45 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+ 
 package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.museum.client.common.AbstractIssue;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.StackPanel;
+import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Clicking on StackPanel fails to open stack.
+ * Ugly focus ring on Tree.
  */
-public class Issue2331 extends AbstractIssue {
+public class Issue1245 extends AbstractIssue {
+  Tree t = new Tree();
 
   @Override
   public Widget createIssue() {
-    StackPanel p = new StackPanel();
-    p.add(new Label("Content A"), "Header A");
-    p.add(new Label("Content B"), "Header B");
-    p.add(new Label("Content C"), "Header C");
-    return p;
+    t.addItem("a").addItem("a.a");
+    t.addItem("b");
+    t.addItem("c").addItem("c.a");
+
+    return t;
   }
 
   @Override
   public String getInstructions() {
-    return "Click on B";
+    return "No focus triangle should be visible";
   }
 
   @Override
   public String getSummary() {
-    return "Stack Panel does not response to switching stacks";
+    return "Ugly focus ring on Tree";
   }
 
   @Override
   public boolean hasCSS() {
     return false;
+  }
+
+  public void onAttatched() {
+    t.setFocus(true);
   }
 
 }

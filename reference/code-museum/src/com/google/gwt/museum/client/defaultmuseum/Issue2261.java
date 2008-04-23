@@ -17,32 +17,33 @@
 package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.museum.client.common.AbstractIssue;
+import com.google.gwt.user.client.ui.DisclosurePanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Clicking on StackPanel fails to open stack.
+ * Open disclosure panel causes flicker.
  */
-public class Issue2331 extends AbstractIssue {
+public class Issue2261 extends AbstractIssue {
 
   @Override
   public Widget createIssue() {
-    StackPanel p = new StackPanel();
-    p.add(new Label("Content A"), "Header A");
-    p.add(new Label("Content B"), "Header B");
-    p.add(new Label("Content C"), "Header C");
-    return p;
+    DisclosurePanel disclosurePanel = new DisclosurePanel("Disclosure Panel 1");
+    Label content = new Label("Some content<br/><br/><br/>");
+    content.setHeight("200px");
+    content.getElement().getStyle().setProperty("background", "blue");
+    disclosurePanel.setContent(content);
+    return disclosurePanel;
   }
 
   @Override
   public String getInstructions() {
-    return "Click on B";
+    return "Open disclosure panel and you should not see a flicker";
   }
 
   @Override
   public String getSummary() {
-    return "Stack Panel does not response to switching stacks";
+    return "DisclosurePanel flicker";
   }
 
   @Override
