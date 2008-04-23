@@ -116,6 +116,16 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
+  public int getDeclEnd() {
+    return baseType.getDeclEnd();
+  }
+
+  @Override
+  public int getDeclStart() {
+    return baseType.getDeclStart();
+  }
+
+  @Override
   public JClassType getEnclosingType() {
     // TODO this can be wrong if the enclosing type is a parameterized type. For
     // example, if a generic class has a non-static generic inner class.

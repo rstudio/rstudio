@@ -349,6 +349,10 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract JConstructor[] getConstructors();
 
+  public abstract int getDeclEnd();
+
+  public abstract int getDeclStart();
+
   public abstract JClassType getEnclosingType();
 
   public abstract JClassType getErasedType();

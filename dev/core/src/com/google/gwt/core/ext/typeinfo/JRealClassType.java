@@ -178,6 +178,14 @@ public class JRealClassType extends JClassType {
     return members.getConstructors();
   }
 
+  public int getDeclEnd() {
+    return declEnd;
+  }
+
+  public int getDeclStart() {
+    return declStart;
+  }
+
   public JClassType getEnclosingType() {
     return enclosingType;
   }

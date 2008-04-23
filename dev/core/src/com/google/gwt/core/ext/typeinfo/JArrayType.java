@@ -113,6 +113,16 @@ public class JArrayType extends JClassType {
   }
 
   @Override
+  public int getDeclEnd() {
+    return 0;
+  }
+
+  @Override
+  public int getDeclStart() {
+    return 0;
+  }
+
+  @Override
   public JClassType getEnclosingType() {
     return null;
   }
