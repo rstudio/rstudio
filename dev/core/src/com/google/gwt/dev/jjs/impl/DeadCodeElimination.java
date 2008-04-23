@@ -1497,13 +1497,15 @@ public class DeadCodeElimination {
         }
       }
 
+      /*
+       * Discard casts from byte or short to int, because such casts are always
+       * implicit anyway. Cannot coerce char since that would change the
+       * semantics of concat.
+       */
       if (type == program.getTypePrimitiveInt()) {
         JType expType = exp.getType();
         if ((expType == program.getTypePrimitiveShort())
-            || (expType == program.getTypePrimitiveChar())
             || (expType == program.getTypePrimitiveByte())) {
-          // Discard casts from char, byte, or short to int, because
-          // such casts re always implicit anyway.
           return exp;
         }
       }
@@ -1526,7 +1528,7 @@ public class DeadCodeElimination {
         return true;
       }
       if (isLiteralNegativeOne(rhs)) {
-        ctx.replaceMe(simplifyNegate(lhs));
+        ctx.replaceMe(simplifyNegate(simplifyCast(type, lhs)));
         return true;
       }
 
