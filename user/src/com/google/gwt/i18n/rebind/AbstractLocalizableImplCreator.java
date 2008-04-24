@@ -47,9 +47,9 @@ import java.util.MissingResourceException;
 abstract class AbstractLocalizableImplCreator extends
     AbstractGeneratorClassCreator {
 
-  static String generateConstantOrMessageClass(TreeLogger logger, TreeLogger deprecatedLogger,
-      GeneratorContext context, String locale, JClassType targetClass)
-      throws UnableToCompleteException {
+  static String generateConstantOrMessageClass(TreeLogger logger,
+      TreeLogger deprecatedLogger, GeneratorContext context, String locale,
+      JClassType targetClass) throws UnableToCompleteException {
     TypeOracle oracle = context.getTypeOracle();
     JClassType constantsClass;
     JClassType messagesClass;
@@ -88,12 +88,15 @@ abstract class AbstractLocalizableImplCreator extends
 
     AbstractResource resource = null;
     try {
-      resource = ResourceFactory.getBundle(logger, targetClass, locale, assignableToConstants);
+      resource = ResourceFactory.getBundle(logger, targetClass, locale,
+          assignableToConstants);
     } catch (MissingResourceException e) {
       throw error(
           logger,
           "Localization failed; there must be at least one properties file accessible through"
-              + " the classpath in package '" + packageName + "' whose base name is '"
+              + " the classpath in package '"
+              + packageName
+              + "' whose base name is '"
               + ResourceFactory.getResourceName(targetClass) + "'");
     } catch (IllegalArgumentException e) {
       // A bad key can generate an illegal argument exception.
@@ -118,15 +121,18 @@ abstract class AbstractLocalizableImplCreator extends
       // Now that we have all the information set up, process the class
       if (constantsWithLookupClass.isAssignableFrom(targetClass)) {
         ConstantsWithLookupImplCreator c = new ConstantsWithLookupImplCreator(
-            logger, deprecatedLogger, writer, targetClass, resource, context.getTypeOracle());
+            logger, deprecatedLogger, writer, targetClass, resource,
+            context.getTypeOracle());
         c.emitClass(logger, locale);
       } else if (constantsClass.isAssignableFrom(targetClass)) {
-        ConstantsImplCreator c = new ConstantsImplCreator(logger, deprecatedLogger, writer,
-            targetClass, resource, context.getTypeOracle());
+        ConstantsImplCreator c = new ConstantsImplCreator(logger,
+            deprecatedLogger, writer, targetClass, resource,
+            context.getTypeOracle());
         c.emitClass(logger, locale);
       } else {
-        MessagesImplCreator messages = new MessagesImplCreator(logger, deprecatedLogger, writer,
-            targetClass, resource, context.getTypeOracle());
+        MessagesImplCreator messages = new MessagesImplCreator(logger,
+            deprecatedLogger, writer, targetClass, resource,
+            context.getTypeOracle());
         messages.emitClass(logger, locale);
       }
       context.commit(logger, pw);
@@ -137,7 +143,7 @@ abstract class AbstractLocalizableImplCreator extends
       String path = generate.fileName();
       if (Generate.DEFAULT.equals(path)) {
         path = targetClass.getPackage().getName() + "."
-        + targetClass.getName().replace('.', '_');
+            + targetClass.getName().replace('.', '_');
       } else if (path.endsWith(File.pathSeparator)) {
         path = path + targetClass.getName().replace('.', '_');
       }
@@ -163,33 +169,38 @@ abstract class AbstractLocalizableImplCreator extends
                 genClassName).asSubclass(MessageCatalogFormat.class);
             msgWriter = msgFormatClass.newInstance();
           } catch (InstantiationException e) {
-            logger.log(TreeLogger.ERROR, "Error instantiating @Generate class " + genClassName, e);
+            logger.log(TreeLogger.ERROR, "Error instantiating @Generate class "
+                + genClassName, e);
             seenError = true;
             continue;
           } catch (IllegalAccessException e) {
-            logger.log(TreeLogger.ERROR, "@Generate class " + genClassName + " illegal access", e);
+            logger.log(TreeLogger.ERROR, "@Generate class " + genClassName
+                + " illegal access", e);
             seenError = true;
             continue;
           } catch (ClassNotFoundException e) {
-            logger.log(TreeLogger.ERROR, "@Generate class " + genClassName + " not found");
+            logger.log(TreeLogger.ERROR, "@Generate class " + genClassName
+                + " not found");
             seenError = true;
             continue;
           }
           // Make generator-specific changes to a temporary copy of the path.
           String genPath = path;
           if (genLocales.length != 1) {
-            // If the user explicitly specified only one locale, do not add the locale.
+            // If the user explicitly specified only one locale, do not add the
+            // locale.
             genPath += '_' + locale;
           }
           genPath += msgWriter.getExtension();
           OutputStream outStr = context.tryCreateResource(logger, genPath);
           if (outStr != null) {
-            TreeLogger branch = logger.branch(TreeLogger.INFO, "Generating " + genPath
-                + " from " + className + " for locale " + locale, null);
+            TreeLogger branch = logger.branch(TreeLogger.INFO, "Generating "
+                + genPath + " from " + className + " for locale " + locale,
+                null);
             PrintWriter out = null;
             try {
-              out = new PrintWriter(new BufferedWriter(
-                  new OutputStreamWriter(outStr, "UTF-8")), false);
+              out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(
+                  outStr, "UTF-8")), false);
             } catch (UnsupportedEncodingException e) {
               throw error(logger, e.getMessage());
             }
@@ -241,9 +252,9 @@ abstract class AbstractLocalizableImplCreator extends
    * @param targetClass current target
    * @param messageBindings backing resource
    */
-  public AbstractLocalizableImplCreator(TreeLogger logger, TreeLogger deprecatedLogger,
-      SourceWriter writer, JClassType targetClass, AbstractResource messageBindings,
-      boolean isConstants) {
+  public AbstractLocalizableImplCreator(TreeLogger logger,
+      TreeLogger deprecatedLogger, SourceWriter writer, JClassType targetClass,
+      AbstractResource messageBindings, boolean isConstants) {
     super(writer, targetClass);
     this.deprecatedLogger = deprecatedLogger;
     this.messageBindings = messageBindings;
@@ -279,13 +290,13 @@ abstract class AbstractLocalizableImplCreator extends
    * @param locale locale to generate
    * @throws UnableToCompleteException
    */
-  protected void delegateToCreator(TreeLogger logger, JMethod method, String locale)
-      throws UnableToCompleteException {
+  protected void delegateToCreator(TreeLogger logger, JMethod method,
+      String locale) throws UnableToCompleteException {
     AbstractMethodCreator methodCreator = getMethodCreator(logger, method);
     String key = getKey(logger, method);
     if (key == null) {
-      logger.log(TreeLogger.ERROR, "Unable to get or compute key for method " + method.getName(),
-          null);
+      logger.log(TreeLogger.ERROR, "Unable to get or compute key for method "
+          + method.getName(), null);
       throw new UnableToCompleteException();
     }
     methodCreator.createMethodFor(logger, method, key, messageBindings, locale);
@@ -296,8 +307,8 @@ abstract class AbstractLocalizableImplCreator extends
    * 
    * @param logger TreeLogger instance for logging
    * @param method method to get key for
-   * @return the key to use for resource lookups or null if unable to get
-   *     or compute the key
+   * @return the key to use for resource lookups or null if unable to get or
+   *         compute the key
    */
   protected String getKey(TreeLogger logger, JMethod method) {
     Key key = method.getAnnotation(Key.class);
@@ -317,7 +328,7 @@ abstract class AbstractLocalizableImplCreator extends
     }
     return AnnotationsResource.getKey(logger, keyGenerator, method, isConstants);
   }
-  
+
   /**
    * Issue a warning about deprecated metadata.
    * 
