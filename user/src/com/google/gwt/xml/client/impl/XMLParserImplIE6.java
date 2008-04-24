@@ -24,7 +24,7 @@ class XMLParserImplIE6 extends XMLParserImpl {
 
   @Override
   protected native JavaScriptObject createDocumentImpl() /*-{
-    var doc = new ActiveXObject("MSXML2.DOMDocument");
+    var doc = new ActiveXObject("Microsoft.DOMDocument");
     doc.preserveWhiteSpace = true;
     doc.setProperty("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");
     doc.setProperty("SelectionLanguage", "XPath");

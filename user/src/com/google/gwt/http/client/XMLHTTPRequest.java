@@ -23,20 +23,30 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 final class XMLHTTPRequest {
 
+  /*
+   * NOTE: Testing discovered that for some bizarre reason, on Mozilla, the
+   * JavaScript <code>XmlHttpRequest.onreadystatechange</code> handler
+   * function maybe still be called after it is deleted. The theory is that the
+   * callback is cached somewhere. Setting it to null or an empty function does
+   * seem to work properly, though.
+   * 
+   * On IE, there are two problems: Setting onreadystatechange to null (as
+   * opposed to an empty function) sometimes throws an exception. With
+   * particular (rare) versions of jscript.dll, setting onreadystatechange from
+   * within onreadystatechange causes a crash. Setting it from within a timeout
+   * fixes this bug (see issue 1610).
+   * 
+   * End result: *always* set onreadystatechange to an empty function (never to
+   * null). Never set onreadystatechange from within onreadystatechange (always
+   * in a setTimeout()).
+   */
+
   public static final int UNITIALIZED = 0;
   public static final int OPEN = 1;
   public static final int SENT = 2;
   public static final int RECEIVING = 3;
   public static final int LOADED = 4;
 
-  /*
-   * NOTE: Testing discovered that for some bizarre reason, on Mozilla, the
-   * JavaScript <code>XmlHttpRequest.onreadystatechange</code> handler function 
-   * maybe still be called after it is deleted. The theory is that the callback 
-   * is cached somewhere.  Setting the handler to null has the desired effect on 
-   * Mozilla but it causes IE to crash during the assignment. The solution is to
-   * set it to an empty function.
-   */
   static native void abort(JavaScriptObject xmlHttpRequest) /*-{
     xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
     xmlHttpRequest.abort();
@@ -236,7 +246,9 @@ final class XMLHTTPRequest {
       String requestData, RequestCallback callback) /*-{
     xmlHttpRequest.onreadystatechange = function() {
       if (xmlHttpRequest.readyState == @com.google.gwt.http.client.XMLHTTPRequest::LOADED) {
-        xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+      	$wnd.setTimeout(function() {
+          xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+      	}, 0);
         httpRequest.@com.google.gwt.http.client.Request::fireOnResponseReceived(Lcom/google/gwt/http/client/RequestCallback;)(callback);
       }
     };
