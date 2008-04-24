@@ -246,9 +246,9 @@ final class XMLHTTPRequest {
       String requestData, RequestCallback callback) /*-{
     xmlHttpRequest.onreadystatechange = function() {
       if (xmlHttpRequest.readyState == @com.google.gwt.http.client.XMLHTTPRequest::LOADED) {
-      	$wnd.setTimeout(function() {
+        $wnd.setTimeout(function() {
           xmlHttpRequest.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-      	}, 0);
+        }, 0);
         httpRequest.@com.google.gwt.http.client.Request::fireOnResponseReceived(Lcom/google/gwt/http/client/RequestCallback;)(callback);
       }
     };

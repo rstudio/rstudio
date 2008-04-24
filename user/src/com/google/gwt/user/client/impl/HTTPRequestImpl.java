@@ -68,9 +68,9 @@ public class HTTPRequestImpl {
       xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4) {
-        	$wnd.setTimeout(function() {
+          $wnd.setTimeout(function() {
             xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-        	}, 0);
+          }, 0);
           handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText || "");
         }
       };
@@ -90,9 +90,9 @@ public class HTTPRequestImpl {
       xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4) {
-        	$wnd.setTimeout(function() {
+          $wnd.setTimeout(function() {
             xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
-        	}, 0);
+          }, 0);
           handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText || "");
         }
       };
