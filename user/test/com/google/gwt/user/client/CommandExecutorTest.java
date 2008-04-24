@@ -329,11 +329,11 @@ public class CommandExecutorTest extends GWTTestCase {
       private int executionCount = 0;
 
       public boolean execute() {
-        if (++executionCount >= 10) {
+        if (++executionCount > 10) {
           fail("IncrementalCommand was fired more than 10 times");
         }
 
-        if (executionCount == 9) {
+        if (executionCount == 10) {
           finishTest();
         }
 
