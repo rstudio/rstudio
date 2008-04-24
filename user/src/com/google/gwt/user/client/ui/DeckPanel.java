@@ -90,6 +90,21 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
 
     @Override
     public void onStart() {
+      // Figure out if the deck panel has a fixed height
+      com.google.gwt.dom.client.Element deckElem = container1.getParentElement();
+      int deckHeight = deckElem.getOffsetHeight();
+      if (growing) {
+        fixedHeight = container2.getOffsetHeight();
+        container2.getStyle().setPropertyPx("height", fixedHeight - 1);
+      } else {
+        fixedHeight = container1.getOffsetHeight();
+        container1.getStyle().setPropertyPx("height", fixedHeight - 1);
+      }
+      if (deckElem.getOffsetHeight() != deckHeight) {
+        fixedHeight = -1;
+      }
+
+      // Start the animation
       onUpdate(0.0);
       UIObject.setVisible(container1, true);
       UIObject.setVisible(container2, true);
@@ -112,6 +127,16 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       } else {
         height1 = (int) (progress * fixedHeight);
         height2 = fixedHeight - height1;
+      }
+
+      // Issue 2339: If the height is 0px, IE7 will display the entire content
+      // widget instead of hiding it completely.
+      if (height1 == 0) {
+        height1 = 1;
+        height2 = Math.max(1, height2 - 1);
+      } else if (height2 == 0) {
+        height2 = 1;
+        height1 = Math.max(1, height1 - 1);
       }
       DOM.setStyleAttribute(container1, "height", height1 + "px");
       DOM.setStyleAttribute(container2, "height", height2 + "px");
@@ -153,12 +178,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
         container1 = newContainer;
         container2 = oldContainer;
         growing = true;
-      }
-
-      // Figure out if we are in a fixed height situation
-      fixedHeight = DOM.getElementPropertyInt(oldContainer, "offsetHeight");
-      if (fixedHeight == oldWidget.getOffsetHeight()) {
-        fixedHeight = -1;
       }
 
       // Start the animation
@@ -315,7 +334,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     DOM.setStyleAttribute(container, "height", "100%");
     w.setSize("100%", "100%");
   }
-  
+
   /**
    * Reset the dimensions of the widget when it is removed.
    */
