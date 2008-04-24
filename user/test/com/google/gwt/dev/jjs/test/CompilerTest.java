@@ -166,6 +166,19 @@ public class CompilerTest extends GWTTestCase {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
+  public void testArrayAccessSideEffect() {
+    int index = 1;
+    int[] array = null;
+    try {
+      // index should be set before exception is thrown
+      array[index = 2]++;
+      fail("null reference expected");
+    } catch (Exception e) {
+      // expected
+    }
+    assertEquals(2, index);
+  }
+
   public void testArrayStore() {
     Object[][] oaa;
     oaa = new Object[4][4];
