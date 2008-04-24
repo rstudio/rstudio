@@ -1,0 +1,1125 @@
+/**
+ * Applied to the entire page.
+ */
+body {
+  color: black;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: small;
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+  direction: ltr;
+}
+
+table td, pre {
+  font-size: small;
+}
+
+a, a:visited, a:hover {
+  color: #0000AA;
+}
+
+iframe {
+	border-top: 2px solid #666;
+  border-left: 2px solid #666;
+  border-right: 2px solid #bbb;
+  border-bottom: 2px solid #bbb;
+}
+
+/**
+ * Applied to buttons.
+ */
+.gwt-Button {
+}
+
+.gwt-Button:active {
+}
+
+.gwt-Button[disabled] {
+  color: #888;
+}
+
+/**
+ * Applied to the checkbox and text next to the checkbox.
+ */
+.gwt-CheckBox {
+}
+
+.gwt-CheckBox-disabled {
+  color: #888;
+}
+
+/**
+ * Applied to the decorator panel.
+ */
+.gwt-DecoratorPanel .topCenter,
+.gwt-DecoratorPanel .bottomCenter {
+  background: url(images/hborder.png) repeat-x;
+}
+.gwt-DecoratorPanel .middleLeft,
+.gwt-DecoratorPanel .middleRight {
+  background: url(images/vborder.png) repeat-y;
+}
+.gwt-DecoratorPanel .topLeftInner,
+.gwt-DecoratorPanel .topRightInner,
+.gwt-DecoratorPanel .bottomLeftInner,
+.gwt-DecoratorPanel .bottomRightInner {
+  width: 5px;
+  height: 5px;
+  zoom: 1;
+}
+html>body .gwt-DecoratorPanel .topLeft {
+  background: url(images/corner.png) no-repeat 0px 0px;
+}
+html>body .gwt-DecoratorPanel .topRight {
+  background: url(images/corner.png) no-repeat -5px 0px;
+}
+html>body .gwt-DecoratorPanel .bottomLeft {
+  background: url(images/corner.png) no-repeat 0px -5px;
+}
+html>body .gwt-DecoratorPanel .bottomRight {
+  background: url(images/corner.png) no-repeat -5px -5px;
+}
+* html .gwt-DecoratorPanel .topLeftInner {
+  width: 5px;
+  height: 5px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratorPanel .topRightInner {
+  width: 10px;
+  height: 5px;
+  margin-left: -5px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratorPanel .bottomLeftInner {
+  width: 5px;
+  height: 10px;
+  margin-left: 0px;
+  margin-top: -5px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratorPanel .bottomRightInner {
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  margin-top: -5px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+
+/**
+ * Applied to the dialog box.
+ */
+.gwt-DialogBox .Caption {
+  background: #93c2f1 url(images/bg_listgradient.png) repeat-x;
+  padding: 4px 4px 4px 8px;
+  cursor: default;
+  border-bottom: 1px solid #bbbbbb;
+}
+.gwt-DialogBox .content {
+}
+.gwt-DialogBox .middleCenter {
+  padding: 3px;
+  background: white;
+}
+html>body .gwt-DialogBox .bottomCenter {
+  background: url(images/hborder.png) repeat-x;
+}
+* html .gwt-DialogBox .bottomCenter {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
+}
+.gwt-DialogBox .middleLeft {
+  background: url(images/vborder.png) repeat-y;
+}
+html>body .gwt-DialogBox .middleRight {
+  background: url(images/vborder.png) repeat-y;
+}
+* html .gwt-DialogBox .middleRight {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
+}
+.gwt-DialogBox .topLeft,
+.gwt-DialogBox .topRight,
+.gwt-DialogBox .bottomLeft,
+.gwt-DialogBox .bottomRight {
+  zoom: 1;
+}
+html>body .gwt-DialogBox .topLeft {
+  width: 5px;
+  background: url(images/corner.png) no-repeat -13px 0px;
+}
+html>body .gwt-DialogBox .topRight {
+  width: 8px;
+  background: url(images/corner.png) no-repeat -18px 0px;
+}
+html>body .gwt-DialogBox .bottomLeft {
+  width: 5px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat 0px -15px;
+}
+html>body .gwt-DialogBox .bottomRight {
+  width: 8px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat -5px -15px;
+}
+* html .gwt-DialogBox .topLeft {
+  width: 5px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/corner_dialog_topleft.png',sizingMethod='crop');
+}
+* html .gwt-DialogBox .topRight {
+  width: 8px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/corner_dialog_topright.png',sizingMethod='crop');
+}
+* html .gwt-DialogBox .bottomLeftInner {
+  width: 5px;
+  height: 23px;
+  margin-top: -15px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DialogBox .bottomRightInner {
+  width: 13px;
+  height: 23px;
+  margin-left: -5px;
+  margin-top: -15px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+
+/**
+ * Applied to the disclosure panel, which shows or hides content when the user
+ * toggles the header.
+ */
+.gwt-DisclosurePanel {
+}
+
+.gwt-DisclosurePanel a {
+  text-decoration: none;  /* Remove underline from header */ 
+}
+
+.gwt-DisclosurePanel-open {
+}
+
+.gwt-DisclosurePanel-closed {
+}
+
+.gwt-DisclosurePanel .header {
+}
+
+.gwt-DisclosurePanel .content {
+  border-left: 3px solid #e8eef7;
+  padding: 4px 0px 4px 8px;
+  margin-left: 6px;
+}
+
+/**
+ * Applied to the File Upload.
+ */
+.gwt-FileUpload {
+}
+
+/**
+ * Applied to split panels.
+ */
+.gwt-HorizontalSplitPanel {
+}
+.gwt-HorizontalSplitPanel .hsplitter {
+  cursor: move;
+  border: 0px; 
+  background: #91c0ef url(images/vborder.png) -9px 0px repeat-y;
+}
+.gwt-VerticalSplitPanel {
+}
+.gwt-VerticalSplitPanel .vsplitter {
+  cursor: move;
+  border: 0px; 
+  background: #91c0ef url(images/hborder.png) 0px -9px repeat-x;
+}
+
+/**
+ * Applied to all HTML label elements.
+ */
+.gwt-HTML {
+}
+
+/**
+ * Applied to all Hyperlinks.
+ */
+.gwt-Hyperlink {
+}
+
+/**
+ * Applied to all Images
+ */
+.gwt-Image {
+}
+
+/**
+ * Applied to all Label elements.
+ */
+.gwt-Label {
+}
+
+/**
+ * Applied to list boxes.
+ */
+.gwt-ListBox {
+}
+
+/**
+ * Applied to the menu bar.
+ */
+.gwt-MenuBar {
+  cursor: default;
+}
+
+.gwt-MenuBar .gwt-MenuItem {
+  cursor: default;
+}
+
+.gwt-MenuBar .gwt-MenuItem-selected {
+  background: #E0EDFE;
+}
+
+.gwt-MenuBar-horizontal {
+  background: #e3e8f3 url(images/bg_headergradient.png) repeat-x;
+  border: 1px solid #BBBBBB;
+}
+
+.gwt-MenuBar-horizontal .gwt-MenuItem {
+  padding: 0px 10px;
+  vertical-align: bottom;
+  color: #666666;
+  font-weight: bold;
+}
+
+.gwt-MenuBar-horizontal .gwt-MenuItemSeparator {
+  width: 1px;
+  padding: 0px;
+  margin: 0px;
+  border: 0px;
+  border-left: 1px solid #888888;
+  background: white;
+}
+
+.gwt-MenuBar-horizontal .gwt-MenuItemSeparator .content {
+  width: 1px;
+  background: white; 
+}
+
+.gwt-MenuBar-vertical {
+  margin-top: 0px;
+  margin-left: 0px;
+  background: white;
+}
+
+.gwt-MenuBar-vertical table {
+  border-collapse: collapse;
+}
+
+.gwt-MenuBar-vertical .gwt-MenuItem {
+  padding: 4px 14px 4px 1px;
+}
+
+.gwt-MenuBar-vertical .gwt-MenuItemSeparator {
+  padding: 2px 0px;
+}
+
+.gwt-MenuBar-vertical .gwt-MenuItemSeparator .content {
+  height: 1px;
+  padding: 0px;
+  border: 0px;
+  border-top: 1px solid #777777;
+  background: #ddddee;
+  overflow: hidden;
+}
+.gwt-MenuBar-vertical .subMenuIcon {
+  padding-right: 4px;
+}
+.gwt-MenuBar-vertical .subMenuIcon-selected {
+  background: #E0EDFE;
+}
+.gwt-MenuBarPopup {
+  margin: 0px 0px 0px 3px;
+}
+.gwt-MenuBarPopup .topCenter {
+  background: url(images/hborder.png) 0px -17px repeat-x;
+}
+html>body .gwt-MenuBarPopup .bottomCenter {
+  background: url(images/hborder.png) 0px -18px repeat-x;
+}
+* html .gwt-MenuBarPopup .bottomCenter {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/hborder_gray_shadow.png',sizingMethod='scale');
+}
+.gwt-MenuBarPopup .middleLeft {
+  background: url(images/vborder.png) -17px 0px repeat-y;
+}
+html>body .gwt-MenuBarPopup .middleRight {
+  background: url(images/vborder.png) -18px 0px repeat-y;
+}
+* html .gwt-MenuBarPopup .middleRight {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/vborder_gray_shadow.png',sizingMethod='scale');
+}
+html>body .gwt-MenuBarPopup .topLeft {
+  width: 5px;
+  height: 5px;
+  background: url(images/corner.png) no-repeat 0px -36px;
+}
+html>body .gwt-MenuBarPopup .topRight {
+  width: 8px;
+  height: 5px;
+  background: url(images/corner.png) no-repeat -5px -36px;
+}
+html>body .gwt-MenuBarPopup .bottomLeft {
+  width: 5px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat 0px -41px;
+}
+html>body .gwt-MenuBarPopup .bottomRight {
+  width: 8px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat -5px -41px;
+}
+* html .gwt-MenuBarPopup .topLeftInner {
+  width: 5px;
+  height: 41px;
+  margin-top: -36px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-MenuBarPopup .topRightInner {
+  width: 13px;
+  height: 41px;
+  margin-left: -5px;
+  margin-top: -36px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-MenuBarPopup .bottomLeftInner {
+  width: 5px;
+  height: 49px;
+  margin-top: -41px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-MenuBarPopup .bottomRightInner {
+  width: 13px;
+  height: 49px;
+  margin-left: -5px;
+  margin-top: -41px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+
+/**
+ * Applied to the password input box.
+ */
+.gwt-PasswordTextBox {
+  padding: 2px;
+}
+.gwt-PasswordTextBox-readonly {
+  color: #888;
+}
+
+/**
+ * Applied to the decorator panel.
+ */
+.gwt-PopupPanel .content {
+}
+.gwt-PopupPanel .middleCenter {
+  padding: 3px;
+  background: white;
+}
+.gwt-PopupPanel .topCenter {
+  background: url(images/hborder.png) repeat-x;
+}
+html>body .gwt-PopupPanel .bottomCenter {
+  background: url(images/hborder.png) repeat-x;
+}
+* html .gwt-PopupPanel .bottomCenter {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
+}
+.gwt-PopupPanel .middleLeft {
+  background: url(images/vborder.png) repeat-y;
+}
+html>body .gwt-PopupPanel .middleRight {
+  background: url(images/vborder.png) repeat-y;
+}
+* html .gwt-PopupPanel .middleRight {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
+}
+.gwt-PopupPanel .topLeft,
+.gwt-PopupPanel .topRight,
+.gwt-PopupPanel .bottomLeft,
+.gwt-PopupPanel .bottomRight {
+  zoom: 1;
+}
+html>body .gwt-PopupPanel .topLeft {
+  width: 5px;
+  height: 5px;
+  background: url(images/corner.png) no-repeat 0px -10px;
+}
+html>body .gwt-PopupPanel .topRight {
+  width: 8px;
+  height: 5px;
+  background: url(images/corner.png) no-repeat -5px -10px;
+}
+html>body .gwt-PopupPanel .bottomLeft {
+  width: 5px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat 0px -15px;
+}
+html>body .gwt-PopupPanel .bottomRight {
+  width: 8px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat -5px -15px;
+}
+* html .gwt-PopupPanel .topLeftInner {
+  width: 5px;
+  height: 15px;
+  margin-top: -10px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-PopupPanel .topRightInner {
+  width: 13px;
+  height: 15px;
+  margin-left: -5px;
+  margin-top: -10px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-PopupPanel .bottomLeftInner {
+  width: 5px;
+  height: 23px;
+  margin-top: -15px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-PopupPanel .bottomRightInner {
+  width: 13px;
+  height: 23px;
+  margin-left: -5px;
+  margin-top: -15px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+
+/**
+ * Applied to the push button, a customizable button that can be pressed
+ * and released.
+ */
+.gwt-PushButton-up {
+  padding: 2px;
+  background-color: #efebe7;
+  border: 2px solid #faf9f7;
+  border-right: 2px solid #848280;
+  border-bottom: 2px solid #848280;
+  cursor: pointer;
+  cursor: hand;
+}
+  
+.gwt-PushButton-up-hovering {
+  padding: 2px;
+  background-color: #efebe7;
+  border: 2px solid #faf9f7;
+  border-right: 2px solid #848280;
+  border-bottom: 2px solid #848280;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-PushButton-up-disabled {
+  padding: 2px;
+  background-color: #efebe7;
+  border: 2px solid #e7e4e0;
+  border-right: 2px solid #625b54;
+  border-bottom: 2px solid #625b54;
+  cursor: default;
+  opacity: 0.5;
+  filter: alpha(opacity=30);
+  zoom: 1;
+}
+
+.gwt-PushButton-down {
+  padding: 2px 1px 2px 3px;
+  background-color: #efebe7;
+  border: 2px solid #848280;
+  border-right: 2px solid #faf9f7;
+  border-bottom: 2px solid #faf9f7;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-PushButton-down-hovering {
+  padding: 2px 1px 2px 3px;
+  background-color: #efebe7;
+  border: 2px solid #848280;
+  border-right: 2px solid #faf9f7;
+  border-bottom: 2px solid #faf9f7;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-PushButton-down-disabled {
+  padding: 2px 1px 2px 3px;
+  background-color: #efebe7;
+  border: 2px solid #e7e4e0;
+  border-right: 2px solid #625b54;
+  border-bottom: 2px solid #625b54;
+  cursor: default;
+  opacity: 0.5;
+  filter: alpha(opacity=30);
+  zoom: 1;  
+}
+
+.gwt-PushButton-down-disabled .gwt-Image {
+  filter: alpha(opacity=30);
+}
+
+/**
+ * Applied to radio buttons and the text next to them.
+ */
+.gwt-RadioButton {
+  padding: 4px 4px 3px 3px;
+}
+
+.gwt-RadioButton-disabled {
+  color: #888;
+}
+
+/**
+ * Applied to the Rich Text Area.
+ */
+.gwt-RichTextArea {
+}
+
+.hasRichTextToolbar {
+  border: 0px;
+}
+
+.gwt-RichTextToolbar {
+  background: #e3e8f3 url(images/bg_headergradient.png) repeat-x;
+  border-bottom: 1px solid #BBBBBB;
+  padding: 3px;
+  margin: 0px;
+}
+
+.gwt-RichTextToolbar .gwt-PushButton-up {
+  padding: 0px 1px 0px 0px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  border-width: 1px; 
+}
+
+.gwt-RichTextToolbar .gwt-PushButton-up-hovering {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 1px 0px 0px;
+  border-width: 1px; 
+}
+
+.gwt-RichTextToolbar .gwt-PushButton-down {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 0px 0px 1px;
+  border-width: 1px; 
+}
+
+.gwt-RichTextToolbar .gwt-PushButton-down-hovering {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 0px 0px 1px;
+  border-width: 1px; 
+}
+
+.gwt-RichTextToolbar .gwt-ToggleButton-up {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 1px 0px 0px;
+  border-width: 1px;
+}
+
+.gwt-RichTextToolbar .gwt-ToggleButton-up-hovering {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 1px 0px 0px;
+  border-width: 1px;
+}
+
+.gwt-RichTextToolbar .gwt-ToggleButton-down {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 0px 0px 1px;
+  border-width: 1px;
+}
+
+.gwt-RichTextToolbar .gwt-ToggleButton-down-hovering {
+  margin-right: 4px;
+  margin-bottom: 4px;
+  padding: 0px 0px 0px 1px;
+  border-width: 1px;
+}
+
+/**
+ * Applied to the stack panel, a vertical menu widget that reveals one
+ * category at a time.
+ */
+.gwt-StackPanel {
+  border-bottom: 1px solid #bbbbbb;
+}
+.gwt-StackPanel .gwt-StackPanelContent {
+  border: 1px solid #bbbbbb;
+  border-bottom: 0px;
+  background: white;
+  padding: 2px 2px 10px 5px;
+}
+.gwt-StackPanelItem {
+  cursor: pointer;
+  cursor: hand;
+}
+.gwt-StackPanelItem .topLeft,
+.gwt-StackPanelItem .topRight {
+  height: 6px;
+  width: 6px;
+  zoom: 1;
+}
+html>body .gwt-StackPanelItem .topLeft {
+  background: #d3def6 url(images/corner.png) no-repeat 0px -49px;
+  border-left: 1px solid #bbbbbb;
+}
+html>body .gwt-StackPanelItem .topRight {
+  background: #d3def6 url(images/corner.png) no-repeat -6px -49px;
+  border-right: 1px solid #bbbbbb;
+}
+.gwt-StackPanelItem .topLeftInner,
+.gwt-StackPanelItem .topRightInner {
+  width: 1px;
+  height: 1px;
+}
+* html .gwt-StackPanelItem .topLeftInner {
+  width: 6px;
+  height: 55px;
+  margin-top: -49px;
+  overflow: hidden;
+  border-left: 1px solid #bbbbbb;
+  background-color: #d3def6;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-StackPanelItem .topRightInner {
+  width: 12px;
+  height: 55px;
+  margin-top: -49px;
+  margin-left: -6px;
+  overflow: hidden;
+  border-right: 1px solid #bbbbbb;
+  background-color: #d3def6;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+.gwt-StackPanelItem .topCenter {
+  background: url(images/hborder.png) 0px -26px repeat-x;
+}
+.gwt-StackPanelItem .middleLeft {
+  background: #d3def6 url(images/bg_stackpanel.png) repeat-x;
+  border-left: 1px solid #bbbbbb;
+}
+.gwt-StackPanelItem .middleLeftInner,
+.gwt-StackPanelItem .middleRightInner {
+  width: 1px;
+  height: 1px;
+}
+.gwt-StackPanelItem .middleRight {
+  background: #d3def6 url(images/bg_stackpanel.png) repeat-x;
+  border-right: 1px solid #bbbbbb;
+}
+.gwt-StackPanelItem .middleCenter {
+  font-weight: bold;
+  font-size: 1.3em;
+  background: #d3def6 url(images/bg_stackpanel.png) repeat-x;
+}
+html>body .gwt-StackPanelItem-first .topRight,
+html>body .gwt-StackPanelItem-first .topLeft {
+  border: 0px;
+  background-color: white;
+}
+html>body .gwt-StackPanelItem-below-selected .topLeft,
+html>body .gwt-StackPanelItem-below-selected .topRight {
+  background-color: white;
+}
+* html .gwt-StackPanelItem-first .topLeftInner,
+* html .gwt-StackPanelItem-first .topRightInner {
+  border: 0px;
+  background-color: white;
+}
+* html .gwt-StackPanelItem-first .topLeftInner {
+  padding-left: 1px;
+}
+* html .gwt-StackPanelItem-below-selected .topLeftInner,
+* html .gwt-StackPanelItem-below-selected .topRightInner {
+  background-color: white;
+}
+
+/**
+ * Applied to the suggest box.
+ */
+.gwt-SuggestBox {
+  padding: 2px;
+}
+.gwt-SuggestBoxPopup {
+  margin-left: 3px;
+}
+.gwt-SuggestBoxPopup .item {
+  padding: 2px 6px;
+  color: #424242;
+  cursor: default;
+}
+.gwt-SuggestBoxPopup .item-selected {
+  background: #b7d6f6;
+}
+.gwt-SuggestBoxPopup .middleCenter {
+  background: white;
+}
+.gwt-SuggestBoxPopup .topCenter {
+  background: url(images/hborder.png) repeat-x;
+}
+html>body .gwt-SuggestBoxPopup .bottomCenter {
+  background: url(images/hborder.png) repeat-x;
+}
+* html .gwt-SuggestBoxPopup .bottomCenter {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
+}
+.gwt-SuggestBoxPopup .middleLeft {
+  background: url(images/vborder.png) repeat-y;
+}
+html>body .gwt-SuggestBoxPopup .middleRight {
+  background: url(images/vborder.png) repeat-y;
+}
+* html .gwt-SuggestBoxPopup .middleRight {
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
+}
+html>body .gwt-SuggestBoxPopup .topLeft {
+  width: 5px;
+  height: 5px;
+  background: url(images/corner.png) no-repeat 0px -23px;
+}
+html>body .gwt-SuggestBoxPopup .topRight {
+  width: 8px;
+  height: 5px;
+  background: url(images/corner.png) no-repeat -5px -23px;
+}
+html>body .gwt-SuggestBoxPopup .bottomLeft {
+  width: 5px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat 0px -28px;
+}
+html>body .gwt-SuggestBoxPopup .bottomRight {
+  width: 8px;
+  height: 8px;
+  background: url(images/corner.png) no-repeat -5px -28px;
+}
+* html .gwt-SuggestBoxPopup .topLeftInner {
+  width: 5px;
+  height: 28px;
+  margin-top: -23px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-SuggestBoxPopup .topRightInner {
+  width: 13px;
+  height: 28px;
+  margin-left: -5px;
+  margin-top: -23px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-SuggestBoxPopup .bottomLeftInner {
+  width: 5px;
+  height: 36px;
+  margin-top: -28px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-SuggestBoxPopup .bottomRightInner {
+  width: 13px;
+  height: 36px;
+  margin-left: -5px;
+  margin-top: -28px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+
+/**
+ * Applied to the tab panel.  The tab panel provides CSS access to
+ * the tab bar element and the table cell that wraps the tab bar element,
+ * which allows for rounded edges via the sliding window method.
+ */ 
+.gwt-TabBar {
+}
+.gwt-TabBar .gwt-TabBarFirst {
+  width: 5px;  /* first tab distance from the left */
+}
+.gwt-TabBar .gwt-TabBarRest {
+}
+.gwt-TabBar .gwt-TabBarItem {
+  border-collapse: collapse;
+  margin-left: 6px;
+}
+.gwt-TabBar .gwt-TabBarItem .topCenter {
+  padding: 0px;
+  background: url(images/hborder.png) 0px -32px repeat-x;
+}
+.gwt-TabBar .gwt-TabBarItem .topLeft,
+.gwt-TabBar .gwt-TabBarItem .topRight {
+  padding: 0px;
+  zoom: 1;
+}
+.gwt-TabBar .gwt-TabBarItem .topLeftInner,
+.gwt-TabBar .gwt-TabBarItem .topRightInner {
+  width: 6px;
+  height: 6px;
+}
+html>body .gwt-TabBar .gwt-TabBarItem .topLeft {
+  background: url(images/corner.png) no-repeat 0px -55px;
+}
+html>body .gwt-TabBar .gwt-TabBarItem .topRight {
+  background: url(images/corner.png) no-repeat -6px -55px;
+}
+* html .gwt-TabBar .gwt-TabBarItem .topLeftInner {
+  width: 5px;
+  height: 61px;
+  margin-top: -55px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-TabBar .gwt-TabBarItem .topRightInner {
+  width: 12px;
+  height: 61px;
+  margin-top: -55px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+.gwt-TabBar .gwt-TabBarItem .middleLeft,
+.gwt-TabBar .gwt-TabBarItem .middleRight {
+  width: 6px;
+  padding: 0px;
+  background: #e4e9f3 url(images/bg_tab.png) repeat-x;
+}
+.gwt-StackPanelItem .middleLeftInner,
+.gwt-StackPanelItem .middleRightInner {
+  width: 1px;
+  height: 1px;
+}
+.gwt-TabBar .gwt-TabBarItem .middleCenter {
+  padding: 0px 4px 2px 4px;
+  cursor: pointer;
+  cursor: hand;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+  background: #e4e9f3 url(images/bg_tab.png) repeat-x;
+}
+.gwt-TabBar .gwt-TabBarItem .topCenter {
+  padding: 0px;
+  background: url(images/hborder.png) 0px -32px repeat-x;
+}
+.gwt-TabBar .gwt-TabBarItem .topLeft,
+.gwt-TabBar .gwt-TabBarItem .topRight {
+  padding: 0px;
+  zoom: 1;
+}
+.gwt-TabBar .gwt-TabBarItem .topLeftInner,
+.gwt-TabBar .gwt-TabBarItem .topRightInner {
+  width: 6px;
+  height: 6px;
+}
+html>body .gwt-TabBar .gwt-TabBarItem .topLeft {
+  background: url(images/corner.png) no-repeat 0px -55px;
+}
+html>body .gwt-TabBar .gwt-TabBarItem .topRight {
+  background: url(images/corner.png) no-repeat -6px -55px;
+}
+* html .gwt-TabBar .gwt-TabBarItem .topLeftInner {
+  width: 5px;
+  height: 61px;
+  margin-top: -55px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-TabBar .gwt-TabBarItem .topRightInner {
+  width: 12px;
+  height: 61px;
+  margin-top: -55px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+.gwt-TabBar .gwt-TabBarItem .middleLeft,
+.gwt-TabBar .gwt-TabBarItem .middleRight {
+  width: 6px;
+  padding: 0px;
+  background: #e4e9f3 url(images/bg_tab.png) repeat-x;
+}
+.gwt-StackPanelItem .middleLeftInner,
+.gwt-StackPanelItem .middleRightInner {
+  width: 1px;
+  height: 1px;
+}
+.gwt-TabBar .gwt-TabBarItem .middleCenter {
+  padding: 0px 4px 2px 4px;
+  cursor: pointer;
+  cursor: hand;
+  font-weight: bold;
+  text-align: center;
+  background: #e4e9f3 url(images/bg_tab.png) repeat-x;
+}
+.gwt-TabBar .gwt-TabBarItem-selected .topCenter {
+  background: url(images/hborder.png) 0px -38px repeat-x;
+}
+html>body .gwt-TabBar .gwt-TabBarItem-selected .topLeft {
+  background-position: 0px -61px;
+}
+html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
+  background-position: -6px -61px;
+}
+* html .gwt-TabBar .gwt-TabBarItem-selected .topLeftInner {
+  width: 5px;
+  height: 67px;
+  margin-top: -61px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-TabBar .gwt-TabBarItem-selected .topRightInner {
+  width: 12px;
+  height: 67px;
+  margin-top: -61px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='issues/images/corner.png',sizingMethod='crop');
+}
+.gwt-TabBar .gwt-TabBarItem-selected .middleLeft,
+.gwt-TabBar .gwt-TabBarItem-selected .middleRight {
+  background: #92c1f0 url(images/bg_tab_selected.png) repeat-x;
+}
+.gwt-TabBar .gwt-TabBarItem-selected .middleCenter {
+  cursor: default;
+  background: #92c1f0 url(images/bg_tab_selected.png) repeat-x;
+}
+.gwt-TabPanel {
+}
+.gwt-TabPanelBottom {
+  border-color: #92c1f0;
+  border-style: solid;
+  border-width: 3px 2px 2px;
+  overflow: hidden;
+  padding: 6px;
+}
+
+/**
+ * Applied to general text areas.
+ */
+.gwt-TextArea {
+  padding: 2px;
+}
+
+.gwt-TextArea-readonly {
+  color: #888;
+}
+
+/**
+ * Applied to text boxes.
+ */
+.gwt-TextBox {
+  padding: 2px;
+}
+
+.gwt-TextBox-readonly {
+  color: #888;
+}
+
+/**
+ * Applied to toggle buttons, a customizable button that can be toggled
+ * between two states (similar to a checkbox).
+ */
+.gwt-ToggleButton-up {
+  padding: 2px;
+  background-color: #efebe7;
+  border: 2px solid #faf9f7;
+  border-right: 2px solid #848280;
+  border-bottom: 2px solid #848280;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-ToggleButton-up-hovering {
+  padding: 2px;
+  background-color: #efebe7;
+  border: 2px solid #faf9f7;
+  border-right: 2px solid #848280;
+  border-bottom: 2px solid #848280;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-ToggleButton-up-disabled {
+  padding: 2px;
+  background-color: #efebe7;
+  border: 2px solid #e7e4e0;
+  border-right: 2px solid #625b54;
+  border-bottom: 2px solid #625b54;
+  cursor: default;
+  opacity: 0.5;
+  filter: alpha(opacity=40);
+  zoom: 1;
+}
+
+.gwt-ToggleButton-down {
+  padding: 2px 1px 2px 3px;
+  background-color: #f5f5f5;
+  border: 2px solid #848280;
+  border-right: 2px solid #faf9f7;
+  border-bottom: 2px solid #faf9f7;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-ToggleButton-down-hovering {
+  padding: 2px 1px 2px 3px;
+  background-color: #f5f5f5;
+  border: 2px solid #848280;
+  border-right: 2px solid #faf9f7;
+  border-bottom: 2px solid #faf9f7;
+  cursor: pointer;
+  cursor: hand;
+}
+
+.gwt-ToggleButton-down-disabled {
+  padding: 2px 1px 2px 3px;
+  background-color: #efebe7;
+  border: 2px solid #e7e4e0;
+  border-right: 2px solid #625b54;
+  border-bottom: 2px solid #625b54;
+  cursor: default;
+  opacity: 0.5;
+  filter: alpha(opacity=40);
+  zoom: 1;
+}
+
+/**
+ * Applied to the Tree.
+ */
+.gwt-Tree .gwt-TreeItem {
+  padding: 1px;
+  margin: 0px;
+  white-space: nowrap;
+  cursor: hand;
+  cursor: pointer;
+}
+.gwt-Tree .gwt-TreeItem-selected {
+  padding: 1px;
+  background: #93c2f1 url(images/bg_listgradient.png) repeat-x;
+}

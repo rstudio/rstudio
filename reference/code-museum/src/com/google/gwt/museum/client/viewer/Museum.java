@@ -169,7 +169,7 @@ public class Museum implements EntryPoint {
 
       @Override
       public void requestSuggestions(Request request, Callback callback) {
-        String ofInterest = ("(.* )*" + request.getQuery() + ".*").toLowerCase();
+        String ofInterest = (".*" + request.getQuery() + ".*").toLowerCase();
         ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
         HashSet<AbstractIssue> s = new HashSet<AbstractIssue>();
         for (AbstractIssue issue : issues) {

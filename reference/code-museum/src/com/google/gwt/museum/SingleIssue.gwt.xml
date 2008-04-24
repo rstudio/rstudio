@@ -4,8 +4,8 @@
     <inherits name='com.google.gwt.user.User'/>
     
     <!-- Specify the app entry point class.                   -->
-    <entry-point class='com.google.gwt.museum.client.defaultmuseum.Issue2290'/>
+    <entry-point class='com.google.gwt.museum.client.defaultmuseum.Issue1488'/>
     <source path="client/common"/>
-    <source path="client/defaultmuseum" includes="Issue2290.java"/>
+    <source path="client/defaultmuseum" includes="Issue1488.java"/>
     <source path="client/viewer"/>
 </module>
