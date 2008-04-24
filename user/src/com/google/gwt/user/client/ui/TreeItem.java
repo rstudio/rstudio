@@ -100,6 +100,10 @@ public class TreeItem extends UIObject implements HasHTML {
         height = scrollHeight - height;
       }
 
+      // Issue 2338: If the height is 0px, IE7 will display all of the children
+      // instead of hiding them completely.
+      height = Math.max(height, 1);
+
       DOM.setStyleAttribute(curItem.childSpanElem, "height", height + "px");
 
       // We need to set the width explicitly of the item might be cropped
@@ -684,9 +688,9 @@ public class TreeItem extends UIObject implements HasHTML {
       tree.showClosedImage(this);
     }
 
-    // We may need to update the tree's selection in response to a tree state change. For
-    // example, if the tree's currently selected item is a descendant of an item whose
-    // branch was just collapsed, then the item itself should become the newly-selected item.
+    // We may need to update the tree's selection in response to a tree state
+    // change. For example, if the tree's currently selected item is a
+    // descendant of an item whose branch was just collapsed, then the item
     // itself should become the newly-selected item.
     if (updateTreeSelection) {
       tree.maybeUpdateSelection(this, this.open);
