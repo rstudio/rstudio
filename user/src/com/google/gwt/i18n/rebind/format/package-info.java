@@ -18,4 +18,5 @@
  * Implementations for various MessageCatalogFormat implementations, which are used
  * to generate files for translation or to read translated messages.
  */
+@com.google.gwt.util.PreventSpuriousRebuilds
 package com.google.gwt.i18n.rebind.format;

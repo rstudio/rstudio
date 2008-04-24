@@ -13,12 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+package com.google.gwt.util;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * Generators which compute the value of a key to use for looking up translated
- * resources.  These exist to allow easy extension to proprietary or internal
- * message catalog systems which use different algorithms to compute keys for
- * message aggregation. 
+ * A dummy annotation applied to package-info.java to force it to generate a
+ * class file; this prevents javac from thinking package-info.java is always
+ * stale.
  */
-@com.google.gwt.util.PreventSpuriousRebuilds
-package com.google.gwt.i18n.rebind.keygen;
+@Target(ElementType.PACKAGE)
+@Retention(RetentionPolicy.CLASS)
+public @interface PreventSpuriousRebuilds {
+}
