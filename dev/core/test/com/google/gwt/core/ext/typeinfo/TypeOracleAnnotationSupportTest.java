@@ -28,6 +28,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 
 import junit.framework.TestCase;
 
+import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -199,7 +200,9 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     // It is an error if we fail to get the type.
     JClassType classType = typeOracle.getType(ClassAnnotatedWithBinaryOnlyAnnotation.class.getCanonicalName());
 
-    assertNull(classType.getAnnotation(BinaryOnlyAnnotation.class));
+    BinaryOnlyAnnotation annotation = classType.getAnnotation(BinaryOnlyAnnotation.class);
+    assertNotNull(annotation);
+    assertEquals(File.class, annotation.jreClassLiteralReference());
   }
 
   /**
