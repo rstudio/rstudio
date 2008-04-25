@@ -19,11 +19,19 @@ import junit.framework.TestCase;
 
 import java.lang.annotation.Annotation;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Base test cases for all {@link JDelegatingClassType}s.
  */
 public abstract class JDelegatingClassTypeTestBase extends TestCase {
+
+  private static final Comparator<? super Annotation> ANNOTATION_COMPARATOR = new Comparator<Annotation>() {
+    public int compare(Annotation o1, Annotation o2) {
+      // Just use toString, it contains all info.
+      return o1.toString().compareTo(o2.toString());
+    }
+  };
 
   protected static void assertArraysEqual(Object[] expected, Object[] actual) {
     assertTrue("Expected: \n" + Arrays.toString(expected) + ",\n Actual: \n"
@@ -64,6 +72,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   protected static void validateAnnotations(Annotation[] expected,
       Annotation[] actual) {
+    Arrays.sort(expected, ANNOTATION_COMPARATOR);
+    Arrays.sort(actual, ANNOTATION_COMPARATOR);
     assertArraysEqual(expected, actual);
   }
 
@@ -82,6 +92,8 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   protected static void validateDeclaredAnnotations(Annotation[] expected,
       Annotation[] actual) {
+    Arrays.sort(expected, ANNOTATION_COMPARATOR);
+    Arrays.sort(actual, ANNOTATION_COMPARATOR);
     assertArraysEqual(expected, actual);
   }
 
@@ -218,6 +230,7 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     }
   }
 
+  @SuppressWarnings("deprecation")
   protected static void validateMetaData(HasMetaData md1, HasMetaData md2) {
     validateMetaDataTags(md1, md2);
 
@@ -234,6 +247,7 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     }
   }
 
+  @SuppressWarnings("deprecation")
   protected static void validateMetaDataTags(HasMetaData md1, HasMetaData md2) {
     assertEquals(md1.getMetaDataTags().length, md2.getMetaDataTags().length);
   }
