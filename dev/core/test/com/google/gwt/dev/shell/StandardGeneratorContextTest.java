@@ -196,7 +196,14 @@ public class StandardGeneratorContextTest extends TestCase {
     File createdFile = new File(tempOutDir, path);
     assertTrue(createdFile.exists());
     assertEquals(1, artifactSet.size());
-    GeneratedResource generatedResource = (GeneratedResource) artifactSet.iterator().next();
+
+    // we need the unqualified nextArt to avoid a bug in Sun JDK1.6.0 on
+    // linux... generatedResource = artifactSet.iterator().next() dies, but
+    // this two-step equivalent does not.
+    @SuppressWarnings("unchecked")
+    Artifact nextArt = artifactSet.iterator().next();
+    GeneratedResource generatedResource = (GeneratedResource) nextArt;
+
     assertEquals(path, generatedResource.getPartialPath());
     assertEquals(MockGenerator.class, generatedResource.getGenerator());
     rememberToDelete(createdFile);
