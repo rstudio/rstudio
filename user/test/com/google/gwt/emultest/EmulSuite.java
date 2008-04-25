@@ -43,6 +43,7 @@ import com.google.gwt.emultest.java.util.HashMapTest;
 import com.google.gwt.emultest.java.util.HashSetTest;
 import com.google.gwt.emultest.java.util.IdentityHashMapTest;
 import com.google.gwt.emultest.java.util.LinkedListTest;
+import com.google.gwt.emultest.java.util.PriorityQueueTest;
 import com.google.gwt.emultest.java.util.StackTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -84,6 +85,7 @@ public class EmulSuite {
     suite.addTestSuite(HashSetTest.class);
     suite.addTestSuite(IdentityHashMapTest.class);
     suite.addTestSuite(LinkedListTest.class);
+    suite.addTestSuite(PriorityQueueTest.class);
     suite.addTestSuite(StackTest.class);
     suite.addTestSuite(SqlDateTest.class);
     suite.addTestSuite(SqlTimeTest.class);
