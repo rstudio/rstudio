@@ -420,7 +420,6 @@ public class GWTShell extends ToolBase {
       registerHandler(new ArgHandlerNoServerFlag());
     }
 
-    registerHandler(new ArgHandlerSaveJsni());
     registerHandler(new ArgHandlerWhitelist());
     registerHandler(new ArgHandlerBlacklist());
 
