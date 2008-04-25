@@ -86,7 +86,9 @@ public class JUnitMessageQueue {
    *          queue.
    */
   JUnitMessageQueue(int numClients) {
-    this.numClients = numClients;
+    synchronized (clientStatusesLock) {
+      this.numClients = numClients;
+    }
   }
 
   /**
@@ -108,7 +110,7 @@ public class JUnitMessageQueue {
 
       long startTime = System.currentTimeMillis();
       long stopTime = startTime + timeout;
-      while (clientStatus.hasRequestedCurrentTest == true) {
+      while (clientStatus.currentTestResults != null) {
         long timeToWait = stopTime - System.currentTimeMillis();
         if (timeToWait < 1) {
           double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
@@ -123,8 +125,6 @@ public class JUnitMessageQueue {
           /*
            * Should never happen; but if it does, just send a null back to the
            * client, which will cause it to stop running tests.
-           * 
-           * TODO: something intelligent, log?
            */
           System.err.println("Unexpected thread interruption");
           e.printStackTrace();
@@ -192,13 +192,13 @@ public class JUnitMessageQueue {
    * @return A map of results from all clients.
    */
   Map<String, JUnitResult> getResults() {
-    Map<String, JUnitResult> result = new HashMap<String, JUnitResult>();
     synchronized (clientStatusesLock) {
+      Map<String, JUnitResult> result = new HashMap<String, JUnitResult>();
       for (ClientStatus clientStatus : clientStatuses.values()) {
         result.put(clientStatus.clientId, clientStatus.currentTestResults);
       }
+      return result;
     }
-    return result;
   }
 
   /**
@@ -209,8 +209,8 @@ public class JUnitMessageQueue {
    *         current test.
    */
   String getUnretrievedClients() {
-    StringBuilder buf = new StringBuilder();
     synchronized (clientStatusesLock) {
+      StringBuilder buf = new StringBuilder();
       int lineCount = 0;
       for (ClientStatus clientStatus : clientStatuses.values()) {
         if (lineCount > 0) {
@@ -234,8 +234,8 @@ public class JUnitMessageQueue {
             + difference
             + " client(s) haven't responded back to JUnitShell since the start of the test.");
       }
+      return buf.toString();
     }
-    return buf.toString();
   }
 
   /**
