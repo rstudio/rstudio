@@ -544,9 +544,18 @@ public final class CompilingClassLoader extends ClassLoader {
       JsniMethods jsniMethods = newClass.getAnnotation(JsniMethods.class);
       if (jsniMethods != null) {
         for (JsniMethod jsniMethod : jsniMethods.value()) {
+          String[] bodyParts = jsniMethod.body();
+          int size = 0;
+          for (String bodyPart : bodyParts) {
+            size += bodyPart.length();
+          }
+          StringBuilder body = new StringBuilder(size);
+          for (String bodyPart : bodyParts) {
+            body.append(bodyPart);
+          }
           shellJavaScriptHost.createNative(jsniMethod.file(),
               jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(),
-              jsniMethod.body());
+              body.toString());
         }
       }
       return newClass;

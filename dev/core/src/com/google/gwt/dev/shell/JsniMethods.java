@@ -26,11 +26,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface JsniMethods {
-  
+
   /**
    * Encodes a JSNI method into a compiled hosted mode class file.
    */
-  @Target({})
+  @Target(value = {})
   public @interface JsniMethod {
     /**
      * Source file of the method.
@@ -53,9 +53,11 @@ public @interface JsniMethods {
     String[] paramNames();
 
     /**
-     * The script body.
+     * The script body. The reason this is an array rather than a single string
+     * is that 64k is the max size of a single string in a class file, and some
+     * methods (such as TypeSerializer method maps) will exceed this.
      */
-    String body();
+    String[] body();
   }
 
   /**

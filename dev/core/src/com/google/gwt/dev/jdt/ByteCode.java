@@ -28,7 +28,7 @@ public class ByteCode implements Serializable {
       "java.class.path", ".");
 
   private static final String systemStringAsIdentifier = About.GWT_VERSION
-      + "_" + systemString.hashCode();
+      + "_" + systemString.hashCode() + "_jsniMethods";
 
   /**
    * This method returns the current system identifier, used to detect changes

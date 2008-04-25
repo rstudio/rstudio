@@ -131,7 +131,7 @@ public class Jsni {
    * 1.5 we can take advantage of autoboxing to not have to wrap primitives.
    */
   public static String buildArgList(JMethod method) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append("new Object[]{");
 
     JParameter[] params = method.getParameters();
@@ -150,7 +150,7 @@ public class Jsni {
    * this method.
    */
   public static String buildTypeList(JMethod method) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append("new Class[]{");
 
     JParameter[] params = method.getParameters();
@@ -191,13 +191,32 @@ public class Jsni {
   }
 
   /**
-   * Replaces double-quotes and backslashes in native JS code with their
-   * appropriate escaped form (so they can be encoded in a java string).
+   * Replaces double-quotes, backslashes, and newlines in native JS code with
+   * their appropriate escaped form (so they can be encoded in a java string).
    */
-  public static String escapeQuotesAndSlashes(String str) {
-    StringBuffer buf = new StringBuffer(str);
-    escapeQuotesAndSlashes(buf);
-    return buf.toString();
+  public static String escapedJavaScriptForStringLiteral(String js) {
+    StringBuilder sb = new StringBuilder(js);
+    for (int i = 0; i < sb.length(); ++i) {
+      char c = sb.charAt(i);
+      switch (c) {
+        case '\"':
+        case '\\':
+          sb.insert(i, '\\');
+          ++i;
+          break;
+        case '\r':
+          sb.setCharAt(i, 'r');
+          sb.insert(i, '\\');
+          ++i;
+          break;
+        case '\n':
+          sb.setCharAt(i, 'n');
+          sb.insert(i, '\\');
+          ++i;
+          break;
+      }
+    }
+    return sb.toString();
   }
 
   public static Interval findJsniSource(JMethod method)
@@ -229,17 +248,12 @@ public class Jsni {
   /**
    * Returns a string representing the source output of the JsNode, where all
    * JSNI idents have been replaced with legal JavaScript for hosted mode.
-   * 
-   * The output has quotes and slashes escaped so that the result can be part of
-   * a legal Java source code string literal.
    */
-  public static String generateEscapedJavaScriptForHostedMode(JsNode<?> node) {
-    String source = generateJavaScriptForHostedMode(node);
-    StringBuffer body = new StringBuffer(source.length());
-    body.append(source);
-    escapeQuotesAndSlashes(body);
-    fixupLinebreaks(body);
-    return body.toString();
+  public static String generateJavaScriptForHostedMode(JsNode<?> node) {
+    DefaultTextOutput out = new DefaultTextOutput(false);
+    JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(out);
+    vi.accept(node);
+    return out.toString();
   }
 
   /**
@@ -257,7 +271,7 @@ public class Jsni {
    */
   public static String getMemberSignature(JMethod method) {
     String name = method.getName();
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     sb.append(name);
     sb.append("(");
     JParameter[] params = method.getParameters();
@@ -297,7 +311,7 @@ public class Jsni {
     } catch (JsParserException e) {
       SourceDetail dtl = e.getSourceDetail();
       if (dtl != null) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(location);
         sb.append("(");
         sb.append(dtl.getLine());
@@ -312,50 +326,6 @@ public class Jsni {
         throw new UnableToCompleteException();
       }
     }
-  }
-
-  /**
-   * Replaces double-quotes and backslashes in native JS code with their
-   * appropriate escaped form (so they can be encoded in a java string).
-   */
-  private static void escapeQuotesAndSlashes(StringBuffer buf) {
-    for (int i = 0; i < buf.length(); ++i) {
-      char c = buf.charAt(i);
-      if (c == '\"' || c == '\\') {
-        buf.insert(i, '\\');
-        i += 1;
-      }
-    }
-  }
-
-  /**
-   * Replaces any actual carriage returns and linebreaks we put in earlier with
-   * an escaped form (so they can be encoded in a java string).
-   */
-  private static void fixupLinebreaks(StringBuffer body) {
-    for (int i = 0; i < body.length(); ++i) {
-      char c = body.charAt(i);
-      if (c == '\r') {
-        body.setCharAt(i, 'r');
-        body.insert(i, '\\');
-        i += 1;
-      } else if (c == '\n') {
-        body.setCharAt(i, 'n');
-        body.insert(i, '\\');
-        i += 1;
-      }
-    }
-  }
-
-  /**
-   * Returns a string representing the source output of the JsNode, where all
-   * JSNI idents have been replaced with legal JavaScript for hosted mode.
-   */
-  private static String generateJavaScriptForHostedMode(JsNode<?> node) {
-    DefaultTextOutput out = new DefaultTextOutput(false);
-    JsSourceGenWithJsniIdentFixup vi = new JsSourceGenWithJsniIdentFixup(out);
-    vi.accept(node);
-    return out.toString();
   }
 
 }

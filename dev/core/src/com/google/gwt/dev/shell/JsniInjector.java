@@ -74,6 +74,8 @@ public class JsniInjector {
     }
   }
 
+  private static final int BLOCK_SIZE = 1024;
+
   private static final String JSNIMETHOD_NAME = JsniMethod.class.getName().replace(
       '$', '.');
 
@@ -133,9 +135,8 @@ public class JsniInjector {
     }
   }
 
-  private JsniMethod createJsniMethod(JMethod method, String file, char[] source) {
-
-    final String escapedFile = Jsni.escapeQuotesAndSlashes(file);
+  private JsniMethod createJsniMethod(JMethod method, final String file,
+      char[] source) {
 
     final int line = Jsni.countNewlines(source, 0, method.getBodyStart()) + 1;
 
@@ -155,12 +156,25 @@ public class JsniInjector {
      */
     JsBlock jsniBody = parsedJsByMethod.get(method);
     assert (jsniBody != null);
-    final String jsTry = "try ";
-    final String jsCatch = " catch (e) {\\n" + "  __static[\\\"@"
-        + Jsni.JAVASCRIPTHOST_NAME + "::exceptionCaught"
-        + "(Ljava/lang/Object;)\\\"]" + "(e == null ? null : e);\\n" + "}\\n";
-    final String body = jsTry
-        + Jsni.generateEscapedJavaScriptForHostedMode(jsniBody) + jsCatch;
+    String jsTry = "try ";
+    String jsCatch = " catch (e) {\n  __static[\"@" + Jsni.JAVASCRIPTHOST_NAME
+        + "::exceptionCaught(Ljava/lang/Object;)\"](e == null ? null : e);\n"
+        + "}\n";
+    String body = jsTry + Jsni.generateJavaScriptForHostedMode(jsniBody)
+        + jsCatch;
+
+    /*
+     * Break up the body into 1k strings; this ensures we don't blow up any
+     * class file limits.
+     */
+    int length = body.length();
+    final String[] bodyParts = new String[(length + BLOCK_SIZE - 1)
+        / BLOCK_SIZE];
+    for (int i = 0; i < bodyParts.length; ++i) {
+      int startIndex = i * BLOCK_SIZE;
+      int endIndex = Math.min(startIndex + BLOCK_SIZE, length);
+      bodyParts[i] = body.substring(startIndex, endIndex);
+    }
 
     return new JsniMethod() {
 
@@ -168,12 +182,12 @@ public class JsniInjector {
         return JsniMethod.class;
       }
 
-      public String body() {
-        return body;
+      public String[] body() {
+        return bodyParts;
       }
 
       public String file() {
-        return escapedFile;
+        return file;
       }
 
       public int line() {
@@ -192,29 +206,26 @@ public class JsniInjector {
       public String toString() {
         StringBuffer sb = new StringBuffer();
         sb.append("@" + JSNIMETHOD_NAME + "(file=\"");
-        sb.append(escapedFile);
+        sb.append(Jsni.escapedJavaScriptForStringLiteral(file));
         sb.append("\",line=");
         sb.append(line);
         sb.append(",name=\"@");
         sb.append(name);
-        sb.append("\",paramNames=");
-        sb.append(toStringParamArray());
-        sb.append(",body=\"");
-        sb.append(body);
-        sb.append("\")");
-        return sb.toString();
-      }
-
-      private String toStringParamArray() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("{");
+        sb.append("\",paramNames={");
         for (String paramName : paramNames) {
           sb.append('\"');
           sb.append(paramName);
           sb.append('\"');
-          sb.append(", ");
+          sb.append(',');
         }
-        sb.append("}");
+        sb.append("},body={");
+        for (String bodyPart : bodyParts) {
+          sb.append('"');
+          sb.append(Jsni.escapedJavaScriptForStringLiteral(bodyPart));
+          sb.append('"');
+          sb.append(',');
+        }
+        sb.append("})");
         return sb.toString();
       }
     };
