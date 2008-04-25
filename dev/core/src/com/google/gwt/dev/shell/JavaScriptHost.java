@@ -23,20 +23,6 @@ public class JavaScriptHost {
 
   private static ShellJavaScriptHost sHost;
 
-  /**
-   * Defines a new native JavaScript function.
-   * 
-   * @param file source file of the function
-   * @param line starting line number of the function
-   * @param jsniSignature the function's jsni signature
-   * @param paramNames the parameter types
-   * @param js the script body
-   */
-  public static void createNative(String file, int line, String jsniSignature,
-      String[] paramNames, String js) {
-    sHost.createNative(file, line, jsniSignature, paramNames, js);
-  }
-
   public static void exceptionCaught(Object exception) {
     sHost.exceptionCaught(exception);
   }
@@ -134,7 +120,7 @@ public class JavaScriptHost {
   public static <T> T rebindAndCreate(Class<?> requestedClass) {
     String className = requestedClass.getName();
     try {
-      return sHost.<T>rebindAndCreate(className);
+      return sHost.<T> rebindAndCreate(className);
     } catch (Throwable e) {
       String msg = "Deferred binding failed for '" + className
           + "' (did you forget to inherit a required module?)";
@@ -143,9 +129,9 @@ public class JavaScriptHost {
   }
 
   /**
-   * This method is called via reflection from the shell, providing the hosted
-   * mode application with all of the methods it needs to interface with the
-   * browser and the server (for deferred binding).
+   * This method is called via reflection from the {@link CompilingClassLoader},
+   * providing the hosted mode application with all of the methods it needs to
+   * interface with the browser and the server (for deferred binding).
    */
   public static void setHost(ShellJavaScriptHost host) {
     sHost = host;

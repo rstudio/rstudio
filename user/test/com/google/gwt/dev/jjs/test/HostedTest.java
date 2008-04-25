@@ -80,7 +80,20 @@ public class HostedTest extends GWTTestCase {
   }
 
   private static enum TestEnum {
-    VAL1, VAL2, VAL3
+    VAL1, VAL2, VAL3() {
+      @Override
+      public native String foo() /*-{
+        return "VAL3-foo";
+      }-*/;
+    };
+
+    public static native String sFoo() /*-{
+      return "sFoo";
+    }-*/;
+
+    public native String foo() /*-{
+      return "foo";
+    }-*/;
   }
 
   static String sFoo(String s) {
@@ -270,6 +283,13 @@ public class HostedTest extends GWTTestCase {
     assertEquals(TestEnum.VAL2.ordinal(), ord);
     String name = enumName(val);
     assertEquals(TestEnum.VAL2.name(), name);
+  }
+
+  public void testEnumJsni() {
+    assertEquals("sFoo", TestEnum.sFoo());
+    assertEquals("sFoo", TestEnum.VAL1.sFoo());
+    assertEquals("foo", TestEnum.VAL1.foo());
+    assertEquals("VAL3-foo", TestEnum.VAL3.foo());
   }
 
   public void testFloat() {

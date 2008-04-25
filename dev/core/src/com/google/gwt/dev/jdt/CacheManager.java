@@ -23,10 +23,12 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.shell.JavaScriptHost;
+import com.google.gwt.dev.shell.JsniMethods;
 import com.google.gwt.dev.shell.ShellGWT;
 import com.google.gwt.dev.shell.ShellJavaScriptHost;
-import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.shell.JsniMethods.JsniMethod;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
@@ -517,18 +519,18 @@ public class CacheManager {
    * to be taken as given by the bytecode compiler.
    */
   public static final Class<?>[] BOOTSTRAP_CLASSES = new Class<?>[] {
-      JavaScriptHost.class, ShellJavaScriptHost.class, ShellGWT.class};
+      JavaScriptHost.class, ShellJavaScriptHost.class, ShellGWT.class,
+      JsniMethods.class, JsniMethod.class};
 
   /**
    * The set of bootstrap classes, which are marked transient, but are
    * nevertheless not recompiled each time, as they are bootstrap classes.
    */
-  private static final Set<String> TRANSIENT_CLASS_NAMES;
+  private static final Set<String> TRANSIENT_CLASS_NAMES = new HashSet<String>();
 
   static {
-    TRANSIENT_CLASS_NAMES = new HashSet<String>(BOOTSTRAP_CLASSES.length + 3);
-    for (int i = 0; i < BOOTSTRAP_CLASSES.length; i++) {
-      TRANSIENT_CLASS_NAMES.add(BOOTSTRAP_CLASSES[i].getName());
+    for (Class<?> c : BOOTSTRAP_CLASSES) {
+      TRANSIENT_CLASS_NAMES.add(c.getName());
     }
   }
 

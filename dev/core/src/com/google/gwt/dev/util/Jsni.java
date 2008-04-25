@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,7 +127,8 @@ public class Jsni {
   public static final String JSNI_BLOCK_START = "/*-{";
 
   /**
-   * Generates the code to wrap a set of parameters as an object array.
+   * Generates the code to wrap a set of parameters as an object array. In Java
+   * 1.5 we can take advantage of autoboxing to not have to wrap primitives.
    */
   public static String buildArgList(JMethod method) {
     StringBuffer sb = new StringBuffer();
@@ -135,40 +136,8 @@ public class Jsni {
 
     JParameter[] params = method.getParameters();
     for (int i = 0; i < params.length; ++i) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-
-      JType type = params[i].getType();
-      String typeName = type.getQualifiedSourceName();
-
-      if ((type.isArray() == null) && (type.isPrimitive() != null)) {
-        // Primitive types have to be wrapped for reflection invoke().
-        //
-        if (typeName.equals("boolean")) {
-          sb.append("new Boolean(" + params[i].getName() + ")");
-        } else if (typeName.equals("byte")) {
-          sb.append("new Byte(" + params[i].getName() + ")");
-        } else if (typeName.equals("char")) {
-          sb.append("new Character(" + params[i].getName() + ")");
-        } else if (typeName.equals("short")) {
-          sb.append("new Short(" + params[i].getName() + ")");
-        } else if (typeName.equals("int")) {
-          sb.append("new Integer(" + params[i].getName() + ")");
-        } else if (typeName.equals("float")) {
-          sb.append("new Float(" + params[i].getName() + ")");
-        } else if (typeName.equals("double")) {
-          sb.append("new Double(" + params[i].getName() + ")");
-        } else if (typeName.equals("long")) {
-          sb.append("new Long(" + params[i].getName() + ")");
-        } else {
-          throw new RuntimeException("Unexpected primitive parameter type");
-        }
-      } else {
-        // Reference types pass through as themselves.
-        //
-        sb.append(params[i].getName());
-      }
+      sb.append(params[i].getName());
+      sb.append(", ");
     }
 
     sb.append("}");
@@ -186,14 +155,10 @@ public class Jsni {
 
     JParameter[] params = method.getParameters();
     for (int i = 0; i < params.length; ++i) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-
       JType type = params[i].getType();
       String typeName = type.getErasedType().getQualifiedSourceName();
       sb.append(typeName);
-      sb.append(".class");
+      sb.append(".class, ");
     }
 
     sb.append("}");
@@ -207,7 +172,7 @@ public class Jsni {
       switch (buf[start]) {
         case '\r':
           ++total;
-          // if the next character is a linefeed, eat it too
+          // if the next character is a line feed, eat it too
           if (start + 1 < end && buf[start + 1] == '\n') {
             ++start;
           }

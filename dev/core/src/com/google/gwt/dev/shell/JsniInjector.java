@@ -26,11 +26,13 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CompilationUnitProviderWithAlternateSource;
 import com.google.gwt.dev.js.ast.JsBlock;
+import com.google.gwt.dev.shell.JsniMethods.JsniMethod;
 import com.google.gwt.dev.util.Jsni;
 import com.google.gwt.dev.util.StringCopier;
 import com.google.gwt.dev.util.Util;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
@@ -72,6 +74,12 @@ public class JsniInjector {
     }
   }
 
+  private static final String JSNIMETHOD_NAME = JsniMethod.class.getName().replace(
+      '$', '.');
+
+  private static final String JSNIMETHODS_NAME = JsniMethods.class.getName();
+
+  private final Map<JClassType, List<JsniMethod>> jsniMethodMap = new IdentityHashMap<JClassType, List<JsniMethod>>();
   private final TypeOracle oracle;
 
   private final Map<JMethod, JsBlock> parsedJsByMethod = new IdentityHashMap<JMethod, JsBlock>();
@@ -125,59 +133,107 @@ public class JsniInjector {
     }
   }
 
-  /**
-   * Static initialization: generate one call to 'JavaScriptHost.createNative()'
-   * for each native method, to define the JavaScript code that will be invoked
-   * later.
-   */
-  private char[] genInitializerBlock(String file, char[] source,
-      JMethod[] methods) {
+  private JsniMethod createJsniMethod(JMethod method, String file, char[] source) {
 
-    String escapedFile = Jsni.escapeQuotesAndSlashes(file);
+    final String escapedFile = Jsni.escapeQuotesAndSlashes(file);
 
-    StringBuffer sb = new StringBuffer();
-    sb.append(" static {");
-    for (int i = 0; i < methods.length; ++i) {
-      JMethod method = methods[i];
+    final int line = Jsni.countNewlines(source, 0, method.getBodyStart()) + 1;
 
-      JsBlock jsniBody = parsedJsByMethod.get(method);
-      if (jsniBody == null) {
-        // Not a JSNI method.
-        //
-        continue;
+    final String name = Jsni.getJsniSignature(method);
+
+    JParameter[] params = method.getParameters();
+    final String[] paramNames = new String[params.length];
+    for (int i = 0; i < params.length; ++i) {
+      paramNames[i] = params[i].getName();
+    }
+
+    /*
+     * Surround the original JS body statements with a try/catch so that we can
+     * map JavaScript exceptions back into Java. Note that the method body
+     * itself will print curly braces, so we don't need them around the
+     * try/catch.
+     */
+    JsBlock jsniBody = parsedJsByMethod.get(method);
+    assert (jsniBody != null);
+    final String jsTry = "try ";
+    final String jsCatch = " catch (e) {\\n" + "  __static[\\\"@"
+        + Jsni.JAVASCRIPTHOST_NAME + "::exceptionCaught"
+        + "(Ljava/lang/Object;)\\\"]" + "(e == null ? null : e);\\n" + "}\\n";
+    final String body = jsTry
+        + Jsni.generateEscapedJavaScriptForHostedMode(jsniBody) + jsCatch;
+
+    return new JsniMethod() {
+
+      public Class<? extends Annotation> annotationType() {
+        return JsniMethod.class;
       }
 
-      JParameter[] params = method.getParameters();
-      String paramNamesArray = getParamNamesArrayExpr(params);
+      public String body() {
+        return body;
+      }
 
-      final String jsTry = "try ";
-      final String jsCatch = " catch (e) {\\n"
-          + "  __static[\\\"@"
-          + Jsni.JAVASCRIPTHOST_NAME
-          + "::exceptionCaught"
-          + "(Ljava/lang/Object;)\\\"]"
-          + "(e == null ? null : e);\\n"
-          + "}\\n";
+      public String file() {
+        return escapedFile;
+      }
 
-      /*
-       * Surround the original JS body statements with a try/catch so that we
-       * can map JavaScript exceptions back into Java. Note that the method body
-       * itself will print curly braces, so we don't need them around the
-       * try/catch.
-       */
-      String js = jsTry + Jsni.generateEscapedJavaScriptForHostedMode(jsniBody)
-          + jsCatch;
-      String jsniSig = Jsni.getJsniSignature(method);
+      public int line() {
+        return line;
+      }
 
-      // figure out starting line number
-      int bodyStart = method.getBodyStart();
-      int line = Jsni.countNewlines(source, 0, bodyStart) + 1;
+      public String name() {
+        return name;
+      }
 
-      sb.append("  " + Jsni.JAVASCRIPTHOST_NAME + ".createNative(\""
-          + escapedFile + "\", " + line + ", " + "\"@" + jsniSig + "\", "
-          + paramNamesArray + ", \"" + js + "\");");
+      public String[] paramNames() {
+        return paramNames;
+      }
+
+      @Override
+      public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("@" + JSNIMETHOD_NAME + "(file=\"");
+        sb.append(escapedFile);
+        sb.append("\",line=");
+        sb.append(line);
+        sb.append(",name=\"@");
+        sb.append(name);
+        sb.append("\",paramNames=");
+        sb.append(toStringParamArray());
+        sb.append(",body=\"");
+        sb.append(body);
+        sb.append("\")");
+        return sb.toString();
+      }
+
+      private String toStringParamArray() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("{");
+        for (String paramName : paramNames) {
+          sb.append('\"');
+          sb.append(paramName);
+          sb.append('\"');
+          sb.append(", ");
+        }
+        sb.append("}");
+        return sb.toString();
+      }
+    };
+  }
+
+  /**
+   * Generate annotation metadata for all the JSNI methods in a list.
+   */
+  private char[] genJsniMethodsAnnotation(List<JsniMethod> jsniMethods,
+      boolean pretty) {
+    StringBuffer sb = new StringBuffer();
+    String nl = pretty ? "\n " : "";
+    sb.append("@" + JSNIMETHODS_NAME + "({");
+    for (JsniMethod jsniMethod : jsniMethods) {
+      sb.append(jsniMethod.toString());
+      sb.append(',');
+      sb.append(nl);
     }
-    sb.append("}");
+    sb.append("})");
     return sb.toString().toCharArray();
   }
 
@@ -284,33 +340,25 @@ public class JsniInjector {
     return sb.toString();
   }
 
-  private String getParamNamesArrayExpr(JParameter[] params) {
-    StringBuffer sb = new StringBuffer();
-    sb.append("new String[] {");
-    for (int i = 0, n = params.length; i < n; ++i) {
-      if (i > 0) {
-        sb.append(", ");
-      }
-
-      JParameter param = params[i];
-      sb.append('\"');
-      sb.append(param.getName());
-      sb.append('\"');
-    }
-    sb.append("}");
-    return sb.toString();
-  }
-
   private void rewriteCompilationUnit(TreeLogger logger, char[] source,
       List<Replacement> changes, CompilationUnitProvider cup, boolean pretty)
       throws UnableToCompleteException {
 
-    // Hit all the types in the compilation unit.
+    // First create replacements for all native methods.
     JClassType[] types = oracle.getTypesInCompilationUnit(cup);
-    for (int i = 0; i < types.length; i++) {
-      JClassType type = types[i];
+    for (JClassType type : types) {
       if (!type.getQualifiedSourceName().startsWith("java.")) {
         rewriteType(logger, source, changes, type, pretty);
+      }
+    }
+
+    // Then annotate the appropriate types with JsniMethod annotations.
+    for (JClassType type : types) {
+      List<JsniMethod> jsniMethods = jsniMethodMap.get(type);
+      if (jsniMethods != null) {
+        char[] annotation = genJsniMethodsAnnotation(jsniMethods, pretty);
+        int declStart = type.getDeclStart();
+        changes.add(new Replacement(declStart, declStart, annotation));
       }
     }
   }
@@ -375,18 +423,20 @@ public class JsniInjector {
         branch.log(TreeLogger.SPAM, patched[i].getReadableDeclaration(), null);
       }
 
-      // Insert an initializer block immediately after the opening brace of the
-      // class.
-      char[] block = genInitializerBlock(loc, source, patched);
-
-      // If this is a non-static inner class, actually put the initializer block
-      // in the first enclosing static or top-level class instead.
-      while (type.getEnclosingType() != null && !type.isStatic()) {
+      // Locate the nearest non-local type.
+      while (type.isLocalType()) {
         type = type.getEnclosingType();
       }
 
-      int bodyStart = type.getBodyStart();
-      changes.add(new Replacement(bodyStart, bodyStart, block));
+      // Add JsniMethod infos to the nearest non-inner type for each method.
+      List<JsniMethod> jsniMethods = jsniMethodMap.get(type);
+      if (jsniMethods == null) {
+        jsniMethods = new ArrayList<JsniMethod>();
+        jsniMethodMap.put(type, jsniMethods);
+      }
+      for (JMethod m : patched) {
+        jsniMethods.add(createJsniMethod(m, loc, source));
+      }
     }
   }
 }

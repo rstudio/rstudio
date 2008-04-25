@@ -73,42 +73,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return threadLocalLogger.get();
   }
 
-  /**
-   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
-   * sets its static 'host' field to be the specified ModuleSpace instance
-   * (which will either be this ModuleSpace or null).
-   * 
-   * @param moduleSpace the ModuleSpace instance to store using
-   *          JavaScriptHost.setHost().
-   * @see JavaScriptHost
-   */
-  private static void setJavaScriptHost(ModuleSpace moduleSpace, ClassLoader cl) {
-    // Find the application's JavaScriptHost interface.
-    //
-    Throwable caught;
-    try {
-      final String jsHostClassName = JavaScriptHost.class.getName();
-      Class<?> jsHostClass = Class.forName(jsHostClassName, true, cl);
-      final Class<?>[] paramTypes = new Class[] {ShellJavaScriptHost.class};
-      Method setHostMethod = jsHostClass.getMethod("setHost", paramTypes);
-      setHostMethod.invoke(jsHostClass, new Object[] {moduleSpace});
-      return;
-    } catch (ClassNotFoundException e) {
-      caught = e;
-    } catch (SecurityException e) {
-      caught = e;
-    } catch (NoSuchMethodException e) {
-      caught = e;
-    } catch (IllegalArgumentException e) {
-      caught = e;
-    } catch (IllegalAccessException e) {
-      caught = e;
-    } catch (InvocationTargetException e) {
-      caught = e.getTargetException();
-    }
-    throw new RuntimeException("Error initializing JavaScriptHost", caught);
-  }
-
   private final ModuleSpaceHost host;
 
   private final Object key;
@@ -124,12 +88,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   public void dispose() {
-    // Tell the user-space JavaScript host object that we're done
-    //
-    clearJavaScriptHost();
-
-    // Clear out the class loader's cache
-    host.getClassLoader().clear();
+    // Clear our class loader.
+    getIsolatedClassLoader().clear();
   }
 
   public void exceptionCaught(Object exception) {
@@ -164,7 +124,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   public String getModuleName() {
     return moduleName;
   }
-  
+
   public boolean invokeNativeBoolean(String name, Object jthis,
       Class<?>[] types, Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
@@ -301,10 +261,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     // Tell the host we're ready for business.
     //
     host.onModuleReady(this);
-
-    // Tell the user-space JavaScript host object how to get back here.
-    //
-    setJavaScriptHost();
 
     // Make sure we can resolve JSNI references to static Java names.
     //
@@ -511,13 +467,6 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     }
   }
 
-  /**
-   * Clear the module's JavaScriptHost 'host' field.
-   */
-  private void clearJavaScriptHost() {
-    setJavaScriptHost(null, getIsolatedClassLoader());
-  }
-
   private String composeResultErrorMsgPrefix(String name, String typePhrase) {
     return "Something other than " + typePhrase + " was returned from JSNI method '" + name + "'";
   }
@@ -543,12 +492,4 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       }
     }
   }
-
-  /**
-   * Set the module's JavaScriptHost 'host' field to this ModuleSpace instance.
-   */
-  private void setJavaScriptHost() {
-    setJavaScriptHost(this, getIsolatedClassLoader());
-  }
-
 }

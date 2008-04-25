@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.CacheManager;
+import com.google.gwt.dev.shell.JsniMethods.JsniMethod;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.util.JsniRef;
@@ -34,6 +35,8 @@ import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -325,13 +328,35 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
+  /**
+   * The names of the bridge classes.
+   */
+  private static final Map<String, Class<?>> BRIDGE_CLASS_NAMES = new HashMap<String, Class<?>>();
+
+  /**
+   * The set of classes exposed into user space that actually live in hosted
+   * space (thus, they bridge across the spaces).
+   */
+  private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[] {
+      ShellJavaScriptHost.class, JsniMethods.class, JsniMethod.class};
+
+  static {
+    for (Class<?> c : BRIDGE_CLASSES) {
+      BRIDGE_CLASS_NAMES.put(c.getName(), c);
+    }
+  }
+
   private final HostedModeClassRewriter classRewriter;
 
   private final ByteCodeCompiler compiler;
 
   private final DispatchClassInfoOracle dispClassInfoOracle = new DispatchClassInfoOracle();
 
+  private Class<?> javaScriptHostClass;
+
   private final TreeLogger logger;
+
+  private ShellJavaScriptHost shellJavaScriptHost;
 
   private final TypeOracle typeOracle;
 
@@ -344,11 +369,13 @@ public final class CompilingClassLoader extends ClassLoader {
       AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
 
   public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler,
-      TypeOracle typeOracle) throws UnableToCompleteException {
+      TypeOracle typeOracle, ShellJavaScriptHost javaScriptHost)
+      throws UnableToCompleteException {
     super(null);
     this.logger = logger;
     this.compiler = compiler;
     this.typeOracle = typeOracle;
+    this.shellJavaScriptHost = javaScriptHost;
 
     // Assertions are always on in hosted mode.
     setDefaultAssertionStatus(true);
@@ -360,8 +387,7 @@ public final class CompilingClassLoader extends ClassLoader {
     // JavaScriptHost is special because its type cannot be known to the user.
     // It is referenced only from generated code and GWT.create.
     //
-    for (int i = 0; i < CacheManager.BOOTSTRAP_CLASSES.length; i++) {
-      Class<?> clazz = CacheManager.BOOTSTRAP_CLASSES[i];
+    for (Class<?> clazz : CacheManager.BOOTSTRAP_CLASSES) {
       String className = clazz.getName();
       try {
         String path = clazz.getName().replace('.', '/').concat(".class");
@@ -490,11 +516,9 @@ public final class CompilingClassLoader extends ClassLoader {
       throw new ClassNotFoundException(className);
     }
 
-    // MAGIC: this allows JavaScriptHost (in user space) to bridge to the real
-    // class in host space.
-    //
-    if (className.equals(ShellJavaScriptHost.class.getName())) {
-      return ShellJavaScriptHost.class;
+    // Check for a bridge class that spans hosted and user space.
+    if (BRIDGE_CLASS_NAMES.containsKey(className)) {
+      return BRIDGE_CLASS_NAMES.get(className);
     }
 
     // Get the bytes, compiling if necessary.
@@ -509,13 +533,32 @@ public final class CompilingClassLoader extends ClassLoader {
       if (classRewriter != null) {
         classBytes = classRewriter.rewrite(className, classBytes);
       }
-      return defineClass(className, classBytes, 0, classBytes.length);
+      Class<?> newClass = defineClass(className, classBytes, 0,
+          classBytes.length);
+
+      if (className.equals(JavaScriptHost.class.getName())) {
+        javaScriptHostClass = newClass;
+        updateJavaScriptHost();
+      }
+
+      JsniMethods jsniMethods = newClass.getAnnotation(JsniMethods.class);
+      if (jsniMethods != null) {
+        for (JsniMethod jsniMethod : jsniMethods.value()) {
+          shellJavaScriptHost.createNative(jsniMethod.file(),
+              jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(),
+              jsniMethod.body());
+        }
+      }
+      return newClass;
     } catch (UnableToCompleteException e) {
       throw new ClassNotFoundException(className);
     }
   }
 
   void clear() {
+    // Release our references to the shell.
+    shellJavaScriptHost = null;
+    updateJavaScriptHost();
     weakJsoCache.clear();
     weakJavaWrapperCache.clear();
     dispClassInfoOracle.clear();
@@ -550,5 +593,39 @@ public final class CompilingClassLoader extends ClassLoader {
     }
 
     return false;
+  }
+
+  /**
+   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
+   * sets its static 'host' field to be the specified ModuleSpace instance
+   * (which will either be this ModuleSpace or null).
+   * 
+   * @param moduleSpace the ModuleSpace instance to store using
+   *          JavaScriptHost.setHost().
+   * @see JavaScriptHost
+   */
+  private void updateJavaScriptHost() {
+    // Find the application's JavaScriptHost interface.
+    //
+    Throwable caught;
+    try {
+      final Class<?>[] paramTypes = new Class[] {ShellJavaScriptHost.class};
+      Method setHostMethod = javaScriptHostClass.getMethod("setHost",
+          paramTypes);
+      setHostMethod.invoke(javaScriptHostClass,
+          new Object[] {shellJavaScriptHost});
+      return;
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e.getTargetException();
+    }
+    throw new RuntimeException("Error initializing JavaScriptHost", caught);
   }
 }
