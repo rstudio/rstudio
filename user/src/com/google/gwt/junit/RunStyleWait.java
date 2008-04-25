@@ -38,9 +38,9 @@ class RunStyleWait extends RunStyleRemote {
   @Override
   public void launchModule(String moduleName) throws UnableToCompleteException {
     if (numClients == 1) {
-      System.out.println("Compilation finished; please navigate your browser to this URL:");
+      System.out.println("Please navigate your browser to this URL:");
     } else {
-      System.out.println("Compilation finished; please navigate " + numClients
+      System.out.println("Please navigate " + numClients
           + " browsers to this URL:");
     }
     System.out.println(getMyUrl(moduleName));
@@ -49,7 +49,8 @@ class RunStyleWait extends RunStyleRemote {
   @Override
   public void maybeCompileModule(String moduleName)
       throws UnableToCompleteException {
-    System.out.println("Please wait while we compile " + moduleName + "...");
+    System.out.print("Compling " + moduleName + "...");
     super.maybeCompileModule(moduleName);
+    System.out.println(" success.");
   }
 }
