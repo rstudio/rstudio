@@ -546,8 +546,8 @@ public class TypeOracleBuilder {
       changedCudsByFileName.put(fileName, cud);
       /*
        * The CacheManager's cuds by file name may include the changed CUDs from
-       * a previous refresh.  So we remove them here to ensure that our sets
-       * do not overlap. 
+       * a previous refresh. So we remove them here to ensure that our sets do
+       * not overlap.
        */
       unchangedCudsByFileName.remove(fileName);
     }
@@ -694,14 +694,7 @@ public class TypeOracleBuilder {
       identifierToValue.put(identifier, elementValue);
     }
 
-    // Create the Annotation proxy
-    JClassType annotationType = (JClassType) resolveType(logger, resolvedType);
-    if (annotationType == null) {
-      return null;
-    }
-
-    return AnnotationProxyFactory.create(clazz, annotationType,
-        identifierToValue);
+    return AnnotationProxyFactory.create(clazz, identifierToValue);
   }
 
   private JClassType[] createTypeParameterBounds(TreeLogger logger,
@@ -922,16 +915,12 @@ public class TypeOracleBuilder {
   }
 
   private Class<?> getClassLiteral(TreeLogger logger, TypeBinding resolvedType) {
-    JType type = resolveType(logger, resolvedType);
-    if (type == null) {
-      return null;
-    }
-
-    if (type.isPrimitive() != null) {
-      return getClassLiteralForPrimitive(type.isPrimitive());
+    if (resolvedType instanceof BaseTypeBinding) {
+      return getClassLiteralForPrimitive((BaseTypeBinding) resolvedType);
     } else {
       try {
-        String className = computeBinaryClassName(type);
+        String className = String.valueOf(resolvedType.constantPoolName());
+        className = className.replace('/', '.');
         Class<?> clazz = Class.forName(className);
         return clazz;
       } catch (ClassNotFoundException e) {
@@ -941,27 +930,30 @@ public class TypeOracleBuilder {
     }
   }
 
-  private Class<?> getClassLiteralForPrimitive(JPrimitiveType type) {
-    if (type == JPrimitiveType.BOOLEAN) {
-      return boolean.class;
-    } else if (type == JPrimitiveType.BYTE) {
-      return byte.class;
-    } else if (type == JPrimitiveType.CHAR) {
-      return char.class;
-    } else if (type == JPrimitiveType.DOUBLE) {
-      return double.class;
-    } else if (type == JPrimitiveType.FLOAT) {
-      return float.class;
-    } else if (type == JPrimitiveType.INT) {
-      return int.class;
-    } else if (type == JPrimitiveType.LONG) {
-      return long.class;
-    } else if (type == JPrimitiveType.SHORT) {
-      return short.class;
+  private Class<?> getClassLiteralForPrimitive(BaseTypeBinding type) {
+    switch (type.id) {
+      case TypeIds.T_boolean:
+        return Boolean.TYPE;
+      case TypeIds.T_byte:
+        return Byte.TYPE;
+      case TypeIds.T_char:
+        return Character.TYPE;
+      case TypeIds.T_short:
+        return Short.TYPE;
+      case TypeIds.T_int:
+        return Integer.TYPE;
+      case TypeIds.T_long:
+        return Long.TYPE;
+      case TypeIds.T_float:
+        return Float.TYPE;
+      case TypeIds.T_double:
+        return Double.TYPE;
+      case TypeIds.T_void:
+        return Void.TYPE;
+      default:
+        assert false : "Unexpected base type id " + type.id;
+        return null;
     }
-
-    assert (false);
-    return null;
   }
 
   private CompilationUnitProvider getCup(TypeDeclaration typeDecl) {

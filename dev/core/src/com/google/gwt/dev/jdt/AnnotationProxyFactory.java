@@ -15,11 +15,6 @@
  */
 package com.google.gwt.dev.jdt;
 
-import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
-import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JType;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -39,10 +34,11 @@ class AnnotationProxyFactory {
    */
   private static class AnnotationProxyInvocationHandler implements
       InvocationHandler {
+
     /**
-     * Returns <code>true</code> if the expected return type is assignable from 
-     * the actual return type or if the expected return type is a primitive and
-     * the actual return type is the corresponding wrapper type.
+     * Returns <code>true</code> if the expected return type is assignable
+     * from the actual return type or if the expected return type is a primitive
+     * and the actual return type is the corresponding wrapper type.
      */
     private static boolean isValidReturnType(Class<?> expectedReturnType,
         Class<? extends Object> actualReturnType) {
@@ -69,7 +65,7 @@ class AnnotationProxyFactory {
           return actualReturnType == Short.class;
         }
       }
-      
+
       return false;
     }
 
@@ -77,8 +73,6 @@ class AnnotationProxyFactory {
      * The resolved class of this annotation.
      */
     private Class<? extends Annotation> annotationClass;
-
-    private final JClassType annotationType;
 
     /**
      * Maps method names onto values. Note that methods on annotation types
@@ -91,10 +85,9 @@ class AnnotationProxyFactory {
      */
     private Annotation proxy;
 
-    public AnnotationProxyInvocationHandler(JClassType annotationType,
+    public AnnotationProxyInvocationHandler(
         Map<String, Object> identifierToValue,
         Class<? extends Annotation> annotationClass) {
-      this.annotationType = annotationType;
       this.identifierToValue = identifierToValue;
       this.annotationClass = annotationClass;
     }
@@ -104,9 +97,16 @@ class AnnotationProxyFactory {
       if (proxy == other) {
         return true;
       }
-      if (!annotationClass.isInstance(other)) {
+
+      if (!(other instanceof Annotation)) {
         return false;
       }
+
+      Annotation otherAnnotation = (Annotation) other;
+      if (annotationClass != otherAnnotation.annotationType()) {
+        return false;
+      }
+
       try {
         for (Method method : annotationClass.getDeclaredMethods()) {
           Object myVal = method.invoke(proxy);
@@ -215,30 +215,25 @@ class AnnotationProxyFactory {
     public Object invoke(Object proxy, Method method, Object[] args)
         throws Throwable {
 
-      String name = method.getName();
-
       Object value = null;
-      if (identifierToValue.containsKey(name)) {
-        // The value was explicitly provided
-        value = identifierToValue.get(name);
-        assert (value != null);
-      } else {
-        JMethod jMethod = annotationType.findMethod(name, new JType[0]);
-        if (jMethod != null) {
-          // The value will be the default value.
-          JAnnotationMethod annotationMethod = jMethod.isAnnotationMethod();
-          assert (annotationMethod != null);
-          value = annotationMethod.getDefaultValue();
+      if (args == null || args.length == 0) {
+        // A no-arg method, try to process as an annotation method.
+        String name = method.getName();
+        if (identifierToValue.containsKey(name)) {
+          // The value was explicitly provided
+          value = identifierToValue.get(name);
           assert (value != null);
-        } else if (method.getDeclaringClass() == Annotation.class
-            && "annotationType".equals(method.getName())) {
-          value = annotationClass;
+        } else {
+          if ("annotationType".equals(method.getName())) {
+            value = annotationClass;
+          } else {
+            value = method.getDefaultValue();
+          }
         }
-      }
-      
-      if (value != null) {
-        assert (isValidReturnType(method.getReturnType(), value.getClass()));
-        return value;
+        if (value != null) {
+          assert (isValidReturnType(method.getReturnType(), value.getClass()));
+          return value;
+        }
       }
 
       /*
@@ -254,8 +249,8 @@ class AnnotationProxyFactory {
     @Override
     public String toString() {
       final StringBuilder msg = new StringBuilder();
-      msg.append('@').append(annotationType.getQualifiedSourceName()).append(
-          '(');
+      String qualifiedSourceName = annotationClass.getName().replace('$', '.');
+      msg.append('@').append(qualifiedSourceName).append('(');
       boolean first = true;
       try {
         for (Method method : annotationClass.getDeclaredMethods()) {
@@ -285,9 +280,9 @@ class AnnotationProxyFactory {
   }
 
   public static Annotation create(Class<? extends Annotation> annotationClass,
-      JClassType annotationType, Map<String, Object> identifierToValue) {
+      Map<String, Object> identifierToValue) {
     AnnotationProxyInvocationHandler annotationInvocationHandler = new AnnotationProxyInvocationHandler(
-        annotationType, identifierToValue, annotationClass);
+        identifierToValue, annotationClass);
     Annotation proxy = (Annotation) Proxy.newProxyInstance(
         AnnotationProxyFactory.class.getClassLoader(), new Class<?>[] {
             java.lang.annotation.Annotation.class, annotationClass},
