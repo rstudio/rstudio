@@ -219,7 +219,7 @@ public class Element extends Node {
    * @return the property value
    */
   public final native String getPropertyString(String name) /*-{
-    return String(this[name]);
+    return (this[name] == null)? null : String(this[name]);
   }-*/;
 
   /**
