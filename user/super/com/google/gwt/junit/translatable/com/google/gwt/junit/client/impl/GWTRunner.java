@@ -57,7 +57,9 @@ public abstract class GWTRunner implements EntryPoint {
      */
     public void onSuccess(TestInfo nextTest) {
       currentTest = nextTest;
-      doRunTest();
+      if (currentTest != null) {
+        doRunTest();
+      }
     }
   }
 
