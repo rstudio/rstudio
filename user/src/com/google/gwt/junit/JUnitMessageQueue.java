@@ -20,11 +20,9 @@ import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A message queue to pass data between {@link JUnitShell} and {@link
@@ -43,61 +41,43 @@ import java.util.Set;
 public class JUnitMessageQueue {
 
   /**
-   * Tracks which test each client is requesting.
-   * 
-   * Key = client-id (e.g. agent+host) Value = the index of the current
-   * requested test
+   * Holds the state of an individual client.
    */
-  private Map<String, Integer> clientTestRequests = new HashMap<String, Integer>();
+  public static class ClientStatus {
+    public final String clientId;
+
+    public JUnitResult currentTestResults = null;
+    public boolean hasRequestedCurrentTest = false;
+    public boolean isNew = true;
+
+    public ClientStatus(String clientId) {
+      this.clientId = clientId;
+    }
+  }
 
   /**
-   * The index of the current test being executed.
+   * Records results for each client; must lock before accessing.
    */
-  private int currentTestIndex = -1;
+  private final Map<String, ClientStatus> clientStatuses = new HashMap<String, ClientStatus>();
+
+  /**
+   * The lock used to synchronize access to clientStatuses.
+   */
+  private Object clientStatusesLock = new Object();
+
+  /**
+   * The current test to execute.
+   */
+  private TestInfo currentTest;
 
   /**
    * The number of TestCase clients executing in parallel.
    */
-  private int numClients = 1;
+  private final int numClients;
 
-  /**
-   * The lock used to synchronize access around testMethod, clientTestRequests,
-   * and currentTestIndex.
-   */
-  private Object readTestLock = new Object();
+  private int numClientsHaveRequestedTest;
 
-  /**
-   * The lock used to synchronize access around testResult.
-   */
-  private Object resultsLock = new Object();
-
-  /**
-   * The name of the test class to execute.
-   */
-  private String testClass;
-
-  /**
-   * The name of the test method to execute.
-   */
-  private String testMethod;
-
-  /**
-   * The name of the module to execute.
-   */
-  private String testModule;
-
-  /**
-   * The results for the current test method.
-   */
-  private List<JUnitResult> testResult = new ArrayList<JUnitResult>();
-
-  /**
-   * Creates a message queue with one client.
-   * 
-   * @see JUnitMessageQueue#JUnitMessageQueue(int)
-   */
-  JUnitMessageQueue() {
-  }
+  private int numClientsHaveResults;
 
   /**
    * Only instantiable within this package.
@@ -112,29 +92,33 @@ public class JUnitMessageQueue {
   /**
    * Called by the servlet to query for for the next method to test.
    * 
-   * @param moduleName the name of the executing module
    * @param timeout how long to wait for an answer
    * @return the next test to run, or <code>null</code> if
    *         <code>timeout</code> is exceeded or the next test does not match
    *         <code>testClassName</code>
    */
-  public TestInfo getNextTestInfo(String clientId, String moduleName,
-      long timeout) throws TimeoutException {
-    synchronized (readTestLock) {
+  public TestInfo getNextTestInfo(String clientId, long timeout)
+      throws TimeoutException {
+    synchronized (clientStatusesLock) {
+      ClientStatus clientStatus = clientStatuses.get(clientId);
+      if (clientStatus == null) {
+        clientStatus = new ClientStatus(clientId);
+        clientStatuses.put(clientId, clientStatus);
+      }
+
       long startTime = System.currentTimeMillis();
       long stopTime = startTime + timeout;
-      while (!testIsAvailableFor(clientId, moduleName)) {
+      while (clientStatus.hasRequestedCurrentTest == true) {
         long timeToWait = stopTime - System.currentTimeMillis();
         if (timeToWait < 1) {
           double elapsed = (System.currentTimeMillis() - startTime) / 1000.0;
           throw new TimeoutException("The servlet did not respond to the "
               + "next query to test within " + timeout + "ms.\n"
-              + " Module Name: " + moduleName + "\n" + " Client id: "
-              + clientId + "\n" + " Actual time elapsed: " + elapsed
-              + " seconds.\n");
+              + " Client id: " + clientId + "\n" + " Actual time elapsed: "
+              + elapsed + " seconds.\n");
         }
         try {
-          readTestLock.wait(timeToWait);
+          clientStatusesLock.wait(timeToWait);
         } catch (InterruptedException e) {
           /*
            * Should never happen; but if it does, just send a null back to the
@@ -148,45 +132,73 @@ public class JUnitMessageQueue {
         }
       }
 
-      if (!moduleName.equals(testModule)) {
-        /*
-         * When a module finishes, clients will continue to query for another
-         * test case; return null to indicate we're done.
-         */
-        return null;
-      }
-
-      bumpClientTestRequest(clientId);
-      return new TestInfo(testClass, testMethod);
+      // Record that this client has retrieved the current test.
+      clientStatus.hasRequestedCurrentTest = true;
+      ++numClientsHaveRequestedTest;
+      return currentTest;
     }
   }
 
   /**
    * Called by the servlet to report the results of the last test to run.
    * 
-   * @param moduleName the name of the test module
+   * @param testInfo the testInfo the result is for
    * @param results the result of running the test
    */
-  public void reportResults(String moduleName, JUnitResult results) {
-    synchronized (resultsLock) {
-      if (!moduleName.equals(testModule)) {
-        // an old client is trying to report results, do nothing
+  public void reportResults(String clientId, TestInfo testInfo,
+      JUnitResult results) {
+    synchronized (clientStatusesLock) {
+      if (testInfo != null && !testInfo.equals(currentTest)) {
+        // A client is reporting results for the wrong test.
         return;
       }
-      testResult.add(results);
+      ClientStatus clientStatus = clientStatuses.get(clientId);
+      clientStatus.currentTestResults = results;
+      ++numClientsHaveResults;
+      clientStatusesLock.notifyAll();
+    }
+  }
+
+  /**
+   * Returns any new clients that have contacted the server since the last call.
+   * The same client will never be returned from this method twice.
+   */
+  String[] getNewClients() {
+    synchronized (clientStatusesLock) {
+      List<String> results = new ArrayList<String>();
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        if (clientStatus.isNew) {
+          results.add(clientStatus.clientId);
+          // Record that this client is no longer new.
+          clientStatus.isNew = false;
+        }
+      }
+      return results.toArray(new String[results.size()]);
+    }
+  }
+
+  /**
+   * Returns how many clients have requested the currently-running test.
+   */
+  int getNumClientsRetrievedCurrentTest() {
+    synchronized (clientStatusesLock) {
+      return numClientsHaveRequestedTest;
     }
   }
 
   /**
    * Fetches the results of a completed test.
    * 
-   * @param moduleName the name of the test module
-   * @return An getException thrown from a failed test, or <code>null</code>
-   *         if the test completed without error.
+   * @return A map of results from all clients.
    */
-  List<JUnitResult> getResults(String moduleName) {
-    assert (moduleName.equals(testModule));
-    return testResult;
+  Map<String, JUnitResult> getResults() {
+    Map<String, JUnitResult> result = new HashMap<String, JUnitResult>();
+    synchronized (clientStatusesLock) {
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        result.put(clientStatus.clientId, clientStatus.currentTestResults);
+      }
+    }
+    return result;
   }
 
   /**
@@ -197,26 +209,23 @@ public class JUnitMessageQueue {
    *         current test.
    */
   String getUnretrievedClients() {
-    int lineCount = 0;
     StringBuilder buf = new StringBuilder();
-    synchronized (readTestLock) {
-      Set<String> keys = clientTestRequests.keySet();
-
-      for (String key : keys) {
+    synchronized (clientStatusesLock) {
+      int lineCount = 0;
+      for (ClientStatus clientStatus : clientStatuses.values()) {
         if (lineCount > 0) {
           buf.append('\n');
         }
 
-        if (clientTestRequests.get(key) <= currentTestIndex) {
+        if (!clientStatus.hasRequestedCurrentTest) {
           buf.append(" - NO RESPONSE: ");
-          buf.append(key);
         } else {
           buf.append(" - (ok): ");
-          buf.append(key);
         }
+        buf.append(clientStatus.clientId);
         lineCount++;
       }
-      int difference = numClients - keys.size();
+      int difference = numClients - numClientsHaveRequestedTest;
       if (difference > 0) {
         if (lineCount > 0) {
           buf.append('\n');
@@ -232,85 +241,37 @@ public class JUnitMessageQueue {
   /**
    * Called by the shell to see if the currently-running test has completed.
    * 
-   * @param moduleName the name of the test module
    * @return If the test has completed, <code>true</code>, otherwise
    *         <code>false</code>.
    */
-  boolean hasResult(String moduleName) {
-    synchronized (resultsLock) {
-      assert (moduleName.equals(testModule));
-      return testResult.size() == numClients;
+  boolean hasResult() {
+    synchronized (clientStatusesLock) {
+      return numClients == numClientsHaveResults;
     }
   }
 
   /**
-   * Returns <code>true</code> if all clients have requested the
-   * currently-running test.
+   * Called by the shell to set the next test to run.
    */
-  boolean haveAllClientsRetrievedCurrentTest() {
-    synchronized (readTestLock) {
-      // If a client hasn't yet made contact back to JUnitShell, it will have
-      // no entry
-      Collection<Integer> clientIndices = clientTestRequests.values();
-      if (clientIndices.size() < numClients) {
-        return false;
+  void setNextTest(TestInfo testInfo) {
+    synchronized (clientStatusesLock) {
+      this.currentTest = testInfo;
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        clientStatus.hasRequestedCurrentTest = false;
+        clientStatus.currentTestResults = null;
       }
-      // Every client must have been bumped PAST the current test index
-      for (Integer value : clientIndices) {
-        if (value <= currentTestIndex) {
-          return false;
-        }
+      numClientsHaveResults = 0;
+      numClientsHaveRequestedTest = 0;
+      clientStatusesLock.notifyAll();
+    }
+  }
+
+  void waitForResults(int millis) {
+    synchronized (clientStatusesLock) {
+      try {
+        clientStatusesLock.wait(millis);
+      } catch (InterruptedException e) {
       }
-      return true;
     }
-  }
-
-  /**
-   * Called by the shell to set the name of the next method to run for this test
-   * class.
-   * 
-   * @param testModule the name of the module to be run.
-   * @param testClass The name of the test class.
-   * @param testMethod The name of the method to run.
-   */
-  void setNextTestName(String testModule, String testClass, String testMethod) {
-    synchronized (readTestLock) {
-      this.testModule = testModule;
-      this.testClass = testClass;
-      this.testMethod = testMethod;
-      ++currentTestIndex;
-      testResult = new ArrayList<JUnitResult>(numClients);
-      readTestLock.notifyAll();
-    }
-  }
-
-  /**
-   * Sets the number of clients that will be executing the JUnit tests in
-   * parallel.
-   * 
-   * @param numClients must be > 0
-   */
-  void setNumClients(int numClients) {
-    this.numClients = numClients;
-  }
-
-  // This method requires that readTestLock is being held for the duration.
-  private void bumpClientTestRequest(String clientId) {
-    Integer index = clientTestRequests.get(clientId);
-    clientTestRequests.put(clientId, index + 1);
-  }
-
-  // This method requires that readTestLock is being held for the duration.
-  private boolean testIsAvailableFor(String clientId, String moduleName) {
-    if (!moduleName.equals(testModule)) {
-      // the "null" test is always available for an old client
-      return true;
-    }
-    Integer index = clientTestRequests.get(clientId);
-    if (index == null) {
-      index = 0;
-      clientTestRequests.put(clientId, index);
-    }
-    return index == currentTestIndex;
   }
 }

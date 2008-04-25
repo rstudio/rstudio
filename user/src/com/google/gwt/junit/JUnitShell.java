@@ -29,6 +29,8 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.junit.client.impl.JUnitResult;
+import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.util.tools.ArgHandler;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 
@@ -37,7 +39,8 @@ import junit.framework.TestCase;
 import junit.framework.TestResult;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -187,6 +190,11 @@ public class JUnitShell extends GWTShell {
   private ModuleDef currentModule;
 
   /**
+   * If true, no launches have yet been successful.
+   */
+  private boolean firstLaunch = true;
+
+  /**
    * If true, the last attempt to launch failed.
    */
   private boolean lastLaunchFailed;
@@ -209,15 +217,15 @@ public class JUnitShell extends GWTShell {
   private RunStyle runStyle = new RunStyleLocalHosted(this);
 
   /**
+   * The time the test actually began.
+   */
+  private long testBeginTime;
+
+  /**
    * The time at which the current test will fail if the client has not yet
    * started the test.
    */
   private long testBeginTimeout;
-
-  /**
-   * The time the test actually began.
-   */
-  private long testBeginTime;
 
   /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
@@ -241,6 +249,7 @@ public class JUnitShell extends GWTShell {
       @Override
       public boolean setFlag() {
         runStyle = new RunStyleLocalWeb(JUnitShell.this);
+        numClients = 1;
         return true;
       }
 
@@ -271,10 +280,58 @@ public class JUnitShell extends GWTShell {
       @Override
       public boolean setString(String str) {
         String[] urls = str.split(",");
-        numClients = urls.length;
         runStyle = RunStyleRemoteWeb.create(JUnitShell.this, urls);
+        numClients = urls.length;
         return runStyle != null;
       }
+    });
+
+    registerHandler(new ArgHandler() {
+
+      @Override
+      public String[] getDefaultArgs() {
+        return null;
+      }
+
+      @Override
+      public String getPurpose() {
+        return "Causes the system to wait for a remote browser to connect";
+      }
+
+      @Override
+      public String getTag() {
+        return "-wait";
+      }
+
+      @Override
+      public String[] getTagArgs() {
+        return new String[] {"[numClients]"};
+      }
+
+      @Override
+      public int handle(String[] args, int tagIndex) {
+        int value = 1;
+        if (tagIndex + 1 < args.length) {
+          try {
+            // See if the next item is an integer.
+            value = Integer.parseInt(args[tagIndex + 1]);
+            if (value >= 1) {
+              setInt(value);
+              return 1;
+            }
+          } catch (NumberFormatException e) {
+            // fall-through
+          }
+        }
+        setInt(1);
+        return 0;
+      }
+
+      public void setInt(int value) {
+        runStyle = new RunStyleWait(JUnitShell.this, value);
+        numClients = value;
+      }
+
     });
 
     registerHandler(new ArgHandlerFlag() {
@@ -353,9 +410,27 @@ public class JUnitShell extends GWTShell {
    */
   @Override
   protected boolean notDone() {
-    if (!messageQueue.haveAllClientsRetrievedCurrentTest()
-        && testBeginTimeout < System.currentTimeMillis()) {
-      double elapsed = (System.currentTimeMillis() - testBeginTime) / 1000.0;
+    int activeClients = messageQueue.getNumClientsRetrievedCurrentTest();
+    if (firstLaunch && runStyle instanceof RunStyleWait) {
+      String[] newClients = messageQueue.getNewClients();
+      int printIndex = activeClients - newClients.length + 1;
+      for (String newClient : newClients) {
+        System.out.println(printIndex + " - " + newClient);
+        ++printIndex;
+      }
+      if (activeClients == this.numClients) {
+        System.out.println("Starting tests");
+      } else {
+        // Wait forever for first contact; user-driven.
+        return true;
+      }
+    }
+
+    long currentTimeMillis = System.currentTimeMillis();
+    if (activeClients == numClients) {
+      firstLaunch = false;
+    } else if (testBeginTimeout < currentTimeMillis) {
+      double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
       throw new TimeoutException(
           "The browser did not contact the server within "
               + TEST_BEGIN_TIMEOUT_MILLIS + "ms.\n"
@@ -363,11 +438,20 @@ public class JUnitShell extends GWTShell {
               + "\n Actual time elapsed: " + elapsed + " seconds.\n");
     }
 
-    if (messageQueue.hasResult(currentModule.getName())) {
+    if (messageQueue.hasResult()) {
       return false;
     }
 
     return !runStyle.wasInterrupted();
+  }
+
+  @Override
+  protected void sleep() {
+    if (runStyle.isLocal()) {
+      super.sleep();
+    } else {
+      messageQueue.waitForResults(1000);
+    }
   }
 
   void compileForWebMode(String moduleName, String userAgentString)
@@ -391,6 +475,10 @@ public class JUnitShell extends GWTShell {
   private void runTestImpl(String moduleName, TestCase testCase,
       TestResult testResult, Strategy strategy)
       throws UnableToCompleteException {
+
+    if (lastLaunchFailed) {
+      throw new UnableToCompleteException();
+    }
 
     String syntheticModuleName = moduleName + "."
         + strategy.getSyntheticModuleExtension();
@@ -416,14 +504,16 @@ public class JUnitShell extends GWTShell {
           "junit.moduleName");
       moduleNameProp.addKnownValue(moduleName);
       moduleNameProp.setActiveValue(moduleName);
+      runStyle.maybeCompileModule(syntheticModuleName);
     }
 
-    lastLaunchFailed = false;
-    messageQueue.setNextTestName(currentModule.getName(),
-        testCase.getClass().getName(), testCase.getName());
+    messageQueue.setNextTest(new TestInfo(currentModule.getName(),
+        testCase.getClass().getName(), testCase.getName()));
 
     try {
-      runStyle.maybeLaunchModule(currentModule.getName(), !sameTest);
+      if (firstLaunch) {
+        runStyle.launchModule(currentModule.getName());
+      }
     } catch (UnableToCompleteException e) {
       lastLaunchFailed = true;
       testResult.addError(testCase, new JUnitFatalLaunchException(e));
@@ -443,22 +533,19 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
-    List<JUnitResult> results = messageQueue.getResults(currentModule.getName());
-
-    if (results == null) {
-      return;
-    }
+    Map<String, JUnitResult> results = messageQueue.getResults();
 
     boolean parallelTesting = numClients > 1;
 
-    for (JUnitResult result : results) {
+    for (Entry<String, JUnitResult> entry : results.entrySet()) {
+      String clientId = entry.getKey();
+      JUnitResult result = entry.getValue();
       Throwable exception = result.getException();
 
       // In the case that we're running multiple clients at once, we need to
       // let the user know the browser in which the failure happened
       if (parallelTesting && exception != null) {
-        String msg = "Remote test failed at " + result.getHost() + " on "
-            + result.getAgent();
+        String msg = "Remote test failed at " + clientId;
         if (exception instanceof AssertionFailedError) {
           AssertionFailedError newException = new AssertionFailedError(msg
               + "\n" + exception.getMessage());

@@ -31,8 +31,10 @@ public interface JUnitHost extends RemoteService {
   public static class TestInfo implements IsSerializable {
     private String testClass;
     private String testMethod;
+    private String testModule;
 
-    public TestInfo(String testClass, String testMethod) {
+    public TestInfo(String testModule, String testClass, String testMethod) {
+      this.testModule = testModule;
       this.testClass = testClass;
       this.testMethod = testMethod;
     }
@@ -43,6 +45,17 @@ public interface JUnitHost extends RemoteService {
     TestInfo() {
     }
 
+    @Override
+    public boolean equals(Object o) {
+      if (o instanceof TestInfo) {
+        TestInfo other = (TestInfo) o;
+        return getTestModule().equals(other.getTestModule())
+            && getTestClass().equals(other.getTestClass())
+            && getTestMethod().equals(other.getTestMethod());
+      }
+      return false;
+    }
+
     public String getTestClass() {
       return testClass;
     }
@@ -51,30 +64,38 @@ public interface JUnitHost extends RemoteService {
       return testMethod;
     }
 
+    public String getTestModule() {
+      return testModule;
+    }
+
+    @Override
+    public int hashCode() {
+      return toString().hashCode();
+    }
+
     @Override
     public String toString() {
-      return testClass + "." + testMethod;
+      return testModule + ":" + testClass + "." + testMethod;
     }
   }
 
   /**
    * Gets the name of next method to run.
    * 
-   * @param moduleName the module name of this client
    * @return the next test to run
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo getFirstMethod(String moduleName) throws TimeoutException;
+  TestInfo getFirstMethod() throws TimeoutException;
 
   /**
    * Reports results for the last method run and gets the name of next method to
    * run.
    * 
-   * @param moduleName the module name of this client
+   * @param testInfo the testInfo the result is for
    * @param result the results of executing the test
    * @return the next test to run
    * @throws TimeoutException if the wait for the next method times out.
    */
-  TestInfo reportResultsAndGetNextMethod(String moduleName, JUnitResult result)
+  TestInfo reportResultsAndGetNextMethod(TestInfo testInfo, JUnitResult result)
       throws TimeoutException;
 }

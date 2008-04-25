@@ -16,52 +16,38 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.shell.BrowserWidget;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
- * Runs locally in hosted mode.
+ * Runs remotely in web mode. This feature is experimental and is not officially
+ * supported.
  */
-class RunStyleLocalHosted extends RunStyle {
+abstract class RunStyleRemote extends RunStyle {
 
-  /**
-   * A browser window to host local tests.
-   */
-  private BrowserWidget browserWindow;
-
-  RunStyleLocalHosted(JUnitShell shell) {
+  public RunStyleRemote(JUnitShell shell) {
     super(shell);
   }
 
   @Override
   public boolean isLocal() {
-    return true;
-  }
-
-  @Override
-  public void launchModule(String moduleName) throws UnableToCompleteException {
-    launchUrl(getUrlSuffix(moduleName));
+    return false;
   }
 
   @Override
   public void maybeCompileModule(String moduleName)
       throws UnableToCompleteException {
-    // nothing to do
+    shell.compileForWebMode(moduleName, null);
   }
 
-  protected BrowserWidget getBrowserWindow() throws UnableToCompleteException {
-    if (browserWindow == null) {
-      browserWindow = shell.openNewBrowserWindow();
+  protected String getMyUrl(String moduleName) {
+    try {
+      String localhost = InetAddress.getLocalHost().getHostAddress();
+      return "http://" + localhost + ":" + shell.getPort() + "/"
+          + getUrlSuffix(moduleName);
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Unable to determine my ip address", e);
     }
-    return browserWindow;
-  }
-
-  /**
-   * Launches a URL in the browser window.
-   * 
-   * @param url The URL to launch.
-   * @throws UnableToCompleteException
-   */
-  protected void launchUrl(String url) throws UnableToCompleteException {
-    getBrowserWindow().go(url);
   }
 }

@@ -26,21 +26,20 @@ public interface JUnitHostAsync {
   /**
    * Gets the name of next method to run.
    * 
-   * @param moduleName the module name of this client
    * @param callBack the object that will receive the name of the next method to
    *          run
    */
-  void getFirstMethod(String moduleName, AsyncCallback<TestInfo> callBack);
+  void getFirstMethod(AsyncCallback<TestInfo> callBack);
 
   /**
    * Reports results for the last method run and gets the name of next method to
    * run.
    * 
-   * @param moduleName the module name of this client
+   * @param testInfo the testInfo the result is for
    * @param result the result of the test
    * @param callBack the object that will receive the name of the next method to
    *          run
    */
-  void reportResultsAndGetNextMethod(String moduleName, JUnitResult result,
+  void reportResultsAndGetNextMethod(TestInfo testInfo, JUnitResult result,
       AsyncCallback<TestInfo> callBack);
 }

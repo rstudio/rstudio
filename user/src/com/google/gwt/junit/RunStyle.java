@@ -15,6 +15,7 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
@@ -23,14 +24,38 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 abstract class RunStyle {
 
   /**
-   * Possibly launches a browser window to run the specified module.
+   * The containing shell.
+   */
+  protected final JUnitShell shell;
+
+  /**
+   * @param shell the containing shell
+   */
+  public RunStyle(JUnitShell shell) {
+    this.shell = shell;
+  }
+
+  /**
+   * Returns whether or not the local UI event loop needs to be pumped.
+   */
+  public abstract boolean isLocal();
+
+  /**
+   * Requests initial launch of the browser.
    * 
    * @param moduleName the module to run
-   * @param forceLaunch If <code>true</code>, forces a new browser window to
-   *          be launched (because <code>testCaseClassName</code> changed)
    * @throws UnableToCompleteException
    */
-  public abstract void maybeLaunchModule(String moduleName, boolean forceLaunch)
+  public abstract void launchModule(String moduleName)
+      throws UnableToCompleteException;
+
+  /**
+   * Possibly causes a compilation on the specified module.
+   * 
+   * @param moduleName the module to compile
+   * @throws UnableToCompleteException
+   */
+  public abstract void maybeCompileModule(String moduleName)
       throws UnableToCompleteException;
 
   /**
@@ -40,6 +65,13 @@ abstract class RunStyle {
    */
   public boolean wasInterrupted() {
     return false;
+  }
+
+  /**
+   * Gets the shell logger.
+   */
+  protected TreeLogger getLogger() {
+    return shell.getTopLogger();
   }
 
   /**

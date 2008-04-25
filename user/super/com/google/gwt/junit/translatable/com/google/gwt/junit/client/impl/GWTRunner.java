@@ -19,6 +19,8 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
@@ -41,17 +43,21 @@ public abstract class GWTRunner implements EntryPoint {
      * A call to junitHost failed.
      */
     public void onFailure(Throwable caught) {
-      // We're not doing anything, which will stop the test harness.
-      // TODO: try the call again?
+      // Try the call again
+      new Timer() {
+        @Override
+        public void run() {
+          syncToServer();
+        }
+      }.schedule(1000);
     }
 
     /**
      * A call to junitHost succeeded; run the next test case.
      */
     public void onSuccess(TestInfo nextTest) {
-      if (nextTest != null) {
-        runTest(nextTest);
-      }
+      currentTest = nextTest;
+      doRunTest();
     }
   }
 
@@ -74,28 +80,9 @@ public abstract class GWTRunner implements EntryPoint {
     return sInstance;
   }
 
-  private static native String getQuery() /*-{
-    return $wnd.location.search || '';  
-  }-*/;
+  private JUnitResult currentResult;
 
-  private static String getQueryParam(String query, String queryParam) {
-    int pos = query.indexOf("?" + queryParam + "=");
-    if (pos < 0) {
-      pos = query.indexOf("&" + queryParam + "=");
-    }
-    if (pos < 0) {
-      return null;
-    }
-    // advance past param name to to param value; +2 for the '&' and '='
-    pos += queryParam.length() + 2;
-    String result = query.substring(pos);
-    // trim any query params that follow
-    pos = result.indexOf('&');
-    if (pos >= 0) {
-      result = result.substring(0, pos);
-    }
-    return result;
-  }
+  private TestInfo currentTest;
 
   /**
    * The remote service to communicate with.
@@ -125,19 +112,19 @@ public abstract class GWTRunner implements EntryPoint {
   }
 
   public void onModuleLoad() {
-    TestInfo queryParamTestToRun = checkForQueryParamTestToRun();
-    if (queryParamTestToRun != null) {
+    currentTest = checkForQueryParamTestToRun();
+    if (currentTest != null) {
       /*
        * Just run a single test with no server-side interaction.
        */
       serverless = true;
-      runTest(queryParamTestToRun);
+      runTest();
     } else {
       /*
        * Normal operation: Kick off the test running process by getting the
        * first method to run from the server.
        */
-      junitHost.getFirstMethod(GWT.getModuleName(), junitHostListener);
+      syncToServer();
     }
   }
 
@@ -146,8 +133,8 @@ public abstract class GWTRunner implements EntryPoint {
       // That's it, we're done
       return;
     }
-    junitHost.reportResultsAndGetNextMethod(GWT.getModuleName(), result,
-        junitHostListener);
+    currentResult = result;
+    syncToServer();
   }
 
   /**
@@ -157,28 +144,54 @@ public abstract class GWTRunner implements EntryPoint {
   protected abstract GWTTestCase createNewTestCase(String testClass);
 
   private TestInfo checkForQueryParamTestToRun() {
-    String query = getQuery();
-    String testClass = getQueryParam(query, TESTCLASS_QUERY_PARAM);
-    String testMethod = getQueryParam(query, TESTFUNC_QUERY_PARAM);
+    String testClass = Window.Location.getParameter(TESTCLASS_QUERY_PARAM);
+    String testMethod = Window.Location.getParameter(TESTFUNC_QUERY_PARAM);
     if (testClass == null || testMethod == null) {
       return null;
     }
-    return new TestInfo(testClass, testMethod);
+    return new TestInfo(GWT.getModuleName(), testClass, testMethod);
   }
 
-  private void runTest(TestInfo testToRun) {
+  private void doRunTest() {
+    // Make sure the module matches.
+    String currentModule = GWT.getModuleName();
+    String newModule = currentTest.getTestModule();
+    if (currentModule.equals(newModule)) {
+      // The module is correct.
+      runTest();
+    } else {
+      /*
+       * We're being asked to run a test in a different module. We must navigate
+       * the browser to a new URL which will run that other module.
+       */
+      String href = Window.Location.getHref();
+      String newHref = href.replace(currentModule, newModule);
+      Window.Location.replace(newHref);
+    }
+  }
+
+  private void runTest() {
     // Dynamically create a new test case.
-    GWTTestCase testCase = createNewTestCase(testToRun.getTestClass());
+    GWTTestCase testCase = createNewTestCase(currentTest.getTestClass());
     if (testCase == null) {
-      RuntimeException ex = new RuntimeException(testToRun
+      RuntimeException ex = new RuntimeException(currentTest
           + ": could not instantiate the requested class");
       JUnitResult result = new JUnitResult();
       result.setExceptionWrapper(new ExceptionWrapper(ex));
       reportResultsAndGetNextMethod(result);
     }
 
-    testCase.setName(testToRun.getTestMethod());
+    testCase.setName(currentTest.getTestMethod());
     testCase.__doRunTest();
+  }
+
+  private void syncToServer() {
+    if (currentTest == null) {
+      junitHost.getFirstMethod(junitHostListener);
+    } else {
+      junitHost.reportResultsAndGetNextMethod(currentTest, currentResult,
+          junitHostListener);
+    }
   }
 
 }

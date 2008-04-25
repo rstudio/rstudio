@@ -36,13 +36,14 @@ class RunStyleLocalWeb extends RunStyleLocalHosted {
   }
 
   @Override
-  public void maybeLaunchModule(String moduleName, boolean forceLaunch)
-      throws UnableToCompleteException {
-    if (forceLaunch) {
-      BrowserWidget browserWindow = getBrowserWindow();
-      shell.compileForWebMode(moduleName, browserWindow.getUserAgent());
-      launchUrl(getUrlSuffix(moduleName) + "?" + PROP_GWT_HYBRID_MODE);
-    }
+  public void launchModule(String moduleName) throws UnableToCompleteException {
+    launchUrl(getUrlSuffix(moduleName) + "?" + PROP_GWT_HYBRID_MODE);
   }
 
+  @Override
+  public void maybeCompileModule(String moduleName)
+      throws UnableToCompleteException {
+    BrowserWidget browserWindow = getBrowserWindow();
+    shell.compileForWebMode(moduleName, browserWindow.getUserAgent());
+  }
 }

@@ -16,52 +16,40 @@
 package com.google.gwt.junit;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.shell.BrowserWidget;
 
 /**
- * Runs locally in hosted mode.
+ * Runs in web mode waiting for the user to contact the server with their own
+ * browser.
  */
-class RunStyleLocalHosted extends RunStyle {
+class RunStyleWait extends RunStyleRemote {
 
-  /**
-   * A browser window to host local tests.
-   */
-  private BrowserWidget browserWindow;
+  private final int numClients;
 
-  RunStyleLocalHosted(JUnitShell shell) {
+  public RunStyleWait(JUnitShell shell, int numClients) {
     super(shell);
+    this.numClients = numClients;
   }
 
   @Override
   public boolean isLocal() {
-    return true;
+    return false;
   }
 
   @Override
   public void launchModule(String moduleName) throws UnableToCompleteException {
-    launchUrl(getUrlSuffix(moduleName));
+    if (numClients == 1) {
+      System.out.println("Compilation finished; please navigate your browser to this URL:");
+    } else {
+      System.out.println("Compilation finished; please navigate " + numClients
+          + " browsers to this URL:");
+    }
+    System.out.println(getMyUrl(moduleName));
   }
 
   @Override
   public void maybeCompileModule(String moduleName)
       throws UnableToCompleteException {
-    // nothing to do
-  }
-
-  protected BrowserWidget getBrowserWindow() throws UnableToCompleteException {
-    if (browserWindow == null) {
-      browserWindow = shell.openNewBrowserWindow();
-    }
-    return browserWindow;
-  }
-
-  /**
-   * Launches a URL in the browser window.
-   * 
-   * @param url The URL to launch.
-   * @throws UnableToCompleteException
-   */
-  protected void launchUrl(String url) throws UnableToCompleteException {
-    getBrowserWindow().go(url);
+    System.out.println("Please wait while we compile " + moduleName + "...");
+    super.maybeCompileModule(moduleName);
   }
 }

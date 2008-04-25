@@ -743,7 +743,7 @@ public class GWTShell extends ToolBase {
     while (notDone()) {
       try {
         if (!display.readAndDispatch()) {
-          display.sleep();
+          sleep();
         }
       } catch (Throwable e) {
         String msg = e.getMessage();
@@ -768,6 +768,10 @@ public class GWTShell extends ToolBase {
     // Stop the HTTP server.
     //
     EmbeddedTomcatServer.stop();
+  }
+
+  protected void sleep() {
+    display.sleep();
   }
 
   protected boolean startUp() {

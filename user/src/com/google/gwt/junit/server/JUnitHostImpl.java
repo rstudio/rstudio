@@ -80,20 +80,19 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     fld.set(obj, value);
   }
 
-  public TestInfo getFirstMethod(String moduleName) throws TimeoutException {
-    return getHost().getNextTestInfo(getClientId(), moduleName,
-        TIME_TO_WAIT_FOR_TESTNAME);
+  public TestInfo getFirstMethod() throws TimeoutException {
+    return getHost().getNextTestInfo(getClientId(), TIME_TO_WAIT_FOR_TESTNAME);
   }
 
-  public TestInfo reportResultsAndGetNextMethod(String moduleName,
+  public TestInfo reportResultsAndGetNextMethod(TestInfo testInfo,
       JUnitResult result) throws TimeoutException {
     initResult(getThreadLocalRequest(), result);
     ExceptionWrapper ew = result.getExceptionWrapper();
     result.setException(deserialize(ew));
     JUnitMessageQueue host = getHost();
-    host.reportResults(moduleName, result);
-    return host.getNextTestInfo(getClientId(), moduleName,
-        TIME_TO_WAIT_FOR_TESTNAME);
+    String clientId = getClientId();
+    host.reportResults(clientId, testInfo, result);
+    return host.getNextTestInfo(clientId, TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   @Override
@@ -101,12 +100,11 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       HttpServletResponse response) throws ServletException, IOException {
     String requestURI = request.getRequestURI();
     if (requestURI.endsWith("/junithost/loadError")) {
-      String moduleName = getModuleName(requestURI);
       String requestPayload = RPCServletUtils.readContentAsUtf8(request);
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportResults(moduleName, result);
+      getHost().reportResults(getClientId(), null, result);
     } else {
       super.service(request, response);
     }
@@ -226,14 +224,6 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     String machine = request.getRemoteHost();
     String agent = request.getHeader("User-Agent");
     return machine + " / " + agent;
-  }
-
-  private String getModuleName(String requestURI) {
-    int pos = requestURI.indexOf("/junithost");
-    String prefix = requestURI.substring(0, pos);
-    pos = prefix.lastIndexOf('/');
-    String moduleName = prefix.substring(pos + 1);
-    return moduleName;
   }
 
   private void initResult(HttpServletRequest request, JUnitResult result) {
