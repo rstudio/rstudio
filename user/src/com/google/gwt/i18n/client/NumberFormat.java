@@ -346,6 +346,20 @@ public class NumberFormat {
   }
 
   /**
+   * Provides the standard currency format for the default locale using a
+   * specified currency.
+   * 
+   * @param currencyCode valid currency code, as defined in 
+   *     com.google.gwt.i18n.client.constants.CurrencyCodeMapConstants.properties
+   * @return a <code>NumberFormat</code> capable of producing and consuming
+   *         currency format for the default locale
+   */
+  public static NumberFormat getCurrencyFormat(String currencyCode) {
+    // TODO(jat): consider caching values per currency code.
+    return new NumberFormat(defaultNumberConstants.currencyPattern(), currencyCode);
+  }
+
+  /**
    * Provides the standard decimal format for the default locale.
    * 
    * @return a <code>NumberFormat</code> capable of producing and consuming
@@ -1068,8 +1082,7 @@ public class NumberFormat {
     // To make sure it lead zero will be kept.
     String fracPart = String.valueOf(fracValue + (long) power);
     int fracLen = fracPart.length();
-    while (fracPart.charAt(fracLen - 1) == '0'
-        && fracLen > minimumFractionDigits + 1) {
+    while (fracPart.charAt(fracLen - 1) == '0' && fracLen > minimumFractionDigits + 1) {
       fracLen--;
     }
 
