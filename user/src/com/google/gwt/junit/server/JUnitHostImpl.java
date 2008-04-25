@@ -52,7 +52,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
    * test. Practically speaking, the test system should respond nearly instantly
    * if there are further tests to run.
    */
-  private static final int TIME_TO_WAIT_FOR_TESTNAME = 300000;
+  private static final int TIME_TO_WAIT_FOR_TESTNAME = 30000;
 
   /**
    * Tries to grab the GWTUnitTestShell sHost environment to communicate with
