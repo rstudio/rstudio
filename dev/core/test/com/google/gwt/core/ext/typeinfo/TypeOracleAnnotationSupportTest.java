@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.test.ClassAnnotatedWithBinaryOnlyAnnotat
 import com.google.gwt.core.ext.typeinfo.test.ClassLiteralReferenceAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.PrimitiveValuesAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.PrimitivesAnnotatedClass;
+import com.google.gwt.core.ext.typeinfo.test.SourceRetentionAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -45,6 +46,8 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
       String testAnnotationValue, String nestedAnnotationValue,
       TestAnnotation realAnnotation) {
     assertNotNull(annotatedElement);
+
+    assertNull(annotatedElement.getAnnotation(SourceRetentionAnnotation.class));
 
     TestAnnotation testAnnotation = annotatedElement.getAnnotation(TestAnnotation.class);
     assertNotNull(testAnnotation);

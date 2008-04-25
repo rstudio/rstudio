@@ -92,6 +92,8 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -289,6 +291,17 @@ public class TypeOracleBuilder {
     } else {
       return String.valueOf(jmethod.binding.selector);
     }
+  }
+
+  private static RetentionPolicy getRetentionPolicy(
+      Class<? extends java.lang.annotation.Annotation> clazz) {
+    // Default retention policy is CLASS, see @Retention.
+    RetentionPolicy retentionPolicy = RetentionPolicy.CLASS;
+    Retention retentionAnnotation = clazz.getAnnotation(Retention.class);
+    if (retentionAnnotation != null) {
+      retentionPolicy = retentionAnnotation.value();
+    }
+    return retentionPolicy;
   }
 
   private static boolean isAnnotation(TypeDeclaration typeDecl) {
@@ -1104,7 +1117,10 @@ public class TypeOracleBuilder {
     }
 
     Class<? extends java.lang.annotation.Annotation> clazz = classLiteral.asSubclass(java.lang.annotation.Annotation.class);
-    declaredAnnotations.put(clazz, annotation);
+    // Do not reflect source-only annotations.
+    if (getRetentionPolicy(clazz) != RetentionPolicy.SOURCE) {
+      declaredAnnotations.put(clazz, annotation);
+    }
     return true;
   }
 

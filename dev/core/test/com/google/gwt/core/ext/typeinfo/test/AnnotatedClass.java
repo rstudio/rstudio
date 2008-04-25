@@ -22,21 +22,26 @@ import com.google.gwt.core.ext.typeinfo.test.ClassLiteralReferenceAnnotation.Foo
  * {@link com.google.gwt.core.ext.typeinfo.TypeOracle TypeOracle} will correctly
  * report the presence of annotations on the different annotatable elements.
  */
+@SourceRetentionAnnotation
 @ClassLiteralReferenceAnnotation(Foo.class)
 @TestAnnotation(value = "Class", nestedAnnotation = @NestedAnnotation("Foo"))
 public class AnnotatedClass {
+  @SourceRetentionAnnotation
   @TestAnnotation("Field")
   private int annotatedField;
 
+  @SourceRetentionAnnotation
   @TestAnnotation("Constructor")
   public AnnotatedClass() {
   }
 
+  @SourceRetentionAnnotation
   @TestAnnotation("Method")
   public void annotatedMethod() {
   }
 
-  public void methodWithAnnotatedParameter(@TestAnnotation("Parameter")
+  public void methodWithAnnotatedParameter(@SourceRetentionAnnotation
+  @TestAnnotation("Parameter")
   int annotatedParameter) {
   }
 }
