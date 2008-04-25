@@ -143,11 +143,9 @@ public final class Util {
 
   public static boolean copy(TreeLogger logger, File in, File out)
       throws UnableToCompleteException {
-    FileInputStream fis = null;
     try {
       if (in.lastModified() > out.lastModified()) {
-        fis = new FileInputStream(in);
-        copy(logger, fis, out);
+        copy(logger, new FileInputStream(in), out);
         return true;
       } else {
         return false;
@@ -156,27 +154,28 @@ public final class Util {
       logger.log(TreeLogger.ERROR, "Unable to open file '"
           + in.getAbsolutePath() + "'", e);
       throw new UnableToCompleteException();
-    } finally {
-      Utility.close(fis);
     }
   }
 
+  /**
+   * Copies an input stream out to a file. Closes the input steam.
+   */
   public static void copy(TreeLogger logger, InputStream is, File out)
       throws UnableToCompleteException {
-    FileOutputStream fos = null;
     try {
       out.getParentFile().mkdirs();
-      fos = new FileOutputStream(out);
-      copy(logger, is, fos);
+      copy(logger, is, new FileOutputStream(out));
     } catch (FileNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Unable to create file '"
           + out.getAbsolutePath() + "'", e);
       throw new UnableToCompleteException();
-    } finally {
-      Utility.close(fos);
     }
   }
 
+  /**
+   * Copies an input stream out to a file. Closes the input steam and output
+   * stream.
+   */
   public static void copy(TreeLogger logger, InputStream is, OutputStream os)
       throws UnableToCompleteException {
     try {
@@ -188,17 +187,18 @@ public final class Util {
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Error during copy", e);
       throw new UnableToCompleteException();
+    } finally {
+      Utility.close(is);
+      Utility.close(os);
     }
   }
 
   public static boolean copy(TreeLogger logger, URL in, File out)
       throws UnableToCompleteException {
-    InputStream is = null;
     try {
       URLConnection conn = in.openConnection();
       if (conn.getLastModified() > out.lastModified()) {
-        is = in.openStream();
-        copy(logger, is, out);
+        copy(logger, in.openStream(), out);
         return true;
       } else {
         return false;
@@ -207,8 +207,6 @@ public final class Util {
       logger.log(TreeLogger.ERROR, "Unable to open '" + in.toExternalForm()
           + "'", e);
       throw new UnableToCompleteException();
-    } finally {
-      Utility.close(is);
     }
   }
 
