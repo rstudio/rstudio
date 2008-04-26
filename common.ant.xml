@@ -1,21 +1,21 @@
 <project name="common">
-        <!-- gwt.build.iscasesensitivefs is true if the filesystem of the
-          build machine is case-sensitive, false otherwise.  Update with
-          new lines for any supported platforms with case-insensitive
-          filesystems
-        -->
-        <condition property="gwt.build.iscasesensitivefs" else="false">
-          <not>
-            <or>
-              <os family="windows"/>
-            </or>
-          </not>
-        </condition>
+	<!-- gwt.build.iscasesensitivefs is true if the filesystem of the
+	  build machine is case-sensitive, false otherwise.  Update with
+	  new lines for any supported platforms with case-insensitive
+	  filesystems
+	-->
+	<condition property="gwt.build.iscasesensitivefs" else="false">
+	  <not>
+	    <or>
+	      <os family="windows"/>
+	    </or>
+	  </not>
+	</condition>
 
 	<property name="test.ant.file" location="${gwt.root}/${project.tail}/build.xml" />
 	<condition property="project.valid">
 		<equals arg1="${ant.file}" arg2="${test.ant.file}"
-                  casesensitive="${gwt.build.iscasesensitivefs}"/>
+		  casesensitive="${gwt.build.iscasesensitivefs}"/>
 	</condition>
 	<fail unless="project.valid" message="This build file is in an inconsistent state (${ant.file} != ${test.ant.file})." />
 
@@ -93,7 +93,24 @@
 	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
 	<property name="gwt.junit.port" value="8888" />
 	<property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
-	
+
+	<!-- Headless mode keeps the hosted mode browser and log window
+	     from popping up during a unit test run. This is usually desirable,
+	     but the WebKit layout engine performs some optimizations in
+	     headless mode that causes some GWT unit tests to break.  The 
+	     solution for the time being is to turn off headless mode on
+	     the mac.
+	  -->
+	<condition property="junit.headless">
+		<not>
+		     <isset property="build.host.ismac" />
+		</not>
+	</condition>
+	<condition property="junit.notheadless.arg" value="-notHeadless" else="">
+		<not>
+		     <isset property="junit.headless" />
+		</not>
+	</condition>
 
 	<!-- Pulls in tasks defined in ant-contrib, i.e. foreach -->
 	<taskdef resource="net/sf/antcontrib/antlib.xml">
@@ -142,10 +159,9 @@
 			<junit dir="@{test.out}" fork="yes" printsummary="yes" failureproperty="junit.failure" >
 				<jvmarg line="${junit.platform.args}" />
 				<jvmarg line="-Xmx512m" />
-				<sysproperty key="gwt.args" value="@{test.args}" />
+				<sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
+				<sysproperty key="java.awt.headless" value="${junit.headless}" />
 				<sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
-				<sysproperty key="java.awt.headless" value="true" />
-
 				<classpath>
 					<pathelement location="${gwt.root}/${project.tail}/src" />
 					<pathelement location="${gwt.root}/${project.tail}/super" />
