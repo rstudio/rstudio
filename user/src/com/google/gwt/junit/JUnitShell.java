@@ -438,11 +438,11 @@ public class JUnitShell extends GWTShell {
               + "\n Actual time elapsed: " + elapsed + " seconds.\n");
     }
 
-    if (messageQueue.hasResult()) {
-      return false;
+    if (runStyle.wasInterrupted()) {
+      throw new TimeoutException("A remote browser died a mysterious death.");
     }
 
-    return !runStyle.wasInterrupted();
+    return !messageQueue.hasResult();
   }
 
   @Override
@@ -533,6 +533,7 @@ public class JUnitShell extends GWTShell {
       return;
     }
 
+    assert (messageQueue.hasResult());
     Map<String, JUnitResult> results = messageQueue.getResults();
 
     boolean parallelTesting = numClients > 1;

@@ -152,6 +152,7 @@ public class JUnitMessageQueue {
         // A client is reporting results for the wrong test.
         return;
       }
+      assert (results != null);
       ClientStatus clientStatus = clientStatuses.get(clientId);
       clientStatus.currentTestResults = results;
       ++numClientsHaveResults;

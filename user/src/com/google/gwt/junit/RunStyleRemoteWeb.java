@@ -59,15 +59,13 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   }
 
   private static final int CONNECT_MS = 10000;
-  private static final int INITIAL_KEEPALIVE_MS = 5000;
-  private static final int PING_KEEPALIVE_MS = 2000;
+  private static final int PING_KEEPALIVE_MS = 5000;
   private static final int RESPONSE_TIMEOUT_MS = 10000;
 
   // Larger values when debugging the unit test framework, so you
   // don't get spurious timeouts.
   // private static final int CONNECT_MS = 1000000;
-  // private static final int INITIAL_KEEPALIVE_MS = 500000;
-  // private static final int PING_KEEPALIVE_MS = 200000;
+  // private static final int PING_KEEPALIVE_MS = 500000;
   // private static final int RESPONSE_TIMEOUT_MS = 1000000;
 
   public static RunStyle create(JUnitShell shell, String[] urls) {
@@ -119,6 +117,11 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   private int[] remoteTokens;
 
   /**
+   * Whether one of the remote browsers was interrupted.
+   */
+  private boolean wasInterrupted;
+
+  /**
    * @param shell the containing shell
    * @param browserManagers a populated array of RMI remote interfaces to each
    *          remote BrowserManagerServer
@@ -139,7 +142,8 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   }
 
   @Override
-  public void launchModule(String moduleName) throws UnableToCompleteException {
+  public synchronized void launchModule(String moduleName)
+      throws UnableToCompleteException {
     String url = getMyUrl(moduleName);
 
     for (int i = 0; i < remoteTokens.length; ++i) {
@@ -150,7 +154,7 @@ class RunStyleRemoteWeb extends RunStyleRemote {
         if (remoteToken != 0) {
           mgr.killBrowser(remoteToken);
         }
-        remoteTokens[i] = mgr.launchNewBrowser(url, INITIAL_KEEPALIVE_MS);
+        remoteTokens[i] = mgr.launchNewBrowser(url, PING_KEEPALIVE_MS);
       } catch (Exception e) {
         Throwable cause = e.getCause();
         if (cause instanceof SocketTimeoutException) {
@@ -166,10 +170,27 @@ class RunStyleRemoteWeb extends RunStyleRemote {
         throw new UnableToCompleteException();
       }
     }
+
+    Thread keepAliveThread = new Thread() {
+      public void run() {
+        do {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException ignored) {
+          }
+        } while (doKeepAlives());
+      }
+    };
+    keepAliveThread.setDaemon(true);
+    keepAliveThread.start();
   }
 
   @Override
-  public boolean wasInterrupted() {
+  public synchronized boolean wasInterrupted() {
+    return wasInterrupted;
+  }
+
+  protected synchronized boolean doKeepAlives() {
     for (int i = 0; i < remoteTokens.length; ++i) {
       int remoteToken = remoteTokens[i];
       BrowserManager mgr = browserManagers[i];
@@ -192,10 +213,11 @@ class RunStyleRemoteWeb extends RunStyleRemote {
             getLogger().log(TreeLogger.ERROR,
                 "Error keeping alive remote browser at " + remoteBmsUrls[i], e);
           }
-          return true;
+          wasInterrupted = true;
+          break;
         }
       }
     }
-    return false;
+    return !wasInterrupted;
   }
 }
