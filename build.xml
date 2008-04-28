@@ -6,6 +6,11 @@
 	<!-- "build" is the default when subprojects are directly targetted  -->
 	<property name="target" value="build" />
 
+	<property name="gwt.apicheck.config" 
+		location="tools/api-checker/config/gwt14_15userApi.conf"/>
+	<property name="gwt.apicheck.oldroot" 
+		location="../gwt-1.4"/>
+
 	<target name="dist" depends="dev, user, servlet, tools, jni, doc, samples" description="Run the distributions">
 		<gwt.ant dir="distro-source" />
 	</target>
@@ -65,4 +70,28 @@
 	<target name="clean" description="Cleans the entire GWT build">
 		<delete dir="${gwt.build}" />
 	</target>
+
+	<target name="apicheck" depends="build"
+		description="Checks API compatibility to prior GWT revision">
+		<copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
+		      file="${gwt.apicheck.config}"
+		      overwrite="true">
+			<filterset>
+				<filter token="OLDROOT" 
+					value="${gwt.apicheck.oldroot}"/>
+			</filterset>
+		</copy>
+		<java failonerror="true" fork="true"
+		      classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
+			<classpath>
+				<pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
+				<pathelement location="${gwt.build.out}/dev/core/bin"/>
+				<pathelement location="${gwt.build.out}/user/bin"/>
+				<pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
+				<pathelement path="${java.class.path}"/>
+			</classpath>
+			<arg file="${gwt.build.out}/userApi.conf"/>
+		</java>
+	</target>
+
 </project>

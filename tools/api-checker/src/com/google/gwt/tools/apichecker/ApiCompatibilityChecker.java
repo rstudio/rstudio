@@ -83,7 +83,7 @@ public class ApiCompatibilityChecker {
 
       if (args.length < 1) {
         printHelp();
-        Runtime.getRuntime().exit(-1);
+        System.exit(-1);
       }
 
       if (processNewApi) {
@@ -105,13 +105,14 @@ public class ApiCompatibilityChecker {
             REMOVE_DUPLICATES);
         System.out.println(apiDifferences);
         System.out.println("\t\t\t\tApi Compatibility Checker tool, Copyright Google Inc. 2008");
+        System.exit(apiDifferences.length() == 0 ? 0 : 1);
       }
 
     } catch (Exception e) {
       System.err.println("Exception " + e.getMessage()
           + ", printing stacktrace");
       e.printStackTrace();
-      Runtime.getRuntime().exit(-1);
+      System.exit(-1);
     }
   }
 
