@@ -58,6 +58,43 @@ class RunStyleRemoteWeb extends RunStyleRemote {
     }
   }
 
+  private static class RemoteBrowser {
+    /**
+     * Remote browser manager.
+     */
+    private final BrowserManager manager;
+
+    /**
+     * RMI URLs for the remote browser server.
+     */
+    private final String rmiUrl;
+    /**
+     * Reference to the remote browser processes.
+     */
+    private int token;
+
+    public RemoteBrowser(BrowserManager manager, String rmiUrl) {
+      this.manager = manager;
+      this.rmiUrl = rmiUrl;
+    }
+
+    public BrowserManager getManager() {
+      return manager;
+    }
+
+    public String getRmiUrl() {
+      return rmiUrl;
+    }
+
+    public int getToken() {
+      return token;
+    }
+
+    public void setToken(int token) {
+      this.token = token;
+    }
+  }
+
   private static final int CONNECT_MS = 10000;
   private static final int PING_KEEPALIVE_MS = 5000;
   private static final int RESPONSE_TIMEOUT_MS = 10000;
@@ -100,26 +137,22 @@ class RunStyleRemoteWeb extends RunStyleRemote {
     return new RunStyleRemoteWeb(shell, browserManagers, urls);
   }
 
-  /**
-   * Remote browser managers.
-   */
-  private final BrowserManager[] browserManagers;
-
-  /**
-   * RMI URLs for each remote browser server (using the same index as
-   * browserManagers[] and remoteTokens[]).
-   */
-  private String remoteBmsUrls[];
-
-  /**
-   * References to the remote browser processes.
-   */
-  private int[] remoteTokens;
+  private final RemoteBrowser[] remoteBrowsers;
 
   /**
    * Whether one of the remote browsers was interrupted.
    */
   private boolean wasInterrupted;
+
+  /**
+   * A separate lock to control access to {@link #wasInterrupted}. This keeps
+   * the main thread calls into {@link #wasInterrupted()} from having to
+   * synchronized on the containing instance and potentially block on RPC calls.
+   * It is okay to take the {@link #wasInterruptedLock} while locking the
+   * containing instance; it is NOT okay to do the opposite or deadlock could
+   * occur.
+   */
+  private final Object wasInterruptedLock = new Object();
 
   /**
    * @param shell the containing shell
@@ -131,9 +164,12 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   private RunStyleRemoteWeb(JUnitShell shell, BrowserManager[] browserManagers,
       String[] urls) {
     super(shell);
-    this.browserManagers = browserManagers;
-    this.remoteTokens = new int[browserManagers.length];
-    this.remoteBmsUrls = urls;
+    synchronized (this) {
+      this.remoteBrowsers = new RemoteBrowser[browserManagers.length];
+      for (int i = 0; i < browserManagers.length; ++i) {
+        remoteBrowsers[i] = new RemoteBrowser(browserManagers[i], urls[i]);
+      }
+    }
   }
 
   @Override
@@ -146,15 +182,16 @@ class RunStyleRemoteWeb extends RunStyleRemote {
       throws UnableToCompleteException {
     String url = getMyUrl(moduleName);
 
-    for (int i = 0; i < remoteTokens.length; ++i) {
+    for (RemoteBrowser remoteBrowser : remoteBrowsers) {
       long callStart = System.currentTimeMillis();
       try {
-        int remoteToken = remoteTokens[i];
-        BrowserManager mgr = browserManagers[i];
+        int remoteToken = remoteBrowser.getToken();
+        BrowserManager mgr = remoteBrowser.getManager();
         if (remoteToken != 0) {
           mgr.killBrowser(remoteToken);
         }
-        remoteTokens[i] = mgr.launchNewBrowser(url, PING_KEEPALIVE_MS);
+        remoteToken = mgr.launchNewBrowser(url, PING_KEEPALIVE_MS);
+        remoteBrowser.setToken(remoteToken);
       } catch (Exception e) {
         Throwable cause = e.getCause();
         if (cause instanceof SocketTimeoutException) {
@@ -162,11 +199,11 @@ class RunStyleRemoteWeb extends RunStyleRemote {
           getLogger().log(
               TreeLogger.ERROR,
               "Timeout: " + elapsed + "ms  launching remote browser at: "
-                  + remoteBmsUrls[i], e.getCause());
+                  + remoteBrowser.getRmiUrl(), e.getCause());
           throw new UnableToCompleteException();
         }
         getLogger().log(TreeLogger.ERROR,
-            "Error launching remote browser at " + remoteBmsUrls[i], e);
+            "Error launching remote browser at " + remoteBrowser.getRmiUrl(), e);
         throw new UnableToCompleteException();
       }
     }
@@ -186,38 +223,45 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   }
 
   @Override
-  public synchronized boolean wasInterrupted() {
-    return wasInterrupted;
+  public boolean wasInterrupted() {
+    synchronized (wasInterruptedLock) {
+      return wasInterrupted;
+    }
   }
 
-  protected synchronized boolean doKeepAlives() {
-    for (int i = 0; i < remoteTokens.length; ++i) {
-      int remoteToken = remoteTokens[i];
-      BrowserManager mgr = browserManagers[i];
-      if (remoteToken > 0) {
-
+  private synchronized boolean doKeepAlives() {
+    for (RemoteBrowser remoteBrowser : remoteBrowsers) {
+      if (remoteBrowser.getToken() > 0) {
         long callStart = System.currentTimeMillis();
         try {
-          mgr.keepAlive(remoteToken, PING_KEEPALIVE_MS);
+          remoteBrowser.getManager().keepAlive(remoteBrowser.getToken(),
+              PING_KEEPALIVE_MS);
         } catch (Exception e) {
           Throwable cause = e.getCause();
+          String rmiUrl = remoteBrowser.getRmiUrl();
           if (cause instanceof SocketTimeoutException) {
             long elapsed = System.currentTimeMillis() - callStart;
             throw new TimeoutException("Timeout: " + elapsed
-                + "ms  keeping alive remote browser at: " + remoteBmsUrls[i],
+                + "ms  keeping alive remote browser at: " + rmiUrl,
                 e.getCause());
           } else if (e instanceof IllegalStateException) {
             getLogger().log(TreeLogger.INFO,
-                "Browser at: " + remoteBmsUrls[i] + " already exited.", e);
+                "Browser at: " + rmiUrl + " already exited.", e);
           } else {
             getLogger().log(TreeLogger.ERROR,
-                "Error keeping alive remote browser at " + remoteBmsUrls[i], e);
+                "Error keeping alive remote browser at " + rmiUrl, e);
           }
-          wasInterrupted = true;
+          remoteBrowser.setToken(0);
+          synchronized (wasInterruptedLock) {
+            wasInterrupted = true;
+          }
           break;
         }
       }
     }
-    return !wasInterrupted;
+
+    synchronized (wasInterruptedLock) {
+      return !wasInterrupted;
+    }
   }
 }

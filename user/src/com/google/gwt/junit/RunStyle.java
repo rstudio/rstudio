@@ -41,7 +41,8 @@ abstract class RunStyle {
   public abstract boolean isLocal();
 
   /**
-   * Requests initial launch of the browser.
+   * Requests initial launch of the browser. This should only be called once per
+   * instance of RunStyle.
    * 
    * @param moduleName the module to run
    * @throws UnableToCompleteException
