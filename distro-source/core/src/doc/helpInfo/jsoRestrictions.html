@@ -15,10 +15,10 @@ this</em>.
 
 <ol>
 
-  <li> All instance methods on JSO classes must be explicitly marked
-  final.  <em>This enforces on the developer the restriction of no
-  polymorphism, because all final instance methods can be dispatched
-  statically.</em>
+  <li>  All instance methods on JSO classes must be one of: explicitly
+  final, a member of a final class, or private.  <em>Methods of JSO classes
+  cannot be overridden, because calls to such methods could require
+  dynamic dispatch.</em>
 
   <li> JSO classes cannot implement interfaces that define
   methods. <em>This prevents virtual calls that would arise by

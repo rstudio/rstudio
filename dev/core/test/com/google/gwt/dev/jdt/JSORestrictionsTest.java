@@ -23,6 +23,17 @@ import junit.framework.TestCase;
 
 public class JSORestrictionsTest extends TestCase {
 
+  public void testFinalClass() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    code.append("final public class Buggy extends JavaScriptObject {\n");
+    code.append("  int nonfinal() { return 10; }\n");
+    code.append("  protected Buggy() { }\n");
+    code.append("}\n");
+
+    shouldGenerateNoError(code);
+  }
+
   public void testInstanceField() throws UnableToCompleteException {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -147,6 +158,17 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_OVERRIDDEN_METHOD);
   }
 
+  public void testPrivateMethod() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
+    code.append("public class Buggy extends JavaScriptObject {\n");
+    code.append("  private int nonfinal() { return 10; }\n");
+    code.append("  protected Buggy() { }\n");
+    code.append("}\n");
+
+    shouldGenerateNoError(code);
+  }
+
   /**
    * Test that when compiling buggyCode, the TypeOracleBuilder emits
    * expectedError somewhere in its output. The code should define a class named
@@ -156,12 +178,19 @@ public class JSORestrictionsTest extends TestCase {
       final String expectedError) throws UnableToCompleteException {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
-    builder.expectError("Errors in \'transient source for Buggy\'", null);
-    builder.expectError(expectedError, null);
-    builder.expectError(
-        "Compilation problem due to \'transient source for Buggy\'", null);
+    if (expectedError != null) {
+      builder.expectError("Errors in \'transient source for Buggy\'", null);
+      builder.expectError(expectedError, null);
+      builder.expectError(
+          "Compilation problem due to \'transient source for Buggy\'", null);
+    }
     UnitTestTreeLogger logger = builder.createLogger();
     TypeOracleTestingUtils.buildTypeOracleForCode("Buggy", buggyCode, logger);
     logger.assertCorrectLogEntries();
+  }
+
+  private void shouldGenerateNoError(StringBuffer buggyCode)
+      throws UnableToCompleteException {
+    shouldGenerateError(buggyCode, null);
   }
 }

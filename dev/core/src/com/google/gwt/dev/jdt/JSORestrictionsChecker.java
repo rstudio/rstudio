@@ -42,7 +42,8 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
  * restrictions. The restrictions are:
  * 
  * <ul>
- * <li> All instance methods on JSO classes must be explicitly marked final.
+ * <li> All instance methods on JSO classes must be one of: final, private, or a
+ * member of a final class.
  * <li> JSO classes cannot implement interfaces that define methods.
  * <li> No instance methods on JSO classes may override another method. (This
  * catches accidents where JSO itself did not finalize some method from its
@@ -96,8 +97,13 @@ class JSORestrictionsChecker {
     @Override
     public void endVisit(MethodDeclaration meth, ClassScope scope) {
       if (isForJSOSubclass(scope)) {
-        if (!meth.isStatic() && ((meth.modifiers & AccFinal) == 0)) {
-          errorOn(meth, ERR_INSTANCE_METHOD_NONFINAL);
+        if ((meth.modifiers & (AccFinal | AccPrivate | AccStatic)) == 0) {
+          // The method's modifiers allow it to be overridden. Make
+          // one final check to see if the surrounding class is final.
+          if ((meth.scope == null)
+              || !meth.scope.enclosingSourceType().isFinal()) {
+            errorOn(meth, ERR_INSTANCE_METHOD_NONFINAL);
+          }
         }
 
         // Should not have to check isStatic() here, but isOverriding() appears
@@ -148,7 +154,7 @@ class JSORestrictionsChecker {
 
   static final String ERR_CONSTRUCTOR_WITH_PARAMETERS = "Constructors must not have parameters in subclasses of JavaScriptObject";
   static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
-  static final String ERR_INSTANCE_METHOD_NONFINAL = "Instance methods must be 'final' in subclasses of JavaScriptObject";
+  static final String ERR_INSTANCE_METHOD_NONFINAL = "Instance methods must be 'final' in non-final subclasses of JavaScriptObject";
   static final String ERR_IS_NONSTATIC_NESTED = "Nested classes must be 'static' if they extend JavaScriptObject";
   static final String ERR_NEW_JSO = "'new' cannot be used to create instances of JavaScriptObject subclasses; instances must originate in JavaScript";
   static final String ERR_NONEMPTY_CONSTRUCTOR = "Constructors must be totally empty in subclasses of JavaScriptObject";
