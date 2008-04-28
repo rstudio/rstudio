@@ -26,6 +26,52 @@ import junit.framework.TestCase;
  * Test access to longs from JSNI.
  */
 public class LongFromJSNITest extends TestCase {
+  public void testCyclicReferences() throws UnableToCompleteException {
+    {
+      StringBuffer buggy = new StringBuffer();
+      buggy.append("class Buggy {\n");
+      buggy.append("  static int anint = 3;\n");
+      buggy.append("  native void jsniMeth() /*-{\n");
+      buggy.append("    $wnd.alert(@Extra::along);\n");
+      buggy.append("  }-*/;\n");
+      buggy.append("}\n");
+
+      StringBuffer extra = new StringBuffer();
+      extra.append("class Extra {\n");
+      extra.append("  static long along = 3;\n");
+      extra.append("  native void jsniMeth() /*-{\n");
+      extra.append("    $wnd.alert(@Buggy::anint);\n");
+      extra.append("  }-*/;\n");
+      extra.append("}\n");
+
+      shouldGenerateError(buggy, extra, 3, "Referencing field 'Extra.along': "
+          + "type 'long' is not safe to access in JSNI code");
+    }
+
+    {
+      StringBuffer buggy = new StringBuffer();
+      buggy.append("class Buggy {\n");
+      buggy.append("  Extra anExtra = new Extra();\n");
+      buggy.append("  static int anint = 3;\n");
+      buggy.append("  native void jsniMeth() /*-{\n");
+      buggy.append("    $wnd.alert(@Extra::along);\n");
+      buggy.append("  }-*/;\n");
+      buggy.append("}\n");
+
+      StringBuffer extra = new StringBuffer();
+      extra.append("class Extra {\n");
+      extra.append("  Buggy mattress = new Buggy();\n");
+      extra.append("  static long along = 3;\n");
+      extra.append("  native void jsniMeth() /*-{\n");
+      extra.append("    $wnd.alert(@Buggy::anint);\n");
+      extra.append("  }-*/;\n");
+      extra.append("}\n");
+
+      shouldGenerateError(buggy, extra, 4, "Referencing field 'Extra.along': "
+          + "type 'long' is not safe to access in JSNI code");
+    }
+  }
+
   public void testFieldAccess() throws UnableToCompleteException {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
@@ -36,6 +82,21 @@ public class LongFromJSNITest extends TestCase {
 
     shouldGenerateError(code, 3,
         "Referencing field 'Buggy.x': type 'long' is not safe to access in JSNI code");
+  }
+
+  public void testInnerClass() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  static class Inner {\n");
+    code.append("    long x = 3;\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth() /*-{\n");
+    code.append("    $wnd.alert(@Buggy.Inner::x);\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateError(code, 5, "Referencing field 'Buggy.Inner.x': "
+        + "type 'long' is not safe to access in JSNI code");
   }
 
   /**
@@ -144,6 +205,48 @@ public class LongFromJSNITest extends TestCase {
     }
   }
 
+  public void testViolator() throws UnableToCompleteException {
+    {
+      StringBuffer okay = new StringBuffer();
+      okay.append("class Buggy {\n");
+      okay.append("  native void jsniMeth() /*-{\n");
+      okay.append("    $wnd.alert(@Extra.Inner::x);\n");
+      okay.append("  }-*/;\n");
+      okay.append("}\n");
+
+      StringBuffer extra = new StringBuffer();
+      extra.append("class Extra {\n");
+      extra.append("  private static class Inner { \n");
+      extra.append("    private static int x = 3;\n");
+      extra.append("  }\n");
+      extra.append("}\n");
+
+      shouldGenerateNoError(okay, extra);
+    }
+
+    {
+      StringBuffer buggy = new StringBuffer();
+      buggy.append("class Buggy {\n");
+      buggy.append("  native void jsniMeth() /*-{\n");
+      buggy.append("    $wnd.alert(@Extra.Inner::x);\n");
+      buggy.append("  }-*/;\n");
+      buggy.append("}\n");
+
+      StringBuffer extra = new StringBuffer();
+      extra.append("class Extra {\n");
+      extra.append("  private static class Inner { \n");
+      extra.append("    private static long x = 3;\n");
+      extra.append("  }\n");
+      extra.append("}\n");
+
+      shouldGenerateError(
+          buggy,
+          extra,
+          2,
+          "Referencing field 'Extra.Inner.x': type 'long' is not safe to access in JSNI code");
+    }
+  }
+
   private void addLongCheckingCups(TypeOracleBuilder builder)
       throws UnableToCompleteException {
     {
@@ -157,16 +260,21 @@ public class LongFromJSNITest extends TestCase {
     }
   }
 
-  private TypeOracle buildOracleWithCode(CharSequence code,
-      UnitTestTreeLogger logger) throws UnableToCompleteException {
+  private TypeOracle buildOracle(CharSequence buggyCode,
+      CharSequence extraCode, UnitTestTreeLogger logger)
+      throws UnableToCompleteException {
     TypeOracleBuilder builder = new TypeOracleBuilder();
     TypeOracleTestingUtils.addStandardCups(builder);
     addLongCheckingCups(builder);
-    TypeOracleTestingUtils.addCup(builder, "Buggy", code);
+    TypeOracleTestingUtils.addCup(builder, "Buggy", buggyCode);
+    if (extraCode != null) {
+      TypeOracleTestingUtils.addCup(builder, "Extra", extraCode);
+    }
     return builder.build(logger);
   }
 
-  private void shouldGenerateError(CharSequence code, int line, String message)
+  private void shouldGenerateError(CharSequence buggyCode,
+      CharSequence extraCode, int line, String message)
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
     b.setLowestLogLevel(TreeLogger.ERROR);
@@ -178,7 +286,7 @@ public class LongFromJSNITest extends TestCase {
           "Compilation problem due to 'transient source for Buggy'", null);
     }
     UnitTestTreeLogger logger = b.createLogger();
-    TypeOracle oracle = buildOracleWithCode(code, logger);
+    TypeOracle oracle = buildOracle(buggyCode, extraCode, logger);
     logger.assertCorrectLogEntries();
     if (message != null) {
       assertEquals("Buggy compilation unit not removed from type oracle", null,
@@ -186,8 +294,18 @@ public class LongFromJSNITest extends TestCase {
     }
   }
 
-  private void shouldGenerateNoError(StringBuffer code)
+  private void shouldGenerateError(CharSequence buggyCode, int line,
+      String message) throws UnableToCompleteException {
+    shouldGenerateError(buggyCode, null, line, message);
+  }
+
+  private void shouldGenerateNoError(CharSequence code)
       throws UnableToCompleteException {
-    shouldGenerateError(code, -1, null);
+    shouldGenerateNoError(code, null);
+  }
+
+  private void shouldGenerateNoError(CharSequence code,
+      CharSequence extraCode) throws UnableToCompleteException {
+    shouldGenerateError(code, extraCode, -1, null);
   }
 }

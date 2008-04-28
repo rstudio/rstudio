@@ -32,6 +32,8 @@ import org.eclipse.jdt.internal.compiler.lookup.BaseTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.FieldBinding;
 import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
+import org.eclipse.jdt.internal.compiler.lookup.ProblemReasons;
+import org.eclipse.jdt.internal.compiler.lookup.ProblemReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
@@ -159,6 +161,26 @@ public class LongFromJSNIChecker {
       char[][] compoundName = CharOperation.splitOn('.',
           className.toCharArray());
       TypeBinding binding = cud.scope.getType(compoundName, compoundName.length);
+
+      if (binding instanceof ProblemReferenceBinding) {
+        ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
+        if (prb.problemId() == ProblemReasons.NotVisible) {
+          // It's just a visibility problem, so try drilling
+          // down manually
+          ReferenceBinding drilling = prb.closestMatch();
+          for (int i = prb.compoundName.length; i < compoundName.length; i++) {
+            drilling = drilling.getMemberType(compoundName[i]);
+            if (binding == null) {
+              return null;
+            }
+          }
+          binding = drilling;
+        }
+      }
+
+      if (binding instanceof ProblemReferenceBinding) {
+        return null;
+      }
       if (binding instanceof ReferenceBinding) {
         return (ReferenceBinding) binding;
       }
