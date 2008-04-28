@@ -413,7 +413,9 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       JClassType localizedType = matchingClasses.get(locale);
       if (localizedType != null) {
         try {
-          Class<?> testClass = Class.forName(localizedType.getQualifiedSourceName());
+          Class<?> testClass = Class.forName(
+              localizedType.getQualifiedSourceName(), false,
+              PluralRule.class.getClassLoader());
           if (PluralRule.class.isAssignableFrom(testClass)) {
             return (PluralRule) testClass.newInstance();
           }

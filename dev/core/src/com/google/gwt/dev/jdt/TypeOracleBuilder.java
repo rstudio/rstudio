@@ -934,8 +934,8 @@ public class TypeOracleBuilder {
       try {
         String className = String.valueOf(resolvedType.constantPoolName());
         className = className.replace('/', '.');
-        Class<?> clazz = Class.forName(className);
-        return clazz;
+        return Class.forName(className, false,
+            TypeOracleBuilder.class.getClassLoader());
       } catch (ClassNotFoundException e) {
         logger.log(TreeLogger.ERROR, "", e);
         return null;

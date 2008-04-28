@@ -166,7 +166,9 @@ abstract class AbstractLocalizableImplCreator extends
           MessageCatalogFormat msgWriter = null;
           try {
             Class<? extends MessageCatalogFormat> msgFormatClass = Class.forName(
-                genClassName).asSubclass(MessageCatalogFormat.class);
+                genClassName, false,
+                MessageCatalogFormat.class.getClassLoader()).asSubclass(
+                MessageCatalogFormat.class);
             msgWriter = msgFormatClass.newInstance();
           } catch (InstantiationException e) {
             logger.log(TreeLogger.ERROR, "Error instantiating @Generate class "

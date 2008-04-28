@@ -170,7 +170,8 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
     assertNotNull(annotatedPackage);
 
     TestAnnotation realAnnotation = Class.forName(
-        "com.google.gwt.core.ext.typeinfo.test.package-info").getAnnotation(
+        "com.google.gwt.core.ext.typeinfo.test.package-info", false,
+        TypeOracleAnnotationSupportTest.class.getClassLoader()).getAnnotation(
         TestAnnotation.class);
 
     validateAnnotation(annotatedPackage, "Package", "Not assigned",

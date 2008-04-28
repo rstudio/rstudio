@@ -169,7 +169,8 @@ public class AnnotationsResource extends AbstractResource {
       String className = generator.value();
       try {
         Class<? extends KeyGenerator> keyGeneratorClass = Class.forName(
-            className).asSubclass(KeyGenerator.class);
+            className, false, KeyGenerator.class.getClassLoader()).asSubclass(
+            KeyGenerator.class);
         return keyGeneratorClass.newInstance();
       } catch (InstantiationException e) {
         throw new AnnotationsError("@GenerateKeys: unable to instantiate "
