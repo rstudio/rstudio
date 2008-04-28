@@ -541,27 +541,36 @@ public final class CompilingClassLoader extends ClassLoader {
         updateJavaScriptHost();
       }
 
-      JsniMethods jsniMethods = newClass.getAnnotation(JsniMethods.class);
-      if (jsniMethods != null) {
-        for (JsniMethod jsniMethod : jsniMethods.value()) {
-          String[] bodyParts = jsniMethod.body();
-          int size = 0;
-          for (String bodyPart : bodyParts) {
-            size += bodyPart.length();
-          }
-          StringBuilder body = new StringBuilder(size);
-          for (String bodyPart : bodyParts) {
-            body.append(bodyPart);
-          }
-          shellJavaScriptHost.createNative(jsniMethod.file(),
-              jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(),
-              body.toString());
-        }
-      }
       return newClass;
     } catch (UnableToCompleteException e) {
       throw new ClassNotFoundException(className);
     }
+  }
+
+  /**
+   * Overridden to process JSNI annotations.
+   */
+  @Override
+  protected synchronized Class<?> loadClass(String name, boolean resolve)
+      throws ClassNotFoundException {
+    Class<?> newClass = super.loadClass(name, resolve);
+    JsniMethods jsniMethods = newClass.getAnnotation(JsniMethods.class);
+    if (jsniMethods != null) {
+      for (JsniMethod jsniMethod : jsniMethods.value()) {
+        String[] bodyParts = jsniMethod.body();
+        int size = 0;
+        for (String bodyPart : bodyParts) {
+          size += bodyPart.length();
+        }
+        StringBuilder body = new StringBuilder(size);
+        for (String bodyPart : bodyParts) {
+          body.append(bodyPart);
+        }
+        shellJavaScriptHost.createNative(jsniMethod.file(), jsniMethod.line(),
+            jsniMethod.name(), jsniMethod.paramNames(), body.toString());
+      }
+    }
+    return newClass;
   }
 
   void clear() {
@@ -614,8 +623,9 @@ public final class CompilingClassLoader extends ClassLoader {
    * @see JavaScriptHost
    */
   private void updateJavaScriptHost() {
-    // Find the application's JavaScriptHost interface.
-    //
+    if (javaScriptHostClass == null) {
+      return;
+    }
     Throwable caught;
     try {
       final Class<?>[] paramTypes = new Class[] {ShellJavaScriptHost.class};
