@@ -171,7 +171,7 @@ public final class JsValueGlue {
     } else {
       // not a boxed primitive
       try {
-        Class<?> jsoType = Class.forName(JSO_IMPL_CLASS, true, cl);
+        Class<?> jsoType = Class.forName(JSO_IMPL_CLASS, false, cl);
         if (jsoType == obj.getClass()) {
           JsValue jsObject = getUnderlyingObject(obj);
           value.setValue(jsObject);
