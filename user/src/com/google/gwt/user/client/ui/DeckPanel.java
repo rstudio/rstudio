@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.animation.WidgetAnimation;
 
 /**
  * A panel that displays all of its child widgets in a 'deck', where only one
@@ -33,9 +33,9 @@ import com.google.gwt.user.client.animation.WidgetAnimation;
  */
 public class DeckPanel extends ComplexPanel implements HasAnimation {
   /**
-   * An {@link WidgetAnimation} used to slide in the new content.
+   * An {@link Animation} used to slide in the new content.
    */
-  private static class SlideAnimation extends WidgetAnimation {
+  private static class SlideAnimation extends Animation {
     /**
      * The {@link Element} holding the {@link Widget} with a lower index.
      */
@@ -76,11 +76,12 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
         DOM.setStyleAttribute(container2, "height", "100%");
         UIObject.setVisible(container2, true);
       }
+      DOM.setStyleAttribute(container1, "overflow", "visible");
+      DOM.setStyleAttribute(container2, "overflow", "visible");
       container1 = null;
       container2 = null;
     }
 
-    @Override
     public void onInstantaneousRun() {
       UIObject.setVisible(container1, growing);
       UIObject.setVisible(container2, !growing);
@@ -105,6 +106,8 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       }
 
       // Start the animation
+      DOM.setStyleAttribute(container1, "overflow", "hidden");
+      DOM.setStyleAttribute(container2, "overflow", "hidden");
       onUpdate(0.0);
       UIObject.setVisible(container1, true);
       UIObject.setVisible(container2, true);
@@ -190,7 +193,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
   }
 
   /**
-   * The {@link WidgetAnimation} used to slide in the new {@link Widget}.
+   * The {@link Animation} used to slide in the new {@link Widget}.
    */
   private static SlideAnimation slideAnimation;
 
@@ -264,9 +267,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     finishWidgetInitialization(container, w);
   }
 
-  /**
-   * @see HasAnimation#isAnimationEnabled()
-   */
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -286,9 +286,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     return removed;
   }
 
-  /**
-   * @see HasAnimation#setAnimationEnabled(boolean)
-   */
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }
@@ -320,7 +317,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     Element container = DOM.createDiv();
     DOM.setStyleAttribute(container, "width", "100%");
     DOM.setStyleAttribute(container, "height", "0px");
-    DOM.setStyleAttribute(container, "overflow", "hidden");
     DOM.setStyleAttribute(container, "padding", "0px");
     DOM.setStyleAttribute(container, "margin", "0px");
     return container;

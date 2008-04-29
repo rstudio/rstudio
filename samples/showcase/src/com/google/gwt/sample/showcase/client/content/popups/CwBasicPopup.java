@@ -110,6 +110,7 @@ public class CwBasicPopup extends ContentWidget {
     // Create a popup to show the full size image
     Image jimmyFull = Showcase.images.jimmy().createImage();
     final PopupPanel imagePopup = new PopupPanel(true);
+    imagePopup.setAnimationEnabled(true);
     imagePopup.ensureDebugId("cwBasicPopup-imagePopup");
     imagePopup.setWidget(jimmyFull);
     jimmyFull.addClickListener(new ClickListener() {

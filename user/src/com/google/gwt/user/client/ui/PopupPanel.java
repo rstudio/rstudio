@@ -15,15 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.animation.WidgetAnimation;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
-import com.google.gwt.i18n.client.LocaleInfo;
 
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
@@ -65,9 +65,9 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
   }
 
   /**
-   * An {@link WidgetAnimation} used to enlarge the popup into view.
+   * An {@link Animation} used to enlarge the popup into view.
    */
-  private static class ResizeAnimation extends WidgetAnimation {
+  private static class ResizeAnimation extends Animation {
     /**
      * The offset height and width of the current {@link PopupPanel}.
      */
@@ -98,7 +98,6 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
       curPanel = null;
     }
 
-    @Override
     public void onInstantaneousRun() {
       if (showing) {
         // Set the position attribute, and then attach to the DOM. Otherwise,
@@ -247,7 +246,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
 
   private String desiredWidth;
 
-  private boolean isAnimationEnabled = true;
+  private boolean isAnimationEnabled = false;
 
   // the left style attribute in pixels
   private int leftPosition = -1;
@@ -384,9 +383,6 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
     hide(false);
   }
 
-  /**
-   * @see HasAnimation#isAnimationEnabled()
-   */
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -493,9 +489,6 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
     }
   }
 
-  /**
-   * @see HasAnimation#setAnimationEnabled(boolean)
-   */
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }

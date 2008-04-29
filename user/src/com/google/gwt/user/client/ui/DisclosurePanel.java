@@ -15,12 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.animation.WidgetAnimation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -50,9 +50,9 @@ import java.util.Iterator;
 public final class DisclosurePanel extends Composite implements
     FiresDisclosureEvents, HasWidgets, HasAnimation {
   /**
-   * An {@link WidgetAnimation} used to open the content.
+   * An {@link Animation} used to open the content.
    */
-  private static class ContentAnimation extends WidgetAnimation {
+  private static class ContentAnimation extends Animation {
     /**
      * Whether the item is being opened or closed.
      */
@@ -75,12 +75,6 @@ public final class DisclosurePanel extends Composite implements
       }
       DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
           "auto");
-      curPanel = null;
-    }
-
-    @Override
-    public void onInstantaneousRun() {
-      curPanel.contentWrapper.setVisible(opening);
       curPanel = null;
     }
 
@@ -118,13 +112,12 @@ public final class DisclosurePanel extends Composite implements
       cancel();
 
       // Open the new item
-      curPanel = panel;
-      opening = panel.isOpen;
-
       if (animate) {
+        curPanel = panel;
+        opening = panel.isOpen;
         run(350);
       } else {
-        onInstantaneousRun();
+        panel.contentWrapper.setVisible(panel.isOpen);
       }
     }
   }
@@ -244,7 +237,7 @@ public final class DisclosurePanel extends Composite implements
   private static final String STYLENAME_CONTENT = "content";
 
   /**
-   * The {@link WidgetAnimation} used to open and close the content.
+   * The {@link Animation} used to open and close the content.
    */
   private static ContentAnimation contentAnimation;
 
@@ -277,7 +270,7 @@ public final class DisclosurePanel extends Composite implements
    */
   private Widget content;
 
-  private boolean isAnimationEnabled = true;
+  private boolean isAnimationEnabled = false;
 
   private boolean isOpen = false;
 
@@ -445,7 +438,7 @@ public final class DisclosurePanel extends Composite implements
     }
     handlers.remove(handler);
   }
- 
+
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }

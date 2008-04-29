@@ -56,7 +56,6 @@ public class Shortcuts extends Composite {
     add(images, new Contacts(images), images.contactsgroup(), "Contacts");
 
     initWidget(stackPanel);
-    stackPanel.setAnimationEnabled(false);
   }
 
   @Override

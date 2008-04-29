@@ -88,7 +88,7 @@ public class CwTabPanel extends ContentWidget {
     TabPanel tabPanel = new TabPanel();
     tabPanel.setWidth("400px");
 
-    // Unlike most widgets, animations are disabled by default
+    // Enable the deck panel animation
     tabPanel.getDeckPanel().setAnimationEnabled(true);
 
     // Add a home tab

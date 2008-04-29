@@ -101,7 +101,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
   private Element body;
 
   private MenuBarImages images = null;
-  private boolean isAnimationEnabled = true;
+  private boolean isAnimationEnabled = false;
   private MenuBar parentMenu;
   private PopupPanel popup;
   private MenuItem selectedItem;
@@ -280,9 +280,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     return autoOpen;
   }
 
-  /**
-   * @see HasAnimation#isAnimationEnabled()
-   */
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -401,9 +398,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     }
   }
 
-  /**
-   * @see HasAnimation#setAnimationEnabled(boolean)
-   */
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }
@@ -549,20 +543,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       }
     };
     popup.setAnimationType(AnimationType.ONE_WAY_CORNER);
+    popup.setAnimationEnabled(isAnimationEnabled);
     popup.setStyleName("gwt-MenuBarPopup");
     popup.addPopupListener(this);
 
     shownChildMenu = item.getSubMenu();
     item.getSubMenu().parentMenu = this;
-
-    // If any parent MenuBar has animations disabled, then do not animate
-    MenuBar parent = parentMenu;
-    boolean animate = isAnimationEnabled;
-    while (animate && parent != null) {
-      animate = parent.isAnimationEnabled();
-      parent = parent.parentMenu;
-    }
-    popup.setAnimationEnabled(animate);
 
     // Show the popup, ensuring that the menubar's event preview remains on top
     // of the popup's.

@@ -46,9 +46,9 @@ public class PopupTest extends GWTTestCase {
     PopupPanel popup = new PopupPanel();
     
     // Animation enabled
-    assertTrue(popup.isAnimationEnabled());
-    popup.setAnimationEnabled(false);
     assertFalse(popup.isAnimationEnabled());
+    popup.setAnimationEnabled(true);
+    assertTrue(popup.isAnimationEnabled());
   }
 
   public void testPopup() {

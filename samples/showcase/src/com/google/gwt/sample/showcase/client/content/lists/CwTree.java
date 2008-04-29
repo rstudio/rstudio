@@ -87,6 +87,7 @@ public class CwTree extends ContentWidget {
   public Widget onInitialize() {
     // Create a static tree and a container to hold it
     Tree staticTree = createStaticTree();
+    staticTree.setAnimationEnabled(true);
     staticTree.ensureDebugId("cwTree-staticTree");
     ScrollPanel staticTreeWrapper = new ScrollPanel(staticTree);
     staticTreeWrapper.ensureDebugId("cwTree-staticTree-Wrapper");

@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.animation;
+package com.google.gwt.animation.client;
 
 import com.google.gwt.core.client.Duration;
 import com.google.gwt.junit.client.GWTTestCase;

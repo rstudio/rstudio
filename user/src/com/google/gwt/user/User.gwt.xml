@@ -19,7 +19,7 @@
 <!--                                                                        -->
 <module>
    <inherits name="com.google.gwt.core.Core"/>
-   <inherits name="com.google.gwt.user.Animation"/>
+   <inherits name="com.google.gwt.animation.Animation"/>
    <inherits name="com.google.gwt.user.RemoteService"/>
    <inherits name="com.google.gwt.user.DocumentRoot" />
    <inherits name="com.google.gwt.user.DOM"/>
@@ -35,7 +35,6 @@
    <inherits name="com.google.gwt.user.ClippedImage"/>
    <inherits name="com.google.gwt.user.RichText"/>
    <inherits name="com.google.gwt.user.SplitPanel"/>
-   <inherits name="com.google.gwt.user.StackPanel"/>
    <inherits name="com.google.gwt.user.ListBox" />
    <inherits name="com.google.gwt.user.CaptionPanel" />
    <inherits name="com.google.gwt.user.Window" />

@@ -306,6 +306,7 @@ public class Application extends Composite implements WindowResizeListener {
     // Setup the main menu
     ApplicationImages treeImages = GWT.create(ApplicationImages.class);
     mainMenu = new Tree(treeImages);
+    mainMenu.setAnimationEnabled(true);
     mainMenu.addStyleName(DEFAULT_STYLE_NAME + "-menu");
     mainMenu.addTreeListener(new TreeListener() {
       public void onTreeItemSelected(TreeItem item) {

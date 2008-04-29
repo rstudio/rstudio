@@ -4,10 +4,6 @@
 	<inherits name='com.google.gwt.user.User'/>
 	<inherits name="com.google.gwt.i18n.I18N"/>
 
-	<!-- Enable Animations -->
-	<set-property name="gwt.enableAnimations" value="true"/> 
-	<set-property name="gwt.enableWidgetAnimations" value="true"/> 
-
 	<!-- Enable debug ID. -->
 	<inherits name="com.google.gwt.user.Debug"/>
 	<set-property name="gwt.enableDebugId" value="true"/> 

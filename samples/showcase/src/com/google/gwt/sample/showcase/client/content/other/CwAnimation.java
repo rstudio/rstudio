@@ -15,10 +15,10 @@
  */
 package com.google.gwt.sample.showcase.client.content.other;
 
+import com.google.gwt.animation.client.Animation;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
-import com.google.gwt.user.client.animation.Animation;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;

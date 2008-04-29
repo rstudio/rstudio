@@ -12,7 +12,13 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
+<!-- Module used to include Animation class.                                -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
 <module>
-	<inherits name="com.google.gwt.user.UserTest"/>
-	<set-property name="gwt.enableWidgetAnimations" value="false"/>
+  <inherits name="com.google.gwt.core.Core"/>
+  
+  <!-- Include User module to inherit Timer -->
+  <inherits name="com.google.gwt.user.User"/>
 </module>

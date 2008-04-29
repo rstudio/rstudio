@@ -179,7 +179,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   private Element focusable;
   private FocusListenerCollection focusListeners;
   private TreeImages images;
-  private boolean isAnimationEnabled = true;
+  private boolean isAnimationEnabled = false;
   private KeyboardListenerCollection keyboardListeners;
   private TreeListenerCollection listeners;
   private MouseListenerCollection mouseListeners = null;
@@ -365,9 +365,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return FocusPanel.impl.getTabIndex(focusable);
   }
 
-  /**
-   * @see HasAnimation#isAnimationEnabled()
-   */
   public boolean isAnimationEnabled() {
     return isAnimationEnabled;
   }
@@ -575,9 +572,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     FocusPanel.impl.setAccessKey(focusable, key);
   }
 
-  /**
-   * @see HasAnimation#setAnimationEnabled(boolean)
-   */
   public void setAnimationEnabled(boolean enable) {
     isAnimationEnabled = enable;
   }

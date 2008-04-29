@@ -15,10 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.animation.client.Animation;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.i18n.client.LocaleInfo;
-import com.google.gwt.user.client.animation.WidgetAnimation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +38,11 @@ import java.util.List;
 public class TreeItem extends UIObject implements HasHTML {
 
   /**
-   * An {@link WidgetAnimation} used to open the child elements. If a
-   * {@link TreeItem} is in the process of opening, it will immediately be
-   * opened and the new {@link TreeItem} will use this animation.
+   * An {@link Animation} used to open the child elements. If a {@link TreeItem}
+   * is in the process of opening, it will immediately be opened and the new
+   * {@link TreeItem} will use this animation.
    */
-  private static class TreeItemAnimation extends WidgetAnimation {
+  private static class TreeItemAnimation extends Animation {
 
     /**
      * The {@link TreeItem} currently being affected.
@@ -73,12 +73,6 @@ public class TreeItem extends UIObject implements HasHTML {
         DOM.setStyleAttribute(curItem.childSpanElem, "width", "auto");
         curItem = null;
       }
-    }
-
-    @Override
-    public void onInstantaneousRun() {
-      UIObject.setVisible(curItem.childSpanElem, opening);
-      curItem = null;
     }
 
     @Override
@@ -123,12 +117,12 @@ public class TreeItem extends UIObject implements HasHTML {
       cancel();
 
       // Open the new item
-      curItem = item;
-      opening = item.open;
       if (animate) {
+        curItem = item;
+        opening = item.open;
         run(Math.min(200, 75 * curItem.getChildCount()));
       } else {
-        onInstantaneousRun();
+        UIObject.setVisible(item.childSpanElem, item.open);
       }
     }
   }

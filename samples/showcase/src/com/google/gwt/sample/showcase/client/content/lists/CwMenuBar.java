@@ -111,6 +111,7 @@ public class CwMenuBar extends ContentWidget {
     MenuBar menu = new MenuBar();
     menu.setAutoOpen(true);
     menu.setWidth("500px");
+    menu.setAnimationEnabled(true);
 
     // Create a sub menu of recent documents
     MenuBar recentDocsMenu = new MenuBar(true);
@@ -121,6 +122,7 @@ public class CwMenuBar extends ContentWidget {
 
     // Create the file menu
     MenuBar fileMenu = new MenuBar(true);
+    fileMenu.setAnimationEnabled(true);
     menu.addItem(new MenuItem(constants.cwMenuBarFileCategory(), fileMenu));
     String[] fileOptions = constants.cwMenuBarFileOptions();
     for (int i = 0; i < fileOptions.length; i++) {

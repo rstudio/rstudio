@@ -144,6 +144,7 @@ public class CwDisclosurePanel extends ContentWidget {
     // Add advanced options to form in a disclosure panel
     DisclosurePanel advancedDisclosure = new DisclosurePanel(
         constants.cwDisclosurePanelFormAdvancedCriteria());
+    advancedDisclosure.setAnimationEnabled(true);
     advancedDisclosure.ensureDebugId("cwDisclosurePanel");
     advancedDisclosure.setContent(advancedOptions);
     layout.setWidget(3, 0, advancedDisclosure);
