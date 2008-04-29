@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
@@ -262,6 +263,51 @@ public class CollectionsTest extends GWTTestCase {
         finishTest();
       }
     });
+  }
+
+  public void testLinkedHashMap() {
+    delayTestFinish(TEST_DELAY);
+    CollectionsTestServiceAsync service = getServiceAsync();
+
+    final LinkedHashMap<String, IsSerializable> expected = TestSetFactory.createLinkedHashMap();
+
+    service.echo(expected,
+        new AsyncCallback<LinkedHashMap<String, IsSerializable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(LinkedHashMap<String, IsSerializable> result) {
+            assertNotNull(result);
+            expected.get("SerializableSet");
+            result.get("SerializableSet");
+            assertTrue(TestSetValidator.isValid(expected,
+                (LinkedHashMap) result));
+            finishTest();
+          }
+        });
+  }
+
+  public void testLinkedHashMapLRU() {
+    delayTestFinish(TEST_DELAY);
+    CollectionsTestServiceAsync service = getServiceAsync();
+
+    final LinkedHashMap<String, IsSerializable> expected = TestSetFactory.createLRULinkedHashMap();
+
+    service.echo(expected,
+        new AsyncCallback<LinkedHashMap<String, IsSerializable>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(LinkedHashMap actual) {
+            assertNotNull(actual);
+            expected.get("SerializableSet");
+            actual.get("SerializableSet");
+            assertTrue(TestSetValidator.isValid(expected, actual));
+            finishTest();
+          }
+        });
   }
 
   public void testLongArray() {

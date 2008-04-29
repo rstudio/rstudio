@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
@@ -57,6 +58,9 @@ public interface CollectionsTestServiceAsync {
 
   void echo(HashMap<String, IsSerializable> value,
       AsyncCallback<HashMap<String, IsSerializable>> callback);
+
+  void echo(LinkedHashMap<String, IsSerializable> value,
+      AsyncCallback<LinkedHashMap<String, IsSerializable>> callback);
 
   void echo(HashSet<IsSerializable> value,
       AsyncCallback<HashSet<IsSerializable>> callback);

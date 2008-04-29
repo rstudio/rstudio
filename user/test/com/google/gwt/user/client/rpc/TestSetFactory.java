@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
@@ -254,6 +255,27 @@ public class TestSetFactory {
 
   public static HashMap createHashMap() {
     HashMap map = new HashMap();
+    map.put("SerializableNode", new SerializableNode());
+    map.put("SerializableList", new SerializableList());
+    map.put("SerializableMap", new SerializableMap());
+    map.put("SerializableSet", new SerializableSet());
+    map.put("SerializableVector", new SerializableVector());
+    return map;
+  }
+
+  public static LinkedHashMap createLRULinkedHashMap() {
+    LinkedHashMap map = new LinkedHashMap(100, 1.0f, true);
+    map.put("SerializableNode", new SerializableNode());
+    map.put("SerializableList", new SerializableList());
+    map.put("SerializableMap", new SerializableMap());
+    map.put("SerializableSet", new SerializableSet());
+    map.put("SerializableVector", new SerializableVector());
+    map.get("SerializableMap");
+    return map;
+  }
+
+  public static LinkedHashMap createLinkedHashMap() {
+    LinkedHashMap map = new LinkedHashMap();
     map.put("SerializableNode", new SerializableNode());
     map.put("SerializableList", new SerializableList());
     map.put("SerializableMap", new SerializableMap());

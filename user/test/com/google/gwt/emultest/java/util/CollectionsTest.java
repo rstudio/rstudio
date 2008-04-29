@@ -19,12 +19,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 /**
  * TODO: document me.
  */
 public class CollectionsTest extends EmulTestBase {
+
+  LinkedHashMap dummy() {
+    return new LinkedHashMap();
+  }
 
   public static List createSortedList() {
     ArrayList l = new ArrayList();
@@ -46,13 +51,10 @@ public class CollectionsTest extends EmulTestBase {
 
   /**
    * Test Collections.binarySearch(List, Object).
-   *
-   * Verify the following cases:
-   *   empty List
-   *   odd numbers of elements
-   *   even numbers of elements
-   *   not found value larger than all elements
-   *   not found value smaller than all elements
+   * 
+   * Verify the following cases: empty List odd numbers of elements even numbers
+   * of elements not found value larger than all elements not found value
+   * smaller than all elements
    */
   public void testBinarySearchObject() {
     List a1 = new ArrayList();
@@ -63,7 +65,7 @@ public class CollectionsTest extends EmulTestBase {
     assertEquals(-2, ret);
     ret = Collections.binarySearch(a2, "y");
     assertEquals(2, ret);
-    List a3 = new ArrayList(Arrays.asList(new String[]{"b", "c", "x", "y"}));
+    List a3 = new ArrayList(Arrays.asList(new String[] {"b", "c", "x", "y"}));
     ret = Collections.binarySearch(a3, "z");
     assertEquals(-5, ret);
     ret = Collections.binarySearch(a3, "a");
@@ -74,14 +76,10 @@ public class CollectionsTest extends EmulTestBase {
 
   /**
    * Test Collections.binarySearch(List, Object, Comparator).
-   *
-   * Verify the following cases:
-   *   empty List
-   *   odd numbers of elements
-   *   even numbers of elements
-   *   not found value larger than all elements
-   *   not found value smaller than all elements
-   *   null Comparator uses natural ordering
+   * 
+   * Verify the following cases: empty List odd numbers of elements even numbers
+   * of elements not found value larger than all elements not found value
+   * smaller than all elements null Comparator uses natural ordering
    */
   public void testBinarySearchObjectComparator() {
     Comparator inverseSort = new Comparator() {
@@ -92,12 +90,12 @@ public class CollectionsTest extends EmulTestBase {
     List a1 = new ArrayList();
     int ret = Collections.binarySearch(a1, "", inverseSort);
     assertEquals(-1, ret);
-    List a2 = new ArrayList(Arrays.asList(new String[]{"y", "g", "a"}));
+    List a2 = new ArrayList(Arrays.asList(new String[] {"y", "g", "a"}));
     ret = Collections.binarySearch(a2, "c", inverseSort);
     assertEquals(-3, ret);
     ret = Collections.binarySearch(a2, "a", inverseSort);
     assertEquals(2, ret);
-    List a3 = new ArrayList(Arrays.asList(new String[]{"y", "x", "c", "b"}));
+    List a3 = new ArrayList(Arrays.asList(new String[] {"y", "x", "c", "b"}));
     ret = Collections.binarySearch(a3, "a", inverseSort);
     assertEquals(-5, ret);
     ret = Collections.binarySearch(a3, "z", inverseSort);
@@ -105,8 +103,8 @@ public class CollectionsTest extends EmulTestBase {
     ret = Collections.binarySearch(a3, "y", inverseSort);
     assertEquals(0, ret);
 
-    List a4 = new ArrayList(Arrays.asList(
-        new String[]{"a", "b", "c", "d", "e"}));
+    List a4 = new ArrayList(
+        Arrays.asList(new String[] {"a", "b", "c", "d", "e"}));
     ret = Collections.binarySearch(a4, "d", null); // should not NPE
     assertEquals(3, ret);
   }
@@ -154,7 +152,7 @@ public class CollectionsTest extends EmulTestBase {
     Object[] expected = {"c", "b", "a"};
     assertEquals(expected, a);
   }
-  
+
   public void testToArray() {
     List<Integer> testList = createRandomList();
     Integer[] testArray = new Integer[testList.size()];

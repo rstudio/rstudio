@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,6 +35,15 @@ import java.util.Map.Entry;
  * TODO: document me.
  */
 public class TestSetValidator {
+
+  public static boolean equals(Iterator expected, Iterator actual) {
+    while (expected.hasNext() && actual.hasNext()) {
+      if (!expected.next().equals(actual.next())) {
+        return false;
+      }
+    }
+    return expected.hasNext() == actual.hasNext();
+  }
 
   public static boolean equals(boolean[] expected, boolean[] actual) {
     if (actual == null) {
@@ -274,6 +284,15 @@ public class TestSetValidator {
     }
 
     return true;
+  }
+
+  public static boolean isValid(LinkedHashMap expected, LinkedHashMap map) {
+    if (isValid((Map) expected, (HashMap) map)) {
+      Iterator expectedEntries = expected.entrySet().iterator();
+      Iterator actualEntries = map.entrySet().iterator();
+      return equals(expectedEntries, actualEntries);
+    }
+    return false;
   }
 
   public static boolean isValid(SerializableClass actual) {

@@ -40,4 +40,8 @@
    <inherits name="com.google.gwt.user.CaptionPanel" />
    <inherits name="com.google.gwt.user.Window" />
    <inherits name="com.google.gwt.user.Accessibility"/>
+    
+    <super-source path="translatable"/>
+    <source path="client"/>
+    
 </module>

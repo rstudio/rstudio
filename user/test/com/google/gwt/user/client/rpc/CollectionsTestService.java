@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
@@ -70,6 +71,10 @@ public interface CollectionsTestService extends RemoteService {
   Float[] echo(Float[] value) throws CollectionsTestServiceException;
 
   HashMap<String, IsSerializable> echo(HashMap<String, IsSerializable> value)
+      throws CollectionsTestServiceException;
+
+  LinkedHashMap<String, IsSerializable> echo(
+      LinkedHashMap<String, IsSerializable> value)
       throws CollectionsTestServiceException;
 
   HashSet<IsSerializable> echo(HashSet<IsSerializable> value)
