@@ -22,9 +22,25 @@ import com.google.gwt.core.client.JavaScriptObject;
  */
 class XMLParserImplIE6 extends XMLParserImpl {
 
+  /**
+   * Called from JSNI to select a DOM document; this is necessary due to
+   * different versions of IE and Windows having different available DOM
+   * implementations.
+   */
+  @SuppressWarnings("unused")
+  private static native JavaScriptObject selectDOMDocumentVersion() /*-{
+    try { return new ActiveXObject("Msxml2.DOMDocument"); } catch (e) { }
+    try { return new ActiveXObject("MSXML.DOMDocument"); } catch (e) { }
+    try { return new ActiveXObject("MSXML3.DOMDocument"); } catch (e) { }
+    try { return new ActiveXObject("Microsoft.XmlDom"); } catch (e) { }
+    try { return new ActiveXObject("Microsoft.DOMDocument"); } catch (e) { }
+  
+    throw new Error("XMLParserImplIE6.createDocumentImpl: Could not find appropriate version of DOMDocument.");
+  }-*/;
+
   @Override
   protected native JavaScriptObject createDocumentImpl() /*-{
-    var doc = new ActiveXObject("MSXML2.DOMDocument");
+    var doc = @com.google.gwt.xml.client.impl.XMLParserImplIE6::selectDOMDocumentVersion()();
     doc.preserveWhiteSpace = true;
     doc.setProperty("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");
     doc.setProperty("SelectionLanguage", "XPath");
