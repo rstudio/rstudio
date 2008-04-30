@@ -286,6 +286,37 @@ public class JUnitShell extends GWTShell {
       }
     });
 
+    registerHandler(new ArgHandlerString() {
+
+      @Override
+      public String getPurpose() {
+        return "Run external browsers in web mode (pass a comma separated list of executables.)";
+      }
+
+      @Override
+      public String getTag() {
+        return "-externalbrowser";
+      }
+
+      @Override
+      public String[] getTagArgs() {
+        return new String[] {"browserPaths"};
+      }
+
+      @Override
+      public boolean isUndocumented() {
+        return true;
+      }
+
+      @Override
+      public boolean setString(String str) {
+        String[] paths = str.split(",");
+        runStyle = new RunStyleExternalBrowser(JUnitShell.this, paths);
+        numClients = paths.length;
+        return runStyle != null;
+      }
+    });
+
     registerHandler(new ArgHandler() {
 
       @Override
@@ -300,7 +331,7 @@ public class JUnitShell extends GWTShell {
 
       @Override
       public String getTag() {
-        return "-wait";
+        return "-manual";
       }
 
       @Override
@@ -328,7 +359,7 @@ public class JUnitShell extends GWTShell {
       }
 
       public void setInt(int value) {
-        runStyle = new RunStyleWait(JUnitShell.this, value);
+        runStyle = new RunStyleManual(JUnitShell.this, value);
         numClients = value;
       }
 
@@ -411,7 +442,7 @@ public class JUnitShell extends GWTShell {
   @Override
   protected boolean notDone() {
     int activeClients = messageQueue.getNumClientsRetrievedCurrentTest();
-    if (firstLaunch && runStyle instanceof RunStyleWait) {
+    if (firstLaunch && runStyle instanceof RunStyleManual) {
       String[] newClients = messageQueue.getNewClients();
       int printIndex = activeClients - newClients.length + 1;
       for (String newClient : newClients) {

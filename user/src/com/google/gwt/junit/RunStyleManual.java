@@ -21,11 +21,11 @@ import com.google.gwt.core.ext.UnableToCompleteException;
  * Runs in web mode waiting for the user to contact the server with their own
  * browser.
  */
-class RunStyleWait extends RunStyleRemote {
+class RunStyleManual extends RunStyleRemote {
 
   private final int numClients;
 
-  public RunStyleWait(JUnitShell shell, int numClients) {
+  public RunStyleManual(JUnitShell shell, int numClients) {
     super(shell);
     this.numClients = numClients;
   }
@@ -49,7 +49,7 @@ class RunStyleWait extends RunStyleRemote {
   @Override
   public void maybeCompileModule(String moduleName)
       throws UnableToCompleteException {
-    System.out.print("Compling " + moduleName + "...");
+    System.out.print("Compiling " + moduleName + "...");
     super.maybeCompileModule(moduleName);
     System.out.println(" success.");
   }
