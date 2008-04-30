@@ -204,6 +204,19 @@ public class LongFromJSNITest extends TestCase {
       shouldGenerateNoError(code);
     }
   }
+  
+  public void testRefInString() throws UnableToCompleteException {
+    {
+      StringBuffer code = new StringBuffer();
+      code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
+      code.append("class Buggy {\n");
+      code.append("  void print(long x) { }\n");
+      code.append("  native void jsniMeth() /*-{ 'this.@Buggy::print(J)(0)'; }-*/;\n");
+      code.append("}\n");
+
+      shouldGenerateNoError(code);
+    }
+  }
 
   public void testViolator() throws UnableToCompleteException {
     {

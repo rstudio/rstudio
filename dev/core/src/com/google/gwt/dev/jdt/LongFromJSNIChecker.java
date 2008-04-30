@@ -38,6 +38,9 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -78,27 +81,27 @@ public class LongFromJSNIChecker {
       }
     }
 
-    private void checkFieldRef(MethodDeclaration meth, JsniRef jsniRef) {
+    private void checkFieldRef(MethodDeclaration meth, JsniRef jsniRef, Set<String> errors) {
       assert jsniRef.isField();
       FieldBinding target = getField(jsniRef);
       if (target == null) {
         return;
       }
       if (containsLong(target.type)) {
-        longAccessError(meth, "Referencing field '" + jsniRef.className() + "."
+        errors.add("Referencing field '" + jsniRef.className() + "."
             + jsniRef.memberName() + "': type '" + typeString(target.type)
             + "' is not safe to access in JSNI code");
       }
     }
 
-    private void checkMethodRef(MethodDeclaration meth, JsniRef jsniRef) {
+    private void checkMethodRef(MethodDeclaration meth, JsniRef jsniRef, Set<String> errors) {
       assert jsniRef.isMethod();
       MethodBinding target = getMethod(jsniRef);
       if (target == null) {
         return;
       }
       if (containsLong(target.returnType)) {
-        longAccessError(meth, "Referencing method '" + jsniRef.className()
+        errors.add("Referencing method '" + jsniRef.className()
             + "." + jsniRef.memberName() + "': return type '"
             + typeString(target.returnType)
             + "' is not safe to access in JSNI code");
@@ -110,7 +113,7 @@ public class LongFromJSNIChecker {
           ++i;
           if (containsLong(paramType)) {
             // It would be nice to print the parameter name, but how to find it?
-            longAccessError(meth, "Parameter " + i + " of method '"
+            errors.add("Parameter " + i + " of method '"
                 + jsniRef.className() + "." + jsniRef.memberName()
                 + "': type '" + typeString(paramType)
                 + "' may not be passed out of JSNI code");
@@ -120,17 +123,38 @@ public class LongFromJSNIChecker {
     }
 
     private void checkRefs(MethodDeclaration meth, ClassScope scope) {
-      FindJsniRefVisitor jsniRefsVisitor = new FindJsniRefVisitor();
-      meth.traverse(jsniRefsVisitor, scope);
-      Set<String> jsniRefs = jsniRefsVisitor.getJsniRefs();
+      Map<String, Set<String>> errors = new LinkedHashMap<String, Set<String>>();
 
-      for (String jsniRefString : jsniRefs) {
+      // first do a sloppy parse, for speed
+      
+      FindJsniRefVisitor sloppyRefsVisitor = new FindJsniRefVisitor();
+      sloppyRefsVisitor.beSloppy();
+      meth.traverse(sloppyRefsVisitor, scope);
+
+      for (String jsniRefString : sloppyRefsVisitor.getJsniRefs()) {
         JsniRef jsniRef = JsniRef.parse(jsniRefString);
         if (jsniRef != null) {
+          Set<String> refErrors = new LinkedHashSet<String>();
           if (jsniRef.isMethod()) {
-            checkMethodRef(meth, jsniRef);
+            checkMethodRef(meth, jsniRef, refErrors);
           } else {
-            checkFieldRef(meth, jsniRef);
+            checkFieldRef(meth, jsniRef, refErrors);
+          }
+          if (!refErrors.isEmpty()) {
+            errors.put(jsniRefString, refErrors);
+          }
+        }
+      }
+      
+      if (!errors.isEmpty()) {
+        // do a strict parse to find out which JSNI refs are real
+        FindJsniRefVisitor jsniRefsVisitor = new FindJsniRefVisitor();
+        meth.traverse(jsniRefsVisitor, scope);
+        for (String jsniRefString : jsniRefsVisitor.getJsniRefs()) {
+          if (errors.containsKey(jsniRefString)) {
+            for (String err : errors.get(jsniRefString)) {
+              longAccessError(meth, err);
+            }
           }
         }
       }

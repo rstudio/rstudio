@@ -24,6 +24,7 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.js.rhino.TokenStream;
 import com.google.gwt.dev.util.Jsni;
 
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
@@ -34,21 +35,23 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * Walks the AST to find references to Java identifiers from within JSNI blocks.
- * By default, it only records the class names referenced. If
- * {@link #justRecordClasses(boolean)} is called with an argument of
- * <code>false</code>, then full references to fields or methods are
- * recorded.
+ * By default, it does a full JavaScript parse to accurately find JSNI
+ * references. If {@link #beSloppy()} is called, then it will run much more
+ * quickly but it will return a superset of the actual JSNI references.
  */
 public class FindJsniRefVisitor extends ASTVisitor {
-  private final Set<String> jsniRefs = new HashSet<String>();
-  private final JsParser jsParser = new JsParser();
-  private final JsProgram jsProgram = new JsProgram();
+  private final Set<String> jsniRefs = new LinkedHashSet<String>();
+  private boolean sloppy = false;
+
+  public void beSloppy() {
+    sloppy = true;
+  }
 
   public Set<String> getJsniRefs() {
     return Collections.unmodifiableSet(jsniRefs);
@@ -60,19 +63,28 @@ public class FindJsniRefVisitor extends ASTVisitor {
     }
 
     // Handle JSNI block
-    char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
-    String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
-        methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
-    int startPos = jsniCode.indexOf(Jsni.JSNI_BLOCK_START);
-    int endPos = jsniCode.lastIndexOf(Jsni.JSNI_BLOCK_END);
-    if (startPos < 0 || endPos < 0) {
-      return false; // ignore the error
+    String jsniCode = getJSNICode(methodDeclaration);
+    if (jsniCode == null) {
+      return false;
+    }
+    if (jsniCode.indexOf('@') < 0) {
+      // short cut: if there are no at signs, there are no JSNI refs
+      return false;
     }
 
-    startPos += Jsni.JSNI_BLOCK_START.length() - 1; // move up to open brace
-    endPos += 1; // move past close brace
+    if (sloppy) {
+      findJsniRefsSloppily(jsniCode);
+    } else {
+      findJsniRefsAccurately(methodDeclaration, jsniCode);
+    }
 
-    jsniCode = jsniCode.substring(startPos, endPos);
+    return false;
+  }
+
+  private void findJsniRefsAccurately(MethodDeclaration methodDeclaration,
+      String jsniCode) throws InternalCompilerException {
+    JsParser jsParser = new JsParser();
+    JsProgram jsProgram = new JsProgram();
 
     String syntheticFnHeader = "function(";
     boolean first = true;
@@ -91,7 +103,7 @@ public class FindJsniRefVisitor extends ASTVisitor {
     StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
     try {
       // start at -1 to avoid counting our synthetic header
-      List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
+    List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
       new JsVisitor() {
         public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
           String ident = x.getIdent();
@@ -106,8 +118,50 @@ public class FindJsniRefVisitor extends ASTVisitor {
     } catch (JsParserException e) {
       // ignore, we only care about finding valid references
     }
+  }
 
-    return false;
+  private void findJsniRefsSloppily(String jsniCode) {
+    StringReader reader = new StringReader(jsniCode);
+    int idx = 0;
+    while (true) {
+      idx = jsniCode.indexOf('@', idx);
+      if (idx < 0) {
+        break;
+      }
+      try {
+        // use Rhino to read a JavaScript identifier
+        reader.reset();
+        reader.skip(idx);
+        TokenStream tokStr = new TokenStream(reader, "(memory)", 0);
+        if (tokStr.getToken() != TokenStream.NAME) {
+          // scottb: Why do we break here?
+          break;
+        }
+        String jsniRefString = tokStr.getString();
+        assert (jsniRefString.charAt(0) == '@');
+        jsniRefs.add(jsniRefString.substring(1));
+        idx += jsniRefString.length();
+      } catch (IOException e) {
+        throw new InternalCompilerException("Unexpected IO error while reading a JS identifier", e);
+      }
+    }
+  }
+
+  private String getJSNICode(MethodDeclaration methodDeclaration) {
+    char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
+    String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
+        methodDeclaration.bodyEnd - methodDeclaration.bodyStart + 1);
+    int startPos = jsniCode.indexOf(Jsni.JSNI_BLOCK_START);
+    int endPos = jsniCode.lastIndexOf(Jsni.JSNI_BLOCK_END);
+    if (startPos < 0 || endPos < 0) {
+      return null; // ignore the error
+    }
+
+    startPos += Jsni.JSNI_BLOCK_START.length() - 1; // move up to open brace
+    endPos += 1; // move past close brace
+
+    jsniCode = jsniCode.substring(startPos, endPos);
+    return jsniCode;
   }
 
 }
