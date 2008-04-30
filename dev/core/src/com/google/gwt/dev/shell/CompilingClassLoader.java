@@ -436,13 +436,17 @@ public final class CompilingClassLoader extends ClassLoader {
       jsoTypes.add(jsoType);
 
       Set<String> jsoTypeNames = new HashSet<String>();
+      Map<String, String> jsoSuperTypes = new HashMap<String, String>();
       for (JClassType type : jsoTypes) {
-        jsoTypeNames.add(getBinaryName(type));
+        String binaryName = getBinaryName(type);
+        jsoTypeNames.add(binaryName);
+        jsoSuperTypes.put(binaryName, getBinaryName(type.getSuperclass()));
       }
 
       MyInstanceMethodOracle mapper = new MyInstanceMethodOracle(jsoTypes,
           typeOracle.getJavaLangObject());
-      classRewriter = new HostedModeClassRewriter(jsoTypeNames, mapper);
+      classRewriter = new HostedModeClassRewriter(jsoTypeNames, jsoSuperTypes,
+          mapper);
     } else {
       // If we couldn't find the JSO class, we don't need to do any rewrites.
       classRewriter = null;
@@ -539,15 +543,19 @@ public final class CompilingClassLoader extends ClassLoader {
     byte[] classBytes;
     try {
       ++stackDepth;
-
-      // A JSO impl class needs the class bytes for the original class.
-      String lookupClassName = className;
-      if (classRewriter != null && classRewriter.isJsoImpl(className)) {
-        lookupClassName = className.substring(0, className.length() - 1);
-      }
-      classBytes = compiler.getClassBytes(logger, lookupClassName);
-      if (classRewriter != null) {
-        classBytes = classRewriter.rewrite(className, classBytes);
+      if (classRewriter != null && classRewriter.isJsoIntf(className)) {
+        // Generate a synthetic JSO interface class.
+        classBytes = classRewriter.writeJsoIntf(className);
+      } else {
+        // A JSO impl class needs the class bytes for the original class.
+        String lookupClassName = className;
+        if (classRewriter != null && classRewriter.isJsoImpl(className)) {
+          lookupClassName = className.substring(0, className.length() - 1);
+        }
+        classBytes = compiler.getClassBytes(logger, lookupClassName);
+        if (classRewriter != null) {
+          classBytes = classRewriter.rewrite(className, classBytes);
+        }
       }
       Class<?> newClass = defineClass(className, classBytes, 0,
           classBytes.length);

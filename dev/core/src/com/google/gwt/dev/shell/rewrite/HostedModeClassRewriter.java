@@ -18,10 +18,15 @@ package com.google.gwt.dev.shell.rewrite;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
+import com.google.gwt.dev.asm.Opcodes;
+import com.google.gwt.dev.asm.util.TraceClassVisitor;
 import com.google.gwt.dev.shell.JsValueGlue;
 
+import java.io.PrintWriter;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -95,18 +100,23 @@ public class HostedModeClassRewriter {
    * An unmodifiable set of descriptors containing the implementation form of
    * <code>JavaScriptObject</code> and all subclasses.
    */
-  private final Set<String> jsoImplDescriptors;
+  private final Set<String> jsoImplDescs;
 
   /**
    * An unmodifiable set of descriptors containing the interface form of
    * <code>JavaScriptObject</code> and all subclasses.
    */
-  private final Set<String> jsoIntfDescriptors;
+  private final Set<String> jsoIntfDescs;
 
   /**
    * Maps methods to the class in which they are declared.
    */
   private InstanceMethodOracle mapper;
+
+  /**
+   * Records the superclass of every JSO for generating empty JSO interfaces.
+   */
+  private final Map<String, String> jsoSuperDescs;
 
   /**
    * Creates a new {@link HostedModeClassRewriter} for a specified set of
@@ -117,16 +127,21 @@ public class HostedModeClassRewriter {
    * @param mapper maps methods to the class in which they are declared
    */
   public HostedModeClassRewriter(Set<String> jsoSubtypes,
-      InstanceMethodOracle mapper) {
-    Set<String> buildJsoIntfDescriptors = new HashSet<String>();
-    Set<String> buildJsoImplDescriptors = new HashSet<String>();
+      Map<String, String> jsoSuperTypes, InstanceMethodOracle mapper) {
+    Set<String> buildJsoIntfDescs = new HashSet<String>();
+    Set<String> buildJsoImplDescs = new HashSet<String>();
+    Map<String, String> buildJsoSuperDescs = new HashMap<String, String>();
     for (String jsoSubtype : jsoSubtypes) {
       String desc = toDescriptor(jsoSubtype);
-      buildJsoIntfDescriptors.add(desc);
-      buildJsoImplDescriptors.add(desc + "$");
+      buildJsoIntfDescs.add(desc);
+      buildJsoImplDescs.add(desc + "$");
+      String superType = jsoSuperTypes.get(jsoSubtype);
+      assert (superType != null);
+      buildJsoSuperDescs.put(desc, toDescriptor(superType));
     }
-    this.jsoIntfDescriptors = Collections.unmodifiableSet(buildJsoIntfDescriptors);
-    this.jsoImplDescriptors = Collections.unmodifiableSet(buildJsoImplDescriptors);
+    this.jsoIntfDescs = Collections.unmodifiableSet(buildJsoIntfDescs);
+    this.jsoImplDescs = Collections.unmodifiableSet(buildJsoImplDescs);
+    this.jsoSuperDescs = Collections.unmodifiableMap(buildJsoSuperDescs);
     this.mapper = mapper;
   }
 
@@ -135,7 +150,7 @@ public class HostedModeClassRewriter {
    * JSO subtype.
    */
   public boolean isJsoImpl(String className) {
-    return jsoImplDescriptors.contains(toDescriptor(className));
+    return jsoImplDescs.contains(toDescriptor(className));
   }
 
   /**
@@ -143,7 +158,7 @@ public class HostedModeClassRewriter {
    * subtype.
    */
   public boolean isJsoIntf(String className) {
-    return jsoIntfDescriptors.contains(toDescriptor(className));
+    return jsoIntfDescs.contains(toDescriptor(className));
   }
 
   /**
@@ -154,6 +169,7 @@ public class HostedModeClassRewriter {
    */
   public byte[] rewrite(String className, byte[] classBytes) {
     String desc = toDescriptor(className);
+    assert (!jsoIntfDescs.contains(desc));
 
     // The ASM model is to chain a bunch of visitors together.
     ClassWriter writer = new ClassWriter(0);
@@ -162,15 +178,39 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
-    v = new RewriteRefsToJsoClasses(v, jsoIntfDescriptors, mapper);
+    v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);
 
-    if (jsoImplDescriptors.contains(desc)) {
-      v = new WriteJsoImpl(v, jsoIntfDescriptors, mapper);
-    } else if (jsoIntfDescriptors.contains(desc)) {
-      v = new WriteJsoInterface(v);
+    if (jsoImplDescs.contains(desc)) {
+      v = new WriteJsoImpl(v, jsoIntfDescs, mapper);
     }
 
     new ClassReader(classBytes).accept(v, 0);
+    return writer.toByteArray();
+  }
+
+  public byte[] writeJsoIntf(String className) {
+    String desc = toDescriptor(className);
+    assert (jsoIntfDescs.contains(desc));
+    assert (jsoSuperDescs.containsKey(desc));
+    String superDesc = jsoSuperDescs.get(desc);
+    assert (superDesc != null);
+
+    // The ASM model is to chain a bunch of visitors together.
+    ClassWriter writer = new ClassWriter(0);
+    ClassVisitor v = writer;
+
+    // v = new CheckClassAdapter(v);
+    // v = new TraceClassVisitor(v, new PrintWriter(System.out));
+
+    String[] interfaces;
+    if ("java/lang/Object".equals(superDesc)) {
+      interfaces = null;
+    } else {
+      interfaces = new String[] {superDesc};
+    }
+    v.visit(49, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE, desc, null,
+        "java/lang/Object", interfaces);
+    v.visitEnd();
     return writer.toByteArray();
   }
 }
