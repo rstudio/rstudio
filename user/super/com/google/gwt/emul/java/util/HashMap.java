@@ -32,16 +32,11 @@ public class HashMap<K, V> extends AbstractHashMap<K, V> implements Cloneable,
   }
 
   public HashMap(int ignored) {
-    // This implementation of HashMap has no need of initial capacities.
-    this(ignored, 0);
+    super(ignored);
   }
 
   public HashMap(int ignored, float alsoIgnored) {
-    // This implementation of HashMap has no need of load factors or capacities.
-    if (ignored < 0 || alsoIgnored < 0) {
-      throw new IllegalArgumentException(
-          "initial capacity was negative or load factor was non-positive");
-    }
+    super(ignored, alsoIgnored);
   }
 
   public HashMap(Map<? extends K, ? extends V> toBeCopied) {

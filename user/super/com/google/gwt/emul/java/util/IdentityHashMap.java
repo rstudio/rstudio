@@ -18,7 +18,6 @@ package java.util;
 import com.google.gwt.core.client.impl.Impl;
 
 import java.io.Serializable;
-import java.util.Map.Entry;
 
 /**
  * Map using reference equality on keys. <a
@@ -35,10 +34,7 @@ public class IdentityHashMap<K, V> extends AbstractHashMap<K, V> implements
   }
 
   public IdentityHashMap(int ignored) {
-    // This implementation of HashMap has no need of load factors or capacities.
-    if (ignored < 0) {
-      throw new IllegalArgumentException("initial capacity was negative");
-    }
+    super(ignored);
   }
 
   public IdentityHashMap(Map<? extends K, ? extends V> toBeCopied) {
