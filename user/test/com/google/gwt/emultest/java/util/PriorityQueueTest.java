@@ -18,6 +18,7 @@ package com.google.gwt.emultest.java.util;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
 
@@ -65,12 +66,42 @@ public class PriorityQueueTest extends GWTTestCase {
     assertTrue(pq.isEmpty());
   }
 
+  public void testCollectionMethods() {
+    PriorityQueue<Integer> pq = buildPQ(3, 4, 21, 5, 23, 31, 22);
+    ArrayList<Integer> src = new ArrayList<Integer>();
+    addArray(src, 21, 3, 31, 5);
+    assertTrue(pq.containsAll(src));
+    assertTrue(pq.contains(4));
+    assertTrue(pq.contains(21));
+    assertEquals(3, pq.peek().intValue());
+    pq.remove(21);
+    assertEquals(6, pq.size());
+    assertTrue(pq.contains(4));
+    assertFalse(pq.contains(21));
+    pq.remove(5);
+    assertFalse(pq.contains(5));
+    pq.remove(3);
+    assertFalse(pq.contains(3));
+    assertEquals(4, pq.remove().intValue());
+    assertEquals(22, pq.remove().intValue());
+    assertEquals(23, pq.remove().intValue());
+    assertEquals(31, pq.remove().intValue());
+    assertTrue(pq.isEmpty());
+    addArray(pq, 3, 4, 21, 5, 23, 31, 22);
+    src.add(99);
+    assertTrue(pq.retainAll(src));
+    assertFalse(pq.retainAll(src));
+    assertEquals(4, pq.size());
+    assertEquals(3, pq.remove().intValue());
+    assertEquals(5, pq.remove().intValue());
+    assertEquals(21, pq.remove().intValue());
+    assertEquals(31, pq.remove().intValue());
+    assertTrue(pq.isEmpty());
+  }
+
   public void testFromCollection() {
     ArrayList<Integer> src = new ArrayList<Integer>();
-    src.add(13);
-    src.add(3);
-    src.add(7);
-    src.add(5);
+    addArray(src, 13, 3, 7, 5);
     PriorityQueue<Integer> pq = new PriorityQueue<Integer>(src);
     assertEquals(4, pq.size());
     assertEquals(3, pq.remove().intValue());
@@ -79,4 +110,27 @@ public class PriorityQueueTest extends GWTTestCase {
     assertEquals(13, pq.remove().intValue());
     assertTrue(pq.isEmpty());
   }
+  
+  public void testPollRemove() {
+    PriorityQueue<Integer> pq = new PriorityQueue<Integer>();
+    try {
+      pq.remove();
+      fail("Expected NoSuchElementException");
+    } catch (NoSuchElementException e) {
+      // expected
+    }
+    assertNull(pq.poll());
+  }
+  
+  private void addArray(Collection<Integer> col, int... values) {
+    for (int val : values) {
+      col.add(val);
+    }
+  }
+
+  private PriorityQueue<Integer> buildPQ(int... values) {
+    PriorityQueue<Integer> pq = new PriorityQueue<Integer>();
+    addArray(pq, values);
+    return pq;
+  } 
 }
