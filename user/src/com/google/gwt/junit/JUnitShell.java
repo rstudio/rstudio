@@ -160,20 +160,27 @@ public class JUnitShell extends GWTShell {
    */
   private static JUnitShell getUnitTestShell() {
     if (unitTestShell == null) {
-      BootStrapPlatform.init();
-      BootStrapPlatform.applyPlatformHacks();
-      JUnitShell shell = new JUnitShell();
-      String[] args = shell.synthesizeArgs();
-      if (!shell.processArgs(args)) {
-        throw new RuntimeException("Invalid shell arguments");
-      }
+      try {
+        BootStrapPlatform.init();
+        BootStrapPlatform.applyPlatformHacks();
+        unitTestShell = new JUnitShell();
+        String[] args = unitTestShell.synthesizeArgs();
+        if (!unitTestShell.processArgs(args)) {
+          throw new JUnitFatalLaunchException(
+              "Error processing shell arguments");
+        }
 
-      shell.messageQueue = new JUnitMessageQueue(shell.numClients);
+        unitTestShell.messageQueue = new JUnitMessageQueue(
+            unitTestShell.numClients);
 
-      if (!shell.startUp()) {
-        throw new RuntimeException("Shell failed to start");
+        if (!unitTestShell.startUp()) {
+          throw new JUnitFatalLaunchException("Shell failed to start");
+        }
+      } finally {
+        if (unitTestShell != null) {
+          unitTestShell.lastLaunchFailed = true;
+        }
       }
-      unitTestShell = shell;
     }
 
     return unitTestShell;

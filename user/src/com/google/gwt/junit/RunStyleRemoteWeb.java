@@ -95,9 +95,33 @@ class RunStyleRemoteWeb extends RunStyleRemote {
     }
   }
 
+  /**
+   * Registered as a shutdown hook to make sure that any browsers that were not
+   * finished are killed.
+   */
+  private class ShutdownCb extends Thread {
+
+    @Override
+    public synchronized void run() {
+      for (RemoteBrowser remoteBrowser : remoteBrowsers) {
+        int remoteToken = remoteBrowser.getToken();
+        if (remoteToken > 0) {
+          try {
+            remoteBrowser.getManager().killBrowser(remoteToken);
+          } catch (Exception e) {
+            System.err.println("Error killing remote browser during shutdown: "
+                + remoteBrowser.getRmiUrl());
+            e.printStackTrace();
+          }
+          // We've done our best to kill it. Don't try anymore.
+          remoteBrowser.setToken(0);
+        }
+      }
+    }
+  }
+
   private static final int CONNECT_MS = 10000;
   private static final int PING_KEEPALIVE_MS = 5000;
-  private static final int RESPONSE_TIMEOUT_MS = 10000;
 
   // Larger values when debugging the unit test framework, so you
   // don't get spurious timeouts.
@@ -105,13 +129,13 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   // private static final int PING_KEEPALIVE_MS = 500000;
   // private static final int RESPONSE_TIMEOUT_MS = 1000000;
 
+  private static final int RESPONSE_TIMEOUT_MS = 10000;
+
   public static RunStyle create(JUnitShell shell, String[] urls) {
     try {
       RMISocketFactoryWithTimeouts.init();
     } catch (IOException e) {
-      System.err.println("Error initializing RMISocketFactory");
-      e.printStackTrace();
-      System.exit(1);
+      throw new JUnitFatalLaunchException("Error initializing RMISocketFactory", e);
     }
     int numClients = urls.length;
     BrowserManager[] browserManagers = new BrowserManager[numClients];
@@ -120,18 +144,17 @@ class RunStyleRemoteWeb extends RunStyleRemote {
       try {
         browserManagers[i] = (BrowserManager) Naming.lookup(urls[i]);
       } catch (Exception e) {
+        String message = "Error connecting to browser manager at " + urls[i];
+        Throwable cause = e;
         if (e.getCause() instanceof SocketTimeoutException) {
           long elapsed = System.currentTimeMillis() - callStart;
-          System.err.println("Timeout " + elapsed
-              + "ms waiting for browser manager server to connect at "
-              + urls[i]);
-          e.getCause().printStackTrace();
-        } else {
-          System.err.println("Error connecting to browser manager at "
-              + urls[i]);
-          e.printStackTrace();
+          message += " - Timeout " + elapsed
+              + "ms waiting to connect to browser manager.";
+          cause = e.getCause();
         }
-        System.exit(1);
+        System.err.println(message);
+        cause.printStackTrace();
+        throw new JUnitFatalLaunchException(message, cause);
       }
     }
     return new RunStyleRemoteWeb(shell, browserManagers, urls);
@@ -170,6 +193,7 @@ class RunStyleRemoteWeb extends RunStyleRemote {
         remoteBrowsers[i] = new RemoteBrowser(browserManagers[i], urls[i]);
       }
     }
+    Runtime.getRuntime().addShutdownHook(new ShutdownCb());
   }
 
   @Override
@@ -209,6 +233,7 @@ class RunStyleRemoteWeb extends RunStyleRemote {
     }
 
     Thread keepAliveThread = new Thread() {
+      @Override
       public void run() {
         do {
           try {
