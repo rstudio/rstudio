@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -356,7 +357,20 @@ public final class CompilingClassLoader extends ClassLoader {
 
   private final TreeLogger logger;
 
+  /**
+   * Stores a list of classes needing JSNI injection. This list will be cleared
+   * when the {@link #stackDepth} is <code>0</code>.
+   */
+  private final List<Class<?>> pendingJsniInjectionClasses = new ArrayList<Class<?>>();
+
   private ShellJavaScriptHost shellJavaScriptHost;
+
+  /**
+   * Used to guard against {@link ClassCircularityError}. Attempting to read
+   * class annotations for the purpose of JSNI injection while defining a class
+   * can lead to circularities; we must wait until we're at the "top of stack".
+   */
+  private int stackDepth = 0;
 
   private final TypeOracle typeOracle;
 
@@ -524,6 +538,8 @@ public final class CompilingClassLoader extends ClassLoader {
     // Get the bytes, compiling if necessary.
     byte[] classBytes;
     try {
+      ++stackDepth;
+
       // A JSO impl class needs the class bytes for the original class.
       String lookupClassName = className;
       if (classRewriter != null && classRewriter.isJsoImpl(className)) {
@@ -544,6 +560,8 @@ public final class CompilingClassLoader extends ClassLoader {
       return newClass;
     } catch (UnableToCompleteException e) {
       throw new ClassNotFoundException(className);
+    } finally {
+      --stackDepth;
     }
   }
 
@@ -554,20 +572,34 @@ public final class CompilingClassLoader extends ClassLoader {
   protected synchronized Class<?> loadClass(String name, boolean resolve)
       throws ClassNotFoundException {
     Class<?> newClass = super.loadClass(name, resolve);
-    JsniMethods jsniMethods = newClass.getAnnotation(JsniMethods.class);
-    if (jsniMethods != null) {
-      for (JsniMethod jsniMethod : jsniMethods.value()) {
-        String[] bodyParts = jsniMethod.body();
-        int size = 0;
-        for (String bodyPart : bodyParts) {
-          size += bodyPart.length();
+
+    // Only real, non-local classes can have JSNI method annotations.
+    if (!newClass.isInterface() && !newClass.isLocalClass()) {
+      pendingJsniInjectionClasses.add(newClass);
+    }
+
+    if (stackDepth == 0 && !pendingJsniInjectionClasses.isEmpty()) {
+      // Save a copy because this can re-enter.
+      Class<?>[] toCheck = pendingJsniInjectionClasses.toArray(new Class<?>[pendingJsniInjectionClasses.size()]);
+      pendingJsniInjectionClasses.clear();
+      for (Class<?> checkClass : toCheck) {
+        JsniMethods jsniMethods = checkClass.getAnnotation(JsniMethods.class);
+        if (jsniMethods != null) {
+          for (JsniMethod jsniMethod : jsniMethods.value()) {
+            String[] bodyParts = jsniMethod.body();
+            int size = 0;
+            for (String bodyPart : bodyParts) {
+              size += bodyPart.length();
+            }
+            StringBuilder body = new StringBuilder(size);
+            for (String bodyPart : bodyParts) {
+              body.append(bodyPart);
+            }
+            shellJavaScriptHost.createNative(jsniMethod.file(),
+                jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(),
+                body.toString());
+          }
         }
-        StringBuilder body = new StringBuilder(size);
-        for (String bodyPart : bodyParts) {
-          body.append(bodyPart);
-        }
-        shellJavaScriptHost.createNative(jsniMethod.file(), jsniMethod.line(),
-            jsniMethod.name(), jsniMethod.paramNames(), body.toString());
       }
     }
     return newClass;
