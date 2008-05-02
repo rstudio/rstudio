@@ -206,13 +206,11 @@ public class StackPanel extends ComplexPanel {
     }
 
     Element tdWrapper = DOM.getChild(DOM.getChild(body, index * 2), 0);
-    Element tbody = DOM.getFirstChild(DOM.getFirstChild(tdWrapper));
-    Element tr = DOM.getChild(tbody, 1);
-    Element td = DOM.getChild(tr, 1);
+    Element headerElem = DOM.getFirstChild(tdWrapper);
     if (asHTML) {
-      DOM.setInnerHTML(td, text);
+      DOM.setInnerHTML(getHeaderTextElem(headerElem), text);
     } else {
-      DOM.setInnerText(td, text);
+      DOM.setInnerText(getHeaderTextElem(headerElem), text);
     }
   }
 
@@ -251,40 +249,31 @@ public class StackPanel extends ComplexPanel {
 
     int numHeaders = DOM.getChildCount(body) >> 1;
     for (int i = 0; i < numHeaders; i++) {
-      Element headerElem = DOM.getFirstChild(DOM.getChild(body, 2 * i));
+      Element tdWrapper = DOM.getFirstChild(DOM.getChild(body, 2 * i));
+      Element headerElem = DOM.getFirstChild(tdWrapper);
       Element bodyElem = DOM.getFirstChild(DOM.getChild(body, 2 * i + 1));
-      ensureDebugId(headerElem, baseID, "text-wrapper" + i);
+      ensureDebugId(tdWrapper, baseID, "text-wrapper" + i);
       ensureDebugId(bodyElem, baseID, "content" + i);
-
-      // Set the ID on the inner most container of the stack item
-      Element table = DOM.getFirstChild(headerElem);
-      Element tbody = DOM.getFirstChild(DOM.getFirstChild(headerElem));
-      Element tr = DOM.getChild(tbody, 1);
-      Element td = DOM.getChild(tr, 1);
-      ensureDebugId(td, baseID, "text" + i);
+      ensureDebugId(getHeaderTextElem(headerElem), baseID, "text" + i);
     }
   }
 
   /**
    * @return a header element
    */
-  private Element createHeaderElem() {
-    // Create the table
-    Element table = DOM.createTable();
-    Element tbody = DOM.createTBody();
-    DOM.appendChild(table, tbody);
-    DOM.setStyleAttribute(table, "width", "100%");
-    DOM.setElementPropertyInt(table, "cellSpacing", 0);
-    DOM.setElementPropertyInt(table, "cellPadding", 0);
+  Element createHeaderElem() {
+    return DOM.createDiv();
+  }
 
-    // Add the top row
-    DOM.appendChild(tbody, DecoratorPanel.createTR("top"));
-
-    // Add the middle row
-    DOM.appendChild(tbody, DecoratorPanel.createTR("middle"));
-
-    // Return the table
-    return table;
+  /**
+   * Get the element that holds the header text given the header element created
+   * by #createHeaderElement.
+   * 
+   * @param headerElem the header element
+   * @return the element around the header text
+   */
+  Element getHeaderTextElem(Element headerElem) {
+    return headerElem;
   }
 
   private int findDividerIndex(Element elem) {

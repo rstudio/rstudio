@@ -22,7 +22,7 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 
 /**
- * Tests <code>ListBox</code>. Needs many, many more tests.
+ * Test cases for {@link StackPanel}.
  */
 public class StackPanelTest extends GWTTestCase {
 
@@ -51,11 +51,11 @@ public class StackPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new StackPanel(), new Adder());
+    HasWidgetsTester.testAll(createStackPanel(), new Adder());
   }
 
   public void testDebugId() {
-    final StackPanel p = new StackPanel();
+    final StackPanel p = createStackPanel();
     Label a = new Label("a");
     Label b = new Label("b");
     Label c = new Label("c");
@@ -86,6 +86,7 @@ public class StackPanelTest extends GWTTestCase {
         Element td0 = DOM.getElementById("gwt-debug-myStack-text-wrapper0");
         Element td1 = DOM.getElementById("gwt-debug-myStack-text-wrapper1");
         Element td2 = DOM.getElementById("gwt-debug-myStack-text-wrapper2");
+
         assertEquals(p.getElement(),
             DOM.getParent(DOM.getParent(DOM.getParent(td0))));
         assertEquals(p.getElement(),
@@ -93,6 +94,7 @@ public class StackPanelTest extends GWTTestCase {
         assertEquals(p.getElement(),
             DOM.getParent(DOM.getParent(DOM.getParent(td2))));
 
+        RootPanel.get().remove(p);
         finishTest();
       }
     });
@@ -103,7 +105,7 @@ public class StackPanelTest extends GWTTestCase {
    * Tests getSelectedStack.
    */
   public void testGetSelectedStack() {
-    StackPanel p = new StackPanel();
+    StackPanel p = createStackPanel();
     assertEquals(-1, p.getSelectedIndex());
     Label a = new Label("a");
     Label b = new Label("b");
@@ -124,7 +126,7 @@ public class StackPanelTest extends GWTTestCase {
    * Tests new remove implementation for StackPanel.
    */
   public void testRemove() {
-    StackPanel p = new StackPanel();
+    StackPanel p = createStackPanel();
     Label a = new Label("a");
     Label b = new Label("b");
     Label c = new Label("c");
@@ -153,5 +155,12 @@ public class StackPanelTest extends GWTTestCase {
     // Remove d.
     p.remove(a);
     assertEquals("d", curContents(p));
+  }
+
+  /**
+   * Create a new stack panel.
+   */
+  protected StackPanel createStackPanel() {
+    return new StackPanel();
   }
 }

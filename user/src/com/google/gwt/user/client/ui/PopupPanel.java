@@ -45,11 +45,8 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  * <li>.gwt-PopupPanel { the outside of the popup }</li>
  * <li>.gwt-PopupPanel .content { the wrapper around the content }</li>
  * </ul>
- * <p>
- * The styles that apply to {@link DecoratorPanel} also apply to PopupPanel.
- * </p>
  */
-public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
+public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview, HasAnimation {
   /**
    * The type of animation to use when opening the popup.
@@ -77,7 +74,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
      * The {@link PopupPanel} being affected.
      */
     private PopupPanel curPanel = null;
-    
+
     /**
      * A boolean indicating whether we are showing or hiding the popup.
      */
@@ -95,6 +92,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
         impl.onHide(curPanel.getElement());
       }
       impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
+      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
       curPanel = null;
     }
 
@@ -113,6 +111,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
         RootPanel.get().remove(curPanel);
         impl.onHide(curPanel.getElement());
       }
+      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
       curPanel = null;
     }
 
@@ -133,6 +132,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
       }
       offsetHeight = curPanel.getOffsetHeight();
       offsetWidth = curPanel.getOffsetWidth();
+      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "hidden");
       onUpdate(0.0);
     }
 
@@ -270,7 +270,6 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
     setPopupPosition(0, 0);
     setStyleName(DEFAULT_STYLENAME);
     setStyleName(getContainerElement(), "content");
-    DOM.setStyleAttribute(getElement(), "overflow", "hidden");
   }
 
   /**
@@ -285,7 +284,8 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
   }
 
   /**
-   * Creates an empty popup panel, specifying its "auto-hide" property.
+   * Creates an empty popup panel, specifying its "auto-hide" and "modal"
+   * properties.
    * 
    * @param autoHide <code>true</code> if the popup should be automatically
    *          hidden when the user clicks outside of it
@@ -311,7 +311,7 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
   public void center() {
     boolean initiallyShowing = showing;
     boolean initiallyAnimated = isAnimationEnabled;
-    
+
     if (!initiallyShowing) {
       setVisible(false);
       setAnimationEnabled(false);
@@ -667,6 +667,32 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
   }
 
   /**
+   * We control size by setting our child widget's size. However, if we don't
+   * currently have a child, we record the size the user wanted so that when we
+   * do get a child, we can set it correctly. Until size is explicitly cleared,
+   * any child put into the popup will be given that size.
+   */
+  void maybeUpdateSize() {
+    // For subclasses of PopupPanel, we want the default behavior of setWidth
+    // and setHeight to change the dimensions of PopupPanel's child widget.
+    // We do this because PopupPanel's child widget is the first widget in
+    // the hierarchy which provides structure to the panel. DialogBox is
+    // an example of this. We want to set the dimensions on DialogBox's
+    // FlexTable, which is PopupPanel's child widget. However, it is not
+    // DialogBox's child widget. To make sure that we are actually getting
+    // PopupPanel's child widget, we have to use super.getWidget().
+    Widget w = super.getWidget();
+    if (w != null) {
+      if (desiredHeight != null) {
+        w.setHeight(desiredHeight);
+      }
+      if (desiredWidth != null) {
+        w.setWidth(desiredWidth);
+      }
+    }
+  }
+
+  /**
    * Remove focus from an Element.
    * 
    * @param elt The Element on which <code>blur()</code> will be invoked
@@ -692,32 +718,6 @@ public class PopupPanel extends DecoratorPanel implements SourcesPopupEvents,
     // Fire the event listeners
     if (popupListeners != null) {
       popupListeners.firePopupClosed(this, autoClosed);
-    }
-  }
-
-  /**
-   * We control size by setting our child widget's size. However, if we don't
-   * currently have a child, we record the size the user wanted so that when we
-   * do get a child, we can set it correctly. Until size is explicitly cleared,
-   * any child put into the popup will be given that size.
-   */
-  private void maybeUpdateSize() {
-    // For subclasses of PopupPanel, we want the default behavior of setWidth
-    // and setHeight to change the dimensions of PopupPanel's child widget.
-    // We do this because PopupPanel's child widget is the first widget in
-    // the hierarchy which provides structure to the panel. DialogBox is
-    // an example of this. We want to set the dimensions on DialogBox's
-    // FlexTable, which is PopupPanel's child widget. However, it is not
-    // DialogBox's child widget. To make sure that we are actually getting
-    // PopupPanel's child widget, we have to use super.getWidget().
-    Widget w = super.getWidget();
-    if (w != null) {
-      if (desiredHeight != null) {
-        w.setHeight(desiredHeight);
-      }
-      if (desiredWidth != null) {
-        w.setWidth(desiredWidth);
-      }
     }
   }
 }

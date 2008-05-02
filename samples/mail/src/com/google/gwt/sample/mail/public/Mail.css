@@ -79,98 +79,98 @@ a:visited {
   background: #ccc;
 }
 
-.gwt-StackPanel {
+.gwt-DecoratedStackPanel {
   width: 15em;
   border-bottom: 1px solid #666;
 }
-.gwt-StackPanel .lcaption {
+.gwt-DecoratedStackPanel .lcaption {
   width: 32px;
   padding: 0 0 4px 5px;
 }
-.gwt-StackPanel .rcaption {
+.gwt-DecoratedStackPanel .rcaption {
   padding: 0 0 4px 5px;
 }
-.gwt-StackPanel .gwt-StackPanelContent {
+.gwt-DecoratedStackPanel .gwt-StackPanelContent {
   border: 1px solid #666;
   border-bottom: 0px;
   background: white;
   padding: 2px 2px 10px 5px;
 }
-.gwt-StackPanelItem {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem {
   cursor: pointer;
   cursor: hand;
 }
-.gwt-StackPanelItem .topLeft,
-.gwt-StackPanelItem .topRight {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
   width: 4px;
   height: 4px;
-	zoom: 1;
+  zoom: 1;
 }
-html>body .gwt-StackPanelItem .topLeft {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft {
   background: #c1eec8 url(leftCorner.gif) no-repeat;
   border-left: 1px solid #666;
 }
-html>body .gwt-StackPanelItem .topRight {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
   background: #c1eec8 url(rightCorner.gif) no-repeat;
   border-right: 1px solid #666;
 }
-.gwt-StackPanelItem .topLeftInner,
-.gwt-StackPanelItem .topRightInner {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
   width: 4px;
   height: 4px;
 }
-* html .gwt-StackPanelItem .topLeftInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner {
   overflow: hidden;
   border-left: 1px solid #666;
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='leftCorner.gif',sizingMethod='crop');
 }
-* html .gwt-StackPanelItem .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
   overflow: hidden;
   border-right: 1px solid #666;
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='rightCorner.gif',sizingMethod='crop');
 }
-.gwt-StackPanelItem .topCenter {
-	background: #ddefde url(gradient.gif) repeat-x 0px 0px;
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topCenter {
+  background: #ddefde url(gradient.gif) repeat-x 0px 0px;
 }
-.gwt-StackPanelItem .middleLeft {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeft {
   background: #d3def6 url(gradient.gif) repeat-x 0px -1px;
   border-left: 1px solid #666;
 }
-.gwt-StackPanelItem .middleLeftInner,
-.gwt-StackPanelItem .middleRightInner {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeftInner,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRightInner {
   width: 1px;
   height: 1px;
 }
-.gwt-StackPanelItem .middleRight {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRight {
   background: #d3def6 url(gradient.gif) repeat-x 0px -1px;
   border-right: 1px solid #666;
 }
-.gwt-StackPanelItem .middleCenter {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleCenter {
   font-weight: bold;
   font-size: 1.3em;
   background: #d3def6 url(gradient.gif) repeat-x 0px -1px;
 }
-html>body .gwt-StackPanelItem-first .topRight,
-html>body .gwt-StackPanelItem-first .topLeft {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRight,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeft {
   border: 0px;
   background-color: white;
 }
-html>body .gwt-StackPanelItem-below-selected .topLeft,
-html>body .gwt-StackPanelItem-below-selected .topRight {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeft,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRight {
   background-color: white;
 }
-* html .gwt-StackPanelItem-first .topLeftInner,
-* html .gwt-StackPanelItem-first .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRightInner {
   border: 0px;
   background-color: white;
 }
-* html .gwt-StackPanelItem-first .topLeftInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner {
   padding-left: 1px;
 }
-* html .gwt-StackPanelItem-below-selected .topLeftInner,
-* html .gwt-StackPanelItem-below-selected .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRightInner {
   background-color: white;
 }
 

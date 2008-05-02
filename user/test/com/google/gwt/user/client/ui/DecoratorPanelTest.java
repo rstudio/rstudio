@@ -59,14 +59,18 @@ public class DecoratorPanelTest extends GWTTestCase {
     // Check the styles of each row
     for (int i = 0; i < rowStyles.length; i++) {
       String rowStyle = rowStyles[i];
-      assertStyleName(DOM.getParent(panel.getCellElement(i, 0)), rowStyle);
-      assertStyleName(panel.getCellElement(i, 0), rowStyle + "Left");
-      assertStyleName(panel.getCellElement(i, 1), rowStyle + "Center");
-      assertStyleName(panel.getCellElement(i, 2), rowStyle + "Right");
+      assertStyleName(DOM.getParent(DOM.getParent(panel.getCellElement(i, 0))),
+          rowStyle);
+      assertStyleName(DOM.getParent(panel.getCellElement(i, 0)), rowStyle
+          + "Left");
+      assertStyleName(DOM.getParent(panel.getCellElement(i, 1)), rowStyle
+          + "Center");
+      assertStyleName(DOM.getParent(panel.getCellElement(i, 2)), rowStyle
+          + "Right");
     }
 
     // Check the container element
-    assertTrue(DOM.getFirstChild(panel.getCellElement(2, 1)) == panel.getContainerElement());
+    assertTrue(panel.getCellElement(2, 1) == panel.getContainerElement());
   }
 
   /**
@@ -79,13 +83,17 @@ public class DecoratorPanelTest extends GWTTestCase {
     // Check the styles of each row
     for (int i = 0; i < rowStyles.length; i++) {
       String rowStyle = rowStyles[i];
-      assertStyleName(DOM.getParent(panel.getCellElement(i, 0)), rowStyle);
-      assertStyleName(panel.getCellElement(i, 0), rowStyle + "Left");
-      assertStyleName(panel.getCellElement(i, 1), rowStyle + "Center");
-      assertStyleName(panel.getCellElement(i, 2), rowStyle + "Right");
+      assertStyleName(DOM.getParent(DOM.getParent(panel.getCellElement(i, 0))),
+          rowStyle);
+      assertStyleName(DOM.getParent(panel.getCellElement(i, 0)), rowStyle
+          + "Left");
+      assertStyleName(DOM.getParent(panel.getCellElement(i, 1)), rowStyle
+          + "Center");
+      assertStyleName(DOM.getParent(panel.getCellElement(i, 2)), rowStyle
+          + "Right");
     }
 
     // Check the container element
-    assertTrue(DOM.getFirstChild(panel.getCellElement(1, 1)) == panel.getContainerElement());
+    assertTrue(panel.getCellElement(1, 1) == panel.getContainerElement());
   }
 }

@@ -17,7 +17,7 @@ package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.StackPanel;
+import com.google.gwt.user.client.ui.DecoratedStackPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -42,7 +42,7 @@ public class Shortcuts extends Composite {
   }
 
   private int nextHeaderIndex = 0;
-  private StackPanel stackPanel = new StackPanel();
+  private DecoratedStackPanel stackPanel = new DecoratedStackPanel();
 
   /**
    * Constructs a new shortcuts widget using the specified images.

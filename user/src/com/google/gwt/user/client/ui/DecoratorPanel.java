@@ -162,11 +162,6 @@ public class DecoratorPanel extends SimplePanel {
     setStyleName(DEFAULT_STYLENAME);
   }
 
-  @Override
-  protected Element getContainerElement() {
-    return containerElem;
-  }
-
   /**
    * Get a specific Element from the panel.
    * 
@@ -174,8 +169,14 @@ public class DecoratorPanel extends SimplePanel {
    * @param cell the cell index
    * @return the Element at the given row and cell
    */
-  Element getCellElement(int row, int cell) {
+  protected Element getCellElement(int row, int cell) {
     Element tr = DOM.getChild(tbody, row);
-    return DOM.getChild(tr, cell);
+    Element td = DOM.getChild(tr, cell);
+    return DOM.getFirstChild(td);
+  }
+
+  @Override
+  protected Element getContainerElement() {
+    return containerElem;
   }
 }

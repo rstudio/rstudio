@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 import java.util.Iterator;
 
@@ -37,11 +38,11 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testAttachDetachOrder() {
-    HasWidgetsTester.testAll(new TabPanel(), new Adder());
+    HasWidgetsTester.testAll(createTabPanel(), new Adder());
   }
 
   public void testDebugId() {
-    TabPanel panel = new TabPanel();
+    TabPanel panel = createTabPanel();
     Label content0 = new Label("content0");
     Label tab0 = new Label("tab0");
     panel.add(content0, tab0);
@@ -60,22 +61,21 @@ public class TabPanelTest extends GWTTestCase {
         panel.getDeckPanel().getElement());
 
     // Check the tabs
+    HorizontalPanel hPanel = (HorizontalPanel) panel.getTabBar().getWidget();
+    Element tr = DOM.getFirstChild(hPanel.getBody());
     UIObjectTest.assertDebugId("myPanel-bar-tab0",
-        TabBarTest.getGrandParent(tab0.getElement(), 2));
-    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper0",
-        DOM.getParent(tab0.getParent().getParent().getElement()));
+        DOM.getParent(tab0.getElement()));
+    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper0", DOM.getChild(tr, 1));
     UIObjectTest.assertDebugId("myPanel-bar-tab1",
-        TabBarTest.getGrandParent(tab1.getElement(), 2));
-    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper1",
-        DOM.getParent(tab1.getParent().getParent().getElement()));
+        DOM.getParent(tab1.getElement()));
+    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper1", DOM.getChild(tr, 2));
     UIObjectTest.assertDebugId("myPanel-bar-tab2",
-        TabBarTest.getGrandParent(tab2.getElement(), 2));
-    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper2",
-        DOM.getParent(tab2.getParent().getParent().getElement()));
+        DOM.getParent(tab2.getElement()));
+    UIObjectTest.assertDebugId("myPanel-bar-tab-wrapper2", DOM.getChild(tr, 3));
   }
 
   public void testInsertMultipleTimes() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
 
     TextBox tb = new TextBox();
     p.add(tb, "Title");
@@ -114,7 +114,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testInsertWithHTML() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
     Label l = new Label();
     p.add(l, "three");
     p.insert(new HTML("<b>hello</b>"), "two", true, 0);
@@ -126,7 +126,7 @@ public class TabPanelTest extends GWTTestCase {
    * Tests to ensure that arbitrary widgets can be added/inserted effectively.
    */
   public void testInsertWithWidgets() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
 
     TextBox wa = new TextBox();
     CheckBox wb = new CheckBox();
@@ -146,7 +146,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testIterator() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
     HTML foo = new HTML("foo");
     HTML bar = new HTML("bar");
     HTML baz = new HTML("baz");
@@ -175,7 +175,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testSelectionEvents() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
     RootPanel.get().add(p);
 
     p.add(new Button("foo"), "foo");
@@ -201,7 +201,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testUnmodifiableDeckPanelSubclasses() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
     DeckPanel d = p.getDeckPanel();
 
     try {
@@ -227,7 +227,7 @@ public class TabPanelTest extends GWTTestCase {
   }
 
   public void testUnmodifiableTabBarSubclasses() {
-    TabPanel p = new TabPanel();
+    TabPanel p = createTabPanel();
     TabBar b = p.getTabBar();
 
     try {
@@ -278,5 +278,12 @@ public class TabPanelTest extends GWTTestCase {
     } catch (UnsupportedOperationException e) {
       // Expected behavior
     }
+  }
+
+  /**
+   * Create a new, empty tab panel.
+   */
+  protected TabPanel createTabPanel() {
+    return new TabPanel();
   }
 }

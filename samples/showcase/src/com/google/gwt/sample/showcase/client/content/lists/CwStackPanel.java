@@ -20,11 +20,11 @@ import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.DecoratedStackPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.StackPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -34,10 +34,9 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  * 
- * @gwt.CSS .gwt-StackPanel
- * @gwt.CSS .gwt-StackPanelItem
- * @gwt.CSS html>body .gwt-StackPanelItem
- * @gwt.CSS * html .gwt-StackPanelItem
+ * @gwt.CSS .gwt-DecoratedStackPanel
+ * @gwt.CSS html>body .gwt-DecoratedStackPanel
+ * @gwt.CSS * html .gwt-DecoratedStackPanel
  * @gwt.CSS .cw-StackPanelHeader
  */
 public class CwStackPanel extends ContentWidget {
@@ -141,7 +140,7 @@ public class CwStackPanel extends ContentWidget {
     Images images = (Images) GWT.create(Images.class);
 
     // Create a new stack panel
-    StackPanel stackPanel = new StackPanel();
+    DecoratedStackPanel stackPanel = new DecoratedStackPanel();
     stackPanel.setWidth("200px");
 
     // Add links to Mail folders

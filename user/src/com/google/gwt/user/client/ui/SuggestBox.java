@@ -195,7 +195,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    * SuggestionMenu as its widget, and the position of the SuggestBox's TextBox
    * is needed in order to correctly position the popup.
    */
-  private class SuggestionPopup extends PopupPanel {
+  private class SuggestionPopup extends DecoratedPopupPanel {
 
     private static final String STYLENAME_DEFAULT = "gwt-SuggestBoxPopup";
 

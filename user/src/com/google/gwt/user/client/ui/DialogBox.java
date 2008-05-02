@@ -41,7 +41,7 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.DialogBoxExample}
  * </p>
  */
-public class DialogBox extends PopupPanel implements HasHTML, HasText,
+public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     MouseListener {
   /**
    * The default style name.
@@ -201,6 +201,6 @@ public class DialogBox extends PopupPanel implements HasHTML, HasText,
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
     caption.ensureDebugId(baseID + "-caption");
-    ensureDebugId(getContainerElement(), baseID, "content");
+    ensureDebugId(getCellElement(1, 1), baseID, "content");
   }
 }

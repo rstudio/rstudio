@@ -43,8 +43,8 @@ public class PopupTest extends GWTTestCase {
    * Test the basic accessors.
    */
   public void testAccessors() {
-    PopupPanel popup = new PopupPanel();
-    
+    PopupPanel popup = createPopupPanel();
+
     // Animation enabled
     assertFalse(popup.isAnimationEnabled());
     popup.setAnimationEnabled(true);
@@ -55,7 +55,7 @@ public class PopupTest extends GWTTestCase {
     // Get rid of window margins so we can test absolute position.
     Window.setMargin("0px");
 
-    PopupPanel popup = new PopupPanel();
+    PopupPanel popup = createPopupPanel();
     popup.setAnimationEnabled(false);
     Label lbl = new Label("foo");
 
@@ -102,12 +102,19 @@ public class PopupTest extends GWTTestCase {
     });
     popup.hide();
   }
-  
+
   public void testSeparateContainers() {
     TestablePopupPanel p1 = new TestablePopupPanel();
     TestablePopupPanel p2 = new TestablePopupPanel();
     assertTrue(p1.getContainerElement() != null);
     assertTrue(p2.getContainerElement() != null);
     assertFalse(p1.getContainerElement() == p2.getContainerElement());
+  }
+
+  /**
+   * Create a new PopupPanel.
+   */
+  protected PopupPanel createPopupPanel() {
+    return new PopupPanel();
   }
 }

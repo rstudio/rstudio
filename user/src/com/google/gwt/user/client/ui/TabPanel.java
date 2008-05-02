@@ -48,7 +48,6 @@ import java.util.Iterator;
  */
 public class TabPanel extends Composite implements TabListener,
     SourcesTabEvents, HasWidgets, IndexedPanel {
-
   /**
    * This extension of DeckPanel overrides the public mutator methods to prevent
    * external callers from adding to the state of the DeckPanel.
@@ -138,7 +137,7 @@ public class TabPanel extends Composite implements TabListener,
    * This extension of TabPanel overrides the public mutator methods to prevent
    * external callers from modifying the state of the TabBar.
    */
-  private static class UnmodifiableTabBar extends TabBar {
+  private class UnmodifiableTabBar extends TabBar {
     @Override
     public void insertTab(String text, boolean asHTML, int beforeIndex) {
       throw new UnsupportedOperationException(
@@ -151,6 +150,14 @@ public class TabPanel extends Composite implements TabListener,
           "Use TabPanel.insert() to alter the TabBar");
     }
 
+    public void insertTabProtected(String text, boolean asHTML, int beforeIndex) {
+      super.insertTab(text, asHTML, beforeIndex);
+    }
+
+    public void insertTabProtected(Widget widget, int beforeIndex) {
+      super.insertTab(widget, beforeIndex);
+    }
+
     @Override
     public void removeTab(int index) {
       // It's possible for removeTab() to function correctly, but it's
@@ -160,17 +167,13 @@ public class TabPanel extends Composite implements TabListener,
           "Use TabPanel.remove() to alter the TabBar");
     }
 
-    protected void insertTabProtected(String text, boolean asHTML,
-        int beforeIndex) {
-      super.insertTab(text, asHTML, beforeIndex);
-    }
-
-    protected void insertTabProtected(Widget widget, int beforeIndex) {
-      super.insertTab(widget, beforeIndex);
-    }
-
-    protected void removeTabProtected(int index) {
+    public void removeTabProtected(int index) {
       super.removeTab(index);
+    }
+
+    @Override
+    protected SimplePanel createTabTextWrapper() {
+      return TabPanel.this.createTabTextWrapper();
     }
   }
 
@@ -370,6 +373,17 @@ public class TabPanel extends Composite implements TabListener,
    */
   public void selectTab(int index) {
     tabBar.selectTab(index);
+  }
+
+  /**
+   * Create a {@link SimplePanel} that will wrap the contents in a tab.
+   * Subclasses can use this method to wrap tabs in decorator panels.
+   * 
+   * @return a {@link SimplePanel} to wrap the tab contents, or null to leave
+   *         tabs unwrapped
+   */
+  protected SimplePanel createTabTextWrapper() {
+    return null;
   }
 
   /**

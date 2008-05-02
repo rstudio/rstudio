@@ -20,6 +20,7 @@ import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -32,6 +33,9 @@ import com.google.gwt.user.client.ui.Widget;
  * @gwt.CSS .gwt-PopupPanel
  * @gwt.CSS html>body .gwt-PopupPanel
  * @gwt.CSS * html .gwt-PopupPanel
+ * @gwt.CSS .gwt-DecoratedPopupPanel
+ * @gwt.CSS html>body .gwt-DecoratedPopupPanel
+ * @gwt.CSS * html .gwt-DecoratedPopupPanel
  */
 public class CwBasicPopup extends ContentWidget {
   /**
@@ -87,9 +91,9 @@ public class CwBasicPopup extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a basic popup widget
-    final PopupPanel simplePopup = new PopupPanel(true);
+    final DecoratedPopupPanel simplePopup = new DecoratedPopupPanel(true);
     simplePopup.ensureDebugId("cwBasicPopup-simplePopup");
-    simplePopup.setWidth("128px");
+    simplePopup.setWidth("150px");
     simplePopup.setWidget(new HTML(
         constants.cwBasicPopupClickOutsideInstructions()));
 

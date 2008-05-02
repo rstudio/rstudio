@@ -18,17 +18,17 @@ package com.google.gwt.sample.showcase.client.content.panels;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.user.client.ui.DecoratedTabPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.TabPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
  * 
- * @gwt.CSS .gwt-TabBar
- * @gwt.CSS html>body .gwt-TabBar
- * @gwt.CSS * html .gwt-TabBar
+ * @gwt.CSS .gwt-DecoratedTabBar
+ * @gwt.CSS html>body .gwt-DecoratedTabBar
+ * @gwt.CSS * html .gwt-DecoratedTabBar
  * @gwt.CSS .gwt-TabPanel
  */
 public class CwTabPanel extends ContentWidget {
@@ -85,7 +85,7 @@ public class CwTabPanel extends ContentWidget {
   @Override
   public Widget onInitialize() {
     // Create a tab panel
-    TabPanel tabPanel = new TabPanel();
+    DecoratedTabPanel tabPanel = new DecoratedTabPanel();
     tabPanel.setWidth("400px");
 
     // Enable the deck panel animation
