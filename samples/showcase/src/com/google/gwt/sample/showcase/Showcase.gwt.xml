@@ -18,6 +18,6 @@
 	<extend-property name="locale" values="zh"/>
 
 	<!-- Include style sheets. -->
-	<stylesheet src="GWT-default.css"/>
-	<stylesheet src="Showcase.css"/>
+	<stylesheet src="default/GWT.css"/>
+	<stylesheet src="default/Showcase.css"/>
 </module>

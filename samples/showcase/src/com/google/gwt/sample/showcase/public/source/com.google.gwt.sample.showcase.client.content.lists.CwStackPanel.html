@@ -96,8 +96,7 @@
     VerticalPanel contactsPanel = new VerticalPanel();
     contactsPanel.setSpacing(4);
     for (String contact : constants.cwStackPanelContacts()) {
-      contactsPanel.add(new HTML("&lt;a href=\"javascript:void;\"&gt;" + contact
-          + "&lt;/a&gt;"));
+      contactsPanel.add(new Label(contact));
     }
     String contactsHeader = getHeaderString(
         constants.cwStackPanelContactsHeader(), images.contactsgroup());

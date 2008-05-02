@@ -58,6 +58,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ChangeListener;
@@ -66,16 +67,18 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -83,21 +86,51 @@ import java.util.Map;
  */
 public class Showcase implements EntryPoint {
   /**
+   * A special version of the ToggleButton that cannot be clicked if down. If
+   * one theme button is pressed, all of the others are depressed.
+   */
+  private static class ThemeButton extends ToggleButton {
+    private static List<ThemeButton> allButtons = null;
+
+    private String theme;
+
+    public ThemeButton(String theme) {
+      super();
+      this.theme = theme;
+      addStyleName("sc-ThemeButton-" + theme);
+
+      // Add this button to the static list
+      if (allButtons == null) {
+        allButtons = new ArrayList<ThemeButton>();
+        setDown(true);
+      }
+      allButtons.add(this);
+    }
+
+    public String getTheme() {
+      return theme;
+    }
+
+    @Override
+    protected void onClick() {
+      if (!isDown()) {
+        // Raise all of the other buttons
+        for (ThemeButton button : allButtons) {
+          if (button != this) {
+            button.setDown(false);
+          }
+        }
+
+        // Fire the click listeners
+        super.onClick();
+      }
+    }
+  }
+
+  /**
    * The static images used throughout the Showcase.
    */
   public static final ShowcaseImages images = (ShowcaseImages) GWT.create(ShowcaseImages.class);
-
-  /**
-   * The images to cache, such as background images. These images will be added
-   * to the page and hidden, forcing the browser to cache them.
-   */
-  private static final String[] CACHED_IMAGES = {
-      "bg_headergradient.png", "bg_listgradient.png", "bg_stackpanel.png",
-      "bg_tab_selected.png", "corner.png", "hborder.png", "loading.gif",
-      "vborder.png", "ie6/corner_dialog_topleft.png",
-      "ie6/corner_dialog_topright.png", "ie6/hborder_blue_shadow.png",
-      "ie6/hborder_gray_shadow.png", "ie6/vborder_blue_shadow.png",
-      "ie6/vborder_gray_shadow.png"};
 
   /**
    * Link to GWT homepage.
@@ -112,8 +145,8 @@ public class Showcase implements EntryPoint {
   /**
    * The available style themes that the user can select.
    */
-  private static final String[] STYLE_THEMES = {"default", "chrome", "black"};
-  
+  private static final String[] STYLE_THEMES = {"default", "chrome", "dark"};
+
   /**
    * Convenience method for getting the document's head element.
    * 
@@ -161,9 +194,46 @@ public class Showcase implements EntryPoint {
   private Map<TreeItem, ContentWidget> itemWidgets = new HashMap<TreeItem, ContentWidget>();
 
   /**
+   * A small widget used to determine when a new style sheet has finished
+   * loading. The widget has a natural width of 0px, but when any GWT.css style
+   * sheet is loaded, the width changes to 5px. We use a Timer to check the
+   * width until the style sheet loads.
+   */
+  private Label styleTester;
+
+  /**
+   * The timer that uses the styleTester to determine when the new GWT style
+   * sheet has loaded.
+   */
+  private Timer styleTesterTimer = new Timer() {
+    @Override
+    public void run() {
+      styleTester.setVisible(false);
+      styleTester.setVisible(true);
+      if (styleTester.getOffsetWidth() > 0) {
+        RootPanel.getBodyElement().getStyle().setProperty("display", "none");
+        RootPanel.getBodyElement().getStyle().setProperty("display", "");
+      } else {
+        schedule(25);
+      }
+    }
+  };
+
+  /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
+    // Create a widget to test when style sheets are loaded
+    styleTester = new HTML("<div class=\"topLeftInner\"></div>");
+    styleTester.setStyleName("gwt-DecoratorPanel");
+    styleTester.getElement().getStyle().setProperty("position", "absolute");
+    styleTester.getElement().getStyle().setProperty("visibility", "hidden");
+    styleTester.getElement().getStyle().setProperty("display", "inline");
+    styleTester.getElement().getStyle().setPropertyPx("padding", 0);
+    styleTester.getElement().getStyle().setPropertyPx("top", 0);
+    styleTester.getElement().getStyle().setPropertyPx("left", 0);
+    RootPanel.get().add(styleTester);
+
     // Create the constants
     ShowcaseConstants constants = (ShowcaseConstants) GWT.create(ShowcaseConstants.class);
 
@@ -171,19 +241,21 @@ public class Showcase implements EntryPoint {
     app = new Application();
     setupTitlePanel(constants);
     setupMainLinks(constants);
-    setupOptionsPanel(constants);
+    setupOptionsPanel();
     setupMainMenu(constants);
     RootPanel.get().add(app);
 
-    // Swap out the style sheets for the RTL versions if needed.  We need to do
+    // Swap out the style sheets for the RTL versions if needed. We need to do
     // this after the app is loaded because the app will setup the layout based
-    // on the width of the main menu, which is defined in the style sheet.  If
+    // on the width of the main menu, which is defined in the style sheet. If
     // we swap the style sheets first, the app may load without any style sheet
     // to define the main menu width, because the RTL version is still being
-    // loaded.  Note that we are basing the layout on the width defined in the
+    // loaded. Note that we are basing the layout on the width defined in the
     // LTR version, so both versions should use the same width for the main nav
     // menu.
-    includeStyleSheets();
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      updateStyleSheets(STYLE_THEMES[0]);
+    }
 
     // Add an listener that sets the content widget when a menu item is selected
     app.setListener(new ApplicationListener() {
@@ -223,20 +295,6 @@ public class Showcase implements EntryPoint {
       ContentWidget firstContent = itemWidgets.get(firstItem);
       historyListener.onHistoryChanged(getContentWidgetToken(firstContent));
     }
-
-    // Cache images as needed
-    cacheImages();
-  }
-
-  /**
-   * Cache the images used in the background.
-   */
-  private void cacheImages() {
-    for (int i = 0; i < CACHED_IMAGES.length; i++) {
-      Image image = new Image("images/" + CACHED_IMAGES[i]);
-      RootPanel.get().add(image);
-      image.setVisible(false);
-    }
   }
 
   /**
@@ -260,37 +318,6 @@ public class Showcase implements EntryPoint {
     String className = content.getClass().getName();
     className = className.substring(className.lastIndexOf('.') + 1);
     return className;
-  }
-
-  /**
-   * Add the stylesheets to the page, loading one at a time.
-   */
-  private void includeStyleSheets() {
-    // Do nothing if we are in LTR
-    if (!LocaleInfo.getCurrentLocale().isRTL()) {
-      return;
-    }
-
-    // Remove existing style sheets
-    Element headElem = getHeadElement();
-    int numChildren = DOM.getChildCount(headElem);
-    for (int i = 0; i < numChildren; i++) {
-      Element elem = DOM.getChild(headElem, i);
-      if (DOM.getElementProperty(elem, "tagName").equalsIgnoreCase("link")
-          && DOM.getElementProperty(elem, "rel").equalsIgnoreCase("stylesheet")) {
-        // Remove the existing link
-        String href = DOM.getElementProperty(elem, "href");
-        DOM.removeChild(headElem, elem);
-
-        // Add the style tag to the page
-        href = href.replaceAll(".css", ".rtl.css");
-        Element styleElem = DOM.createElement("link");
-        DOM.setElementProperty(styleElem, "rel", "stylesheet");
-        DOM.setElementProperty(styleElem, "type", "text/css");
-        DOM.setElementProperty(styleElem, "href", href);
-        DOM.insertChild(headElem, styleElem, i);
-      }
-    }
   }
 
   /**
@@ -424,14 +451,12 @@ public class Showcase implements EntryPoint {
 
   /**
    * Create the options that appear next to the title.
-   * 
-   * @param constants the constant values to use
    */
-  private void setupOptionsPanel(ShowcaseConstants constants) {
+  private void setupOptionsPanel() {
     VerticalPanel vPanel = new VerticalPanel();
     vPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
     app.setOptionsWidget(vPanel);
-    
+
     // Add the option to change the locale
     final ListBox localeBox = new ListBox();
     String currentLocale = LocaleInfo.getCurrentLocale().getLocaleName();
@@ -459,23 +484,21 @@ public class Showcase implements EntryPoint {
     localeWrapper.add(images.locale().createImage());
     localeWrapper.add(localeBox);
     vPanel.add(localeWrapper);
-    
+
     // Add the option to change the style
-    HorizontalPanel styleWrapper = new HorizontalPanel();
+    final HorizontalPanel styleWrapper = new HorizontalPanel();
     vPanel.add(styleWrapper);
     for (int i = 0; i < STYLE_THEMES.length; i++) {
-      String theme = STYLE_THEMES[i];
-      PushButton button = new PushButton();
-      button.addStyleName("sc-ThemeButton-" + theme);
+      final ThemeButton button = new ThemeButton(STYLE_THEMES[i]);
       styleWrapper.add(button);
       button.addClickListener(new ClickListener() {
         public void onClick(Widget sender) {
-          Window.alert("Additional styles coming soon...");
+          updateStyleSheets(button.getTheme());
         }
       });
     }
   }
-  
+
   /**
    * Create the title bar at the top of the application.
    * 
@@ -492,5 +515,49 @@ public class Showcase implements EntryPoint {
     titlePanel.add(images.gwtLogo().createImage());
     titlePanel.add(new HTML(pageTitle));
     app.setTitleWidget(titlePanel);
+  }
+
+  /**
+   * Update the style sheets to reflect the current theme and direction.
+   * 
+   * @param theme the current theme
+   */
+  private void updateStyleSheets(String theme) {
+    // Remove existing style sheets
+    boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();
+    Element headElem = getHeadElement();
+    int numChildren = DOM.getChildCount(headElem);
+    for (int i = 0; i < numChildren; i++) {
+      Element elem = DOM.getChild(headElem, i);
+      if (DOM.getElementProperty(elem, "tagName").equalsIgnoreCase("link")
+          && DOM.getElementProperty(elem, "rel").equalsIgnoreCase("stylesheet")) {
+        // Remove the existing link
+        String href = DOM.getElementProperty(elem, "href");
+        DOM.removeChild(headElem, elem);
+
+        // Set the theme
+        for (String oldTheme : STYLE_THEMES) {
+          href = href.replaceAll("/" + oldTheme + "/", "/" + theme + "/");
+        }
+
+        // Convert to an rtl suffix
+        if (isRTL) {
+          href = href.replaceAll("_rtl.css", ".css");
+          href = href.replaceAll(".css", "_rtl.css");
+        }
+
+        // Start waiting for the new GWT style sheet to load
+        if (href.contains("GWT.")) {
+          styleTesterTimer.schedule(25);
+        }
+
+        // Add the style tag to the page
+        Element styleElem = DOM.createElement("link");
+        DOM.setElementProperty(styleElem, "rel", "stylesheet");
+        DOM.setElementProperty(styleElem, "type", "text/css");
+        DOM.setElementProperty(styleElem, "href", href);
+        DOM.insertChild(headElem, styleElem, i);
+      }
+    }
   }
 }

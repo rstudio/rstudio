@@ -36,7 +36,7 @@ public class ShowcaseGenerator {
   /**
    * The names of the CSS files to parse.
    */
-  private static final String[] CSS_FILES = {"GWT-default.css", "Showcase.css"};
+  private static final String[] CSS_FILES = {"GWT.css", "Showcase.css"};
 
   /**
    * The root of all files.
@@ -71,7 +71,7 @@ public class ShowcaseGenerator {
    * The path to the folder containing all CSS style sheets.
    */
   private static final String SRC_CSS = FILE_ROOT
-      + "com/google/gwt/sample/showcase/public/";
+      + "com/google/gwt/sample/showcase/public/default/";
 
   /**
    * The root of properties files.
