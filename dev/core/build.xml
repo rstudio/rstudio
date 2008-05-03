@@ -105,6 +105,9 @@
 				<pathelement location="${gwt.tools.lib}/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" />
 			</classpath>
 		</gwt.javac>
+		<copy todir="${javac.out}">
+			<fileset dir="src" includes="**/*.properties"/>
+                </copy>
 	</target>
 
 	<target name="checkstyle" description="Static analysis of source">
@@ -131,7 +134,7 @@
 			</classpath>
 		</taskdef>
 	
-		<echo message="Writing test results to @{junit.out}/reports for @{test.cases}" />
+		<echo message="Writing test results to ${junit.out}/reports for ${test.cases}" />
 		<mkdir dir="${junit.out}/reports" />
 	
 		<echo message="${javac.out} ${javac.junit.out}" />

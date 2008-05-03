@@ -26,6 +26,19 @@ import junit.framework.TestCase;
  * Test access to longs from JSNI.
  */
 public class LongFromJSNITest extends TestCase {
+  public void testBogusRef() throws UnableToCompleteException {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {                                  \n");
+    code.append("volatile long x = -1;                          \n");
+    code.append("native void jsniMeth() /*-{                    \n");
+    code.append("  // @\\bogus refs should just be skipped      \n");
+    code.append("  $wnd.alert(\"x is: \"+this.@Buggy::x); }-*/; \n");
+    code.append("}                                              \n");
+
+    shouldGenerateError(code, 3,
+        "Referencing field 'Buggy.x': type 'long' is not safe to access in JSNI code");
+  }
+
   public void testCyclicReferences() throws UnableToCompleteException {
     {
       StringBuffer buggy = new StringBuffer();
@@ -191,6 +204,19 @@ public class LongFromJSNITest extends TestCase {
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
+  public void testRefInString() throws UnableToCompleteException {
+    {
+      StringBuffer code = new StringBuffer();
+      code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
+      code.append("class Buggy {\n");
+      code.append("  void print(long x) { }\n");
+      code.append("  native void jsniMeth() /*-{ 'this.@Buggy::print(J)(0)'; }-*/;\n");
+      code.append("}\n");
+
+      shouldGenerateNoError(code);
+    }
+  }
+
   public void testUnsafeAnnotation() throws UnableToCompleteException {
     {
       StringBuffer code = new StringBuffer();
@@ -199,19 +225,6 @@ public class LongFromJSNITest extends TestCase {
       code.append("  void print(long x) { }\n");
       code.append("  @UnsafeNativeLong\n");
       code.append("  native void jsniMeth() /*-{ this.@Buggy::print(J)(0); }-*/;\n");
-      code.append("}\n");
-
-      shouldGenerateNoError(code);
-    }
-  }
-  
-  public void testRefInString() throws UnableToCompleteException {
-    {
-      StringBuffer code = new StringBuffer();
-      code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
-      code.append("class Buggy {\n");
-      code.append("  void print(long x) { }\n");
-      code.append("  native void jsniMeth() /*-{ 'this.@Buggy::print(J)(0)'; }-*/;\n");
       code.append("}\n");
 
       shouldGenerateNoError(code);
@@ -317,8 +330,8 @@ public class LongFromJSNITest extends TestCase {
     shouldGenerateNoError(code, null);
   }
 
-  private void shouldGenerateNoError(CharSequence code,
-      CharSequence extraCode) throws UnableToCompleteException {
+  private void shouldGenerateNoError(CharSequence code, CharSequence extraCode)
+      throws UnableToCompleteException {
     shouldGenerateError(code, extraCode, -1, null);
   }
 }
