@@ -240,4 +240,9 @@ class NodeImpl extends DOMItem implements Node {
       throw new DOMNodeException(DOMException.INVALID_MODIFICATION_ERR, e, this);
     }
   }
+ 
+  @Override
+  public String toString() {
+    return XMLParserImpl.getInstance().toStringImpl(this);
+  }
 }

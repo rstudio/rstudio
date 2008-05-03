@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,12 +20,34 @@ import com.google.gwt.core.client.JavaScriptObject;
 /**
  * This class is Safari implementation of the XMLParser interface.
  */
-class XMLParserImplSafari extends XMLParserImplStandard {
+public class XMLParserImplSafari extends XMLParserImplStandard {
 
+  private static boolean safari2LevelWebKit = (getWebKitVersion() <= 420);
+
+  public static boolean isSafari2LevelWebKit() {
+    return safari2LevelWebKit;
+  }
+  
+  private static native int getWebKitVersion() /*-{
+    var result = / AppleWebKit\/([\d]+)/.exec(navigator.userAgent);
+    return ((result) ? parseInt(result[1]) : 0) || 0;
+  }-*/;
+  
   @Override
   protected native JavaScriptObject getElementsByTagNameImpl(JavaScriptObject o,
       String tagName) /*-{
     return o.getElementsByTagName(tagName);
+  }-*/;
+  
+  @Override
+  protected native JavaScriptObject importNodeImpl(JavaScriptObject jsObject,
+      JavaScriptObject importedNode, boolean deep) /*-{
+    // Works around a Safari2 issue where importing a node will steal attributes
+    // from the original. TODO(knorton): Add a runtime check here.
+    if (@com.google.gwt.xml.client.impl.XMLParserImplSafari::isSafari2LevelWebKit()()) {
+      importedNode = importedNode.cloneNode(deep);
+    }
+    return jsObject.importNode(importedNode, deep);
   }-*/;
   
   /**

@@ -96,30 +96,4 @@ class ElementImpl extends NodeImpl implements Element {
       throw new DOMNodeException(DOMException.INVALID_MODIFICATION_ERR, e, this);
     }
   }
-
-  /**
-   * This method returns the string representation of this
-   * <code>ElementImpl</code>.
-   * 
-   * @return the string representation of this <code>ElementImpl</code>.
-   * @see java.lang.Object#toString()
-   */
-  @Override
-  public String toString() {
-    final StringBuffer b = new StringBuffer("<");
-    b.append(getTagName());
-    if (hasAttributes()) {
-      b.append(getAttributes().toString());
-    }
-    if (hasChildNodes()) {
-      b.append(">");
-      b.append(getChildNodes().toString());
-      b.append("</");
-      b.append(getTagName());
-      b.append(">");
-    } else {
-      b.append("/>");
-    }
-    return b.toString();
-  }
 }

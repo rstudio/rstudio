@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,15 +56,5 @@ class ProcessingInstructionImpl extends NodeImpl implements
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
-  }
-
-  @Override
-  public String toString() {
-    StringBuffer b = new StringBuffer("<?");
-    b.append(getNodeName());
-    b.append(" ");
-    b.append(getData());
-    b.append("?>");
-    return b.toString();
   }
 }

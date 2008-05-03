@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -152,22 +152,5 @@ class DocumentImpl extends NodeImpl implements Document {
     } catch (JavaScriptException e) {
       throw new DOMNodeException(DOMException.INVALID_STATE_ERR, e, this);
     }
-  }
-
-  /**
-   * This method returns the string representation of this
-   * <code>DocumentImpl</code>.
-   * 
-   * @return the string representation of this <code>DocumentImpl</code>.
-   * @see java.lang.Object#toString()
-   */
-  @Override
-  public String toString() {
-    StringBuffer b = new StringBuffer();
-    NodeList children = getChildNodes();
-    for (int i = 0; i < children.getLength(); i++) {
-      b.append(children.item(i).toString());
-    }
-    return b.toString();
   }
 }

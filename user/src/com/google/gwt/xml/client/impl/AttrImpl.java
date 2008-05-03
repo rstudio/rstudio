@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -48,20 +48,5 @@ class AttrImpl extends NodeImpl implements Attr {
    */
   public String getValue() {
     return XMLParserImpl.getValue(this.getJsObject());
-  }
-
-  /**
-   * This method returns the string representation of this <code>Attr</code>.
-   * @return the string representation of this <code>Attr</code>.
-   * @see java.lang.Object#toString()
-   */
-  @Override
-  public String toString() {
-    final StringBuffer b = new StringBuffer();
-    b.append(" " + getName());
-    b.append("=\"");
-    b.append(getValue());
-    b.append("\"");
-    return b.toString();
   }
 }

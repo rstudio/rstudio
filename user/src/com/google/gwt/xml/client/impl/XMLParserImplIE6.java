@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -41,6 +41,9 @@ class XMLParserImplIE6 extends XMLParserImpl {
   @Override
   protected native JavaScriptObject createDocumentImpl() /*-{
     var doc = @com.google.gwt.xml.client.impl.XMLParserImplIE6::selectDOMDocumentVersion()();
+    // preserveWhiteSpace is set to true here to prevent IE from throwing away
+    // text nodes that consist of only whitespace characters. This makes it
+    // act more like other browsers.
     doc.preserveWhiteSpace = true;
     doc.setProperty("SelectionNamespaces", "xmlns:xsl='http://www.w3.org/1999/XSL/Transform'");
     doc.setProperty("SelectionLanguage", "XPath");
@@ -84,4 +87,8 @@ class XMLParserImplIE6 extends XMLParserImpl {
     }
   }-*/;
 
+  protected native String toStringImpl(NodeImpl node) /*-{
+    var jsNode = node.@com.google.gwt.xml.client.impl.DOMItem::getJsObject()();
+    return jsNode.xml;
+  }-*/;
 }
