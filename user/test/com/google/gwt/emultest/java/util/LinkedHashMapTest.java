@@ -30,6 +30,32 @@ import java.util.LinkedHashMap;
  * Tests <code>LinkedHashMap</code>.
  */
 public class LinkedHashMapTest extends TestMap {
+  // should be a method-level class, however to avoid serialization warning made
+  // static instead.
+  static class TestRemoveEldestMap extends LinkedHashMap {
+
+    public String expectedKey;
+    public boolean removeEldest;
+
+    public TestRemoveEldestMap() {
+      this(false);
+    }
+
+    public TestRemoveEldestMap(boolean accessOrder) {
+      super(1, .5f, accessOrder);
+    }
+
+    @Override
+    public boolean removeEldestEntry(Map.Entry entry) {
+      if (removeEldest) {
+        assertEquals(expectedKey, entry.getKey());
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+
   private static final int CAPACITY_16 = 16;
   private static final int CAPACITY_NEG_ONE_HALF = -1;
   private static final int CAPACITY_ZERO = 0;
@@ -118,102 +144,6 @@ public class LinkedHashMapTest extends TestMap {
     return "com.google.gwt.emultest.EmulSuite";
   }
 
-  // should be a method-level class, however to avoid serialization warning made
-  // static instead.
-  static class TestRemoveEldestMap extends LinkedHashMap {
-
-    public boolean removeEldest;
-    public String expectedKey;
-
-    public TestRemoveEldestMap() {
-      this(false);
-    }
-
-    public TestRemoveEldestMap(boolean accessOrder) {
-      super(1, .5f, accessOrder);
-    }
-
-    @Override
-    public boolean removeEldestEntry(Map.Entry entry) {
-      if (removeEldest) {
-        assertEquals(expectedKey, entry.getKey());
-        return true;
-      } else {
-        return false;
-      }
-    }
-  }
-
-  public void testRemoveEldest() {
-    TestRemoveEldestMap m = new TestRemoveEldestMap(false);
-    m.put("A", "A");
-    m.put("B", "B");
-    m.put("C", "C");
-    m.put("D", "D");
-    m.get("B");
-    m.get("D");
-    m.removeEldest = true;
-    m.expectedKey = "A";
-    m.put("E", "E");
-    m.put("B", "New-B");
-    Iterator<Map.Entry> entries = m.entrySet().iterator();
-    Map.Entry first = entries.next();
-    assertEquals("B", first.getKey());
-    assertEquals("New-B", first.getValue());
-    assertEquals(4, m.size());
-  }
-
-  public void testRemoveEldestMapLRU() {
-    TestRemoveEldestMap m;
-    Iterator<Map.Entry> entries;
-    Map.Entry first;
-    m = new TestRemoveEldestMap(true);
-    m.put("A", "A");
-    m.put("B", "B");
-    m.put("C", "C");
-    m.put("D", "D");
-    m.get("A");
-    m.get("D");
-    m.removeEldest = true;
-    m.expectedKey = "B";
-    m.put("E", "E");
-
-    m.put("C", "New-C");
-    entries = m.entrySet().iterator();
-    first = entries.next();
-    assertEquals("A", first.getKey());
-    assertEquals("D", entries.next().getKey());
-    assertEquals("E", entries.next().getKey());
-    assertEquals("New-C", entries.next().getValue());
-  }
-
-  public void testAddWatch() {
-    LinkedHashMap<String, String> m = new LinkedHashMap<String, String>();
-    m.put("watch", "watch");
-    assertEquals(m.get("watch"), "watch");
-  }
-
-  public void testLRU() {
-    LinkedHashMap<String, String> m = new LinkedHashMap<String, String>(10,
-        .5f, true);
-    m.put("A", "A");
-    m.put("B", "B");
-    m.put("C", "C");
-    m.put("D", "D");
-    Iterator<Entry<String, String>> entry = m.entrySet().iterator();
-    assertEquals("A", entry.next().getValue());
-    assertEquals("B", entry.next().getValue());
-    assertEquals("C", entry.next().getValue());
-    assertEquals("D", entry.next().getValue());
-    m.get("B");
-    m.get("D");
-    entry = m.entrySet().iterator();
-    assertEquals("A", entry.next().getValue());
-    assertEquals("C", entry.next().getValue());
-    assertEquals("B", entry.next().getValue());
-    assertEquals("D", entry.next().getValue());
-  }
-
   public void testAddEqualKeys() {
     final LinkedHashMap<Number, Object> expected = new LinkedHashMap<Number, Object>();
     assertEquals(expected.size(), 0);
@@ -225,6 +155,12 @@ public class LinkedHashMapTest extends TestMap {
     assertNotSame(new Integer(45), new Long(45));
     assertEquals(expected.size(), 2);
     iterateThrough(expected);
+  }
+
+  public void testAddWatch() {
+    LinkedHashMap<String, String> m = new LinkedHashMap<String, String>();
+    m.put("watch", "watch");
+    assertEquals(m.get("watch"), "watch");
   }
 
   /*
@@ -412,6 +348,71 @@ public class LinkedHashMapTest extends TestMap {
   }
 
   /*
+   * Test method for 'java.util.AbstractMap.isEmpty()'
+   */
+  public void testIsEmpty() {
+    LinkedHashMap<String, String> srcMap = new LinkedHashMap<String, String>();
+    checkEmptyLinkedHashMapAssumptions(srcMap);
+
+    LinkedHashMap<String, String> dstMap = new LinkedHashMap<String, String>();
+    checkEmptyLinkedHashMapAssumptions(dstMap);
+
+    dstMap.putAll(srcMap);
+    assertTrue(dstMap.isEmpty());
+
+    dstMap.put(KEY_KEY, VALUE_VAL);
+    assertFalse(dstMap.isEmpty());
+
+    dstMap.remove(KEY_KEY);
+    assertTrue(dstMap.isEmpty());
+    assertEquals(dstMap.size(), 0);
+  }
+
+  public void testKeysConflict() {
+    LinkedHashMap<Object, String> hashMap = new LinkedHashMap<Object, String>();
+
+    hashMap.put(STRING_ZERO_KEY, STRING_ZERO_VALUE);
+    hashMap.put(INTEGER_ZERO_KEY, INTEGER_ZERO_VALUE);
+    hashMap.put(ODD_ZERO_KEY, ODD_ZERO_VALUE);
+    assertEquals(hashMap.get(INTEGER_ZERO_KEY), INTEGER_ZERO_VALUE);
+    assertEquals(hashMap.get(ODD_ZERO_KEY), ODD_ZERO_VALUE);
+    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
+    hashMap.remove(INTEGER_ZERO_KEY);
+    assertEquals(hashMap.get(ODD_ZERO_KEY), ODD_ZERO_VALUE);
+    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
+    assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
+    hashMap.remove(ODD_ZERO_KEY);
+    assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
+    assertEquals(hashMap.get(ODD_ZERO_KEY), null);
+    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
+    hashMap.remove(STRING_ZERO_KEY);
+    assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
+    assertEquals(hashMap.get(ODD_ZERO_KEY), null);
+    assertEquals(hashMap.get(STRING_ZERO_KEY), null);
+    assertEquals(hashMap.size(), 0);
+  }
+
+  /*
+   * Test method for 'java.util.LinkedHashMap.keySet()'
+   */
+  public void testKeySet() {
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
+    checkEmptyLinkedHashMapAssumptions(hashMap);
+
+    Set keySet = hashMap.keySet();
+    System.err.println("keySet:" + keySet);
+    assertNotNull(keySet);
+    assertTrue(keySet.isEmpty());
+    assertTrue(keySet.size() == 0);
+
+    hashMap.put(KEY_TEST_KEY_SET, VALUE_TEST_KEY_SET);
+    assertEquals(SIZE_ONE, keySet.size());
+    assertTrue(keySet.contains(KEY_TEST_KEY_SET));
+    assertFalse(keySet.contains(VALUE_TEST_KEY_SET));
+    assertFalse(keySet.contains(KEY_TEST_KEY_SET.toUpperCase()));
+  }
+
+  /*
    * Test method for 'java.util.LinkedHashMap.LinkedHashMap()'.
    */
   public void testLinkedHashMap() {
@@ -514,69 +515,25 @@ public class LinkedHashMapTest extends TestMap {
     assertTrue(keyColl.contains(INTEGER_3));
   }
 
-  /*
-   * Test method for 'java.util.AbstractMap.isEmpty()'
-   */
-  public void testIsEmpty() {
-    LinkedHashMap<String, String> srcMap = new LinkedHashMap<String, String>();
-    checkEmptyLinkedHashMapAssumptions(srcMap);
-
-    LinkedHashMap<String, String> dstMap = new LinkedHashMap<String, String>();
-    checkEmptyLinkedHashMapAssumptions(dstMap);
-
-    dstMap.putAll(srcMap);
-    assertTrue(dstMap.isEmpty());
-
-    dstMap.put(KEY_KEY, VALUE_VAL);
-    assertFalse(dstMap.isEmpty());
-
-    dstMap.remove(KEY_KEY);
-    assertTrue(dstMap.isEmpty());
-    assertEquals(dstMap.size(), 0);
-  }
-
-  public void testKeysConflict() {
-    LinkedHashMap<Object, String> hashMap = new LinkedHashMap<Object, String>();
-
-    hashMap.put(STRING_ZERO_KEY, STRING_ZERO_VALUE);
-    hashMap.put(INTEGER_ZERO_KEY, INTEGER_ZERO_VALUE);
-    hashMap.put(ODD_ZERO_KEY, ODD_ZERO_VALUE);
-    assertEquals(hashMap.get(INTEGER_ZERO_KEY), INTEGER_ZERO_VALUE);
-    assertEquals(hashMap.get(ODD_ZERO_KEY), ODD_ZERO_VALUE);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
-    hashMap.remove(INTEGER_ZERO_KEY);
-    assertEquals(hashMap.get(ODD_ZERO_KEY), ODD_ZERO_VALUE);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
-    assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
-    hashMap.remove(ODD_ZERO_KEY);
-    assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
-    assertEquals(hashMap.get(ODD_ZERO_KEY), null);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), STRING_ZERO_VALUE);
-    hashMap.remove(STRING_ZERO_KEY);
-    assertEquals(hashMap.get(INTEGER_ZERO_KEY), null);
-    assertEquals(hashMap.get(ODD_ZERO_KEY), null);
-    assertEquals(hashMap.get(STRING_ZERO_KEY), null);
-    assertEquals(hashMap.size(), 0);
-  }
-
-  /*
-   * Test method for 'java.util.LinkedHashMap.keySet()'
-   */
-  public void testKeySet() {
-    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
-    checkEmptyLinkedHashMapAssumptions(hashMap);
-
-    Set keySet = hashMap.keySet();
-    System.err.println("keySet:" + keySet);
-    assertNotNull(keySet);
-    assertTrue(keySet.isEmpty());
-    assertTrue(keySet.size() == 0);
-
-    hashMap.put(KEY_TEST_KEY_SET, VALUE_TEST_KEY_SET);
-    assertEquals(SIZE_ONE, keySet.size());
-    assertTrue(keySet.contains(KEY_TEST_KEY_SET));
-    assertFalse(keySet.contains(VALUE_TEST_KEY_SET));
-    assertFalse(keySet.contains(KEY_TEST_KEY_SET.toUpperCase()));
+  public void testLRU() {
+    LinkedHashMap<String, String> m = new LinkedHashMap<String, String>(10,
+        .5f, true);
+    m.put("A", "A");
+    m.put("B", "B");
+    m.put("C", "C");
+    m.put("D", "D");
+    Iterator<Entry<String, String>> entry = m.entrySet().iterator();
+    assertEquals("A", entry.next().getValue());
+    assertEquals("B", entry.next().getValue());
+    assertEquals("C", entry.next().getValue());
+    assertEquals("D", entry.next().getValue());
+    m.get("B");
+    m.get("D");
+    entry = m.entrySet().iterator();
+    assertEquals("A", entry.next().getValue());
+    assertEquals("C", entry.next().getValue());
+    assertEquals("B", entry.next().getValue());
+    assertEquals("D", entry.next().getValue());
   }
 
   /*
@@ -671,6 +628,49 @@ public class LinkedHashMapTest extends TestMap {
     hashMap.put(KEY_TEST_REMOVE, VALUE_TEST_REMOVE);
     assertEquals(hashMap.remove(KEY_TEST_REMOVE), VALUE_TEST_REMOVE);
     assertNull(hashMap.remove(KEY_TEST_REMOVE));
+  }
+
+  public void testRemoveEldest() {
+    TestRemoveEldestMap m = new TestRemoveEldestMap(false);
+    m.put("A", "A");
+    m.put("B", "B");
+    m.put("C", "C");
+    m.put("D", "D");
+    m.get("B");
+    m.get("D");
+    m.removeEldest = true;
+    m.expectedKey = "A";
+    m.put("E", "E");
+    m.put("B", "New-B");
+    Iterator<Map.Entry> entries = m.entrySet().iterator();
+    Map.Entry first = entries.next();
+    assertEquals("B", first.getKey());
+    assertEquals("New-B", first.getValue());
+    assertEquals(4, m.size());
+  }
+
+  public void testRemoveEldestMapLRU() {
+    TestRemoveEldestMap m;
+    Iterator<Map.Entry> entries;
+    Map.Entry first;
+    m = new TestRemoveEldestMap(true);
+    m.put("A", "A");
+    m.put("B", "B");
+    m.put("C", "C");
+    m.put("D", "D");
+    m.get("A");
+    m.get("D");
+    m.removeEldest = true;
+    m.expectedKey = "B";
+    m.put("E", "E");
+
+    m.put("C", "New-C");
+    entries = m.entrySet().iterator();
+    first = entries.next();
+    assertEquals("A", first.getKey());
+    assertEquals("D", entries.next().getKey());
+    assertEquals("E", entries.next().getKey());
+    assertEquals("New-C", entries.next().getValue());
   }
 
   /**
