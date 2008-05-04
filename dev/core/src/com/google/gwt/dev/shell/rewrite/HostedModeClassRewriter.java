@@ -19,10 +19,8 @@ import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
-import com.google.gwt.dev.asm.util.TraceClassVisitor;
 import com.google.gwt.dev.shell.JsValueGlue;
 
-import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +31,8 @@ import java.util.Set;
  * This class performs any and all byte code rewriting needed to make hosted
  * mode work. Currently, it performs the following rewrites:
  * <ol>
+ * <li>Rewrites all native methods into non-native thunks to call JSNI via
+ * {@link com.google.gwt.dev.shell.JavaScriptHost}.</li>
  * <li>Rewrites all JSO types into an interface type (which retains the
  * original name) and an implementation type (which has a $ appended).</li>
  * <li>All JSO interface types are empty and mirror the original type
@@ -46,6 +46,7 @@ import java.util.Set;
  * instantiable type.</li>
  * </ol>
  * 
+ * @see RewriteJsniMethods
  * @see RewriteRefsToJsoClasses
  * @see WriteJsoInterface
  * @see WriteJsoImpl
@@ -80,13 +81,13 @@ public class HostedModeClassRewriter {
     String findOriginalDeclaringClass(String declaredClass, String signature);
   }
 
-  static final String REFERENCE_FIELD = JsValueGlue.HOSTED_MODE_REFERENCE;
-
   static final String JAVASCRIPTOBJECT_DESC = JsValueGlue.JSO_CLASS.replace(
       '.', '/');
 
   static final String JAVASCRIPTOBJECT_IMPL_DESC = JsValueGlue.JSO_IMPL_CLASS.replace(
-      '.', '/');;
+      '.', '/');
+
+  static final String REFERENCE_FIELD = JsValueGlue.HOSTED_MODE_REFERENCE;;
 
   static String addSyntheticThisParam(String owner, String methodDescriptor) {
     return "(L" + owner + ";" + methodDescriptor.substring(1);
@@ -109,14 +110,14 @@ public class HostedModeClassRewriter {
   private final Set<String> jsoIntfDescs;
 
   /**
-   * Maps methods to the class in which they are declared.
-   */
-  private InstanceMethodOracle mapper;
-
-  /**
    * Records the superclass of every JSO for generating empty JSO interfaces.
    */
   private final Map<String, String> jsoSuperDescs;
+
+  /**
+   * Maps methods to the class in which they are declared.
+   */
+  private InstanceMethodOracle mapper;
 
   /**
    * Creates a new {@link HostedModeClassRewriter} for a specified set of
@@ -183,6 +184,8 @@ public class HostedModeClassRewriter {
     if (jsoImplDescs.contains(desc)) {
       v = new WriteJsoImpl(v, jsoIntfDescs, mapper);
     }
+
+    v = new RewriteJsniMethods(v);
 
     new ClassReader(classBytes).accept(v, 0);
     return writer.toByteArray();

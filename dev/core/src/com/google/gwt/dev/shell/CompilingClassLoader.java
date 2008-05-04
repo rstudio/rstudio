@@ -33,12 +33,15 @@ import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceIdentityMap;
 import org.apache.commons.collections.map.ReferenceMap;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -341,9 +344,40 @@ public final class CompilingClassLoader extends ClassLoader {
   private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[] {
       ShellJavaScriptHost.class, JsniMethods.class, JsniMethod.class};
 
+  private static final boolean CLASS_DUMP = false;
+
+  private static final String CLASS_DUMP_PATH = "rewritten-classes";
+
   static {
     for (Class<?> c : BRIDGE_CLASSES) {
       BRIDGE_CLASS_NAMES.put(c.getName(), c);
+    }
+  }
+
+  private static void classDump(String name, byte[] bytes) {
+    String packageName, className;
+    int pos = name.lastIndexOf('.');
+    if (pos < 0) {
+      packageName = "";
+      className = name;
+    } else {
+      packageName = name.substring(0, pos);
+      className = name.substring(pos + 1);
+    }
+
+    File dir = new File(CLASS_DUMP_PATH + File.separator
+        + packageName.replace('.', File.separatorChar));
+    if (!dir.exists()) {
+      dir.mkdirs();
+    }
+
+    File file = new File(dir, className + ".class");
+    try {
+      FileOutputStream fileOutput = new FileOutputStream(file);
+      fileOutput.write(bytes);
+      fileOutput.close();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -554,7 +588,13 @@ public final class CompilingClassLoader extends ClassLoader {
         }
         classBytes = compiler.getClassBytes(logger, lookupClassName);
         if (classRewriter != null) {
-          classBytes = classRewriter.rewrite(className, classBytes);
+          byte[] newBytes = classRewriter.rewrite(className, classBytes);
+          if (CLASS_DUMP) {
+            if (!Arrays.equals(classBytes, newBytes)) {
+              classDump(className, classBytes);
+            }
+          }
+          classBytes = newBytes;
         }
       }
       Class<?> newClass = defineClass(className, classBytes, 0,

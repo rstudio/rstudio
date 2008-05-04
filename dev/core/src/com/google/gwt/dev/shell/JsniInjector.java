@@ -21,8 +21,6 @@ import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.jdt.CompilationUnitProviderWithAlternateSource;
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -84,8 +82,6 @@ public class JsniInjector {
   private final Map<JClassType, List<JsniMethod>> jsniMethodMap = new IdentityHashMap<JClassType, List<JsniMethod>>();
   private final TypeOracle oracle;
 
-  private final Map<JMethod, JsBlock> parsedJsByMethod = new IdentityHashMap<JMethod, JsBlock>();
-
   public JsniInjector(TypeOracle oracle) {
     this.oracle = oracle;
   }
@@ -135,8 +131,45 @@ public class JsniInjector {
     }
   }
 
-  private JsniMethod createJsniMethod(JMethod method, final String file,
-      char[] source) {
+  private void collectJsniMethods(TreeLogger logger, char[] source,
+      JClassType type) throws UnableToCompleteException {
+
+    // Locate the nearest non-local type; don't try to annotate local types.
+    JClassType targetType = type;
+    while (targetType.isLocalType()) {
+      targetType = targetType.getEnclosingType();
+    }
+    List<JsniMethod> jsniMethods = jsniMethodMap.get(targetType);
+    String loc = type.getCompilationUnit().getLocation();
+
+    for (JMethod method : type.getMethods()) {
+      if (!method.isNative()) {
+        continue;
+      }
+      Jsni.Interval interval = Jsni.findJsniSource(method);
+      if (interval == null) {
+        String msg = "No JavaScript body found for native method '" + method
+            + "' in type '" + type + "'";
+        logger.log(TreeLogger.ERROR, msg, null);
+        throw new UnableToCompleteException();
+      }
+      // Parse it.
+      String js = String.valueOf(source, interval.start, interval.end
+          - interval.start);
+      int startLine = Jsni.countNewlines(source, 0, interval.start) + 1;
+      JsBlock body = Jsni.parseAsFunctionBody(logger, js, loc, startLine);
+
+      // Add JsniMethod annotations to the target type.
+      if (jsniMethods == null) {
+        jsniMethods = new ArrayList<JsniMethod>();
+        jsniMethodMap.put(targetType, jsniMethods);
+      }
+      jsniMethods.add(createJsniMethod(method, body, loc, source));
+    }
+  }
+
+  private JsniMethod createJsniMethod(JMethod method, JsBlock jsniBody,
+      final String file, char[] source) {
 
     final int line = Jsni.countNewlines(source, 0, method.getBodyStart()) + 1;
 
@@ -154,8 +187,6 @@ public class JsniInjector {
      * itself will print curly braces, so we don't need them around the
      * try/catch.
      */
-    JsBlock jsniBody = parsedJsByMethod.get(method);
-    assert (jsniBody != null);
     String jsTry = "try ";
     String jsCatch = " catch (e) {\n  __static[\"@" + Jsni.JAVASCRIPTHOST_NAME
         + "::exceptionCaught(Ljava/lang/Object;)\"](e == null ? null : e);\n"
@@ -248,205 +279,25 @@ public class JsniInjector {
     return sb.toString().toCharArray();
   }
 
-  /**
-   * Create a legal Java method call that will result in a JSNI invocation.
-   * 
-   * @param method
-   * @param expectedHeaderLines
-   * @param expectedBodyLines
-   * @param prettyPrint true if the output should be prettier
-   * @return a String of the Java code to call a JSNI method, using
-   *         JavaScriptHost.invokeNative*
-   */
-  private String genNonNativeVersionOfJsniMethod(JMethod method,
-      int expectedHeaderLines, int expectedBodyLines, boolean pretty) {
-    StringBuffer sb = new StringBuffer();
-    String nl = pretty ? "\n " : "";
-
-    // Add extra lines at the start to match comments + declaration
-    if (!pretty) {
-      for (int i = 0; i < expectedHeaderLines; ++i) {
-        sb.append('\n');
-      }
-    }
-
-    String methodDecl = method.getReadableDeclaration(false, true, false,
-        false, false);
-
-    sb.append(methodDecl + " {" + nl);
-    // wrap the call in a try-catch block
-    sb.append("try {" + nl);
-
-    // Write the Java call to the property invoke method, adding
-    // downcasts where necessary.
-    JType returnType = method.getReturnType();
-    JPrimitiveType primType = returnType.isPrimitive();
-    if (primType != null) {
-      // Primitives have special overloads.
-      char[] primTypeSuffix = primType.getSimpleSourceName().toCharArray();
-      primTypeSuffix[0] = Character.toUpperCase(primTypeSuffix[0]);
-      String invokeMethodName = "invokeNative" + String.valueOf(primTypeSuffix);
-      if (primType != JPrimitiveType.VOID) {
-        sb.append("return ");
-      }
-      sb.append(Jsni.JAVASCRIPTHOST_NAME);
-      sb.append(".");
-      sb.append(invokeMethodName);
-    } else {
-      // Some reference type.
-      // We need to add a downcast to the originally-declared type.
-      String returnTypeName = returnType.getParameterizedQualifiedSourceName();
-      sb.append("return (");
-      sb.append(returnTypeName);
-      sb.append(")");
-      sb.append(Jsni.JAVASCRIPTHOST_NAME);
-      sb.append(".invokeNativeObject");
-    }
-
-    // Write the argument list for the invoke call.
-    sb.append("(\"@");
-    String jsniSig = Jsni.getJsniSignature(method);
-    sb.append(jsniSig);
-    if (method.isStatic()) {
-      sb.append("\", null, ");
-    } else {
-      sb.append("\", this, ");
-    }
-
-    // Build an array of classes that tells the invoker how to adapt the
-    // incoming arguments for calling into JavaScript.
-    sb.append(Jsni.buildTypeList(method));
-    sb.append(',');
-
-    // Build an array containing the arguments based on the names of the
-    // parameters.
-    sb.append(Jsni.buildArgList(method));
-    sb.append(");" + nl);
-
-    // Catch exceptions; rethrow if the exception is RTE or declared.
-    sb.append("} catch (java.lang.Throwable __gwt_exception) {" + nl);
-    sb.append("if (__gwt_exception instanceof java.lang.RuntimeException) throw (java.lang.RuntimeException) __gwt_exception;"
-        + nl);
-    sb.append("if (__gwt_exception instanceof java.lang.Error) throw (java.lang.Error) __gwt_exception;"
-        + nl);
-    JType[] throwTypes = method.getThrows();
-    for (int i = 0; i < throwTypes.length; ++i) {
-      String typeName = throwTypes[i].getQualifiedSourceName();
-      sb.append("if (__gwt_exception instanceof " + typeName + ") throw ("
-          + typeName + ") __gwt_exception;" + nl);
-    }
-    sb.append("throw new java.lang.RuntimeException(\"Undeclared checked exception thrown out of JavaScript; web mode behavior may differ.\", __gwt_exception);"
-        + nl);
-    sb.append("}" + nl);
-
-    sb.append("}" + nl);
-
-    // Add extra lines at the end to match JSNI body.
-    if (!pretty) {
-      for (int i = 0; i < expectedBodyLines; ++i) {
-        sb.append('\n');
-      }
-    }
-
-    return sb.toString();
-  }
-
   private void rewriteCompilationUnit(TreeLogger logger, char[] source,
       List<Replacement> changes, CompilationUnitProvider cup, boolean pretty)
       throws UnableToCompleteException {
 
-    // First create replacements for all native methods.
+    // Collect all JSNI methods in the compilation unit.
     JClassType[] types = oracle.getTypesInCompilationUnit(cup);
     for (JClassType type : types) {
       if (!type.getQualifiedSourceName().startsWith("java.")) {
-        rewriteType(logger, source, changes, type, pretty);
+        collectJsniMethods(logger, source, type);
       }
     }
 
-    // Then annotate the appropriate types with JsniMethod annotations.
+    // Annotate the appropriate types with JsniMethod annotations.
     for (JClassType type : types) {
       List<JsniMethod> jsniMethods = jsniMethodMap.get(type);
-      if (jsniMethods != null) {
+      if (jsniMethods != null && jsniMethods.size() > 0) {
         char[] annotation = genJsniMethodsAnnotation(jsniMethods, pretty);
         int declStart = type.getDeclStart();
         changes.add(new Replacement(declStart, declStart, annotation));
-      }
-    }
-  }
-
-  private void rewriteType(TreeLogger logger, char[] source,
-      List<Replacement> changes, JClassType type, boolean pretty)
-      throws UnableToCompleteException {
-
-    String loc = type.getCompilationUnit().getLocation();
-
-    // Examine each method for JSNIness.
-    List<JMethod> patchedMethods = new ArrayList<JMethod>();
-    JMethod[] methods = type.getMethods();
-    for (int i = 0; i < methods.length; i++) {
-      JMethod method = methods[i];
-      if (method.isNative()) {
-        Jsni.Interval interval = Jsni.findJsniSource(method);
-        if (interval != null) {
-          // The method itself needs to be replaced.
-
-          // Parse it.
-          String js = String.valueOf(source, interval.start, interval.end
-              - interval.start);
-          int startLine = Jsni.countNewlines(source, 0, interval.start) + 1;
-          JsBlock body = Jsni.parseAsFunctionBody(logger, js, loc, startLine);
-
-          // Remember this as being a valid JSNI method.
-          parsedJsByMethod.put(method, body);
-
-          // Replace the method.
-          final int declStart = method.getDeclStart();
-          final int declEnd = method.getDeclEnd();
-
-          int expectedHeaderLines = Jsni.countNewlines(source, declStart,
-              interval.start);
-          int expectedBodyLines = Jsni.countNewlines(source, interval.start,
-              interval.end);
-          String newDecl = genNonNativeVersionOfJsniMethod(method,
-              expectedHeaderLines, expectedBodyLines, pretty);
-
-          final char[] newSource = newDecl.toCharArray();
-          changes.add(new Replacement(declStart, declEnd, newSource));
-          patchedMethods.add(method);
-        } else {
-          // report error
-          String msg = "No JavaScript body found for native method '" + method
-              + "' in type '" + type + "'";
-          logger.log(TreeLogger.ERROR, msg, null);
-          throw new UnableToCompleteException();
-        }
-      }
-    }
-
-    if (!patchedMethods.isEmpty()) {
-      JMethod[] patched = new JMethod[patchedMethods.size()];
-      patched = patchedMethods.toArray(patched);
-
-      TreeLogger branch = logger.branch(TreeLogger.SPAM, "Patched methods in '"
-          + type.getQualifiedSourceName() + "'", null);
-
-      for (int i = 0; i < patched.length; i++) {
-        branch.log(TreeLogger.SPAM, patched[i].getReadableDeclaration(), null);
-      }
-
-      // Locate the nearest non-local type.
-      while (type.isLocalType()) {
-        type = type.getEnclosingType();
-      }
-
-      // Add JsniMethod infos to the nearest non-inner type for each method.
-      List<JsniMethod> jsniMethods = jsniMethodMap.get(type);
-      if (jsniMethods == null) {
-        jsniMethods = new ArrayList<JsniMethod>();
-        jsniMethodMap.put(type, jsniMethods);
-      }
-      for (JMethod m : patched) {
-        jsniMethods.add(createJsniMethod(m, loc, source));
       }
     }
   }
