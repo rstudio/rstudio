@@ -18,7 +18,9 @@ package com.google.gwt.dom.client;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * TODO
+ * Provides programmatic access to properties of the style object.
+ * 
+ * @see Element#getStyle()
  */
 public class Style extends JavaScriptObject {
 
@@ -26,21 +28,23 @@ public class Style extends JavaScriptObject {
   }
 
   /**
-   * TODO
+   * Gets the value of a named property.
    */
   public final native String getProperty(String name) /*-{
     return this[name] || '';
   }-*/;
 
   /**
-   * TODO
+   * Sets the value of a named property.
    */
   public final native void setProperty(String name, String value) /*-{
     this[name] = value;
   }-*/;
 
   /**
-   * TODO
+   * Sets the value of a named property, in pixels.
+   * 
+   * This is shorthand for <code>value + "px"</code>.
    */
   public final native void setPropertyPx(String name, int value) /*-{
     this[name] = value + "px";
