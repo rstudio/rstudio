@@ -211,8 +211,8 @@ public class HostedModeClassRewriter {
     } else {
       interfaces = new String[] {superDesc};
     }
-    v.visit(49, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE, desc, null,
-        "java/lang/Object", interfaces);
+    v.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE, desc,
+        null, "java/lang/Object", interfaces);
     v.visitEnd();
     return writer.toByteArray();
   }
