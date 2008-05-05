@@ -237,6 +237,11 @@ public class RewriteJsniMethods extends ClassAdapter {
     public void visitCode() {
       super.visitCode();
 
+      /*
+       * If you modify the generated code, you must recompute the stack size
+       * in visitEnd(). 
+       */
+
       // First argument - JSNI signature
       String jsniTarget = getJsniSignature(name, descriptor);
       visitLdcInsn(jsniTarget);
@@ -278,6 +283,9 @@ public class RewriteJsniMethods extends ClassAdapter {
       /*
        * For speed, we don't ask ASM to COMPUTE_MAXS. We manually calculated a
        * max depth of 8.
+       * 
+       * Also, when tobyr tried getting ASM to compute the correct stack size,
+       * ASM seemed to compute the wrong value for reasons we don't understand.
        */
       int maxStack = 8;
       int maxLocals = 0; // Computed by GeneratorAdapter superclass.
