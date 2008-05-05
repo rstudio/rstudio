@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dom.client;
 
-
 /**
  * All HTML element interfaces derive from this class.
  */
@@ -140,17 +139,17 @@ public class Element extends Node {
   /**
    * The height of an element relative to the layout.
    */
-  public final int getOffsetHeight() {
-    return getPropertyInt("offsetHeight");
-  }
+  public final native int getOffsetHeight() /*-{
+    return this.offsetHeight || 0;
+  }-*/;
 
   /**
    * The number of pixels that the upper left corner of the current element is
    * offset to the left within the offsetParent node.
    */
-  public final int getOffsetLeft() {
-    return getPropertyInt("offsetLeft");
-  }
+  public final native int getOffsetLeft() /*-{
+    return this.offsetLeft || 0;
+  }-*/;
 
   /**
    * Returns a reference to the object which is the closest (nearest in the
@@ -164,16 +163,16 @@ public class Element extends Node {
    * The number of pixels that the upper top corner of the current element is
    * offset to the top within the offsetParent node.
    */
-  public final int getOffsetTop() {
-    return getPropertyInt("offsetTop");
-  }
+  public final native int getOffsetTop() /*-{
+    return this.offsetTop || 0;
+  }-*/;
 
   /**
    * The width of an element relative to the layout.
    */
-  public final int getOffsetWidth() {
-    return getPropertyInt("offsetWidth");
-  }
+  public final native int getOffsetWidth() /*-{
+    return this.offsetWidth || 0;
+  }-*/;
 
   /**
    * The parent element of this element.
@@ -219,35 +218,35 @@ public class Element extends Node {
    * @return the property value
    */
   public final native String getPropertyString(String name) /*-{
-    return (this[name] == null)? null : String(this[name]);
+    return (this[name] == null) ? null : String(this[name]);
   }-*/;
 
   /**
    * The height of the scroll view of an element.
    */
   public final native int getScrollHeight() /*-{
-    return this.scrollHeight;
+    return this.scrollHeight || 0;
   }-*/;
 
   /**
    * The number of pixels that an element's content is scrolled to the left.
    */
   public final native int getScrollLeft() /*-{
-    return this.scrollLeft;
+    return this.scrollLeft || 0;
   }-*/;
 
   /**
    * The number of pixels that an element's content is scrolled to the top.
    */
   public final native int getScrollTop() /*-{
-    return this.scrollTop;
+    return this.scrollTop || 0;
   }-*/;
 
   /**
    * The height of the scroll view of an element.
    */
   public final native int getScrollWidth() /*-{
-    return this.scrollWidth;
+    return this.scrollWidth || 0;
   }-*/;
 
   /**
@@ -431,6 +430,8 @@ public class Element extends Node {
    * The element's advisory title.
    */
   public final native void setTitle(String title) /*-{
+    // Setting the title to null results in the string "null" being displayed
+    // on some browsers.
     this.title = title || '';
   }-*/;
 }

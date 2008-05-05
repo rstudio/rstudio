@@ -31,7 +31,7 @@ public class Style extends JavaScriptObject {
    * Gets the value of a named property.
    */
   public final native String getProperty(String name) /*-{
-    return this[name] || '';
+    return this[name];
   }-*/;
 
   /**

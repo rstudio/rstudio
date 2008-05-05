@@ -98,10 +98,6 @@ abstract class DOMImpl {
     return text;
   }-*/;
 
-  public native int getIntStyleAttribute(Element elem, String attr) /*-{
-    return parseInt(elem.style[attr]) || 0;
-  }-*/;
-
   public native Element getNextSiblingElement(Element elem) /*-{
     var sib = elem.nextSibling;
     while (sib && sib.nodeType != 1)
@@ -117,10 +113,6 @@ abstract class DOMImpl {
     if (parent.nodeType != 1)
       parent = null;
     return parent;
-  }-*/;
-
-  public native String getStyleAttribute(Element elem, String attr) /*-{
-    return elem.style[attr];
   }-*/;
 
   public native String imgGetSrc(Element img) /*-{
@@ -195,14 +187,6 @@ abstract class DOMImpl {
     if (text != null) {
       elem.appendChild($doc.createTextNode(text));
     }
-  }-*/;
-
-  public native void setIntStyleAttribute(Element elem, String attr, int value) /*-{
-    elem.style[attr] = value;
-  }-*/;
-
-  public native void setStyleAttribute(Element elem, String attr, String value) /*-{
-    elem.style[attr] = value;
   }-*/;
 
   public native String toString(Element elem) /*-{
