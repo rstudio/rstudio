@@ -575,19 +575,26 @@ public class JUnitShell extends GWTShell {
     for (Entry<String, JUnitResult> entry : results.entrySet()) {
       String clientId = entry.getKey();
       JUnitResult result = entry.getValue();
-      Throwable exception = result.getException();
 
-      // In the case that we're running multiple clients at once, we need to
-      // let the user know the browser in which the failure happened
-      if (parallelTesting && exception != null) {
-        String msg = "Remote test failed at " + clientId;
-        if (exception instanceof AssertionFailedError) {
-          AssertionFailedError newException = new AssertionFailedError(msg
-              + "\n" + exception.getMessage());
-          newException.setStackTrace(exception.getStackTrace());
-          exception = newException;
-        } else {
-          exception = new RuntimeException(msg, exception);
+      Throwable exception = null;
+      if (result == null) {
+        String msg = "Remote test returned no result from: " + clientId;
+        exception = new RuntimeException();
+      } else {
+        exception = result.getException();
+
+        // In the case that we're running multiple clients at once, we need to
+        // let the user know the browser in which the failure happened
+        if (parallelTesting && exception != null) {
+          String msg = "Remote test failed at " + clientId;
+          if (exception instanceof AssertionFailedError) {
+            AssertionFailedError newException = new AssertionFailedError(msg
+                + "\n" + exception.getMessage());
+            newException.setStackTrace(exception.getStackTrace());
+            exception = newException;
+          } else {
+            exception = new RuntimeException(msg, exception);
+          }
         }
       }
 
