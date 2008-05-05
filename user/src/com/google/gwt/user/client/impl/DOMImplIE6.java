@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
@@ -24,11 +25,14 @@ import com.google.gwt.user.client.Event;
  */
 class DOMImplIE6 extends DOMImpl {
 
-  /**
-   * Referenced from JavaScript.
-   */
   @SuppressWarnings("unused")
   private static Element currentEventTarget;
+
+  @SuppressWarnings("unused")
+  private static JavaScriptObject dispatchEvent;
+
+  @SuppressWarnings("unused")
+  private static JavaScriptObject dispatchDblClickEvent;
 
   @Override
   public native int eventGetClientX(Event evt) /*-{
@@ -101,8 +105,7 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native void initEventSystem() /*-{
-    // Set up event dispatchers.
-    $wnd.__dispatchEvent = function() {
+    @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent = function() {
       // IE doesn't define event.currentTarget, so we squirrel it away here. It
       // also seems that IE won't allow you to add expandos to the event object,
       // so we have to store it in a global. This is ok because only one event
@@ -119,33 +122,44 @@ class DOMImplIE6 extends DOMImpl {
       }
 
       var listener, curElem = this;
-      while (curElem && !(listener = curElem.__listener))
+      while (curElem && !(listener = curElem.__listener)) {
         curElem = curElem.parentElement;
+      }
 
-      if (listener)
-        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, curElem, listener);
+      if (listener) {
+        if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(listener)) {
+          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)($wnd.event, curElem, listener);
+        }
+      }
 
       @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = oldEventTarget;
     };
 
-    $wnd.__dispatchDblClickEvent = function() {
+    @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent = function() {
       var newEvent = $doc.createEventObject();
       this.fireEvent('onclick', newEvent);
-      if (this.__eventBits & 2)
-        $wnd.__dispatchEvent.call(this);
+      if (this.__eventBits & 2) {
+        (@com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent)();
+      }
     };
 
-    $doc.body.onclick       =
-    $doc.body.onmousedown   =
-    $doc.body.onmouseup     =
-    $doc.body.onmousemove   =
-    $doc.body.onmousewheel  =
-    $doc.body.onkeydown     =
-    $doc.body.onkeypress    =
-    $doc.body.onkeyup       =
-    $doc.body.onfocus       =
-    $doc.body.onblur        =
-    $doc.body.ondblclick    = $wnd.__dispatchEvent;
+    // We need to create these delegate functions to fix up the 'this' context.
+    // Normally, 'this' is the firing element, but this is only true for
+    // 'onclick = ...' event handlers, not for handlers setup via attachEvent().
+    var bodyDispatcher = function() { @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent.call($doc.body); };
+    var bodyDblClickDispatcher = function() { @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent.call($doc.body); };
+
+    $doc.body.attachEvent('onclick', bodyDispatcher);
+    $doc.body.attachEvent('onmousedown', bodyDispatcher);
+    $doc.body.attachEvent('onmouseup', bodyDispatcher);
+    $doc.body.attachEvent('onmousemove', bodyDispatcher);
+    $doc.body.attachEvent('onmousewheel', bodyDispatcher);
+    $doc.body.attachEvent('onkeydown', bodyDispatcher);
+    $doc.body.attachEvent('onkeypress', bodyDispatcher);
+    $doc.body.attachEvent('onkeyup', bodyDispatcher);
+    $doc.body.attachEvent('onfocus', bodyDispatcher);
+    $doc.body.attachEvent('onblur', bodyDispatcher);
+    $doc.body.attachEvent('ondblclick', bodyDblClickDispatcher);
   }-*/;
 
   @Override
@@ -186,44 +200,44 @@ class DOMImplIE6 extends DOMImpl {
     var chMask = (elem.__eventBits || 0) ^ bits;
     elem.__eventBits = bits;
     if (!chMask) return;
-     
+
     if (chMask & 0x00001) elem.onclick       = (bits & 0x00001) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     // Add a ondblclick handler if onclick is desired to ensure that 
     // a user's double click will result in two onlclick events.
     if (chMask & (0x00003)) elem.ondblclick  = (bits & (0x00003)) ?
-        $wnd.__dispatchDblClickEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent : null;
     if (chMask & 0x00004) elem.onmousedown   = (bits & 0x00004) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00008) elem.onmouseup     = (bits & 0x00008) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00010) elem.onmouseover   = (bits & 0x00010) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00020) elem.onmouseout    = (bits & 0x00020) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00040) elem.onmousemove   = (bits & 0x00040) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00080) elem.onkeydown     = (bits & 0x00080) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00100) elem.onkeypress    = (bits & 0x00100) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00200) elem.onkeyup       = (bits & 0x00200) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00400) elem.onchange      = (bits & 0x00400) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x00800) elem.onfocus       = (bits & 0x00800) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x01000) elem.onblur        = (bits & 0x01000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x02000) elem.onlosecapture = (bits & 0x02000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x04000) elem.onscroll      = (bits & 0x04000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x08000) elem.onload        = (bits & 0x08000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
   }-*/;
 }

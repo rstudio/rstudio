@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
@@ -24,6 +25,18 @@ import com.google.gwt.user.client.Event;
  * not IE).
  */
 abstract class DOMImplStandard extends DOMImpl {
+
+  @SuppressWarnings("unused")
+  private static JavaScriptObject captureElem;
+
+  @SuppressWarnings("unused")
+  private static JavaScriptObject dispatchCapturedEvent;
+
+  @SuppressWarnings("unused")
+  private static JavaScriptObject dispatchCapturedMouseEvent;
+
+  @SuppressWarnings("unused")
+  private static JavaScriptObject dispatchEvent;
 
   @Override
   public native int eventGetButton(Event evt) /*-{
@@ -150,18 +163,19 @@ abstract class DOMImplStandard extends DOMImpl {
 
   @Override
   protected native void initEventSystem() /*-{
-    // Set up capture event dispatchers.
-    $wnd.__dispatchCapturedMouseEvent = function(evt) {
-      if ($wnd.__dispatchCapturedEvent(evt)) {
-        var cap = $wnd.__captureElem;
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent = function(evt) {
+      if ((@com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent)(evt)) {
+        var cap = @com.google.gwt.user.client.impl.DOMImplStandard::captureElem;
         if (cap && cap.__listener) {
-          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, cap, cap.__listener);
-          evt.stopPropagation();
+          if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(cap.__listener)) {
+            @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, cap, cap.__listener);
+            evt.stopPropagation();
+          }
         }
       }
     };
 
-    $wnd.__dispatchCapturedEvent = function(evt) {
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent = function(evt) {
       if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)(evt)) {
         evt.stopPropagation();
         evt.preventDefault();
@@ -171,31 +185,34 @@ abstract class DOMImplStandard extends DOMImpl {
       return true;
     };
 
-    $wnd.addEventListener('click', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('dblclick', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('mousedown', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('mouseup', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('mousemove', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('mouseover', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('mouseout', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('mousewheel', $wnd.__dispatchCapturedMouseEvent, true);
-    $wnd.addEventListener('keydown', $wnd.__dispatchCapturedEvent, true);
-    $wnd.addEventListener('keyup', $wnd.__dispatchCapturedEvent, true);
-    $wnd.addEventListener('keypress', $wnd.__dispatchCapturedEvent, true);
-
-    // Set up normal event dispatcher.
-    $wnd.__dispatchEvent = function(evt) {
+    @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent = function(evt) {
       var listener, curElem = this;
-      while (curElem && !(listener = curElem.__listener))
+      while (curElem && !(listener = curElem.__listener)) {
         curElem = curElem.parentNode;
-      if (curElem && curElem.nodeType != 1)
-        curElem = null;
+      }
 
-      if (listener)
-        @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, curElem, listener);
+      if (curElem && curElem.nodeType != 1) {
+        curElem = null;
+      }
+  
+      if (listener) {
+        if (@com.google.gwt.user.client.impl.DOMImpl::isMyListener(Ljava/lang/Object;)(listener)) {
+          @com.google.gwt.user.client.DOM::dispatchEvent(Lcom/google/gwt/user/client/Event;Lcom/google/gwt/user/client/Element;Lcom/google/gwt/user/client/EventListener;)(evt, curElem, listener);
+        }
+      }
     };
 
-    $wnd.__captureElem = null;
+    $wnd.addEventListener('click', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('dblclick', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mousedown', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mouseup', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mousemove', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mouseover', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mouseout', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('mousewheel', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent, true);
+    $wnd.addEventListener('keydown', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent, true);
+    $wnd.addEventListener('keyup', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent, true);
+    $wnd.addEventListener('keypress', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent, true);
   }-*/;
 
   protected native void sinkEventsImpl(Element elem, int bits) /*-{
@@ -204,50 +221,50 @@ abstract class DOMImplStandard extends DOMImpl {
     if (!chMask) return;
    
     if (chMask & 0x00001) elem.onclick       = (bits & 0x00001) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00002) elem.ondblclick    = (bits & 0x00002) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00004) elem.onmousedown   = (bits & 0x00004) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00008) elem.onmouseup     = (bits & 0x00008) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00010) elem.onmouseover   = (bits & 0x00010) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00020) elem.onmouseout    = (bits & 0x00020) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00040) elem.onmousemove   = (bits & 0x00040) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00080) elem.onkeydown     = (bits & 0x00080) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00100) elem.onkeypress    = (bits & 0x00100) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00200) elem.onkeyup       = (bits & 0x00200) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00400) elem.onchange      = (bits & 0x00400) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x00800) elem.onfocus       = (bits & 0x00800) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x01000) elem.onblur        = (bits & 0x01000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x02000) elem.onlosecapture = (bits & 0x02000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x04000) elem.onscroll      = (bits & 0x04000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x08000) elem.onload        = (bits & 0x08000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
-        $wnd.__dispatchEvent : null;
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
   }-*/;
 
   private native void releaseCaptureImpl(Element elem) /*-{
-    if (elem === $wnd.__captureElem) {
-      $wnd.__captureElem = null;
+    if (elem === @com.google.gwt.user.client.impl.DOMImplStandard::captureElem) {
+      @com.google.gwt.user.client.impl.DOMImplStandard::captureElem = null;
     }
   }-*/;
 
   private native void setCaptureImpl(Element elem) /*-{
-    $wnd.__captureElem = elem;
+    @com.google.gwt.user.client.impl.DOMImplStandard::captureElem = elem;
   }-*/;
 }

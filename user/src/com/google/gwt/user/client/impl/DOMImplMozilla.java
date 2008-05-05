@@ -36,7 +36,7 @@ class DOMImplMozilla extends DOMImplStandard {
 
   public native void sinkEventsMozilla(Element elem, int bits) /*-{
     if (bits & 0x20000) {
-      elem.addEventListener('DOMMouseScroll', $wnd.__dispatchEvent, false);
+      elem.addEventListener('DOMMouseScroll', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent, false);
     }
   }-*/;
 
@@ -69,7 +69,7 @@ class DOMImplMozilla extends DOMImplStandard {
       true
     );
 
-    $wnd.addEventListener('DOMMouseScroll', $wnd.__dispatchCapturedMouseEvent,
+    $wnd.addEventListener('DOMMouseScroll', @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedMouseEvent,
       true);
   }-*/;
 }
