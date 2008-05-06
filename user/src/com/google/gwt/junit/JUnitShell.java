@@ -575,8 +575,8 @@ public class JUnitShell extends GWTShell {
     for (Entry<String, JUnitResult> entry : results.entrySet()) {
       String clientId = entry.getKey();
       JUnitResult result = entry.getValue();
+      assert (result != null);
       Throwable exception = result.getException();
-
       // In the case that we're running multiple clients at once, we need to
       // let the user know the browser in which the failure happened
       if (parallelTesting && exception != null) {

@@ -75,10 +75,6 @@ public class JUnitMessageQueue {
    */
   private final int numClients;
 
-  private int numClientsHaveRequestedTest;
-
-  private int numClientsHaveResults;
-
   /**
    * Only instantiable within this package.
    * 
@@ -134,7 +130,6 @@ public class JUnitMessageQueue {
 
       // Record that this client has retrieved the current test.
       clientStatus.hasRequestedCurrentTest = true;
-      ++numClientsHaveRequestedTest;
       return currentTest;
     }
   }
@@ -155,7 +150,6 @@ public class JUnitMessageQueue {
       assert (results != null);
       ClientStatus clientStatus = clientStatuses.get(clientId);
       clientStatus.currentTestResults = results;
-      ++numClientsHaveResults;
       clientStatusesLock.notifyAll();
     }
   }
@@ -182,9 +176,15 @@ public class JUnitMessageQueue {
    * Returns how many clients have requested the currently-running test.
    */
   int getNumClientsRetrievedCurrentTest() {
+    int count = 0;
     synchronized (clientStatusesLock) {
-      return numClientsHaveRequestedTest;
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        if (clientStatus.hasRequestedCurrentTest) {
+          ++count;
+        }
+      }
     }
+    return count;
   }
 
   /**
@@ -224,9 +224,9 @@ public class JUnitMessageQueue {
           buf.append(" - (ok): ");
         }
         buf.append(clientStatus.clientId);
-        lineCount++;
+        ++lineCount;
       }
-      int difference = numClients - numClientsHaveRequestedTest;
+      int difference = numClients - getNumClientsRetrievedCurrentTest();
       if (difference > 0) {
         if (lineCount > 0) {
           buf.append('\n');
@@ -247,8 +247,16 @@ public class JUnitMessageQueue {
    */
   boolean hasResult() {
     synchronized (clientStatusesLock) {
-      return numClients == numClientsHaveResults;
+      if (numClients > clientStatuses.size()) {
+        return false;
+      }
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        if (clientStatus.currentTestResults == null) {
+          return false;
+        }
+      }
     }
+    return true;
   }
 
   /**
@@ -261,8 +269,6 @@ public class JUnitMessageQueue {
         clientStatus.hasRequestedCurrentTest = false;
         clientStatus.currentTestResults = null;
       }
-      numClientsHaveResults = 0;
-      numClientsHaveRequestedTest = 0;
       clientStatusesLock.notifyAll();
     }
   }
