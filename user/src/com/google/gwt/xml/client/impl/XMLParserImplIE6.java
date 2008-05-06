@@ -87,6 +87,10 @@ class XMLParserImplIE6 extends XMLParserImpl {
     }
   }-*/;
 
+  protected String toStringImpl(ProcessingInstructionImpl node) {
+    return toStringImpl((NodeImpl) node);
+  }
+  
   protected native String toStringImpl(NodeImpl node) /*-{
     var jsNode = node.@com.google.gwt.xml.client.impl.DOMItem::getJsObject()();
     return jsNode.xml;

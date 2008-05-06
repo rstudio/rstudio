@@ -300,5 +300,7 @@ public abstract class XMLParserImpl {
 
   protected abstract JavaScriptObject parseImpl(String contents);
   
+  abstract String toStringImpl(ProcessingInstructionImpl node);
+  
   abstract String toStringImpl(NodeImpl node);
 }

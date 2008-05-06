@@ -43,7 +43,7 @@ public class XMLParserImplSafari extends XMLParserImplStandard {
   protected native JavaScriptObject importNodeImpl(JavaScriptObject jsObject,
       JavaScriptObject importedNode, boolean deep) /*-{
     // Works around a Safari2 issue where importing a node will steal attributes
-    // from the original. TODO(knorton): Add a runtime check here.
+    // from the original.
     if (@com.google.gwt.xml.client.impl.XMLParserImplSafari::isSafari2LevelWebKit()()) {
       importedNode = importedNode.cloneNode(deep);
     }

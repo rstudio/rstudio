@@ -57,4 +57,9 @@ class ProcessingInstructionImpl extends NodeImpl implements
       throw new DOMNodeException(DOMException.INVALID_CHARACTER_ERR, e, this);
     }
   }
+  
+  @Override
+  public String toString() {
+    return XMLParserImpl.getInstance().toStringImpl(this);
+  }
 }
