@@ -160,6 +160,16 @@ public abstract class DOMImpl {
 
   public abstract void insertChild(Element parent, Element child, int index);
 
+  /**
+   * Initialize the event system if it has not already been initialized.
+   */
+  public void maybeInitializeEventSystem() {
+    if (!eventSystemIsInitialized) {
+      initEventSystem();
+      eventSystemIsInitialized = true;
+    }
+  }
+
   public abstract void releaseCapture(Element elem);
 
   public abstract void setCapture(Element elem);
@@ -174,14 +184,4 @@ public abstract class DOMImpl {
    * Initializes the event dispatch system.
    */
   protected abstract void initEventSystem();
-
-  /**
-   * Initialize the event system if it has not already been initialized.
-   */
-  protected void maybeInitializeEventSystem() {
-    if (!eventSystemIsInitialized) {
-      initEventSystem();
-      eventSystemIsInitialized = true;
-    }
-  }
 }

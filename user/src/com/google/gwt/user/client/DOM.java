@@ -51,6 +51,8 @@ public class DOM {
    * @param preview the event preview to be added to the stack.
    */
   public static void addEventPreview(EventPreview preview) {
+    impl.maybeInitializeEventSystem();
+
     // Add the event preview to the stack. It will automatically
     // begin receiving events.
     if (sEventPreviewStack == null) {
