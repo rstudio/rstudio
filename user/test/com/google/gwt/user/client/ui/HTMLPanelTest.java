@@ -15,8 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * Tests the HTMLPanel widget.
@@ -97,5 +99,35 @@ public class HTMLPanelTest extends GWTTestCase {
     assertTrue(DOM.isOrHasChild(fp.getElement(), hp.getElement()));
     assertTrue(DOM.getNextSibling(ba.getElement()) == hp.getElement());
     assertTrue(DOM.getNextSibling(hp.getElement()) == bb.getElement());
+  }
+
+  /**
+   * Ensures that addAndReplaceChild() puts the widget in exactly the right place in the DOM.
+   */
+  public void testAddAndReplaceElement() {
+    HTMLPanel hp = new HTMLPanel("<div id='parent'>foo<span id='placeholder'></span>bar</div>");
+
+    Button button = new Button("my button");
+    hp.addAndReplaceElement(button, "placeholder");
+
+    assertEquals("parent", button.getElement().getParentElement().getId());
+
+    Node prev = button.getElement().getPreviousSibling();
+    assertEquals("foo", prev.getNodeValue());
+
+    Node next = button.getElement().getNextSibling();
+    assertEquals("bar", next.getNodeValue());
+  }
+
+  public void testGetElementById() {
+    HTMLPanel hp = new HTMLPanel("foo<div id='toFind'>bar</div>baz");
+
+    // Get the element twice, once before and once after attachment.
+    Element elem0 = hp.getElementById("toFind");
+    RootPanel.get().add(hp);
+    Element elem1 = hp.getElementById("toFind");
+
+    // Make sure we got the same element in both cases.
+    assertEquals(elem0, elem1);
   }
 }

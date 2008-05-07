@@ -26,6 +26,8 @@ import java.util.NoSuchElementException;
  */
 public class HTMLPanel extends ComplexPanel {
 
+  private static Element hiddenDiv;
+
   /**
    * A helper method for creating unique IDs for elements within dynamically-
    * generated HTML. This is important because no two elements in a document
@@ -36,8 +38,6 @@ public class HTMLPanel extends ComplexPanel {
   public static String createUniqueId() {
     return DOM.createUniqueId();
   }
-
-  private Element hiddenDiv;
 
   /**
    * Creates an HTML panel with the specified HTML contents. Any element within
@@ -58,8 +58,7 @@ public class HTMLPanel extends ComplexPanel {
    * @param id the id of the element within which it will be contained
    */
   public void add(Widget widget, String id) {
-    final Element elem = (isAttached()) ? DOM.getElementById(id)
-        : attachToDomAndGetElement(id);
+    final Element elem = getElementById(id);
 
     if (elem == null) {
       throw new NoSuchElementException(id);
@@ -68,15 +67,35 @@ public class HTMLPanel extends ComplexPanel {
     super.add(widget, elem);
   }
 
-  @Override
-  protected void onLoad() {
-    if (hiddenDiv != null) {
-      // This widget's element has already been moved, just need to remove the
-      // hidden DIV.
-      DOM.removeChild(RootPanel.getBodyElement(), hiddenDiv);
-      hiddenDiv = null;
+  /**
+   * Adds a child widget to the panel, replacing the HTML element specified by a
+   * given id.
+   * 
+   * @param widget the widget to be added
+   * @param id the id of the element to be replaced by the widget
+   */
+  public void addAndReplaceElement(Widget widget, String id) {
+    final Element toReplace = getElementById(id);
+
+    if (toReplace == null) {
+      throw new NoSuchElementException(id);
     }
-    super.onLoad();
+
+    // Logic pulled from super.add(), replacing the element rather than adding.
+    widget.removeFromParent();
+    getChildren().add(widget);
+    toReplace.getParentNode().replaceChild(widget.getElement(), toReplace);
+    adopt(widget);
+  }
+
+  /**
+   * Finds an {@link Element element} within this panel by its id. 
+   * 
+   * @param id the id of the element to be found
+   * @return the element with the given id, or <code>null</code> if none is found
+   */
+  public Element getElementById(String id) {
+    return isAttached() ? DOM.getElementById(id) : attachToDomAndGetElement(id);
   }
 
   /**
