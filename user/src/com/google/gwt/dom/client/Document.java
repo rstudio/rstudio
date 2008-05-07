@@ -23,14 +23,6 @@ package com.google.gwt.dom.client;
  */
 public class Document extends Node {
 
-  /*
-   * Used by createUniqueId(). This is intentionally static to make the
-   * generated id unique across all documents (even though createUniqueId() only
-   * requires that an id be unique to a particular document, this will minimize
-   * the probability of accidental collisions, and is slightly more efficient).
-   */
-  private static int curUidIndex = 0;
-
   /**
    * Gets the default document. This is the document in which the module is
    * running.
@@ -597,9 +589,15 @@ public class Document extends Node {
    * 
    * @return a unique identifier
    */
-  public final String createUniqueId() {
-    return "uid-" + (++curUidIndex);
-  }
+  public final native String createUniqueId() /*-{
+    // In order to force uid's to be document-unique across multiple modules,
+    // we hang a counter from the document.
+    if (!this.gwt_uid) {
+      this.gwt_uid = 1;
+    }
+
+    return "gwt-uid-" + this.gwt_uid++;
+  }-*/;
 
   /**
    * The element that contains the content for the document. In documents with
