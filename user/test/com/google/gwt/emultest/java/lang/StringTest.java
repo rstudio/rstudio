@@ -373,6 +373,24 @@ public class StringTest extends GWTTestCase {
     assertEquals("$$x$", x5.replaceAll("(x)", "\\$\\$$1\\$"));
   }
 
+  public void testReplaceString() {
+    assertEquals("foobar", hideFromCompiler("bazbar").replace("baz", "foo"));
+    assertEquals("$0bar", hideFromCompiler("foobar").replace("foo", "$0"));
+    assertEquals("$1bar", hideFromCompiler("foobar").replace("foo", "$1"));
+    assertEquals("\\$1bar", hideFromCompiler("foobar").replace("foo", "\\$1"));
+    assertEquals("\\1", hideFromCompiler("*[)1").replace("*[)", "\\"));
+
+    // issue 2363
+    assertEquals("cb", hideFromCompiler("$ab").replace("$a", "c"));
+    assertEquals("cb", hideFromCompiler("^ab").replace("^a", "c"));
+
+    // test JS replacement characters
+    assertEquals("a$$b", hideFromCompiler("a[x]b").replace("[x]", "$$"));
+    assertEquals("a$1b", hideFromCompiler("a[x]b").replace("[x]", "$1"));
+    assertEquals("a$`b", hideFromCompiler("a[x]b").replace("[x]", "$`"));
+    assertEquals("a$'b", hideFromCompiler("a[x]b").replace("[x]", "$'"));
+  }
+
   public void testSplit() {
     compareList("fullSplit", new String[] {"abc", "", "", "de", "f"},
         "abcxxxdexfxx".split("x"));
@@ -393,14 +411,6 @@ public class StringTest extends GWTTestCase {
         "b", "", ":and:f"});
     compareList("0:", "boo:and:foo".split(":", 0), new String[] {
         "boo", "and", "foo"});
-  }
-
-  public void testReplaceString() {
-    assertEquals("foobar", hideFromCompiler("bazbar").replace("baz", "foo"));
-    assertEquals("$0bar", hideFromCompiler("foobar").replace("foo", "$0"));
-    assertEquals("$1bar", hideFromCompiler("foobar").replace("foo", "$1"));
-    assertEquals("\\$1bar", hideFromCompiler("foobar").replace("foo", "\\$1"));
-    assertEquals("\\1", hideFromCompiler("*[)1").replace("*[)", "\\"));
   }
 
   public void testStartsWith() {

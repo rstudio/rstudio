@@ -563,13 +563,19 @@ public final class String implements Comparable<String>, CharSequence,
     return this.replace(RegExp(regex, "g"), String.fromCharCode(to));
   }-*/;
 
-  // TODO(jat): fails on Safari 2 -- to be fixed for 1.5RC1
   public String replace(CharSequence from, CharSequence to) {
+    // Implementation note: This uses a regex replacement instead of
+    // a string literal replacement because Safari does not
+    // follow the spec for "$$" in the replacement string: it
+    // will insert a literal "$$". IE and Firefox, meanwhile,
+    // treat "$$" as "$".
+    
     // Escape regex special characters from literal replacement string.
-    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}])", "\\\\$1");
+    String regex = from.toString().replaceAll("([/\\\\\\.\\*\\+\\?\\|\\(\\)\\[\\]\\{\\}$^])", "\\\\$1");
     // Escape $ since it is for match backrefs and \ since it is used to escape
     // $.
     String replacement = to.toString().replaceAll("\\\\", "\\\\\\\\").replaceAll("\\$", "\\\\$");
+
     return replaceAll(regex, replacement);
   }
 
@@ -722,5 +728,4 @@ public final class String implements Comparable<String>, CharSequence,
     var r2 = r1.replace(/\s*$/, '');
     return r2;
   }-*/;
-
 }
