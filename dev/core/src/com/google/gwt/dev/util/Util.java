@@ -30,6 +30,7 @@ import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -173,23 +174,16 @@ public final class Util {
   }
 
   /**
-   * Copies an input stream out to a file. Closes the input steam and output
-   * stream.
+   * Copies an input stream out to an output stream. Closes the input steam and
+   * output stream.
    */
   public static void copy(TreeLogger logger, InputStream is, OutputStream os)
       throws UnableToCompleteException {
     try {
-      byte[] buf = new byte[8 * 1024];
-      int i = 0;
-      while ((i = is.read(buf)) != -1) {
-        os.write(buf, 0, i);
-      }
+      copy(is, os);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Error during copy", e);
       throw new UnableToCompleteException();
-    } finally {
-      Utility.close(is);
-      Utility.close(os);
     }
   }
 
@@ -540,16 +534,14 @@ public final class Util {
    * Give the developer a chance to see the in-memory source that failed.
    */
   public static void maybeDumpSource(TreeLogger logger, String location,
-      char[] source, String typeName) {
+      String source, String typeName) {
 
     if (isCompilationUnitOnDisk(location)) {
       // Don't write another copy.
       return;
     }
 
-    TreeLogger branch = logger.branch(TreeLogger.ERROR,
-        "Compilation problem due to '" + location + "'", null);
-    if (!branch.isLoggable(TreeLogger.INFO)) {
+    if (!logger.isLoggable(TreeLogger.INFO)) {
       // Don't bother dumping source if they can't see the related message.
       return;
     }
@@ -558,16 +550,14 @@ public final class Util {
     Throwable caught = null;
     try {
       tmpSrc = File.createTempFile(typeName, ".java");
-      writeCharsAsFile(logger, tmpSrc, source);
+      writeStringAsFile(tmpSrc, source);
       String dumpPath = tmpSrc.getAbsolutePath();
-      branch.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);
+      logger.log(TreeLogger.INFO, "See snapshot: " + dumpPath, null);
       return;
     } catch (IOException e) {
       caught = e;
-    } catch (UnableToCompleteException e) {
-      caught = e;
     }
-    branch.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
+    logger.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
   }
 
   public static byte[] readFileAsBytes(File file) {
@@ -617,6 +607,22 @@ public final class Util {
         line = br.readLine();
       }
       return line;
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  /**
+   * Reads an entire input stream as String. Closes the input stream.
+   */
+  public static String readStreamAsString(InputStream in) {
+    try {
+      ByteArrayOutputStream out = new ByteArrayOutputStream(1024);
+      copy(in, out);
+      return out.toString(DEFAULT_ENCODING);
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(
+          "The JVM does not support the compiler's default encoding.", e);
     } catch (IOException e) {
       return null;
     }
@@ -830,6 +836,14 @@ public final class Util {
   }
 
   /**
+   * Returns a String representing the character content of the bytes; the bytes
+   * must be encoded using the compiler's default encoding.
+   */
+  public static String toString(byte[] bytes) {
+    return toString(bytes, DEFAULT_ENCODING);
+  }
+
+  /**
    * Creates a string array from the contents of a collection.
    */
   public static String[] toStringArray(Collection<String> coll) {
@@ -1016,6 +1030,19 @@ public final class Util {
       Utility.close(stream);
     }
     return true;
+  }
+
+  private static void copy(InputStream is, OutputStream os) throws IOException {
+    try {
+      byte[] buf = new byte[8 * 1024];
+      int i;
+      while ((i = is.read(buf)) != -1) {
+        os.write(buf, 0, i);
+      }
+    } finally {
+      Utility.close(is);
+      Utility.close(os);
+    }
   }
 
   /**

@@ -19,15 +19,16 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.jdt.CacheManager;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
+import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.JdtCompiler;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
 
 import junit.framework.TestCase;
 
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 
@@ -40,18 +41,49 @@ import java.util.HashSet;
  * test white-list support.
  */
 public class ApiCompatibilityTest extends TestCase {
-  // These cups are slightly different from the cups in ApiContainerTest
-  static StaticCompilationUnitProvider cuApiClass = new StaticCompilationUnitProvider(
-      "test.apicontainer", "ApiClass", getSourceForApiClass());
-  static StaticCompilationUnitProvider cuNonApiClass = new StaticCompilationUnitProvider(
-      "test.apicontainer", "NonApiClass", getSourceForNonApiClass());
-  static StaticCompilationUnitProvider cuNonApiPackage = new StaticCompilationUnitProvider(
-      "test.nonapipackage", "TestClass", getSourceForTestClass());
-  static StaticCompilationUnitProvider cuObject = new StaticCompilationUnitProvider(
-      "java.lang", "Object", getSourceForObject());
 
-  static StaticCompilationUnitProvider cuThrowable = new StaticCompilationUnitProvider(
-      "java.lang", "Throwable", getSourceForThrowable());
+  static class StaticCompilationUnit extends CompilationUnit {
+
+    private final char[] source;
+    private final String typeName;
+
+    public StaticCompilationUnit(String typeName, char[] source) {
+      this.typeName = typeName;
+      this.source = source;
+    }
+
+    @Override
+    public String getDisplayLocation() {
+      return "/mock/" + typeName;
+    }
+
+    @Override
+    public String getSource() {
+      return String.valueOf(source);
+    }
+
+    @Override
+    public String getTypeName() {
+      return typeName;
+    }
+
+    @Override
+    public boolean isGenerated() {
+      return false;
+    }
+  }
+
+  // These cups are slightly different from the cups in ApiContainerTest
+  static StaticCompilationUnit cuApiClass = new StaticCompilationUnit(
+      "test.apicontainer.ApiClass", getSourceForApiClass());
+  static StaticCompilationUnit cuNonApiClass = new StaticCompilationUnit(
+      "test.apicontainer.NonApiClass", getSourceForNonApiClass());
+  static StaticCompilationUnit cuNonApiPackage = new StaticCompilationUnit(
+      "test.nonapipackage.TestClass", getSourceForTestClass());
+  static StaticCompilationUnit cuObject = new StaticCompilationUnit(
+      "java.lang.Object", getSourceForObject());
+  static StaticCompilationUnit cuThrowable = new StaticCompilationUnit(
+      "java.lang.Throwable", getSourceForThrowable());
 
   private static char[] getSourceForApiClass() {
     StringBuffer sb = new StringBuffer();
@@ -115,14 +147,16 @@ public class ApiCompatibilityTest extends TestCase {
 
   public TypeOracle getNewTypeOracleWithCompilationUnitsAdded(
       AbstractTreeLogger logger) throws UnableToCompleteException {
-    TypeOracleBuilder builder1 = new TypeOracleBuilder(new CacheManager(null,
-        null, ApiCompatibilityChecker.DISABLE_CHECKS));
-    builder1.addCompilationUnit(cuObject);
-    builder1.addCompilationUnit(cuNonApiClass);
-    builder1.addCompilationUnit(cuApiClass);
-    builder1.addCompilationUnit(cuNonApiPackage);
-    builder1.addCompilationUnit(cuThrowable);
-    return builder1.build(logger);
+    TypeOracleMediator mediator = new TypeOracleMediator();
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    units.add(cuObject);
+    units.add(cuNonApiClass);
+    units.add(cuApiClass);
+    units.add(cuNonApiPackage);
+    units.add(cuThrowable);
+    JdtCompiler.compile(units);
+    mediator.refresh(logger, units);
+    return mediator.getTypeOracle();
   }
 
   @Override

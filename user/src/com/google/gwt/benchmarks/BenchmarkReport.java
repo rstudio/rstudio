@@ -193,16 +193,8 @@ public class BenchmarkReport {
         return source;
       }
 
-      try {
-        return source.substring(method.getDeclStart(), method.getDeclEnd() + 1);
-      } catch (IndexOutOfBoundsException e) {
-        logger.log(TreeLogger.WARN, "Unable to parse " + method.getName(), e);
-        // Have seen this happen when the compiler read the source using one
-        // character encoding, and then this Parser read it in a different
-        // encoding. I don't know if there are other cases in which this can
-        // occur.
-        return null;
-      }
+      // TODO: search for the method manually?
+      return null;
     }
   }
 

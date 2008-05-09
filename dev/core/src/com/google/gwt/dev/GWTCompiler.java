@@ -22,9 +22,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
@@ -32,9 +30,9 @@ import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
-import com.google.gwt.dev.jdt.CacheManager;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jdt.StandardSourceOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
@@ -122,8 +120,8 @@ public class GWTCompiler extends ToolBase {
     private final Map<String, String> cache = new HashMap<String, String>();
 
     public CompilationRebindOracle(ArtifactSet generatorArtifacts) {
-      super(typeOracle, propOracle, module, rules, genDir,
-          generatorResourcesDir, cacheManager, generatorArtifacts);
+      super(compilationState, propOracle, module, rules, genDir,
+          generatorResourcesDir, generatorArtifacts);
     }
 
     /**
@@ -146,30 +144,7 @@ public class GWTCompiler extends ToolBase {
         String msg = "Rebind answer for '" + in + "' found in cache " + out;
         logger.log(TreeLogger.DEBUG, msg, null);
       }
-
-      if (recordDecision(in, out)) {
-        List<JClassType> genTypes = generatedTypesByResultTypeName.get(out);
-        if (genTypes != null) {
-          for (JClassType genType : genTypes) {
-            String sourceHash = genType.getTypeHash();
-            String genTypeName = genType.getQualifiedSourceName();
-            recordGeneratedTypeHash(genTypeName, sourceHash);
-          }
-        }
-      }
-
       return out;
-    }
-
-    @SuppressWarnings("unused")
-    protected boolean recordDecision(String in, String out) {
-      // TODO(bobv): consider caching compilations again?
-      return false;
-    }
-
-    @SuppressWarnings("unused")
-    protected void recordGeneratedTypeHash(String typeName, String sourceHash) {
-      // TODO(bobv): consider caching compilations again?
     }
   }
 
@@ -179,9 +154,8 @@ public class GWTCompiler extends ToolBase {
     private final StandardRebindOracle rebindOracle;
 
     public DistillerRebindPermutationOracle(ArtifactSet generatorArtifacts) {
-      rebindOracle = new StandardRebindOracle(typeOracle, propOracle, module,
-          rules, genDir, generatorResourcesDir, cacheManager,
-          generatorArtifacts) {
+      rebindOracle = new StandardRebindOracle(compilationState, propOracle,
+          module, rules, genDir, generatorResourcesDir, generatorArtifacts) {
 
         /**
          * Record generated types.
@@ -246,26 +220,15 @@ public class GWTCompiler extends ToolBase {
     System.exit(1);
   }
 
-  /**
-   * Returns the fully-qualified main type name of a compilation unit.
-   */
-  private static String makeTypeName(CompilationUnitProvider cup) {
-    if (cup.getPackageName().length() > 0) {
-      return cup.getPackageName() + "." + cup.getMainTypeName();
-    } else {
-      return cup.getMainTypeName();
-    }
-  }
-
-  private final CacheManager cacheManager;
-
-  private File generatorResourcesDir;
+  private CompilationState compilationState;
 
   private String[] declEntryPts;
 
   private File genDir;
 
   private Map<String, List<JClassType>> generatedTypesByResultTypeName = new HashMap<String, List<JClassType>>();
+
+  private File generatorResourcesDir;
 
   private JavaToJavaScriptCompiler jjs;
 
@@ -289,17 +252,9 @@ public class GWTCompiler extends ToolBase {
 
   private Rules rules;
 
-  private StandardSourceOracle sourceOracle;
-
-  private TypeOracle typeOracle;
-
   private boolean useGuiLogger;
 
   public GWTCompiler() {
-    this(null);
-  }
-
-  public GWTCompiler(CacheManager cacheManager) {
     registerHandler(new ArgHandlerLogLevel() {
       @Override
       public void setLogLevel(Type level) {
@@ -344,13 +299,12 @@ public class GWTCompiler extends ToolBase {
     });
 
     registerHandler(new ArgHandlerValidateOnlyFlag());
-
-    this.cacheManager = cacheManager;
   }
 
   public void distill(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     this.module = moduleDef;
+    this.compilationState = moduleDef.getCompilationState();
 
     // Set up all the initial state.
     checkModule(logger);
@@ -369,18 +323,20 @@ public class GWTCompiler extends ToolBase {
     Util.recursiveDelete(generatorResourcesDir, true);
     generatorResourcesDir.mkdirs();
 
+    // TODO: All JDT checks now before even building TypeOracle?
+    compilationState.compile(logger);
+
     rules = module.getRules();
-    typeOracle = module.getTypeOracle(logger);
-    sourceOracle = new StandardSourceOracle(typeOracle);
     if (jjsOptions.isValidateOnly()) {
+      // TODO: revisit this.. do we even need to run JJS?
       logger.log(TreeLogger.INFO, "Validating compilation " + module.getName(),
           null);
       // Pretend that every single compilation unit is an entry point.
-      CompilationUnitProvider[] compilationUnits = module.getCompilationUnits();
-      declEntryPts = new String[compilationUnits.length];
-      for (int i = 0; i < compilationUnits.length; ++i) {
-        CompilationUnitProvider cup = compilationUnits[i];
-        declEntryPts[i] = makeTypeName(cup);
+      Set<CompilationUnit> compilationUnits = compilationState.getCompilationUnits();
+      declEntryPts = new String[compilationUnits.size()];
+      int i = 0;
+      for (CompilationUnit unit : compilationUnits) {
+        declEntryPts[i++] = unit.getTypeName();
       }
     } else {
       logger.log(TreeLogger.INFO, "Compiling module " + module.getName(), null);
@@ -393,7 +349,7 @@ public class GWTCompiler extends ToolBase {
     properties = module.getProperties();
     perms = new PropertyPermutations(properties);
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-        sourceOracle, rebindPermOracle);
+        compilationState, rebindPermOracle);
     jjs = new JavaToJavaScriptCompiler(logger, frontEnd, declEntryPts,
         jjsOptions);
 

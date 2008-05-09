@@ -42,7 +42,29 @@ public final class GWT {
     void onUncaughtException(Throwable e);
   }
 
-  // web mode default is to let the exception go
+  /**
+   * An {@link UncaughtExceptionHandler} that logs errors to
+   * {@link GWT#log(String, Throwable)}. This is the default exception handler
+   * in hosted mode. In web mode, the default exception handler is
+   * <code>null</code>.
+   */
+  private static final class DefaultUncaughtExceptionHandler implements
+      UncaughtExceptionHandler {
+    public void onUncaughtException(Throwable e) {
+      log("Uncaught exception escaped", e);
+    }
+  }
+
+  /**
+   * Always <code>null</code> in web mode; in hosted mode provides the
+   * implementation for certain methods.
+   */
+  private static GWTBridge sGWTBridge = null;
+
+  /**
+   * Defaults to <code>null</code> in web mode and an instance of
+   * {@link DefaultUncaughtExceptionHandler} in hosted mode.
+   */
   private static UncaughtExceptionHandler sUncaughtExceptionHandler = null;
 
   /**
@@ -61,16 +83,20 @@ public final class GWT {
    */
   @SuppressWarnings("unused")
   public static <T> T create(Class<?> classLiteral) {
-    /*
-     * In web mode, the compiler directly replaces calls to this method with a
-     * new Object() type expression of the correct rebound type.
-     */
-    throw new UnsupportedOperationException(
-        "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
-            + "for example, from server code.  If you are running a unit test, "
-            + "check that your test case extends GWTTestCase and that GWT.create() "
-            + "is not called from within an initializer, constructor, or "
-            + "setUp()/tearDown().");
+    if (sGWTBridge == null) {
+      /*
+       * In web mode, the compiler directly replaces calls to this method with a
+       * new Object() type expression of the correct rebound type.
+       */
+      throw new UnsupportedOperationException(
+          "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
+              + "for example, from server code.  If you are running a unit test, "
+              + "check that your test case extends GWTTestCase and that GWT.create() "
+              + "is not called from within an initializer, constructor, or "
+              + "setUp()/tearDown().");
+    } else {
+      return sGWTBridge.<T> create(classLiteral);
+    }
   }
 
   /**
@@ -126,9 +152,13 @@ public final class GWT {
     return sUncaughtExceptionHandler;
   }
 
-  public static native String getVersion() /*-{
-    return $gwt_version;
-  }-*/;
+  public static String getVersion() {
+    if (sGWTBridge == null) {
+      return getVersion0();
+    } else {
+      return sGWTBridge.getVersion();
+    }
+  }
 
   /**
    * Returns <code>true</code> when running inside the normal GWT environment,
@@ -137,16 +167,15 @@ public final class GWT {
    * on the server, or during the bootstrap sequence of a GWTTestCase test.
    */
   public static boolean isClient() {
-    // Replaced with "true" by compiler and hosted mode.
-    return false;
+    // Replaced with "true" by compiler.
+    return sGWTBridge != null;
   }
 
   /**
    * Determines whether or not the running program is script or bytecode.
    */
   public static boolean isScript() {
-    // Will return false in hosted mode.
-    return isClient() && true;
+    return isClient() && sGWTBridge == null;
   }
 
   /**
@@ -155,7 +184,9 @@ public final class GWT {
    */
   @SuppressWarnings("unused")
   public static void log(String message, Throwable e) {
-    // intentionally empty in web mode.
+    if (sGWTBridge != null) {
+      sGWTBridge.log(message, e);
+    }
   }
 
   /**
@@ -170,4 +201,19 @@ public final class GWT {
       UncaughtExceptionHandler handler) {
     sUncaughtExceptionHandler = handler;
   }
+
+  /**
+   * Called via reflection in hosted mode; do not every call this method in web
+   * mode.
+   */
+  static void setBridge(GWTBridge bridge) {
+    sGWTBridge = bridge;
+    if (bridge != null) {
+      setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler());
+    }
+  }
+
+  private static native String getVersion0() /*-{
+    return $gwt_version;
+  }-*/;
 }

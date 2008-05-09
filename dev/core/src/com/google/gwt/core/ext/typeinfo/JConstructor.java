@@ -24,18 +24,15 @@ import java.util.Map;
 public class JConstructor extends JAbstractMethod {
   private final JClassType enclosingType;
 
-  public JConstructor(JClassType enclosingType, String name, int declStart,
-      int declEnd, int bodyStart, int bodyEnd) {
-    this(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd, null, null);
+  public JConstructor(JClassType enclosingType, String name) {
+    this(enclosingType, name, null, null);
   }
 
-  public JConstructor(JClassType enclosingType, String name, int declStart,
-      int declEnd, int bodyStart, int bodyEnd,
+  public JConstructor(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
-    super(name, declStart, declEnd, bodyStart, bodyEnd, declaredAnnotations, 
-        jtypeParameters);
-    
+    super(name, declaredAnnotations, jtypeParameters);
+
     this.enclosingType = enclosingType;
     enclosingType.addConstructor(this);
   }

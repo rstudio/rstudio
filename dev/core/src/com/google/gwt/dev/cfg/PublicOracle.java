@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.cfg;
 
-import java.net.URL;
+import com.google.gwt.dev.resource.Resource;
 
 /**
  * Abstracts the process of querying for public files.
@@ -28,7 +28,7 @@ public interface PublicOracle {
    * @param partialPath a file path relative to the root of any public package
    * @return the url of the file, or <code>null</code> if no such file exists
    */
-  URL findPublicFile(String partialPath);
+  Resource findPublicFile(String partialPath);
 
   /**
    * Returns all available public files.

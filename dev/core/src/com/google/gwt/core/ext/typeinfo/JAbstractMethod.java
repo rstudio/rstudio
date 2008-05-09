@@ -28,14 +28,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   private final Annotations annotations;
 
-  private int bodyEnd;
-
-  private int bodyStart;
-
-  private final int declEnd;
-
-  private final int declStart;
-
   private boolean isVarArgs = false;
 
   private final HasMetaData metaData = new MetaData();
@@ -52,10 +44,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   JAbstractMethod(JAbstractMethod srcMethod) {
     this.annotations = new Annotations(srcMethod.annotations);
-    this.bodyEnd = srcMethod.bodyEnd;
-    this.bodyStart = srcMethod.bodyStart;
-    this.declEnd = srcMethod.declEnd;
-    this.declStart = srcMethod.declStart;
     this.isVarArgs = srcMethod.isVarArgs;
     MetaData.copy(this, srcMethod.metaData);
     this.modifierBits = srcMethod.modifierBits;
@@ -63,21 +51,16 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   }
 
   // Only the builder can construct
-  JAbstractMethod(String name, int declStart, int declEnd, int bodyStart,
-      int bodyEnd,
+  JAbstractMethod(String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
     this.name = name;
-    this.declStart = declStart;
-    this.declEnd = declEnd;
-    this.bodyStart = bodyStart;
-    this.bodyEnd = bodyEnd;
     annotations = new Annotations();
     annotations.addAnnotations(declaredAnnotations);
-    
+
     if (jtypeParameters != null) {
       for (JTypeParameter jtypeParameter : jtypeParameters) {
-        addTypeParameter(jtypeParameter);            
+        addTypeParameter(jtypeParameter);
       }
     }
   }
@@ -106,22 +89,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     return annotations.getAnnotation(annotationClass);
-  }
-
-  public int getBodyEnd() {
-    return bodyEnd;
-  }
-
-  public int getBodyStart() {
-    return bodyStart;
-  }
-
-  public int getDeclEnd() {
-    return declEnd;
-  }
-
-  public int getDeclStart() {
-    return declStart;
   }
 
   /**
@@ -281,8 +248,8 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     }
     return true;
   }
-  
+
   private void addTypeParameter(JTypeParameter typeParameter) {
     typeParams.add(typeParameter);
-  }      
+  }
 }

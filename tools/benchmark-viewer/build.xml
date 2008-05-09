@@ -96,6 +96,7 @@
 			</targetfiles>
 			<sequential>
 				<java dir="${tools.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+					<jvmarg value="-Xmx256M"/>
 					<arg value="-out" />
 					<arg file="${tools.build}/www" />
 					<arg value="${tools.module}" />

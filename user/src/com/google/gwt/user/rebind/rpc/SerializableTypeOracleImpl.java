@@ -21,7 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.Util;
 
 import java.io.UnsupportedEncodingException;
@@ -144,7 +144,7 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   }
 
   public String getSerializedTypeName(JType type) {
-    return TypeOracleBuilder.computeBinaryClassName(type);
+    return TypeOracleMediator.computeBinaryClassName(type);
   }
 
   public String getTypeSerializerQualifiedName(JClassType serviceIntf) {

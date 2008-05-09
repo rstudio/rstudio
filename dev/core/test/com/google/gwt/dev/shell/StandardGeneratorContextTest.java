@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,59 +18,67 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
-import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.PublicOracle;
-import com.google.gwt.dev.jdt.CacheManager;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.JavaSourceFile;
+import com.google.gwt.dev.javac.JavaSourceOracle;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 
 import junit.framework.TestCase;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A wide variety of tests on {@link StandardGeneratorContext}.
  */
 public class StandardGeneratorContextTest extends TestCase {
 
-  private static class MockArtifact extends Artifact<MockArtifact> {
+  public static class MockCompilationState extends CompilationState {
 
-    public MockArtifact() {
-      super(Linker.class);
+    public MockCompilationState() {
+      super(new JavaSourceOracle() {
+        public Set<String> getClassNames() {
+          return Collections.emptySet();
+        }
+
+        public Set<JavaSourceFile> getSourceFiles() {
+          return Collections.emptySet();
+        }
+
+        public Map<String, JavaSourceFile> getSourceMap() {
+          return Collections.emptyMap();
+        }
+      });
     }
 
-    @Override
-    protected int compareToComparableArtifact(MockArtifact o) {
-      return 0;
-    }
-
-    @Override
-    protected Class<MockArtifact> getComparableArtifactType() {
-      return MockArtifact.class;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
   }
 
-  private static class MockCacheManager extends CacheManager {
+  private static class MockGenerator extends Generator {
+    @Override
+    public String generate(TreeLogger logger, GeneratorContext context,
+        String typeName) throws UnableToCompleteException {
+      return typeName;
+    }
   }
 
   private static class MockPropertyOracle implements PropertyOracle {
@@ -85,23 +93,32 @@ public class StandardGeneratorContextTest extends TestCase {
     }
   }
 
-  private static class MockGenerator extends Generator {
-    @Override
-    public String generate(TreeLogger logger, GeneratorContext context,
-        String typeName) throws UnableToCompleteException {
-      return typeName;
-    }
-  }
-
   private static class MockPublicOracle implements PublicOracle {
 
-    public URL findPublicFile(String partialPath) {
+    public Resource findPublicFile(String partialPath) {
       if ("onPublicPath.txt".equals(partialPath)) {
-        try {
-          return new File("").toURL();
-        } catch (MalformedURLException e) {
-          throw new RuntimeException(e);
-        }
+        return new Resource() {
+
+          @Override
+          public String getLocation() {
+            return "/mock/onPublicPath.txt";
+          }
+
+          @Override
+          public String getPath() {
+            return "onPublicPath.txt";
+          }
+
+          @Override
+          public URL getURL() {
+            return null;
+          }
+
+          @Override
+          public InputStream openContents() {
+            return new ByteArrayInputStream(Util.getBytes("w00t!"));
+          }
+        };
       }
       return null;
     }
@@ -112,31 +129,27 @@ public class StandardGeneratorContextTest extends TestCase {
 
   }
 
-  private static class MockTypeOracle extends TypeOracle {
-  }
-
   private final ArtifactSet artifactSet = new ArtifactSet();
 
+  private final StandardGeneratorContext genCtx;
+  private final CompilationState mockCompilationState = new MockCompilationState();
+  private final TreeLogger mockLogger = TreeLogger.NULL;
+  private final PropertyOracle mockPropOracle = new MockPropertyOracle();
+  private final PublicOracle mockPublicOracle = new MockPublicOracle();
+  private int tempFileCounter;
+  private final File tempGenDir;
+  private final File tempOutDir;
   /**
    * Stores the File objects to delete in the order they were created. Delete
    * them in reverse order.
    */
   private final List<File> toDelete = new ArrayList<File>();
-  private final TypeOracle mockTypeOracle = new MockTypeOracle();
-  private final PropertyOracle mockPropOracle = new MockPropertyOracle();
-  private final PublicOracle mockPublicOracle = new MockPublicOracle();
-  private final File tempGenDir;
-  private final File tempOutDir;
-  private final CacheManager mockCacheManager = new MockCacheManager();
-  private final TreeLogger mockLogger = TreeLogger.NULL;
-  private final StandardGeneratorContext genCtx;
-  private int tempFileCounter;
 
   public StandardGeneratorContextTest() {
     tempGenDir = createTempDir("gwt-gen-");
     tempOutDir = createTempDir("gwt-out-");
-    genCtx = new StandardGeneratorContext(mockTypeOracle, mockPropOracle,
-        mockPublicOracle, tempGenDir, tempOutDir, mockCacheManager, artifactSet);
+    genCtx = new StandardGeneratorContext(mockCompilationState, mockPropOracle,
+        mockPublicOracle, tempGenDir, tempOutDir, artifactSet);
   }
 
   public void testTryCreateResource_badFileName() {
@@ -267,15 +280,6 @@ public class StandardGeneratorContextTest extends TestCase {
     genCtx.finish(mockLogger);
   }
 
-  public void testTryCreateResource_duplicateCreationAttempt()
-      throws UnableToCompleteException {
-    String path = createTempOutFilename();
-    OutputStream os1 = genCtx.tryCreateResource(mockLogger, path);
-    assertNotNull(os1);
-    OutputStream os2 = genCtx.tryCreateResource(mockLogger, path);
-    assertNull(os2);
-  }
-
   public void testTryCreateResource_duplicateCreationAfterCommit()
       throws UnableToCompleteException, UnsupportedEncodingException,
       IOException {
@@ -287,6 +291,15 @@ public class StandardGeneratorContextTest extends TestCase {
     assertTrue(createdFile.exists());
     rememberToDelete(createdFile);
 
+    OutputStream os2 = genCtx.tryCreateResource(mockLogger, path);
+    assertNull(os2);
+  }
+
+  public void testTryCreateResource_duplicateCreationAttempt()
+      throws UnableToCompleteException {
+    String path = createTempOutFilename();
+    OutputStream os1 = genCtx.tryCreateResource(mockLogger, path);
+    assertNotNull(os1);
     OutputStream os2 = genCtx.tryCreateResource(mockLogger, path);
     assertNull(os2);
   }
@@ -331,12 +344,6 @@ public class StandardGeneratorContextTest extends TestCase {
         "tryCreateResource() should return null when the target file is already on the public path",
         os);
     assertEquals(0, artifactSet.size());
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    mockCacheManager.invalidateVolatileFiles();
-    artifactSet.clear();
   }
 
   @Override

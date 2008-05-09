@@ -20,22 +20,23 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.jdt.CacheManager;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
-import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.JavaSourceFile;
+import com.google.gwt.dev.javac.JavaSourceOracle;
+import com.google.gwt.dev.javac.impl.JavaSourceOracleImpl;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.impl.PathPrefix;
+import com.google.gwt.dev.resource.impl.PathPrefixSet;
+import com.google.gwt.dev.resource.impl.ResourceFilter;
+import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.util.Empty;
-import com.google.gwt.dev.util.FileOracle;
-import com.google.gwt.dev.util.FileOracleFactory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.FileOracleFactory.FileFilter;
 
 import org.apache.tools.ant.types.ZipScanner;
 
 import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -84,22 +85,17 @@ public class ModuleDef implements PublicOracle {
 
   private Class<? extends Linker> activePrimaryLinker;
 
-  private final ArrayList<URLCompilationUnitProvider> allCups = new ArrayList<URLCompilationUnitProvider>();
-
-  private final Set<String> alreadySeenFiles = new HashSet<String>();
-
-  private final CacheManager cacheManager = new CacheManager(".gwt-cache",
-      new TypeOracle());
-
-  private CompilationUnitProvider[] cups = new CompilationUnitProvider[0];
+  private CompilationState compilationState;
 
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
 
-  private FileOracle lazyPublicOracle;
+  private JavaSourceOracle lazyJavaSourceOracle;
 
-  private FileOracle lazySourceOracle;
+  private ResourceOracleImpl lazyPublicOracle;
+
+  private ResourceOracleImpl lazySourceOracle;
 
   private TypeOracle lazyTypeOracle;
 
@@ -117,7 +113,7 @@ public class ModuleDef implements PublicOracle {
 
   private final Properties properties = new Properties();
 
-  private final FileOracleFactory publicPathEntries = new FileOracleFactory();
+  private PathPrefixSet publicPrefixSet = new PathPrefixSet();
 
   private final Rules rules = new Rules();
 
@@ -125,7 +121,7 @@ public class ModuleDef implements PublicOracle {
 
   private final Map<String, String> servletClassNamesByPath = new HashMap<String, String>();
 
-  private final FileOracleFactory sourcePathEntries = new FileOracleFactory();
+  private PathPrefixSet sourcePrefixSet = new PathPrefixSet();
 
   private final Styles styles = new Styles();
 
@@ -164,12 +160,11 @@ public class ModuleDef implements PublicOracle {
     final ZipScanner scanner = getScanner(includeList, excludeList,
         defaultExcludes, caseSensitive);
 
-    // index from this package down
-    publicPathEntries.addRootPackage(publicPackage, new FileFilter() {
-      public boolean accept(String name) {
-        return scanner.match(name);
+    publicPrefixSet.add(new PathPrefix(publicPackage, new ResourceFilter() {
+      public boolean allows(String path) {
+        return scanner.match(path);
       }
-    });
+    }, true));
   }
 
   public void addSourcePackage(String sourcePackage, String[] includeList,
@@ -195,17 +190,15 @@ public class ModuleDef implements PublicOracle {
     final ZipScanner scanner = getScanner(includeList, excludeList,
         defaultExcludes, caseSensitive);
 
-    final FileFilter sourceFileFilter = new FileFilter() {
-      public boolean accept(String name) {
-        return scanner.match(name);
+    ResourceFilter sourceFileFilter = new ResourceFilter() {
+      public boolean allows(String path) {
+        return path.endsWith(".java") && scanner.match(path);
       }
     };
 
-    if (isSuperSource) {
-      sourcePathEntries.addRootPackage(sourcePackage, sourceFileFilter);
-    } else {
-      sourcePathEntries.addPackage(sourcePackage, sourceFileFilter);
-    }
+    PathPrefix pathPrefix = new PathPrefix(sourcePackage, sourceFileFilter,
+        isSuperSource);
+    sourcePrefixSet.add(pathPrefix);
   }
 
   public void addSuperSourcePackage(String superSourcePackage,
@@ -223,13 +216,12 @@ public class ModuleDef implements PublicOracle {
     linkerTypesByName.put(name, linker);
   }
 
-  public synchronized URL findPublicFile(String partialPath) {
-    return lazyPublicOracle.find(partialPath);
+  public synchronized Resource findPublicFile(String partialPath) {
+    return lazyPublicOracle.getResourceMap().get(partialPath);
   }
 
   public synchronized String findServletForPath(String actual) {
     // Walk in backwards sorted order to find the longest path match first.
-    //
     Set<Entry<String, String>> entrySet = servletClassNamesByPath.entrySet();
     Entry<String, String>[] entries = Util.toArray(Entry.class, entrySet);
     Arrays.sort(entries, REV_NAME_CMP);
@@ -257,11 +249,7 @@ public class ModuleDef implements PublicOracle {
   }
 
   public String[] getAllPublicFiles() {
-    return lazyPublicOracle.getAllFiles();
-  }
-
-  public CacheManager getCacheManager() {
-    return cacheManager;
+    return lazyPublicOracle.getPathNames().toArray(Empty.STRINGS);
   }
 
   /**
@@ -272,8 +260,8 @@ public class ModuleDef implements PublicOracle {
     return name;
   }
 
-  public synchronized CompilationUnitProvider[] getCompilationUnits() {
-    return cups;
+  public CompilationState getCompilationState() {
+    return compilationState;
   }
 
   public synchronized String[] getEntryPointTypeNames() {
@@ -332,7 +320,8 @@ public class ModuleDef implements PublicOracle {
   public synchronized TypeOracle getTypeOracle(TreeLogger logger)
       throws UnableToCompleteException {
     if (lazyTypeOracle == null) {
-      lazyTypeOracle = createTypeOracle(logger);
+      lazyTypeOracle = compilationState.getTypeOracle();
+      updateTypeOracle(logger);
     }
     return lazyTypeOracle;
   }
@@ -363,11 +352,17 @@ public class ModuleDef implements PublicOracle {
   public synchronized void refresh(TreeLogger logger)
       throws UnableToCompleteException {
     PerfLogger.start("ModuleDef.refresh");
-    cacheManager.invalidateVolatileFiles();
-    normalize(logger);
-    lazyTypeOracle = createTypeOracle(logger);
-    Util.invokeInaccessableMethod(TypeOracle.class, "incrementReloadCount",
-        new Class[] {}, lazyTypeOracle, new Object[] {});
+
+    // Refresh the public path.
+    lazyPublicOracle.refresh(logger);
+
+    // Refreshes source internally.
+    compilationState.refresh();
+
+    // Refresh type oracle if needed.
+    if (lazyTypeOracle != null) {
+      updateTypeOracle(logger);
+    }
     PerfLogger.end();
   }
 
@@ -388,8 +383,8 @@ public class ModuleDef implements PublicOracle {
    * @param partialPath
    * @return
    */
-  synchronized URL findSourceFile(String partialPath) {
-    return lazySourceOracle.find(partialPath);
+  synchronized JavaSourceFile findSourceFile(String partialPath) {
+    return lazyJavaSourceOracle.getSourceMap().get(partialPath);
   }
 
   /**
@@ -424,109 +419,30 @@ public class ModuleDef implements PublicOracle {
       }
     }
 
-    // Create the source path.
-    //
-    TreeLogger branch = Messages.SOURCE_PATH_LOCATIONS.branch(logger, null);
-    lazySourceOracle = sourcePathEntries.create(branch);
+    // Create the public path.
+    TreeLogger branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
+    // lazyPublicOracle = publicPathEntries.create(branch);
+    if (lazyPublicOracle == null) {
+      lazyPublicOracle = new ResourceOracleImpl(branch);
+      lazyPublicOracle.setPathPrefixes(publicPrefixSet);
+    }
+    lazyPublicOracle.refresh(branch);
 
-    if (lazySourceOracle.isEmpty()) {
+    // Create the source path.
+    branch = Messages.SOURCE_PATH_LOCATIONS.branch(logger, null);
+    lazySourceOracle = new ResourceOracleImpl(branch);
+    lazySourceOracle.setPathPrefixes(sourcePrefixSet);
+    lazySourceOracle.refresh(branch);
+    if (lazySourceOracle.getResources().isEmpty()) {
       branch.log(TreeLogger.WARN,
           "No source path entries; expect subsequent failures", null);
-    } else {
-      // Create the CUPs
-      String[] allFiles = lazySourceOracle.getAllFiles();
-      Set<String> files = new HashSet<String>();
-      files.addAll(Arrays.asList(allFiles));
-      files.removeAll(alreadySeenFiles);
-      for (Iterator<String> iter = files.iterator(); iter.hasNext();) {
-        String fileName = iter.next();
-        int pos = fileName.lastIndexOf('/');
-        String packageName;
-        if (pos >= 0) {
-          packageName = fileName.substring(0, pos);
-          packageName = packageName.replace('/', '.');
-        } else {
-          packageName = "";
-        }
-        URL url = lazySourceOracle.find(fileName);
-        allCups.add(new URLCompilationUnitProvider(url, packageName));
-      }
-      alreadySeenFiles.addAll(files);
-      this.cups = allCups.toArray(this.cups);
     }
+    lazyJavaSourceOracle = new JavaSourceOracleImpl(lazySourceOracle);
 
-    // Create the public path.
-    //
-    branch = Messages.PUBLIC_PATH_LOCATIONS.branch(logger, null);
-    lazyPublicOracle = publicPathEntries.create(branch);
+    // Create the compilation state.
+    compilationState = new CompilationState(lazyJavaSourceOracle);
 
     PerfLogger.end();
-  }
-
-  private TypeOracle createTypeOracle(TreeLogger logger)
-      throws UnableToCompleteException {
-
-    TypeOracle newTypeOracle = null;
-
-    try {
-      String msg = "Analyzing source in module '" + getName() + "'";
-      TreeLogger branch = logger.branch(TreeLogger.TRACE, msg, null);
-      long before = System.currentTimeMillis();
-      TypeOracleBuilder builder = new TypeOracleBuilder(getCacheManager());
-      CompilationUnitProvider[] currentCups = getCompilationUnits();
-      Arrays.sort(currentCups, CompilationUnitProvider.LOCATION_COMPARATOR);
-
-      TreeLogger subBranch = null;
-      if (branch.isLoggable(TreeLogger.DEBUG)) {
-        subBranch = branch.branch(TreeLogger.DEBUG,
-            "Adding compilation units...", null);
-      }
-
-      for (int i = 0; i < currentCups.length; i++) {
-        CompilationUnitProvider cup = currentCups[i];
-        if (subBranch != null) {
-          subBranch.log(TreeLogger.DEBUG, cup.getLocation(), null);
-        }
-        builder.addCompilationUnit(currentCups[i]);
-      }
-
-      if (lazyTypeOracle != null) {
-        cacheManager.invalidateOnRefresh(lazyTypeOracle);
-      }
-
-      newTypeOracle = builder.build(branch);
-      long after = System.currentTimeMillis();
-      branch.log(TreeLogger.TRACE, "Finished in " + (after - before) + " ms",
-          null);
-    } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.ERROR, "Failed to complete analysis", null);
-      throw new UnableToCompleteException();
-    }
-
-    // Sanity check the seed types and don't even start it they're missing.
-    //
-    boolean seedTypesMissing = false;
-    if (newTypeOracle.findType("java.lang.Object") == null) {
-      Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
-      seedTypesMissing = true;
-    } else {
-      TreeLogger branch = logger.branch(TreeLogger.TRACE,
-          "Finding entry point classes", null);
-      String[] typeNames = getEntryPointTypeNames();
-      for (int i = 0; i < typeNames.length; i++) {
-        String typeName = typeNames[i];
-        if (newTypeOracle.findType(typeName) == null) {
-          Util.logMissingTypeErrorWithHints(branch, typeName);
-          seedTypesMissing = true;
-        }
-      }
-    }
-
-    if (seedTypesMissing) {
-      throw new UnableToCompleteException();
-    }
-
-    return newTypeOracle;
   }
 
   private ZipScanner getScanner(String[] includeList, String[] excludeList,
@@ -550,6 +466,39 @@ public class ModuleDef implements PublicOracle {
     scanner.init();
 
     return scanner;
+  }
+
+  private void updateTypeOracle(TreeLogger logger)
+      throws UnableToCompleteException {
+    PerfLogger.start("ModuleDef.updateTypeOracle");
+    TreeLogger branch = logger.branch(TreeLogger.TRACE,
+        "Compiling Java source files in module '" + getName() + "'");
+    compilationState.compile(branch);
+    PerfLogger.end();
+
+    TypeOracle typeOracle = compilationState.getTypeOracle();
+
+    // Sanity check the seed types and don't even start it they're missing.
+    boolean seedTypesMissing = false;
+    if (typeOracle.findType("java.lang.Object") == null) {
+      Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
+      seedTypesMissing = true;
+    } else {
+      branch = logger.branch(TreeLogger.TRACE, "Finding entry point classes",
+          null);
+      String[] typeNames = getEntryPointTypeNames();
+      for (int i = 0; i < typeNames.length; i++) {
+        String typeName = typeNames[i];
+        if (typeOracle.findType(typeName) == null) {
+          Util.logMissingTypeErrorWithHints(branch, typeName);
+          seedTypesMissing = true;
+        }
+      }
+    }
+
+    if (seedTypesMissing) {
+      throw new UnableToCompleteException();
+    }
   }
 
 }

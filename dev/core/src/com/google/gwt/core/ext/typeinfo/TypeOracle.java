@@ -143,7 +143,7 @@ public class TypeOracle {
    * @return true if the type has been invalidated
    */
   private static boolean isInvalidatedTypeRecursive(JType type,
-      Set<JClassType> invalidTypes) {
+      Set<JRealClassType> invalidTypes) {
     if (type instanceof JParameterizedType) {
       JParameterizedType parameterizedType = (JParameterizedType) type;
       if (isInvalidatedTypeRecursive(parameterizedType.getBaseType(),
@@ -168,6 +168,8 @@ public class TypeOracle {
 
   private final Map<JType, JArrayType> arrayTypes = new IdentityHashMap<JType, JArrayType>();
 
+  private final Set<JRealClassType> invalidatedTypes = new HashSet<JRealClassType>();
+
   private JClassType javaLangObject;
 
   private final Map<String, JPackage> packages = new HashMap<String, JPackage>();
@@ -175,8 +177,6 @@ public class TypeOracle {
   private final Map<String, List<JParameterizedType>> parameterizedTypes = new HashMap<String, List<JParameterizedType>>();
 
   private int reloadCount = 0;
-
-  private final Map<CompilationUnitProvider, JClassType[]> typesByCup = new IdentityHashMap<CompilationUnitProvider, JClassType[]>();
 
   private final Map<String, List<JWildcardType>> wildcardTypes = new HashMap<String, List<JWildcardType>>();
 
@@ -267,6 +267,7 @@ public class TypeOracle {
    * <code>java.lang.Object</code>.
    */
   public JClassType getJavaLangObject() {
+    assert javaLangObject != null;
     return javaLangObject;
   }
 
@@ -347,7 +348,7 @@ public class TypeOracle {
         throw new IllegalArgumentException("Generic type '"
             + genericType.getParameterizedQualifiedSourceName()
             + "' is a non-static member type, but the enclosing type '"
-            + enclosingType.getQualifiedSourceName() 
+            + enclosingType.getQualifiedSourceName()
             + "' is not a parameterized or raw type");
       }
     }
@@ -459,20 +460,11 @@ public class TypeOracle {
       JPackage pkg = pkgs[i];
       JClassType[] types = pkg.getTypes();
       for (int j = 0; j < types.length; j++) {
-        JClassType type = types[j];
+        JRealClassType type = (JRealClassType) types[j];
         buildAllTypesImpl(allTypes, type);
       }
     }
     return allTypes.toArray(NO_JCLASSES);
-  }
-
-  public JClassType[] getTypesInCompilationUnit(CompilationUnitProvider cup) {
-    JClassType[] types = typesByCup.get(cup);
-    if (types != null) {
-      return types;
-    } else {
-      return NO_JCLASSES;
-    }
   }
 
   public JWildcardType getWildcardType(JWildcardType.BoundType boundType,
@@ -525,6 +517,42 @@ public class TypeOracle {
     // Recursively parse.
     //
     return parseImpl(type);
+  }
+
+  /**
+   * Updates relationships within this type oracle. Should be called after any
+   * changes are made.
+   * 
+   * <p>
+   * Throws <code>TypeOracleException</code> thrown if fundamental baseline
+   * correctness criteria are violated, most notably the absence of
+   * "java.lang.Object"
+   * </p>
+   * 
+   * TODO: make this not public.
+   */
+  public void refresh(TreeLogger logger) throws NotFoundException {
+    if (javaLangObject == null) {
+      javaLangObject = findType("java.lang.Object");
+      if (javaLangObject == null) {
+        throw new NotFoundException("java.lang.Object");
+      }
+    }
+    computeHierarchyRelationships();
+    consumeTypeArgMetaData(logger);
+  }
+
+  /**
+   * Removes all types that are no longer valid.
+   * 
+   * TODO: make not public?
+   */
+  public void removeInvalidatedTypes() {
+    if (!invalidatedTypes.isEmpty()) {
+      invalidateTypes(invalidatedTypes);
+      invalidatedTypes.clear();
+      ++reloadCount;
+    }
   }
 
   /**
@@ -586,77 +614,16 @@ public class TypeOracle {
     });
   }
 
-  void incrementReloadCount() {
-    reloadCount++;
+  void invalidate(JRealClassType realClassType) {
+    invalidatedTypes.add(realClassType);
   }
 
-  /**
-   * Note, this method is called reflectively from the
-   * {@link com.google.gwt.dev.jdt.CacheManager#invalidateOnRefresh(TypeOracle)}.
-   * 
-   * @param cup compilation unit whose types will be invalidated
-   */
-  void invalidateTypesInCompilationUnit(CompilationUnitProvider cup) {
-    Set<JClassType> invalidTypes = new HashSet<JClassType>();
-    JClassType[] types = typesByCup.get(cup);
-    if (types == null) {
-      return;
-    }
-
-    for (int i = 0; i < types.length; i++) {
-      JClassType classTypeToInvalidate = types[i];
-      invalidTypes.add(classTypeToInvalidate);
-    }
-
-    typesByCup.remove(cup);
-
-    removeInvalidatedArrayTypes(invalidTypes);
-
-    removeInvalidatedParameterizedTypes(invalidTypes);
-
-    removeTypes(invalidTypes);
-  }
-
-  void recordTypeInCompilationUnit(CompilationUnitProvider cup, JClassType type) {
-    JClassType[] types = typesByCup.get(cup);
-    if (types == null) {
-      types = new JClassType[] {type};
-    } else {
-      JClassType[] temp = new JClassType[types.length + 1];
-      System.arraycopy(types, 0, temp, 0, types.length);
-      temp[types.length] = type;
-      types = temp;
-    }
-    typesByCup.put(cup, types);
-  }
-
-  /**
-   * Updates relationships within this type oracle. Should be called after any
-   * changes are made.
-   * 
-   * <p>
-   * Throws <code>TypeOracleException</code> thrown if fundamental baseline
-   * correctness criteria are violated, most notably the absence of
-   * "java.lang.Object"
-   * </p>
-   */
-  void refresh(TreeLogger logger) throws NotFoundException {
-    if (javaLangObject == null) {
-      javaLangObject = findType("java.lang.Object");
-      if (javaLangObject == null) {
-        throw new NotFoundException("java.lang.Object");
-      }
-    }
-    computeHierarchyRelationships();
-    consumeTypeArgMetaData(logger);
-  }
-
-  private void buildAllTypesImpl(Set<JClassType> allTypes, JClassType type) {
+  private void buildAllTypesImpl(Set<JClassType> allTypes, JRealClassType type) {
     boolean didAdd = allTypes.add(type);
     assert (didAdd);
     JClassType[] nestedTypes = type.getNestedTypes();
     for (int i = 0; i < nestedTypes.length; i++) {
-      JClassType nestedType = nestedTypes[i];
+      JRealClassType nestedType = (JRealClassType) nestedTypes[i];
       buildAllTypesImpl(allTypes, nestedType);
     }
   }
@@ -843,6 +810,12 @@ public class TypeOracle {
     return resultingType;
   }
 
+  private void invalidateTypes(Set<JRealClassType> invalidTypes) {
+    removeInvalidatedArrayTypes(invalidTypes);
+    removeInvalidatedParameterizedTypes(invalidTypes);
+    removeTypes(invalidTypes);
+  }
+
   private JType parseImpl(String type) throws NotFoundException,
       ParseException, BadTypeArgsException {
     if (type.endsWith("[]")) {
@@ -991,7 +964,7 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types that have been invalidated.
    */
-  private void removeInvalidatedArrayTypes(Set<JClassType> invalidTypes) {
+  private void removeInvalidatedArrayTypes(Set<JRealClassType> invalidTypes) {
     arrayTypes.keySet().removeAll(invalidTypes);
   }
 
@@ -1001,7 +974,8 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types known to have been invalidated
    */
-  private void removeInvalidatedParameterizedTypes(Set<JClassType> invalidTypes) {
+  private void removeInvalidatedParameterizedTypes(
+      Set<JRealClassType> invalidTypes) {
     Iterator<List<JParameterizedType>> listIterator = parameterizedTypes.values().iterator();
 
     while (listIterator.hasNext()) {
@@ -1021,10 +995,8 @@ public class TypeOracle {
    * 
    * @param invalidTypes set of types to remove
    */
-  private void removeTypes(Set<JClassType> invalidTypes) {
-    Iterator<JClassType> iter = invalidTypes.iterator();
-
-    while (iter.hasNext()) {
+  private void removeTypes(Set<JRealClassType> invalidTypes) {
+    for (Iterator<JRealClassType> iter = invalidTypes.iterator(); iter.hasNext();) {
       JClassType classType = iter.next();
       JPackage pkg = classType.getPackage();
       if (pkg != null) {
@@ -1032,6 +1004,7 @@ public class TypeOracle {
       }
 
       classType.removeFromSupertypes();
+      iter.remove();
     }
   }
 }

@@ -160,27 +160,6 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * handles the -saveJsni command line flag.
-   */
-  protected class ArgHandlerSaveJsni extends ArgHandlerFlag {
-    @Override
-    public String getPurpose() {
-      return "Save generated JSNI source in the supplied gen directory (if any)";
-    }
-
-    @Override
-    public String getTag() {
-      return "-saveJsni";
-    }
-
-    @Override
-    public boolean setFlag() {
-      saveJsni = true;
-      return true;
-    }
-  }
-
-  /**
    * Handles the list of startup urls that can be passed on the command line.
    */
   protected class ArgHandlerStartupURLs extends ArgHandlerExtra {
@@ -403,8 +382,6 @@ public class GWTShell extends ToolBase {
 
   private boolean runTomcat = true;
 
-  private boolean saveJsni = false;
-
   private boolean started;
 
   private final List<String> startupUrls = new ArrayList<String>();
@@ -441,8 +418,6 @@ public class GWTShell extends ToolBase {
         genDir = dir;
       }
     });
-
-    registerHandler(new ArgHandlerSaveJsni());
 
     if (!noURLs) {
       registerHandler(new ArgHandlerStartupURLs());
@@ -644,7 +619,7 @@ public class GWTShell extends ToolBase {
    */
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    GWTCompiler compiler = new GWTCompiler(moduleDef.getCacheManager());
+    GWTCompiler compiler = new GWTCompiler();
     compiler.setCompilerOptions(jjsOptions);
     compiler.setGenDir(genDir);
     compiler.setOutDir(outDir);
@@ -668,7 +643,7 @@ public class GWTShell extends ToolBase {
       TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef,
       File genDir, File shellDir) {
     return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir,
-        shellDir, saveJsni);
+        shellDir);
   }
 
   /**

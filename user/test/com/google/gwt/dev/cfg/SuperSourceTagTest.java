@@ -37,8 +37,7 @@ public class SuperSourceTagTest extends TestSuperAndSourceTags {
   protected String getLogicalPath(Class<?> clazz) {
     String name = clazz.getCanonicalName();
     name = name.substring(getClass().getPackage().getName().length() + 1);
-    name = name.replace('.', '/') + ".java";
-    name = name.replaceFirst("test/\\w+/", "");
+    name = name.replaceFirst("test\\.\\w+\\.", "");
     return name;
   }
 }

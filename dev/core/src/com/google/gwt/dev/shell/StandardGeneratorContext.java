@@ -24,24 +24,21 @@ import com.google.gwt.core.ext.linker.Artifact;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.PublicOracle;
-import com.google.gwt.dev.jdt.CacheManager;
-import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
-import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.Util;
 
 import java.io.ByteArrayOutputStream;
-import java.io.CharArrayWriter;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -49,79 +46,90 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 /**
- * An abstract implementation of a generator context in terms of a
- * {@link com.google.gwt.dev.jdt.MutableCompilationServiceHost}, a
- * {@link com.google.gwt.dev.jdt.PropertyOracle}, and a
- * {@link com.google.gwt.core.server.typeinfo.TypeOracle}. The generator
- * interacts with the mutable source oracle by increasing the available
- * compilation units as they are generated.
+ * Manages generators and generated units during a single compilation.
  */
 public class StandardGeneratorContext implements GeneratorContext {
 
   /**
-   * This compilation unit provider acts as a normal compilation unit provider
-   * as well as a buffer into which generators can write their source. A
-   * controller should ensure that source isn't requested until the generator
-   * has finished writing it.
+   * This compilation unit acts as a normal compilation unit as well as a buffer
+   * into which generators can write their source. A controller should ensure
+   * that source isn't requested until the generator has finished writing it.
    */
-  private static class GeneratedCompilationUnitProvider extends
-      StaticCompilationUnitProvider {
+  private static class GeneratedUnitWithFile extends CompilationUnit {
 
-    public CharArrayWriter caw;
+    private File file;
 
-    public PrintWriter pw;
+    private PrintWriter pw;
 
-    public char[] source;
+    private String source;
 
-    public GeneratedCompilationUnitProvider(String packageName,
-        String simpleTypeName) {
-      super(packageName, simpleTypeName, null);
-      caw = new CharArrayWriter();
-      pw = new PrintWriter(caw, true);
+    private StringWriter sw;
+
+    private final String typeName;
+
+    public GeneratedUnitWithFile(String typeName) {
+      this.typeName = typeName;
+      sw = new StringWriter();
+      pw = new PrintWriter(sw, true);
     }
 
     /**
      * Finalizes the source and adds this compilation unit to the host.
      */
     public void commit() {
-      source = caw.toCharArray();
-      pw.close();
+      source = sw.toString();
       pw = null;
-      caw.close();
-      caw = null;
+      sw = null;
     }
 
     @Override
-    public char[] getSource() {
-      if (source == null) {
+    public String getDisplayLocation() {
+      if (file == null) {
+        return "transient source for " + typeName;
+      } else {
+        return file.getAbsoluteFile().toURI().toString();
+      }
+    }
+
+    @Override
+    public String getSource() {
+      if (source == null && file == null) {
         throw new IllegalStateException("source not committed");
       }
+      if (source == null) {
+        source = Util.readFileAsString(file);
+      }
+      assert (source != null);
       return source;
     }
-  }
 
-  /**
-   * {@link CompilationUnitProvider} used to represent generated source code
-   * which is stored on disk. This class is only used if the -gen flag is
-   * specified.
-   */
-  private static final class GeneratedCUP extends URLCompilationUnitProvider {
-    private GeneratedCUP(URL url, String name) {
-      super(url, name);
+    @Override
+    public String getTypeName() {
+      return typeName;
     }
 
     @Override
-    public long getLastModified() throws UnableToCompleteException {
-      // Make it seem really old so it won't cause recompiles.
-      //
-      return 0L;
-    }
-
-    @Override
-    public boolean isTransient() {
+    public boolean isGenerated() {
       return true;
+    }
+
+    public boolean isOnDisk() {
+      return file != null;
+    }
+
+    public void setFile(File file) {
+      assert (file.exists() && file.canRead());
+      this.file = file;
+    }
+
+    @Override
+    protected void dumpSource() {
+      if (file != null) {
+        source = null;
+      }
     }
   }
 
@@ -161,9 +169,9 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final ArtifactSet artifactSet;
 
-  private final CacheManager cacheManager;
+  private final Set<GeneratedUnitWithFile> committedGeneratedCups = new HashSet<GeneratedUnitWithFile>();
 
-  private final Set<GeneratedCompilationUnitProvider> committedGeneratedCups = new HashSet<GeneratedCompilationUnitProvider>();
+  private final CompilationState compilationState;
 
   private Class<? extends Generator> currentGenerator;
 
@@ -179,23 +187,20 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final PublicOracle publicOracle;
 
-  private final TypeOracle typeOracle;
-
-  private final Map<PrintWriter, GeneratedCompilationUnitProvider> uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap<PrintWriter, GeneratedCompilationUnitProvider>();
+  private final Map<PrintWriter, GeneratedUnitWithFile> uncommittedGeneratedCupsByPrintWriter = new IdentityHashMap<PrintWriter, GeneratedUnitWithFile>();
 
   /**
    * Normally, the compiler host would be aware of the same types that are
    * available in the supplied type oracle although it isn't strictly required.
    */
-  public StandardGeneratorContext(TypeOracle typeOracle,
+  public StandardGeneratorContext(CompilationState compilationState,
       PropertyOracle propOracle, PublicOracle publicOracle, File genDir,
-      File outDir, CacheManager cacheManager, ArtifactSet artifactSet) {
-    this.typeOracle = typeOracle;
+      File outDir, ArtifactSet artifactSet) {
+    this.compilationState = compilationState;
     this.propOracle = propOracle;
     this.publicOracle = publicOracle;
     this.genDir = genDir;
     this.outDir = outDir;
-    this.cacheManager = cacheManager;
     this.artifactSet = artifactSet;
   }
 
@@ -203,7 +208,7 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Commits a pending generated type.
    */
   public final void commit(TreeLogger logger, PrintWriter pw) {
-    GeneratedCompilationUnitProvider gcup = uncommittedGeneratedCupsByPrintWriter.get(pw);
+    GeneratedUnitWithFile gcup = uncommittedGeneratedCupsByPrintWriter.get(pw);
     if (gcup != null) {
       gcup.commit();
       uncommittedGeneratedCupsByPrintWriter.remove(pw);
@@ -221,9 +226,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
       throws UnableToCompleteException {
     // The artifactSet will be null in hosted mode, since we never run Linkers
-    if (artifactSet != null) {
-      artifactSet.replace(artifact);
-    }
+    artifactSet.replace(artifact);
   }
 
   public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
@@ -234,7 +237,6 @@ public class StandardGeneratorContext implements GeneratorContext {
     if (pendingResource != null) {
       // Actually write the bytes to disk.
       pendingResource.commit(logger);
-      cacheManager.addGeneratedResource(pendingResource.getPartialPath());
 
       // Add the GeneratedResource to the ArtifactSet
       GeneratedResource toReturn;
@@ -293,26 +295,22 @@ public class StandardGeneratorContext implements GeneratorContext {
               "Generated source files...", null);
         }
 
-        assert (cacheManager.getTypeOracle() == typeOracle);
-        TypeOracleBuilder builder = new TypeOracleBuilder(cacheManager);
-        for (Iterator<GeneratedCompilationUnitProvider> iter = committedGeneratedCups.iterator(); iter.hasNext();) {
-          GeneratedCompilationUnitProvider gcup = iter.next();
-          String typeName = gcup.getTypeName();
-          String genTypeName = gcup.getPackageName() + "." + typeName;
-          genTypeNames.add(genTypeName);
-          CompilationUnitProvider cup = writeSource(logger, gcup, typeName);
-          builder.addCompilationUnit(cup);
-          cacheManager.addGeneratedCup(cup);
+        for (GeneratedUnitWithFile gcup : committedGeneratedCups) {
+          String qualifiedTypeName = gcup.getTypeName();
+          genTypeNames.add(qualifiedTypeName);
+          maybeWriteSource(gcup, qualifiedTypeName);
+          compilationState.addGeneratedCompilationUnit(gcup);
 
           if (subBranch != null) {
-            subBranch.log(TreeLogger.DEBUG, cup.getLocation(), null);
+            subBranch.log(TreeLogger.DEBUG, gcup.getDisplayLocation(), null);
           }
         }
 
-        builder.build(branch);
+        compilationState.compile(logger);
       }
 
       // Return the generated types.
+      TypeOracle typeOracle = getTypeOracle();
       JClassType[] genTypes = new JClassType[genTypeNames.size()];
       int next = 0;
       for (Iterator<String> iter = genTypeNames.iterator(); iter.hasNext();) {
@@ -333,10 +331,8 @@ public class StandardGeneratorContext implements GeneratorContext {
         String msg = "For the following type(s), generated source was never committed (did you forget to call commit()?)";
         logger = logger.branch(TreeLogger.WARN, msg, null);
 
-        for (Iterator<GeneratedCompilationUnitProvider> iter = uncommittedGeneratedCupsByPrintWriter.values().iterator(); iter.hasNext();) {
-          StaticCompilationUnitProvider cup = iter.next();
-          String typeName = cup.getPackageName() + "." + cup.getTypeName();
-          logger.log(TreeLogger.WARN, typeName, null);
+        for (GeneratedUnitWithFile unit : uncommittedGeneratedCupsByPrintWriter.values()) {
+          logger.log(TreeLogger.WARN, unit.getTypeName(), null);
         }
       }
 
@@ -355,7 +351,7 @@ public class StandardGeneratorContext implements GeneratorContext {
   }
 
   public final TypeOracle getTypeOracle() {
-    return typeOracle;
+    return compilationState.getTypeOracle();
   }
 
   public void setCurrentGenerator(Class<? extends Generator> currentGenerator) {
@@ -367,7 +363,8 @@ public class StandardGeneratorContext implements GeneratorContext {
     String typeName = packageName + "." + simpleTypeName;
 
     // Is type already known to the host?
-    JClassType existingType = typeOracle.findType(packageName, simpleTypeName);
+    JClassType existingType = getTypeOracle().findType(packageName,
+        simpleTypeName);
     if (existingType != null) {
       logger.log(TreeLogger.DEBUG, "Type '" + typeName
           + "' already exists and will not be re-created ", null);
@@ -385,8 +382,13 @@ public class StandardGeneratorContext implements GeneratorContext {
 
     // The type isn't there, so we can let the caller create it. Remember that
     // it is pending so another attempt to create the same type will fail.
-    GeneratedCompilationUnitProvider gcup = new GeneratedCompilationUnitProvider(
-        packageName, simpleTypeName);
+    String qualifiedSourceName;
+    if (packageName.length() == 0) {
+      qualifiedSourceName = simpleTypeName;
+    } else {
+      qualifiedSourceName = packageName + '.' + simpleTypeName;
+    }
+    GeneratedUnitWithFile gcup = new GeneratedUnitWithFile(qualifiedSourceName);
     uncommittedGeneratedCupsByPrintWriter.put(gcup.pw, gcup);
     generatedTypeNames.add(typeName);
 
@@ -433,8 +435,11 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // See if the file is already committed.
-    if (cacheManager.hasGeneratedResource(partialPath)) {
-      return null;
+    SortedSet<GeneratedResource> resources = artifactSet.find(GeneratedResource.class);
+    for (GeneratedResource resource : resources) {
+      if (partialPath.equals(resource.getPartialPath())) {
+        return null;
+      }
     }
 
     // See if the file is pending.
@@ -483,43 +488,25 @@ public class StandardGeneratorContext implements GeneratorContext {
    * Writes the source of the specified compilation unit to disk if a gen
    * directory is specified.
    * 
-   * @param cup the compilation unit whose contents might need to be written
-   * @param simpleTypeName the fully-qualified type name
-   * @return a wrapper for the existing cup with a proper location
+   * @param unit the compilation unit whose contents might need to be written
+   * @param qualifiedTypeName the fully-qualified type name
    */
-  private CompilationUnitProvider writeSource(TreeLogger logger,
-      CompilationUnitProvider cup, String simpleTypeName)
-      throws UnableToCompleteException {
+  private void maybeWriteSource(GeneratedUnitWithFile unit,
+      String qualifiedTypeName) {
 
-    if (genDir == null) {
+    if (unit.isOnDisk() || genDir == null) {
       // No place to write it.
-      return cup;
-    }
-
-    if (Util.isCompilationUnitOnDisk(cup.getLocation())) {
-      // Already on disk.
-      return cup;
+      return;
     }
 
     // Let's do write it.
-    String typeName = cup.getPackageName() + "." + simpleTypeName;
-    String relativePath = typeName.replace('.', '/') + ".java";
-    File srcFile = new File(genDir, relativePath);
-    Util.writeCharsAsFile(logger, srcFile, cup.getSource());
-
-    // Update the location of the cup
-    Throwable caught = null;
-    try {
-      URL fileURL = srcFile.toURI().toURL();
-      URLCompilationUnitProvider fileBaseCup = new GeneratedCUP(fileURL,
-          cup.getPackageName());
-      return fileBaseCup;
-    } catch (MalformedURLException e) {
-      caught = e;
+    String packageName = Shared.getPackageName(qualifiedTypeName);
+    String shortName = Shared.getShortName(qualifiedTypeName);
+    File dir = new File(genDir, packageName.replace('.', File.separatorChar));
+    dir.mkdirs();
+    File srcFile = new File(dir, shortName + ".java");
+    if (Util.writeStringAsFile(srcFile, unit.getSource())) {
+      unit.setFile(srcFile);
     }
-    logger.log(TreeLogger.ERROR,
-        "Internal error: cannot build URL from synthesized file name '"
-            + srcFile.getAbsolutePath() + "'", caught);
-    throw new UnableToCompleteException();
   }
 }

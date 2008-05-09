@@ -17,8 +17,6 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
-import com.google.gwt.dev.jdt.ICompilationUnitAdapter;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
@@ -254,7 +252,6 @@ public class JavaToJavaScriptCompiler {
 
   private final String[] declEntryPoints;
   private final CompilationUnitDeclaration[] goldenCuds;
-  private long lastModified;
   private final JJSOptions options;
   private final Set<IProblem> problemSet = new HashSet<IProblem>();
 
@@ -302,25 +299,6 @@ public class JavaToJavaScriptCompiler {
     // found here will have already been logged by AbstractCompiler.
     //
     checkForErrors(logger, false);
-
-    // Find the newest of all these.
-    //
-    lastModified = 0;
-    CompilationUnitProvider newestCup = null;
-    for (CompilationUnitDeclaration cud : goldenCuds) {
-      ICompilationUnitAdapter icua = (ICompilationUnitAdapter) cud.compilationResult.compilationUnit;
-      CompilationUnitProvider cup = icua.getCompilationUnitProvider();
-      long cupLastModified = cup.getLastModified();
-      if (cupLastModified > lastModified) {
-        newestCup = cup;
-        lastModified = cupLastModified;
-      }
-    }
-    if (newestCup != null) {
-      String loc = newestCup.getLocation();
-      String msg = "Newest compilation unit is '" + loc + "'";
-      logger.log(TreeLogger.DEBUG, msg, null);
-    }
   }
 
   /**
@@ -533,10 +511,6 @@ public class JavaToJavaScriptCompiler {
       logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
       throw new UnableToCompleteException();
     }
-  }
-
-  public long getLastModifiedTimeOfNewestCompilationUnit() {
-    return lastModified;
   }
 
   private void checkForErrors(final TreeLogger logger, boolean itemizeErrors)

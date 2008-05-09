@@ -27,16 +27,15 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
 
   private final List<JTypeParameter> typeParams = new ArrayList<JTypeParameter>();
 
-  public JGenericType(TypeOracle oracle, CompilationUnitProvider cup,
-      JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,
-      String name, int declStart, int declEnd, int bodyStart, int bodyEnd,
+  public JGenericType(TypeOracle oracle, JPackage declaringPackage,
+      JClassType enclosingType, boolean isLocalType, String name,
       boolean isInterface, JTypeParameter[] jtypeParameters) {
-    super(oracle, cup, declaringPackage, enclosingType, isLocalType, name,
-        declStart, declEnd, bodyStart, bodyEnd, isInterface);
-    
-     if (jtypeParameters != null) {
+    super(oracle, declaringPackage, enclosingType, isLocalType, name,
+        isInterface);
+
+    if (jtypeParameters != null) {
       for (JTypeParameter jtypeParameter : jtypeParameters) {
-        addTypeParameter(jtypeParameter);            
+        addTypeParameter(jtypeParameter);
       }
     }
   }

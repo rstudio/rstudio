@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jdt;
 
+import com.google.gwt.dev.javac.GWTProblem;
+
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.ClassLiteralAccess;

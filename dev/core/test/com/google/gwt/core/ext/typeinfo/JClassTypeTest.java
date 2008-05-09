@@ -17,18 +17,9 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
-import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
-
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 
 /**
  * Tests related to JClassType. See individual test methods to details.
@@ -43,7 +34,6 @@ public class JClassTypeTest extends TestCase {
   }
 
   public void testGetOverridableMethods() throws TypeOracleException {
-    TreeLogger logger = TreeLogger.NULL;
     TypeOracle typeOracle = moduleContext.getOracle();
     // TypeOracle typeOracle = buildOracleFromTestPackage(logger);
 
@@ -220,34 +210,6 @@ public class JClassTypeTest extends TestCase {
           "com.google.gwt.core.ext.typeinfo.test.CA",
           "com.google.gwt.core.ext.typeinfo.test.CA",
           "caNotOverridablePrivate", noParams);
-    }
-  }
-
-  private void addCompilationUnitsInPath(TypeOracleBuilder builder,
-      File sourcePathEntry, String pkgName) throws UnableToCompleteException,
-      MalformedURLException {
-    File pkgPath = new File(sourcePathEntry, pkgName.replace('.', '/'));
-    File[] files = pkgPath.listFiles();
-    if (files == null) {
-      // No files found.
-      return;
-    }
-
-    for (int i = 0; i < files.length; i++) {
-      File file = files[i];
-      if (file.isFile()) {
-        // If it's a source file, slurp it in.
-        if (file.getName().endsWith(".java")) {
-          URL location = file.toURL();
-          CompilationUnitProvider cup = new URLCompilationUnitProvider(
-              location, pkgName);
-          builder.addCompilationUnit(cup);
-        }
-      } else {
-        // Recurse into subpackages.
-        addCompilationUnitsInPath(builder, sourcePathEntry, pkgName
-            + file.getName());
-      }
     }
   }
 

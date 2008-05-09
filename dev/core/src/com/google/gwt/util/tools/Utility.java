@@ -201,7 +201,7 @@ public final class Utility {
    */
   public static String getFileFromClassPath(String partialPath)
       throws IOException {
-    InputStream in = Utility.class.getClassLoader().getResourceAsStream(
+    InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(
         partialPath);
     try {
       if (in == null) {
@@ -279,7 +279,8 @@ public final class Utility {
       if (override == null) {
         String partialPath = Utility.class.getName().replace('.', '/').concat(
             ".class");
-        URL url = Utility.class.getClassLoader().getResource(partialPath);
+        URL url = Thread.currentThread().getContextClassLoader().getResource(
+            partialPath);
         if (url != null && "jar".equals(url.getProtocol())) {
           String path = url.toString();
           String jarPath = path.substring(path.indexOf("file:"),

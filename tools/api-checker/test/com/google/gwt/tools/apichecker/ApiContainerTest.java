@@ -19,13 +19,17 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.jdt.CacheManager;
-import com.google.gwt.dev.jdt.StaticCompilationUnitProvider;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
+import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.JdtCompiler;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.tools.apichecker.ApiCompatibilityTest.StaticCompilationUnit;
 
 import junit.framework.TestCase;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Test ApiContainer.
@@ -61,19 +65,16 @@ public class ApiContainerTest extends TestCase {
     }
   }
 
-  static StaticCompilationUnitProvider cuApiClass = new StaticCompilationUnitProvider(
-      "test.apicontainer", "ApiClass", getSourceForApiClass());
-
-  static StaticCompilationUnitProvider cuNewPackage = new StaticCompilationUnitProvider(
-      "java.newpackage", "Test", getSourceForTest());
-
-  static StaticCompilationUnitProvider cuNonApiClass = new StaticCompilationUnitProvider(
-      "test.apicontainer", "NonApiClass", getSourceForNonApiClass());
-  static StaticCompilationUnitProvider cuNonApiPackage = new StaticCompilationUnitProvider(
-      "test.nonapipackage", "TestClass", getSourceForTestClass());
-
-  static StaticCompilationUnitProvider cuObject = new StaticCompilationUnitProvider(
-      "java.lang", "Object", getSourceForObject());
+  static StaticCompilationUnit cuApiClass = new StaticCompilationUnit(
+      "test.apicontainer.ApiClass", getSourceForApiClass());
+  static StaticCompilationUnit cuNonApiClass = new StaticCompilationUnit(
+      "test.apicontainer.NonApiClass", getSourceForNonApiClass());
+  static StaticCompilationUnit cuNonApiPackage = new StaticCompilationUnit(
+      "test.nonapipackage.TestClass", getSourceForTestClass());
+  static StaticCompilationUnit cuObject = new StaticCompilationUnit(
+      "java.lang.Object", getSourceForObject());
+  static StaticCompilationUnit cuNewPackage = new StaticCompilationUnit(
+      "java.newpackage.Test", getSourceForTest());
 
   private static JAbstractMethod getMethodByName(String name, ApiClass apiClass) {
     return (apiClass.getApiMethodsByName(name, ApiClass.MethodType.METHOD).toArray(
@@ -142,18 +143,20 @@ public class ApiContainerTest extends TestCase {
   public TypeOracle getNewTypeOracleWithCompilationUnitsAdded()
       throws UnableToCompleteException {
 
-    // Build onto an empty type oracle.
-    TypeOracleBuilder builder1 = new TypeOracleBuilder(new CacheManager(null,
-        null, ApiCompatibilityChecker.DISABLE_CHECKS));
-    builder1.addCompilationUnit(cuObject);
-    builder1.addCompilationUnit(cuNonApiClass);
-    builder1.addCompilationUnit(cuApiClass);
-    builder1.addCompilationUnit(cuNonApiPackage);
-    builder1.addCompilationUnit(cuNewPackage);
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
-    TypeOracle typeOracle = builder1.build(logger);
-    return typeOracle;
+
+    // Build onto an empty type oracle.
+    TypeOracleMediator mediator = new TypeOracleMediator();
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    units.add(cuObject);
+    units.add(cuNonApiClass);
+    units.add(cuApiClass);
+    units.add(cuNonApiPackage);
+    units.add(cuNewPackage);
+    JdtCompiler.compile(units);
+    mediator.refresh(logger, units);
+    return mediator.getTypeOracle();
   }
 
   /**

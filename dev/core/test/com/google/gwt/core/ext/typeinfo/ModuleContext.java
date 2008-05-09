@@ -21,7 +21,7 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 
 /**
- * Helper for loading modules from the classpath. 
+ * Helper for loading modules from the classpath.
  */
 class ModuleContext {
   private final TypeOracle oracle;
@@ -32,12 +32,8 @@ class ModuleContext {
     moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName);
     oracle = moduleDef.getTypeOracle(logger);
   }
-  
+
   public TypeOracle getOracle() {
     return oracle;
-  }
-  
-  public ModuleDef getModule() {
-    return moduleDef;
   }
 }

@@ -15,10 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.Util;
-
-import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -35,17 +31,7 @@ public class JRealClassType extends JClassType {
 
   private final Annotations annotations = new Annotations();
 
-  private final int bodyEnd;
-
-  private final int bodyStart;
-
-  private final CompilationUnitProvider cup;
-
   private final JPackage declaringPackage;
-
-  private final int declEnd;
-
-  private final int declStart;
 
   private final JClassType enclosingType;
 
@@ -54,8 +40,6 @@ public class JRealClassType extends JClassType {
   private final boolean isInterface;
 
   private final boolean isLocalType;
-
-  private String lazyHash;
 
   private String lazyQualifiedName;
 
@@ -73,21 +57,14 @@ public class JRealClassType extends JClassType {
 
   private JClassType superclass;
 
-  public JRealClassType(TypeOracle oracle, CompilationUnitProvider cup,
-      JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,
-      String name, int declStart, int declEnd, int bodyStart, int bodyEnd,
+  public JRealClassType(TypeOracle oracle, JPackage declaringPackage,
+      JClassType enclosingType, boolean isLocalType, String name,
       boolean isInterface) {
-    oracle.recordTypeInCompilationUnit(cup, this);
     this.oracle = oracle;
-    this.cup = cup;
     this.declaringPackage = declaringPackage;
     this.enclosingType = enclosingType;
     this.isLocalType = isLocalType;
     this.name = name;
-    this.declStart = declStart;
-    this.declEnd = declEnd;
-    this.bodyStart = bodyStart;
-    this.bodyEnd = bodyEnd;
     this.isInterface = isInterface;
     if (enclosingType == null) {
       // Add myself to my package.
@@ -155,18 +132,6 @@ public class JRealClassType extends JClassType {
     return annotations.getAnnotation(annotationClass);
   }
 
-  public int getBodyEnd() {
-    return bodyEnd;
-  }
-
-  public int getBodyStart() {
-    return bodyStart;
-  }
-
-  public CompilationUnitProvider getCompilationUnit() {
-    return cup;
-  }
-
   @Override
   public JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException {
@@ -176,14 +141,6 @@ public class JRealClassType extends JClassType {
   @Override
   public JConstructor[] getConstructors() {
     return members.getConstructors();
-  }
-
-  public int getDeclEnd() {
-    return declEnd;
-  }
-
-  public int getDeclStart() {
-    return declStart;
   }
 
   public JClassType getEnclosingType() {
@@ -298,19 +255,11 @@ public class JRealClassType extends JClassType {
     return superclass;
   }
 
-  public String getTypeHash() throws UnableToCompleteException {
-    if (lazyHash == null) {
-      char[] source = cup.getSource();
-      int length = declEnd - declStart + 1;
-      String s = new String(source, declStart, length);
-      try {
-        lazyHash = Util.computeStrongName(s.getBytes(Util.DEFAULT_ENCODING));
-      } catch (UnsupportedEncodingException e) {
-        // Details, details...
-        throw new UnableToCompleteException();
-      }
-    }
-    return lazyHash;
+  /**
+   * TODO: solve this better.
+   */
+  public void invalidate() {
+    oracle.invalidate(this);
   }
 
   public boolean isAbstract() {

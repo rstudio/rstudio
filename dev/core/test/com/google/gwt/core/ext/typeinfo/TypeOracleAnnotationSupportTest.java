@@ -24,8 +24,7 @@ import com.google.gwt.core.ext.typeinfo.test.PrimitiveValuesAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.PrimitivesAnnotatedClass;
 import com.google.gwt.core.ext.typeinfo.test.SourceRetentionAnnotation;
 import com.google.gwt.core.ext.typeinfo.test.TestAnnotation;
-import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -89,15 +88,14 @@ public class TypeOracleAnnotationSupportTest extends TestCase {
         testAnnotation.emptyArray().length);
   }
 
-  private final TreeLogger logger = TreeLogger.NULL;
-  private ModuleDef moduleDef;
+  private final boolean logToConsole = false;
+  private final ModuleContext moduleContext = new ModuleContext(logToConsole
+      ? new PrintWriterTreeLogger() : TreeLogger.NULL,
+      "com.google.gwt.core.ext.typeinfo.TypeOracleTest");
 
-  private final TypeOracle typeOracle;
+  private final TypeOracle typeOracle = moduleContext.getOracle();
 
   public TypeOracleAnnotationSupportTest() throws UnableToCompleteException {
-    moduleDef = ModuleDefLoader.loadFromClassPath(logger,
-        "com.google.gwt.core.ext.typeinfo.TypeOracleTest");
-    typeOracle = moduleDef.getTypeOracle(logger);
   }
 
   /**

@@ -37,12 +37,11 @@ public class JEnumType extends JRealClassType {
    * @param bodyEnd
    * @param isInterface
    */
-  public JEnumType(TypeOracle oracle, CompilationUnitProvider cup,
-      JPackage declaringPackage, JClassType enclosingType, boolean isLocalType,
-      String name, int declStart, int declEnd, int bodyStart, int bodyEnd,
+  public JEnumType(TypeOracle oracle, JPackage declaringPackage,
+      JClassType enclosingType, boolean isLocalType, String name,
       boolean isInterface) {
-    super(oracle, cup, declaringPackage, enclosingType, isLocalType, name,
-        declStart, declEnd, bodyStart, bodyEnd, isInterface);
+    super(oracle, declaringPackage, enclosingType, isLocalType, name,
+        isInterface);
   }
 
   /**

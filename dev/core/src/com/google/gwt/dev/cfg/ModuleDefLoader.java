@@ -101,7 +101,7 @@ public final class ModuleDefLoader {
    */
   public static ModuleDef loadFromClassPath(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    return loadFromClassPath(logger, moduleName, true);
+    return loadFromClassPath(logger, moduleName, false);
   }
 
   /**

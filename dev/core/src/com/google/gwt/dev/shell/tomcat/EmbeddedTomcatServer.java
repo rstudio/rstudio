@@ -16,8 +16,11 @@
 package com.google.gwt.dev.shell.tomcat;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.util.FileOracle;
-import com.google.gwt.dev.util.FileOracleFactory;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.impl.ClassPathEntry;
+import com.google.gwt.dev.resource.impl.PathPrefix;
+import com.google.gwt.dev.resource.impl.PathPrefixSet;
+import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.util.tools.Utility;
 
 import org.apache.catalina.Connector;
@@ -39,7 +42,11 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Wraps an instance of the Tomcat web server used in hosted mode.
@@ -249,14 +256,14 @@ public class EmbeddedTomcatServer {
   /*
    * Assumes that the leaf is a file (not a directory).
    */
-  private void copyFileNoOverwrite(TreeLogger logger, FileOracle fileOracle,
-      String srcResName, File catBase) {
+  private void copyFileNoOverwrite(TreeLogger logger, String srcResName,
+      Resource resource, File catBase) {
 
     File dest = new File(catBase, srcResName);
     InputStream is = null;
     FileOutputStream os = null;
     try {
-      URL srcRes = fileOracle.find(srcResName);
+      URL srcRes = resource.getURL();
       if (srcRes == null) {
         logger.log(TreeLogger.TRACE, "Cannot find: " + srcResName, null);
         return;
@@ -321,26 +328,59 @@ public class EmbeddedTomcatServer {
         "Property 'catalina.base' not specified; checking for a standard catalina base image instead",
         null);
 
-    // Recursively copies out files and directories under
-    // com.google.gwt.dev.etc.tomcat.
-    //
-    FileOracleFactory fof = new FileOracleFactory();
-    final String tomcatEtcDir = "com/google/gwt/dev/etc/tomcat/";
-    fof.addRootPackage(tomcatEtcDir, null);
-    FileOracle fo = fof.create(logger);
-    if (fo.isEmpty()) {
-      logger.log(TreeLogger.WARN, "Could not find " + tomcatEtcDir, null);
-      return null;
+    // Recursively copies out files and directories
+    String tomcatEtcDir = "com/google/gwt/dev/etc/tomcat/";
+    Map<String, Resource> resourceMap = null;
+    Throwable caught = null;
+    try {
+      resourceMap = getResourcesFor(logger, tomcatEtcDir);
+    } catch (URISyntaxException e) {
+      caught = e;
+    } catch (IOException e) {
+      caught = e;
     }
 
     File catBase = new File(workDir, "tomcat");
-    String[] allChildren = fo.getAllFiles();
-    for (int i = 0; i < allChildren.length; i++) {
-      String src = allChildren[i];
-      copyFileNoOverwrite(logger, fo, src, catBase);
+    if (resourceMap == null || resourceMap.isEmpty()) {
+      logger.log(TreeLogger.WARN, "Could not find " + tomcatEtcDir, caught);
+    } else {
+      for (Entry<String, Resource> entry : resourceMap.entrySet()) {
+        copyFileNoOverwrite(logger, entry.getKey(), entry.getValue(), catBase);
+      }
     }
 
     return catBase.getAbsolutePath();
+  }
+
+  /**
+   * Hacky, but fast.
+   */
+  private Map<String, Resource> getResourcesFor(TreeLogger logger,
+      String tomcatEtcDir) throws URISyntaxException, IOException {
+    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+    URL url = contextClassLoader.getResource(tomcatEtcDir);
+    if (url == null) {
+      return null;
+    }
+    String prefix = "";
+    String urlString = url.toString();
+    if (urlString.startsWith("jar:")) {
+      assert urlString.contains(".jar!/" + tomcatEtcDir);
+      urlString = urlString.substring(4, urlString.indexOf('!'));
+      url = new URL(urlString);
+      prefix = tomcatEtcDir;
+    }
+    ClassPathEntry entry = ResourceOracleImpl.createEntryForUrl(logger, url);
+    assert (entry != null);
+    ResourceOracleImpl resourceOracle = new ResourceOracleImpl(
+        Collections.singletonList(entry));
+    PathPrefixSet pathPrefixSet = new PathPrefixSet();
+    PathPrefix pathPrefix = new PathPrefix(prefix, null, true);
+    pathPrefixSet.add(pathPrefix);
+    resourceOracle.setPathPrefixes(pathPrefixSet);
+    resourceOracle.refresh(logger);
+    Map<String, Resource> resourceMap = resourceOracle.getResourceMap();
+    return resourceMap;
   }
 
   private void publishAttributeToWebApp(TreeLogger logger,

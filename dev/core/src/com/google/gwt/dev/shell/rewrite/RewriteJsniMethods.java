@@ -367,7 +367,6 @@ public class RewriteJsniMethods extends ClassAdapter {
         + descriptor;
     String argsDescriptor = descriptor.substring(argsIndexBegin,
         argsIndexEnd + 1);
-    String sourceName = classDesc.replace('/', '.').replace('$', '.');
-    return "@" + sourceName + "::" + name + argsDescriptor;
+    return "@" + classDesc.replace('/', '.') + "::" + name + argsDescriptor;
   }
 }

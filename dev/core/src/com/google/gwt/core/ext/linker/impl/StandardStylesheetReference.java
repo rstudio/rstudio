@@ -17,18 +17,12 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.StylesheetReference;
 
-import java.net.URL;
-
 /**
  * The standard implementation of {@link StylesheetReference}.
  */
 public class StandardStylesheetReference extends StylesheetReference {
 
-  /**
-   * Might use <code>url</code>someday.
-   */
-  @SuppressWarnings("unused")
-  public StandardStylesheetReference(String src, URL url) {
+  public StandardStylesheetReference(String src) {
     super(StandardLinkerContext.class, src);
   }
 }

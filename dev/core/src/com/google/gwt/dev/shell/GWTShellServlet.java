@@ -25,6 +25,7 @@ import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
@@ -410,12 +411,15 @@ public class GWTShellServlet extends HttpServlet {
       return;
     }
 
-    URL foundResource;
+    URL foundResource = null;
     try {
       // Look for the requested file on the public path.
       //
       ModuleDef moduleDef = getModuleDef(logger, moduleName);
-      foundResource = moduleDef.findPublicFile(partialPath);
+      Resource publicResource = moduleDef.findPublicFile(partialPath);
+      if (publicResource != null) {
+        foundResource = publicResource.getURL();
+      }
 
       if (foundResource == null) {
         // Look for generated files

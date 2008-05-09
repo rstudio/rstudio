@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,11 +20,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.jdt.CacheManager;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.Util;
 
@@ -51,10 +50,9 @@ public class StandardRebindOracle implements RebindOracle {
 
     private final List<String> usedTypeNames = new ArrayList<String>();
 
-    public Rebinder(TypeOracle typeOracle, PropertyOracle propOracle,
-        PublicOracle publicOracle) {
-      genCtx = new StandardGeneratorContext(typeOracle, propOracle,
-          publicOracle, genDir, outDir, cacheManager, artifactSet);
+    public Rebinder() {
+      genCtx = new StandardGeneratorContext(compilationState, propOracle,
+          publicOracle, genDir, outDir, artifactSet);
     }
 
     public String rebind(TreeLogger logger, String typeName)
@@ -135,7 +133,7 @@ public class StandardRebindOracle implements RebindOracle {
 
   private final ArtifactSet artifactSet;
 
-  private final CacheManager cacheManager;
+  private final CompilationState compilationState;
 
   private final File genDir;
 
@@ -147,22 +145,15 @@ public class StandardRebindOracle implements RebindOracle {
 
   private final Rules rules;
 
-  private final TypeOracle typeOracle;
-
-  public StandardRebindOracle(TypeOracle typeOracle, PropertyOracle propOracle,
-      PublicOracle publicOracle, Rules rules, File genDir, File moduleOutDir,
-      CacheManager cacheManager, ArtifactSet artifactSet) {
-    this.typeOracle = typeOracle;
+  public StandardRebindOracle(CompilationState compilationState,
+      PropertyOracle propOracle, PublicOracle publicOracle, Rules rules,
+      File genDir, File moduleOutDir, ArtifactSet artifactSet) {
+    this.compilationState = compilationState;
     this.propOracle = propOracle;
     this.publicOracle = publicOracle;
     this.rules = rules;
     this.genDir = genDir;
     this.outDir = moduleOutDir;
-    if (cacheManager != null) {
-      this.cacheManager = cacheManager;
-    } else {
-      this.cacheManager = new CacheManager(typeOracle);
-    }
     this.artifactSet = artifactSet;
   }
 
@@ -171,7 +162,7 @@ public class StandardRebindOracle implements RebindOracle {
 
     logger = Messages.TRACE_TOPLEVEL_REBIND.branch(logger, typeName, null);
 
-    Rebinder rebinder = new Rebinder(typeOracle, propOracle, publicOracle);
+    Rebinder rebinder = new Rebinder();
     String result = rebinder.rebind(logger, typeName);
 
     Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, result, null);

@@ -17,28 +17,19 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.jdt.ByteCodeCompiler;
 import com.google.gwt.dev.jdt.RebindOracle;
-import com.google.gwt.dev.jdt.SourceOracle;
-
-import org.apache.commons.collections.map.AbstractReferenceMap;
-import org.apache.commons.collections.map.ReferenceIdentityMap;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * Provides an environment for a {@link com.google.gwt.dev.shell.ModuleSpace}
  * that works appropriately for the development shell.
  */
 public class ShellModuleSpaceHost implements ModuleSpaceHost {
-
-  @SuppressWarnings("unchecked")
-  private static Map<ModuleDef, ByteCodeCompiler> byteCodeCompilersByModule = new ReferenceIdentityMap(
-      AbstractReferenceMap.WEAK, AbstractReferenceMap.HARD, true);
 
   protected final File genDir;
 
@@ -52,8 +43,6 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private RebindOracle rebindOracle;
 
-  private final boolean saveJsni;
-
   private final File shellDir;
 
   private ModuleSpace space;
@@ -63,12 +52,11 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    * @param saveJsni
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir, File shellDir, boolean saveJsni) {
+      ModuleDef module, File genDir, File shellDir) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
     this.genDir = genDir;
-    this.saveJsni = saveJsni;
 
     // Combine the user's output dir with the module name to get the
     // module-specific output dir.
@@ -93,16 +81,6 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
       throws UnableToCompleteException {
     this.space = readySpace;
 
-    // Create a host for the hosted mode compiler.
-    // We add compilation units to it as deferred binding generators write them.
-    //
-    SourceOracle srcOracle = new HostedModeSourceOracle(typeOracle, saveJsni
-        ? genDir : null);
-
-    // Create or find the compiler to be used by the compiling class loader.
-    //
-    ByteCodeCompiler compiler = getOrCreateByteCodeCompiler(srcOracle);
-
     // Establish an environment for JavaScript property providers to run.
     //
     ModuleSpacePropertyOracle propOracle = new ModuleSpacePropertyOracle(
@@ -112,8 +90,8 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // It has to wait until now because we need to inject javascript.
     //
     Rules rules = module.getRules();
-    rebindOracle = new StandardRebindOracle(typeOracle, propOracle, module,
-        rules, genDir, shellDir, module.getCacheManager(), null);
+    rebindOracle = new StandardRebindOracle(module.getCompilationState(),
+        propOracle, module, rules, genDir, shellDir, new ArtifactSet());
 
     // Create a completely isolated class loader which owns all classes
     // associated with a particular module. This effectively builds a
@@ -126,26 +104,14 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // accidentally 'escaping' its domain and loading classes from the system
     // class loader (the one that loaded the shell itself).
     //
-    classLoader = new CompilingClassLoader(logger, compiler, typeOracle,
-        readySpace);
+    classLoader = new CompilingClassLoader(logger,
+        module.getCompilationState(), readySpace);
   }
 
   public String rebind(TreeLogger rebindLogger, String sourceTypeName)
       throws UnableToCompleteException {
     checkForModuleSpace();
     return rebindOracle.rebind(rebindLogger, sourceTypeName);
-  }
-
-  ByteCodeCompiler getOrCreateByteCodeCompiler(SourceOracle srcOracle) {
-    ByteCodeCompiler compiler;
-    synchronized (byteCodeCompilersByModule) {
-      compiler = byteCodeCompilersByModule.get(module);
-      if (compiler == null) {
-        compiler = new ByteCodeCompiler(srcOracle, module.getCacheManager());
-        byteCodeCompilersByModule.put(module, compiler);
-      }
-    }
-    return compiler;
   }
 
   private void checkForModuleSpace() {

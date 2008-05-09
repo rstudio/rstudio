@@ -108,27 +108,6 @@ public class JavaScriptHost {
   }
 
   /**
-   * Logs in dev shell.
-   */
-  public static void log(String message, Throwable e) {
-    sHost.log(message, e);
-  }
-
-  /**
-   * Resolves a deferred binding request and create the requested object.
-   */
-  public static <T> T rebindAndCreate(Class<?> requestedClass) {
-    String className = requestedClass.getName();
-    try {
-      return sHost.<T> rebindAndCreate(className);
-    } catch (Throwable e) {
-      String msg = "Deferred binding failed for '" + className
-          + "' (did you forget to inherit a required module?)";
-      throw new RuntimeException(msg, e);
-    }
-  }
-
-  /**
    * This method is called via reflection from the {@link CompilingClassLoader},
    * providing the hosted mode application with all of the methods it needs to
    * interface with the browser and the server (for deferred binding).

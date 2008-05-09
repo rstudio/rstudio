@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
@@ -190,16 +189,6 @@ public class ImageBundleGenerator extends Generator {
     return baseName + "_generatedBundle";
   }
 
-  private int countLines(char[] source, int declStartIndex) {
-    int lineNum = 1;
-    for (int i = 0; i < declStartIndex; ++i) {
-      if (source[i] == '\n') {
-        ++lineNum;
-      }
-    }
-    return lineNum;
-  }
-
   private void generateImageMethod(ImageBundleBuilder compositeImage,
       SourceWriter sw, JMethod method, String imgResName) {
 
@@ -287,11 +276,8 @@ public class ImageBundleGenerator extends Generator {
       List<String> imageResNames = new ArrayList<String>();
 
       for (JMethod method : imageMethods) {
-        CompilationUnitProvider unit = method.getEnclosingType().getCompilationUnit();
-        String sourceFile = unit.getLocation();
-        int lineNum = countLines(unit.getSource(), method.getDeclStart());
         String branchMsg = "Analyzing method '" + method.getName()
-            + "' beginning on line " + lineNum + " of " + sourceFile;
+            + "' in type " + userType.getQualifiedSourceName();
         TreeLogger branch = logger.branch(TreeLogger.DEBUG, branchMsg, null);
 
         // Verify that this method is valid on an image bundle.

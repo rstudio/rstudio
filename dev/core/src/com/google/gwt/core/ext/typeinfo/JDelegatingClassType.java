@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
-
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
@@ -83,21 +81,6 @@ abstract class JDelegatingClassType extends JClassType {
     return baseType;
   }
 
-  @Override
-  public int getBodyEnd() {
-    return baseType.getBodyEnd();
-  }
-
-  @Override
-  public int getBodyStart() {
-    return baseType.getBodyStart();
-  }
-
-  @Override
-  public CompilationUnitProvider getCompilationUnit() {
-    return baseType.getCompilationUnit();
-  }
-
   /**
    * Delegating types generally cannot be constructed.
    */
@@ -113,16 +96,6 @@ abstract class JDelegatingClassType extends JClassType {
   @Override
   public JConstructor[] getConstructors() {
     return TypeOracle.NO_JCTORS;
-  }
-
-  @Override
-  public int getDeclEnd() {
-    return baseType.getDeclEnd();
-  }
-
-  @Override
-  public int getDeclStart() {
-    return baseType.getDeclStart();
   }
 
   @Override
@@ -225,11 +198,6 @@ abstract class JDelegatingClassType extends JClassType {
   @Override
   public JClassType getSuperclass() {
     return baseType.getSuperclass();
-  }
-
-  @Override
-  public String getTypeHash() throws UnableToCompleteException {
-    return baseType.getTypeHash();
   }
 
   @Override

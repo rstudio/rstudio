@@ -18,13 +18,13 @@ package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.jdt.CacheManager;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
-import com.google.gwt.dev.jdt.URLCompilationUnitProvider;
+import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.JdtCompiler;
+import com.google.gwt.dev.javac.TypeOracleMediator;
+import com.google.gwt.dev.javac.impl.FileCompilationUnit;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -33,13 +33,13 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Vector;
 
 /**
@@ -47,6 +47,7 @@ import java.util.Vector;
  * 
  */
 public class ApiContainer {
+
   private HashMap<String, ApiPackage> apiPackages = new HashMap<String, ApiPackage>();
   private HashMap<String, String> excludedFiles = null;
   private TreeLogger logger = null;
@@ -119,8 +120,8 @@ public class ApiContainer {
   public TreeLogger getLogger() {
     return logger;
   }
- 
-  private void addCompilationUnitsInPath(TypeOracleBuilder builder,
+
+  private void addCompilationUnitsInPath(Set<CompilationUnit> units,
       File sourcePathEntry) throws NotFoundException, IOException,
       UnableToCompleteException {
     File[] files = sourcePathEntry.listFiles();
@@ -130,7 +131,7 @@ public class ApiContainer {
     }
 
     for (int i = 0; i < files.length; i++) {
-      File file = files[i];
+      final File file = files[i];
       // Ignore files like .svn and .cvs
       if (file.getName().startsWith(".") || file.getName().equals("CVS")) {
         continue;
@@ -150,19 +151,15 @@ public class ApiContainer {
         }
         if (isValidPackage(pkgName, sourcePathEntry.toURL().toString())) {
           // Add if it's a source file and the package and fileNames are okay
-          URL location = file.toURL();
-          CompilationUnitProvider cup = new URLCompilationUnitProvider(
-              location, pkgName);
-          logger.log(TreeLogger.DEBUG, "+ to CompilationUnit" + ", location="
-              + location + ", pkgName=" + pkgName, null);
-          builder.addCompilationUnit(cup);
+          CompilationUnit unit = new FileCompilationUnit(file, pkgName);
+          units.add(unit);
           numFilesCount++;
         } else {
           logger.log(TreeLogger.SPAM, " not adding file " + file.toURL(), null);
         }
       } else {
         // Recurse into subDirs
-        addCompilationUnitsInPath(builder, file);
+        addCompilationUnitsInPath(units, file);
       }
     }
   }
@@ -171,12 +168,14 @@ public class ApiContainer {
       IOException, UnableToCompleteException {
 
     numFilesCount = 0;
-    TypeOracleBuilder builder = new TypeOracleBuilder(new CacheManager(null,
-        null, ApiCompatibilityChecker.DISABLE_CHECKS));
+    TypeOracleMediator mediator = new TypeOracleMediator();
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     for (Iterator<File> i = sourceTrees.iterator(); i.hasNext();) {
-      addCompilationUnitsInPath(builder, i.next());
+      addCompilationUnitsInPath(units, i.next());
     }
-    typeOracle = builder.build(logger);
+    JdtCompiler.compile(units);
+    mediator.refresh(logger, units);
+    typeOracle = mediator.getTypeOracle();
     logger.log(TreeLogger.INFO, "API " + name
         + ", Finished with building typeOracle, added " + numFilesCount
         + " files", null);

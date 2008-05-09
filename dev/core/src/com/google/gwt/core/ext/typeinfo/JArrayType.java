@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
-
 import java.lang.annotation.Annotation;
 import java.util.Map;
 
@@ -82,21 +80,6 @@ public class JArrayType extends JClassType {
     return null;
   }
 
-  @Override
-  public int getBodyEnd() {
-    return 0;
-  }
-
-  @Override
-  public int getBodyStart() {
-    return 0;
-  }
-
-  @Override
-  public CompilationUnitProvider getCompilationUnit() {
-    return null;
-  }
-
   public JType getComponentType() {
     return componentType;
   }
@@ -110,16 +93,6 @@ public class JArrayType extends JClassType {
   @Override
   public JConstructor[] getConstructors() {
     return TypeOracle.NO_JCTORS;
-  }
-
-  @Override
-  public int getDeclEnd() {
-    return 0;
-  }
-
-  @Override
-  public int getDeclStart() {
-    return 0;
   }
 
   @Override
@@ -269,20 +242,6 @@ public class JArrayType extends JClassType {
   @Override
   public JClassType getSuperclass() {
     return getOracle().getJavaLangObject();
-  }
-
-  @Override
-  public String getTypeHash() throws UnableToCompleteException {
-    JType leafType = getLeafType();
-    JClassType leafClassType = leafType.isClassOrInterface();
-    if (leafClassType != null) {
-      return leafClassType.getTypeHash();
-    }
-
-    // Arrays of primitive types should have a stable hash
-    assert (leafType.isPrimitive() != null);
-
-    return leafType.getQualifiedSourceName();
   }
 
   @Override

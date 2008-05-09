@@ -398,17 +398,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
   /**
    * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getCompilationUnit()}.
-   */
-  public void testGetCompilationUnit() throws NotFoundException {
-    JDelegatingClassType testType = getTestType();
-    JClassType baseType = testType.getBaseType();
-
-    assertEquals(testType.getCompilationUnit(), baseType.getCompilationUnit());
-  }
-
-  /**
-   * Test method for
    * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getConstructor(com.google.gwt.core.ext.typeinfo.JType[])}.
    */
   public void testGetConstructor() throws NotFoundException {

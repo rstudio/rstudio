@@ -29,11 +29,9 @@ public class JAnnotationMethod extends JMethod {
   private final Object defaultValue;
 
   public JAnnotationMethod(JClassType enclosingType, String name,
-      int declStart, int declEnd, int bodyStart, int bodyEnd,
       Object defaultValue,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    super(enclosingType, name, declStart, declEnd, bodyStart, bodyEnd,
-        declaredAnnotations, null);
+    super(enclosingType, name, declaredAnnotations, null);
     this.defaultValue = defaultValue;
   }
 

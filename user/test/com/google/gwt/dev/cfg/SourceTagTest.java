@@ -35,6 +35,6 @@ public class SourceTagTest extends TestSuperAndSourceTags {
    * logical path would be java/lang/Object.
    */
   protected String getLogicalPath(Class<?> clazz) {
-    return clazz.getCanonicalName().replace('.', '/') + ".java";
+    return clazz.getCanonicalName();
   }
 }

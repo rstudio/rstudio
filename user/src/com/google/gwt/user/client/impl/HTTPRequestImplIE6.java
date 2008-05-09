@@ -18,8 +18,7 @@ package com.google.gwt.user.client.impl;
 import com.google.gwt.core.client.JavaScriptObject;
 
 /**
- * Internet Explorer 6 implementation of
- * {@link com.google.gwt.user.client.impl.HttpRequestImpl}.
+ * Internet Explorer 6 implementation of {@link HTTPRequestImpl}.
  */
 class HTTPRequestImplIE6 extends HTTPRequestImpl {
 

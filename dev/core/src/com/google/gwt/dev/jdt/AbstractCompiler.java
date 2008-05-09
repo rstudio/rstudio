@@ -16,9 +16,12 @@
 package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
-import com.google.gwt.core.ext.typeinfo.CompilationUnitProvider;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.GWTProblem;
+import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
+import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.CharArrayComparator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
@@ -59,22 +62,6 @@ import java.util.TreeSet;
 public abstract class AbstractCompiler {
 
   /**
-   * A policy that can be set to affect which
-   * {@link org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration
-   * CompilationUnitDeclarations} the compiler processes.
-   */
-  public interface CachePolicy {
-
-    /**
-     * Return true if <code>cud</code> should be processed, otherwise false.
-     * 
-     * @param cud a not <code>null</code> unit
-     * @return true iff <code>cud</code> should be fully processed
-     */
-    boolean shouldProcess(CompilationUnitDeclaration cud);
-  }
-
-  /**
    * Adapted to hook the processing of compilation unit declarations so as to be
    * able to add additional compilation units based on the results of
    * previously-compiled ones. Examples of cases where this is useful include
@@ -104,11 +91,6 @@ public abstract class AbstractCompiler {
     public void process(CompilationUnitDeclaration cud, int index) {
 
       long processBeginNanos = System.nanoTime();
-
-      if (!cachePolicy.shouldProcess(cud)) {
-        jdtProcessNanos += System.nanoTime() - processBeginNanos;
-        return;
-      }
 
       // The following block of code is a copy of super.process(cud, index),
       // with the modification that cud.generateCode is conditionally called
@@ -313,32 +295,9 @@ public abstract class AbstractCompiler {
       TreeLogger logger = threadLogger.branch(TreeLogger.SPAM,
           "Compiler is asking about '" + qname + "'", null);
 
-      if (sourceOracle.isPackage(qname)) {
+      if (isPackage(qname)) {
         logger.log(TreeLogger.SPAM, "Found to be a package", null);
         return null;
-      }
-
-      // Try to find the compiled type in the cache.
-      //
-      ByteCode byteCode = doGetByteCodeFromCache(logger, qname);
-      if (byteCode != null) {
-        // Return it as a binary type to JDT.
-        //
-        byte[] classBytes = byteCode.getBytes();
-        char[] loc = byteCode.getLocation().toCharArray();
-        try {
-          logger.log(TreeLogger.SPAM, "Found cached bytes", null);
-          ClassFileReader cfr = new ClassFileReader(classBytes, loc);
-          NameEnvironmentAnswer out = new NameEnvironmentAnswer(cfr, null);
-          nameEnvironmentAnswerForTypeName.put(qname, out);
-          return out;
-        } catch (ClassFormatException e) {
-          // Bad bytecode in the cache. Remove it from the cache.
-          //
-          String msg = "Bad bytecode for '" + qname + "'";
-          compiler.problemReporter.abortDueToInternalError(msg);
-          return null;
-        }
       }
 
       // Didn't find it in the cache, so let's compile from source.
@@ -353,49 +312,40 @@ public abstract class AbstractCompiler {
           return (nameEnvironmentAnswerForTypeName.get(qname));
         }
       }
-      CompilationUnitProvider cup;
-      try {
-        cup = sourceOracle.findCompilationUnit(logger, qname);
-        if (cup != null) {
-          logger.log(TreeLogger.SPAM, "Found type in compilation unit: "
-              + cup.getLocation(), null);
-          ICompilationUnitAdapter unit = new ICompilationUnitAdapter(cup);
-          NameEnvironmentAnswer out = new NameEnvironmentAnswer(unit, null);
-          nameEnvironmentAnswerForTypeName.put(qname, out);
-          return out;
-        } else {
-          ClassLoader classLoader = getClassLoader();
-          URL resourceURL = classLoader.getResource(className.replace('.', '/')
-              + ".class");
-          if (resourceURL != null) {
-            /*
-             * We know that there is a .class file that matches the name that we
-             * are looking for. However, at least on OSX, this lookup is case
-             * insensitive so we need to use Class.forName to effectively verify
-             * the case.
-             */
-            if (isBinaryType(classLoader, className)) {
-              byte[] classBytes = Util.readURLAsBytes(resourceURL);
-              ClassFileReader cfr;
-              try {
-                cfr = new ClassFileReader(classBytes, null);
-                NameEnvironmentAnswer out = new NameEnvironmentAnswer(cfr, null);
-                nameEnvironmentAnswerForTypeName.put(qname, out);
-                return out;
-              } catch (ClassFormatException e) {
-                // Ignored.
-              }
+      CompilationUnit unit = findCompilationUnit(qname);
+      if (unit != null) {
+        logger.log(TreeLogger.SPAM, "Found type in compilation unit: "
+            + unit.getDisplayLocation());
+        ICompilationUnit icu = new CompilationUnitAdapter(unit);
+        NameEnvironmentAnswer out = new NameEnvironmentAnswer(icu, null);
+        nameEnvironmentAnswerForTypeName.put(qname, out);
+        return out;
+      } else {
+        ClassLoader classLoader = getClassLoader();
+        URL resourceURL = classLoader.getResource(className.replace('.', '/')
+            + ".class");
+        if (resourceURL != null) {
+          /*
+           * We know that there is a .class file that matches the name that we
+           * are looking for. However, at least on OSX, this lookup is case
+           * insensitive so we need to use Class.forName to effectively verify
+           * the case.
+           */
+          if (isBinaryType(classLoader, className)) {
+            byte[] classBytes = Util.readURLAsBytes(resourceURL);
+            ClassFileReader cfr;
+            try {
+              cfr = new ClassFileReader(classBytes, null);
+              NameEnvironmentAnswer out = new NameEnvironmentAnswer(cfr, null);
+              nameEnvironmentAnswerForTypeName.put(qname, out);
+              return out;
+            } catch (ClassFormatException e) {
+              // Ignored.
             }
           }
-
-          logger.log(TreeLogger.SPAM, "Not a known type", null);
-          return null;
         }
-      } catch (UnableToCompleteException e) {
-        // It was found, but something went really wrong trying to get it.
-        //
-        String msg = "Error acquiring source for '" + qname + "'";
-        compiler.problemReporter.abortDueToInternalError(msg);
+
+        logger.log(TreeLogger.SPAM, "Not a known type", null);
         return null;
       }
     }
@@ -409,7 +359,7 @@ public abstract class AbstractCompiler {
       String packageName = String.valueOf(pathChars);
       if (knownPackages.contains(packageName)) {
         return true;
-      } else if (sourceOracle.isPackage(packageName)
+      } else if (isPackage(packageName)
           || isPackage(getClassLoader(), packageName)) {
         // Grow our own list to spare calls into the host.
         //
@@ -442,6 +392,10 @@ public abstract class AbstractCompiler {
       String packageAsPath = packageName.replace('.', '/');
       return classLoader.getResource(packageAsPath) != null;
     }
+
+    private boolean isPackage(String packageName) {
+      return packages.contains(packageName);
+    }
   }
 
   private static final Comparator<CompilationUnitDeclaration> CUD_COMPARATOR = new Comparator<CompilationUnitDeclaration>() {
@@ -468,15 +422,9 @@ public abstract class AbstractCompiler {
     }
   };
 
-  private static final CachePolicy DEFAULT_POLICY = new CachePolicy() {
-    public boolean shouldProcess(CompilationUnitDeclaration cud) {
-      return true;
-    }
-  };
+  protected final CompilationState compilationState;
 
   protected final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
-
-  private CachePolicy cachePolicy = DEFAULT_POLICY;
 
   private final CompilerImpl compiler;
 
@@ -486,12 +434,11 @@ public abstract class AbstractCompiler {
 
   private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName = new HashMap<String, NameEnvironmentAnswer>();
 
-  private final SourceOracle sourceOracle;
+  private final Set<String> packages = new HashSet<String>();
 
-  private final Map<String, ICompilationUnit> unitsByTypeName = new HashMap<String, ICompilationUnit>();
-
-  protected AbstractCompiler(SourceOracle sourceOracle, boolean doGenerateBytes) {
-    this.sourceOracle = sourceOracle;
+  protected AbstractCompiler(CompilationState compilationState,
+      boolean doGenerateBytes) {
+    this.compilationState = compilationState;
     this.doGenerateBytes = doGenerateBytes;
     rememberPackage("");
 
@@ -528,30 +475,14 @@ public abstract class AbstractCompiler {
         probFact);
   }
 
-  public CachePolicy getCachePolicy() {
-    return cachePolicy;
-  }
-
-  public final void invalidateUnitsInFiles(Set<String> typeNames) {
-    // StandardSourceOracle has its own cache that needs to be cleared
-    // out. Short of modifying the interface SourceOracle to have an
-    // invalidateCups, this check is needed.
-    if (sourceOracle instanceof StandardSourceOracle) {
-      StandardSourceOracle sso = (StandardSourceOracle) sourceOracle;
-      sso.invalidateCups(typeNames);
-    }
-    for (String qname : typeNames) {
-      unitsByTypeName.remove(qname);
-      nameEnvironmentAnswerForTypeName.remove(qname);
-    }
-  }
-
-  public void setCachePolicy(CachePolicy policy) {
-    this.cachePolicy = policy;
-  }
-
   protected final CompilationUnitDeclaration[] compile(TreeLogger logger,
       ICompilationUnit[] units) {
+    // Initialize the packages list.
+    for (CompilationUnit unit : compilationState.getCompilationUnits()) {
+      String packageName = Shared.getPackageName(unit.getTypeName());
+      addPackages(packageName);
+    }
+
     // Any additional compilation units that are found to be needed will be
     // pulled in while procssing compilation units. See CompilerImpl.process().
     //
@@ -596,53 +527,18 @@ public abstract class AbstractCompiler {
     return Empty.STRINGS;
   }
 
-  /**
-   * Checks to see if we already have the bytecode definition of the requested
-   * type. By default we compile everything from source, so we never have it
-   * unless a subclass overrides this method.
-   */
-  @SuppressWarnings("unused")
-  // overrider may use unused parameter
-  protected ByteCode doGetByteCodeFromCache(TreeLogger logger,
-      String binaryTypeName) {
-    return null;
-  }
-
-  /**
-   * Finds a compilation unit for the given type. This is often used to
-   * bootstrap compiles since during compiles, the compiler will directly ask
-   * the name environment internally, bypassing this call.
-   */
-  protected ICompilationUnit getCompilationUnitForType(TreeLogger logger,
-      String binaryTypeName) throws UnableToCompleteException {
-
-    // We really look for the topmost type rather than a nested type.
-    //
-    String top = stripNestedTypeNames(binaryTypeName);
-
-    // Check the cache.
-    //
-    ICompilationUnit unit = unitsByTypeName.get(top);
-    if (unit != null) {
-      return unit;
+  protected CompilationUnit findCompilationUnit(String qname) {
+    // Build the initial set of compilation units.
+    Map<String, CompilationUnit> unitMap = compilationState.getCompilationUnitMap();
+    CompilationUnit unit = unitMap.get(qname);
+    while (unit == null) {
+      int pos = qname.lastIndexOf('.');
+      if (pos < 0) {
+        return null;
+      }
+      qname = qname.substring(0, pos);
+      unit = unitMap.get(qname);
     }
-
-    // Not cached, so actually look for it.
-    //
-    CompilationUnitProvider cup = sourceOracle.findCompilationUnit(logger, top);
-    if (cup == null) {
-      // Could not find the starting type.
-      //
-      String s = "Unable to find compilation unit for type '" + top + "'";
-      logger.log(TreeLogger.WARN, s, null);
-      throw new UnableToCompleteException();
-    }
-
-    // Create a cup adapter and cache it.
-    //
-    unit = new ICompilationUnitAdapter(cup);
-    unitsByTypeName.put(top, unit);
-
     return unit;
   }
 
@@ -673,20 +569,19 @@ public abstract class AbstractCompiler {
     return compiler.resolvePossiblyNestedType(typeName);
   }
 
-  SourceOracle getSourceOracle() {
-    return sourceOracle;
-  }
-
-  private String stripNestedTypeNames(String binaryTypeName) {
-    int i = binaryTypeName.lastIndexOf('.');
-    if (i == -1) {
-      i = 0;
+  private void addPackages(String packageName) {
+    if (packages.contains(packageName)) {
+      return;
     }
-    int j = binaryTypeName.indexOf('$', i);
-    if (j != -1) {
-      return binaryTypeName.substring(0, j);
-    } else {
-      return binaryTypeName;
+    while (true) {
+      packages.add(String.valueOf(packageName));
+      int pos = packageName.lastIndexOf('.');
+      if (pos > 0) {
+        packageName = packageName.substring(0, pos);
+      } else {
+        packages.add("");
+        break;
+      }
     }
   }
 }

@@ -18,30 +18,24 @@ package com.google.gwt.core.ext.linker.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.PublicResource;
+import com.google.gwt.dev.resource.Resource;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 /**
  * The standard implementation of {@link PublicResource}.
  */
 public class StandardPublicResource extends PublicResource {
-  private final URL url;
+  private final Resource resource;
 
-  public StandardPublicResource(String partialPath, URL url) {
+  public StandardPublicResource(String partialPath, Resource resource) {
     super(StandardLinkerContext.class, partialPath);
-    this.url = url;
+    this.resource = resource;
   }
 
   @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
-    try {
-      return url.openStream();
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to open file", e);
-      throw new UnableToCompleteException();
-    }
+    return resource.openContents();
   }
 }

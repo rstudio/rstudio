@@ -17,18 +17,12 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.ScriptReference;
 
-import java.net.URL;
-
 /**
  * The standard implementation of {@link ScriptReference}.
  */
 public class StandardScriptReference extends ScriptReference {
 
-  /**
-   * Might use <code>url</code>someday.
-   */
-  @SuppressWarnings("unused")
-  public StandardScriptReference(String src, URL url) {
+  public StandardScriptReference(String src) {
     super(StandardLinkerContext.class, src);
   }
 }

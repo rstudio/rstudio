@@ -18,8 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.test.MyEnum;
-import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
@@ -27,17 +26,17 @@ import junit.framework.TestCase;
  * Tests for {@link JEnumType}.
  */
 public class JEnumTypeTest extends TestCase {
-  private final TreeLogger logger = TreeLogger.NULL;
 
-  private ModuleDef moduleDef;
+  private final boolean logToConsole = false;
 
-  private final TypeOracle typeOracle;
+  private final ModuleContext moduleContext = new ModuleContext(logToConsole
+      ? new PrintWriterTreeLogger() : TreeLogger.NULL,
+      "com.google.gwt.core.ext.typeinfo.TypeOracleTest");
 
-  public JEnumTypeTest() throws UnableToCompleteException, NotFoundException {
-    moduleDef = ModuleDefLoader.loadFromClassPath(logger,
-        "com.google.gwt.core.ext.typeinfo.TypeOracleTest");
-    typeOracle = moduleDef.getTypeOracle(logger);
+  public JEnumTypeTest() throws UnableToCompleteException {
   }
+
+  private final TypeOracle typeOracle = moduleContext.getOracle();
 
   /**
    * Test method for

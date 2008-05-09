@@ -15,17 +15,19 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.jdt.ByteCodeCompiler;
-import com.google.gwt.dev.jdt.CacheManager;
-import com.google.gwt.dev.shell.JsniMethods.JsniMethod;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
+import com.google.gwt.dev.util.Jsni;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.util.tools.Utility;
 
@@ -45,7 +47,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -342,11 +343,16 @@ public final class CompilingClassLoader extends ClassLoader {
    * space (thus, they bridge across the spaces).
    */
   private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[] {
-      ShellJavaScriptHost.class, JsniMethods.class, JsniMethod.class};
+      ShellJavaScriptHost.class, GWTBridge.class};
 
   private static final boolean CLASS_DUMP = false;
 
   private static final String CLASS_DUMP_PATH = "rewritten-classes";
+
+  /**
+   * Caches the byte code for {@link JavaScriptHost}.
+   */
+  private static byte[] javaScriptHostBytes;
 
   static {
     for (Class<?> c : BRIDGE_CLASSES) {
@@ -381,30 +387,64 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
+  /**
+   * Magic: {@link JavaScriptHost} was never compiled because it's a part of the
+   * hosted mode infrastructure. However, unlike {@link #BRIDGE_CLASSES},
+   * {@code JavaScriptHost} needs a separate copy per inside the ClassLoader for
+   * each module.
+   */
+  private static void ensureJavaScriptHostBytes(TreeLogger logger)
+      throws UnableToCompleteException {
+
+    if (javaScriptHostBytes != null) {
+      return;
+    }
+
+    String className = JavaScriptHost.class.getName();
+    try {
+      String path = className.replace('.', '/') + ".class";
+      ClassLoader cl = Thread.currentThread().getContextClassLoader();
+      URL url = cl.getResource(path);
+      if (url != null) {
+        javaScriptHostBytes = getClassBytesFromStream(url.openStream());
+      } else {
+        logger.log(TreeLogger.ERROR,
+            "Could not find required bootstrap class '" + className
+                + "' in the classpath", null);
+        throw new UnableToCompleteException();
+      }
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR,
+          "Error reading class bytes for " + className, e);
+      throw new UnableToCompleteException();
+    }
+  }
+
+  private static byte[] getClassBytesFromStream(InputStream is)
+      throws IOException {
+    try {
+      byte classBytes[] = new byte[is.available()];
+      int read = 0;
+      while (read < classBytes.length) {
+        read += is.read(classBytes, read, classBytes.length - read);
+      }
+      return classBytes;
+    } finally {
+      Utility.close(is);
+    }
+  }
+
   private final HostedModeClassRewriter classRewriter;
 
-  private final ByteCodeCompiler compiler;
+  private CompilationState compilationState;
 
   private final DispatchClassInfoOracle dispClassInfoOracle = new DispatchClassInfoOracle();
 
-  private Class<?> javaScriptHostClass;
+  private Class<?> gwtClass, javaScriptHostClass;
 
   private final TreeLogger logger;
 
-  /**
-   * Stores a list of classes needing JSNI injection. This list will be cleared
-   * when the {@link #stackDepth} is <code>0</code>.
-   */
-  private final List<Class<?>> pendingJsniInjectionClasses = new ArrayList<Class<?>>();
-
   private ShellJavaScriptHost shellJavaScriptHost;
-
-  /**
-   * Used to guard against {@link ClassCircularityError}. Attempting to read
-   * class annotations for the purpose of JSNI injection while defining a class
-   * can lead to circularities; we must wait until we're at the "top of stack".
-   */
-  private int stackDepth = 0;
 
   private final TypeOracle typeOracle;
 
@@ -416,48 +456,19 @@ public final class CompilingClassLoader extends ClassLoader {
   private final Map<Integer, Object> weakJsoCache = new ReferenceMap(
       AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
 
-  public CompilingClassLoader(TreeLogger logger, ByteCodeCompiler compiler,
-      TypeOracle typeOracle, ShellJavaScriptHost javaScriptHost)
+  public CompilingClassLoader(TreeLogger logger,
+      CompilationState compilationState, ShellJavaScriptHost javaScriptHost)
       throws UnableToCompleteException {
     super(null);
     this.logger = logger;
-    this.compiler = compiler;
-    this.typeOracle = typeOracle;
+    this.compilationState = compilationState;
     this.shellJavaScriptHost = javaScriptHost;
+    this.typeOracle = compilationState.getTypeOracle();
 
     // Assertions are always on in hosted mode.
     setDefaultAssertionStatus(true);
 
-    // SPECIAL MAGIC: Prevents the compile process from ever trying to compile
-    // these guys from source, which is what we want, since they are special and
-    // neither of them would compile correctly from source.
-    // 
-    // JavaScriptHost is special because its type cannot be known to the user.
-    // It is referenced only from generated code and GWT.create.
-    //
-    for (Class<?> clazz : CacheManager.BOOTSTRAP_CLASSES) {
-      String className = clazz.getName();
-      try {
-        String path = clazz.getName().replace('.', '/').concat(".class");
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        URL url = cl.getResource(path);
-        if (url != null) {
-          byte classBytes[] = getClassBytesFromStream(url.openStream());
-          String loc = url.toExternalForm();
-          compiler.putClassBytes(logger, className, classBytes, loc);
-        } else {
-          logger.log(TreeLogger.ERROR,
-              "Could not find required bootstrap class '" + className
-                  + "' in the classpath", null);
-          throw new UnableToCompleteException();
-        }
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Error reading class bytes for "
-            + className, e);
-        throw new UnableToCompleteException();
-      }
-    }
-    compiler.removeStaleByteCode(logger);
+    ensureJavaScriptHostBytes(logger);
 
     // Create a class rewriter based on all the subtypes of the JSO class.
     JClassType jsoType = typeOracle.findType(JsValueGlue.JSO_CLASS);
@@ -574,82 +585,22 @@ public final class CompilingClassLoader extends ClassLoader {
     }
 
     // Get the bytes, compiling if necessary.
-    byte[] classBytes;
-    try {
-      ++stackDepth;
-      if (classRewriter != null && classRewriter.isJsoIntf(className)) {
-        // Generate a synthetic JSO interface class.
-        classBytes = classRewriter.writeJsoIntf(className);
-      } else {
-        // A JSO impl class needs the class bytes for the original class.
-        String lookupClassName = className;
-        if (classRewriter != null && classRewriter.isJsoImpl(className)) {
-          lookupClassName = className.substring(0, className.length() - 1);
-        }
-        classBytes = compiler.getClassBytes(logger, lookupClassName);
-        if (classRewriter != null) {
-          byte[] newBytes = classRewriter.rewrite(className, classBytes);
-          if (CLASS_DUMP) {
-            if (!Arrays.equals(classBytes, newBytes)) {
-              classDump(className, classBytes);
-            }
-          }
-          classBytes = newBytes;
-        }
-      }
-      Class<?> newClass = defineClass(className, classBytes, 0,
-          classBytes.length);
-
-      if (className.equals(JavaScriptHost.class.getName())) {
-        javaScriptHostClass = newClass;
-        updateJavaScriptHost();
-      }
-
-      return newClass;
-    } catch (UnableToCompleteException e) {
+    byte[] classBytes = findClassBytes(className);
+    if (classBytes == null) {
       throw new ClassNotFoundException(className);
-    } finally {
-      --stackDepth;
-    }
-  }
-
-  /**
-   * Overridden to process JSNI annotations.
-   */
-  @Override
-  protected synchronized Class<?> loadClass(String name, boolean resolve)
-      throws ClassNotFoundException {
-    Class<?> newClass = super.loadClass(name, resolve);
-
-    // Only real, non-local classes can have JSNI method annotations.
-    if (!newClass.isInterface() && !newClass.isLocalClass()) {
-      pendingJsniInjectionClasses.add(newClass);
     }
 
-    if (stackDepth == 0 && !pendingJsniInjectionClasses.isEmpty()) {
-      // Save a copy because this can re-enter.
-      Class<?>[] toCheck = pendingJsniInjectionClasses.toArray(new Class<?>[pendingJsniInjectionClasses.size()]);
-      pendingJsniInjectionClasses.clear();
-      for (Class<?> checkClass : toCheck) {
-        JsniMethods jsniMethods = checkClass.getAnnotation(JsniMethods.class);
-        if (jsniMethods != null) {
-          for (JsniMethod jsniMethod : jsniMethods.value()) {
-            String[] bodyParts = jsniMethod.body();
-            int size = 0;
-            for (String bodyPart : bodyParts) {
-              size += bodyPart.length();
-            }
-            StringBuilder body = new StringBuilder(size);
-            for (String bodyPart : bodyParts) {
-              body.append(bodyPart);
-            }
-            shellJavaScriptHost.createNative(jsniMethod.file(),
-                jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(),
-                body.toString());
-          }
-        }
-      }
+    Class<?> newClass = defineClass(className, classBytes, 0, classBytes.length);
+    if (className.equals(JavaScriptHost.class.getName())) {
+      javaScriptHostClass = newClass;
+      updateJavaScriptHost();
     }
+
+    if (className.equals("com.google.gwt.core.client.GWT")) {
+      gwtClass = newClass;
+      updateGwtClass();
+    }
+
     return newClass;
   }
 
@@ -662,22 +613,59 @@ public final class CompilingClassLoader extends ClassLoader {
     dispClassInfoOracle.clear();
   }
 
+  private byte[] findClassBytes(String className) {
+    if (JavaScriptHost.class.getName().equals(className)) {
+      // No need to rewrite.
+      return javaScriptHostBytes;
+    }
+
+    if (classRewriter != null && classRewriter.isJsoIntf(className)) {
+      // Generate a synthetic JSO interface class.
+      return classRewriter.writeJsoIntf(className);
+    }
+
+    // A JSO impl class needs the class bytes for the original class.
+    String lookupClassName = className.replace('.', '/');
+    if (classRewriter != null && classRewriter.isJsoImpl(className)) {
+      lookupClassName = lookupClassName.substring(0,
+          lookupClassName.length() - 1);
+    }
+
+    CompiledClass compiledClass = compilationState.getClassFileMap().get(
+        lookupClassName);
+    if (compiledClass != null) {
+      injectJsniFor(compiledClass);
+
+      byte[] classBytes = compiledClass.getBytes();
+      if (classRewriter != null) {
+        byte[] newBytes = classRewriter.rewrite(className, classBytes);
+        if (CLASS_DUMP) {
+          if (!Arrays.equals(classBytes, newBytes)) {
+            classDump(className, newBytes);
+          }
+        }
+        classBytes = newBytes;
+      }
+      return classBytes;
+    }
+    return null;
+  }
+
   private String getBinaryName(JClassType type) {
     String name = type.getPackage().getName() + '.';
     name += type.getName().replace('.', '$');
     return name;
   }
 
-  private byte[] getClassBytesFromStream(InputStream is) throws IOException {
-    try {
-      byte classBytes[] = new byte[is.available()];
-      int read = 0;
-      while (read < classBytes.length) {
-        read += is.read(classBytes, read, classBytes.length - read);
+  private void injectJsniFor(CompiledClass compiledClass) {
+    for (JsniMethod jsniMethod : compiledClass.getJsniMethods()) {
+      String body = Jsni.getJavaScriptForHostedMode(logger, jsniMethod);
+      if (body == null) {
+        // The error has been logged; just ignore it for now.
+        continue;
       }
-      return classBytes;
-    } finally {
-      Utility.close(is);
+      shellJavaScriptHost.createNative(jsniMethod.location(),
+          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
     }
   }
 
@@ -695,8 +683,47 @@ public final class CompilingClassLoader extends ClassLoader {
 
   /**
    * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
-   * sets its static 'host' field to be the specified ModuleSpace instance
-   * (which will either be this ModuleSpace or null).
+   * sets its static 'host' field to our module space.
+   * 
+   * @param moduleSpace the ModuleSpace instance to store using
+   *          JavaScriptHost.setHost().
+   * @see JavaScriptHost
+   */
+  private void updateGwtClass() {
+    if (gwtClass == null) {
+      return;
+    }
+    Throwable caught;
+    try {
+      GWTBridgeImpl bridge;
+      if (shellJavaScriptHost == null) {
+        bridge = null;
+      } else {
+        bridge = new GWTBridgeImpl(shellJavaScriptHost);
+      }
+      final Class<?>[] paramTypes = new Class[] {GWTBridge.class};
+      Method setBridgeMethod = gwtClass.getDeclaredMethod("setBridge",
+          paramTypes);
+      setBridgeMethod.setAccessible(true);
+      setBridgeMethod.invoke(gwtClass, new Object[] {bridge});
+      return;
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e.getTargetException();
+    }
+    throw new RuntimeException("Error initializing GWT bridge", caught);
+  }
+
+  /**
+   * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
+   * sets its static 'host' field to our module space.
    * 
    * @param moduleSpace the ModuleSpace instance to store using
    *          JavaScriptHost.setHost().

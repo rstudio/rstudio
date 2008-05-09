@@ -27,7 +27,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.ParseException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.dev.jdt.TypeOracleBuilder;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -81,9 +81,9 @@ public class InteractiveTypeOracle {
 
     // Build an oracle.
     //
-    TypeOracleBuilder builder = new TypeOracleBuilder();
+    TypeOracleMediator mediator = new TypeOracleMediator();
+    TypeOracle oracle = mediator.getTypeOracle();
     // TODO: add compilation units
-    TypeOracle oracle = builder.build(logger);
 
     // Create an interactive wrapper around the oracle.
     //

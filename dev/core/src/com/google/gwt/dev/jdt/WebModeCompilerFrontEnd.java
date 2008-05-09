@@ -17,6 +17,9 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.DeferredBindingSite;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
@@ -36,13 +39,13 @@ import java.util.Set;
  * Provides a reusable front-end based on the JDT compiler that incorporates
  * GWT-specific concepts such as JSNI and deferred binding.
  */
-public class WebModeCompilerFrontEnd extends AstCompiler {
+public class WebModeCompilerFrontEnd extends AbstractCompiler {
 
   private final RebindPermutationOracle rebindPermOracle;
 
-  public WebModeCompilerFrontEnd(SourceOracle sourceOracle,
+  public WebModeCompilerFrontEnd(CompilationState compilationState,
       RebindPermutationOracle rebindPermOracle) {
-    super(sourceOracle);
+    super(compilationState, false);
     this.rebindPermOracle = rebindPermOracle;
   }
 
@@ -51,17 +54,29 @@ public class WebModeCompilerFrontEnd extends AstCompiler {
       throws UnableToCompleteException {
 
     // Build the initial set of compilation units.
-    //
-    ICompilationUnit[] units = new ICompilationUnit[seedTypeNames.length];
+    Map<String, CompilationUnit> unitMap = compilationState.getCompilationUnitMap();
+    ICompilationUnit[] icus = new ICompilationUnit[seedTypeNames.length];
     for (int i = 0; i < seedTypeNames.length; i++) {
       String seedTypeName = seedTypeNames[i];
-      units[i] = getCompilationUnitForType(logger, seedTypeName);
+      CompilationUnit unit = unitMap.get(seedTypeName);
+      while (unit == null) {
+        int pos = seedTypeName.lastIndexOf('.');
+        if (pos < 0) {
+          logger.log(TreeLogger.ERROR,
+              "Unable to find compilation unit for type '" + seedTypeNames[i]
+                  + "'");
+          throw new UnableToCompleteException();
+        }
+        seedTypeName = seedTypeName.substring(0, pos);
+        unit = unitMap.get(seedTypeName);
+      }
+      icus[i] = new CompilationUnitAdapter(unit);
     }
 
     // Compile, which will pull in everything else via
     // doFindAdditionalTypesUsingMagic()
     //
-    CompilationUnitDeclaration[] cuds = compile(logger, units);
+    CompilationUnitDeclaration[] cuds = compile(logger, icus);
     return cuds;
   }
 

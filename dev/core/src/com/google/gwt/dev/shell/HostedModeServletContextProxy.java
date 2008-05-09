@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.resource.Resource;
 
 import java.io.File;
 import java.io.IOException;
@@ -172,15 +173,17 @@ class HostedModeServletContextProxy implements ServletContext {
     String partialPath = path.substring(moduleContext.length());
 
     // Try to get the resource from the application's public path
-    URL url = moduleDef.findPublicFile(partialPath);
-    if (url == null) {
-      // Otherwise try the path but rooted in the shell's output directory
-      File shellDir = new File(outDir, GWTShell.GWT_SHELL_PATH + File.separator
-          + moduleDef.getName());
-      File requestedFile = new File(shellDir, partialPath);
-      if (requestedFile.exists()) {
-        url = requestedFile.toURI().toURL();
-      }
+    Resource publicResource = moduleDef.findPublicFile(partialPath);
+    if (publicResource != null) {
+      return publicResource.getURL();
+    }
+
+    // Otherwise try the path but rooted in the shell's output directory
+    File shellDir = new File(outDir, GWTShell.GWT_SHELL_PATH + File.separator
+        + moduleDef.getName());
+    File requestedFile = new File(shellDir, partialPath);
+    if (requestedFile.exists()) {
+      return requestedFile.toURI().toURL();
     }
 
     /*
@@ -188,19 +191,16 @@ class HostedModeServletContextProxy implements ServletContext {
      * directory for the file. We'll default to using the output directory of
      * the first linker defined in the <set-linker> tab.
      */
-    if (url == null) {
-      File requestedFile = new File(new File(outDir, moduleDef.getName()),
-          partialPath);
-      if (requestedFile.exists()) {
-        try {
-          url = requestedFile.toURI().toURL();
-        } catch (MalformedURLException e) {
-          // ignore since it was speculative anyway
-        }
+    requestedFile = new File(new File(outDir, moduleDef.getName()), partialPath);
+    if (requestedFile.exists()) {
+      try {
+        return requestedFile.toURI().toURL();
+      } catch (MalformedURLException e) {
+        // ignore since it was speculative anyway
       }
     }
 
-    return url;
+    return null;
   }
 
   /**

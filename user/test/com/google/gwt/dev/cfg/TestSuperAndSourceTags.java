@@ -70,8 +70,8 @@ public abstract class TestSuperAndSourceTags extends TestCase {
   }
 
   /**
-   * Returns the logical path for a class.  This method is implemented by the 
-   * subclasses because source and super-source compute logical paths 
+   * Returns the logical path for a class. This method is implemented by the
+   * subclasses because source and super-source compute logical paths
    * differently.
    */
   protected abstract String getLogicalPath(Class<?> clazz);

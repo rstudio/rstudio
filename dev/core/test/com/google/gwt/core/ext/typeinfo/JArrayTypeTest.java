@@ -17,7 +17,6 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.test.CA;
 import com.google.gwt.core.ext.typeinfo.test.CB;
 import com.google.gwt.core.ext.typeinfo.test.MyCustomList;
 import com.google.gwt.core.ext.typeinfo.test.MyList;

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
-
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
 import java.util.Map;
@@ -338,20 +336,10 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract <T extends Annotation> T getAnnotation(
       Class<T> annotationClass);
 
-  public abstract int getBodyEnd();
-
-  public abstract int getBodyStart();
-
-  public abstract CompilationUnitProvider getCompilationUnit();
-
   public abstract JConstructor getConstructor(JType[] paramTypes)
       throws NotFoundException;
 
   public abstract JConstructor[] getConstructors();
-
-  public abstract int getDeclEnd();
-
-  public abstract int getDeclStart();
 
   public abstract JClassType getEnclosingType();
 
@@ -411,8 +399,6 @@ public abstract class JClassType extends JType implements HasAnnotations,
   public abstract JClassType[] getSubtypes();
 
   public abstract JClassType getSuperclass();
-
-  public abstract String getTypeHash() throws UnableToCompleteException;
 
   public abstract boolean isAbstract();
 
