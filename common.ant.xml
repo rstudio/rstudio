@@ -195,6 +195,19 @@
 		</sequential>
 	</macrodef>
 
+	<macrodef name="gwt.timer">
+		<attribute name="name"/>
+		<element name="timer.elements" implicit="true" optional="false"/>
+		<sequential>
+			<taskdef name="timer" 
+				classname="com.google.gwt.ant.taskdefs.Timer"
+				classpath="${gwt.build.lib}/ant-gwt.jar" />
+			<timer name="@{name}">
+				<timer.elements/>
+			</timer>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="gwt.checkstyle">
 		<element name="sourcepath" implicit="yes" optional="true" />
 		<sequential>

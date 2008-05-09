@@ -43,12 +43,14 @@
 			<targetfiles path="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}/com.google.gwt.sample.${sample.package}.${sample.module}.nocache.js" />
 			<sequential>
 				<mkdir dir="${sample.build}/www" />
-				<java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
-					<jvmarg value="-Xmx256M"/>
-					<arg value="-out" />
-					<arg file="${sample.build}/www" />
-					<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
-				</java>
+				<gwt.timer name="${sample.main}">
+					<java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+						<jvmarg value="-Xmx256M"/>
+						<arg value="-out" />
+						<arg file="${sample.build}/www" />
+						<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
+					</java>
+				</gwt.timer>
 			</sequential>
 		</outofdate>
 	</target>

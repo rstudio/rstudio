@@ -45,9 +45,17 @@
 	</target>
 
 	<target name="build" description="Builds GWT">
-		<antcall target="-do">
-			<param name="target" value="build" />
-		</antcall>
+		<gwt.timer name="all">
+			<antcall target="-do">
+				<param name="target" value="build" />
+			</antcall>
+		</gwt.timer>
+		<length property="gwt.sample.length">
+			<fileset dir="${gwt.build.out}/samples">
+				<include name="**/www/com*/**"/>
+			</fileset>
+		</length>
+		<echo message="compiled size of all samples is ${gwt.sample.length} bytes."/>
 	</target>
 
 	<target name="checkstyle" description="Static analysis of GWT source">
