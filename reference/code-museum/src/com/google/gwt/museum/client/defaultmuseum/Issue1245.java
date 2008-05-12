@@ -24,14 +24,14 @@ import com.google.gwt.user.client.ui.Widget;
  * Ugly focus ring on Tree.
  */
 public class Issue1245 extends AbstractIssue {
-  Tree t = new Tree();
+  Tree t = null;
 
   @Override
   public Widget createIssue() {
+    t = new Tree();
     t.addItem("a").addItem("a.a");
     t.addItem("b");
     t.addItem("c").addItem("c.a");
-
     return t;
   }
 

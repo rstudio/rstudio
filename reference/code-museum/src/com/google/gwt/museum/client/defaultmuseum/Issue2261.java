@@ -29,6 +29,7 @@ public class Issue2261 extends AbstractIssue {
   @Override
   public Widget createIssue() {
     DisclosurePanel disclosurePanel = new DisclosurePanel("Disclosure Panel 1");
+    disclosurePanel.setAnimationEnabled(true);
     Label content = new Label("Some content<br/><br/><br/>");
     content.setHeight("200px");
     content.getElement().getStyle().setProperty("background", "blue");

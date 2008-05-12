@@ -29,6 +29,7 @@ public class Issue2338 extends AbstractIssue {
   @Override
   public Widget createIssue() {
     Tree tree = new Tree();
+    tree.setAnimationEnabled(true);
     TreeItem root = tree.addItem("Root");
     for (int i = 0; i < 5; i++) {
       root.addItem("Item " + i);
