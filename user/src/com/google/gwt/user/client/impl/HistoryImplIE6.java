@@ -115,7 +115,9 @@ class HistoryImplIE6 extends HistoryImplFrame {
   @Override
   protected native void newItemImpl(Element historyFrame, String historyToken, boolean forceAdd) /*-{
     historyToken = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)(historyToken || "");
-    if (forceAdd || ($wnd.__gwt_historyToken != historyToken)) {
+    var encodedGwtHistoryToken = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)($wnd.__gwt_historyToken || "");
+
+    if (forceAdd || (encodedGwtHistoryToken != historyToken)) {
       var doc = historyFrame.contentWindow.document;
       doc.open();
       doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + historyToken + '</div></body></html>');
