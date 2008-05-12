@@ -19,8 +19,6 @@ import com.google.gwt.i18n.client.ConstantsWithLookup;
 
 /**
  * Internationalized constants used to demonstrate {@link ConstantsWithLookup}.
- * 
- * @gwt.RAW
  */
 public interface ColorConstants extends ConstantsWithLookup {
   String black();

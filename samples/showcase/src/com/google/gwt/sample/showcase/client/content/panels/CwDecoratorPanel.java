@@ -17,6 +17,9 @@ package com.google.gwt.sample.showcase.client.content.panels;
 
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -26,17 +29,13 @@ import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-DecoratorPanel
- * @gwt.CSS html>body .gwt-DecoratorPanel
- * @gwt.CSS * html .gwt-DecoratorPanel
  */
+@ShowcaseStyle({".gwt-DecoratorPanel", "html>body .gwt-DecoratorPanel", "* html .gwt-DecoratorPanel"})
 public class CwDecoratorPanel extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwDecoratorPanelDescription();
@@ -46,9 +45,8 @@ public class CwDecoratorPanel extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -73,9 +71,8 @@ public class CwDecoratorPanel extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a table to layout the form options

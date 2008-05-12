@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.popups;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -31,18 +34,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-DialogBox
- * @gwt.CSS html>body .gwt-DialogBox
- * @gwt.CSS * html .gwt-DialogBox
- * @gwt.CSS .cw-DialogBox
  */
+@ShowcaseStyle({".gwt-DialogBox", "html>body .gwt-DialogBox", "* html .gwt-DialogBox",
+    ".cw-DialogBox"})
 public class CwDialogBox extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwDialogBoxCaption();
@@ -66,9 +65,8 @@ public class CwDialogBox extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -93,9 +91,8 @@ public class CwDialogBox extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create the dialog box
@@ -136,8 +133,8 @@ public class CwDialogBox extends ContentWidget {
    * Create the dialog box for this example.
    * 
    * @return the new dialog box
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private DialogBox createDialogBox() {
     // Create a dialog box and set the caption text
     final DialogBox dialogBox = new DialogBox();

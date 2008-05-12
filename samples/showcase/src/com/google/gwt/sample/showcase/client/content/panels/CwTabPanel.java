@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.panels;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.DecoratedTabPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -25,18 +28,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-DecoratedTabBar
- * @gwt.CSS html>body .gwt-DecoratedTabBar
- * @gwt.CSS * html .gwt-DecoratedTabBar
- * @gwt.CSS .gwt-TabPanel
  */
+@ShowcaseStyle({".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
+    "* html .gwt-DecoratedTabBar", ".gwt-TabPanel"})
 public class CwTabPanel extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwTabPanelDescription();
@@ -52,9 +51,8 @@ public class CwTabPanel extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -79,9 +77,8 @@ public class CwTabPanel extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a tab panel

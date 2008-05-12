@@ -15,11 +15,15 @@
  */
 package com.google.gwt.sample.showcase.client;
 
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.HTTPRequest;
-import com.google.gwt.user.client.ResponseTextHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -29,6 +33,9 @@ import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -75,8 +82,6 @@ public abstract class ContentWidget extends Composite implements TabListener {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
   private CwConstants constants;
 
@@ -102,10 +107,9 @@ public abstract class ContentWidget extends Composite implements TabListener {
   private HTML sourceWidget = null;
 
   /**
-   * A boolean indicating whether or not the RPC request for the style code has
-   * been sent.
+   * A mapping of themes to style definitions.
    */
-  private boolean styleLoaded = false;
+  private Map<String, String> styleDefs = null;
 
   /**
    * The widget used to display css style.
@@ -215,10 +219,9 @@ public abstract class ContentWidget extends Composite implements TabListener {
 
       // Add style tab
       if (hasStyle()) {
+        styleDefs = new HashMap<String, String>();
         styleWidget = new HTML();
         add(styleWidget, constants.contentWidgetStyle());
-      } else {
-        styleLoaded = true;
       }
 
       // Initialize the widget and add it to the page
@@ -254,16 +257,38 @@ public abstract class ContentWidget extends Composite implements TabListener {
     // Show the associated widget in the deck panel
     deckPanel.showWidget(tabIndex);
 
-    // Send an RPC request to load the content of the tab
+    // Load the source code
     String tabHTML = getTabBar().getTabHTML(tabIndex);
     if (!sourceLoaded && tabHTML.equals(constants.contentWidgetSource())) {
       sourceLoaded = true;
-      requestFileContents("source/" + this.getClass().getName() + ".html",
-          sourceWidget, "Source code not available.");
-    } else if (!styleLoaded && tabHTML.equals(constants.contentWidgetStyle())) {
-      styleLoaded = true;
-      requestFileContents("style/" + this.getClass().getName() + ".html",
-          styleWidget, "Style not available.");
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_EXAMPLE
+          + this.getClass().getName() + ".html", sourceWidget, null);
+    }
+
+    // Load the style definitions
+    if (hasStyle() && tabHTML.equals(constants.contentWidgetStyle())) {
+      final String theme = Showcase.CUR_THEME;
+      if (styleDefs.containsKey(theme)) {
+        styleWidget.setHTML(styleDefs.get(theme));
+      } else {
+        styleDefs.put(theme, "");
+        RequestCallback callback = new RequestCallback() {
+          public void onError(Request request, Throwable exception) {
+            styleDefs.put(theme, "Style not available.");
+          }
+
+          public void onResponseReceived(Request request, Response response) {
+            styleDefs.put(theme, response.getText());
+          }
+        };
+
+        String srcPath = ShowcaseConstants.DST_SOURCE_STYLE + theme;
+        if (LocaleInfo.getCurrentLocale().isRTL()) {
+          srcPath += "_rtl";
+        }
+        requestSourceContents(srcPath + "/" + this.getClass().getName()
+            + ".html", styleWidget, callback);
+      }
     }
   }
 
@@ -290,12 +315,12 @@ public abstract class ContentWidget extends Composite implements TabListener {
   /**
    * Load the contents of a remote file into the specified widget.
    * 
-   * @param url the URL of the file
+   * @param url the URL of the file relative to the source directory in public
    * @param target the target Widget to place the contents
-   * @param errorMsg the error message to display if the request fails
+   * @param callback the callback when the call completes
    */
-  protected void requestFileContents(String url, final HTML target,
-      final String errorMsg) {
+  protected void requestSourceContents(String url, final HTML target,
+      final RequestCallback callback) {
     // Show the loading image
     if (loadingImage == null) {
       loadingImage = new Image("images/loading.gif");
@@ -305,14 +330,30 @@ public abstract class ContentWidget extends Composite implements TabListener {
     target.setHTML("&nbsp;&nbsp;" + loadingImage.toString());
 
     // Request the contents of the file
-    HTTPRequest.asyncGet(url, new ResponseTextHandler() {
-      public void onCompletion(String responseText) {
-        if (responseText.length() > 0) {
-          target.setHTML(responseText);
-        } else {
-          target.setHTML(errorMsg);
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);
+    RequestCallback realCallback = new RequestCallback() {
+      public void onError(Request request, Throwable exception) {
+        target.setHTML("Cannot find resource");
+        if (callback != null) {
+          callback.onError(request, exception);
         }
       }
-    });
+
+      public void onResponseReceived(Request request, Response response) {
+        target.setHTML(response.getText());
+        if (callback != null) {
+          callback.onResponseReceived(request, response);
+        }
+      }
+    };
+    builder.setCallback(realCallback);
+
+    // Send the request
+    Request request = null;
+    try {
+      request = builder.send();
+    } catch (RequestException e) {
+      realCallback.onError(request, e);
+    }
   }
 }

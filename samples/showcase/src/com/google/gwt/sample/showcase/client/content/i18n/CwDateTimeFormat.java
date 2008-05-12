@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -32,15 +35,13 @@ import java.util.Date;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .cw-RedText
  */
+@ShowcaseStyle(".cw-RedText")
 public class CwDateTimeFormat extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwDateTimeFormatDescription();
@@ -67,37 +68,32 @@ public class CwDateTimeFormat extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
    * The {@link Label} where the formatted value is displayed.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Label formattedBox = null;
 
   /**
    * The {@link TextBox} that displays the current pattern.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox patternBox = null;
 
   /**
    * The {@link ListBox} that holds the patterns.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private ListBox patternList = null;
 
   /**
    * The {@link TextBox} where the user enters a value.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox valueBox = null;
 
   /**
@@ -122,9 +118,8 @@ public class CwDateTimeFormat extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Use a Grid to layout the content
@@ -187,8 +182,8 @@ public class CwDateTimeFormat extends ContentWidget {
    * Show an error message. Pass in null to clear the error message.
    * 
    * @param errorMsg the error message
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void showErrorMessage(String errorMsg) {
     if (errorMsg == null) {
       formattedBox.removeStyleName("cw-RedText");
@@ -200,9 +195,8 @@ public class CwDateTimeFormat extends ContentWidget {
 
   /**
    * Update the formatted value based on the user entered value and pattern.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updateFormattedValue() {
     String sValue = valueBox.getText();
     if (!sValue.equals("")) {
@@ -221,9 +215,8 @@ public class CwDateTimeFormat extends ContentWidget {
 
   /**
    * Update the selected pattern based on the pattern in the list.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updatePattern() {
     switch (patternList.getSelectedIndex()) {
       // Date + Time

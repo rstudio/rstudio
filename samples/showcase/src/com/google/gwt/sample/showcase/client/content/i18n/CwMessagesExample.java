@@ -18,6 +18,10 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseConstants;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -32,12 +36,12 @@ import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 /**
  * Example file.
  */
+@ShowcaseRaw({"ErrorMessages.java", "ErrorMessages.properties"})
 public class CwMessagesExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwMessagesExampleArg0Label();
@@ -59,44 +63,38 @@ public class CwMessagesExample extends ContentWidget {
 
   /**
    * The {@link TextBox} where the user enters argument 0.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox arg0Box = null;
 
   /**
    * The {@link TextBox} where the user enters argument 1.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox arg1Box = null;
 
   /**
    * The {@link TextBox} where the user enters argument 2.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox arg2Box = null;
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
    * The error messages used in this example.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private ErrorMessages errorMessages = null;
 
   /**
    * The {@link HTML} used to display the message.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private HTML formattedMessage = null;
 
   /**
@@ -148,9 +146,8 @@ public class CwMessagesExample extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create the internationalized error messages
@@ -232,15 +229,15 @@ public class CwMessagesExample extends ContentWidget {
     if (!javaLoaded && tabIndex == 2) {
       // Load ErrorMessages.java
       javaLoaded = true;
-      String className = ErrorMessages.class.getName().replaceAll("_", "");
-      requestFileContents("raw/" + className + ".java.html", javaWidget,
-          "Source code not available.");
+      String className = ErrorMessages.class.getName();
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
+          + ".java.html", javaWidget, null);
     } else if (!propertiesLoaded && tabIndex == 3) {
       // Load ErrorMessages.properties
       propertiesLoaded = true;
-      String className = ErrorMessages.class.getName().replaceAll("_", "");
-      requestFileContents("raw/" + className + ".properties.html",
-          propertiesWidget, "Source code not available.");
+      String className = ErrorMessages.class.getName();
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
+          + ".properties.html", propertiesWidget, null);
     }
   }
 
@@ -259,9 +256,8 @@ public class CwMessagesExample extends ContentWidget {
 
   /**
    * Update the formatted message.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updateMessage() {
     String arg0 = arg0Box.getText().trim();
     String arg1 = arg1Box.getText().trim();

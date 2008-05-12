@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.tables;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
@@ -29,15 +32,13 @@ import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .cw-FlexTable
  */
+@ShowcaseStyle(".cw-FlexTable")
 public class CwFlexTable extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwFlexTableAddRow();
@@ -53,9 +54,8 @@ public class CwFlexTable extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -80,9 +80,8 @@ public class CwFlexTable extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a Flex Table
@@ -130,9 +129,8 @@ public class CwFlexTable extends ContentWidget {
 
   /**
    * Add a row to the flex table.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void addRow(FlexTable flexTable) {
     int numRows = flexTable.getRowCount();
     flexTable.setWidget(numRows, 0, Showcase.images.gwtLogo().createImage());
@@ -142,9 +140,8 @@ public class CwFlexTable extends ContentWidget {
 
   /**
    * Remove a row from the flex table.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void removeRow(FlexTable flexTable) {
     int numRows = flexTable.getRowCount();
     if (numRows > 1) {

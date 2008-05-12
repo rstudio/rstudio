@@ -8,6 +8,11 @@
 	<inherits name="com.google.gwt.user.Debug"/>
 	<set-property name="gwt.enableDebugId" value="true"/> 
 
+	<!-- Use a generator to create the source code -->
+	<generate-with class="com.google.gwt.sample.showcase.generator.ShowcaseGenerator">
+		<when-type-assignable class="com.google.gwt.sample.showcase.client.Showcase.GeneratorInfo" />
+	</generate-with>
+
 	<!-- Specify the app entry point class. -->
 	<entry-point class='com.google.gwt.sample.showcase.client.Showcase'/>
 

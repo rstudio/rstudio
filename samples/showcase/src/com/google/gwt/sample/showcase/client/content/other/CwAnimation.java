@@ -19,6 +19,8 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -35,9 +37,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class CwAnimation extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwAnimationDescription();
@@ -48,9 +49,8 @@ public class CwAnimation extends ContentWidget {
   /**
    * A custom animation that moves a small image around a circle in an
    * {@link AbsolutePanel}.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public class CustomAnimation extends Animation {
     /**
      * The x-coordinate of the center of the circle.
@@ -112,65 +112,56 @@ public class CwAnimation extends ContentWidget {
 
   /**
    * The absolute panel used in the example.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private AbsolutePanel absolutePanel = null;
 
   /**
    * The widget that is being animated.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Widget animateeBottom = null;
 
   /**
    * The widget that is being animated.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Widget animateeLeft = null;
 
   /**
    * The widget that is being animated.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Widget animateeRight = null;
 
   /**
    * The widget that is being animated.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Widget animateeTop = null;
 
   /**
    * The instance of an animation.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CustomAnimation animation = null;
 
   /**
    * The {@link Button} used to cancel the {@link Animation}.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Button cancelButton = null;
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
    * The {@link Button} used to start the {@link Animation}.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Button startButton = null;
 
   /**
@@ -200,9 +191,8 @@ public class CwAnimation extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a new panel
@@ -249,8 +239,8 @@ public class CwAnimation extends ContentWidget {
    * it.
    * 
    * @return the new options panel
-   * @GWT.SRC
    */
+  @ShowcaseSource
   private Widget createOptionsBar() {
     // Create a panel to move components around
     VerticalPanel optionsBar = new VerticalPanel();

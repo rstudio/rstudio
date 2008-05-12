@@ -18,6 +18,8 @@ package com.google.gwt.sample.showcase.client.content.panels;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.ui.AbsolutePanel;
@@ -42,9 +44,8 @@ import java.util.Map;
 public class CwAbsolutePanel extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwAbsolutePanelClickMe();
@@ -71,38 +72,33 @@ public class CwAbsolutePanel extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
    * The input field used to set the left position of a {@link Widget}.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox leftPosBox = null;
 
   /**
    * The list box of items that can be repositioned.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private ListBox listBox = new ListBox();
 
   /**
    * The input field used to set the top position of a {@link Widget}.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox topPosBox = null;
 
   /**
    * A mapping between the name of a {@link Widget} and the widget in the
    * {@link AbsolutePanel}.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private Map<String, Widget> widgetMap = null;
 
   /**
@@ -132,9 +128,8 @@ public class CwAbsolutePanel extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a new panel
@@ -186,8 +181,8 @@ public class CwAbsolutePanel extends ContentWidget {
    * it.
    * 
    * @return the new options panel
-   * @GWT.SRC
    */
+  @ShowcaseSource
   private Widget createOptionsBar() {
     // Create a panel to move components around
     FlexTable optionsBar = new FlexTable();
@@ -234,9 +229,8 @@ public class CwAbsolutePanel extends ContentWidget {
   /**
    * Reposition an item when the user changes the value in the top or left
    * position text boxes.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void repositionItem() {
     // Use a DeferredCommand to allow the key to take effect in the browser
     DeferredCommand.addCommand(new Command() {
@@ -261,9 +255,8 @@ public class CwAbsolutePanel extends ContentWidget {
   /**
    * Update the top and left position text fields when the user selects a new
    * item to move.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updateSelectedItem() {
     String name = listBox.getValue(listBox.getSelectedIndex());
     Widget item = widgetMap.get(name);

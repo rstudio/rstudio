@@ -70,6 +70,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.ToggleButton;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -85,6 +86,13 @@ import java.util.Map;
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class Showcase implements EntryPoint {
+  /**
+   * The type passed into the
+   * {@link com.google.gwt.sample.showcase.generator.ShowcaseGenerator}.
+   */
+  private static final class GeneratorInfo {
+  }
+
   /**
    * A special version of the ToggleButton that cannot be clicked if down. If
    * one theme button is pressed, all of the others are depressed.
@@ -133,19 +141,9 @@ public class Showcase implements EntryPoint {
   public static final ShowcaseImages images = (ShowcaseImages) GWT.create(ShowcaseImages.class);
 
   /**
-   * Link to GWT homepage.
+   * The current style theme.
    */
-  private static final String GWT_HOMEPAGE = "http://code.google.com/webtoolkit/";
-
-  /**
-   * Link to GWT examples page.
-   */
-  private static final String GWT_EXAMPLES = GWT_HOMEPAGE + "examples/";
-
-  /**
-   * The available style themes that the user can select.
-   */
-  private static final String[] STYLE_THEMES = {"default", "chrome", "dark"};
+  public static String CUR_THEME = ShowcaseConstants.STYLE_THEMES[0];
 
   /**
    * Convenience method for getting the document's head element.
@@ -223,6 +221,9 @@ public class Showcase implements EntryPoint {
    * This is the entry point method.
    */
   public void onModuleLoad() {
+    // Generate the source code and css for the examples
+    GWT.create(GeneratorInfo.class);
+
     // Create a widget to test when style sheets are loaded
     styleTester = new HTML("<div class=\"topLeftInner\"></div>");
     styleTester.setStyleName("gwt-DecoratorPanel");
@@ -254,7 +255,7 @@ public class Showcase implements EntryPoint {
     // LTR version, so both versions should use the same width for the main nav
     // menu.
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      updateStyleSheets(STYLE_THEMES[0]);
+      updateStyleSheets();
     }
 
     // Add an listener that sets the content widget when a menu item is selected
@@ -327,11 +328,11 @@ public class Showcase implements EntryPoint {
    */
   private void setupMainLinks(ShowcaseConstants constants) {
     // Link to GWT Homepage
-    app.addLink(new HTML("<a href=\"" + GWT_HOMEPAGE + "\">"
+    app.addLink(new HTML("<a href=\"" + ShowcaseConstants.GWT_HOMEPAGE + "\">"
         + constants.mainLinkHomepage() + "</a>"));
 
     // Link to More Examples
-    app.addLink(new HTML("<a href=\"" + GWT_EXAMPLES + "\">"
+    app.addLink(new HTML("<a href=\"" + ShowcaseConstants.GWT_EXAMPLES + "\">"
         + constants.mainLinkExamples() + "</a>"));
   }
 
@@ -488,12 +489,21 @@ public class Showcase implements EntryPoint {
     // Add the option to change the style
     final HorizontalPanel styleWrapper = new HorizontalPanel();
     vPanel.add(styleWrapper);
-    for (int i = 0; i < STYLE_THEMES.length; i++) {
-      final ThemeButton button = new ThemeButton(STYLE_THEMES[i]);
+    for (int i = 0; i < ShowcaseConstants.STYLE_THEMES.length; i++) {
+      final ThemeButton button = new ThemeButton(
+          ShowcaseConstants.STYLE_THEMES[i]);
       styleWrapper.add(button);
       button.addClickListener(new ClickListener() {
         public void onClick(Widget sender) {
-          updateStyleSheets(button.getTheme());
+          // Update the current theme
+          CUR_THEME = button.getTheme();
+
+          // Reload the current tab, loading the new theme if necessary
+          TabBar bar = ((TabBar) app.getContentTitle());
+          bar.selectTab(bar.getSelectedTab());
+
+          // Load the new style sheets
+          updateStyleSheets();
         }
       });
     }
@@ -519,10 +529,8 @@ public class Showcase implements EntryPoint {
 
   /**
    * Update the style sheets to reflect the current theme and direction.
-   * 
-   * @param theme the current theme
    */
-  private void updateStyleSheets(String theme) {
+  private void updateStyleSheets() {
     // Remove existing style sheets
     boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();
     Element headElem = getHeadElement();
@@ -536,8 +544,8 @@ public class Showcase implements EntryPoint {
         DOM.removeChild(headElem, elem);
 
         // Set the theme
-        for (String oldTheme : STYLE_THEMES) {
-          href = href.replaceAll("/" + oldTheme + "/", "/" + theme + "/");
+        for (String oldTheme : ShowcaseConstants.STYLE_THEMES) {
+          href = href.replaceAll("/" + oldTheme + "/", "/" + CUR_THEME + "/");
         }
 
         // Convert to an rtl suffix

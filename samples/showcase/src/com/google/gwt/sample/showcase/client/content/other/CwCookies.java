@@ -17,6 +17,8 @@ package com.google.gwt.sample.showcase.client.content.other;
 
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DeferredCommand;
@@ -38,9 +40,8 @@ import java.util.Date;
 public class CwCookies extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwCookiesDeleteCookie();
@@ -62,37 +63,32 @@ public class CwCookies extends ContentWidget {
 
   /**
    * The timeout before a cookie expires, in milliseconds. Current one year.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private static final int COOKIE_TIMOUT = 1000 * 60 * 60 * 24 * 365;
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
    * A {@link TextBox} that holds the name of the cookie.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox cookieNameBox = null;
 
   /**
    * A {@link TextBox} that holds the value of the cookie.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox cookieValueBox = null;
 
   /**
    * The {@link ListBox} containing existing cookies.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private ListBox existingCookiesBox = null;
 
   /**
@@ -122,9 +118,8 @@ public class CwCookies extends ContentWidget {
   
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create the panel used to layout the content
@@ -196,8 +191,8 @@ public class CwCookies extends ContentWidget {
    * Refresh the list of existing cookies.
    * 
    * @param selectedCookie the cookie to select by default
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void refreshExistingCookies(String selectedCookie) {
     // Clear the existing cookies
     existingCookiesBox.clear();
@@ -230,9 +225,8 @@ public class CwCookies extends ContentWidget {
 
   /**
    * Retrieve the value of the existing cookie and put it into to value label.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updateExstingCookie() {
     // Cannot update if there are no items
     if (existingCookiesBox.getItemCount() < 1) {

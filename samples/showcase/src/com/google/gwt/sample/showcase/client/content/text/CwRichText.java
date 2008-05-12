@@ -17,24 +17,23 @@ package com.google.gwt.sample.showcase.client.content.text;
 
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-RichTextArea
- * @gwt.CSS .hasRichTextToolbar
- * @gwt.CSS .gwt-RichTextToolbar
- * @gwt.CSS .cw-RichText
  */
+@ShowcaseStyle({".gwt-RichTextArea", ".hasRichTextToolbar", ".gwt-RichTextToolbar",
+    ".cw-RichText"})
 public class CwRichText extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwRichTextDescription();
@@ -44,9 +43,8 @@ public class CwRichText extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -71,9 +69,8 @@ public class CwRichText extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create the text area and toolbar

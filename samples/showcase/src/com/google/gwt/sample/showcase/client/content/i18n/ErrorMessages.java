@@ -19,7 +19,6 @@ import com.google.gwt.i18n.client.Messages;
 
 /**
  * Internationalized messages.
- * @gwt.RAW
  */
 public interface ErrorMessages extends Messages {
   String permissionDenied(String username, String securityClearance,

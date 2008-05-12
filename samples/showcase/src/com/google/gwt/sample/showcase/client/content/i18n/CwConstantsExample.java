@@ -18,6 +18,10 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseConstants;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -33,12 +37,12 @@ import java.util.Map;
 /**
  * Example file.
  */
+@ShowcaseRaw({"ExampleConstants.java", "ExampleConstants.properties"})
 public class CwConstantsExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwConstantsExampleDescription();
@@ -50,9 +54,8 @@ public class CwConstantsExample extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -104,9 +107,8 @@ public class CwConstantsExample extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create the internationalized constants
@@ -173,15 +175,15 @@ public class CwConstantsExample extends ContentWidget {
     if (!javaLoaded && tabIndex == 2) {
       // Load ErrorMessages.java
       javaLoaded = true;
-      String className = ExampleConstants.class.getName().replaceAll("_", "");
-      requestFileContents("raw/" + className + ".java.html", javaWidget,
-          "Source code not available.");
+      String className = ExampleConstants.class.getName();
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
+          + ".java.html", javaWidget, null);
     } else if (!propertiesLoaded && tabIndex == 3) {
       // Load ErrorMessages.properties
       propertiesLoaded = true;
-      String className = ExampleConstants.class.getName().replaceAll("_", "");
-      requestFileContents("raw/" + className + ".properties.html",
-          propertiesWidget, "Source code not available.");
+      String className = ExampleConstants.class.getName();
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
+          + ".properties.html", propertiesWidget, null);
     }
   }
 

@@ -17,6 +17,9 @@ package com.google.gwt.sample.showcase.client.content.lists;
 
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -26,15 +29,13 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-ListBox
  */
+@ShowcaseStyle(".gwt-ListBox")
 public class CwListBox extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String[] cwListBoxCategories();
@@ -54,9 +55,8 @@ public class CwListBox extends ContentWidget {
 
   /**
    * The data for each type of list.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private static final String[] carTypes = {
       "Acura", "Audi", "BMW", "Buick", "Chevrolet", "Dodge", "Ford", "Honda",
       "KIA", "Lexus", "Lincoln", "Mercedes", "Porsche", "Saturn", "Toyota",
@@ -64,9 +64,8 @@ public class CwListBox extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -91,9 +90,8 @@ public class CwListBox extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a panel to align the Widgets
@@ -145,8 +143,8 @@ public class CwListBox extends ContentWidget {
    * 
    * @param listBox the ListBox to add the options to
    * @param category the category index
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void showCategory(ListBox listBox, int category) {
     listBox.clear();
     String[] listData = null;

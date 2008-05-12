@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.lists;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.DecoratedStackPanel;
@@ -33,18 +36,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-DecoratedStackPanel
- * @gwt.CSS html>body .gwt-DecoratedStackPanel
- * @gwt.CSS * html .gwt-DecoratedStackPanel
- * @gwt.CSS .cw-StackPanelHeader
  */
+@ShowcaseStyle({".gwt-DecoratedStackPanel", "html>body .gwt-DecoratedStackPanel",
+    "* html .gwt-DecoratedStackPanel", ".cw-StackPanelHeader"})
 public class CwStackPanel extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String[] cwStackPanelContacts();
@@ -70,9 +69,8 @@ public class CwStackPanel extends ContentWidget {
    * We will override the leaf image used in the tree. Instead of using a blank
    * 16x16 image, we will use a blank 1x1 image so it does not take up any
    * space. Each TreeItem will use its own custom image.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public interface Images extends TreeImages {
     AbstractImagePrototype contactsgroup();
 
@@ -99,9 +97,8 @@ public class CwStackPanel extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -131,9 +128,8 @@ public class CwStackPanel extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Get the images
@@ -189,8 +185,8 @@ public class CwStackPanel extends ContentWidget {
    * @param text the header text
    * @param image the {@link AbstractImagePrototype} to add next to the header
    * @return the header as a string
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private String getHeaderString(String text, AbstractImagePrototype image) {
     // Add the image and text to a horizontal panel
     HorizontalPanel hPanel = new HorizontalPanel();

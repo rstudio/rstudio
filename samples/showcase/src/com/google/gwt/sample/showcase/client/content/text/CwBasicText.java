@@ -17,6 +17,9 @@ package com.google.gwt.sample.showcase.client.content.text;
 
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -31,17 +34,13 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-TextBox
- * @gwt.CSS .gwt-PasswordTextBox
- * @gwt.CSS .gwt-TextArea
  */
+@ShowcaseStyle({".gwt-TextBox", ".gwt-PasswordTextBox", ".gwt-TextArea"})
 public class CwBasicText extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwBasicTextAreaLabel();
@@ -61,9 +60,8 @@ public class CwBasicText extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -88,9 +86,8 @@ public class CwBasicText extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a panel to layout the widgets
@@ -136,8 +133,8 @@ public class CwBasicText extends ContentWidget {
    * @param textBox the text box to listen to
    * @param addSelection add listeners to update label
    * @return the Label that will be updated
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private HorizontalPanel createTextExample(final TextBoxBase textBox,
       boolean addSelection) {
     // Add the text box and label to a panel
@@ -178,8 +175,8 @@ public class CwBasicText extends ContentWidget {
    * 
    * @param textBox the text box
    * @param label the label to update
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updateSelectionLabel(TextBoxBase textBox, Label label) {
     label.setText(constants.cwBasicTextSelected() + ": "
         + textBox.getCursorPos() + ", " + textBox.getSelectionLength());

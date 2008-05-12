@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.popups;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
@@ -29,20 +32,16 @@ import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .gwt-PopupPanel
- * @gwt.CSS html>body .gwt-PopupPanel
- * @gwt.CSS * html .gwt-PopupPanel
- * @gwt.CSS .gwt-DecoratedPopupPanel
- * @gwt.CSS html>body .gwt-DecoratedPopupPanel
- * @gwt.CSS * html .gwt-DecoratedPopupPanel
  */
+@ShowcaseStyle({
+    ".gwt-PopupPanel", "html>body .gwt-PopupPanel", "* html .gwt-PopupPanel",
+    ".gwt-DecoratedPopupPanel", "html>body .gwt-DecoratedPopupPanel",
+    "* html .gwt-DecoratedPopupPanel"})
 public class CwBasicPopup extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwBasicPopupClickOutsideInstructions();
@@ -58,9 +57,8 @@ public class CwBasicPopup extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -85,9 +83,8 @@ public class CwBasicPopup extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a basic popup widget

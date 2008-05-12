@@ -18,6 +18,10 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseConstants;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -33,12 +37,12 @@ import java.util.MissingResourceException;
 /**
  * Example file.
  */
+@ShowcaseRaw({"ColorConstants.java", "ColorConstants.properties"})
 public class CwConstantsWithLookupExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwConstantsWithLookupExampleDescription();
@@ -58,9 +62,8 @@ public class CwConstantsWithLookupExample extends ContentWidget {
 
   /**
    * A {@link TextBox} where the user can select a color to lookup.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox colorBox = null;
 
   /**
@@ -70,16 +73,14 @@ public class CwConstantsWithLookupExample extends ContentWidget {
 
   /**
    * A {@link TextBox} where the results of the lookup are displayed.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private TextBox colorResultsBox = null;
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -131,9 +132,8 @@ public class CwConstantsWithLookupExample extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create the internationalized constants
@@ -197,15 +197,15 @@ public class CwConstantsWithLookupExample extends ContentWidget {
     if (!javaLoaded && tabIndex == 2) {
       // Load ErrorMessages.java
       javaLoaded = true;
-      String className = ColorConstants.class.getName().replaceAll("_", "");
-      requestFileContents("raw/" + className + ".java.html", javaWidget,
-          "Source code not available.");
+      String className = ColorConstants.class.getName();
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
+          + ".java.html", javaWidget, null);
     } else if (!propertiesLoaded && tabIndex == 3) {
       // Load ErrorMessages.properties
       propertiesLoaded = true;
-      String className = ColorConstants.class.getName().replaceAll("_", "");
-      requestFileContents("raw/" + className + ".properties.html",
-          propertiesWidget, "Source code not available.");
+      String className = ColorConstants.class.getName();
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
+          + ".properties.html", propertiesWidget, null);
     }
   }
 
@@ -224,9 +224,8 @@ public class CwConstantsWithLookupExample extends ContentWidget {
 
   /**
    * Lookup the color based on the value the user entered.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   private void updateColor() {
     String key = colorBox.getText().trim();
     if (key.equals("")) {

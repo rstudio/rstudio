@@ -21,7 +21,6 @@ import java.util.Map;
 
 /**
  * Internationalized constants used to demonstrate {@link Constants}.
- * @gwt.RAW
  */
 public interface ExampleConstants extends Constants {
   Map<String, String> colorMap();

@@ -75,6 +75,41 @@ public interface ShowcaseConstants extends Constants,
     CwDictionaryExample.CwConstants, CwDecoratorPanel.CwConstants,
     CwAnimation.CwConstants {
 
+  /**
+   * The path to source code for examples, raw files, and style definitions.
+   */
+  String DST_SOURCE = "gwtShowcaseSource/";
+
+  /**
+   * The destination folder for parsed source code from Showcase examples.
+   */
+  String DST_SOURCE_EXAMPLE = DST_SOURCE + "java/";
+
+  /**
+   * The destination folder for raw files that are included in entirety.
+   */
+  String DST_SOURCE_RAW = DST_SOURCE + "raw/";
+
+  /**
+   * The destination folder for parsed CSS styles used in Showcase examples.
+   */
+  String DST_SOURCE_STYLE = DST_SOURCE + "css/";
+
+  /**
+   * Link to GWT homepage.
+   */
+  String GWT_HOMEPAGE = "http://code.google.com/webtoolkit/";
+
+  /**
+   * Link to GWT examples page.
+   */
+  String GWT_EXAMPLES = GWT_HOMEPAGE + "examples/";
+
+  /**
+   * The available style themes that the user can select.
+   */
+  String[] STYLE_THEMES = {"default", "chrome", "dark"};
+
   String categoryI18N();
 
   String categoryLists();

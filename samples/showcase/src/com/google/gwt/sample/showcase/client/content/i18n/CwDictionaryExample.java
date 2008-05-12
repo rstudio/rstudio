@@ -18,6 +18,9 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.Dictionary;
 import com.google.gwt.sample.showcase.client.ContentWidget;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -27,15 +30,13 @@ import java.util.Set;
 
 /**
  * Example file.
- * 
- * @gwt.CSS .cw-DictionaryExample
  */
+@ShowcaseStyle(".cw-DictionaryExample")
 public class CwDictionaryExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String cwDictionaryExampleDescription();
@@ -47,9 +48,8 @@ public class CwDictionaryExample extends ContentWidget {
 
   /**
    * An instance of the constants.
-   * 
-   * @gwt.DATA
    */
+  @ShowcaseData
   private CwConstants constants;
 
   /**
@@ -74,9 +74,8 @@ public class CwDictionaryExample extends ContentWidget {
 
   /**
    * Initialize this example.
-   * 
-   * @gwt.SRC
    */
+  @ShowcaseSource
   @Override
   public Widget onInitialize() {
     // Create a vertical panel to layout the contents
