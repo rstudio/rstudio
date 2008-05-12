@@ -326,6 +326,16 @@ public class ResourceOracleImpl implements ResourceOracle {
           assert (path.startsWith(pathPrefix.getPrefix()));
           if (pathPrefix.shouldReroot()) {
             path = pathPrefix.getRerootedPath(path);
+            // Try to reuse the same wrapper.
+            Resource exposed = exposedResourceMap.get(path);
+            if (exposed instanceof ResourceWrapper) {
+              ResourceWrapper exposedWrapper = (ResourceWrapper) exposed;
+              if (exposedWrapper.resource == resource) {
+                externalMap.put(path, exposedWrapper);
+                break;
+              }
+            }
+            // Just create a new wrapper.
             AbstractResource wrapper = new ResourceWrapper(path, resource);
             externalMap.put(path, wrapper);
           } else {
