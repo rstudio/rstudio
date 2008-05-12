@@ -74,14 +74,7 @@
   background: url(images/hborder.png) repeat-x 0px -2003px;
   border-bottom: 2px solid #bbcdf3;
 }
-.Application-content-title .gwt-TabBarItem .top,
-.Application-content-title .gwt-TabBarItem .topLeft,
-.Application-content-title .gwt-TabBarItem .topRight,
-.Application-content-title .gwt-TabBarItem .middleLeft,
-.Application-content-title .gwt-TabBarItem .middleRight {
-  display: none;
-}
-.Application-content-title .gwt-TabBarItem .middleCenter {
+.Application-content-title .gwt-TabBarItem {
   background: none;
   padding: 0px;
 }

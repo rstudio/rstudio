@@ -467,66 +467,75 @@ html>body .gwt-MenuBarPopup .bottomRight {
 }
 
 /**
- * Applied to the decorator panel.
+ * Applied to PopupPanel.
  */
-.gwt-PopupPanel .content {
-}
-.gwt-PopupPanel .middleCenter {
+.gwt-PopupPanel {
+  border: 3px solid #C3D9FF;
   padding: 3px;
   background: white;
 }
-.gwt-PopupPanel .topCenter {
+
+/**
+ * Applied to the DecoratedPopupPanel.
+ */
+.gwt-DecoratedPopupPanel .content {
+}
+.gwt-DecoratedPopupPanel .middleCenter {
+  padding: 3px;
+  background: white;
+}
+.gwt-DecoratedPopupPanel .topCenter {
   background: url(images/hborder.png) repeat-x;
 }
-html>body .gwt-PopupPanel .bottomCenter {
+html>body .gwt-DecoratedPopupPanel .bottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
-* html .gwt-PopupPanel .bottomCenter {
+* html .gwt-DecoratedPopupPanel .bottomCenter {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-PopupPanel .middleLeft {
+.gwt-DecoratedPopupPanel .middleLeft {
   background: url(images/vborder.png) repeat-y;
 }
-html>body .gwt-PopupPanel .middleRight {
+html>body .gwt-DecoratedPopupPanel .middleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
-* html .gwt-PopupPanel .middleRight {
+* html .gwt-DecoratedPopupPanel .middleRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-PopupPanel .topLeft,
-.gwt-PopupPanel .topRight,
-.gwt-PopupPanel .bottomLeft,
-.gwt-PopupPanel .bottomRight {
+.gwt-DecoratedPopupPanel .topLeft,
+.gwt-DecoratedPopupPanel .topRight,
+.gwt-DecoratedPopupPanel .bottomLeft,
+.gwt-DecoratedPopupPanel .bottomRight {
   zoom: 1;
 }
-html>body .gwt-PopupPanel .topLeft {
+html>body .gwt-DecoratedPopupPanel .topLeft {
   width: 5px;
   height: 5px;
   background: url(images/corner.png) no-repeat 0px -10px;
 }
-html>body .gwt-PopupPanel .topRight {
+html>body .gwt-DecoratedPopupPanel .topRight {
   width: 8px;
   height: 5px;
   background: url(images/corner.png) no-repeat -5px -10px;
 }
-html>body .gwt-PopupPanel .bottomLeft {
+html>body .gwt-DecoratedPopupPanel .bottomLeft {
   width: 5px;
   height: 8px;
   background: url(images/corner.png) no-repeat 0px -15px;
 }
-html>body .gwt-PopupPanel .bottomRight {
+html>body .gwt-DecoratedPopupPanel .bottomRight {
   width: 8px;
   height: 8px;
   background: url(images/corner.png) no-repeat -5px -15px;
 }
-* html .gwt-PopupPanel .topLeftInner {
+* html .gwt-DecoratedPopupPanel .topLeftInner {
   width: 5px;
   height: 15px;
   margin-top: -10px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-PopupPanel .topRightInner {
+* html .gwt-DecoratedPopupPanel .topRightInner {
   width: 13px;
   height: 15px;
   margin-left: -5px;
@@ -534,14 +543,14 @@ html>body .gwt-PopupPanel .bottomRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-PopupPanel .bottomLeftInner {
+* html .gwt-DecoratedPopupPanel .bottomLeftInner {
   width: 5px;
   height: 23px;
   margin-top: -15px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-PopupPanel .bottomRightInner {
+* html .gwt-DecoratedPopupPanel .bottomRightInner {
   width: 13px;
   height: 23px;
   margin-left: -5px;
@@ -688,42 +697,64 @@ html>body .gwt-PopupPanel .bottomRight {
 }
 
 /**
- * Applied to the stack panel, a vertical menu widget that reveals one
- * category at a time.
+ * Applied to StackPanel.
  */
 .gwt-StackPanel {
   border-bottom: 1px solid #bbbbbb;
+}
+.gwt-StackPanel .gwt-StackPanelItem {
+  cursor: pointer;
+  cursor: hand;
+  font-weight: bold;
+  font-size: 1.3em;
+  padding: 3px;
+  border: 1px solid #bbbbbb;
+  border-bottom: 0px;
+  background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
 }
 .gwt-StackPanel .gwt-StackPanelContent {
   border: 1px solid #bbbbbb;
   border-bottom: 0px;
   background: white;
+  padding: 2px 2px 10px 5px;
+}
+
+/**
+ * Applied to DecoratedStackPanel.
+ */
+.gwt-DecoratedStackPanel {
+  border-bottom: 1px solid #bbbbbb;
+}
+.gwt-DecoratedStackPanel .gwt-StackPanelContent {
+  border: 1px solid #bbbbbb;
+  border-bottom: 0px;
+  background: white;
   padding: 2px 5px 10px 2px;
 }
-.gwt-StackPanelItem {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem {
   cursor: pointer;
   cursor: hand;
 }
-.gwt-StackPanelItem .topLeft,
-.gwt-StackPanelItem .topRight {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
   height: 6px;
   width: 6px;
   zoom: 1;
 }
-html>body .gwt-StackPanelItem .topLeft {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft {
   background: #d3def6 url(images/corner.png) no-repeat 0px -49px;
   border-left: 1px solid #bbbbbb;
 }
-html>body .gwt-StackPanelItem .topRight {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
   background: #d3def6 url(images/corner.png) no-repeat -6px -49px;
   border-right: 1px solid #bbbbbb;
 }
-.gwt-StackPanelItem .topLeftInner,
-.gwt-StackPanelItem .topRightInner {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
   width: 1px;
   height: 1px;
 }
-* html .gwt-StackPanelItem .topLeftInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner {
   width: 6px;
   height: 55px;
   margin-top: -49px;
@@ -732,7 +763,7 @@ html>body .gwt-StackPanelItem .topRight {
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-StackPanelItem .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
   width: 12px;
   height: 55px;
   margin-top: -49px;
@@ -742,46 +773,46 @@ html>body .gwt-StackPanelItem .topRight {
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
 }
-.gwt-StackPanelItem .topCenter {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topCenter {
   background: url(images/hborder.png) 0px -21px repeat-x;
 }
-.gwt-StackPanelItem .middleLeft {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeft {
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
   border-left: 1px solid #bbbbbb;
 }
-.gwt-StackPanelItem .middleLeftInner,
-.gwt-StackPanelItem .middleRightInner {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeftInner,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRightInner {
   width: 1px;
   height: 1px;
 }
-.gwt-StackPanelItem .middleRight {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRight {
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
   border-right: 1px solid #bbbbbb;
 }
-.gwt-StackPanelItem .middleCenter {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleCenter {
   font-weight: bold;
   font-size: 1.3em;
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
 }
-html>body .gwt-StackPanelItem-first .topRight,
-html>body .gwt-StackPanelItem-first .topLeft {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRight,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeft {
   border: 0px;
   background-color: white;
 }
-html>body .gwt-StackPanelItem-below-selected .topLeft,
-html>body .gwt-StackPanelItem-below-selected .topRight {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeft,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRight {
   background-color: white;
 }
-* html .gwt-StackPanelItem-first .topLeftInner,
-* html .gwt-StackPanelItem-first .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRightInner {
   border: 0px;
   background-color: white;
 }
-* html .gwt-StackPanelItem-first .topLeftInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner {
   padding-right: 1px;
 }
-* html .gwt-StackPanelItem-below-selected .topLeftInner,
-* html .gwt-StackPanelItem-below-selected .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRightInner {
   background-color: white;
 }
 
@@ -875,10 +906,8 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
 }
 
 /**
- * Applied to the tab panel.  The tab panel provides CSS access to
- * the tab bar element and the table cell that wraps the tab bar element,
- * which allows for rounded edges via the sliding window method.
- */ 
+ * Applied to TabPanel.
+ */
 .gwt-TabBar {
 }
 .gwt-TabBar .gwt-TabBarFirst {
@@ -887,57 +916,8 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
 .gwt-TabBar .gwt-TabBarRest {
 }
 .gwt-TabBar .gwt-TabBarItem {
-  border-collapse: collapse;
-  margin-right: 6px;
-}
-.gwt-TabBar .gwt-TabBarItem .topCenter {
-  padding: 0px;
-  background: #d0e4f6;
-}
-.gwt-TabBar .gwt-TabBarItem .topLeft,
-.gwt-TabBar .gwt-TabBarItem .topRight {
-  padding: 0px;
-  zoom: 1;
-}
-.gwt-TabBar .gwt-TabBarItem .topLeftInner,
-.gwt-TabBar .gwt-TabBarItem .topRightInner {
-  width: 6px;
-  height: 6px;
-}
-html>body .gwt-TabBar .gwt-TabBarItem .topLeft {
-  background: url(images/corner.png) no-repeat 0px -55px;
-}
-html>body .gwt-TabBar .gwt-TabBarItem .topRight {
-  background: url(images/corner.png) no-repeat -6px -55px;
-}
-* html .gwt-TabBar .gwt-TabBarItem .topLeftInner {
-  width: 5px;
-  height: 61px;
-  margin-top: -55px;
-  overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
-}
-* html .gwt-TabBar .gwt-TabBarItem .topRightInner {
-  width: 12px;
-  height: 61px;
-  margin-top: -55px;
-  margin-left: -6px;
-  overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
-}
-.gwt-TabBar .gwt-TabBarItem .middleLeft,
-.gwt-TabBar .gwt-TabBarItem .middleRight {
-  width: 6px;
-  padding: 0px;
-  background: #d0e4f6;
-}
-.gwt-StackPanelItem .middleLeftInner,
-.gwt-StackPanelItem .middleRightInner {
-  width: 1px;
-  height: 1px;
-}
-.gwt-TabBar .gwt-TabBarItem .middleCenter {
-  padding: 0px 4px 2px 4px;
+  margin-left: 6px;
+  padding: 3px 6px 3px 6px;
   cursor: pointer;
   cursor: hand;
   color: black;
@@ -945,38 +925,11 @@ html>body .gwt-TabBar .gwt-TabBarItem .topRight {
   text-align: center;
   background: #d0e4f6;
 }
-.gwt-TabBar .gwt-TabBarItem-selected .topCenter {
-  background: #92c1f0;
-}
-html>body .gwt-TabBar .gwt-TabBarItem-selected .topLeft {
-  background-position: 0px -61px;
-}
-html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
-  background-position: -6px -61px;
-}
-* html .gwt-TabBar .gwt-TabBarItem-selected .topLeftInner {
-  width: 5px;
-  height: 67px;
-  margin-top: -61px;
-  overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
-}
-* html .gwt-TabBar .gwt-TabBarItem-selected .topRightInner {
-  width: 12px;
-  height: 67px;
-  margin-top: -61px;
-  margin-left: -6px;
-  overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
-}
-.gwt-TabBar .gwt-TabBarItem-selected .middleLeft,
-.gwt-TabBar .gwt-TabBarItem-selected .middleRight {
-  background: #92c1f0;
-}
-.gwt-TabBar .gwt-TabBarItem-selected .middleCenter {
+.gwt-TabBar .gwt-TabBarItem-selected {
   cursor: default;
   background: #92c1f0;
-}
+} 
+
 .gwt-TabPanel {
 }
 .gwt-TabPanelBottom {
@@ -985,6 +938,108 @@ html>body .gwt-TabBar .gwt-TabBarItem-selected .topRight {
   border-width: 3px 2px 2px;
   overflow: hidden;
   padding: 6px;
+}
+
+/**
+ * Applied to DecoratedTabPanel.
+ */ 
+.gwt-DecoratedTabBar {
+}
+.gwt-DecoratedTabBar .gwt-TabBarFirst {
+  width: 5px;  /* first tab distance from the left */
+}
+.gwt-DecoratedTabBar .gwt-TabBarRest {
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem {
+  border-collapse: collapse;
+  margin-right: 6px;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .topCenter {
+  padding: 0px;
+  background: #d0e4f6;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .topLeft,
+.gwt-DecoratedTabBar .gwt-TabBarItem .topRight {
+  padding: 0px;
+  zoom: 1;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .topLeftInner,
+.gwt-DecoratedTabBar .gwt-TabBarItem .topRightInner {
+  width: 6px;
+  height: 6px;
+}
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem .topLeft {
+  background: url(images/corner.png) no-repeat 0px -55px;
+}
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem .topRight {
+  background: url(images/corner.png) no-repeat -6px -55px;
+}
+* html .gwt-DecoratedTabBar .gwt-TabBarItem .topLeftInner {
+  width: 5px;
+  height: 61px;
+  margin-top: -55px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratedTabBar .gwt-TabBarItem .topRightInner {
+  width: 12px;
+  height: 61px;
+  margin-top: -55px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .middleLeft,
+.gwt-DecoratedTabBar .gwt-TabBarItem .middleRight {
+  width: 6px;
+  padding: 0px;
+  background: #d0e4f6;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .middleLeftInner,
+.gwt-DecoratedTabBar .gwt-TabBarItem .middleRightInner {
+  width: 1px;
+  height: 1px;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .middleCenter {
+  padding: 0px 4px 2px 4px;
+  cursor: pointer;
+  cursor: hand;
+  color: black;
+  font-weight: bold;
+  text-align: center;
+  background: #d0e4f6;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .topCenter {
+  background: #92c1f0;
+}
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topLeft {
+  background-position: 0px -61px;
+}
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRight {
+  background-position: -6px -61px;
+}
+* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topLeftInner {
+  width: 5px;
+  height: 67px;
+  margin-top: -61px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRightInner {
+  width: 12px;
+  height: 67px;
+  margin-top: -61px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='default/images/corner.png',sizingMethod='crop');
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleLeft,
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleRight {
+  background: #92c1f0;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleCenter {
+  cursor: default;
+  background: #92c1f0;
 }
 
 /**

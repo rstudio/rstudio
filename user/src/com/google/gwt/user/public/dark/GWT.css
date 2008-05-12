@@ -430,66 +430,75 @@ html>body .gwt-MenuBarPopup .bottomRight {
 }
 
 /**
- * Applied to the decorator panel.
+ * Applied to PopupPanel.
  */
-.gwt-PopupPanel .content {
-}
-.gwt-PopupPanel .middleCenter {
+.gwt-PopupPanel {
+  border: 3px solid #222222;
   padding: 3px;
   background: #4D4D4D;
 }
-.gwt-PopupPanel .topCenter {
+
+/**
+ * Applied to the DecoratedPopupPanel.
+ */
+.gwt-DecoratedPopupPanel .content {
+}
+.gwt-DecoratedPopupPanel .middleCenter {
+  padding: 3px;
+  background: #4D4D4D;
+}
+.gwt-DecoratedPopupPanel .topCenter {
   background: url(images/hborder.png) repeat-x;
 }
-html>body .gwt-PopupPanel .bottomCenter {
+html>body .gwt-DecoratedPopupPanel .bottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
-* html .gwt-PopupPanel .bottomCenter {
+* html .gwt-DecoratedPopupPanel .bottomCenter {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
 }
-.gwt-PopupPanel .middleLeft {
+.gwt-DecoratedPopupPanel .middleLeft {
   background: url(images/vborder.png) repeat-y;
 }
-html>body .gwt-PopupPanel .middleRight {
+html>body .gwt-DecoratedPopupPanel .middleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
-* html .gwt-PopupPanel .middleRight {
+* html .gwt-DecoratedPopupPanel .middleRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
 }
-.gwt-PopupPanel .topLeft,
-.gwt-PopupPanel .topRight,
-.gwt-PopupPanel .bottomLeft,
-.gwt-PopupPanel .bottomRight {
+.gwt-DecoratedPopupPanel .topLeft,
+.gwt-DecoratedPopupPanel .topRight,
+.gwt-DecoratedPopupPanel .bottomLeft,
+.gwt-DecoratedPopupPanel .bottomRight {
   zoom: 1;
 }
-html>body .gwt-PopupPanel .topLeft {
+html>body .gwt-DecoratedPopupPanel .topLeft {
   width: 5px;
   height: 5px;
   background: url(images/corner.png) no-repeat 0px -10px;
 }
-html>body .gwt-PopupPanel .topRight {
+html>body .gwt-DecoratedPopupPanel .topRight {
   width: 8px;
   height: 5px;
   background: url(images/corner.png) no-repeat -5px -10px;
 }
-html>body .gwt-PopupPanel .bottomLeft {
+html>body .gwt-DecoratedPopupPanel .bottomLeft {
   width: 5px;
   height: 8px;
   background: url(images/corner.png) no-repeat 0px -15px;
 }
-html>body .gwt-PopupPanel .bottomRight {
+html>body .gwt-DecoratedPopupPanel .bottomRight {
   width: 8px;
   height: 8px;
   background: url(images/corner.png) no-repeat -5px -15px;
 }
-* html .gwt-PopupPanel .topLeftInner {
+* html .gwt-DecoratedPopupPanel .topLeftInner {
   width: 5px;
   height: 15px;
   margin-top: -10px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-PopupPanel .topRightInner {
+* html .gwt-DecoratedPopupPanel .topRightInner {
   width: 13px;
   height: 15px;
   margin-left: -5px;
@@ -497,14 +506,14 @@ html>body .gwt-PopupPanel .bottomRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-PopupPanel .bottomLeftInner {
+* html .gwt-DecoratedPopupPanel .bottomLeftInner {
   width: 5px;
   height: 23px;
   margin-top: -15px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-PopupPanel .bottomRightInner {
+* html .gwt-DecoratedPopupPanel .bottomRightInner {
   width: 13px;
   height: 23px;
   margin-left: -5px;
@@ -650,11 +659,20 @@ html>body .gwt-PopupPanel .bottomRight {
 }
 
 /**
- * Applied to the stack panel, a vertical menu widget that reveals one
- * category at a time.
+ * Applied to StackPanel.
  */
 .gwt-StackPanel {
   border-bottom: 1px solid #000;
+}
+.gwt-StackPanel .gwt-StackPanelItem {
+  cursor: pointer;
+  cursor: hand;
+  font-weight: bold;
+  font-size: 1.3em;
+  padding: 4px;
+  border: 1px solid #000;
+  border-bottom: 0px;
+  background: #222;
 }
 .gwt-StackPanel .gwt-StackPanelContent {
   border: 1px solid #000;
@@ -662,18 +680,33 @@ html>body .gwt-PopupPanel .bottomRight {
   background: #666;
   padding: 2px 2px 10px 5px;
 }
-.gwt-StackPanelItem {
+
+/**
+ * Applied to DecoratedStackPanel.
+ */
+.gwt-DecoratedStackPanel {
+  border-bottom: 1px solid #000;
+}
+.gwt-DecoratedStackPanel .gwt-StackPanelContent {
+  border: 1px solid #000;
+  border-bottom: 0px;
+  background: #666;
+  padding: 2px 2px 10px 5px;
+}
+.gwt-DecoratedStackPanel .gwt-StackPanelItem {
   cursor: pointer;
   cursor: hand;
+  font-weight: bold;
+  font-size: 1.3em;
   padding: 4px;
   border: 1px solid #000;
   border-bottom: 0px;
   background: #222;
 }
-.gwt-StackPanelItem .topLeft,
-.gwt-StackPanelItem .topRight,
-.gwt-StackPanelItem .topLeftInner,
-.gwt-StackPanelItem .topRightInner {
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner,
+.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
   display: none;
 }
 
@@ -767,10 +800,8 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
 }
 
 /**
- * Applied to the tab panel.  The tab panel provides CSS access to
- * the tab bar element and the table cell that wraps the tab bar element,
- * which allows for rounded edges via the sliding window method.
- */ 
+ * Applied to TabPanel.
+ */
 .gwt-TabBar {
 }
 .gwt-TabBar .gwt-TabBarFirst {
@@ -779,16 +810,7 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
 .gwt-TabBar .gwt-TabBarRest {
 }
 .gwt-TabBar .gwt-TabBarItem {
-  border-collapse: collapse;
   margin-left: 6px;
-}
-.gwt-TabBar .gwt-TabBarItem .topLeft,
-.gwt-TabBar .gwt-TabBarItem .topRight,
-.gwt-TabBar .gwt-TabBarItem .topLeftInner,
-.gwt-TabBar .gwt-TabBarItem .topRightInner {
-  display: none;
-}
-.gwt-TabBar .gwt-TabBarItem .middleCenter {
   padding: 4px 6px;
   cursor: pointer;
   cursor: hand;
@@ -797,10 +819,11 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   text-align: center;
   background: #222;
 }
-.gwt-TabBar .gwt-TabBarItem-selected .middleCenter {
+.gwt-TabBar .gwt-TabBarItem-selected {
   cursor: default;
   background: #000;
-}
+} 
+
 .gwt-TabPanel {
 }
 .gwt-TabPanelBottom {
@@ -809,6 +832,40 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   border-width: 3px 2px 2px;
   overflow: hidden;
   padding: 6px;
+}
+
+/**
+ * Applied to DecoratedTabPanel.
+ */ 
+.gwt-DecoratedTabBar {
+}
+.gwt-DecoratedTabBar .gwt-TabBarFirst {
+  width: 5px;  /* first tab distance from the left */
+}
+.gwt-DecoratedTabBar .gwt-TabBarRest {
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem {
+  border-collapse: collapse;
+  margin-left: 6px;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .topLeft,
+.gwt-DecoratedTabBar .gwt-TabBarItem .topRight,
+.gwt-DecoratedTabBar .gwt-TabBarItem .topLeftInner,
+.gwt-DecoratedTabBar .gwt-TabBarItem .topRightInner {
+  display: none;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem .middleCenter {
+  padding: 4px 6px;
+  cursor: pointer;
+  cursor: hand;
+  color: #bec7cc;
+  font-weight: bold;
+  text-align: center;
+  background: #222;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleCenter {
+  cursor: default;
+  background: #000;
 }
 
 /**
