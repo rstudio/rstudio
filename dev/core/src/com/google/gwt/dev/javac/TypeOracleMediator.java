@@ -348,10 +348,7 @@ public class TypeOracleMediator {
       throws UnableToCompleteException {
     PerfLogger.start("TypeOracleMediator.refresh");
     typeOracle.removeInvalidatedTypes();
-    binaryMapper.clear();
-    sourceMapper.clear();
-    tvMapper.clear();
-    unresolvedTypes.clear();
+    clear();
 
     // Perform a shallow pass to establish identity for new and old types.
     PerfLogger.start("TypeOracleMediator.refresh (shallow)");
@@ -390,6 +387,7 @@ public class TypeOracleMediator {
         }
       }
     }
+    clear();
     PerfLogger.end();
 
     try {
@@ -400,6 +398,13 @@ public class TypeOracleMediator {
     }
 
     PerfLogger.end();
+  }
+
+  private void clear() {
+    binaryMapper.clear();
+    sourceMapper.clear();
+    tvMapper.clear();
+    unresolvedTypes.clear();
   }
 
   private Object createAnnotationInstance(TreeLogger logger,
