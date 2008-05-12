@@ -353,10 +353,11 @@ public class ModuleDef implements PublicOracle {
       throws UnableToCompleteException {
     PerfLogger.start("ModuleDef.refresh");
 
-    // Refresh the public path.
+    // Refresh resource oracles.
     lazyPublicOracle.refresh(logger);
+    lazySourceOracle.refresh(logger);
 
-    // Refreshes source internally.
+    // Update the compilation state to reflect the resource oracle changes.
     compilationState.refresh();
 
     // Refresh type oracle if needed.
