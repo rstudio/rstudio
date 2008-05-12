@@ -208,6 +208,17 @@ public final class ApplicationCreator extends ToolBase {
     }
 
     {
+      // Create a skeleton css file
+      File publicCSS = Utility.createNormalFile(publicDir, className + ".css",
+          overwrite, ignore);
+      if (publicCSS != null) {
+        String out = Utility.getFileFromClassPath(PACKAGE_PATH
+            + "AppCss.csssrc");
+        Utility.writeTemplateFile(publicCSS, out, replacements);
+      }
+    }
+
+    {
       // Create a skeleton Application class
       File javaClass = Utility.createNormalFile(clientDir, className + ".java",
           overwrite, ignore);

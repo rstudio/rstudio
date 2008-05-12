@@ -5,6 +5,8 @@
 
 	<!-- Specify the app entry point class.                   -->
 	<entry-point class='@clientPackage.@className'/>
+    
+    <!-- Style sheet information -->
 
       <!-- Include the default GWT style sheet.  You can change -->
       <!-- the theme of your GWT application by uncommenting    -->
@@ -12,4 +14,9 @@
       <stylesheet src='default/GWT.css'/>
       <!-- <stylesheet src='chrome/GWT.css'/> -->
       <!-- <stylesheet src='dark/GWT.css'/> -->
+      
+      
+      <!-- Specify the application specific style sheet.        -->
+      <stylesheet src='@className.css' />
+	
 </module>
