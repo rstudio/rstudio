@@ -490,7 +490,9 @@ public class JUnitShell extends GWTShell {
 
   void compileForWebMode(String moduleName, String userAgentString)
       throws UnableToCompleteException {
-    ModuleDef module = doLoadModule(getTopLogger(), moduleName);
+    // Never fresh during JUnit.
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(getTopLogger(),
+        moduleName, false);
     if (userAgentString != null) {
       Properties props = module.getProperties();
       Property userAgent = props.find("user.agent");

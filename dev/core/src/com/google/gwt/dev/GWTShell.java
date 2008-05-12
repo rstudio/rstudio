@@ -57,6 +57,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -280,9 +281,12 @@ public class GWTShell extends ToolBase {
      * @return the loaded module
      * @throws UnableToCompleteException
      */
-    private ModuleDef loadModule(final String moduleName, TreeLogger logger)
+    private ModuleDef loadModule(String moduleName, TreeLogger logger)
         throws UnableToCompleteException {
-      ModuleDef moduleDef = doLoadModule(logger, moduleName);
+      boolean assumeFresh = !alreadySeenModules.contains(moduleName);
+      ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger,
+          moduleName, !assumeFresh);
+      alreadySeenModules.add(moduleName);
       assert (moduleDef != null) : "Required module state is absent";
       return moduleDef;
     }
@@ -363,6 +367,14 @@ public class GWTShell extends ToolBase {
   protected final Display display = Display.getDefault();
 
   protected File outDir;
+
+  /**
+   * Cheat on the first load's refresh by assuming the module loaded by
+   * {@link com.google.gwt.dev.shell.GWTShellServlet} is still fresh. This
+   * prevents a double-refresh on startup. Subsequent refreshes will trigger a
+   * real refresh.
+   */
+  private Set<String> alreadySeenModules = new HashSet<String>();
 
   private BrowserWidgetHostImpl browserHost = new BrowserWidgetHostImpl();
 
@@ -652,16 +664,6 @@ public class GWTShell extends ToolBase {
    */
   protected Type doGetDefaultLogLevel() {
     return Type.INFO;
-  }
-
-  /**
-   * Loads a named module. This method can be overridden if the module def needs
-   * to be tweaked (or even created) programmatically -- JUnit integration does
-   * this, for example.
-   */
-  protected ModuleDef doLoadModule(TreeLogger logger, final String moduleName)
-      throws UnableToCompleteException {
-    return ModuleDefLoader.loadFromClassPath(logger, moduleName);
   }
 
   /**
