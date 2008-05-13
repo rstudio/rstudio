@@ -191,17 +191,18 @@ public final class Utility {
   }
 
   /**
-   * Gets the contents of a file from the class path as a string.
+   * Gets the contents of a file from the class path as a String. Note: this
+   * method is only guaranteed to work for resources in the same class loader
+   * that contains this {@link Utility} class.
    * 
-   * @param partialPath the partial path to the resource from this class's class
-   *          file
+   * @param partialPath the partial path to the resource on the class path
    * @return the contents of the file
    * @throws IOException if the file could not be found or an error occurred
    *           while reading it
    */
   public static String getFileFromClassPath(String partialPath)
       throws IOException {
-    InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+    InputStream in = Utility.class.getClassLoader().getResourceAsStream(
         partialPath);
     try {
       if (in == null) {
@@ -279,8 +280,7 @@ public final class Utility {
       if (override == null) {
         String partialPath = Utility.class.getName().replace('.', '/').concat(
             ".class");
-        URL url = Thread.currentThread().getContextClassLoader().getResource(
-            partialPath);
+        URL url = Utility.class.getClassLoader().getResource(partialPath);
         if (url != null && "jar".equals(url.getProtocol())) {
           String path = url.toString();
           String jarPath = path.substring(path.indexOf("file:"),
