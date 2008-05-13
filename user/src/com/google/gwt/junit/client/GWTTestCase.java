@@ -42,6 +42,20 @@ public abstract class GWTTestCase extends TestCase {
   protected TestResult testResult = null;
 
   /**
+   * A new instance of your subclass is constructed for each test method that is
+   * to be run. You should avoid running code in your subclass constructor,
+   * initializer blocks, and field initializations, because if those code blocks
+   * must be runnable outside of the GWT environment. As an example of what
+   * could go wrong if you run code there, trying to run a JSNI method could
+   * generate an {@link UnsatisfiedLinkError}, and trying to call
+   * {@link com.google.gwt.core.client.GWT#create(Class)} could throw an
+   * {@link UnsupportedOperationException}.Instead, override
+   * {@link #gwtSetUp()} and perform any initialization code there.
+   */
+  public GWTTestCase() {
+  }
+
+  /**
    * Add a checkpoint message to the current test. If this test fails, all
    * checkpoint messages will be appended to the getException description. This
    * can be useful in web mode for determining how far test execution progressed
@@ -179,6 +193,24 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
+   * A replacement for JUnit's {@link #setUp()} method. This method runs once
+   * per test method in your subclass, just before your each test method runs
+   * and can be used to perform initialization. Override this method instead of
+   * {@link #setUp()}.
+   */
+  protected void gwtSetUp() throws Exception {
+  }
+
+  /**
+   * A replacement for JUnit's {@link #tearDown()} method. This method runs once
+   * per test method in your subclass, just after your each test method runs and
+   * can be used to perform cleanup. Override this method instead of
+   * {@link #tearDown()}.
+   */
+  protected void gwtTearDown() throws Exception {
+  }
+
+  /**
    * Runs the test via the {@link JUnitShell} environment. Do not override or
    * call this method.
    */
@@ -188,11 +220,31 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   /**
+   * This method has been made final to prevent you from accidentally running
+   * client code outside of the GWT environment. Please override
+   * {@link #gwtSetUp()} instead.
+   */
+  @Override
+  protected final void setUp() throws Exception {
+    // implemented in the translatable version of this class
+  }
+
+  /**
    * Returns true if this test case supports asynchronous mode. By default, this
    * is set to true.
    */
   protected boolean supportsAsync() {
     return true;
+  }
+
+  /**
+   * This method has been made final to prevent you from accidentally running
+   * client code outside of the GWT environment. Please override
+   * {@link #gwtTearDown()} instead.
+   */
+  @Override
+  protected void tearDown() throws Exception {
+    // implemented in the translatable version of this class
   }
 
 }

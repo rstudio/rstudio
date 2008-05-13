@@ -30,7 +30,7 @@ public abstract class TestTreeMap extends TestMap {
 
   protected TreeMap map = null;
 
-  public void setUp() {
+  public void gwtSetUp() {
     map = (TreeMap) makeEmptyMap();
   }
 

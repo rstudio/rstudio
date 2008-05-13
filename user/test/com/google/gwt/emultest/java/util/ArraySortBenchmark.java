@@ -130,13 +130,12 @@ public class ArraySortBenchmark extends Benchmark {
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected void gwtSetUp() throws Exception {
     /*
      * Since the RNG available in web mode cannot accept a seed for reproducible
      * reports we use a simple pseudorandom sequence here. Its only purpose is
      * to reasonably shuffle the data.
      */
-    super.setUp();
     initByteArray = new byte[MAX_ARRAY_SIZE + SUBARRAY_SKIP];
     for (int i = 0; i < MAX_ARRAY_SIZE + SUBARRAY_SKIP; i++) {
       initByteArray[i] = (byte) (i * 31 + 17);

@@ -46,6 +46,10 @@ public class GWTTest extends GWTTestCase {
     }
   }
 
+  public GWTTest() {
+    jvmTests();
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.core.Core";
@@ -83,11 +87,8 @@ public class GWTTest extends GWTTestCase {
   }
 
   @Override
-  protected void setUp() {
-    if (GWT.isClient()) {
-      assertTrue(canCallNativeMethod());
-    } else {
-      jvmTests();
-    }
+  protected void gwtSetUp() {
+    assertTrue(GWT.isClient());
+    assertTrue(canCallNativeMethod());
   }
 }

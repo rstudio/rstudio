@@ -1825,9 +1825,8 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   }
 
   @Override
-  protected void setUp() throws Exception {
+  protected void gwtSetUp() throws Exception {
     setComparator(null);
-    super.setUp();
   }
 
   Map<K, V> createMap() {

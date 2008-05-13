@@ -221,9 +221,25 @@ public abstract class GWTTestCase extends TestCase {
           "This test case does not support asynchronous mode.");
     }
   }
-  
+
+  protected void gwtSetUp() throws Exception {
+  }
+
+  protected void gwtTearDown() throws Exception {
+  }
+
+  @Override
+  protected final void setUp() throws Exception {
+    gwtSetUp();
+  }
+
   protected boolean supportsAsync() {
     return true;
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    gwtTearDown();
   }
 
   /**
