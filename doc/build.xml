@@ -10,19 +10,20 @@
 	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
 	<property name="USER_PKGS"
-          value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.linker;com.google.gwt.core.ext.typeinfo;com.google.gwt.dom.client;com.google.gwt.i18n.client;com.google.gwt.i18n.rebind.format;com.google.gwt.i18n.rebind.keygen;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client;com.google.gwt.junit.viewer.client" />
+          value="com.google.gwt.core.client;com.google.gwt.core.ext;com.google.gwt.core.ext.linker;com.google.gwt.core.ext.typeinfo;com.google.gwt.dom.client;com.google.gwt.i18n.client;com.google.gwt.i18n.rebind.format;com.google.gwt.i18n.rebind.keygen;com.google.gwt.json.client;com.google.gwt.junit.client;com.google.gwt.benchmarks.client;com.google.gwt.user.client;com.google.gwt.user.client.rpc;com.google.gwt.user.client.ui;com.google.gwt.user.server.rpc;com.google.gwt.xml.client;com.google.gwt.http.client" />
 	<property name="LANG_PKGS" value="java.lang;java.lang.annotation;java.util;java.io" />
 
 	<!--
 		*** Note that if the USER_SOURCE_PATH paths are updated,
-		the fileset dependencies in the outofdate tags in the doc,
-		user, and javadoc targets must be updated as well.
+		the fileset dependencies in the outofdate tags in the
+		javadoc target must be updated as well.
 	-->
 	<path id="USER_SOURCE_PATH">
 		<pathelement location="${gwt.root}/user/src" />
 		<pathelement location="${gwt.root}/user/javadoc" />
 		<pathelement location="${gwt.root}/user/super" />
 		<pathelement location="${gwt.root}/dev/core/src" />
+		<pathelement location="${gwt.root}/dev/core/super" />
 	</path>
 
 	<path id="USER_CLASS_PATH">
@@ -53,6 +54,9 @@
 					<include name="**/*.java" />
 				</fileset>
 				<fileset dir="${gwt.root}/dev/core/src">
+					<include name="**/*.java" />
+				</fileset>
+				<fileset dir="${gwt.root}/dev/core/super">
 					<include name="**/*.java" />
 				</fileset>
 			</sourcefiles>
