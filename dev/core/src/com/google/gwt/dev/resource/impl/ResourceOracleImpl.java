@@ -51,7 +51,7 @@ public class ResourceOracleImpl implements ResourceOracle {
         "Resource '$0' is being shadowed by another resource higher in the classpath having the same name; this one will not be used");
 
     static final Message1String NEW_RESOURCE_FOUND = new Message1String(
-        TreeLogger.TRACE, "Found new resource: $0");
+        TreeLogger.DEBUG, "Found new resource: $0");
 
     static final Message0 NO_RESOURCES_CHANGED = new Message0(TreeLogger.DEBUG,
         "No resources changed");
@@ -125,7 +125,7 @@ public class ResourceOracleImpl implements ResourceOracle {
       } else if (f.isFile() && f.getName().endsWith(".jar")) {
         return new JarFileClassPathEntry(new JarFile(f));
       } else {
-        logger.log(TreeLogger.WARN, "Unexpected error reading classpath; " + f
+        logger.log(TreeLogger.INFO, "Unexpected entry in classpath; " + f
             + " is neither a directory nor a jar");
         return null;
       }
