@@ -171,7 +171,9 @@ public class GWTShellServlet extends HttpServlet {
 
     // If the module is renamed, substitute the renamed module name
     ModuleDef moduleDef = loadedModulesByName.get(moduleName);
-    moduleName = moduleDef.getName();
+    if (moduleDef != null) {
+      moduleName = moduleDef.getName();
+    }
 
     if (partialPath == null) {
       // Redir back to the same URL but ending with a slash.
