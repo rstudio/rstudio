@@ -151,13 +151,14 @@ public class LowLevel {
   /**
    * Snatches a field from an object to which we do not have access.
    */
-  public static Object snatchFieldObjectValue(Class<?> victimClass,
+  @SuppressWarnings("unchecked")
+  public static <T> T snatchFieldObjectValue(Class<?> victimClass,
       Object victimObject, String fieldName) {
     Throwable rethrow = null;
     try {
       Field victimField = victimClass.getDeclaredField(fieldName);
       victimField.setAccessible(true);
-      return victimField.get(victimObject);
+      return (T) victimField.get(victimObject);
     } catch (IllegalArgumentException e) {
       rethrow = e;
     } catch (SecurityException e) {

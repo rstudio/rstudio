@@ -108,7 +108,7 @@ public class CaptionPanel extends Composite implements HasWidgets {
   /**
    * Constructs a CaptionPanel with specified caption text.
    * 
-   * @param caption the text of the caption, which is automatically escaped
+   * @param captionText the text of the caption, which is automatically escaped
    */
   public CaptionPanel(String captionText) {
     this(captionText, false);

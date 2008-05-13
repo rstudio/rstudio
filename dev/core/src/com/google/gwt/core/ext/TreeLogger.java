@@ -250,18 +250,16 @@ public abstract class TreeLogger {
   public abstract boolean isLoggable(TreeLogger.Type type);
 
   /**
-   * Calls
-   * {@link #log(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
-   * with a <code>null</code> <code>caught</code> and <code>helpInfo</code>.
+   * Calls {@link #log(TreeLogger.Type, String, Throwable, HelpInfo)} with a
+   * <code>null</code> <code>caught</code> and <code>helpInfo</code>.
    */
   public final void log(TreeLogger.Type type, String msg) {
     log(type, msg, null, null);
   }
 
   /**
-   * Calls
-   * {@link #log(com.google.gwt.core.ext.TreeLogger.Type, String, Throwable, com.google.gwt.core.ext.TreeLogger.HelpInfo)
-   * with a <code>null</code> <code>helpInfo</code>.
+   * Calls {@link #log(TreeLogger.Type, String, Throwable, HelpInfo)} with a
+   * <code>null</code> <code>helpInfo</code>.
    */
   public final void log(TreeLogger.Type type, String msg, Throwable caught) {
     log(type, msg, caught, null);

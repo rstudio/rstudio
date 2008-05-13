@@ -16,7 +16,7 @@
 package com.google.gwt.benchmarks.client;
 
 /**
- * A mathematical operator used in {@link Range}s to indicate the stepping
+ * A mathematical operator used in {@link IntRange}s to indicate the stepping
  * function.
  */
 public final class Operator {

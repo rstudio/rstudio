@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,14 +28,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Vector;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 /**
  * An extension to the Ant Tar task that supports slurping in other tar files
  * without loss of information (such as permissions or symlinks). It behaves in
  * all respects like the basic Tar task, but adds the nested element
- * &lt;includetar&gt; which declares another tar file whose <i>contents</i>
+ * {@code <includetar>} which declares another tar file whose <i>contents</i>
  * should be added to the file being created.
  * 
  * In addition to preserving permissions and symlinks no matter what the host
@@ -50,17 +51,17 @@ import java.util.zip.GZIPInputStream;
  * Example use:
  * 
  * <pre>
- * <taskdef name="tar.cat"
+ * &lt;taskdef name="tar.cat"
  *     classname="com.google.gwt.ant.taskdefs.TarCat"
- *     classpath="${gwt.build.lib}/ant-gwt.jar" />
- * <tar.cat destfile="foo.tar.gz" compression="gzip" longfile="gnu">
- *   <!-- all normal tar attributes and elements supported -->
- *   <tarfileset dir="foo/src">
- *     <include name="*.class" />
- *   </tarfileset>
- *   <!-- tar.cat adds the ability to directly slurp in other tar files -->
- *   <includetar src="bar.tar.gz" compression="gzip" prefix="bar/" />
- * </tar.cat>
+ *     classpath="${gwt.build.lib}/ant-gwt.jar" /&gt;
+ * &lt;tar.cat destfile="foo.tar.gz" compression="gzip" longfile="gnu"&gt;
+ *   &lt;!-- all normal tar attributes and elements supported --&gt;
+ *   &lt;tarfileset dir="foo/src"&gt;
+ *     &lt;include name="*.class" /&gt;
+ *   &lt;/tarfileset&gt;
+ *   &lt;!-- tar.cat adds the ability to directly slurp in other tar files --&gt;
+ *   &lt;includetar src="bar.tar.gz" compression="gzip" prefix="bar/" /&gt;
+ * &lt;/tar.cat&gt;
  * </pre>
  */
 public class TarCat extends Tar {
@@ -75,17 +76,19 @@ public class TarCat extends Tar {
     private UntarCompressionMethod compression = new UntarCompressionMethod();
 
     /**
-     * An association from a super Tar to a derived TarCat.
+     * This instance's peer object that is a member of {@link TarCat}'s
+     * superclass.
      */
-    private TarFileSet wrapper;
+    private TarFileSet peer;
 
     /**
      * Constructs a new IncludeTar.
      * 
-     * @param wrapper the association from a super Tar to a derived TarExt
+     * @param peer this instance's peer object that is a member of
+     *          {@link TarCat}'s superclass
      */
-    public IncludeTar(TarFileSet wrapper) {
-      this.wrapper = wrapper;
+    public IncludeTar(TarFileSet peer) {
+      this.peer = peer;
     }
 
     /**
@@ -111,7 +114,7 @@ public class TarCat extends Tar {
      * @param prefix the path prefix.
      */
     public void setPrefix(String prefix) {
-      wrapper.setPrefix(prefix);
+      peer.setPrefix(prefix);
     }
 
     /**
@@ -120,7 +123,7 @@ public class TarCat extends Tar {
      * @param tarFile the tar file to read
      */
     public void setSrc(File tarFile) {
-      wrapper.setFile(tarFile);
+      peer.setFile(tarFile);
     }
   }
 
@@ -165,17 +168,12 @@ public class TarCat extends Tar {
   }
 
   /**
-   * The set of tars to include in this tar operation.
+   * A map to the set of {@link IncludeTar}s from their peer objects.
    */
-  Vector includeTars = new Vector();
+  private final Map<TarFileSet, IncludeTar> peerMap = new IdentityHashMap<TarFileSet, IncludeTar>();
 
   /**
-   * A set of tarfileset wrappers mapped to includeTars.
-   */
-  Vector includeTarWrappers = new Vector();
-
-  /**
-   * Creates a TarExt task instance.
+   * Creates a task instance.
    */
   public TarCat() {
   }
@@ -185,26 +183,29 @@ public class TarCat extends Tar {
    */
   public IncludeTar createIncludeTar() {
     /*
-     * Create a dummy tarfileset to hold our own includeTars and add it to the
-     * super class. This is how we get the super class to call us back during
-     * execution.
+     * Create a peer TarFileSet corresponding to one of our own IncludeTars.
+     * This causes the superclass to call us back during execution.
      */
-    TarFileSet wrapper = super.createTarFileSet();
-    IncludeTar includeTar = new IncludeTar(wrapper);
-    includeTars.addElement(includeTar);
-    includeTarWrappers.add(wrapper);
+    TarFileSet peer = super.createTarFileSet();
+    IncludeTar includeTar = new IncludeTar(peer);
+    peerMap.put(peer, includeTar);
     return includeTar;
   }
 
   protected void tarFile(File file, TarOutputStream tOut, String vPath,
       TarFileSet tarFileSet) throws IOException {
-    // See if it's one of ours
-    int index = includeTarWrappers.indexOf(tarFileSet);
-    if (index < 0) {
+    if (!peerMap.containsKey(tarFileSet)) {
+      // Not one of ours, punt to superclass.
       super.tarFile(file, tOut, vPath, tarFileSet);
       return;
     }
-    IncludeTar includeTar = (IncludeTar) includeTars.get(index);
+
+    IncludeTar includeTar = peerMap.get(tarFileSet);
+    String prefix = tarFileSet.getPrefix();
+    if (prefix.length() > 0 && !prefix.endsWith("/")) {
+      // '/' is appended for compatibility with the zip task.
+      prefix = prefix + "/";
+    }
     TarInputStream tIn = null;
     try {
       tIn = new TarInputStream(includeTar.compression.decompress(file,
@@ -222,11 +223,6 @@ public class TarCat extends Tar {
           vPath += "/";
         }
 
-        String prefix = tarFileSet.getPrefix();
-        // '/' is appended for compatibility with the zip task.
-        if (prefix.length() > 0 && !prefix.endsWith("/")) {
-          prefix = prefix + "/";
-        }
         vPath = prefix + vPath;
 
         te.setName(vPath);
@@ -245,15 +241,14 @@ public class TarCat extends Tar {
         tOut.closeEntry();
       }
 
-    } catch (IOException ioe) {
-      throw new BuildException("Error while expanding " + file.getPath(), ioe,
+    } catch (IOException e) {
+      throw new BuildException("Error while expanding " + file.getPath(), e,
           getLocation());
     } finally {
       if (tIn != null) {
         try {
           tIn.close();
-        } catch (IOException e) {
-          // ignore
+        } catch (IOException ignored) {
         }
       }
     }

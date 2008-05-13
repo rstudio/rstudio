@@ -71,7 +71,7 @@ public class OrderCheck extends Check {
    * List of Declaration States. This is necessary due to inner classes that
    * have their own state.
    */
-  private final Stack classScopes = new Stack();
+  private final Stack<ScopeState> classScopes = new Stack<ScopeState>();
 
   /**
    * Previous method name, used for alphabetical ordering.
@@ -174,7 +174,7 @@ public class OrderCheck extends Check {
    * @return whether the state or visibility modifiers have changed
    */
   private boolean checkState(DetailAST aAST, int curState, String type) {
-    ScopeState scope = (ScopeState) classScopes.peek();
+    ScopeState scope = classScopes.peek();
     if (scope.state > curState) {
       log(aAST, type + " in wrong order.");
       // Wrong type implies at least a temporary state switch.

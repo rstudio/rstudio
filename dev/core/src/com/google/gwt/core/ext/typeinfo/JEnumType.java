@@ -24,19 +24,6 @@ import java.util.List;
 public class JEnumType extends JRealClassType {
   private JEnumConstant[] lazyEnumConstants;
 
-  /**
-   * @param oracle
-   * @param cup
-   * @param declaringPackage
-   * @param enclosingType
-   * @param isLocalType
-   * @param name
-   * @param declStart
-   * @param declEnd
-   * @param bodyStart
-   * @param bodyEnd
-   * @param isInterface
-   */
   public JEnumType(TypeOracle oracle, JPackage declaringPackage,
       JClassType enclosingType, boolean isLocalType, String name,
       boolean isInterface) {

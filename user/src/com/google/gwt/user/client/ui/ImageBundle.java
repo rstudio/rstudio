@@ -36,7 +36,7 @@ import java.lang.annotation.Target;
  * the bundle. Each method must take no parameters and must have a return type
  * of
  * {@link com.google.gwt.user.client.ui.AbstractImagePrototype AbstractImagePrototype}.
- * The image name can optionally be specified using the {@link @Resource}
+ * The image name can optionally be specified using the {@link Resource}
  * annotation. (Note that the <code>gwt.resource</code> javadoc metadata tag
  * supporting in GWT 1.4 has been superceded by the <code>Resource</code>
  * annotation.) Valid image name extensions are <code>png</code>,

@@ -100,7 +100,7 @@ public final class JavaScriptException extends RuntimeException {
   private final String name;
 
   /**
-   * @param exception
+   * @param e the object caught in JavaScript that triggered the exception
    */
   public JavaScriptException(Object e) {
     super(constructMessage(e));

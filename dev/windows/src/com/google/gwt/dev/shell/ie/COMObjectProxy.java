@@ -70,8 +70,8 @@ class COMObjectProxy extends COMObject {
     this.target = victim;
 
     // Get the COMObject ObjectMap so that we can hijack the target's slot.
-    Map<Integer, COMObject> objectMap = (Map<Integer, COMObject>) LowLevel.snatchFieldObjectValue(COMObject.class,
-        null, "ObjectMap");
+    Map<Integer, COMObject> objectMap = LowLevel.snatchFieldObjectValue(
+        COMObject.class, null, "ObjectMap");
     Integer ppVtableTarget = new Integer(target.getAddress());
 
     // First, make sure that the target is still actually in the map.

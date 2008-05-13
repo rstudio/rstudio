@@ -928,7 +928,7 @@ public class DOM {
    * less than zero, or greater than or equal to the length of the list, then
    * the option element will be appended to the end of the list.
    * 
-   * @param select the <code>&lt;select&gt;</code> element
+   * @param selectElem the <code>&lt;select&gt;</code> element
    * @param item the text of the new item; cannot be <code>null</code>
    * @param value the <code>value</code> attribute for the new
    *          <code>&lt;option&gt;</code>; cannot be <code>null</code>

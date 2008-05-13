@@ -169,7 +169,7 @@ public interface Messages extends LocalizableResource {
   /**
    * Default text to be used if no translation is found (and also used as the
    * source for translation). Format should be that expected by
-   * {@link MessageFormat}.
+   * {@link java.text.MessageFormat}.
    * 
    * <p>Example:
    * <code><pre>
