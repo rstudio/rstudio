@@ -112,7 +112,7 @@ public class JsniRef {
   private final String[] paramTypes;
   private final String paramTypesString;
 
-  private JsniRef(String className, String memberName, String paramTypesString,
+  protected JsniRef(String className, String memberName, String paramTypesString,
       String[] paramTypes) {
     this.className = className;
     this.memberName = memberName;
