@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 /**
  * A parsed Java reference from within a JSNI method.
  */
-public final class JsniRef {
+public class JsniRef {
 
   /**
    * A regex pattern for a Java reference in JSNI code. Its groups are:
