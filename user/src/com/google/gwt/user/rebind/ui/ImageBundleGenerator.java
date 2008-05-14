@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -455,7 +456,9 @@ public class ImageBundleGenerator extends Generator {
       if (imgNameAnn == null) {
         // There is JavaDoc metadata but no annotation.
         imgFileName = imgNameJavaDoc;
-        logger.log(TreeLogger.WARN, MSG_JAVADOC_FORM_DEPRECATED, null);
+        if (GenUtil.warnAboutMetadata()) {
+          logger.log(TreeLogger.WARN, MSG_JAVADOC_FORM_DEPRECATED, null);
+        }
       } else {
         // There is both JavaDoc metadata and an annotation.
         logger.log(TreeLogger.WARN, MSG_MULTIPLE_ANNOTATIONS, null);

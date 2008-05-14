@@ -32,6 +32,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.generator.ast.ForLoop;
 import com.google.gwt.dev.generator.ast.MethodCall;
 import com.google.gwt.dev.generator.ast.Statement;
@@ -240,9 +241,11 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   public void writeSource() throws UnableToCompleteException {
     super.writeSource();
 
-    deprecationBranch = logger.branch(TreeLogger.TRACE,
-        "Scanning Benchmarks for deprecated annotations; please see "
-            + BENCHMARK_CLASS + " for more information", null);
+    if (GenUtil.warnAboutMetadata()) {
+      deprecationBranch = logger.branch(TreeLogger.TRACE,
+          "Scanning Benchmarks for deprecated annotations; please see "
+              + BENCHMARK_CLASS + " for more information", null);
+    }
 
     generateEmptyFunc(getSourceWriter());
     implementZeroArgTestMethods();
@@ -491,10 +494,12 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       return getAnnotationMetaData(method, bound);
     }
 
-    deprecationBranch.log(TreeLogger.WARN, "Deprecated use of "
-        + BENCHMARK_PARAM_META + " at " + method.getEnclosingType() + " in "
-        + method + "; please use the new Benchmark JDK 1.5 annotations in "
-        + "com.google.gwt.benchmark.client", null);
+    if (deprecationBranch != null) {
+      deprecationBranch.log(TreeLogger.WARN, "Deprecated use of "
+          + BENCHMARK_PARAM_META + " at " + method.getEnclosingType() + " in "
+          + method + "; please use the new Benchmark JDK 1.5 annotations in "
+          + "com.google.gwt.benchmark.client", null);
+    }
 
     Map<String, String> params = new HashMap<String, String>();
 

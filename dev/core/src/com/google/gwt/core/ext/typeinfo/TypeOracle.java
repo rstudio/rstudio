@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.generator.GenUtil;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -640,12 +641,14 @@ public class TypeOracle {
   }
 
   private void consumeTypeArgMetaData(TreeLogger logger) {
-    logger = logger.branch(
-        TreeLogger.DEBUG,
-        "Scanning source for uses of the deprecated "
-            + TAG_TYPEARGS
-            + " javadoc annotation; please use Java parameterized types instead",
-        null);
+    if (GenUtil.warnAboutMetadata()) {
+      logger = logger.branch(
+          TreeLogger.DEBUG,
+          "Scanning source for uses of the deprecated "
+              + TAG_TYPEARGS
+              + " javadoc annotation; please use Java parameterized types instead",
+          null);
+    }
     consumeTypeArgMetaData(logger, getTypes());
   }
 
@@ -693,10 +696,12 @@ public class TypeOracle {
         String[] token = tokensArray[tokensArray.length - 1];
         JType resultingType = determineActualType(branch, fieldType, token, 0);
 
-        branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
-            + " for field " + field.getName() + "; Please use "
-            + resultingType.getParameterizedQualifiedSourceName()
-            + " as the field's type", null);
+        if (GenUtil.warnAboutMetadata()) {
+          branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
+              + " for field " + field.getName() + "; Please use "
+              + resultingType.getParameterizedQualifiedSourceName()
+              + " as the field's type", null);
+        }
 
         field.setType(resultingType);
       } catch (UnableToCompleteException e) {
@@ -747,10 +752,12 @@ public class TypeOracle {
                   param.getType(), tokens, 1);
               param.setType(resultingType);
 
-              branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
-                  + " for parameter " + param.getName() + "; Please use "
-                  + resultingType.getParameterizedQualifiedSourceName()
-                  + " as the parameter's type", null);
+              if (GenUtil.warnAboutMetadata()) {
+                branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
+                    + " for parameter " + param.getName() + "; Please use "
+                    + resultingType.getParameterizedQualifiedSourceName()
+                    + " as the parameter's type", null);
+              }
               paramsAlreadySet.add(param);
             } else {
               // This parameter type has already been set.
@@ -768,10 +775,12 @@ public class TypeOracle {
                   method.getReturnType(), tokens, 0);
               method.setReturnType(resultingType);
 
-              branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
-                  + " for the return type; Please use "
-                  + resultingType.getParameterizedQualifiedSourceName()
-                  + " as the method's return type", null);
+              if (GenUtil.warnAboutMetadata()) {
+                branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
+                    + " for the return type; Please use "
+                    + resultingType.getParameterizedQualifiedSourceName()
+                    + " as the method's return type", null);
+              }
               returnTypeHandled = true;
             } else {
               // The return type has already been set.

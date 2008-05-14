@@ -16,6 +16,7 @@
 package com.google.gwt.user.rebind.ui;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ui.ImageBundleBuilder.HasRect;
@@ -231,7 +232,9 @@ public class ImageBundleGeneratorTest extends TestCase {
    */
   public void testResourceNotFoundGivenLegacyJavaDoc() {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    if (GenUtil.warnAboutMetadata()) {
+      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    }
     b.expectError(
         ImageBundleGenerator.msgCannotFindImageFromMetaData("from/metadata/notfound.png"),
         null);
@@ -274,10 +277,12 @@ public class ImageBundleGeneratorTest extends TestCase {
   public void testResourcesFoundFromImageBundleInDefaultPackage()
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    // Due to [2] below
-    b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-    // Due to [4] below
-    b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    if (GenUtil.warnAboutMetadata()) {
+      // Due to [2] below
+      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+      // Due to [4] below
+      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    }
     UnitTestTreeLogger logger = b.createLogger();
 
     {
@@ -336,10 +341,12 @@ public class ImageBundleGeneratorTest extends TestCase {
   public void testResourcesFoundFromImageBundleInNonDefaultPackage()
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    // Due to [2] below
-    b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-    // Due to [4] below
-    b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    if (GenUtil.warnAboutMetadata()) {
+      // Due to [2] below
+      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+      // Due to [4] below
+      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    }
     UnitTestTreeLogger logger = b.createLogger();
 
     {
@@ -412,7 +419,9 @@ public class ImageBundleGeneratorTest extends TestCase {
    */
   public void testWarnOnUseOfLegacyJavaDoc() throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    if (GenUtil.warnAboutMetadata()) {
+      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
+    }
     UnitTestTreeLogger logger = b.createLogger();
 
     String imgName = getImageName(logger, new String[] {

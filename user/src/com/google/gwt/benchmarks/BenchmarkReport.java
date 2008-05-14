@@ -436,7 +436,7 @@ public class BenchmarkReport {
   private <T extends HasMetaData & HasAnnotations> String getBenchmarkCategory(
       TreeLogger deprecationBranch, T element) {
     String category = getSimpleMetaData(element, GWT_BENCHMARK_CATEGORY);
-    if (category != null) {
+    if (category != null && deprecationBranch != null) {
       deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_CATEGORY + " has "
           + "been deprecated with no replacement.", null);
     }
@@ -471,7 +471,8 @@ public class BenchmarkReport {
     String categoryDescription = getSimpleMetaData(categoryType,
         GWT_BENCHMARK_DESCRIPTION);
 
-    if (categoryName != null || categoryDescription != null) {
+    if ((categoryName != null || categoryDescription != null)
+        && deprecationBranch != null) {
       deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_NAME + " and "
           + GWT_BENCHMARK_DESCRIPTION + " have been deprecated with no "
           + "replacement", null);

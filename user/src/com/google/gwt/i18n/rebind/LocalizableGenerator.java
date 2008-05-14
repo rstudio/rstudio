@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.Messages;
@@ -107,9 +108,12 @@ public class LocalizableGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    TreeLogger deprecatedLogger = logger.branch(TreeLogger.TRACE,
-        "Checking for deprecated metadata", null);
-    
+    TreeLogger deprecatedLogger = null;
+    if (GenUtil.warnAboutMetadata()) {
+      deprecatedLogger = logger.branch(TreeLogger.TRACE,
+          "Checking for deprecated metadata", null);
+    }
+
     // Link current locale and interface type to correct implementation class.
     String generatedClass = AbstractLocalizableImplCreator.generateConstantOrMessageClass(
         logger, deprecatedLogger , context, locale, targetClass);

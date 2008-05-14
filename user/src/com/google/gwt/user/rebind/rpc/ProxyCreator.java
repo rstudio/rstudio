@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.http.client.Request;
@@ -99,11 +100,13 @@ class ProxyCreator {
       throws UnableToCompleteException {
     TypeOracle typeOracle = context.getTypeOracle();
 
-    TreeLogger javadocAnnotationDeprecationBranch = logger.branch(
-        TreeLogger.TRACE,
-        "Scanning this RemoteService for deprecated annotations; "
-            + "Please see " + RemoteServiceRelativePath.class.getName()
-            + " for more information.", null);
+    TreeLogger javadocAnnotationDeprecationBranch = null;
+    if (GenUtil.warnAboutMetadata()) {
+      javadocAnnotationDeprecationBranch = logger.branch(TreeLogger.TRACE,
+          "Scanning this RemoteService for deprecated annotations; "
+              + "Please see " + RemoteServiceRelativePath.class.getName()
+              + " for more information.", null);
+    }
 
     JClassType serviceAsync = typeOracle.findType(serviceIntf.getQualifiedSourceName()
         + "Async");
@@ -373,9 +376,11 @@ class ProxyCreator {
       TreeLogger javadocAnnotationDeprecationBranch) {
     String[][] metaData = serviceIntf.getMetaData(ENTRY_POINT_TAG);
     if (metaData.length != 0) {
-      javadocAnnotationDeprecationBranch.log(TreeLogger.WARN,
-          "Deprecated use of " + ENTRY_POINT_TAG + "; Please use "
-              + RemoteServiceRelativePath.class.getName() + " instead", null);
+      if (javadocAnnotationDeprecationBranch != null) {
+        javadocAnnotationDeprecationBranch.log(TreeLogger.WARN,
+            "Deprecated use of " + ENTRY_POINT_TAG + "; Please use "
+                + RemoteServiceRelativePath.class.getName() + " instead", null);
+      }
       return metaData[0][0];
     } else {
       RemoteServiceRelativePath moduleRelativeURL = serviceIntf.getAnnotation(RemoteServiceRelativePath.class);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -337,9 +337,11 @@ abstract class AbstractLocalizableImplCreator extends
    * @param method method to warn about
    */
   void warnOnMetadata(JMethod method) {
-    deprecatedLogger.log(TreeLogger.WARN, "Deprecated metadata found on "
-        + method.getEnclosingType().getSimpleSourceName() + "."
-        + method.getName() + ";svn use annotations instead", null);
+    if (deprecatedLogger != null) {
+      deprecatedLogger.log(TreeLogger.WARN, "Deprecated metadata found on "
+          + method.getEnclosingType().getSimpleSourceName() + "."
+          + method.getName() + ";svn use annotations instead", null);
+    }
   }
 
 }
