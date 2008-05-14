@@ -43,7 +43,7 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-PopupPanel { the outside of the popup }</li>
- * <li>.gwt-PopupPanel .content { the wrapper around the content }</li>
+ * <li>.gwt-PopupPanel .popupContent { the wrapper around the content }</li>
  * </ul>
  */
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
@@ -269,7 +269,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // an undefined location if it is shown before its position is set.
     setPopupPosition(0, 0);
     setStyleName(DEFAULT_STYLENAME);
-    setStyleName(getContainerElement(), "content");
+    setStyleName(getContainerElement(), "popupContent");
   }
 
   /**

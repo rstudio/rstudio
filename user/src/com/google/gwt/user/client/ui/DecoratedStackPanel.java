@@ -30,17 +30,34 @@ import com.google.gwt.user.client.Element;
  * <li>.gwt-DecoratedStackPanel .gwt-StackPanelItem-selected { selected items }</li>
  * <li>.gwt-DecoratedStackPanel .gwt-StackPanelContent { the wrapper around the
  * contents of the item }</li>
- * <li>.gwt-DecoratedStackPanel .topLeft { top left corner of the item}</li>
- * <li>.gwt-DecoratedStackPanel .topCenter { top center of the item}</li>
- * <li>.gwt-DecoratedStackPanel .topRight { top right corner of the item}</li>
- * <li>.gwt-DecoratedStackPanel .middleLeft { left side of the item }</li>
- * <li>.gwt-DecoratedStackPanel .middleCenter { center of the item, where the
- * item text resides }</li>
- * <li>.gwt-DecoratedStackPanel .middleRight { right side of the item }</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemTopLeft { top left corner of the
+ * item}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemTopLeftInner { the inner element of
+ * the cell}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemTopCenter { top center of the item}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemTopCenterInner { the inner element of
+ * the cell}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemTopRight { top right corner of the
+ * item}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemTopRightInner { the inner element of
+ * the cell}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemMiddleLeft { left side of the item }</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemMiddleLeftInner { the inner element
+ * of the cell}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemMiddleCenter { center of the item,
+ * where the item text resides }</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemMiddleCenterInner { the inner element
+ * of the cell}</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemMiddleRight { right side of the item }</li>
+ * <li>.gwt-DecoratedStackPanel .stackItemMiddleRightInner { the inner element
+ * of the cell}</li>
  * </ul>
  */
 public class DecoratedStackPanel extends StackPanel {
   public static final String DEFAULT_STYLENAME = "gwt-DecoratedStackPanel";
+
+  private static final String[] DEFAULT_ROW_STYLENAMES = {
+      "stackItemTop", "stackItemMiddle"};
 
   /**
    * Creates an empty decorated stack panel.
@@ -60,11 +77,10 @@ public class DecoratedStackPanel extends StackPanel {
     DOM.setElementPropertyInt(table, "cellSpacing", 0);
     DOM.setElementPropertyInt(table, "cellPadding", 0);
 
-    // Add the top row
-    DOM.appendChild(tbody, DecoratorPanel.createTR("top"));
-
-    // Add the middle row
-    DOM.appendChild(tbody, DecoratorPanel.createTR("middle"));
+    // Add the decorated rows
+    for (int i = 0; i < DEFAULT_ROW_STYLENAMES.length; i++) {
+      DOM.appendChild(tbody, DecoratorPanel.createTR(DEFAULT_ROW_STYLENAMES[i]));
+    }
 
     // Return the table
     return table;

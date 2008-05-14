@@ -38,7 +38,7 @@ public class MenuItemSeparator extends UIObject {
     // Add an inner element for styling purposes
     Element div = DOM.createDiv();
     DOM.appendChild(getElement(), div);
-    setStyleName(div, "content");
+    setStyleName(div, "menuSeparatorInner");
   }
 
   /**

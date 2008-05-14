@@ -81,6 +81,33 @@ import java.util.List;
  * <li>.gwt-SuggestBoxPopup { the suggestion popup }</li>
  * <li>.gwt-SuggestBoxPopup .item { an unselected suggestion }</li>
  * <li>.gwt-SuggestBoxPopup .item-selected { a selected suggestion }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeft { the top left cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenter { the top center cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopRight { the top right cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopRightInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft { the middle left cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter { the middle center cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner { the inner element
+ * of the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRight { the middle right cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner { the inner element
+ * of the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeft { the bottom left cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenter { the bottom center cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner { the inner element
+ * of the cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRight { the bottom right cell }</li>
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner { the inner element
+ * of the cell }</li>
  * </ul>
  * 
  * @see SuggestOracle
@@ -160,6 +187,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private static class SuggestionMenuItem extends MenuItem {
 
+    @SuppressWarnings("hiding")
     private static final String STYLENAME_DEFAULT = "item";
 
     private Suggestion suggestion;
@@ -197,10 +225,11 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private class SuggestionPopup extends DecoratedPopupPanel {
 
+    @SuppressWarnings("hiding")
     private static final String STYLENAME_DEFAULT = "gwt-SuggestBoxPopup";
 
     public SuggestionPopup() {
-      super(true);
+      super(true, false, "suggestPopup");
       setWidget(suggestionMenu);
       setStyleName(STYLENAME_DEFAULT);
     }

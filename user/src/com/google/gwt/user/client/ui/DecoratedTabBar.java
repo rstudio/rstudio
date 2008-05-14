@@ -31,20 +31,26 @@ package com.google.gwt.user.client.ui;
  * selected tabs } </li>
  * <li>.gwt-DecoratedTabBar .gwt-TabBarItem-wrapper-selected { table cell
  * around selected tab }</li>
- * <li>.gwt-DecoratedTabBar .gwt-TabBarItem .topLeft { top left corner of the
- * tab}</li>
- * <li>.gwt-DecoratedTabBar .gwt-TabBarItem .topCenter { top center of the tab}</li>
- * <li>.gwt-DecoratedTabBar .gwt-TabBarItem .topRight { top right corner of the
- * tab}</li>
- * <li>.gwt-DecoratedTabBar .gwt-TabBarItem .middleLeft { left side of the tab }</li>
- * <li>.gwt-DecoratedTabBar .gwt-TabBarItem .middleCenter { center of the tab,
- * where the tab text or widget resides }</li>
- * <li>.gwt-DecoratedTabBar .gwt-TabBarItem .middleRight { right side of the
- * tab }</li>
+ * <li>.gwt-DecoratedTabBar .tabTopLeft { top left corner of the tab}</li>
+ * <li>.gwt-DecoratedTabBar .tabTopLeftInner { the inner element of the cell}</li>
+ * <li>.gwt-DecoratedTabBar .tabTopCenter { top center of the tab}</li>
+ * <li>.gwt-DecoratedTabBar .tabTopCenterInner { the inner element of the cell}</li>
+ * <li>.gwt-DecoratedTabBar .tabTopRight { top right corner of the tab}</li>
+ * <li>.gwt-DecoratedTabBar .tabTopRightInner { the inner element of the cell}</li>
+ * <li>.gwt-DecoratedTabBar .tabMiddleLeft { left side of the tab }</li>
+ * <li>.gwt-DecoratedTabBar .tabMiddleLeftInner { the inner element of the
+ * cell}</li>
+ * <li>.gwt-DecoratedTabBar .tabMiddleCenter { center of the tab, where the tab
+ * text or widget resides }</li>
+ * <li>.gwt-DecoratedTabBar .tabMiddleCenterInner { the inner element of the
+ * cell}</li>
+ * <li>.gwt-DecoratedTabBar .tabMiddleRight { right side of the tab }</li>
+ * <li>.gwt-DecoratedTabBar .tabMiddleRightInner { the inner element of the
+ * cell}</li>
  * </ul>
  */
 public class DecoratedTabBar extends TabBar {
-  static String[] TAB_ROW_STYLES = {"top", "middle"};
+  static String[] TAB_ROW_STYLES = {"tabTop", "tabMiddle"};
 
   static final String STYLENAME_DEFAULT = "gwt-DecoratedTabBar";
 

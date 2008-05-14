@@ -14,32 +14,21 @@
  * so we need to use the AlphaImageLoader in IE6 only.
  */
 
-/**
- * Applied to the entire page.
- */
-body,td,a,div,.p {
-  font-family:arial,sans-serif
+body, table td, a, div, .p, pre {
+  font-family: Arial, sans-serif;
+  font-size: small;
 }
-
 body {
   color: black;
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: small;
   margin: 0px;
   border: 0px;
   padding: 0px;
   background: #fff;
   direction: rtl;
 }
-
-table td, pre {
-  font-size: small;
-}
-
 a, a:visited, a:hover {
   color: #0000AA;
 }
-
 iframe {
   border-top: 2px solid #666;
   border-left: 2px solid #666;
@@ -47,50 +36,38 @@ iframe {
   border-bottom: 2px solid #bbb;
 }
 
-/**
- * Applied to buttons.
- */
 .gwt-Button {
   margin: 0;
-  padding: .3em 5px;
-  font-family:Arial, sans-serif;
+  padding: 3px 5px;
   text-decoration: none;
+  font-size: small;
   cursor: pointer;
   cursor: hand;
   background: url("images/hborder.png") repeat-x 0px -27px;
   border: 1px outset #ccc;
 }
-
 .gwt-Button:active {
   border: 1px inset #ccc;
 }
-
 .gwt-Button:hover {
   border-color: #9cf #69e #69e #7af;
 }
-
 .gwt-Button[disabled] {
   cursor: default;
   color: #888;
 }
-
 .gwt-Button[disabled]:hover {
   border: 1px outset #ccc;
 }
 
-/**
- * Applied to the checkbox and text next to the checkbox.
- */
 .gwt-CheckBox {
 }
-
 .gwt-CheckBox-disabled {
   color: #888;
 }
 
-/**
- * Applied to the decorator panel.
- */
+.gwt-DecoratorPanel {
+}
 .gwt-DecoratorPanel .topCenter,
 .gwt-DecoratorPanel .bottomCenter {
   background: url(images/hborder.png) repeat-x;
@@ -149,9 +126,6 @@ html>body .gwt-DecoratorPanel .bottomRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
 
-/**
- * Applied to the dialog box.
- */
 .gwt-DialogBox .Caption {
   background: #ebebeb url(images/hborder.png) repeat-x 0px -2003px;
   padding: 4px 8px 4px 4px;
@@ -159,69 +133,75 @@ html>body .gwt-DecoratorPanel .bottomRight {
   border-bottom: 1px solid #bbbbbb;
   border-top: 5px solid #e3e3e3;
 }
-.gwt-DialogBox .content {
+.gwt-DialogBox .dialogContent {
 }
-.gwt-DialogBox .middleCenter {
+.gwt-DialogBox .dialogMiddleCenter {
   padding: 3px;
   background: white;
 }
-html>body .gwt-DialogBox .bottomCenter {
+html>body .gwt-DialogBox .dialogBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
-* html .gwt-DialogBox .bottomCenter {
+* html .gwt-DialogBox .dialogBottomCenter {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-DialogBox .middleLeft {
+.gwt-DialogBox .dialogMiddleLeft {
   background: url(images/vborder.png) repeat-y;
 }
-html>body .gwt-DialogBox .middleRight {
+html>body .gwt-DialogBox .dialogMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
-* html .gwt-DialogBox .middleRight {
+* html .gwt-DialogBox .dialogMiddleRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-DialogBox .topLeft,
-.gwt-DialogBox .topRight,
-.gwt-DialogBox .bottomLeft,
-.gwt-DialogBox .bottomRight {
+.gwt-DialogBox .dialogTopLeftInner {
+  width: 5px;
   zoom: 1;
 }
-html>body .gwt-DialogBox .topLeft {
+.gwt-DialogBox .dialogTopRightInner {
+  width: 8px;
+  zoom: 1;
+}
+.gwt-DialogBox .dialogBottomLeftInner {
   width: 5px;
+  height: 8px;
+  zoom: 1;
+}
+.gwt-DialogBox .dialogBottomRightInner {
+  width: 5px;
+  height: 8px;
+  zoom: 1;
+}
+html>body .gwt-DialogBox .dialogTopLeft {
   background: url(images/corner.png) no-repeat -13px 0px;
 }
-html>body .gwt-DialogBox .topRight {
-  width: 8px;
+html>body .gwt-DialogBox .dialogTopRight {
   background: url(images/corner.png) no-repeat -18px 0px;
 }
-html>body .gwt-DialogBox .bottomLeft {
-  width: 5px;
-  height: 8px;
+html>body .gwt-DialogBox .dialogBottomLeft {
   background: url(images/corner.png) no-repeat 0px -15px;
 }
-html>body .gwt-DialogBox .bottomRight {
-  width: 8px;
-  height: 8px;
+html>body .gwt-DialogBox .dialogBottomRight {
   background: url(images/corner.png) no-repeat -5px -15px;
 }
-* html .gwt-DialogBox .topLeft {
+* html .gwt-DialogBox .dialogTopLeft {
   width: 5px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/corner_dialog_topleft.png',sizingMethod='crop');
 }
-* html .gwt-DialogBox .topRight {
+* html .gwt-DialogBox .dialogTopRight {
   width: 8px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/corner_dialog_topright.png',sizingMethod='crop');
 }
-* html .gwt-DialogBox .bottomLeftInner {
+* html .gwt-DialogBox .dialogBottomLeftInner {
   width: 5px;
   height: 23px;
   margin-top: -15px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DialogBox .bottomRightInner {
+* html .gwt-DialogBox .dialogBottomRightInner {
   width: 13px;
   height: 23px;
   margin-left: -5px;
@@ -230,42 +210,29 @@ html>body .gwt-DialogBox .bottomRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
 
-/**
- * Applied to the disclosure panel, which shows or hides content when the user
- * toggles the header.
- */
 .gwt-DisclosurePanel {
 }
-
-.gwt-DisclosurePanel a {
-  text-decoration: none;  /* Remove underline from header */ 
-}
-
 .gwt-DisclosurePanel-open {
 }
-
 .gwt-DisclosurePanel-closed {
 }
-
-.gwt-DisclosurePanel .header {
-  color: black;
+.gwt-DisclosurePanel .header,
+.gwt-DisclosurePanel .header a,
+.gwt-DisclosurePanel .header td {
+  text-decoration: none;  /* Remove underline from header */
+  color: black; 
+  cursor: pointer;
+  cursor: hand;
 }
-
 .gwt-DisclosurePanel .content {
   border-right: 3px solid #e3e3e3;
   padding: 4px 8px 4px 0px;
   margin-right: 6px;
 }
 
-/**
- * Applied to the File Upload.
- */
 .gwt-FileUpload {
 }
 
-/**
- * Applied to split panels.
- */
 .gwt-HorizontalSplitPanel {
 }
 .gwt-HorizontalSplitPanel .hsplitter {
@@ -281,63 +248,40 @@ html>body .gwt-DialogBox .bottomRight {
   background: #91c0ef url(images/hborder.png) repeat-x;
 }
 
-/**
- * Applied to all HTML label elements.
- */
 .gwt-HTML {
 }
 
-/**
- * Applied to all Hyperlinks.
- */
 .gwt-Hyperlink {
 }
 
-/**
- * Applied to all Images
- */
 .gwt-Image {
 }
 
-/**
- * Applied to all Label elements.
- */
 .gwt-Label {
 }
 
-/**
- * Applied to list boxes.
- */
 .gwt-ListBox {
 }
 
-/**
- * Applied to the menu bar.
- */
 .gwt-MenuBar {
   cursor: default;
 }
-
 .gwt-MenuBar .gwt-MenuItem {
   cursor: default;
 }
-
 .gwt-MenuBar .gwt-MenuItem-selected {
   background: #cdcdcd;
 }
-
 .gwt-MenuBar-horizontal {
   background: #ebebeb url(images/hborder.png) repeat-x 0px -2003px;
   border: 1px solid #BBBBBB;
 }
-
 .gwt-MenuBar-horizontal .gwt-MenuItem {
   padding: 0px 10px;
   vertical-align: bottom;
   color: #666666;
   font-weight: bold;
 }
-
 .gwt-MenuBar-horizontal .gwt-MenuItemSeparator {
   width: 1px;
   padding: 0px;
@@ -346,31 +290,25 @@ html>body .gwt-DialogBox .bottomRight {
   border-right: 1px solid #888888;
   background: white;
 }
-
-.gwt-MenuBar-horizontal .gwt-MenuItemSeparator .content {
+.gwt-MenuBar-horizontal .gwt-MenuItemSeparator .menuSeparatorInner {
   width: 1px;
   background: white; 
 }
-
 .gwt-MenuBar-vertical {
   margin-top: 0px;
   margin-right: 0px;
   background: white;
 }
-
 .gwt-MenuBar-vertical table {
   border-collapse: collapse;
 }
-
 .gwt-MenuBar-vertical .gwt-MenuItem {
   padding: 4px 1px 4px 14px;
 }
-
 .gwt-MenuBar-vertical .gwt-MenuItemSeparator {
   padding: 2px 0px;
 }
-
-.gwt-MenuBar-vertical .gwt-MenuItemSeparator .content {
+.gwt-MenuBar-vertical .gwt-MenuItemSeparator .menuSeparatorInner {
   height: 1px;
   padding: 0px;
   border: 0px;
@@ -387,52 +325,64 @@ html>body .gwt-DialogBox .bottomRight {
 .gwt-MenuBarPopup {
   margin: 0px 3px 0px 0px;
 }
-.gwt-MenuBarPopup .topCenter {
+.gwt-MenuBarPopup .menuPopupTopCenter {
   background: url(images/hborder.png) 0px -12px repeat-x;
 }
-html>body .gwt-MenuBarPopup .bottomCenter {
+html>body .gwt-MenuBarPopup .menuPopupBottomCenter {
   background: url(images/hborder.png) 0px -13px repeat-x;
 }
-* html .gwt-MenuBarPopup .bottomCenter {
+* html .gwt-MenuBarPopup .menuPopupBottomCenter {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/hborder_gray_shadow.png',sizingMethod='scale');
 }
-.gwt-MenuBarPopup .middleLeft {
+.gwt-MenuBarPopup .menuPopupMiddleLeft {
   background: url(images/vborder.png) -12px 0px repeat-y;
 }
-html>body .gwt-MenuBarPopup .middleRight {
+html>body .gwt-MenuBarPopup .menuPopupMiddleRight {
   background: url(images/vborder.png) -13px 0px repeat-y;
 }
-* html .gwt-MenuBarPopup .middleRight {
+* html .gwt-MenuBarPopup .menuPopupMiddleRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/vborder_gray_shadow.png',sizingMethod='scale');
 }
-html>body .gwt-MenuBarPopup .topLeft {
+.gwt-MenuBarPopup .menuPopupTopLeftInner {
   width: 5px;
   height: 5px;
+  zoom: 1;
+}
+.gwt-MenuBarPopup .menuPopupTopRightInner {
+  width: 8px;
+  height: 5px;
+  zoom: 1;
+}
+.gwt-MenuBarPopup .menuPopupBottomLeftInner {
+  width: 5px;
+  height: 8px;
+  zoom: 1;
+}
+.gwt-MenuBarPopup .menuPopupBottomRightInner {
+  width: 8px;
+  height: 8px;
+  zoom: 1;
+}
+html>body .gwt-MenuBarPopup .menuPopupTopLeft {
   background: url(images/corner.png) no-repeat 0px -36px;
 }
-html>body .gwt-MenuBarPopup .topRight {
-  width: 8px;
-  height: 5px;
+html>body .gwt-MenuBarPopup .menuPopupTopRight {
   background: url(images/corner.png) no-repeat -5px -36px;
 }
-html>body .gwt-MenuBarPopup .bottomLeft {
-  width: 5px;
-  height: 8px;
+html>body .gwt-MenuBarPopup .menuPopupBottomLeft {
   background: url(images/corner.png) no-repeat 0px -41px;
 }
-html>body .gwt-MenuBarPopup .bottomRight {
-  width: 8px;
-  height: 8px;
+html>body .gwt-MenuBarPopup .menuPopupBottomRight {
   background: url(images/corner.png) no-repeat -5px -41px;
 }
-* html .gwt-MenuBarPopup .topLeftInner {
+* html .gwt-MenuBarPopup .menuPopupTopLeftInner {
   width: 5px;
   height: 41px;
   margin-top: -36px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-MenuBarPopup .topRightInner {
+* html .gwt-MenuBarPopup .menuPopupTopRightInner {
   width: 13px;
   height: 41px;
   margin-left: -5px;
@@ -440,14 +390,14 @@ html>body .gwt-MenuBarPopup .bottomRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-MenuBarPopup .bottomLeftInner {
+* html .gwt-MenuBarPopup .menuPopupBottomLeftInner {
   width: 5px;
   height: 49px;
   margin-top: -41px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-MenuBarPopup .bottomRightInner {
+* html .gwt-MenuBarPopup .menuPopupBottomRightInner {
   width: 13px;
   height: 49px;
   margin-left: -5px;
@@ -456,9 +406,6 @@ html>body .gwt-MenuBarPopup .bottomRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
 
-/**
- * Applied to the password input box.
- */
 .gwt-PasswordTextBox {
   padding: 2px;
 }
@@ -466,76 +413,76 @@ html>body .gwt-MenuBarPopup .bottomRight {
   color: #888;
 }
 
-/**
- * Applied to PopupPanel.
- */
 .gwt-PopupPanel {
   border: 3px solid #e3e3e3;
   padding: 3px;
   background: white;
 }
 
-/**
- * Applied to the DecoratedPopupPanel.
- */
-.gwt-DecoratedPopupPanel .content {
+.gwt-DecoratedPopupPanel .popupContent {
 }
-.gwt-DecoratedPopupPanel .middleCenter {
+.gwt-DecoratedPopupPanel .popupMiddleCenter {
   padding: 3px;
   background: white;
 }
-.gwt-DecoratedPopupPanel .topCenter {
+.gwt-DecoratedPopupPanel .popupTopCenter {
   background: url(images/hborder.png) repeat-x;
 }
-html>body .gwt-DecoratedPopupPanel .bottomCenter {
+html>body .gwt-DecoratedPopupPanel .popupBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
-* html .gwt-DecoratedPopupPanel .bottomCenter {
+* html .gwt-DecoratedPopupPanel .popupBottomCenter {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-DecoratedPopupPanel .middleLeft {
+.gwt-DecoratedPopupPanel .popupMiddleLeft {
   background: url(images/vborder.png) repeat-y;
 }
-html>body .gwt-DecoratedPopupPanel .middleRight {
+html>body .gwt-DecoratedPopupPanel .popupMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
-* html .gwt-DecoratedPopupPanel .middleRight {
+* html .gwt-DecoratedPopupPanel .popupMiddleRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-DecoratedPopupPanel .topLeft,
-.gwt-DecoratedPopupPanel .topRight,
-.gwt-DecoratedPopupPanel .bottomLeft,
-.gwt-DecoratedPopupPanel .bottomRight {
+.gwt-DecoratedPopupPanel .popupTopLeftInner {
+  width: 5px;
+  height: 5px;
   zoom: 1;
 }
-html>body .gwt-DecoratedPopupPanel .topLeft {
-  width: 5px;
+.gwt-DecoratedPopupPanel .popupTopRightInner {
+  width: 8px;
   height: 5px;
+  zoom: 1;
+}
+.gwt-DecoratedPopupPanel .popupBottomLeftInner {
+  width: 5px;
+  height: 8px;
+  zoom: 1;
+}
+.gwt-DecoratedPopupPanel .popupBottomRightInner {
+  width: 8px;
+  height: 8px;
+  zoom: 1;
+}
+html>body .gwt-DecoratedPopupPanel .popupTopLeft {
   background: url(images/corner.png) no-repeat 0px -10px;
 }
-html>body .gwt-DecoratedPopupPanel .topRight {
-  width: 8px;
-  height: 5px;
+html>body .gwt-DecoratedPopupPanel .popupTopRight {
   background: url(images/corner.png) no-repeat -5px -10px;
 }
-html>body .gwt-DecoratedPopupPanel .bottomLeft {
-  width: 5px;
-  height: 8px;
+html>body .gwt-DecoratedPopupPanel .popupBottomLeft {
   background: url(images/corner.png) no-repeat 0px -15px;
 }
-html>body .gwt-DecoratedPopupPanel .bottomRight {
-  width: 8px;
-  height: 8px;
+html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   background: url(images/corner.png) no-repeat -5px -15px;
 }
-* html .gwt-DecoratedPopupPanel .topLeftInner {
+* html .gwt-DecoratedPopupPanel .popupTopLeftInner {
   width: 5px;
   height: 15px;
   margin-top: -10px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DecoratedPopupPanel .topRightInner {
+* html .gwt-DecoratedPopupPanel .popupTopRightInner {
   width: 13px;
   height: 15px;
   margin-left: -5px;
@@ -543,14 +490,14 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DecoratedPopupPanel .bottomLeftInner {
+* html .gwt-DecoratedPopupPanel .popupBottomLeftInner {
   width: 5px;
   height: 23px;
   margin-top: -15px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DecoratedPopupPanel .bottomRightInner {
+* html .gwt-DecoratedPopupPanel .popupBottomRightInner {
   width: 13px;
   height: 23px;
   margin-left: -5px;
@@ -559,10 +506,6 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
 
-/**
- * Applied to the push button, a customizable button that can be pressed
- * and released.
- */
 .gwt-PushButton-up,
 .gwt-PushButton-up-hovering,
 .gwt-PushButton-up-disabled,
@@ -571,7 +514,6 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
 .gwt-PushButton-down-disabled {
   margin: 0;
   padding: 3px 5px;
-  font-family:Arial, sans-serif;
   text-decoration: none;
   background: url("images/hborder.png") repeat-x 0px -27px;
 }
@@ -612,83 +554,66 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
   zoom: 1;
 }
 
-/**
- * Applied to radio buttons and the text next to them.
- */
 .gwt-RadioButton {
   padding: 4px 3px 3px 4px;
 }
-
 .gwt-RadioButton-disabled {
   color: #888;
 }
 
-/**
- * Applied to the Rich Text Area.
- */
 .gwt-RichTextArea {
 }
-
 .hasRichTextToolbar {
   border: 0px;
 }
-
 .gwt-RichTextToolbar {
   background: #ebebeb url(images/hborder.png) repeat-x 0px -2003px;
   border-bottom: 1px solid #BBBBBB;
   padding: 3px;
   margin: 0px;
 }
-
 .gwt-RichTextToolbar .gwt-PushButton-up {
   padding: 0px 0px 0px 1px;
   margin-left: 4px;
   margin-bottom: 4px;
   border-width: 1px; 
 }
-
 .gwt-RichTextToolbar .gwt-PushButton-up-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 0px 0px 1px;
   border-width: 1px; 
 }
-
 .gwt-RichTextToolbar .gwt-PushButton-down {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
   border-width: 1px; 
 }
-
 .gwt-RichTextToolbar .gwt-PushButton-down-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
   border-width: 1px; 
 }
-
 .gwt-RichTextToolbar .gwt-ToggleButton-up {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 0px 0px 1px;
   border-width: 1px;
 }
-
 .gwt-RichTextToolbar .gwt-ToggleButton-up-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 0px 0px 1px;
   border-width: 1px;
 }
-
 .gwt-RichTextToolbar .gwt-ToggleButton-down {
   margin-left: 4px;
   margin-bottom: 4px;
   padding: 0px 1px 0px 0px;
   border-width: 1px;
 }
-
 .gwt-RichTextToolbar .gwt-ToggleButton-down-hovering {
   margin-left: 4px;
   margin-bottom: 4px;
@@ -696,9 +621,6 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
   border-width: 1px;
 }
 
-/**
- * Applied to StackPanel.
- */
 .gwt-StackPanel {
   border-bottom: 1px solid #bbbbbb;
 }
@@ -719,9 +641,6 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
   padding: 2px 2px 10px 5px;
 }
 
-/**
- * Applied to DecoratedStackPanel.
- */
 .gwt-DecoratedStackPanel {
   border-bottom: 1px solid #bbbbbb;
 }
@@ -735,26 +654,26 @@ html>body .gwt-DecoratedPopupPanel .bottomRight {
   cursor: pointer;
   cursor: hand;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft,
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
+.gwt-DecoratedStackPanel .stackItemTopLeft,
+.gwt-DecoratedStackPanel .stackItemTopRight {
   height: 6px;
   width: 6px;
   zoom: 1;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft {
+html>body .gwt-DecoratedStackPanel .stackItemTopLeft {
   background: #e4e4e4 url(images/corner.png) no-repeat 0px -49px;
   border-left: 1px solid #bbbbbb;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
+html>body .gwt-DecoratedStackPanel .stackItemTopRight {
   background: #e4e4e4 url(images/corner.png) no-repeat -6px -49px;
   border-right: 1px solid #bbbbbb;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner,
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
+.gwt-DecoratedStackPanel .stackItemTopLeftInner,
+.gwt-DecoratedStackPanel .stackItemTopRightInner {
   width: 1px;
   height: 1px;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner {
+* html .gwt-DecoratedStackPanel .stackItemTopLeftInner {
   width: 6px;
   height: 55px;
   margin-top: -49px;
@@ -763,7 +682,7 @@ html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
+* html .gwt-DecoratedStackPanel .stackItemTopRightInner {
   width: 12px;
   height: 55px;
   margin-top: -49px;
@@ -773,52 +692,49 @@ html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topCenter {
+.gwt-DecoratedStackPanel .stackItemTopCenter {
   background: url(images/hborder.png) 0px -21px repeat-x;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeft {
+.gwt-DecoratedStackPanel .stackItemMiddleLeft {
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
   border-left: 1px solid #bbbbbb;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeftInner,
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRightInner {
+.gwt-DecoratedStackPanel .stackItemMiddleLeftInner,
+.gwt-DecoratedStackPanel .stackItemMiddleRightInner {
   width: 1px;
   height: 1px;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRight {
+.gwt-DecoratedStackPanel .stackItemMiddleRight {
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
   border-right: 1px solid #bbbbbb;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleCenter {
+.gwt-DecoratedStackPanel .stackItemMiddleCenter {
   font-weight: bold;
   font-size: 1.3em;
   background: #d3def6 url(images/hborder.png) repeat-x 0px -989px;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRight,
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeft {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopRight,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopLeft {
   border: 0px;
   background-color: white;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeft,
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRight {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopLeft,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopRight {
   background-color: white;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner,
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopRightInner {
   border: 0px;
   background-color: white;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopLeftInner {
   padding-right: 1px;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeftInner,
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopRightInner {
   background-color: white;
 }
 
-/**
- * Applied to the suggest box.
- */
 .gwt-SuggestBox {
   padding: 2px;
 }
@@ -833,55 +749,67 @@ html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRight 
 .gwt-SuggestBoxPopup .item-selected {
   background: #cdcdcd;
 }
-.gwt-SuggestBoxPopup .middleCenter {
+.gwt-SuggestBoxPopup .suggestPopupContent {
   background: white;
 }
-.gwt-SuggestBoxPopup .topCenter {
+.gwt-SuggestBoxPopup .suggestPopupTopCenter {
   background: url(images/hborder.png) repeat-x;
 }
-html>body .gwt-SuggestBoxPopup .bottomCenter {
+html>body .gwt-SuggestBoxPopup .suggestPopupBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
-* html .gwt-SuggestBoxPopup .bottomCenter {
+* html .gwt-SuggestBoxPopup .suggestPopupBottomCenter {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
-.gwt-SuggestBoxPopup .middleLeft {
+.gwt-SuggestBoxPopup .suggestPopupMiddleLeft {
   background: url(images/vborder.png) repeat-y;
 }
-html>body .gwt-SuggestBoxPopup .middleRight {
+html>body .gwt-SuggestBoxPopup .suggestPopupMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
-* html .gwt-SuggestBoxPopup .middleRight {
+* html .gwt-SuggestBoxPopup .suggestPopupMiddleRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
-html>body .gwt-SuggestBoxPopup .topLeft {
+.gwt-SuggestBoxPopup .suggestPopupTopLeftInner {
   width: 5px;
   height: 5px;
+  zoom: 1;  
+}
+.gwt-SuggestBoxPopup .suggestPopupTopRightInner {
+  width: 8px;
+  height: 5px;
+  zoom: 1;
+}
+.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner {
+  width: 5px;
+  height: 8px;
+  zoom: 1;
+}
+.gwt-SuggestBoxPopup .suggestPopupBottomRightInner {
+  width: 8px;
+  height: 8px;
+  zoom: 1;
+}
+html>body .gwt-SuggestBoxPopup .suggestPopupTopLeft {
   background: url(images/corner.png) no-repeat 0px -23px;
 }
-html>body .gwt-SuggestBoxPopup .topRight {
-  width: 8px;
-  height: 5px;
+html>body .gwt-SuggestBoxPopup .suggestPopupTopRight {
   background: url(images/corner.png) no-repeat -5px -23px;
 }
-html>body .gwt-SuggestBoxPopup .bottomLeft {
-  width: 5px;
-  height: 8px;
+html>body .gwt-SuggestBoxPopup .suggestPopupBottomLeft {
   background: url(images/corner.png) no-repeat 0px -28px;
 }
-html>body .gwt-SuggestBoxPopup .bottomRight {
-  width: 8px;
-  height: 8px;
+html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   background: url(images/corner.png) no-repeat -5px -28px;
 }
-* html .gwt-SuggestBoxPopup .topLeftInner {
+* html .gwt-SuggestBoxPopup .suggestPopupTopLeftInner {
   width: 5px;
   height: 28px;
   margin-top: -23px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-SuggestBoxPopup .topRightInner {
+* html .gwt-SuggestBoxPopup .suggestPopupTopRightInner {
   width: 13px;
   height: 28px;
   margin-left: -5px;
@@ -889,14 +817,14 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-SuggestBoxPopup .bottomLeftInner {
+* html .gwt-SuggestBoxPopup .suggestPopupBottomLeftInner {
   width: 5px;
   height: 36px;
   margin-top: -28px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-SuggestBoxPopup .bottomRightInner {
+* html .gwt-SuggestBoxPopup .suggestPopupBottomRightInner {
   width: 13px;
   height: 36px;
   margin-left: -5px;
@@ -905,9 +833,6 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
 
-/**
- * Applied to TabPanel.
- */
 .gwt-TabBar {
 }
 .gwt-TabBar .gwt-TabBarFirst {
@@ -929,7 +854,6 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   cursor: default;
   background: #bcbcbc;
 } 
-
 .gwt-TabPanel {
 }
 .gwt-TabPanelBottom {
@@ -940,9 +864,6 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   padding: 6px;
 }
 
-/**
- * Applied to DecoratedTabPanel.
- */ 
 .gwt-DecoratedTabBar {
 }
 .gwt-DecoratedTabBar .gwt-TabBarFirst {
@@ -954,34 +875,34 @@ html>body .gwt-SuggestBoxPopup .bottomRight {
   border-collapse: collapse;
   margin-right: 6px;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem .topCenter {
+.gwt-DecoratedTabBar .tabTopCenter {
   padding: 0px;
   background: #e3e3e3;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem .topLeft,
-.gwt-DecoratedTabBar .gwt-TabBarItem .topRight {
+.gwt-DecoratedTabBar .tabTopLeft,
+.gwt-DecoratedTabBar .tabTopRight {
   padding: 0px;
   zoom: 1;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem .topLeftInner,
-.gwt-DecoratedTabBar .gwt-TabBarItem .topRightInner {
+.gwt-DecoratedTabBar .tabTopLeftInner,
+.gwt-DecoratedTabBar .tabTopRightInner {
   width: 6px;
   height: 6px;
 }
-html>body .gwt-DecoratedTabBar .gwt-TabBarItem .topLeft {
+html>body .gwt-DecoratedTabBar .tabTopLeft {
   background: url(images/corner.png) no-repeat 0px -55px;
 }
-html>body .gwt-DecoratedTabBar .gwt-TabBarItem .topRight {
+html>body .gwt-DecoratedTabBar .tabTopRight {
   background: url(images/corner.png) no-repeat -6px -55px;
 }
-* html .gwt-DecoratedTabBar .gwt-TabBarItem .topLeftInner {
+* html .gwt-DecoratedTabBar .tabTopLeftInner {
   width: 5px;
   height: 61px;
   margin-top: -55px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DecoratedTabBar .gwt-TabBarItem .topRightInner {
+* html .gwt-DecoratedTabBar .tabTopRightInner {
   width: 12px;
   height: 61px;
   margin-top: -55px;
@@ -989,18 +910,18 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem .topRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem .middleLeft,
-.gwt-DecoratedTabBar .gwt-TabBarItem .middleRight {
+.gwt-DecoratedTabBar .tabMiddleLeft,
+.gwt-DecoratedTabBar .tabMiddleRight {
   width: 6px;
   padding: 0px;
   background: #e3e3e3 url(images/hborder.png) repeat-x 0px -1463px;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem .middleLeftInner,
-.gwt-DecoratedTabBar .gwt-TabBarItem .middleRightInner {
+.gwt-DecoratedTabBar .tabMiddleLeftInner,
+.gwt-DecoratedTabBar .tabMiddleRightInner {
   width: 1px;
   height: 1px;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem .middleCenter {
+.gwt-DecoratedTabBar .tabMiddleCenter {
   padding: 0px 4px 2px 4px;
   cursor: pointer;
   cursor: hand;
@@ -1009,23 +930,23 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem .topRight {
   text-align: center;
   background: #e3e3e3 url(images/hborder.png) repeat-x 0px -1463px;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem-selected .topCenter {
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopCenter {
   background: #747474;
 }
-html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topLeft {
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopLeft {
   background-position: 0px -61px;
 }
-html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRight {
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
   background-position: -6px -61px;
 }
-* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topLeftInner {
+* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopLeftInner {
   width: 5px;
   height: 67px;
   margin-top: -61px;
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRightInner {
+* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRightInner {
   width: 12px;
   height: 67px;
   margin-top: -61px;
@@ -1033,42 +954,30 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRight {
   overflow: hidden;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='chrome/images/corner.png',sizingMethod='crop');
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleLeft,
-.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleRight {
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabMiddleLeft,
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabMiddleRight {
   background: #bcbcbc url(images/hborder.png) repeat-x 0px -2511px;
 }
-.gwt-DecoratedTabBar .gwt-TabBarItem-selected .middleCenter {
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabMiddleCenter {
   cursor: default;
   background: #bcbcbc url(images/hborder.png) repeat-x 0px -2511px;
   color: white;
 }
 
-/**
- * Applied to general text areas.
- */
 .gwt-TextArea {
   padding: 2px;
 }
-
 .gwt-TextArea-readonly {
   color: #888;
 }
 
-/**
- * Applied to text boxes.
- */
 .gwt-TextBox {
   padding: 2px;
 }
-
 .gwt-TextBox-readonly {
   color: #888;
 }
 
-/**
- * Applied to toggle buttons, a customizable button that can be toggled
- * between two states (similar to a checkbox).
- */
 .gwt-ToggleButton-up,
 .gwt-ToggleButton-up-hovering,
 .gwt-ToggleButton-up-disabled,
@@ -1077,7 +986,6 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRight {
 .gwt-ToggleButton-down-disabled {
   margin: 0;
   padding: 3px 5px;
-  font-family:Arial, sans-serif;
   text-decoration: none;
   background: url("images/hborder.png") repeat-x 0px -27px;
 }
@@ -1121,9 +1029,6 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .topRight {
   filter: alpha(opacity=40);
 }
 
-/**
- * Applied to the Tree.
- */
 .gwt-Tree .gwt-TreeItem {
   padding: 1px;
   margin: 0px;

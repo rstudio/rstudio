@@ -27,11 +27,35 @@ import java.util.Iterator;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-DecoratedPopupPanel { the outside of the popup }</li>
- * <li>.gwt-DecoratedPopupPanel .content { the wrapper around the content }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupContent { the wrapper around the content }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupTopLeft { the top left cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupTopLeftInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupTopCenter { the top center cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupTopCenterInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupTopRight { the top right cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupTopRightInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupMiddleLeft { the middle left cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupMiddleLeftInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupMiddleCenter { the middle center cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupMiddleCenterInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupMiddleRight { the middle right cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupMiddleRightInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupBottomLeft { the bottom left cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupBottomLeftInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupBottomCenter { the bottom center cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupBottomCenterInner { the inner element of
+ * the cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupBottomRight { the bottom right cell }</li>
+ * <li>.gwt-DecoratedPopupPanel .popupBottomRightInner { the inner element of
+ * the cell }</li>
  * </ul>
- * <p>
- * The styles that apply to {@link DecoratorPanel} also apply to PopupPanel.
- * </p>
  */
 public class DecoratedPopupPanel extends PopupPanel {
   private static final String DEFAULT_STYLENAME = "gwt-DecoratedPopupPanel";
@@ -39,7 +63,7 @@ public class DecoratedPopupPanel extends PopupPanel {
   /**
    * The panel used to nine box the contents.
    */
-  private DecoratorPanel decPanel = new DecoratorPanel();
+  private DecoratorPanel decPanel;
 
   /**
    * Creates an empty decorated popup panel. A child widget must be added to it
@@ -70,12 +94,28 @@ public class DecoratedPopupPanel extends PopupPanel {
    *          target the PopupPanel or its children should be ignored
    */
   public DecoratedPopupPanel(boolean autoHide, boolean modal) {
+    this(autoHide, modal, "popup");
+  }
+
+  /**
+   * Creates an empty decorated popup panel using the specified style names.
+   * 
+   * @param autoHide <code>true</code> if the popup should be automatically
+   *          hidden when the user clicks outside of it
+   * @param modal <code>true</code> if keyboard or mouse events that do not
+   *          target the PopupPanel or its children should be ignored
+   * @param prefix the prefix applied to child style names
+   */
+  DecoratedPopupPanel(boolean autoHide, boolean modal, String prefix) {
     super(autoHide, modal);
+    String[] rowStyles = new String[] {
+        prefix + "Top", prefix + "Middle", prefix + "Bottom"};
+    decPanel = new DecoratorPanel(rowStyles, 1);
     decPanel.setStyleName("");
     setStylePrimaryName(DEFAULT_STYLENAME);
     super.setWidget(decPanel);
-    setStyleName(getContainerElement(), "content", false);
-    setStyleName(decPanel.getContainerElement(), "content", true);
+    setStyleName(getContainerElement(), "popupContent", false);
+    setStyleName(decPanel.getContainerElement(), prefix + "Content", true);
   }
 
   @Override

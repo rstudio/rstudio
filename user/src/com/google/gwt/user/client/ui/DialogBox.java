@@ -31,11 +31,28 @@ import com.google.gwt.user.client.Event;
  * <ul class='css'>
  * <li>.gwt-DialogBox { the outside of the dialog }</li>
  * <li>.gwt-DialogBox .Caption { the caption }</li>
- * <li>.gwt-DialogBox .content { the content }</li>
+ * <li>.gwt-DialogBox .dialogContent { the wrapepr around the content }</li>
+ * <li>.gwt-DialogBox .dialogTopLeft { the top left cell }</li>
+ * <li>.gwt-DialogBox .dialogTopLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogTopCenter { the top center cell, where the caption
+ * is located }</li>
+ * <li>.gwt-DialogBox .dialogTopCenterInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogTopRight { the top right cell }</li>
+ * <li>.gwt-DialogBox .dialogTopRightInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogMiddleLeft { the middle left cell }</li>
+ * <li>.gwt-DialogBox .dialogMiddleLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogMiddleCenter { the middle center cell, where the
+ * content is located }</li>
+ * <li>.gwt-DialogBox .dialogMiddleCenterInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogMiddleRight { the middle right cell }</li>
+ * <li>.gwt-DialogBox .dialogMiddleRightInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogBottomLeft { the bottom left cell }</li>
+ * <li>.gwt-DialogBox .dialogBottomLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogBottomCenter { the bottom center cell }</li>
+ * <li>.gwt-DialogBox .dialogBottomCenterInner { the inner element of the cell }</li>
+ * <li>.gwt-DialogBox .dialogBottomRight { the bottom right cell }</li>
+ * <li>.gwt-DialogBox .dialogBottomRightInner { the inner element of the cell }</li>
  * </ul>
- * <p>
- * The styles that apply to {@link DecoratorPanel} also apply to DialogBox.
- * </p>
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.DialogBoxExample}
@@ -47,7 +64,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
    * The default style name.
    */
   private static final String DEFAULT_STYLENAME = "gwt-DialogBox";
-  
+
   private HTML caption = new HTML();
   private boolean dragging;
   private int dragStartX, dragStartY;
@@ -83,10 +100,10 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
    *          not contained by the dialog should be ignored
    */
   public DialogBox(boolean autoHide, boolean modal) {
-    super(autoHide, modal);
+    super(autoHide, modal, "dialog");
 
-    // Add the caption to the top row of the decorator panel.  We need to
-    // logically adopt the caption so we can catch mouse events. 
+    // Add the caption to the top row of the decorator panel. We need to
+    // logically adopt the caption so we can catch mouse events.
     Element td = getCellElement(0, 1);
     DOM.appendChild(td, caption.getElement());
     adopt(caption);
@@ -168,11 +185,11 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   public void setText(String text) {
     caption.setText(text);
   }
-  
+
   @Override
   protected void doAttachChildren() {
     super.doAttachChildren();
-    
+
     // See comment in doDetachChildren for an explanation of this call
     caption.onAttach();
   }
@@ -180,7 +197,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   @Override
   protected void doDetachChildren() {
     super.doDetachChildren();
-    
+
     // We need to detach the caption specifically because it is not part of the
     // iterator of Widgets that the {@link SimplePanel} super class returns.
     // This is similar to a {@link ComplexPanel}, but we do not want to expose

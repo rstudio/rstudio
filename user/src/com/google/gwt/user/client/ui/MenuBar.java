@@ -46,8 +46,26 @@ import java.util.List;
  * <li>.gwt-MenuBar .gwt-MenuItem-selected { selected menu items }</li>
  * <li>.gwt-MenuBar .gwt-MenuItemSeparator { section breaks between menu items }
  * </li>
- * <li>.gwt-MenuBar .gwt-MenuItemSeparator .content { inner component of
+ * <li>.gwt-MenuBar .gwt-MenuItemSeparator .menuSeparatorInner { inner component of
  * section separators } </li>
+ * <li>.gwt-MenuBar .menuPopupTopLeft { the top left cell }</li>
+ * <li>.gwt-MenuBar .menuPopupTopLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupTopCenter { the top center cell }</li>
+ * <li>.gwt-MenuBar .menuPopupTopCenterInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupTopRight { the top right cell }</li>
+ * <li>.gwt-MenuBar .menuPopupTopRightInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupMiddleLeft { the middle left cell }</li>
+ * <li>.gwt-MenuBar .menuPopupMiddleLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupMiddleCenter { the middle center cell }</li>
+ * <li>.gwt-MenuBar .menuPopupMiddleCenterInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupMiddleRight { the middle right cell }</li>
+ * <li>.gwt-MenuBar .menuPopupMiddleRightInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupBottomLeft { the bottom left cell }</li>
+ * <li>.gwt-MenuBar .menuPopupBottomLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupBottomCenter { the bottom center cell }</li>
+ * <li>.gwt-MenuBar .menuPopupBottomCenterInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBar .menuPopupBottomRight { the bottom right cell }</li>
+ * <li>.gwt-MenuBar .menuPopupBottomRightInner { the inner element of the cell }</li>
  * </ul>
  * 
  * <p>
@@ -517,7 +535,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     // Create a new popup for this item, and position it next to
     // the item (below if this is a horizontal menu bar, to the
     // right if it's a vertical bar).
-    popup = new DecoratedPopupPanel(true) {
+    popup = new DecoratedPopupPanel(true, false, "menuPopup") {
       {
         setWidget(item.getSubMenu());
         item.getSubMenu().onShow();
