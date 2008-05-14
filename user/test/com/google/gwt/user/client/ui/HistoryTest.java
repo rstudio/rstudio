@@ -30,9 +30,54 @@ public class HistoryTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  /* Tests against issue #572: Double unescaping of history tokens. */
+  private static native String getCurrentLocationHash() /*-{
+    var href = $wnd.location.href;
+    
+    splitted = href.split("#");
+    if (splitted.length != 2) {
+      return null;
+    }
+    
+    hashPortion = splitted[1];
+    
+    return hashPortion;
+  }-*/;
+  
   public void testTokenEscaping() {
+    final String shouldBeEncoded = "% ^[]|\"<>{}\\`";
+    final String shouldBeEncodedAs = "%25%20%5E%5B%5D%7C%22%3C%3E%7B%7D%5C%60";
+    
+    delayTestFinish(5000);
+    History.addHistoryListener(new HistoryListener() {
+      public void onHistoryChanged(String token) {
+        assertEquals(shouldBeEncodedAs, getCurrentLocationHash());
+        assertEquals(shouldBeEncoded, token);
+        finishTest();
+        History.removeHistoryListener(this);
+      }
+    });
+    History.newItem(shouldBeEncoded);
+  }
+  
+  public void testTokenNonescaping() {
+    final String shouldNotChange = "abc;,/?:@&=+$-_.!~*'()ABC123foo";
+    
+    delayTestFinish(5000);
+    History.addHistoryListener(new HistoryListener() {
+      public void onHistoryChanged(String token) {
+        assertEquals(shouldNotChange, getCurrentLocationHash());
+        assertEquals(shouldNotChange, token);
+        finishTest();
+        History.removeHistoryListener(this);
+      }
+    });
+    History.newItem(shouldNotChange);
+  }
+
+  /* Tests against issue #572: Double unescaping of history tokens. */
+  public void testDoubleEscaping() {
     final String escToken = "%24%24%24";
+
     delayTestFinish(5000);
     History.addHistoryListener(new HistoryListener() {
       public void onHistoryChanged(String token) {

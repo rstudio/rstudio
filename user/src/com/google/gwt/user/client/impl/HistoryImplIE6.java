@@ -49,7 +49,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
       if (hash.length > 0) {
         var token = '';
         try {
-          token = decodeURIComponent(hash.substring(1));
+          token = this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
         } catch (e) {
           // If there's a bad hash, always reload. This could only happen if
           // if someone entered or linked to a bad url.
@@ -85,7 +85,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     var hash = $wnd.location.hash;
     if (hash.length > 0) {
       try {
-        $wnd.__gwt_historyToken = decodeURIComponent(hash.substring(1));
+        $wnd.__gwt_historyToken = this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
       } catch (e) {
         // Clear the bad hash and __gwt_historyToken
         // (this can't have been a valid token).
@@ -101,12 +101,16 @@ class HistoryImplIE6 extends HistoryImplFrame {
 
   @Override
   protected native void injectGlobalHandler() /*-{
+    var historyImplRef = this;
+    
     $wnd.__gwt_onHistoryLoad = function(token) {
       // Change the URL and notify the application that its history frame
       // is changing.
+      
       if (token != $wnd.__gwt_historyToken) {
         $wnd.__gwt_historyToken = token;
-        $wnd.location.hash = encodeURIComponent(token);
+        $wnd.location.hash = historyImplRef.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
+        
         @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
       }
     };

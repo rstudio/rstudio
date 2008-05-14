@@ -1,12 +1,12 @@
 /*
  * Copyright 2007 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,10 +19,9 @@ package com.google.gwt.user.client.impl;
  * History implementation for Mozilla-based browsers.
  */
 class HistoryImplMozilla extends HistoryImplStandard {
- 
+
   @Override
   public native void newItem(String historyToken) /*-{
-
     // When the historyToken is blank or null, we are not able to set
     // $wnd.location.hash to the empty string, due to a bug in Mozilla.
     // Every time $wnd.location.hash is set to the empty string, one of the
@@ -39,7 +38,14 @@ class HistoryImplMozilla extends HistoryImplStandard {
 
       $wnd.location = s + '#';
     } else {
-      $wnd.location.hash = encodeURIComponent(historyToken);
+      $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
     }
   }-*/;
+
+  @Override
+  protected String decodeFragment(String encodedFragment) {
+    // Mozilla browsers pre-decode the result of location.hash, so there's no
+    // need to decode it again (which would in fact be incorrect).
+    return encodedFragment;
+  }
 }

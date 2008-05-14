@@ -34,9 +34,7 @@ class HistoryImplStandard extends HistoryImpl {
     $wnd.__checkHistory = function() {
       var token = '', hash = $wnd.location.hash;
       if (hash.length > 0) {
-        // Not all browsers decode location.hash the same way, so the
-        // implementation needs an opportunity to handle decoding.
-        token = historyImpl.@com.google.gwt.user.client.impl.HistoryImplStandard::decode(Ljava/lang/String;)(hash.substring(1));
+        token = historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
       }
 
       if (token != $wnd.__gwt_historyToken) {
@@ -49,7 +47,6 @@ class HistoryImplStandard extends HistoryImpl {
 
     // Kick off the timer.
     $wnd.__checkHistory();
-
     return true;
   }-*/;
 
@@ -58,10 +55,6 @@ class HistoryImplStandard extends HistoryImpl {
     if (historyToken == null) {
       historyToken = "";
     }
-    $wnd.location.hash = encodeURIComponent(historyToken);
+    $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
   }-*/;
-
-  protected String decode(String historyToken) {
-    return historyToken;
-  }
 }

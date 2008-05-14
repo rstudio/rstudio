@@ -24,9 +24,9 @@ package com.google.gwt.user.client.impl;
  */
 class HistoryImplSafari extends HistoryImplStandard {
 
-  private static boolean isOldSafari = detectOldSafari();
+  static boolean isOldSafari = detectOldSafari();
 
-  private static native boolean detectOldSafari() /*-{
+  static native boolean detectOldSafari() /*-{
     var exp = / AppleWebKit\/([\d]+)/;
     var result = exp.exec(navigator.userAgent);
     if (result) {
@@ -66,17 +66,6 @@ class HistoryImplSafari extends HistoryImplStandard {
     super.newItem(historyToken);
   }
 
-  protected native String decode(String historyToken) /*-{
-    try {
-      // Unlike most other browsers, Safari does not unescape location.hash.
-      return decodeURIComponent(historyToken);
-    } catch (e) {
-      // This is very unlikely to be malformed, since it comes directly from
-      // location.hash.
-      return "";
-    }
-  }-*/;
-
   private native void initImpl() /*-{
     $wnd.__gwt_historyToken = '';
 
@@ -84,7 +73,7 @@ class HistoryImplSafari extends HistoryImplStandard {
     var hash = $wnd.location.hash;
     if (hash.length > 0) {
       $wnd.__gwt_historyToken =
-        this.@com.google.gwt.user.client.impl.HistoryImplStandard::decode(Ljava/lang/String;)(hash.substring(1));
+        this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
     }
 
     @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)($wnd.__gwt_historyToken);
@@ -96,7 +85,7 @@ class HistoryImplSafari extends HistoryImplStandard {
     var meta = $doc.createElement('meta');
     meta.setAttribute('http-equiv','refresh');
 
-    var newUrl = $wnd.location.href.split('#')[0] + '#' + encodeURIComponent(historyToken);
+    var newUrl = $wnd.location.href.split('#')[0] + '#' + this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
     meta.setAttribute('content','0.01;url=' + newUrl);
 
     $doc.body.appendChild(meta);

@@ -35,6 +35,16 @@ public abstract class HistoryImpl {
 
   public abstract void newItem(String historyToken);
 
+  protected native String decodeFragment(String encodedFragment) /*-{  
+    // decodeURI() does *not* decode the '#' character.
+    return decodeURI(encodedFragment.replace("%23", "#"));
+  }-*/;
+
+  protected native String encodeFragment(String fragment) /*-{
+    // encodeURI() does *not* encode the '#' character.
+    return encodeURI(fragment).replace("#", "%23");
+  }-*/;
+
   protected native void setToken(String token) /*-{
     $wnd.__gwt_historyToken = token;
   }-*/;
