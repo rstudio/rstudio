@@ -30,7 +30,6 @@ public class GWTTest extends GWTTestCase {
   }-*/;
 
   private static void jvmTests() {
-    assertFalse(GWT.isClient());
     assertFalse(GWT.isScript());
     try {
       canCallNativeMethod();
@@ -47,7 +46,9 @@ public class GWTTest extends GWTTestCase {
   }
 
   public GWTTest() {
-    jvmTests();
+    if (!GWT.isClient()) {
+      jvmTests();
+    }
   }
 
   @Override
