@@ -139,7 +139,7 @@ class DOMImplIE6 extends DOMImpl {
       var newEvent = $doc.createEventObject();
       this.fireEvent('onclick', newEvent);
       if (this.__eventBits & 2) {
-        (@com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent)();
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent.call(this);
       }
     };
 
@@ -204,7 +204,7 @@ class DOMImplIE6 extends DOMImpl {
     if (chMask & 0x00001) elem.onclick       = (bits & 0x00001) ?
         @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     // Add a ondblclick handler if onclick is desired to ensure that 
-    // a user's double click will result in two onlclick events.
+    // a user's double click will result in two onclick events.
     if (chMask & (0x00003)) elem.ondblclick  = (bits & (0x00003)) ?
         @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent : null;
     if (chMask & 0x00004) elem.onmousedown   = (bits & 0x00004) ?
