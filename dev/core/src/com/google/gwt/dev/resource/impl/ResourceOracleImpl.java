@@ -125,7 +125,7 @@ public class ResourceOracleImpl implements ResourceOracle {
       } else if (f.isFile() && f.getName().endsWith(".jar")) {
         return new JarFileClassPathEntry(new JarFile(f));
       } else {
-        logger.log(TreeLogger.INFO, "Unexpected entry in classpath; " + f
+        logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f
             + " is neither a directory nor a jar");
         return null;
       }
