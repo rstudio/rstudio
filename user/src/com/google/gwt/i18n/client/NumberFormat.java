@@ -1040,8 +1040,8 @@ public class NumberFormat {
     // Round the number.
     double power = Math.pow(10, maximumFractionDigits);
     number = Math.round(number * power);
-    long intValue = (long) Math.floor(number / power);
-    long fracValue = (long) Math.floor(number - intValue * power);
+    double intValue = (double) Math.floor(number / power);
+    double fracValue = (double) Math.floor(number - intValue * power);
 
     boolean fractionPresent = (minimumFractionDigits > 0) || (fracValue > 0);
 
@@ -1080,7 +1080,7 @@ public class NumberFormat {
     }
 
     // To make sure it lead zero will be kept.
-    String fracPart = String.valueOf(fracValue + (long) power);
+    String fracPart = String.valueOf(fracValue + power);
     int fracLen = fracPart.length();
     while (fracPart.charAt(fracLen - 1) == '0' && fracLen > minimumFractionDigits + 1) {
       fracLen--;
