@@ -55,6 +55,12 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("(flag?f:g)()");
   }
 
+  public void testConditionals() throws Exception {
+    doTest("(a?b:c)?d:e");
+    doTest("a?b:c?d:e");
+    doTest("a?b?c:d:e?f:g");
+  }
+
   public void testConstructionInvocation() throws Exception {
     doTest("(new a())()");
   }

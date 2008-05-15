@@ -29,7 +29,6 @@ import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
 import com.google.gwt.dev.js.ast.JsContinue;
 import com.google.gwt.dev.js.ast.JsDebugger;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsDefault;
 import com.google.gwt.dev.js.ast.JsDoWhile;
 import com.google.gwt.dev.js.ast.JsEmpty;
@@ -45,6 +44,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsOperator;
 import com.google.gwt.dev.js.ast.JsParameter;
@@ -255,12 +255,15 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsConditional x, JsContext<JsExpression> ctx) {
-    // right associative
+    // Associativity: for the then and else branches, it is safe to insert
+    // another
+    // ternary expression, but if the test expression is a ternary, it should
+    // get parentheses around it.
     {
       JsExpression testExpression = x.getTestExpression();
-      _parenPush(x, testExpression, false);
+      _parenPush(x, testExpression, true);
       accept(testExpression);
-      _parenPop(x, testExpression, false);
+      _parenPop(x, testExpression, true);
     }
     _questionMark();
     {

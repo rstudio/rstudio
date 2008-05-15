@@ -62,6 +62,10 @@ public class MiscellaneousTest extends GWTTestCase {
     }
   }
 
+  private static volatile boolean FALSE = false;
+
+  private static volatile boolean TRUE = true;
+
   public static native boolean noOptimizeFalse() /*-{
     return false;
   }-*/;
@@ -197,6 +201,11 @@ public class MiscellaneousTest extends GWTTestCase {
     b[2][1] = null;
     b = new int[3][][];
     b[2] = null;
+  }
+
+  public void testAssociativityCond() {
+    int result = (TRUE ? TRUE : FALSE) ? 100 : 200;
+    assertEquals(100, result);
   }
 
   @SuppressWarnings("cast")
