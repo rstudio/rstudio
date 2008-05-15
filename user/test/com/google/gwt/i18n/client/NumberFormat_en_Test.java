@@ -56,7 +56,11 @@ public class NumberFormat_en_Test extends GWTTestCase {
    */
   public void testBasicFormat() {
     String str = NumberFormat.getFormat("0.0000").format(123.45789179565757f);
-    assertTrue(str.equals("123.4579"));
+    assertEquals("123.4579", str);
+    
+    // tests for overflow of mantissa bits during formatting
+    str = NumberFormat.getFormat("#,##0.000").format(112589990684262.5);
+    assertEquals("112,589,990,684,262.500", str);
   }
 
   public void testCurrency() {
@@ -64,149 +68,149 @@ public class NumberFormat_en_Test extends GWTTestCase {
 
     str = NumberFormat.getFormat("\u00a4#,##0.00;-\u00a4#,##0.00").format(
         1234.56);
-    assertTrue(str.equals("$1,234.56"));
+    assertEquals("$1,234.56", str);
     str = NumberFormat.getFormat("\u00a4#,##0.00;-\u00a4#,##0.00").format(
         -1234.56);
-    assertTrue(str.equals("-$1,234.56"));
+    assertEquals("-$1,234.56", str);
 
     str = NumberFormat.getFormat("\u00a4\u00a4 #,##0.00;-\u00a4\u00a4 #,##0.00").format(
         1234.56);
-    assertTrue(str.equals("USD 1,234.56"));
+    assertEquals("USD 1,234.56", str);
     str = NumberFormat.getFormat("\u00a4\u00a4 #,##0.00;\u00a4\u00a4 -#,##0.00").format(
         -1234.56);
-    assertTrue(str.equals("USD -1,234.56"));
+    assertEquals("USD -1,234.56", str);
 
     NumberFormat formatter = NumberFormat.getFormat(
         "\u00a4#,##0.00;-\u00a4#,##0.00", "BRL");
     str = formatter.format(1234.56);
-    assertTrue(str.equals("R$1,234.56"));
+    assertEquals("R$1,234.56", str);
     str = formatter.format(-1234.56);
-    assertTrue(str.equals("-R$1,234.56"));
+    assertEquals("-R$1,234.56", str);
 
     formatter = NumberFormat.getFormat(
         "\u00a4\u00a4 #,##0.00;(\u00a4\u00a4 #,##0.00)", "BRL");
     str = formatter.format(1234.56);
-    assertTrue(str.equals("BRL 1,234.56"));
+    assertEquals("BRL 1,234.56", str);
     str = formatter.format(-1234.56);
-    assertTrue(str.equals("(BRL 1,234.56)"));
+    assertEquals("(BRL 1,234.56)", str);
   }
 
   public void testExponential() {
     String str;
 
     str = NumberFormat.getFormat("0.####E0").format(0.01234);
-    assertTrue(str.equals("1.234E-2"));
+    assertEquals("1.234E-2", str);
     str = NumberFormat.getFormat("00.000E00").format(0.01234);
-    assertTrue(str.equals("12.340E-03"));
+    assertEquals("12.340E-03", str);
     str = NumberFormat.getFormat("##0.######E000").format(0.01234);
-    assertTrue(str.equals("12.34E-003"));
+    assertEquals("12.34E-003", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(0.01234);
-    assertTrue(str.equals("1.234E-2"));
+    assertEquals("1.234E-2", str);
 
     str = NumberFormat.getFormat("0.####E0").format(123456789);
-    assertTrue(str.equals("1.2346E8"));
+    assertEquals("1.2346E8", str);
     str = NumberFormat.getFormat("00.000E00").format(123456789);
-    assertTrue(str.equals("12.346E07"));
+    assertEquals("12.346E07", str);
     str = NumberFormat.getFormat("##0.######E000").format(123456789);
-    assertTrue(str.equals("123.456789E006"));
+    assertEquals("123.456789E006", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(123456789);
-    assertTrue(str.equals("1.235E8"));
+    assertEquals("1.235E8", str);
 
     str = NumberFormat.getFormat("0.####E0").format(1.23e300);
-    assertTrue(str.equals("1.23E300"));
+    assertEquals("1.23E300", str);
     str = NumberFormat.getFormat("00.000E00").format(1.23e300);
-    assertTrue(str.equals("12.300E299"));
+    assertEquals("12.300E299", str);
     str = NumberFormat.getFormat("##0.######E000").format(1.23e300);
-    assertTrue(str.equals("1.23E300"));
+    assertEquals("1.23E300", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(1.23e300);
-    assertTrue(str.equals("1.23E300"));
+    assertEquals("1.23E300", str);
 
     str = NumberFormat.getFormat("0.####E0").format(-3.141592653e-271);
-    assertTrue(str.equals("-3.1416E-271"));
+    assertEquals("-3.1416E-271", str);
     str = NumberFormat.getFormat("00.000E00").format(-3.141592653e-271);
-    assertTrue(str.equals("-31.416E-272"));
+    assertEquals("-31.416E-272", str);
     str = NumberFormat.getFormat("##0.######E000").format(-3.141592653e-271);
-    assertTrue(str.equals("-314.159265E-273"));
+    assertEquals("-314.159265E-273", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(-3.141592653e-271);
-    assertTrue(str.equals("[3.142E-271]"));
+    assertEquals("[3.142E-271]", str);
 
     str = NumberFormat.getFormat("0.####E0").format(0);
-    assertTrue(str.equals("0E0"));
+    assertEquals("0E0", str);
     str = NumberFormat.getFormat("00.000E00").format(0);
-    assertTrue(str.equals("00.000E00"));
+    assertEquals("00.000E00", str);
     str = NumberFormat.getFormat("##0.######E000").format(0);
-    assertTrue(str.equals("0E000"));
+    assertEquals("0E000", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(0);
-    assertTrue(str.equals("0E0"));
+    assertEquals("0E0", str);
 
     str = NumberFormat.getFormat("0.####E0").format(-1);
-    assertTrue(str.equals("-1E0"));
+    assertEquals("-1E0", str);
     str = NumberFormat.getFormat("00.000E00").format(-1);
-    assertTrue(str.equals("-10.000E-01"));
+    assertEquals("-10.000E-01", str);
     str = NumberFormat.getFormat("##0.######E000").format(-1);
-    assertTrue(str.equals("-1E000"));
+    assertEquals("-1E000", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(-1);
-    assertTrue(str.equals("[1E0]"));
+    assertEquals("[1E0]", str);
 
     str = NumberFormat.getFormat("0.####E0").format(1);
-    assertTrue(str.equals("1E0"));
+    assertEquals("1E0", str);
     str = NumberFormat.getFormat("00.000E00").format(1);
-    assertTrue(str.equals("10.000E-01"));
+    assertEquals("10.000E-01", str);
     str = NumberFormat.getFormat("##0.######E000").format(1);
-    assertTrue(str.equals("1E000"));
+    assertEquals("1E000", str);
     str = NumberFormat.getFormat("0.###E0;[0.###E0]").format(1);
-    assertTrue(str.equals("1E0"));
+    assertEquals("1E0", str);
 
     str = NumberFormat.getFormat("#E0").format(12345.0);
-    assertTrue(str.equals("1E4"));
+    assertEquals("1E4", str);
     str = NumberFormat.getFormat("0E0").format(12345.0);
-    assertTrue(str.equals("1E4"));
+    assertEquals("1E4", str);
     str = NumberFormat.getFormat("##0.###E0").format(12345.0);
-    assertTrue(str.equals("12.345E3"));
+    assertEquals("12.345E3", str);
     str = NumberFormat.getFormat("##0.###E0").format(12345.00001);
-    assertTrue(str.equals("12.345E3"));
+    assertEquals("12.345E3", str);
     str = NumberFormat.getFormat("##0.###E0").format(12345);
-    assertTrue(str.equals("12.345E3"));
+    assertEquals("12.345E3", str);
 
     str = NumberFormat.getFormat("##0.####E0").format(789.12345e-9);
-    assertTrue(str.equals("789.1235E-9"));
+    assertEquals("789.1235E-9", str);
     str = NumberFormat.getFormat("##0.####E0").format(780.e-9);
-    assertTrue(str.equals("780E-9"));
+    assertEquals("780E-9", str);
     str = NumberFormat.getFormat(".###E0").format(45678.0);
-    assertTrue(str.equals(".457E5"));
+    assertEquals(".457E5", str);
     str = NumberFormat.getFormat(".###E0").format(0);
-    assertTrue(str.equals(".0E0"));
+    assertEquals(".0E0", str);
 
     str = NumberFormat.getFormat("#E0").format(45678000);
-    assertTrue(str.equals("5E7"));
+    assertEquals("5E7", str);
     str = NumberFormat.getFormat("##E0").format(45678000);
-    assertTrue(str.equals("46E6"));
+    assertEquals("46E6", str);
     str = NumberFormat.getFormat("####E0").format(45678000);
-    assertTrue(str.equals("4568E4"));
+    assertEquals("4568E4", str);
     str = NumberFormat.getFormat("0E0").format(45678000);
-    assertTrue(str.equals("5E7"));
+    assertEquals("5E7", str);
     str = NumberFormat.getFormat("00E0").format(45678000);
-    assertTrue(str.equals("46E6"));
+    assertEquals("46E6", str);
     str = NumberFormat.getFormat("000E0").format(45678000);
-    assertTrue(str.equals("457E5"));
+    assertEquals("457E5", str);
     str = NumberFormat.getFormat("###E0").format(0.0000123);
-    assertTrue(str.equals("12E-6"));
+    assertEquals("12E-6", str);
     str = NumberFormat.getFormat("###E0").format(0.000123);
-    assertTrue(str.equals("123E-6"));
+    assertEquals("123E-6", str);
     str = NumberFormat.getFormat("###E0").format(0.00123);
-    assertTrue(str.equals("1E-3"));
+    assertEquals("1E-3", str);
     str = NumberFormat.getFormat("###E0").format(0.0123);
-    assertTrue(str.equals("12E-3"));
+    assertEquals("12E-3", str);
     str = NumberFormat.getFormat("###E0").format(0.123);
-    assertTrue(str.equals("123E-3"));
+    assertEquals("123E-3", str);
     str = NumberFormat.getFormat("###E0").format(1.23);
-    assertTrue(str.equals("1E0"));
+    assertEquals("1E0", str);
     str = NumberFormat.getFormat("###E0").format(12.3);
-    assertTrue(str.equals("12E0"));
+    assertEquals("12E0", str);
     str = NumberFormat.getFormat("###E0").format(123.0);
-    assertTrue(str.equals("123E0"));
+    assertEquals("123E0", str);
     str = NumberFormat.getFormat("###E0").format(1230.0);
-    assertTrue(str.equals("1E3"));
+    assertEquals("1E3", str);
   }
 
   public void testExponentParse() {
@@ -232,63 +236,63 @@ public class NumberFormat_en_Test extends GWTTestCase {
     String str;
 
     str = NumberFormat.getFormat("#,###").format(1234567890);
-    assertTrue(str.equals("1,234,567,890"));
+    assertEquals("1,234,567,890", str);
     str = NumberFormat.getFormat("#,####").format(1234567890);
-    assertTrue(str.equals("12,3456,7890"));
+    assertEquals("12,3456,7890", str);
 
     str = NumberFormat.getFormat("#").format(1234567890);
-    assertTrue(str.equals("1234567890"));
+    assertEquals("1234567890", str);
   }
 
   public void testPerMill() {
     String str;
 
     str = NumberFormat.getFormat("###.###\u2030").format(0.4857);
-    assertTrue(str.equals("485.7\u2030"));
+    assertEquals("485.7\u2030", str);
   }
 
   public void testQuotes() {
     String str;
 
     str = NumberFormat.getFormat("a'fo''o'b#").format(123);
-    assertTrue(str.equals("afo'ob123"));
+    assertEquals("afo'ob123", str);
 
     str = NumberFormat.getFormat("a''b#").format(123);
-    assertTrue(str.equals("a'b123"));
+    assertEquals("a'b123", str);
   }
 
   public void testStandardFormat() {
     String str;
 
     str = NumberFormat.getCurrencyFormat().format(1234.579);
-    assertTrue(str.equals("$1,234.58"));
+    assertEquals("$1,234.58", str);
     str = NumberFormat.getDecimalFormat().format(1234.579);
-    assertTrue(str.equals("1,234.579"));
+    assertEquals("1,234.579", str);
     str = NumberFormat.getPercentFormat().format(1234.579);
-    assertTrue(str.equals("123,458%"));
+    assertEquals("123,458%", str);
     str = NumberFormat.getScientificFormat().format(1234.579);
-    assertTrue(str.equals("1.235E3"));
+    assertEquals("1.235E3", str);
   }
 
   public void testZeros() {
     String str;
 
     str = NumberFormat.getFormat("#.#").format(0);
-    assertTrue(str.equals("0"));
+    assertEquals("0", str);
     str = NumberFormat.getFormat("#.").format(0);
-    assertTrue(str.equals("0."));
+    assertEquals("0.", str);
     str = NumberFormat.getFormat(".#").format(0);
-    assertTrue(str.equals(".0"));
+    assertEquals(".0", str);
     str = NumberFormat.getFormat("#").format(0);
-    assertTrue(str.equals("0"));
+    assertEquals("0", str);
 
     str = NumberFormat.getFormat("#0.#").format(0);
-    assertTrue(str.equals("0"));
+    assertEquals("0", str);
     str = NumberFormat.getFormat("#0.").format(0);
-    assertTrue(str.equals("0."));
+    assertEquals("0.", str);
     str = NumberFormat.getFormat("#.0").format(0);
-    assertTrue(str.equals(".0"));
+    assertEquals(".0", str);
     str = NumberFormat.getFormat("#").format(0);
-    assertTrue(str.equals("0"));
+    assertEquals("0", str);
   }
 }

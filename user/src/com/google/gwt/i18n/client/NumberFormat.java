@@ -678,6 +678,49 @@ public class NumberFormat {
   }
 
   /**
+   * This does the work of String.valueOf(long), but given a double as input
+   * and avoiding our emulated longs.  Contrasted with String.valueOf(double),
+   * it ensures (a) there will be no trailing .0, and (b) unwinds E-notation.
+   *  
+   * @param number the integral value to convert
+   * @return the string representing that integer
+   */
+  private String makeIntString(double number) {
+    String intPart = String.valueOf(number);
+    if (GWT.isScript()) {
+      return intPart; // JavaScript does the right thing for integral doubles
+    }
+    // ...but bytecode (hosted mode) does not... String.valueOf(double) will 
+    // either end in .0 (non internationalized) which we don't want but is 
+    // easy, or, for large numbers, it will be E-notation, which is annoying.
+    int digitLen = intPart.length();
+    
+    if (intPart.charAt(digitLen - 2) == '.') {
+      return intPart.substring(0, digitLen - 2);
+    } 
+
+    // if we have E notation, (1) the exponent will be positive (else 
+    // intValue is 0, which doesn't need E notation), and (2) there will
+    // be a radix dot (String.valueOf() isn't interationalized)
+    int radix = intPart.indexOf('.');
+    int exp = intPart.indexOf('E');
+    int digits = 0;
+    for (int i = exp + 1; i < intPart.length(); i++) {
+      digits = digits * 10 + (intPart.charAt(i) - '0');
+    }
+    digits++;  // exp of zero is one int digit...
+    StringBuffer newIntPart = new StringBuffer();
+    newIntPart.append(intPart.substring(0, radix));
+    newIntPart.append(intPart.substring(radix + 1, exp));
+    while (newIntPart.length() < digits) {
+      newIntPart.append('0');
+    }
+    newIntPart.setLength(digits);
+    return newIntPart.toString();
+  }
+  
+  
+  /**
    * This method parses affix part of pattern.
    * 
    * @param pattern pattern string that need to be parsed
@@ -1039,13 +1082,18 @@ public class NumberFormat {
       int minIntDigits) {
     // Round the number.
     double power = Math.pow(10, maximumFractionDigits);
-    number = Math.round(number * power);
-    double intValue = (double) Math.floor(number / power);
-    double fracValue = (double) Math.floor(number - intValue * power);
+    double intValue = (double) Math.floor(number);
+    // we don't want to use Math.round, 'cause that returns a long which JS
+    // then has to emulate... Math.floor(x + 0.5d) is defined to be equivalent
+    double fracValue = (double) Math.floor((number - intValue) * power + 0.5d);
+    if (fracValue >= power) {
+      intValue += 1.0;
+      fracValue -= power;
+    }
 
     boolean fractionPresent = (minimumFractionDigits > 0) || (fracValue > 0);
 
-    String intPart = String.valueOf(intValue);
+    String intPart = makeIntString(intValue);
     String grouping = isCurrencyFormat
         ? numberConstants.monetaryGroupingSeparator()
         : numberConstants.groupingSeparator();
@@ -1054,7 +1102,7 @@ public class NumberFormat {
 
     int zeroDelta = numberConstants.zeroDigit().charAt(0) - '0';
     int digitLen = intPart.length();
-
+    
     if (intValue > 0 || minIntDigits > 0) {
       for (int i = digitLen; i < minIntDigits; i++) {
         result.append(numberConstants.zeroDigit());
@@ -1080,7 +1128,7 @@ public class NumberFormat {
     }
 
     // To make sure it lead zero will be kept.
-    String fracPart = String.valueOf(fracValue + power);
+    String fracPart = makeIntString(Math.floor(fracValue + power + 0.5d));
     int fracLen = fracPart.length();
     while (fracPart.charAt(fracLen - 1) == '0' && fracLen > minimumFractionDigits + 1) {
       fracLen--;
