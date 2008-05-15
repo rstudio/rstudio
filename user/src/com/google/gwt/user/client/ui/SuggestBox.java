@@ -615,19 +615,14 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   private void showSuggestions(Collection<? extends Suggestion> suggestions) {
     if (suggestions.size() > 0) {
 
-      /* Hide the popup before we manipulate the menu within it. If we do not
-         do this, some browsers will redraw the popup as items are removed
-         and added to the menu.
-
-         As an optimization, setVisible(false) is used in place of the hide()
-         method. hide() removes the popup from the DOM, whereas setVisible(false)
-         does not. Since the popup is going to be shown again as soon as the menu
-         is rebuilt, it makes more sense to leave the popup attached to the DOM.
-
-         Notice that setVisible(true) is never called. This is because the call
-         to showAlignedPopup() will cause show() to be called, which in turn
-         calls setVisible(true). */
-      suggestionPopup.setVisible(false);
+      // Hide the popup before we manipulate the menu within it. If we do not
+      // do this, some browsers will redraw the popup as items are removed
+      // and added to the menu.
+      boolean isAnimationEnabled = suggestionPopup.isAnimationEnabled();
+      if (suggestionPopup.isAttached()) {
+        suggestionPopup.setAnimationEnabled(false);
+        suggestionPopup.hide();
+      }
       
       suggestionMenu.clearItems();
 
@@ -647,6 +642,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
       suggestionMenu.selectItem(0);
 
       suggestionPopup.showAlignedPopup();
+      suggestionPopup.setAnimationEnabled(isAnimationEnabled);
     } else {
       suggestionPopup.hide();
     }

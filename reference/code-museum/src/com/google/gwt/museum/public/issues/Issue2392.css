@@ -1,0 +1,16 @@
+@import url("MasterIssue.css");
+
+/* Outside of the popup */
+.gwt-SuggestBoxPopup {
+  border: 1px solid red;
+}
+
+/* The cell containing the suggestions */
+.gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
+  border: 1px solid blue;
+}
+
+/* The div containing the suggests */
+.gwt-SuggestBoxPopup .suggestPopupContent {
+  border: 1px solid green;
+}
