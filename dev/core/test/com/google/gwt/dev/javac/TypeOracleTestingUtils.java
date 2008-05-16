@@ -49,16 +49,7 @@ public class TypeOracleTestingUtils {
     return buildTypeOracle(logger, unitSet);
   }
 
-  /**
-   * Add compilation units for basic classes like Object and String.
-   */
-  private static void addStandardCups(Set<CompilationUnit> units) {
-    for (JavaSourceFile resource : JavaSourceCodeBase.getStandardResources()) {
-      units.add(new SourceFileCompilationUnit(resource));
-    }
-  }
-
-  private static TypeOracle buildTypeOracle(TreeLogger logger,
+  public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<CompilationUnit> units) throws UnableToCompleteException {
     JdtCompiler.compile(units);
     Map<String, CompiledClass> classMap = new HashMap<String, CompiledClass>();
@@ -72,5 +63,14 @@ public class TypeOracleTestingUtils {
     TypeOracleMediator mediator = new TypeOracleMediator();
     mediator.refresh(logger, units);
     return mediator.getTypeOracle();
+  }
+
+  /**
+   * Add compilation units for basic classes like Object and String.
+   */
+  private static void addStandardCups(Set<CompilationUnit> units) {
+    for (JavaSourceFile resource : JavaSourceCodeBase.getStandardResources()) {
+      units.add(new SourceFileCompilationUnit(resource));
+    }
   }
 }

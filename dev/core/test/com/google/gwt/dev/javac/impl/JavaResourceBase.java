@@ -99,11 +99,11 @@ public class JavaResourceBase {
     }
   };
   public static final MockResource SERIALIZABLE = new MockJavaResource(
-      "java.lang.Serializable") {
+      "java.io.Serializable") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
-      code.append("package java.lang;\n");
+      code.append("package java.io;\n");
       code.append("public interface Serializable { }\n");
       return code;
     }
@@ -114,7 +114,8 @@ public class JavaResourceBase {
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
       code.append("package java.lang;\n");
-      code.append("public final class String {\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("public final class String implements Serializable {\n");
       code.append("  public int length() { return 0; }\n");
       code.append("}\n");
       return code;
