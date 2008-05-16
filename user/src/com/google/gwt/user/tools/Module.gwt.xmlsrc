@@ -1,22 +1,19 @@
 <module>
 
-	<!-- Inherit the core Web Toolkit stuff.                  -->
-	<inherits name='com.google.gwt.user.User'/>
+      <!-- Inherit the core Web Toolkit stuff.                        -->
+      <inherits name='com.google.gwt.user.User'/>
+	
+      <!-- Inherit the default GWT style sheet.  You can change       -->
+      <!-- the theme of your GWT application by uncommenting          -->
+      <!-- any one of the following lines.                            -->
+      <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+      <!-- <inherits name="com.google.gwt.user.theme.chrome.Chrome"/> -->
+      <!-- <inherits name="com.google.gwt.user.theme.dark.Dark"/>     -->
 
-	<!-- Specify the app entry point class.                   -->
-	<entry-point class='@clientPackage.@className'/>
+      <!-- Specify the app entry point class.                         -->
+      <entry-point class='@clientPackage.@className'/>
     
-    <!-- Style sheet information -->
-
-      <!-- Include the default GWT style sheet.  You can change -->
-      <!-- the theme of your GWT application by uncommenting    -->
-      <!-- any one of the following lines.                      -->
-      <stylesheet src='default/GWT.css'/>
-      <!-- <stylesheet src='chrome/GWT.css'/> -->
-      <!-- <stylesheet src='dark/GWT.css'/> -->
-      
-      
-      <!-- Specify the application specific style sheet.        -->
+      <!-- Specify the application specific style sheet.              -->
       <stylesheet src='@className.css' />
 	
 </module>

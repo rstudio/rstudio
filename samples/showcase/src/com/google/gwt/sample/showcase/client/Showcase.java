@@ -17,6 +17,12 @@ package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.HeadElement;
+import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.sample.showcase.client.Application.ApplicationListener;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
@@ -54,8 +60,6 @@ import com.google.gwt.sample.showcase.client.content.widgets.CwCustomButton;
 import com.google.gwt.sample.showcase.client.content.widgets.CwFileUpload;
 import com.google.gwt.sample.showcase.client.content.widgets.CwHyperlink;
 import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.Timer;
@@ -150,7 +154,7 @@ public class Showcase implements EntryPoint {
    * 
    * @return the document's head element
    */
-  private static native Element getHeadElement() /*-{
+  private static native HeadElement getHeadElement() /*-{
     return $doc.getElementsByTagName("head")[0];
   }-*/;
 
@@ -254,9 +258,7 @@ public class Showcase implements EntryPoint {
     // loaded. Note that we are basing the layout on the width defined in the
     // LTR version, so both versions should use the same width for the main nav
     // menu.
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      updateStyleSheets();
-    }
+    updateStyleSheets();
 
     // Add an listener that sets the content widget when a menu item is selected
     app.setListener(new ApplicationListener() {
@@ -319,6 +321,20 @@ public class Showcase implements EntryPoint {
     String className = content.getClass().getName();
     className = className.substring(className.lastIndexOf('.') + 1);
     return className;
+  }
+
+  /**
+   * Create a new {@link LinkElement} that links to a style sheet and append it
+   * to the head element.
+   * 
+   * @param href the path to the style sheet
+   */
+  private void loadStyleSheet(String href) {
+    LinkElement linkElem = Document.get().createLinkElement();
+    linkElem.setRel("stylesheet");
+    linkElem.setType("text/css");
+    linkElem.setHref(href);
+    getHeadElement().appendChild(linkElem);
   }
 
   /**
@@ -532,40 +548,30 @@ public class Showcase implements EntryPoint {
    */
   private void updateStyleSheets() {
     // Remove existing style sheets
-    boolean isRTL = LocaleInfo.getCurrentLocale().isRTL();
-    Element headElem = getHeadElement();
-    int numChildren = DOM.getChildCount(headElem);
-    for (int i = 0; i < numChildren; i++) {
-      Element elem = DOM.getChild(headElem, i);
-      if (DOM.getElementProperty(elem, "tagName").equalsIgnoreCase("link")
-          && DOM.getElementProperty(elem, "rel").equalsIgnoreCase("stylesheet")) {
-        // Remove the existing link
-        String href = DOM.getElementProperty(elem, "href");
-        DOM.removeChild(headElem, elem);
-
-        // Set the theme
-        for (String oldTheme : ShowcaseConstants.STYLE_THEMES) {
-          href = href.replaceAll("/" + oldTheme + "/", "/" + CUR_THEME + "/");
+    HeadElement headElem = getHeadElement();
+    NodeList<Node> children = headElem.getChildNodes();
+    for (int i = 0; i < children.getLength(); i++) {
+      Node node = children.getItem(i);
+      if (node.getNodeType() == Node.ELEMENT_NODE) {
+        Element elem = Element.as(node);
+        if (elem.getTagName().equalsIgnoreCase("link")
+            && elem.getPropertyString("rel").equalsIgnoreCase("stylesheet")) {
+          headElem.removeChild(elem);
+          i--;
         }
-
-        // Convert to an rtl suffix
-        if (isRTL) {
-          href = href.replaceAll("_rtl.css", ".css");
-          href = href.replaceAll(".css", "_rtl.css");
-        }
-
-        // Start waiting for the new GWT style sheet to load
-        if (href.contains("GWT.")) {
-          styleTesterTimer.schedule(25);
-        }
-
-        // Add the style tag to the page
-        Element styleElem = DOM.createElement("link");
-        DOM.setElementProperty(styleElem, "rel", "stylesheet");
-        DOM.setElementProperty(styleElem, "type", "text/css");
-        DOM.setElementProperty(styleElem, "href", href);
-        DOM.insertChild(headElem, styleElem, i);
       }
     }
+
+    // Add the new style sheets
+    String modulePath = GWT.getModuleBaseURL();
+    String gwtPath = modulePath + "gwt/" + CUR_THEME + "/" + CUR_THEME + ".css";
+    String showcasePath = modulePath + CUR_THEME + "/Showcase.css";
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      gwtPath = gwtPath.replace(".css", "_rtl.css");
+      showcasePath = showcasePath.replace(".css", "_rtl.css");
+    }
+    styleTesterTimer.schedule(25);
+    loadStyleSheet(gwtPath);
+    loadStyleSheet(showcasePath);
   }
 }

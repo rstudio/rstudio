@@ -108,7 +108,7 @@ public interface ShowcaseConstants extends Constants,
   /**
    * The available style themes that the user can select.
    */
-  String[] STYLE_THEMES = {"default", "chrome", "dark"};
+  String[] STYLE_THEMES = {"standard", "chrome", "dark"};
 
   String categoryI18N();
 

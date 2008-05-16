@@ -3,6 +3,9 @@
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name='com.google.gwt.user.User'/>
 	<inherits name="com.google.gwt.i18n.I18N"/>
+      <inherits name="com.google.gwt.user.theme.standard.Standard"/>
+      <inherits name="com.google.gwt.user.theme.chrome.Chrome"/>
+      <inherits name="com.google.gwt.user.theme.dark.Dark"/>
 
 	<!-- Enable debug ID. -->
 	<inherits name="com.google.gwt.user.Debug"/>
@@ -23,6 +26,5 @@
 	<extend-property name="locale" values="zh"/>
 
 	<!-- Include style sheets. -->
-	<stylesheet src="default/GWT.css"/>
-	<stylesheet src="default/Showcase.css"/>
+	<stylesheet src="standard/Showcase.css"/>
 </module>

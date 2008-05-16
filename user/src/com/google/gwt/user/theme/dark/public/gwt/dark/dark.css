@@ -106,7 +106,7 @@ html>body .gwt-DialogBox .dialogBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
 * html .gwt-DialogBox .dialogBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
 }
 .gwt-DialogBox .dialogMiddleLeft {
   background: url(images/vborder.png) repeat-y;
@@ -115,7 +115,7 @@ html>body .gwt-DialogBox .dialogMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
 * html .gwt-DialogBox .dialogMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
 }
 .gwt-DialogBox .dialogTopLeftInner {
   width: 5px;
@@ -150,19 +150,19 @@ html>body .gwt-DialogBox .dialogBottomRight {
 * html .gwt-DialogBox .dialogTopLeft {
   width: 5px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/corner_dialog_topleft.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/corner_dialog_topleft.png',sizingMethod='crop');
 }
 * html .gwt-DialogBox .dialogTopRight {
   width: 8px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/corner_dialog_topright.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/corner_dialog_topright.png',sizingMethod='crop');
 }
 * html .gwt-DialogBox .dialogBottomLeftInner {
   width: 5px;
   height: 23px;
   margin-top: -15px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-DialogBox .dialogBottomRightInner {
   width: 13px;
@@ -170,7 +170,7 @@ html>body .gwt-DialogBox .dialogBottomRight {
   margin-left: -5px;
   margin-top: -15px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 
 .gwt-DisclosurePanel {
@@ -296,7 +296,7 @@ html>body .gwt-MenuBarPopup .menuPopupBottomCenter {
   background: url(images/hborder.png) 0px -13px repeat-x;
 }
 * html .gwt-MenuBarPopup .menuPopupBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/hborder_gray_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_gray_shadow.png',sizingMethod='scale');
 }
 .gwt-MenuBarPopup .menuPopupMiddleLeft {
   background: url(images/vborder.png) -12px 0px repeat-y;
@@ -305,7 +305,7 @@ html>body .gwt-MenuBarPopup .menuPopupMiddleRight {
   background: url(images/vborder.png) -13px 0px repeat-y;
 }
 * html .gwt-MenuBarPopup .menuPopupMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/vborder_gray_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_gray_shadow.png',sizingMethod='scale');
 }
 .gwt-MenuBarPopup .menuPopupTopLeftInner {
   width: 5px;
@@ -344,7 +344,7 @@ html>body .gwt-MenuBarPopup .menuPopupBottomRight {
   height: 41px;
   margin-top: -36px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-MenuBarPopup .menuPopupTopRightInner {
   width: 13px;
@@ -352,14 +352,14 @@ html>body .gwt-MenuBarPopup .menuPopupBottomRight {
   margin-left: -5px;
   margin-top: -36px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-MenuBarPopup .menuPopupBottomLeftInner {
   width: 5px;
   height: 49px;
   margin-top: -41px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-MenuBarPopup .menuPopupBottomRightInner {
   width: 13px;
@@ -367,7 +367,7 @@ html>body .gwt-MenuBarPopup .menuPopupBottomRight {
   margin-left: -5px;
   margin-top: -41px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 
 .gwt-PasswordTextBox {
@@ -396,7 +396,7 @@ html>body .gwt-DecoratedPopupPanel .popupBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
 * html .gwt-DecoratedPopupPanel .popupBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
 }
 .gwt-DecoratedPopupPanel .popupMiddleLeft {
   background: url(images/vborder.png) repeat-y;
@@ -405,7 +405,7 @@ html>body .gwt-DecoratedPopupPanel .popupMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
 * html .gwt-DecoratedPopupPanel .popupMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
 }
 .gwt-DecoratedPopupPanel .popupTopLeftInner {
   width: 5px;
@@ -444,7 +444,7 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   height: 15px;
   margin-top: -10px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-DecoratedPopupPanel .popupTopRightInner {
   width: 13px;
@@ -452,14 +452,14 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   margin-left: -5px;
   margin-top: -10px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-DecoratedPopupPanel .popupBottomLeftInner {
   width: 5px;
   height: 23px;
   margin-top: -15px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-DecoratedPopupPanel .popupBottomRightInner {
   width: 13px;
@@ -467,7 +467,7 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   margin-left: -5px;
   margin-top: -15px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 
 .gwt-PushButton-up,
@@ -654,7 +654,7 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
 * html .gwt-SuggestBoxPopup .suggestPopupBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
 }
 .gwt-SuggestBoxPopup .suggestPopupMiddleLeft {
   background: url(images/vborder.png) repeat-y;
@@ -663,7 +663,7 @@ html>body .gwt-SuggestBoxPopup .suggestPopupMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
 * html .gwt-SuggestBoxPopup .suggestPopupMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
 }
 .gwt-SuggestBoxPopup .suggestPopupTopLeftInner {
   width: 5px;
@@ -702,7 +702,7 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   height: 28px;
   margin-top: -23px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-SuggestBoxPopup .suggestPopupTopRightInner {
   width: 13px;
@@ -710,14 +710,14 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   margin-left: -5px;
   margin-top: -23px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-SuggestBoxPopup .suggestPopupBottomLeftInner {
   width: 5px;
   height: 36px;
   margin-top: -28px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 * html .gwt-SuggestBoxPopup .suggestPopupBottomRightInner {
   width: 13px;
@@ -725,7 +725,7 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   margin-left: -5px;
   margin-top: -28px;
   overflow: hidden;
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='dark/images/corner.png',sizingMethod='crop');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
 }
 
 .gwt-TabBar {

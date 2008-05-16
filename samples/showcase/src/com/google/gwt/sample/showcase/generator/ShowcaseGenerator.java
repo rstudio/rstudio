@@ -48,7 +48,7 @@ public class ShowcaseGenerator extends Generator {
    * RTL mode.
    */
   private static final String[] SRC_CSS = {
-      "com/google/gwt/user/public/$THEME/GWT.css",
+      "com/google/gwt/user/theme/$THEME/public/gwt/$THEME/$THEME.css",
       "com/google/gwt/sample/showcase/public/$THEME/Showcase.css"};
 
   /**
@@ -286,7 +286,7 @@ public class ShowcaseGenerator extends Generator {
       throws UnableToCompleteException {
     InputStream in = classLoader.getResourceAsStream(path);
     if (in == null) {
-      logger.log(TreeLogger.ERROR, "Resource not found");
+      logger.log(TreeLogger.ERROR, "Resource not found: " + path);
       throw new UnableToCompleteException();
     }
 

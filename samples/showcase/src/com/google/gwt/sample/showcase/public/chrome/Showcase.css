@@ -48,7 +48,7 @@
 .Application-options .gwt-ToggleButton-down-hovering {
   cursor: default;
 }
-.Application-options .sc-ThemeButton-default {
+.Application-options .sc-ThemeButton-standard {
   background: #d0e4f6;
 }
 .Application-options .sc-ThemeButton-chrome {
@@ -71,7 +71,7 @@
 .Application-content-title {
   padding: 4px 0px 3px 6px;
   text-align: left;
-  background: url(images/hborder.png) repeat-x 0px -2003px;
+  background: url(../gwt/chrome/images/hborder.png) repeat-x 0px -2003px;
   border-bottom: 2px solid #e3e3e3;
 }
 .Application-content-title .gwt-TabBarItem {

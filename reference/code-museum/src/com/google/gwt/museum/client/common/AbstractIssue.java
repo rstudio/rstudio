@@ -117,6 +117,7 @@ public abstract class AbstractIssue implements EntryPoint {
   }
 
   public void onModuleLoad() {
+    Utility.removeGwtStyleSheet();
     Utility.getHeadElement().appendChild(createCSS());
     Window.setTitle(getHeadline());
     RootPanel.get().add(new HTML(getInstructions()));

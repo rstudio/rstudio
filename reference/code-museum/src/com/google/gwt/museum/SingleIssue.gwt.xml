@@ -2,6 +2,7 @@
     
     <!-- Inherit the core Web Toolkit stuff.                  -->
     <inherits name='com.google.gwt.user.User'/>
+    <inherits name="com.google.gwt.user.theme.standard.Standard"/>
     
     <!-- Specify the app entry point class.                   -->
     <entry-point class='com.google.gwt.museum.client.defaultmuseum.Issue1488'/>
