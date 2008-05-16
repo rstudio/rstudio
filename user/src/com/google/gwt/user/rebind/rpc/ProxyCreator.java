@@ -19,18 +19,21 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
@@ -61,6 +64,80 @@ class ProxyCreator {
   private static final Map<JPrimitiveType, ResponseReader> JPRIMITIVETYPE_TO_RESPONSEREADER = new HashMap<JPrimitiveType, ResponseReader>();
 
   private static final String PROXY_SUFFIX = "_Proxy";
+
+  /**
+   * Adds a root type for each type that appears in the RemoteService interface
+   * methods.
+   */
+  private static void addRemoteServiceRootTypes(TreeLogger logger,
+      TypeOracle typeOracle, SerializableTypeOracleBuilder stob,
+      JClassType remoteService) throws NotFoundException {
+    logger = logger.branch(TreeLogger.DEBUG, "Analyzing '"
+        + remoteService.getParameterizedQualifiedSourceName()
+        + "' for serializable types", null);
+
+    JMethod[] methods = remoteService.getOverridableMethods();
+
+    JClassType exceptionClass = typeOracle.getType(Exception.class.getName());
+
+    TreeLogger validationLogger = logger.branch(TreeLogger.DEBUG,
+        "Analyzing methods:", null);
+    for (JMethod method : methods) {
+      TreeLogger methodLogger = validationLogger.branch(TreeLogger.DEBUG,
+          method.toString(), null);
+      JType returnType = method.getReturnType();
+      if (returnType != JPrimitiveType.VOID) {
+        TreeLogger returnTypeLogger = methodLogger.branch(TreeLogger.DEBUG,
+            "Return type: " + returnType.getParameterizedQualifiedSourceName(),
+            null);
+        stob.addRootType(returnTypeLogger, returnType);
+      }
+
+      JParameter[] params = method.getParameters();
+      for (JParameter param : params) {
+        TreeLogger paramLogger = methodLogger.branch(TreeLogger.DEBUG,
+            "Parameter: " + param.toString(), null);
+        JType paramType = param.getType();
+        stob.addRootType(paramLogger, paramType);
+      }
+
+      JType[] exs = method.getThrows();
+      if (exs.length > 0) {
+        TreeLogger throwsLogger = methodLogger.branch(TreeLogger.DEBUG,
+            "Throws:", null);
+        for (JType ex : exs) {
+          if (!exceptionClass.isAssignableFrom(ex.isClass())) {
+            throwsLogger = throwsLogger.branch(
+                TreeLogger.WARN,
+                "'"
+                    + ex.getQualifiedSourceName()
+                    + "' is not a checked exception; only checked exceptions may be used",
+                null);
+          }
+
+          stob.addRootType(throwsLogger, ex);
+        }
+      }
+    }
+  }
+
+  /**
+   * Add the implicit root types that are needed to make RPC work. These would
+   * be {@link String} and {@link IncompatibleRemoteServiceException}.
+   */
+  private static void addRequiredRoots(TreeLogger logger,
+      TypeOracle typeOracle, SerializableTypeOracleBuilder stob)
+      throws NotFoundException {
+    logger = logger.branch(TreeLogger.DEBUG, "Analyzing implicit types");
+
+    // String is always instantiable.
+    JClassType stringType = typeOracle.getType(String.class.getName());
+    stob.addRootType(logger, stringType);
+
+    // IncompatibleRemoteServiceException is always serializable
+    JClassType icseType = typeOracle.getType(IncompatibleRemoteServiceException.class.getName());
+    stob.addRootType(logger, icseType);
+  }
 
   private boolean enforceTypeVersioning;
 
@@ -135,8 +212,24 @@ class ProxyCreator {
     // Determine the set of serializable types
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
         logger, typeOracle);
-    SerializableTypeOracle sto = stob.build(context.getPropertyOracle(),
-        serviceIntf);
+    try {
+      addRequiredRoots(logger, typeOracle, stob);
+
+      addRemoteServiceRootTypes(logger, typeOracle, stob, serviceIntf);
+    } catch (NotFoundException e) {
+      logger.log(TreeLogger.ERROR, "", e);
+      throw new UnableToCompleteException();
+    }
+
+    // Create a resource file to receive all of the serialization information
+    // computed by STOB and mark it as private so it does not end up in the
+    // output.
+    OutputStream pathInfo = context.tryCreateResource(logger,
+        serviceIntf.getQualifiedSourceName() + ".rpc.log");
+    stob.setLogOutputStream(pathInfo);
+    SerializableTypeOracle sto = stob.build(logger);
+    GeneratedResource rpcLog = context.commitResource(logger, pathInfo);
+    rpcLog.setPrivate(true);
 
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger, sto, context,
         serviceIntf);

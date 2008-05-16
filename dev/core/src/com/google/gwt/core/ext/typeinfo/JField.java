@@ -45,7 +45,7 @@ public class JField implements HasAnnotations, HasMetaData {
     this.enclosingType = enclosingType;
     this.name = name;
     this.enclosingType.addField(this);
-    annotations =  new Annotations();
+    annotations = new Annotations();
     annotations.addAnnotations(declaredAnnotations);
   }
 
@@ -152,7 +152,7 @@ public class JField implements HasAnnotations, HasMetaData {
     if (names.length > 0) {
       sb.append(" ");
     }
-    sb.append(type.getQualifiedSourceName());
+    sb.append(type.getParameterizedQualifiedSourceName());
     sb.append(" ");
     sb.append(getName());
     return sb.toString();

@@ -238,6 +238,8 @@ class RemoteServiceAsyncValidator {
       validationFailed(branch, remoteService);
     }
 
+    branch.log(TreeLogger.DEBUG, "Interfaces are in sync");
+
     return syncMethodToAsyncMethodMap;
   }
 }

@@ -15,63 +15,69 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
-import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
-import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPackage;
-import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JGenericType;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
-import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
+import com.google.gwt.core.ext.typeinfo.JRawType;
+import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.JWildcardType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.client.rpc.IsSerializable;
+import com.google.gwt.user.rebind.rpc.TypeParameterExposureComputer.TypeParameterFlowInfo;
 
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.Serializable;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 
 /**
- * Builds a {@link SerializableTypeOracle} for a given
- * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
+ * Builds a {@link SerializableTypeOracle} for a given set of root types.
  * 
- * <h4>Background</h4>
+ * <p>
+ * There are two goals for this builder. First, discover the set of serializable
+ * types that can be serialized if you serialize one of the root types. Second,
+ * to make sure that all root types can actually be serialized by GWT.
  * </p>
- * There are two goals for this builder. First, discover the set serializable
- * types that can be exchanged between client and server code over a given
- * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService} interface.
- * Second, to make sure that all types which qualify for serializability
- * actually adhere to the constraints for the particular type of serializability
- * which applies to them.
  * 
+ * <p>
+ * It then traverses the type hierarchy of each of the types in these method
+ * signatures in order to discover additional types which it might need to
+ * include. For the purposes of this explanation we define a root type to be any
+ * type which appears in the RemoteService method signatures or the type of any
+ * non-final, instance field which is part of a type that qualifies for
+ * serialization. The builder will fail if a root is not serializable and it has
+ * no subtypes that are.
  * </p>
- * This builder starts from the set of methods that are declared or inherited by
- * the RemoteService interface. It then traverses the type hierarchy of each of
- * the types in these method signatures in order to discover additional types
- * which it might need to include. For the purposes of this explanation we
- * define a root type to be any type which appears in the RemoteService method
- * signatures or the type of any non-final, instance field which is part of a
- * type that qualifies for serialization. The builder will fail if a root is not
- * serializable and it has no subtypes that are.
  * 
+ * <p>
+ * To improve the accuracy of the traversal there is a computations of the
+ * exposure of type parameters. When the traversal reaches a paramaterized type,
+ * these exposure values are used to determine how to treat the arguments.
  * </p>
+ * 
+ * <p>
  * A type qualifies for serialization if it is automatically or manually
  * serializable. Automatic serialization is selected if the type is assignable
  * to {@link IsSerializable} or {@link Serializable} or if the type is a
@@ -79,66 +85,44 @@ import java.util.TreeSet;
  * there exists another type with the same fully qualified name concatenated
  * with "_CustomFieldSerializer". If a type qualifies for both manual and
  * automatic serialization, manual serialization is preferred.
- * 
  * </p>
- * If any of the checks described in the following sections fail, the build
- * process will fail.
- * 
- * <h4>Root Types</h4>
- * <ul>
- * <li>If not parameterized and it is assignable to Map or Collection, emit a
- * warning and check all serializable subtypes of object.</li>
- * <li>If parameterized check all subtypes of the type arguments.</li>
- * <li>Check all subtypes of the raw type</li>
- * <li>If not parameterized and not assignable to Map or Collection, check the
- * root type and all of its subtypes</li>
- * </ul>
- * 
- * <h4>Classes</h4>
- * <ul>
- * <li>Does not qualify for serialization</li>
- * <ul>
- * <li>If asked to check subtypes, check all subclasses; must have one
- * serializable subtype</li>
- * </ul>
- * <li>Qualifies for Auto Serialization
- * <ul>
- * <li>If superclass qualifies for serialization check it</li>
- * <li>Check the type of every non-final instance field</li>
- * <li>If class is local or nested and not static ignore it</li>
- * <li>If class is not abstract and not default instantiable fail</li>
- * <li>If class is not part of the JRE, warn if it uses native methods</li>
- * <li>If asked to check subtypes, check all subclasses</li>
- * </ul>
- * </li>
- * <li>Qualifies for Manual Serialization
- * <ul>
- * <li>If superclass qualifies for serialization check it</li>
- * <li>Check the type of every non-final instance field</li>
- * <li>Check that the CustomFieldSerializer meets the following criteria:
- * <ul>
- * <li>A deserialize method whose signature is: 'public static void
- * deserialize({@link SerializationStreamReader}, &lt;T&gt; instance)'</li>
- * <li>A serialize method whose signature is: 'public static void serialize({@link SerializationStreamWriter},
- * &lt;T&gt; instance)'</li>
- * <li>It the class is not abstract, not default instantiable the custom field
- * serializer must implement an instantiate method whose signature is: 'public
- * static &lt;T&gt; instantiate(SerializationStreamReader)'</li>
- * </ul>
- * </ul>
- * </li>
- * </ul>
- * 
- * <h4>Arrays</h4>
- * <ul>
- * <li>Check the leaf type of the array; it must be serializable or have a
- * subtype that is.</li>
- * <li>All covariant array types are included.</li>
- * </ul>
  */
 public class SerializableTypeOracleBuilder {
 
-  private class TypeInfo {
+  interface Path {
+    Path getParent();
+
+    String toString();
+  }
+
+  enum TypeState {
+    /**
+     * The instantiability of a type has been determined.
+     */
+    CHECK_DONE("Check succeeded"),
+    /**
+     * The instantiability of a type is being checked.
+     */
+    CHECK_IN_PROGRESS("Check in progress"),
+    /**
+     * The instantiability of a type has not been checked.
+     */
+    NOT_CHECKED("Not checked");
+
+    private final String message;
+
+    TypeState(String message) {
+      this.message = message;
+    }
+
+    @Override
+    public String toString() {
+      return message;
+    }
+  }
+
+  private class TypeInfoComputed {
+
     /**
      * <code>true</code> if the type is assignable to {@link IsSerializable}
      * or {@link java.io.Serializable Serializable}.
@@ -152,11 +136,45 @@ public class SerializableTypeOracleBuilder {
     private final boolean directlyImplementsMarker;
 
     /**
+     * <code>true</code> if the type is automatically or manually serializable
+     * and the corresponding checks succeed.
+     */
+    private boolean fieldSerializable = false;
+
+    /**
+     * <code>true</code> if this type might be instantiated.
+     */
+    private boolean instantiable = false;
+
+    /**
+     * <code>true</code> if there are instantiable subtypes assignable to this
+     * one.
+     */
+    private boolean instantiableSubtypes;
+
+    /**
      * Custom field serializer or <code>null</code> if there isn't one.
      */
     private final JClassType manualSerializer;
 
-    TypeInfo(JClassType type) {
+    /**
+     * Path used to discover this type.
+     */
+    private final Path path;
+
+    /**
+     * The state that this type is currently in.
+     */
+    private TypeState state = TypeState.NOT_CHECKED;
+
+    /**
+     * {@link JClassType} associated with this metadata.
+     */
+    private final JClassType type;
+
+    public TypeInfoComputed(JClassType type, Path path) {
+      this.type = type;
+      this.path = path;
       autoSerializable = type.isAssignableTo(isSerializableClass)
           || type.isAssignableTo(serializableClass);
       manualSerializer = findCustomFieldSerializer(typeOracle, type);
@@ -167,6 +185,18 @@ public class SerializableTypeOracleBuilder {
 
     public JClassType getManualSerializer() {
       return manualSerializer;
+    }
+
+    public Path getPath() {
+      return path;
+    }
+
+    public JClassType getType() {
+      return type;
+    }
+
+    public boolean hasInstantiableSubtypes() {
+      return isInstantiable() || instantiableSubtypes;
     }
 
     public boolean isAutoSerializable() {
@@ -181,113 +211,8 @@ public class SerializableTypeOracleBuilder {
       return directlyImplementsMarker || isManuallySerializable();
     }
 
-    public boolean isManuallySerializable() {
-      return manualSerializer != null;
-    }
-  }
-
-  private static class TypeInfoComputed {
-    /**
-     * An issue that prevents a type from being serializable.
-     */
-    private static class SerializationIssue implements
-        Comparable<SerializationIssue> {
-      public final boolean isSpeculative;
-      public final String issueMessage;
-
-      SerializationIssue(boolean isSpeculative, String issueMessage) {
-        this.isSpeculative = isSpeculative;
-        this.issueMessage = issueMessage;
-      }
-
-      public int compareTo(SerializationIssue other) {
-        if (isSpeculative == other.isSpeculative) {
-          return issueMessage.compareTo(other.issueMessage);
-        }
-
-        if (isSpeculative && !other.isSpeculative) {
-          return -1;
-        }
-
-        return 1;
-      }
-    }
-
-    /**
-     * Represents the state of a type while we are determining the set of
-     * serializable types.
-     */
-    private static final class TypeState {
-      private final String state;
-
-      protected TypeState(String state) {
-        this.state = state;
-      }
-
-      @Override
-      public String toString() {
-        return state;
-      }
-    }
-
-    /**
-     * The instantiability of a type has been determined.
-     */
-    static final TypeState CHECK_DONE = new TypeState("Check succeeded");
-
-    /**
-     * The instantiability of a type is being checked.
-     */
-    static final TypeState CHECK_IN_PROGRESS = new TypeState(
-        "Check in progress");
-
-    /**
-     * The instantiability of a type has not been checked.
-     */
-    static final TypeState NOT_CHECKED = new TypeState("Not checked");
-
-    /**
-     * <code>true</code> if the type is automatically or manually serializable
-     * and the corresponding checks succeed.
-     */
-    private boolean fieldSerializable = false;
-
-    /**
-     * <code>true</code> if this type might be instantiated.
-     */
-    private boolean instantiable = false;
-
-    /**
-     * List of serialization warnings or errors that prevent this type from
-     * being serializable.
-     */
-    private Set<SerializationIssue> serializationIssues = new TreeSet<SerializationIssue>();
-
-    /**
-     * The state that this type is currently in.
-     */
-    private TypeState state = NOT_CHECKED;
-
-    /**
-     * {@link JClassType} associated with this metadata.
-     */
-    private final JClassType type;
-
-    public TypeInfoComputed(JClassType type) {
-      this.type = type;
-    }
-
-    public void addSerializationIssue(boolean isSpeculative, String issueMessage) {
-      serializationIssues.add(new SerializationIssue(isSpeculative,
-          issueMessage));
-    }
-
-    public JClassType getType() {
-      return type;
-    }
-
     public boolean isDone() {
-      return state == CHECK_DONE;
+      return state == TypeState.CHECK_DONE;
     }
 
     public boolean isFieldSerializable() {
@@ -298,15 +223,12 @@ public class SerializableTypeOracleBuilder {
       return instantiable;
     }
 
-    public boolean isPendingInstantiable() {
-      return state == CHECK_IN_PROGRESS;
+    public boolean isManuallySerializable() {
+      return manualSerializer != null;
     }
 
-    public void logReasonsForUnserializability(TreeLogger logger) {
-      for (SerializationIssue serializationIssue : serializationIssues) {
-        logger.branch(getLogLevel(serializationIssue.isSpeculative),
-            serializationIssue.issueMessage, null);
-      }
+    public boolean isPendingInstantiable() {
+      return state == TypeState.CHECK_IN_PROGRESS;
     }
 
     public void setFieldSerializable() {
@@ -318,22 +240,57 @@ public class SerializableTypeOracleBuilder {
       if (instantiable) {
         fieldSerializable = true;
       }
-      state = CHECK_DONE;
+      state = TypeState.CHECK_DONE;
+    }
+
+    public void setInstantiableSubytpes(boolean instantiableSubtypes) {
+      this.instantiableSubtypes = instantiableSubtypes;
     }
 
     public void setPendingInstantiable() {
-      state = CHECK_IN_PROGRESS;
+      state = TypeState.CHECK_IN_PROGRESS;
     }
   }
 
   /**
-   * Compares {@link JClassType}s according to their qualified source names.
+   * Type parameter is exposed.
    */
-  private static final Comparator<JClassType> JCLASS_TYPE_COMPARATOR = new Comparator<JClassType>() {
-    public int compare(JClassType t1, JClassType t2) {
+  static final int EXPOSURE_DIRECT = 0;
+
+  /**
+   * Type parameter is exposed as a bounded array. The value is the max bound of
+   * the exposure.
+   */
+  static final int EXPOSURE_MIN_BOUNDED_ARRAY = EXPOSURE_DIRECT + 1;
+
+  /**
+   * Type parameter is not exposed.
+   */
+  static final int EXPOSURE_NONE = -1;
+
+  /**
+   * Compares {@link JType}s according to their qualified source names.
+   */
+  static final Comparator<JType> JTYPE_COMPARATOR = new Comparator<JType>() {
+    public int compare(JType t1, JType t2) {
       return t1.getQualifiedSourceName().compareTo(t2.getQualifiedSourceName());
     }
   };
+
+  /**
+   * No type filtering by default..
+   */
+  private static final TypeFilter DEFAULT_TYPE_FILTER = new TypeFilter() {
+    public String getName() {
+      return "Default";
+    }
+
+    public boolean isAllowed(JClassType type) {
+      return true;
+    }
+  };
+
+  private static final JClassType[] NO_JCLASSES = new JClassType[0];
 
   /**
    * Finds the custom field serializer for a given type.
@@ -362,32 +319,127 @@ public class SerializableTypeOracleBuilder {
     return customSerializer;
   }
 
-  private static void addEdge(Map<JClassType, List<JClassType>> adjList,
-      JClassType subclass, JClassType clazz) {
-    List<JClassType> edges = adjList.get(subclass);
-    if (edges == null) {
-      edges = new ArrayList<JClassType>();
-      adjList.put(subclass, edges);
+  /**
+   * Returns <code>true</code> if the field qualifies for serialization
+   * without considering its type.
+   */
+  static boolean qualfiesForSerialization(TreeLogger logger, JField field) {
+    if (field.isStatic() || field.isTransient()) {
+      return false;
     }
 
-    edges.add(clazz);
+    if (field.isFinal()) {
+      logger.branch(TreeLogger.DEBUG, "Field '" + field.toString()
+          + "' will not be serialized because it is final", null);
+      return false;
+    }
+
+    return true;
   }
 
-  private static void depthFirstSearch(Set<JClassType> seen,
-      Map<JClassType, List<JClassType>> adjList, JClassType type) {
-    if (seen.contains(type)) {
-      return;
+  static void recordTypeParametersIn(JType type, Set<JTypeParameter> params) {
+    JTypeParameter isTypeParameter = type.isTypeParameter();
+    if (isTypeParameter != null) {
+      params.add(isTypeParameter);
     }
-    seen.add(type);
 
-    List<JClassType> children = adjList.get(type);
-    if (children != null) {
-      for (JClassType child : children) {
-        if (!seen.contains(child)) {
-          depthFirstSearch(seen, adjList, child);
-        }
+    JArrayType isArray = type.isArray();
+    if (isArray != null) {
+      recordTypeParametersIn(isArray.getComponentType(), params);
+    }
+
+    JWildcardType isWildcard = type.isWildcard();
+    if (isWildcard != null) {
+      for (JClassType bound : isWildcard.getUpperBounds()) {
+        recordTypeParametersIn(bound, params);
       }
     }
+
+    JParameterizedType isParameterized = type.isParameterized();
+    if (isParameterized != null) {
+      for (JClassType arg : isParameterized.getTypeArgs()) {
+        recordTypeParametersIn(arg, params);
+      }
+    }
+  }
+
+  private static Path createArrayComponentPath(final JArrayType arrayType,
+      final Path parent) {
+    return new Path() {
+      public Path getParent() {
+        return parent;
+      }
+
+      @Override
+      public String toString() {
+        return "Type '"
+            + arrayType.getComponentType().getParameterizedQualifiedSourceName()
+            + "' is reachable from array type '"
+            + arrayType.getParameterizedQualifiedSourceName() + "'";
+      }
+    };
+  }
+
+  private static Path createFieldPath(final Path parent, final JField field) {
+    return new Path() {
+      public Path getParent() {
+        return parent;
+      }
+
+      @Override
+      public String toString() {
+        JType type = field.getType();
+        JClassType enclosingType = field.getEnclosingType();
+        return "'" + type.getParameterizedQualifiedSourceName()
+            + "' is reachable from field '" + field.getName() + "' of type '"
+            + enclosingType.getParameterizedQualifiedSourceName() + "'";
+      }
+    };
+  }
+
+  private static Path createRootPath(final JType type) {
+    return new Path() {
+      public Path getParent() {
+        return null;
+      }
+
+      @Override
+      public String toString() {
+        return "Started from '" + type.getParameterizedQualifiedSourceName()
+            + "'";
+      }
+    };
+  }
+
+  private static Path createSubtypePath(final Path parent, final JType type,
+      final JClassType supertype) {
+    return new Path() {
+      public Path getParent() {
+        return parent;
+      }
+
+      @Override
+      public String toString() {
+        return "'" + type.getParameterizedQualifiedSourceName()
+            + "' is reachable as a subtype of type '" + supertype + "'";
+      }
+    };
+  }
+
+  private static Path createTypeArgumentPath(final Path parent,
+      final JClassType type, final int typeArgIndex, final JClassType typeArg) {
+    return new Path() {
+      public Path getParent() {
+        return parent;
+      }
+
+      @Override
+      public String toString() {
+        return "'" + typeArg.getParameterizedQualifiedSourceName()
+            + "' is reachable from type argument " + typeArgIndex
+            + " of type '" + type.getParameterizedQualifiedSourceName() + "'";
+      }
+    };
   }
 
   /**
@@ -427,26 +479,6 @@ public class SerializableTypeOracleBuilder {
     return false;
   }
 
-  /**
-   * Returns all types on the path from the root type to the serializable
-   * leaves.
-   * 
-   * @param root the root type
-   * @param leaves the set of serializable leaf types
-   * @return all types on the path from the root type to the serializable leaves
-   */
-  private static List<JClassType> getAllTypesBetweenRootTypeAndLeaves(
-      JClassType root, List<JClassType> leaves) {
-    Map<JClassType, List<JClassType>> adjList = getInvertedTypeHierarchy(root);
-    Set<JClassType> types = new HashSet<JClassType>();
-
-    for (JClassType type : leaves) {
-      depthFirstSearch(types, adjList, type);
-    }
-
-    return Arrays.asList(types.toArray(new JClassType[0]));
-  }
-
   private static JArrayType getArrayType(TypeOracle typeOracle, int rank,
       JType component) {
     assert (rank > 0);
@@ -459,43 +491,6 @@ public class SerializableTypeOracleBuilder {
     }
 
     return array;
-  }
-
-  /**
-   * Given a root type return an adjacency list that is the inverted type
-   * hierarchy.
-   */
-  private static Map<JClassType, List<JClassType>> getInvertedTypeHierarchy(
-      JClassType root) {
-    Map<JClassType, List<JClassType>> adjList = new HashMap<JClassType, List<JClassType>>();
-    Set<JClassType> seen = new HashSet<JClassType>();
-    Stack<JClassType> queue = new Stack<JClassType>();
-    queue.push(root);
-    while (!queue.isEmpty()) {
-      JClassType clazz = queue.pop();
-      JClassType[] subclasses = clazz.getSubtypes();
-
-      if (seen.contains(clazz)) {
-        continue;
-      }
-      seen.add(clazz);
-
-      for (JClassType subclass : subclasses) {
-        if (clazz.isInterface() != null) {
-          if (directlyImplementsInterface(subclass, clazz)) {
-            addEdge(adjList, subclass, clazz);
-            queue.push(subclass);
-          }
-        } else {
-          if (subclass.getSuperclass() == clazz) {
-            addEdge(adjList, subclass, clazz);
-            queue.push(subclass);
-          }
-        }
-      }
-    }
-
-    return adjList;
   }
 
   private static Type getLogLevel(boolean isSpeculative) {
@@ -522,11 +517,6 @@ public class SerializableTypeOracleBuilder {
   private final JClassType collectionClass;
 
   /**
-   * Cache of the {@link JClassType} for {@link Exception}.
-   */
-  private final JClassType exceptionClass;
-
-  /**
    * Cache of the {@link JClassType} for {@link IsSerializable}.
    */
   private final JClassType isSerializableClass;
@@ -536,7 +526,7 @@ public class SerializableTypeOracleBuilder {
    */
   private final JClassType mapClass;
 
-  private final TreeLogger rootLogger;
+  private final Map<JClassType, TreeLogger> rootTypes = new LinkedHashMap<JClassType, TreeLogger>();
 
   /**
    * Cache of the {@link JClassType} for
@@ -544,150 +534,119 @@ public class SerializableTypeOracleBuilder {
    */
   private final JClassType serializableClass;
 
+  private TypeFilter typeFilter = DEFAULT_TYPE_FILTER;
+
   private final TypeOracle typeOracle;
 
-  /**
-   * Map of {@link JClassType} to {@link TypeInfo}.
-   */
-  private final Map<JClassType, TypeInfo> typeToTypeInfo = new HashMap<JClassType, TypeInfo>();
+  private final TypeParameterExposureComputer typeParameterExposureComputer = new TypeParameterExposureComputer();
+
+  private Set<JTypeParameter> typeParametersInRootTypes = new HashSet<JTypeParameter>();
 
   /**
    * Map of {@link JType} to {@link TypeInfoComputed}.
    */
   private final Map<JType, TypeInfoComputed> typeToTypeInfoComputed = new HashMap<JType, TypeInfoComputed>();
 
+  private OutputStream logOutputStream;
+
   /**
    * Constructs a builder.
    * 
-   * @param rootLogger
+   * @param logger
    * @param typeOracle
+   * 
    * @throws UnableToCompleteException if we fail to find one of our special
    *           types
    */
-  public SerializableTypeOracleBuilder(TreeLogger rootLogger,
-      TypeOracle typeOracle) throws UnableToCompleteException {
-    this.rootLogger = rootLogger;
+  public SerializableTypeOracleBuilder(TreeLogger logger, TypeOracle typeOracle)
+      throws UnableToCompleteException {
     this.typeOracle = typeOracle;
 
     try {
       collectionClass = typeOracle.getType(Collection.class.getName());
-      exceptionClass = typeOracle.getType(Exception.class.getName());
       isSerializableClass = typeOracle.getType(IsSerializable.class.getName());
       mapClass = typeOracle.getType(Map.class.getName());
       serializableClass = typeOracle.getType(Serializable.class.getName());
     } catch (NotFoundException e) {
-      rootLogger.log(TreeLogger.ERROR, null, e);
+      logger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
     }
   }
 
-  /**
-   * Builds a {@link SerializableTypeOracle} for a give
-   * {@link com.google.gwt.user.client.rpc.RemoteService} interface.
-   * 
-   * @param propertyOracle property oracle used for initializing properties
-   * @param remoteService
-   *          {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}
-   *          interface to build the oracle for
-   * @return a {@link SerializableTypeOracle} for the specified
-   *         {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}
-   *         interface
-   * 
-   * @throws UnableToCompleteException if the the remote service is considered
-   *           invalid due to serialization problem or a missing or ill formed
-   *           remote service asynchronous interface
-   */
-  public SerializableTypeOracle build(PropertyOracle propertyOracle,
-      JClassType remoteService) throws UnableToCompleteException {
+  public void addRootType(TreeLogger logger, JType type) {
+    if (type.isPrimitive() != null) {
+      return;
+    }
 
-    try {
-      // String is always instantiable.
-      JClassType stringType = typeOracle.getType(String.class.getName());
-      if (!checkTypeInstantiable(rootLogger, stringType, false)) {
-        throw new UnableToCompleteException();
-      }
-      // IncompatibleRemoteServiceException is always serializable
-      JClassType icseType = typeOracle.getType(IncompatibleRemoteServiceException.class.getName());
-      if (!checkTypeInstantiable(rootLogger, icseType, false)) {
-        throw new UnableToCompleteException();
-      }
-    } catch (NotFoundException e) {
-      rootLogger.log(TreeLogger.ERROR, null, e);
+    JClassType clazz = (JClassType) type;
+    if (!rootTypes.containsKey(clazz)) {
+      recordTypeParametersIn(type, typeParametersInRootTypes);
+
+      rootTypes.put(clazz, logger);
+    } else {
+      logger.log(TreeLogger.TRACE, clazz.getParameterizedQualifiedSourceName()
+          + " is already a root type.");
+    }
+  }
+
+  /**
+   * Builds a {@link SerializableTypeOracle} for a given set of root types.
+   * 
+   * @param logger
+   * 
+   * @return a {@link SerializableTypeOracle} for the specified set of root
+   *         types
+   * 
+   * @throws UnableToCompleteException if there was not at least one
+   *           instantiable type assignable to each of the specified root types
+   */
+  public SerializableTypeOracle build(TreeLogger logger)
+      throws UnableToCompleteException {
+    alreadyCheckedObject = false;
+
+    boolean allSucceeded = true;
+    for (Entry<JClassType, TreeLogger> entry : rootTypes.entrySet()) {
+      allSucceeded &= checkTypeInstantiable(entry.getValue(), entry.getKey(),
+          false, createRootPath(entry.getKey()));
+    }
+
+    if (!allSucceeded) {
+      // the validation code has already logged why
       throw new UnableToCompleteException();
     }
 
-    TreeLogger logger = rootLogger.branch(TreeLogger.DEBUG, "Analyzing '"
-        + remoteService.getParameterizedQualifiedSourceName()
-        + "' for serializable types", null);
+    pruneUnreachableTypes();
 
-    alreadyCheckedObject = false;
-
-    validateRemoteService(logger, remoteService);
-
-    // Compute covariant arrays.
-    // Cache a list to prevent comodification.
-    List<TypeInfoComputed> typeInfoComputed = new ArrayList<TypeInfoComputed>(
-        typeToTypeInfoComputed.values());
-    for (TypeInfoComputed tic : typeInfoComputed) {
-      if (tic.isInstantiable()) {
-        JArrayType arrayType = tic.getType().isArray();
-        if (arrayType != null) {
-          JType leafType = arrayType.getLeafType();
-          int rank = arrayType.getRank();
-          JClassType classType = leafType.isClassOrInterface();
-          if (classType != null) {
-            List<JClassType> instantiableSubTypes = new ArrayList<JClassType>();
-            JClassType[] subTypes = classType.getSubtypes();
-            for (int i = 0; i < subTypes.length; ++i) {
-              if (getTypeInfoComputed(subTypes[i]).isInstantiable()) {
-                instantiableSubTypes.add(subTypes[i]);
-              }
-            }
-            List<JClassType> covariantTypes = getAllTypesBetweenRootTypeAndLeaves(
-                classType, instantiableSubTypes);
-            for (int i = 0, c = covariantTypes.size(); i < c; ++i) {
-              JArrayType covariantArray = getArrayType(typeOracle, rank,
-                  covariantTypes.get(i));
-              getTypeInfoComputed(covariantArray).setInstantiable(true);
-            }
-          }
-        }
-      }
+    TreeLogger reachableTypesLogger = logger;
+    if (logOutputStream != null) {
+      PrintWriterTreeLogger printWriterTreeLogger = new PrintWriterTreeLogger(
+          new PrintWriter(logOutputStream));
+      printWriterTreeLogger.setMaxDetail(TreeLogger.ALL);
+      reachableTypesLogger = printWriterTreeLogger;
     }
 
+    logReachableTypes(reachableTypesLogger);
+
     Set<JClassType> possiblyInstantiatedTypes = new TreeSet<JClassType>(
-        JCLASS_TYPE_COMPARATOR);
+        JTYPE_COMPARATOR);
 
     Set<JClassType> fieldSerializableTypes = new TreeSet<JClassType>(
-        JCLASS_TYPE_COMPARATOR);
+        JTYPE_COMPARATOR);
 
     for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
       JClassType type = tic.getType();
 
-      if (type.isTypeParameter() != null || type.isWildcard() != null) {
-        /*
-         * Wildcard and type parameters types are ignored here. Their
-         * corresponding subtypes will be part of the typeToTypeInfoComputed
-         * set. TypeParameters can reach here if there are methods on the
-         * RemoteService that declare their own type parameters.
-         */
-        continue;
-      }
-
-      // Only record real types
-      if (type.isParameterized() != null) {
-        type = type.isParameterized().getRawType();
-      } else if (type.isGenericType() != null) {
-        type = type.isGenericType().getRawType();
-      }
-
-      assert (type == type.getErasedType());
+      type = type.getErasedType();
 
       if (tic.isInstantiable()) {
+        assert (!type.isAbstract() || type.isEnum() != null);
+
         possiblyInstantiatedTypes.add(type);
       }
 
       if (tic.isFieldSerializable()) {
+        assert (type.isInterface() == null);
+
         fieldSerializableTypes.add(type);
       }
     }
@@ -698,11 +657,33 @@ public class SerializableTypeOracleBuilder {
         possiblyInstantiatedTypes);
   }
 
-  /*
-   * Exposed using default access to enable testing.
+  /**
+   * Set the {@link OutputStream} which will receive a detailed log of the types
+   * which were examined in order to determine serializability.
+   */
+  public void setLogOutputStream(OutputStream logOutputStream) {
+    this.logOutputStream = logOutputStream;
+  }
+
+  public void setTypeFilter(TypeFilter typeFilter) {
+    this.typeFilter = typeFilter;
+  }
+
+  /**
+   * This method determines whether a type can be serialized by GWT. To do so,
+   * it must traverse all subtypes as well as all field types of those types,
+   * transitively.
+   * 
+   * It returns a boolean indicating whether this type or any of its subtypes
+   * are instantiable.
+   * 
+   * As a side effect, all types needed--plus some--to serialize this type are
+   * accumulated in {@link #typeToTypeInfoComputed}.
+   * 
+   * The method is exposed using default access to enable testing.
    */
   final boolean checkTypeInstantiable(TreeLogger logger, JType type,
-      boolean isSpeculative) {
+      boolean isSpeculative, final Path path) {
     assert (type != null);
     if (type.isPrimitive() != null) {
       return true;
@@ -715,113 +696,272 @@ public class SerializableTypeOracleBuilder {
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
         classType.getParameterizedQualifiedSourceName(), null);
 
-    TypeInfoComputed tic = getTypeInfoComputed(classType);
+    if (!isAllowedByFilter(localLogger, classType, isSpeculative)) {
+      return false;
+    }
+
+    JTypeParameter isTypeParameter = classType.isTypeParameter();
+    if (isTypeParameter != null) {
+      if (typeParametersInRootTypes.contains(isTypeParameter)) {
+        return checkTypeInstantiable(localLogger,
+            isTypeParameter.getFirstBound(), isSpeculative, path);
+      }
+
+      /*
+       * This type parameter was not in a root type and therefore it is the
+       * caller's responsibility to deal with it. We assume that it is
+       * instantiable here.
+       */
+      return true;
+    }
+
+    JWildcardType isWildcard = classType.isWildcard();
+    if (isWildcard != null) {
+      boolean success = true;
+      for (JClassType bound : isWildcard.getUpperBounds()) {
+        success &= checkTypeInstantiable(localLogger, bound, isSpeculative,
+            path);
+      }
+      return success;
+    }
+
+    TypeInfoComputed tic = getTypeInfoComputed(classType, path);
     if (tic.isPendingInstantiable()) {
       // just early out and pretend we will succeed
       return true;
     } else if (tic.isDone()) {
-      return tic.isInstantiable();
+      return tic.hasInstantiableSubtypes();
     }
-
     tic.setPendingInstantiable();
 
-    if (classType.isArray() != null) {
-      return checkArrayInstantiable(logger, classType.isArray(), tic,
-          isSpeculative);
-    } else if (classType.isWildcard() != null) {
-      return checkWildcardInstantiable(logger, classType.isWildcard(), tic,
-          isSpeculative);
-    } else if (classType.isClassOrInterface() != null) {
-      TypeInfo typeInfo = getTypeInfo(classType);
-      if (isSpeculative && typeInfo.isDirectlySerializable()) {
-        isSpeculative = false;
+    JArrayType isArray = classType.isArray();
+    if (isArray != null) {
+      JType leafType = isArray.getLeafType();
+      JTypeParameter isLeafTypeParameter = leafType.isTypeParameter();
+      if (isLeafTypeParameter != null
+          && !typeParametersInRootTypes.contains(isLeafTypeParameter)) {
+        // Don't deal with non root type parameters
+        tic.setInstantiable(false);
+        tic.setInstantiableSubytpes(true);
+        return true;
       }
 
-      JClassType javaLangObject = typeOracle.getJavaLangObject();
-      if (classType == javaLangObject
-          || classType.getErasedType() == javaLangObject) {
+      boolean succeeded = checkArrayInstantiable(localLogger, isArray,
+          isSpeculative, path);
+      if (succeeded) {
+        JClassType leafClass = leafType.isClassOrInterface();
+        if (leafClass != null) {
+          JClassType[] leafSubtypes = leafClass.getErasedType().getSubtypes();
+          for (JClassType leafSubtype : leafSubtypes) {
+            JArrayType covariantArray = getArrayType(typeOracle,
+                isArray.getRank(), leafSubtype);
+            checkTypeInstantiable(localLogger, covariantArray, true, path);
+          }
+        }
+      }
+
+      tic.setInstantiable(succeeded);
+      return succeeded;
+    }
+
+    if (classType == typeOracle.getJavaLangObject()) {
+      /*
+       * Report an error if the type is or erases to Object since this violates
+       * our restrictions on RPC.
+       */
+      localLogger.branch(
+          getLogLevel(isSpeculative),
+          "In order to produce smaller client-side code, 'Object' is not allowed; consider using a more specific type",
+          null);
+      tic.setInstantiable(false);
+      return false;
+    }
+
+    if (classType.isRawType() != null) {
+      TreeLogger rawTypeLogger = localLogger.branch(
+          TreeLogger.DEBUG,
+          "Type '"
+              + classType.getQualifiedSourceName()
+              + "' should be parameterized to help the compiler produce the smallest code size possible for your module",
+          null);
+
+      if (classType.isAssignableTo(collectionClass)
+          || classType.isAssignableTo(mapClass)) {
         /*
-         * Report an error if the type is or erases to Object since this
-         * violates our restrictions on RPC.
+         * Backwards compatibility. Raw collections or maps force all object
+         * subtypes to be considered. Fall through to the normal class handling.
          */
-        markAsUninstantiableAndLog(
-            localLogger,
-            isSpeculative,
-            "In order to produce smaller client-side code, 'Object' is not allowed; consider using a more specific type",
-            tic);
-        return false;
+        checkAllSubtypesOfObject(rawTypeLogger, path);
       }
+    }
 
-      boolean anySubtypes = false;
-      if (checkClassOrInterfaceInstantiable(localLogger, classType,
-          isSpeculative)) {
-        tic.setInstantiable(true);
-        anySubtypes = true;
+    JClassType originalType = (JClassType) type;
+
+    JRealClassType baseType;
+    if (type.isRawType() != null) {
+      baseType = type.isRawType().getBaseType();
+    } else if (type.isParameterized() != null) {
+      baseType = type.isParameterized().getBaseType();
+    } else {
+      baseType = (JRealClassType) originalType;
+    }
+
+    if (isSpeculative && tic.isDirectlySerializable()) {
+      isSpeculative = false;
+    }
+
+    boolean isInstantiable = checkTypeInstantiableNoSubtypes(localLogger,
+        baseType, isSpeculative, path);
+
+    JClassType[] typeArgs = NO_JCLASSES;
+    JParameterizedType isParameterized = originalType.isParameterized();
+    JGenericType baseAsGenericType = baseType.isGenericType();
+
+    if (isParameterized != null) {
+      typeArgs = isParameterized.getTypeArgs();
+    } else if (baseAsGenericType != null) {
+      List<JClassType> arguments = new ArrayList<JClassType>();
+      for (JTypeParameter typeParameter : baseAsGenericType.getTypeParameters()) {
+        arguments.add(typeParameter.getFirstBound());
       }
+      typeArgs = arguments.toArray(NO_JCLASSES);
+    }
 
-      if (classType.isParameterized() != null) {
+    boolean parametersOkay = true;
+    JRawType isRaw = originalType.isRawType();
+    if (isParameterized != null || isRaw != null) {
+      assert (baseAsGenericType != null);
+      int numDeclaredParams = baseAsGenericType.getTypeParameters().length;
+      if (numDeclaredParams == typeArgs.length) {
+        for (int i = 0; i < numDeclaredParams; ++i) {
+          JClassType typeArg = typeArgs[i];
+          parametersOkay &= checkTypeArgument(localLogger, baseAsGenericType,
+              i, typeArg, isSpeculative, path);
+        }
+      } else {
         /*
+         * TODO: Does anyone actually depend on this odious behavior?
+         * 
          * Backwards compatibility. The number of parameterization arguments
          * specified via gwt.typeArgs could exceed the number of formal
          * parameters declared on the generic type. Therefore have to explicitly
          * visit them here and they must all be instantiable.
          */
-        JParameterizedType parameterizedType = classType.isParameterized();
-        if (!checkTypeArgumentsInstantiable(localLogger, parameterizedType,
-            isSpeculative)) {
-          return false;
-        }
-      } else if (classType.isRawType() != null) {
-        TreeLogger rawTypeLogger = logger.branch(
-            TreeLogger.DEBUG,
-            "Type '"
-                + classType.getQualifiedSourceName()
-                + "' should be parameterized to help the compiler produce the smallest code size possible for your module",
-            null);
-
-        if (classType.isAssignableTo(collectionClass)
-            || classType.isAssignableTo(mapClass)) {
-          /*
-           * Backwards compatibility. Raw collections or maps force all object
-           * subtypes to be considered. Fall through to the normal class
-           * handling.
-           */
-          checkAllSubtypesOfObject(rawTypeLogger);
+        for (int i = 0; i < numDeclaredParams; ++i) {
+          JClassType typeArg = typeArgs[i];
+          parametersOkay &= checkTypeInstantiable(localLogger, typeArg,
+              isSpeculative, path);
         }
       }
+    }
 
+    isInstantiable &= parametersOkay;
+
+    boolean anySubtypes = false;
+    if (parametersOkay) {
       // Speculatively check all subtypes.
-      JClassType[] subtypes = classType.getSubtypes();
+      JClassType[] subtypes = baseType.getSubtypes();
       if (subtypes.length > 0) {
-        TreeLogger subLogger = localLogger.branch(TreeLogger.DEBUG,
+        TreeLogger subtypesLogger = localLogger.branch(TreeLogger.DEBUG,
             "Analyzing subclasses:", null);
 
-        for (JClassType subType : subtypes) {
-          if (checkClassOrInterfaceInstantiable(subLogger.branch(
-              TreeLogger.DEBUG, subType.getParameterizedQualifiedSourceName(),
-              null), subType, true)) {
-            getTypeInfoComputed(subType).setInstantiable(true);
+        for (JClassType subtype : subtypes) {
+          TreeLogger subtypeLogger = subtypesLogger.branch(TreeLogger.DEBUG,
+              subtype.getParameterizedQualifiedSourceName(), null);
+          Path subtypePath = createSubtypePath(path, subtype, originalType);
+          boolean subInstantiable = checkTypeInstantiableNoSubtypes(
+              subtypeLogger, subtype, true, subtypePath);
+          JGenericType genericSub = subtype.isGenericType();
+          if (genericSub != null) {
+            TreeLogger paramsLogger = subtypeLogger.branch(TreeLogger.DEBUG,
+                "Checking parameters of '"
+                    + genericSub.getParameterizedQualifiedSourceName() + "'");
+            Map<JTypeParameter, Set<JTypeParameter>> subParamsConstrainedBy = subParamsConstrainedBy(
+                baseType, genericSub);
+            for (int i = 0; i < genericSub.getTypeParameters().length; i++) {
+              JTypeParameter param = genericSub.getTypeParameters()[i];
+              TreeLogger paramLogger = paramsLogger.branch(TreeLogger.DEBUG,
+                  "Checking param '"
+                      + param.getParameterizedQualifiedSourceName() + "'");
+              Set<JTypeParameter> constBy = subParamsConstrainedBy.get(param);
+              if (constBy == null) {
+                subInstantiable &= checkTypeArgument(paramLogger, genericSub,
+                    i, param.getFirstBound(), true, path);
+              } else {
+                boolean paramOK = false;
+                for (JTypeParameter constrained : constBy) {
+                  paramOK |= checkTypeArgument(paramLogger, genericSub, i,
+                      typeArgs[constrained.getOrdinal()], true, path);
+                }
+                subInstantiable &= paramOK;
+              }
+            }
+          } else {
+            /*
+             * The subtype is not generic so it must be a concrete
+             * parameterization of the query type. If the query type is also a
+             * concrete parameterization then we should be able to exclude the
+             * subtype based on an assignability check. If the query type does
+             * contain type parameters then we assume that the subtype should be
+             * included. In order to be certain, we would need to perform a full
+             * unification between the query type and subtype.
+             */
+            if (subInstantiable && isParameterized != null) {
+              HashSet<JTypeParameter> typeParamsInQueryType = new HashSet<JTypeParameter>();
+              recordTypeParametersIn(isParameterized, typeParamsInQueryType);
+
+              if (typeParamsInQueryType.isEmpty()) {
+                if (!isParameterized.isAssignableFrom(subtype)) {
+                  // Only emit a warning if the supertype is not instantiable.
+                  Type logLevel = isInstantiable ? TreeLogger.DEBUG
+                      : getLogLevel(true);
+                  subtypeLogger.log(logLevel, "Excluding type '"
+                      + subtype.getParameterizedQualifiedSourceName()
+                      + "' because it is not assignable to '"
+                      + isParameterized.getParameterizedQualifiedSourceName()
+                      + "'");
+                  subInstantiable = false;
+                }
+              }
+            }
+          }
+
+          if (subInstantiable) {
+            // TODO: This is suspect.
+            getTypeInfoComputed(subtype, path).setInstantiable(true);
             anySubtypes = true;
           }
         }
       }
-
-      if (!anySubtypes && !isSpeculative) {
-        // No instantiable types were found
-        markAsUninstantiableAndLog(
-            logger,
-            isSpeculative,
-            "Type '"
-                + classType.getParameterizedQualifiedSourceName()
-                + "' was not serializable and has no concrete serializable subtypes",
-            tic);
-      }
-
-      return anySubtypes;
-    } else {
-      assert (false);
-      return false;
     }
+
+    anySubtypes |= isInstantiable;
+
+    tic.setInstantiable(isInstantiable);
+    tic.setInstantiableSubytpes(anySubtypes);
+
+    if (!anySubtypes && !isSpeculative) {
+      // No instantiable types were found
+      localLogger.branch(getLogLevel(isSpeculative), "Type '"
+          + classType.getParameterizedQualifiedSourceName()
+          + "' was not serializable and has no concrete serializable subtypes",
+          null);
+    }
+
+    return tic.hasInstantiableSubtypes();
+  }
+
+  final boolean checkTypeInstantiableNoSubtypes(TreeLogger logger,
+      JClassType type, boolean isSpeculative, Path path) {
+    if (qualifiesForSerialization(logger, type, isSpeculative, path)) {
+      return checkFields(logger, type, isSpeculative, path);
+    }
+
+    return false;
+  }
+
+  int getTypeParameterExposure(JGenericType type, int index) {
+    return getFlowInfo(type, index).getExposure();
   }
 
   /**
@@ -829,7 +969,7 @@ public class SerializableTypeOracleBuilder {
    * 
    * @param logger
    */
-  private void checkAllSubtypesOfObject(TreeLogger logger) {
+  private void checkAllSubtypesOfObject(TreeLogger logger, Path parent) {
     if (alreadyCheckedObject) {
       return;
     }
@@ -845,124 +985,30 @@ public class SerializableTypeOracleBuilder {
         "Checking all subtypes of Object which qualify for serialization", null);
     JClassType[] allTypes = typeOracle.getJavaLangObject().getSubtypes();
     for (JClassType cls : allTypes) {
-      if (getTypeInfo(cls).isDeclaredSerializable()) {
-        checkTypeInstantiable(localLogger, cls, true);
+      if (getTypeInfoComputed(cls, parent).isDeclaredSerializable()) {
+        checkTypeInstantiable(localLogger, cls, true, parent);
       }
     }
   }
 
   private boolean checkArrayInstantiable(TreeLogger logger,
-      JArrayType arrayType, TypeInfoComputed tic, boolean isSpeculative) {
+      final JArrayType arrayType, boolean isSpeculative, final Path parent) {
     TreeLogger branch = logger.branch(TreeLogger.DEBUG,
         "Analyzing component type:", null);
-    boolean success = checkTypeInstantiable(branch,
-        arrayType.getComponentType(), isSpeculative);
-    tic.setInstantiable(success);
-    return success;
-  }
-
-  private boolean checkClassOrInterfaceInstantiable(TreeLogger logger,
-      JClassType type, boolean isSpeculative) {
-
-    TypeInfo typeInfo = getTypeInfo(type);
-    TypeInfoComputed tic = getTypeInfoComputed(type);
-
-    if (!typeInfo.isDeclaredSerializable()) {
-      logger.branch(TreeLogger.DEBUG, "Type '"
-          + type.getParameterizedQualifiedSourceName()
-          + "' is not assignable to '" + IsSerializable.class.getName()
-          + "' or '" + Serializable.class.getName()
-          + "' nor does it have a custom field serializer", null);
-      return false;
-    }
-
-    if (typeInfo.isManuallySerializable()) {
-      List<String> failures = CustomFieldSerializerValidator.validate(
-          typeInfo.getManualSerializer(), type);
-      if (!failures.isEmpty()) {
-        markAsUninstantiableAndLog(logger, isSpeculative, failures, tic);
-        return false;
-      }
-    } else {
-      assert (typeInfo.isAutoSerializable());
-
-      if (type.isEnum() != null) {
-        if (type.isLocalType()) {
-          /*
-           * Quietly ignore local enum types.
-           */
-          tic.setInstantiable(false);
-          return false;
-        } else {
-          /*
-           * Enumerated types are serializable by default, but they do not have
-           * their state automatically or manually serialized. So, consider it
-           * serializable but do not check its fields.
-           */
-          return !type.isPrivate();
-        }
-      }
-
-      if (type.isPrivate()) {
-        /*
-         * Quietly ignore private types since these cannot be instantiated from
-         * the generated field serializers.
-         */
-        tic.setInstantiable(false);
-        return false;
-      }
-
-      if (type.isLocalType()) {
-        markAsUninstantiableAndLog(
-            logger,
-            isSpeculative,
-            type.getParameterizedQualifiedSourceName()
-                + " is a local type; it will be excluded from the set of serializable types",
-            tic);
-        return false;
-      }
-
-      if (type.isMemberType() && !type.isStatic()) {
-        markAsUninstantiableAndLog(
-            logger,
-            isSpeculative,
-            type.getParameterizedQualifiedSourceName()
-                + " is nested but not static; it will be excluded from the set of serializable types",
-            tic);
-        return false;
-      }
-
-      if (type.isInterface() != null || type.isAbstract()) {
-        // Quietly return false.
-        return false;
-      }
-
-      if (!type.isDefaultInstantiable()) {
-        // Warn and return false.
-        logger.log(
-            TreeLogger.WARN,
-            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
-            null);
-        return false;
-      }
-    }
-
-    if (!checkFields(logger, type, isSpeculative)) {
-      return false;
-    }
-
-    checkMethods(logger, type);
-    return true;
+    return checkTypeInstantiable(branch, arrayType.getComponentType(),
+        isSpeculative, createArrayComponentPath(arrayType, parent));
   }
 
   private boolean checkFields(TreeLogger logger, JClassType classOrInterface,
-      boolean isSpeculative) {
-    TypeInfo typeInfo = getTypeInfo(classOrInterface);
+      boolean isSpeculative, Path parent) {
+    TypeInfoComputed typeInfo = getTypeInfoComputed(classOrInterface, parent);
 
     // Check all super type fields first (recursively).
     JClassType superType = classOrInterface.getSuperclass();
-    if (superType != null && getTypeInfo(superType).isDeclaredSerializable()) {
-      boolean superTypeOk = checkFields(logger, superType, isSpeculative);
+    if (superType != null
+        && getTypeInfoComputed(superType, parent).isDeclaredSerializable()) {
+      boolean superTypeOk = checkFields(logger, superType, isSpeculative,
+          parent);
       /*
        * If my super type did not check out, then I am not instantiable and we
        * should error out... UNLESS I am *directly* serializable myself, in
@@ -986,13 +1032,7 @@ public class SerializableTypeOracleBuilder {
           "Analyzing Fields:", null);
 
       for (JField field : fields) {
-        if (field.isStatic() || field.isTransient()) {
-          continue;
-        }
-
-        if (field.isFinal()) {
-          localLogger.branch(TreeLogger.DEBUG, "Field '" + field.toString()
-              + "' will not be serialized because it is final", null);
+        if (!qualfiesForSerialization(localLogger, field)) {
           continue;
         }
 
@@ -1000,173 +1040,326 @@ public class SerializableTypeOracleBuilder {
             field.toString(), null);
         JType fieldType = field.getType();
 
+        Path path = createFieldPath(parent, field);
         if (typeInfo.isManuallySerializable()
             && fieldType.getLeafType() == typeOracle.getJavaLangObject()) {
           checkAllSubtypesOfObject(fieldLogger.branch(TreeLogger.WARN,
-              "Object was reached from a manually serializable type", null));
+              "Object was reached from a manually serializable type", null),
+              path);
         } else {
           allSucceeded &= checkTypeInstantiable(fieldLogger, fieldType,
-              isSpeculative);
+              isSpeculative, path);
         }
       }
     }
 
     boolean succeeded = allSucceeded || typeInfo.isManuallySerializable();
     if (succeeded) {
-      getTypeInfoComputed(classOrInterface).setFieldSerializable();
+      getTypeInfoComputed(classOrInterface, parent).setFieldSerializable();
     }
     return succeeded;
   }
 
-  private void checkMethods(TreeLogger logger, JClassType classOrInterface) {
-    if (isDefinedInJREEmulation(classOrInterface)) {
-      // JRE emulation classes are never used on the server; skip the check
-      return;
-    }
-
-    // TODO: consider looking up type hierarchy.
-    JMethod[] methods = classOrInterface.getMethods();
-    for (JMethod method : methods) {
-      if (method.isNative()) {
-        logger.branch(
-            TreeLogger.WARN,
-            MessageFormat.format(
-                "Method ''{0}'' is native, calling this method in server side code will result in an UnsatisfiedLinkError",
-                method.toString()), null);
+  /**
+   * Check the argument to a parameterized type to see if it will make the type
+   * it is applied to be serializable. As a side effect, populates
+   * {@link #typeToTypeInfoComputed} in the same way as
+   * {@link #checkTypeInstantiable(TreeLogger, JType, boolean)}.
+   * 
+   * @param logger
+   * @param baseType - The generic type the parameter is on
+   * @param paramIndex - The index of the parameter in the generic type
+   * @param typeArg - An upper bound on the actual argument being applied to the
+   *          generic type
+   * @param isSpeculative
+   * 
+   * @return Whether the a parameterized type can be serializable if
+   *         <code>baseType</code> is the base type and the
+   *         <code>paramIndex</code>th type argument is a subtype of
+   *         <code>typeArg</code>.
+   */
+  private boolean checkTypeArgument(TreeLogger logger, JGenericType baseType,
+      int paramIndex, JClassType typeArg, boolean isSpeculative, Path parent) {
+    JArrayType typeArgAsArray = typeArg.isArray();
+    if (typeArgAsArray != null) {
+      JTypeParameter parameterOfTypeArgArray = typeArgAsArray.getLeafType().isTypeParameter();
+      if (parameterOfTypeArgArray != null) {
+        JGenericType declaringClass = parameterOfTypeArgArray.getDeclaringClass();
+        if (declaringClass != null) {
+          TypeParameterFlowInfo flowInfoForArrayParam = getFlowInfo(
+              declaringClass, parameterOfTypeArgArray.getOrdinal());
+          TypeParameterFlowInfo otherFlowInfo = getFlowInfo(baseType,
+              paramIndex);
+          if (otherFlowInfo.getExposure() >= 0
+              && flowInfoForArrayParam.infiniteArrayExpansionPathBetween(otherFlowInfo)) {
+            logger.branch(
+                getLogLevel(isSpeculative),
+                "Cannot serialize type '"
+                    + baseType.getParameterizedQualifiedSourceName()
+                    + "' when given an argument of type '"
+                    + typeArg.getParameterizedQualifiedSourceName()
+                    + "' because it appears to require serializing arrays of unbounded dimension");
+            return false;
+          }
+        }
       }
     }
-  }
 
-  /**
-   * Returns <code>true</code> if all of the type arguments of the
-   * parameterized type are themselves instantiable.
-   */
-  private boolean checkTypeArgumentsInstantiable(TreeLogger logger,
-      JParameterizedType parameterizedType, boolean isSpeculative) {
-    TreeLogger branch = logger.branch(TreeLogger.DEBUG, "Analyzing type args",
-        null);
-    JClassType[] typeArgs = parameterizedType.getTypeArgs();
-    boolean allSucceeded = true;
-    for (JClassType typeArg : typeArgs) {
-      allSucceeded &= checkTypeInstantiable(branch, typeArg, isSpeculative);
+    Path path = createTypeArgumentPath(parent, baseType, paramIndex, typeArg);
+    int exposure = getTypeParameterExposure(baseType, paramIndex);
+    switch (exposure) {
+      case EXPOSURE_DIRECT:
+        return checkTypeInstantiable(logger, typeArg, true, path)
+            || mightNotBeExposed(baseType, paramIndex);
+
+      case EXPOSURE_NONE:
+        // Ignore this argument
+        return true;
+
+      default:
+        assert (exposure >= EXPOSURE_MIN_BOUNDED_ARRAY);
+        return checkTypeInstantiable(logger, getArrayType(typeOracle, exposure,
+            typeArg), true, path)
+            || mightNotBeExposed(baseType, paramIndex);
     }
-
-    return allSucceeded;
   }
 
-  private boolean checkWildcardInstantiable(TreeLogger logger,
-      JWildcardType wildcard, TypeInfoComputed tic, boolean isSpeculative) {
-    boolean success;
-    if (wildcard.getLowerBounds().length > 0) {
-      // Fail since ? super T for any T implies object also
-      markAsUninstantiableAndLog(logger, isSpeculative,
-          "In order to produce smaller client-side code, 'Object' is not allowed; '"
-              + wildcard.getQualifiedSourceName() + "' includes Object", tic);
-
-      success = false;
-    } else {
-      JClassType firstBound = wildcard.getFirstBound();
-      success = checkTypeInstantiable(logger, firstBound, isSpeculative);
-    }
-
-    tic.setInstantiable(success);
-    return success;
+  private TypeParameterFlowInfo getFlowInfo(JGenericType type, int index) {
+    return typeParameterExposureComputer.computeTypeParameterExposure(type,
+        index);
   }
 
-  private TypeInfo getTypeInfo(JClassType type) {
-    TypeInfo ti = typeToTypeInfo.get(type);
-    if (ti == null) {
-      ti = new TypeInfo(type);
-      typeToTypeInfo.put(type, ti);
-    }
-    return ti;
-  }
-
-  private TypeInfoComputed getTypeInfoComputed(JClassType type) {
+  private TypeInfoComputed getTypeInfoComputed(JClassType type, Path path) {
     TypeInfoComputed tic = typeToTypeInfoComputed.get(type);
     if (tic == null) {
-      tic = new TypeInfoComputed(type);
+      tic = new TypeInfoComputed(type, path);
       typeToTypeInfoComputed.put(type, tic);
     }
     return tic;
   }
 
+  private boolean isAllowedByFilter(TreeLogger logger, JClassType classType,
+      boolean isSpeculative) {
+    if (!typeFilter.isAllowed(classType)) {
+      logger.log(getLogLevel(isSpeculative), "Excluded by type filter ");
+      return false;
+    }
+
+    return true;
+  }
+
+  private void logPath(TreeLogger logger, Path path) {
+    if (path == null) {
+      return;
+    }
+
+    logger.log(TreeLogger.INFO, path.toString());
+    logPath(logger, path.getParent());
+  }
+
+  private void logReachableTypes(TreeLogger logger) {
+    logger.log(TreeLogger.INFO, "Reachable types computed on: "
+        + new Date().toString());
+    Set<JType> keySet = typeToTypeInfoComputed.keySet();
+    JType[] types = keySet.toArray(new JType[0]);
+    Arrays.sort(types, JTYPE_COMPARATOR);
+
+    for (JType type : types) {
+      TypeInfoComputed tic = typeToTypeInfoComputed.get(type);
+      assert (tic != null);
+
+      TreeLogger typeLogger = logger.branch(TreeLogger.INFO,
+          tic.getType().getParameterizedQualifiedSourceName());
+      TreeLogger serializationStatus = typeLogger.branch(TreeLogger.INFO,
+          "Serialization status");
+      if (tic.isInstantiable()) {
+        serializationStatus.branch(TreeLogger.INFO, "Instantiable");
+      } else {
+        if (tic.isFieldSerializable()) {
+          serializationStatus.branch(TreeLogger.INFO, "Field serializable");
+        } else {
+          serializationStatus.branch(TreeLogger.INFO, "Not serializable");
+        }
+      }
+
+      TreeLogger pathLogger = typeLogger.branch(TreeLogger.INFO, "Path");
+
+      logPath(pathLogger, tic.getPath());
+    }
+  }
+
+  private boolean mightNotBeExposed(JGenericType baseType, int paramIndex) {
+    TypeParameterFlowInfo flowInfo = getFlowInfo(baseType, paramIndex);
+    return flowInfo.getMightNotBeExposed();
+  }
+
   /**
-   * Returns <code>true</code> if the type is defined by the JRE.
+   * Remove serializable types that were visited due to speculative paths but
+   * are not really needed for serialization.
+   * 
+   * NOTE: This is currently much more limited than it should be. For example, a
+   * path sensitive prune could remove instantiable types also.
    */
-  private boolean isDefinedInJREEmulation(JClassType type) {
-    JPackage pkg = type.getPackage();
-    if (pkg != null) {
-      return pkg.getName().startsWith("java.");
-    }
-
-    return false;
-  }
-
-  private void markAsUninstantiableAndLog(TreeLogger logger,
-      boolean isSpeculative, List<String> es, TypeInfoComputed tic) {
-    for (String s : es) {
-      markAsUninstantiableAndLog(logger, isSpeculative, s, tic);
-    }
-  }
-
-  private void markAsUninstantiableAndLog(TreeLogger logger,
-      boolean isSpeculative, String logMessage, TypeInfoComputed tic) {
-    tic.setInstantiable(false);
-    tic.addSerializationIssue(isSpeculative, logMessage);
-    logger.branch(getLogLevel(isSpeculative), logMessage, null);
-  }
-
-  private void validateRemoteService(TreeLogger logger, JClassType remoteService)
-      throws UnableToCompleteException {
-    JMethod[] methods = remoteService.getOverridableMethods();
-
-    TreeLogger validationLogger = logger.branch(TreeLogger.DEBUG,
-        "Analyzing methods:", null);
-
-    boolean allSucceeded = true;
-    for (JMethod method : methods) {
-      TreeLogger methodLogger = validationLogger.branch(TreeLogger.DEBUG,
-          method.toString(), null);
-      JType returnType = method.getReturnType();
-      if (returnType != JPrimitiveType.VOID) {
-        TreeLogger returnTypeLogger = methodLogger.branch(TreeLogger.DEBUG,
-            "Return type: " + returnType.getParameterizedQualifiedSourceName(),
-            null);
-        allSucceeded &= checkTypeInstantiable(returnTypeLogger, returnType,
-            false);
-      }
-
-      JParameter[] params = method.getParameters();
-      for (JParameter param : params) {
-        TreeLogger paramLogger = methodLogger.branch(TreeLogger.DEBUG,
-            "Parameter: " + param.toString(), null);
-        JType paramType = param.getType();
-        allSucceeded &= checkTypeInstantiable(paramLogger, paramType, false);
-      }
-
-      JType[] exs = method.getThrows();
-      if (exs.length > 0) {
-        TreeLogger throwsLogger = methodLogger.branch(TreeLogger.DEBUG,
-            "Throws:", null);
-        for (JType ex : exs) {
-          if (!exceptionClass.isAssignableFrom(ex.isClass())) {
-            throwsLogger = throwsLogger.branch(
-                TreeLogger.WARN,
-                "'"
-                    + ex.getQualifiedSourceName()
-                    + "' is not a checked exception; only checked exceptions may be used",
-                null);
-          }
-
-          allSucceeded &= checkTypeInstantiable(throwsLogger, ex, false);
+  private void pruneUnreachableTypes() {
+    /*
+     * Record all supertypes of any instantiable type, whether or not they are
+     * field serialziable.
+     */
+    Set<JType> supersOfInstantiableTypes = new LinkedHashSet<JType>();
+    for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
+      if (tic.isInstantiable()) {
+        JClassType type = tic.getType().getErasedType();
+        JClassType sup = type;
+        while (sup != null) {
+          supersOfInstantiableTypes.add(sup.getErasedType());
+          sup = sup.getErasedType().getSuperclass();
         }
       }
     }
 
-    if (!allSucceeded) {
-      // the validation code has already logged why
-      throw new UnableToCompleteException();
+    /*
+     * Record any field serializable type that is not in the supers of any
+     * instantiable type.
+     */
+    Set<JType> toKill = new LinkedHashSet<JType>();
+    for (TypeInfoComputed tic : typeToTypeInfoComputed.values()) {
+      if (tic.isFieldSerializable()
+          && !supersOfInstantiableTypes.contains(tic.getType().getErasedType())) {
+        toKill.add(tic.getType());
+      }
     }
+
+    /*
+     * Remove any field serializable supers that cannot be reached from an
+     * instantiable type.
+     */
+    for (JType type : toKill) {
+      typeToTypeInfoComputed.remove(type);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the type qualifies for serialization.
+   */
+  private boolean qualifiesForSerialization(TreeLogger logger, JClassType type,
+      boolean isSpeculative, Path parent) {
+    TypeInfoComputed typeInfo = getTypeInfoComputed(type, parent);
+
+    if (!isAllowedByFilter(logger, type, isSpeculative)) {
+      return false;
+    }
+
+    if (!typeInfo.isDeclaredSerializable()) {
+      logger.branch(TreeLogger.DEBUG, "Type '"
+          + type.getParameterizedQualifiedSourceName()
+          + "' is not assignable to '" + IsSerializable.class.getName()
+          + "' or '" + Serializable.class.getName()
+          + "' nor does it have a custom field serializer", null);
+      return false;
+    }
+
+    if (typeInfo.isManuallySerializable()) {
+      List<String> problems = CustomFieldSerializerValidator.validate(
+          typeInfo.getManualSerializer(), type);
+      if (!problems.isEmpty()) {
+        for (String problem : problems) {
+          logger.branch(getLogLevel(isSpeculative), problem, null);
+        }
+        return false;
+      }
+    } else {
+      assert (typeInfo.isAutoSerializable());
+
+      if (type.isEnum() != null) {
+        if (type.isLocalType()) {
+          /*
+           * Quietly ignore local enum types.
+           */
+          return false;
+        } else {
+          /*
+           * Enumerated types are serializable by default, but they do not have
+           * their state automatically or manually serialized. So, consider it
+           * serializable but do not check its fields.
+           */
+          return !type.isPrivate();
+        }
+      }
+
+      if (type.isPrivate()) {
+        /*
+         * Quietly ignore private types since these cannot be instantiated from
+         * the generated field serializers.
+         */
+        return false;
+      }
+
+      if (type.isLocalType()) {
+        logger.branch(
+            getLogLevel(isSpeculative),
+            type.getParameterizedQualifiedSourceName()
+                + " is a local type; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
+      if (type.isMemberType() && !type.isStatic()) {
+        logger.branch(
+            getLogLevel(isSpeculative),
+            type.getParameterizedQualifiedSourceName()
+                + " is nested but not static; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
+      if (type.isAbstract()) {
+        // Abstract types will be picked up if there is an instantiable subtype.
+        return false;
+      }
+
+      if (!type.isDefaultInstantiable()) {
+        // Warn and return false.
+        logger.log(
+            TreeLogger.WARN,
+            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
+            null);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * 
+   * Returns a map from each parameter in the subtype to the set of parameters,
+   * if any, in the supertype which constrain that parameter.
+   */
+  private Map<JTypeParameter, Set<JTypeParameter>> subParamsConstrainedBy(
+      JClassType superclass, JGenericType subclass) {
+
+    Map<JTypeParameter, Set<JTypeParameter>> newTypeParameters = new LinkedHashMap<JTypeParameter, Set<JTypeParameter>>();
+
+    JGenericType isGenericSuper = superclass.isGenericType();
+    if (isGenericSuper != null) {
+      JParameterizedType parameterization = subclass.asParameterizationOf(isGenericSuper);
+      JClassType[] paramArgs = parameterization.getTypeArgs();
+      for (int i = 0; i < paramArgs.length; ++i) {
+        Set<JTypeParameter> typeParamsInParamArg = new HashSet<JTypeParameter>();
+        recordTypeParametersIn(paramArgs[i], typeParamsInParamArg);
+
+        for (JTypeParameter arg : typeParamsInParamArg) {
+          Set<JTypeParameter> constBy = newTypeParameters.get(arg);
+          if (constBy == null) {
+            constBy = new LinkedHashSet<JTypeParameter>();
+            newTypeParameters.put(arg, constBy);
+          }
+
+          constBy.add(isGenericSuper.getTypeParameters()[i]);
+        }
+      }
+    }
+
+    return newTypeParameters;
   }
 }

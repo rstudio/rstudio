@@ -325,6 +325,18 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract void addModifierBits(int bits);
 
+  public JParameterizedType asParameterizationOf(JGenericType type) {
+    Set<JClassType> supertypes = getFlattenedSuperTypeHierarchy(this);
+    for (JClassType supertype : supertypes) {
+      JParameterizedType isParameterized = supertype.isParameterized();
+      if (isParameterized != null && isParameterized.getBaseType() == type) {
+        return isParameterized;
+      }
+    }
+
+    return null;
+  }
+
   public abstract JConstructor findConstructor(JType[] paramTypes);
 
   public abstract JField findField(String name);

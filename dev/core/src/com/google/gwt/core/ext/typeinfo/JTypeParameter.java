@@ -23,6 +23,7 @@ import java.util.List;
  */
 public class JTypeParameter extends JDelegatingClassType {
   private JClassType[] bounds;
+  private JGenericType declaringClass;
   private final int ordinal;
   private final String typeName;
 
@@ -43,6 +44,10 @@ public class JTypeParameter extends JDelegatingClassType {
 
   public JClassType[] getBounds() {
     return bounds;
+  }
+
+  public JGenericType getDeclaringClass() {
+    return declaringClass;
   }
 
   @Override
@@ -79,6 +84,10 @@ public class JTypeParameter extends JDelegatingClassType {
   @Override
   public String getName() {
     return typeName;
+  }
+
+  public int getOrdinal() {
+    return ordinal;
   }
 
   @Override
@@ -157,13 +166,13 @@ public class JTypeParameter extends JDelegatingClassType {
     }
   }
 
-  int getOrdinal() {
-    return ordinal;
-  }
-
   @Override
   JClassType getSubstitutedType(JParameterizedType parameterizedType) {
     return parameterizedType.getTypeParameterSubstitution(this);
+  }
+
+  void setDeclaringClass(JGenericType declaringClass) {
+    this.declaringClass = declaringClass;
   }
 
   private String toString(boolean simpleName) {

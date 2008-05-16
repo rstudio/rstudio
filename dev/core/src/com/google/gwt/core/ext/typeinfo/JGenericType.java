@@ -99,5 +99,6 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
 
   private void addTypeParameter(JTypeParameter typeParameter) {
     typeParams.add(typeParameter);
+    typeParameter.setDeclaringClass(this);
   }
 }
