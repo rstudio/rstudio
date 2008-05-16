@@ -31,7 +31,7 @@ a:visited {
   text-align: left;
 }
 
-.gwt-DialogBox .content {
+.gwt-DialogBox .dialogContent {
   border: 1px solid #666;
   border-top: 0;
 }
@@ -100,77 +100,77 @@ a:visited {
   cursor: pointer;
   cursor: hand;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft,
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
+.gwt-DecoratedStackPanel .stackItemTopLeft,
+.gwt-DecoratedStackPanel .stackItemTopRight {
   width: 4px;
   height: 4px;
   zoom: 1;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeft {
+html>body .gwt-DecoratedStackPanel .stackItemTopLeft {
   background: #c1eec8 url(leftCorner.gif) no-repeat;
   border-left: 1px solid #666;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRight {
+html>body .gwt-DecoratedStackPanel .stackItemTopRight {
   background: #c1eec8 url(rightCorner.gif) no-repeat;
   border-right: 1px solid #666;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner,
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
+.gwt-DecoratedStackPanel .stackItemTopLeftInner,
+.gwt-DecoratedStackPanel .stackItemTopRightInner {
   width: 4px;
   height: 4px;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topLeftInner {
+* html .gwt-DecoratedStackPanel .stackItemTopLeftInner {
   overflow: hidden;
   border-left: 1px solid #666;
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='leftCorner.gif',sizingMethod='crop');
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem .topRightInner {
+* html .gwt-DecoratedStackPanel .stackItemTopRightInner {
   overflow: hidden;
   border-right: 1px solid #666;
   background-color: #d3def6;
   filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='rightCorner.gif',sizingMethod='crop');
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .topCenter {
+.gwt-DecoratedStackPanel .stackItemTopCenter {
   background: #ddefde url(gradient.gif) repeat-x 0px 0px;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeft {
+.gwt-DecoratedStackPanel .stackItemMiddleLeft {
   background: #d3def6 url(gradient.gif) repeat-x 0px -1px;
   border-left: 1px solid #666;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleLeftInner,
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRightInner {
+.gwt-DecoratedStackPanel .stackItemMiddleLeftInner,
+.gwt-DecoratedStackPanel .stackItemMiddleRightInner {
   width: 1px;
   height: 1px;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleRight {
+.gwt-DecoratedStackPanel .stackItemMiddleRight {
   background: #d3def6 url(gradient.gif) repeat-x 0px -1px;
   border-right: 1px solid #666;
 }
-.gwt-DecoratedStackPanel .gwt-StackPanelItem .middleCenter {
+.gwt-DecoratedStackPanel .stackItemMiddleCenter {
   font-weight: bold;
   font-size: 1.3em;
   background: #d3def6 url(gradient.gif) repeat-x 0px -1px;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRight,
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeft {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopRight,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopLeft {
   border: 0px;
   background-color: white;
 }
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeft,
-html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRight {
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopLeft,
+html>body .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopRight {
   background-color: white;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner,
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopRightInner {
   border: 0px;
   background-color: white;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .topLeftInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-first .stackItemTopLeftInner {
   padding-left: 1px;
 }
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topLeftInner,
-* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .topRightInner {
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopLeftInner,
+* html .gwt-DecoratedStackPanel .gwt-StackPanelItem-below-selected .stackItemTopRightInner {
   background-color: white;
 }
 
