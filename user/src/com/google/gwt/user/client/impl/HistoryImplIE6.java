@@ -36,34 +36,6 @@ class HistoryImplIE6 extends HistoryImplFrame {
     DOM.setInnerText(div, maybeHtml);
     return DOM.getInnerHTML(div);
   }
-  
-  private static native void initUrlCheckTimer() /*-{
-    // This is the URL check timer.  It detects when an unexpected change
-    // occurs in the document's URL (e.g. when the user enters one manually
-    // or selects a 'favorite', but only the #hash part changes).  When this
-    // occurs, we _must_ reload the page.  This is because IE has a really
-    // nasty bug that totally mangles its history stack and causes the location
-    // bar in the UI to stop working under these circumstances.
-    var urlChecker = function() {
-      var hash = $wnd.location.hash;
-      if (hash.length > 0) {
-        var token = '';
-        try {
-          token = this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
-        } catch (e) {
-          // If there's a bad hash, always reload. This could only happen if
-          // if someone entered or linked to a bad url.
-          $wnd.location.reload();
-        }
-
-        if ($wnd.__gwt_historyToken && (token != $wnd.__gwt_historyToken)) {
-          $wnd.location.reload();
-        }
-      }
-      $wnd.setTimeout(urlChecker, 250);
-    };
-    urlChecker();
-  }-*/;
 
   @Override
   public boolean init() {
@@ -127,5 +99,34 @@ class HistoryImplIE6 extends HistoryImplFrame {
       doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + historyToken + '</div></body></html>');
       doc.close();
     }
+  }-*/;
+
+  private native void initUrlCheckTimer() /*-{
+    // This is the URL check timer.  It detects when an unexpected change
+    // occurs in the document's URL (e.g. when the user enters one manually
+    // or selects a 'favorite', but only the #hash part changes).  When this
+    // occurs, we _must_ reload the page.  This is because IE has a really
+    // nasty bug that totally mangles its history stack and causes the location
+    // bar in the UI to stop working under these circumstances.
+    var historyImplRef = this;
+    var urlChecker = function() {
+      var hash = $wnd.location.hash;
+      if (hash.length > 0) {
+        var token = '';
+        try {
+          token = historyImplRef.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
+        } catch (e) {
+          // If there's a bad hash, always reload. This could only happen if
+          // if someone entered or linked to a bad url.
+          $wnd.location.reload();
+        }
+  
+        if ($wnd.__gwt_historyToken && (token != $wnd.__gwt_historyToken)) {
+          $wnd.location.reload();
+        }
+      }
+      $wnd.setTimeout(urlChecker, 250);
+    };
+    urlChecker();
   }-*/;
 }
