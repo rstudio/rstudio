@@ -112,6 +112,25 @@ public class UIObjectTest extends GWTTestCase {
     assertEquals("primary", o.getStylePrimaryName());
   }
 
+  public void testDebugIdOnElement() {
+    // Test basic set
+    Element oElem = DOM.createDiv();
+    UIObject.ensureDebugId(oElem, "test1");
+    assertDebugId("test1", oElem);
+
+    // Test override with new ID
+    UIObject.ensureDebugId(oElem, "test2");
+    assertDebugId("test2", oElem);
+
+    // Test setting actual id
+    DOM.setElementProperty(oElem, "id", "mytest");
+    assertEquals("mytest", DOM.getElementProperty(oElem, "id"));
+
+    // Test overriding with debug ID succeeds if ID present
+    UIObject.ensureDebugId(oElem, "test3");
+    assertDebugId("test3", oElem);
+  }
+
   public void testDebugId() {
     // Test basic set
     MyObject o = new MyObject();

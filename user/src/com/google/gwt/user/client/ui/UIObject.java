@@ -102,6 +102,11 @@ public abstract class UIObject {
     // parameters
     public void ensureDebugId(UIObject uiObject, String id) {
     }
+
+    @SuppressWarnings("unused")
+    // parameters
+    public void ensureDebugId(Element elem, String id) {
+    }
   }
 
   /**
@@ -112,6 +117,11 @@ public abstract class UIObject {
     @Override
     public void ensureDebugId(UIObject uiObject, String id) {
       uiObject.onEnsureDebugId(id);
+    }
+
+    @Override
+    public void ensureDebugId(Element elem, String id) {
+     UIObject.ensureDebugId(elem, "", id);
     }
   }
 
@@ -129,6 +139,29 @@ public abstract class UIObject {
 
   private static final String NULL_HANDLE_MSG = "Null widget handle. If you "
       + "are creating a composite, ensure that initWidget() has been called.";
+
+  /**
+   * <p>
+   * Ensure that elem has an ID property set, which allows it to integrate with
+   * third-party libraries and test tools.  If  elem already has an ID, this
+   * method WILL override it.  The ID that you specify will be prefixed by the
+   * static string {@link #DEBUG_ID_PREFIX}.
+   * </p>
+   * 
+   * <p>
+   * This method will be compiled out and will have no effect unless you inherit
+   * the DebugID module in your gwt.xml file by adding the following line:
+   * 
+   * <pre class="code">
+   * &lt;inherits name="com.google.gwt.user.Debug"/&gt;</pre>
+   * </p>
+   * 
+   * @param elem the target {@link Element}
+   * @param id the ID to set on the element
+   */
+  public static void ensureDebugId(Element elem, String id) {
+    debugIdImpl.ensureDebugId(elem, id);
+  }
 
   public static native boolean isVisible(Element elem) /*-{
     return (elem.style.display != 'none');
@@ -476,7 +509,7 @@ public abstract class UIObject {
    */
   public com.google.gwt.user.client.Element getElement() {
     assert (element != null) : MISSING_ELEMENT_ERROR;
-    return (com.google.gwt.user.client.Element)element;
+    return (com.google.gwt.user.client.Element) element;
   }
 
   /**
@@ -752,7 +785,7 @@ public abstract class UIObject {
    * @param elem the object's element
    */
   protected final void setElement(Element elem) {
-    setElement((com.google.gwt.user.client.Element)elem);
+    setElement((com.google.gwt.user.client.Element) elem);
   }
 
   /**
