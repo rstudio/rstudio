@@ -634,8 +634,8 @@ public class DOM {
    * @param evt the event to stringize
    * @return a string form of the event
    */
-  public static String eventToString(Event evt) {
-    return evt.getString();
+  public static String eventToString(Event evt) { 
+    return impl.eventToString(evt);
   }
 
   /**
