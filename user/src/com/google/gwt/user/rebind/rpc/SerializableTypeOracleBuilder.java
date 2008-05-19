@@ -912,10 +912,7 @@ public class SerializableTypeOracleBuilder {
 
               if (typeParamsInQueryType.isEmpty()) {
                 if (!isParameterized.isAssignableFrom(subtype)) {
-                  // Only emit a warning if the supertype is not instantiable.
-                  Type logLevel = isInstantiable ? TreeLogger.DEBUG
-                      : getLogLevel(true);
-                  subtypeLogger.log(logLevel, "Excluding type '"
+                  subtypeLogger.log(TreeLogger.DEBUG, "Excluding type '"
                       + subtype.getParameterizedQualifiedSourceName()
                       + "' because it is not assignable to '"
                       + isParameterized.getParameterizedQualifiedSourceName()
@@ -1294,9 +1291,16 @@ public class SerializableTypeOracleBuilder {
         return false;
       }
 
+      /*
+       * Speculative paths log at DEBUG level, non-speculative ones log at WARN
+       * level.
+       */
+      TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
+          : TreeLogger.WARN;
+
       if (type.isLocalType()) {
         logger.branch(
-            getLogLevel(isSpeculative),
+            logLevel,
             type.getParameterizedQualifiedSourceName()
                 + " is a local type; it will be excluded from the set of serializable types",
             null);
@@ -1305,7 +1309,7 @@ public class SerializableTypeOracleBuilder {
 
       if (type.isMemberType() && !type.isStatic()) {
         logger.branch(
-            getLogLevel(isSpeculative),
+            logLevel,
             type.getParameterizedQualifiedSourceName()
                 + " is nested but not static; it will be excluded from the set of serializable types",
             null);
@@ -1320,7 +1324,7 @@ public class SerializableTypeOracleBuilder {
       if (!type.isDefaultInstantiable()) {
         // Warn and return false.
         logger.log(
-            TreeLogger.WARN,
+            logLevel,
             "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
             null);
         return false;
