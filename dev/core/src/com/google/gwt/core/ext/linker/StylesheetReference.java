@@ -18,14 +18,18 @@ package com.google.gwt.core.ext.linker;
 import com.google.gwt.core.ext.Linker;
 
 /**
- * An external stylesheet referenced in the module manifest.
+ * An external stylesheet referenced in the module manifest. The index is
+ * important because output order must match module declaration order.
  */
 public abstract class StylesheetReference extends Artifact<StylesheetReference> {
   private final String src;
+  private final int index;
 
-  protected StylesheetReference(Class<? extends Linker> linkerType, String src) {
+  protected StylesheetReference(Class<? extends Linker> linkerType, String src,
+      int index) {
     super(linkerType);
     this.src = src;
+    this.index = index;
   }
 
   /**
@@ -48,7 +52,7 @@ public abstract class StylesheetReference extends Artifact<StylesheetReference> 
 
   @Override
   protected final int compareToComparableArtifact(StylesheetReference o) {
-    return getSrc().compareTo(o.getSrc());
+    return index - o.index;
   }
 
   @Override

@@ -22,7 +22,7 @@ import com.google.gwt.core.ext.linker.ScriptReference;
  */
 public class StandardScriptReference extends ScriptReference {
 
-  public StandardScriptReference(String src) {
-    super(StandardLinkerContext.class, src);
+  public StandardScriptReference(String src, int index) {
+    super(StandardLinkerContext.class, src, index);
   }
 }

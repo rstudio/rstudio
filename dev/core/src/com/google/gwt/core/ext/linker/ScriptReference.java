@@ -18,14 +18,18 @@ package com.google.gwt.core.ext.linker;
 import com.google.gwt.core.ext.Linker;
 
 /**
- * An external script file referenced in the module manifest.
+ * An external script file referenced in the module manifest. The index is
+ * important because output order must match module declaration order.
  */
 public abstract class ScriptReference extends Artifact<ScriptReference> {
+  private final int index;
   private final String src;
 
-  protected ScriptReference(Class<? extends Linker> linkerType, String src) {
+  protected ScriptReference(Class<? extends Linker> linkerType, String src,
+      int index) {
     super(linkerType);
     this.src = src;
+    this.index = index;
   }
 
   /**
@@ -48,7 +52,7 @@ public abstract class ScriptReference extends Artifact<ScriptReference> {
 
   @Override
   protected final int compareToComparableArtifact(ScriptReference o) {
-    return getSrc().compareTo(o.getSrc());
+    return index - o.index;
   }
 
   @Override

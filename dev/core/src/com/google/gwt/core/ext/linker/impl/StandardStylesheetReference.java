@@ -22,7 +22,7 @@ import com.google.gwt.core.ext.linker.StylesheetReference;
  */
 public class StandardStylesheetReference extends StylesheetReference {
 
-  public StandardStylesheetReference(String src) {
-    super(StandardLinkerContext.class, src);
+  public StandardStylesheetReference(String src, int index) {
+    super(StandardLinkerContext.class, src, index);
   }
 }

@@ -87,7 +87,7 @@ public final class ArtifactSet implements SortedSet<Artifact<?>> {
    */
   public <A extends Artifact<?>, T extends A> SortedSet<A> find(
       Class<T> artifactType) {
-    // TODO make this sub-linear
+    // TODO make this sub-linear (but must retain order for styles/scripts!)
     SortedSet<A> toReturn = new TreeSet<A>();
     for (Artifact<?> artifact : this) {
       if (artifactType.isInstance(artifact)) {

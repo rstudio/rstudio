@@ -175,14 +175,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
     properties = Collections.unmodifiableSortedSet(mutableProperties);
 
-    for (Script script : module.getScripts()) {
-      artifacts.add(new StandardScriptReference(script.getSrc()));
-      logger.log(TreeLogger.SPAM, "Added script " + script.getSrc(), null);
+    {
+      int index = 0;
+      for (Script script : module.getScripts()) {
+        artifacts.add(new StandardScriptReference(script.getSrc(), index++));
+        logger.log(TreeLogger.SPAM, "Added script " + script.getSrc(), null);
+      }
     }
 
-    for (String style : module.getStyles()) {
-      artifacts.add(new StandardStylesheetReference(style));
-      logger.log(TreeLogger.SPAM, "Added style " + style, null);
+    {
+      int index = 0;
+      for (String style : module.getStyles()) {
+        artifacts.add(new StandardStylesheetReference(style, index++));
+        logger.log(TreeLogger.SPAM, "Added style " + style, null);
+      }
     }
 
     // Generated files should be passed in via addArtifacts()
