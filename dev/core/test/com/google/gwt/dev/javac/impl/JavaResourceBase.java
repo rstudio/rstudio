@@ -116,6 +116,7 @@ public class JavaResourceBase {
       code.append("package java.lang;\n");
       code.append("import java.io.Serializable;\n");
       code.append("public final class String implements Serializable {\n");
+      code.append("  private static final long serialVersionUID = 0L;\n");
       code.append("  public int length() { return 0; }\n");
       code.append("}\n");
       return code;
