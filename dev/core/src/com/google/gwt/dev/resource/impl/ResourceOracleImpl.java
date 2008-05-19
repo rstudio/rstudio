@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
+import java.util.zip.ZipFile;
 
 /**
  * The normal implementation of {@link ResourceOracle}.
@@ -120,13 +121,16 @@ public class ResourceOracleImpl implements ResourceOracle {
     if (url.getProtocol().equals("file")) {
       URI uri = new URI(urlString);
       File f = new File(uri);
+      String lowerCaseFileName = f.getName().toLowerCase();
       if (f.isDirectory()) {
         return new DirectoryClassPathEntry(f);
-      } else if (f.isFile() && f.getName().endsWith(".jar")) {
-        return new JarFileClassPathEntry(new JarFile(f));
+      } else if (f.isFile() && lowerCaseFileName.endsWith(".jar")) {
+        return new ZipFileClassPathEntry(new JarFile(f));
+      } else if (f.isFile() && lowerCaseFileName.endsWith(".zip")) {
+        return new ZipFileClassPathEntry(new ZipFile(f));
       } else {
         logger.log(TreeLogger.TRACE, "Unexpected entry in classpath; " + f
-            + " is neither a directory nor a jar");
+            + " is neither a directory nor an archive (.jar or .zip)");
         return null;
       }
     } else {

@@ -181,7 +181,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
   protected ClassPathEntry getClassPathEntry1AsJar() throws IOException,
       URISyntaxException {
     File file = findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
-    return new ExcludeSvnClassPathEntry(new JarFileClassPathEntry(new JarFile(
+    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(new JarFile(
         file)));
   }
 
@@ -198,7 +198,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
   protected ClassPathEntry getClassPathEntry2AsJar() throws URISyntaxException,
       IOException {
     File file = findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
-    return new ExcludeSvnClassPathEntry(new JarFileClassPathEntry(new JarFile(
+    return new ExcludeSvnClassPathEntry(new ZipFileClassPathEntry(new JarFile(
         file)));
   }
 

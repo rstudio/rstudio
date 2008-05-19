@@ -20,37 +20,35 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.jar.JarEntry;
+import java.util.zip.ZipEntry;
 
 /**
- * Represents a resource contained in a jar file.
+ * Represents a resource contained in a jar or zip file.
  */
-public class JarFileResource extends AbstractResource {
+public class ZipFileResource extends AbstractResource {
 
-  private final JarFileClassPathEntry classPathEntry;
-  private final JarEntry jarEntry;
+  private final ZipFileClassPathEntry classPathEntry;
+  private final ZipEntry zipEntry;
 
-  public JarFileResource(JarFileClassPathEntry classPathEntry, JarEntry jarEntry) {
+  public ZipFileResource(ZipFileClassPathEntry classPathEntry, ZipEntry zipEntry) {
     this.classPathEntry = classPathEntry;
-    this.jarEntry = jarEntry;
+    this.zipEntry = zipEntry;
   }
 
   @Override
-  public JarFileClassPathEntry getClassPathEntry() {
+  public ZipFileClassPathEntry getClassPathEntry() {
     return classPathEntry;
-  }
-
-  public JarEntry getJarEntry() {
-    return jarEntry;
   }
 
   @Override
   public String getLocation() {
-    return "jar:" + classPathEntry.getLocation() + "!/" + getPath();
+    String proto = zipEntry instanceof JarEntry ? "jar:" : "zip:";
+    return proto + classPathEntry.getLocation() + "!/" + getPath();
   }
 
   @Override
   public String getPath() {
-    return jarEntry.getName();
+    return zipEntry.getName();
   }
 
   @Override
@@ -62,8 +60,12 @@ public class JarFileResource extends AbstractResource {
     }
   }
 
+  public ZipEntry getZipEntry() {
+    return zipEntry;
+  }
+
   /**
-   * Since we don't dynamically reload jars during a run, jar-based resources
+   * Since we don't dynamically reload zips during a run, zip-based resources
    * cannot become stale.
    */
   @Override
@@ -74,7 +76,7 @@ public class JarFileResource extends AbstractResource {
   @Override
   public InputStream openContents() {
     try {
-      return classPathEntry.getJarFile().getInputStream(jarEntry);
+      return classPathEntry.getZipFile().getInputStream(zipEntry);
     } catch (IOException e) {
       // The spec for this method says it can return null.
       return null;

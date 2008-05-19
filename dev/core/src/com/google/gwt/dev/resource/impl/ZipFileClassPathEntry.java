@@ -22,20 +22,20 @@ import java.io.File;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
- * A classpath entry that is a jar file.
+ * A classpath entry that is a jar or zip file.
  */
-public class JarFileClassPathEntry extends ClassPathEntry {
+public class ZipFileClassPathEntry extends ClassPathEntry {
 
   /**
    * Logger messages related to this class.
    */
   private static class Messages {
     static final Message1String BUILDING_INDEX = new Message1String(
-        TreeLogger.TRACE, "Indexing jar file: $0");
+        TreeLogger.TRACE, "Indexing zip file: $0");
 
     static final Message1String EXCLUDING_RESOURCE = new Message1String(
         TreeLogger.DEBUG, "Excluding $0");
@@ -46,28 +46,28 @@ public class JarFileClassPathEntry extends ClassPathEntry {
     static final Message1String INCLUDING_RESOURCE = new Message1String(
         TreeLogger.DEBUG, "Including $0");
 
-    static final Message1String READ_JAR_ENTRY = new Message1String(
+    static final Message1String READ_ZIP_ENTRY = new Message1String(
         TreeLogger.DEBUG, "$0");
   }
 
-  private Set<JarFileResource> allJarFileResources;
+  private Set<ZipFileResource> allZipFileResources;
   private Set<AbstractResource> cachedAnswers;
-  private final JarFile jarFile;
   private PathPrefixSet lastPrefixSet;
+  private final ZipFile zipFile;
 
-  public JarFileClassPathEntry(JarFile jarFile) {
-    this.jarFile = jarFile;
+  public ZipFileClassPathEntry(ZipFile zipFile) {
+    this.zipFile = zipFile;
   }
 
   /**
-   * Indexes the jar file on-demand, and only once over the life of the process.
+   * Indexes the zip file on-demand, and only once over the life of the process.
    */
   @Override
   public Set<AbstractResource> findApplicableResources(TreeLogger logger,
       PathPrefixSet pathPrefixSet) {
     // Never re-index.
-    if (allJarFileResources == null) {
-      allJarFileResources = buildIndex(logger);
+    if (allZipFileResources == null) {
+      allZipFileResources = buildIndex(logger);
     }
 
     if (cachedAnswers == null || lastPrefixSet != pathPrefixSet
@@ -78,33 +78,33 @@ public class JarFileClassPathEntry extends ClassPathEntry {
     return cachedAnswers;
   }
 
-  public JarFile getJarFile() {
-    return jarFile;
-  }
-
   @Override
   public String getLocation() {
-    return new File(jarFile.getName()).toURI().toString();
+    return new File(zipFile.getName()).toURI().toString();
   }
 
-  private Set<JarFileResource> buildIndex(TreeLogger logger) {
-    logger = Messages.BUILDING_INDEX.branch(logger, jarFile.getName(), null);
+  public ZipFile getZipFile() {
+    return zipFile;
+  }
 
-    HashSet<JarFileResource> results = new HashSet<JarFileResource>();
-    Enumeration<JarEntry> e = jarFile.entries();
+  private Set<ZipFileResource> buildIndex(TreeLogger logger) {
+    logger = Messages.BUILDING_INDEX.branch(logger, zipFile.getName(), null);
+
+    HashSet<ZipFileResource> results = new HashSet<ZipFileResource>();
+    Enumeration<? extends ZipEntry> e = zipFile.entries();
     while (e.hasMoreElements()) {
-      JarEntry jarEntry = e.nextElement();
-      if (jarEntry.isDirectory()) {
+      ZipEntry zipEntry = e.nextElement();
+      if (zipEntry.isDirectory()) {
         // Skip directories.
         continue;
       }
-      if (jarEntry.getName().startsWith("META-INF/")) {
+      if (zipEntry.getName().startsWith("META-INF/")) {
         // Skip META-INF since classloaders normally make this invisible.
         continue;
       }
-      JarFileResource jarResource = new JarFileResource(this, jarEntry);
-      results.add(jarResource);
-      Messages.READ_JAR_ENTRY.log(logger, jarEntry.getName(), null);
+      ZipFileResource zipResource = new ZipFileResource(this, zipEntry);
+      results.add(zipResource);
+      Messages.READ_ZIP_ENTRY.log(logger, zipEntry.getName(), null);
     }
     return results;
   }
@@ -112,10 +112,10 @@ public class JarFileClassPathEntry extends ClassPathEntry {
   private Set<AbstractResource> computeApplicableResources(TreeLogger logger,
       PathPrefixSet pathPrefixSet) {
     logger = Messages.FINDING_INCLUDED_RESOURCES.branch(logger,
-        jarFile.getName(), null);
+        zipFile.getName(), null);
 
     Set<AbstractResource> results = new HashSet<AbstractResource>();
-    for (JarFileResource r : allJarFileResources) {
+    for (ZipFileResource r : allZipFileResources) {
       String path = r.getPath();
       if (pathPrefixSet.includesResource(path)) {
         Messages.INCLUDING_RESOURCE.log(logger, path, null);

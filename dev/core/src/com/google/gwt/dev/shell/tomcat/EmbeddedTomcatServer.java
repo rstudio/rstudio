@@ -365,7 +365,12 @@ public class EmbeddedTomcatServer {
     String prefix = "";
     String urlString = url.toString();
     if (urlString.startsWith("jar:")) {
-      assert urlString.contains(".jar!/" + tomcatEtcDir);
+      assert urlString.toLowerCase().contains(".jar!/" + tomcatEtcDir);
+      urlString = urlString.substring(4, urlString.indexOf('!'));
+      url = new URL(urlString);
+      prefix = tomcatEtcDir;
+    } else if (urlString.startsWith("zip:")) {
+      assert urlString.toLowerCase().contains(".zip!/" + tomcatEtcDir);
       urlString = urlString.substring(4, urlString.indexOf('!'));
       url = new URL(urlString);
       prefix = tomcatEtcDir;

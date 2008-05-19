@@ -53,7 +53,6 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.URLDecoder;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -63,7 +62,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.jar.JarEntry;
 
 /**
  * A smattering of useful methods. Methods in this class are candidates for
@@ -255,38 +253,6 @@ public final class Util {
     return escaped;
   }
 
-  /**
-   * Converts a URL "jar:file:aaa.jar!bbb" to the filename "aaa.jar". This also
-   * does URLDecoding if needed.
-   * 
-   * @param location the URL pointing at a jar location
-   * @return the path to the jar file
-   */
-  public static String findFileName(String location) {
-    String newLocation = location;
-    if ((location.startsWith("zip:file:"))
-        || (location.startsWith("jar:file:"))) {
-      int lastIndexOfExclam = newLocation.lastIndexOf('!');
-      // This file lives in a jar or zipfile
-      // we pretend the location is the jar or zip file
-      if (lastIndexOfExclam != -1) {
-        newLocation = newLocation.substring(0, lastIndexOfExclam);
-      }
-      newLocation = newLocation.substring(9);
-      // If the file does not exist that may be because the path is
-      // URLEncoded. Therefore, decode it.
-      if (!new File(newLocation).exists()) {
-        try {
-          newLocation = URLDecoder.decode(newLocation, DEFAULT_ENCODING);
-        } catch (UnsupportedEncodingException e) {
-          // An unsupported encoding indicates confusion; do nothing.
-          return location;
-        }
-      }
-    }
-    return newLocation;
-  }
-
   public static URL findSourceInClassPath(ClassLoader cl, String sourceTypeName) {
     String toTry = sourceTypeName.replace('.', '/') + ".java";
     URL foundURL = cl.getResource(toTry);
@@ -389,7 +355,8 @@ public final class Util {
 
       URL url = new URL(loc);
       String s = url.toExternalForm();
-      if (s.startsWith("file:") || s.startsWith("jar:")) {
+      if (s.startsWith("file:") || s.startsWith("jar:file:")
+          || s.startsWith("zip:file:")) {
         return true;
       }
     } catch (MalformedURLException e) {
@@ -855,18 +822,6 @@ public final class Util {
       return f.toURI().toURL();
     } catch (MalformedURLException e) {
       throw new RuntimeException("Failed to convert a File to a URL", e);
-    }
-  }
-
-  public static URL toURL(URL jarUrl, JarEntry jarEntry) {
-    return toURL(jarUrl, jarEntry.toString());
-  }
-
-  public static URL toURL(URL jarUrl, String path) {
-    try {
-      return new URL("jar" + ":" + jarUrl.toString() + "!/" + path);
-    } catch (MalformedURLException e) {
-      throw new RuntimeException("Failed to convert a jar path to a URL", e);
     }
   }
 
