@@ -940,7 +940,7 @@ public class JsInliner {
        */
       int originalComplexity = complexity(x);
       int inlinedComplexity = complexity(op);
-      double ratio = ((double) originalComplexity) / inlinedComplexity;
+      double ratio = ((double) inlinedComplexity) / originalComplexity;
       if (ratio > MAX_COMPLEXITY_INCREASE && isInvokedMoreThanOnce(f)) {
         return;
       }
@@ -979,6 +979,7 @@ public class JsInliner {
   private static class InvocationCountingVisitor extends JsVisitor {
     private final Map<JsFunction, Integer> invocationCount = new IdentityHashMap<JsFunction, Integer>();
 
+    @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
       JsFunction function = isFunction(x.getQualifier());
       if (function != null) {
