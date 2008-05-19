@@ -407,7 +407,7 @@ public class GeneratorAdapter extends LocalVariablesSorter {
                     break;
                 case Type.CHAR:
                     mv.visitFieldInsn(Opcodes.GETSTATIC,
-                            "java/lang/Char",
+                            "java/lang/Character",
                             "TYPE",
                             CLDESC);
                     break;
