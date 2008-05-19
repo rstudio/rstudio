@@ -144,6 +144,7 @@
 		<attribute name="test.out" default="" />
 		<attribute name="test.reports" default="@{test.out}/reports" />
 		<attribute name="test.cases" default="" />
+		<element name="extraclasspaths" optional="true" />
 		<sequential>
 			<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
 				<classpath>
@@ -170,6 +171,7 @@
 					<pathelement location="${javac.out}" />
 					<pathelement location="${gwt.dev.staging.jar}" />
 					<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+					<extraclasspaths />
 				</classpath>
 
 				<formatter type="plain" />

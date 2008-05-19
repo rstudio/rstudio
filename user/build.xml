@@ -36,11 +36,19 @@
                   stubversion="1.2"/>
 	</target>
 
-	<target name="compile.tests" description="Compiles the test code for this project">
+	<!--
+		Compile test code for dev/core to pick up TypeOracleTestUtils and others.
+	-->	
+	<target name="compile.dev.core.tests" description="Compiles test dependencies in dev/core">
+		<gwt.ant dir="../dev/core" target="compile.tests" />
+	</target>
+		
+	<target name="compile.tests" depends="compile.dev.core.tests" description="Compiles the test code for this project">
 		<mkdir dir="${javac.junit.out}" />
 		<gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
 			<classpath>
 				<pathelement location="${javac.out}" />
+				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 				<pathelement location="${gwt.dev.staging.jar}" />
 			</classpath>
@@ -67,15 +75,27 @@
 
 	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
 		<echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
-		<gwt.junit test.args="${test.args} -out www -web -remoteweb ${gwt.remote.browsers}" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" />
+		<gwt.junit test.args="${test.args} -out www -web -remoteweb ${gwt.remote.browsers}" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" >
+			<extraclasspaths>
+				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
+			</extraclasspaths>
+		</gwt.junit>
 	</target>
 
 	<target name="test.hosted" depends="compile, compile.tests" description="Run only hosted-mode tests for this project.">
-		<gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" />
+		<gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" >
+			<extraclasspaths>
+				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
+			</extraclasspaths>
+		</gwt.junit>
 	</target>
 
 	<target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
-		<gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" />
+		<gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" >
+			<extraclasspaths>
+				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
+			</extraclasspaths>
+		</gwt.junit>
 	</target>
 
 	<target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode and remoteweb tests for this project.">
