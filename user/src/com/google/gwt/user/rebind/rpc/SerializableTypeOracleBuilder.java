@@ -502,7 +502,7 @@ public class SerializableTypeOracleBuilder {
    * the same package.
    */
   private static boolean isAccessibleToClassesInSamePackage(JClassType type) {
-    if (type.isPrivate()) {
+    if (type.isPrivate() || type.isLocalType()) {
       return false;
     }
 
@@ -761,6 +761,21 @@ public class SerializableTypeOracleBuilder {
         if (leafClass != null) {
           JClassType[] leafSubtypes = leafClass.getErasedType().getSubtypes();
           for (JClassType leafSubtype : leafSubtypes) {
+            if (leafSubtype.isRawType() != null) {
+              /*
+               * Convert from a generic type into a parameterization of the said
+               * generic type where each argument is the type argument. The goal
+               * is have checkTypeInstantiable not check the type parameters.
+               */
+              JGenericType leafGenericSub = leafSubtype.isRawType().getBaseType();
+              leafSubtype = typeOracle.getParameterizedType(leafGenericSub,
+                  leafGenericSub.getTypeParameters());
+            }
+
+            if (!isAccessibleToClassesInSamePackage(leafSubtype)) {
+              continue;
+            }
+
             JArrayType covariantArray = getArrayType(typeOracle,
                 isArray.getRank(), leafSubtype);
             checkTypeInstantiable(localLogger, covariantArray, true, path);
@@ -879,6 +894,11 @@ public class SerializableTypeOracleBuilder {
           Path subtypePath = createSubtypePath(path, subtype, originalType);
           boolean subInstantiable = checkTypeInstantiableNoSubtypes(
               subtypeLogger, subtype, true, subtypePath);
+          if (!subInstantiable) {
+            // If the subtype is not instantiable do not check the arguments.
+            continue;
+          }
+
           JGenericType genericSub = subtype.isGenericType();
           if (genericSub != null) {
             TreeLogger paramsLogger = subtypeLogger.branch(TreeLogger.DEBUG,
@@ -914,7 +934,7 @@ public class SerializableTypeOracleBuilder {
              * included. In order to be certain, we would need to perform a full
              * unification between the query type and subtype.
              */
-            if (subInstantiable && isParameterized != null) {
+            if (isParameterized != null) {
               HashSet<JTypeParameter> typeParamsInQueryType = new HashSet<JTypeParameter>();
               recordTypeParametersIn(isParameterized, typeParamsInQueryType);
 
@@ -1098,6 +1118,7 @@ public class SerializableTypeOracleBuilder {
       final JArrayType arrayType, boolean isSpeculative, final Path parent) {
     TreeLogger branch = logger.branch(TreeLogger.DEBUG,
         "Analyzing component type:", null);
+
     return checkTypeInstantiable(branch, arrayType.getComponentType(),
         isSpeculative, createArrayComponentPath(arrayType, parent));
   }
@@ -1132,7 +1153,9 @@ public class SerializableTypeOracleBuilder {
     JField[] fields = classOrInterface.getFields();
     if (fields.length > 0) {
       TreeLogger localLogger = logger.branch(TreeLogger.DEBUG,
-          "Analyzing Fields:", null);
+          "Analyzing the fields of type '"
+              + classOrInterface.getParameterizedQualifiedSourceName()
+              + "' that qualify for serialization", null);
 
       for (JField field : fields) {
         if (!qualfiesForSerialization(localLogger, field)) {
@@ -1211,19 +1234,38 @@ public class SerializableTypeOracleBuilder {
     Path path = createTypeArgumentPath(parent, baseType, paramIndex, typeArg);
     int exposure = getTypeParameterExposure(baseType, paramIndex);
     switch (exposure) {
-      case EXPOSURE_DIRECT:
-        return checkTypeInstantiable(logger, typeArg, true, path)
+      case EXPOSURE_DIRECT: {
+        TreeLogger branch = logger.branch(
+            TreeLogger.DEBUG,
+            "Checking type argument "
+                + paramIndex
+                + " of type '"
+                + baseType.getParameterizedQualifiedSourceName()
+                + "' because it is directly exposed in this type or in one of its subtypes");
+        return checkTypeInstantiable(branch, typeArg, true, path)
             || mightNotBeExposed(baseType, paramIndex);
-
+      }
       case EXPOSURE_NONE:
         // Ignore this argument
+        logger.branch(TreeLogger.DEBUG, "Ignoring type argument " + paramIndex
+            + " of type '" + baseType.getParameterizedQualifiedSourceName()
+            + "' because it is not exposed in this or any subtype");
         return true;
 
-      default:
+      default: {
         assert (exposure >= EXPOSURE_MIN_BOUNDED_ARRAY);
-        return checkTypeInstantiable(logger, getArrayType(typeOracle, exposure,
+        TreeLogger branch = logger.branch(
+            TreeLogger.DEBUG,
+            "Checking type argument "
+                + paramIndex
+                + " of type '"
+                + baseType.getParameterizedQualifiedSourceName()
+                + "' because it is exposed as an array with a maximum dimension of "
+                + exposure + " in this type or one of its subtypes");
+        return checkTypeInstantiable(branch, getArrayType(typeOracle, exposure,
             typeArg), true, path)
             || mightNotBeExposed(baseType, paramIndex);
+      }
     }
   }
 
@@ -1357,7 +1399,6 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * 
    * Returns a map from each parameter in the subtype to the set of parameters,
    * if any, in the supertype which constrain that parameter.
    */
