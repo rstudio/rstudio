@@ -64,6 +64,13 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
   private transient E[] array;
 
   /**
+   * Ensures that RPC will consider type parameter E to be exposed. It will be
+   * pruned by dead code elimination.
+   */
+  @SuppressWarnings("unused")
+  private E exposeElement;
+
+  /**
    * The size of the array.
    */
   private int size;

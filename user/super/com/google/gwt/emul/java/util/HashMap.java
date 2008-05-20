@@ -28,6 +28,20 @@ import java.io.Serializable;
 public class HashMap<K, V> extends AbstractHashMap<K, V> implements Cloneable,
     Serializable {
 
+  /**
+   * Ensures that RPC will consider type parameter K to be exposed. It will be
+   * pruned by dead code elimination.
+   */
+  @SuppressWarnings("unused")
+  private K exposeKey;
+
+  /**
+   * Ensures that RPC will consider type parameter V to be exposed. It will be
+   * pruned by dead code elimination.
+   */
+  @SuppressWarnings("unused")
+  private V exposeValue;
+
   public HashMap() {
   }
 

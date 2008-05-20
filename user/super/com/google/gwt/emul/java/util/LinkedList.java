@@ -171,6 +171,13 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
   }
 
   /**
+   * Ensures that RPC will consider type parameter E to be exposed. It will be
+   * pruned by dead code elimination.
+   */
+  @SuppressWarnings("unused")
+  private E exposeElement;
+
+  /**
    * Header node - header.next is the first element of the list, and header.prev
    * is the last element of the list. If the list is empty, the header node will
    * point to itself.

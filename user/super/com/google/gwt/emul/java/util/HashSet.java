@@ -29,6 +29,13 @@ public class HashSet<E> extends AbstractSet<E> implements Set<E>, Cloneable,
 
   private transient HashMap<E, Object> map;
 
+  /**
+   * Ensures that RPC will consider type parameter E to be exposed. It will be
+   * pruned by dead code elimination.
+   */
+  @SuppressWarnings("unused")
+  private E exposeElement;
+
   public HashSet() {
     map = new HashMap<E, Object>();
   }
