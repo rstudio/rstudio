@@ -669,6 +669,10 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
+  /**
+   * NOTE: This logic is also used in SerializableTypeOracleBuilder; don't
+   * change this one without changing the other.
+   */
   private boolean isInStandardJavaPackage(String className) {
     if (className.startsWith("java.")) {
       return true;
