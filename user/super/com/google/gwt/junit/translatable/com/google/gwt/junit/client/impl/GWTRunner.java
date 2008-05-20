@@ -181,6 +181,7 @@ public abstract class GWTRunner implements EntryPoint {
       JUnitResult result = new JUnitResult();
       result.setExceptionWrapper(new ExceptionWrapper(ex));
       reportResultsAndGetNextMethod(result);
+      return;
     }
 
     testCase.setName(currentTest.getTestMethod());

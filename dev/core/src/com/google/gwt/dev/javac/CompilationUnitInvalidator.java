@@ -143,7 +143,7 @@ public class CompilationUnitInvalidator {
   public static void validateCompilationUnits(Set<CompilationUnit> units,
       Map<String, CompiledClass> compiledClasses) {
     for (CompilationUnit unit : units) {
-      if (unit.getState() != State.CHECKED) {
+      if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
         JSORestrictionsChecker.check(jdtCud);
         LongFromJSNIChecker.check(jdtCud);
