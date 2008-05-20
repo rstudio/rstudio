@@ -547,6 +547,14 @@ public class Showcase implements EntryPoint {
    * Update the style sheets to reflect the current theme and direction.
    */
   private void updateStyleSheets() {
+    // Generate the names of the style sheets to include
+    String gwtStyleSheet = "gwt/" + CUR_THEME + "/" + CUR_THEME + ".css";
+    String showcaseStyleSheet = CUR_THEME + "/Showcase.css";
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      gwtStyleSheet = gwtStyleSheet.replace(".css", "_rtl.css");
+      showcaseStyleSheet = showcaseStyleSheet.replace(".css", "_rtl.css");
+    }
+
     // Remove existing style sheets
     HeadElement headElem = getHeadElement();
     NodeList<Node> children = headElem.getChildNodes();
@@ -556,22 +564,31 @@ public class Showcase implements EntryPoint {
         Element elem = Element.as(node);
         if (elem.getTagName().equalsIgnoreCase("link")
             && elem.getPropertyString("rel").equalsIgnoreCase("stylesheet")) {
-          headElem.removeChild(elem);
-          i--;
+          String href = elem.getPropertyString("href");
+          // If the style sheet is already loaded, we keep it and set
+          // gwtStyleSheet to null so that we do not load it below.  The same
+          // applies to showcaseStyleSheet.
+          if (gwtStyleSheet != null && href.contains(gwtStyleSheet)) {
+            gwtStyleSheet = null;
+          } else if (showcaseStyleSheet != null
+              && href.contains(showcaseStyleSheet)) {
+            showcaseStyleSheet = null;
+          } else {
+            headElem.removeChild(elem);
+            i--;
+          }
         }
       }
     }
 
     // Add the new style sheets
     String modulePath = GWT.getModuleBaseURL();
-    String gwtPath = modulePath + "gwt/" + CUR_THEME + "/" + CUR_THEME + ".css";
-    String showcasePath = modulePath + CUR_THEME + "/Showcase.css";
-    if (LocaleInfo.getCurrentLocale().isRTL()) {
-      gwtPath = gwtPath.replace(".css", "_rtl.css");
-      showcasePath = showcasePath.replace(".css", "_rtl.css");
+    if (gwtStyleSheet != null) {
+      styleTesterTimer.schedule(25);
+      loadStyleSheet(modulePath + gwtStyleSheet);
     }
-    styleTesterTimer.schedule(25);
-    loadStyleSheet(gwtPath);
-    loadStyleSheet(showcasePath);
+    if (showcaseStyleSheet != null) {
+      loadStyleSheet(modulePath + showcaseStyleSheet);
+    }
   }
 }
