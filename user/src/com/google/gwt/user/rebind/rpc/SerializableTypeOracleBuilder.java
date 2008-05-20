@@ -617,15 +617,7 @@ public class SerializableTypeOracleBuilder {
 
     pruneUnreachableTypes();
 
-    TreeLogger reachableTypesLogger = logger;
-    if (logOutputStream != null) {
-      PrintWriterTreeLogger printWriterTreeLogger = new PrintWriterTreeLogger(
-          new PrintWriter(logOutputStream));
-      printWriterTreeLogger.setMaxDetail(TreeLogger.ALL);
-      reachableTypesLogger = printWriterTreeLogger;
-    }
-
-    logReachableTypes(reachableTypesLogger);
+    logReachableTypes(logger);
 
     Set<JClassType> possiblyInstantiatedTypes = new TreeSet<JClassType>(
         JTYPE_COMPARATOR);
@@ -1155,6 +1147,16 @@ public class SerializableTypeOracleBuilder {
   }
 
   private void logReachableTypes(TreeLogger logger) {
+    PrintWriter printWriter = null;
+    if (logOutputStream != null) {
+      // Route the TreeLogger output to an output stream.
+      printWriter = new PrintWriter(logOutputStream);
+      PrintWriterTreeLogger printWriterTreeLogger = new PrintWriterTreeLogger(
+          printWriter);
+      printWriterTreeLogger.setMaxDetail(TreeLogger.ALL);
+      logger = printWriterTreeLogger;
+    }
+
     logger.log(TreeLogger.INFO, "Reachable types computed on: "
         + new Date().toString());
     Set<JType> keySet = typeToTypeInfoComputed.keySet();
@@ -1182,6 +1184,11 @@ public class SerializableTypeOracleBuilder {
       TreeLogger pathLogger = typeLogger.branch(TreeLogger.INFO, "Path");
 
       logPath(pathLogger, tic.getPath());
+      logger.log(TreeLogger.INFO, "");
+    }
+
+    if (printWriter != null) {
+      printWriter.flush();
     }
   }
 
