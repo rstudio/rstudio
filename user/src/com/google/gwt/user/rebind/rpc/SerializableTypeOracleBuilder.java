@@ -521,6 +521,8 @@ public class SerializableTypeOracleBuilder {
    */
   private final JClassType isSerializableClass;
 
+  private OutputStream logOutputStream;
+
   /**
    * Cache of the {@link JClassType} for {@link Map}.
    */
@@ -546,8 +548,6 @@ public class SerializableTypeOracleBuilder {
    * Map of {@link JType} to {@link TypeInfoComputed}.
    */
   private final Map<JType, TypeInfoComputed> typeToTypeInfoComputed = new HashMap<JType, TypeInfoComputed>();
-
-  private OutputStream logOutputStream;
 
   /**
    * Constructs a builder.
@@ -954,6 +954,105 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
+   * Returns <code>true</code> if the type qualifies for serialization.
+   */
+  boolean qualifiesForSerialization(TreeLogger logger, JClassType type,
+      boolean isSpeculative, Path parent) {
+    TypeInfoComputed typeInfo = getTypeInfoComputed(type, parent);
+
+    if (!isAllowedByFilter(logger, type, isSpeculative)) {
+      return false;
+    }
+
+    if (!typeInfo.isDeclaredSerializable()) {
+      logger.branch(TreeLogger.DEBUG, "Type '"
+          + type.getParameterizedQualifiedSourceName()
+          + "' is not assignable to '" + IsSerializable.class.getName()
+          + "' or '" + Serializable.class.getName()
+          + "' nor does it have a custom field serializer", null);
+      return false;
+    }
+
+    if (typeInfo.isManuallySerializable()) {
+      List<String> problems = CustomFieldSerializerValidator.validate(
+          typeInfo.getManualSerializer(), type);
+      if (!problems.isEmpty()) {
+        for (String problem : problems) {
+          logger.branch(getLogLevel(isSpeculative), problem, null);
+        }
+        return false;
+      }
+    } else {
+      assert (typeInfo.isAutoSerializable());
+
+      if (type.isEnum() != null) {
+        if (type.isLocalType()) {
+          /*
+           * Quietly ignore local enum types.
+           */
+          return false;
+        } else {
+          /*
+           * Enumerated types are serializable by default, but they do not have
+           * their state automatically or manually serialized. So, consider it
+           * serializable but do not check its fields.
+           */
+          return !type.isPrivate();
+        }
+      }
+
+      if (type.isPrivate()) {
+        /*
+         * Quietly ignore private types since these cannot be instantiated from
+         * the generated field serializers.
+         */
+        return false;
+      }
+
+      /*
+       * Speculative paths log at DEBUG level, non-speculative ones log at WARN
+       * level.
+       */
+      TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
+          : TreeLogger.WARN;
+
+      if (type.isLocalType()) {
+        logger.branch(
+            logLevel,
+            type.getParameterizedQualifiedSourceName()
+                + " is a local type; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
+      if (type.isMemberType() && !type.isStatic()) {
+        logger.branch(
+            logLevel,
+            type.getParameterizedQualifiedSourceName()
+                + " is nested but not static; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
+      if (type.isAbstract()) {
+        // Abstract types will be picked up if there is an instantiable subtype.
+        return false;
+      }
+
+      if (!type.isDefaultInstantiable()) {
+        // Warn and return false.
+        logger.log(
+            logLevel,
+            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
+            null);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Consider any subtype of java.lang.Object which qualifies for serialization.
    * 
    * @param logger
@@ -1240,105 +1339,6 @@ public class SerializableTypeOracleBuilder {
     for (JType type : toKill) {
       typeToTypeInfoComputed.remove(type);
     }
-  }
-
-  /**
-   * Returns <code>true</code> if the type qualifies for serialization.
-   */
-  private boolean qualifiesForSerialization(TreeLogger logger, JClassType type,
-      boolean isSpeculative, Path parent) {
-    TypeInfoComputed typeInfo = getTypeInfoComputed(type, parent);
-
-    if (!isAllowedByFilter(logger, type, isSpeculative)) {
-      return false;
-    }
-
-    if (!typeInfo.isDeclaredSerializable()) {
-      logger.branch(TreeLogger.DEBUG, "Type '"
-          + type.getParameterizedQualifiedSourceName()
-          + "' is not assignable to '" + IsSerializable.class.getName()
-          + "' or '" + Serializable.class.getName()
-          + "' nor does it have a custom field serializer", null);
-      return false;
-    }
-
-    if (typeInfo.isManuallySerializable()) {
-      List<String> problems = CustomFieldSerializerValidator.validate(
-          typeInfo.getManualSerializer(), type);
-      if (!problems.isEmpty()) {
-        for (String problem : problems) {
-          logger.branch(getLogLevel(isSpeculative), problem, null);
-        }
-        return false;
-      }
-    } else {
-      assert (typeInfo.isAutoSerializable());
-
-      if (type.isEnum() != null) {
-        if (type.isLocalType()) {
-          /*
-           * Quietly ignore local enum types.
-           */
-          return false;
-        } else {
-          /*
-           * Enumerated types are serializable by default, but they do not have
-           * their state automatically or manually serialized. So, consider it
-           * serializable but do not check its fields.
-           */
-          return !type.isPrivate();
-        }
-      }
-
-      if (type.isPrivate()) {
-        /*
-         * Quietly ignore private types since these cannot be instantiated from
-         * the generated field serializers.
-         */
-        return false;
-      }
-
-      /*
-       * Speculative paths log at DEBUG level, non-speculative ones log at WARN
-       * level.
-       */
-      TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
-          : TreeLogger.WARN;
-
-      if (type.isLocalType()) {
-        logger.branch(
-            logLevel,
-            type.getParameterizedQualifiedSourceName()
-                + " is a local type; it will be excluded from the set of serializable types",
-            null);
-        return false;
-      }
-
-      if (type.isMemberType() && !type.isStatic()) {
-        logger.branch(
-            logLevel,
-            type.getParameterizedQualifiedSourceName()
-                + " is nested but not static; it will be excluded from the set of serializable types",
-            null);
-        return false;
-      }
-
-      if (type.isAbstract()) {
-        // Abstract types will be picked up if there is an instantiable subtype.
-        return false;
-      }
-
-      if (!type.isDefaultInstantiable()) {
-        // Warn and return false.
-        logger.log(
-            logLevel,
-            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
-            null);
-        return false;
-      }
-    }
-
-    return true;
   }
 
   /**
