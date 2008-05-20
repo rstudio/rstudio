@@ -101,9 +101,4 @@ class DOMImplIE6 extends DOMImpl {
       select.add(option);
     }
   }-*/;
-
-  @Override
-  public native void setInnerText(Element elem, String text) /*-{
-    elem.innerText = text || '';
-  }-*/;
 }

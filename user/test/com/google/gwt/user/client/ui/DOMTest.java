@@ -211,6 +211,31 @@ public class DOMTest extends GWTTestCase {
     // should be deleted, including any text nodes, for all supported browsers.
     assertTrue(getDenormalizedChildCount(tdElem) == 0);
   }
+  
+  /**
+   * Tests that {@link DOM#setInnerText(Element, String)} works consistently
+   * across browsers with respect to whitespace. Particularly,
+   * we want to guarantee that whitespace characters won't be replaced with
+   * HTML entities.
+   */
+  public void testSetInnerTextWhitespace() {
+    Element divElem = DOM.createDiv();
+    String spaces = "     ";
+    String whitespace = "   \n\t   ";
+    
+    // Block of spaces first. We call trim because it remvoes leading and
+    // trailing whitespace characters -- so, if all is well, all of them.
+    DOM.setInnerText(divElem, spaces);
+    String contents = DOM.getInnerText(divElem);
+    String trimmed = contents.trim();
+    assertEquals(trimmed, "");
+    
+    // Now with some assorted whitespace.
+    DOM.setInnerText(divElem, whitespace);
+    contents = DOM.getInnerText(divElem);
+    trimmed = contents.trim();
+    assertEquals(trimmed, "");
+  }
 
   /**
    * Tests the correctness of setting the <code>src</code> attribute on
