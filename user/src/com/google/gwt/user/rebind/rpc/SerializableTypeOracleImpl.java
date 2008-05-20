@@ -65,7 +65,8 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
   private final Set<JClassType> possiblyInstantiatedTypes;
 
   public SerializableTypeOracleImpl(TypeOracle typeOracle,
-      Set<JClassType> serializableTypes, Set<JClassType> possiblyInstantiatedTypes) {
+      Set<JClassType> serializableTypes,
+      Set<JClassType> possiblyInstantiatedTypes) {
 
     serializableTypesSet = serializableTypes;
     this.typeOracle = typeOracle;
@@ -89,7 +90,12 @@ final class SerializableTypeOracleImpl implements SerializableTypeOracle {
         GENERATED_FIELD_SERIALIZER_SUFFIX);
     if (name[0].length() > 0) {
       String serializerName = name[0] + "." + name[1];
-      if (name[0].startsWith("java.")) {
+      if (SerializableTypeOracleBuilder.isInStandardJavaPackage(type.getQualifiedSourceName())) {
+        /*
+         * Don't generate code into java packages. If you do hosted mode
+         * CompilingClassLoader will fail to resolve references to the generated
+         * code.
+         */
         serializerName = "com.google.gwt.user.client.rpc.core."
             + serializerName;
       }

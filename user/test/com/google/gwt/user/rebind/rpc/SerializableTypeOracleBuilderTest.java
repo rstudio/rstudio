@@ -346,6 +346,59 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertSerializableTypes(so, list.getRawType(), emptyList.getRawType());
   }
 
+  /**
+   * Tests that we do not violate java package restrictions when computing
+   * serializable types.
+   */
+  public void testAccessLevelsInJavaPackage() throws UnableToCompleteException,
+      NotFoundException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    addStandardClasses(units);
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("package java;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("public class A implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("java.A", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("package java;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("class B extends A {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("java.B", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("package java;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("public class C extends A {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("java.C", code));
+    }
+
+    TreeLogger logger = createLogger();
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+
+    JClassType a = to.getType("java.A");
+    JArrayType arrayOfA = to.getArrayType(a);
+
+    JClassType c = to.getType("java.C");
+    JArrayType arrayOfC = to.getArrayType(c);
+
+    SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
+        logger, to);
+    sob.addRootType(logger, arrayOfA);
+    SerializableTypeOracle so = sob.build(logger);
+
+    assertSerializableTypes(so, arrayOfA, arrayOfC, a, c);
+  }
+
   /*
    * Tests that arrays of type variables that do not cause infinite expansion.
    */

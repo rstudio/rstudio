@@ -73,7 +73,7 @@ import java.util.Map.Entry;
  * 
  * <p>
  * To improve the accuracy of the traversal there is a computations of the
- * exposure of type parameters. When the traversal reaches a paramaterized type,
+ * exposure of type parameters. When the traversal reaches a parameterized type,
  * these exposure values are used to determine how to treat the arguments.
  * </p>
  * 
@@ -178,9 +178,10 @@ public class SerializableTypeOracleBuilder {
       autoSerializable = type.isAssignableTo(isSerializableClass)
           || type.isAssignableTo(serializableClass);
       manualSerializer = findCustomFieldSerializer(typeOracle, type);
-      directlyImplementsMarker = directlyImplementsInterface(type,
-          isSerializableClass)
-          || directlyImplementsInterface(type, serializableClass);
+      directlyImplementsMarker = TypeHierarchyUtils.directlyImplementsInterface(
+          type, isSerializableClass)
+          || TypeHierarchyUtils.directlyImplementsInterface(type,
+              serializableClass);
     }
 
     public JClassType getManualSerializer() {
@@ -320,6 +321,26 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
+   * Returns <code>true</code> if this type is part of the standard java
+   * packages.
+   * 
+   * NOTE: This code is copied from
+   * {@link com.google.gwt.dev.shell.CompilingClassLoader CompilingClassLoader};
+   * don't change one without changing the other.
+   */
+  static boolean isInStandardJavaPackage(String className) {
+    if (className.startsWith("java.")) {
+      return true;
+    }
+
+    if (className.startsWith("javax.")) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
    * Returns <code>true</code> if the field qualifies for serialization
    * without considering its type.
    */
@@ -442,43 +463,6 @@ public class SerializableTypeOracleBuilder {
     };
   }
 
-  /**
-   * Returns <code>true</code> if the type directly implements the specified
-   * interface.
-   * 
-   * @param type type to check
-   * @param intf interface to look for
-   * @return <code>true</code> if the type directly implements the specified
-   *         interface
-   */
-  private static boolean directlyImplementsInterface(JClassType type,
-      JClassType intf) {
-    return directlyImplementsInterfaceRecursive(new HashSet<JClassType>(),
-        type, intf);
-  }
-
-  private static boolean directlyImplementsInterfaceRecursive(
-      Set<JClassType> seen, JClassType clazz, JClassType intf) {
-
-    if (clazz == intf) {
-      return true;
-    }
-
-    JClassType[] intfImpls = clazz.getImplementedInterfaces();
-
-    for (JClassType intfImpl : intfImpls) {
-      if (!seen.contains(intfImpl)) {
-        seen.add(intfImpl);
-
-        if (directlyImplementsInterfaceRecursive(seen, intfImpl, intf)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   private static JArrayType getArrayType(TypeOracle typeOracle, int rank,
       JType component) {
     assert (rank > 0);
@@ -498,16 +482,21 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * Returns <code>true</code> if the query type is accessible to classes in
-   * the same package.
+   * Returns <code>true</code> if a serializer class could access this type.
    */
-  private static boolean isAccessibleToClassesInSamePackage(JClassType type) {
+  private static boolean isAccessibleToSerializer(JClassType type) {
     if (type.isPrivate() || type.isLocalType()) {
       return false;
     }
 
+    if (isInStandardJavaPackage(type.getQualifiedSourceName())) {
+      if (!type.isPublic()) {
+        return false;
+      }
+    }
+
     if (type.isMemberType()) {
-      return isAccessibleToClassesInSamePackage(type.getEnclosingType());
+      return isAccessibleToSerializer(type.getEnclosingType());
     }
 
     return true;
@@ -692,6 +681,16 @@ public class SerializableTypeOracleBuilder {
    */
   final boolean checkTypeInstantiable(TreeLogger logger, JType type,
       boolean isSpeculative, final Path path) {
+    return checkTypeInstantiable(logger, type, isSpeculative, path, null);
+  }
+
+  /**
+   * Same as
+   * {@link #checkTypeInstantiable(TreeLogger, JType, boolean, com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder.Path)},
+   * except that returns the set of instantiable subtypes.
+   */
+  boolean checkTypeInstantiable(TreeLogger logger, JType type,
+      boolean isSpeculative, final Path path, Set<JClassType> instSubtypes) {
     assert (type != null);
     if (type.isPrimitive() != null) {
       return true;
@@ -744,47 +743,7 @@ public class SerializableTypeOracleBuilder {
 
     JArrayType isArray = classType.isArray();
     if (isArray != null) {
-      JType leafType = isArray.getLeafType();
-      JTypeParameter isLeafTypeParameter = leafType.isTypeParameter();
-      if (isLeafTypeParameter != null
-          && !typeParametersInRootTypes.contains(isLeafTypeParameter)) {
-        // Don't deal with non root type parameters
-        tic.setInstantiable(false);
-        tic.setInstantiableSubytpes(true);
-        return true;
-      }
-
-      boolean succeeded = checkArrayInstantiable(localLogger, isArray,
-          isSpeculative, path);
-      if (succeeded) {
-        JClassType leafClass = leafType.isClassOrInterface();
-        if (leafClass != null) {
-          JClassType[] leafSubtypes = leafClass.getErasedType().getSubtypes();
-          for (JClassType leafSubtype : leafSubtypes) {
-            if (leafSubtype.isRawType() != null) {
-              /*
-               * Convert from a generic type into a parameterization of the said
-               * generic type where each argument is the type argument. The goal
-               * is have checkTypeInstantiable not check the type parameters.
-               */
-              JGenericType leafGenericSub = leafSubtype.isRawType().getBaseType();
-              leafSubtype = typeOracle.getParameterizedType(leafGenericSub,
-                  leafGenericSub.getTypeParameters());
-            }
-
-            if (!isAccessibleToClassesInSamePackage(leafSubtype)) {
-              continue;
-            }
-
-            JArrayType covariantArray = getArrayType(typeOracle,
-                isArray.getRank(), leafSubtype);
-            checkTypeInstantiable(localLogger, covariantArray, true, path);
-          }
-        }
-      }
-
-      tic.setInstantiable(succeeded);
-      return succeeded;
+      return checkArrayInstantiable(localLogger, tic, isSpeculative, path);
     }
 
     if (classType == typeOracle.getJavaLangObject()) {
@@ -952,6 +911,10 @@ public class SerializableTypeOracleBuilder {
           }
 
           if (subInstantiable) {
+            if (instSubtypes != null) {
+              instSubtypes.add(subtype);
+            }
+
             // TODO: This is suspect.
             getTypeInfoComputed(subtype, path).setInstantiable(true);
             anySubtypes = true;
@@ -1031,7 +994,7 @@ public class SerializableTypeOracleBuilder {
       TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
           : TreeLogger.WARN;
 
-      if (!isAccessibleToClassesInSamePackage(type)) {
+      if (!isAccessibleToSerializer(type)) {
         // Class is not visible to a serializer class in the same package
         logger.branch(
             logLevel,
@@ -1114,13 +1077,54 @@ public class SerializableTypeOracleBuilder {
     }
   }
 
-  private boolean checkArrayInstantiable(TreeLogger logger,
-      final JArrayType arrayType, boolean isSpeculative, final Path parent) {
-    TreeLogger branch = logger.branch(TreeLogger.DEBUG,
-        "Analyzing component type:", null);
+  private boolean checkArrayInstantiable(TreeLogger localLogger,
+      TypeInfoComputed tic, boolean isSpeculative, final Path path) {
+    JArrayType isArray = tic.getType().isArray();
+    assert (isArray != null);
 
-    return checkTypeInstantiable(branch, arrayType.getComponentType(),
-        isSpeculative, createArrayComponentPath(arrayType, parent));
+    JType leafType = isArray.getLeafType();
+    JClassType leafClass = leafType.isClassOrInterface();
+    JTypeParameter isLeafTypeParameter = leafType.isTypeParameter();
+    if (isLeafTypeParameter != null
+        && !typeParametersInRootTypes.contains(isLeafTypeParameter)) {
+      // Don't deal with non root type parameters
+      tic.setInstantiable(false);
+      tic.setInstantiableSubytpes(true);
+      return true;
+    }
+
+    TreeLogger branch = localLogger.branch(TreeLogger.DEBUG,
+        "Analyzing component type:", null);
+    Set<JClassType> instantiableTypes = new HashSet<JClassType>();
+
+    boolean succeeded = checkTypeInstantiable(branch,
+        isArray.getComponentType(), isSpeculative, createArrayComponentPath(
+            isArray, path), instantiableTypes);
+    if (succeeded && leafClass != null) {
+      /*
+       * Compute covariant arrays for arrays of reference types.
+       */
+      for (JClassType instantiableType : TypeHierarchyUtils.getAllTypesBetweenRootTypeAndLeaves(
+          leafClass, instantiableTypes)) {
+        if (!isAccessibleToSerializer(instantiableType)) {
+          // Skip types that are not accessible from a serializer
+          continue;
+        }
+
+        for (int rank = 1; rank <= isArray.getRank(); ++rank) {
+          JArrayType covariantArray = getArrayType(typeOracle, rank,
+              instantiableType);
+
+          // TODO: Check the choice of path
+          TypeInfoComputed covariantArrayTic = getTypeInfoComputed(
+              covariantArray, path);
+          covariantArrayTic.setInstantiable(true);
+        }
+      }
+    }
+
+    tic.setInstantiable(succeeded);
+    return succeeded;
   }
 
   private boolean checkFields(TreeLogger logger, JClassType classOrInterface,
