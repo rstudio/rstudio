@@ -497,6 +497,22 @@ public class SerializableTypeOracleBuilder {
     return isSpeculative ? TreeLogger.WARN : TreeLogger.ERROR;
   }
 
+  /**
+   * Returns <code>true</code> if the query type is accessible to classes in
+   * the same package.
+   */
+  private static boolean isAccessibleToClassesInSamePackage(JClassType type) {
+    if (type.isPrivate()) {
+      return false;
+    }
+
+    if (type.isMemberType()) {
+      return isAccessibleToClassesInSamePackage(type.getEnclosingType());
+    }
+
+    return true;
+  }
+
   private static void logSerializableTypes(TreeLogger logger,
       Set<JClassType> fieldSerializableTypes) {
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG, "Identified "
@@ -943,7 +959,8 @@ public class SerializableTypeOracleBuilder {
   final boolean checkTypeInstantiableNoSubtypes(TreeLogger logger,
       JClassType type, boolean isSpeculative, Path path) {
     if (qualifiesForSerialization(logger, type, isSpeculative, path)) {
-      return checkFields(logger, type, isSpeculative, path);
+      return type.isEnum() != null
+          || checkFields(logger, type, isSpeculative, path);
     }
 
     return false;
@@ -955,6 +972,8 @@ public class SerializableTypeOracleBuilder {
 
   /**
    * Returns <code>true</code> if the type qualifies for serialization.
+   * 
+   * Default access to allow for testing.
    */
   boolean qualifiesForSerialization(TreeLogger logger, JClassType type,
       boolean isSpeculative, Path parent) {
@@ -985,30 +1004,6 @@ public class SerializableTypeOracleBuilder {
     } else {
       assert (typeInfo.isAutoSerializable());
 
-      if (type.isEnum() != null) {
-        if (type.isLocalType()) {
-          /*
-           * Quietly ignore local enum types.
-           */
-          return false;
-        } else {
-          /*
-           * Enumerated types are serializable by default, but they do not have
-           * their state automatically or manually serialized. So, consider it
-           * serializable but do not check its fields.
-           */
-          return !type.isPrivate();
-        }
-      }
-
-      if (type.isPrivate()) {
-        /*
-         * Quietly ignore private types since these cannot be instantiated from
-         * the generated field serializers.
-         */
-        return false;
-      }
-
       /*
        * Speculative paths log at DEBUG level, non-speculative ones log at WARN
        * level.
@@ -1016,7 +1011,18 @@ public class SerializableTypeOracleBuilder {
       TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
           : TreeLogger.WARN;
 
+      if (!isAccessibleToClassesInSamePackage(type)) {
+        // Class is not visible to a serializer class in the same package
+        logger.branch(
+            logLevel,
+            type.getParameterizedQualifiedSourceName()
+                + " is not accessible from a class in its same package; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
       if (type.isLocalType()) {
+        // Local types cannot be serialized
         logger.branch(
             logLevel,
             type.getParameterizedQualifiedSourceName()
@@ -1026,6 +1032,7 @@ public class SerializableTypeOracleBuilder {
       }
 
       if (type.isMemberType() && !type.isStatic()) {
+        // Non-static member types cannot be serialized
         logger.branch(
             logLevel,
             type.getParameterizedQualifiedSourceName()
@@ -1034,18 +1041,26 @@ public class SerializableTypeOracleBuilder {
         return false;
       }
 
-      if (type.isAbstract()) {
-        // Abstract types will be picked up if there is an instantiable subtype.
-        return false;
-      }
+      if (type.isEnum() == null) {
+        if (type.isAbstract()) {
+          // Abstract types will be picked up if there is an instantiable
+          // subtype.
+          return false;
+        }
 
-      if (!type.isDefaultInstantiable()) {
-        // Warn and return false.
-        logger.log(
-            logLevel,
-            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
-            null);
-        return false;
+        if (!type.isDefaultInstantiable()) {
+          // Warn and return false.
+          logger.log(
+              logLevel,
+              "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
+              null);
+          return false;
+        }
+      } else {
+        /*
+         * Enums are always instantiable regardless of abstract or default
+         * instantiability.
+         */
       }
     }
 

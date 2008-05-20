@@ -431,6 +431,179 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   /**
+   * Tests the rules that govern whether a type qualifies for serialization.
+   * 
+   * @throws UnableToCompleteException
+   * @throws NotFoundException
+   */
+  public void testClassQualifiesForSerialization()
+      throws UnableToCompleteException, NotFoundException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    addStandardClasses(units);
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("public class NotSerializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("NotSerializable", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class AutoSerializable {\n");
+      code.append("  interface IFoo extends Serializable {};\n");
+      code.append("  IFoo createFoo() { return new IFoo(){};}\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("AutoSerializable", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class OuterClass {\n");
+      code.append("  static class StaticNested implements Serializable {};\n");
+      code.append("  class NonStaticNested implements Serializable {};\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("OuterClass", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public abstract class AbstractSerializableClass implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("AbstractSerializableClass", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class NonDefaultInstantiableSerializable implements Serializable {\n");
+      code.append("  NonDefaultInstantiableSerializable(int i) {}\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("NonDefaultInstantiableSerializable",
+          code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class PublicOuterClass {\n");
+      code.append("  private static class PrivateStaticInner {\n");
+      code.append("    public static class PublicStaticInnerInner implements Serializable {\n");
+      code.append("    }\n");
+      code.append("  }\n");
+      code.append("  static class DefaultStaticInner {\n");
+      code.append("    static class DefaultStaticInnerInner implements Serializable {\n");
+      code.append("    }\n");
+      code.append("  }\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("PublicOuterClass", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("public enum EnumWithSubclasses {\n");
+      code.append("  A {\n");
+      code.append("    @Override\n");
+      code.append("    public String value() {\n");
+      code.append("      return \"X\";\n");
+      code.append("    }\n");
+      code.append("  },\n");
+      code.append("  B {\n");
+      code.append("    @Override\n");
+      code.append("    public String value() {\n");
+      code.append("      return \"Y\";\n");
+      code.append("    };\n");
+      code.append("  };\n");
+      code.append("  public abstract String value();\n");
+      code.append("};\n");
+      units.add(createMockCompilationUnit("EnumWithSubclasses", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("public enum EnumWithNonDefaultCtors {\n");
+      code.append("  A(\"X\"), B(\"Y\");\n");
+      code.append("  String value;");
+      code.append("  private EnumWithNonDefaultCtors(String value) {\n");
+      code.append("    this.value = value;\n");
+      code.append("  }\n");
+      code.append("};\n");
+      units.add(createMockCompilationUnit("EnumWithNonDefaultCtors", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("package java.lang;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("public class Enum<E extends Enum<E>> implements Serializable {\n");
+      code.append("  protected Enum(String name, int ordinal) {\n");
+      code.append("  }\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("java.lang.Enum", code));
+    }
+
+    TreeLogger logger = createLogger();
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+    SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
+        logger, to);
+
+    // Does not qualify because it is not declared to be auto or manually
+    // serializable
+    JClassType notSerializable = to.getType("NotSerializable");
+    assertFalse(sob.qualifiesForSerialization(logger, notSerializable, false,
+        null));
+
+    // Local types should not qualify for serialization
+    JClassType iFoo = to.getType("AutoSerializable.IFoo");
+    assertFalse(sob.qualifiesForSerialization(logger, iFoo.getSubtypes()[0],
+        false, null));
+
+    // Static nested types qualify for serialization
+    JClassType staticNested = to.getType("OuterClass.StaticNested");
+    assertTrue(sob.qualifiesForSerialization(logger, staticNested, false, null));
+
+    // Non-static nested types do not qualify for serialization
+    JClassType nonStaticNested = to.getType("OuterClass.NonStaticNested");
+    assertFalse(sob.qualifiesForSerialization(logger, nonStaticNested, false,
+        null));
+
+    // Abstract classes that implement Serializable should not qualify
+    JClassType abstractSerializableClass = to.getType("AbstractSerializableClass");
+    assertFalse(sob.qualifiesForSerialization(logger,
+        abstractSerializableClass, false, null));
+
+    // Non-default instantiable types should not qualify
+    JClassType nonDefaultInstantiableSerializable = to.getType("NonDefaultInstantiableSerializable");
+    assertFalse(sob.qualifiesForSerialization(logger,
+        nonDefaultInstantiableSerializable, false, null));
+
+    // SPublicStaticInnerInner is not accessible to classes in its package
+    JClassType publicStaticInnerInner = to.getType("PublicOuterClass.PrivateStaticInner.PublicStaticInnerInner");
+    assertFalse(sob.qualifiesForSerialization(logger, publicStaticInnerInner,
+        false, null));
+
+    // DefaultStaticInnerInner is visible to classes in its package
+    JClassType defaultStaticInnerInner = to.getType("PublicOuterClass.DefaultStaticInner.DefaultStaticInnerInner");
+    assertTrue(sob.qualifiesForSerialization(logger, defaultStaticInnerInner,
+        false, null));
+
+    // Enum with subclasses should qualify, but their subtypes should not
+    JClassType enumWithSubclasses = to.getType("EnumWithSubclasses");
+    assertTrue(sob.qualifiesForSerialization(logger, enumWithSubclasses, false,
+        null));
+    assertFalse(sob.qualifiesForSerialization(logger,
+        enumWithSubclasses.getSubtypes()[0], false, null));
+
+    // Enum that are not default instantiable should qualify
+    JClassType enumWithNonDefaultCtors = to.getType("EnumWithNonDefaultCtors");
+    assertTrue(sob.qualifiesForSerialization(logger, enumWithNonDefaultCtors,
+        false, null));
+  }
+
+  /**
    * Tests that both the generic and raw forms of type that has a type parameter
    * that erases to object are not serializable.
    * 
