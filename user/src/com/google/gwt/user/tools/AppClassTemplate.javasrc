@@ -18,7 +18,7 @@ public class @className implements EntryPoint {
    * This is the entry point method.
    */
   public void onModuleLoad() {
-    Image img = new Image("http://code.google.com/webtoolkit/logo-185x175.gif");
+    Image img = new Image("http://code.google.com/webtoolkit/logo-185x175.png");
     Button button = new Button("Click me");
 
     VerticalPanel vPanel = new VerticalPanel();
