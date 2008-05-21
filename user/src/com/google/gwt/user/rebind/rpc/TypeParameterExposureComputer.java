@@ -87,25 +87,28 @@ class TypeParameterExposureComputer {
       boolean didChange = false;
       JClassType type = baseType;
       while (type != null) {
-        JField[] fields = type.getFields();
-        for (JField field : fields) {
-          if (!SerializableTypeOracleBuilder.qualfiesForSerialization(
-              TreeLogger.NULL, field)) {
-            continue;
-          }
+        if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
+            TreeLogger.NULL, type, true, typeFilter)) {
+          JField[] fields = type.getFields();
+          for (JField field : fields) {
+            if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
+                TreeLogger.NULL, field)) {
+              continue;
+            }
 
-          if (field.getType().getLeafType() == getTypeParameter()) {
-            /*
-             * If the type parameter is referenced explicitly or as the leaf
-             * type of an array, then it will be considered directly exposed.
-             */
-            markExposedAsArray(0);
-            mightNotBeExposed = false;
-            didChange = true;
+            if (field.getType().getLeafType() == getTypeParameter()) {
+              /*
+               * If the type parameter is referenced explicitly or as the leaf
+               * type of an array, then it will be considered directly exposed.
+               */
+              markExposedAsArray(0);
+              mightNotBeExposed = false;
+              didChange = true;
 
-            JArrayType fieldTypeAsArray = field.getType().isArray();
-            if (fieldTypeAsArray != null) {
-              markExposedAsArray(fieldTypeAsArray.getRank());
+              JArrayType fieldTypeAsArray = field.getType().isArray();
+              if (fieldTypeAsArray != null) {
+                markExposedAsArray(fieldTypeAsArray.getRank());
+              }
             }
           }
         }
@@ -208,12 +211,13 @@ class TypeParameterExposureComputer {
       JClassType[] subtypes = baseType.getSubtypes();
       for (JClassType subtype : subtypes) {
         JGenericType isGeneric = subtype.isGenericType();
-        if (isGeneric == null || isGeneric.isLocalType()
-            || (isGeneric.isMemberType() && !isGeneric.isStatic())) {
-          // Only generic types can cause a type parameter to be exposed,
-          // we exclude local and non-static member types that we know cannot
-          // be serialized.
-          // TODO: Unify this check with the checkTypeInstantiableNoSubtypes.
+        if (isGeneric == null) {
+          // Only generic types can cause a type parameter to be exposed
+          continue;
+        }
+
+        if (!SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
+            TreeLogger.NULL, subtype, true, typeFilter)) {
           continue;
         }
 
@@ -229,28 +233,31 @@ class TypeParameterExposureComputer {
 
       JClassType type = baseType;
       while (type != null) {
-        JField[] fields = type.getFields();
-        for (JField field : fields) {
-          if (!SerializableTypeOracleBuilder.qualfiesForSerialization(
-              TreeLogger.NULL, field)) {
-            continue;
-          }
+        if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
+            TreeLogger.NULL, type, true, typeFilter)) {
+          JField[] fields = type.getFields();
+          for (JField field : fields) {
+            if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
+                TreeLogger.NULL, field)) {
+              continue;
+            }
 
-          JParameterizedType isParameterized = field.getType().isParameterized();
-          if (isParameterized == null) {
-            continue;
-          }
+            JParameterizedType isParameterized = field.getType().isParameterized();
+            if (isParameterized == null) {
+              continue;
+            }
 
-          JClassType[] typeArgs = isParameterized.getTypeArgs();
-          for (int i = 0; i < typeArgs.length; ++i) {
-            if (referencesTypeParameter(typeArgs[i], getTypeParameter())) {
-              JGenericType genericFieldType = isParameterized.getBaseType();
-              recordCausesExposure(genericFieldType, i, 0);
-              JArrayType typeArgIsArray = typeArgs[i].isArray();
-              if (typeArgIsArray != null
-                  && typeArgIsArray.getLeafType() == getTypeParameter()) {
-                int dims = typeArgIsArray.getRank();
-                recordCausesExposure(genericFieldType, i, dims);
+            JClassType[] typeArgs = isParameterized.getTypeArgs();
+            for (int i = 0; i < typeArgs.length; ++i) {
+              if (referencesTypeParameter(typeArgs[i], getTypeParameter())) {
+                JGenericType genericFieldType = isParameterized.getBaseType();
+                recordCausesExposure(genericFieldType, i, 0);
+                JArrayType typeArgIsArray = typeArgs[i].isArray();
+                if (typeArgIsArray != null
+                    && typeArgIsArray.getLeafType() == getTypeParameter()) {
+                  int dims = typeArgIsArray.getRank();
+                  recordCausesExposure(genericFieldType, i, dims);
+                }
               }
             }
           }
@@ -327,9 +334,15 @@ class TypeParameterExposureComputer {
     }
   }
 
+  private TypeFilter typeFilter;
+
   private final Map<JTypeParameter, TypeParameterFlowInfo> typeParameterToFlowInfo = new IdentityHashMap<JTypeParameter, TypeParameterFlowInfo>();
 
   private final Set<TypeParameterFlowInfo> worklist = new LinkedHashSet<TypeParameterFlowInfo>();
+
+  TypeParameterExposureComputer(TypeFilter typeFilter) {
+    this.typeFilter = typeFilter;
+  }
 
   /**
    * Computes flow information for the specified type parameter. If it has
@@ -367,6 +380,10 @@ class TypeParameterExposureComputer {
     }
 
     return queryFlow;
+  }
+
+  public void setTypeFilter(TypeFilter typeFilter) {
+    this.typeFilter = typeFilter;
   }
 
   /**

@@ -606,54 +606,59 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     // Does not qualify because it is not declared to be auto or manually
     // serializable
     JClassType notSerializable = to.getType("NotSerializable");
-    assertFalse(sob.qualifiesForSerialization(logger, notSerializable, false,
-        null));
+    assertFalse(sob.shouldConsiderFieldsForSerialization(logger,
+        notSerializable, false));
 
     // Local types should not qualify for serialization
     JClassType iFoo = to.getType("AutoSerializable.IFoo");
-    assertFalse(sob.qualifiesForSerialization(logger, iFoo.getSubtypes()[0],
-        false, null));
+    assertFalse(sob.shouldConsiderFieldsForSerialization(logger,
+        iFoo.getSubtypes()[0], false));
 
     // Static nested types qualify for serialization
     JClassType staticNested = to.getType("OuterClass.StaticNested");
-    assertTrue(sob.qualifiesForSerialization(logger, staticNested, false, null));
+    assertTrue(sob.shouldConsiderFieldsForSerialization(logger, staticNested,
+        false));
 
     // Non-static nested types do not qualify for serialization
     JClassType nonStaticNested = to.getType("OuterClass.NonStaticNested");
-    assertFalse(sob.qualifiesForSerialization(logger, nonStaticNested, false,
-        null));
+    assertFalse(sob.shouldConsiderFieldsForSerialization(logger,
+        nonStaticNested, false));
 
     // Abstract classes that implement Serializable should not qualify
     JClassType abstractSerializableClass = to.getType("AbstractSerializableClass");
-    assertFalse(sob.qualifiesForSerialization(logger,
-        abstractSerializableClass, false, null));
+    assertTrue(sob.shouldConsiderFieldsForSerialization(logger,
+        abstractSerializableClass, false));
+    assertFalse(SerializableTypeOracleBuilder.canBeInstantiated(
+        TreeLogger.NULL, abstractSerializableClass, TreeLogger.DEBUG));
 
     // Non-default instantiable types should not qualify
     JClassType nonDefaultInstantiableSerializable = to.getType("NonDefaultInstantiableSerializable");
-    assertFalse(sob.qualifiesForSerialization(logger,
-        nonDefaultInstantiableSerializable, false, null));
+    assertTrue(sob.shouldConsiderFieldsForSerialization(logger,
+        nonDefaultInstantiableSerializable, false));
+    assertFalse(SerializableTypeOracleBuilder.canBeInstantiated(
+        TreeLogger.NULL, nonDefaultInstantiableSerializable, TreeLogger.DEBUG));
 
     // SPublicStaticInnerInner is not accessible to classes in its package
     JClassType publicStaticInnerInner = to.getType("PublicOuterClass.PrivateStaticInner.PublicStaticInnerInner");
-    assertFalse(sob.qualifiesForSerialization(logger, publicStaticInnerInner,
-        false, null));
+    assertFalse(sob.shouldConsiderFieldsForSerialization(logger,
+        publicStaticInnerInner, false));
 
     // DefaultStaticInnerInner is visible to classes in its package
     JClassType defaultStaticInnerInner = to.getType("PublicOuterClass.DefaultStaticInner.DefaultStaticInnerInner");
-    assertTrue(sob.qualifiesForSerialization(logger, defaultStaticInnerInner,
-        false, null));
+    assertTrue(sob.shouldConsiderFieldsForSerialization(logger,
+        defaultStaticInnerInner, false));
 
     // Enum with subclasses should qualify, but their subtypes should not
     JClassType enumWithSubclasses = to.getType("EnumWithSubclasses");
-    assertTrue(sob.qualifiesForSerialization(logger, enumWithSubclasses, false,
-        null));
-    assertFalse(sob.qualifiesForSerialization(logger,
-        enumWithSubclasses.getSubtypes()[0], false, null));
+    assertTrue(sob.shouldConsiderFieldsForSerialization(logger,
+        enumWithSubclasses, false));
+    assertFalse(sob.shouldConsiderFieldsForSerialization(logger,
+        enumWithSubclasses.getSubtypes()[0], false));
 
     // Enum that are not default instantiable should qualify
     JClassType enumWithNonDefaultCtors = to.getType("EnumWithNonDefaultCtors");
-    assertTrue(sob.qualifiesForSerialization(logger, enumWithNonDefaultCtors,
-        false, null));
+    assertTrue(sob.shouldConsiderFieldsForSerialization(logger,
+        enumWithNonDefaultCtors, false));
   }
 
   /**

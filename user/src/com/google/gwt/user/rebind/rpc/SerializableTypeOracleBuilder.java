@@ -88,7 +88,6 @@ import java.util.Map.Entry;
  * </p>
  */
 public class SerializableTypeOracleBuilder {
-
   interface Path {
     Path getParent();
 
@@ -175,13 +174,9 @@ public class SerializableTypeOracleBuilder {
     public TypeInfoComputed(JClassType type, Path path) {
       this.type = type;
       this.path = path;
-      autoSerializable = type.isAssignableTo(isSerializableClass)
-          || type.isAssignableTo(serializableClass);
+      autoSerializable = SerializableTypeOracleBuilder.isAutoSerializable(type);
       manualSerializer = findCustomFieldSerializer(typeOracle, type);
-      directlyImplementsMarker = TypeHierarchyUtils.directlyImplementsInterface(
-          type, isSerializableClass)
-          || TypeHierarchyUtils.directlyImplementsInterface(type,
-              serializableClass);
+      directlyImplementsMarker = directlyImplementsMarkerInterface(type);
     }
 
     public JClassType getManualSerializer() {
@@ -293,6 +288,33 @@ public class SerializableTypeOracleBuilder {
 
   private static final JClassType[] NO_JCLASSES = new JClassType[0];
 
+  static boolean canBeInstantiated(TreeLogger logger, JClassType type,
+      TreeLogger.Type logLevel) {
+    if (type.isEnum() == null) {
+      if (type.isAbstract()) {
+        // Abstract types will be picked up if there is an instantiable
+        // subtype.
+        return false;
+      }
+
+      if (!type.isDefaultInstantiable() && !isManuallySerializable(type)) {
+        // Warn and return false.
+        logger.log(
+            logLevel,
+            "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
+            null);
+        return false;
+      }
+    } else {
+      /*
+       * Enums are always instantiable regardless of abstract or default
+       * instantiability.
+       */
+    }
+
+    return true;
+  }
+
   /**
    * Finds the custom field serializer for a given type.
    * 
@@ -320,6 +342,17 @@ public class SerializableTypeOracleBuilder {
     return customSerializer;
   }
 
+  static boolean isAutoSerializable(JClassType type) {
+    try {
+      JClassType isSerializable = getIsSerializableMarkerInterface(type);
+      JClassType serializable = getSerializableMarkerInterface(type);
+      return type.isAssignableTo(isSerializable)
+          || type.isAssignableTo(serializable);
+    } catch (NotFoundException e) {
+      return false;
+    }
+  }
+
   /**
    * Returns <code>true</code> if this type is part of the standard java
    * packages.
@@ -338,24 +371,6 @@ public class SerializableTypeOracleBuilder {
     }
 
     return false;
-  }
-
-  /**
-   * Returns <code>true</code> if the field qualifies for serialization
-   * without considering its type.
-   */
-  static boolean qualfiesForSerialization(TreeLogger logger, JField field) {
-    if (field.isStatic() || field.isTransient()) {
-      return false;
-    }
-
-    if (field.isFinal()) {
-      logger.branch(TreeLogger.DEBUG, "Field '" + field.toString()
-          + "' will not be serialized because it is final", null);
-      return false;
-    }
-
-    return true;
   }
 
   static void recordTypeParametersIn(JType type, Set<JTypeParameter> params) {
@@ -382,6 +397,96 @@ public class SerializableTypeOracleBuilder {
         recordTypeParametersIn(arg, params);
       }
     }
+  }
+
+  static boolean shouldConsiderFieldsForSerialization(TreeLogger logger,
+      JClassType type, boolean isSpeculative, TypeFilter filter) {
+    if (!isAllowedByFilter(logger, filter, type, isSpeculative)) {
+      return false;
+    }
+
+    if (!isDeclaredSerializable(type)) {
+      logger.branch(TreeLogger.DEBUG, "Type '"
+          + type.getParameterizedQualifiedSourceName()
+          + "' is not assignable to '" + IsSerializable.class.getName()
+          + "' or '" + Serializable.class.getName()
+          + "' nor does it have a custom field serializer", null);
+      return false;
+    }
+
+    if (isManuallySerializable(type)) {
+      JClassType manualSerializer = findCustomFieldSerializer(type.getOracle(),
+          type);
+      assert (manualSerializer != null);
+
+      List<String> problems = CustomFieldSerializerValidator.validate(
+          manualSerializer, type);
+      if (!problems.isEmpty()) {
+        for (String problem : problems) {
+          logger.branch(getLogLevel(isSpeculative), problem, null);
+        }
+        return false;
+      }
+    } else {
+      assert (isAutoSerializable(type));
+
+      /*
+       * Speculative paths log at DEBUG level, non-speculative ones log at WARN
+       * level.
+       */
+      TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
+          : TreeLogger.WARN;
+
+      if (!isAccessibleToSerializer(type)) {
+        // Class is not visible to a serializer class in the same package
+        logger.branch(
+            logLevel,
+            type.getParameterizedQualifiedSourceName()
+                + " is not accessible from a class in its same package; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
+      if (type.isLocalType()) {
+        // Local types cannot be serialized
+        logger.branch(
+            logLevel,
+            type.getParameterizedQualifiedSourceName()
+                + " is a local type; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+
+      if (type.isMemberType() && !type.isStatic()) {
+        // Non-static member types cannot be serialized
+        logger.branch(
+            logLevel,
+            type.getParameterizedQualifiedSourceName()
+                + " is nested but not static; it will be excluded from the set of serializable types",
+            null);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns <code>true</code> if the field qualifies for serialization
+   * without considering its type.
+   */
+  static boolean shouldConsiderForSerialization(TreeLogger logger, JField field) {
+    if (field.isStatic() || field.isTransient()) {
+      return false;
+    }
+
+    if (field.isFinal()) {
+      logger.branch(TreeLogger.DEBUG, "Field '" + field.toString()
+          + "' will not be serialized because it is final", null);
+      return false;
+    }
+
+    return true;
   }
 
   private static Path createArrayComponentPath(final JArrayType arrayType,
@@ -463,6 +568,17 @@ public class SerializableTypeOracleBuilder {
     };
   }
 
+  private static boolean directlyImplementsMarkerInterface(JClassType type) {
+    try {
+      return TypeHierarchyUtils.directlyImplementsInterface(type,
+          getIsSerializableMarkerInterface(type))
+          || TypeHierarchyUtils.directlyImplementsInterface(type,
+              getSerializableMarkerInterface(type));
+    } catch (NotFoundException e) {
+      return false;
+    }
+  }
+
   private static JArrayType getArrayType(TypeOracle typeOracle, int rank,
       JType component) {
     assert (rank > 0);
@@ -477,8 +593,18 @@ public class SerializableTypeOracleBuilder {
     return array;
   }
 
+  private static JClassType getIsSerializableMarkerInterface(JClassType type)
+      throws NotFoundException {
+    return type.getOracle().getType(IsSerializable.class.getName());
+  }
+
   private static Type getLogLevel(boolean isSpeculative) {
     return isSpeculative ? TreeLogger.WARN : TreeLogger.ERROR;
+  }
+
+  private static JClassType getSerializableMarkerInterface(JClassType type)
+      throws NotFoundException {
+    return type.getOracle().getType(Serializable.class.getName());
   }
 
   /**
@@ -502,6 +628,24 @@ public class SerializableTypeOracleBuilder {
     return true;
   }
 
+  private static boolean isAllowedByFilter(TreeLogger logger,
+      TypeFilter filter, JClassType classType, boolean isSpeculative) {
+    if (!filter.isAllowed(classType)) {
+      logger.log(getLogLevel(isSpeculative), "Excluded by type filter ");
+      return false;
+    }
+
+    return true;
+  }
+
+  private static boolean isDeclaredSerializable(JClassType type) {
+    return isAutoSerializable(type) || isManuallySerializable(type);
+  }
+
+  private static boolean isManuallySerializable(JClassType type) {
+    return findCustomFieldSerializer(type.getOracle(), type) != null;
+  }
+
   private static void logSerializableTypes(TreeLogger logger,
       Set<JClassType> fieldSerializableTypes) {
     TreeLogger localLogger = logger.branch(TreeLogger.DEBUG, "Identified "
@@ -521,11 +665,6 @@ public class SerializableTypeOracleBuilder {
    */
   private final JClassType collectionClass;
 
-  /**
-   * Cache of the {@link JClassType} for {@link IsSerializable}.
-   */
-  private final JClassType isSerializableClass;
-
   private OutputStream logOutputStream;
 
   /**
@@ -535,17 +674,12 @@ public class SerializableTypeOracleBuilder {
 
   private final Map<JClassType, TreeLogger> rootTypes = new LinkedHashMap<JClassType, TreeLogger>();
 
-  /**
-   * Cache of the {@link JClassType} for
-   * {@link java.io.Serializable Serializable}.
-   */
-  private final JClassType serializableClass;
-
   private TypeFilter typeFilter = DEFAULT_TYPE_FILTER;
 
   private final TypeOracle typeOracle;
 
-  private final TypeParameterExposureComputer typeParameterExposureComputer = new TypeParameterExposureComputer();
+  private final TypeParameterExposureComputer typeParameterExposureComputer = new TypeParameterExposureComputer(
+      typeFilter);
 
   private Set<JTypeParameter> typeParametersInRootTypes = new HashSet<JTypeParameter>();
 
@@ -569,9 +703,7 @@ public class SerializableTypeOracleBuilder {
 
     try {
       collectionClass = typeOracle.getType(Collection.class.getName());
-      isSerializableClass = typeOracle.getType(IsSerializable.class.getName());
       mapClass = typeOracle.getType(Map.class.getName());
-      serializableClass = typeOracle.getType(Serializable.class.getName());
     } catch (NotFoundException e) {
       logger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
@@ -664,6 +796,7 @@ public class SerializableTypeOracleBuilder {
 
   public void setTypeFilter(TypeFilter typeFilter) {
     this.typeFilter = typeFilter;
+    typeParameterExposureComputer.setTypeFilter(typeFilter);
   }
 
   /**
@@ -834,8 +967,11 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
+    // TODO: Figure out logLevel for canBeInstantiated
     boolean isInstantiable = parametersOkay
-        && qualifiesForSerialization(localLogger, baseType, isSpeculative, path)
+        && shouldConsiderFieldsForSerialization(localLogger, baseType,
+            isSpeculative)
+        && canBeInstantiated(logger, baseType, TreeLogger.WARN)
         && checkFields(localLogger, baseType, isSpeculative, path);
 
     boolean anySubtypes = false;
@@ -867,100 +1003,15 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * Returns <code>true</code> if the type qualifies for serialization.
+   * Returns <code>true</code> if the fields of the type should be considered
+   * for serialization.
    * 
    * Default access to allow for testing.
    */
-  boolean qualifiesForSerialization(TreeLogger logger, JClassType type,
-      boolean isSpeculative, Path parent) {
-    TypeInfoComputed typeInfo = getTypeInfoComputed(type, parent);
-
-    if (!isAllowedByFilter(logger, type, isSpeculative)) {
-      return false;
-    }
-
-    if (!typeInfo.isDeclaredSerializable()) {
-      logger.branch(TreeLogger.DEBUG, "Type '"
-          + type.getParameterizedQualifiedSourceName()
-          + "' is not assignable to '" + IsSerializable.class.getName()
-          + "' or '" + Serializable.class.getName()
-          + "' nor does it have a custom field serializer", null);
-      return false;
-    }
-
-    if (typeInfo.isManuallySerializable()) {
-      List<String> problems = CustomFieldSerializerValidator.validate(
-          typeInfo.getManualSerializer(), type);
-      if (!problems.isEmpty()) {
-        for (String problem : problems) {
-          logger.branch(getLogLevel(isSpeculative), problem, null);
-        }
-        return false;
-      }
-    } else {
-      assert (typeInfo.isAutoSerializable());
-
-      /*
-       * Speculative paths log at DEBUG level, non-speculative ones log at WARN
-       * level.
-       */
-      TreeLogger.Type logLevel = isSpeculative ? TreeLogger.DEBUG
-          : TreeLogger.WARN;
-
-      if (!isAccessibleToSerializer(type)) {
-        // Class is not visible to a serializer class in the same package
-        logger.branch(
-            logLevel,
-            type.getParameterizedQualifiedSourceName()
-                + " is not accessible from a class in its same package; it will be excluded from the set of serializable types",
-            null);
-        return false;
-      }
-
-      if (type.isLocalType()) {
-        // Local types cannot be serialized
-        logger.branch(
-            logLevel,
-            type.getParameterizedQualifiedSourceName()
-                + " is a local type; it will be excluded from the set of serializable types",
-            null);
-        return false;
-      }
-
-      if (type.isMemberType() && !type.isStatic()) {
-        // Non-static member types cannot be serialized
-        logger.branch(
-            logLevel,
-            type.getParameterizedQualifiedSourceName()
-                + " is nested but not static; it will be excluded from the set of serializable types",
-            null);
-        return false;
-      }
-
-      if (type.isEnum() == null) {
-        if (type.isAbstract()) {
-          // Abstract types will be picked up if there is an instantiable
-          // subtype.
-          return false;
-        }
-
-        if (!type.isDefaultInstantiable()) {
-          // Warn and return false.
-          logger.log(
-              logLevel,
-              "Was not default instantiable (it must have a zero-argument constructor or no constructors at all)",
-              null);
-          return false;
-        }
-      } else {
-        /*
-         * Enums are always instantiable regardless of abstract or default
-         * instantiability.
-         */
-      }
-    }
-
-    return true;
+  boolean shouldConsiderFieldsForSerialization(TreeLogger logger,
+      JClassType type, boolean isSpeculative) {
+    return shouldConsiderFieldsForSerialization(logger, type, isSpeculative,
+        typeFilter);
   }
 
   /**
@@ -1066,7 +1117,7 @@ public class SerializableTypeOracleBuilder {
               + "' that qualify for serialization", null);
 
       for (JField field : fields) {
-        if (!qualfiesForSerialization(localLogger, field)) {
+        if (!shouldConsiderForSerialization(localLogger, field)) {
           continue;
         }
 
@@ -1098,6 +1149,10 @@ public class SerializableTypeOracleBuilder {
   private boolean checkFields(TreeLogger logger, JClassType classOrInterface,
       boolean isSpeculative, Path parent) {
     TypeInfoComputed typeInfo = getTypeInfoComputed(classOrInterface, parent);
+    if (classOrInterface.isEnum() != null) {
+      // The fields of an enum are never serialized; they are always okay.
+      return true;
+    }
 
     // Check all super type fields first (recursively).
     JClassType superType = classOrInterface.getSuperclass();
@@ -1140,18 +1195,18 @@ public class SerializableTypeOracleBuilder {
      * If super does not qualify and I am not directly serializable then I can't
      * be serializable.
      */
-    boolean subInstantiable = qualifiesForSerialization(subtypeLogger,
-        currentSubtype, true, subtypePath);
+    boolean fieldSerializable = shouldConsiderFieldsForSerialization(
+        subtypeLogger, currentSubtype, true);
     if (!superIsFieldSerializable) {
-      subInstantiable &= typeInfo.isDirectlySerializable();
+      fieldSerializable &= typeInfo.isDirectlySerializable();
     }
 
-    if (subInstantiable) {
+    if (fieldSerializable) {
       if (checkSuperFields) {
-        subInstantiable &= checkFields(subtypeLogger, typeInfo.getType(), true,
-            subtypePath);
+        fieldSerializable &= checkFields(subtypeLogger, typeInfo.getType(),
+            true, subtypePath);
       } else {
-        subInstantiable &= checkDeclaredFields(subtypeLogger, typeInfo, true,
+        fieldSerializable &= checkDeclaredFields(subtypeLogger, typeInfo, true,
             subtypePath);
       }
     }
@@ -1167,10 +1222,10 @@ public class SerializableTypeOracleBuilder {
           && immediateSubtype.isClass() != null;
       anySubtypes |= checkSubtypes(localLogger, originalType, baseType,
           instSubtypes, typeArgs, path, immediateSubtype, checkSuperFields,
-          subInstantiable);
+          fieldSerializable);
     }
 
-    if (!subInstantiable) {
+    if (!fieldSerializable) {
       // If the subtype is not instantiable do not check the arguments.
       return anySubtypes;
     }
@@ -1193,7 +1248,7 @@ public class SerializableTypeOracleBuilder {
                 + "'");
         Set<JTypeParameter> constBy = subParamsConstrainedBy.get(param);
         if (constBy == null) {
-          subInstantiable &= checkTypeArgument(paramLogger, genericSub, i,
+          fieldSerializable &= checkTypeArgument(paramLogger, genericSub, i,
               param.getFirstBound(), true, path);
         } else {
           boolean paramOK = false;
@@ -1201,7 +1256,7 @@ public class SerializableTypeOracleBuilder {
             paramOK |= checkTypeArgument(paramLogger, genericSub, i,
                 typeArgs[constrained.getOrdinal()], true, path);
           }
-          subInstantiable &= paramOK;
+          fieldSerializable &= paramOK;
         }
       }
     } else {
@@ -1225,13 +1280,14 @@ public class SerializableTypeOracleBuilder {
                 + currentSubtype.getParameterizedQualifiedSourceName()
                 + "' because it is not assignable to '"
                 + isParameterized.getParameterizedQualifiedSourceName() + "'");
-            subInstantiable = false;
+            fieldSerializable = false;
           }
         }
       }
     }
 
-    if (subInstantiable) {
+    if (fieldSerializable
+        && canBeInstantiated(subtypeLogger, currentSubtype, TreeLogger.DEBUG)) {
       if (instSubtypes != null) {
         instSubtypes.add(currentSubtype);
       }
@@ -1342,12 +1398,7 @@ public class SerializableTypeOracleBuilder {
 
   private boolean isAllowedByFilter(TreeLogger logger, JClassType classType,
       boolean isSpeculative) {
-    if (!typeFilter.isAllowed(classType)) {
-      logger.log(getLogLevel(isSpeculative), "Excluded by type filter ");
-      return false;
-    }
-
-    return true;
+    return isAllowedByFilter(logger, typeFilter, classType, isSpeculative);
   }
 
   private void logPath(TreeLogger logger, Path path) {

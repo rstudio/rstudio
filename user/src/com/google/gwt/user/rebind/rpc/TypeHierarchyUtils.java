@@ -75,7 +75,12 @@ class TypeHierarchyUtils {
     List<JClassType> immediateSubtypes = new ArrayList<JClassType>();
     clazz = clazz.getErasedType();
     for (JClassType subclass : clazz.getSubtypes()) {
-      if (subclass.getSuperclass() == clazz || clazz.isInterface() != null
+      JClassType superclass = subclass.getSuperclass();
+      if (superclass != null) {
+        superclass = superclass.getErasedType();
+      }
+
+      if (superclass == clazz || clazz.isInterface() != null
           && directlyImplementsInterface(subclass, clazz)) {
         immediateSubtypes.add(subclass);
       }
