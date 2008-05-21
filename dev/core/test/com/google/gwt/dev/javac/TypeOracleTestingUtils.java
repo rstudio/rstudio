@@ -21,9 +21,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -52,13 +50,14 @@ public class TypeOracleTestingUtils {
   public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<CompilationUnit> units) throws UnableToCompleteException {
     JdtCompiler.compile(units);
-    Map<String, CompiledClass> classMap = new HashMap<String, CompiledClass>();
+    Set<String> validBinaryTypeNames = new HashSet<String>();
     for (CompilationUnit unit : units) {
       for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-        classMap.put(compiledClass.getBinaryName(), compiledClass);
+        validBinaryTypeNames.add(compiledClass.getBinaryName());
       }
     }
-    CompilationUnitInvalidator.validateCompilationUnits(units, classMap);
+    CompilationUnitInvalidator.validateCompilationUnits(units,
+        validBinaryTypeNames);
     CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units);
     TypeOracleMediator mediator = new TypeOracleMediator();
     mediator.refresh(logger, units);

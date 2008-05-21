@@ -24,11 +24,9 @@ import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * Helper class to invalidate units in a set based on errors or references to
@@ -45,11 +43,10 @@ public class CompilationUnitInvalidator {
     // Start by removing units with a known problem.
     boolean anyRemoved = false;
     for (CompilationUnit unit : units) {
-      CompilationUnitDeclaration cud = unit.getJdtCud();
-      if (cud == null) {
+      if (unit.getState() != State.COMPILED) {
         continue;
       }
-      CompilationResult result = cud.compilationResult();
+      CompilationResult result = unit.getJdtCud().compilationResult();
       if (result.hasErrors()) {
         anyRemoved = true;
 
@@ -92,63 +89,50 @@ public class CompilationUnitInvalidator {
 
   public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
       Set<CompilationUnit> units) {
-    logger = logger.branch(TreeLogger.TRACE, "Removing invalidate units");
+    logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
 
-    // Map all units by file name.
-    Map<String, CompilationUnit> unitsByFileName = new HashMap<String, CompilationUnit>();
+    // Assume all compiled units are valid at first.
+    boolean changed;
+    Set<CompilationUnit> validUnits = new HashSet<CompilationUnit>();
     for (CompilationUnit unit : units) {
-      unitsByFileName.put(unit.getDisplayLocation(), unit);
+      if (unit.isCompiled()) {
+        validUnits.add(unit);
+      }
     }
-    // First, compute a map from all targets all referents.
-    Map<CompilationUnit, Set<CompilationUnit>> refTargetToReferents = new HashMap<CompilationUnit, Set<CompilationUnit>>();
-    for (CompilationUnit referentUnit : units) {
-      if (referentUnit.isCompiled()) {
-        Set<String> fileNameRefs = referentUnit.getFileNameRefs();
-        for (String fileNameRef : fileNameRefs) {
-          CompilationUnit targetUnit = unitsByFileName.get(fileNameRef);
-          if (targetUnit != null) {
-            Set<CompilationUnit> referents = refTargetToReferents.get(targetUnit);
-            if (referents == null) {
-              referents = new HashSet<CompilationUnit>();
-              refTargetToReferents.put(targetUnit, referents);
+    do {
+      changed = false;
+      Set<String> validRefs = new HashSet<String>();
+      for (CompilationUnit unit : validUnits) {
+        validRefs.add(unit.getDisplayLocation());
+      }
+      for (Iterator<CompilationUnit> it = validUnits.iterator(); it.hasNext();) {
+        CompilationUnit unit = it.next();
+        TreeLogger branch = null;
+        for (String ref : unit.getFileNameRefs()) {
+          if (!validRefs.contains(ref)) {
+            if (branch == null) {
+              branch = logger.branch(TreeLogger.WARN, "Compilation unit '"
+                  + unit + "' is removed due to invalid reference(s):");
+              it.remove();
+              changed = true;
+              unit.setState(State.FRESH);
             }
-            // Add myself as a referent.
-            referents.add(referentUnit);
+            branch.log(TreeLogger.WARN, ref);
           }
         }
       }
-    }
-
-    // Now use the map to transitively blow away invalid units.
-    for (Entry<CompilationUnit, Set<CompilationUnit>> entry : refTargetToReferents.entrySet()) {
-      CompilationUnit maybeInvalidUnit = entry.getKey();
-      if (!maybeInvalidUnit.isCompiled()) {
-        // Invalidate all dependent units.
-        Set<CompilationUnit> invalidReferentUnits = entry.getValue();
-        TreeLogger branch = logger.branch(TreeLogger.TRACE,
-            "Compilation unit '" + maybeInvalidUnit + "' is invalid");
-        State why = maybeInvalidUnit.getState();
-        for (CompilationUnit invalidReferentUnit : invalidReferentUnits) {
-          if (invalidReferentUnit.isCompiled()) {
-            // Set it to the same state as the unit it depends on.
-            invalidReferentUnit.setState(why);
-            branch.log(TreeLogger.TRACE, "Removing dependent unit '"
-                + invalidReferentUnit + "'");
-          }
-        }
-      }
-    }
+    } while (changed);
   }
 
   public static void validateCompilationUnits(Set<CompilationUnit> units,
-      Map<String, CompiledClass> compiledClasses) {
+      Set<String> validBinaryTypeNames) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
         JSORestrictionsChecker.check(jdtCud);
         LongFromJSNIChecker.check(jdtCud);
         BinaryTypeReferenceRestrictionsChecker.check(jdtCud,
-            compiledClasses.keySet());
+            validBinaryTypeNames);
       }
     }
   }

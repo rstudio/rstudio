@@ -22,6 +22,9 @@ import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
 
+import org.eclipse.jdt.core.compiler.CharOperation;
+import org.eclipse.jdt.internal.compiler.ClassFile;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,10 +70,29 @@ public class CompilationState {
    */
   public void compile(TreeLogger logger) throws UnableToCompleteException {
     JdtCompiler.compile(getCompilationUnits());
+    Set<String> validBinaryTypeNames = new HashSet<String>();
+    for (CompilationUnit unit : getCompilationUnits()) {
+      switch (unit.getState()) {
+        case COMPILED:
+          for (ClassFile classFile : unit.getJdtCud().compilationResult().getClassFiles()) {
+            char[] binaryName = CharOperation.concatWith(
+                classFile.getCompoundName(), '/');
+            validBinaryTypeNames.add(String.valueOf(binaryName));
+          }
+          break;
+        case CHECKED:
+          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+            validBinaryTypeNames.add(compiledClass.getBinaryName());
+          }
+          break;
+      }
+    }
     CompilationUnitInvalidator.validateCompilationUnits(getCompilationUnits(),
-        getClassFileMap());
+        validBinaryTypeNames);
 
-    // TODO: Move into validation & log errors?
+    CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
+        getCompilationUnits());
+
     JsniCollector.collectJsniMethods(logger, getCompilationUnits(),
         new JsProgram());
 
