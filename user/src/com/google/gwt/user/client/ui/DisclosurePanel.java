@@ -50,6 +50,11 @@ import java.util.Iterator;
 public final class DisclosurePanel extends Composite implements
     FiresDisclosureEvents, HasWidgets, HasAnimation {
   /**
+   * The duration of the animation. 
+   */
+  private static final int ANIMATION_DURATION = 350;
+
+  /**
    * An {@link Animation} used to open the content.
    */
   private static class ContentAnimation extends Animation {
@@ -62,44 +67,6 @@ public final class DisclosurePanel extends Composite implements
      * The {@link DisclosurePanel} being affected.
      */
     private DisclosurePanel curPanel;
-
-    @Override
-    public void onCancel() {
-      onComplete();
-    }
-
-    @Override
-    public void onComplete() {
-      if (!opening) {
-        curPanel.contentWrapper.setVisible(false);
-      }
-      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
-          "auto");
-      curPanel = null;
-    }
-
-    @Override
-    public void onStart() {
-      onUpdate(0.0);
-      if (opening) {
-        curPanel.contentWrapper.setVisible(true);
-      }
-    }
-
-    @Override
-    public void onUpdate(double progress) {
-      int scrollHeight = DOM.getElementPropertyInt(
-          curPanel.contentWrapper.getElement(), "scrollHeight");
-      int height = (int) (progress * scrollHeight);
-      if (!opening) {
-        height = scrollHeight - height;
-      }
-      height = Math.max(height, 1);
-      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
-          height + "px");
-      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "width",
-          "auto");
-    }
 
     /**
      * Open or close the content.
@@ -115,10 +82,43 @@ public final class DisclosurePanel extends Composite implements
       if (animate) {
         curPanel = panel;
         opening = panel.isOpen;
-        run(350);
+        run(ANIMATION_DURATION);
       } else {
         panel.contentWrapper.setVisible(panel.isOpen);
       }
+    }
+
+    @Override
+    protected void onComplete() {
+      if (!opening) {
+        curPanel.contentWrapper.setVisible(false);
+      }
+      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
+          "auto");
+      curPanel = null;
+    }
+
+    @Override
+    protected void onStart() {
+      super.onStart();
+      if (opening) {
+        curPanel.contentWrapper.setVisible(true);
+      }
+    }
+
+    @Override
+    protected void onUpdate(double progress) {
+      int scrollHeight = DOM.getElementPropertyInt(
+          curPanel.contentWrapper.getElement(), "scrollHeight");
+      int height = (int) (progress * scrollHeight);
+      if (!opening) {
+        height = scrollHeight - height;
+      }
+      height = Math.max(height, 1);
+      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "height",
+          height + "px");
+      DOM.setStyleAttribute(curPanel.contentWrapper.getElement(), "width",
+          "auto");
     }
   }
 

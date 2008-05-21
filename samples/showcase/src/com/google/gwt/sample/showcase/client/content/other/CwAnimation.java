@@ -68,26 +68,21 @@ public class CwAnimation extends ContentWidget {
     private int radius = 100;
 
     @Override
-    public void onCancel() {
-      onComplete();
-    }
-
-    @Override
-    public void onComplete() {
-      onUpdate(1.0);
+    protected void onComplete() {
+      super.onComplete();
       startButton.setEnabled(true);
       cancelButton.setEnabled(false);
     }
 
     @Override
-    public void onStart() {
-      onUpdate(1.0);
+    protected void onStart() {
+      super.onStart();
       startButton.setEnabled(false);
       cancelButton.setEnabled(true);
     }
 
     @Override
-    public void onUpdate(double progress) {
+    protected void onUpdate(double progress) {
       double radian = 2 * Math.PI * progress;
       updatePosition(animateeLeft, radian, 0);
       updatePosition(animateeBottom, radian, 0.5 * Math.PI);

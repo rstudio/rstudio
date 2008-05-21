@@ -36,7 +36,6 @@ import java.util.List;
  * </p>
  */
 public class TreeItem extends UIObject implements HasHTML {
-
   /**
    * An {@link Animation} used to open the child elements. If a {@link TreeItem}
    * is in the process of opening, it will immediately be opened and the new
@@ -54,13 +53,29 @@ public class TreeItem extends UIObject implements HasHTML {
      */
     private boolean opening = true;
 
-    @Override
-    public void onCancel() {
-      onComplete();
+    /**
+     * Open the specified {@link TreeItem}.
+     * 
+     * @param item the {@link TreeItem} to open
+     * @param animate true to animate, false to open instantly
+     */
+    public void setItemState(TreeItem item, boolean animate) {
+      // Immediately complete previous open
+      cancel();
+
+      // Open the new item
+      if (animate) {
+        curItem = item;
+        opening = item.open;
+        run(Math.min(ANIMATION_DURATION, ANIMATION_DURATION_PER_ITEM
+            * curItem.getChildCount()));
+      } else {
+        UIObject.setVisible(item.childSpanElem, item.open);
+      }
     }
 
     @Override
-    public void onComplete() {
+    protected void onComplete() {
       if (curItem != null) {
         if (opening) {
           UIObject.setVisible(curItem.childSpanElem, true);
@@ -76,16 +91,16 @@ public class TreeItem extends UIObject implements HasHTML {
     }
 
     @Override
-    public void onStart() {
+    protected void onStart() {
       DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "hidden");
-      onUpdate(0.0);
+      super.onStart();
       if (opening) {
         UIObject.setVisible(curItem.childSpanElem, true);
       }
     }
 
     @Override
-    public void onUpdate(double progress) {
+    protected void onUpdate(double progress) {
       int scrollHeight = DOM.getElementPropertyInt(curItem.childSpanElem,
           "scrollHeight");
 
@@ -105,26 +120,6 @@ public class TreeItem extends UIObject implements HasHTML {
           "scrollWidth");
       DOM.setStyleAttribute(curItem.childSpanElem, "width", scrollWidth + "px");
     }
-
-    /**
-     * Open the specified {@link TreeItem}.
-     * 
-     * @param item the {@link TreeItem} to open
-     * @param animate true to animate, false to open instantly
-     */
-    public void setItemState(TreeItem item, boolean animate) {
-      // Immediately complete previous open
-      cancel();
-
-      // Open the new item
-      if (animate) {
-        curItem = item;
-        opening = item.open;
-        run(Math.min(200, 75 * curItem.getChildCount()));
-      } else {
-        UIObject.setVisible(item.childSpanElem, item.open);
-      }
-    }
   }
 
   // By not overwriting the default tree padding and spacing, we traditionally
@@ -135,7 +130,19 @@ public class TreeItem extends UIObject implements HasHTML {
   static final int IMAGE_PAD = 7;
 
   /**
-   * The static animation used to open {@link TreeItem}s.
+   * The duration of the animation. 
+   */
+  private static final int ANIMATION_DURATION = 200;
+
+  /**
+   * The duration of the animation per child {@link TreeItem}. If the per item
+   * duration times the number of child items is less than the duration above,
+   * the smaller duration will be used.
+   */
+  private static final int ANIMATION_DURATION_PER_ITEM = 75;
+
+  /**
+   * The static animation used to open {@link TreeItem TreeItems}.
    */
   private static TreeItemAnimation itemAnimation = new TreeItemAnimation();
 

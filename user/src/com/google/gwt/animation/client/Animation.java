@@ -32,7 +32,7 @@ public abstract class Animation {
   private static final int DEFAULT_FRAME_DELAY = 25;
 
   /**
-   * The {@link Animation}s that are currently in progress.
+   * The {@link Animation Animations} that are currently in progress.
    */
   private static List<Animation> animations = null;
 
@@ -42,7 +42,7 @@ public abstract class Animation {
   private static Timer animationTimer = null;
 
   /**
-   * Update all {@link Animation}s.
+   * Update all {@link Animation Animations}.
    */
   private static void updateAnimations() {
     // Iterator through the animations
@@ -77,19 +77,20 @@ public abstract class Animation {
   private double startTime = -1;
 
   /**
-   * Immediately cancel this animation.
+   * Immediately cancel this animation. If the animation is running or is
+   * scheduled to run, {@link #onCancel()} will be called.
    */
   public void cancel() {
-    // No animations available
+    // Ignore if no animations are running
     if (animations == null) {
       return;
     }
 
-    // Remove the animation
-    started = false;
+    // Remove this animation from the list
     if (animations.remove(this)) {
       onCancel();
     }
+    started = false;
   }
 
   /**
@@ -155,27 +156,38 @@ public abstract class Animation {
   }
 
   /**
-   * Called immediately after the animation is canceled.
+   * Called immediately after the animation is canceled. The default
+   * implementation of this method calls {@link #onComplete()} only if the
+   * animation has actually started running.
    */
-  protected abstract void onCancel();
+  protected void onCancel() {
+    if (started) {
+      started = false;
+      onComplete();
+    }
+  }
 
   /**
    * Called immediately after the animation completes.
    */
-  protected abstract void onComplete();
+  protected void onComplete() {
+    onUpdate(interpolate(1.0));
+  }
 
   /**
    * Called immediately before the animation starts.
    */
-  protected abstract void onStart();
+  protected void onStart() {
+    onUpdate(interpolate(0.0));
+  }
 
   /**
    * Called when the animation should be updated.
    * 
-   * The value of progress is between 0.0 and 1.0 inclusively, but it is not
-   * safe to assume that either 0.0 or 1.0 will be passed in. Use
-   * {@link #onStart()} and {@link #onComplete()} to do setup and tear down
-   * procedures.
+   * The value of progress is between 0.0 and 1.0 inclusively (unless you
+   * override the {@link #interpolate(double)} method to provide a wider range
+   * of values). You can override {@link #onStart()} and {@link #onComplete()}
+   * to perform setup and tear down procedures.
    */
   protected abstract void onUpdate(double progress);
 
@@ -186,21 +198,24 @@ public abstract class Animation {
    * @return true if the animation is complete, false if still running
    */
   private boolean update(double curTime) {
-    // Start the animation
+    boolean finished = curTime >= startTime + duration;
+    if (started && !finished) {
+      // Animation is in progress.
+      double progress = (curTime - startTime) / duration;
+      onUpdate(interpolate(progress));
+      return false;
+    }
     if (!started && curTime >= startTime) {
+      // Start the animation.
       started = true;
       onStart();
+      // Intentional fall through to possibly end the animation.
     }
-
-    if (curTime >= startTime + duration) {
-      // Animation is complete
+    if (finished) {
+      // Animation is complete.
       started = false;
       onComplete();
       return true;
-    } else if (curTime >= startTime) {
-      // Animation is in progress
-      double progress = (curTime - startTime) / duration;
-      onUpdate(interpolate(progress));
     }
     return false;
   }

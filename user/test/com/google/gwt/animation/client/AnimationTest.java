@@ -24,32 +24,53 @@ import com.google.gwt.user.client.Timer;
  */
 public class AnimationTest extends GWTTestCase {
   /**
-   * A customer {@link Animation} used for testing.
+   * Increase this multiplier to increase the duration of the tests, reducing
+   * the potential of an error caused by timing issues.
    */
-  private static class TestAnimation extends Animation {
-    public boolean cancelled = false;
-    public boolean completed = false;
-    public double curProgress = -1.0;
-    public boolean started = false;
+  private static int DELAY_MULTIPLIER = 100;
 
-    @Override
-    public void onCancel() {
-      cancelled = true;
+  /**
+   * A default implementation of {@link Animation} used for testing.
+   */
+  private static class DefaultAnimation extends Animation {
+    protected boolean cancelled = false;
+    protected boolean completed = false;
+    protected boolean started = false;
+    protected double curProgress = -1.0;
+
+    /**
+     * Assert the value of canceled.
+     */
+    public void assertCancelled(boolean expected) {
+      assertEquals(expected, cancelled);
     }
 
-    @Override
-    public void onComplete() {
-      completed = true;
+    /**
+     * Assert the value of completed.
+     */
+    public void assertCompleted(boolean expected) {
+      assertEquals(expected, completed);
     }
 
-    @Override
-    public void onStart() {
-      started = true;
+    /**
+     * Assert that the progress equals the specified value.
+     */
+    public void assertProgress(double expected) {
+      assertEquals(expected, curProgress);
     }
 
-    @Override
-    public void onUpdate(double progress) {
-      curProgress = progress;
+    /**
+     * Assert that the progress falls between min and max, inclusively.
+     */
+    public void assertProgressRange(double min, double max) {
+      assertTrue(curProgress >= min && curProgress <= max);
+    }
+
+    /**
+     * Assert the value of started.
+     */
+    public void assertStarted(boolean expected) {
+      assertEquals(expected, started);
     }
 
     public void reset() {
@@ -57,6 +78,55 @@ public class AnimationTest extends GWTTestCase {
       completed = false;
       started = false;
       curProgress = -1.0;
+    }
+
+    @Override
+    protected void onUpdate(double progress) {
+      curProgress = progress;
+    }
+
+    @Override
+    protected void onCancel() {
+      super.onCancel();
+      cancelled = true;
+    }
+
+    @Override
+    protected void onComplete() {
+      super.onComplete();
+      completed = true;
+    }
+
+    @Override
+    protected void onStart() {
+      super.onStart();
+      started = true;
+    }
+  }
+
+  /**
+   * A custom {@link Animation} used for testing.
+   */
+  private static class TestAnimation extends DefaultAnimation {
+    /*
+     * TODO: Consider timing issues for test system. Specifically, onUpdate is
+     * not guaranteed to be called in the Animation timer if we miss our
+     * deadline.
+     */
+
+    @Override
+    protected void onCancel() {
+      cancelled = true;
+    }
+
+    @Override
+    protected void onComplete() {
+      completed = true;
+    }
+
+    @Override
+    protected void onStart() {
+      started = true;
     }
   }
 
@@ -71,36 +141,36 @@ public class AnimationTest extends GWTTestCase {
   public void testCancelBeforeStarted() {
     final TestAnimation anim = new TestAnimation();
     double curTime = Duration.currentTimeMillis();
-    anim.run(100, curTime + 200);
+    anim.run(10 * DELAY_MULTIPLIER, curTime + 10 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertFalse(anim.started);
-        assertFalse(anim.completed);
-        assertEquals(-1.0, anim.curProgress);
+        anim.assertStarted(false);
+        anim.assertCompleted(false);
+        anim.assertProgress(-1.0);
         anim.cancel();
-        assertTrue(anim.cancelled);
-        assertFalse(anim.started);
-        assertFalse(anim.completed);
+        anim.assertStarted(false);
+        anim.assertCancelled(true);
+        anim.assertCompleted(false);
         anim.reset();
       }
-    }.schedule(50);
+    }.schedule(5 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertFalse(anim.started);
-        assertFalse(anim.completed);
-        assertEquals(-1.0, anim.curProgress);
+        anim.assertStarted(false);
+        anim.assertCompleted(false);
+        anim.assertProgress(-1.0);
         finishTest();
       }
-    }.schedule(100);
+    }.schedule(15 * DELAY_MULTIPLIER);
 
     // Wait for test to finish
-    delayTestFinish(150);
+    delayTestFinish(20 * DELAY_MULTIPLIER);
   }
 
   /**
@@ -108,35 +178,35 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelWhenComplete() {
     final TestAnimation anim = new TestAnimation();
-    anim.run(100);
+    anim.run(10 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertTrue(anim.started);
-        assertTrue(anim.completed);
-        assertTrue(anim.curProgress > 0.0 && anim.curProgress <= 1.0);
+        anim.assertStarted(true);
+        anim.assertCompleted(true);
+        anim.assertProgressRange(0.0, 1.0);
         anim.cancel();
-        assertFalse(anim.cancelled);
-        assertTrue(anim.completed);
+        anim.assertCancelled(false);
+        anim.assertCompleted(true);
         anim.reset();
       }
-    }.schedule(150);
+    }.schedule(15 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertFalse(anim.started);
-        assertFalse(anim.completed);
-        assertEquals(-1.0, anim.curProgress);
+        anim.assertStarted(false);
+        anim.assertCompleted(false);
+        anim.assertProgress(-1.0);
         finishTest();
       }
-    }.schedule(200);
+    }.schedule(20 * DELAY_MULTIPLIER);
 
     // Wait for test to finish
-    delayTestFinish(250);
+    delayTestFinish(25 * DELAY_MULTIPLIER);
   }
 
   /**
@@ -144,35 +214,34 @@ public class AnimationTest extends GWTTestCase {
    */
   public void testCancelWhileRunning() {
     final TestAnimation anim = new TestAnimation();
-    anim.run(500);
+    anim.run(50 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertTrue(anim.started);
-        assertFalse(anim.completed);
-        assertTrue(anim.curProgress > 0.0 && anim.curProgress <= 1.0);
+        anim.assertStarted(true);
+        anim.assertCompleted(false);
         anim.cancel();
-        assertTrue(anim.cancelled);
-        assertFalse(anim.completed);
+        anim.assertCancelled(true);
+        anim.assertCompleted(false);
         anim.reset();
       }
-    }.schedule(50);
+    }.schedule(5 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertFalse(anim.started);
-        assertFalse(anim.completed);
-        assertEquals(-1.0, anim.curProgress);
+        anim.assertStarted(false);
+        anim.assertCompleted(false);
+        anim.assertProgress(-1.0);
         finishTest();
       }
-    }.schedule(150);
+    }.schedule(15 * DELAY_MULTIPLIER);
 
     // Wait for test to finish
-    delayTestFinish(200);
+    delayTestFinish(20 * DELAY_MULTIPLIER);
   }
 
   /**
@@ -186,21 +255,69 @@ public class AnimationTest extends GWTTestCase {
     // Run animations
     double curTime = Duration.currentTimeMillis();
     animNow.run(0);
-    animPast.run(0, curTime - 150);
-    animFuture.run(0, curTime + 150);
+    animPast.run(0, curTime - 15 * DELAY_MULTIPLIER);
+    animFuture.run(0, curTime + 15 * DELAY_MULTIPLIER);
 
     // Test synchronous start
-    assertTrue(animNow.started);
-    assertTrue(animNow.completed);
-    assertEquals(-1.0, animNow.curProgress);
+    animNow.assertStarted(true);
+    animNow.assertCompleted(true);
+    animNow.assertProgress(-1.0);
 
-    assertTrue(animPast.started);
-    assertTrue(animPast.completed);
-    assertEquals(-1.0, animFuture.curProgress);
+    animPast.assertStarted(true);
+    animPast.assertCompleted(true);
+    animPast.assertProgress(-1.0);
 
-    assertFalse(animFuture.started);
-    assertFalse(animFuture.completed);
-    assertEquals(-1.0, animFuture.curProgress);
+    animFuture.assertStarted(false);
+    animFuture.assertCompleted(false);
+    animFuture.assertProgress(-1.0);
+  }
+
+  /**
+   * Test the default implementations of events in {@link Animation}.
+   */
+  public void testDefaultAnimation() {
+    // Verify initial state
+    final DefaultAnimation anim = new DefaultAnimation();
+    anim.assertProgress(-1.0);
+    anim.assertStarted(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+
+    // Starting an animation calls onUpdate(interpolate(0.0))
+    anim.reset();
+    anim.onStart();
+    anim.assertProgress(0.0);
+    anim.assertStarted(true);
+    anim.assertCompleted(false);
+    anim.assertCancelled(false);
+
+    // Completing an animation calls onUpdate(interpolate(1.0))
+    anim.reset();
+    anim.onComplete();
+    anim.assertProgress(1.0);
+    anim.assertStarted(false);
+    anim.assertCompleted(true);
+    anim.assertCancelled(false);
+
+    // Canceling an animation that is not running does not call onStart or
+    // onComplete
+    anim.reset();
+    anim.onCancel();
+    anim.assertProgress(-1.0);
+    anim.assertStarted(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(true);
+
+    // Canceling an animation before it starts does not call onStart or
+    // onComplete
+    anim.reset();
+    anim.run(20 * DELAY_MULTIPLIER, Duration.currentTimeMillis() + 100
+        * DELAY_MULTIPLIER);
+    anim.cancel();
+    anim.assertProgress(-1.0);
+    anim.assertStarted(false);
+    anim.assertCompleted(false);
+    anim.assertCancelled(true);
   }
 
   /**
@@ -213,62 +330,118 @@ public class AnimationTest extends GWTTestCase {
 
     // Run animations
     double curTime = Duration.currentTimeMillis();
-    animNow.run(300);
-    animPast.run(300, curTime - 150);
-    animFuture.run(300, curTime + 150);
+    animNow.run(30 * DELAY_MULTIPLIER);
+    animPast.run(30 * DELAY_MULTIPLIER, curTime - 10 * DELAY_MULTIPLIER);
+    animFuture.run(30 * DELAY_MULTIPLIER, curTime + 10 * DELAY_MULTIPLIER);
 
     // Test synchronous start
-    assertTrue(animNow.started);
-    assertFalse(animNow.completed);
-    assertTrue(animNow.curProgress >= 0.0 && animNow.curProgress <= 2.0);
+    animNow.assertStarted(true);
+    animNow.assertCompleted(false);
+    animNow.assertProgress(-1.0);
 
-    assertTrue(animPast.started);
-    assertFalse(animPast.completed);
-    assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
+    animPast.assertStarted(true);
+    animPast.assertCompleted(false);
+    animPast.assertProgress(-1.0);
 
-    assertFalse(animFuture.started);
-    assertFalse(animFuture.completed);
-    assertEquals(-1.0, animFuture.curProgress);
+    animFuture.assertStarted(false);
+    animFuture.assertCompleted(false);
+    animFuture.assertProgress(-1.0);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertTrue(animNow.started);
-        assertFalse(animNow.completed);
-        assertTrue(animNow.curProgress > 0.0 && animNow.curProgress <= 2.0);
+        animNow.assertStarted(true);
+        animNow.assertCompleted(false);
+        animNow.assertProgressRange(0.0, 1.0);
 
-        assertTrue(animPast.started);
-        assertFalse(animPast.completed);
-        assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
+        animPast.assertStarted(true);
+        animPast.assertCompleted(false);
+        animPast.assertProgressRange(0.0, 1.0);
 
-        assertFalse(animFuture.started);
-        assertFalse(animFuture.completed);
-        assertEquals(-1.0, animFuture.curProgress);
+        animFuture.assertStarted(false);
+        animFuture.assertCompleted(false);
+        animFuture.assertProgress(-1.0);
       }
-    }.schedule(50);
+    }.schedule(5 * DELAY_MULTIPLIER);
 
     // Check progress
     new Timer() {
       @Override
       public void run() {
-        assertTrue(animNow.started);
-        assertTrue(animNow.completed);
-        assertTrue(animNow.curProgress > 0.0 && animNow.curProgress <= 1.0);
+        animNow.assertStarted(true);
+        animNow.assertCompleted(false);
+        animNow.assertProgressRange(0.0, 1.0);
 
-        assertTrue(animPast.started);
-        assertTrue(animPast.completed);
-        assertTrue(animPast.curProgress > 0.0 && animPast.curProgress <= 1.0);
+        animPast.assertStarted(true);
+        animPast.assertCompleted(false);
+        animPast.assertProgressRange(0.0, 1.0);
 
-        assertTrue(animFuture.started);
-        assertFalse(animFuture.completed);
-        assertTrue(animFuture.curProgress > 0.0
-            && animFuture.curProgress <= 1.0);
+        animFuture.assertStarted(true);
+        animFuture.assertCompleted(false);
+        animFuture.assertProgressRange(0.0, 1.0);
+      }
+    }.schedule(15 * DELAY_MULTIPLIER);
+
+    // Check progress
+    new Timer() {
+      @Override
+      public void run() {
+        animNow.assertStarted(true);
+        animNow.assertCompleted(false);
+        animNow.assertProgressRange(0.0, 1.0);
+
+        animPast.assertStarted(true);
+        animPast.assertCompleted(true);
+        animPast.assertProgressRange(0.0, 1.0);
+
+        animFuture.assertStarted(true);
+        animFuture.assertCompleted(false);
+        animFuture.assertProgressRange(0.0, 1.0);
+      }
+    }.schedule(25 * DELAY_MULTIPLIER);
+
+    // Check progress
+    new Timer() {
+      @Override
+      public void run() {
+        animNow.assertStarted(true);
+        animNow.assertCompleted(true);
+        animNow.assertProgressRange(0.0, 1.0);
+
+        animPast.assertStarted(true);
+        animPast.assertCompleted(true);
+        animPast.assertProgressRange(0.0, 1.0);
+
+        animFuture.assertStarted(true);
+        animFuture.assertCompleted(false);
+        animFuture.assertProgressRange(0.0, 1.0);
+
         finishTest();
       }
-    }.schedule(350);
+    }.schedule(35 * DELAY_MULTIPLIER);
+
+    // Check progress
+    new Timer() {
+      @Override
+      public void run() {
+        animNow.assertStarted(true);
+        animNow.assertCompleted(true);
+        animNow.assertProgressRange(0.0, 1.0);
+
+        animPast.assertStarted(true);
+        animPast.assertCompleted(true);
+        animPast.assertProgressRange(0.0, 1.0);
+
+        animFuture.assertStarted(true);
+        animFuture.assertCompleted(true);
+        animFuture.assertProgressRange(0.0, 1.0);
+
+        finishTest();
+      }
+    }.schedule(45 * DELAY_MULTIPLIER);
 
     // Wait for the test to finish
-    delayTestFinish(500);
+    delayTestFinish(50 * DELAY_MULTIPLIER);
   }
 }

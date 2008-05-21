@@ -33,6 +33,11 @@ import com.google.gwt.user.client.Element;
  */
 public class DeckPanel extends ComplexPanel implements HasAnimation {
   /**
+   * The duration of the animation. 
+   */
+  private static final int ANIMATION_DURATION = 350;
+  
+  /**
    * An {@link Animation} used to slide in the new content.
    */
   private static class SlideAnimation extends Animation {
@@ -56,94 +61,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
      * does not have a fixed height, this will be set to -1.
      */
     private int fixedHeight = -1;
-
-    @Override
-    public void onCancel() {
-      onComplete();
-    }
-
-    @Override
-    public void onComplete() {
-      if (growing) {
-        onUpdate(1.0);
-        DOM.setStyleAttribute(container1, "height", "100%");
-        UIObject.setVisible(container1, true);
-        UIObject.setVisible(container2, false);
-        DOM.setStyleAttribute(container2, "height", "100%");
-      } else {
-        UIObject.setVisible(container1, false);
-        DOM.setStyleAttribute(container1, "height", "100%");
-        DOM.setStyleAttribute(container2, "height", "100%");
-        UIObject.setVisible(container2, true);
-      }
-      DOM.setStyleAttribute(container1, "overflow", "visible");
-      DOM.setStyleAttribute(container2, "overflow", "visible");
-      container1 = null;
-      container2 = null;
-    }
-
-    public void onInstantaneousRun() {
-      UIObject.setVisible(container1, growing);
-      UIObject.setVisible(container2, !growing);
-      container1 = null;
-      container2 = null;
-    }
-
-    @Override
-    public void onStart() {
-      // Figure out if the deck panel has a fixed height
-      com.google.gwt.dom.client.Element deckElem = container1.getParentElement();
-      int deckHeight = deckElem.getOffsetHeight();
-      if (growing) {
-        fixedHeight = container2.getOffsetHeight();
-        container2.getStyle().setPropertyPx("height", fixedHeight - 1);
-      } else {
-        fixedHeight = container1.getOffsetHeight();
-        container1.getStyle().setPropertyPx("height", fixedHeight - 1);
-      }
-      if (deckElem.getOffsetHeight() != deckHeight) {
-        fixedHeight = -1;
-      }
-
-      // Start the animation
-      DOM.setStyleAttribute(container1, "overflow", "hidden");
-      DOM.setStyleAttribute(container2, "overflow", "hidden");
-      onUpdate(0.0);
-      UIObject.setVisible(container1, true);
-      UIObject.setVisible(container2, true);
-    }
-
-    @Override
-    public void onUpdate(double progress) {
-      if (!growing) {
-        progress = 1.0 - progress;
-      }
-
-      // Container1 expands (shrinks) to its target height
-      int height1;
-      int height2;
-      if (fixedHeight == -1) {
-        height1 = (int) (progress * DOM.getElementPropertyInt(container1,
-            "scrollHeight"));
-        height2 = (int) ((1.0 - progress) * DOM.getElementPropertyInt(
-            container2, "scrollHeight"));
-      } else {
-        height1 = (int) (progress * fixedHeight);
-        height2 = fixedHeight - height1;
-      }
-
-      // Issue 2339: If the height is 0px, IE7 will display the entire content
-      // widget instead of hiding it completely.
-      if (height1 == 0) {
-        height1 = 1;
-        height2 = Math.max(1, height2 - 1);
-      } else if (height2 == 0) {
-        height2 = 1;
-        height1 = Math.max(1, height1 - 1);
-      }
-      DOM.setStyleAttribute(container1, "height", height1 + "px");
-      DOM.setStyleAttribute(container2, "height", height2 + "px");
-    }
 
     /**
      * Switch to a new {@link Widget}.
@@ -185,10 +102,92 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
 
       // Start the animation
       if (animate) {
-        run(350);
+        run(ANIMATION_DURATION);
       } else {
         onInstantaneousRun();
       }
+    }
+
+    @Override
+    protected void onComplete() {
+      if (growing) {
+        DOM.setStyleAttribute(container1, "height", "100%");
+        UIObject.setVisible(container1, true);
+        UIObject.setVisible(container2, false);
+        DOM.setStyleAttribute(container2, "height", "100%");
+      } else {
+        UIObject.setVisible(container1, false);
+        DOM.setStyleAttribute(container1, "height", "100%");
+        DOM.setStyleAttribute(container2, "height", "100%");
+        UIObject.setVisible(container2, true);
+      }
+      DOM.setStyleAttribute(container1, "overflow", "visible");
+      DOM.setStyleAttribute(container2, "overflow", "visible");
+      container1 = null;
+      container2 = null;
+    }
+
+    @Override
+    protected void onStart() {
+      // Figure out if the deck panel has a fixed height
+      com.google.gwt.dom.client.Element deckElem = container1.getParentElement();
+      int deckHeight = deckElem.getOffsetHeight();
+      if (growing) {
+        fixedHeight = container2.getOffsetHeight();
+        container2.getStyle().setPropertyPx("height", fixedHeight - 1);
+      } else {
+        fixedHeight = container1.getOffsetHeight();
+        container1.getStyle().setPropertyPx("height", fixedHeight - 1);
+      }
+      if (deckElem.getOffsetHeight() != deckHeight) {
+        fixedHeight = -1;
+      }
+
+      // Start the animation
+      DOM.setStyleAttribute(container1, "overflow", "hidden");
+      DOM.setStyleAttribute(container2, "overflow", "hidden");
+      onUpdate(0.0);
+      UIObject.setVisible(container1, true);
+      UIObject.setVisible(container2, true);
+    }
+
+    @Override
+    protected void onUpdate(double progress) {
+      if (!growing) {
+        progress = 1.0 - progress;
+      }
+
+      // Container1 expands (shrinks) to its target height
+      int height1;
+      int height2;
+      if (fixedHeight == -1) {
+        height1 = (int) (progress * DOM.getElementPropertyInt(container1,
+            "scrollHeight"));
+        height2 = (int) ((1.0 - progress) * DOM.getElementPropertyInt(
+            container2, "scrollHeight"));
+      } else {
+        height1 = (int) (progress * fixedHeight);
+        height2 = fixedHeight - height1;
+      }
+
+      // Issue 2339: If the height is 0px, IE7 will display the entire content
+      // widget instead of hiding it completely.
+      if (height1 == 0) {
+        height1 = 1;
+        height2 = Math.max(1, height2 - 1);
+      } else if (height2 == 0) {
+        height2 = 1;
+        height1 = Math.max(1, height1 - 1);
+      }
+      DOM.setStyleAttribute(container1, "height", height1 + "px");
+      DOM.setStyleAttribute(container2, "height", height2 + "px");
+    }
+
+    private void onInstantaneousRun() {
+      UIObject.setVisible(container1, growing);
+      UIObject.setVisible(container2, !growing);
+      container1 = null;
+      container2 = null;
     }
   }
 

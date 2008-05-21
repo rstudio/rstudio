@@ -49,6 +49,11 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview, HasAnimation {
   /**
+   * The duration of the animation. 
+   */
+  private static final int ANIMATION_DURATION = 200;
+
+  /**
    * The type of animation to use when opening the popup.
    * 
    * <ul>
@@ -57,7 +62,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * hiding</li>
    * </ul>
    */
-  public static enum AnimationType {
+  static enum AnimationType {
     CENTER, ONE_WAY_CORNER
   }
 
@@ -80,13 +85,35 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
      */
     private boolean showing = false;
 
-    @Override
-    public void onCancel() {
-      onComplete();
+    /**
+     * Open or close the content. This method always called immediately after
+     * the PopupPanel showing state has changed, so we base the animation on the
+     * current state.
+     * 
+     * @param panel the panel to open or close
+     */
+    public void setOpen(final PopupPanel panel) {
+      // Immediately complete previous open/close animation
+      cancel();
+
+      // Determine if we need to animate
+      boolean animate = panel.isAnimationEnabled;
+      if (panel.animType == AnimationType.ONE_WAY_CORNER && !panel.showing) {
+        animate = false;
+      }
+
+      // Open the new item
+      showing = panel.showing;
+      curPanel = panel;
+      if (animate) {
+        run(ANIMATION_DURATION);
+      } else {
+        onInstantaneousRun();
+      }
     }
 
     @Override
-    public void onComplete() {
+    protected void onComplete() {
       if (!showing) {
         RootPanel.get().remove(curPanel);
         impl.onHide(curPanel.getElement());
@@ -96,27 +123,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       curPanel = null;
     }
 
-    public void onInstantaneousRun() {
-      if (showing) {
-        // Set the position attribute, and then attach to the DOM. Otherwise,
-        // the PopupPanel will appear to 'jump' from its static/relative
-        // position to its absolute position (issue #1231).
-        DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
-        if (curPanel.topPosition != -1) {
-          curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
-        }
-        RootPanel.get().add(curPanel);
-        impl.onShow(curPanel.getElement());
-      } else {
-        RootPanel.get().remove(curPanel);
-        impl.onHide(curPanel.getElement());
-      }
-      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
-      curPanel = null;
-    }
-
     @Override
-    public void onStart() {
+    protected void onStart() {
       // Attach to the page
       if (showing) {
         // Set the position attribute, and then attach to the DOM. Otherwise,
@@ -133,11 +141,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       offsetHeight = curPanel.getOffsetHeight();
       offsetWidth = curPanel.getOffsetWidth();
       DOM.setStyleAttribute(curPanel.getElement(), "overflow", "hidden");
-      onUpdate(0.0);
+      super.onStart();
     }
 
     @Override
-    public void onUpdate(double progress) {
+    protected void onUpdate(double progress) {
       if (!showing) {
         progress = 1.0 - progress;
       }
@@ -166,38 +174,30 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
 
     /**
-     * Open or close the content. This method always called immediately after
-     * the PopupPanel showing state has changed, so we base the animation on the
-     * current state.
-     * 
-     * @param panel the panel to open or close
-     */
-    public void setOpen(final PopupPanel panel) {
-      // Immediately complete previous open/close animation
-      cancel();
-
-      // Determine if we need to animate
-      boolean animate = panel.isAnimationEnabled;
-      if (panel.animType == AnimationType.ONE_WAY_CORNER && !panel.showing) {
-        animate = false;
-      }
-
-      // Open the new item
-      showing = panel.showing;
-      curPanel = panel;
-      if (animate) {
-        run(200);
-      } else {
-        onInstantaneousRun();
-      }
-    }
-
-    /**
      * @return a rect string
      */
     private String getRectString(int top, int right, int bottom, int left) {
       return "rect(" + top + "px, " + right + "px, " + bottom + "px, " + left
           + "px)";
+    }
+
+    private void onInstantaneousRun() {
+      if (showing) {
+        // Set the position attribute, and then attach to the DOM. Otherwise,
+        // the PopupPanel will appear to 'jump' from its static/relative
+        // position to its absolute position (issue #1231).
+        DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
+        if (curPanel.topPosition != -1) {
+          curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
+        }
+        RootPanel.get().add(curPanel);
+        impl.onShow(curPanel.getElement());
+      } else {
+        RootPanel.get().remove(curPanel);
+        impl.onHide(curPanel.getElement());
+      }
+      DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
+      curPanel = null;
     }
   }
 
@@ -658,15 +658,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Enable or disable animation of the {@link PopupPanel}.
-   * 
-   * @param type the type of animation to use
-   */
-  protected void setAnimationType(AnimationType type) {
-    animType = type;
-  }
-
-  /**
    * We control size by setting our child widget's size. However, if we don't
    * currently have a child, we record the size the user wanted so that when we
    * do get a child, we can set it correctly. Until size is explicitly cleared,
@@ -690,6 +681,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         w.setWidth(desiredWidth);
       }
     }
+  }
+
+  /**
+   * Enable or disable animation of the {@link PopupPanel}.
+   * 
+   * @param type the type of animation to use
+   */
+  void setAnimationType(AnimationType type) {
+    animType = type;
   }
 
   /**
