@@ -80,7 +80,7 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
     assertEquals("04.08.06", shortDateFormat);
 
     String fullTimeFormat = DateTimeFormat.getFullTimeFormat().format(date);
-    assertEquals("13:49 Uhr GMT" + tz, fullTimeFormat);
+    assertEquals("13:49:24 GMT" + tz, fullTimeFormat);
 
     String longTimeFormat = DateTimeFormat.getLongTimeFormat().format(date);
     assertEquals("13:49:24 GMT" + tz, longTimeFormat);
@@ -92,7 +92,7 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
     assertEquals("13:49", shortTimeFormat);
 
     String fullFormat = DateTimeFormat.getFullDateTimeFormat().format(date);
-    assertEquals("Freitag, 4. August 2006 13:49 Uhr GMT" + tz, fullFormat);
+    assertEquals("Freitag, 4. August 2006 13:49:24 GMT" + tz, fullFormat);
 
     String longFormat = DateTimeFormat.getLongDateTimeFormat().format(date);
     assertEquals("4. August 2006 13:49:24 GMT" + tz, longFormat);
