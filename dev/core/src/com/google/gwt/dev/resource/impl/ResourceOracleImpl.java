@@ -325,30 +325,32 @@ public class ResourceOracleImpl implements ResourceOracle {
         // A rerooted resource blocks any other resource at this path.
         continue;
       }
+      int hitCount = 0;
       for (PathPrefix pathPrefix : pathPrefixSet.values()) {
         if (pathPrefix.allows(path)) {
           assert (path.startsWith(pathPrefix.getPrefix()));
           if (pathPrefix.shouldReroot()) {
-            path = pathPrefix.getRerootedPath(path);
+            String rerootedPath = pathPrefix.getRerootedPath(path);
             // Try to reuse the same wrapper.
-            Resource exposed = exposedResourceMap.get(path);
+            Resource exposed = exposedResourceMap.get(rerootedPath);
             if (exposed instanceof ResourceWrapper) {
               ResourceWrapper exposedWrapper = (ResourceWrapper) exposed;
               if (exposedWrapper.resource == resource) {
-                externalMap.put(path, exposedWrapper);
+                externalMap.put(rerootedPath, exposedWrapper);
                 break;
               }
             }
             // Just create a new wrapper.
-            AbstractResource wrapper = new ResourceWrapper(path, resource);
-            externalMap.put(path, wrapper);
+            AbstractResource wrapper = new ResourceWrapper(rerootedPath,
+                resource);
+            externalMap.put(rerootedPath, wrapper);
           } else {
             externalMap.put(path, resource);
           }
-          break;
+          ++hitCount;
         }
       }
-      assert (externalMap.containsKey(path));
+      assert (hitCount > 0);
     }
     return externalMap;
   }
