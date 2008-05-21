@@ -19,6 +19,7 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.WindowTest;
+import com.google.gwt.user.client.ZzzTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.CaptionPanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
@@ -134,6 +135,7 @@ public class UISuite {
     suite.addTestSuite(WidgetIteratorsTest.class);
     suite.addTestSuite(WidgetOnLoadTest.class);
     suite.addTestSuite(WindowTest.class);
+    suite.addTestSuite(ZzzTest.class);
     suite.addTestSuite(XMLTest.class);
 
     return suite;
