@@ -68,6 +68,22 @@ class TypeHierarchyUtils {
     return Arrays.asList(types.toArray(new JClassType[0]));
   }
 
+  /**
+   * Returns the immediate subtypes of the erased class argument.
+   */
+  public static List<JClassType> getImmediateSubtypes(JClassType clazz) {
+    List<JClassType> immediateSubtypes = new ArrayList<JClassType>();
+    clazz = clazz.getErasedType();
+    for (JClassType subclass : clazz.getSubtypes()) {
+      if (subclass.getSuperclass() == clazz || clazz.isInterface() != null
+          && directlyImplementsInterface(subclass, clazz)) {
+        immediateSubtypes.add(subclass);
+      }
+    }
+
+    return immediateSubtypes;
+  }
+
   private static void addEdge(Map<JClassType, List<JClassType>> adjList,
       JClassType subclass, JClassType clazz) {
     List<JClassType> edges = adjList.get(subclass);
@@ -116,21 +132,6 @@ class TypeHierarchyUtils {
     }
 
     return false;
-  }
-
-  /**
-   * Returns the immediate subtypes of a given type.
-   */
-  private static List<JClassType> getImmediateSubtypes(JClassType clazz) {
-    List<JClassType> immediateSubtypes = new ArrayList<JClassType>();
-    for (JClassType subclass : clazz.getSubtypes()) {
-      if (subclass.getSuperclass() == clazz || clazz.isInterface() != null
-          && directlyImplementsInterface(subclass, clazz)) {
-        immediateSubtypes.add(subclass);
-      }
-    }
-
-    return immediateSubtypes;
   }
 
   /**

@@ -792,9 +792,6 @@ public class SerializableTypeOracleBuilder {
       isSpeculative = false;
     }
 
-    boolean isInstantiable = checkTypeInstantiableNoSubtypes(localLogger,
-        baseType, isSpeculative, path);
-
     JClassType[] typeArgs = NO_JCLASSES;
     JParameterizedType isParameterized = originalType.isParameterized();
     JGenericType baseAsGenericType = baseType.isGenericType();
@@ -837,90 +834,16 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
-    isInstantiable &= parametersOkay;
+    boolean isInstantiable = parametersOkay
+        && qualifiesForSerialization(localLogger, baseType, isSpeculative, path)
+        && checkFields(localLogger, baseType, isSpeculative, path);
 
     boolean anySubtypes = false;
-    if (parametersOkay) {
-      // Speculatively check all subtypes.
-      JClassType[] subtypes = baseType.getSubtypes();
-      if (subtypes.length > 0) {
-        TreeLogger subtypesLogger = localLogger.branch(TreeLogger.DEBUG,
-            "Analyzing subclasses:", null);
-
-        for (JClassType subtype : subtypes) {
-          TreeLogger subtypeLogger = subtypesLogger.branch(TreeLogger.DEBUG,
-              subtype.getParameterizedQualifiedSourceName(), null);
-          Path subtypePath = createSubtypePath(path, subtype, originalType);
-          boolean subInstantiable = checkTypeInstantiableNoSubtypes(
-              subtypeLogger, subtype, true, subtypePath);
-          if (!subInstantiable) {
-            // If the subtype is not instantiable do not check the arguments.
-            continue;
-          }
-
-          JGenericType genericSub = subtype.isGenericType();
-          if (genericSub != null) {
-            TreeLogger paramsLogger = subtypeLogger.branch(TreeLogger.DEBUG,
-                "Checking parameters of '"
-                    + genericSub.getParameterizedQualifiedSourceName() + "'");
-            Map<JTypeParameter, Set<JTypeParameter>> subParamsConstrainedBy = subParamsConstrainedBy(
-                baseType, genericSub);
-            for (int i = 0; i < genericSub.getTypeParameters().length; i++) {
-              JTypeParameter param = genericSub.getTypeParameters()[i];
-              TreeLogger paramLogger = paramsLogger.branch(TreeLogger.DEBUG,
-                  "Checking param '"
-                      + param.getParameterizedQualifiedSourceName() + "'");
-              Set<JTypeParameter> constBy = subParamsConstrainedBy.get(param);
-              if (constBy == null) {
-                subInstantiable &= checkTypeArgument(paramLogger, genericSub,
-                    i, param.getFirstBound(), true, path);
-              } else {
-                boolean paramOK = false;
-                for (JTypeParameter constrained : constBy) {
-                  paramOK |= checkTypeArgument(paramLogger, genericSub, i,
-                      typeArgs[constrained.getOrdinal()], true, path);
-                }
-                subInstantiable &= paramOK;
-              }
-            }
-          } else {
-            /*
-             * The subtype is not generic so it must be a concrete
-             * parameterization of the query type. If the query type is also a
-             * concrete parameterization then we should be able to exclude the
-             * subtype based on an assignability check. If the query type does
-             * contain type parameters then we assume that the subtype should be
-             * included. In order to be certain, we would need to perform a full
-             * unification between the query type and subtype.
-             */
-            if (isParameterized != null) {
-              HashSet<JTypeParameter> typeParamsInQueryType = new HashSet<JTypeParameter>();
-              recordTypeParametersIn(isParameterized, typeParamsInQueryType);
-
-              if (typeParamsInQueryType.isEmpty()) {
-                if (!isParameterized.isAssignableFrom(subtype)) {
-                  subtypeLogger.log(TreeLogger.DEBUG, "Excluding type '"
-                      + subtype.getParameterizedQualifiedSourceName()
-                      + "' because it is not assignable to '"
-                      + isParameterized.getParameterizedQualifiedSourceName()
-                      + "'");
-                  subInstantiable = false;
-                }
-              }
-            }
-          }
-
-          if (subInstantiable) {
-            if (instSubtypes != null) {
-              instSubtypes.add(subtype);
-            }
-
-            // TODO: This is suspect.
-            getTypeInfoComputed(subtype, path).setInstantiable(true);
-            anySubtypes = true;
-          }
-        }
-      }
+    if (parametersOkay && baseType.getSubtypes().length > 0) {
+      TreeLogger subtypesLogger = localLogger.branch(TreeLogger.DEBUG,
+          "Analyzing subclasses:", null);
+      anySubtypes = checkSubtypes(subtypesLogger, originalType, baseType,
+          instSubtypes, typeArgs, path, baseType, false, isInstantiable);
     }
 
     anySubtypes |= isInstantiable;
@@ -937,16 +860,6 @@ public class SerializableTypeOracleBuilder {
     }
 
     return tic.hasInstantiableSubtypes();
-  }
-
-  final boolean checkTypeInstantiableNoSubtypes(TreeLogger logger,
-      JClassType type, boolean isSpeculative, Path path) {
-    if (qualifiesForSerialization(logger, type, isSpeculative, path)) {
-      return type.isEnum() != null
-          || checkFields(logger, type, isSpeculative, path);
-    }
-
-    return false;
   }
 
   int getTypeParameterExposure(JGenericType type, int index) {
@@ -1127,31 +1040,22 @@ public class SerializableTypeOracleBuilder {
     return succeeded;
   }
 
-  private boolean checkFields(TreeLogger logger, JClassType classOrInterface,
-      boolean isSpeculative, Path parent) {
-    TypeInfoComputed typeInfo = getTypeInfoComputed(classOrInterface, parent);
+  /**
+   * Returns <code>true</code> if the declared fields of this type are all
+   * instantiable. As a side-effect it fills in {@link TypeInfoComputed} for all
+   * necessary types.
+   */
+  private boolean checkDeclaredFields(TreeLogger logger,
+      TypeInfoComputed typeInfo, boolean isSpeculative, Path parent) {
 
-    // Check all super type fields first (recursively).
-    JClassType superType = classOrInterface.getSuperclass();
-    if (superType != null
-        && getTypeInfoComputed(superType, parent).isDeclaredSerializable()) {
-      boolean superTypeOk = checkFields(logger, superType, isSpeculative,
-          parent);
-      /*
-       * If my super type did not check out, then I am not instantiable and we
-       * should error out... UNLESS I am *directly* serializable myself, in
-       * which case it's ok for me to be the root of a new instantiable
-       * hierarchy.
-       */
-      if (!superTypeOk && !typeInfo.isDirectlySerializable()) {
-        return false;
-      }
+    JClassType classOrInterface = typeInfo.getType();
+    if (classOrInterface.isEnum() != null) {
+      // The fields of an enum are never serialized; they are always okay.
+      return true;
     }
 
-    if (typeInfo.isManuallySerializable()) {
-      // All fields on a manual serializable are considered speculative.
-      isSpeculative = true;
-    }
+    // All fields on a manual serializable are considered speculative.
+    isSpeculative |= typeInfo.isManuallySerializable();
 
     boolean allSucceeded = true;
     JField[] fields = classOrInterface.getFields();
@@ -1187,7 +1091,156 @@ public class SerializableTypeOracleBuilder {
     if (succeeded) {
       getTypeInfoComputed(classOrInterface, parent).setFieldSerializable();
     }
+
     return succeeded;
+  }
+
+  private boolean checkFields(TreeLogger logger, JClassType classOrInterface,
+      boolean isSpeculative, Path parent) {
+    TypeInfoComputed typeInfo = getTypeInfoComputed(classOrInterface, parent);
+
+    // Check all super type fields first (recursively).
+    JClassType superType = classOrInterface.getSuperclass();
+    if (superType != null
+        && getTypeInfoComputed(superType, parent).isDeclaredSerializable()) {
+      boolean superTypeOk = checkFields(logger, superType, isSpeculative,
+          parent);
+      /*
+       * If my super type did not check out, then I am not instantiable and we
+       * should error out... UNLESS I am *directly* serializable myself, in
+       * which case it's ok for me to be the root of a new instantiable
+       * hierarchy.
+       */
+      if (!superTypeOk && !typeInfo.isDirectlySerializable()) {
+        return false;
+      }
+    }
+
+    return checkDeclaredFields(logger, typeInfo, isSpeculative, parent);
+  }
+
+  /**
+   * Returns <code>true</code> if this type or one of its subtypes is
+   * instantiable relative to a known base type.
+   */
+  private boolean checkSubtypes(TreeLogger localLogger,
+      JClassType originalType, JRealClassType baseType,
+      Set<JClassType> instSubtypes, JClassType[] typeArgs, final Path path,
+      JClassType currentSubtype, boolean checkSuperFields,
+      boolean superIsFieldSerializable) {
+    assert (currentSubtype instanceof JRealClassType || currentSubtype.isGenericType() != null);
+
+    Path subtypePath = createSubtypePath(path, currentSubtype, originalType);
+    TypeInfoComputed typeInfo = getTypeInfoComputed(currentSubtype, subtypePath);
+
+    TreeLogger subtypeLogger = localLogger.branch(TreeLogger.DEBUG,
+        currentSubtype.getParameterizedQualifiedSourceName(), null);
+
+    /*
+     * If super does not qualify and I am not directly serializable then I can't
+     * be serializable.
+     */
+    boolean subInstantiable = qualifiesForSerialization(subtypeLogger,
+        currentSubtype, true, subtypePath);
+    if (!superIsFieldSerializable) {
+      subInstantiable &= typeInfo.isDirectlySerializable();
+    }
+
+    if (subInstantiable) {
+      if (checkSuperFields) {
+        subInstantiable &= checkFields(subtypeLogger, typeInfo.getType(), true,
+            subtypePath);
+      } else {
+        subInstantiable &= checkDeclaredFields(subtypeLogger, typeInfo, true,
+            subtypePath);
+      }
+    }
+
+    boolean anySubtypes = false;
+    List<JClassType> immediateSubtypes = TypeHierarchyUtils.getImmediateSubtypes(currentSubtype);
+    for (JClassType immediateSubtype : immediateSubtypes) {
+      if (immediateSubtype.isRawType() != null) {
+        immediateSubtype = immediateSubtype.isRawType().getBaseType();
+      }
+
+      checkSuperFields = currentSubtype.isInterface() != null
+          && immediateSubtype.isClass() != null;
+      anySubtypes |= checkSubtypes(localLogger, originalType, baseType,
+          instSubtypes, typeArgs, path, immediateSubtype, checkSuperFields,
+          subInstantiable);
+    }
+
+    if (!subInstantiable) {
+      // If the subtype is not instantiable do not check the arguments.
+      return anySubtypes;
+    }
+
+    if (currentSubtype == baseType) {
+      return anySubtypes;
+    }
+
+    JGenericType genericSub = currentSubtype.isGenericType();
+    if (genericSub != null) {
+      TreeLogger paramsLogger = subtypeLogger.branch(TreeLogger.DEBUG,
+          "Checking parameters of '"
+              + genericSub.getParameterizedQualifiedSourceName() + "'");
+      Map<JTypeParameter, Set<JTypeParameter>> subParamsConstrainedBy = subParamsConstrainedBy(
+          baseType, genericSub);
+      for (int i = 0; i < genericSub.getTypeParameters().length; i++) {
+        JTypeParameter param = genericSub.getTypeParameters()[i];
+        TreeLogger paramLogger = paramsLogger.branch(TreeLogger.DEBUG,
+            "Checking param '" + param.getParameterizedQualifiedSourceName()
+                + "'");
+        Set<JTypeParameter> constBy = subParamsConstrainedBy.get(param);
+        if (constBy == null) {
+          subInstantiable &= checkTypeArgument(paramLogger, genericSub, i,
+              param.getFirstBound(), true, path);
+        } else {
+          boolean paramOK = false;
+          for (JTypeParameter constrained : constBy) {
+            paramOK |= checkTypeArgument(paramLogger, genericSub, i,
+                typeArgs[constrained.getOrdinal()], true, path);
+          }
+          subInstantiable &= paramOK;
+        }
+      }
+    } else {
+      JParameterizedType isParameterized = originalType.isParameterized();
+
+      /*
+       * The subtype is not generic so it must be a concrete parameterization of
+       * the query type. If the query type is also a concrete parameterization
+       * then we should be able to exclude the subtype based on an assignability
+       * check. If the query type does contain type parameters then we assume
+       * that the subtype should be included. In order to be certain, we would
+       * need to perform a full unification between the query type and subtype.
+       */
+      if (isParameterized != null) {
+        HashSet<JTypeParameter> typeParamsInQueryType = new HashSet<JTypeParameter>();
+        recordTypeParametersIn(isParameterized, typeParamsInQueryType);
+
+        if (typeParamsInQueryType.isEmpty()) {
+          if (!isParameterized.isAssignableFrom(currentSubtype)) {
+            subtypeLogger.log(TreeLogger.DEBUG, "Excluding type '"
+                + currentSubtype.getParameterizedQualifiedSourceName()
+                + "' because it is not assignable to '"
+                + isParameterized.getParameterizedQualifiedSourceName() + "'");
+            subInstantiable = false;
+          }
+        }
+      }
+    }
+
+    if (subInstantiable) {
+      if (instSubtypes != null) {
+        instSubtypes.add(currentSubtype);
+      }
+
+      typeInfo.setInstantiable(true);
+      anySubtypes = true;
+    }
+
+    return anySubtypes;
   }
 
   /**
