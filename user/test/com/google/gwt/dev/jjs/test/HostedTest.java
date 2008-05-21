@@ -170,15 +170,6 @@ public class HostedTest extends GWTTestCase {
     return @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;) === @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
   }-*/;
 
-  private static native int passThroughInt(int val) /*-{
-    return val;
-  }-*/;
-
-  @UnsafeNativeLong
-  private static native long passThroughLong(long val) /*-{
-    return val;
-  }-*/;
-
   private static native String sFooCall(String s) /*-{
     var func = @com.google.gwt.dev.jjs.test.HostedTest::sFoo(Ljava/lang/String;);
     return func.call(null, s);
@@ -214,11 +205,6 @@ public class HostedTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
-  }
-
-  public void test32BitInt() {
-    assertEquals(Integer.MAX_VALUE, passThroughInt(Integer.MAX_VALUE));
-    assertEquals(Integer.MIN_VALUE, passThroughInt(Integer.MIN_VALUE));
   }
 
   public void testAssertionsAlwaysOn() {
@@ -378,6 +364,226 @@ public class HostedTest extends GWTTestCase {
   }
 
   /**
+   * Tests passing primitive type arguments to JSNI methods. See issue 2426.
+   */
+  public void testJsniParamUnboxedPrimitives() {
+    class Inner {
+      native boolean nativeJsniParamUnboxedBoolean(boolean param) /*-{
+        return (param == true);        
+      }-*/;
+
+      native boolean nativeJsniParamUnboxedByte(byte param) /*-{
+        return (param == 99);
+      }-*/;
+
+      native boolean nativeJsniParamUnboxedCharacter(char param) /*-{
+        return (param == 77);
+      }-*/;
+
+      native boolean nativeJsniParamUnboxedDouble(double param) /*-{
+        return (param == 1234.56789);
+      }-*/;
+
+      native boolean nativeJsniParamUnboxedFloat(float param) /*-{
+        return (param == 1234.5);
+      }-*/;
+
+      native boolean nativeJsniParamUnboxedInteger(int param) /*-{
+        return (param == 9876543);
+      }-*/;
+
+      native boolean nativeJsniParamUnboxedShort(short param) /*-{
+        return (param == 1234);
+      }-*/;
+    }
+    Inner inner = new Inner();
+
+    assertTrue("Unboxed boolean", inner.nativeJsniParamUnboxedBoolean(true));
+    assertTrue("Unboxed byte", inner.nativeJsniParamUnboxedByte((byte) 99));
+    assertTrue("Unboxed char", inner.nativeJsniParamUnboxedCharacter((char) 77));
+    assertTrue("Unboxed double", inner.nativeJsniParamUnboxedDouble(1234.56789));
+    assertTrue("Unboxed float",
+        inner.nativeJsniParamUnboxedFloat((float) 1234.5));
+    assertTrue("Unboxed int", inner.nativeJsniParamUnboxedInteger(9876543));
+    // long type intentionally omitted - it is emulated and not usable w/in
+    // JavaScript.
+    assertTrue("Unboxed short", inner.nativeJsniParamUnboxedShort((short) 1234));
+  }
+
+  /**
+   * More test cases resulting from issue 2426 to show that primitives can be
+   * passed through JSNI methods unmolested.
+   */
+  public void testJsniPassthroughPrimitives() {
+    class Inner {
+      native boolean nativeBoolean(boolean param) /*-{
+         return param;        
+      }-*/;
+
+      native byte nativeByte(byte param) /*-{
+        return param;
+      }-*/;
+
+      native char nativeCharacter(char param) /*-{
+        return param;
+      }-*/;
+
+      native double nativeDouble(double param) /*-{
+        return param;
+      }-*/;
+
+      native float nativeFloat(float param) /*-{
+        return param;
+      }-*/;
+
+      native int nativeInteger(int param) /*-{
+        return param;
+      }-*/;
+
+      @UnsafeNativeLong
+      native long nativeLong(long param) /*-{
+        return param;
+      }-*/;
+
+      native short nativeShort(short param) /*-{
+        return param;
+      }-*/;
+    }
+    Inner inner = new Inner();
+
+    assertEquals("nativeBoolean", inner.nativeBoolean(true), true);
+    assertEquals("nativeBoolean", inner.nativeBoolean(false), false);
+
+    assertEquals("nativeByte", inner.nativeByte((byte) 0), (byte) 0);
+    assertEquals("nativeByte", inner.nativeByte((byte) 1), (byte) 1);
+    assertEquals("nativeByte", inner.nativeByte((byte) -1), (byte) -1);
+    assertEquals("nativeByte", inner.nativeByte((byte) 127), (byte) 127);
+    assertEquals("nativeByte", inner.nativeByte((byte) -127), (byte) -127);
+    assertEquals("nativeByte", inner.nativeByte(Byte.MAX_VALUE), Byte.MAX_VALUE);
+    assertEquals("nativeByte", inner.nativeByte(Byte.MIN_VALUE), Byte.MIN_VALUE);    
+
+    assertEquals("nativeCharacter", inner.nativeCharacter((char) 0), (char) 0);
+    assertEquals("nativeCharacter", inner.nativeCharacter((char) 1), (char) 1);
+    assertEquals("nativeCharacter", inner.nativeCharacter((char) -1), (char) -1);
+    assertEquals("nativeCharacter", inner.nativeCharacter((char) 32767),
+        (char) 32767);
+    assertEquals("nativeCharacter", inner.nativeCharacter((char) -32767),
+        (char) -32767);
+    assertEquals("nativeCharacter", inner.nativeCharacter(Character.MAX_VALUE),
+        Character.MAX_VALUE);
+    assertEquals("nativeCharacter", inner.nativeCharacter(Character.MIN_VALUE),
+        Character.MIN_VALUE);    
+
+    assertEquals("nativeDouble", inner.nativeDouble(0.0), 0.0);
+    assertEquals("nativeDouble", inner.nativeDouble(1.0), 1.0);
+    assertEquals("nativeDouble", inner.nativeDouble(-1.0), -1.0);
+    assertEquals("nativeDouble", inner.nativeDouble(100000000000.0),
+        100000000000.0);
+    assertEquals("nativeDouble", inner.nativeDouble(-100000000000.0),
+        -100000000000.0);
+    assertEquals("nativeDouble MAX", inner.nativeDouble(Double.MAX_VALUE),
+        Double.MAX_VALUE);
+    assertEquals("nativeDouble MIN", inner.nativeDouble(Double.MIN_VALUE),
+        Double.MIN_VALUE);
+    
+    assertEquals("nativeFloat", inner.nativeFloat((float) 0.0), (float) 0.0);
+    assertEquals("nativeFloat", inner.nativeFloat((float) 1.0), (float) 1.0);
+    assertEquals("nativeFloat", inner.nativeFloat((float) -1.0), (float) -1.0);
+    assertEquals("nativeFloat", inner.nativeFloat((float) 1000000.0),
+        (float) 1000000.0);
+    assertEquals("nativeFloat", inner.nativeFloat((float) -1000000.0),
+        (float) -1000000.0);
+    assertEquals("nativeFloat", inner.nativeFloat(Float.MAX_VALUE),
+        Float.MAX_VALUE);
+    assertEquals("nativeFloat", inner.nativeFloat(Float.MIN_VALUE),
+        Float.MIN_VALUE);
+    
+    assertEquals("nativeInteger", inner.nativeInteger(0), 0);
+    assertEquals("nativeInteger", inner.nativeInteger(1), 1);
+    assertEquals("nativeInteger", inner.nativeInteger(-1), -1);
+    assertEquals("nativeInteger", inner.nativeInteger(2147483647), 2147483647);
+    assertEquals("nativeInteger", inner.nativeInteger(-2147483647), -2147483647);
+    assertEquals("nativeInteger MAX", inner.nativeInteger(Integer.MAX_VALUE), 
+        Integer.MAX_VALUE);
+    assertEquals("nativeInteger MIN", inner.nativeInteger(Integer.MIN_VALUE), 
+        Integer.MIN_VALUE);
+    
+    assertEquals("nativeLong", inner.nativeLong(0L), 0L);
+    assertEquals("nativeLong", inner.nativeLong(1L), 1L);
+    assertEquals("nativeLong", inner.nativeLong(-1L), -1L);
+    assertEquals("nativeLong", inner.nativeLong(9223372036854775807L),
+        9223372036854775807L);
+    assertEquals("nativeLong", inner.nativeLong(-9223372036854775807L),
+        -9223372036854775807L);
+    assertEquals("nativeLong", inner.nativeLong(Long.MAX_VALUE), 
+        Long.MAX_VALUE);
+    assertEquals("nativeLong", inner.nativeLong(Long.MIN_VALUE), 
+        Long.MIN_VALUE);    
+
+    assertEquals("nativeShort", inner.nativeShort((short) 0), (short) 0);
+    assertEquals("nativeShort", inner.nativeShort((short) 1), (short) 1);
+    assertEquals("nativeShort", inner.nativeShort((short) -1), (short) -1);
+    assertEquals("nativeShort", inner.nativeShort((short) 32767), (short) 32767);
+    assertEquals("nativeShort", inner.nativeShort((short) -32767),
+        (short) -32767);
+    assertEquals("nativeShort MAX", inner.nativeShort(Short.MAX_VALUE), 
+        Short.MAX_VALUE);
+    assertEquals("nativeShort MIN", inner.nativeLong(Short.MIN_VALUE), 
+        Short.MIN_VALUE);        
+  }
+
+  /**
+   * Tests returning primitive type arguments from JSNI methods. See issue 2426.
+   */
+  public void testJsniReturnUnboxedPrimitives() {
+    class Inner {
+      native boolean nativeJsniReturnUnboxedBoolean() /*-{
+        return true;        
+      }-*/;
+
+      native byte nativeJsniReturnUnboxedByte() /*-{
+        return 99;
+      }-*/;
+
+      native char nativeJsniReturnUnboxedCharacter() /*-{
+        return 77;
+      }-*/;
+
+      native double nativeJsniReturnUnboxedDouble() /*-{
+        return 1234.56789;
+      }-*/;
+
+      native float nativeJsniReturnUnboxedFloat() /*-{
+        return 1234.5;
+      }-*/;
+
+      native int nativeJsniReturnUnboxedInteger() /*-{
+        return 9876543;
+      }-*/;
+
+      native short nativeJsniReturnUnboxedShort() /*-{
+        return 1234;
+      }-*/;
+    }
+    Inner inner = new Inner();
+
+    assertTrue("Unboxed boolean",
+        inner.nativeJsniReturnUnboxedBoolean() == true);
+    assertTrue("Unboxed byte", inner.nativeJsniReturnUnboxedByte() == (byte) 99);
+    assertTrue("Unboxed char",
+        inner.nativeJsniReturnUnboxedCharacter() == (char) 77);
+    assertTrue("Unboxed double",
+        inner.nativeJsniReturnUnboxedDouble() == 1234.56789);
+    assertTrue("Unboxed float",
+        inner.nativeJsniReturnUnboxedFloat() == (float) 1234.5);
+    assertTrue("Unboxed int", inner.nativeJsniReturnUnboxedInteger() == 9876543);
+    // long type intentionally omitted - it is emulated and not usable w/in
+    // JavaScript.
+    assertTrue("Unboxed short",
+        inner.nativeJsniReturnUnboxedShort() == (short) 1234);
+  }
+
+  /**
    * Tests that using the JavaScript toString method results in a call to the
    * java.lang.Object::toString() method.
    */
@@ -433,12 +639,6 @@ public class HostedTest extends GWTTestCase {
     assertEquals(fo.a(), "oblah");
     assertEquals(fo.b(), "oblah");
     assertEquals(fo.c(), "oblah");
-  }
-
-  public void testLongMarshalling() {
-    // a big number that cannot accurately be represented as a double
-    long l = 1234567890123456789L;
-    assertEquals(l, passThroughLong(l));
   }
 
   /*
