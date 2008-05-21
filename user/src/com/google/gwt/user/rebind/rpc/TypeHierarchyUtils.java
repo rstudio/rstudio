@@ -29,7 +29,7 @@ import java.util.Set;
 import java.util.Stack;
 
 /**
- * Collection of utility methods for dealing with type hierachies.
+ * Collection of utility methods for dealing with type hierarchies.
  */
 class TypeHierarchyUtils {
 
@@ -62,7 +62,7 @@ class TypeHierarchyUtils {
     Set<JClassType> types = new HashSet<JClassType>();
 
     for (JClassType type : leaves) {
-      TypeHierarchyUtils.depthFirstSearch(types, adjList, type.getErasedType());
+      depthFirstSearch(types, adjList, type.getErasedType());
     }
 
     return Arrays.asList(types.toArray(new JClassType[0]));
@@ -119,6 +119,21 @@ class TypeHierarchyUtils {
   }
 
   /**
+   * Returns the immediate subtypes of a given type.
+   */
+  private static List<JClassType> getImmediateSubtypes(JClassType clazz) {
+    List<JClassType> immediateSubtypes = new ArrayList<JClassType>();
+    for (JClassType subclass : clazz.getSubtypes()) {
+      if (subclass.getSuperclass() == clazz || clazz.isInterface() != null
+          && directlyImplementsInterface(subclass, clazz)) {
+        immediateSubtypes.add(subclass);
+      }
+    }
+
+    return immediateSubtypes;
+  }
+
+  /**
    * Given a root type return an adjacency list that is the inverted type
    * hierarchy.
    */
@@ -130,25 +145,16 @@ class TypeHierarchyUtils {
     queue.push(root);
     while (!queue.isEmpty()) {
       JClassType clazz = queue.pop();
-      JClassType[] subclasses = clazz.getSubtypes();
-
       if (seen.contains(clazz)) {
         continue;
       }
       seen.add(clazz);
 
-      for (JClassType subclass : subclasses) {
-        if (clazz.isInterface() != null) {
-          if (TypeHierarchyUtils.directlyImplementsInterface(subclass, clazz)) {
-            TypeHierarchyUtils.addEdge(adjList, subclass, clazz);
-            queue.push(subclass);
-          }
-        } else {
-          if (subclass.getSuperclass() == clazz) {
-            TypeHierarchyUtils.addEdge(adjList, subclass, clazz);
-            queue.push(subclass);
-          }
-        }
+      List<JClassType> immediateSubtypes = getImmediateSubtypes(clazz);
+      for (JClassType immediateSubtype : immediateSubtypes) {
+        // Add an edge from the immediate subtype to the supertype
+        addEdge(adjList, immediateSubtype, clazz);
+        queue.push(immediateSubtype);
       }
     }
 
