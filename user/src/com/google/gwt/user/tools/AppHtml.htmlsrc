@@ -1,6 +1,6 @@
 
-<!-- <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" -->
-<!-- "http://www.w3.org/TR/html4/loose.dtd">                        -->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" 
+"http://www.w3.org/TR/html4/loose.dtd">
 
 <!-- The HTML 4.01 Transitional DOCTYPE declaration-->
 <!-- above set at the top of the file will set     -->
@@ -17,18 +17,7 @@
     <!--                                           -->
     <!-- Any title is fine                         -->
     <!--                                           -->
-    <title>Wrapper HTML for @className</title>
-
-    <!--                                           -->
-    <!-- Use normal html, such as style            -->
-    <!--                                           -->
-    <style type="text/css">
-      body,td,a,div,.p{font-family:arial,sans-serif}
-      div,td{color:#000000}
-      a:link,.w,.w a:link{color:#0000cc}
-      a:visited{color:#551a8b}
-      a:active{color:#ff0000}
-    </style>
+    <title>@className</title>
     
     <!--                                           -->
     <!-- This script loads your compiled module.   -->
@@ -48,19 +37,5 @@
     <!-- OPTIONAL: include this if you want history support -->
     <iframe src="javascript:''" id="__gwt_historyFrame" tabIndex='-1' style="position:absolute;width:0;height:0;border:0"></iframe>
 
-    <h1>@className</h1>
-
-    <p>
-      This is an example of a host page for the @className application. 
-      You can attach a Web Toolkit module to any HTML page you like, 
-      making it easy to add bits of AJAX functionality to existing pages 
-      without starting from scratch.
-    </p>
-    <table>
-	<tr>
-	  <td id="slot1"></td>
-	  <td id="slot2"></td>
-	</tr>
-    </table>
   </body>
 </html>
