@@ -114,7 +114,7 @@ public class JUnitShell extends GWTShell {
    * The amount of time to wait for all clients to have contacted the server and
    * begun running the test.
    */
-  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 1800000;
+  private static final int TEST_BEGIN_TIMEOUT_MILLIS = 180000;
 
   /**
    * Singleton object for hosting unit tests. All test case instances executed
