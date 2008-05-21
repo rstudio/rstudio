@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,28 +15,82 @@
  */
 package com.google.gwt.user.tools;
 
+import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.user.tools.util.ArgHandlerAddToClassPath;
 import com.google.gwt.user.tools.util.ArgHandlerEclipse;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
+import com.google.gwt.user.tools.util.CreatorUtilities;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
+import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
- * Creates a GWT application.
- * 
+ * Creates a GWT application skeleton.
  */
 public final class ApplicationCreator extends ToolBase {
 
-  /**
+  /*
    * Arguments for the application creator.
-   * 
+   */
+
+  /**
+   * Add an extra module injection into the top level module file.
+   */
+  protected class ArgHandlerAddModule extends ArgHandlerString {
+    private List<String> extraModuleList = new ArrayList<String>();
+
+    public List<String> getExtraModuleList() {
+      return extraModuleList;
+    }
+
+    @Override
+    public String getPurpose() {
+      return "Adds extra GWT modules to be inherited.";
+    }
+
+    @Override
+    public String getTag() {
+      return "-addModule";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"module"};
+    }
+
+    @Override
+    public boolean setString(String str) {
+      // Parse out a comma separated list
+      StringTokenizer st = new StringTokenizer(str, ",");
+      while (st.hasMoreTokens()) {
+        String module = st.nextToken();
+
+        // Check className to see that it is a period separated string of words.
+        if (!module.matches("[\\w\\$]+(\\.[\\w\\$]+)+")) {
+          System.err.println("'" + module
+              + "' does not appear to be a valid fully-qualified module name");
+          return false;
+        }
+        extraModuleList.add(module);
+      }
+
+      return true;
+    }
+  }
+
+  /**
+   * Specify the top level class name of the application to create.
    */
   protected class ArgHandlerAppClass extends ArgHandlerExtra {
 
@@ -55,7 +109,6 @@ public final class ApplicationCreator extends ToolBase {
       }
 
       // Check out the class name.
-      //
       if (arg.indexOf('$') != -1) {
         System.err.println("'" + arg
             + "': This version of the tool does not support nested classes");
@@ -119,13 +172,38 @@ public final class ApplicationCreator extends ToolBase {
    * @throws IOException
    */
   static void createApplication(String fullClassName, File outDir,
-      String eclipse, boolean overwrite, boolean ignore) throws IOException {
+      String eclipse, boolean overwrite, boolean ignore)
+      throws IOException {
+    createApplication(fullClassName, outDir, eclipse, overwrite, ignore, null, null);
+  }
+  
+  /**
+   * @param fullClassName Name of the fully-qualified Java class to create as an
+   *          Application.
+   * @param outDir Where to put the output files
+   * @param eclipse The name of a project to attach a .launch config to
+   * @param overwrite Overwrite an existing files if they exist.
+   * @param ignore Ignore existing files if they exist.
+   * @param extraClassPaths A list of paths to append to the class path for
+   *          launch configs.
+   * @param extraModules A list of GWT modules to add 'inherits' tags for.
+   * @throws IOException
+   */
+  static void createApplication(String fullClassName, File outDir,
+      String eclipse, boolean overwrite, boolean ignore,
+      List<String> extraClassPaths, List<String> extraModules)
+      throws IOException {
 
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
     String gwtDevPath = installPath + '/' + Utility.getDevJarName();
 
+    // Validate the arguments for extra class path entries and modules.
+    if (!CreatorUtilities.validatePathsAndModules(gwtUserPath, extraClassPaths,
+        extraModules)) {
+      return;
+    }
     // Figure out what platform we're on
     // 
     boolean isWindows = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1).indexOf(
@@ -184,11 +262,18 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@compileClass", "com.google.gwt.dev.GWTCompiler");
     replacements.put("@startupUrl", startupUrl);
     replacements.put("@vmargs", isMacOsX ? "-XstartOnFirstThread" : "");
+    replacements.put("@eclipseExtraLaunchPaths",
+        CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
+    replacements.put("@extraModuleInherits",
+        createExtraModuleInherits(extraModules));
+    replacements.put("@extraClassPathsColon", CreatorUtilities.appendPaths(":",
+        extraClassPaths));
+    replacements.put("@extraClassPathsSemicolon", CreatorUtilities.appendPaths(";", extraClassPaths));
 
     {
       // Create the module
       File moduleXML = Utility.createNormalFile(basePackageDir, className
-          + ".gwt.xml", overwrite, ignore);
+          + ModuleDefLoader.GWT_MODULE_XML_SUFFIX, overwrite, ignore);
       if (moduleXML != null) {
         String out = Utility.getFileFromClassPath(PACKAGE_PATH
             + "Module.gwt.xmlsrc");
@@ -287,9 +372,25 @@ public final class ApplicationCreator extends ToolBase {
     }
   }
 
+  private static String createExtraModuleInherits(List<String> modules) {
+    if (modules == null) {
+      return "";
+    }
+    // Create an <inherits> tag in the gwt.xml file for each extra module
+    StringBuilder buf = new StringBuilder();
+    for (String module : modules) {
+      buf.append("      <inherits name=\"");
+      buf.append(module);
+      buf.append("\" />\n");
+    }
+    return buf.toString();
+  }
+
+  private ArgHandlerAddToClassPath classPathHandler = new ArgHandlerAddToClassPath();
   private String eclipse = null;
   private String fullClassName = null;
   private boolean ignore = false;
+  private ArgHandlerAddModule moduleHandler = new ArgHandlerAddModule();
   private File outDir;
   private boolean overwrite = false;
 
@@ -340,11 +441,15 @@ public final class ApplicationCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerAppClass());
+    registerHandler(classPathHandler);
+    registerHandler(moduleHandler);
   }
 
   protected boolean run() {
     try {
-      createApplication(fullClassName, outDir, eclipse, overwrite, ignore);
+      createApplication(fullClassName, outDir, eclipse, overwrite, ignore,
+          classPathHandler.getExtraClassPathList(),
+          moduleHandler.getExtraModuleList());
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

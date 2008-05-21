@@ -1,1 +1,1 @@
-@java -Xmx256M -cp "%~dp0\src;%~dp0\bin;@gwtUserPath;@gwtDevPath" @shellClass -out "%~dp0\www" %* @startupUrl
+@java -Xmx256M -cp "%~dp0\src;%~dp0\bin;@gwtUserPath;@gwtDevPath@extraClassPathsSemicolon" @shellClass -out "%~dp0\www" %* @startupUrl

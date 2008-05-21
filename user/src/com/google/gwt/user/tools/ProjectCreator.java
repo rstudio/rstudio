@@ -15,17 +15,21 @@
  */
 package com.google.gwt.user.tools;
 
+import com.google.gwt.user.tools.util.ArgHandlerAddToClassPath;
 import com.google.gwt.user.tools.util.ArgHandlerEclipse;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
+import com.google.gwt.user.tools.util.CreatorUtilities;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -53,6 +57,8 @@ public final class ProjectCreator extends ToolBase {
   }
 
   /**
+   * Create a set of project files.
+   * 
    * @param eclipse The name of project to create.
    * @param ant The name of an ant file to create.
    * @param outDir The directory to write into.
@@ -62,14 +68,37 @@ public final class ProjectCreator extends ToolBase {
    */
   static void createProject(String eclipse, String ant, File outDir,
       boolean overwrite, boolean ignore) throws IOException {
+    createProject(eclipse, ant, outDir, overwrite, ignore, null);
+  }
+
+  /**
+   * Create a set of project files.
+   * 
+   * @param eclipse The name of project to create.
+   * @param ant The name of an ant file to create.
+   * @param outDir The directory to write into.
+   * @param overwrite Overwrite an existing files if they exist.
+   * @param ignore Ignore existing files if they exist.
+   * @param extraClassPaths class path entries passed on the command line
+   * @throws IOException
+   */
+  static void createProject(String eclipse, String ant, File outDir,
+      boolean overwrite, boolean ignore, List<String> extraClassPaths)
+      throws IOException {
 
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
 
     // Create a map of replacements.
-    //
     Map<String, String> replacements = new HashMap<String, String>();
-    replacements.put("@gwtUserPath", installPath + '/' + "gwt-user.jar");
+    String userJarPath = installPath + '/' + "gwt-user.jar";
+    replacements.put("@gwtUserPath", userJarPath);
+
+    // Check to see that the passed extra path/module arguments are valid.
+    if (!CreatorUtilities.validatePathsAndModules(userJarPath, extraClassPaths,
+        null)) {
+      return;
+    }
 
     Utility.getDirectory(outDir, "src", true);
     Utility.getDirectory(outDir, "test", true);
@@ -77,6 +106,16 @@ public final class ProjectCreator extends ToolBase {
     if (ant != null) {
       // Create an ant build file
       replacements.put("@projectName", ant);
+
+      // Build the list of extra paths
+      StringBuilder buf = new StringBuilder();
+      if (extraClassPaths != null) {
+        for (String path : extraClassPaths) {
+          buf.append("    <pathelement path=\"" + path + "\"/>");
+        }
+      }
+      replacements.put("@extraAntPathElements", buf.toString());
+
       File antXML = Utility.createNormalFile(outDir, ant + ".ant.xml",
           overwrite, ignore);
       if (antXML != null) {
@@ -96,6 +135,35 @@ public final class ProjectCreator extends ToolBase {
         Utility.writeTemplateFile(dotProject, out, replacements);
       }
 
+      StringBuilder classpathEntries = new StringBuilder();
+      if (extraClassPaths != null) {
+        for (String path : extraClassPaths) {
+          File f = new File(path);
+
+          if (!f.exists()) {
+            throw new FileNotFoundException("extraClassPath: " + path
+                + " must be present before .launch file can be created.");
+          }
+          // Handle both .jar files and paths
+        String kindString;
+          if (f.isDirectory()) {
+            kindString = "output";
+          } else if (path.endsWith(".jar")) {
+            kindString = "lib";
+          } else {
+            throw new RuntimeException("Don't know how to handle path: " + path
+                + ". It doesn't appear to be a directory or a .jar file");
+          }
+          classpathEntries.append("   <classpathentry kind=\"");
+          classpathEntries.append(kindString);
+          classpathEntries.append("\" path=\"");
+          classpathEntries.append(path);
+          classpathEntries.append("\"/>\n");
+        }
+      }
+
+      replacements.put("@eclipseClassPathEntries", classpathEntries.toString());
+
       // Create an eclipse classpath file
       File dotClasspath = Utility.createNormalFile(outDir, ".classpath",
           overwrite, ignore);
@@ -108,12 +176,11 @@ public final class ProjectCreator extends ToolBase {
   }
 
   private String ant = null;
-
   private String eclipse = null;
-
   private boolean ignore = false;
   private File outDir = null;
   private boolean overwrite = false;
+  private ArgHandlerAddToClassPath classPathHandler = new ArgHandlerAddToClassPath();
 
   protected ProjectCreator() {
 
@@ -185,6 +252,8 @@ public final class ProjectCreator extends ToolBase {
         return true;
       }
     });
+
+    registerHandler(classPathHandler);
   }
 
   protected boolean run() {
@@ -194,7 +263,8 @@ public final class ProjectCreator extends ToolBase {
         printHelp();
         return false;
       }
-      createProject(eclipse, ant, outDir, overwrite, ignore);
+      createProject(eclipse, ant, outDir, overwrite, ignore,
+          classPathHandler.getExtraClassPathList());
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

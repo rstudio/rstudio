@@ -141,6 +141,11 @@ public final class ModuleDefLoader {
   private final LoadStrategy strategy;
 
   /**
+   * Filename suffix used for GWT Module XML files.
+   */
+  public static final String GWT_MODULE_XML_SUFFIX = ".gwt.xml";
+
+  /**
    * Constructs a {@link ModuleDefLoader} that loads from the class path.
    */
   private ModuleDefLoader() {
@@ -194,7 +199,7 @@ public final class ModuleDefLoader {
     // Find the specified module using the classpath.
     //
     String slashedModuleName = moduleName.replace('.', '/');
-    String resName = slashedModuleName + ".gwt.xml";
+    String resName = slashedModuleName + ModuleDefLoader.GWT_MODULE_XML_SUFFIX;
     URL moduleURL = classLoader.getResource(resName);
 
     if (moduleURL != null) {

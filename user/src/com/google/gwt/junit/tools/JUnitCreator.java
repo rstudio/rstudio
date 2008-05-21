@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,11 @@
  */
 package com.google.gwt.junit.tools;
 
+import com.google.gwt.user.tools.util.ArgHandlerAddToClassPath;
 import com.google.gwt.user.tools.util.ArgHandlerEclipse;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
+import com.google.gwt.user.tools.util.CreatorUtilities;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -27,6 +29,7 @@ import com.google.gwt.util.tools.Utility;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,18 +119,26 @@ public final class JUnitCreator extends ToolBase {
    *          Application.
    * @param outDir Where to put the output files
    * @param eclipse The name of a project to attach a .launch config to
+   * @param extraClassPaths extra class path entries to add to the configuration
    * @param overwrite Overwrite an existing files if they exist.
    * @param ignore Ignore existing files if they exist.
    * @throws IOException
    */
   static void createTest(String junitPath, String moduleName,
-      String fullClassName, File outDir, String eclipse, boolean overwrite,
-      boolean ignore) throws IOException {
+      String fullClassName, File outDir, String eclipse,
+      List<String> extraClassPaths, boolean overwrite, boolean ignore)
+      throws IOException {
 
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
     String gwtDevPath = installPath + '/' + Utility.getDevJarName();
+
+    // Check to see that the passed extra path/module arguments are valid.
+    if (!CreatorUtilities.validatePathsAndModules(gwtUserPath, extraClassPaths,
+        null)) {
+      return;
+    }
 
     // Figure out what platform we're on
     // 
@@ -198,6 +209,11 @@ public final class JUnitCreator extends ToolBase {
     replacements.put("@gwtUserPath", basePathEnv + gwtUserPath);
     replacements.put("@gwtDevPath", basePathEnv + gwtDevPath);
     replacements.put("@vmargs", isMacOsX ? "-XstartOnFirstThread" : "");
+    replacements.put("@eclipseExtraLaunchPaths",
+        CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
+    replacements.put("@extraClassPathsColon", CreatorUtilities.appendPaths(":",
+        extraClassPaths));
+    replacements.put("@extraClassPathsSemicolon", CreatorUtilities.appendPaths(";", extraClassPaths));
 
     {
       // Create a skeleton Test class
@@ -213,6 +229,7 @@ public final class JUnitCreator extends ToolBase {
     if (eclipse != null) {
       // Create an eclipse launch config
       replacements.put("@projectName", eclipse);
+
       File hostedConfig = Utility.createNormalFile(outDir, className
           + "-hosted.launch", overwrite, ignore);
       if (hostedConfig != null) {
@@ -270,6 +287,7 @@ public final class JUnitCreator extends ToolBase {
   private String moduleName = null;
   private File outDir;
   private boolean overwrite = false;
+  private ArgHandlerAddToClassPath classPathHandler = new ArgHandlerAddToClassPath();
 
   protected JUnitCreator() {
 
@@ -394,12 +412,13 @@ public final class JUnitCreator extends ToolBase {
     });
 
     registerHandler(new ArgHandlerTestClass());
+    registerHandler(classPathHandler);
   }
 
   protected boolean run() {
     try {
       createTest(junitPath, moduleName, fullClassName, outDir, eclipse,
-          overwrite, ignore);
+          classPathHandler.getExtraClassPathList(), overwrite, ignore);
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

@@ -6,4 +6,5 @@
    <classpathentry kind="lib" path="@gwtUserPath"/>
    <classpathentry kind="var" path="JUNIT_HOME/junit.jar"/>
    <classpathentry kind="output" path="bin"/>
+@eclipseClassPathEntries
 </classpath>
