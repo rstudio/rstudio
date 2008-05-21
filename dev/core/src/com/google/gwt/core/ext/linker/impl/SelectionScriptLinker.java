@@ -189,14 +189,17 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     int startPos;
 
     // Add external dependencies
-    startPos = selectionScript.indexOf("// __MODULE_DEPS_END__");
+    startPos = selectionScript.indexOf("// __MODULE_STYLES_END__");
     if (startPos != -1) {
       for (StylesheetReference resource : artifacts.find(StylesheetReference.class)) {
         String text = generateStylesheetInjector(resource.getSrc());
         selectionScript.insert(startPos, text);
         startPos += text.length();
       }
+    }
 
+    startPos = selectionScript.indexOf("// __MODULE_SCRIPTS_END__");
+    if (startPos != -1) {
       for (ScriptReference resource : artifacts.find(ScriptReference.class)) {
         String text = generateScriptInjector(resource.getSrc());
         selectionScript.insert(startPos, text);
@@ -276,22 +279,32 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return selectionScript.toString();
   }
 
+  /**
+   * Generate a snippit of JavaScript to inject an external stylesheet.
+   * 
+   * <pre>
+   * if (!__gwt_stylesLoaded['URL']) {
+   *   var l = $doc.createElement('link');
+   *   __gwt_styleLoaded['URL'] = l;
+   *   l.setAttribute('rel', 'stylesheet');
+   *   l.setAttribute('href', HREF_EXPR);
+   *   $doc.getElementsByTagName('head')[0].appendChild(l);
+   * }
+   * </pre>
+   */
   protected String generateStylesheetInjector(String stylesheetUrl) {
+    String hrefExpr = "'" + stylesheetUrl + "'";
     if (isRelativeURL(stylesheetUrl)) {
-      return "  if (!__gwt_stylesLoaded['"
-          + stylesheetUrl
-          + "']) {\n"
-          + "    __gwt_stylesLoaded['"
-          + stylesheetUrl
-          + "'] = true;\n"
-          + "    document.write('<link rel=\\\"stylesheet\\\" href=\\\"'+base+'"
-          + stylesheetUrl + "\\\">');\n" + "  }\n";
-    } else {
-      return "  if (!__gwt_stylesLoaded['" + stylesheetUrl + "']) {\n"
-          + "    __gwt_stylesLoaded['" + stylesheetUrl + "'] = true;\n"
-          + "    document.write('<link rel=\\\"stylesheet\\\" href=\\\""
-          + stylesheetUrl + "\\\">');\n" + "  }\n";
+      hrefExpr = "base + " + hrefExpr;
     }
+
+    return "if (!__gwt_stylesLoaded['" + stylesheetUrl + "']) {\n           "
+        + "  var l = $doc.createElement('link');\n                          "
+        + "  __gwt_stylesLoaded['" + stylesheetUrl + "'] = l;\n             "
+        + "  l.setAttribute('rel', 'stylesheet');\n                         "
+        + "  l.setAttribute('href', " + hrefExpr + ");\n                    "
+        + "  $doc.getElementsByTagName('head')[0].appendChild(l);\n         "
+        + "}\n";
   }
 
   protected abstract String getCompilationExtension(TreeLogger logger,

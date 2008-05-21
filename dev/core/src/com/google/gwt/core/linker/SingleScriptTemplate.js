@@ -221,6 +221,9 @@ window.__MODULE_FUNC__ = function() {
   function onBodyDone() {
     if (!bodyDone) {
       bodyDone = true;
+// __MODULE_STYLES_BEGIN__
+     // Style resources are injected here to prevent operation aborted errors on ie
+// __MODULE_STYLES_END__
       maybeStartModule();
 
       if ($doc.removeEventListener) {
@@ -244,9 +247,9 @@ window.__MODULE_FUNC__ = function() {
     }
   }, 50);
 
-// __MODULE_DEPS_BEGIN__
-  // Module dependencies, such as scripts and css
-// __MODULE_DEPS_END__
+// __MODULE_SCRIPTS_BEGIN__
+  // Script resources are injected here
+// __MODULE_SCRIPTS_END__
 }
 
 // Called from compiled code to hook the window's resize & load events (the

@@ -305,6 +305,9 @@ function __MODULE_FUNC__() {
   function onBodyDone() {
     if (!bodyDone) {
       bodyDone = true;
+// __MODULE_STYLES_BEGIN__
+     // Style resources are injected here to prevent operation aborted errors on ie
+// __MODULE_STYLES_END__
       maybeStartModule();
 
       if ($doc.removeEventListener) {
@@ -353,9 +356,9 @@ function __MODULE_FUNC__() {
     }
   }, 50);
 
-// __MODULE_DEPS_BEGIN__
-  // Module dependencies, such as scripts and css
-// __MODULE_DEPS_END__
+// __MODULE_SCRIPTS_BEGIN__
+  // Script resources are injected here
+// __MODULE_SCRIPTS_END__
   $doc.write('<script>__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
 }
 
