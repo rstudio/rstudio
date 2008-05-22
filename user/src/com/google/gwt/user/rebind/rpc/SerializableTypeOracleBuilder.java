@@ -1447,7 +1447,7 @@ public class SerializableTypeOracleBuilder {
 
   private boolean mightNotBeExposed(JGenericType baseType, int paramIndex) {
     TypeParameterFlowInfo flowInfo = getFlowInfo(baseType, paramIndex);
-    return flowInfo.getMightNotBeExposed();
+    return flowInfo.getMightNotBeExposed() || isManuallySerializable(baseType);
   }
 
   /**
