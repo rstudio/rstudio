@@ -366,9 +366,10 @@ function __MODULE_FUNC__() {
       
       /* 
        * The src has to be set after the iframe is attached to the DOM to avoid
-       * refresh quirks in Safari.
+       * refresh quirks in Safari.  We have to use the location.replace trick to
+       * avoid FF2 refresh quirks.
        */
-      iframe.src = base + strongName;
+      iframe.contentWindow.location.replace(base + strongName);
     }
   }
 
