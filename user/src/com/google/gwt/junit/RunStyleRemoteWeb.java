@@ -250,11 +250,16 @@ class RunStyleRemoteWeb extends RunStyleRemote {
   @Override
   public boolean wasInterrupted() {
     synchronized (wasInterruptedLock) {
+      if (wasInterrupted) {
+        getLogger().log(TreeLogger.INFO, "A remote test was interrupted.");
+      }
       return wasInterrupted;
     }
   }
 
   private synchronized boolean doKeepAlives() {
+    getLogger().log(TreeLogger.TRACE, "Sending keepalives to browsermanagerservers (time="
+        + System.currentTimeMillis());
     for (RemoteBrowser remoteBrowser : remoteBrowsers) {
       if (remoteBrowser.getToken() > 0) {
         long callStart = System.currentTimeMillis();
@@ -267,7 +272,7 @@ class RunStyleRemoteWeb extends RunStyleRemote {
           if (cause instanceof SocketTimeoutException) {
             long elapsed = System.currentTimeMillis() - callStart;
             throw new TimeoutException("Timeout: " + elapsed
-                + "ms  keeping alive remote browser at: " + rmiUrl,
+                + "ms keeping alive remote browser at: " + rmiUrl,
                 e.getCause());
           } else if (e instanceof IllegalStateException) {
             getLogger().log(TreeLogger.INFO,
@@ -286,6 +291,10 @@ class RunStyleRemoteWeb extends RunStyleRemote {
     }
 
     synchronized (wasInterruptedLock) {
+      if (wasInterrupted) {
+        getLogger().log(TreeLogger.INFO, 
+            "Remote test was interrupted during keepalives to browsermanagerserver.");
+      }
       return !wasInterrupted;
     }
   }

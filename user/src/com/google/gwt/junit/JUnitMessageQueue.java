@@ -15,6 +15,9 @@
  */
 package com.google.gwt.junit;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.JUnitResult;
 import com.google.gwt.junit.client.impl.JUnitHost.TestInfo;
@@ -70,6 +73,7 @@ public class JUnitMessageQueue {
    */
   private TestInfo currentTest;
 
+  private TreeLogger logger;
   /**
    * The number of TestCase clients executing in parallel.
    */
@@ -80,8 +84,16 @@ public class JUnitMessageQueue {
    * 
    * @param numClients The number of parallel clients being served by this
    *          queue.
+   * @param loglevel The loglevel to use.  There is a circular dependency in 
+   *          startup; we need the message queue to make the GWTShell, but its
+   *          logger depends on having mainWnd which requires the GWTShell be
+   *          started.  So, initially, we log to a PrintWriterTreeLogger, and
+   *          use setLogger after the bootstrap.
    */
-  JUnitMessageQueue(int numClients) {
+  JUnitMessageQueue(int numClients, Type loglevel) {
+    PrintWriterTreeLogger consolelog = new PrintWriterTreeLogger();
+    consolelog.setMaxDetail(loglevel);
+    logger = consolelog;
     synchronized (clientStatusesLock) {
       this.numClients = numClients;
     }
@@ -130,6 +142,9 @@ public class JUnitMessageQueue {
 
       // Record that this client has retrieved the current test.
       clientStatus.hasRequestedCurrentTest = true;
+      logger.log(TreeLogger.TRACE, 
+          "Client " + clientId + " has next test info for " +
+          currentTest.getTestClass() + "." + currentTest.getTestMethod());
       return currentTest;
     }
   }
@@ -145,8 +160,14 @@ public class JUnitMessageQueue {
     synchronized (clientStatusesLock) {
       if (testInfo != null && !testInfo.equals(currentTest)) {
         // A client is reporting results for the wrong test.
+        logger.log(TreeLogger.WARN, 
+            "Wrong (stale?) test report from " + clientId + ": reporting on " + 
+            testInfo.getTestClass() + "." + testInfo.getTestMethod() +
+            " (current test is " + testInfo.getTestClass() + "." + 
+            testInfo.getTestMethod() + ")");
         return;
       }
+      logger.log(TreeLogger.TRACE, "Client " + clientId + "reported results.");
       assert (results != null);
       ClientStatus clientStatus = clientStatuses.get(clientId);
       clientStatus.currentTestResults = results;
@@ -154,6 +175,10 @@ public class JUnitMessageQueue {
     }
   }
 
+  public void setLogger(TreeLogger newlog) {
+    logger = newlog;
+  }
+  
   /**
    * Returns any new clients that have contacted the server since the last call.
    * The same client will never be returned from this method twice.
