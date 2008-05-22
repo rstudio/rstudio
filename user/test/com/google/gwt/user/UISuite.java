@@ -135,7 +135,6 @@ public class UISuite {
     suite.addTestSuite(WidgetIteratorsTest.class);
     suite.addTestSuite(WidgetOnLoadTest.class);
     suite.addTestSuite(WindowTest.class);
-    suite.addTestSuite(ZzzTest.class);
     suite.addTestSuite(XMLTest.class);
 
     return suite;
