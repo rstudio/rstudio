@@ -50,6 +50,7 @@
 				<include name="samples/*/src/**" />
 				<include name="samples/*/bin/**" />
 				<include name="samples/*/www/**" />
+				<exclude name="samples/*/www/.*/**" />
 			</tarfileset>
 			<tarfileset dir="${gwt.build.out}/samples-scripts/${dist.platform}" mode="755" prefix="${project.distname}/samples">
 				<include name="*/*-compile" />
