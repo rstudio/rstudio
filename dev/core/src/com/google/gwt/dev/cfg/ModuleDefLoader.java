@@ -55,6 +55,11 @@ public final class ModuleDefLoader {
   }
 
   /**
+   * Filename suffix used for GWT Module XML files.
+   */
+  public static final String GWT_MODULE_XML_SUFFIX = ".gwt.xml";
+
+  /**
    * Keep soft references to loaded modules so the VM can gc them when memory is
    * tight.
    */
@@ -139,11 +144,6 @@ public final class ModuleDefLoader {
   private final ClassLoader classLoader;
 
   private final LoadStrategy strategy;
-
-  /**
-   * Filename suffix used for GWT Module XML files.
-   */
-  public static final String GWT_MODULE_XML_SUFFIX = ".gwt.xml";
 
   /**
    * Constructs a {@link ModuleDefLoader} that loads from the class path.
@@ -272,10 +272,10 @@ public final class ModuleDefLoader {
     // Do any final setup.
     //
     moduleDef.normalize(logger);
-    
+
     // Add the "physical" module name: com.google.Module
     loadedModules.put(moduleName, moduleDef);
-    
+
     // Add the module's effective name: some.other.Module
     loadedModules.put(moduleDef.getName(), moduleDef);
     return moduleDef;
