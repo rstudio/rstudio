@@ -960,7 +960,7 @@ public class SerializableTypeOracleBuilder {
     boolean isInstantiable = parametersOkay
         && shouldConsiderFieldsForSerialization(localLogger, baseType,
             isSpeculative)
-        && canBeInstantiated(logger, baseType, TreeLogger.WARN)
+        && canBeInstantiated(localLogger, baseType, TreeLogger.WARN)
         && checkFields(localLogger, baseType, isSpeculative, path);
 
     boolean anySubtypes = false;
