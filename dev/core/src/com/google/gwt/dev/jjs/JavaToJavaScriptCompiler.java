@@ -313,6 +313,12 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = new JProgram(logger, rebindOracle);
       JsProgram jsProgram = new JsProgram();
 
+      if (JProgram.isTracingEnabled()) {
+        System.out.println("------------------------------------------------------------");
+        System.out.println("|                     (new permuation)                     |");
+        System.out.println("------------------------------------------------------------");
+      }
+
       {
         /*
          * (1) Build a flattened map of TypeDeclarations => JType. The resulting

@@ -119,6 +119,10 @@ public class JProgram extends JNode {
     }
   }
 
+  public static boolean isTracingEnabled() {
+    return System.getProperty("gwt.jjs.traceMethods") != null;
+  }
+
   public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
     // static methods cannot match each other
     if (method1.isStatic() || method2.isStatic()) {
