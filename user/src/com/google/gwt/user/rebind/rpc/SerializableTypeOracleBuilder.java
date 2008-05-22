@@ -62,39 +62,33 @@ import java.util.Map.Entry;
  * </p>
  * 
  * <p>
- * It then traverses the type hierarchy of each of the types in these method
- * signatures in order to discover additional types which it might need to
- * include. For the purposes of this explanation we define a root type to be any
- * type which appears in the RemoteService method signatures or the type of any
- * non-final, instance field which is part of a type that qualifies for
- * serialization. The builder will fail if a root is not serializable and it has
- * no subtypes that are.
+ * To find the serializable types, it includes the root types, and then it
+ * iteratively traverses the type hierarchy and the fields of any type already
+ * deemed serializable. To improve the accuracy of the traversal there is a
+ * computations of the exposure of type parameters. When the traversal reaches a
+ * parameterized type, these exposure values are used to determine how to treat
+ * the arguments.
  * </p>
  * 
  * <p>
- * To improve the accuracy of the traversal there is a computations of the
- * exposure of type parameters. When the traversal reaches a parameterized type,
- * these exposure values are used to determine how to treat the arguments.
- * </p>
- * 
- * <p>
- * A type qualifies for serialization if it is automatically or manually
- * serializable. Automatic serialization is selected if the type is assignable
- * to {@link IsSerializable} or {@link Serializable} or if the type is a
- * primitive type such as int, boolean, etc. Manual serialization is selected if
- * there exists another type with the same fully qualified name concatenated
- * with "_CustomFieldSerializer". If a type qualifies for both manual and
- * automatic serialization, manual serialization is preferred.
+ * A type qualifies for serialization if it or one of its subtypes is
+ * automatically or manually serializable. Automatic serialization is selected
+ * if the type is assignable to {@link IsSerializable} or {@link Serializable}
+ * or if the type is a primitive type such as int, boolean, etc. Manual
+ * serialization is selected if there exists another type with the same fully
+ * qualified name concatenated with "_CustomFieldSerializer". If a type
+ * qualifies for both manual and automatic serialization, manual serialization
+ * is preferred.
  * </p>
  */
 public class SerializableTypeOracleBuilder {
-  interface Path {
+  private interface Path {
     Path getParent();
 
     String toString();
   }
 
-  enum TypeState {
+  private enum TypeState {
     /**
      * The instantiability of a type has been determined.
      */
@@ -249,22 +243,6 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * Type parameter is exposed.
-   */
-  static final int EXPOSURE_DIRECT = 0;
-
-  /**
-   * Type parameter is exposed as a bounded array. The value is the max bound of
-   * the exposure.
-   */
-  static final int EXPOSURE_MIN_BOUNDED_ARRAY = EXPOSURE_DIRECT + 1;
-
-  /**
-   * Type parameter is not exposed.
-   */
-  static final int EXPOSURE_NONE = -1;
-
-  /**
    * Compares {@link JType}s according to their qualified source names.
    */
   static final Comparator<JType> JTYPE_COMPARATOR = new Comparator<JType>() {
@@ -399,6 +377,11 @@ public class SerializableTypeOracleBuilder {
     }
   }
 
+  /**
+   * Return <code>true</code> if a class's fields should be considered for
+   * serialization. If it returns <code>false</code> then none of the fields
+   * of this class should be serialized.
+   */
   static boolean shouldConsiderFieldsForSerialization(TreeLogger logger,
       JClassType type, boolean isSpeculative, TypeFilter filter) {
     if (!isAllowedByFilter(logger, filter, type, isSpeculative)) {
@@ -681,6 +664,12 @@ public class SerializableTypeOracleBuilder {
   private final TypeParameterExposureComputer typeParameterExposureComputer = new TypeParameterExposureComputer(
       typeFilter);
 
+  /**
+   * The set of type parameters that appear in one of the root types.
+   * TODO(spoon): It would be cleaner to delete this field, and instead to have
+   * {@link #addRootType(TreeLogger, JType)} replace parameters with wildcard
+   * types. Then the root types would not contain any parameters.
+   */
   private Set<JTypeParameter> typeParametersInRootTypes = new HashSet<JTypeParameter>();
 
   /**
@@ -1347,7 +1336,7 @@ public class SerializableTypeOracleBuilder {
     Path path = createTypeArgumentPath(parent, baseType, paramIndex, typeArg);
     int exposure = getTypeParameterExposure(baseType, paramIndex);
     switch (exposure) {
-      case EXPOSURE_DIRECT: {
+      case TypeParameterExposureComputer.EXPOSURE_DIRECT: {
         TreeLogger branch = logger.branch(
             TreeLogger.DEBUG,
             "Checking type argument "
@@ -1358,7 +1347,7 @@ public class SerializableTypeOracleBuilder {
         return checkTypeInstantiable(branch, typeArg, true, path)
             || mightNotBeExposed(baseType, paramIndex);
       }
-      case EXPOSURE_NONE:
+      case TypeParameterExposureComputer.EXPOSURE_NONE:
         // Ignore this argument
         logger.branch(TreeLogger.DEBUG, "Ignoring type argument " + paramIndex
             + " of type '" + baseType.getParameterizedQualifiedSourceName()
@@ -1366,7 +1355,7 @@ public class SerializableTypeOracleBuilder {
         return true;
 
       default: {
-        assert (exposure >= EXPOSURE_MIN_BOUNDED_ARRAY);
+        assert (exposure >= TypeParameterExposureComputer.EXPOSURE_MIN_BOUNDED_ARRAY);
         TreeLogger branch = logger.branch(
             TreeLogger.DEBUG,
             "Checking type argument "

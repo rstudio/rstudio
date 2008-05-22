@@ -41,6 +41,9 @@ class TypeParameterExposureComputer {
    * Helper class for type parameter flow information.
    */
   class TypeParameterFlowInfo {
+    /**
+     * The class that declares this type parameter.
+     */
     private final JGenericType baseType;
 
     /**
@@ -52,7 +55,7 @@ class TypeParameterExposureComputer {
      */
     private final Map<TypeParameterFlowInfo, Integer> causesExposure = new LinkedHashMap<TypeParameterFlowInfo, Integer>();
 
-    private int exposure = SerializableTypeOracleBuilder.EXPOSURE_NONE;
+    private int exposure = EXPOSURE_NONE;
 
     private final Map<TypeParameterFlowInfo, Boolean> isTransitivelyAffectedByCache = new HashMap<TypeParameterFlowInfo, Boolean>();
 
@@ -75,14 +78,6 @@ class TypeParameterExposureComputer {
       this.ordinal = ordinal;
     }
 
-    /**
-     * TODO: We only need to go up the hierarchy until we find the first non RPC
-     * qualifying type.
-     * 
-     * TODO: We need to ignore fields that would be ignored by serialization.
-     * 
-     * @return
-     */
     public boolean checkDirectExposure() {
       boolean didChange = false;
       JClassType type = baseType;
@@ -134,6 +129,13 @@ class TypeParameterExposureComputer {
       return listeners;
     }
 
+    /**
+     * Return whether it is possible for the parameter not to be exposed. For
+     * example, if a class has one subclass that uses the parameter and another
+     * that does not, then the parameter is exposed (exposure >=
+     * <code>EXPOSURE_DIRECT</code>) but this method will return
+     * <code>false</code>.
+     */
     public boolean getMightNotBeExposed() {
       return mightNotBeExposed;
     }
@@ -208,6 +210,8 @@ class TypeParameterExposureComputer {
     }
 
     private void computeIndirectExposureCauses() {
+      // TODO(spoon): this only needs to consider immediate subtypes, not all
+      // subtypes
       JClassType[] subtypes = baseType.getSubtypes();
       for (JClassType subtype : subtypes) {
         JGenericType isGeneric = subtype.isGenericType();
@@ -242,7 +246,7 @@ class TypeParameterExposureComputer {
               continue;
             }
 
-            JParameterizedType isParameterized = field.getType().isParameterized();
+            JParameterizedType isParameterized = field.getType().getLeafType().isParameterized();
             if (isParameterized == null) {
               continue;
             }
@@ -334,6 +338,22 @@ class TypeParameterExposureComputer {
     }
   }
 
+  /**
+   * Type parameter is exposed.
+   */
+  static final int EXPOSURE_DIRECT = 0;
+
+  /**
+   * Type parameter is exposed as a bounded array. The value is the max bound of
+   * the exposure.
+   */
+  static final int EXPOSURE_MIN_BOUNDED_ARRAY = EXPOSURE_DIRECT + 1;
+
+  /**
+   * Type parameter is not exposed.
+   */
+  static final int EXPOSURE_NONE = -1;
+
   private TypeFilter typeFilter;
 
   private final Map<JTypeParameter, TypeParameterFlowInfo> typeParameterToFlowInfo = new IdentityHashMap<JTypeParameter, TypeParameterFlowInfo>();
@@ -389,8 +409,7 @@ class TypeParameterExposureComputer {
   /**
    * Return the parameter flow info for a type parameter specified by class and
    * index. If the flow info did not previously exist, create it and add it to
-   * the work list. TODO(spoon): if the flow info has already been computed,
-   * then make a perfect/no-search flow info for this type parameter.
+   * the work list.
    */
   private TypeParameterFlowInfo getFlowInfo(JGenericType type, int index) {
     JTypeParameter typeParameter = type.getTypeParameters()[index];

@@ -68,6 +68,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       this.maybeInstantiated = maybeInstantiated;
     }
 
+    @Override
     public boolean equals(Object obj) {
       if (this == obj) {
         return true;
@@ -88,6 +89,10 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
           + " }";
     }
   }
+
+  private static final int EXPOSURE_DIRECT = TypeParameterExposureComputer.EXPOSURE_DIRECT;
+
+  private static final int EXPOSURE_NONE = TypeParameterExposureComputer.EXPOSURE_NONE;
 
   private static void addICRSE(Set<CompilationUnit> units) {
     StringBuffer code = new StringBuffer();
@@ -335,7 +340,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     JClassType cantSerialize = to.getType("CantSerialize");
 
     JParameterizedType listOfCantSerialize = to.getParameterizedType(list,
-        new JClassType[] {cantSerialize});
+        makeArray(cantSerialize));
 
     SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
         logger, to);
@@ -400,7 +405,118 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   /*
-   * Tests that arrays of type variables that do not cause infinite expansion.
+   * Tests arrays of parameterized types.
+   */
+  public void testArrayOfParameterizedTypes() throws UnableToCompleteException,
+      NotFoundException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    addStandardClasses(units);
+
+    {
+      // A<T> exposes its param
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class A<T> implements Serializable {\n");
+      code.append("  T t;\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("A", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class AList<T> implements Serializable {\n");
+      code.append("  A<T>[] as;\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("AList", code));
+    }
+
+    {
+      // B<T> does not expose its param
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class B<T> implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("B", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class BList<T> implements Serializable {\n");
+      code.append("  B<T>[] bs;\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("BList", code));
+    }
+
+    {
+      // A random serializable class
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class Ser1 implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("Ser1", code));
+    }
+
+    {
+      // A random serializable class
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class Ser2 implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("Ser2", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class Root implements Serializable {\n");
+      code.append("  AList<Ser1> alist;\n");
+      code.append("  BList<Ser2> blist;\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("Root", code));
+    }
+
+    TreeLogger logger = createLogger();
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+
+    JGenericType a = to.getType("A").isGenericType();
+    JGenericType b = to.getType("B").isGenericType();
+    JGenericType alist = to.getType("AList").isGenericType();
+    JGenericType blist = to.getType("BList").isGenericType();
+    JClassType ser1 = to.getType("Ser1");
+    JClassType ser2 = to.getType("Ser2");
+    JClassType root = to.getType("Root");
+
+    SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
+        logger, to);
+    sob.addRootType(logger, root);
+
+    assertEquals(EXPOSURE_DIRECT, sob.getTypeParameterExposure(a, 0));
+    assertEquals(EXPOSURE_NONE, sob.getTypeParameterExposure(b, 0));
+    assertEquals(EXPOSURE_DIRECT, sob.getTypeParameterExposure(alist, 0));
+    assertEquals(EXPOSURE_NONE, sob.getTypeParameterExposure(blist, 0));
+
+    SerializableTypeOracle so = sob.build(logger);
+
+    JArrayType aArray = to.getArrayType(a.getRawType());
+    JArrayType bArray = to.getArrayType(b.getRawType());
+
+    assertSerializableTypes(so, root, alist.getRawType(), blist.getRawType(),
+        aArray, bArray, a.getRawType(), b.getRawType(), ser1);
+
+    assertInstantiable(so, alist.getRawType());
+    assertInstantiable(so, blist.getRawType());
+    assertInstantiable(so, a.getRawType());
+    assertInstantiable(so, b.getRawType());
+    assertInstantiable(so, aArray);
+    assertInstantiable(so, bArray);
+    assertInstantiable(so, ser1);
+    assertNotInstantiableOrFieldSerializable(so, ser2);
+  }
+
+  /*
+   * Tests arrays of type variables that do not cause infinite expansion.
    */
   public void testArrayOfTypeParameter() throws UnableToCompleteException,
       NotFoundException {
@@ -452,7 +568,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     JClassType javaLangString = to.getType(String.class.getName());
     JParameterizedType cOfString = to.getParameterizedType(c,
-        new JClassType[] {javaLangString});
+        makeArray(javaLangString));
     SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
         logger, to);
     sob.addRootType(logger, cOfString);
@@ -757,7 +873,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     JClassType serializableArgument = to.getType("SerializableArgument");
 
     JParameterizedType aOfString = to.getParameterizedType(a,
-        new JClassType[] {serializableArgument});
+        makeArray(serializableArgument));
     SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
         logger, to);
     sob.addRootType(logger, aOfString);
@@ -812,7 +928,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     JClassType unusedSerializableArgument = to.getType("UnusedSerializableArgument");
 
     JParameterizedType aOfString = to.getParameterizedType(a,
-        new JClassType[] {unusedSerializableArgument});
+        makeArray(unusedSerializableArgument));
     SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
         logger, to);
     sob.addRootType(logger, aOfString);
@@ -860,7 +976,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     JClassType javaLangString = to.getType(String.class.getName());
     JParameterizedType aOfString = to.getParameterizedType(a,
-        new JClassType[] {javaLangString});
+        makeArray(javaLangString));
     SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
         logger, to);
     sob.addRootType(logger, aOfString);
@@ -908,12 +1024,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     JClassType javaLangString = to.getType(String.class.getName());
     JParameterizedType aOfString = to.getParameterizedType(a,
-        new JClassType[] {javaLangString});
+        makeArray(javaLangString));
     SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
         logger, to);
 
-    assertEquals(0, sob.getTypeParameterExposure(a, 0));
-    assertEquals(0, sob.getTypeParameterExposure(b, 0));
+    assertEquals(EXPOSURE_DIRECT, sob.getTypeParameterExposure(a, 0));
+    assertEquals(EXPOSURE_DIRECT, sob.getTypeParameterExposure(b, 0));
 
     sob.addRootType(logger, aOfString);
     SerializableTypeOracle so = sob.build(logger);
@@ -1169,12 +1285,12 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     JClassType javaLangString = to.getType(String.class.getName());
     JParameterizedType aOfString = to.getParameterizedType(a,
-        new JClassType[] {javaLangString});
+        makeArray(javaLangString));
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
         logger, to);
     stob.addRootType(logger, aOfString);
 
-    assertTrue(stob.getTypeParameterExposure(a, 0) < 0);
+    assertEquals(EXPOSURE_NONE, stob.getTypeParameterExposure(a, 0));
 
     SerializableTypeOracle so = stob.build(logger);
 
@@ -1387,7 +1503,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     JClassType b = to.getType("B");
 
     JTypeParameter syntheticTypeParam = new JTypeParameter("U", 0);
-    syntheticTypeParam.setBounds(new JClassType[] {b});
+    syntheticTypeParam.setBounds(makeArray(b));
 
     JParameterizedType parameterizedType = to.getParameterizedType(a,
         new JClassType[] {syntheticTypeParam});
@@ -1399,5 +1515,9 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertInstantiable(so, rawA);
     assertInstantiable(so, b);
     assertSerializableTypes(so, rawA, b);
+  }
+
+  private JClassType[] makeArray(JClassType... elements) {
+    return elements;
   }
 }
