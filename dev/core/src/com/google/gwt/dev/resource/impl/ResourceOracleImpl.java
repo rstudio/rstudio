@@ -337,6 +337,7 @@ public class ResourceOracleImpl implements ResourceOracle {
               ResourceWrapper exposedWrapper = (ResourceWrapper) exposed;
               if (exposedWrapper.resource == resource) {
                 externalMap.put(rerootedPath, exposedWrapper);
+                ++hitCount;
                 break;
               }
             }
@@ -344,10 +345,11 @@ public class ResourceOracleImpl implements ResourceOracle {
             AbstractResource wrapper = new ResourceWrapper(rerootedPath,
                 resource);
             externalMap.put(rerootedPath, wrapper);
+            ++hitCount;
           } else {
             externalMap.put(path, resource);
+            ++hitCount;
           }
-          ++hitCount;
         }
       }
       assert (hitCount > 0);
