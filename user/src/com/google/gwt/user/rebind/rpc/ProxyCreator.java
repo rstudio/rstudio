@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
@@ -299,7 +300,7 @@ class ProxyCreator {
     w.println();
 
     // Write the method signature
-    JType asyncReturnType = asyncMethod.getReturnType();
+    JType asyncReturnType = asyncMethod.getReturnType().getErasedType();
     w.print("public ");
     w.print(asyncReturnType.getQualifiedSourceName());
     w.print(" ");
@@ -323,6 +324,7 @@ class ProxyCreator {
        * SerializationStreamWriter.writeObject we need a try catch block
        */
       JType paramType = param.getType();
+      paramType = paramType.getErasedType();
       if (i < asyncParams.length - 1
           && paramType.isPrimitive() == null
           && !paramType.getQualifiedSourceName().equals(
@@ -330,7 +332,7 @@ class ProxyCreator {
         needsTryCatchBlock = true;
       }
 
-      w.print(paramType.getParameterizedQualifiedSourceName());
+      w.print(paramType.getQualifiedSourceName());
       w.print(" ");
 
       String paramName = param.getName();
@@ -377,8 +379,9 @@ class ProxyCreator {
     JParameter[] syncParams = syncMethod.getParameters();
     w.println(streamWriterName + ".writeInt(" + syncParams.length + ");");
     for (JParameter param : syncParams) {
-      w.println(streamWriterName + ".writeString(\""
-          + serializableTypeOracle.getSerializedTypeName(param.getType())
+      w.println(streamWriterName
+          + ".writeString(\""
+          + serializableTypeOracle.getSerializedTypeName(param.getType().getErasedType())
           + "\");");
     }
 
@@ -446,8 +449,24 @@ class ProxyCreator {
       Map<JMethod, JMethod> syncMethToAsyncMethMap) {
     JMethod[] syncMethods = serviceIntf.getOverridableMethods();
     for (JMethod syncMethod : syncMethods) {
+
       JMethod asyncMethod = syncMethToAsyncMethMap.get(syncMethod);
       assert (asyncMethod != null);
+
+      JClassType enclosingType = syncMethod.getEnclosingType();
+      JParameterizedType isParameterizedType = enclosingType.isParameterized();
+      if (isParameterizedType != null) {
+        JMethod[] methods = isParameterizedType.getMethods();
+        for (int i = 0; i < methods.length; ++i) {
+          if (methods[i] == syncMethod) {
+            /*
+             * Use the generic version of the method to ensure that the server
+             * can find the method using the erasure of the generic signature.
+             */
+            syncMethod = isParameterizedType.getBaseType().getMethods()[i];
+          }
+        }
+      }
 
       generateProxyMethod(w, serializableTypeOracle, syncMethod, asyncMethod);
     }
@@ -521,7 +540,7 @@ class ProxyCreator {
     }
 
     composerFactory.setSuperclass(RemoteServiceProxy.class.getSimpleName());
-    composerFactory.addImplementedInterface(serviceAsync.getParameterizedQualifiedSourceName());
+    composerFactory.addImplementedInterface(serviceAsync.getErasedType().getQualifiedSourceName());
 
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
