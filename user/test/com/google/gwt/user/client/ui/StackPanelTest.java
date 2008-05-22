@@ -78,7 +78,6 @@ public class StackPanelTest extends GWTTestCase {
     // Check the header IDs
     DeferredCommand.addCommand(new Command() {
       public void execute() {
-        String prefix = UIObject.DEBUG_ID_PREFIX;
         UIObjectTest.assertDebugIdContents("myStack-text0", "header a");
         UIObjectTest.assertDebugIdContents("myStack-text1", "header b");
         UIObjectTest.assertDebugIdContents("myStack-text2", "header c");
@@ -98,7 +97,7 @@ public class StackPanelTest extends GWTTestCase {
         finishTest();
       }
     });
-    delayTestFinish(250);
+    delayTestFinish(5000);
   }
 
   /**
