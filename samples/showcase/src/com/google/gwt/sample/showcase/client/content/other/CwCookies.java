@@ -62,10 +62,10 @@ public class CwCookies extends ContentWidget {
   }
 
   /**
-   * The timeout before a cookie expires, in milliseconds. Current one year.
+   * The timeout before a cookie expires, in milliseconds. Current one day.
    */
   @ShowcaseData
-  private static final int COOKIE_TIMOUT = 1000 * 60 * 60 * 24 * 365;
+  private static final int COOKIE_TIMEOUT = 1000 * 60 * 60 * 24;
 
   /**
    * An instance of the constants.
@@ -150,7 +150,7 @@ public class CwCookies extends ContentWidget {
       public void onClick(Widget sender) {
         String name = cookieNameBox.getText();
         String value = cookieValueBox.getText();
-        Date expires = new Date((new Date()).getTime() + COOKIE_TIMOUT);
+        Date expires = new Date((new Date()).getTime() + COOKIE_TIMEOUT);
 
         // Verify the name is valid
         if (name.length() < 1) {
@@ -175,10 +175,12 @@ public class CwCookies extends ContentWidget {
     deleteCookieButton.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
         int selectedIndex = existingCookiesBox.getSelectedIndex();
-        String cookieName = existingCookiesBox.getValue(selectedIndex);
-        Cookies.removeCookie(cookieName);
-        existingCookiesBox.removeItem(selectedIndex);
-        updateExstingCookie();
+        if (selectedIndex > -1 && selectedIndex < existingCookiesBox.getItemCount()) {
+          String cookieName = existingCookiesBox.getValue(selectedIndex);
+          Cookies.removeCookie(cookieName);
+          existingCookiesBox.removeItem(selectedIndex);
+          updateExstingCookie();
+        }
       }
     });
 
