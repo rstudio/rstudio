@@ -156,8 +156,7 @@ public class ShowcaseGenerator extends Generator {
       fileContents = "<pre>" + fileContents + "</pre>";
 
       // Save the raw source in the public directory
-      String dstPath = ShowcaseConstants.DST_SOURCE_RAW + pkgName + "."
-          + filename + ".html";
+      String dstPath = ShowcaseConstants.DST_SOURCE_RAW + filename + ".html";
       createPublicResource(dstPath, fileContents);
     }
   }
@@ -219,7 +218,7 @@ public class ShowcaseGenerator extends Generator {
 
     // Save the source code to a file
     String dstPath = ShowcaseConstants.DST_SOURCE_EXAMPLE
-        + type.getQualifiedSourceName() + ".html";
+        + type.getSimpleSourceName() + ".html";
     createPublicResource(dstPath, formattedSource);
   }
 
@@ -272,7 +271,7 @@ public class ShowcaseGenerator extends Generator {
     }
 
     // Save the raw source in the public directory
-    String dstPath = outDir + type.getQualifiedSourceName() + ".html";
+    String dstPath = outDir + type.getSimpleSourceName() + ".html";
     createPublicResource(dstPath, formattedStyle);
   }
 

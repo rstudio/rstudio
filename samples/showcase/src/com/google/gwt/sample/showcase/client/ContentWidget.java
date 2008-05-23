@@ -261,8 +261,10 @@ public abstract class ContentWidget extends Composite implements TabListener {
     String tabHTML = getTabBar().getTabHTML(tabIndex);
     if (!sourceLoaded && tabHTML.equals(constants.contentWidgetSource())) {
       sourceLoaded = true;
-      requestSourceContents(ShowcaseConstants.DST_SOURCE_EXAMPLE
-          + this.getClass().getName() + ".html", sourceWidget, null);
+      String className = this.getClass().getName();
+      className = className.substring(className.lastIndexOf(".") + 1);
+      requestSourceContents(ShowcaseConstants.DST_SOURCE_EXAMPLE + className
+          + ".html", sourceWidget, null);
     }
 
     // Load the style definitions
@@ -286,8 +288,10 @@ public abstract class ContentWidget extends Composite implements TabListener {
         if (LocaleInfo.getCurrentLocale().isRTL()) {
           srcPath += "_rtl";
         }
-        requestSourceContents(srcPath + "/" + this.getClass().getName()
-            + ".html", styleWidget, callback);
+        String className = this.getClass().getName();
+        className = className.substring(className.lastIndexOf(".") + 1);
+        requestSourceContents(srcPath + "/" + className + ".html", styleWidget,
+            callback);
       }
     }
   }

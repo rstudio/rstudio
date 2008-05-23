@@ -198,12 +198,14 @@ public class CwConstantsWithLookupExample extends ContentWidget {
       // Load ErrorMessages.java
       javaLoaded = true;
       String className = ColorConstants.class.getName();
+      className = className.substring(className.lastIndexOf(".") + 1);
       requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
           + ".java.html", javaWidget, null);
     } else if (!propertiesLoaded && tabIndex == 3) {
       // Load ErrorMessages.properties
       propertiesLoaded = true;
       String className = ColorConstants.class.getName();
+      className = className.substring(className.lastIndexOf(".") + 1);
       requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
           + ".properties.html", propertiesWidget, null);
     }
