@@ -215,6 +215,7 @@ public class Showcase implements EntryPoint {
       if (styleTester.getOffsetWidth() > 0) {
         RootPanel.getBodyElement().getStyle().setProperty("display", "none");
         RootPanel.getBodyElement().getStyle().setProperty("display", "");
+        app.onWindowResizedImpl(Window.getClientWidth());
       } else {
         schedule(25);
       }
@@ -581,10 +582,15 @@ public class Showcase implements EntryPoint {
       }
     }
 
+    // Kick off the timer that checks to see when the stylesheet has been applied, so that 
+    // we can force a re-layout of the application. We even do this in the case where 
+    // no stylesheets are swapped out, because this could be on the first load of the application,
+    // and the stylesheet may not have been applied to the DOM elements as yet.
+    styleTesterTimer.schedule(25);
+    
     // Add the new style sheets
     String modulePath = GWT.getModuleBaseURL();
     if (gwtStyleSheet != null) {
-      styleTesterTimer.schedule(25);
       loadStyleSheet(modulePath + gwtStyleSheet);
     }
     if (showcaseStyleSheet != null) {
