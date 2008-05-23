@@ -63,13 +63,8 @@ public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E> {
 
   @Override
   public boolean add(E o) {
-    if (map.containsKey(o)) {
-      // must not change map for equal keys
-      return false;
-    }
     // Use "this" as a convenient non-null value to store in the map
-    map.put(o, o);
-    return true;
+    return map.put(o, this) == null;
   }
 
   @Override

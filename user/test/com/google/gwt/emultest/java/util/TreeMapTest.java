@@ -20,7 +20,9 @@ import com.google.gwt.core.client.JavaScriptException;
 
 import org.apache.commons.collections.TestMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -132,6 +134,12 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertEquals(expected.values().toArray(), actual.values().toArray());
   }
 
+  // Use JSNI to call a special method on our implementation of TreeMap.
+  @SuppressWarnings("unchecked") // raw Map
+  private static native void callAssertCorrectness(Map map) /*-{
+    map.@java.util.TreeMap::assertCorrectness()();
+  }-*/;
+
   /**
    * Create the expected return of toString for a Map containing only the passed
    * key and value.
@@ -155,6 +163,7 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   private boolean isPutSupported = true;
   private boolean isRemoveSupported = true;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -891,6 +900,29 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
     assertEquals(2, keySet.size());
     map.remove(getKeys()[1]);
     assertEquals(1, keySet.size());
+  }
+
+  public void testKeySetIteratorRemove() {
+    Map<K, V> map = makeFullMap();
+    resetFull();
+    ArrayList<K> keys = new ArrayList<K>();
+    for (Object key : getSampleKeys()) {
+      keys.add((K) key);
+    }
+    Comparator<? super K> cmp = ((TreeMap<K, V>) map).comparator();
+    if (cmp != null) {
+      Collections.sort(keys, cmp);
+    } else {
+      Collections.sort(keys);
+    }
+    Iterator<K> it = map.keySet().iterator();
+    for (K key : keys) {
+      assertTrue(it.hasNext());
+      K rem = it.next();
+      it.remove();
+      assertEquals(key, rem);
+    }
+    assertEquals(0, map.size());
   }
 
   /**
@@ -1810,6 +1842,11 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
 
   protected abstract Object getConflictingValue();
 
+  @Override
+  protected void gwtSetUp() throws Exception {
+    setComparator(null);
+  }
+
   protected boolean isNaturalOrder() {
     return comparator == null;
   }
@@ -1825,8 +1862,12 @@ public abstract class TreeMapTest<K extends Comparable<K>, V> extends TestMap {
   }
 
   @Override
-  protected void gwtSetUp() throws Exception {
-    setComparator(null);
+  protected void verifyMap() {
+    if (GWT.isScript()) {
+      // Verify red-black correctness in our implementation
+      callAssertCorrectness(map);
+    }
+    super.verifyMap();
   }
 
   Map<K, V> createMap() {

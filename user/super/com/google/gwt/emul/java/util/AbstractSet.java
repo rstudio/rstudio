@@ -58,6 +58,8 @@ public abstract class AbstractSet<E> extends AbstractCollection<E> implements
       E next = iter.next();
       if (next != null) {
         hashCode += next.hashCode();
+        // handle int overflow by coercing to int
+        hashCode = ~~hashCode;
       }
     }
     return hashCode;
