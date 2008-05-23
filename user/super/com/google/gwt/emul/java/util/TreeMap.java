@@ -37,36 +37,14 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
    */
 
   /**
-   * An iterator for entries kept in a TreeMap.
+   * Iterator for <code>EntrySet</code>.
    */
-  private class EntryIterator implements Iterator<Entry<K, V>> {
-
-    // The most recent node returned from next(); null if it hasn't been called
-    // or has been deleted.
-    private Node<K, V> current;
-
-    // Lower, inclusive bound on returned keys.
-    private K fromKey;
-
-    /*
-     * Since we don't keep parent pointers, we maintain our position in the tree
-     * via the stack which would be used for iterative in-order traversal. The
-     * top of the stack is always the next node to visit.
-     */
-    private Stack<Node<K, V>> inorderStack;
-
-    // Upper, exclusive bound on returned keys, or null if there is none --
-    // used for iterators on submaps.
-    private K toKey;
-
-    // The type of range bounds on this iterator.
-    private SubMapType type;
-
-    // true if the iterator hasn't been initialized yet.
-    private boolean uninitialized;
+  private final class EntryIterator implements Iterator<Entry<K, V>> {
+    private final Iterator<Map.Entry<K, V>> iter;
+    private Map.Entry<K, V> last = null;
 
     /**
-     * Create a new iterator with no restrictions on the returned values.
+     * Constructor for <code>EntrySetIterator</code>.
      */
     public EntryIterator() {
       this(SubMapType.All, null, null);
@@ -79,67 +57,46 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
      * @param toKey the upper bound of keys to return.
      */
     public EntryIterator(SubMapType type, K fromKey, K toKey) {
-      inorderStack = new Stack<Node<K, V>>();
-      uninitialized = true;
-      this.type = type;
-      this.fromKey = fromKey;
-      this.toKey = toKey;
+      List<Map.Entry<K, V>> list = new ArrayList<Map.Entry<K, V>>();
+      inOrderAdd(list, type, TreeMap.this.root, fromKey, toKey);
+      this.iter = list.iterator();
     }
 
     public boolean hasNext() {
-      if (uninitialized) {
-        initialize();
-      }
-      if (inorderStack.isEmpty()) {
-        return false;
-      }
-      return inRange(inorderStack.peek().key);
+      return iter.hasNext();
     }
 
-    public Entry<K, V> next() {
-      if (uninitialized) {
-        initialize();
-      }
-      /*
-       * After returning the current node, push the left children of its right
-       * child on the stack.
-       */
-      current = inorderStack.pop();
-      if (current == null || !inRange(current.key)) {
-        throw new NoSuchElementException("No more elements");
-      }
-      pushLeftChildren(current.child[RIGHT]);
-      return current;
+    public Map.Entry<K, V> next() {
+      return last = iter.next();
     }
 
     public void remove() {
+      if (last == null) {
+        throw new IllegalStateException("Must call next() before remove().");
+      } else {
+        iter.remove();
+        TreeMap.this.remove(last.getKey());
+        last = null;
+      }
+    }
+
+    private void inOrderAdd(List<Map.Entry<K, V>> list, SubMapType type,
+        Node<K, V> current, K fromKey, K toKey) {
       if (current == null) {
-        throw new IllegalStateException("No current element");
+        return;
       }
-      TreeMap.this.remove(current.getKey());
-      current = null;
-    }
-
-    private void initialize() {
-      uninitialized = false;
-      pushLeftChildren(root);
-      current = null;
-      if (type == SubMapType.Tail || type == SubMapType.Range) {
-        // TODO(jat): rewrite this similar to getAdjacentEntry()
-        while (!inorderStack.isEmpty()) {
-          current = inorderStack.pop();
-          if (inRange(current.key)) {
-            // we found the starting point, so push it back on the stack
-            inorderStack.push(current);
-            current = null;
-            break;
-          }
-          pushLeftChildren(current.child[RIGHT]);
-        }
+      if (current.child[LEFT] != null) {
+        inOrderAdd(list, type, current.child[LEFT], fromKey, toKey);
+      }
+      if (inRange(type, current.getKey(), fromKey, toKey)) {
+        list.add(current);
+      }
+      if (current.child[RIGHT] != null) {
+        inOrderAdd(list, type, current.child[RIGHT], fromKey, toKey);
       }
     }
 
-    private boolean inRange(K key) {
+    private boolean inRange(SubMapType type, K key, K fromKey, K toKey) {
       if (type == SubMapType.Head || type == SubMapType.Range) {
         if (cmp.compare(key, toKey) >= 0) {
           return false;
@@ -151,19 +108,6 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
         }
       }
       return true;
-    }
-
-    /**
-     * Follow the left children of the specified node, pushing them on the stack
-     * as we go.
-     * 
-     * @param node parent node to follow left children from.
-     */
-    private void pushLeftChildren(Node<K, V> node) {
-      while (node != null) {
-        inorderStack.push(node);
-        node = node.child[LEFT];
-      }
     }
   }
 
@@ -347,6 +291,9 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
         case Tail:
           // check key for compatibility with comparator
           cmp.compare(fromKey, fromKey);
+          break;
+        case All:
+          // no checks are needed
           break;
       }
       this.type = type;
@@ -659,6 +606,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     return state.value;
   }
 
+  @Override
   @SuppressWarnings("unchecked")
   public V remove(Object keyObj) {
     K key = (K) keyObj; // suppress unchecked cast
