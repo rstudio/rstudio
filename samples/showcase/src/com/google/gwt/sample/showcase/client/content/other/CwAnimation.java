@@ -36,17 +36,6 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class CwAnimation extends ContentWidget {
   /**
-   * The constants used in this Content Widget.
-   */
-  @ShowcaseSource
-  public static interface CwConstants extends Constants,
-      ContentWidget.CwConstants {
-    String cwAnimationDescription();
-
-    String cwAnimationName();
-  }
-
-  /**
    * A custom animation that moves a small image around a circle in an
    * {@link AbsolutePanel}.
    */
@@ -103,6 +92,26 @@ public class CwAnimation extends ContentWidget {
       double y = radius * Math.sin(radian) + centerY;
       absolutePanel.setWidgetPosition(w, (int) x, (int) y);
     }
+  }
+
+  /**
+   * The constants used in this Content Widget.
+   */
+  @ShowcaseSource
+  public static interface CwConstants extends Constants,
+      ContentWidget.CwConstants {
+    @DefaultStringValue("Cancel")
+    String cwAnimationCancel();
+
+    String cwAnimationDescription();
+
+    String cwAnimationName();
+
+    @DefaultStringValue("Animation Options")
+    String cwAnimationOptions();
+
+    @DefaultStringValue("Start")
+    String cwAnimationStart();
   }
 
   /**
@@ -243,10 +252,10 @@ public class CwAnimation extends ContentWidget {
     optionsBar.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
 
     // Add a title
-    optionsBar.add(new HTML("<b>Animation Options</b>"));
+    optionsBar.add(new HTML("<b>" + constants.cwAnimationOptions() + "</b>"));
 
     // Add start button
-    startButton = new Button("Start");
+    startButton = new Button(constants.cwAnimationStart());
     startButton.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
         animation.run(2000);
@@ -255,7 +264,7 @@ public class CwAnimation extends ContentWidget {
     optionsBar.add(startButton);
 
     // Add cancel button
-    cancelButton = new Button("Cancel");
+    cancelButton = new Button(constants.cwAnimationCancel());
     cancelButton.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
         animation.cancel();

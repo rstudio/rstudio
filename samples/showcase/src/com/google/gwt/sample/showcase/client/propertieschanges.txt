@@ -1,2 +1,12 @@
 cwDecoratorPanelName
 cwDecoratorPanelDescription
+
+cwAnimationName = Animations
+cwAnimationDescription = Animate your application with timed effects.
+cwAnimationStart = Start
+cwAnimationCancel = Cancel
+cwAnimationOptions = Animation Options
+
+cwDecoratorPanelFormName => cwDisclosurePanelFormName
+cwDecoratorPanelFormDescription => cwDisclosurePanelFormDescription
+cwDecoratorPanelFormTitle => cwDisclosurePanelFormTitle
