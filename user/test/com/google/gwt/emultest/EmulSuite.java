@@ -91,6 +91,7 @@ public class EmulSuite {
     suite.addTestSuite(SqlTimeTest.class);
     suite.addTestSuite(SqlTimestampTest.class);
     suite.addTest(TreeMapSuiteSub.suite());
+    suite.addTest(TreeSetSuiteSub.suite());
     // $JUnit-END$
 
     return suite;

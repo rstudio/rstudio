@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,66 +24,100 @@ package java.util;
  */
 public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E> {
 
+  /**
+   * TreeSet is stored as a TreeMap of the requested type to null Objects.
+   */
+  private SortedMap<E, Object> map;
+
   public TreeSet() {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("TreeSet not implemented");
+    map = new TreeMap<E, Object>();
   }
 
   public TreeSet(Collection<? extends E> c) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("TreeSet not implemented");
+    this();
+    addAll(c);
   }
 
   public TreeSet(Comparator<? super E> c) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("TreeSet not implemented");
+    if (c == null) {
+      map = new TreeMap<E, Object>();
+    } else {
+      map = new TreeMap<E, Object>(c);
+    }
   }
 
   public TreeSet(SortedSet<E> s) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("TreeSet not implemented");
+    this(s.comparator());
+    // TODO(jat): more efficient implementation
+    addAll(s);
+  }
+
+  /**
+   * Used to wrap subset maps in a new TreeSet.
+   * 
+   * @param map map to use for backing store
+   */
+  private TreeSet(SortedMap<E, Object> map) {
+    this.map = map;
+  }
+
+  @Override
+  public boolean add(E o) {
+    if (map.containsKey(o)) {
+      // must not change map for equal keys
+      return false;
+    }
+    // Use "this" as a convenient non-null value to store in the map
+    map.put(o, o);
+    return true;
+  }
+
+  @Override
+  public void clear() {
+    map.clear();
   }
 
   public Comparator<? super E> comparator() {
-    // TODO(jat): implement
-    return null;
+    return map.comparator();
+  }
+
+  @Override
+  public boolean contains(Object o) {
+    return map.containsKey(o);
   }
 
   public E first() {
-    // TODO(jat): implement
-    return null;
+    return map.firstKey();
   }
 
   public SortedSet<E> headSet(E toElement) {
-    // TODO(jat): implement
-    return null;
+    return new TreeSet<E>(map.headMap(toElement));
   }
 
   @Override
   public Iterator<E> iterator() {
-    // TODO(jat): implement
-    return null;
+    return map.keySet().iterator();
   }
 
   public E last() {
-    // TODO(jat): implement
-    return null;
+    return map.lastKey();
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    return map.remove(o) != null;
   }
 
   @Override
   public int size() {
-    // TODO(jat): implement
-    return 0;
+    return map.size();
   }
 
   public SortedSet<E> subSet(E fromElement, E toElement) {
-    // TODO(jat): implement
-    return null;
+    return new TreeSet<E>(map.subMap(fromElement, toElement));
   }
 
   public SortedSet<E> tailSet(E fromElement) {
-    // TODO(jat): implement
-    return null;
+    return new TreeSet<E>(map.tailMap(fromElement));
   }
-
 }
