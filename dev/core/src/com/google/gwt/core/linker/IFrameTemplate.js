@@ -274,9 +274,14 @@ function __MODULE_FUNC__() {
   // Called when the compiled script identified by moduleName is done loading.
   //
   __MODULE_FUNC__.onScriptLoad = function() {
-    // Mark this module's script as done loading and (possibly) start the module.
-    loadDone = true;
-    maybeStartModule();
+    // IE7 bookmark bug. A phantom (presumably cached) version of our compiled iframe
+    // can call onScriptLoad before we even properly inject the iframe. So if this is
+    // called before the frame was injected ... it is completely bogus.
+    if (frameInjected) {
+      // Mark this module's script as done loading and (possibly) start the module.
+      loadDone = true;
+      maybeStartModule();
+    }
   }
 
   // --------------- STRAIGHT-LINE CODE ---------------
