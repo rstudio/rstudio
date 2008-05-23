@@ -171,7 +171,7 @@ public class JUnitShell extends GWTShell {
       }
 
       unitTestShell.messageQueue = new JUnitMessageQueue(
-          unitTestShell.numClients, unitTestShell.getLogLevel());
+          unitTestShell.numClients);
 
       if (!unitTestShell.startUp()) {
         throw new JUnitFatalLaunchException("Shell failed to start");
@@ -436,16 +436,6 @@ public class JUnitShell extends GWTShell {
     } else {
       super.initializeLogger();
     }
-    TreeLogger log = getTopLogger();
-    if (log.isLoggable(TreeLogger.ALL)) {
-      log.log(TreeLogger.INFO, "Logging ALL messages.");
-    } else if (log.isLoggable(TreeLogger.SPAM)) {
-      log.log(TreeLogger.INFO, "Logging SPAM messages.");
-    } else if (log.isLoggable(TreeLogger.TRACE)) {
-      log.log(TreeLogger.INFO, "Logging TRACE messages.");
-    } else if (log.isLoggable(TreeLogger.INFO)) {
-      log.log(TreeLogger.INFO, "Logging INFO messages.");
-    }
   }
 
   /**
@@ -534,14 +524,12 @@ public class JUnitShell extends GWTShell {
       throw new UnableToCompleteException();
     }
 
-    TreeLogger log = getTopLogger();
     if (!sameTest) {
       /*
        * Synthesize a synthetic module that derives from the user-specified
        * module but also includes JUnit support.
        */
-      log.log(TreeLogger.TRACE, "Switching to module " + syntheticModuleName);
-      currentModule = ModuleDefLoader.createSyntheticModule(log,
+      currentModule = ModuleDefLoader.createSyntheticModule(getTopLogger(),
           syntheticModuleName, new String[] {
               moduleName, strategy.getModuleInherit()}, true);
       // Replace any user entry points with our test runner.
@@ -552,15 +540,9 @@ public class JUnitShell extends GWTShell {
           "junit.moduleName");
       moduleNameProp.addKnownValue(moduleName);
       moduleNameProp.setActiveValue(moduleName);
-      long startCompile = System.currentTimeMillis();
       runStyle.maybeCompileModule(syntheticModuleName);
-      double compileTime = (System.currentTimeMillis() - startCompile) / 1000.0D;
-      log.log(TreeLogger.INFO, "Switched to module " + syntheticModuleName + 
-          " (compiled in " + compileTime + "sec)");
     }
 
-    log.log(TreeLogger.TRACE, "Queueing test " + testCase.getClass().getName() + "."
-        + testCase.getName());
     messageQueue.setNextTest(new TestInfo(currentModule.getName(),
         testCase.getClass().getName(), testCase.getName()));
 
@@ -588,7 +570,6 @@ public class JUnitShell extends GWTShell {
     }
 
     assert (messageQueue.hasResult());
-    log.log(TreeLogger.TRACE, "Completed test, fetching results...");
     Map<String, JUnitResult> results = messageQueue.getResults();
 
     boolean parallelTesting = numClients > 1;
@@ -596,7 +577,6 @@ public class JUnitShell extends GWTShell {
     for (Entry<String, JUnitResult> entry : results.entrySet()) {
       String clientId = entry.getKey();
       JUnitResult result = entry.getValue();
-      log.log(TreeLogger.TRACE, "Got result from " + clientId + ": " + result);
       assert (result != null);
       Throwable exception = result.getException();
       // In the case that we're running multiple clients at once, we need to

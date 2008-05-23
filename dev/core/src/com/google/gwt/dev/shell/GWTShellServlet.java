@@ -59,11 +59,6 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class GWTShellServlet extends HttpServlet {
 
-  /**
-   *  Silence the serialVersionUID warning.
-   */
-  private static final long serialVersionUID = 1L;
-
   private static class RequestParts {
     public final String moduleName;
 
@@ -148,11 +143,6 @@ public class GWTShellServlet extends HttpServlet {
   protected void processFileRequest(HttpServletRequest request,
       HttpServletResponse response) throws IOException {
 
-    TreeLogger logger = getLogger();
-    
-    logger.log(TreeLogger.TRACE, "Servlet request for " + 
-        request.getPathInfo() + " from " + request.getRemoteHost());
-
     String pathInfo = request.getPathInfo();
     if (pathInfo.length() == 0 || pathInfo.equals("/")) {
       response.setContentType("text/html");
@@ -162,6 +152,8 @@ public class GWTShellServlet extends HttpServlet {
       writer.println("</body></html>");
       return;
     }
+
+    TreeLogger logger = getLogger();
 
     // Parse the request assuming it is module/resource.
     //
@@ -211,8 +203,7 @@ public class GWTShellServlet extends HttpServlet {
       StringBuffer url = request.getRequestURL();
 
       // Branch the logger in case we decide to log more below.
-      logger = logger.branch(TreeLogger.TRACE, "Request " + id + ": " + url +
-          " from " + request.getRemoteHost(),
+      logger = logger.branch(TreeLogger.TRACE, "Request " + id + ": " + url,
           null);
     }
 
@@ -284,7 +275,6 @@ public class GWTShellServlet extends HttpServlet {
 
     // Load/get the servlet if we found one.
     if (servletClassName != null) {
-      logger.log(TreeLogger.TRACE, "Delegating to " + servletClassName + " for " + moduleDef);
       HttpServlet delegatee = tryGetOrLoadServlet(logger, moduleDef,
           servletClassName);
       if (delegatee == null) {
@@ -617,12 +607,10 @@ public class GWTShellServlet extends HttpServlet {
   }
 
   /**
-   * We don't actually log this (except at TRACE) on purpose since the client
-   * does anyway.
+   * We don't actually log this on purpose since the client does anyway.
    */
   private ModuleDef getModuleDef(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    logger.log(TreeLogger.TRACE, "Servlet getModuleDef(logger, \"" + moduleName + "\"");
     synchronized (loadedModulesByName) {
       ModuleDef moduleDef = loadedModulesByName.get(moduleName);
       if (moduleDef == null) {

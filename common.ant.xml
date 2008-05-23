@@ -160,7 +160,7 @@
 			<junit dir="@{test.out}" fork="yes" printsummary="yes" failureproperty="junit.failure" >
 				<jvmarg line="${junit.platform.args}" />
 				<jvmarg line="-Xmx512m" />
-				<sysproperty key="gwt.args" value="-logLevel TRACE ${junit.notheadless.arg} @{test.args}" />
+				<sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
 				<sysproperty key="java.awt.headless" value="${junit.headless}" />
 				<sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
 				<classpath>
