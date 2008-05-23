@@ -32,9 +32,9 @@ import java.util.LinkedHashMap;
 public class LinkedHashMapTest extends TestMap {
   // should be a method-level class, however to avoid serialization warning made
   // static instead.
-  static class TestRemoveEldestMap extends LinkedHashMap {
+  static class TestRemoveEldestMap<K, V> extends LinkedHashMap<K, V> {
 
-    public String expectedKey;
+    public K expectedKey;
     public boolean removeEldest;
 
     public TestRemoveEldestMap() {
@@ -46,7 +46,7 @@ public class LinkedHashMapTest extends TestMap {
     }
 
     @Override
-    public boolean removeEldestEntry(Map.Entry entry) {
+    public boolean removeEldestEntry(Map.Entry<K, V> entry) {
       if (removeEldest) {
         assertEquals(expectedKey, entry.getKey());
         return true;
@@ -119,6 +119,7 @@ public class LinkedHashMapTest extends TestMap {
    * 
    * @param hashMap
    */
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   private static void checkEmptyLinkedHashMapAssumptions(LinkedHashMap hashMap) {
     assertNotNull(hashMap);
     assertTrue(hashMap.isEmpty());
@@ -210,7 +211,7 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.containsKey(Object)'
    */
   public void testContainsKey() {
-    LinkedHashMap hashMap = new LinkedHashMap();
+    LinkedHashMap<String, Integer> hashMap = new LinkedHashMap<String, Integer>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     assertFalse(hashMap.containsKey(KEY_TEST_CONTAINS_KEY));
@@ -227,7 +228,7 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.containsValue(Object)'
    */
   public void testContainsValue() {
-    LinkedHashMap hashMap = new LinkedHashMap();
+    LinkedHashMap<String, Integer> hashMap = new LinkedHashMap<String, Integer>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     assertFalse("check contains of empty map",
@@ -247,18 +248,18 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.entrySet()'
    */
   public void testEntrySet() {
-    LinkedHashMap hashMap = new LinkedHashMap();
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
-    Set entrySet = hashMap.entrySet();
+    Set<Entry<String, String>> entrySet = hashMap.entrySet();
     assertNotNull(entrySet);
 
     // Check that the entry set looks right
     hashMap.put(KEY_TEST_ENTRY_SET, VALUE_TEST_ENTRY_SET_1);
     entrySet = hashMap.entrySet();
     assertEquals(entrySet.size(), SIZE_ONE);
-    Iterator itSet = entrySet.iterator();
-    Map.Entry entry = (Map.Entry) itSet.next();
+    Iterator<Entry<String, String>> itSet = entrySet.iterator();
+    Map.Entry<String, String> entry = itSet.next();
     assertEquals(entry.getKey(), KEY_TEST_ENTRY_SET);
     assertEquals(entry.getValue(), VALUE_TEST_ENTRY_SET_1);
 
@@ -267,7 +268,7 @@ public class LinkedHashMapTest extends TestMap {
     entrySet = hashMap.entrySet();
     assertEquals(entrySet.size(), SIZE_ONE);
     itSet = entrySet.iterator();
-    entry = (Map.Entry) itSet.next();
+    entry = itSet.next();
     assertEquals(entry.getKey(), KEY_TEST_ENTRY_SET);
     assertEquals(entry.getValue(), VALUE_TEST_ENTRY_SET_2);
 
@@ -284,8 +285,8 @@ public class LinkedHashMapTest extends TestMap {
     hashMap.put("A", "B");
     LinkedHashMap<String, String> dummy = new LinkedHashMap<String, String>();
     dummy.put("A", "b");
-    Entry bogus = (Entry) dummy.entrySet().iterator().next();
-    Set entrySet = hashMap.entrySet();
+    Entry<String, String> bogus = dummy.entrySet().iterator().next();
+    Set<Entry<String, String>> entrySet = hashMap.entrySet();
     boolean removed = entrySet.remove(bogus);
     assertEquals(removed, false);
     assertEquals(hashMap.get("A"), "B");
@@ -317,7 +318,7 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.get(Object)'.
    */
   public void testGet() {
-    LinkedHashMap hashMap = new LinkedHashMap();
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     assertNull(hashMap.get(KEY_TEST_GET));
@@ -336,7 +337,7 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.AbstractMap.hashCode()'.
    */
   public void testHashCode() {
-    LinkedHashMap hashMap = new LinkedHashMap();
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     // Check that hashCode changes
@@ -399,7 +400,7 @@ public class LinkedHashMapTest extends TestMap {
     LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
-    Set keySet = hashMap.keySet();
+    Set<String> keySet = hashMap.keySet();
     System.err.println("keySet:" + keySet);
     assertNotNull(keySet);
     assertTrue(keySet.isEmpty());
@@ -416,7 +417,7 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.LinkedHashMap()'.
    */
   public void testLinkedHashMap() {
-    LinkedHashMap hashMap = new LinkedHashMap();
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>();
     checkEmptyLinkedHashMapAssumptions(hashMap);
   }
 
@@ -424,13 +425,13 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.LinkedHashMap(int)'
    */
   public void testLinkedHashMapInt() {
-    LinkedHashMap hashMap = new LinkedHashMap(CAPACITY_16);
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>(CAPACITY_16);
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     // TODO(mmendez): how do we verify capacity?
     boolean failed = true;
     try {
-      new LinkedHashMap(-SIZE_ONE);
+      new LinkedHashMap<String, String>(-SIZE_ONE);
     } catch (Throwable ex) {
       if (ex instanceof IllegalArgumentException) {
         failed = false;
@@ -441,7 +442,7 @@ public class LinkedHashMapTest extends TestMap {
       fail("Failure testing new LinkedHashMap(-1)");
     }
 
-    LinkedHashMap zeroSizedLinkedHashMap = new LinkedHashMap(0);
+    LinkedHashMap<String, String> zeroSizedLinkedHashMap = new LinkedHashMap<String, String>(0);
     assertNotNull(zeroSizedLinkedHashMap);
   }
 
@@ -450,7 +451,8 @@ public class LinkedHashMapTest extends TestMap {
    */
   public void testLinkedHashMapIntFloat() {
 
-    LinkedHashMap hashMap = new LinkedHashMap(CAPACITY_16, LOAD_FACTOR_ONE_HALF);
+    LinkedHashMap<String, String> hashMap = new LinkedHashMap<String, String>(CAPACITY_16,
+        LOAD_FACTOR_ONE_HALF);
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     // TODO(mmendez): how do we verify capacity and load factor?
@@ -458,7 +460,7 @@ public class LinkedHashMapTest extends TestMap {
     // Test new LinkedHashMap(-1, 0.0F)
     boolean failed = true;
     try {
-      new LinkedHashMap(CAPACITY_NEG_ONE_HALF, LOAD_FACTOR_ZERO);
+      new LinkedHashMap<String, String>(CAPACITY_NEG_ONE_HALF, LOAD_FACTOR_ZERO);
     } catch (Throwable ex) {
       if (ex instanceof IllegalArgumentException) {
         failed = false;
@@ -472,7 +474,7 @@ public class LinkedHashMapTest extends TestMap {
     // Test new LinkedHashMap(0, -1.0F)
     failed = true;
     try {
-      new LinkedHashMap(CAPACITY_ZERO, LOAD_FACTOR_NEG_ONE);
+      new LinkedHashMap<String, String>(CAPACITY_ZERO, LOAD_FACTOR_NEG_ONE);
     } catch (Throwable ex) {
       if (ex instanceof IllegalArgumentException) {
         failed = false;
@@ -484,7 +486,7 @@ public class LinkedHashMapTest extends TestMap {
     }
 
     // Test new LinkedHashMap(0,0F);
-    hashMap = new LinkedHashMap(CAPACITY_ZERO, LOAD_FACTOR_ONE_TENTH);
+    hashMap = new LinkedHashMap<String, String>(CAPACITY_ZERO, LOAD_FACTOR_ONE_TENTH);
     assertNotNull(hashMap);
   }
 
@@ -492,7 +494,7 @@ public class LinkedHashMapTest extends TestMap {
    * Test method for 'java.util.LinkedHashMap.LinkedHashMap(Map)'
    */
   public void testLinkedHashMapMap() {
-    LinkedHashMap srcMap = new LinkedHashMap();
+    LinkedHashMap<Integer, Integer> srcMap = new LinkedHashMap<Integer, Integer>();
     assertNotNull(srcMap);
     checkEmptyLinkedHashMapAssumptions(srcMap);
 
@@ -500,16 +502,16 @@ public class LinkedHashMapTest extends TestMap {
     srcMap.put(INTEGER_2, INTEGER_22);
     srcMap.put(INTEGER_3, INTEGER_33);
 
-    LinkedHashMap hashMap = cloneLinkedHashMap(srcMap);
+    LinkedHashMap<Integer, Integer> hashMap = cloneLinkedHashMap(srcMap);
     assertFalse(hashMap.isEmpty());
     assertTrue(hashMap.size() == SIZE_THREE);
 
-    Collection valColl = hashMap.values();
+    Collection<Integer> valColl = hashMap.values();
     assertTrue(valColl.contains(INTEGER_11));
     assertTrue(valColl.contains(INTEGER_22));
     assertTrue(valColl.contains(INTEGER_33));
 
-    Collection keyColl = hashMap.keySet();
+    Collection<Integer> keyColl = hashMap.keySet();
     assertTrue(keyColl.contains(INTEGER_1));
     assertTrue(keyColl.contains(INTEGER_2));
     assertTrue(keyColl.contains(INTEGER_3));
@@ -631,7 +633,7 @@ public class LinkedHashMapTest extends TestMap {
   }
 
   public void testRemoveEldest() {
-    TestRemoveEldestMap m = new TestRemoveEldestMap(false);
+    TestRemoveEldestMap<String, String> m = new TestRemoveEldestMap<String, String>(false);
     m.put("A", "A");
     m.put("B", "B");
     m.put("C", "C");
@@ -642,18 +644,15 @@ public class LinkedHashMapTest extends TestMap {
     m.expectedKey = "A";
     m.put("E", "E");
     m.put("B", "New-B");
-    Iterator<Map.Entry> entries = m.entrySet().iterator();
-    Map.Entry first = entries.next();
+    Iterator<Map.Entry<String, String>> entries = m.entrySet().iterator();
+    Map.Entry<String, String> first = entries.next();
     assertEquals("B", first.getKey());
     assertEquals("New-B", first.getValue());
     assertEquals(4, m.size());
   }
 
   public void testRemoveEldestMapLRU() {
-    TestRemoveEldestMap m;
-    Iterator<Map.Entry> entries;
-    Map.Entry first;
-    m = new TestRemoveEldestMap(true);
+    TestRemoveEldestMap<String, String> m = new TestRemoveEldestMap<String, String>(true);
     m.put("A", "A");
     m.put("B", "B");
     m.put("C", "C");
@@ -665,8 +664,8 @@ public class LinkedHashMapTest extends TestMap {
     m.put("E", "E");
 
     m.put("C", "New-C");
-    entries = m.entrySet().iterator();
-    first = entries.next();
+    Iterator<Map.Entry<String, String>> entries = m.entrySet().iterator();
+    Map.Entry<String, String> first = entries.next();
     assertEquals("A", first.getKey());
     assertEquals("D", entries.next().getKey());
     assertEquals("E", entries.next().getKey());
@@ -701,7 +700,7 @@ public class LinkedHashMapTest extends TestMap {
     hashMap.put(KEY_1, VALUE_1);
     hashMap.put(KEY_2, VALUE_2);
     hashMap.put(KEY_3, VALUE_3);
-    LinkedHashMap srcMap = cloneLinkedHashMap(hashMap);
+    LinkedHashMap<String, String> srcMap = cloneLinkedHashMap(hashMap);
     hashMap.putAll(srcMap);
     assertEquals(hashMap.size(), SIZE_THREE);
 
@@ -741,6 +740,7 @@ public class LinkedHashMapTest extends TestMap {
     assertEquals(val, VALUE_VAL);
   }
 
+  @SuppressWarnings("unchecked") // raw Map/LinkedHashMap
   @Override
   protected Map makeEmptyMap() {
     return new LinkedHashMap();
@@ -755,6 +755,7 @@ public class LinkedHashMapTest extends TestMap {
    * @param hashMap the LinkedHashMap to be copied
    * @return the copy
    */
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   private LinkedHashMap cloneLinkedHashMap(LinkedHashMap hashMap) {
     if (GWT.isScript()) {
       return new LinkedHashMap(hashMap);

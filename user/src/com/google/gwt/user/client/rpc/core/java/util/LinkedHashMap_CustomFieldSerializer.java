@@ -21,8 +21,6 @@ import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.lang.reflect.Field;
 import java.util.LinkedHashMap;
-import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * Custom field serializer for {@link java.util.LinkedHashMap} for the server
@@ -30,35 +28,27 @@ import java.util.Map.Entry;
  */
 public final class LinkedHashMap_CustomFieldSerializer {
 
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   public static void deserialize(SerializationStreamReader streamReader,
       LinkedHashMap instance) throws SerializationException {
-    int size = streamReader.readInt();
-
-    for (int i = 0; i < size; ++i) {
-      Object key = streamReader.readObject();
-      Object value = streamReader.readObject();
-      instance.put(key, value);
-    }
+    Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   public static LinkedHashMap instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
     boolean accessOrder = streamReader.readBoolean();
     return new LinkedHashMap(16, .75f, accessOrder);
   }
 
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   public static void serialize(SerializationStreamWriter streamWriter,
       LinkedHashMap instance) throws SerializationException {
     streamWriter.writeBoolean(getAccessOrder(instance));
-    int size = instance.size();
-    streamWriter.writeInt(size);
-
-    for (Entry entry : (Set<Entry>) instance.entrySet()) {
-      streamWriter.writeObject(entry.getKey());
-      streamWriter.writeObject(entry.getValue());
-    }
+    Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
+  @SuppressWarnings("unchecked") // raw LinkedHashMap
   private static boolean getAccessOrder(LinkedHashMap instance)
       throws SerializationException {
     Field accessOrderField;
@@ -76,5 +66,4 @@ public final class LinkedHashMap_CustomFieldSerializer {
       throw new SerializationException("Can't get accessOrder field", e);
     }
   }
-
 }

@@ -32,7 +32,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
    * list with a head node. This reduces the special cases we have to deal with
    * in the list operations.
    * 
-   * Note that we duplicate the key from the underlying hashmap so we can find
+   * Note that we duplicate the key from the underlying hash map so we can find
    * the eldest entry. The alternative would have been to modify HashMap so more
    * of the code was directly usable here, but this would have added some
    * overhead to HashMap, or to reimplement most of the HashMap code here with
@@ -53,21 +53,21 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
     }
 
     /**
-     * Add this node after the specified node in the chain.
-     * 
-     * @param node the node to insert after
+     * Add this node to the end of the chain.
      */
-    public void addAfter(ChainEntry node) {
-      update(node, node.next);
-    }
+    public void addToEnd() {
+      ChainEntry tail = head.prev;
 
-    /**
-     * Add this node before the specified node in the chain.
-     * 
-     * @param node the node to insert before
-     */
-    public void addBefore(ChainEntry node) {
-      update(node.prev, node);
+      // Chain is valid.
+      assert (head != null && tail != null);
+
+      // This entry is not in the list.
+      assert (next == null) && (prev == null);
+
+      // Update me.
+      prev = tail;
+      next = head;
+      tail.next = head.prev = this;
     }
 
     /**
@@ -76,36 +76,20 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
     public void remove() {
       next.prev = prev;
       prev.next = next;
-      next = null;
-      prev = null;
-    }
-
-    private void update(ChainEntry prev, ChainEntry next) {
-      // This entry is not in the list.
-      assert (this.next == null) && (this.prev == null);
-
-      // Will not break the chain.
-      assert (prev != null && next != null);
-
-      // Update me.
-      this.prev = prev;
-      this.next = next;
-      next.prev = this;
-      prev.next = this;
+      next = prev = null;
     }
   }
 
   private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
 
     private final class EntryIterator implements Iterator<Entry<K, V>> {
-      // Current entry.
-      private ChainEntry current;
+      // The last entry that was returned from this iterator.
+      private ChainEntry last;
 
-      // Next entry. Used to allow removal of the current node.
+      // The next entry to return from this iterator.
       private ChainEntry next;
 
       public EntryIterator() {
-        current = head;
         next = head.next;
       }
 
@@ -113,22 +97,22 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
         return next != head;
       }
 
-      public java.util.Map.Entry<K, V> next() {
-        if (next == null) {
+      public Map.Entry<K, V> next() {
+        if (next == head) {
           throw new NoSuchElementException();
         }
-        current = next;
+        last = next;
         next = next.next;
-        return current;
+        return last;
       }
 
       public void remove() {
-        if (current == null || current == head) {
+        if (last == null) {
           throw new IllegalStateException("No current entry");
         }
-        current.remove();
-        map.remove(current.getKey());
-        current = null;
+        last.remove();
+        map.remove(last.getKey());
+        last = null;
       }
     }
 
@@ -168,48 +152,44 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
 
   /*
    * The head of the LRU/insert order chain, which is a doubly-linked circular
-   * list.
+   * list. The key and value of head should never be read.
    * 
    * The most recently inserted/accessed node is at the end of the chain, ie.
    * chain.prev.
    */
-  private transient ChainEntry head;
+  private final transient ChainEntry head = new ChainEntry();
 
   /*
    * The hashmap that keeps track of our entries and the chain. Note that we
    * duplicate the key here to eliminate changes to HashMap and minimize the
    * code here, at the expense of additional space.
    */
-  private transient HashMap<K, ChainEntry> map;
+  private final transient HashMap<K, ChainEntry> map = new HashMap<K, ChainEntry>();
 
   {
-    // Head's value should never be accessed.
-    head = new ChainEntry();
+    // Initialize the empty linked list.
     head.prev = head;
     head.next = head;
   }
 
   public LinkedHashMap() {
-    this(11, 0.75f, false);
   }
 
   public LinkedHashMap(int ignored) {
-    this(ignored, 0.75f, false);
+    super(ignored);
   }
 
   public LinkedHashMap(int ignored, float alsoIgnored) {
-    this(ignored, alsoIgnored, false);
+    super(ignored, alsoIgnored);
   }
 
   public LinkedHashMap(int ignored, float alsoIgnored, boolean accessOrder) {
-    super();
+    super(ignored, alsoIgnored);
     this.accessOrder = accessOrder;
-    this.map = new HashMap<K, ChainEntry>(ignored, alsoIgnored);
   }
 
   public LinkedHashMap(Map<? extends K, ? extends V> toBeCopied) {
-    this(toBeCopied.size());
-    putAll(toBeCopied);
+    this.putAll(toBeCopied);
   }
 
   @Override
@@ -245,11 +225,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
   public V get(Object key) {
     ChainEntry entry = map.get(key);
     if (entry != null) {
-      if (accessOrder) {
-        // Move to the tail of the chain on access if requested.
-        entry.remove();
-        entry.addBefore(head);
-      }
+      recordAccess(entry);
       return entry.getValue();
     }
     return null;
@@ -261,7 +237,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
     if (old == null) {
       ChainEntry newEntry = new ChainEntry(key, value);
       map.put(key, newEntry);
-      newEntry.addBefore(head);
+      newEntry.addToEnd();
       ChainEntry eldest = head.next;
       if (removeEldestEntry(eldest)) {
         eldest.remove();
@@ -271,11 +247,7 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
     } else {
       V oldValue = old.getValue();
       old.setValue(value);
-      // If orders by access, move to end of execution block.
-      if (accessOrder) {
-        old.remove();
-        old.addBefore(head);
-      }
+      recordAccess(old);
       return oldValue;
     }
   }
@@ -295,7 +267,16 @@ public class LinkedHashMap<K, V> extends HashMap<K, V> implements Map<K, V> {
     return map.size();
   }
 
-  protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+  @SuppressWarnings("unused")
+  protected boolean removeEldestEntry(Entry<K, V> eldest) {
     return false;
+  }
+
+  private void recordAccess(ChainEntry entry) {
+    if (accessOrder) {
+      // Move to the tail of the chain on access.
+      entry.remove();
+      entry.addToEnd();
+    }
   }
 }

@@ -18,26 +18,21 @@ package com.google.gwt.user.client.rpc.core.java.util;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
+import com.google.gwt.user.client.rpc.core.java.util.Map_CustomFieldSerializerBase;
 
 import java.util.LinkedHashMap;
 import java.util.Set;
 import java.util.Map.Entry;
 
 /**
- * Custom field serializer for {@link java.util.LinkedHashMap}, which is the
- * same as {@link java.util.HashMap}.
+ * Custom field serializer for {@link java.util.LinkedHashMap}, which uses
+ * JSNI.
  */
 public final class LinkedHashMap_CustomFieldSerializer {
 
   public static void deserialize(SerializationStreamReader streamReader,
       LinkedHashMap instance) throws SerializationException {
-    int size = streamReader.readInt();
-
-    for (int i = 0; i < size; ++i) {
-      Object key = streamReader.readObject();
-      Object value = streamReader.readObject();
-      instance.put(key, value);
-    }
+    Map_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
   public static LinkedHashMap instantiate(SerializationStreamReader streamReader)
@@ -49,13 +44,7 @@ public final class LinkedHashMap_CustomFieldSerializer {
   public static void serialize(SerializationStreamWriter streamWriter,
       LinkedHashMap instance) throws SerializationException {
     streamWriter.writeBoolean(getAccessOrder(instance));
-    int size = instance.size();
-    streamWriter.writeInt(size);
-    
-    for (Entry entry : (Set<Entry>) instance.entrySet()) {
-      streamWriter.writeObject(entry.getKey());
-      streamWriter.writeObject(entry.getValue());
-    }
+    Map_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 
   private static native boolean getAccessOrder(LinkedHashMap instance) /*-{

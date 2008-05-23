@@ -21,12 +21,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.Map.Entry;
 
 /**
  * Tests <code>HashMap</code>.
  */
+@SuppressWarnings("unchecked")
 public class HashMapTest extends TestMap {
   private static final int CAPACITY_16 = 16;
   private static final int CAPACITY_NEG_ONE_HALF = -1;
@@ -85,6 +87,16 @@ public class HashMapTest extends TestMap {
   private static final String VALUE_TEST_REMOVE = KEY_TEST_REMOVE + " - value";
   private static final String VALUE_VAL = "value";
 
+  private static void assertEmptyIterator(Iterator it) {
+    assertNotNull(it);
+    assertFalse(it.hasNext());
+    try {
+      it.next();
+      fail("Expected NoSuchElementException");
+    } catch (NoSuchElementException expected) {
+    }
+  }
+
   /**
    * Check the state of a newly constructed, empty HashMap.
    * 
@@ -106,8 +118,7 @@ public class HashMapTest extends TestMap {
     assertTrue(hashMap.entrySet().isEmpty());
     assertTrue(hashMap.entrySet().size() == 0);
 
-    assertNotNull(hashMap.entrySet().iterator());
-    assertFalse(hashMap.entrySet().iterator().hasNext());
+    assertEmptyIterator(hashMap.entrySet().iterator());
   }
 
   public String getModuleName() {
@@ -232,6 +243,7 @@ public class HashMapTest extends TestMap {
     Map.Entry entry = (Map.Entry) itSet.next();
     assertEquals(entry.getKey(), KEY_TEST_ENTRY_SET);
     assertEquals(entry.getValue(), VALUE_TEST_ENTRY_SET_1);
+    assertEmptyIterator(itSet);
 
     // Check that entries in the entrySet are update correctly on overwrites
     hashMap.put(KEY_TEST_ENTRY_SET, VALUE_TEST_ENTRY_SET_2);
@@ -241,6 +253,7 @@ public class HashMapTest extends TestMap {
     entry = (Map.Entry) itSet.next();
     assertEquals(entry.getKey(), KEY_TEST_ENTRY_SET);
     assertEquals(entry.getValue(), VALUE_TEST_ENTRY_SET_2);
+    assertEmptyIterator(itSet);
 
     // Check that entries are updated on removes
     hashMap.remove(KEY_TEST_ENTRY_SET);
