@@ -231,6 +231,16 @@ public class JUnitShell extends GWTShell {
   private long testBeginTimeout;
 
   /**
+   * We need to keep a hard reference to the last module that was launched until
+   * all client browsers have successfully transitioned to the current module.
+   * Failure to do so allows the last module to be GC'd, which transitively
+   * kills the {@link com.google.gwt.junit.server.JUnitHostImpl} servlet. If the
+   * servlet dies, the client browsers will be unable to transition.
+   */
+  @SuppressWarnings("unused")
+  private ModuleDef lastModule;
+
+  /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
    * server mode and disables processing extra arguments as URLs to be shown.
    */
@@ -463,6 +473,11 @@ public class JUnitShell extends GWTShell {
     long currentTimeMillis = System.currentTimeMillis();
     if (activeClients == numClients) {
       firstLaunch = false;
+      /*
+       * It's now safe to release any reference to the last module since all
+       * clients have transitioned to the current module.
+       */
+      lastModule = currentModule;
     } else if (testBeginTimeout < currentTimeMillis) {
       double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
       throw new TimeoutException(
