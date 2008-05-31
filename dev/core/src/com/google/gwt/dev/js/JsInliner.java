@@ -676,14 +676,14 @@ public class JsInliner {
   private static class InliningVisitor extends JsModVisitor {
     private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
     private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
-    private final Map<JsFunction, Integer> invocationCounts;
+    private final InvocationCountingVisitor invocationCountingVisitor = new InvocationCountingVisitor();
+
     private final Stack<List<JsName>> newLocalVariableStack = new Stack<List<JsName>>();
     private final JsProgram program;
 
-    public InliningVisitor(JsProgram program,
-        Map<JsFunction, Integer> invocationCounts) {
+    public InliningVisitor(JsProgram program) {
       this.program = program;
-      this.invocationCounts = invocationCounts;
+      invocationCountingVisitor.accept(program);
     }
 
     /**
@@ -948,6 +948,10 @@ public class JsInliner {
       // We've committed to the inlining, ensure the vars are created
       newLocalVariableStack.peek().addAll(localVariableNames);
 
+      // update invocation counts according to this inlining
+      invocationCountingVisitor.removeCountsFor(x);
+      invocationCountingVisitor.accept(op);
+
       /*
        * See if any further inlining can be performed in the current context. By
        * attempting to maximize the level of inlining now, we can reduce the
@@ -966,7 +970,7 @@ public class JsInliner {
     }
 
     private boolean isInvokedMoreThanOnce(JsFunction f) {
-      Integer count = invocationCounts.get(f);
+      Integer count = invocationCountingVisitor.invocationCount(f);
       return count == null || count > 1;
     }
   }
@@ -977,6 +981,7 @@ public class JsInliner {
    * complexity.
    */
   private static class InvocationCountingVisitor extends JsVisitor {
+    private boolean removingCounts = false;
     private final Map<JsFunction, Integer> invocationCount = new IdentityHashMap<JsFunction, Integer>();
 
     @Override
@@ -985,16 +990,31 @@ public class JsInliner {
       if (function != null) {
         Integer count = invocationCount.get(function);
         if (count == null) {
+          assert (!removingCounts);
           count = 1;
         } else {
-          count += 1;
+          if (removingCounts) {
+            count -= 1;
+          } else {
+            count += 1;
+          }
         }
         invocationCount.put(function, count);
       }
     }
 
-    public Map<JsFunction, Integer> getInvocationCounts() {
-      return invocationCount;
+    public Integer invocationCount(JsFunction f) {
+      return invocationCount.get(f);
+    }
+
+    /**
+     * Like accept(), but remove counts for all invocations in <code>expr</code>.
+     */
+    public void removeCountsFor(JsExpression expr) {
+      assert (!removingCounts);
+      removingCounts = true;
+      accept(expr);
+      removingCounts = false;
     }
   }
 
@@ -1349,10 +1369,7 @@ public class JsInliner {
     RecursionCollector rc = new RecursionCollector();
     rc.accept(program);
 
-    InvocationCountingVisitor icv = new InvocationCountingVisitor();
-    icv.accept(program);
-
-    InliningVisitor v = new InliningVisitor(program, icv.getInvocationCounts());
+    InliningVisitor v = new InliningVisitor(program);
     v.blacklist(d.getRedefined());
     v.blacklist(rc.getRecursive());
     v.accept(program);
