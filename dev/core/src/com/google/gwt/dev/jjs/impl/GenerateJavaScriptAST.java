@@ -917,6 +917,10 @@ public class GenerateJavaScriptAST {
         JsExpression next = exprs.get(i);
         cur = createCommaExpression(cur, next);
       }
+      if (cur == null) {
+        // the multi-expression was empty; use undefined
+        cur = jsProgram.getUndefinedLiteral();
+      }
       push(cur);
     }
 
