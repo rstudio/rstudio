@@ -47,7 +47,6 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -55,7 +54,6 @@ import com.google.gwt.dev.jjs.ast.JStringLiteral;
 import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JUnaryOperation;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JValueLiteral;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -85,8 +83,8 @@ public class DeadCodeElimination {
    * operations in favor of pure side effects.
    * 
    * TODO(spoon): move more simplifications into methods like
-   * {@link #simplifyCast(JExpression, JType, JExpression) simplifyCast}, so
-   * that more simplifications can be made on a single pass through a tree.
+   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast},
+   * so that more simplifications can be made on a single pass through a tree.
    */
   public class DeadCodeVisitor extends JModVisitor {
 
@@ -105,14 +103,14 @@ public class DeadCodeElimination {
      * existing uses of <code>ignoringExpressionOutput</code> are with mutable
      * nodes.
      */
-    private Set<JExpression> ignoringExpressionOutput = new HashSet<JExpression>();
+    private final Set<JExpression> ignoringExpressionOutput = new HashSet<JExpression>();
 
     /**
      * Expressions being used as lvalues.
      */
-    private Set<JExpression> lvalues = new HashSet<JExpression>();
+    private final Set<JExpression> lvalues = new HashSet<JExpression>();
 
-    private Set<JBlock> switchBlocks = new HashSet<JBlock>();
+    private final Set<JBlock> switchBlocks = new HashSet<JBlock>();
 
     /**
      * Short circuit binary operations.
@@ -218,6 +216,21 @@ public class DeadCodeElimination {
           }
         }
 
+        if (stmt instanceof JExpressionStatement) {
+          JExpressionStatement stmtExpr = (JExpressionStatement) stmt;
+          if (stmtExpr.getExpr() instanceof JMultiExpression) {
+            // Promote a multi's expressions to the current block
+            x.statements.remove(i);
+            int start = i;
+            JMultiExpression multi = ((JMultiExpression) stmtExpr.getExpr());
+            for (JExpression expr : multi.exprs) {
+              x.statements.add(i++, expr.makeStatement());
+            }
+            i = start - 1;
+            continue;
+          }
+        }
+
         if (stmt.unconditionalControlBreak()) {
           // Abrupt change in flow, chop the remaining items from this block
           for (int j = i + 1; j < x.statements.size();) {
@@ -235,7 +248,8 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
-      JExpression updated = simplifyCast(x, x.getCastType(), x.getExpr());
+      JExpression updated = simplifier.cast(x, x.getSourceInfo(),
+          x.getCastType(), x.getExpr());
       if (updated != x) {
         ctx.replaceMe(updated);
       }
@@ -248,57 +262,10 @@ public class DeadCodeElimination {
 
     @Override
     public void endVisit(JConditional x, Context ctx) {
-      JExpression condExpr = x.getIfTest();
-      JExpression thenExpr = x.getThenExpr();
-      JExpression elseExpr = x.getElseExpr();
-      if (condExpr instanceof JBooleanLiteral) {
-        if (((JBooleanLiteral) condExpr).getValue()) {
-          // e.g. (true ? then : else) -> then
-          ctx.replaceMe(thenExpr);
-        } else {
-          // e.g. (false ? then : else) -> else
-          ctx.replaceMe(elseExpr);
-        }
-      } else if (thenExpr instanceof JBooleanLiteral) {
-        if (((JBooleanLiteral) thenExpr).getValue()) {
-          // e.g. (cond ? true : else) -> cond || else
-          JBinaryOperation binOp = new JBinaryOperation(program,
-              x.getSourceInfo(), x.getType(), JBinaryOperator.OR, condExpr,
-              elseExpr);
-          ctx.replaceMe(binOp);
-        } else {
-          // e.g. (cond ? false : else) -> !cond && else
-          JPrefixOperation notCondExpr = new JPrefixOperation(program,
-              condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
-          JBinaryOperation binOp = new JBinaryOperation(program,
-              x.getSourceInfo(), x.getType(), JBinaryOperator.AND, notCondExpr,
-              elseExpr);
-          ctx.replaceMe(binOp);
-        }
-      } else if (elseExpr instanceof JBooleanLiteral) {
-        if (((JBooleanLiteral) elseExpr).getValue()) {
-          // e.g. (cond ? then : true) -> !cond || then
-          JPrefixOperation notCondExpr = new JPrefixOperation(program,
-              condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
-          JBinaryOperation binOp = new JBinaryOperation(program,
-              x.getSourceInfo(), x.getType(), JBinaryOperator.OR, notCondExpr,
-              thenExpr);
-          ctx.replaceMe(binOp);
-        } else {
-          // e.g. (cond ? then : false) -> cond && then
-          JBinaryOperation binOp = new JBinaryOperation(program,
-              x.getSourceInfo(), x.getType(), JBinaryOperator.AND, condExpr,
-              thenExpr);
-          ctx.replaceMe(binOp);
-        }
-      } else {
-        // e.g. (!cond ? then : else) -> (cond ? else : then)
-        JExpression unflipped = maybeUnflipBoolean(condExpr);
-        if (unflipped != null) {
-          ctx.replaceMe(new JConditional(program, x.getSourceInfo(),
-              x.getType(), unflipped, elseExpr, thenExpr));
-          return;
-        }
+      JExpression updated = simplifier.conditional(x, x.getSourceInfo(),
+          x.getType(), x.getIfTest(), x.getThenExpr(), x.getElseExpr());
+      if (updated != x) {
+        ctx.replaceMe(updated);
       }
     }
 
@@ -392,42 +359,10 @@ public class DeadCodeElimination {
      */
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
-      JExpression expr = x.getIfExpr();
-      JStatement thenStmt = x.getThenStmt();
-      JStatement elseStmt = x.getElseStmt();
-      if (expr instanceof JBooleanLiteral) {
-        JBooleanLiteral booleanLiteral = (JBooleanLiteral) expr;
-        boolean boolVal = booleanLiteral.getValue();
-        if (boolVal && !isEmpty(thenStmt)) {
-          // If true, replace myself with then statement
-          ctx.replaceMe(thenStmt);
-        } else if (!boolVal && !isEmpty(elseStmt)) {
-          // If false, replace myself with else statement
-          ctx.replaceMe(elseStmt);
-        } else {
-          // just prune me
-          removeMe(x, ctx);
-        }
-        return;
-      }
-
-      if (isEmpty(thenStmt) && isEmpty(elseStmt)) {
-        ctx.replaceMe(expr.makeStatement());
-        return;
-      }
-
-      if (!isEmpty(elseStmt)) {
-        // if (!cond) foo else bar -> if (cond) bar else foo
-        JExpression unflipped = maybeUnflipBoolean(expr);
-        if (unflipped != null) {
-          // Force sub-parts to blocks, otherwise we break else-if chains.
-          // TODO: this goes away when we normalize the Java AST properly.
-          thenStmt = ensureBlock(thenStmt);
-          elseStmt = ensureBlock(elseStmt);
-          ctx.replaceMe(new JIfStatement(program, x.getSourceInfo(), unflipped,
-              elseStmt, thenStmt));
-          return;
-        }
+      JStatement updated = simplifier.ifStatement(x, x.getSourceInfo(),
+          x.getIfExpr(), x.getThenStmt(), x.getElseStmt());
+      if (updated != x) {
+        ctx.replaceMe(updated);
       }
     }
 
@@ -550,46 +485,11 @@ public class DeadCodeElimination {
         }
       }
       if (x.getOp() == JUnaryOperator.NOT) {
-        JExpression arg = x.getArg();
-        if (arg instanceof JBinaryOperation) {
-          // try to invert the binary operator
-          JBinaryOperation argOp = (JBinaryOperation) arg;
-          JBinaryOperator op = argOp.getOp();
-          JBinaryOperator newOp = null;
-          if (op == JBinaryOperator.EQ) {
-            // e.g. !(x == y) -> x != y
-            newOp = JBinaryOperator.NEQ;
-          } else if (op == JBinaryOperator.NEQ) {
-            // e.g. !(x != y) -> x == y
-            newOp = JBinaryOperator.EQ;
-          } else if (op == JBinaryOperator.GT) {
-            // e.g. !(x > y) -> x <= y
-            newOp = JBinaryOperator.LTE;
-          } else if (op == JBinaryOperator.LTE) {
-            // e.g. !(x <= y) -> x > y
-            newOp = JBinaryOperator.GT;
-          } else if (op == JBinaryOperator.GTE) {
-            // e.g. !(x >= y) -> x < y
-            newOp = JBinaryOperator.LT;
-          } else if (op == JBinaryOperator.LT) {
-            // e.g. !(x < y) -> x >= y
-            newOp = JBinaryOperator.GTE;
-          }
-          if (newOp != null) {
-            JBinaryOperation newBinOp = new JBinaryOperation(program,
-                argOp.getSourceInfo(), argOp.getType(), newOp, argOp.getLhs(),
-                argOp.getRhs());
-            ctx.replaceMe(newBinOp);
-          }
-        } else if (arg instanceof JPrefixOperation) {
-          // try to invert the unary operator
-          JPrefixOperation argOp = (JPrefixOperation) arg;
-          JUnaryOperator op = argOp.getOp();
-          // e.g. !!x -> x
-          if (op == JUnaryOperator.NOT) {
-            ctx.replaceMe(argOp.getArg());
-          }
+        JExpression updated = simplifier.not(x, x.getSourceInfo(), x.getArg());
+        if (updated != x) {
+          ctx.replaceMe(updated);
         }
+        return;
       } else if (x.getOp() == JUnaryOperator.NEG) {
         JExpression updated = simplifyNegate(x, x.getArg());
         if (updated != x) {
@@ -637,9 +537,9 @@ public class DeadCodeElimination {
       }
 
       // Compute properties regarding the state of this try statement
-      boolean noTry = isEmpty(x.getTryBlock());
+      boolean noTry = Simplifier.isEmpty(x.getTryBlock());
       boolean noCatch = catchArgs.size() == 0;
-      boolean noFinally = isEmpty(x.getFinallyBlock());
+      boolean noFinally = Simplifier.isEmpty(x.getFinallyBlock());
 
       if (noTry) {
         // 2) Prune try statements with no body.
@@ -759,15 +659,6 @@ public class DeadCodeElimination {
         }
       }
       return true;
-    }
-
-    private JStatement ensureBlock(JStatement stmt) {
-      if (!(stmt instanceof JBlock)) {
-        JBlock block = new JBlock(program, stmt.getSourceInfo());
-        block.statements.add(stmt);
-        stmt = block;
-      }
-      return stmt;
     }
 
     private void evalConcat(JExpression lhs, JExpression rhs, Context ctx) {
@@ -1125,16 +1016,6 @@ public class DeadCodeElimination {
       return true;
     }
 
-    /**
-     * TODO: if the AST were normalized, we wouldn't need this.
-     */
-    private boolean isEmpty(JStatement stmt) {
-      if (stmt == null) {
-        return true;
-      }
-      return (stmt instanceof JBlock && ((JBlock) stmt).statements.isEmpty());
-    }
-
     private boolean isLiteralNegativeOne(JExpression exp) {
       if (exp instanceof JValueLiteral) {
         JValueLiteral lit = (JValueLiteral) exp;
@@ -1284,20 +1165,6 @@ public class DeadCodeElimination {
       return call;
     }
 
-    /**
-     * Negate the supplied expression if negating it makes the expression
-     * shorter. Otherwise, return null.
-     */
-    private JExpression maybeUnflipBoolean(JExpression expr) {
-      if (expr instanceof JUnaryOperation) {
-        JUnaryOperation unop = (JUnaryOperation) expr;
-        if (unop.getOp() == JUnaryOperator.NOT) {
-          return unop.getArg();
-        }
-      }
-      return null;
-    }
-
     private int numRemovableExpressions(JMultiExpression x) {
       if (ignoringExpressionOutput.contains(x)) {
         // The result doesn't matter: all expressions can be removed.
@@ -1437,11 +1304,11 @@ public class DeadCodeElimination {
     private boolean simplifyAdd(JExpression lhs, JExpression rhs, Context ctx,
         JType type) {
       if (isLiteralZero(rhs)) {
-        ctx.replaceMe(simplifyCast(type, lhs));
+        ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
       }
       if (isLiteralZero(lhs)) {
-        ctx.replaceMe(simplifyCast(type, rhs));
+        ctx.replaceMe(simplifier.cast(type, rhs));
         return true;
       }
 
@@ -1482,66 +1349,14 @@ public class DeadCodeElimination {
       }
     }
 
-    /**
-     * Simplify a cast operation. Return <code>original</code> if it is
-     * equivalent to the desired return value.
-     * 
-     * TODO: Simplify casts of casts, e.g. (int)(long)foo.
-     * 
-     * @param original Either <code>null</code>, or a cast from
-     *          <code>exp</code> to <code>type</code>
-     * @param type The type to cast to
-     * @param exp The expression being cast
-     * @return An expression equivalent to a cast from <code>exp</code> to
-     *         <code>type</code>, but possibly simplified
-     */
-    private JExpression simplifyCast(JExpression original, JType type,
-        JExpression exp) {
-      if (type == exp.getType()) {
-        return exp;
-      }
-      if ((type instanceof JPrimitiveType) && (exp instanceof JValueLiteral)) {
-        // Statically evaluate casting literals.
-        JPrimitiveType typePrim = (JPrimitiveType) type;
-        JValueLiteral expLit = (JValueLiteral) exp;
-        JValueLiteral casted = typePrim.coerceLiteral(expLit);
-        if (casted != null) {
-          return casted;
-        }
-      }
-
-      /*
-       * Discard casts from byte or short to int, because such casts are always
-       * implicit anyway. Cannot coerce char since that would change the
-       * semantics of concat.
-       */
-      if (type == program.getTypePrimitiveInt()) {
-        JType expType = exp.getType();
-        if ((expType == program.getTypePrimitiveShort())
-            || (expType == program.getTypePrimitiveByte())) {
-          return exp;
-        }
-      }
-
-      // no simplification made
-      if (original != null) {
-        return original;
-      }
-      return new JCastOperation(program, exp.getSourceInfo(), type, exp);
-    }
-
-    private JExpression simplifyCast(JType type, JExpression exp) {
-      return simplifyCast(null, type, exp);
-    }
-
     private boolean simplifyDiv(JExpression lhs, JExpression rhs, Context ctx,
         JType type) {
       if (isLiteralOne(rhs)) {
-        ctx.replaceMe(simplifyCast(type, lhs));
+        ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
       }
       if (isLiteralNegativeOne(rhs)) {
-        ctx.replaceMe(simplifyNegate(simplifyCast(type, lhs)));
+        ctx.replaceMe(simplifyNegate(simplifier.cast(type, lhs)));
         return true;
       }
 
@@ -1563,27 +1378,27 @@ public class DeadCodeElimination {
     private boolean simplifyMul(JExpression lhs, JExpression rhs, Context ctx,
         JType type) {
       if (isLiteralOne(rhs)) {
-        ctx.replaceMe(simplifyCast(type, lhs));
+        ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
       }
       if (isLiteralOne(lhs)) {
-        ctx.replaceMe(simplifyCast(type, rhs));
+        ctx.replaceMe(simplifier.cast(type, rhs));
         return true;
       }
       if (isLiteralNegativeOne(rhs)) {
-        ctx.replaceMe(simplifyNegate(simplifyCast(type, lhs)));
+        ctx.replaceMe(simplifyNegate(simplifier.cast(type, lhs)));
         return true;
       }
       if (isLiteralNegativeOne(lhs)) {
-        ctx.replaceMe(simplifyNegate(simplifyCast(type, rhs)));
+        ctx.replaceMe(simplifyNegate(simplifier.cast(type, rhs)));
         return true;
       }
       if (isLiteralZero(rhs) && !lhs.hasSideEffects()) {
-        ctx.replaceMe(simplifyCast(type, rhs));
+        ctx.replaceMe(simplifier.cast(type, rhs));
         return true;
       }
       if (isLiteralZero(lhs) && !rhs.hasSideEffects()) {
-        ctx.replaceMe(simplifyCast(type, lhs));
+        ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
       }
       return false;
@@ -1621,11 +1436,11 @@ public class DeadCodeElimination {
     private boolean simplifySub(JExpression lhs, JExpression rhs, Context ctx,
         JType type) {
       if (isLiteralZero(rhs)) {
-        ctx.replaceMe(simplifyCast(type, lhs));
+        ctx.replaceMe(simplifier.cast(type, lhs));
         return true;
       }
       if (isLiteralZero(lhs)) {
-        ctx.replaceMe(simplifyNegate(simplifyCast(type, rhs)));
+        ctx.replaceMe(simplifyNegate(simplifier.cast(type, rhs)));
         return true;
       }
       return false;
@@ -1906,11 +1721,13 @@ public class DeadCodeElimination {
   }
 
   private final JProgram program;
+  private final Simplifier simplifier;
 
   private final Map<JType, Class<?>> typeClassMap = new IdentityHashMap<JType, Class<?>>();
 
   public DeadCodeElimination(JProgram program) {
     this.program = program;
+    simplifier = new Simplifier(program);
     typeClassMap.put(program.getTypeJavaLangObject(), Object.class);
     typeClassMap.put(program.getTypeJavaLangString(), String.class);
     typeClassMap.put(program.getTypePrimitiveBoolean(), boolean.class);

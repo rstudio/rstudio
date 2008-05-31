@@ -17,10 +17,9 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
-import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JConditional;
-import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -30,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JValueLiteral;
 
 import java.util.List;
 
@@ -182,28 +180,14 @@ public class LongCastNormalizer {
     /**
      * Returns an explicit cast if the target type is long and the input
      * expression is not a long, or if the target type is floating point and the
-     * expression is a long.
+     * expression is a long. TODO(spoon): there is no floating point in this
+     * method; update the comment
      */
     private JExpression checkAndReplace(JExpression arg, JType targetType) {
-      JType argType = arg.getType();
-      if (targetType == argType) {
+      if (targetType != longType && arg.getType() != longType) {
         return arg;
       }
-      if (targetType != longType && argType != longType) {
-        return arg;
-      }
-      if (arg instanceof JValueLiteral && targetType instanceof JPrimitiveType) {
-        // Attempt to coerce the literal.
-        JPrimitiveType primitiveType = (JPrimitiveType) targetType;
-        JValueLiteral coerced = primitiveType.coerceLiteral((JValueLiteral) arg);
-        if (coerced != null) {
-          return coerced;
-        }
-      }
-      // Synthesize a cast to long to force explicit conversion.
-      JCastOperation cast = new JCastOperation(program, arg.getSourceInfo(),
-          targetType, arg);
-      return cast;
+      return simplifier.cast(targetType, arg);
     }
   }
 
@@ -212,9 +196,11 @@ public class LongCastNormalizer {
   }
 
   private final JProgram program;
+  private final Simplifier simplifier;
 
   private LongCastNormalizer(JProgram program) {
     this.program = program;
+    simplifier = new Simplifier(program);
   }
 
   private void execImpl() {
@@ -222,5 +208,4 @@ public class LongCastNormalizer {
         program.getTypePrimitiveLong());
     visitor.accept(program);
   }
-
 }
