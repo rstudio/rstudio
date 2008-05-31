@@ -53,7 +53,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   private final boolean isPrivate;
   private final boolean isStatic;
   private final String name;
-  private ArrayList<JType> originalParamTypes;
+  private List<JType> originalParamTypes;
   private JType returnType;
   private boolean trace = false;
   private boolean traceFirst = true;
@@ -75,34 +75,13 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   }
 
   public void freezeParamTypes() {
-    if (originalParamTypes != null) {
-      throw new InternalCompilerException("Param types already frozen");
+    List<JType> paramTypes =  new ArrayList<JType>();
+    for (JParameter param : params) {
+      paramTypes.add(param.getType());
     }
-    originalParamTypes = new ArrayList<JType>();
-    for (int i = 0; i < params.size(); ++i) {
-      JParameter param = params.get(i);
-      originalParamTypes.add(param.getType());
-    }
-
-    // Determine if we should trace this method.
-    if (enclosingType != null) {
-      String jsniSig = JProgram.getJsniSig(this);
-      Set<String> set = JProgram.traceMethods.get(enclosingType.getName());
-      if (set != null
-          && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
-        trace = true;
-      }
-      // Try the short name.
-      if (!trace && enclosingType != null) {
-        set = JProgram.traceMethods.get(enclosingType.getShortName());
-        if (set != null
-            && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
-          trace = true;
-        }
-      }
-    }
+    setOriginalParamTypes(paramTypes);
   }
-
+  
   public JAbstractMethodBody getBody() {
     return body;
   }
@@ -164,6 +143,32 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
 
   public void setFinal() {
     isFinal = true;
+  }
+
+  public void setOriginalParamTypes(List<JType> paramTypes) {
+    if (originalParamTypes != null) {
+      throw new InternalCompilerException("Param types already frozen");
+    }
+    originalParamTypes = paramTypes;
+    
+
+    // Determine if we should trace this method.
+    if (enclosingType != null) {
+      String jsniSig = JProgram.getJsniSig(this);
+      Set<String> set = JProgram.traceMethods.get(enclosingType.getName());
+      if (set != null
+          && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
+        trace = true;
+      }
+      // Try the short name.
+      if (!trace && enclosingType != null) {
+        set = JProgram.traceMethods.get(enclosingType.getShortName());
+        if (set != null
+            && (set.contains(name) || set.contains(jsniSig) || set.contains(TRACE_METHOD_WILDCARD))) {
+          trace = true;
+        }
+      }
+    }
   }
 
   public void setTrace() {

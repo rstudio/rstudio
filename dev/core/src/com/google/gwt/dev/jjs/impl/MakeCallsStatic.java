@@ -40,8 +40,10 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsThisRef;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -154,7 +156,12 @@ public class MakeCallsStatic {
             false, newMethod);
         varMap.put(oldVar, newVar);
       }
-      newMethod.freezeParamTypes();
+
+      // Set the new original param types based on the old original param types
+      List<JType> originalParamTypes =  new ArrayList<JType>();
+      originalParamTypes.add(enclosingType);
+      originalParamTypes.addAll(x.getOriginalParamTypes());
+      newMethod.setOriginalParamTypes(originalParamTypes);
 
       // Move the body of the instance method to the static method
       JAbstractMethodBody movedBody = x.getBody();

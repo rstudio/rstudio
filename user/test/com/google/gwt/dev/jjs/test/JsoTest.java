@@ -121,6 +121,8 @@ public class JsoTest extends GWTTestCase {
   }
 
   private static class Overloads {
+    private static volatile boolean FALSE = false;
+
     @SuppressWarnings("unused")
     private static String sFunc(Bar b) {
       return "sFunc Bar";
@@ -159,21 +161,37 @@ public class JsoTest extends GWTTestCase {
 
     @SuppressWarnings("unused")
     private String func(Bar b) {
+      if (FALSE) {
+        // prevent inlining
+        return func(b);
+      }
       return "func Bar";
     }
 
     @SuppressWarnings("unused")
     private String func(Bar[][] b) {
+      if (FALSE) {
+        // prevent inlining
+        return func(b);
+      }
       return "func Bar[][]";
     }
 
     @SuppressWarnings("unused")
     private String func(Foo f) {
+      if (FALSE) {
+        // prevent inlining
+        return func(f);
+      }
       return "func Foo";
     }
 
     @SuppressWarnings("unused")
     private String func(Foo[][] f) {
+      if (FALSE) {
+        // prevent inlining
+        return func(f);
+      }
       return "func Foo[][]";
     }
   }
