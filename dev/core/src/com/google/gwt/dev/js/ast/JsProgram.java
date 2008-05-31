@@ -55,6 +55,13 @@ public final class JsProgram extends JsNode<JsProgram> {
     objectScope = new JsScope(rootScope, "Object");
   }
 
+  public JsBooleanLiteral getBooleanLiteral(boolean truth) {
+    if (truth) {
+      return getTrueLiteral();
+    }
+    return getFalseLiteral();
+  }
+
   /**
    * Gets the {@link JsStatement} to use whenever parsed source include a
    * <code>debugger</code> statement.

@@ -30,10 +30,12 @@ import com.google.gwt.dev.js.ast.JsFor;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsIf;
 import com.google.gwt.dev.js.ast.JsModVisitor;
+import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
+import com.google.gwt.dev.js.ast.JsValueLiteral;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVisitor;
 import com.google.gwt.dev.js.ast.JsWhile;
@@ -86,8 +88,8 @@ public class JsStaticEval {
    */
   private class EvalFunctionsAtTopScope extends JsModVisitor {
     private final Set<JsFunction> dontMove = new HashSet<JsFunction>();
-    private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
     private final Stack<ListIterator<JsStatement>> itrStack = new Stack<ListIterator<JsStatement>>();
+    private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
 
     @Override
     public void endVisit(JsFunction x, JsContext<JsExpression> ctx) {
@@ -233,6 +235,8 @@ public class JsStaticEval {
         shortCircuitOr(arg1, arg2, ctx);
       } else if (op == JsBinaryOperator.COMMA) {
         trySimplifyComma(arg1, arg2, ctx);
+      } else if (op == JsBinaryOperator.EQ) {
+        trySimplifyEq(x, arg1, arg2, ctx);
       }
     }
 
@@ -524,6 +528,47 @@ public class JsStaticEval {
         JsBlock jsBlock = new JsBlock();
         jsBlock.getStatements().addAll(stmts);
         return jsBlock;
+      }
+    }
+
+    private JsExpression simplifyEq(JsExpression original, JsExpression arg1,
+        JsExpression arg2) {
+      assert (original != null);
+
+      if (arg1 instanceof JsNullLiteral) {
+        return simplifyNullEq(original, arg2);
+      }
+
+      if (arg2 instanceof JsNullLiteral) {
+        return simplifyNullEq(original, arg1);
+      }
+
+      // no simplification made
+      return original;
+    }
+
+    /**
+     * Simplify exp == null.
+     */
+    private JsExpression simplifyNullEq(JsExpression original, JsExpression exp) {
+      assert (original != null);
+
+      if (exp instanceof JsValueLiteral) {
+        // "undefined" is not a JsValueLiteral, so the only way
+        // the result can be true is if exp is itself a JsNullLiteral
+        boolean result = exp instanceof JsNullLiteral;
+        return program.getBooleanLiteral(result);
+      }
+
+      // no simplification made
+      return original;
+    }
+
+    private void trySimplifyEq(JsExpression original, JsExpression arg1,
+        JsExpression arg2, JsContext<JsExpression> ctx) {
+      JsExpression updated = simplifyEq(original, arg1, arg2);
+      if (updated != original) {
+        ctx.replaceMe(updated);
       }
     }
   }
