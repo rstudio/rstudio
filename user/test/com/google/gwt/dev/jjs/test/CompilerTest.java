@@ -125,6 +125,7 @@ public class CompilerTest extends GWTTestCase {
 
   private static final class UninstantiableType {
     public Object field;
+    public int intField;
 
     private UninstantiableType() {
     }
@@ -139,6 +140,10 @@ public class CompilerTest extends GWTTestCase {
   private static int sideEffectChecker;
 
   private static volatile boolean TRUE = true;
+
+  private static volatile int volatileInt;
+  private static volatile boolean volatileBoolean;
+  private static volatile UninstantiableType volatileUninstantiableType;
 
   private static native void accessUninstantiableField(UninstantiableType u) /*-{
     u.@com.google.gwt.dev.jjs.test.CompilerTest$UninstantiableType::field.toString();
@@ -162,6 +167,7 @@ public class CompilerTest extends GWTTestCase {
     return @com.google.gwt.dev.jjs.test.CompilerTest$SideEffectCauser5::causeClinitSideEffectOnRead;
   }-*/;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
@@ -575,6 +581,7 @@ public class CompilerTest extends GWTTestCase {
         a = foo;
       }
 
+      @Override
       public String toString() {
         return new Object() {
 
@@ -586,6 +593,7 @@ public class CompilerTest extends GWTTestCase {
             ai = foo;
           }
 
+          @Override
           public String toString() {
             // this line used to cause ICE due to no synthetic path to bar
             bar.valueOf(false);
@@ -837,7 +845,7 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(-7, x);
   }
 
-  public void testUninstantiableNativeAccess() {
+  public void testUninstantiableAccess() {
     UninstantiableType u = null;
 
     try {
@@ -850,6 +858,48 @@ public class CompilerTest extends GWTTestCase {
       accessUninstantiableMethod(u);
       fail("Expected JavaScriptException");
     } catch (JavaScriptException expected) {
+    }
+
+    try {
+      volatileUninstantiableType = (UninstantiableType) (new Object());
+      fail("Expected ClassCastException");
+    } catch (ClassCastException expected) {
+    }
+
+    try {
+      volatileInt = u.intField++;
+      fail("Expected NullPointerException (1)");
+    } catch (Exception expected) {
+    }
+
+    try {
+      volatileInt = u.intField--;
+      fail("Expected NullPointerException (2)");
+    } catch (Exception expected) {
+    }
+
+    try {
+      volatileInt = ++u.intField;
+      fail("Expected NullPointerException (3)");
+    } catch (Exception expected) {
+    }
+
+    try {
+      volatileInt = --u.intField;
+      fail("Expected NullPointerException (4)");
+    } catch (Exception expected) {
+    }
+
+    try {
+      u.intField = 0;
+      fail("Expected NullPointerException (5)");
+    } catch (Exception expected) {
+    }
+
+    try {
+      volatileBoolean = u.intField == 0;
+      fail("Expected NullPointerException (6)");
+    } catch (Exception expected) {
     }
   }
 

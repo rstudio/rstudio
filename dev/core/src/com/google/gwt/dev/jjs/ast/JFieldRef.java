@@ -30,20 +30,33 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   /**
    * The referenced field.
    */
-  private JField field;
+  private final JField field;
 
   /**
    * This can only be null if the referenced field is static.
    */
   private JExpression instance;
 
+  /**
+   * An overridden type for this reference. Normally the type of a field
+   * reference is the same as the type of the field itself.  That default
+   * can be overridden by setting this field.
+   */
+  private final JType overriddenType;
+
   public JFieldRef(JProgram program, SourceInfo info, JExpression instance,
       JField field, JReferenceType enclosingType) {
+    this(program, info, instance, field, enclosingType, null);
+  }
+  
+  public JFieldRef(JProgram program, SourceInfo info, JExpression instance,
+      JField field, JReferenceType enclosingType, JType overriddenType) {
     super(program, info, field);
     assert (instance != null || field.isStatic());
     this.instance = instance;
     this.field = field;
     this.enclosingType = enclosingType;
+    this.overriddenType = overriddenType;
   }
 
   public JReferenceType getEnclosingType() {
@@ -57,7 +70,16 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   public JExpression getInstance() {
     return instance;
   }
+  
+  @Override
+  public JType getType() {
+    if (overriddenType != null) {
+      return overriddenType;
+    }
+    return super.getType();
+  }
 
+  @Override
   public boolean hasSideEffects() {
     // A cross-class reference to a static, non constant field forces clinit
     if (field.isStatic()

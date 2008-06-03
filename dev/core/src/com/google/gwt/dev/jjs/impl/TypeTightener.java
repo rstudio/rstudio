@@ -112,7 +112,7 @@ public class TypeTightener {
           instance = program.getLiteralNull();
         }
         JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(),
-            instance, program.getNullField(), null);
+            instance, program.getNullField(), null, x.getType());
         ctx.replaceMe(fieldRef);
       }
     }
@@ -379,10 +379,12 @@ public class TypeTightener {
      */
     private boolean myDidChange = false;
 
+    @Override
     public boolean didChange() {
       return myDidChange || super.didChange();
     }
 
+    @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JType argType = x.getExpr().getType();
       if (!(x.getCastType() instanceof JReferenceType)
@@ -602,6 +604,7 @@ public class TypeTightener {
       return true;
     }
 
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       /*
        * Explicitly NOT visiting native methods since we can't infer further
