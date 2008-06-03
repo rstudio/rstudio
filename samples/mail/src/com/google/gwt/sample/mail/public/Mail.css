@@ -62,20 +62,15 @@ a:visited {
 .gwt-Tree {
 }
 
-.gwt-Tree .gwt-TreeItem span * {
-  margin: 0 4px;
-}
-
 .gwt-Tree .gwt-TreeItem {
   font-size: 80%;
-  cursor: default;
+  padding: 1px 3px 0 3px;
+  cursor: hand;
+  cursor: pointer;
+  display: block !important;
 }
 
-.gwt-Tree .gwt-TreeItem span {
-  padding: 2px 0;
-}
-
-.gwt-Tree .gwt-TreeItem-selected span {
+.gwt-Tree .gwt-TreeItem-selected {
   background: #ccc;
 }
 

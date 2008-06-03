@@ -465,9 +465,6 @@ public class Window {
       },
       function() {
         @com.google.gwt.user.client.Window::onClosed()();
-        $wnd.onresize = null;
-        $wnd.onbeforeclose = null;
-        $wnd.onclose = null;
       }
     );
   }-*/;

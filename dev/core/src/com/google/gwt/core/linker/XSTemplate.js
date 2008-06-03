@@ -375,6 +375,9 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
       unload();
     } finally {
       oldOnUnload && oldOnUnload(evt);
+      $wnd.onresize = null;
+      $wnd.onbeforeunload = null;
+      $wnd.onunload = null;
     }
   };
 };

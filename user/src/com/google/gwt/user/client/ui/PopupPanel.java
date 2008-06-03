@@ -18,7 +18,9 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.LocaleInfo;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
@@ -49,7 +51,7 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview, HasAnimation {
   /**
-   * The duration of the animation. 
+   * The duration of the animation.
    */
   private static final int ANIMATION_DURATION = 200;
 
@@ -106,7 +108,29 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       showing = panel.showing;
       curPanel = panel;
       if (animate) {
-        run(ANIMATION_DURATION);
+        // impl.onShow takes some time to complete, so we do it before starting
+        // the animation.  If we move this to onStart, the animation will look
+        // choppy or not run at all.
+        if (showing) {
+          // Set the position attribute, and then attach to the DOM. Otherwise,
+          // the PopupPanel will appear to 'jump' from its static/relative
+          // position to its absolute position (issue #1231).
+          DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
+          if (curPanel.topPosition != -1) {
+            curPanel.setPopupPosition(curPanel.leftPosition,
+                curPanel.topPosition);
+          }
+          impl.setClip(curPanel.getElement(), getRectString(0, 0, 0, 0));
+          RootPanel.get().add(curPanel);
+          impl.onShow(curPanel.getElement());
+        }
+        
+        // Wait for the popup panel to be attached before running the animation
+        DeferredCommand.addCommand(new Command() {
+          public void execute() {
+            run(ANIMATION_DURATION);
+          }
+        });
       } else {
         onInstantaneousRun();
       }
@@ -125,19 +149,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     @Override
     protected void onStart() {
-      // Attach to the page
-      if (showing) {
-        // Set the position attribute, and then attach to the DOM. Otherwise,
-        // the PopupPanel will appear to 'jump' from its static/relative
-        // position to its absolute position (issue #1231).
-        DOM.setStyleAttribute(curPanel.getElement(), "position", "absolute");
-        if (curPanel.topPosition != -1) {
-          curPanel.setPopupPosition(curPanel.leftPosition, curPanel.topPosition);
-        }
-        impl.setClip(curPanel.getElement(), getRectString(0, 0, 0, 0));
-        RootPanel.get().add(curPanel);
-        impl.onShow(curPanel.getElement());
-      }
       offsetHeight = curPanel.getOffsetHeight();
       offsetWidth = curPanel.getOffsetWidth();
       DOM.setStyleAttribute(curPanel.getElement(), "overflow", "hidden");

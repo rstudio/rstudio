@@ -352,6 +352,59 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   /**
+   * Tests abstract root types that are field serializable.
+   * 
+   * @throws UnableToCompleteException
+   * @throws NotFoundException
+   */
+  public void testAbstractFieldSerializableRootType()
+      throws UnableToCompleteException, NotFoundException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    addStandardClasses(units);
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public abstract class A implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("A", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public abstract class B extends A {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("B", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class C extends B {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("C", code));
+    }
+
+    TreeLogger logger = createLogger();
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+
+    JClassType a = to.getType("A");
+    JClassType b = to.getType("B");
+    JClassType c = to.getType("C");
+
+    SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
+        logger, to);
+    sob.addRootType(logger, b);
+    SerializableTypeOracle so = sob.build(logger);
+
+    assertInstantiable(so, c);
+    assertFieldSerializable(so, a);
+    assertFieldSerializable(so, b);
+    assertSerializableTypes(so, a, b, c);
+  }
+
+  /**
    * Tests that we do not violate java package restrictions when computing
    * serializable types.
    */

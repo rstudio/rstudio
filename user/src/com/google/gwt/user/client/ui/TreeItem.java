@@ -54,6 +54,11 @@ public class TreeItem extends UIObject implements HasHTML {
     private boolean opening = true;
 
     /**
+     * The target height of the child items.
+     */
+    private int scrollHeight = 0;
+
+    /**
      * Open the specified {@link TreeItem}.
      * 
      * @param item the {@link TreeItem} to open
@@ -92,18 +97,31 @@ public class TreeItem extends UIObject implements HasHTML {
 
     @Override
     protected void onStart() {
+      scrollHeight = 0;
+      
+      // If the TreeItem is already open, we can get its scrollHeight
+      // immediately.
+      if (!opening) {
+        scrollHeight = curItem.childSpanElem.getScrollHeight();
+      }
       DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "hidden");
+      
+      // If the TreeItem is already open, onStart will set its height to its
+      // natural height.  If the TreeItem is currently closed, onStart will set
+      // its height to 1px (see onUpdate below), and then we make the TreeItem
+      // visible so we can get its correct scrollHeight.
       super.onStart();
+      
+      // If the TreeItem is currently closed, we need to make it visible before
+      // we can get its height.
       if (opening) {
         UIObject.setVisible(curItem.childSpanElem, true);
+        scrollHeight = curItem.childSpanElem.getScrollHeight();
       }
     }
 
     @Override
     protected void onUpdate(double progress) {
-      int scrollHeight = DOM.getElementPropertyInt(curItem.childSpanElem,
-          "scrollHeight");
-
       int height = (int) (progress * scrollHeight);
       if (!opening) {
         height = scrollHeight - height;

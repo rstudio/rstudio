@@ -956,19 +956,23 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
-    // TODO: Figure out logLevel for canBeInstantiated
-    boolean isInstantiable = parametersOkay
+    // Check whether the type is field serializable
+    // TODO: Should we really continue if parametersOkay is false?
+    boolean isFieldSerializable = parametersOkay
         && shouldConsiderFieldsForSerialization(localLogger, baseType,
             isSpeculative)
-        && canBeInstantiated(localLogger, baseType, TreeLogger.WARN)
         && checkFields(localLogger, baseType, isSpeculative, path);
+
+    // TODO: Figure out logLevel for canBeInstantiated
+    boolean isInstantiable = isFieldSerializable
+        && canBeInstantiated(localLogger, baseType, TreeLogger.WARN);
 
     boolean anySubtypes = false;
     if (parametersOkay && baseType.getSubtypes().length > 0) {
       TreeLogger subtypesLogger = localLogger.branch(TreeLogger.DEBUG,
           "Analyzing subclasses:", null);
       anySubtypes = checkSubtypes(subtypesLogger, originalType, baseType,
-          instSubtypes, typeArgs, path, baseType, false, isInstantiable);
+          instSubtypes, typeArgs, path, baseType, false, isFieldSerializable);
     }
 
     anySubtypes |= isInstantiable;

@@ -93,6 +93,6 @@ public class Mailboxes extends Composite {
    * @return the resultant HTML
    */
   private String imageItemHTML(AbstractImagePrototype imageProto, String title) {
-    return "<span>" + imageProto.getHTML() + title + "</span>";
+    return imageProto.getHTML() + " " + title;
   }
 }

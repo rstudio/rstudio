@@ -32,7 +32,7 @@
 	path CDATA #REQUIRED
 		includes CDATA #IMPLIED
 		excludes CDATA #IMPLIED
-		defaultexclude (yes | no) "yes"
+		defaultexcludes (yes | no) "yes"
 		casesensitive (true | false) "true"
 >
 <!-- Specify the public resource path, relative to the classpath location of the module descriptor -->
@@ -41,7 +41,7 @@
 	path CDATA #REQUIRED
 		includes CDATA #IMPLIED
 		excludes CDATA #IMPLIED
-		defaultexclude (yes | no) "yes"
+		defaultexcludes (yes | no) "yes"
 		casesensitive (true | false) "true"
 >
 <!-- Specify a source path that rebases subpackages into the root namespace -->
@@ -50,7 +50,7 @@
 	path CDATA #REQUIRED
 		includes CDATA #IMPLIED
 		excludes CDATA #IMPLIED
-		defaultexclude (yes | no) "yes"
+		defaultexcludes (yes | no) "yes"
 		casesensitive (true | false) "true"
 >
 <!ELEMENT include EMPTY>
