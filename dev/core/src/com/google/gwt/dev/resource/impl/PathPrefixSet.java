@@ -219,10 +219,18 @@ public class PathPrefixSet {
    *         and any associated filters don't exclude it
    */
   public boolean includesResource(String resourceAbstractPathName) {
+    /*
+     * Algorithm: dive down the package hierarchy looking for the most specific
+     * package that applies to this resource. The filter of the most specific
+     * package is the final determiner of inclusion/exclusion, such that more
+     * specific subpackages can override the filter settings on less specific
+     * superpackages.
+     */
+
     assertValidAbstractResourcePathName(resourceAbstractPathName);
 
-    TrieNode parentNode = rootTrieNode;
-    PathPrefix matchingPrefix = rootTrieNode.getPathPrefix();
+    TrieNode currentNode = rootTrieNode;
+    PathPrefix mostSpecificPrefix = rootTrieNode.getPathPrefix();
 
     // TODO(bruce): consider not using split for speed
     String[] parts = resourceAbstractPathName.split("/");
@@ -231,24 +239,27 @@ public class PathPrefixSet {
     for (int i = 0, n = parts.length - 1; i < n; ++i) {
       String part = parts[i];
       assert (!"".equals(part));
-      TrieNode childNode = parentNode.findChild(part);
+      TrieNode childNode = currentNode.findChild(part);
       if (childNode != null) {
-        // Follow valid branch.
-        matchingPrefix = childNode.getPathPrefix();
-        parentNode = childNode;
+        // We found a more specific node.
+        PathPrefix moreSpecificPrefix = childNode.getPathPrefix();
+        if (moreSpecificPrefix != null) {
+          mostSpecificPrefix = moreSpecificPrefix;
+        }
+        currentNode = childNode;
       } else {
         // No valid branch to follow.
         break;
       }
     }
 
-    if (matchingPrefix == null) {
+    if (mostSpecificPrefix == null) {
       // Didn't match any specified prefix.
       return false;
     }
 
-    // It did match a prefix, but we still need to test.
-    return matchingPrefix.allows(resourceAbstractPathName);
+    // Test the filter of the most specific prefix we found.
+    return mostSpecificPrefix.allows(resourceAbstractPathName);
   }
 
   public Collection<PathPrefix> values() {
