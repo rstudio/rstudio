@@ -111,6 +111,7 @@ public class Pruner {
       }
     }
 
+    @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
       // The variable may have been pruned.
       if (!referencedNonTypes.contains(x.getVariableRef().getTarget())) {
@@ -485,8 +486,10 @@ public class Pruner {
         // Don't rescue variables that are merely assigned to and never read
         boolean doSkip = false;
         JExpression lhs = x.getLhs();
-        if (lhs.hasSideEffects()) {
-          // cannot skip
+        if (lhs.hasSideEffects() || isVolatileField(lhs)) {
+          // If the lhs has side effects, skipping it would lose the side effect.
+          // If the lhs is volatile, also keep it.  This behavior provides a useful
+          // idiom for test cases to prevent code from being pruned.
         } else if (lhs instanceof JLocalRef) {
           // locals are ok to skip
           doSkip = true;
@@ -554,6 +557,7 @@ public class Pruner {
       return false;
     }
 
+    @Override
     public boolean visit(JDeclarationStatement x, Context ctx) {
       /*
        * A declaration by itself doesn't rescue a local (even if it has an
@@ -748,6 +752,17 @@ public class Pruner {
       // rescue and instantiate java.lang.String
       rescue(program.getTypeJavaLangString(), true, true);
       return true;
+    }
+
+    private boolean isVolatileField(JExpression x) {
+      if (x instanceof JFieldRef) {
+        JFieldRef xFieldRef = (JFieldRef) x;
+        if (xFieldRef.getField().isVolatile()) {
+          return true;
+        }
+      }
+
+      return false;
     }
 
     /**
