@@ -167,15 +167,16 @@ public final class GWT {
    * on the server, or during the bootstrap sequence of a GWTTestCase test.
    */
   public static boolean isClient() {
-    // Replaced with "true" by compiler.
-    return sGWTBridge != null;
+    // Replaced with "true" by GWT compiler.
+    return sGWTBridge != null && sGWTBridge.isClient();
   }
 
   /**
    * Determines whether or not the running program is script or bytecode.
    */
   public static boolean isScript() {
-    return isClient() && sGWTBridge == null;
+    // Replaced with "true" by GWT compiler.
+    return false;
   }
 
   /**
@@ -203,7 +204,7 @@ public final class GWT {
   }
 
   /**
-   * Called via reflection in hosted mode; do not every call this method in web
+   * Called via reflection in hosted mode; do not ever call this method in web
    * mode.
    */
   static void setBridge(GWTBridge bridge) {

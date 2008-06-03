@@ -32,6 +32,7 @@ public class GWTBridgeImpl extends GWTBridge {
   /**
    * Resolves a deferred binding request and create the requested object.
    */
+  @Override
   public <T> T create(Class<?> requestedClass) {
     String className = requestedClass.getName();
     try {
@@ -43,13 +44,23 @@ public class GWTBridgeImpl extends GWTBridge {
     }
   };
 
+  @Override
   public String getVersion() {
     return About.GWT_VERSION_NUM;
   }
 
   /**
+   * Yes, we're running as client code in the hosted mode classloader.
+   */
+  @Override
+  public boolean isClient() {
+    return true;
+  }
+
+  /**
    * Logs in dev shell.
    */
+  @Override
   public void log(String message, Throwable e) {
     host.log(message, e);
   }

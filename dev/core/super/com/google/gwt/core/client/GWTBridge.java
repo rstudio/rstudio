@@ -25,5 +25,7 @@ public abstract class GWTBridge {
 
   public abstract String getVersion();
 
+  public abstract boolean isClient();
+
   public abstract void log(String message, Throwable e);
 }

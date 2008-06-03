@@ -378,9 +378,12 @@ public class GenerateJavaAST {
           }
         }
 
-        // Reimplement GWT.isClient() to return true
+        // Reimplement GWT.isClient() and GWT.isScript() to return true
         if (currentClass == program.getIndexedType("GWT")) {
           JMethod method = program.getIndexedMethod("GWT.isClient");
+          implementMethod(method, program.getLiteralBoolean(true));
+
+          method = program.getIndexedMethod("GWT.isScript");
           implementMethod(method, program.getLiteralBoolean(true));
         }
 
