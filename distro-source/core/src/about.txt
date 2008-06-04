@@ -13,6 +13,8 @@ This product includes software developed by:
  - The Mozilla Foundation (http://www.mozilla.org/).
    - Mozilla 1.7.12 (http://www.mozilla.org/releases/mozilla1.7.12/)
    - Rhino (http://www.mozilla.org/rhino/) with modifications
+ - The OpenQA Project (http://openqa.org/)
+   - Selenium-RC (http://selenium-rc.openqa.org/)
  - The WebKit Open Source Project (http://www.webkit.org)
 
 For source availability and license information see COPYING.
