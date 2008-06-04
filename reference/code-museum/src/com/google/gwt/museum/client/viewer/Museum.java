@@ -136,8 +136,6 @@ public class Museum implements EntryPoint {
   }
 
   public void onModuleLoad() {
-    Utility.removeGwtStyleSheet();
-
     // Add the options and issue containers to the page
     RootPanel.get().add(createOptionsPanel());
     RootPanel.get().add(issueDescription);

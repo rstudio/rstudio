@@ -16,10 +16,7 @@
 
 package com.google.gwt.museum.client.common;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.HeadElement;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
 
 /**
  * Utility helper methods.
@@ -33,27 +30,4 @@ public class Utility {
   public static native HeadElement getHeadElement() /*-{
     return $doc.getElementsByTagName("head")[0];
   }-*/;
-
-  /**
-   * Remove the GWT style sheet from the head element so it does not conflict
-   * with this styles used by the issue. The CSS file used by the issue can
-   * still import the GWT style sheet if needed.
-   */
-  public static void removeGwtStyleSheet() {
-    // Remove the GWT style sheet
-    HeadElement headElem = getHeadElement();
-    NodeList<Node> children = headElem.getChildNodes();
-    for (int i = 0; i < children.getLength(); i++) {
-      Node node = children.getItem(i);
-      if (node.getNodeType() == Node.ELEMENT_NODE) {
-        Element elem = Element.as(node);
-        if (elem.getTagName().equalsIgnoreCase("link")
-            && elem.getPropertyString("rel").equalsIgnoreCase("stylesheet")
-            && elem.getPropertyString("href").contains("standard.css")) {
-          headElem.removeChild(elem);
-          return;
-        }
-      }
-    }
-  }
 }
