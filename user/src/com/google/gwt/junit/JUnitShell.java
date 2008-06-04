@@ -272,7 +272,8 @@ public class JUnitShell extends GWTShell {
 
       @Override
       public String getPurpose() {
-        return "Runs web mode via RMI to a BrowserManagerServer; e.g. rmi://localhost/ie6";
+        return "Runs web mode via RMI to a set of BrowserManagerServers; "
+            + "e.g. rmi://localhost/ie6,rmi://localhost/firefox";
       }
 
       @Override
@@ -295,6 +296,33 @@ public class JUnitShell extends GWTShell {
         String[] urls = str.split(",");
         runStyle = RunStyleRemoteWeb.create(JUnitShell.this, urls);
         numClients = urls.length;
+        return runStyle != null;
+      }
+    });
+
+    registerHandler(new ArgHandlerString() {
+
+      @Override
+      public String getPurpose() {
+        return "Runs web mode via HTTP to a set of Selenium servers; "
+            + "e.g. localhost:4444/*firefox,remotehost:4444/*iexplore";
+      }
+
+      @Override
+      public String getTag() {
+        return "-selenium";
+      }
+
+      @Override
+      public String[] getTagArgs() {
+        return new String[] {"seleniumHost"};
+      }
+
+      @Override
+      public boolean setString(String str) {
+        String[] targets = str.split(",");
+        numClients = targets.length;
+        runStyle = RunStyleSelenium.create(JUnitShell.this, targets);
         return runStyle != null;
       }
     });

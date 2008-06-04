@@ -26,6 +26,7 @@
 				<pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 				<pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
+				<pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
 				<pathelement location="${gwt.dev.jar}" />
 			</classpath>
 		</gwt.javac>
@@ -50,6 +51,7 @@
 				<pathelement location="${javac.out}" />
 				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
 				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
 				<pathelement location="${gwt.dev.staging.jar}" />
 			</classpath>
 		</gwt.javac>
@@ -62,6 +64,7 @@
 			<fileset dir="super" excludes="**/package.html" />
 			<fileset dir="${javac.out}" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
+		        <zipfileset src="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
 		</gwt.jar>
 	</target>
 
@@ -75,7 +78,16 @@
 
 	<target name="remoteweb-test" description="Run a remoteweb test at the given host and path" if="gwt.remote.browsers">
 		<echo message="Performing remote browser testing at ${gwt.remote.browsers}" />
-		<gwt.junit test.args="${test.args} -out www -web -remoteweb ${gwt.remote.browsers}" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" >
+		<gwt.junit test.args="${test.args} -out www -remoteweb ${gwt.remote.browsers}" test.out="${junit.out}/remoteweb" test.cases="default.web.tests" >
+			<extraclasspaths>
+				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
+			</extraclasspaths>
+		</gwt.junit>
+	</target>
+
+	<target name="selenium-test" description="Run a remote test using Selenium RC test at the given host and path" if="gwt.selenium.hosts">
+		<echo message="Performing remote browser testing using Selenium RC at ${gwt.selenium.hosts}" />
+		<gwt.junit test.args="${test.args} -out www -selenium ${gwt.selenium.hosts}" test.out="${junit.out}/selenium" test.cases="default.web.tests" >
 			<extraclasspaths>
 				<pathelement location="${gwt.build}/out/dev/core/bin-test" />
 			</extraclasspaths>
@@ -98,7 +110,7 @@
 		</gwt.junit>
 	</target>
 
-	<target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode and remoteweb tests for this project.">
+	<target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode, remoteweb, and selenium tests for this project.">
 		<property.ensure name="distro.built" location="${gwt.dev.staging.jar}" message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
 
 		<!--
@@ -107,6 +119,8 @@
 		-->
 		<limit failonerror="true" hours="2">
 		<parallel threadsPerProcessor="1">
+			<!-- selenium-test is a no-op unless gwt.selenium.hosts is defined -->
+			<antcall target="selenium-test"/>
 			<!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
 			<antcall target="remoteweb-test"/>
 			<antcall target="test.hosted"/>

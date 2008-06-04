@@ -7,6 +7,7 @@
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry exported="true" kind="var" path="GWT_TOOLS/lib/tomcat/servlet-api-2.4.jar" sourcepath="/GWT_TOOLS/lib/tomcat/jakarta-tomcat-5.0.28-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/selenium/selenium-java-client-driver.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/gwt-dev-windows"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
