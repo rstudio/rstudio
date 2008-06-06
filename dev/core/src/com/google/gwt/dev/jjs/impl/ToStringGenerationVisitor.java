@@ -634,9 +634,9 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JNewArray x, Context ctx) {
     print(CHARS_NEW);
-    printTypeName(x.getArrayType().getLeafType());
+    printTypeName(x.getArrayType());
     if (x.initializers != null) {
-      print('{');
+      print(" {");
       visitCollectionWithCommas(x.initializers.iterator());
       print('}');
     } else {
