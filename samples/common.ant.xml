@@ -51,6 +51,10 @@
 						<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
 					</java>
 				</gwt.timer>
+				<length property="sample.size">
+					<fileset dir="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}"/>
+				</length>
+				<echo message="output size for ${sample.main} is ${sample.size} bytes"/>
 			</sequential>
 		</outofdate>
 	</target>
