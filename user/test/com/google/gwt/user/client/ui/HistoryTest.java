@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.HistoryListener;
  */
 public class HistoryTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -163,5 +164,30 @@ public class HistoryTest extends GWTTestCase {
     // history token in the initial state will not cause an onHistoryChanged
     // event to fire.
     History.newItem("foobar");
+  }
+
+  /*
+   * Test against issue #2500. IE6 has a bug that causes it to not report any
+   * part of the current fragment after a '?' when read from location.hash;
+   * make sure that on affected browsers, we're not relying on this.
+   */
+  public void testTokenWithQuestionmark() {
+    delayTestFinish(5000);
+    final String token = "foo?bar";
+
+    History.addHistoryListener(new HistoryListener() {
+      public void onHistoryChanged(String historyToken) {
+
+        if (historyToken == null) {
+          fail("historyToken should not be null");
+        }
+
+        assertEquals(token, historyToken);
+        History.removeHistoryListener(this);
+        finishTest();
+      }
+    });
+
+    History.newItem(token);
   }
 }

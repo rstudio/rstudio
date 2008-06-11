@@ -88,7 +88,17 @@ namespace gwt {
   /*
    * Java class and method references needed to do delegation.
    */
+  
+  /*
+   * The main JVM, used by foreign threads to attach.
+   */
+  static JavaVM* _javaVM;
+
+  /*
+   * Only valid for the main thread!  WebKit can finalized on a foreign thread.
+   */
   static JNIEnv* _javaEnv;
+
   static jclass _javaDispatchObjectClass;
   static jclass _javaDispatchMethodClass;
   static jclass _lowLevelSafClass;
@@ -460,6 +470,9 @@ bool Initialize(JNIEnv* javaEnv, jclass javaDispatchObjectClass,
     return false;
   }
 
+  _javaVM = 0;
+  javaEnv->GetJavaVM(&_javaVM);
+
   _javaEnv = javaEnv;
   _javaDispatchObjectClass = static_cast<jclass>(
       javaEnv->NewGlobalRef(javaDispatchObjectClass));
@@ -478,7 +491,8 @@ bool Initialize(JNIEnv* javaEnv, jclass javaDispatchObjectClass,
   _lowLevelSafReleaseObject = javaEnv->GetStaticMethodID(
       lowLevelSafClass, "releaseObject", "(Ljava/lang/Object;)V");
 
-  if (!_javaDispatchObjectSetFieldMethod || !_javaDispatchObjectGetFieldMethod
+  if (!_javaVM
+      || !_javaDispatchObjectSetFieldMethod || !_javaDispatchObjectGetFieldMethod
       || !_javaDispatchMethodInvokeMethod || !_javaDispatchObjectToStringMethod
       || !_lowLevelSafReleaseObject || javaEnv->ExceptionCheck()) {
     return false;
@@ -489,14 +503,22 @@ bool Initialize(JNIEnv* javaEnv, jclass javaDispatchObjectClass,
 }
 
 void ReleaseJavaObject(jobject jObject) {
-  // Tell the Java code we're done with this object.
-  _javaEnv->CallStaticVoidMethod(_lowLevelSafClass, _lowLevelSafReleaseObject,
-      jObject);
-  if (_javaEnv->ExceptionCheck()) {
+  // Tricky: this call may be on a foreign thread.
+  JNIEnv* javaEnv = 0;
+  if ((_javaVM->AttachCurrentThreadAsDaemon(reinterpret_cast<void**>(&javaEnv),
+      NULL) < 0) || !javaEnv) {
     TR_FAIL();
     return;
   }
-  _javaEnv->DeleteGlobalRef(jObject);
+
+  // Tell the Java code we're done with this object.
+  javaEnv->CallStaticVoidMethod(_lowLevelSafClass, _lowLevelSafReleaseObject,
+      jObject);
+  if (javaEnv->ExceptionCheck()) {
+    TR_FAIL();
+    return;
+  }
+  javaEnv->DeleteGlobalRef(jObject);
 }
 
 } // namespace gwt

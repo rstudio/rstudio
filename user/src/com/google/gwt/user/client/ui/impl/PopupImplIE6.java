@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -56,6 +56,11 @@ public class PopupImplIE6 extends PopupImpl {
     // Visibility of frame should match visiblity of popup element.
     style.visibility = popup.style.visibility;
   
+    // Issue 2443: remove styles that affect the size of the iframe
+    style.border = 0;
+    style.padding = 0;
+    style.margin = 0;
+
     // takes effect immediately
     style.left = popup.offsetLeft;
     style.top = popup.offsetTop;

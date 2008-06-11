@@ -26,6 +26,13 @@
 #include "Tracer.h"
 #include "JsStringWrap.h"
 
+#ifdef ENABLE_TRACING
+extern void PrintJSValue(JSContext* cx, jsval val, char* prefix="");
+#else
+// Include a null version just to keep from cluttering up call sites.
+static inline void PrintJSValue(JSContext* cx, jsval val, char* prefix="") { }
+#endif
+
 // note that this does not use the NS_DEFINE_CID macro because it defines
 // the variable as const, which by default has internal linkage.  I could
 // work around it by putting extern in front of the macro, but that seems
@@ -83,25 +90,25 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
     }
     tracer.log("module name=%s", JS_GetStringBytes(moduleName));
   } else {
-  	tracer.log("null module name");
+    tracer.log("null module name");
   }
-  
+
   jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
   jclass objClass = savedJNIEnv->GetObjectClass(externalObject);
   if (!objClass || savedJNIEnv->ExceptionCheck()) {
     tracer.setFail("can't get LowLevelMoz.ExternalObject class");
     return JS_FALSE;
   }
-  
+
   jmethodID methodID = savedJNIEnv->GetMethodID(objClass, "gwtOnLoad",
       "(ILjava/lang/String;)Z");
   if (!methodID || savedJNIEnv->ExceptionCheck()) {
     tracer.setFail("can't get gwtOnLoad method");
     return JS_FALSE;
   }
-  
+
   tracer.log("scriptGlobal=%08x", unsigned(scriptGlobal.get()));
-  
+
   jboolean result = savedJNIEnv->CallBooleanMethod(externalObject, methodID,
       NS_REINTERPRET_CAST(jint, scriptGlobal.get()), jModuleName);
   if (savedJNIEnv->ExceptionCheck()) {
@@ -122,8 +129,14 @@ static JSBool JS_DLL_CALLBACK gwt_external_getProperty(JSContext *cx,
 {
   Tracer tracer("gwt_external_getProperty");
   JsRootedValue::ContextManager context(cx);
-  if (*vp != JSVAL_VOID)
+  if (*vp != JSVAL_VOID) {
+    // we setup the gwtOnLoad function as a property in GetScriptObject and
+    // do not maintain a copy of it anywhere.  So, if there is a cached
+    // value for a property we must return it.  As we never redefine any
+    // property values, this is safe.  If we were going to keep this code
+    // around and add Toby's profiling code we would need to revisit this.
     return JS_TRUE;
+  }
 
   if (!JSVAL_IS_STRING(id)) {
     tracer.setFail("not a string");
@@ -134,7 +147,7 @@ static JSBool JS_DLL_CALLBACK gwt_external_getProperty(JSContext *cx,
 
 // All this is for calling resolveReference which only returns void.  So,
 // just replace this code to return void for now.  TODO(jat): revisit when
-// merging in Toby's code. 
+// merging in Toby's code.
 #if 0
   jstring jident = savedJNIEnv->NewString(jsStr.chars(), jsStr.length());
   if (!jident || savedJNIEnv->ExceptionCheck()) {
@@ -303,7 +316,7 @@ NS_IMETHODIMP nsRpExternalFactory::CreateInstance(nsISupports *aOuter,
     tracer.setFail("can't create a new ExternalWrapper");
     return NS_ERROR_OUT_OF_MEMORY;
   }
-      
+
   nsresult result = object->QueryInterface(aIID, aResult);
   if (!*aResult || NS_FAILED(result)) {
     tracer.setFail("ExternalWrapper::QueryInterface failed");

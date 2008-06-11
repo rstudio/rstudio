@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,11 +31,23 @@ class HistoryImplIE6 extends HistoryImplFrame {
    * @param maybeHtml untrusted string that may contain html
    * @return sanitized string
    */
+  @SuppressWarnings("unused")
   private static String escapeHtml(String maybeHtml) {
     final Element div = DOM.createDiv();
     DOM.setInnerText(div, maybeHtml);
     return DOM.getInnerHTML(div);
   }
+
+  /**
+   * For IE6, reading from $wnd.location.hash drops part of the fragment if the
+   * fragment contains a '?'. To avoid this bug, we use location.href instead. 
+   */
+  @SuppressWarnings("unused")
+  private static native String getLocationHash() /*-{
+    var href = $wnd.location.href;
+    var hashLoc = href.indexOf("#");
+    return (hashLoc > 0) ? href.substring(hashLoc) : "";
+  }-*/;
 
   @Override
   public boolean init() {
@@ -54,7 +66,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
   @Override
   protected native void initHistoryToken() /*-{
     // Get the initial token from the url's hash component.
-    var hash = $wnd.location.hash;
+    var hash = @com.google.gwt.user.client.impl.HistoryImplIE6::getLocationHash()();
     if (hash.length > 0) {
       try {
         $wnd.__gwt_historyToken = this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
@@ -100,7 +112,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
       doc.close();
     }
   }-*/;
-
+  
   private native void initUrlCheckTimer() /*-{
     // This is the URL check timer.  It detects when an unexpected change
     // occurs in the document's URL (e.g. when the user enters one manually
@@ -110,7 +122,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     // bar in the UI to stop working under these circumstances.
     var historyImplRef = this;
     var urlChecker = function() {
-      var hash = $wnd.location.hash;
+      var hash = @com.google.gwt.user.client.impl.HistoryImplIE6::getLocationHash()();
       if (hash.length > 0) {
         var token = '';
         try {

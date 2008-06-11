@@ -21,7 +21,7 @@ function __MODULE_FUNC__() {
   var $wnd = window
   ,$doc = document
   ,external = $wnd.external
-  ,$stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null
+  ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
 
   // These variables gate calling gwtOnLoad; all must be true to start
   ,scriptsDone, loadDone, bodyDone
@@ -47,8 +47,13 @@ function __MODULE_FUNC__() {
 
   ; // end of global vars
 
-  // Record startup timing information
-  $stats && $stats('__MODULE_NAME__', 'startup', 'selectionStart', {millis:(new Date()).getTime()});
+  $stats && $stats({
+    moduleName: '__MODULE_NAME__',
+    subSystem: 'startup',
+    evtGroup: 'bootstrap', 
+    millis:(new Date()).getTime(), 
+    type: 'begin',
+  });
 
   // ------------------ TRUE GLOBALS ------------------
 
@@ -88,10 +93,16 @@ function __MODULE_FUNC__() {
       }
       // remove this whole function from the global namespace to allow GC
       __MODULE_FUNC__ = null;
+      // JavaToJavaScriptCompiler logs onModuleLoadStart for each EntryPoint.
       frameWnd.gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
-
-      // Record when the module was started
-      $stats && $stats('__MODULE_NAME__', 'startup', 'selectionDone', {millis:(new Date()).getTime()});
+      // Record when the module EntryPoints return.
+      $stats && $stats({
+        moduleName: '__MODULE_NAME__',
+        subSystem: 'startup',
+        evtGroup: 'moduleStartup',
+        millis:(new Date()).getTime(),
+        type: 'end',
+      });
     }
   }
 
@@ -255,21 +266,41 @@ function __MODULE_FUNC__() {
     throw null;
   }
 
-  // --------------- PROPERTY PROVIDERS ---------------
+  var frameInjected;
+  function maybeInjectFrame() {
+    if (!frameInjected) {
+      frameInjected = true;
+      var iframe = $doc.createElement('iframe');
+      // Prevents mixed mode security in IE6/7.
+      iframe.src = "javascript:''";
+      iframe.id = "__MODULE_NAME__";
+      iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
+      iframe.tabIndex = -1;
+      // Due to an IE6/7 refresh quirk, this must be an appendChild.
+      $doc.body.appendChild(iframe);
+      
+      /* 
+       * The src has to be set after the iframe is attached to the DOM to avoid
+       * refresh quirks in Safari.  We have to use the location.replace trick to
+       * avoid FF2 refresh quirks.
+       */
+      $stats && $stats({
+        moduleName:'__MODULE_NAME__', 
+        subSystem:'startup', 
+        evtGroup: 'moduleStartup', 
+        millis:(new Date()).getTime(), 
+        type: 'moduleRequested'
+      });
+      iframe.contentWindow.location.replace(base + strongName);
+    }
+  }
+
+  // --------------- PROPERTY PROVIDERS --------------- 
 
 // __PROPERTIES_BEGIN__
 // __PROPERTIES_END__
 
   // --------------- EXPOSED FUNCTIONS ----------------
-
-  // Called when the script injection is complete.
-  //
-  __MODULE_FUNC__.onInjectionDone = function() {
-    // Mark this module's script injection done and (possibly) start the module.
-    scriptsDone = true;
-    $stats && $stats('__MODULE_NAME__', 'startup', 'moduleRequested', {millis:(new Date()).getTime()});
-    maybeStartModule();
-  }
 
   // Called when the compiled script identified by moduleName is done loading.
   //
@@ -284,6 +315,21 @@ function __MODULE_FUNC__() {
     }
   }
 
+  // Called when the script injection is complete.
+  //
+  __MODULE_FUNC__.onInjectionDone = function() {
+    // Mark this module's script injection done and (possibly) start the module.
+    scriptsDone = true;
+    $stats && $stats({
+      moduleName:'__MODULE_NAME__', 
+      subSystem:'startup', 
+      evtGroup: 'loadExternalRefs', 
+      millis:(new Date()).getTime(), 
+      type: 'end'
+    });
+    maybeStartModule();
+  }
+
   // --------------- STRAIGHT-LINE CODE ---------------
 
   // do it early for compile/browse rebasing
@@ -291,6 +337,14 @@ function __MODULE_FUNC__() {
   processMetas();
 
   // --------------- WINDOW ONLOAD HOOK ---------------
+
+  $stats && $stats({
+    moduleName:'__MODULE_NAME__', 
+    subSystem:'startup', 
+    evtGroup: 'bootstrap', 
+    millis:(new Date()).getTime(), 
+    type: 'selectingPermutation'
+  });
 
   var strongName;
   if (isHostedMode()) {
@@ -324,28 +378,6 @@ function __MODULE_FUNC__() {
     }
   }
 
-  var frameInjected;
-  function maybeInjectFrame() {
-    if (!frameInjected) {
-      frameInjected = true;
-      var iframe = $doc.createElement('iframe');
-      // Prevents mixed mode security in IE6/7.
-      iframe.src = "javascript:''";
-      iframe.id = "__MODULE_NAME__";
-      iframe.style.cssText = "position:absolute;width:0;height:0;border:none";
-      iframe.tabIndex = -1;
-      // Due to an IE6/7 refresh quirk, this must be an appendChild.
-      $doc.body.appendChild(iframe);
-      
-      /* 
-       * The src has to be set after the iframe is attached to the DOM to avoid
-       * refresh quirks in Safari.  We have to use the location.replace trick to
-       * avoid FF2 refresh quirks.
-       */
-      iframe.contentWindow.location.replace(base + strongName);
-    }
-  }
-
   // For everyone that supports DOMContentLoaded.
   if ($doc.addEventListener) {
     $doc.addEventListener("DOMContentLoaded", function() {
@@ -362,10 +394,27 @@ function __MODULE_FUNC__() {
     }
   }, 50);
 
+  $stats && $stats({
+    moduleName:'__MODULE_NAME__', 
+    subSystem:'startup', 
+    evtGroup: 'bootstrap', 
+    millis:(new Date()).getTime(), 
+    type: 'end'
+  });
+
+  $stats && $stats({
+    moduleName:'__MODULE_NAME__', 
+    subSystem:'startup', 
+    evtGroup: 'loadExternalRefs', 
+    millis:(new Date()).getTime(), 
+    type: 'begin'
+  });
+
 // __MODULE_SCRIPTS_BEGIN__
   // Script resources are injected here
 // __MODULE_SCRIPTS_END__
-  $doc.write('<script>__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
+
+  $doc.write('<script defer="defer">__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
 }
 
 // Called from compiled code to hook the window's resize & load events (the

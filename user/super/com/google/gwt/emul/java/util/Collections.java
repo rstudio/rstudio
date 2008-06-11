@@ -75,9 +75,14 @@ public class Collections {
     }
   }
 
-  public static final List<?> EMPTY_LIST = unmodifiableList(new ArrayList<Object>());
-  public static final Map<?, ?> EMPTY_MAP = unmodifiableMap(new HashMap<Object, Object>());
-  public static final Set<?> EMPTY_SET = unmodifiableSet(new HashSet<Object>());
+  @SuppressWarnings("unchecked")
+  public static final List EMPTY_LIST = unmodifiableList(new ArrayList());
+
+  @SuppressWarnings("unchecked")
+  public static final Map EMPTY_MAP = unmodifiableMap(new HashMap());
+
+  @SuppressWarnings("unchecked")
+  public static final Set EMPTY_SET = unmodifiableSet(new HashSet());
 
   private static Comparator<Comparable<Object>> reverseComparator = new Comparator<Comparable<Object>>() {
     public int compare(Comparable<Object> o1, Comparable<Object> o2) {

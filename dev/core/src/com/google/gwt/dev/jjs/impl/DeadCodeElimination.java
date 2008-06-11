@@ -774,7 +774,7 @@ public class DeadCodeElimination {
         case MUL:
         case DIV:
         case MOD: {
-          if (isTypeDouble(lhs) || isTypeFloat(rhs) || isTypeDouble(lhs)
+          if (isTypeDouble(lhs) || isTypeFloat(lhs) || isTypeDouble(rhs)
               || isTypeFloat(rhs)) {
             // do the op on doubles and cast back
             double left = toDouble(lhs);

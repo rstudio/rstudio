@@ -45,13 +45,18 @@ public abstract class Animation {
    * Update all {@link Animation Animations}.
    */
   private static void updateAnimations() {
+    // Duplicate the animations list in case it changes as we iterate over it
+    Animation[] curAnimations = new Animation[animations.size()];
+    curAnimations = animations.toArray(curAnimations);
+
     // Iterator through the animations
     double curTime = Duration.currentTimeMillis();
-    for (int i = 0; i < animations.size(); i++) {
-      Animation animation = animations.get(i);
-      if (animation.update(curTime)) {
-        animations.remove(i);
-        i--;
+    for (Animation animation : curAnimations) {
+      if (animation.running && animation.update(curTime)) {
+        // We can't just remove the animation at the index, because calling
+        // animation.update may have the side effect of canceling this
+        // animation, running new animations, or canceling other animations.
+        animations.remove(animation);
       }
     }
 
@@ -67,7 +72,13 @@ public abstract class Animation {
   private int duration = -1;
 
   /**
-   * Has the {@link Animation} been started.
+   * Is the {@link Animation} running, even if {@link #onStart()} has not yet
+   * been called.
+   */
+  private boolean running = false;
+
+  /**
+   * Has the {@link Animation} actually started.
    */
   private boolean started = false;
 
@@ -81,16 +92,15 @@ public abstract class Animation {
    * scheduled to run, {@link #onCancel()} will be called.
    */
   public void cancel() {
-    // Ignore if no animations are running
-    if (animations == null) {
+    // Ignore if the animation is not currently running
+    if (!running) {
       return;
     }
 
-    // Remove this animation from the list
-    if (animations.remove(this)) {
-      onCancel();
-    }
+    animations.remove(this);
+    onCancel();
     started = false;
+    running = false;
   }
 
   /**
@@ -116,6 +126,7 @@ public abstract class Animation {
     cancel();
 
     // Save the duration and startTime
+    this.running = true;
     this.duration = duration;
     this.startTime = startTime;
 
@@ -162,7 +173,6 @@ public abstract class Animation {
    */
   protected void onCancel() {
     if (started) {
-      started = false;
       onComplete();
     }
   }
@@ -213,8 +223,9 @@ public abstract class Animation {
     }
     if (finished) {
       // Animation is complete.
-      started = false;
       onComplete();
+      started = false;
+      running = false;
       return true;
     }
     return false;

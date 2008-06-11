@@ -298,7 +298,7 @@ public class Application extends Composite implements WindowResizeListener {
     int contentWidth = width - menuWidth - 30;
     int contentWidthInner = contentWidth - 10;
     bottomPanel.setCellWidth(mainMenu, menuWidth + "px");
-    bottomPanel.setCellWidth(contentLayout, contentWidth + "px");
+    bottomPanel.setCellWidth(contentDecorator, contentWidth + "px");
     contentLayout.getCellFormatter().setWidth(0, 0, contentWidthInner + "px");
     contentLayout.getCellFormatter().setWidth(1, 0, contentWidthInner + "px");
   }

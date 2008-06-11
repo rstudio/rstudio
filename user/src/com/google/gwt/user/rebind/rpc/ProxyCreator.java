@@ -344,15 +344,12 @@ class ProxyCreator {
     w.indent();
 
     String requestIdName = nameFactory.createName("requestId");
-    w.println("long " + requestIdName + " = getNextRequestId();");
+    w.println("int " + requestIdName + " = getNextRequestId();");
 
-    String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName()
-        + ":\" + getRequestId() + \"";
+    String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName();        
     String tossName = nameFactory.createName("toss");
-    w.println("boolean " + tossName + " = isStatsAvailable() && stats(\""
-        + statsMethodExpr + ":requestStart\", timeStat(\""
-        + getProxySimpleName() + "." + syncMethod.getName()
-        + "\", getRequestId()));");
+    w.println("boolean " + tossName + " = isStatsAvailable() && stats("
+        + "timeStat(\"" + statsMethodExpr + "\", getRequestId(), \"begin\"));");
 
     w.print(ClientSerializationStreamWriter.class.getSimpleName());
     w.print(" ");
@@ -414,9 +411,8 @@ class ProxyCreator {
     w.println("String " + payloadName + " = " + streamWriterName
         + ".toString();");
 
-    w.println(tossName + " = isStatsAvailable() && stats(\"" + statsMethodExpr
-        + ":requestSerialized\", timeStat(\"" + getProxySimpleName() + "."
-        + syncMethod.getName() + "\", getRequestId()));");
+    w.println(tossName + " = isStatsAvailable() && stats("
+        + "timeStat(\"" + statsMethodExpr + "\", getRequestId(), \"requestSerialized\"));");
 
     /*
      * Depending on the return type for the async method, return a

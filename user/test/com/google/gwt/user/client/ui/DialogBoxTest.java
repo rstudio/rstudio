@@ -32,7 +32,10 @@ public class DialogBoxTest extends PopupTest {
   /**
    * Test the accessors.
    */
+  @Override
   public void testAccessors() {
+    super.testAccessors();
+    
     // Set the widget
     DialogBox box1 = new DialogBox();
     assertNull(box1.getWidget());
@@ -90,5 +93,35 @@ public class DialogBoxTest extends PopupTest {
       }
     });
     delayTestFinish(250);
+  }
+
+  @Override
+  public void testDependantPopupPanel() {
+    // Create the dependent popup
+    final PopupPanel dependantPopup = createPopupPanel();
+    dependantPopup.setAnimationEnabled(true);
+
+    // Create the primary popup
+    final DialogBox primaryPopup = new DialogBox(false, false) {
+      @Override
+      protected void onAttach() {
+        dependantPopup.show();
+        super.onAttach();
+      }
+
+      @Override
+      protected void onDetach() {
+        dependantPopup.hide();
+        super.onDetach();
+      }
+    };
+    primaryPopup.setAnimationEnabled(true);
+
+    testDependantPopupPanel(primaryPopup);
+  }
+
+  @Override
+  protected PopupPanel createPopupPanel() {
+    return new DialogBox();
   }
 }

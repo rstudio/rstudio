@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -41,8 +40,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   private static int requestId;
 
   public static native JavaScriptObject bytesStat(String method, int count,
-      int bytes) /*-{
-    var stat = @com.google.gwt.user.client.rpc.impl.RemoteServiceProxy::timeStat(Ljava/lang/String;I)(method, count);
+      int bytes, String eventType) /*-{
+    var stat = @com.google.gwt.user.client.rpc.impl.RemoteServiceProxy::timeStat(Ljava/lang/String;ILjava/lang/String;)(method, count, eventType);
     stat.bytes = bytes;
     return stat;
   }-*/;
@@ -50,24 +49,29 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   /**
    * Indicates if RPC statistics should be gathered.
    */
-  public static boolean isStatsAvailable() {
-    return GWT.isScript() && isStatsAvailable0();
-  }
+  /**
+   * Indicates if RPC statistics should be gathered.
+   */
+  public static native boolean isStatsAvailable() /*-{
+    return !!$stats;
+  }-*/;
 
   /**
    * Always use this as {@link #isStatsAvailable()} &amp;&amp;
-   * {@link #stats(String, String, int)}.
+   * {@link #stats(JavaScriptObject)}.
    */
-  public static native boolean stats(String invocation, JavaScriptObject data) /*-{
-    return $stats(@com.google.gwt.core.client.GWT::getModuleName()(), 'rpc',
-      invocation, data);
+  public static native boolean stats(JavaScriptObject data) /*-{
+    return $stats(data);
   }-*/;
 
-  public static native JavaScriptObject timeStat(String method, int count) /*-{
+  public static native JavaScriptObject timeStat(String method, int count, String eventType) /*-{
     return {
-      id: count,
+      moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
+      subSystem: 'rpc',
+      evtGroup: count,
       method: method,
-      millis: (new Date()).getTime()
+      millis: (new Date()).getTime(),
+      type: eventType
     };
   }-*/;
 
@@ -117,13 +121,6 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
 
     return encodedResponse;
   }
-
-  /**
-   * Indicates if RPC statistics should be gathered.
-   */
-  private static native boolean isStatsAvailable0() /*-{
-    return @com.google.gwt.core.client.GWT::isScript()() && !!$stats;
-  }-*/;
 
   /**
    * The module base URL as specified during construction.
@@ -244,9 +241,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
       callback.onFailure(iex);
     } finally {
       if (RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":" + invocationCount
-              + ":requestSent", RemoteServiceProxy.bytesStat(methodName,
-              invocationCount, requestData.length()))) {
+          && RemoteServiceProxy.stats(RemoteServiceProxy.bytesStat(methodName,
+          invocationCount, requestData.length(), "requestSent"))) {
       }
     }
     return null;
@@ -272,13 +268,6 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
 
     RequestBuilder rb = doPrepareRequestBuilderImpl(responseReader, methodName,
         invocationCount, requestData, callback);
-
-    // We'll record when the request was configured...
-    if (RemoteServiceProxy.isStatsAvailable()
-        && RemoteServiceProxy.stats(methodName + ":" + invocationCount
-            + ":requestPrepared", RemoteServiceProxy.bytesStat(methodName,
-            invocationCount, requestData.length()))) {
-    }
 
     return rb;
   }

@@ -20,6 +20,32 @@ package com.google.gwt.user.client.ui;
  */
 public class DecoratedPopupTest extends PopupTest {
   @Override
+  public void testDependantPopupPanel() {
+    // Create the dependent popup
+    final PopupPanel dependantPopup = createPopupPanel();
+    dependantPopup.setAnimationEnabled(true);
+
+    // Create the primary popup
+    final DecoratedPopupPanel primaryPopup = new DecoratedPopupPanel(false,
+        false) {
+      @Override
+      protected void onAttach() {
+        dependantPopup.show();
+        super.onAttach();
+      }
+
+      @Override
+      protected void onDetach() {
+        dependantPopup.hide();
+        super.onDetach();
+      }
+    };
+    primaryPopup.setAnimationEnabled(true);
+
+    testDependantPopupPanel(primaryPopup);
+  }
+
+  @Override
   protected PopupPanel createPopupPanel() {
     return new DecoratedPopupPanel();
   }

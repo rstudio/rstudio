@@ -29,11 +29,17 @@ body {
 a, a:visited, a:hover {
   color: #0000AA;
 }
-iframe {
-  border-top: 2px solid #666;
-  border-left: 2px solid #666;
-  border-right: 2px solid #bbb;
-  border-bottom: 2px solid #bbb;
+
+/**
+ * The reference theme can be used to determine when this style sheet has
+ * loaded.  Create a hidden div element with absolute position, assign the style
+ * name below, and attach it to the DOM.  Use a timer to detect when the
+ * element's height and width are set to 5px.
+ */
+.gwt-Reference-chrome-rtl {
+  height: 5px;
+  width: 5px;
+  zoom: 1;
 }
 
 .gwt-Button {
@@ -231,6 +237,13 @@ html>body .gwt-DialogBox .dialogBottomRight {
 }
 
 .gwt-FileUpload {
+}
+
+.gwt-Frame {
+  border-top: 2px solid #666;
+  border-left: 2px solid #666;
+  border-right: 2px solid #bbb;
+  border-bottom: 2px solid #bbb;
 }
 
 .gwt-HorizontalSplitPanel {
@@ -513,9 +526,13 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
 .gwt-PushButton-down-hovering,
 .gwt-PushButton-down-disabled {
   margin: 0;
-  padding: 3px 5px;
   text-decoration: none;
   background: url("images/hborder.png") repeat-x 0px -27px;
+}
+.gwt-PushButton-up,
+.gwt-PushButton-up-hovering,
+.gwt-PushButton-up-disabled {
+  padding: 3px 5px 3px 5px;
 }
 .gwt-PushButton-up {
   border: 1px outset #ccc;
@@ -534,6 +551,11 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   opacity: .5;
   filter: alpha(opacity=40);
   zoom: 1;
+}
+.gwt-PushButton-down,
+.gwt-PushButton-down-hovering,
+.gwt-PushButton-down-disabled {
+  padding: 4px 4px 2px 6px;
 }
 .gwt-PushButton-down {
   border: 1px inset #666;
@@ -985,9 +1007,13 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
 .gwt-ToggleButton-down-hovering,
 .gwt-ToggleButton-down-disabled {
   margin: 0;
-  padding: 3px 5px;
   text-decoration: none;
   background: url("images/hborder.png") repeat-x 0px -27px;
+}
+.gwt-ToggleButton-up,
+.gwt-ToggleButton-up-hovering,
+.gwt-ToggleButton-up-disabled {
+  padding: 3px 5px 3px 5px;
 }
 .gwt-ToggleButton-up {
   border: 1px outset #ccc;
@@ -1006,6 +1032,11 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
   opacity: .5;
   zoom: 1;
   filter: alpha(opacity=40);
+}
+.gwt-ToggleButton-down,
+.gwt-ToggleButton-down-hovering,
+.gwt-ToggleButton-down-disabled {
+  padding: 4px 4px 2px 6px;
 }
 .gwt-ToggleButton-down {
   background-position: 0 -513px;

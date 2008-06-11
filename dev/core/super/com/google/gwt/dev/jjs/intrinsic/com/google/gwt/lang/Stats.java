@@ -15,9 +15,6 @@
  */
 package com.google.gwt.lang;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-
 /**
  * Provides access to the statistics collector function as an intrinsic for use
  * by the compiler. The typical use case is:
@@ -27,25 +24,18 @@ import com.google.gwt.core.client.JavaScriptObject;
  * </pre>
  */
 final class Stats {
-
-  static native String getModuleName() /*-{
-    return $moduleName;
-  }-*/;
-
-  static boolean isStatsAvailable() {
-    return GWT.isScript() && isStatsAvailable0();
-  }
-
-  static native JavaScriptObject makeTimeStat() /*-{
-    return {millis : (new Date()).getTime()};
-  }-*/;
-
-  static native boolean stats(String moduleName, String system, String event,
-      JavaScriptObject data) /*-{
-    return $stats(moduleName, system, event, data);
-  }-*/;
-
-  private static native boolean isStatsAvailable0() /*-{
+  static native boolean isStatsAvailable() /*-{
     return !!$stats;
+  }-*/;
+
+  static native boolean onModuleStart(String mainClassName) /*-{
+    return $stats({
+      moduleName: $moduleName,
+      subSystem: "startup",
+      evtGroup: "moduleStartup",
+      millis : (new Date()).getTime(),
+      type: "onModuleLoadStart",
+      className: mainClassName,
+    });
   }-*/;
 }

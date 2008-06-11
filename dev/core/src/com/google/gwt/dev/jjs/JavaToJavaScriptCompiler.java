@@ -212,40 +212,23 @@ public class JavaToJavaScriptCompiler {
    * 
    * <pre>
    * Stats.isStatsAvailable() &&
-   *   Stats.stats(GWT.getModuleName(), "startup",
-   *     "onModuleLoadStart:<className>", Stats.makeTimeStat());
+   *   Stats.onModuleStart("mainClassName");
    * </pre>
    */
   private static JStatement makeStatsCalls(JProgram program,
       String mainClassName) {
-
-    // Trim to the unqualified name for brevity
-    if (mainClassName.contains(".")) {
-      mainClassName = mainClassName.substring(mainClassName.lastIndexOf('.') + 1);
-    }
-
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
-    JMethod makeTimeStatMethod = program.getIndexedMethod("Stats.makeTimeStat");
-    JMethod moduleNameMethod = program.getIndexedMethod("Stats.getModuleName");
-    JMethod statsMethod = program.getIndexedMethod("Stats.stats");
+    JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 
     JMethodCall availableCall = new JMethodCall(program, null, null,
         isStatsAvailableMethod);
-    JMethodCall makeTimeStatCall = new JMethodCall(program, null, null,
-        makeTimeStatMethod);
-    JMethodCall moduleNameCall = new JMethodCall(program, null, null,
-        moduleNameMethod);
-    JMethodCall statsCall = new JMethodCall(program, null, null, statsMethod);
-
-    statsCall.getArgs().add(moduleNameCall);
-    statsCall.getArgs().add(program.getLiteralString("startup"));
-    statsCall.getArgs().add(
-        program.getLiteralString("onModuleLoadStart:" + mainClassName));
-    statsCall.getArgs().add(makeTimeStatCall);
+    JMethodCall onModuleStartCall = new JMethodCall(program, null, null,
+        onModuleStartMethod);
+    onModuleStartCall.getArgs().add(program.getLiteralString(mainClassName));
 
     JBinaryOperation amp = new JBinaryOperation(program, null,
         program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
-        statsCall);
+        onModuleStartCall);
 
     return amp.makeStatement();
   }

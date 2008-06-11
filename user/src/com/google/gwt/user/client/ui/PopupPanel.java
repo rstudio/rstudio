@@ -88,28 +88,36 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     private boolean showing = false;
 
     /**
+     * Create a new {@link ResizeAnimation}.
+     * 
+     * @param panel the panel to affect
+     */
+    public ResizeAnimation(PopupPanel panel) {
+      this.curPanel = panel;
+    }
+
+    /**
      * Open or close the content. This method always called immediately after
      * the PopupPanel showing state has changed, so we base the animation on the
      * current state.
      * 
-     * @param panel the panel to open or close
+     * @param showing true if the popup is showing, false if not
      */
-    public void setOpen(final PopupPanel panel) {
+    public void setState(boolean showing) {
       // Immediately complete previous open/close animation
       cancel();
 
       // Determine if we need to animate
-      boolean animate = panel.isAnimationEnabled;
-      if (panel.animType == AnimationType.ONE_WAY_CORNER && !panel.showing) {
+      boolean animate = curPanel.isAnimationEnabled;
+      if (curPanel.animType == AnimationType.ONE_WAY_CORNER && !showing) {
         animate = false;
       }
 
       // Open the new item
-      showing = panel.showing;
-      curPanel = panel;
+      this.showing = showing;
       if (animate) {
         // impl.onShow takes some time to complete, so we do it before starting
-        // the animation.  If we move this to onStart, the animation will look
+        // the animation. If we move this to onStart, the animation will look
         // choppy or not run at all.
         if (showing) {
           // Set the position attribute, and then attach to the DOM. Otherwise,
@@ -124,7 +132,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
           RootPanel.get().add(curPanel);
           impl.onShow(curPanel.getElement());
         }
-        
+
         // Wait for the popup panel to be attached before running the animation
         DeferredCommand.addCommand(new Command() {
           public void execute() {
@@ -144,7 +152,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
       impl.setClip(curPanel.getElement(), "rect(auto, auto, auto, auto)");
       DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
-      curPanel = null;
     }
 
     @Override
@@ -208,7 +215,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         impl.onHide(curPanel.getElement());
       }
       DOM.setStyleAttribute(curPanel.getElement(), "overflow", "visible");
-      curPanel = null;
     }
   }
 
@@ -239,11 +245,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private static final PopupImpl impl = GWT.create(PopupImpl.class);
 
   /**
-   * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
-   */
-  private static ResizeAnimation resizeAnimation;
-
-  /**
    * If true, animate the opening of this popup from the center. If false,
    * animate it open from top to bottom, and do not animate closing. Use false
    * to animate menus.
@@ -258,6 +259,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private String desiredWidth;
 
   private boolean isAnimationEnabled = false;
+
+  /**
+   * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
+   */
+  private ResizeAnimation resizeAnimation = new ResizeAnimation(this);
 
   // the left style attribute in pixels
   private int leftPosition = -1;
@@ -645,11 +651,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
     showing = true;
     DOM.addEventPreview(this);
-
-    if (resizeAnimation == null) {
-      resizeAnimation = new ResizeAnimation();
-    }
-    resizeAnimation.setOpen(this);
+    resizeAnimation.setState(true);
   }
 
   @Override
@@ -708,7 +710,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * @param elt The Element on which <code>blur()</code> will be invoked
    */
-  private native void blur(Element elt) /*-{
+  private native void blur(Element elt)
+  /*-{
     if (elt.blur) {
       elt.blur();
     }
@@ -721,10 +724,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     showing = false;
 
     // Hide the popup
-    if (resizeAnimation == null) {
-      resizeAnimation = new ResizeAnimation();
-    }
-    resizeAnimation.setOpen(this);
+    resizeAnimation.setState(false);
 
     // Fire the event listeners
     if (popupListeners != null) {

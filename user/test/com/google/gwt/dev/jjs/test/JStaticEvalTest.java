@@ -166,6 +166,7 @@ public class JStaticEvalTest extends GWTTestCase {
 
     assertEquals(65536, ((char) returnIntNegOne()) + 1);
     assertEquals(10.0, ((double) returnIntFive()) + ((double) returnIntFive()));
+    assertEquals(1.5, returnFloatOneHalf() + 1);
   }
 
   /**
@@ -332,6 +333,10 @@ public class JStaticEvalTest extends GWTTestCase {
 
   private float returnFloatOne() {
     return 1.0F;
+  }
+
+  private float returnFloatOneHalf() {
+    return 0.5F;
   }
 
   private int returnIntFive() {

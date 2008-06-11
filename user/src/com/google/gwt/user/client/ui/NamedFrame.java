@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,11 +23,17 @@ import com.google.gwt.user.client.Element;
  * A {@link com.google.gwt.user.client.ui.Frame} that has a 'name' associated
  * with it. This allows the frame to be the target of a
  * {@link com.google.gwt.user.client.ui.FormPanel}
+ * 
+ * <h3>CSS Style Rules</h3>
+ * <ul class='css'>
+ * <li>.gwt-Frame { }</li>
+ * </ul>
  */
 public class NamedFrame extends Frame {
 
   // Used inside JSNI, so please don't delete this field just because
   // your compiler or IDE says it's unused.
+  @SuppressWarnings("unused")
   private static JavaScriptObject PATTERN_NAME;
 
   static {
@@ -70,6 +76,7 @@ public class NamedFrame extends Frame {
 
     Element iframe = DOM.getFirstChild(div);
     replaceElement(iframe);
+    setStyleName(DEFAULT_STYLENAME);
   }
 
   /**

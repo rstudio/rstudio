@@ -38,6 +38,8 @@ public class CwListBox extends ContentWidget {
   @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
+    String[] cwListBoxCars();
+
     String[] cwListBoxCategories();
 
     String cwListBoxDescription();
@@ -52,15 +54,6 @@ public class CwListBox extends ContentWidget {
 
     String[] cwListBoxVacations();
   }
-
-  /**
-   * The data for each type of list.
-   */
-  @ShowcaseData
-  private static final String[] carTypes = {
-      "Acura", "Audi", "BMW", "Buick", "Chevrolet", "Dodge", "Ford", "Honda",
-      "KIA", "Lexus", "Lincoln", "Mercedes", "Porsche", "Saturn", "Toyota",
-      "Volkswagen", "Volvo"};
 
   /**
    * An instance of the constants.
@@ -150,7 +143,7 @@ public class CwListBox extends ContentWidget {
     String[] listData = null;
     switch (category) {
       case 0:
-        listData = carTypes;
+        listData = constants.cwListBoxCars();
         break;
       case 1:
         listData = constants.cwListBoxSports();

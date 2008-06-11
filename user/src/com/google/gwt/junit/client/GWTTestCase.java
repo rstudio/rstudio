@@ -243,7 +243,7 @@ public abstract class GWTTestCase extends TestCase {
    * {@link #gwtTearDown()} instead.
    */
   @Override
-  protected void tearDown() throws Exception {
+  protected final void tearDown() throws Exception {
     // implemented in the translatable version of this class
   }
 

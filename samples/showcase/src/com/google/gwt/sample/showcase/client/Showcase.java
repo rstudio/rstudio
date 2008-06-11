@@ -17,10 +17,8 @@ package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.HeadElement;
-import com.google.gwt.dom.client.LinkElement;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.i18n.client.LocaleInfo;
@@ -60,9 +58,9 @@ import com.google.gwt.sample.showcase.client.content.widgets.CwCustomButton;
 import com.google.gwt.sample.showcase.client.content.widgets.CwFileUpload;
 import com.google.gwt.sample.showcase.client.content.widgets.CwHyperlink;
 import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.ChangeListener;
@@ -71,7 +69,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TabBar;
@@ -150,20 +147,12 @@ public class Showcase implements EntryPoint {
   public static String CUR_THEME = ShowcaseConstants.STYLE_THEMES[0];
 
   /**
-   * Convenience method for getting the document's head element.
-   * 
-   * @return the document's head element
-   */
-  private static native HeadElement getHeadElement() /*-{
-    return $doc.getElementsByTagName("head")[0];
-  }-*/;
-
-  /**
    * Get the URL of the page, without an hash of query string.
    * 
    * @return the location of the page
    */
-  private static native String getHostPageLocation() /*-{
+  private static native String getHostPageLocation()
+  /*-{
     var s = $doc.location.href;
   
     // Pull off any hash.
@@ -186,6 +175,16 @@ public class Showcase implements EntryPoint {
   private Application app;
 
   /**
+   * When the user selects a {@link TreeItem} from the main menu, we
+   * synchronously change the current example and add a history token for
+   * history support. However, adding the history token causes the history
+   * changed event to fire, which normally selects the associated menu item and
+   * displays the example. We don't want to repeat this twice, so we use a
+   * boolean to indicate that we want to ignore the history changed event.
+   */
+  private boolean ignoreNextHistoryEvent = false;
+
+  /**
    * A mapping of history tokens to their associated menu items.
    */
   private Map<String, TreeItem> itemTokens = new HashMap<String, TreeItem>();
@@ -196,49 +195,11 @@ public class Showcase implements EntryPoint {
   private Map<TreeItem, ContentWidget> itemWidgets = new HashMap<TreeItem, ContentWidget>();
 
   /**
-   * A small widget used to determine when a new style sheet has finished
-   * loading. The widget has a natural width of 0px, but when any GWT.css style
-   * sheet is loaded, the width changes to 5px. We use a Timer to check the
-   * width until the style sheet loads.
-   */
-  private Label styleTester;
-
-  /**
-   * The timer that uses the styleTester to determine when the new GWT style
-   * sheet has loaded.
-   */
-  private Timer styleTesterTimer = new Timer() {
-    @Override
-    public void run() {
-      styleTester.setVisible(false);
-      styleTester.setVisible(true);
-      if (styleTester.getOffsetWidth() > 0) {
-        RootPanel.getBodyElement().getStyle().setProperty("display", "none");
-        RootPanel.getBodyElement().getStyle().setProperty("display", "");
-        app.onWindowResizedImpl(Window.getClientWidth());
-      } else {
-        schedule(25);
-      }
-    }
-  };
-
-  /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
     // Generate the source code and css for the examples
     GWT.create(GeneratorInfo.class);
-
-    // Create a widget to test when style sheets are loaded
-    styleTester = new HTML("<div class=\"topLeftInner\"></div>");
-    styleTester.setStyleName("gwt-DecoratorPanel");
-    styleTester.getElement().getStyle().setProperty("position", "absolute");
-    styleTester.getElement().getStyle().setProperty("visibility", "hidden");
-    styleTester.getElement().getStyle().setProperty("display", "inline");
-    styleTester.getElement().getStyle().setPropertyPx("padding", 0);
-    styleTester.getElement().getStyle().setPropertyPx("top", 0);
-    styleTester.getElement().getStyle().setPropertyPx("left", 0);
-    RootPanel.get().add(styleTester);
 
     // Create the constants
     ShowcaseConstants constants = (ShowcaseConstants) GWT.create(ShowcaseConstants.class);
@@ -249,7 +210,6 @@ public class Showcase implements EntryPoint {
     setupMainLinks(constants);
     setupOptionsPanel();
     setupMainMenu(constants);
-    RootPanel.get().add(app);
 
     // Swap out the style sheets for the RTL versions if needed. We need to do
     // this after the app is loaded because the app will setup the layout based
@@ -261,44 +221,63 @@ public class Showcase implements EntryPoint {
     // menu.
     updateStyleSheets();
 
-    // Add an listener that sets the content widget when a menu item is selected
-    app.setListener(new ApplicationListener() {
-      public void onMenuItemSelected(TreeItem item) {
-        ContentWidget content = itemWidgets.get(item);
-        if (content != null) {
-          History.newItem(getContentWidgetToken(content));
-        }
-      }
-    });
-
     // Setup a history listener to reselect the associate menu item
-    HistoryListener historyListener = new HistoryListener() {
+    final HistoryListener historyListener = new HistoryListener() {
       public void onHistoryChanged(String historyToken) {
+        // Ignore the event if the user selected the content from the main menu
+        if (ignoreNextHistoryEvent) {
+          ignoreNextHistoryEvent = false;
+          return;
+        }
+
         TreeItem item = itemTokens.get(historyToken);
         if (item != null) {
-          // Select the item in the tree
-          if (!item.equals(app.getMainMenu().getSelectedItem())) {
-            app.getMainMenu().setSelectedItem(item, false);
-            app.getMainMenu().ensureSelectedItemVisible();
-          }
+          // Select the associated TreeItem
+          app.getMainMenu().setSelectedItem(item, false);
+          app.getMainMenu().ensureSelectedItemVisible();
 
-          // Show the associated widget
+          // Show the associated ContentWidget
           displayContentWidget(itemWidgets.get(item));
         }
       }
     };
     History.addHistoryListener(historyListener);
 
-    // Show the initial example
-    String initToken = History.getToken();
-    if (initToken.length() > 0) {
-      historyListener.onHistoryChanged(initToken);
-    } else {
-      // Use the first token available
-      TreeItem firstItem = app.getMainMenu().getItem(0).getChild(0);
-      ContentWidget firstContent = itemWidgets.get(firstItem);
-      historyListener.onHistoryChanged(getContentWidgetToken(firstContent));
-    }
+    // Add an listener that sets the content widget when a menu item is selected
+    app.setListener(new ApplicationListener() {
+      public void onMenuItemSelected(TreeItem item) {
+        ContentWidget content = itemWidgets.get(item);
+        if (content != null && !content.equals(app.getContent())) {
+          // Show the new example
+          displayContentWidget(content);
+
+          // Update the history token, but ignore the next history event
+          ignoreNextHistoryEvent = true;
+          History.newItem(getContentWidgetToken(content));
+        }
+      }
+    });
+
+    // When the style sheet has loaded, attach the app
+    StyleSheetLoader.waitForStyleSheet(getCurrentReferenceStyleName(),
+        new Command() {
+          public void execute() {
+            if (!app.isAttached()) {
+              RootPanel.get().add(app);
+            }
+
+            // Show the initial example
+            String initToken = History.getToken();
+            if (initToken.length() > 0) {
+              historyListener.onHistoryChanged(initToken);
+            } else {
+              // Use the first token available
+              TreeItem firstItem = app.getMainMenu().getItem(0).getChild(0);
+              app.getMainMenu().setSelectedItem(firstItem, true);
+              app.getMainMenu().ensureSelectedItemVisible();
+            }
+          }
+        });
   }
 
   /**
@@ -325,17 +304,17 @@ public class Showcase implements EntryPoint {
   }
 
   /**
-   * Create a new {@link LinkElement} that links to a style sheet and append it
-   * to the head element.
+   * Get the style name of the reference element defined in the current GWT
+   * theme style sheet.
    * 
-   * @param href the path to the style sheet
+   * @return the style name
    */
-  private void loadStyleSheet(String href) {
-    LinkElement linkElem = Document.get().createLinkElement();
-    linkElem.setRel("stylesheet");
-    linkElem.setType("text/css");
-    linkElem.setHref(href);
-    getHeadElement().appendChild(linkElem);
+  private String getCurrentReferenceStyleName() {
+    String gwtRef = "gwt-Reference-" + CUR_THEME;
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      gwtRef += "-rtl";
+    }
+    return gwtRef;
   }
 
   /**
@@ -556,8 +535,9 @@ public class Showcase implements EntryPoint {
       showcaseStyleSheet = showcaseStyleSheet.replace(".css", "_rtl.css");
     }
 
-    // Remove existing style sheets
-    HeadElement headElem = getHeadElement();
+    // Find existing style sheets that need to be removed
+    final HeadElement headElem = StyleSheetLoader.getHeadElement();
+    final List<Element> toRemove = new ArrayList<Element>();
     NodeList<Node> children = headElem.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
       Node node = children.getItem(i);
@@ -566,35 +546,48 @@ public class Showcase implements EntryPoint {
         if (elem.getTagName().equalsIgnoreCase("link")
             && elem.getPropertyString("rel").equalsIgnoreCase("stylesheet")) {
           String href = elem.getPropertyString("href");
-          // If the style sheet is already loaded, we keep it and set
-          // gwtStyleSheet to null so that we do not load it below.  The same
-          // applies to showcaseStyleSheet.
-          if (gwtStyleSheet != null && href.contains(gwtStyleSheet)) {
-            gwtStyleSheet = null;
-          } else if (showcaseStyleSheet != null
-              && href.contains(showcaseStyleSheet)) {
-            showcaseStyleSheet = null;
-          } else {
-            headElem.removeChild(elem);
-            i--;
+          // If the correct style sheets are already loaded, then we should have
+          // nothing to remove.
+          if (!href.contains(gwtStyleSheet)
+              && !href.contains(showcaseStyleSheet)) {
+            toRemove.add(elem);
           }
         }
       }
     }
 
-    // Kick off the timer that checks to see when the stylesheet has been applied, so that 
-    // we can force a re-layout of the application. We even do this in the case where 
-    // no stylesheets are swapped out, because this could be on the first load of the application,
-    // and the stylesheet may not have been applied to the DOM elements as yet.
-    styleTesterTimer.schedule(25);
-    
-    // Add the new style sheets
+    // Return if we already have the correct style sheets
+    if (toRemove.size() == 0) {
+      return;
+    }
+
+    // Detach the app while we manipulate the styles to avoid rendering issues
+    RootPanel.get().remove(app);
+
+    // Remove the old style sheets
+    for (Element elem : toRemove) {
+      headElem.removeChild(elem);
+    }
+
+    // Load the GWT theme style sheet
     String modulePath = GWT.getModuleBaseURL();
-    if (gwtStyleSheet != null) {
-      loadStyleSheet(modulePath + gwtStyleSheet);
-    }
-    if (showcaseStyleSheet != null) {
-      loadStyleSheet(modulePath + showcaseStyleSheet);
-    }
+    Command callback = new Command() {
+      public void execute() {
+        // Different themes use different background colors for the body
+        // element, but IE only changes the background of the visible content
+        // on the page instead of changing the background color of the entire
+        // page. By changing the display style on the body element, we force
+        // IE to redraw the background correctly.
+        RootPanel.getBodyElement().getStyle().setProperty("display", "none");
+        RootPanel.getBodyElement().getStyle().setProperty("display", "");
+        RootPanel.get().add(app);
+      }
+    };
+    StyleSheetLoader.loadStyleSheet(modulePath + gwtStyleSheet,
+        getCurrentReferenceStyleName(), callback);
+
+    // Load the showcase specific style sheet after the GWT theme style sheet so
+    // that custom styles supercede the theme styles.
+    StyleSheetLoader.loadStyleSheet(modulePath + showcaseStyleSheet);
   }
 }

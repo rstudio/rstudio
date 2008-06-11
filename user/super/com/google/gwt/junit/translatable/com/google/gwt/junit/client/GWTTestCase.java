@@ -238,7 +238,7 @@ public abstract class GWTTestCase extends TestCase {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected final void tearDown() throws Exception {
     gwtTearDown();
   }
 

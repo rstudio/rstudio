@@ -18,12 +18,15 @@ package com.google.gwt.junit;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
@@ -152,6 +155,42 @@ public class JUnitShell extends GWTShell {
       TestResult testResult, Strategy strategy)
       throws UnableToCompleteException {
     getUnitTestShell().runTestImpl(moduleName, testCase, testResult, strategy);
+  }
+
+  /**
+   * Sanity check; if the type we're trying to run did not actually wind up in
+   * the type oracle, there's no way this test can possibly run. Bail early
+   * instead of failing on the client.
+   */
+  private static JUnitFatalLaunchException checkTestClassInCurrentModule(
+      TreeLogger logger, ModuleDef currentModule, String moduleName,
+      TestCase testCase) throws UnableToCompleteException {
+    TypeOracle typeOracle = currentModule.getTypeOracle(logger);
+    String typeName = testCase.getClass().getName();
+    typeName = typeName.replace('$', '.');
+    JClassType foundType = typeOracle.findType(typeName);
+    if (foundType != null) {
+      return null;
+    }
+    Map<String, CompilationUnit> unitMap = currentModule.getCompilationState().getCompilationUnitMap();
+    CompilationUnit unit = unitMap.get(typeName);
+    String errMsg;
+    if (unit == null) {
+      errMsg = "The test class '" + typeName + "' was not found in module '"
+          + moduleName + "'; no compilation unit for that type was seen";
+    } else if (unit.isError()) {
+      errMsg = "The test class '" + typeName
+          + "' had compile errors; check log for details";
+    } else if (!unit.isCompiled()) {
+      errMsg = "The test class '"
+          + typeName
+          + "' depends on a unit that had compile errors; check log for details";
+    } else {
+      errMsg = "Unexpected error: the test class '"
+          + typeName
+          + "' appears to be valid, but no corresponding type was found in TypeOracle; please contact GWT support";
+    }
+    return new JUnitFatalLaunchException(errMsg);
   }
 
   /**
@@ -584,6 +623,13 @@ public class JUnitShell extends GWTShell {
       moduleNameProp.addKnownValue(moduleName);
       moduleNameProp.setActiveValue(moduleName);
       runStyle.maybeCompileModule(syntheticModuleName);
+    }
+
+    JUnitFatalLaunchException launchException = checkTestClassInCurrentModule(
+        getTopLogger(), currentModule, moduleName, testCase);
+    if (launchException != null) {
+      testResult.addError(testCase, launchException);
+      return;
     }
 
     messageQueue.setNextTest(new TestInfo(currentModule.getName(),

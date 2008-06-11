@@ -185,9 +185,8 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       String encodedResponse = response.getText();
       int statusCode = response.getStatusCode();
       boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":" + requestId
-              + ":responseReceived", RemoteServiceProxy.bytesStat(methodName,
-              requestId, encodedResponse.length()));
+          && RemoteServiceProxy.stats(RemoteServiceProxy.bytesStat(methodName,
+          requestId, encodedResponse.length(), "responseReceived"));
 
       if (statusCode != Response.SC_OK) {
         caught = new StatusCodeException(statusCode, encodedResponse);
@@ -207,9 +206,8 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       caught = e;
     } finally {
       boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":" + requestId
-              + ":responseDeserialized", RemoteServiceProxy.timeStat(
-              methodName, requestId));
+          && RemoteServiceProxy.stats(RemoteServiceProxy.timeStat(
+          methodName, requestId, "responseDeserialized"));
     }
 
     try {
@@ -220,9 +218,8 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
       }
     } finally {
       boolean toss = RemoteServiceProxy.isStatsAvailable()
-          && RemoteServiceProxy.stats(methodName + ":" + requestId
-              + ":responseCallbackDone", RemoteServiceProxy.timeStat(
-              methodName, requestId));
+          && RemoteServiceProxy.stats(RemoteServiceProxy.timeStat(
+          methodName, requestId, "end"));
     }
   }
 }

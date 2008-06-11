@@ -19,18 +19,6 @@
 // Define to log debug-level output rather than just warnings.
 #define DEBUG
 
-/*
- * Debug definitions -- define FILETRACE to have debug output written to
- * a file named gwt-ll.log, or JAVATRACE to have debug output passed to the
- * Java LowLevelMoz.trace method.
- */
-//#define FILETRACE
-//#define JAVATRACE
-
-#if defined(FILETRACE) || defined(JAVATRACE)
-#define ANYTRACE
-#endif
-
 #include <cstdio>
 #include <cstdarg>
 #include <cwchar>
@@ -45,6 +33,16 @@
 #include "Tracer.h"
 #include "JsStringWrap.h"
 
+/*
+ * Debug definitions -- define FILETRACE to have debug output written to
+ * a file named gwt-ll.log, or JAVATRACE to have debug output passed to the
+ * Java LowLevelMoz.trace method.
+ */
+#ifdef ENABLE_TRACING
+#define FILETRACE
+//#define JAVATRACE
+#endif
+
 // include javah-generated header to make sure we match
 #include "LowLevelMoz.h"
 
@@ -52,7 +50,7 @@ JNIEnv* savedJNIEnv = 0;
 jclass lowLevelMozClass;
 
 // Only include debugging code if we are tracing somewhere.
-#ifdef ANYTRACE
+#ifdef ENABLE_TRACING
 
 /*
  * Template so vsnprintf/vswprintf can be used interchangeably in the
@@ -127,7 +125,7 @@ static int append_sprintf(charT* bufStart, const charT* bufEnd,
  * be rewritten for out-of-process hosted mode, it seems unlikely to be worth
  * the effort until that is completed.
  */
-static void PrintJSValue(JSContext* cx, jsval val, char* prefix="") {
+void PrintJSValue(JSContext* cx, jsval val, char* prefix="") {
   JSType type = JS_TypeOfValue(cx, val);
   const char* typeString=JS_GetTypeName(cx, type);
   static const int BUF_SIZE = 256;

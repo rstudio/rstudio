@@ -25,6 +25,7 @@ import com.google.gwt.user.client.rpc.ObjectGraphTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
+import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
@@ -51,6 +52,7 @@ public class RPCSuite {
         "Test for com.google.gwt.user.client.rpc");
 
     suite.addTestSuite(SerializableTypeOracleBuilderTest.class);
+    suite.addTestSuite(TypeHierarchyUtilsTest.class);
     suite.addTestSuite(RPCTest.class);
     suite.addTestSuite(ValueTypesTest.class);
     suite.addTestSuite(EnumsTest.class);

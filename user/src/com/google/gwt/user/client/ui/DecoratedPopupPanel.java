@@ -144,6 +144,24 @@ public class DecoratedPopupPanel extends PopupPanel {
     maybeUpdateSize();
   }
 
+  @Override
+  protected void doAttachChildren() {
+    // See comment in doDetachChildren for an explanation of this call
+    decPanel.onAttach();
+  }
+
+  @Override
+  protected void doDetachChildren() {
+    // We need to detach the decPanel because it is not part of the iterator of
+    // Widgets that this class returns (see the iterator() method override).
+    // Detaching the decPanel detaches both itself and its children. We do not
+    // call super.onDetachChildren() because that would detach the decPanel's
+    // children (redundantly) without detaching the decPanel itself.
+    // This is similar to a {@link ComplexPanel}, but we do not want to expose
+    // the decPanel widget, as its just an internal implementation.
+    decPanel.onDetach();
+  }
+
   /**
    * Get a specific Element from the panel.
    * 

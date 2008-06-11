@@ -38,15 +38,11 @@ public class CwCheckBox extends ContentWidget {
       ContentWidget.CwConstants {
     String cwCheckBoxCheckAll();
 
+    String[] cwCheckBoxDays();
+
     String cwCheckBoxDescription();
 
-    String cwCheckBoxFemale();
-
-    String cwCheckBoxMale();
-
     String cwCheckBoxName();
-
-    String cwCheckBoxUnknown();
   }
 
   /**
@@ -87,21 +83,20 @@ public class CwCheckBox extends ContentWidget {
     label.ensureDebugId("cwCheckBox-label");
     vPanel.add(label);
 
-    // Add a male checkbox
-    CheckBox maleCheckBox = new CheckBox(constants.cwCheckBoxMale());
-    maleCheckBox.ensureDebugId("cwCheckBox-male");
-    vPanel.add(maleCheckBox);
-    
-    // Add a female checkbox
-    CheckBox femaleCheckBox = new CheckBox(constants.cwCheckBoxFemale()); 
-    femaleCheckBox.ensureDebugId("cwCheckBox-female");
-    vPanel.add(femaleCheckBox);
+    // Add a checkbox for each day of the week
+    String[] daysOfWeek = constants.cwCheckBoxDays();
+    for (int i = 0; i < daysOfWeek.length; i++) {
+      String day = daysOfWeek[i];
+      CheckBox checkBox = new CheckBox(day);
+      checkBox.ensureDebugId("cwCheckBox-" + day);
 
-    // Add one disabled checkbox
-    CheckBox disabledCheckBox = new CheckBox(constants.cwCheckBoxUnknown());
-    disabledCheckBox.ensureDebugId("cwCheckBox-disabled");
-    disabledCheckBox.setEnabled(false);
-    vPanel.add(disabledCheckBox);
+      // Disable the weekends
+      if (i >= 5) {
+        checkBox.setEnabled(false);
+      }
+
+      vPanel.add(checkBox);
+    }
 
     // Return the panel of checkboxes
     return vPanel;

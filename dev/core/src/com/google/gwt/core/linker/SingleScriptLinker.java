@@ -78,7 +78,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
-    out.print("var $stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null;");
+    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {$wnd.__gwtStatsEvent(a)} : null;");
     out.newlineOpt();
 
     // Find the single CompilationResult

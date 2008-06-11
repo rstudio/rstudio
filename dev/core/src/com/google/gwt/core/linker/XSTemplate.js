@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -16,41 +16,46 @@
 
 function __MODULE_FUNC__() {
   // ---------------- INTERNAL GLOBALS ----------------
-  
+
   // Cache symbols locally for good obfuscation
   var $wnd = window
   ,$doc = document
   ,external = $wnd.external
-  ,$stats = $wnd.__gwtstatsEvent ? function(a,b,c,d) {$wnd.__gwtstatsEvent(a,b,c,d)} : null
+  ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
 
   // These variables gate calling gwtOnLoad; all must be true to start
   ,gwtOnLoad, bodyDone
 
   // If non-empty, an alternate base url for this module
   ,base = ''
-  
+
   // A map of properties that were declared in meta tags
   ,metaProps = {}
-  
+
   // Maps property names onto sets of legal values for that property.
   ,values = []
-  
+
   // Maps property names onto a function to compute that property.
   ,providers = []
-  
+
   // A multi-tier lookup map that uses actual property values to quickly find
   // the strong name of the cache.js file to load.
   ,answers = []
 
   // Error functions.  Default unset in compiled mode, may be set by meta props.
   ,onLoadErrorFunc, propertyErrorFunc
-  
+
   ; // end of global vars
 
-  // Record startup timing information
-  $stats && $stats('__MODULE_NAME__', 'startup', 'selectionStart', {millis:(new Date()).getTime()});
-  
-  // ------------------ TRUE GLOBALS ------------------  
+  $stats && $stats({
+    moduleName: '__MODULE_NAME__',
+    subSystem: 'startup',
+    evtGroup: 'bootstrap', 
+    millis:(new Date()).getTime(), 
+    type: 'begin',
+  });
+
+  // ------------------ TRUE GLOBALS ------------------
 
   // Maps to synchronize the loading of styles and scripts; resources are loaded
   // only once, even when multiple modules depend on them.  This API must not
@@ -77,28 +82,36 @@ function __MODULE_FUNC__() {
   function maybeStartModule() {
     // TODO: it may not be necessary to check gwtOnLoad here.
     if (gwtOnLoad && bodyDone) {
-      if (isHostedMode()) {
-        external.gwtOnLoad($wnd, $wnd.$moduleName);
-      } else {
-        gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
-        // Record when the module was started
-        $stats && $stats('__MODULE_NAME__', 'startup', 'selectionDone', {millis:(new Date()).getTime()});
-      }
+      gwtOnLoad(onLoadErrorFunc, '__MODULE_NAME__', base);
+      // Record when the module EntryPoints return.
+      $stats && $stats({
+        moduleName: '__MODULE_NAME__',
+        subSystem: 'startup',
+        evtGroup: 'moduleStartup',
+        millis:(new Date()).getTime(),
+        type: 'end',
+      });
     }
   }
 
   // Determine our own script's URL via magic :)
+  // This function produces one side-effect, it sets base to the module's
+  // base url.
   //
   function computeScriptBase() {
-    // see if gwt.js left a marker for us
-    var thisScript, markerScript;
+    var thisScript
+    ,markerId = "__gwt_marker___MODULE_NAME__"
+    ,markerScript;
 
-    // try writing a marker
-    $doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
-    markerScript = $doc.getElementById("__gwt_marker___MODULE_NAME__");
-    if (markerScript) {
-      // this script should be the previous element
-      thisScript = markerScript.previousSibling;
+    $doc.write('<script id="' + markerId + '"></script>');
+    markerScript = $doc.getElementById(markerId);
+
+    // Our script element is assumed to be the closest previous script element
+    // to the marker, so start at the marker and walk backwards until we find
+    // a script.
+    thisScript = markerScript && markerScript.previousSibling;
+    while (thisScript && thisScript.tagName != 'SCRIPT') {
+      thisScript = thisScript.previousSibling;
     }
 
     function getDirectoryOfFile(path) {
@@ -123,7 +136,7 @@ function __MODULE_FUNC__() {
         var loc = $doc.location;
         var href = loc.href;
         base = getDirectoryOfFile(href.substr(0, href.length
-        	- loc.hash.length));
+            - loc.hash.length));
       }
     } else if ((base.match(/^\w+:\/\//))) {
       // If the URL is obviously absolute, do nothing.
@@ -142,7 +155,7 @@ function __MODULE_FUNC__() {
       markerScript.parentNode.removeChild(markerScript);
     }
   }
-  
+
   // Called to slurp up all <meta> tags:
   // gwt:property, gwt:onPropertyErrorFn, gwt:onLoadErrorFn
   //
@@ -150,7 +163,7 @@ function __MODULE_FUNC__() {
     var metas = document.getElementsByTagName('meta');
     for (var i = 0, n = metas.length; i < n; ++i) {
       var meta = metas[i], name = meta.getAttribute('name'), content;
-  
+
       if (name) {
         if (name == 'gwt:property') {
           content = meta.getAttribute('content');
@@ -192,7 +205,7 @@ function __MODULE_FUNC__() {
   /**
    * Determines whether or not a particular property value is allowed. Called by
    * property providers.
-   * 
+   *
    * @param propName the name of the property being checked
    * @param propValue the property value being tested
    */
@@ -222,7 +235,7 @@ function __MODULE_FUNC__() {
     // set the final one to the value
     answer[propValArray[n]] = value;
   }
-  
+
   // Computes the value of a given property.  propName must be a valid property
   // name. Used by the generated PERMUTATIONS code.
   //
@@ -240,8 +253,8 @@ function __MODULE_FUNC__() {
     }
     throw null;
   }
-  
-  // --------------- PROPERTY PROVIDERS ---------------
+
+  // --------------- PROPERTY PROVIDERS --------------- 
 
 // __PROPERTIES_BEGIN__
 // __PROPERTIES_END__
@@ -259,21 +272,36 @@ function __MODULE_FUNC__() {
 
   // --------------- STRAIGHT-LINE CODE ---------------
 
+  if (isHostedMode()) {
+    alert("Cross-site hosted mode not yet implemented. See issue " +
+      "http://code.google.com/p/google-web-toolkit/issues/detail?id=2079");
+    return;
+  }
+
   // do it early for compile/browse rebasing
   computeScriptBase();
   processMetas();
-  
-  if (isHostedMode()) {
-    // Set up the globals and execute the hosted mode hook function
-    $wnd.$wnd = $wnd;
-    $wnd.$doc = $doc;
-    $wnd.$moduleName = '__MODULE_NAME__';
-    $wnd.$moduleBase = base;
-    $wnd.__gwt_getProperty = computePropValue;
-    $wnd.__gwt_initHandlers = __MODULE_FUNC__.__gwt_initHandlers;
-  }
+
   // --------------- WINDOW ONLOAD HOOK ---------------
 
+  $stats && $stats({
+    moduleName:'__MODULE_NAME__', 
+    subSystem:'startup', 
+    evtGroup: 'bootstrap', 
+    millis:(new Date()).getTime(), 
+    type: 'selectingPermutation'
+  });
+
+  var strongName;
+  try {
+// __PERMUTATIONS_BEGIN__
+    // Permutation logic
+// __PERMUTATIONS_END__
+  } catch (e) {
+    // intentionally silent on property failure
+    return;
+  }  
+  
   var onBodyDoneTimerId;
   function onBodyDone() {
     if (!bodyDone) {
@@ -294,7 +322,9 @@ function __MODULE_FUNC__() {
 
   // For everyone that supports DOMContentLoaded.
   if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
+    $doc.addEventListener("DOMContentLoaded", function() {
+      onBodyDone();
+    }, false);
   }
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.
@@ -304,31 +334,42 @@ function __MODULE_FUNC__() {
     }
   }, 50);
 
-  if (isHostedMode()) {
-    alert("Cross-site hosted mode not yet implemented. See issue " +
-      "http://code.google.com/p/google-web-toolkit/issues/detail?id=2079");
-    return;
-  }
+  $stats && $stats({
+    moduleName:'__MODULE_NAME__', 
+    subSystem:'startup', 
+    evtGroup: 'bootstrap', 
+    millis:(new Date()).getTime(), 
+    type: 'end'
+  });
 
-  var strongName;
-  try {
-// __PERMUTATIONS_BEGIN__
-    // Permutation logic
-// __PERMUTATIONS_END__
-  } catch (e) {
-    // intentionally silent on property failure
-    return;
-  }  
+  $stats && $stats({
+    moduleName:'__MODULE_NAME__', 
+    subSystem:'startup', 
+    evtGroup: 'loadExternalRefs', 
+    millis:(new Date()).getTime(), 
+    type: 'begin'
+  });
+
 // __MODULE_SCRIPTS_BEGIN__
   // Script resources are injected here
 // __MODULE_SCRIPTS_END__
-  $doc.write('<script src="' + base + strongName + '"></script>');
-  $stats && $stats('__MODULE_NAME__', 'startup', 'moduleRequested', {millis:(new Date()).getTime()});
+
+  $doc.write('<script defer="defer">'
+    + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
+    + 'moduleName:\'__MODULE_NAME__\', subSystem:\'startup\','
+    + 'evtGroup: \'loadExternalRefs\', millis:(new Date()).getTime(),'
+    + 'type: \'end\'});'
+    + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
+    + 'moduleName:\'__MODULE_NAME__\', subSystem:\'startup\','
+    + 'evtGroup: \'moduleStartup\', millis:(new Date()).getTime(),'
+    + 'type: \'moduleRequested\'});'
+    + '</script>'
+    + '<script defer="defer" src="' + base + strongName + '"></script>');
 }
 
 // Called from compiled code to hook the window's resize & load events (the
 // code running in the script frame is not allowed to hook these directly).
-// 
+//
 // Notes:
 // 1) We declare it here in the global scope so that it won't closure the
 // internals of the module func.
@@ -345,13 +386,13 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
   ;
 
   $wnd.onresize = function(evt) {
-   try {
-     resize();
-   } finally {
-     oldOnResize && oldOnResize(evt);
-   }
+    try {
+      resize();
+    } finally {
+      oldOnResize && oldOnResize(evt);
+    }
   };
-  
+
   $wnd.onbeforeunload = function(evt) {
     var ret, oldRet;
     try {
@@ -362,14 +403,14 @@ __MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
     // Avoid returning null as IE6 will coerce it into a string.
     // Ensure that "" gets returned properly.
     if (ret != null) {
-	  return ret;
-	}
-	if (oldRet != null) {
-	  return oldRet;
-	}
-   // returns undefined.
+      return ret;
+    }
+    if (oldRet != null) {
+      return oldRet;
+    }
+    // returns undefined.
   };
-  
+
   $wnd.onunload = function(evt) {
     try {
       unload();

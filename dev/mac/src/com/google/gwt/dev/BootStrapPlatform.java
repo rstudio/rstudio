@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,6 +31,15 @@ public class BootStrapPlatform {
   }
 
   public static void init() {
+    /*
+     * The following check must be made before attempting to initialize Safari,
+     * or we'll fail with an less-than-helpful UnsatisfiedLinkError.
+     */
+    if (!isJava5()) {
+      System.err.println("You must use a Java 1.5 runtime to use GWT Hosted Mode on Mac OS X.");
+      System.exit(-1);
+    }
+
     LowLevelSaf.init();
     // Ensure we were started with -XstartOnFirstThread
     if (!hasStartOnFirstThreadFlag(LowLevelSaf.getProcessArgs())) {
@@ -99,6 +108,14 @@ public class BootStrapPlatform {
       }
     }
     return false;
+  }
+
+  /**
+   * Determine if we're using the Java 1.5 runtime, since the 1.6 runtime is
+   * 64-bit.
+   */
+  private static boolean isJava5() {
+    return System.getProperty("java.version").startsWith("1.5");
   }
 
   /**

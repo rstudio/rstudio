@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,13 +35,14 @@ import com.google.gwt.user.client.DOM;
  * </p>
  */
 public class Frame extends Widget {
-
+  static final String DEFAULT_STYLENAME = "gwt-Frame";
+  
   /**
    * Creates an empty frame.
    */
   public Frame() {
     setElement(DOM.createIFrame());
-    setStyleName("gwt-Frame");
+    setStyleName(DEFAULT_STYLENAME);
   }
 
   /**

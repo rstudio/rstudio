@@ -35,7 +35,8 @@ class TypeHierarchyUtils {
 
   /**
    * Returns <code>true</code> if the type directly implements the specified
-   * interface.
+   * interface.  The test is done on erased types; any paramaterizations
+   * supplied in the arguments are ignored.
    * 
    * @param type type to check
    * @param intf interface to look for
@@ -44,6 +45,8 @@ class TypeHierarchyUtils {
    */
   public static boolean directlyImplementsInterface(JClassType type,
       JClassType intf) {
+    type = type.getErasedType();
+    intf = intf.getErasedType();
     return directlyImplementsInterfaceRecursive(new HashSet<JClassType>(),
         type, intf);
   }
@@ -119,6 +122,8 @@ class TypeHierarchyUtils {
 
   private static boolean directlyImplementsInterfaceRecursive(
       Set<JClassType> seen, JClassType clazz, JClassType intf) {
+    assert (clazz.getErasedType() == clazz);
+    assert (intf.getErasedType() == intf);
 
     if (clazz == intf) {
       return true;
@@ -127,6 +132,7 @@ class TypeHierarchyUtils {
     JClassType[] intfImpls = clazz.getImplementedInterfaces();
 
     for (JClassType intfImpl : intfImpls) {
+      intfImpl = intfImpl.getErasedType();
       if (!seen.contains(intfImpl)) {
         seen.add(intfImpl);
 

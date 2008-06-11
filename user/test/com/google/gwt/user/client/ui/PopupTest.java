@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 
 /**
@@ -49,6 +50,37 @@ public class PopupTest extends GWTTestCase {
     assertFalse(popup.isAnimationEnabled());
     popup.setAnimationEnabled(true);
     assertTrue(popup.isAnimationEnabled());
+  }
+
+  /**
+   * Issue 2463: If a {@link PopupPanel} contains a dependent {@link PopupPanel}
+   * that is hidden or shown in the onDetach or onAttach method, we could run
+   * into conflicts with the animations. The {@link MenuBar} exhibits this
+   * behavior because, when we detach a {@link MenuBar} from the page, it closes
+   * all of its sub menus, each located in a different {@link PopupPanel}.
+   */
+  public void testDependantPopupPanel() {
+    // Create the dependent popup
+    final PopupPanel dependantPopup = createPopupPanel();
+    dependantPopup.setAnimationEnabled(true);
+
+    // Create the primary popup
+    final PopupPanel primaryPopup = new PopupPanel(false, false) {
+      @Override
+      protected void onAttach() {
+        dependantPopup.show();
+        super.onAttach();
+      }
+
+      @Override
+      protected void onDetach() {
+        dependantPopup.hide();
+        super.onDetach();
+      }
+    };
+    primaryPopup.setAnimationEnabled(true);
+
+    testDependantPopupPanel(primaryPopup);
   }
 
   public void testPopup() {
@@ -112,9 +144,47 @@ public class PopupTest extends GWTTestCase {
   }
 
   /**
+   * Issue 2481: Try to set the contents of the popup while the popup is
+   * attached. When we hide the popup, this should not leave the popup in an
+   * invalid attach state.
+   */
+  public void testSetWidgetWhileAttached() {
+    PopupPanel popup = createPopupPanel();
+    popup.show();
+    popup.setWidget(new Label("test"));
+    popup.hide();
+  }
+
+  /**
    * Create a new PopupPanel.
    */
   protected PopupPanel createPopupPanel() {
     return new PopupPanel();
+  }
+
+  /**
+   * @see #testDependantPopupPanel()
+   */
+  protected void testDependantPopupPanel(final PopupPanel primaryPopup) {
+    // Show the popup
+    primaryPopup.show();
+
+    // Hide the popup
+    new Timer() {
+      @Override
+      public void run() {
+        primaryPopup.hide();
+      }
+    }.schedule(1000);
+
+    // Give time for any errors to occur
+    new Timer() {
+      @Override
+      public void run() {
+        finishTest();
+      }
+    }.schedule(2000);
+
+    delayTestFinish(5000);
   }
 }
