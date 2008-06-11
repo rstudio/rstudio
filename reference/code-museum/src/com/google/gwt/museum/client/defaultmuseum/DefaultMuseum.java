@@ -26,6 +26,7 @@ import com.google.gwt.museum.client.viewer.Museum;
 public class DefaultMuseum extends Museum implements EntryPoint {
   public DefaultMuseum() {
     addIssue(new Issue1245());
+    addIssue(new Issue1772());
     addIssue(new Issue1897());
     addIssue(new Issue2261());
     addIssue(new Issue2290());

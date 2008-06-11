@@ -26,6 +26,11 @@ import java.util.Iterator;
  * {@link VerticalSplitPanel}.
  */
 abstract class SplitPanel extends Panel {
+  /**
+   * The element that masks the screen so we can catch mouse events over
+   * iframes.
+   */
+  private static Element glassElem = null;
 
   /**
    * Sets an elements positioning to absolute.
@@ -220,7 +225,24 @@ abstract class SplitPanel extends Panel {
     this.splitElem = splitElem;
     elements[0] = headElem;
     elements[1] = tailElem;
-    sinkEvents(Event.MOUSEEVENTS);
+    sinkEvents(Event.MOUSEEVENTS | Event.ONLOSECAPTURE);
+
+    if (glassElem == null) {
+      glassElem = DOM.createDiv();
+      glassElem.getStyle().setProperty("position", "absolute");
+      glassElem.getStyle().setProperty("top", "0px");
+      glassElem.getStyle().setProperty("left", "0px");
+      glassElem.getStyle().setProperty("margin", "0px");
+      glassElem.getStyle().setProperty("padding", "0px");
+      glassElem.getStyle().setProperty("border", "0px");
+
+      // We need to set the background color or mouse events will go right
+      // through the glassElem. If the SplitPanel contains an iframe, the
+      // iframe will capture the event and the slider will stop moving.
+      glassElem.getStyle().setProperty("background", "white");
+      glassElem.getStyle().setProperty("opacity", "0.0");
+      glassElem.getStyle().setProperty("filter", "alpha(opacity=0)");
+    }
   }
 
   @Override
@@ -265,8 +287,13 @@ abstract class SplitPanel extends Panel {
       }
 
       case Event.ONMOUSEUP: {
-        DOM.releaseCapture(getElement());
-        stopResizing();
+        if (isResizing()) {
+          // The order of these two lines is important. If we release capture
+          // first, then we might trigger an onLoseCapture event before we set
+          // isResizing to false.
+          stopResizing();
+          DOM.releaseCapture(getElement());
+        }
         break;
       }
 
@@ -276,6 +303,15 @@ abstract class SplitPanel extends Panel {
           onSplitterResize(DOM.eventGetClientX(event) - getAbsoluteLeft(),
               DOM.eventGetClientY(event) - getAbsoluteTop());
           DOM.eventPreventDefault(event);
+        }
+        break;
+      }
+
+      // IE automatically releases capture if the user switches windows, so we
+      // need to catch the event and stop resizing.
+      case Event.ONLOSECAPTURE: {
+        if (isResizing()) {
+          stopResizing();
         }
         break;
       }
@@ -403,9 +439,17 @@ abstract class SplitPanel extends Panel {
   private void startResizingFrom(int x, int y) {
     isResizing = true;
     onSplitterResizeStarted(x, y);
+
+    // Resize glassElem to take up the entire scrollable window area
+    int height = RootPanel.getBodyElement().getScrollHeight() - 1;
+    int width = RootPanel.getBodyElement().getScrollWidth() - 1;
+    glassElem.getStyle().setProperty("height", height + "px");
+    glassElem.getStyle().setProperty("width", width + "px");
+    RootPanel.getBodyElement().appendChild(glassElem);
   }
 
   private void stopResizing() {
     isResizing = false;
+    RootPanel.getBodyElement().removeChild(glassElem);
   }
 }
