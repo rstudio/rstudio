@@ -48,24 +48,32 @@ import java.util.List;
  * </li>
  * <li>.gwt-MenuBar .gwt-MenuItemSeparator .menuSeparatorInner { inner component of
  * section separators } </li>
- * <li>.gwt-MenuBar .menuPopupTopLeft { the top left cell }</li>
- * <li>.gwt-MenuBar .menuPopupTopLeftInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupTopCenter { the top center cell }</li>
- * <li>.gwt-MenuBar .menuPopupTopCenterInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupTopRight { the top right cell }</li>
- * <li>.gwt-MenuBar .menuPopupTopRightInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupMiddleLeft { the middle left cell }</li>
- * <li>.gwt-MenuBar .menuPopupMiddleLeftInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupMiddleCenter { the middle center cell }</li>
- * <li>.gwt-MenuBar .menuPopupMiddleCenterInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupMiddleRight { the middle right cell }</li>
- * <li>.gwt-MenuBar .menuPopupMiddleRightInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupBottomLeft { the bottom left cell }</li>
- * <li>.gwt-MenuBar .menuPopupBottomLeftInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupBottomCenter { the bottom center cell }</li>
- * <li>.gwt-MenuBar .menuPopupBottomCenterInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBar .menuPopupBottomRight { the bottom right cell }</li>
- * <li>.gwt-MenuBar .menuPopupBottomRightInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopLeft { the top left cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopLeftInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopCenter { the top center cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopCenterInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopRight { the top right cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopRightInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleLeft { the middle left cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleLeftInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleCenter { the middle center cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleCenterInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleRight { the middle right cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleRightInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomLeft { the bottom left cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomLeftInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomCenter { the bottom center cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomCenterInner { the inner element of the
+ * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomRight { the bottom right cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomRightInner { the inner element of the
+ * cell }</li>
  * </ul>
  * 
  * <p>
@@ -74,6 +82,8 @@ import java.util.List;
  * </p>
  */
 public class MenuBar extends Widget implements PopupListener, HasAnimation {
+  private static final String STYLENAME_DEFAULT = "gwt-MenuBar";
+
   /**
    * An {@link ImageBundle} that provides images for {@link MenuBar}.
    */
@@ -562,7 +572,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     };
     popup.setAnimationType(AnimationType.ONE_WAY_CORNER);
     popup.setAnimationEnabled(isAnimationEnabled);
-    popup.setStyleName("gwt-MenuBarPopup");
+    popup.setStyleName(STYLENAME_DEFAULT + "Popup");
+    String primaryStyleName = getStylePrimaryName();
+    if (!STYLENAME_DEFAULT.equals(primaryStyleName)) {
+      popup.addStyleName(primaryStyleName + "Popup");
+    }
     popup.addPopupListener(this);
 
     shownChildMenu = item.getSubMenu();
@@ -777,7 +791,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
         | Event.ONFOCUS |  Event.ONKEYDOWN);
 
-    setStyleName("gwt-MenuBar");
+    setStyleName(STYLENAME_DEFAULT);
     if (vertical) {
       addStyleDependentName("vertical");
     } else {
