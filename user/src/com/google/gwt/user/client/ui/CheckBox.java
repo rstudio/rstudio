@@ -202,6 +202,8 @@ public class CheckBox extends ButtonBase implements HasName {
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
     ensureDebugId(labelElem, baseID, "label");
+    ensureDebugId(inputElem, baseID, "input");
+    DOM.setElementProperty(labelElem, "htmlFor", inputElem.getId());
   }
 
   /**

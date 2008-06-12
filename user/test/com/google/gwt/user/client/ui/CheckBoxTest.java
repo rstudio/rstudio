@@ -16,8 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * Tests the CheckBox Widget.
@@ -59,16 +59,16 @@ public class CheckBoxTest extends GWTTestCase {
 
   public void testDebugId() {
     CheckBox check = new CheckBox("myLabel");
+
+    // We need to replace the input element so we can keep a handle to it
+    Element newInput = DOM.createInputCheck();
+    check.replaceInputElement(newInput);
+
     check.ensureDebugId("myCheck");
     RootPanel.get().add(check);
-    
+
     UIObjectTest.assertDebugId("myCheck", check.getElement());
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
-        finishTest();
-      }
-    });
-    delayTestFinish(250);
+    UIObjectTest.assertDebugId("myCheck-input", newInput);
+    UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
   }
 }

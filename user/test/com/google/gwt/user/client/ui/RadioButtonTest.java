@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,14 +16,32 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * Tests the RadioButton class.
  */
 public class RadioButtonTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
-    return "com.google.gwt.user.User";
+    return "com.google.gwt.user.DebugTest";
+  }
+
+  public void testDebugId() {
+    RadioButton radio = new RadioButton("myName", "myLabel");
+
+    // We need to replace the input element so we can keep a handle to it
+    Element newInput = DOM.createInputRadio("MyName");
+    radio.replaceInputElement(newInput);
+
+    radio.ensureDebugId("myRadio");
+    RootPanel.get().add(radio);
+
+    UIObjectTest.assertDebugId("myRadio", radio.getElement());
+    UIObjectTest.assertDebugId("myRadio-input", newInput);
+    UIObjectTest.assertDebugIdContents("myRadio-label", "myLabel");
   }
 
   /**
