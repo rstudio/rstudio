@@ -84,9 +84,7 @@ public class CwTabPanel extends ContentWidget {
     // Create a tab panel
     DecoratedTabPanel tabPanel = new DecoratedTabPanel();
     tabPanel.setWidth("400px");
-
-    // Enable the deck panel animation
-    tabPanel.getDeckPanel().setAnimationEnabled(true);
+    tabPanel.setAnimationEnabled(true);
 
     // Add a home tab
     String[] tabTitles = constants.cwTabPanelTabs();

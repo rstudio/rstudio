@@ -66,10 +66,6 @@ public class MiscellaneousTest extends GWTTestCase {
 
   private static volatile boolean TRUE = true;
 
-  public static native boolean noOptimizeFalse() /*-{
-    return false;
-  }-*/;
-
   private static void assertAllCanStore(Object[] dest, Object[] src) {
     for (int i = 0; i < src.length; ++i) {
       dest[0] = src[i];
@@ -90,6 +86,9 @@ public class MiscellaneousTest extends GWTTestCase {
     @com.google.gwt.dev.jjs.test.MiscellaneousTest$HasClinit::i = 5;
   }-*/;
 
+  private static native void noOp() /*-{
+  }-*/;
+
   private static native void throwNativeException() /*-{
     var a; a.asdf();
   }-*/;
@@ -101,8 +100,7 @@ public class MiscellaneousTest extends GWTTestCase {
   public void testArrayCasts() {
     {
       // thwart optimizer
-      Object f1 = noOptimizeFalse() ? (Object) new PolyA()
-          : (Object) new IFoo[1];
+      Object f1 = FALSE ? (Object) new PolyA() : (Object) new IFoo[1];
       assertEquals("[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;",
           f1.getClass().getName());
       assertFalse(f1 instanceof PolyA[][]);
@@ -122,8 +120,7 @@ public class MiscellaneousTest extends GWTTestCase {
 
     {
       // thwart optimizer
-      Object a1 = noOptimizeFalse() ? (Object) new PolyA()
-          : (Object) new PolyA[1];
+      Object a1 = FALSE ? (Object) new PolyA() : (Object) new PolyA[1];
       assertEquals("[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;",
           a1.getClass().getName());
       assertFalse(a1 instanceof PolyA[][]);
@@ -142,8 +139,7 @@ public class MiscellaneousTest extends GWTTestCase {
 
     {
       // thwart optimizer
-      Object f2 = noOptimizeFalse() ? (Object) new PolyA()
-          : (Object) new IFoo[1][];
+      Object f2 = FALSE ? (Object) new PolyA() : (Object) new IFoo[1][];
       assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$IFoo;",
           f2.getClass().getName());
       assertFalse(f2 instanceof PolyA[][]);
@@ -162,8 +158,7 @@ public class MiscellaneousTest extends GWTTestCase {
 
     {
       // thwart optimizer
-      Object a2 = noOptimizeFalse() ? (Object) new PolyA()
-          : (Object) new PolyA[1][];
+      Object a2 = FALSE ? (Object) new PolyA() : (Object) new PolyA[1][];
       assertEquals("[[Lcom.google.gwt.dev.jjs.test.MiscellaneousTest$PolyA;",
           a2.getClass().getName());
       assertTrue(a2 instanceof PolyA[][]);
@@ -210,7 +205,7 @@ public class MiscellaneousTest extends GWTTestCase {
 
   @SuppressWarnings("cast")
   public void testCasts() {
-    Object o = noOptimizeFalse() ? (Object) new PolyA() : (Object) new PolyB();
+    Object o = FALSE ? (Object) new PolyA() : (Object) new PolyB();
     assertTrue(o instanceof I);
     assertFalse(o instanceof IFoo);
     assertTrue(o instanceof IBar);
@@ -276,6 +271,15 @@ public class MiscellaneousTest extends GWTTestCase {
     assertEquals(5, i);
   }
 
+  public void testIssue2479() {
+    if (TRUE) {
+      FALSE = false;
+    } else if (FALSE) {
+      TRUE = true;
+    } else
+      noOp();
+  }
+
   public void testString() {
     String x = "hi";
     assertEquals("hi", x);
@@ -301,7 +305,7 @@ public class MiscellaneousTest extends GWTTestCase {
    */
   @SuppressWarnings("unchecked")
   public void testStringPrototype() {
-    Object s = noOptimizeFalse() ? new Object() : "Hello, World!";
+    Object s = FALSE ? new Object() : "Hello, World!";
     assertEquals(String.class, s.getClass());
     assertEquals("Hello, World!".hashCode(), s.hashCode());
     assertTrue(s.equals("Hello, World!"));
@@ -311,7 +315,7 @@ public class MiscellaneousTest extends GWTTestCase {
     assertEquals("Hello, World!", s.toString());
     assertTrue(s instanceof String);
 
-    Comparable b = noOptimizeFalse() ? new Integer(1) : "Hello, World!";
+    Comparable b = FALSE ? new Integer(1) : "Hello, World!";
     assertTrue(((Comparable) "Hello, World!").compareTo(b) == 0);
     assertTrue(b.compareTo("Hello, World!") == 0);
     assertTrue(((Comparable) "A").compareTo(b) < 0);
@@ -320,7 +324,7 @@ public class MiscellaneousTest extends GWTTestCase {
     assertTrue(b.compareTo("Z") < 0);
     assertTrue(b instanceof String);
 
-    CharSequence c = noOptimizeFalse() ? new StringBuffer() : "Hello, World!";
+    CharSequence c = FALSE ? new StringBuffer() : "Hello, World!";
     assertEquals('e', c.charAt(1));
     assertEquals(13, c.length());
     assertEquals("ello", c.subSequence(1, 5));

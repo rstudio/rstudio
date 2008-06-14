@@ -17,7 +17,7 @@
   <!-- Enable or disable the UIObject.ensureDebugID method -->
   <define-property name="gwt.enableDebugId" values="true, false"/>
   
-  <!-- Default to disabled -->
+  <!-- Default to enabled -->
   <set-property name="gwt.enableDebugId" value="true"/> 
 
   <!-- Replace the DebugIdImpl -->

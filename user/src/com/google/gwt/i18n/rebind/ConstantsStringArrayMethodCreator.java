@@ -16,7 +16,6 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
@@ -46,7 +45,6 @@ class ConstantsStringArrayMethodCreator extends
     for (int i = 0; i < args.length; i++) {
       args[i] = args[i].replaceAll("\\\\,", ",").trim();
     }
-
     return args;
   }
 
@@ -62,28 +60,33 @@ class ConstantsStringArrayMethodCreator extends
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod method, String key,
-      AbstractResource resource, String locale) throws UnableToCompleteException {
+      AbstractResource resource, String locale) {
     String methodName = method.getName();
     // Make sure cache exists.
     enableCache();
     // Check cache for array.
     println("String args[] = (String[]) cache.get(" + wrap(methodName) + ");");
     // If not found, create String[].
-    print("if (args == null){\n  String [] writer= {");
+    println("if (args == null) {");
+    indent();
+    println("String [] writer= {");
+    indent();
     String template = resource.getRequiredStringExt(logger, key, null);
     String[] args = split(template);
     for (int i = 0; i < args.length; i++) {
-      if (i != 0) {
-        print(", ");
-      }
       String toPrint = args[i].replaceAll("\\,", ",");
-      print(wrap(toPrint));
+      println(wrap(toPrint) + ",");
     }
-    println("}; ");
+    outdent();
+    println("};");
     // add to cache, and return
     println("cache.put(" + wrap(methodName) + ", writer);");
     println("return writer;");
-    println("} else");
+    outdent();
+    println("} else {");
+    indent();
     println("return args;");
+    outdent();
+    println("}");
   }
 }

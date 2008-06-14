@@ -116,7 +116,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JClassLiteral x, Context ctx) {
-    expression = x;
+    expression = program.getLiteralClass(x.getRefType());
     return false;
   }
 

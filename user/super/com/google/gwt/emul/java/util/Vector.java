@@ -222,10 +222,11 @@ public class Vector<E> extends AbstractList<E> implements List<E>,
     return arrayList.size();
   }
 
-  @Override
-  public List<E> subList(int fromIndex, int toIndex) {
-    return arrayList.subList(fromIndex, toIndex);
-  }
+  // TODO(jat): add back when ArrayList actually supports subList
+//  @Override
+//  public List<E> subList(int fromIndex, int toIndex) {
+//    return arrayList.subList(fromIndex, toIndex);
+//  }
 
   @Override
   public Object[] toArray() {

@@ -37,13 +37,35 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 /**
- * Replace any complex assignments that will cause problems down the road with
- * broken expressions; replace side-effect expressions in the lhs with temps to
- * prevent multiple evaluation.
+ * <p>
+ * Replace problematic compound assignments with a sequence of simpler
+ * operations, all of which are either simple assignments or are non-assigning
+ * operations. When doing so, be careful that side effects happen exactly once
+ * and that the order of any side effects is preserved. The choice of which
+ * assignments to replace is made in subclasses; they must override the three
+ * <code>shouldBreakUp()</code> methods.
+ * </p>
+ * 
+ * <p>
+ * Note that because AST nodes are mutable, they cannot be reused in different
+ * parts of the same tree. Instead, the node must be cloned before each
+ * insertion into a tree other than the first.
+ * </p>
+ * 
+ * <p>
+ * If the <code>reuseTemps</code> constructor parameter is set to
+ * <code>false</code>, then temps will be reused aggressively, even when
+ * their types do not match the values assigned to them. To determine when a
+ * temp can be reused, the current implementation uses a notion of "temp usage
+ * scopes". Every time a temporary variable is allocated, it is recorded in the
+ * current temp usage scope. Once the current temp usage scope is exited, all of
+ * its temps become available for use for other purposes.
+ * </p>
  */
-public class CompoundAssignmentNormalizer {
+public abstract class CompoundAssignmentNormalizer {
 
   /**
    * Breaks apart certain complex assignments.
@@ -56,18 +78,7 @@ public class CompoundAssignmentNormalizer {
       if (op.getNonAssignmentOf() == null) {
         return;
       }
-
-      boolean doIt = false;
-      if (x.getType() == program.getTypePrimitiveLong()) {
-        doIt = true;
-      }
-      if (op == JBinaryOperator.ASG_DIV
-          && x.getType() != program.getTypePrimitiveFloat()
-          && x.getType() != program.getTypePrimitiveDouble()) {
-        doIt = true;
-      }
-
-      if (!doIt) {
+      if (!shouldBreakUp(x)) {
         return;
       }
 
@@ -77,17 +88,19 @@ public class CompoundAssignmentNormalizer {
        * expressions that could have side effects with temporaries, so that they
        * are only run once.
        */
-      final int pushLocalIndex = localIndex;
+      enterTempUsageScope();
       ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
           new JMultiExpression(program, x.getSourceInfo()));
       JExpression newLhs = replacer.accept(x.getLhs());
-      localIndex = pushLocalIndex;
+      exitTempUsageScope();
 
       JBinaryOperation operation = new JBinaryOperation(program,
           x.getSourceInfo(), newLhs.getType(), op.getNonAssignmentOf(), newLhs,
           x.getRhs());
+      // newLhs is cloned below because it was used in operation
       JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
-          newLhs.getType(), JBinaryOperator.ASG, newLhs, operation);
+          newLhs.getType(), JBinaryOperator.ASG,
+          cloner.cloneExpression(newLhs), operation);
 
       JMultiExpression multiExpr = replacer.getMultiExpr();
       if (multiExpr.exprs.isEmpty()) {
@@ -112,7 +125,7 @@ public class CompoundAssignmentNormalizer {
       if (!op.isModifying()) {
         return;
       }
-      if (x.getType() != program.getTypePrimitiveLong()) {
+      if (!shouldBreakUp(x)) {
         return;
       }
 
@@ -120,19 +133,21 @@ public class CompoundAssignmentNormalizer {
       // (t = x, x += 1, t)
 
       // First, replace the arg with a non-side-effect causing one.
-      final int pushLocalIndex = localIndex;
+      enterTempUsageScope();
       JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
       ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
           multi);
       JExpression newArg = replacer.accept(x.getArg());
 
+      JExpression expressionReturn = expressionToReturn(newArg);
+
       // Now generate the appropriate expressions.
-      JLocal tempLocal = getTempLocal(newArg.getType());
+      JLocal tempLocal = getTempLocal(expressionReturn.getType());
 
       // t = x
       JLocalRef tempRef = new JLocalRef(program, x.getSourceInfo(), tempLocal);
       JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
-          x.getType(), JBinaryOperator.ASG, tempRef, newArg);
+          x.getType(), JBinaryOperator.ASG, tempRef, expressionReturn);
       multi.exprs.add(asg);
 
       // x += 1
@@ -145,7 +160,7 @@ public class CompoundAssignmentNormalizer {
       multi.exprs.add(tempRef);
 
       ctx.replaceMe(multi);
-      localIndex = pushLocalIndex;
+      exitTempUsageScope();
     }
 
     @Override
@@ -154,7 +169,7 @@ public class CompoundAssignmentNormalizer {
       if (!op.isModifying()) {
         return;
       }
-      if (x.getType() != program.getTypePrimitiveLong()) {
+      if (!shouldBreakUp(x)) {
         return;
       }
 
@@ -186,11 +201,22 @@ public class CompoundAssignmentNormalizer {
                 + String.valueOf(op.getSymbol()));
       }
 
+      JExpression one;
+      if (arg.getType() == program.getTypePrimitiveLong()) {
+        // use an explicit long, so that LongEmulationNormalizer does not get
+        // confused
+        one = program.getLiteralLong(1);
+      } else {
+        // int is safe to add to all other types
+        one = program.getLiteralInt(1);
+      }
+      // arg is cloned below because the caller is allowed to use it somewhere
       JBinaryOperation asg = new JBinaryOperation(program, arg.getSourceInfo(),
-          arg.getType(), newOp, arg, program.getLiteralLong(1));
+          arg.getType(), newOp, cloner.cloneExpression(arg), one);
       return asg;
     }
   }
+
   /**
    * Replaces side effects in lvalue.
    */
@@ -260,41 +286,75 @@ public class CompoundAssignmentNormalizer {
           x.getType(), JBinaryOperator.ASG, tempRef, x);
       multi.exprs.add(asg);
       // Update me with the temp
-      return tempRef;
+      return cloner.cloneExpression(tempRef);
     }
   }
 
-  public static void exec(JProgram program) {
-    new CompoundAssignmentNormalizer(program).execImpl();
-  }
+  private static int localCounter;
+  protected final JProgram program;
+  private final CloneExpressionVisitor cloner;
 
   private JMethodBody currentMethodBody;
-  private int localIndex;
-  private final JProgram program;
-  private final List<JLocal> tempLocals = new ArrayList<JLocal>();
 
-  private CompoundAssignmentNormalizer(JProgram program) {
+  private final boolean reuseTemps;
+  private List<JLocal> tempLocals;
+  private int tempLocalsIndex;
+  private Stack<Integer> usageScopeStarts;
+
+  protected CompoundAssignmentNormalizer(JProgram program, boolean reuseTemps) {
     this.program = program;
+    this.reuseTemps = reuseTemps;
+    cloner = new CloneExpressionVisitor(program);
+    clearLocals();
   }
 
-  private void clearLocals() {
-    tempLocals.clear();
-    localIndex = 0;
-  }
-
-  private void execImpl() {
+  public void breakUpAssignments() {
     BreakupAssignOpsVisitor breaker = new BreakupAssignOpsVisitor();
     breaker.accept(program);
   }
 
+  /**
+   * Decide what expression to return when breaking up a compound assignment of
+   * the form <code>lhs op= rhs</code>. By default the <code>lhs</code> is
+   * returned.
+   */
+  protected JExpression expressionToReturn(JExpression lhs) {
+    return lhs;
+  }
+
+  protected abstract boolean shouldBreakUp(JBinaryOperation x);
+
+  protected abstract boolean shouldBreakUp(JPostfixOperation x);
+
+  protected abstract boolean shouldBreakUp(JPrefixOperation x);
+
+  private void clearLocals() {
+    tempLocals = new ArrayList<JLocal>();
+    tempLocalsIndex = 0;
+    usageScopeStarts = new Stack<Integer>();
+  }
+
+  private void enterTempUsageScope() {
+    usageScopeStarts.push(tempLocalsIndex);
+  }
+
+  private void exitTempUsageScope() {
+    tempLocalsIndex = usageScopeStarts.pop();
+  }
+
+  /**
+   * Allocate a temporary local variable.
+   */
   private JLocal getTempLocal(JType type) {
-    if (localIndex < tempLocals.size()) {
-      return tempLocals.get(localIndex++);
+    if (reuseTemps) {
+      if (tempLocalsIndex < tempLocals.size()) {
+        return tempLocals.get(tempLocalsIndex++);
+      }
     }
+
     JLocal newTemp = program.createLocal(null,
-        ("$t" + localIndex++).toCharArray(), type, false, currentMethodBody);
+        ("$t" + localCounter++).toCharArray(), type, false, currentMethodBody);
     tempLocals.add(newTemp);
     return newTemp;
   }
-
 }

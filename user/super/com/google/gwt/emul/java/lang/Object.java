@@ -29,14 +29,16 @@ public class Object {
    * 
    * @skip
    */
-  public transient int typeId;
+  @SuppressWarnings("unused")
+  private transient int typeId;
 
   /**
    * magic magic magic.
    * 
    * @skip
    */
-  public transient Object typeMarker;
+  @SuppressWarnings("unused")
+  private transient Object typeMarker;
 
   public boolean equals(Object other) {
     return this == other;

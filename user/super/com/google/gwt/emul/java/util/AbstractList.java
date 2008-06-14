@@ -133,7 +133,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
   }
 
   public void add(int index, E element) {
-    throw new UnsupportedOperationException("add");
+    throw new UnsupportedOperationException("Add not supported on this list");
   }
 
   public boolean addAll(int index, Collection<? extends E> c) {
@@ -189,6 +189,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
     while (iter.hasNext()) {
       E obj = iter.next();
       k = coeff * k + (obj == null ? 0 : obj.hashCode());
+      k = ~~k;
     }
     return k;
   }
@@ -225,17 +226,16 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
   }
 
   public E remove(int index) {
-    throw new UnsupportedOperationException("remove");
+    throw new UnsupportedOperationException("Remove not supported on this list");
   }
 
   public E set(int index, E o) {
-    throw new UnsupportedOperationException("set");
+    throw new UnsupportedOperationException("Set not supported on this list");
   }
 
-  public List<E> subList(int fromIndex, int toIndex) {
-    // TODO Implement me.
-    throw new UnsupportedOperationException("subList");
-  }
+  // TODO(jat): implement
+//  public List<E> subList(int fromIndex, int toIndex) {
+//  }
 
   protected void removeRange(int fromIndex, int endIndex) {
     ListIterator<E> iter = listIterator(fromIndex);

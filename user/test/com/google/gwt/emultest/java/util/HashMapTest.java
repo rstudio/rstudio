@@ -17,9 +17,11 @@ package com.google.gwt.emultest.java.util;
 
 import org.apache.commons.collections.TestMap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -58,6 +60,7 @@ public class HashMapTest extends TestMap {
   private static final float LOAD_FACTOR_ONE_TENTH = 0.1F;
   private static final float LOAD_FACTOR_ZERO = 0.0F;
   private static final Object ODD_ZERO_KEY = new Object() {
+    @Override
     public int hashCode() {
       return 0;
     }
@@ -121,6 +124,7 @@ public class HashMapTest extends TestMap {
     assertEmptyIterator(hashMap.entrySet().iterator());
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -555,6 +559,33 @@ public class HashMapTest extends TestMap {
   }
 
   /*
+   * Test from issue 2499.
+   * The problem was actually in other objects hashCode() function, as
+   * the value was not coerced to an int and therefore parseInt in
+   * AbstractHashMap.addAllHashEntries was failing.  This was fixed
+   * both in our JRE classes to ensure int overflow is handled properly
+   * in their hashCode() implementation and in HashMap so that user
+   * objects which don't account for int overflow will still be
+   * handled properly.  There is a slight performance penalty, as
+   * the coercion will be done twice, but that should be fixeable with
+   * improved compiler optimization.
+   */
+  public void testLargeHashCodes() {
+    final int LIST_COUNT = 20;
+    List<Integer> values = new ArrayList<Integer>(LIST_COUNT);
+    for (int n = 0; n < LIST_COUNT; n++) {
+      values.add(n);
+    }
+    Map<List<Integer>, String> testMap = new HashMap<List<Integer>, String>();
+    testMap.put(values, "test");
+    int count = 0;
+    for (Map.Entry<List<Integer>, String> entry : testMap.entrySet()) {
+      count++;
+    }
+    assertEquals(testMap.size(), count);
+  }
+
+  /*
    * Test method for 'java.util.HashMap.put(Object, Object)'
    */
   public void testPut() {
@@ -716,6 +747,7 @@ public class HashMapTest extends TestMap {
     assertEquals(val, VALUE_VAL);
   }
 
+  @Override
   protected Map makeEmptyMap() {
     return new HashMap();
   }

@@ -38,6 +38,32 @@ import java.util.Set;
  * may be invalidated at certain times and recomputed.
  */
 public class CompilationState {
+
+  /**
+   * Compute the set of all valid binary type names (for
+   * {@link BinaryTypeReferenceRestrictionsChecker}.
+   */
+  private static Set<String> getValidBinaryTypeNames(Set<CompilationUnit> units) {
+    Set<String> validBinaryTypeNames = new HashSet<String>();
+    for (CompilationUnit unit : units) {
+      switch (unit.getState()) {
+        case COMPILED:
+          for (ClassFile classFile : unit.getJdtCud().compilationResult().getClassFiles()) {
+            char[] binaryName = CharOperation.concatWith(
+                classFile.getCompoundName(), '/');
+            validBinaryTypeNames.add(String.valueOf(binaryName));
+          }
+          break;
+        case CHECKED:
+          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+            validBinaryTypeNames.add(compiledClass.getBinaryName());
+          }
+          break;
+      }
+    }
+    return validBinaryTypeNames;
+  }
+
   protected final Map<String, CompilationUnit> unitMap = new HashMap<String, CompilationUnit>();
   private Set<JavaSourceFile> cachedSourceFiles = Collections.emptySet();
   private Map<String, CompiledClass> exposedClassFileMap = null;
@@ -69,40 +95,37 @@ public class CompilationState {
    * compile errors.
    */
   public void compile(TreeLogger logger) throws UnableToCompleteException {
-    JdtCompiler.compile(getCompilationUnits());
-    Set<String> validBinaryTypeNames = new HashSet<String>();
-    for (CompilationUnit unit : getCompilationUnits()) {
-      switch (unit.getState()) {
-        case COMPILED:
-          for (ClassFile classFile : unit.getJdtCud().compilationResult().getClassFiles()) {
-            char[] binaryName = CharOperation.concatWith(
-                classFile.getCompoundName(), '/');
-            validBinaryTypeNames.add(String.valueOf(binaryName));
-          }
-          break;
-        case CHECKED:
-          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-            validBinaryTypeNames.add(compiledClass.getBinaryName());
-          }
-          break;
-      }
-    }
-    CompilationUnitInvalidator.validateCompilationUnits(getCompilationUnits(),
+    Set<CompilationUnit> units = getCompilationUnits();
+    JdtCompiler.compile(units);
+    Set<String> validBinaryTypeNames = getValidBinaryTypeNames(units);
+
+    // Dump all units with direct errors; we cannot safely check them.
+    boolean anyErrors = CompilationUnitInvalidator.invalidateUnitsWithErrors(
+        logger, units);
+
+    // Check all units using our custom checks.
+    CompilationUnitInvalidator.validateCompilationUnits(units,
         validBinaryTypeNames);
 
-    CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
-        getCompilationUnits());
+    // More units may have errors now.
+    anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
+        units);
 
-    JsniCollector.collectJsniMethods(logger, getCompilationUnits(),
-        new JsProgram());
+    if (anyErrors) {
+      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
+    }
 
-    CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
-        getCompilationUnits());
+    JsniCollector.collectJsniMethods(logger, units, new JsProgram());
 
-    mediator.refresh(logger, getCompilationUnits());
+    // JSNI collection can generate additional errors.
+    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
+      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
+    }
 
-    // Any surviving units are now checked.
-    for (CompilationUnit unit : getCompilationUnits()) {
+    mediator.refresh(logger, units);
+
+    // Any surviving units are now considered CHECKED.
+    for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         unit.setState(State.CHECKED);
       }

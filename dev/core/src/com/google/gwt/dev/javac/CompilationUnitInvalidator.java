@@ -37,7 +37,15 @@ import java.util.Set;
  */
 public class CompilationUnitInvalidator {
 
-  public static void invalidateUnitsWithErrors(TreeLogger logger,
+  /**
+   * For all units containing one or more errors whose state is currently
+   * {@link State#COMPILED}, each unit's error(s) will be logged to
+   * <code>logger</code> and each unit's state will be set to
+   * {@link State#ERROR}.
+   * 
+   * @return <code>true</code> if any units changed state
+   */
+  public static boolean invalidateUnitsWithErrors(TreeLogger logger,
       Set<CompilationUnit> units) {
     logger = logger.branch(TreeLogger.TRACE, "Removing units with errors");
     // Start by removing units with a known problem.
@@ -81,10 +89,7 @@ public class CompilationUnitInvalidator {
       }
     }
 
-    if (anyRemoved) {
-      // Then removing anything else that won't compile as a result.
-      invalidateUnitsWithInvalidRefs(logger, units);
-    }
+    return anyRemoved;
   }
 
   public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,

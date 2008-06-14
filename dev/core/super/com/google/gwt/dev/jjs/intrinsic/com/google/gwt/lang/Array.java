@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ public final class Array {
   public static <T> T[] cloneSubrange(T[] array, int fromIndex, int toIndex) {
     Array a = asArrayType(array);
     Array result = arraySlice(a, fromIndex, toIndex);
-    initValues(a.getClass(), a.typeId, a.queryId, result);
+    initValues(a.getClass(), Util.getTypeId(a), a.queryId, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -71,7 +71,7 @@ public final class Array {
   public static <T> T[] createFrom(T[] array, int length) {
     Array a = asArrayType(array);
     Array result = createFromSeed(NULL_SEED_TYPE, length);
-    initValues(a.getClass(), a.typeId, a.queryId, result);
+    initValues(a.getClass(), Util.getTypeId(a), a.queryId, result);
     // implicit type arg not inferred (as of JDK 1.5.0_07)
     return Array.<T> asArray(result);
   }
@@ -128,7 +128,7 @@ public final class Array {
     }
     wrapArray(array, protoTypeArray);
     array.arrayClass = arrayClass;
-    array.typeId = typeId;
+    Util.setTypeId(array, typeId);
     array.queryId = queryId;
     return array;
   }
@@ -138,7 +138,7 @@ public final class Array {
    */
   public static Object setCheck(Array array, int index, Object value) {
     if (value != null) {
-      if (array.queryId > 0 && !Cast.canCastUnsafe(value.typeId, array.queryId)) {
+      if (array.queryId > 0 && !Cast.canCastUnsafe(Util.getTypeId(value), array.queryId)) {
         throw new ArrayStoreException();
       }
       if (array.queryId < 0 && Cast.isJavaObject(value)) {

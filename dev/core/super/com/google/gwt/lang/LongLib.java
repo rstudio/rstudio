@@ -48,12 +48,6 @@ public class LongLib {
    */
 
   /**
-   * Number of bits we expect to be accurate for a double representing a large
-   * integer.
-   */
-  private static final int PRECISION_BITS = 48;
-
-  /**
    * Use nested class to avoid clinit on outer.
    */
   static class CachedInts {
@@ -86,6 +80,12 @@ public class LongLib {
   public static boolean RUN_IN_JVM = false;
 
   /**
+   * Number of bits we expect to be accurate for a double representing a large
+   * integer.
+   */
+  private static final int PRECISION_BITS = 48;
+
+  /**
    * Index of the high bits in a 2-double array.
    */
   private static final int HIGH = 1;
@@ -115,6 +115,35 @@ public class LongLib {
 
   public static double[] and(double[] a, double[] b) {
     return makeFromBits(highBits(a) & highBits(b), lowBits(a) & lowBits(b));
+  }
+
+  /**
+   * Compare the receiver to the argument.
+   * 
+   * @return 0 if they are the same, 1 if the receiver is greater, -1 if the
+   *         argument is greater.
+   */
+  public static int compare(double[] a, double[] b) {
+    if (eq(a, b)) {
+      return 0;
+    }
+
+    boolean nega = isNegative(a);
+    boolean negb = isNegative(b);
+    if (nega && !negb) {
+      return -1;
+    }
+    if (!nega && negb) {
+      return 1;
+    }
+
+    // at this point, the signs are the same, so subtraction will not overflow
+    assert (nega == negb);
+    if (isNegative(sub(a, b))) {
+      return -1;
+    } else {
+      return 1;
+    }
   }
 
   public static double[] div(double[] a, double[] b) {
@@ -467,35 +496,6 @@ public class LongLib {
       return accum;
     }
     return add(accum, create(a * b, 0.0));
-  }
-
-  /**
-   * Compare the receiver to the argument.
-   * 
-   * @return 0 if they are the same, 1 if the receiver is greater, -1 if the
-   *         argument is greater.
-   */
-  private static int compare(double[] a, double[] b) {
-    if (eq(a, b)) {
-      return 0;
-    }
-
-    boolean nega = isNegative(a);
-    boolean negb = isNegative(b);
-    if (nega && !negb) {
-      return -1;
-    }
-    if (!nega && negb) {
-      return 1;
-    }
-
-    // at this point, the signs are the same, so subtraction will not overflow
-    assert (nega == negb);
-    if (isNegative(sub(a, b))) {
-      return -1;
-    } else {
-      return 1;
-    }
   }
 
   /*

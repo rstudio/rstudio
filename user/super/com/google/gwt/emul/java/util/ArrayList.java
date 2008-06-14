@@ -276,11 +276,10 @@ public class ArrayList<E> extends AbstractList<E> implements List<E>,
     size = newSize;
   }
 
-  @SuppressWarnings("unused")
-  List<E> subListUnimplemented(int fromIndex, int toIndex) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("subList not implemented");
-  }
+  // TODO(jat): implement
+//  @Override
+//  List<E> subList(int fromIndex, int toIndex) {
+//  }
 
   @SuppressWarnings("unchecked")
   private void clearImpl() {

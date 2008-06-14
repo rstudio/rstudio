@@ -15,6 +15,8 @@
  */
 package com.google.gwt.lang;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 // CHECKSTYLE_NAMING_OFF: Uses legacy conventions of underscore prefixes.
 
 /**
@@ -43,7 +45,7 @@ final class Cast {
   }-*/;
 
   static Object dynamicCast(Object src, int dstId) {
-    if (src != null && !canCastUnsafe(src.typeId, dstId)) {
+    if (src != null && !canCastUnsafe(Util.getTypeId(src), dstId)) {
       throw new ClassCastException();
     }
     return src;
@@ -60,7 +62,7 @@ final class Cast {
   }
 
   static boolean instanceOf(Object src, int dstId) {
-    return (src != null) && canCast(src.typeId, dstId);
+    return (src != null) && canCast(Util.getTypeId(src), dstId);
   }
 
   /**
@@ -71,11 +73,11 @@ final class Cast {
   }
 
   static boolean isJavaObject(Object src) {
-    return src.typeMarker == getNullMethod() || src.typeId == 2;
+    return Util.getTypeMarker(src) == getNullMethod() || Util.getTypeId(src) == 2;
   }
 
   static boolean isJavaScriptObject(Object src) {
-    return src.typeMarker != getNullMethod() && src.typeId != 2;
+    return Util.getTypeMarker(src) != getNullMethod() && Util.getTypeId(src) != 2;
   }
 
   /**
@@ -179,7 +181,7 @@ final class Cast {
     return o;
   }
 
-  private static native Object getNullMethod() /*-{
+  private static native JavaScriptObject getNullMethod() /*-{
     return @null::nullMethod();
   }-*/;
 

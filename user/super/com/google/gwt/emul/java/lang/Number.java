@@ -159,7 +159,7 @@ public abstract class Number implements Serializable {
    * 
    * @return The floating-point representation of <code>str</code> or
    *         <code>Number.NaN</code> if the string does not match
-   *         {@link floatRegex}.
+   *         {@link #floatRegex}.
    */
   private static native double __parseDouble(String str) /*-{
     var floatRegex = @java.lang.Number::floatRegex;
@@ -184,7 +184,9 @@ public abstract class Number implements Serializable {
 
   // CHECKSTYLE_ON
 
-  public abstract byte byteValue();
+  public byte byteValue() {
+    return (byte) intValue();
+  }
 
   public abstract double doubleValue();
 
@@ -194,5 +196,7 @@ public abstract class Number implements Serializable {
 
   public abstract long longValue();
 
-  public abstract short shortValue();
+  public short shortValue() {
+    return (short) intValue();
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
   /**
    * Must refer to a valid module that inherits from com.google.gwt.junit.JUnit.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_en";
   }

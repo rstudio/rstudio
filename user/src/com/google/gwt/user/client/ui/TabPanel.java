@@ -47,7 +47,7 @@ import java.util.Iterator;
  * </p>
  */
 public class TabPanel extends Composite implements TabListener,
-    SourcesTabEvents, HasWidgets, IndexedPanel {
+    SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel {
   /**
    * This extension of DeckPanel overrides the public mutator methods to prevent
    * external callers from adding to the state of the DeckPanel.
@@ -325,6 +325,10 @@ public class TabPanel extends Composite implements TabListener,
     insert(widget, tabText, false, beforeIndex);
   }
 
+  public boolean isAnimationEnabled() {
+    return deck.isAnimationEnabled();
+  }
+
   public Iterator<Widget> iterator() {
     // The Iterator returned by DeckPanel supports removal and will invoke
     // TabbedDeckPanel.remove(), which is an active function.
@@ -373,6 +377,10 @@ public class TabPanel extends Composite implements TabListener,
    */
   public void selectTab(int index) {
     tabBar.selectTab(index);
+  }
+
+  public void setAnimationEnabled(boolean enable) {
+    deck.setAnimationEnabled(enable);
   }
 
   /**

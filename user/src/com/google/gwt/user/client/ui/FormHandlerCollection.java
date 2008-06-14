@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,7 +32,7 @@ public class FormHandlerCollection extends ArrayList<FormHandler> {
    * @param sender the object sending the event
    * @param results the results of the form submission
    */
-  public void fireOnComplete(Object sender, String results) {
+  public void fireOnComplete(FormPanel sender, String results) {
     FormSubmitCompleteEvent event = new FormSubmitCompleteEvent(sender, results);
     for (FormHandler handler : this) {
       handler.onSubmitComplete(event);
@@ -46,7 +46,7 @@ public class FormHandlerCollection extends ArrayList<FormHandler> {
    * @param sender the object sending the event
    * @return <code>true</code> if the event should be cancelled
    */
-  public boolean fireOnSubmit(Object sender) {
+  public boolean fireOnSubmit(FormPanel sender) {
     FormSubmitEvent event = new FormSubmitEvent(sender);
     for (FormHandler handler : this) {
       handler.onSubmit(event);

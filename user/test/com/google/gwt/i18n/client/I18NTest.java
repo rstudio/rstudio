@@ -45,6 +45,7 @@ import java.util.Set;
  * Tests Internationalization. Assumes locale is set to piglatin_UK
  */
 public class I18NTest extends GWTTestCase {
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest";
   }
@@ -162,7 +163,7 @@ public class I18NTest extends GWTTestCase {
         m.invertedArguments("first", "second")); // from default locale
     assertEquals("PL: Don't tell me I can't {quote things in braces}", m.quotedText());
     assertEquals("PL: This {0} would be an argument if not quoted", m.quotedArg());
-    assertEquals("PL: Total is $11,305.01", m.currencyFormat(11305.01));
+    assertEquals("PL: Total is US$11,305.01", m.currencyFormat(11305.01));
     assertEquals("PL: Default number format is 1,017.1", m.defaultNumberFormat(1017.1));
     assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
         m.getTimeDate(new Date(107, 11, 1, 12, 1, 2)));
@@ -430,6 +431,10 @@ public class I18NTest extends GWTTestCase {
 
   public void testConstantsWithLookup() {
     TestConstantsWithLookup l = (TestConstantsWithLookup) GWT.create(TestConstantsWithLookup.class);
+    Map<String, String> map = l.getMap("mapABCD");
+    assertEquals("valueA", map.get("keyA"));
+    map = l.getMap("mapDCBA");
+    assertEquals("valueD", map.get("keyD"));
     assertEquals(l.mapABCD(), l.getMap("mapABCD"));
     assertEquals(l.mapDCBA(), l.getMap("mapDCBA"));
     assertEquals(l.mapBACD(), l.getMap("mapBACD"));

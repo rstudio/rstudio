@@ -235,17 +235,17 @@ public class Collections {
     return true;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "cast"})
   public static <T> List<T> emptyList() {
     return (List<T>) EMPTY_LIST;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "cast"})
   public static <K, V> Map<K, V> emptyMap() {
     return (Map<K, V>) EMPTY_MAP;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "cast"})
   public static <T> Set<T> emptySet() {
     return (Set<T>) EMPTY_SET;
   }
@@ -278,6 +278,14 @@ public class Collections {
       }
     }
     return count;
+  }
+
+  public static <T> ArrayList<T> list(Enumeration<T> e) {
+    ArrayList<T> arrayList = new ArrayList<T>();
+    while (e.hasMoreElements()) {
+      arrayList.add(e.nextElement());
+    }
+    return arrayList;
   }
 
   public static <T extends Object & Comparable<? super T>> T max(
@@ -578,10 +586,9 @@ public class Collections {
         return list.size();
       }
 
-      public List<T> subList(int fromIndex, int toIndex) {
-        throw new UnsupportedOperationException(
-            "unmodifiableList: subList not permitted");
-      }
+      // TODO(jat): implement
+//      public List<T> subList(int fromIndex, int toIndex) {
+//      }
 
       public Object[] toArray() {
         return list.toArray();
@@ -591,7 +598,7 @@ public class Collections {
         return list.toArray(array);
       }
     };
-  };
+  }
 
   public static <K, V> Map<K, V> unmodifiableMap(
       final Map<? extends K, ? extends V> map) {

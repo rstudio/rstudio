@@ -36,6 +36,7 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -112,7 +113,8 @@ public class TypeTightener {
           instance = program.getLiteralNull();
         }
         JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(),
-            instance, program.getNullField(), null, x.getType());
+            instance, program.getNullField(), null,
+            primitiveTypeOrNullType(x.getType()));
         ctx.replaceMe(fieldRef);
       }
     }
@@ -138,7 +140,8 @@ public class TypeTightener {
           instance = program.getLiteralNull();
         }
         JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-            instance, program.getNullMethod());
+            instance, program.getNullMethod(),
+            primitiveTypeOrNullType(x.getType()));
         ctx.replaceMe(newCall);
       } else if (isStaticImpl && method.params.size() > 0
           && method.params.get(0).isThis() && x.getArgs().size() > 0
@@ -149,9 +152,20 @@ public class TypeTightener {
           instance = program.getLiteralNull();
         }
         JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-            instance, program.getNullMethod());
+            instance, program.getNullMethod(),
+            primitiveTypeOrNullType(x.getType()));
         ctx.replaceMe(newCall);
       }
+    }
+
+    /**
+     * Return the smallest type that is is a subtype of the argument.
+     */
+    private JType primitiveTypeOrNullType(JType type) {
+      if (type instanceof JPrimitiveType) {
+        return type;
+      }
+      return program.getTypeNull();
     }
   }
 

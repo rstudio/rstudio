@@ -102,15 +102,17 @@ public interface TestConstants extends com.google.gwt.i18n.client.Constants {
 
   boolean booleanTrue();
 
-  Map mapABCD();
+  Map<String, String> mapABCD();
 
+  // raw type test
+  @SuppressWarnings("unchecked")
   Map mapDCBA();
 
-  Map mapBACD();
+  Map<String, String> mapBACD();
 
-  Map mapBBB();
+  Map<String, String> mapBBB();
 
-  Map mapXYZ();
+  Map<String, String> mapXYZ();
 
   // uncomment for desk tests
   // Map mapWithMissingKey();

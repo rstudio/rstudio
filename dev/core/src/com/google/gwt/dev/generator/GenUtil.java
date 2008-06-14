@@ -26,7 +26,7 @@ public class GenUtil {
    * <code>false</code>, generators should not warn.
    */
   public static boolean warnAboutMetadata() {
-    return System.getProperty("gwt.nowarn.metadata") != null;
+    return System.getProperty("gwt.nowarn.metadata") == null;
   }
 
   /**

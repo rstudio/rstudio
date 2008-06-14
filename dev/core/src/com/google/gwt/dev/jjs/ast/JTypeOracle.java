@@ -88,7 +88,7 @@ public class JTypeOracle {
       hasLiveCode = true;
       return false;
     }
-    
+
     @Override
     public boolean visit(JExpressionStatement x, Context ctx) {
       JExpression expr = x.getExpr();
@@ -144,7 +144,7 @@ public class JTypeOracle {
 
   private final Map<JClassType, Set<JInterfaceType>> implementsMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
-  private final Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
+  private Set<JReferenceType> instantiatedTypes = null;
 
   private final Map<JInterfaceType, Set<JClassType>> isImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
@@ -389,10 +389,6 @@ public class JTypeOracle {
     return results;
   }
 
-  public Set<JReferenceType> getInstantiatedTypes() {
-    return instantiatedTypes;
-  }
-
   public boolean hasClinit(JReferenceType type) {
     return hasClinitSet.contains(type);
   }
@@ -406,6 +402,11 @@ public class JTypeOracle {
   }
 
   public boolean isInstantiatedType(JReferenceType type) {
+    if (instantiatedTypes == null) {
+      // The instantiated types have not yet been computed.
+      return true;
+    }
+
     if (type instanceof JNullType) {
       return true;
     }
@@ -443,7 +444,7 @@ public class JTypeOracle {
   }
 
   public void setInstantiatedTypes(Set<JReferenceType> instantiatedTypes) {
-    this.instantiatedTypes.clear();
+    this.instantiatedTypes = new HashSet<JReferenceType>();
     this.instantiatedTypes.addAll(instantiatedTypes);
   }
 
@@ -614,7 +615,7 @@ public class JTypeOracle {
     Map<JClassType, Set<JMethod>> overrideMap = getOrCreateMap(virtualUpRefMap,
         method);
     for (JClassType classType : overrideMap.keySet()) {
-      if (instantiatedTypes.contains(classType)) {
+      if (isInstantiatedType(classType)) {
         Set<JMethod> set = overrideMap.get(classType);
         results.addAll(set);
       }

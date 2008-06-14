@@ -25,8 +25,6 @@ package java.util;
  */
 public abstract class AbstractMap<K, V> implements Map<K, V> {
 
-  private static final String MSG_CANNOT_MODIFY = "This map implementation does not support modification";
-
   protected AbstractMap() {
   }
 
@@ -131,11 +129,12 @@ public abstract class AbstractMap<K, V> implements Map<K, V> {
   }
 
   public V put(K key, V value) {
-    throw new UnsupportedOperationException(MSG_CANNOT_MODIFY);
+    throw new UnsupportedOperationException("Put not supported on this map");
   }
 
   public void putAll(Map<? extends K, ? extends V> t) {
-    for (Iterator<? extends Entry<? extends K, ? extends V>> iter = t.entrySet().iterator(); iter.hasNext();) {
+    for (Iterator<? extends Entry<? extends K, ? extends V>> iter = t.entrySet().iterator();
+        iter.hasNext(); ) {
       Entry<? extends K, ? extends V> e = iter.next();
       put(e.getKey(), e.getValue());
     }

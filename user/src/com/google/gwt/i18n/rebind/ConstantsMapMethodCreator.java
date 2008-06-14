@@ -16,7 +16,6 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
@@ -38,13 +37,15 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
   /**
    * Generates Map of key/value pairs for a list of keys.
    * 
+   * @param logger TreeLogger instance for logging
    * @param method method body to create
-   * @param value value to create returnType from
-   * @throws UnableToCompleteException
+   * @param key value to create map from
+   * @param resource AbstractResource for key lookup
+   * @param locale locale to use for localized string lookup
    */
   @Override
   public void createMethodFor(TreeLogger logger, JMethod method, String key,
-      AbstractResource resource, String locale) throws UnableToCompleteException {
+      AbstractResource resource, String locale) {
     String methodName = method.getName();
     if (method.getParameters().length > 0) {
       error(
@@ -56,12 +57,13 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     // make sure cache exists
     enableCache();
     // check cache for array
-    println("java.util.Map args = (java.util.Map) cache.get("
+    String constantMapClassName = ConstantMap.class.getCanonicalName();
+    println(constantMapClassName + " args = (" + constantMapClassName + ") cache.get("
         + wrap(methodName) + ");");
     // if not found create Map
-    println("if (args == null){");
+    println("if (args == null) {");
     indent();
-    println("args = new " + ConstantMap.class.getCanonicalName() + "();");
+    println("args = new " + constantMapClassName + "();");
     String value;
     try {
       value = resource.getRequiredStringExt(logger, key, null);
@@ -82,8 +84,8 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
       }
     }
     println("cache.put(" + wrap(methodName) + ", args);");
-    println("}; ");
     outdent();
+    println("};");
     println("return args;");
   }
 }

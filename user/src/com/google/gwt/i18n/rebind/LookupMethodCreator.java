@@ -49,40 +49,53 @@ class LookupMethodCreator extends AbstractMethodCreator {
     createMethodFor(targetMethod);
   }
 
-  void createMethodFor(JMethod targetMethod) {
-    String template = "{0} target = ({0})cache.get(arg0);";
+  /**
+   * @return string containing return type name
+   */
+  protected String getReturnTypeName() {
     String type;
     JPrimitiveType s = returnType.isPrimitive();
     if (s != null) {
       type = AbstractSourceCreator.getJavaObjectTypeFor(s);
     } else {
-      type = returnType.getQualifiedSourceName();
+      type = returnType.getParameterizedQualifiedSourceName();
     }
-    Object[] args = {type};
-    String lookup = MessageFormat.format(template, args);
+    return type;
+  }
+
+  void createMethodFor(JMethod targetMethod) {
+    String template = "{0} target = ({0}) cache.get(arg0);";
+    String returnTypeName = getReturnTypeName();
+    String lookup = MessageFormat.format(template, new Object[] {returnTypeName});
     println(lookup);
-    println("if (target != null)");
+    println("if (target != null) {");
+    indent();
     printReturnTarget();
+    outdent();
+    println("}");
     JMethod[] methods = ((ConstantsWithLookupImplCreator) currentCreator).allInterfaceMethods;
+    JType erasedType = returnType.getErasedType();
     for (int i = 0; i < methods.length; i++) {
-      if (methods[i].getReturnType().equals(returnType)
+      if (methods[i].getReturnType().getErasedType().equals(erasedType)
           && methods[i] != targetMethod) {
         String methodName = methods[i].getName();
-        String body = "if(arg0.equals(" + wrap(methodName) + ")){";
+        String body = "if(arg0.equals(" + wrap(methodName) + ")) {";
         println(body);
+        indent();
         printFound(methodName);
+        outdent();
         println("}");
       }
     }
-    String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" + {0} + \"''; expecting a method name\", \"{1}\", {0});";
+    String format = "throw new java.util.MissingResourceException(\"Cannot find constant ''\" +"
+        + "{0} + \"''; expecting a method name\", \"{1}\", {0});";
     String result = MessageFormat.format(format, "arg0",
         this.currentCreator.getTarget().getQualifiedSourceName());
     println(result);
   }
 
   void printFound(String methodName) {
-    Object[] args2 = {methodName};
-    println(MessageFormat.format(returnTemplate(), args2));
+    println(MessageFormat.format(returnTemplate(), new Object[] {methodName}));
   }
 
   void printReturnTarget() {

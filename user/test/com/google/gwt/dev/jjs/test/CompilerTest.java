@@ -130,6 +130,10 @@ public class CompilerTest extends GWTTestCase {
     private UninstantiableType() {
     }
 
+    public int returnInt() {
+      return intField;
+    }
+
     public Object returnNull() {
       return null;
     }
@@ -899,6 +903,12 @@ public class CompilerTest extends GWTTestCase {
     try {
       volatileBoolean = u.intField == 0;
       fail("Expected NullPointerException (6)");
+    } catch (Exception expected) {
+    }
+
+    try {
+      volatileBoolean = u.returnInt() == 0;
+      fail("Expected NullPointerException (7)");
     } catch (Exception expected) {
     }
   }

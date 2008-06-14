@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -50,11 +50,13 @@ public class ArraysTest extends EmulTestBase {
       index = val;
     }
 
+    @Override
     public String toString() {
       return value + "@" + index;
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -423,6 +425,20 @@ public class ArraysTest extends EmulTestBase {
     assertEquals(-1, ret);
     ret = Arrays.binarySearch(a3, (short) -71);
     assertEquals(0, ret);
+  }
+
+  /**
+   * Tests sorting of long primitives.
+   */
+  public void testLongSort() {
+    long[] x = {3, 11, 2, 1, 22, 3};
+    Arrays.sort(x);
+    assertEquals(1, x[0]);
+    assertEquals(2, x[1]);
+    assertEquals(3, x[2]);
+    assertEquals(3, x[3]);
+    assertEquals(11, x[4]);
+    assertEquals(22, x[5]);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,5 +34,33 @@ public class ObjectTest extends GWTTestCase {
 
     Object obj2 = new Object();
     assertEquals(obj2.hashCode(), obj2.hashCode());
+  }
+
+  /**
+   * Tests that 'java.lang.Object.typeId' does not shadow a local field.
+   */
+  public void testTypeIdShadow() {
+    // arbitrary number
+    final int typeId = -824107554;
+    Object obj = new Object() {
+      public int hashCode() {
+        return typeId;
+      }
+    };
+    assertEquals(typeId, obj.hashCode());
+  }
+
+  /**
+   * Tests that 'java.lang.Object.typeMarker' does not shadow a local field.
+   */
+  public void testTypeMarkerShadow() {
+    final Object typeMarker = new Object();
+    class TestClass {
+      public Object getTypeMarker() {
+        return typeMarker;
+      }
+    }
+    TestClass test = new TestClass();
+    assertEquals(typeMarker, test.getTypeMarker());
   }
 }

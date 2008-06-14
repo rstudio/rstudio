@@ -169,6 +169,10 @@ public final class Integer extends Number implements Comparable<Integer> {
     return toPowerOfTwoString(value, 4);
   }
 
+  public static String toOctalString(int value) {
+    return toPowerOfTwoString(value, 3);
+  }
+
   public static String toString(int value) {
     return String.valueOf(value);
   }

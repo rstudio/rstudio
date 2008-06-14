@@ -50,15 +50,15 @@ public class JProgram extends JNode {
           "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
           "com.google.gwt.lang.Stats",}));
 
-  static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
-
-  private static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
+  public static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
       Arrays.asList(new String[] {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
           "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Enum",
           "java.lang.Iterable", "java.util.Iterator",
           "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject"}));
+
+  static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
   private static final int IS_ARRAY = 2;
 
@@ -185,8 +185,6 @@ public class JProgram extends JNode {
       });
 
   private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
-
-  private Map<JType, JClassLiteral> classLiterals = new HashMap<JType, JClassLiteral>();
 
   /**
    * Each entry is a HashMap(JType => JArrayType), arranged such that the number
@@ -523,12 +521,16 @@ public class JProgram extends JNode {
   }
 
   public JClassLiteral getLiteralClass(JType type) {
-    JClassLiteral result = classLiterals.get(type);
-    if (result == null) {
-      result = new JClassLiteral(this, type);
-      classLiterals.put(type, result);
-    }
-    return result;
+    /*
+     * Explicitly not interned. This is due to the underlying allocation
+     * expression, which can be mutated by some optimizations. If the same
+     * allocation expression could be visited multiple times within a single
+     * visitor, then every visitor would have to be idempotent. In fact,
+     * Pruner.CleanupRefsVisitor is not idempotent when removing arguments,
+     * because they are only implicitly (positionally) correlated with recently
+     * pruned parameters.
+     */
+    return new JClassLiteral(this, type);
   }
 
   public JClassSeed getLiteralClassSeed(JClassType type) {

@@ -1,24 +1,4 @@
 /** Add css rules here for your application. */
-body {
-  font-family:arial,sans-serif
-}
-
-div,td {
-  color:#000000
-}
-
-a:link {
-  color:#0000cc
-}
-     
-a:visited {
-  color:#551a8b
-}
-
-a:active {
-  color:#ff0000
-}
-
 button {
   display: block;
   font-size: 16pt

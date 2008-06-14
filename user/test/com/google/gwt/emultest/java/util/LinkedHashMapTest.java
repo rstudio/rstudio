@@ -401,7 +401,6 @@ public class LinkedHashMapTest extends TestMap {
     checkEmptyLinkedHashMapAssumptions(hashMap);
 
     Set<String> keySet = hashMap.keySet();
-    System.err.println("keySet:" + keySet);
     assertNotNull(keySet);
     assertTrue(keySet.isEmpty());
     assertTrue(keySet.size() == 0);

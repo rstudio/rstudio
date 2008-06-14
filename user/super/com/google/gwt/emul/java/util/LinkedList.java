@@ -302,11 +302,10 @@ public class LinkedList<E> extends AbstractSequentialList<E> implements
     return size;
   }
 
-  @SuppressWarnings("unused")
-  List<E> subListUnimplemented(final int fromIndex, final int toIndex) {
-    // TODO(jat): implement
-    throw new UnsupportedOperationException("subList not implemented");
-  }
+  // TODO(jat): implement
+//  @Override
+//  List<E> subList(final int fromIndex, final int toIndex) {
+//  }
 
   private void addBefore(E o, Node<E> target) {
     new Node<E>(o, target);

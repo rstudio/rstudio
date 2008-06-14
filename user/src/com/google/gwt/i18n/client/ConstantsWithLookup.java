@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.client;
 
 import java.util.Map;
+import java.util.MissingResourceException;
 
 /**
  * Like {@link com.google.gwt.i18n.client.Constants}, a tag interface that
@@ -56,54 +57,61 @@ public interface ConstantsWithLookup extends Constants {
    * 
    * @param methodName method name
    * @return boolean returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  boolean getBoolean(String methodName);
+  boolean getBoolean(String methodName) throws MissingResourceException;
 
   /**
    * Look up <code>double</code> by method name.
    * 
    * @param methodName method name
    * @return double returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  double getDouble(String methodName);
+  double getDouble(String methodName) throws MissingResourceException;
 
   /**
    * Look up <code>float</code> by method name.
    * 
    * @param methodName method name
    * @return float returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  float getFloat(String methodName);
+  float getFloat(String methodName) throws MissingResourceException;
 
   /**
    * Look up <code>int</code> by method name.
    * 
    * @param methodName method name
    * @return int returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  int getInt(String methodName);
+  int getInt(String methodName) throws MissingResourceException;
 
   /**
    * Look up <code>Map</code> by method name.
    * 
    * @param methodName method name
    * @return Map returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  Map<String, String> getMap(String methodName);
+  Map<String, String> getMap(String methodName) throws MissingResourceException;
 
   /**
    * Look up <code>String</code> by method name.
    * 
    * @param methodName method name
    * @return String returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  String getString(String methodName);
+  String getString(String methodName) throws MissingResourceException;
 
   /**
    * Look up <code>String[]</code> by method name.
    * 
    * @param methodName method name
    * @return String[] returned by method
+   * @throws MissingResourceException if methodName is not valid
    */
-  String[] getStringArray(String methodName);
+  String[] getStringArray(String methodName) throws MissingResourceException;
 }

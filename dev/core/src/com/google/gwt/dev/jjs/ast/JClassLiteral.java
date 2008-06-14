@@ -97,6 +97,7 @@ public class JClassLiteral extends JLiteral {
               continue;
             }
             valuesMethod = methodIt;
+            break;
           }
         }
         if (valuesMethod == null) {

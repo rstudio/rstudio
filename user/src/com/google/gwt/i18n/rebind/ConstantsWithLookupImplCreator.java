@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -65,7 +66,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
 
         @Override
         public String returnTemplate() {
-          return "boolean answer = {0}();\n cache.put(\"{0}\",new Boolean(answer));return answer;";
+          return "boolean answer = {0}();\ncache.put(\"{0}\",new Boolean(answer));\nreturn answer;";
         }
       };
       namesToMethodCreators.put("getBoolean", booleanMethod);
@@ -81,7 +82,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
 
         @Override
         public String returnTemplate() {
-          return "double answer = {0}();\n cache.put(\"{0}\",new Double(answer));return answer;";
+          return "double answer = {0}();\ncache.put(\"{0}\",new Double(answer));\nreturn answer;";
         }
       };
       namesToMethodCreators.put("getDouble", doubleMethod);
@@ -96,7 +97,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
 
         @Override
         public String returnTemplate() {
-          return "int answer = {0}();\n cache.put(\"{0}\",new Integer(answer));return answer;";
+          return "int answer = {0}();\ncache.put(\"{0}\",new Integer(answer));\nreturn answer;";
         }
       };
 
@@ -107,7 +108,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       LookupMethodCreator floatMethod = new LookupMethodCreator(this, floatType) {
         @Override
         public String returnTemplate() {
-          String val = "float v ={0}(); cache.put(\"{0}\", new Float(v));return v;";
+          String val = "float answer = {0}();\ncache.put(\"{0}\", new Float(answer));\nreturn answer;";
           return val;
         }
 
@@ -118,10 +119,14 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       };
       namesToMethodCreators.put("getFloat", floatMethod);
 
-      // Map
-      JType mapType = oracle.parse(Map.class.getName());
-      namesToMethodCreators.put("getMap",
-          new LookupMethodCreator(this, mapType));
+      // Map - use erased type for matching
+      JType mapType = oracle.parse(Map.class.getName()).getErasedType();
+      namesToMethodCreators.put("getMap", new LookupMethodCreator(this, mapType) {
+        @Override
+        public String getReturnTypeName() {
+          return ConstantMap.class.getCanonicalName();
+        }
+      });
 
       // String
       JType stringType = oracle.parse(String.class.getName());
@@ -129,7 +134,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
           stringType) {
         @Override
         public String returnTemplate() {
-          return "String answer = {0}();\n cache.put(\"{0}\",answer);return answer;";
+          return "String answer = {0}();\ncache.put(\"{0}\",answer);\nreturn answer;";
         }
       };
       namesToMethodCreators.put("getString", stringMethod);
@@ -176,22 +181,19 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       throws UnableToCompleteException {
     if (namesToMethodCreators.get(method.getName()) != null) {
       JParameter[] params = method.getParameters();
-      // getString() might be returning a String argument, so leave it alone.
+      // user may have specified a method named getInt/etc with no parameters
+      // this isn't a conflict, so treat them like any other Constant methods
       if (params.length == 0) {
-        return;
-      }
-      if (params.length != 1
-          || !params[0].getType().getQualifiedSourceName().equals(
-              "java.lang.String")) {
-        String s = method + " must have a single String argument.";
-        throw error(logger, s);
+        checkConstantMethod(logger, method);
+      } else {
+        if (params.length != 1
+            || !params[0].getType().getQualifiedSourceName().equals("java.lang.String")) {
+          throw error(logger, method + " must have a single String argument.");
+        }
+        checkReturnType(logger, method);
       }
     } else {
-      if (method.getParameters().length > 0) {
-        throw error(
-            logger,
-            "User-defined methods in interfaces extending ConstantsWithLookup must have no parameters and a return type of int, String, String[], ...");
-      }
+      checkConstantMethod(logger, method);
     }
   }
 }

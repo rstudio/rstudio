@@ -104,9 +104,15 @@ public class JsRequiresSemiVisitor extends JsVisitor {
   public boolean visit(JsIf x, JsContext<JsStatement> ctx) {
     JsStatement thenStmt = x.getThenStmt();
     JsStatement elseStmt = x.getElseStmt();
-    if (elseStmt instanceof JsEmpty
-        || (elseStmt == null && thenStmt instanceof JsEmpty)) {
+    JsStatement toCheck = thenStmt;
+    if (elseStmt != null) {
+      toCheck = elseStmt;
+    }
+    if (toCheck instanceof JsEmpty) {
       needsSemicolon = true;
+    } else {
+      // Must recurse to determine last statement (possible if-else chain).
+      accept(toCheck);
     }
     return false;
   }

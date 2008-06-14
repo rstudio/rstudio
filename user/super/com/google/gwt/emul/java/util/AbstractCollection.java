@@ -31,7 +31,7 @@ public abstract class AbstractCollection<E> implements Collection<E> {
   }
 
   public boolean add(E o) {
-    throw new UnsupportedOperationException("add");
+    throw new UnsupportedOperationException("Add not supported on this collection");
   }
 
   public boolean addAll(Collection<? extends E> c) {

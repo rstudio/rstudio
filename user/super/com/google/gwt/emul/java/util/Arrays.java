@@ -17,6 +17,7 @@
 package java.util;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.lang.Array;
 
 import java.io.Serializable;
@@ -909,6 +910,15 @@ public class Arrays {
     nativeNumberSort(array, fromIndex, toIndex);
   }
 
+  public static void sort(char[] array) {
+    nativeNumberSort(array);
+  }
+
+  public static void sort(char[] array, int fromIndex, int toIndex) {
+    verifySortIndices(fromIndex, toIndex, array.length);
+    nativeNumberSort(array, fromIndex, toIndex);
+  }
+
   public static void sort(double[] array) {
     nativeNumberSort(array);
   }
@@ -937,35 +947,29 @@ public class Arrays {
   }
 
   public static void sort(long[] array) {
-    /*
-     * TODO: if we emulate long in JS rather than using a native primitive, we
-     * will need to change this.
-     */
-    nativeNumberSort(array);
+    nativeLongSort(array);
   }
 
   public static void sort(long[] array, int fromIndex, int toIndex) {
-    /*
-     * TODO: if we emulate long in JS rather than using a native primitive, we
-     * will need to change this.
-     */
     verifySortIndices(fromIndex, toIndex, array.length);
-    nativeNumberSort(array, fromIndex, toIndex);
+    nativeLongSort(array, fromIndex, toIndex);
   }
 
   public static void sort(Object[] array) {
-    // Commented out implementation that uses the native sort with a fixup.
+    // Can't use native JS sort because it isn't stable.
 
+    // -- Commented out implementation that uses the native sort with a fixup.
     // nativeObjSort(array, 0, array.length, getNativeComparator(array,
-    // Comparators.natural()));
+    //     Comparators.natural()));
     mergeSort(array, 0, array.length, Comparators.natural());
   }
 
   public static void sort(Object[] x, int fromIndex, int toIndex) {
-    // Commented out implementation that uses the native sort with a fixup.
+    // Can't use native JS sort because it isn't stable.
 
+    // -- Commented out implementation that uses the native sort with a fixup.
     // nativeObjSort(x, fromIndex, toIndex, getNativeComparator(x,
-    // Comparators.natural()));
+    //     Comparators.natural()));
     mergeSort(x, fromIndex, toIndex, Comparators.natural());
   }
 
@@ -1133,7 +1137,7 @@ public class Arrays {
   }
 
   /**
-   * Recursive helper function for {@link deepToString(Object[])}.
+   * Recursive helper function for {@link Arrays#deepToString(Object[])}.
    */
   private static String deepToString(Object[] a, Set<Object[]> arraysIveSeen) {
     if (a == null) {
@@ -1287,7 +1291,7 @@ public class Arrays {
 
   /**
    * Recursive helper function for
-   * {@link mergeSort(Object[],int,int,Comparator<?>)}.
+   * {@link Arrays#mergeSort(Object[], int, int, Comparator)}.
    * 
    * @param temp temporary space, as large as the range of elements being
    *          sorted. On entry, temp should contain a copy of the sort range
@@ -1332,6 +1336,28 @@ public class Arrays {
   /**
    * Sort an entire array of number primitives.
    */
+  @UnsafeNativeLong
+  private static native void nativeLongSort(Object array) /*-{
+    array.sort(@com.google.gwt.lang.LongLib::compare([D[D));
+  }-*/;
+
+  /**
+   * Sort a subset of an array of number primitives.
+   */
+  @UnsafeNativeLong
+  private static native void nativeLongSort(Object array, int fromIndex,
+      int toIndex) /*-{
+    var temp = array.slice(fromIndex, toIndex);
+    temp.sort(@com.google.gwt.lang.LongLib::compare([D[D));
+    var n = toIndex - fromIndex;
+    // Do the equivalent of array.splice(fromIndex, n, temp) except
+    // flattening the temp slice.
+    Array.prototype.splice.apply(array, [fromIndex, n].concat(temp));
+  }-*/;
+
+  /**
+   * Sort an entire array of number primitives.
+   */
   private static native void nativeNumberSort(Object array) /*-{
     array.sort(function(a,b) { return a - b; });
   }-*/;
@@ -1344,7 +1370,7 @@ public class Arrays {
     var temp = array.slice(fromIndex, toIndex);
     temp.sort(function(a,b) { return a - b; });
     var n = toIndex - fromIndex;
-    // Do the equivalent of array.splice(fromIndex, n, temp.slice(0, n)) except
+    // Do the equivalent of array.splice(fromIndex, n, temp) except
     // flattening the temp slice.
     Array.prototype.splice.apply(array, [fromIndex, n].concat(temp.slice(0, n)));
   }-*/;

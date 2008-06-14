@@ -231,6 +231,8 @@ public class GenerateJavaAST {
       return ice;
     }
 
+    private final AutoboxUtils autoboxUtils;
+
     private JReferenceType currentClass;
 
     private ClassScope currentClassScope;
@@ -260,6 +262,7 @@ public class GenerateJavaAST {
       this.typeMap = typeMap;
       this.program = program;
       this.enableAsserts = enableAsserts;
+      autoboxUtils = new AutoboxUtils(program);
     }
 
     public void processEnumType(JEnumType type) {
@@ -468,9 +471,12 @@ public class GenerateJavaAST {
                     + primitiveTypeToBox.getName(), null);
           }
 
-          result = box(result, (JPrimitiveType) primitiveTypeToBox);
+          result = autoboxUtils.box(result,
+              ((JPrimitiveType) primitiveTypeToBox));
         } else if ((x.implicitConversion & TypeIds.UNBOXING) != 0) {
-
+          // This code can actually leave an unbox operation in
+          // an lvalue position, for example ++x.intValue().
+          // Such trees are cleaned up in FixAssignmentToUnbox.
           JType typeToUnbox = (JType) typeMap.get(x.resolvedType);
           if (!(typeToUnbox instanceof JClassType)) {
             throw new InternalCompilerException(result,
@@ -1605,8 +1611,8 @@ public class GenerateJavaAST {
       // May need to box or unbox the element assignment.
       if (x.elementVariableImplicitWidening != -1) {
         if ((x.elementVariableImplicitWidening & TypeIds.BOXING) != 0) {
-          elementDecl.initializer = box(elementDecl.initializer,
-              (JPrimitiveType) elementDecl.initializer.getType());
+          elementDecl.initializer = autoboxUtils.box(elementDecl.initializer,
+              ((JPrimitiveType) elementDecl.initializer.getType()));
         } else if ((x.elementVariableImplicitWidening & TypeIds.UNBOXING) != 0) {
           elementDecl.initializer = unbox(elementDecl.initializer,
               (JClassType) elementDecl.initializer.getType());
@@ -1924,47 +1930,6 @@ public class GenerateJavaAST {
         }
         callArgs.add(newArray);
       }
-    }
-
-    private JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
-      // Find the wrapper type for this primitive type.
-      String wrapperTypeName = primitiveType.getWrapperTypeName();
-      JClassType wrapperType = (JClassType) program.getFromTypeMap(wrapperTypeName);
-      if (wrapperType == null) {
-        throw new InternalCompilerException(toBox, "Cannot find wrapper type '"
-            + wrapperTypeName + "' associated with primitive type '"
-            + primitiveType.getName() + "'", null);
-      }
-
-      // Find the correct valueOf() method.
-      JMethod valueOfMethod = null;
-      for (JMethod method : wrapperType.methods) {
-        if ("valueOf".equals(method.getName())) {
-          if (method.params.size() == 1) {
-            JParameter param = method.params.get(0);
-            if (param.getType() == primitiveType) {
-              // Found it.
-              valueOfMethod = method;
-              break;
-            }
-          }
-        }
-      }
-
-      if (valueOfMethod == null || !valueOfMethod.isStatic()
-          || valueOfMethod.getType() != wrapperType) {
-        throw new InternalCompilerException(toBox,
-            "Expected to find a method on '" + wrapperType.getName()
-                + "' whose signature matches 'public static "
-                + wrapperType.getName() + " valueOf(" + primitiveType.getName()
-                + ")'", null);
-      }
-
-      // Create the boxing call.
-      JMethodCall call = new JMethodCall(program, toBox.getSourceInfo(), null,
-          valueOfMethod);
-      call.getArgs().add(toBox);
-      return call;
     }
 
     private JDeclarationStatement createDeclaration(SourceInfo info,
@@ -2701,6 +2666,7 @@ public class GenerateJavaAST {
       this.jsniMethodMap = jsniMethodMap;
     }
 
+    @Override
     public void endVisit(JClassType x, Context ctx) {
       currentClass = null;
     }

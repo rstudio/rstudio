@@ -243,7 +243,7 @@ public abstract class AbstractGeneratorClassCreator extends
   private void genMethod(TreeLogger logger, JMethod method, String locale)
       throws UnableToCompleteException {
     String name = method.getName();
-    String returnType = method.getReturnType().getQualifiedSourceName();
+    String returnType = method.getReturnType().getParameterizedQualifiedSourceName();
     getWriter().print("public " + returnType + " " + name + "(");
     JParameter[] params = method.getParameters();
     for (int i = 0; i < params.length; i++) {

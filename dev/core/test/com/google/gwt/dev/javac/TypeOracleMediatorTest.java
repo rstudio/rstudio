@@ -1089,7 +1089,9 @@ public class TypeOracleMediatorTest extends TestCase {
     TreeLogger logger = createTreeLogger();
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
     JdtCompiler.compile(units);
-    CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units);
+    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
+      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
+    }
     mediator.refresh(logger, units);
     checkTypes(typeOracle.getTypes());
   }

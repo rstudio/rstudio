@@ -37,6 +37,27 @@ public class TabPanelTest extends GWTTestCase {
     return "com.google.gwt.user.DebugTest";
   }
 
+  /**
+   * Test that methods associated with animations delegate to the
+   * {@link DeckPanel}.
+   */
+  public void testAnimationDelegation() {
+    TabPanel tabPanel = createTabPanel();
+    DeckPanel deck = tabPanel.getDeckPanel();
+
+    tabPanel.setAnimationEnabled(true);
+    assertTrue(tabPanel.isAnimationEnabled());
+    assertTrue(deck.isAnimationEnabled());
+
+    tabPanel.setAnimationEnabled(false);
+    assertFalse(tabPanel.isAnimationEnabled());
+    assertFalse(deck.isAnimationEnabled());
+
+    deck.setAnimationEnabled(true);
+    assertTrue(tabPanel.isAnimationEnabled());
+    assertTrue(deck.isAnimationEnabled());
+  }
+
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(createTabPanel(), new Adder());
   }

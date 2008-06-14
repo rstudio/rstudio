@@ -19,6 +19,7 @@ package java.lang;
  * Wraps a primitive <code>long</code> as an object.
  */
 public final class Long extends Number implements Comparable<Long> {
+
   /**
    * Use nested class to avoid clinit on outer.
    */
@@ -202,6 +203,10 @@ public final class Long extends Number implements Comparable<Long> {
 
   public static String toHexString(long value) {
     return toPowerOfTwoString(value, 4);
+  }
+
+  public static String toOctalString(long value) {
+    return toPowerOfTwoString(value, 3);
   }
 
   public static String toString(long value) {

@@ -161,9 +161,17 @@ public final class String implements Comparable<String>, CharSequence,
     }
   };
 
+  public static String copyValueOf(char[] v) {
+    return valueOf(v);
+  }
+
+  public static String copyValueOf(char[] v, int offset, int count) {
+    return valueOf(v, offset, count);
+  }
+
   public static String valueOf(boolean x) {
     return "" + x;
-  };
+  }
 
   public static native String valueOf(char x) /*-{
     return String.fromCharCode(x);

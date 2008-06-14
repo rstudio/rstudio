@@ -28,6 +28,61 @@ public class DeckPanelTest extends GWTTestCase {
   }
 
   /**
+   * Test that the {@link DeckPanel} calls widget.setVisible(true) on the
+   * visible widget, but does NOT call widget.setVisible(false) when a widget is
+   * hidden.
+   */
+  public void testSetWidgetVisible() {
+    // Show a widget with animations disabled
+    {
+      DeckPanel deck = new DeckPanel();
+      deck.setAnimationEnabled(false);
+      Label[] labels = new Label[3];
+      for (int i = 0; i < labels.length; i++) {
+        labels[i] = new Label("content" + i);
+        labels[i].setVisible(false);
+        deck.add(labels[i]);
+      }
+
+      // Show widget at index 1, make sure it becomes visible
+      deck.showWidget(1);
+      assertFalse(labels[0].isVisible());
+      assertTrue(labels[1].isVisible());
+      assertFalse(labels[2].isVisible());
+
+      // Show widget at index 0, make sure widget 1 is still visible
+      deck.showWidget(0);
+      assertTrue(labels[0].isVisible());
+      assertTrue(labels[1].isVisible());
+      assertFalse(labels[2].isVisible());
+    }
+
+    // Show a widget with animations enabled
+    {
+      DeckPanel deck = new DeckPanel();
+      deck.setAnimationEnabled(true);
+      Label[] labels = new Label[3];
+      for (int i = 0; i < labels.length; i++) {
+        labels[i] = new Label("content" + i);
+        labels[i].setVisible(false);
+        deck.add(labels[i]);
+      }
+
+      // Show widget at index 1, make sure it becomes visible
+      deck.showWidget(1);
+      assertFalse(labels[0].isVisible());
+      assertTrue(labels[1].isVisible());
+      assertFalse(labels[2].isVisible());
+
+      // Show widget at index 0, make sure widget 1 is still visible
+      deck.showWidget(0);
+      assertTrue(labels[0].isVisible());
+      assertTrue(labels[1].isVisible());
+      assertFalse(labels[2].isVisible());
+    }
+  }
+
+  /**
    * Test that the offsetHeight/Width of a widget are defined when the widget is
    * added to the DeckPanel.
    */

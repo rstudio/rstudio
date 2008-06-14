@@ -58,7 +58,9 @@ public class TypeOracleTestingUtils {
     }
     CompilationUnitInvalidator.validateCompilationUnits(units,
         validBinaryTypeNames);
-    CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units);
+    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
+      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
+    }
     TypeOracleMediator mediator = new TypeOracleMediator();
     mediator.refresh(logger, units);
     return mediator.getTypeOracle();

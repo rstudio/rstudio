@@ -17,8 +17,11 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameterizedType;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -80,11 +83,68 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
     }
   }
 
+  /**
+   * Checks that the method has the right structure to implement
+   * <code>Constant</code>.
+   * 
+   * @param method method to check
+   */
+  protected void checkConstantMethod(TreeLogger logger, JMethod method)
+      throws UnableToCompleteException {
+    if (method.getParameters().length > 0) {
+      throw error(logger, "Methods in interfaces extending Constant must have no parameters");
+    }
+    checkReturnType(logger, method);
+  }
+
+  /**
+   * @param logger
+   * @param method
+   * @throws UnableToCompleteException
+   */
+  protected void checkReturnType(TreeLogger logger, JMethod method)
+      throws UnableToCompleteException {
+    JType returnType = method.getReturnType();
+    JPrimitiveType primitive = returnType.isPrimitive();
+    if (primitive != null && (primitive == JPrimitiveType.BOOLEAN
+        || primitive == JPrimitiveType.DOUBLE
+        || primitive == JPrimitiveType.FLOAT
+        || primitive == JPrimitiveType.INT)) {
+      return;
+    }
+    JArrayType arrayType = returnType.isArray();
+    if (arrayType != null) {
+      String arrayComponent = arrayType.getComponentType().getQualifiedSourceName();
+      if (!arrayComponent.equals("java.lang.String")) {
+        throw error(logger,
+            "Methods in interfaces extending Constant only support arrays of Strings");
+      }
+      return;
+    }
+    String returnTypeName = returnType.getQualifiedSourceName();
+    if (returnTypeName.equals("java.lang.String")) {
+      return;
+    }
+    if (returnTypeName.equals("java.util.Map")) {
+      JParameterizedType paramType = returnType.isParameterized();
+      if (paramType != null) {
+        JClassType[] typeArgs = paramType.getTypeArgs();
+        if (typeArgs.length != 2 || !typeArgs[0].getQualifiedSourceName().equals("java.lang.String")
+            || !typeArgs[1].getQualifiedSourceName().equals("java.lang.String")) {
+          throw error(logger,
+          "Map Methods in interfaces extending Constant must be raw or <String, String>");
+        }
+      }
+      return;
+    }
+    throw error(logger, "Methods in interfaces extending Constant must have a return type of "
+        + "String/int/float/boolean/double/String[]/Map");
+  }
+
   @Override
   protected void classEpilog() {
     if (isNeedCache()) {
-      getWriter().println(
-          "java.util.Map cache = new java.util.HashMap();".toString());
+      getWriter().println("java.util.Map cache = new java.util.HashMap();");
     }
   }
 
@@ -105,19 +165,5 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
 
   void setNeedCache(boolean needCache) {
     this.needCache = needCache;
-  }
-
-  /**
-   * Checks that the method has the right structure to implement
-   * <code>Constant</code>.
-   * 
-   * @param method method to check
-   */
-  private void checkConstantMethod(TreeLogger logger, JMethod method)
-      throws UnableToCompleteException {
-    if (method.getParameters().length > 0) {
-      String s = "Methods in interfaces extending Constant must have no parameters and a return type of  String/int/float/boolean/double/String[]/Map";
-      throw error(logger, s);
-    }
   }
 }

@@ -16,10 +16,9 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.i18n.client.constants.CurrencyCodeMapConstants;
 import com.google.gwt.i18n.client.constants.NumberConstants;
-
-import java.util.Map;
+import com.google.gwt.i18n.client.impl.CurrencyData;
+import com.google.gwt.i18n.client.impl.CurrencyList;
 
 /**
  * Formats and parses numbers using locale-sensitive patterns.
@@ -309,7 +308,6 @@ public class NumberFormat {
 
   // Sets of constants as defined for the default locale.
   private static final NumberConstants defaultNumberConstants = (NumberConstants) GWT.create(NumberConstants.class);
-  private static final CurrencyCodeMapConstants defaultCurrencyCodeMapConstants = (CurrencyCodeMapConstants) GWT.create(CurrencyCodeMapConstants.class);
 
   // Constants for characters used in programmatic (unlocalized) patterns.
   private static final char PATTERN_ZERO_DIGIT = '0';
@@ -339,8 +337,7 @@ public class NumberFormat {
   public static NumberFormat getCurrencyFormat() {
     if (cachedCurrencyFormat == null) {
       cachedCurrencyFormat = new NumberFormat(
-          defaultNumberConstants.currencyPattern(),
-          defaultNumberConstants.defCurrencyCode());
+          defaultNumberConstants.currencyPattern(), CurrencyList.get().getDefault(), false);
     }
     return cachedCurrencyFormat;
   }
@@ -356,7 +353,8 @@ public class NumberFormat {
    */
   public static NumberFormat getCurrencyFormat(String currencyCode) {
     // TODO(jat): consider caching values per currency code.
-    return new NumberFormat(defaultNumberConstants.currencyPattern(), currencyCode);
+    return new NumberFormat(defaultNumberConstants.currencyPattern(),
+        CurrencyList.get().lookup(currencyCode), false);
   }
 
   /**
@@ -369,7 +367,7 @@ public class NumberFormat {
     if (cachedDecimalFormat == null) {
       cachedDecimalFormat = new NumberFormat(
           defaultNumberConstants.decimalPattern(),
-          defaultNumberConstants.defCurrencyCode());
+          CurrencyList.get().getDefault(), false);
     }
     return cachedDecimalFormat;
   }
@@ -383,7 +381,7 @@ public class NumberFormat {
    * @throws IllegalArgumentException if the specified pattern is invalid
    */
   public static NumberFormat getFormat(String pattern) {
-    return new NumberFormat(pattern, defaultNumberConstants.defCurrencyCode());
+    return new NumberFormat(pattern, CurrencyList.get().getDefault(), true);
   }
 
   /**
@@ -396,7 +394,7 @@ public class NumberFormat {
    * @throws IllegalArgumentException if the specified pattern is invalid
    */
   public static NumberFormat getFormat(String pattern, String currencyCode) {
-    return new NumberFormat(pattern, currencyCode);
+    return new NumberFormat(pattern, CurrencyList.get().lookup(currencyCode), true);
   }
 
   /**
@@ -409,7 +407,7 @@ public class NumberFormat {
     if (cachedPercentFormat == null) {
       cachedPercentFormat = new NumberFormat(
           defaultNumberConstants.percentPattern(),
-          defaultNumberConstants.defCurrencyCode());
+          CurrencyList.get().getDefault(), false);
     }
     return cachedPercentFormat;
   }
@@ -424,7 +422,7 @@ public class NumberFormat {
     if (cachedScientificFormat == null) {
       cachedScientificFormat = new NumberFormat(
           defaultNumberConstants.scientificPattern(),
-          defaultNumberConstants.defCurrencyCode());
+          CurrencyList.get().getDefault(), false);
     }
     return cachedScientificFormat;
   }
@@ -472,23 +470,27 @@ public class NumberFormat {
    * 
    * @param numberConstants the locale-specific number constants to use for this
    *          format
-   * @param currencyCodeMapConstants the locale-specific currency code map to
-   *          use for this format
    * @param pattern pattern that specify how number should be formatted
-   * @param currencyCode currency that should be used
+   * @param cdata currency data that should be used
+   * @param userSuppliedPattern true if the pattern was supplied by the user
    * @skip
    */
-  protected NumberFormat(NumberConstants numberConstants,
-      CurrencyCodeMapConstants currencyCodeMapConstants, String pattern,
-      String currencyCode) {
+  protected NumberFormat(NumberConstants numberConstants, String pattern, CurrencyData cdata,
+      boolean userSuppliedPattern) {
+    if (cdata == null) {
+      throw new IllegalArgumentException("Unknown currency code");
+    }
     this.numberConstants = numberConstants;
     this.pattern = pattern;
-    this.currencyCode = currencyCode;
+    currencyCode = cdata.getCurrencyCode();
+    currencySymbol = cdata.getCurrencySymbol();
 
-    Map<String, String> currencyMap = currencyCodeMapConstants.currencyMap();
-    currencySymbol = currencyMap.get(currencyCode);
-
+    // TODO: handle per-currency flags, such as symbol prefix/suffix and spacing
     parsePattern(this.pattern);
+    if (!userSuppliedPattern && isCurrencyFormat) {
+      minimumFractionDigits = cdata.getDefaultFractionDigits();
+      maximumFractionDigits = minimumFractionDigits;
+    }
   }
 
   /**
@@ -496,12 +498,12 @@ public class NumberFormat {
    * settings.
    * 
    * @param pattern pattern that specify how number should be formatted
-   * @param currencyCode currency that should be used
+   * @param cdata currency data that should be used
+   * @param userSuppliedPattern true if the pattern was supplied by the user
    * @skip
    */
-  protected NumberFormat(String pattern, String currencyCode) {
-    this(defaultNumberConstants, defaultCurrencyCodeMapConstants, pattern,
-        currencyCode);
+  protected NumberFormat(String pattern, CurrencyData cdata, boolean userSuppliedPattern) {
+    this(defaultNumberConstants, pattern, cdata, userSuppliedPattern);
   }
 
   /**
@@ -1082,10 +1084,10 @@ public class NumberFormat {
       int minIntDigits) {
     // Round the number.
     double power = Math.pow(10, maximumFractionDigits);
-    double intValue = (double) Math.floor(number);
+    double intValue = Math.floor(number);
     // we don't want to use Math.round, 'cause that returns a long which JS
     // then has to emulate... Math.floor(x + 0.5d) is defined to be equivalent
-    double fracValue = (double) Math.floor((number - intValue) * power + 0.5d);
+    double fracValue = Math.floor((number - intValue) * power + 0.5d);
     if (fracValue >= power) {
       intValue += 1.0;
       fracValue -= power;

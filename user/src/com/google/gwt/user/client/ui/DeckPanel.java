@@ -33,10 +33,10 @@ import com.google.gwt.user.client.Element;
  */
 public class DeckPanel extends ComplexPanel implements HasAnimation {
   /**
-   * The duration of the animation. 
+   * The duration of the animation.
    */
   private static final int ANIMATION_DURATION = 350;
-  
+
   /**
    * An {@link Animation} used to slide in the new content.
    */
@@ -81,6 +81,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       // If we aren't showing anything, don't bother with the animation
       if (oldWidget == null) {
         UIObject.setVisible(newContainer, true);
+        newWidget.setVisible(true);
         return;
       }
 
@@ -106,6 +107,12 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       } else {
         onInstantaneousRun();
       }
+
+      // We call newWidget.setVisible(true) immediately after showing the
+      // widget's container so users can delay render their widget. Ultimately,
+      // we should have a better way of handling this, but we need to call
+      // setVisible for legacy support.
+      newWidget.setVisible(true);
     }
 
     @Override

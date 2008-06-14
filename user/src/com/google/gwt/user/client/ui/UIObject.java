@@ -105,7 +105,7 @@ public abstract class UIObject {
 
     @SuppressWarnings("unused")
     // parameters
-    public void ensureDebugId(Element elem, String id) {
+    public void ensureDebugId(Element elem, String baseID, String id) {
     }
   }
 
@@ -120,8 +120,11 @@ public abstract class UIObject {
     }
 
     @Override
-    public void ensureDebugId(Element elem, String id) {
-     UIObject.ensureDebugId(elem, "", id);
+    public void ensureDebugId(Element elem, String baseID, String id) {
+      assert baseID != null;
+      baseID = (baseID.length() > 0) ? baseID + "-" : "";
+      DOM.setElementProperty(elem.<com.google.gwt.user.client.Element> cast(),
+          "id", DEBUG_ID_PREFIX + baseID + id);
     }
   }
 
@@ -160,7 +163,7 @@ public abstract class UIObject {
    * @param id the ID to set on the element
    */
   public static void ensureDebugId(Element elem, String id) {
-    debugIdImpl.ensureDebugId(elem, id);
+    ensureDebugId(elem, "", id);
   }
 
   public static native boolean isVisible(Element elem) /*-{
@@ -181,10 +184,7 @@ public abstract class UIObject {
    * @param id the id to append to the base debug id
    */
   protected static void ensureDebugId(Element elem, String baseID, String id) {
-    assert baseID != null;
-    baseID = (baseID.length() > 0) ? baseID + "-" : "";
-    DOM.setElementProperty(elem.<com.google.gwt.user.client.Element> cast(),
-        "id", DEBUG_ID_PREFIX + baseID + id);
+    debugIdImpl.ensureDebugId(elem, baseID, id);
   }
 
   /**

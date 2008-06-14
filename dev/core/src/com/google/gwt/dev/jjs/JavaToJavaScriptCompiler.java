@@ -38,10 +38,10 @@ import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
-import com.google.gwt.dev.jjs.impl.CompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
+import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
@@ -51,6 +51,7 @@ import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
 import com.google.gwt.dev.jjs.impl.MakeCallsStatic;
 import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
+import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
@@ -267,7 +268,7 @@ public class JavaToJavaScriptCompiler {
         Util.addAll(allEntryPoints, all);
       }
       allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
-      allEntryPoints.add("com.google.gwt.lang.Stats");
+      allEntryPoints.addAll(JProgram.INDEX_TYPES_SET);
       allEntryPoints.add("java.lang.Object");
       allEntryPoints.add("java.lang.String");
       allEntryPoints.add("java.lang.Iterable");
@@ -331,6 +332,8 @@ public class JavaToJavaScriptCompiler {
       }
 
       // (3) Perform Java AST normalizations.
+
+      FixAssignmentToUnbox.exec(jprogram);
 
       /*
        * TODO: If we defer this until later, we could maybe use the results of
@@ -400,7 +403,7 @@ public class JavaToJavaScriptCompiler {
       LongCastNormalizer.exec(jprogram);
       JsoDevirtualizer.exec(jprogram);
       CatchBlockNormalizer.exec(jprogram);
-      CompoundAssignmentNormalizer.exec(jprogram);
+      PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
       LongEmulationNormalizer.exec(jprogram);
       CastNormalizer.exec(jprogram);
       ArrayNormalizer.exec(jprogram);
