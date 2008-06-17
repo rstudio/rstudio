@@ -453,14 +453,16 @@ public class LongLib {
     while (!isZero(rem)) {
       // Do several digits each time through the loop, so as to
       // minimize the calls to the very expensive emulated div.
-      final int divByZeroes = 9;
-      final int divBy = 1000000000;
+      final int tenPowerZeroes = 9;
+      final int tenPower = 1000000000;
+      double[] tenPowerLong = fromInt(tenPower);
 
-      String digits = "" + toInt(mod(rem, fromInt(divBy)));
-      rem = div(rem, fromInt(divBy));
+      final double[] remDivTenPower = div(rem, tenPowerLong);
+      String digits = "" + toInt(sub(rem, mul(remDivTenPower, tenPowerLong)));
+      rem = remDivTenPower;
 
       if (!isZero(rem)) {
-        int zeroesNeeded = divByZeroes - digits.length();
+        int zeroesNeeded = tenPowerZeroes - digits.length();
         for (; zeroesNeeded > 0; zeroesNeeded--) {
           digits = "0" + digits;
         }
