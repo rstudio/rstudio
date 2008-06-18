@@ -68,12 +68,12 @@ public class RunStyleSelenium extends RunStyleRemote {
   public static RunStyle create(JUnitShell shell, String[] targetsIn) {
     RCSelenium targets[] = new RCSelenium[targetsIn.length];
 
-    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\*]+)");
+    Pattern pattern = Pattern.compile("([\\w\\.-]+):([\\d]+)/([\\w\\s\\*]+)");
     for (int i = 0; i < targets.length; ++i) {
       Matcher matcher = pattern.matcher(targetsIn[i]);
       if (!matcher.matches()) {
         throw new JUnitFatalLaunchException("Unable to parse Selenium target "
-            + targets[i] + " (expected format is [host]:[port]/[browser])");
+            + targetsIn[i] + " (expected format is [host]:[port]/[browser])");
       }
       RCSelenium instance = new RCSelenium(matcher.group(3), matcher.group(1),
           Integer.parseInt(matcher.group(2)));

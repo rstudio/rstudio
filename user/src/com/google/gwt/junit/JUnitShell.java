@@ -710,8 +710,17 @@ public class JUnitShell extends GWTShell {
       //
       Pattern pattern = Pattern.compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
       Matcher matcher = pattern.matcher(args);
+      Pattern quotedArgsPattern = Pattern.compile("^([\"'])(.*)([\"'])$");
+      
       while (matcher.find()) {
-        argList.add(matcher.group());
+        // Strip leading and trailing quotes from the arg
+        String arg = matcher.group();
+        Matcher qmatcher = quotedArgsPattern.matcher(arg);
+        if (qmatcher.matches()) {
+          argList.add(qmatcher.group(2));
+        } else {
+          argList.add(arg);
+        }
       }
     }
 
