@@ -24,10 +24,6 @@ package com.google.gwt.core.client;
  */
 public final class JavaScriptException extends RuntimeException {
 
-  private static String constructMessage(Object e) {
-    return "(" + getName(e) + "): " + getDescription(e) + getProperties(e);
-  }
-
   private static String getDescription(Object e) {
     if (e instanceof JavaScriptObject) {
       return getDescription0((JavaScriptObject) e);
@@ -39,14 +35,6 @@ public final class JavaScriptException extends RuntimeException {
   private static native String getDescription0(JavaScriptObject e) /*-{
     return (e == null) ? null : e.message;
   }-*/;
-
-  private static JavaScriptObject getException(Object e) {
-    if (e instanceof JavaScriptObject) {
-      return (JavaScriptObject) e;
-    } else {
-      return null;
-    }
-  }
 
   private static String getName(Object e) {
     if (e == null) {
@@ -86,34 +74,36 @@ public final class JavaScriptException extends RuntimeException {
    * The original description of the JavaScript exception this class wraps,
    * initialized as <code>e.message</code>.
    */
-  private final String description;
+  private String description;
 
   /**
    * The underlying exception this class wraps.
    */
-  private final JavaScriptObject exception;
+  private final Object e;
+
+  /**
+   * A constructed message describing this exception.
+   */
+  private String message;
 
   /**
    * The original type name of the JavaScript exception this class wraps,
    * initialized as <code>e.name</code>.
    */
-  private final String name;
+  private String name;
 
   /**
    * @param e the object caught in JavaScript that triggered the exception
    */
   public JavaScriptException(Object e) {
-    super(constructMessage(e));
-    this.name = getName(e);
-    this.description = getDescription(e);
-    this.exception = getException(e);
+    this.e = e;
   }
 
   public JavaScriptException(String name, String description) {
-    super("JavaScript " + name + " exception: " + description);
+    this.message = "JavaScript " + name + " exception: " + description;
     this.name = name;
     this.description = description;
-    this.exception = null;
+    this.e = null;
   }
 
   /**
@@ -127,7 +117,7 @@ public final class JavaScriptException extends RuntimeException {
     super(message);
     this.name = null;
     this.description = message;
-    this.exception = null;
+    this.e = null;
   }
 
   /**
@@ -135,6 +125,9 @@ public final class JavaScriptException extends RuntimeException {
    * <code>null</code>.
    */
   public String getDescription() {
+    if (description == null) {
+      init();
+    }
     return description;
   }
 
@@ -142,7 +135,15 @@ public final class JavaScriptException extends RuntimeException {
    * Returns the original JavaScript the exception; may be <code>null</code>.
    */
   public JavaScriptObject getException() {
-    return exception;
+    return (e instanceof JavaScriptObject) ? (JavaScriptObject) e : null;
+  }
+
+  @Override
+  public String getMessage() {
+    if (message == null) {
+      init();
+    }
+    return message;
   }
 
   /**
@@ -150,7 +151,16 @@ public final class JavaScriptException extends RuntimeException {
    * <code>null</code>.
    */
   public String getName() {
+    if (name == null) {
+      init();
+    }
     return name;
+  }
+  
+  private void init() {
+    name = getName(e);
+    description = getDescription(e);
+    message = "(" + name + "): " + description + getProperties(e);
   }
 
 }
