@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -35,8 +34,9 @@ import com.google.gwt.user.rebind.SourceWriter;
 import java.io.PrintWriter;
 
 /**
- * This class generates a class that is able to serialize and deserialize a set
- * of types into or out of a stream.
+ * This class generates a class with name 'typeSerializerClassName' that is able
+ * to serialize and deserialize a set of types into or out of a stream. The set
+ * of types is obtained from the SerializableTypeOracle object.
  */
 public class TypeSerializerCreator {
 
@@ -56,8 +56,6 @@ public class TypeSerializerCreator {
 
   private final boolean enforceTypeVersioning;
 
-  private final JClassType remoteService;
-
   private final JType[] serializableTypes;
 
   private final SerializableTypeOracle serializationOracle;
@@ -66,11 +64,13 @@ public class TypeSerializerCreator {
 
   private final TypeOracle typeOracle;
 
+  private final String typeSerializerClassName;
+
   public TypeSerializerCreator(TreeLogger logger,
       SerializableTypeOracle serializationOracle, GeneratorContext context,
-      JClassType remoteService) {
+      String typeSerializerClassName) {
     this.context = context;
-    this.remoteService = remoteService;
+    this.typeSerializerClassName = typeSerializerClassName;
     this.serializationOracle = serializationOracle;
     this.typeOracle = context.getTypeOracle();
 
@@ -85,8 +85,8 @@ public class TypeSerializerCreator {
   public String realize(TreeLogger logger) {
     logger = logger.branch(TreeLogger.DEBUG,
         "Generating TypeSerializer for service interface '"
-            + getServiceInterface().getQualifiedSourceName() + "'", null);
-    String typeSerializerName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
+            + getTypeSerializerClassName() + "'", null);
+    String typeSerializerName = getTypeSerializerClassName();
     if (srcWriter == null) {
       return typeSerializerName;
     }
@@ -172,20 +172,25 @@ public class TypeSerializerCreator {
         + serializationOracle.getFieldSerializerName(type).replace('.', '_');
   }
 
+  private String[] getPackageAndClassName(String fullClassName) {
+    String className = fullClassName;
+    String packageName = "";
+    int index = -1;
+    if ((index = className.lastIndexOf('.')) >= 0) {
+      packageName = className.substring(0, index);
+      className = className.substring(index + 1, className.length());
+    }
+    return new String[]{packageName, className};
+  }
+  
   private JType[] getSerializableTypes() {
     return serializableTypes;
   }
-
-  private JClassType getServiceInterface() {
-    return remoteService;
-  }
-
+  
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
-    JClassType serviceIntf = getServiceInterface();
-    JPackage serviceIntfPackage = serviceIntf.getPackage();
-    String packageName = serviceIntfPackage != null
-        ? serviceIntfPackage.getName() : "";
-    String className = serializationOracle.getTypeSerializerSimpleName(getServiceInterface());
+    String name[] = getPackageAndClassName(getTypeSerializerClassName());
+    String packageName = name[0];
+    String className = name[1];
     PrintWriter printWriter = ctx.tryCreate(logger, packageName, className);
     if (printWriter == null) {
       return null;
@@ -202,6 +207,10 @@ public class TypeSerializerCreator {
 
     composerFactory.addImplementedInterface("Serializer");
     return composerFactory.createSourceWriter(ctx, printWriter);
+  }
+
+  private String getTypeSerializerClassName() {
+    return typeSerializerClassName;
   }
 
   /**
@@ -279,7 +288,7 @@ public class TypeSerializerCreator {
           {
             srcWriter.print("@");
             if (needsCreateMethod(type)) {
-              srcWriter.print(serializationOracle.getTypeSerializerQualifiedName(getServiceInterface()));
+              srcWriter.print(getTypeSerializerClassName());
               srcWriter.print("::");
               srcWriter.print(getCreateMethodName(type));
             } else {
@@ -402,7 +411,7 @@ public class TypeSerializerCreator {
     srcWriter.print(DESERIALIZE_METHOD_SIGNATURE);
     srcWriter.println(" /*-" + '{');
     {
-      String serializerTypeName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
+      String serializerTypeName = getTypeSerializerClassName();
       srcWriter.indent();
       srcWriter.println("var methodTable = @" + serializerTypeName
           + "::methodMap[typeSignature];");
@@ -423,7 +432,7 @@ public class TypeSerializerCreator {
       srcWriter.indentln("return null;");
       srcWriter.println("};");
     } else {
-      String serializerTypeName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
+      String serializerTypeName = getTypeSerializerClassName();
       srcWriter.println("public native String getSerializationSignature(String typeName) /*-" + '{');
       srcWriter.indent();
       srcWriter.println("return @" + serializerTypeName
@@ -438,7 +447,7 @@ public class TypeSerializerCreator {
     srcWriter.print(INSTANTIATE_METHOD_SIGNATURE);
     srcWriter.println(" /*-" + '{');
     {
-      String serializerTypeName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
+      String serializerTypeName = getTypeSerializerClassName();
       srcWriter.indent();
       srcWriter.println("var methodTable = @" + serializerTypeName
           + "::methodMap[typeSignature];");
@@ -464,7 +473,7 @@ public class TypeSerializerCreator {
     srcWriter.print(SERIALIZE_METHOD_SIGNATURE);
     srcWriter.println(" /*-" + '{');
     {
-      String serializerTypeName = serializationOracle.getTypeSerializerQualifiedName(getServiceInterface());
+      String serializerTypeName = getTypeSerializerClassName();
       srcWriter.indent();
       srcWriter.println("var methodTable = @" + serializerTypeName
           + "::methodMap[typeSignature];");

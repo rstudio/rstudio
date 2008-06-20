@@ -233,7 +233,7 @@ class ProxyCreator {
     rpcLog.setPrivate(true);
 
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger, sto, context,
-        serviceIntf);
+        sto.getTypeSerializerQualifiedName(serviceIntf));
     tsc.realize(logger);
 
     enforceTypeVersioning = Shared.shouldEnforceTypeVersioning(logger,
