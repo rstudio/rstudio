@@ -15,30 +15,9 @@
  */
 package com.google.gwt.tools.apichecker;
 
-import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-
-import java.util.Collections;
-import java.util.List;
-
 /**
- * Encapsulates an API constructor.
+ * An interface encapsulating any API elements.
  */
-final class ApiConstructor extends ApiAbstractMethod {
-
-  ApiConstructor(JAbstractMethod method, ApiClass apiClass) {
-    super(method, apiClass);
-  }
-
-  @Override
-  ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod) {
-    return null;
-  }
-
-  /**
-   * returns an immutable List.
-   */
-  @Override
-  List<ApiChange.Status> getModifierChanges(ApiAbstractMethod newMethod) {
-    return Collections.emptyList();
-  }
+public interface ApiElement {
+  String getRelativeSignature();
 }

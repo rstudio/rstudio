@@ -23,54 +23,92 @@ import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
- * Checks if the new API is compatible with the existing API.
+ * {@link ApiCompatibilityChecker} Main class to check if the new API is
+ * compatible with the existing API.
  * 
  * 
- * To compute Api diffs, follow these 5 steps: i) for each of the two
- * repositories, construct an ApiContainer, ii) construct an ApiDiffGenerator,
- * iii) call computeApiDiff on the ApiDiffGenerator iv) call cleanApiDiff on the
- * ApiDiffGenerator v) call printApiDiff on the ApiDiffGenerator
+ * <p>
+ * To compute API diffs, follow these 2 steps:
+ * <ol>
+ * <li> for each of the two repositories, construct an {@link ApiContainer}
+ * <li> call getApiDiff on the {@code ApiDiffGenerator}
+ * </ol>
+ * </p>
  * 
- * An apicontainer object has a list of apiPackage objects. ApiPackage objects
- * themselves are list of ApiClass objects. ApiClass objects contain list of
- * ApiConstructor, ApiMethod, and JField objects.
+ * <p>
+ * An {@code ApiContainer} object is a list of {@link ApiPackage} objects.
+ * {@code ApiPackage} objects themselves are list of {@link ApiClass} objects.
+ * {@code ApiClass} objects contain list of {@code ApiConstructor},
+ * {@code ApiMethod}, and {@code JField} objects.
+ * </p>
  * 
- * Each ApiDiffGenerator object has a list of intersecting and missing
- * ApiPackageDiffGenerator objects. Each ApiPackageDiffGenerator object has a
- * list of intersecting and missing ApiClassDiffGenerator objects. Each
- * ApiClassDiffGenerator object has a list of intersecting and missing
- * apiMembers, where these members are constructors, methods, and fields.
+ * <p>
+ * Each {@code ApiDiffGenerator} object computes the list of intersecting and
+ * missing {@link ApiPackageDiffGenerator} objects. Each
+ * {@code ApiPackageDiffGenerator} object in turn computes the list of
+ * intersecting and missing {@link ApiClassDiffGenerator} objects. Each
+ * {@code ApiClassDiffGenerator} object in turn computes the list of
+ * intersecting and missing API members. The members are represented by
+ * {@link ApiConstructor} for constructors, {@link ApiMethod} for methods, and
+ * {@link ApiField} for fields.
+ * </p>
  * 
- * For each intersecting apiMember, a list of ApiChange objects is stored. Each
- * ApiChange object encodes a specific Api change like adding the 'final'
- * keyword to an apiMethod.
+ * <p>
+ * For each intersecting API member, a list of {@link ApiChange} objects is
+ * stored. Each ApiChange object encodes a specific {@code ApiChange} like
+ * adding the 'final' keyword to the API member.
  * 
  */
 public class ApiCompatibilityChecker {
 
+  // TODO(amitmanjhi): use ToolBase for command-line processing
+
+  // TODO(amitmanjhi): check gwt's dev/core/src files. Would need the ability to
+  // build TypeOracle from class files
+
+  // TODO(amitmanjhi): ignore API breakages due to impl package. More generally,
+  // white-list of packages that should not be checked.
+
+  // TODO(amitmanjhi): better handling of exceptions and exception-chaining.
+
+  // currently doing only source_compatibility. true by default.
   public static final boolean API_SOURCE_COMPATIBILITY = true;
-  public static final boolean REMOVE_ABSTRACT_CLASS_FROM_API = true;
-  public static final boolean IGNORE_WHITELIST = false;
-  public static final boolean PRINT_COMPATIBLE_WITH = false;
-  public static final boolean PRINT_INTERSECTIONS = false;
-  public static final boolean REMOVE_DUPLICATES = true;
+
+  // prints which class the member was declared in, false by default
   public static final boolean DEBUG = false;
-  public static final boolean DISABLE_CHECKS = true;
 
-  private static final AbstractTreeLogger logger1 = createTreeLogger();
+  // prints the API of the two containers, false by default.
+  public static final boolean DEBUG_PRINT_ALL_API = false;
 
-  public static String getApiDiff(ApiDiffGenerator temp,
-      HashSet<String> whiteList, boolean removeDuplicates)
-      throws NotFoundException {
-    temp.computeApiDiff();
-    if (removeDuplicates) {
-      temp.cleanApiDiff();
-    }
-    String apiDifferences = temp.printApiDiff();
-    return removeWhiteListMatches(apiDifferences, whiteList);
+  // these two parameters print APIs common in the two repositories. Should be
+  // false by default.
+  public static final boolean PRINT_COMPATIBLE = false;
+
+  public static final boolean PRINT_COMPATIBLE_WITH = false;
+  // for debugging. To see if TypeOracle builds
+  public static final boolean PROCESS_EXISTING_API = true;
+
+  public static final boolean PROCESS_NEW_API = true;
+  // true by default
+  public static final boolean REMOVE_NON_SUBCLASSABLE_ABSTRACT_CLASS_FROM_API =
+      true;
+
+  // Tweak for log output.
+  public static final TreeLogger.Type type = TreeLogger.ERROR;
+
+  // remove duplicates by default
+  public static Collection<ApiChange> getApiDiff(ApiContainer newApi,
+      ApiContainer existingApi, Set<String> whiteList) throws NotFoundException {
+    ApiDiffGenerator apiDiff = new ApiDiffGenerator(newApi, existingApi);
+    return getApiDiff(apiDiff, whiteList, true);
   }
 
   // Call APIBuilders for each of the 2 source trees
@@ -78,100 +116,132 @@ public class ApiCompatibilityChecker {
 
     try {
       ApiContainer newApi = null, existingApi = null;
-      boolean processNewApi = true;
-      boolean processExistingApi = true;
 
       if (args.length < 1) {
         printHelp();
         System.exit(-1);
       }
 
-      if (processNewApi) {
-        newApi = new ApiContainer(args[0], "_new", logger1);
-      }
-      if (processExistingApi) {
-        existingApi = new ApiContainer(args[0], "_old", logger1);
-      }
-
-      if ((processNewApi && processExistingApi)
-          && (newApi != null && existingApi != null)) {
-        HashSet<String> whiteList = new HashSet<String>();
-        if (!IGNORE_WHITELIST) {
-          whiteList = readStringFromFile(args[0]);
+      AbstractTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(type);
+      if (PROCESS_NEW_API) {
+        newApi = new ApiContainer(args[0], "_new", logger);
+        if (ApiCompatibilityChecker.DEBUG_PRINT_ALL_API) {
+          logger.log(TreeLogger.INFO, newApi.getApiAsString()); // print the API
         }
-
-        ApiDiffGenerator apiDiff = new ApiDiffGenerator(newApi, existingApi);
-        String apiDifferences = getApiDiff(apiDiff, whiteList,
-            REMOVE_DUPLICATES);
-        System.out.println(apiDifferences);
-        System.out.println("\t\t\t\tApi Compatibility Checker tool, Copyright Google Inc. 2008");
-        System.exit(apiDifferences.length() == 0 ? 0 : 1);
+      }
+      if (PROCESS_EXISTING_API) {
+        existingApi = new ApiContainer(args[0], "_old", logger);
+        if (ApiCompatibilityChecker.DEBUG_PRINT_ALL_API) {
+          logger.log(TreeLogger.INFO, existingApi.getApiAsString());
+        }
       }
 
+      if (PROCESS_NEW_API && PROCESS_EXISTING_API) {
+        Collection<ApiChange> apiDifferences =
+            getApiDiff(newApi, existingApi, readWhiteListFromFile(args[0]));
+        for (ApiChange apiChange : apiDifferences) {
+          System.out.println(apiChange);
+        }
+        System.out.println("\t\t\t\tApi Compatibility Checker tool, Copyright Google Inc. 2008");
+        System.exit(apiDifferences.size() == 0 ? 0 : 1);
+      }
     } catch (Exception e) {
-      System.err.println("Exception " + e.getMessage()
-          + ", printing stacktrace");
+      // intercepting all exceptions in main, because I have to exit with -1 so
+      // that the build breaks.
       e.printStackTrace();
       System.exit(-1);
     }
   }
 
   public static void printHelp() {
-    System.out.println("java ApiCompatibilityChecker configFile\n");
-    System.out.println("The ApiCompatibilityChecker tool requires a config file as an argument. "
-        + "The config file must specify two repositories of java source files "
-        + "that must be compared for API source compatibility. Each repository "
-        + "must specify three properties: 'name', 'sourceFiles', and 'excludeFiles.' "
-        + "A suffix of '_old' is attached to properties of the first repository, "
-        + "while a suffix of '_new' is attached to properties of the second "
-        + "repository. An optional whitelist can also be present at the end of "
-        + "the config file. The format of the whitelist is same as the output of "
-        + "the tool without the whitelist.");
-    System.out.println();
-    System.out.println("The name property specifies the api name that should "
-        + "be used in the output. The sourceFiles property, a colon-separated "
-        + "list of files/directories, specifies the roots of the the filesystem "
-        + "trees that must be included. The excludeFiles property, "
-        + "a colon-separated lists of files/directories specifies the roots of "
-        + "the filesystem trees that must be excluded.");
-    System.out.println();
-    System.out.println();
-    System.out.println("Example api.conf file:\n"
+    StringBuffer sb = new StringBuffer();
+    sb.append("java ApiCompatibilityChecker configFile\n");
+    sb.append("The ApiCompatibilityChecker tool requires a config file as an argument. ");
+    sb.append("The config file must specify two repositories of java source files: ");
+    sb.append("'_old' and '_new', which are to be compared for API source compatibility.\n");
+    sb.append("An optional whitelist is present at the end of ");
+    sb.append("the config file. The format of the whitelist is same as the output of ");
+    sb.append("the tool without the whitelist.\n");
+    sb.append("Each repository is specified by the following four properties:\n");
+    sb.append("name           specifies how the api should be refered to in the output\n");
+    sb.append("dirRoot        optional argument that specifies the base directory of all other file/directory names\n");
+    sb.append("sourceFiles    a colon-separated list of files/directories that specify the roots of the the filesystem trees to be included.\n");
+    sb.append("excludeFiles   a colon-separated lists of files/directories that specify the roots of the filesystem trees to be excluded");
 
-        + "name_old gwtEmulator\n"
-        + "sourceFiles_old dev/core/super/com/google/gwt/dev/jjs/intrinsic/:user/super/com/google/gwt/emul/:user/src/com/google/gwt/core/client\n"
-        + "excludeFiles_old \n\n"
+    sb.append("\n\n");
+    sb.append("Example api.conf file:\n");
+    sb.append("name_old         gwtEmulator");
+    sb.append("\n");
+    sb.append("dirRoot_old      ./");
+    sb.append("\n");
+    sb.append("sourceFiles_old  dev/core/super:user/super:user/src");
+    sb.append("\n");
+    sb.append("excludeFiles_old user/super/com/google/gwt/junit");
+    sb.append("\n\n");
 
-        + "name_new gwtEmulatorCopy\n"
-        + "sourceFiles_new dev/core/super/com/google/gwt/dev/jjs/intrinsic/:user/super/com/google/gwt/emul/:user/src/com/google/gwt/core/client\n"
-        + "excludeFiles_new \n\n");
+    sb.append("name_new         gwtEmulatorCopy");
+    sb.append("\n");
+    sb.append("dirRoot_new      ../gwt-14/");
+    sb.append("\n");
+    sb.append("sourceFiles_new  dev/core:user/super:user/src");
+    sb.append("\n");
+    sb.append("excludeFiles_new user/super/com/google/gwt/junit");
+    sb.append("\n\n");
+
+    System.out.println(sb.toString());
+  }
+
+  // interface for testing, since do not want to build ApiDiff frequently
+  static Collection<ApiChange> getApiDiff(ApiDiffGenerator apiDiff,
+      Set<String> whiteList, boolean removeDuplicates) throws NotFoundException {
+    Collection<ApiChange> collection = apiDiff.getApiDiff(removeDuplicates);
+    Set<ApiChange> prunedCollection = new HashSet<ApiChange>();
+    for (ApiChange apiChange : collection) {
+      String apiChangeAsString = apiChange.toString();
+      apiChangeAsString = apiChangeAsString.trim();
+      if (whiteList.remove(apiChangeAsString)) {
+        continue;
+      }
+      // check for Status.Compatible and Status.Compatible_with
+      if (!PRINT_COMPATIBLE
+          && apiChange.getStatus().equals(ApiChange.Status.COMPATIBLE)) {
+        continue;
+      }
+      if (!PRINT_COMPATIBLE_WITH
+          && apiChange.getStatus().equals(ApiChange.Status.COMPATIBLE_WITH)) {
+        continue;
+      }
+      prunedCollection.add(apiChange);
+    }
+    if (whiteList.size() > 0) {
+      List<String> al = new ArrayList<String>(whiteList);
+      Collections.sort(al);
+      System.err.println("ApiChanges "
+          + al
+          + ",  not found. Are you using a properly formatted configuration file?");
+    }
+    List<ApiChange> apiChangeList = new ArrayList<ApiChange>(prunedCollection);
+    Collections.sort(apiChangeList);
+    return apiChangeList;
   }
 
   /**
-   * Tweak this for the log output.
+   * Each whiteList element is an {@link ApiElement} and
+   * {@link ApiChange.Status} separated by space. For example,
+   * "java.util.ArrayList::size() MISSING". The {@code ApiElement} is
+   * represented as the string obtained by invoking the getRelativeSignature()
+   * method on {@link ApiElement}.
+   * 
+   * @param fileName
+   * @return
    */
-  private static AbstractTreeLogger createTreeLogger() {
-    AbstractTreeLogger logger = new PrintWriterTreeLogger();
-    int choice = 3; // 1, 2, 3
-    switch (choice) {
-      case 1:
-        logger.setMaxDetail(TreeLogger.ALL);
-        break;
-      case 2:
-        logger.setMaxDetail(null);
-        break;
-      default:
-        logger.setMaxDetail(TreeLogger.ERROR);
-    }
-    return logger;
-  }
-
-  private static HashSet<String> readStringFromFile(String fileName)
+  private static Set<String> readWhiteListFromFile(String fileName)
       throws IOException {
     if (fileName == null) {
       throw new IllegalArgumentException("fileName is null");
     }
-    HashSet<String> hashSet = new HashSet<String>();
+    Set<String> hashSet = new HashSet<String>();
     FileReader fr = new FileReader(fileName);
     BufferedReader br = new BufferedReader(fr);
     String str = null;
@@ -182,34 +252,12 @@ public class ApiCompatibilityChecker {
         continue;
       }
       String splits[] = str.split(" ");
-      if (splits.length > 1) {
-        hashSet.add(splits[0] + " " + splits[1]);
+      if (splits.length > 1 && ApiChange.contains(splits[1])) {
+        String identifier = splits[0] + ApiDiffGenerator.DELIMITER + splits[1];
+        hashSet.add(identifier.trim());
       }
     }
     return hashSet;
-  }
-
-  private static String removeWhiteListMatches(String apiDifferences,
-      HashSet<String> whiteList) {
-    String apiDifferencesArray[] = apiDifferences.split("\n");
-    String whiteListArray[] = whiteList.toArray(new String[0]);
-    for (int i = 0; i < apiDifferencesArray.length; i++) {
-      String temp = apiDifferencesArray[i].trim();
-      for (String whiteListElement : whiteListArray) {
-        if (temp.startsWith(whiteListElement)) {
-          apiDifferencesArray[i] = "";
-        }
-      }
-    }
-
-    StringBuffer sb = new StringBuffer();
-    for (String temp : apiDifferencesArray) {
-      if (temp.length() > 0) {
-        sb.append(temp);
-        sb.append("\n");
-      }
-    }
-    return sb.toString();
   }
 
 }

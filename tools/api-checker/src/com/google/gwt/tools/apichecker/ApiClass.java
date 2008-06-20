@@ -17,226 +17,160 @@ package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JConstructor;
 import com.google.gwt.core.ext.typeinfo.JField;
+import com.google.gwt.core.ext.typeinfo.JMethod;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates an API class.
  */
-public class ApiClass {
+final class ApiClass implements Comparable<ApiClass>, ApiElement {
   /**
    * Enum for indexing the common storage used for methods and constructors
    * 
    */
   public static enum MethodType {
-    CONSTRUCTOR(0), METHOD(1);
-
-    private final int id;
-
-    MethodType(int id) {
-      this.id = id;
-    }
-
-    public int getId() {
-      return id;
-    }
+    CONSTRUCTOR, METHOD;
   }
 
-  public static String computeFieldApiSignature(JField field) {
-    return field.getEnclosingType().getQualifiedSourceName() + "::"
-        + field.getName();
-  }
+  private HashMap<String, ApiField> apiFields = null;
 
   /**
-   * Assumption: Clients may sub-class an API class, but they will not add their
-   * class to the package.
+   * TODO (amitmanjhi): Toby felt that combining structures for storing
+   * MethodType and Constructors was unnecessary. In particular, the hashMap of
+   * name#args -> object is meaningless for constructor, since name is empty for
+   * constructors. Make it separate.
    * 
-   * Notes: -- A class with only private constructors can be an Api class.
+   * In addition, the current method fails when constructors or methods accept
+   * variable arguments. In future, just index everything by name [and not add
+   * the number of arguments that they accept].
    */
-  public static boolean isApiClass(JClassType classType) {
-    // check for outer classes
-    if (isPublicOuterClass(classType)) {
-      return true;
-    }
-    // if classType is not a member type, return false
-    if (!classType.isMemberType()) {
-      return false;
-    }
-    JClassType enclosingType = classType.getEnclosingType();
-    if (classType.isPublic()) {
-      return isApiClass(enclosingType) || isAnySubtypeAnApiClass(enclosingType);
-    }
-    if (classType.isProtected()) {
-      return isSubclassableApiClass(enclosingType)
-          || isAnySubtypeASubclassableApiClass(enclosingType);
-    }
-    return false;
-  }
-
-  public static boolean isInstantiableApiClass(JClassType classType) {
-    return !classType.isAbstract()
-        && hasPublicOrProtectedConstructor(classType);
-  }
-
-  public static boolean isNotsubclassableApiClass(JClassType classType) {
-    return isApiClass(classType) && !isSubclassable(classType);
-  }
-
-  /**
-   * @return returns true if classType is public AND an outer class
-   */
-  public static boolean isPublicOuterClass(JClassType classType) {
-    return classType.isPublic() && !classType.isMemberType();
-  }
-
-  public static boolean isSubclassable(JClassType classType) {
-    return !classType.isFinal() && hasPublicOrProtectedConstructor(classType);
-  }
-
-  public static boolean isSubclassableApiClass(JClassType classType) {
-    return isApiClass(classType) && isSubclassable(classType);
-  }
-
-  private static boolean hasPublicOrProtectedConstructor(JClassType classType) {
-    JConstructor[] constructors = classType.getConstructors();
-    for (JConstructor constructor : constructors) {
-      if (constructor.isPublic() || constructor.isProtected()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isAnySubtypeAnApiClass(JClassType classType) {
-    JClassType subTypes[] = classType.getSubtypes();
-    for (JClassType tempType : subTypes) {
-      if (isApiClass(tempType)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isAnySubtypeASubclassableApiClass(JClassType classType) {
-    JClassType subTypes[] = classType.getSubtypes();
-    for (JClassType tempType : subTypes) {
-      if (isSubclassableApiClass(tempType)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private HashMap<String, JField> apiFields = null;
 
   /**
    * 2 entries in the list: one for CONSTRUCTOR, and the other for METHOD. Each
    * entry is a mapping from MethodName#args to a set of ApiAbstractMethod
    */
-  private ArrayList<HashMap<String, HashSet<ApiAbstractMethod>>> apiMembersByName = new ArrayList<HashMap<String, HashSet<ApiAbstractMethod>>>(
-      MethodType.values().length);
+  private EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>> apiMembersByName =
+      null;
 
-  private ApiPackage apiPackage = null;
+  private final ApiPackage apiPackage;
+  private final JClassType classType;
 
-  private JClassType classType = null;
+  private final boolean isInstantiableApiClass;
+  private final boolean isNotsubclassableApiClass;
+  private final boolean isSubclassableApiClass;
+  private final TreeLogger logger;
 
-  private boolean isInstantiableApiClass = false;
-
-  private boolean isNotsubclassableApiClass = false;
-  private boolean isSubclassableApiClass = false;
-  private TreeLogger logger = null;
-
-  public ApiClass(JClassType classType, ApiPackage apiPackage) {
+  ApiClass(JClassType classType, ApiPackage apiPackage) {
     this.classType = classType;
     this.apiPackage = apiPackage;
     logger = apiPackage.getApiContainer().getLogger();
-    isSubclassableApiClass = isSubclassableApiClass(classType);
-    isNotsubclassableApiClass = isNotsubclassableApiClass(classType);
-    isInstantiableApiClass = isInstantiableApiClass(classType);
+    ApiContainer apiContainer = apiPackage.getApiContainer();
+    isSubclassableApiClass = apiContainer.isSubclassableApiClass(classType);
+    isNotsubclassableApiClass =
+        apiContainer.isNotsubclassableApiClass(classType);
+    isInstantiableApiClass = apiContainer.isInstantiableApiClass(classType);
   }
 
-  public <E> String computeRelativeSignature(E element) {
-    String signature = element.toString();
-    JClassType enclosingType = null;
-    if (element instanceof JField) {
-      JField field = (JField) element;
-      signature = field.getName();
-      enclosingType = field.getEnclosingType();
-    }
-    if (element instanceof JAbstractMethod) {
-      JAbstractMethod jam = (JAbstractMethod) element;
-      signature = ApiAbstractMethod.computeInternalSignature(jam);
-      enclosingType = jam.getEnclosingType();
-    }
-    if (ApiCompatibilityChecker.DEBUG) {
-      return classType.getQualifiedSourceName()
-          + "::"
-          + signature
-          + " defined in "
-          + (enclosingType == null ? "null enclosing type "
-              : enclosingType.getQualifiedSourceName());
-    }
-    return classType.getQualifiedSourceName() + "::" + signature;
+  public int compareTo(ApiClass other) {
+    return getName().compareTo(other.getName());
   }
 
-  public JField getApiFieldByName(String name) {
+  public String getRelativeSignature() {
+    return classType.getQualifiedSourceName();
+  }
+
+  @Override
+  public String toString() {
+    return classType.toString();
+  }
+
+  String getApiAsString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("\t" + getName() + "\n");
+    if (apiFields != null) {
+      ArrayList<ApiField> apiFieldsList =
+          new ArrayList<ApiField>(apiFields.values());
+      Collections.sort(apiFieldsList);
+      for (ApiField apiField : apiFieldsList) {
+        sb.append("\t\t" + apiField.getRelativeSignature() + "\n");
+      }
+    }
+    if (apiMembersByName != null
+        && apiMembersByName.get(MethodType.METHOD) != null) {
+      for (MethodType method : MethodType.values()) {
+        HashSet<ApiAbstractMethod> apiMethodsSet =
+            new HashSet<ApiAbstractMethod>();
+        for (Set<ApiAbstractMethod> methodsSets : apiMembersByName.get(method).values()) {
+          apiMethodsSet.addAll(methodsSets);
+        }
+        ArrayList<ApiAbstractMethod> apiMethodsList =
+            new ArrayList<ApiAbstractMethod>(apiMethodsSet);
+        Collections.sort(apiMethodsList);
+        for (ApiAbstractMethod apiMethod : apiMethodsList) {
+          sb.append("\t\t" + apiMethod.getRelativeSignature() + "\n");
+        }
+      }
+    }
+    return sb.toString();
+  }
+
+  ApiField getApiFieldByName(String name) {
     return apiFields.get(name);
   }
 
-  public HashSet<String> getApiFieldNames() {
+  Set<String> getApiFieldNames() {
     if (apiFields == null) {
       initializeApiFields();
     }
     return new HashSet<String>(apiFields.keySet());
   }
 
-  public HashSet<JField> getApiFieldsBySet(HashSet<String> names) {
-    HashSet<JField> ret = new HashSet<JField>();
-    String tempStrings[] = names.toArray(new String[0]);
-    for (String temp : tempStrings) {
-      ret.add(apiFields.get(temp));
+  Set<ApiField> getApiFieldsBySet(Set<String> names) {
+    Set<ApiField> ret = new HashSet<ApiField>();
+    for (String name : names) {
+      ret.add(apiFields.get(name));
     }
     return ret;
   }
 
-  public HashSet<String> getApiMemberNames(MethodType type) {
-    if (apiMembersByName.size() == 0) {
-      initializeApiConstructorsAndFields();
+  Set<String> getApiMemberNames(MethodType type) {
+    if (apiMembersByName == null) {
+      initializeApiConstructorsAndMethods();
     }
-    return new HashSet<String>(apiMembersByName.get(type.getId()).keySet());
+    return new HashSet<String>(apiMembersByName.get(type).keySet());
   }
 
-  public HashSet<ApiAbstractMethod> getApiMembersBySet(
-      HashSet<String> methodNames, MethodType type) {
-    Iterator<String> iteratorString = methodNames.iterator();
-    HashMap<String, HashSet<ApiAbstractMethod>> current = apiMembersByName.get(type.getId());
-    HashSet<ApiAbstractMethod> tempMethods = new HashSet<ApiAbstractMethod>();
-    while (iteratorString.hasNext()) {
-      tempMethods.addAll(current.get(iteratorString.next()));
+  Set<ApiAbstractMethod> getApiMembersBySet(Set<String> methodNames,
+      MethodType type) {
+    Map<String, Set<ApiAbstractMethod>> current = apiMembersByName.get(type);
+    Set<ApiAbstractMethod> tempMethods = new HashSet<ApiAbstractMethod>();
+    for (String methodName : methodNames) {
+      tempMethods.addAll(current.get(methodName));
     }
     return tempMethods;
   }
 
-  public HashSet<ApiAbstractMethod> getApiMethodsByName(String name,
-      MethodType type) {
-    return apiMembersByName.get(type.getId()).get(name);
+  Set<ApiAbstractMethod> getApiMethodsByName(String name, MethodType type) {
+    return apiMembersByName.get(type).get(name);
   }
 
-  public JClassType getClassObject() {
+  JClassType getClassObject() {
     return classType;
   }
 
-  public String getFullName() {
+  String getFullName() {
     return classType.getQualifiedSourceName();
   }
 
@@ -246,9 +180,9 @@ public class ApiClass {
    * (if a non-abstract class is made into interface, the client class/interface
    * inheriting from it would need to change)
    */
-  public ArrayList<ApiChange.Status> getModifierChanges(ApiClass newClass) {
+  List<ApiChange.Status> getModifierChanges(ApiClass newClass) {
     JClassType newClassType = newClass.getClassObject();
-    ArrayList<ApiChange.Status> statuses = new ArrayList<ApiChange.Status>(5);
+    List<ApiChange.Status> statuses = new ArrayList<ApiChange.Status>(5);
 
     // check for addition of 'final', 'abstract', 'static'
     if (!classType.isFinal() && newClassType.isFinal()) {
@@ -269,7 +203,7 @@ public class ApiClass {
     if (!classType.isAbstract() && (newClassType.isInterface() != null)) {
       statuses.add(ApiChange.Status.NONABSTRACT_CLASS_MADE_INTERFACE);
     }
-    if (isSubclassableApiClass(classType)) {
+    if (apiPackage.getApiContainer().isSubclassableApiClass(classType)) {
       if ((classType.isClass() != null) && (newClassType.isInterface() != null)) {
         statuses.add(ApiChange.Status.SUBCLASSABLE_API_CLASS_MADE_INTERFACE);
       }
@@ -280,21 +214,22 @@ public class ApiClass {
     return statuses;
   }
 
-  public String getName() {
+  String getName() {
     return classType.getName();
   }
 
-  public ApiPackage getPackage() {
+  ApiPackage getPackage() {
     return apiPackage;
   }
 
-  public void initializeApiFields() {
-    apiFields = new HashMap<String, JField>();
-    ArrayList<String> notAddedFields = new ArrayList<String>();
+  void initializeApiFields() {
+    apiFields = new HashMap<String, ApiField>();
+    List<String> notAddedFields = new ArrayList<String>();
     JField fields[] = getAccessibleFields();
     for (JField field : fields) {
       if (isApiMember(field)) {
-        apiFields.put(computeFieldApiSignature(field), field);
+        apiFields.put(ApiField.computeApiSignature(field), new ApiField(field,
+            this));
       } else {
         notAddedFields.add(field.toString());
       }
@@ -303,11 +238,6 @@ public class ApiClass {
       logger.log(TreeLogger.SPAM, "class " + getName() + " " + ", not adding "
           + notAddedFields.size() + " nonApi fields: " + notAddedFields, null);
     }
-  }
-
-  @Override
-  public String toString() {
-    return classType.toString();
   }
 
   private JField[] getAccessibleFields() {
@@ -329,16 +259,6 @@ public class ApiClass {
       tempClassType = tempClassType.getSuperclass();
     } while (tempClassType != null);
     return fieldsBySignature.values().toArray(new JField[0]);
-  }
-
-  private JAbstractMethod[] getAccessibleMembers(MethodType member) {
-    switch (member) {
-      case CONSTRUCTOR:
-        return classType.getConstructors();
-      case METHOD:
-        return getAccessibleMethods();
-    }
-    throw new AssertionError("Unknown value : " + member.getId());
   }
 
   // TODO(amitmanjhi): to optimize, cache results
@@ -377,21 +297,35 @@ public class ApiClass {
     return methodsBySignature.values().toArray(new JMethod[0]);
   }
 
-  private void initializeApiConstructorsAndFields() {
-    for (MethodType member : MethodType.values()) {
-      apiMembersByName.add(member.getId(),
-          new HashMap<String, HashSet<ApiAbstractMethod>>());
-      HashMap<String, HashSet<ApiAbstractMethod>> pointer = apiMembersByName.get(member.getId());
-      ArrayList<String> notAddedMembers = new ArrayList<String>();
-      JAbstractMethod jams[] = getAccessibleMembers(member);
+  private JAbstractMethod[] getAccessibleMethods(MethodType member) {
+    switch (member) {
+      case CONSTRUCTOR:
+        return classType.getConstructors();
+      case METHOD:
+        return getAccessibleMethods();
+    }
+    throw new AssertionError("Unknown value : " + member);
+  }
+
+  private void initializeApiConstructorsAndMethods() {
+    apiMembersByName =
+        new EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>>(
+            MethodType.class);
+    for (MethodType method : MethodType.values()) {
+      apiMembersByName.put(method,
+          new HashMap<String, Set<ApiAbstractMethod>>());
+      Map<String, Set<ApiAbstractMethod>> pointer =
+          apiMembersByName.get(method);
+      List<String> notAddedMembers = new ArrayList<String>();
+      JAbstractMethod jams[] = getAccessibleMethods(method);
       for (JAbstractMethod jam : jams) {
         if (isApiMember(jam)) {
           String tempName = jam.getName() + jam.getParameters().length;
-          HashSet<ApiAbstractMethod> existingMembers = pointer.get(tempName);
+          Set<ApiAbstractMethod> existingMembers = pointer.get(tempName);
           if (existingMembers == null) {
             existingMembers = new HashSet<ApiAbstractMethod>();
           }
-          switch (member) {
+          switch (method) {
             case CONSTRUCTOR:
               existingMembers.add(new ApiConstructor(jam, this));
               break;
@@ -399,7 +333,7 @@ public class ApiClass {
               existingMembers.add(new ApiMethod(jam, this));
               break;
             default:
-              throw new AssertionError("Unknown memberType : " + member);
+              throw new AssertionError("Unknown memberType : " + method);
           }
           pointer.put(tempName, existingMembers);
         } else {
@@ -418,7 +352,7 @@ public class ApiClass {
    * Note: Instance members of a class that is not instantiable are not api
    * members.
    */
-  private <E> boolean isApiMember(final E member) {
+  private boolean isApiMember(final Object member) {
     boolean isPublic = false;
     boolean isPublicOrProtected = false;
     boolean isStatic = false;
@@ -440,12 +374,13 @@ public class ApiClass {
         isStatic = false; // constructors can't be static
       }
     }
-    if (ApiCompatibilityChecker.REMOVE_ABSTRACT_CLASS_FROM_API) {
-      if (!isInstantiableApiClass && !isStatic) {
+    if (ApiCompatibilityChecker.REMOVE_NON_SUBCLASSABLE_ABSTRACT_CLASS_FROM_API) {
+      if (!isInstantiableApiClass && !isStatic && !isSubclassableApiClass) {
         return false;
       }
     }
     return (isSubclassableApiClass && isPublicOrProtected)
         || (isNotsubclassableApiClass && isPublic);
   }
+
 }

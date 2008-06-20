@@ -20,36 +20,36 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JType;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Encapsulates an API method.
+ * Encapsulates an API method. Useful for set-operations.
  */
-public class ApiMethod extends ApiAbstractMethod {
+final class ApiMethod extends ApiAbstractMethod {
 
-  public ApiMethod(JAbstractMethod method, ApiClass apiClass) {
+  ApiMethod(JAbstractMethod method, ApiClass apiClass) {
     super(method, apiClass);
   }
 
   @Override
-  public ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod)
+  ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod)
       throws TypeNotPresentException {
     JType firstType, secondType;
-    if (newMethod.getMethodObject() instanceof JMethod
-        && method instanceof JMethod) {
+    if (newMethod.getMethod() instanceof JMethod && method instanceof JMethod) {
       firstType = ((JMethod) method).getReturnType();
-      secondType = ((JMethod) newMethod.getMethodObject()).getReturnType();
+      secondType = ((JMethod) newMethod.getMethod()).getReturnType();
     } else {
       throw new AssertionError("Different types for method = "
           + method.getClass() + ", and newMethodObject = "
-          + newMethod.getMethodObject().getClass() + ", signature = "
+          + newMethod.getMethod().getClass() + ", signature = "
           + getApiSignature());
     }
     StringBuffer sb = new StringBuffer();
     if (firstType.getSimpleSourceName().indexOf("void") != -1) {
       return null;
     }
-    boolean compatible = ApiDiffGenerator.isFirstTypeAssignableToSecond(
-        secondType, firstType);
+    boolean compatible =
+        ApiDiffGenerator.isFirstTypeAssignableToSecond(secondType, firstType);
     if (compatible) {
       return null;
     }
@@ -57,33 +57,32 @@ public class ApiMethod extends ApiAbstractMethod {
     sb.append(firstType.getQualifiedSourceName());
     sb.append(" to ");
     sb.append(secondType.getQualifiedSourceName());
-    return new ApiChange(ApiChange.Status.RETURN_TYPE_ERROR, sb.toString());
+    return new ApiChange(this, ApiChange.Status.RETURN_TYPE_ERROR,
+        sb.toString());
   }
 
   /*
-   * check for: (i) added 'final' or 'abstract', (ii) removed 'static' adding
+   * check for: (i) added 'final' or 'abstract', (ii) removed 'static', adding
    * the 'static' keyword is fine.
    * 
    * A private, static, or final method can't be made 'abstract' (Java language
    * specification).
    */
   @Override
-  public ArrayList<ApiChange.Status> getModifierChanges(
-      final ApiAbstractMethod newMethod) {
+  List<ApiChange.Status> getModifierChanges(final ApiAbstractMethod newMethod) {
     JMethod newjmethod = null;
     JMethod oldjmethod = null;
 
-    if (newMethod.getMethodObject() instanceof JMethod
-        && method instanceof JMethod) {
-      newjmethod = (JMethod) newMethod.getMethodObject();
+    if (newMethod.getMethod() instanceof JMethod && method instanceof JMethod) {
+      newjmethod = (JMethod) newMethod.getMethod();
       oldjmethod = (JMethod) method;
     } else {
       throw new AssertionError("Different types for method = "
           + method.getClass() + " and newMethod = "
-          + newMethod.getMethodObject().getClass() + ", signature = "
+          + newMethod.getMethod().getClass() + ", signature = "
           + getApiSignature());
     }
-    ArrayList<ApiChange.Status> statuses = new ArrayList<ApiChange.Status>();
+    List<ApiChange.Status> statuses = new ArrayList<ApiChange.Status>();
     if (!oldjmethod.isFinal() && newjmethod.isFinal()) {
       statuses.add(ApiChange.Status.FINAL_ADDED);
     }

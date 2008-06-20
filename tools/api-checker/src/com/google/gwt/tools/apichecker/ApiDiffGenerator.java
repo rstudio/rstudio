@@ -21,32 +21,25 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * encapsulates a class that produces the diff between two api's.
+ * {@link ApiDiffGenerator} encapsulates a class that produces the diff between
+ * two api's.
  */
-public class ApiDiffGenerator {
+public final class ApiDiffGenerator {
 
   public static final String DELIMITER = " ";
-
-  @SuppressWarnings("unchecked")
-  public static HashSet<String> extractCommonElements(HashSet<String> s1,
-      HashSet<String> s2) {
-    HashSet<String> intersection = (HashSet<String>) s1.clone();
-    intersection.retainAll(s2);
-    s1.removeAll(intersection);
-    s2.removeAll(intersection);
-    return intersection;
-  }
 
   /**
    * The two types might belong to different typeOracles.
    */
-  public static boolean isFirstTypeAssignableToSecond(JType firstType,
-      JType secondType) {
+  static boolean isFirstTypeAssignableToSecond(JType firstType, JType secondType) {
 
     // getJNISignature() does TypeErasure
     if (firstType.getJNISignature().equals(secondType.getJNISignature())) {
@@ -59,8 +52,10 @@ public class ApiDiffGenerator {
     }
     TypeOracle newApiTypeOracle = classType2.getOracle();
     // get the appropriate classObject in the newApi
-    JClassType firstClassType = newApiTypeOracle.findType(classType1.getQualifiedSourceName());
-    JClassType secondClassType = newApiTypeOracle.findType(classType2.getQualifiedSourceName());
+    JClassType firstClassType =
+        newApiTypeOracle.findType(classType1.getQualifiedSourceName());
+    JClassType secondClassType =
+        newApiTypeOracle.findType(classType2.getQualifiedSourceName());
     // The types might not necessarily exist in the newApi
     if (firstClassType == null || secondClassType == null) {
       return false;
@@ -68,49 +63,45 @@ public class ApiDiffGenerator {
     return firstClassType.isAssignableTo(secondClassType);
   }
 
-  HashMap<String, ApiPackageDiffGenerator> intersectingPackages = new HashMap<String, ApiPackageDiffGenerator>();
+  @SuppressWarnings("unchecked")
+  static Set<String> removeIntersection(Set<String> s1, Set<String> s2) {
+    Set<String> intersection = new HashSet<String>(s1);
+    intersection.retainAll(s2);
+    s1.removeAll(intersection);
+    s2.removeAll(intersection);
+    return intersection;
+  }
 
-  HashSet<String> missingPackageNames = null;
-  ApiContainer newApi = null;
-
-  ApiContainer oldApi = null;
+  Map<String, ApiPackageDiffGenerator> intersectingPackages =
+      new HashMap<String, ApiPackageDiffGenerator>();
+  Set<String> missingPackageNames;
+  final ApiContainer newApi;
+  final ApiContainer oldApi;
 
   ApiDiffGenerator(ApiContainer newApi, ApiContainer oldApi) {
     this.newApi = newApi;
     this.oldApi = oldApi;
   }
 
-  public void cleanApiDiff() {
-    Iterator<ApiPackageDiffGenerator> tempIterator = intersectingPackages.values().iterator();
-    while (tempIterator.hasNext()) {
-      tempIterator.next().cleanApiDiff();
+  Collection<ApiChange> getApiDiff(boolean removeDuplicates)
+      throws NotFoundException {
+    computeApiDiff();
+    if (removeDuplicates) {
+      cleanApiDiff();
     }
+    Collection<ApiChange> collection = new ArrayList<ApiChange>();
+    Set<ApiPackage> missingPackages =
+        oldApi.getApiPackagesBySet(missingPackageNames);
+    for (ApiPackage missingPackage : missingPackages) {
+      collection.add(new ApiChange(missingPackage, ApiChange.Status.MISSING));
+    }
+    for (ApiPackageDiffGenerator intersectingPackage : intersectingPackages.values()) {
+      collection.addAll(intersectingPackage.getApiDiff());
+    }
+    return collection;
   }
 
-  /**
-   * Compares 2 APIs for source compatibility. Algorithm: First find packages
-   * that are in one but not in another. Then, look at at classes in the common
-   * packages. Look at public classes.
-   * 
-   */
-  public void computeApiDiff() throws NotFoundException {
-    HashSet<String> newApiPackageNames = newApi.getApiPackageNames();
-    missingPackageNames = oldApi.getApiPackageNames();
-    HashSet<String> intersection = extractCommonElements(newApiPackageNames,
-        missingPackageNames);
-    // Inspect each of the classes in each of the packages in the intersection
-    Iterator<String> tempIterator = intersection.iterator();
-    while (tempIterator.hasNext()) {
-      String packageName = tempIterator.next();
-      ApiPackageDiffGenerator temp = new ApiPackageDiffGenerator(packageName,
-          this);
-      intersectingPackages.put(packageName, temp);
-      temp.computeApiDiff();
-    }
-  }
-
-  public ApiClassDiffGenerator findApiClassDiffGenerator(JClassType classType) {
-    String className = classType.getQualifiedSourceName();
+  ApiClassDiffGenerator findApiClassDiffGenerator(String className) {
     int i = className.length() - 1;
     while (i >= 0) {
       int dot = className.lastIndexOf('.', i);
@@ -123,8 +114,8 @@ public class ApiDiffGenerator {
       } else {
         i = -1;
       }
-      ApiClassDiffGenerator result = findApiClassDiffGenerator(pkgName,
-          typeName);
+      ApiClassDiffGenerator result =
+          findApiClassDiffGenerator(pkgName, typeName);
       if (result != null) {
         return result;
       }
@@ -140,12 +131,12 @@ public class ApiDiffGenerator {
    * 
    * @return <code>null</code> if the type is not found
    */
-  public ApiClassDiffGenerator findApiClassDiffGenerator(String pkgName,
+  ApiClassDiffGenerator findApiClassDiffGenerator(String pkgName,
       String typeName) {
     ApiPackageDiffGenerator pkg = findApiPackageDiffGenerator(pkgName);
     if (pkg != null) {
-      ApiClassDiffGenerator type = pkg.findApiClassDiffGenerator(pkgName + "."
-          + typeName);
+      ApiClassDiffGenerator type =
+          pkg.findApiClassDiffGenerator(pkgName + "." + typeName);
       if (type != null) {
         return type;
       }
@@ -153,30 +144,42 @@ public class ApiDiffGenerator {
     return null;
   }
 
-  public ApiPackageDiffGenerator findApiPackageDiffGenerator(String key) {
+  ApiPackageDiffGenerator findApiPackageDiffGenerator(String key) {
     return intersectingPackages.get(key);
   }
 
-  public ApiContainer getNewApiContainer() {
+  ApiContainer getNewApiContainer() {
     return newApi;
   }
 
-  public ApiContainer getOldApiContainer() {
+  ApiContainer getOldApiContainer() {
     return oldApi;
   }
 
-  public String printApiDiff() {
-    StringBuffer sb = new StringBuffer();
-    Iterator<String> missingPackagesIterator = missingPackageNames.iterator();
-    while (missingPackagesIterator.hasNext()) {
-      sb.append(missingPackagesIterator.next() + DELIMITER
-          + ApiChange.Status.MISSING + "\n");
+  private void cleanApiDiff() {
+    for (ApiPackageDiffGenerator intersectingPackage : intersectingPackages.values()) {
+      intersectingPackage.cleanApiDiff();
     }
-    Iterator<ApiPackageDiffGenerator> tempIterator = intersectingPackages.values().iterator();
-    while (tempIterator.hasNext()) {
-      sb.append(tempIterator.next().printApiDiff());
+  }
+
+  /**
+   * Compares 2 APIs for source compatibility. Algorithm: First find packages
+   * that are in one but not in another. Then, look at at classes in the common
+   * packages. Look at public classes.
+   * 
+   */
+  private void computeApiDiff() throws NotFoundException {
+    Set<String> newApiPackageNames = newApi.getApiPackageNames();
+    missingPackageNames = oldApi.getApiPackageNames();
+    Set<String> intersection =
+        removeIntersection(newApiPackageNames, missingPackageNames);
+    // Inspect each of the classes in each of the packages in the intersection
+    for (String packageName : intersection) {
+      ApiPackageDiffGenerator tempPackageDiffGenerator =
+          new ApiPackageDiffGenerator(packageName, this);
+      intersectingPackages.put(packageName, tempPackageDiffGenerator);
+      tempPackageDiffGenerator.computeApiDiff();
     }
-    return sb.toString();
   }
 
 }

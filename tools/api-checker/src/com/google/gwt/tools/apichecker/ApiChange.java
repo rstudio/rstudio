@@ -16,6 +16,10 @@
 
 package com.google.gwt.tools.apichecker;
 
+
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 
  * An ApiChange message.Each message is a Status followed by an optional String
@@ -23,73 +27,91 @@ package com.google.gwt.tools.apichecker;
  * 
  */
 
-public class ApiChange {
+final class ApiChange implements Comparable<ApiChange> {
 
   // add specific changes. For example, add FINAL_ADDED and
   // ABSTRACT_ADDED instead of API_ATTRIBUTES_CHANGED
-  static enum Status {
-    ABSTRACT_ADDED("ABSTRACT_ADDED"),
+  enum Status {
+    ABSTRACT_ADDED,
 
-    ATTRIBUTES_WARNING("ATTRIBUTES_CHANGED_WARNING"),
+    ATTRIBUTES_CHANGED_WARNING,
 
-    COMPATIBLE("COMPATIBLE"),
+    COMPATIBLE,
 
-    COMPATIBLE_WITH("COMPATIBLE_WITH"),
+    COMPATIBLE_WITH,
 
-    EXCEPTIONS_ERROR("EXCEPTION_TYPE_ERROR"),
+    EXCEPTION_TYPE_ERROR,
 
-    FINAL_ADDED("FINAL_ADDED"),
+    FINAL_ADDED,
 
-    MISSING("MISSING"),
+    MISSING,
 
-    NONABSTRACT_CLASS_MADE_INTERFACE("NONABSTRACT_CLASS_MADE_INTERFACE"),
+    NONABSTRACT_CLASS_MADE_INTERFACE,
 
-    OVERLOADED("OVERLOADED_METHOD_CALL"),
+    OVERLOADED_METHOD_CALL,
 
-    RETURN_TYPE_ERROR("RETURN_TYPE_ERROR"),
+    RETURN_TYPE_ERROR,
 
-    STATIC_ADDED("STATIC_ADDED"),
+    STATIC_ADDED,
 
-    STATIC_REMOVED("STATIC_REMOVED"),
+    STATIC_REMOVED,
 
-    SUBCLASSABLE_API_CLASS_MADE_INTERFACE("SUBCLASSABLE_CLASS_MADE_INTERFACE"),
+    SUBCLASSABLE_API_CLASS_MADE_INTERFACE,
 
-    SUBCLASSABLE_API_INTERFACE_MADE_CLASS("SUBCLASSABLE_INTERFACE_MADE_CLASS");
+    SUBCLASSABLE_API_INTERFACE_MADE_CLASS,
+  }
 
-    private final String str;
-
-    Status(String str) {
-      this.str = str;
-    }
-
-    @Override
-    public final String toString() {
-      return str;
+  private static Map<String, Status> cache = new HashMap<String, Status>();
+  static {
+    for (Status tempStatus : Status.values()) {
+      cache.put(tempStatus.name(), tempStatus);
     }
   }
 
+  public static boolean contains(String str) {
+    return cache.get(str) != null;
+  }
+
+  private ApiElement element = null;
   private String message = null;
+
   private Status status = null;
 
-  public ApiChange(Status status) {
-    this.status = status;
+  private String stringRepresentation = null;
+
+  public ApiChange(ApiElement element, Status status) {
+    this(element, status, null);
   }
 
-  public ApiChange(Status status, String message) {
+  public ApiChange(ApiElement element, Status status, String message) {
+    this.element = element;
     this.status = status;
     this.message = message;
+  }
+
+  public int compareTo(ApiChange arg0) {
+    return this.toString().compareTo(arg0.toString());
+  }
+
+  public ApiElement getApiElement() {
+    return element;
+  }
+
+  public String getMessage() {
+    return message;
   }
 
   public Status getStatus() {
     return status;
   }
- 
+
   @Override
   public String toString() {
-    if (message != null) {
-      return status + " " + message;
+    if (stringRepresentation == null) {
+      stringRepresentation =
+          element.getRelativeSignature() + ApiDiffGenerator.DELIMITER
+              + status.name();
     }
-    return status.toString();
+    return stringRepresentation;
   }
-
 }

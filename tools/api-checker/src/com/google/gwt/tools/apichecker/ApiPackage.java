@@ -22,53 +22,48 @@ import com.google.gwt.core.ext.typeinfo.JPackage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Encapsulates an API package.
+ * An immutable class that encapsulates an API package.
  */
-public class ApiPackage {
-  /**
-   * A package is an API package if it contains at least one API class. Refer
-   * http://wiki.eclipse.org/index.php/Evolving_Java-based_APIs This definition
-   * boils down to "a package is an API package iff it contains at least one API
-   * class that is not enclosed in any other class."
-   * 
-   * @return return true if and only if the packageObject is an apiPackage
-   */
-  public static boolean isApiPackage(JPackage packageObject) {
-    JClassType classTypes[] = packageObject.getTypes();
-    for (JClassType classType : classTypes) {
-      if (ApiClass.isPublicOuterClass(classType)) {
-        return true;
-      }
-    }
-    return false;
-  }
+final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
 
-  private HashMap<String, ApiClass> apiClasses = new HashMap<String, ApiClass>();
-  private ApiContainer container = null;
+  private Map<String, ApiClass> apiClasses = new HashMap<String, ApiClass>();
+  private final ApiContainer apiContainer;
+  private final TreeLogger logger;
+  private final String name;
+  private final JPackage packageObject;
 
-  private TreeLogger logger = null;
-  private String name = null;
-
-  private JPackage packageObject = null;
-
-  public ApiPackage(JPackage obj, ApiContainer container) {
+  ApiPackage(JPackage obj, ApiContainer container) {
     packageObject = obj;
-    this.container = container;
-    if (logger == null) {
-      logger = container.getLogger();
-    }
+    this.apiContainer = container;
+    logger = container.getLogger();
     name = obj.getName();
     initialize();
   }
 
-  public ArrayList<JClassType> getAllClasses() {
-    ArrayList<JClassType> allClasses = new ArrayList<JClassType>(
-        Arrays.asList(packageObject.getTypes()));
+  public int compareTo(ApiPackage other) {
+    return this.getName().compareTo(other.getName());
+  }
+
+  public String getRelativeSignature() {
+    return name;
+  }
+
+  @Override
+  public String toString() {
+    return name;
+  }
+
+  List<JClassType> getAllClasses() {
+    List<JClassType> allClasses =
+        new ArrayList<JClassType>(Arrays.asList(packageObject.getTypes()));
     logger.log(TreeLogger.SPAM, "API " + packageObject + " has "
         + allClasses.size() + " outer classes", null);
     int index = 0;
@@ -82,33 +77,46 @@ public class ApiPackage {
     return allClasses;
   }
 
-  public ApiClass getApiClass(String className) {
+  String getApiAsString() {
+    StringBuffer sb = new StringBuffer();
+    sb.append(name + "\n");
+    ArrayList<ApiClass> apiClassesList =
+        new ArrayList<ApiClass>(apiClasses.values());
+    Collections.sort(apiClassesList);
+    for (ApiClass apiClass : apiClassesList) {
+      sb.append(apiClass.getApiAsString());
+    }
+    return sb.toString();
+  }
+
+  ApiClass getApiClass(String className) {
     return apiClasses.get(className);
   }
 
-  public HashSet<String> getApiClassNames() {
+  Set<ApiClass> getApiClassesBySet(Set<String> classNames) {
+    Set<ApiClass> set = new HashSet<ApiClass>();
+    for (String className : classNames) {
+      set.add(getApiClass(className));
+    }
+    return set;
+  }
+
+  Set<String> getApiClassNames() {
     return new HashSet<String>(apiClasses.keySet());
   }
 
-  public ApiContainer getApiContainer() {
-    return container;
+  ApiContainer getApiContainer() {
+    return apiContainer;
   }
 
-  public String getName() {
-    return name;
-  }
-
-  @Override
-  public String toString() {
+  String getName() {
     return name;
   }
 
   private void initialize() {
-    Iterator<JClassType> allClassesIterator = getAllClasses().iterator();
     ArrayList<String> notAddedClassNames = new ArrayList<String>();
-    while (allClassesIterator.hasNext()) {
-      JClassType classType = allClassesIterator.next();
-      if (ApiClass.isApiClass(classType)) {
+    for (JClassType classType : getAllClasses()) {
+      if (apiContainer.isApiClass(classType)) {
         ApiClass apiClass = new ApiClass(classType, this);
         apiClasses.put(classType.getQualifiedSourceName(), apiClass);
       } else {

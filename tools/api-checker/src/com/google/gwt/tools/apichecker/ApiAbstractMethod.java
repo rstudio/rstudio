@@ -16,17 +16,19 @@
 package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * abstract super-class for ApiMethod and ApiConstructor.
  */
-public abstract class ApiAbstractMethod {
+abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
+    ApiElement {
 
-  public static String computeApiSignature(JAbstractMethod method) {
+  static String computeApiSignature(JAbstractMethod method) {
     String className = method.getEnclosingType().getQualifiedSourceName();
     StringBuffer sb = new StringBuffer();
     sb.append(className);
@@ -35,7 +37,7 @@ public abstract class ApiAbstractMethod {
     return sb.toString();
   }
 
-  public static String computeInternalSignature(JAbstractMethod method) {
+  static String computeInternalSignature(JAbstractMethod method) {
     StringBuffer sb = new StringBuffer();
     sb.append(method.getName());
     sb.append("(");
@@ -49,42 +51,64 @@ public abstract class ApiAbstractMethod {
     return sb.toString();
   }
 
-  ApiClass apiClass;
-
+  final ApiClass apiClass;
   String apiSignature = null;
-
-  JAbstractMethod method;
+  final JAbstractMethod method;
+  String relativeSignature = null;
 
   public ApiAbstractMethod(JAbstractMethod method, ApiClass apiClass) {
     this.method = method;
     this.apiClass = apiClass;
   }
 
-  public String getApiSignature() {
-    if (apiSignature == null) {
-      apiSignature = computeApiSignature();
-    }
-    return apiSignature;
+  public int compareTo(ApiAbstractMethod other) {
+    return getRelativeSignature().compareTo(other.getRelativeSignature());
   }
 
-  // for a non-primitive type, someone can pass it null as a parameter
-  public String getCoarseSignature() {
-    StringBuffer returnStr = new StringBuffer();
-    JParameter[] parameters = method.getParameters();
-    for (JParameter parameter : parameters) {
-      JType type = parameter.getType();
-      if (type.isPrimitive() != null) {
-        returnStr.append(type.getJNISignature());
-      } else {
-        returnStr.append("c");
-      }
-      returnStr.append(";"); // to mark the end of a type
+  /**
+   * Used in set comparisons.
+   */
+  @Override
+  public boolean equals(Object o) {
+    if (o instanceof ApiAbstractMethod) {
+      ApiAbstractMethod other = (ApiAbstractMethod) o;
+      return getApiSignature().equals(other.getApiSignature());
     }
-    return returnStr.toString();
+    return false;
   }
 
-  public JAbstractMethod getMethodObject() {
+  public JAbstractMethod getMethod() {
     return method;
+  }
+
+  public String getRelativeSignature() {
+    if (relativeSignature == null) {
+      relativeSignature = computeRelativeSignature();
+    }
+    return relativeSignature;
+  }
+
+  @Override
+  public int hashCode() {
+    return getApiSignature().hashCode();
+  }
+
+  public boolean isCompatible(ApiAbstractMethod methodInNew) {
+    JParameter[] parametersInNew = methodInNew.getMethod().getParameters();
+    int length = parametersInNew.length;
+    if (length != method.getParameters().length) {
+      return false;
+    }
+    for (int i = 0; i < length; i++) {
+      if (!ApiDiffGenerator.isFirstTypeAssignableToSecond(
+          method.getParameters()[i].getType(), parametersInNew[i].getType())) {
+        return false;
+      }
+    }
+    // Control reaches here iff methods are compatible with respect to
+    // parameters and return type. For source compatibility, I do not need to
+    // check in which classes the methods are declared.
+    return true;
   }
 
   // Not sure the above implementation is sufficient. If need be, look at the
@@ -109,27 +133,6 @@ public abstract class ApiAbstractMethod {
   // return returnStr.toString();
   // }
 
-  public abstract ArrayList<ApiChange.Status> getModifierChanges(
-      ApiAbstractMethod newMethod);
-
-  public boolean isCompatible(ApiAbstractMethod methodInNew) {
-    JParameter[] parametersInNew = methodInNew.getMethodObject().getParameters();
-    int length = parametersInNew.length;
-    if (length != method.getParameters().length) {
-      return false;
-    }
-    for (int i = 0; i < length; i++) {
-      if (!ApiDiffGenerator.isFirstTypeAssignableToSecond(
-          method.getParameters()[i].getType(), parametersInNew[i].getType())) {
-        return false;
-      }
-    }
-    // Control reaches here iff methods are compatible with respect to
-    // parameters and return type. For source compatibility, I do not need to
-    // check in which classes the methods are declared.
-    return true;
-  }
-
   @Override
   public String toString() {
     return method.toString();
@@ -140,5 +143,49 @@ public abstract class ApiAbstractMethod {
   }
 
   abstract ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod);
+
+  String getApiSignature() {
+    if (apiSignature == null) {
+      apiSignature = computeApiSignature();
+    }
+    return apiSignature;
+  }
+
+  // for a non-primitive type, someone can pass it null as a parameter
+  String getCoarseSignature() {
+    StringBuffer returnStr = new StringBuffer();
+    JParameter[] parameters = method.getParameters();
+    for (JParameter parameter : parameters) {
+      JType type = parameter.getType();
+      if (type.isPrimitive() != null) {
+        returnStr.append(type.getJNISignature());
+      } else {
+        returnStr.append("c");
+      }
+      returnStr.append(";"); // to mark the end of a type
+    }
+    return returnStr.toString();
+  }
+
+  /**
+   * Find changes in modifiers. returns a possibly immutable list.
+   * 
+   */
+  abstract List<ApiChange.Status> getModifierChanges(ApiAbstractMethod newMethod);
+
+  private String computeRelativeSignature() {
+    String signature = computeInternalSignature(method);
+    if (ApiCompatibilityChecker.DEBUG) {
+      JClassType enclosingType = method.getEnclosingType();
+      return apiClass.getClassObject().getQualifiedSourceName()
+          + "::"
+          + signature
+          + " defined in "
+          + (enclosingType == null ? "null enclosing type "
+              : enclosingType.getQualifiedSourceName());
+    }
+    return apiClass.getClassObject().getQualifiedSourceName() + "::"
+        + signature;
+  }
 
 }

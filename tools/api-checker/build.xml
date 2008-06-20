@@ -42,6 +42,35 @@
 		</gwt.jar>
 	</target>
 
+	<target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
+		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+			<classpath>
+				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
+			</classpath>
+		</taskdef>
+	
+		<echo message="Writing test results to ${junit.out}/reports" />
+		<mkdir dir="${junit.out}/reports" />
+	
+		<junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
+			<classpath>
+				<pathelement location="test" />
+				<pathelement location="${gwt.build.out}/dev/core/bin"/>
+				<pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
+				<pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
+				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+				<pathelement location="${javac.junit.out}" />
+			</classpath>
+	
+			<formatter type="plain" />
+			<formatter type="xml" />
+			<batchtest todir="${junit.out}/reports">
+                          <fileset dir="${javac.junit.out}"
+                            includes="**/*Test.class"/> 
+			</batchtest>
+		</junit>
+	</target>
 
 	<target name="checkstyle" description="Static analysis of source">
 		<gwt.checkstyle>
