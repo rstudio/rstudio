@@ -149,6 +149,14 @@ public class JUnitMessageQueue {
       }
       assert (results != null);
       ClientStatus clientStatus = clientStatuses.get(clientId);
+      /*
+       * Unknown client, but valid testInfo; this can happen if the client's
+       * module fails to load.
+       */
+      if (clientStatus == null) {
+        clientStatus = new ClientStatus(clientId);
+        clientStatuses.put(clientId, clientStatus);
+      }
       clientStatus.currentTestResults = results;
       clientStatusesLock.notifyAll();
     }

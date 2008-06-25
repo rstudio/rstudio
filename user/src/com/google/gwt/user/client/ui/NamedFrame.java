@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -37,7 +38,9 @@ public class NamedFrame extends Frame {
   private static JavaScriptObject PATTERN_NAME;
 
   static {
-    initStatics();
+    if (GWT.isClient()) {
+      initStatics();
+    }
   }
 
   private static native void initStatics() /*-{

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +40,15 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
         addTypeParameter(jtypeParameter);
       }
     }
+  }
+
+  public JParameterizedType asParameterizedByWildcards() {
+    JClassType[] typeArgs = new JClassType[typeParams.size()];
+    for (int i = 0; i < typeArgs.length; ++i) {
+      typeArgs[i] = getOracle().getWildcardType(BoundType.EXTENDS,
+          typeParams.get(i).getFirstBound());
+    }
+    return getOracle().getParameterizedType(this, typeArgs);
   }
 
   @Override

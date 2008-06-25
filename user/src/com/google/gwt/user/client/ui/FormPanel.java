@@ -16,8 +16,10 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.FormElement;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
@@ -85,6 +87,27 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   private static int formId = 0;
   private static FormPanelImpl impl = GWT.create(FormPanelImpl.class);
 
+  /**
+   * Creates a FormPanel that wraps an existing &lt;form&gt; element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static FormPanel wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    FormElement.as(element);
+    assert Document.get().getBody().isOrHasChild(element);
+
+    FormPanel formPanel = new FormPanel((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    formPanel.onAttach();
+    RootPanel.detachOnWindowClose(formPanel);
+
+    return formPanel;
+  }
+
   private FormHandlerCollection formHandlers;
   private String frameName;
   private Element iframe;
@@ -150,6 +173,10 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   public FormPanel(String target) {
     super(DOM.createForm());
     setTarget(target);
+  }
+
+  private FormPanel(Element elem) {
+    super(elem);
   }
 
   public void addFormHandler(FormHandler handler) {

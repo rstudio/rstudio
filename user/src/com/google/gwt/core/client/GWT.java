@@ -92,8 +92,7 @@ public final class GWT {
           "ERROR: GWT.create() is only usable in client code!  It cannot be called, "
               + "for example, from server code.  If you are running a unit test, "
               + "check that your test case extends GWTTestCase and that GWT.create() "
-              + "is not called from within an initializer, constructor, or "
-              + "setUp()/tearDown().");
+              + "is not called from within an initializer or constructor.");
     } else {
       return sGWTBridge.<T> create(classLiteral);
     }

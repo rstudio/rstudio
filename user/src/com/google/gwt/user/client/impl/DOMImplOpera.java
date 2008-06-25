@@ -25,7 +25,7 @@ public class DOMImplOpera extends DOMImplStandard {
 
   @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail * 4 || -1;
+    return evt.detail * 4 || 0;
   }-*/;
 
   /**
@@ -70,6 +70,8 @@ public class DOMImplOpera extends DOMImplStandard {
     elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     elem.onmousewheel  = (bits & 0x20000) ?
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    elem.oncontextmenu = (bits & 0x40000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
   }-*/;
 }

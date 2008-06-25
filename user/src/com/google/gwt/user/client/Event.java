@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import com.google.gwt.core.client.JavaScriptObject;
  * from, and can be accessed in JavaScript code as expected. This is typically
  * done by calling methods in the {@link com.google.gwt.user.client.DOM} class.
  */
-public final class Event extends JavaScriptObject {
+public class Event extends JavaScriptObject {
 
   /**
    * The left mouse button (used in {@link DOM#eventGetButton(Event)}).
@@ -135,6 +135,13 @@ public final class Event extends JavaScriptObject {
   public static final int ONSCROLL = 0x04000;
 
   /**
+   * Fired when the user requests an element's context menu (usually by right-clicking).
+   * 
+   * Note that not all browsers will fire this event (notably Opera, as of 9.5).
+   */
+  public static final int ONCONTEXTMENU = 0x40000;
+
+  /**
    * A bit-mask covering both focus events (focus and blur).
    */
   public static final int FOCUSEVENTS = ONFOCUS | ONBLUR;
@@ -152,14 +159,27 @@ public final class Event extends JavaScriptObject {
       | ONMOUSEOVER | ONMOUSEOUT;
 
   /**
-   * Error code returned by DOM.getEventXXX methods when the actual integer
-   * value is undefined. For example, DOM.getEventKeyCode returns UNDEFINED for
-   * some non-keyboard events.
+   * Value returned by DOM.getEventXXX methods when the actual integer value is
+   * undefined. For example, DOM.getEventKeyCode returns UNDEFINED for
+   * non-keyboard events.
    * 
-   * For some events, some browsers return undefined while others return data
-   * for certain events.
+   * If assertions are enabled in hosted mode (using the -ea or
+   * -enableassertion compiler flag), DOM.getEventXXX will throw assertion
+   * errors instead of returning UNDEFINED.  The assertions in each
+   * DOM.getEventXXX ensure that the attribute you are retrieving is defined for
+   * all supported browsers.
+   * 
+   * If you disable assertions, some events in some browsers will return
+   * UNDEFINED.  However, other browsers may return meaningless data instead of
+   * UNDEFINED if the attribute does not have meaning in the context of the
+   * Event.  In addition, some methods might return the value 0, which equals
+   * UNDEFINED, when in fact 0 is a valid return type (for example, clientX 
+   * could be 0). As a result, it is NOT safe to rely on the return type of
+   * DOM.getEventXXX methods when assertions are disabled, because the return
+   * values may not have meaning in the context of the event.
    */
-  public static final int UNDEFINED = -1;
+  @Deprecated
+  public static final int UNDEFINED = 0;
 
   /**
    * Gets the current event that is being fired. The current event is only

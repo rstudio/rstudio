@@ -42,17 +42,54 @@ public final class JsRootScope extends JsScope {
   }
 
   private void ctorAddKnownGlobalSymbols() {
+    // Section references are from Ecma-262
+    // (http://www.ecma-international.org/publications/files/ECMA-ST/Ecma-262.pdf)
     String[] commonBuiltins = new String[] {
-        "ActiveXObject", "Array", "Boolean", "Date", "Debug", "Enumerator",
-        "Error", "Function", "Global", "Image", "Math", "Number", "Object",
-        "RegExp", "String", "VBArray", "window", "document", "event",
-        "arguments", "call", "toString", "$wnd", "$doc", "$moduleName",
-        "$moduleBase", "undefined", "getClass", "$gwt_version"};
+        // 15.1.1 Value Properties of the Global Object
+        "NaN",
+        "Infinity",
+        "undefined",
+
+        // 15.1.2 Function Properties of the Global Object
+        "eval", "parseInt", "parseFloat",
+        "isNan",
+        "isFinite",
+
+        // 15.1.3 URI Handling Function Properties
+        "decodeURI", "decodeURIComponent",
+        "encodeURI",
+        "encodeURIComponent",
+
+        // 15.1.4 Constructor Properties of the Global Object
+        "Object", "Function", "Array", "String", "Boolean", "Number", "Date",
+        "RegExp", "Error", "EvalError", "RangeError", "ReferenceError",
+        "SyntaxError", "TypeError", "URIError",
+
+        // 15.1.5 Other Properties of the Global Object
+        "Math",
+
+        // 10.1.6 Activation Object
+        "arguments",
+
+        // B.2 Additional Properties (non-normative)
+        "escape", "unescape",
+
+        // Common browser-defined identifiers not defined in ECMAScript
+        "window", "document", "event", "location", "history", "external",
+        "Debug", "Enumerator", "Global", "Image", "ActiveXObject", "VBArray",
+
+        // Functions commonly defined on Object
+        "toString", "getClass",
+
+        // GWT-defined identifiers
+        "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version",
+
+        // TODO: prove why this is necessary or remove it
+        "call",};
 
     for (int i = 0; i < commonBuiltins.length; i++) {
       String ident = commonBuiltins[i];
       this.doCreateName(ident, ident);
     }
   }
-
 }

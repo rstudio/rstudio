@@ -15,7 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * A widget that wraps an IFRAME element, which can contain an arbitrary web
@@ -35,8 +38,30 @@ import com.google.gwt.user.client.DOM;
  * </p>
  */
 public class Frame extends Widget {
+
   static final String DEFAULT_STYLENAME = "gwt-Frame";
-  
+
+  /**
+   * Creates a Frame widget that wraps an existing &lt;frame&gt; element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static Frame wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    IFrameElement.as(element);
+    assert Document.get().getBody().isOrHasChild(element);
+
+    Frame frame = new Frame((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    frame.onAttach();
+    RootPanel.detachOnWindowClose(frame);
+
+    return frame;
+  }
+
   /**
    * Creates an empty frame.
    */
@@ -53,6 +78,10 @@ public class Frame extends Widget {
   public Frame(String url) {
     this();
     setUrl(url);
+  }
+
+  private Frame(Element element) {
+    setElement(element);
   }
 
   /**

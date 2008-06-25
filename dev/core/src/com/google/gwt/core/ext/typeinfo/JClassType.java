@@ -332,6 +332,11 @@ public abstract class JClassType extends JType implements HasAnnotations,
       if (isParameterized != null && isParameterized.getBaseType() == type) {
         return isParameterized;
       }
+      
+      JRawType isRaw = supertype.isRawType();
+      if (isRaw != null && isRaw.getBaseType() == type) {
+        return isRaw.asParameterizedByWildcards();
+      }
     }
 
     return null;
@@ -355,6 +360,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract JClassType getEnclosingType();
 
+  @Override
   public abstract JClassType getErasedType();
 
   public abstract JField getField(String name);
@@ -471,6 +477,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract boolean isFinal();
 
+  @Override
   public abstract JGenericType isGenericType();
 
   @Override

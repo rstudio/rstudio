@@ -58,6 +58,30 @@ public class TestFireEvents extends AbstractIssue {
     Button button = new Button("Double-click me") {
       @Override
       public void onBrowserEvent(Event event) {
+        // Verify that values associated with events are defined. For some
+        // values, we just want to make sure we can get them without any
+        // errrors.
+        assert event.getClientX() > 0;
+        assert event.getClientY() > 0;
+        assert event.getScreenX() > 0;
+        assert event.getScreenY() > 0;
+        event.getAltKey();
+        event.getCtrlKey();
+        event.getShiftKey();
+        event.getMetaKey();
+        int eventType = event.getTypeInt();
+        switch (eventType) {
+          case Event.ONMOUSEDOWN:
+          case Event.ONMOUSEUP:
+            event.getButton();
+            break;
+          case Event.ONMOUSEOVER:
+          case Event.ONMOUSEOUT:
+            assert event.getFromElement() != null;
+            assert event.getToElement() != null;
+            break;
+        }
+
         passTest(event);
       }
     };
@@ -72,8 +96,30 @@ public class TestFireEvents extends AbstractIssue {
 
     // Keyboard events
     TextBox textBox = new TextBox() {
+      @SuppressWarnings("fallthrough")
       @Override
       public void onBrowserEvent(Event event) {
+        // Verify that values associated with events are defined
+        int eventType = event.getTypeInt();
+        switch (eventType) {
+          case Event.ONFOCUS:
+          case Event.ONBLUR:
+            break;
+          case Event.ONKEYDOWN:
+            event.getRepeat();
+            // Intentional fall through
+          case Event.ONKEYUP:
+          case Event.ONKEYPRESS:
+            event.getAltKey();
+            event.getCtrlKey();
+            event.getShiftKey();
+            event.getMetaKey();
+            assert event.getKeyCode() > 0;
+            break;
+          case Event.ONCHANGE:
+            break;
+        }
+
         passTest(event);
       }
     };
@@ -96,6 +142,20 @@ public class TestFireEvents extends AbstractIssue {
     ScrollPanel scrollable = new ScrollPanel(scrollableContents) {
       @Override
       public void onBrowserEvent(Event event) {
+        // Verify that values associated with events are defined
+        int eventType = event.getTypeInt();
+        switch (eventType) {
+          case Event.ONMOUSEWHEEL:
+            event.getClientX();
+            event.getClientY();
+            event.getScreenX();
+            event.getScreenY();
+            event.getMouseWheelVelocityY();
+            break;
+          case Event.ONSCROLL:
+            break;
+        }
+
         passTest(event);
       }
     };
@@ -110,13 +170,29 @@ public class TestFireEvents extends AbstractIssue {
       @Override
       public void onBrowserEvent(Event event) {
         passTest(event);
-        if (DOM.eventGetType(event) == Event.ONERROR) {
-          setUrl("issues/images/gwtLogo.png");
+
+        int eventType = event.getTypeInt();
+        switch (eventType) {
+          case Event.ONERROR:
+            setUrl("issues/images/gwtLogo.png");
+            break;
+          case Event.ONCONTEXTMENU:
+            assert event.getClientX() > 0;
+            assert event.getClientY() > 0;
+            assert event.getScreenX() > 0;
+            assert event.getScreenY() > 0;
+            event.getAltKey();
+            event.getShiftKey();
+            event.getCtrlKey();
+            event.getMetaKey();
+            break;
         }
       }
     };
+    loadable.sinkEvents(Event.ONCONTEXTMENU);
     addTest(Event.ONERROR, "error", loadable);
     addDependentTest(Event.ONLOAD, "load");
+    addDependentTest(Event.ONCONTEXTMENU, "contextMenu");
     loadable.setUrl("imageDoesNotExist.abc");
 
     // The following are not testable or not supported in all browsers

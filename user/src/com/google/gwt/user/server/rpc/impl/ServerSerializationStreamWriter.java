@@ -544,10 +544,15 @@ public final class ServerSerializationStreamWriter extends
 
   public void writeLong(long fieldValue) {
     /*
-     * Marshal down to client as a string; if we tried to marshal as a number
-     * the JSON eval would lose precision.
+     * Client code represents longs internally as an array of two Numbers. In
+     * order to make serialization of longs faster, we'll send the component
+     * parts so that the value can be directly reconstituted on the client.
      */
-    writeString(Long.toString(fieldValue, 16));
+    double[] parts = makeLongComponents((int) (fieldValue >> 32),
+        (int) fieldValue);
+    assert parts.length == 2;
+    writeDouble(parts[0]);
+    writeDouble(parts[1]);
   }
 
   @Override

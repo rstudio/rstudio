@@ -15,10 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.core.client.GWT;
 
 /**
  * A widget that presents a list of choices to the user, either as a list box or
@@ -148,6 +150,28 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   private static final int INSERT_AT_END = -1;
   private static final Impl impl = GWT.create(Impl.class);
+
+  /**
+   * Creates a ListBox widget that wraps an existing &lt;select&gt; element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static ListBox wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    SelectElement.as(element);
+    assert Document.get().getBody().isOrHasChild(element);
+
+    ListBox listBox = new ListBox((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    listBox.onAttach();
+    RootPanel.detachOnWindowClose(listBox);
+
+    return listBox;
+  }
+
   private ChangeListenerCollection changeListeners;
 
   /**
@@ -166,6 +190,10 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   public ListBox(boolean isMultipleSelect) {
     super(DOM.createSelect(isMultipleSelect));
     setStyleName("gwt-ListBox");
+  }
+
+  private ListBox(Element element) {
+    super(element);
   }
 
   public void addChangeListener(ChangeListener listener) {

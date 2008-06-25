@@ -23,7 +23,9 @@ import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * The panel to which all other widgets must ultimately be added. RootPanels are
@@ -37,6 +39,21 @@ import java.util.HashMap;
 public class RootPanel extends AbsolutePanel {
 
   private static HashMap<String, RootPanel> rootPanels = new HashMap<String, RootPanel>();
+  private static List<Widget> widgetsToDetach = new ArrayList<Widget>();
+
+  /**
+   * Adds a widget to the list of widgets to be detached when the page unloads.
+   * 
+   * This method must be called for all widgets that have no parent widgets.
+   * These are most commonly {@link RootPanel RootPanels}, but can also be any
+   * widget used to wrap an existing element on the page. Failing to do this
+   * may cause these widgets to leak memory.
+   * 
+   * @param widget the widget to be cleaned up when the page closes
+   */
+  public static void detachOnWindowClose(Widget widget) {
+    widgetsToDetach.add(widget);
+  }
 
   /**
    * Gets the default root panel. This panel wraps body of the browser's
@@ -82,7 +99,6 @@ public class RootPanel extends AbsolutePanel {
       
       // If we're in a RTL locale, set the RTL directionality
       // on the entire document.
-      
       if (LocaleInfo.getCurrentLocale().isRTL()) {
         BidiUtils.setDirectionOnElement(getRootElement(), HasDirection.Direction.RTL);
       }      
@@ -94,6 +110,7 @@ public class RootPanel extends AbsolutePanel {
       elem = getBodyElement();
     }
     rootPanels.put(id, rp = new RootPanel(elem));
+    widgetsToDetach.add(rp);
     return rp;
   }
 
@@ -115,17 +132,18 @@ public class RootPanel extends AbsolutePanel {
   private static native Element getRootElement() /*-{
     return $doc;
   }-*/;
-  
+
   private static void hookWindowClosing() {
     // Catch the window closing event.
     Window.addWindowCloseListener(new WindowCloseListener() {
       public void onWindowClosed() {
-        // When the window is closing, detach all root panels. This will cause
-        // all of their children's event listeners to be unhooked, which will
-        // avoid potential memory leaks.
-        for (RootPanel gwt : rootPanels.values()) {
-          if (gwt.isAttached()) {
-            gwt.onDetach();
+        // When the window is closing, detach all widgets that need to be
+        // cleaned up. This will cause all of their event listeners
+        // to be unhooked, which will avoid potential memory leaks.
+        for (int i = 0; i < widgetsToDetach.size(); ++i) {
+          Widget widget = widgetsToDetach.get(i);
+          if (widget.isAttached()) {
+            widget.onDetach();
           }
         }
       }

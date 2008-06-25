@@ -20,7 +20,6 @@ function __MODULE_FUNC__() {
   // Cache symbols locally for good obfuscation
   var $wnd = window
   ,$doc = document
-  ,external = $wnd.external
   ,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null
 
   // These variables gate calling gwtOnLoad; all must be true to start
@@ -71,7 +70,7 @@ function __MODULE_FUNC__() {
 
   function isHostedMode() {
     try {
-      return (external && external.gwtOnLoad &&
+      return ($wnd.external && $wnd.external.gwtOnLoad &&
           ($wnd.location.search.indexOf('gwt.hybrid') == -1));
     } catch (e) {
       // Defensive: some versions of IE7 reportedly can throw an exception

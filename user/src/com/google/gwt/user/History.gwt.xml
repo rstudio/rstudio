@@ -46,4 +46,10 @@
 		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
 		<when-property-is name="user.agent" value="safari"/>
 	</replace-with>
+
+  <!-- Opera has yet another history implementation. -->
+  <replace-with class="com.google.gwt.user.client.impl.HistoryImplOpera">
+    <when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
+    <when-property-is name="user.agent" value="opera"/>
+  </replace-with>
 </module>

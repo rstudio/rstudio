@@ -17,6 +17,7 @@ package com.google.gwt.core;
 
 import com.google.gwt.core.client.GWTTest;
 import com.google.gwt.core.client.JavaScriptExceptionTest;
+import com.google.gwt.core.client.JsArrayTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -30,6 +31,7 @@ public class CoreSuite {
 
     // $JUnit-BEGIN$
     suite.addTestSuite(JavaScriptExceptionTest.class);
+    suite.addTestSuite(JsArrayTest.class);
     suite.addTestSuite(GWTTest.class);
     // $JUnit-END$
 

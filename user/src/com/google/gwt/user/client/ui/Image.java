@@ -15,13 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
-import com.google.gwt.core.client.GWT;
 
 import java.util.HashMap;
 
@@ -221,6 +223,11 @@ public class Image extends Widget implements SourcesClickEvents,
    */
   private static class UnclippedState extends State {
 
+    UnclippedState(Element element) {
+      DOM.sinkEvents(element, Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
+          | Event.ONERROR | Event.ONMOUSEWHEEL);
+    }
+
     UnclippedState(Image image) {
       image.replaceElement(DOM.createImg());
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
@@ -300,6 +307,28 @@ public class Image extends Widget implements SourcesClickEvents,
     prefetchImages.put(url, img);
   }
 
+  /**
+   * Creates a Image widget that wraps an existing &lt;img&gt; element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static Image wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    ImageElement.as(element);
+    assert Document.get().getBody().isOrHasChild(element);
+
+    Image image = new Image((Element) element);
+    image.changeState(new UnclippedState((Element) element));
+
+    // Mark it attached and remember it for cleanup.
+    image.onAttach();
+    RootPanel.detachOnWindowClose(image);
+
+    return image;
+  }
+
   private ClickListenerCollection clickListeners;
   private LoadListenerCollection loadListeners;
   private MouseListenerCollection mouseListeners;
@@ -347,6 +376,10 @@ public class Image extends Widget implements SourcesClickEvents,
   public Image(String url, int left, int top, int width, int height) {
     changeState(new ClippedState(this, url, left, top, width, height));
     setStyleName("gwt-Image");
+  }
+
+  private Image(Element element) {
+    setElement(element);
   }
 
   public void addClickListener(ClickListener listener) {

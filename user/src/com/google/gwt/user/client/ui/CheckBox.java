@@ -19,16 +19,21 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * A standard check box widget (also serves as a base class for
+ * A standard check box widget.
+ * 
+ * This class also serves as a base class for
  * {@link com.google.gwt.user.client.ui.RadioButton}.
+ * 
  * <p>
  * <img class='gallery' src='CheckBox.png'/>
  * </p>
+ * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-CheckBox { }</li>
  * <li>.gwt-CheckBox-disabled { Applied when Checkbox is disabled }</li>
  * </ul>
+ * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.CheckBoxExample}
@@ -237,7 +242,6 @@ public class CheckBox extends ButtonBase implements HasName {
    * @param elem the new input element
    */
   protected void replaceInputElement(Element elem) {
- 
     // Collect information we need to set
     int tabIndex = getTabIndex();
     boolean checked = isChecked();

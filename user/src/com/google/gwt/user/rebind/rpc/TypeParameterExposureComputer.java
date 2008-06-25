@@ -192,6 +192,35 @@ class TypeParameterExposureComputer {
       return checkDirectExposure();
     }
 
+    boolean isTransitivelyAffectedBy(TypeParameterFlowInfo flowInfo) {
+      Boolean result = isTransitivelyAffectedByCache.get(flowInfo);
+      if (result != null) {
+        return result;
+      }
+
+      HashSet<TypeParameterFlowInfo> affectedBy = new HashSet<TypeParameterFlowInfo>();
+      Set<TypeParameterFlowInfo> affectedByWorklist = new LinkedHashSet<TypeParameterFlowInfo>();
+      affectedByWorklist.add(this);
+
+      result = false;
+      while (!affectedByWorklist.isEmpty()) {
+        TypeParameterFlowInfo currFlowInfo = affectedByWorklist.iterator().next();
+        affectedByWorklist.remove(currFlowInfo);
+
+        if (currFlowInfo == flowInfo) {
+          result = true;
+          break;
+        }
+
+        if (affectedBy.add(currFlowInfo)) {
+          affectedByWorklist.addAll(currFlowInfo.getAffectedBy());
+        }
+      }
+
+      isTransitivelyAffectedByCache.put(flowInfo, result);
+      return result;
+    }
+
     boolean markExposedAsArray(int dim) {
       if (exposure >= dim) {
         return false;
@@ -289,35 +318,6 @@ class TypeParameterExposureComputer {
           type, index);
       flowInfo.addListener(this);
       return flowInfo;
-    }
-
-    private boolean isTransitivelyAffectedBy(TypeParameterFlowInfo flowInfo) {
-      Boolean result = isTransitivelyAffectedByCache.get(flowInfo);
-      if (result != null) {
-        return result;
-      }
-
-      HashSet<TypeParameterFlowInfo> affectedBy = new HashSet<TypeParameterFlowInfo>();
-      Set<TypeParameterFlowInfo> affectedByWorklist = new LinkedHashSet<TypeParameterFlowInfo>();
-      affectedByWorklist.add(this);
-
-      result = false;
-      while (!affectedByWorklist.isEmpty()) {
-        TypeParameterFlowInfo currFlowInfo = affectedByWorklist.iterator().next();
-        affectedByWorklist.remove(currFlowInfo);
-
-        if (currFlowInfo == flowInfo) {
-          result = true;
-          break;
-        }
-
-        if (affectedBy.add(currFlowInfo)) {
-          affectedByWorklist.addAll(currFlowInfo.getAffectedBy());
-        }
-      }
-
-      isTransitivelyAffectedByCache.put(flowInfo, result);
-      return result;
     }
 
     private void recordCausesExposure(JGenericType type, int index, int level) {

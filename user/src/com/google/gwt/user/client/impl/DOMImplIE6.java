@@ -58,7 +58,7 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return Math.round(-evt.wheelDelta / 40) || -1;
+    return Math.round(-evt.wheelDelta / 40) || 0;
   }-*/;
 
   @Override
@@ -160,6 +160,7 @@ class DOMImplIE6 extends DOMImpl {
     $doc.body.attachEvent('onfocus', bodyDispatcher);
     $doc.body.attachEvent('onblur', bodyDispatcher);
     $doc.body.attachEvent('ondblclick', bodyDblClickDispatcher);
+    $doc.body.attachEvent('oncontextmenu', bodyDispatcher);
   }-*/;
 
   @Override
@@ -238,6 +239,8 @@ class DOMImplIE6 extends DOMImpl {
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
+        @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
+    if (chMask & 0x40000) elem.oncontextmenu = (bits & 0x40000) ? 
         @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent : null;
   }-*/;
 }

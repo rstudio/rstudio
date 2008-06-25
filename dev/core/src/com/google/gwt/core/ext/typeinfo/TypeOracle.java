@@ -167,6 +167,8 @@ public class TypeOracle {
     }
   }
 
+  private Set<JClassType> allTypes = null;
+
   private final Map<JType, JArrayType> arrayTypes = new IdentityHashMap<JType, JArrayType>();
 
   private final Set<JRealClassType> invalidatedTypes = new HashSet<JRealClassType>();
@@ -455,14 +457,16 @@ public class TypeOracle {
    * @return an array of types, possibly of zero length
    */
   public JClassType[] getTypes() {
-    Set<JClassType> allTypes = new HashSet<JClassType>();
-    JPackage[] pkgs = getPackages();
-    for (int i = 0; i < pkgs.length; i++) {
-      JPackage pkg = pkgs[i];
-      JClassType[] types = pkg.getTypes();
-      for (int j = 0; j < types.length; j++) {
-        JRealClassType type = (JRealClassType) types[j];
-        buildAllTypesImpl(allTypes, type);
+    if (allTypes == null) {
+      allTypes = new HashSet<JClassType>();
+      JPackage[] pkgs = getPackages();
+      for (int i = 0; i < pkgs.length; i++) {
+        JPackage pkg = pkgs[i];
+        JClassType[] types = pkg.getTypes();
+        for (int j = 0; j < types.length; j++) {
+          JRealClassType type = (JRealClassType) types[j];
+          buildAllTypesImpl(allTypes, type);
+        }
       }
     }
     return allTypes.toArray(NO_JCLASSES);
@@ -533,6 +537,7 @@ public class TypeOracle {
    * TODO: make this not public.
    */
   public void refresh(TreeLogger logger) throws NotFoundException {
+    allTypes = null;
     if (javaLangObject == null) {
       javaLangObject = findType("java.lang.Object");
       if (javaLangObject == null) {
@@ -633,9 +638,9 @@ public class TypeOracle {
     // For each type, walk up its hierarchy chain and tell each supertype
     // about its subtype.
     //
-    JClassType[] allTypes = getTypes();
-    for (int i = 0; i < allTypes.length; i++) {
-      JClassType type = allTypes[i];
+    JClassType[] types = getTypes();
+    for (int i = 0; i < types.length; i++) {
+      JClassType type = types[i];
       type.notifySuperTypes();
     }
   }

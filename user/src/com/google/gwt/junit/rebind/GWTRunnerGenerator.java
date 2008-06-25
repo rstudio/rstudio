@@ -24,7 +24,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.junit.client.impl.GWTRunner;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -90,22 +89,18 @@ public class GWTRunnerGenerator extends Generator {
         generatedClass, GWT_RUNNER_NAME);
 
     if (sourceWriter != null) {
-      PerfLogger.start("GWTRunnerGenerator");
       JClassType[] allTestTypes = getAllTestTypes(context.getTypeOracle());
       Set<String> testClasses = getTestTypesForModule(logger, moduleName,
           allTestTypes);
       writeCreateNewTestCaseMethod(testClasses, sourceWriter);
       sourceWriter.commit(logger);
-      PerfLogger.end();
     }
 
     return qualifiedStubClassName;
   }
 
   private JClassType[] getAllTestTypes(TypeOracle typeOracle) {
-    PerfLogger.start("GWTRunnerGenerator.getAllTestTypes");
     JClassType gwtTestType = typeOracle.findType(GWTTestCase.class.getName());
-    PerfLogger.end();
     if (gwtTestType != null) {
       return gwtTestType.getSubtypes();
     } else {
@@ -130,7 +125,6 @@ public class GWTRunnerGenerator extends Generator {
 
   private Set<String> getTestTypesForModule(TreeLogger logger,
       String moduleName, JClassType[] allTestTypes) {
-    PerfLogger.start("GWTRunnerGenerator.getTestTypesForModule");
     // Must use sorted set to prevent nondeterminism.
     Set<String> testClasses = new TreeSet<String>();
     for (JClassType classType : allTestTypes) {
@@ -158,13 +152,11 @@ public class GWTRunnerGenerator extends Generator {
       }
       testClasses.add(className);
     }
-    PerfLogger.end();
     return testClasses;
   }
 
   private void writeCreateNewTestCaseMethod(Set<String> testClasses,
       SourceWriter sw) {
-    PerfLogger.start("GWTRunnerGenerator.writeCreateNewTestCaseMethod");
     sw.println();
     sw.println("protected final GWTTestCase createNewTestCase(String testClass) {");
     sw.indent();
@@ -183,6 +175,5 @@ public class GWTRunnerGenerator extends Generator {
     sw.println("return null;");
     sw.outdent();
     sw.println("}");
-    PerfLogger.end();
   }
 }

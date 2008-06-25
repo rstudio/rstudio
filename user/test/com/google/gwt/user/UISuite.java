@@ -20,6 +20,7 @@ import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
+import com.google.gwt.user.client.ui.AnchorTest;
 import com.google.gwt.user.client.ui.CaptionPanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CompositeTest;
@@ -35,6 +36,7 @@ import com.google.gwt.user.client.ui.DelegatingKeyboardListenerCollectionTest;
 import com.google.gwt.user.client.ui.DialogBoxTest;
 import com.google.gwt.user.client.ui.DisclosurePanelTest;
 import com.google.gwt.user.client.ui.DockPanelTest;
+import com.google.gwt.user.client.ui.ElementWrappingTest;
 import com.google.gwt.user.client.ui.FastStringMapTest;
 import com.google.gwt.user.client.ui.FlexTableTest;
 import com.google.gwt.user.client.ui.FlowPanelTest;
@@ -55,6 +57,8 @@ import com.google.gwt.user.client.ui.PrefixTreeTest;
 import com.google.gwt.user.client.ui.RadioButtonTest;
 import com.google.gwt.user.client.ui.RichTextAreaTest;
 import com.google.gwt.user.client.ui.ScrollPanelTest;
+import com.google.gwt.user.client.ui.SimpleCheckBoxTest;
+import com.google.gwt.user.client.ui.SimpleRadioButtonTest;
 import com.google.gwt.user.client.ui.SplitPanelTest;
 import com.google.gwt.user.client.ui.StackPanelTest;
 import com.google.gwt.user.client.ui.TabBarTest;
@@ -81,6 +85,7 @@ public class UISuite {
         "Test for suite for the com.google.gwt.ui module");
 
     suite.addTestSuite(AbsolutePanelTest.class);
+    suite.addTestSuite(AnchorTest.class);
     suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
@@ -99,6 +104,7 @@ public class UISuite {
     suite.addTestSuite(DisclosurePanelTest.class);
     suite.addTestSuite(DockPanelTest.class);
     suite.addTestSuite(DOMTest.class);
+    suite.addTestSuite(ElementWrappingTest.class);
     suite.addTestSuite(FastStringMapTest.class);
     suite.addTestSuite(FlexTableTest.class);
     suite.addTestSuite(FlowPanelTest.class);
@@ -122,6 +128,8 @@ public class UISuite {
     suite.addTestSuite(RadioButtonTest.class);
     suite.addTestSuite(RichTextAreaTest.class);
     suite.addTestSuite(ScrollPanelTest.class);
+    suite.addTestSuite(SimpleCheckBoxTest.class);
+    suite.addTestSuite(SimpleRadioButtonTest.class);
     suite.addTestSuite(SplitPanelTest.class);
     suite.addTestSuite(StackPanelTest.class);
     suite.addTestSuite(TabBarTest.class);
@@ -135,6 +143,7 @@ public class UISuite {
     suite.addTestSuite(WidgetOnLoadTest.class);
     suite.addTestSuite(WindowTest.class);
     suite.addTestSuite(XMLTest.class);
+    suite.addTestSuite(ClassInitTest.class);
 
     return suite;
   }

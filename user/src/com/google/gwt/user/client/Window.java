@@ -21,6 +21,7 @@ import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.impl.WindowImpl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,12 +34,13 @@ public class Window {
   /**
    * This class provides access to the browser's location's object. The location
    * object contains information about the current URL and methods to manipulate
-   * it. <code>Location</code> is a very simple wrapper, so not all browser quirks are hidden from
-   * the user.
+   * it. <code>Location</code> is a very simple wrapper, so not all browser
+   * quirks are hidden from the user.
    * 
    */
   public static class Location {
     private static Map<String, String> paramMap;
+    private static Map<String, String> unmodifiableParamMap;
 
     /**
      * Assigns the window to a new URL. All GWT state will be lost.
@@ -93,7 +95,24 @@ public class Window {
      * @return the value of the URL's parameter
      */
     public static String getParameter(String name) {
-      return ensureParameterMap().get(name);
+      ensureParameterMap();
+      return paramMap.get(name);
+    }
+
+    /**
+     * Returns a Map of the URL query parameters for the host page; since
+     * changing the map would not change the window's location, the map returned
+     * is immutable.
+     * 
+     * @return a map from URL query parameter names to values
+     */
+    public static Map<String, String> getParameterMap() {
+      ensureParameterMap();
+
+      if (unmodifiableParamMap == null) {
+        unmodifiableParamMap = Collections.unmodifiableMap(paramMap);
+      }
+      return unmodifiableParamMap;
     }
 
     /**
@@ -149,7 +168,7 @@ public class Window {
       $wnd.location.replace(newURL);
     }-*/;
 
-    private static Map<String, String> ensureParameterMap() {
+    private static void ensureParameterMap() {
       if (paramMap == null) {
         paramMap = new HashMap<String, String>();
         String queryString = getQueryString();
@@ -165,7 +184,6 @@ public class Window {
           }
         }
       }
-      return paramMap;
     }
 
     private Location() {
@@ -470,7 +488,7 @@ public class Window {
   }-*/;
 
   private static void maybeInitializeHandlers() {
-    if (!handlersAreInitialized) {
+    if (GWT.isClient() && !handlersAreInitialized) {
       init();
       handlersAreInitialized = true;
     }

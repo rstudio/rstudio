@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.IsSerializable;
 
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    */
   private static final String NORMALIZE_TO_SINGLE_WHITE_SPACE = "\\s+";
 
-  private static HTML convertMe = new HTML();
+  private static HTML convertMe = GWT.isClient() ? new HTML() : null;
 
   /**
    * Associates substrings with words.

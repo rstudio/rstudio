@@ -15,10 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * A widget that can contain arbitrary HTML.
+ * 
+ * This widget uses a &lt;div&gt; element, causing it to be displayed with block
+ * layout.
  * 
  * <p>
  * If you only need a simple label (text, but not HTML), then the
@@ -38,6 +43,29 @@ import com.google.gwt.user.client.DOM;
  * </p>
  */
 public class HTML extends Label implements HasHTML {
+
+  /**
+   * Creates an HTML widget that wraps an existing &lt;div&gt; or &lt;span&gt;
+   * element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static HTML wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    assert element.getTagName().equalsIgnoreCase("div")
+        || element.getTagName().equalsIgnoreCase("span");
+    assert Document.get().getBody().isOrHasChild(element);
+
+    HTML html = new HTML((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    html.onAttach();
+    RootPanel.detachOnWindowClose(html);
+
+    return html;
+  }
 
   /**
    * Creates an empty HTML widget.
@@ -67,6 +95,10 @@ public class HTML extends Label implements HasHTML {
   public HTML(String html, boolean wordWrap) {
     this(html);
     setWordWrap(wordWrap);
+  }
+
+  HTML(Element element) {
+    super(element);
   }
 
   public String getHTML() {

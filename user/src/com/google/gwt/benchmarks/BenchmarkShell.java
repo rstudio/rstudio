@@ -45,7 +45,9 @@ public class BenchmarkShell {
     }
 
     public void processResult(TestCase testCase, JUnitResult result) {
-      report.addBenchmarkResults(testCase, (BenchmarkResults) result);
+      if (result instanceof BenchmarkResults) {
+        report.addBenchmarkResults(testCase, (BenchmarkResults) result);
+      }
     }
   }
 

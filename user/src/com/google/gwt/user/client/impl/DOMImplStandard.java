@@ -48,7 +48,7 @@ abstract class DOMImplStandard extends DOMImpl {
     } else if (button == 3) {
       return 2;
     }
-    return button || -1;
+    return button || 0;
   }-*/;
 
   @Override
@@ -255,6 +255,8 @@ abstract class DOMImplStandard extends DOMImpl {
     if (chMask & 0x10000) elem.onerror       = (bits & 0x10000) ?
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
     if (chMask & 0x20000) elem.onmousewheel  = (bits & 0x20000) ? 
+        @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
+    if (chMask & 0x40000) elem.oncontextmenu = (bits & 0x40000) ? 
         @com.google.gwt.user.client.impl.DOMImplStandard::dispatchEvent : null;
   }-*/;
 

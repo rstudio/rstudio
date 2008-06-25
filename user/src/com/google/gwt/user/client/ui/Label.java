@@ -15,14 +15,18 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.i18n.client.BidiUtils;
+import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.i18n.client.BidiUtils;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
+ * 
+ * This widget uses a &lt;div&gt; element, causing it to be displayed with
+ * block layout.
  * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
@@ -38,6 +42,29 @@ public class Label extends Widget implements SourcesClickEvents,
     SourcesMouseEvents, SourcesMouseWheelEvents, HasHorizontalAlignment,
     HasText, HasWordWrap, HasDirection {
 
+  /**
+   * Creates a Label widget that wraps an existing &lt;div&gt; or &lt;span&gt;
+   * element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static Label wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    assert element.getTagName().equalsIgnoreCase("div")
+        || element.getTagName().equalsIgnoreCase("span");
+    assert Document.get().getBody().isOrHasChild(element);
+
+    Label label = new Label((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    label.onAttach();
+    RootPanel.detachOnWindowClose(label);
+
+    return label;
+  }
+
   private ClickListenerCollection clickListeners;
   private HorizontalAlignmentConstant horzAlign;
   private MouseListenerCollection mouseListeners;
@@ -49,15 +76,6 @@ public class Label extends Widget implements SourcesClickEvents,
   public Label() {
     setElement(DOM.createDiv());
     setStyleName("gwt-Label");
-  }
-
-  /**
-   * This constructor is used to let the HTML constructors avoid work.
-   * 
-   * @param element element
-   */
-  Label(Element element) {
-    setElement(element);
   }
 
   /**
@@ -79,6 +97,15 @@ public class Label extends Widget implements SourcesClickEvents,
   public Label(String text, boolean wordWrap) {
     this(text);
     setWordWrap(wordWrap);
+  }
+
+  /**
+   * This constructor is used to let the HTML constructors avoid work.
+   * 
+   * @param element element
+   */
+  Label(Element element) {
+    setElement(element);
   }
 
   public void addClickListener(ClickListener listener) {

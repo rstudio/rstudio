@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -177,29 +178,31 @@ public class TreeItem extends UIObject implements HasHTML {
    * Static constructor to set up clonable elements.
    */
   static {
-    // Create the base table element that will be cloned.
-    BASE_INTERNAL_ELEM = DOM.createTable();
-    Element contentElem = DOM.createSpan();
-    Element tbody = DOM.createTBody(), tr = DOM.createTR();
-    Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
-    DOM.appendChild(BASE_INTERNAL_ELEM, tbody);
-    DOM.appendChild(tbody, tr);
-    DOM.appendChild(tr, tdImg);
-    DOM.appendChild(tr, tdContent);
-    DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
-    DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
-    DOM.appendChild(tdContent, contentElem);
-    DOM.setStyleAttribute(contentElem, "display", "inline");
-    setStyleName(contentElem, "gwt-TreeItem");
-    DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
+    if (GWT.isClient()) {
+      // Create the base table element that will be cloned.
+      BASE_INTERNAL_ELEM = DOM.createTable();
+      Element contentElem = DOM.createSpan();
+      Element tbody = DOM.createTBody(), tr = DOM.createTR();
+      Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
+      DOM.appendChild(BASE_INTERNAL_ELEM, tbody);
+      DOM.appendChild(tbody, tr);
+      DOM.appendChild(tr, tdImg);
+      DOM.appendChild(tr, tdContent);
+      DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
+      DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
+      DOM.appendChild(tdContent, contentElem);
+      DOM.setStyleAttribute(contentElem, "display", "inline");
+      setStyleName(contentElem, "gwt-TreeItem");
+      DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
 
-    // Create the base element that will be cloned
-    BASE_BARE_ELEM = DOM.createDiv();
+      // Create the base element that will be cloned
+      BASE_BARE_ELEM = DOM.createDiv();
 
-    // Simulates padding from table element.
-    DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "3px");
-    DOM.appendChild(BASE_BARE_ELEM, contentElem);
-    Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
+      // Simulates padding from table element.
+      DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "3px");
+      DOM.appendChild(BASE_BARE_ELEM, contentElem);
+      Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
+    }
   }
   private ArrayList<TreeItem> children;
   private Element contentElem, childSpanElem, imageHolder;

@@ -142,7 +142,7 @@ public class PerfLogger {
       msg.append(t.message);
       if (!t.messageOnly) {
         msg.append(" ");
-        msg.append(t.totalTimeNanos / 1000000.0);
+        msg.append(t.totalTimeNanos / 1000000);
         msg.append("ms");
       }
       System.out.println(msg);

@@ -39,9 +39,9 @@ public class JWildcardType extends JDelegatingClassType {
     UNBOUND
   }
 
+  private final BoundType boundType;
   private JClassType[] lazyLowerBounds;
   private JClassType[] lazyUpperBounds;
-  private final BoundType boundType;
 
   public JWildcardType(BoundType boundType, JClassType typeBound) {
     this.boundType = boundType;
@@ -58,15 +58,13 @@ public class JWildcardType extends JDelegatingClassType {
     return getBaseType().findMethod(name, paramTypes);
   }
 
+  public BoundType getBoundType() {
+    return boundType;
+  }
+
   @Override
   public JClassType getErasedType() {
-    if (isUpperBound()) {
-      // ? extends T erases to T
-      return getFirstBound().getErasedType();
-    }
-
-    // ? super T erases to Object
-    return getOracle().getJavaLangObject();
+    return getUpperBound().getErasedType();
   }
 
   @Override
@@ -142,6 +140,14 @@ public class JWildcardType extends JDelegatingClassType {
     }
 
     // The only safe superclass for a ? super T is Object.
+    return getOracle().getJavaLangObject();
+  }
+
+  public JClassType getUpperBound() {
+    if (isUpperBound()) {
+      return getFirstBound();
+    }
+
     return getOracle().getJavaLangObject();
   }
 

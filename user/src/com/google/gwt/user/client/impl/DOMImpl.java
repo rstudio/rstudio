@@ -54,15 +54,15 @@ public abstract class DOMImpl {
    }-*/;
 
   public native int eventGetButton(Event evt) /*-{
-    return evt.button || -1;
+    return evt.button || 0;
    }-*/;
 
   public native int eventGetClientX(Event evt) /*-{
-    return evt.clientX || -1;
+    return evt.clientX || 0;
    }-*/;
 
   public native int eventGetClientY(Event evt) /*-{
-    return evt.clientY || -1;
+    return evt.clientY || 0;
    }-*/;
 
   public native boolean eventGetCtrlKey(Event evt) /*-{
@@ -79,7 +79,7 @@ public abstract class DOMImpl {
     // 'which' gives the right key value, except when it doesn't -- in which
     // case, keyCode gives the right value on all browsers.
     // If all else fails, return an error code
-    return evt.which || evt.keyCode || -1;
+    return evt.which || evt.keyCode || 0;
    }-*/;
 
   public native boolean eventGetMetaKey(Event evt) /*-{
@@ -93,11 +93,11 @@ public abstract class DOMImpl {
    }-*/;
 
   public native int eventGetScreenX(Event evt) /*-{
-    return evt.screenX || -1;
+    return evt.screenX || 0;
    }-*/;
 
   public native int eventGetScreenY(Event evt) /*-{
-    return evt.screenY || -1;
+    return evt.screenY || 0;
    }-*/;
 
   public native boolean eventGetShiftKey(Event evt) /*-{
@@ -133,6 +133,7 @@ public abstract class DOMImpl {
         case "error": return 0x10000;
         case "mousewheel": return 0x20000;
         case "DOMMouseScroll": return 0x20000;
+        case "contextmenu": return 0x40000;
       }
     }-*/;
 

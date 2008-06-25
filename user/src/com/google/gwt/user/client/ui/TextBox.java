@@ -15,10 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.i18n.client.BidiUtils;
+import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.i18n.client.BidiUtils;
 
 /**
  * A standard single-line text box.
@@ -41,13 +43,35 @@ import com.google.gwt.i18n.client.BidiUtils;
 public class TextBox extends TextBoxBase implements HasDirection {
 
   /**
+   * Creates a TextBox widget that wraps an existing &lt;input type='text'&gt;
+   * element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static TextBox wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    assert InputElement.as(element).getType().equalsIgnoreCase("text");
+    assert Document.get().getBody().isOrHasChild(element);
+
+    TextBox textBox = new TextBox((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    textBox.onAttach();
+    RootPanel.detachOnWindowClose(textBox);
+
+    return textBox;
+  }
+
+  /**
    * Creates an empty text box.
    */
   public TextBox() {
     super(DOM.createInputText());
     setStyleName("gwt-TextBox");
   }
-  
+
   /**
    * Protected constructor for use by subclasses.
    * @param element element

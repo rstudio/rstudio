@@ -70,9 +70,9 @@ public class LongEmulationNormalizer {
         case SHL:
         case SHR:
         case SHRU:
-          if (rhsType != program.getTypePrimitiveInt()) {
+          if (rhsType == longType) {
             throw new InternalCompilerException(
-                "Expected right operand to be of type int");
+                "Expected right operand not to be of type long");
           }
           break;
         default:

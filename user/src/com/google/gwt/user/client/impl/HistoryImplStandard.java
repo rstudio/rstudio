@@ -42,7 +42,7 @@ class HistoryImplStandard extends HistoryImpl {
         @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
       }
 
-      $wnd.setTimeout('__checkHistory()', 250);
+      $wnd.setTimeout($wnd.__checkHistory, 250);
     };
 
     // Kick off the timer.

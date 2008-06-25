@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.util.PerfLogger;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -95,31 +96,28 @@ public class CompilationState {
    * compile errors.
    */
   public void compile(TreeLogger logger) throws UnableToCompleteException {
+    PerfLogger.start("CompilationState.compile");
     Set<CompilationUnit> units = getCompilationUnits();
-    JdtCompiler.compile(units);
-    Set<String> validBinaryTypeNames = getValidBinaryTypeNames(units);
+    if (JdtCompiler.compile(units)) {
+      Set<String> validBinaryTypeNames = getValidBinaryTypeNames(units);
 
-    // Dump all units with direct errors; we cannot safely check them.
-    boolean anyErrors = CompilationUnitInvalidator.invalidateUnitsWithErrors(
-        logger, units);
+      // Dump all units with direct errors; we cannot safely check them.
+      boolean anyErrors = CompilationUnitInvalidator.invalidateUnitsWithErrors(
+          logger, units);
 
-    // Check all units using our custom checks.
-    CompilationUnitInvalidator.validateCompilationUnits(units,
-        validBinaryTypeNames);
+      // Check all units using our custom checks.
+      CompilationUnitInvalidator.validateCompilationUnits(units,
+          validBinaryTypeNames);
 
-    // More units may have errors now.
-    anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
-        units);
+      // More units may have errors now.
+      anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
+          units);
 
-    if (anyErrors) {
-      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
-    }
+      if (anyErrors) {
+        CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
+      }
 
-    JsniCollector.collectJsniMethods(logger, units, new JsProgram());
-
-    // JSNI collection can generate additional errors.
-    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
-      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
+      JsniCollector.collectJsniMethods(logger, units, new JsProgram());
     }
 
     mediator.refresh(logger, units);
@@ -132,6 +130,7 @@ public class CompilationState {
     }
 
     updateExposedUnits();
+    PerfLogger.end();
   }
 
   /**

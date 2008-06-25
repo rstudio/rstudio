@@ -20,7 +20,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * TODO: document me.
+ * Tests the {@link TabBar} widget.
  */
 public class TabBarTest extends GWTTestCase {
   int selected;
@@ -106,6 +106,32 @@ public class TabBarTest extends GWTTestCase {
     assertTrue("<b>bar</b>".equalsIgnoreCase(bar.getTabHTML(1)));
     bar.removeTab(1);
     assertEquals("baz", bar.getTabHTML(1));
+  }
+
+  public void testSetTextAndHTML() {
+    final TabBar bar = createTabBar();
+    bar.addTab("foo");
+    bar.addTab("bar");
+    bar.addTab("baz");
+    bar.addTab(new Grid(0, 0));
+
+    bar.setTabText(1, "w00t");
+    assertEquals("w00t", bar.getTabHTML(1));
+
+    // toLowerCase() is necessary in these assertions because IE capitalizes
+    // HTML tags read from innerHTML.
+    bar.setTabHTML(1, "<i>w00t!</i>");
+    assertEquals("<i>w00t!</i>", bar.getTabHTML(1).toLowerCase());
+
+    // Set the text knowing that we currently have an HTML.  This should replace
+    // the HTML with a Label.
+    bar.setTabText(1, "<b>w00t</b>");
+    assertEquals("<b>w00t</b>", bar.getTabHTML(1).toLowerCase());
+
+    // Set the text knowing that we currently have a Grid.  This should replace
+    // the Grid with a Label.
+    bar.setTabText(3, "w00t");
+    assertEquals("w00t", bar.getTabHTML(3));
   }
 
   /**

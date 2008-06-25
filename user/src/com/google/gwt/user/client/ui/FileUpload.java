@@ -15,18 +15,44 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Element;
 
 /**
  * A widget that wraps the HTML &lt;input type='file'&gt; element. This widget
- * must be used with {@link com.google.gwt.user.client.ui.FormPanel} if it is
- * to be submitted to a server.
+ * must be used with {@link com.google.gwt.user.client.ui.FormPanel} if it is to
+ * be submitted to a server.
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.FormPanelExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.FormPanelExample}
  * </p>
  */
 public class FileUpload extends Widget implements HasName {
+
+  /**
+   * Creates a FileUpload widget that wraps an existing &lt;input
+   * type='file'&gt; element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static FileUpload wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the right type and is attached.
+    assert InputElement.as(element).getType().equalsIgnoreCase("file");
+    assert Document.get().getBody().isOrHasChild(element);
+
+    FileUpload fileUpload = new FileUpload((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    fileUpload.onAttach();
+    RootPanel.detachOnWindowClose(fileUpload);
+
+    return fileUpload;
+  }
 
   /**
    * Constructs a new file upload widget.
@@ -35,6 +61,10 @@ public class FileUpload extends Widget implements HasName {
     setElement(DOM.createElement("input"));
     DOM.setElementProperty(getElement(), "type", "file");
     setStyleName("gwt-FileUpload");
+  }
+
+  private FileUpload(Element element) {
+    setElement(element);
   }
 
   /**

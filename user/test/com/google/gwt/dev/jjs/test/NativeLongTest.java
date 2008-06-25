@@ -28,6 +28,9 @@ public class NativeLongTest extends GWTTestCase {
    * constant fold them. The problem is that if you write assertEquals(2L,
    * 4L/2L), the compiler will emit assertEquals(2L, 2L).
    */
+  private static volatile byte BYTE_FOUR = (byte) 4;
+  private static volatile char CHAR_FOUR = (char) 4;
+  private static volatile int INT_FOUR = 4;
   private static volatile long LONG_100 = 100L;
   private static volatile long LONG_1234 = 0x1234123412341234L;
   private static volatile long LONG_1234_DECIMAL = 1234123412341234L;
@@ -37,11 +40,13 @@ public class NativeLongTest extends GWTTestCase {
   private static volatile long LONG_DEADBEEF = 0xdeadbeefdeadbeefL;
   private static volatile long LONG_DEADBEEF12341234 = 0xdeadbeef12341234L;
   private static volatile long LONG_FFFFFFFF = 0xFFFFFFFFL;
+  private static volatile long LONG_FOUR = 4L;
   private static volatile long LONG_ONE = 1L;
   private static volatile long LONG_THREE = 3L;
   private static volatile long LONG_TWO = 2L;
   private static volatile long LONG_TWO_PWR_32 = 0x100000000L;
   private static volatile long LONG_ZERO = 0L;
+  private static volatile short SHORT_FOUR = (short) 4;
 
   @Override
   public String getModuleName() {
@@ -129,10 +134,18 @@ public class NativeLongTest extends GWTTestCase {
 
   public void testModifyingOps() {
     long l = 20;
-    l += 10;
-    assertEquals(31, ++l);
-    assertEquals(31, l++);
-    assertEquals(32, l);
+    l += INT_FOUR;
+    assertEquals(25, ++l);
+    assertEquals(25, l++);
+    assertEquals(26, l);
+    l += BYTE_FOUR;
+    assertEquals(30, l);
+    l += CHAR_FOUR;
+    assertEquals(34, l);
+    l += SHORT_FOUR;
+    assertEquals(38, l);
+    l += INT_FOUR;
+    assertEquals(42, l);
   }
 
   public void testShift() {
@@ -140,6 +153,11 @@ public class NativeLongTest extends GWTTestCase {
     assertEquals(LONG_ONE << 12, (LONG_ONE << 60) >>> (48));
 
     assertTrue((LONG_ONE << 35) > (LONG_ONE << 30));
+    assertEquals(0x10L, LONG_ONE << BYTE_FOUR);
+    assertEquals(0x10L, LONG_ONE << CHAR_FOUR);
+    assertEquals(0x10L, LONG_ONE << SHORT_FOUR);
+    assertEquals(0x10L, LONG_ONE << INT_FOUR);
+    assertEquals(0x10L, LONG_ONE << LONG_FOUR);
 
     assertEquals(1L, LONG_TWO_PWR_32 >> 32);
     assertEquals(1L, LONG_TWO_PWR_32 >>> 32);

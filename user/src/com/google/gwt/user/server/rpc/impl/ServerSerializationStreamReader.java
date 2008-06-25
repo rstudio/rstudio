@@ -428,7 +428,9 @@ public final class ServerSerializationStreamReader extends
   }
 
   public long readLong() {
-    return Long.parseLong(extract(), 16);
+    // Keep synchronized with LongLib. The wire format are the two component
+    // parts of the double in the client code.
+    return (long) readDouble() + (long) readDouble();
   }
 
   public short readShort() {

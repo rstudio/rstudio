@@ -37,6 +37,10 @@ public class JRawType extends JMaybeParameterizedType {
     members = new DelegateMembers(this, getBaseType(), ERASURE_SUBSTITUTION);
   }
 
+  public JParameterizedType asParameterizedByWildcards() {
+    return getBaseType().asParameterizedByWildcards();
+  }
+
   @Override
   public JConstructor findConstructor(JType[] paramTypes) {
     return members.findConstructor(paramTypes);

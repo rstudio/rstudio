@@ -41,9 +41,15 @@ class DOMImplSafari extends DOMImplStandard {
     while (elem) {
       left += elem.offsetLeft;
 
+      // Safari 3 does not include borders with offsetLeft, so we need to add
+      // the borders of the parent manually.
+      var parent = elem.offsetParent;
+      if (parent && $wnd.devicePixelRatio) {
+        left += parseInt($doc.defaultView.getComputedStyle(parent, '').getPropertyValue('border-left-width'));
+      }
+
       // Safari bug: a top-level absolutely positioned element includes the
       // body's offset position already.
-      var parent = elem.offsetParent;
       if (parent && (parent.tagName == 'BODY') &&
           (elem.style.position == 'absolute')) {
         break;
@@ -75,9 +81,15 @@ class DOMImplSafari extends DOMImplStandard {
     while (elem) {
       top += elem.offsetTop;
 
+      // Safari 3 does not include borders with offsetTop, so we need to add the
+      // borders of the parent manually.
+      var parent = elem.offsetParent;
+      if (parent && $wnd.devicePixelRatio) {
+        top += parseInt($doc.defaultView.getComputedStyle(parent, '').getPropertyValue('border-top-width'));
+      }
+
       // Safari bug: a top-level absolutely positioned element includes the
       // body's offset position already.
-      var parent = elem.offsetParent;
       if (parent && (parent.tagName == 'BODY') &&
           (elem.style.position == 'absolute')) {
         break;

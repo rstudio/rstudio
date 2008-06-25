@@ -39,8 +39,37 @@ import java.util.Set;
  */
 public abstract class CompilationUnit {
 
+  /**
+   * Tracks the state of a compilation unit through the compile and recompile
+   * process.
+   */
   enum State {
-    COMPILED, CHECKED, ERROR, FRESH
+    /**
+     * All internal state is cleared; the unit's source has not yet been
+     * compiled by JDT.
+     */
+    FRESH,
+    /**
+     * In this intermediate state, the unit's source has been compiled by JDT.
+     * The unit will contain a set of CompiledClasses.
+     */
+    COMPILED,
+    /**
+     * In this final state, the unit was compiled, but contained one or more
+     * errors. Those errors are cached inside the unit, but all other internal
+     * state is cleared.
+     */
+    ERROR,
+    /**
+     * In this final state, the unit has been compiled and is error free.
+     * Additionally, all other units this unit depends on (transitively) are
+     * also error free. The unit contains a set of checked CompiledClasses. The
+     * unit and each contained CompiledClass releases all references to the JDT
+     * AST. Each class contains a reference to a valid JRealClassType, which has
+     * been added to the module's TypeOracle, as well as byte code, JSNI
+     * methods, and all other final state.
+     */
+    CHECKED
   }
 
   private class FindTypesInCud extends ASTVisitor {
@@ -209,6 +238,7 @@ public abstract class CompilationUnit {
    * Sets the compiled JDT AST for this unit.
    */
   void setJdtCud(CompilationUnitDeclaration cud) {
+    assert (state == State.FRESH || state == State.ERROR);
     this.cud = cud;
     state = State.COMPILED;
   }

@@ -81,7 +81,8 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   }
 
   public TestInfo getFirstMethod() throws TimeoutException {
-    return getHost().getNextTestInfo(getClientId(), TIME_TO_WAIT_FOR_TESTNAME);
+    return getHost().getNextTestInfo(getClientId(getThreadLocalRequest()),
+        TIME_TO_WAIT_FOR_TESTNAME);
   }
 
   public TestInfo reportResultsAndGetNextMethod(TestInfo testInfo,
@@ -90,7 +91,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
     ExceptionWrapper ew = result.getExceptionWrapper();
     result.setException(deserialize(ew));
     JUnitMessageQueue host = getHost();
-    String clientId = getClientId();
+    String clientId = getClientId(getThreadLocalRequest());
     host.reportResults(clientId, testInfo, result);
     return host.getNextTestInfo(clientId, TIME_TO_WAIT_FOR_TESTNAME);
   }
@@ -104,7 +105,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
       JUnitResult result = new JUnitResult();
       initResult(request, result);
       result.setException(new JUnitFatalLaunchException(requestPayload));
-      getHost().reportResults(getClientId(), null, result);
+      getHost().reportResults(getClientId(request), null, result);
     } else {
       super.service(request, response);
     }
@@ -219,8 +220,7 @@ public class JUnitHostImpl extends RemoteServiceServlet implements JUnitHost {
   /**
    * Returns a "client id" for the current request.
    */
-  private String getClientId() {
-    HttpServletRequest request = getThreadLocalRequest();
+  private String getClientId(HttpServletRequest request) {
     String machine = request.getRemoteHost();
     String agent = request.getHeader("User-Agent");
     return machine + " / " + agent;

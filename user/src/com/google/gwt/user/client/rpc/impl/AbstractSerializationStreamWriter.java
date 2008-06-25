@@ -33,6 +33,30 @@ import java.util.Map;
 public abstract class AbstractSerializationStreamWriter extends
     AbstractSerializationStream implements SerializationStreamWriter {
 
+  // Keep synchronized with LongLib
+  private static final double TWO_PWR_16_DBL = 0x10000;
+
+  // Keep synchronized with LongLib
+  private static final double TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
+
+  /**
+   * Make an instance equivalent to stringing highBits next to lowBits, where
+   * highBits and lowBits are assumed to be in 32-bit twos-complement notation.
+   * As a result, for any double[] l, the following identity holds:
+   * 
+   * <blockquote> <code>l == makeFromBits(l.highBits(), l.lowBits())</code>
+   * </blockquote>
+   */
+  // Keep synchronized with LongLib
+  protected static double[] makeLongComponents(int highBits, int lowBits) {
+    double high = highBits * TWO_PWR_32_DBL;
+    double low = lowBits;
+    if (lowBits < 0) {
+      low += TWO_PWR_32_DBL;
+    }
+    return new double[] {low, high};
+  }
+
   private int objectCount;
 
   private Map<Object, Integer> objectMap = new IdentityHashMap<Object, Integer>();

@@ -28,6 +28,7 @@ public class DefaultMuseum extends Museum implements EntryPoint {
     addIssue(new Issue1245());
     addIssue(new Issue1772());
     addIssue(new Issue1897());
+    addIssue(new Issue1932());
     addIssue(new Issue2261());
     addIssue(new Issue2290());
     addIssue(new Issue2307());

@@ -15,17 +15,36 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.user.client.Element;
+
 /**
  * Opera implementation of {@link com.google.gwt.user.client.impl.WindowImpl}.
  */
 public class WindowImplOpera extends WindowImpl {
-  @Override
-  public native int getClientHeight() /*-{
-    return $doc.body.clientHeight;
+  @SuppressWarnings("unused")
+  private static Element body;
+  
+  /**
+   * In standards mode, on Opera 9.5 (and presumably, above), the clientHeight
+   * and clientWidth are defined on doc.documentElement instead of doc.body.
+   */  
+  @SuppressWarnings("unused")
+  private static native Element getBodyElement() /*-{
+    if (@com.google.gwt.user.client.impl.WindowImplOpera::body == null) {
+      @com.google.gwt.user.client.impl.WindowImplOpera::body =
+        ($doc.compatMode == 'CSS1Compat' && opera.version() >= 9.5) ?
+        $doc.documentElement : $doc.body;
+    }       
+    return @com.google.gwt.user.client.impl.WindowImplOpera::body;
   }-*/;
 
   @Override
+  public native int getClientHeight() /*-{
+    return @com.google.gwt.user.client.impl.WindowImplOpera::getBodyElement()().clientHeight;
+  }-*/;  
+  
+  @Override
   public native int getClientWidth() /*-{
-    return $doc.body.clientWidth;
-  }-*/;
+    return @com.google.gwt.user.client.impl.WindowImplOpera::getBodyElement()().clientWidth;
+  }-*/; 
 }

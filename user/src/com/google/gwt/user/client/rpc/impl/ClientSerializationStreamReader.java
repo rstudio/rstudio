@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,7 +15,9 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.user.client.rpc.SerializationException;
 
 /**
@@ -30,6 +32,11 @@ public final class ClientSerializationStreamReader extends
 
   private static native int getLength(JavaScriptObject array) /*-{
     return array.length;
+  }-*/;
+
+  @UnsafeNativeLong
+  private static native long readLong0(double low, double high) /*-{
+    return [low, high];
   }-*/;
 
   int index;
@@ -77,11 +84,11 @@ public final class ClientSerializationStreamReader extends
   }-*/;
 
   public long readLong() {
-    /*
-     * Sent as a string; if we tried to marshal as a number the JSON eval would
-     * lose precision. We use hex due to specially optimized code paths in Long.
-     */
-    return Long.parseLong(readString(), 16);
+    if (GWT.isScript()) {
+      return readLong0(readDouble(), readDouble());
+    } else {
+      return (long) readDouble() + (long) readDouble();
+    }
   }
 
   public native short readShort() /*-{
@@ -103,7 +110,7 @@ public final class ClientSerializationStreamReader extends
   }
 
   @Override
-  protected native String getString(int index) /*-{ 
+  protected native String getString(int index) /*-{
     // index is 1-based
     return index > 0 ? this.@com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader::stringTable[index - 1] : null;
   }-*/;

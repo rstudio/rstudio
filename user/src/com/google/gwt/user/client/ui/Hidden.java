@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -23,6 +25,28 @@ import com.google.gwt.user.client.Element;
  * Represents a hidden field in an HTML form.
  */
 public class Hidden extends Widget implements HasName {
+
+  /**
+   * Creates a Hidden widget that wraps an existing &lt;input type='hidden'&gt;
+   * element.
+   * 
+   * This element must already be attached to the document.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static Hidden wrap(com.google.gwt.dom.client.Element element) {
+    // Assert that the element is of the correct type and is attached.
+    assert InputElement.as(element).getType().equalsIgnoreCase("hidden");
+    assert Document.get().getBody().isOrHasChild(element);
+
+    Hidden hidden = new Hidden((Element) element);
+
+    // Mark it attached and remember it for cleanup.
+    hidden.onAttach();
+    RootPanel.detachOnWindowClose(hidden);
+
+    return hidden;
+  }
 
   /**
    * Constructor for <code>Hidden</code>.
@@ -52,6 +76,10 @@ public class Hidden extends Widget implements HasName {
   public Hidden(String name, String value) {
     this(name);
     setValue(value);
+  }
+
+  private Hidden(Element element) {
+    setElement(element);
   }
 
   /**

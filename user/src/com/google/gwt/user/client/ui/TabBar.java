@@ -316,6 +316,42 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
+   * Sets a tab's contents via HTML.
+   * 
+   * Use care when setting an object's HTML; it is an easy way to expose
+   * script-based security problems. Consider using
+   * {@link #setTabText(int, String)} whenever possible.
+   * 
+   * @param index the index of the tab whose HTML is to be set
+   * @param html the tab new HTML
+   */
+  public void setTabHTML(int index, String html) {
+    assert (index >= 0) && (index < getTabCount()) : "Tab index out of bounds";
+
+    ClickDelegatePanel delPanel = (ClickDelegatePanel) panel.getWidget(index + 1);
+    SimplePanel focusablePanel = delPanel.getFocusablePanel();
+    focusablePanel.setWidget(new HTML(html));
+  }
+
+  /**
+   * Sets a tab's text contents.
+   * 
+   * @param index the index of the tab whose text is to be set
+   * @param text the object's new text
+   */
+  public void setTabText(int index, String text) {
+    assert (index >= 0) && (index < getTabCount()) : "Tab index out of bounds";
+
+    ClickDelegatePanel delPanel = (ClickDelegatePanel) panel.getWidget(index + 1);
+    SimplePanel focusablePanel = delPanel.getFocusablePanel();
+
+    // It is not safe to check if the current widget is an instanceof Label and
+    // reuse it here because HTML is an instanceof Label.  Leaving an HTML would
+    // throw off the results of getTabHTML(int).
+    focusablePanel.setWidget(new Label(text));
+  }
+
+  /**
    * Create a {@link SimplePanel} that will wrap the contents in a tab.
    * Subclasses can use this method to wrap tabs in decorator panels.
    * 

@@ -45,6 +45,10 @@ public class LongLib {
    * implementation of the long type for web mode, any place it uses a long is
    * not usable in web mode. There are currently two such methods:
    * {@link #toLong(double[])} and {@link #make(long)}.
+   * 
+   * The GWT RPC serialization code is dependent on the internal format of the
+   * long type; any changes made to this class should be reflected in the
+   * implementations of SerializationStreamReader and Writer.
    */
 
   /**

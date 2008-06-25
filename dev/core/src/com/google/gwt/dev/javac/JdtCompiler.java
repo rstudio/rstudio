@@ -189,10 +189,8 @@ public class JdtCompiler {
    * Compiles the given set of units. The units will be internally modified to
    * reflect the results of compilation.
    */
-  public static void compile(Collection<CompilationUnit> units) {
-    PerfLogger.start("JdtCompiler.compile");
-    new JdtCompiler().doCompile(units);
-    PerfLogger.end();
+  public static boolean compile(Collection<CompilationUnit> units) {
+    return new JdtCompiler().doCompile(units);
   }
 
   private static CompilerOptions getCompilerOptions() {
@@ -255,7 +253,7 @@ public class JdtCompiler {
     }
   }
 
-  private void doCompile(Collection<CompilationUnit> units) {
+  private boolean doCompile(Collection<CompilationUnit> units) {
     List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>();
     for (CompilationUnit unit : units) {
       String packageName = Shared.getPackageName(unit.getTypeName());
@@ -271,9 +269,14 @@ public class JdtCompiler {
         }
       }
     }
-    if (!icus.isEmpty()) {
-      compiler.compile(icus.toArray(new ICompilationUnit[icus.size()]));
+    if (icus.isEmpty()) {
+      return false;
     }
+
+    PerfLogger.start("JdtCompiler.compile");
+    compiler.compile(icus.toArray(new ICompilationUnit[icus.size()]));
+    PerfLogger.end();
+    return true;
   }
 
 }

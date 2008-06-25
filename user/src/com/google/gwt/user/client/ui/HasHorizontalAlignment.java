@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.LocaleInfo;
 
 /**
@@ -67,7 +68,8 @@ public interface HasHorizontalAlignment {
    * should be aligned to the left.
    */
   HorizontalAlignmentConstant ALIGN_DEFAULT = 
-      (LocaleInfo.getCurrentLocale().isRTL()) ? ALIGN_RIGHT : ALIGN_LEFT;
+      (GWT.isClient() && (LocaleInfo.getCurrentLocale().isRTL()))
+        ? ALIGN_RIGHT : ALIGN_LEFT;
       
   /**
    * Gets the horizontal alignment.
