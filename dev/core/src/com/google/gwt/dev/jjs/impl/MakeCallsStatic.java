@@ -158,7 +158,7 @@ public class MakeCallsStatic {
       }
 
       // Set the new original param types based on the old original param types
-      List<JType> originalParamTypes =  new ArrayList<JType>();
+      List<JType> originalParamTypes = new ArrayList<JType>();
       originalParamTypes.add(enclosingType);
       originalParamTypes.addAll(x.getOriginalParamTypes());
       newMethod.setOriginalParamTypes(originalParamTypes);
@@ -302,19 +302,21 @@ public class MakeCallsStatic {
   private boolean execImpl() {
     FindStaticDispatchSitesVisitor finder = new FindStaticDispatchSitesVisitor();
     finder.accept(program);
-    if (toBeMadeStatic.isEmpty()) {
-      return false;
-    }
 
     CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor();
     for (JMethod method : toBeMadeStatic) {
       creator.accept(method);
     }
 
+    /*
+     * Run the rewriter even if we didn't make any new static methods; other
+     * optimizations can unlock devirtualizations even if no more static impls
+     * are created.
+     */
     RewriteCallSites rewriter = new RewriteCallSites();
     rewriter.accept(program);
-    assert (rewriter.didChange());
-    return true;
+    assert (rewriter.didChange() || toBeMadeStatic.isEmpty());
+    return rewriter.didChange();
   }
 
 }
