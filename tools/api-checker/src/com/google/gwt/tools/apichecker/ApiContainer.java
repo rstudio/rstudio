@@ -80,11 +80,12 @@ public final class ApiContainer {
   public ApiContainer(String fileName, String suffix, TreeLogger logger)
       throws IllegalArgumentException, UnableToCompleteException {
     this.logger = logger;
+    FileInputStream fis = null;
     if (fileName == null) {
       throw new IllegalArgumentException("fileName is null");
     }
     try {
-      FileInputStream fis = new FileInputStream(fileName);
+      fis = new FileInputStream(fileName);
       Properties config = new Properties();
       config.load(fis);
       String apiName = config.getProperty("name" + suffix);
@@ -132,6 +133,11 @@ public final class ApiContainer {
     } catch (MalformedURLException e1) {
       throw new IllegalArgumentException(e1);
     } catch (FileNotFoundException e2) {
+      if (fis == null) {
+        System.err.println("Have you specified the path of the config file correctly?");
+      } else {
+        System.err.println("Do you have a reference version of the API checked out?");
+      }
       throw new IllegalArgumentException(e2);
     } catch (IOException e3) {
       throw new IllegalArgumentException(e3);

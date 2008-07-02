@@ -143,13 +143,18 @@ public class ApiCompatibilityChecker {
         for (ApiChange apiChange : apiDifferences) {
           System.out.println(apiChange);
         }
-        System.out.println("\t\t\t\tApi Compatibility Checker tool, Copyright Google Inc. 2008");
+        if (apiDifferences.size() == 0) {
+          System.out.println("API compatibility check SUCCESSFUL");
+        } else {
+          System.out.println("API compatibility check FAILED");
+        }
         System.exit(apiDifferences.size() == 0 ? 0 : 1);
       }
     } catch (Exception e) {
       // intercepting all exceptions in main, because I have to exit with -1 so
       // that the build breaks.
       e.printStackTrace();
+      System.err.println("To view the help for this tool, execute this tool without any arguments");
       System.exit(-1);
     }
   }
