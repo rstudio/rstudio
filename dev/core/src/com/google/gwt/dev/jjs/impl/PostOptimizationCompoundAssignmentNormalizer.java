@@ -36,6 +36,11 @@ public class PostOptimizationCompoundAssignmentNormalizer extends
   }
 
   @Override
+  protected String getTempPrefix() {
+    return "$t";
+  }
+
+  @Override
   protected boolean shouldBreakUp(JBinaryOperation x) {
     if (x.getType() == program.getTypePrimitiveLong()) {
       return true;

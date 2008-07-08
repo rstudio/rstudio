@@ -18,10 +18,12 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.i18n.client.PluralRule.PluralForm;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,8 +45,9 @@ import java.util.Set;
  * parent is associated with a separate resource tree.
  */
 public abstract class AbstractResource {
+
   /**
-   * Exception indicating a require resource was not found.
+   * Exception indicating a required resource was not found.
    */
   public static class MissingResourceException extends RuntimeException {
     private String key;
@@ -85,6 +88,211 @@ public abstract class AbstractResource {
   }
 
   /**
+   * Encapsulates an ordered set of resources to search for translations.
+   */
+  public static class ResourceList extends AbstractList<AbstractResource>
+      implements List<AbstractResource>, Set<AbstractResource> {
+
+    private List<AbstractResource> list = new ArrayList<AbstractResource>();
+
+    private Set<AbstractResource> set = new HashSet<AbstractResource>();
+    
+    private Map<String, PluralForm[]> pluralForms = new HashMap<String, PluralForm[]>();
+
+    @Override
+    public boolean add(AbstractResource element) {
+      if (set.contains(element)) {
+        return false;
+      }
+      set.add(element);
+      return list.add(element);
+    }
+
+    @Override
+    public void add(int index, AbstractResource element) {
+      if (set.contains(element)) {
+        throw new IllegalArgumentException("Duplicate element");
+      }
+      set.add(element);
+      list.add(index, element);
+    }
+
+    /**
+     * Add all keys known by this ResourceList to the specified set.
+     * 
+     * @param s set to add keys to
+     */
+    public void addToKeySet(Set<String> s) {
+      for (AbstractResource resource : list) {
+        resource.addToKeySet(s);
+      }
+    }
+
+    @Override
+    public AbstractResource get(int index) {
+      return list.get(index);
+    }
+
+    /**
+     * Return the first AnnotationsResource containing a specified key.
+     * 
+     * @param logger
+     * @param key
+     * @return first AnnotationsResource containing key, or null if none
+     */
+    public AnnotationsResource getAnnotationsResource(TreeLogger logger,
+        String key) {
+      for (AbstractResource resource : list) {
+        if (resource instanceof AnnotationsResource
+            && resource.keySet.contains(key)) {
+          return (AnnotationsResource) resource;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Return the list of extensions available for a given key.
+     * 
+     * @param key
+     * @return collection of extensions for the given key
+     */
+    public Collection<String> getExtension(String key) {
+      Set<String> extensions = new HashSet<String>();
+      for (AbstractResource resource : list) {
+        extensions.addAll(resource.getExtensions(key));
+      }
+      return extensions;
+    }
+
+    /**
+     * Return the list of plural forms for a given key.
+     *
+     * @param key
+     * @return array of plural forms.
+     */
+    public PluralForm[] getPluralForms(String key) {
+      return pluralForms.get(key);
+    }
+
+    /**
+     * Return a translation for a key, or throw an exception.
+     * 
+     * @param key
+     * @return translated string for key
+     * @throws MissingResourceException
+     */
+    public String getRequiredString(String key)
+        throws MissingResourceException {
+      String val = getString(key);
+      if (val == null) {
+        throw new MissingResourceException(key, list);
+      }
+      return val;
+    }
+
+    /**
+     * Return a translation for a key/extension, or throw an exception.
+     * 
+     * @param key
+     * @param ext key extension, null if none
+     * @return translated string for key
+     * @throws MissingResourceException
+     */
+    public String getRequiredStringExt(String key, String ext)
+        throws MissingResourceException {
+      String val = getStringExt(key, ext);
+      if (val == null) {
+        throw new MissingResourceException(getExtendedKey(key, ext), list);
+      }
+      return val;
+    }
+
+    /**
+     * Return a translation for a key, or null if not found.
+     * 
+     * @param key
+     * @return translated string for key
+     */
+    public String getString(String key) {
+      for (AbstractResource resource : list) {
+        String s = resource.getStringExt(key, null);
+        if (s != null) {
+          return s;
+        }
+      }
+      return null;
+    }
+
+    /**
+     * Return a translation for a key/extension, or null if not found.
+     * 
+     * @param key
+     * @param extension key extension, null if none
+     * @return translated string for key
+     */
+    public String getStringExt(String key, String extension) {
+      for (AbstractResource resource : list) {
+        String s = resource.getStringExt(key, extension);
+        if (s != null) {
+          return s;
+        }
+      }
+      return null;
+    }
+
+    @Override
+    public int indexOf(Object o) {
+      return list.indexOf(o);
+    }
+
+    @Override
+    public Iterator<AbstractResource> iterator() {
+      return list.iterator();
+    }
+
+    /**
+     * @return set of keys present across all resources
+     */
+    public Set<String> keySet() {
+      Set<String> keySet = new HashSet<String>();
+      for (AbstractResource resource : list) {
+        keySet.addAll(resource.keySet());
+      }
+      return keySet;
+    }
+
+    @Override
+    public int lastIndexOf(Object o) {
+      return list.lastIndexOf(o);
+    }
+
+    @Override
+    public AbstractResource remove(int index) {
+      AbstractResource element = list.remove(index);
+      set.remove(element);
+      return element;
+    }
+
+    /**
+     * Set the plural forms associated with a given message.
+     * 
+     * @param key
+     * @param forms
+     */
+    public void setPluralForms(String key, PluralForm[] forms) {
+      if (!pluralForms.containsKey(key)) {
+        pluralForms.put(key, forms);
+      }
+    }
+
+    @Override
+    public int size() {
+      return list.size();
+    }
+  }
+
+  /**
    * Error messages concerning missing keys should include the defined keys if
    * the number of keys is below this threshold.
    */
@@ -97,82 +305,46 @@ public abstract class AbstractResource {
     return key;
   }
 
-  private final List<AbstractResource> alternativeParents = new ArrayList<AbstractResource>();
-
   private Set<String> keySet;
 
-  private Map<String, PluralForm[]> pluralFormMap = new HashMap<String, PluralForm[]>();
-
-  private String localeName;
-
   private String path;
-
-  private AbstractResource primaryParent;
-
-  /**
-   * Walk up the resource inheritance tree until we find one which is an
-   * instance of AnnotationsResource.
-   * 
-   * This is needed so the original Annotations metadata can be used even in
-   * inherited resources, such as from a properties file for a specific locale.
-   * 
-   * TODO(jat): really bad code smell -- the superclass should not know about a
-   * particular implementation, but I couldn't think of a decent way around it.
-   * Long term, this whole structure needs to be be redone to make use of
-   * resources that fundamentally don't look like property files to be used
-   * effectively. I don't think it is feasible to do that in time for 1.5, so I
-   * am continuing with this hacky solution but we need to look at this after
-   * 1.5 is done.
-   */
-  public AnnotationsResource getAnnotationsResource() {
-    AbstractResource resource = this;
-    while (resource != null && !(resource instanceof AnnotationsResource)) {
-      resource = resource.primaryParent;
-    }
-    return (AnnotationsResource) resource;
-  }
 
   public Collection<String> getExtensions(String key) {
     return new ArrayList<String>();
   }
 
   /**
-   * @see java.util.ResourceBundle#getLocale()
+   * Get a string and fail if not present.
+   * 
+   * @param key
+   * @return the requested string
    */
-  public String getLocaleName() {
-    return localeName;
-  }
-
-  /**
-   * @see java.util.ResourceBundle#getObject(java.lang.String)
-   */
-  public final Object getObject(String key) {
-    Object s = getObjectAux(key, true, true);
-    return s;
-  }
-
-  public PluralForm[] getPluralForms(String key) {
-    return pluralFormMap.get(key);
+  public final String getRequiredString(String key) {
+    return getRequiredStringExt(key, null);
   }
 
   /**
    * Get a string (with optional extension) and fail if not present.
    * 
-   * @param logger
    * @param key
    * @param extension
    * @return the requested string
    */
-  public final String getRequiredStringExt(TreeLogger logger, String key,
-      String extension) {
-    return extension == null ? (String) getObjectAux(key, true, true) : null;
+  public final String getRequiredStringExt(String key, String extension) {
+    String s = getStringExt(key, extension);
+    if (s == null) {
+      ArrayList<AbstractResource> list = new ArrayList<AbstractResource>();
+      list.add(this);
+      throw new MissingResourceException(key, list);
+    }
+    return s;
   }
 
   /**
    * @see java.util.ResourceBundle#getString(java.lang.String)
    */
   public final String getString(String key) {
-    return (String) getObjectAux(key, true);
+    return getStringExt(key, null);
   }
 
   /**
@@ -182,11 +354,7 @@ public abstract class AbstractResource {
    * @param extension extension of the key, nullable
    * @return string or null
    */
-  public String getStringExt(String key, String extension) {
-    return extension == null ? getString(key) : null;
-  }
-
-  public abstract Object handleGetObject(String key);
+  public abstract String getStringExt(String key, String extension);
 
   /**
    * Keys associated with this resource.
@@ -197,19 +365,15 @@ public abstract class AbstractResource {
     if (keySet == null) {
       keySet = new HashSet<String>();
       addToKeySet(keySet);
-      if (primaryParent != null) {
-        primaryParent.addToKeySet(keySet);
-      }
-      for (int i = 0; i < alternativeParents.size(); i++) {
-        AbstractResource element = alternativeParents.get(i);
-        keySet.addAll(element.keySet());
-      }
     }
     return keySet;
   }
 
-  public void setPluralForms(String key, PluralForm[] pluralForms) {
-    pluralFormMap.put(key, pluralForms);
+  /**
+   * @return true if this resource has any keys
+   */
+  public boolean notEmpty() {
+    return !keySet.isEmpty();
   }
 
   @Override
@@ -228,96 +392,14 @@ public abstract class AbstractResource {
     return b.toString();
   }
 
-  void addAlternativeParent(AbstractResource parent) {
-    if (parent != null) {
-      alternativeParents.add(parent);
-    }
-  }
-
   abstract void addToKeySet(Set<String> s);
-
-  void checkKeys() {
-    // If I don't have a parent, then I am a default node so do not need to
-    // conform
-    if (primaryParent == null) {
-      return;
-    }
-    for (String key : keySet()) {
-      if (primaryParent.getObjectAux(key, true) == null) {
-        for (int i = 0; i < alternativeParents.size(); i++) {
-          AbstractResource alt = alternativeParents.get(i);
-          if (alt.getObjectAux(key, true) != null) {
-            break;
-          }
-        }
-
-        throw new IllegalArgumentException(
-            key
-                + " is not a valid resource key as it does not occur in the default version of "
-                + this + " nor in any of " + alternativeParents);
-      }
-    }
-  }
-
-  final Object getObjectAux(String key, boolean useAlternativeParents) {
-    try {
-      return getObjectAux(key, useAlternativeParents, false);
-    } catch (MissingResourceException e) {
-      // Can't happen since we pass required=false
-      throw new RuntimeException("Unexpected MissingResourceException", e);
-    }
-  }
-
-  final Object getObjectAux(String key, boolean useAlternativeParents,
-      boolean required) throws MissingResourceException {
-    ArrayList<AbstractResource> searched = new ArrayList<AbstractResource>();
-    searched.add(this);
-    Object s = handleGetObject(key);
-    if (s != null) {
-      return s;
-    }
-    AbstractResource parent = this.getPrimaryParent();
-    if (parent != null) {
-      // Primary parents should not look at their alternative parents
-      searched.add(parent);
-      s = parent.getObjectAux(key, false);
-    }
-    if ((s == null) && (alternativeParents.size() > 0)
-        && (useAlternativeParents)) {
-      for (int i = 0; (i < alternativeParents.size()) && (s == null); i++) {
-        // Alternate parents may look at their alternative parents.
-        AbstractResource altParent = alternativeParents.get(i);
-        searched.add(altParent);
-        s = altParent.getObjectAux(key, true);
-      }
-    }
-    if (s == null && required) {
-      throw new MissingResourceException(key, searched);
-    }
-    return s;
-  }
 
   String getPath() {
     return path;
   }
 
-  AbstractResource getPrimaryParent() {
-    return primaryParent;
-  }
-
-  void setLocaleName(String locale) {
-    this.localeName = locale;
-  }
-
   void setPath(String path) {
     this.path = path;
-  }
-
-  void setPrimaryParent(AbstractResource primaryParent) {
-    if (primaryParent == null) {
-      return;
-    }
-    this.primaryParent = primaryParent;
   }
 
   private void newLine(int indent, StringBuffer buf) {
@@ -330,16 +412,5 @@ public abstract class AbstractResource {
   private void toVerboseStringAux(int indent, StringBuffer buf) {
     newLine(indent, buf);
     buf.append(toString());
-    if (primaryParent != null) {
-      newLine(indent, buf);
-      buf.append("Primary Parent: ");
-      primaryParent.toVerboseStringAux(indent + 1, buf);
-    }
-    for (int i = 0; i < alternativeParents.size(); i++) {
-      newLine(indent, buf);
-      buf.append("Alternate Parent: ");
-      AbstractResource element = alternativeParents.get(i);
-      element.toVerboseStringAux(indent + 1, buf);
-    }
   }
 }

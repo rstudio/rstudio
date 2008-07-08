@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.SourceWriter;
 
 /**
@@ -34,16 +35,16 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
    * 
    * @param writer <code>Writer</code> to print to
    * @param localizableClass Class/Interface to conform to
-   * @param messageBindings resource bundle used to generate the class
+   * @param resourceList resource bundle used to generate the class
    * @param oracle types
    * @param logger logger to print errors
    * @param deprecatedLogger logger for deprecated metadata warnings
    * @throws UnableToCompleteException
    */
   public MessagesImplCreator(TreeLogger logger, TreeLogger deprecatedLogger, SourceWriter writer,
-      JClassType localizableClass, AbstractResource messageBindings,
+      JClassType localizableClass, ResourceList resourceList,
       TypeOracle oracle) throws UnableToCompleteException {
-    super(logger, deprecatedLogger, writer, localizableClass, messageBindings, false);
+    super(logger, deprecatedLogger, writer, localizableClass, resourceList, false);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       register(stringClass, new MessagesMethodCreator(this));

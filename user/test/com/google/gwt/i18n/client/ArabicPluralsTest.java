@@ -23,6 +23,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class ArabicPluralsTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_ar";
   }

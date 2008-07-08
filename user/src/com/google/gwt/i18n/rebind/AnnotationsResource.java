@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRawType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.i18n.client.PluralRule;
 import com.google.gwt.i18n.client.Constants.DefaultBooleanValue;
 import com.google.gwt.i18n.client.Constants.DefaultDoubleValue;
 import com.google.gwt.i18n.client.Constants.DefaultFloatValue;
@@ -32,6 +33,7 @@ import com.google.gwt.i18n.client.Constants.DefaultIntValue;
 import com.google.gwt.i18n.client.Constants.DefaultStringArrayValue;
 import com.google.gwt.i18n.client.Constants.DefaultStringMapValue;
 import com.google.gwt.i18n.client.Constants.DefaultStringValue;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.client.LocalizableResource.Description;
 import com.google.gwt.i18n.client.LocalizableResource.GenerateKeys;
 import com.google.gwt.i18n.client.LocalizableResource.Key;
@@ -76,6 +78,7 @@ public class AnnotationsResource extends AbstractResource {
     public boolean isPluralCount;
     public String name;
     public boolean optional;
+    public Class<? extends PluralRule> pluralRuleClass;
 
     public ArgumentInfo(String name) {
       this.name = name;
@@ -364,14 +367,23 @@ public class AnnotationsResource extends AbstractResource {
    * 
    * @param logger
    * @param clazz
+   * @param locale
    * @param isConstants
    * @throws AnnotationsError if there is a fatal error while processing
    *           annotations
    */
   public AnnotationsResource(TreeLogger logger, JClassType clazz,
-      boolean isConstants) throws AnnotationsError {
+      String locale, boolean isConstants) throws AnnotationsError {
     KeyGenerator keyGenerator = getKeyGenerator(clazz);
     map = new HashMap<String, MethodEntry>();
+    setPath(clazz.getQualifiedSourceName());
+    DefaultLocale defLocale = clazz.getAnnotation(DefaultLocale.class);
+    if (defLocale != null && !ResourceFactory.DEFAULT_TOKEN.equals(locale)
+        && !locale.equalsIgnoreCase(defLocale.value())) {
+      logger.log(TreeLogger.WARN, "@DefaultLocale on "
+          + clazz.getQualifiedSourceName() + " doesn't match " + locale);  
+      return;
+    }
     for (JMethod method : clazz.getMethods()) {
       String meaningString = null;
       Meaning meaning = method.getAnnotation(Meaning.class);
@@ -409,10 +421,10 @@ public class AnnotationsResource extends AbstractResource {
         if ((pluralForms.length & 1) != 0) {
           throw new AnnotationsError(
               "Odd number of strings supplied to @PluralText: must be"
-                  + " pairs of form names and strings");
+              + " pairs of form names and strings");
         }
         for (int i = 0; i + 1 < pluralForms.length; i += 2) {
-          entry.pluralText.put(pluralForms[i], pluralForms[i + 1]);
+          entry.addPluralText(pluralForms[i], pluralForms[i + 1]);
         }
       }
       for (JParameter param : method.getParameters()) {
@@ -431,7 +443,6 @@ public class AnnotationsResource extends AbstractResource {
         }
       }
     }
-    setPath(clazz.getQualifiedSourceName());
   }
 
   @Override
@@ -462,25 +473,20 @@ public class AnnotationsResource extends AbstractResource {
 
   @Override
   public String getStringExt(String key, String extension) {
-    if (extension == null) {
-      return getString(key);
-    }
     MethodEntry entry = map.get(key);
-    return entry == null ? null : entry.pluralText.get(extension);
+    if (entry == null) {
+      return null;
+    }
+    if (extension != null) {
+      return entry.pluralText.get(extension);
+    } else {
+      return entry.text;
+    }
   }
 
   @Override
-  public Object handleGetObject(String key) {
-    MethodEntry entry = map.get(key);
-    return entry == null ? null : entry.text;
-  }
-
   public boolean notEmpty() {
     return !map.isEmpty();
-  }
-
-  public void setParentResource(AnnotationsResource parent) {
-    setPrimaryParent(parent);
   }
 
   @Override

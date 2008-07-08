@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 
@@ -165,7 +165,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   }
 
   @Override
-  protected void setElement(Element elem) {
+  protected void setElement(com.google.gwt.user.client.Element elem) {
     super.setElement(elem);
 
     // Accessibility: setting tab index to be 0 by default, ensuring element

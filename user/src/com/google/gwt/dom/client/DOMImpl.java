@@ -166,6 +166,10 @@ abstract class DOMImpl {
     select.add(option, before);
   }-*/;
 
+  public native void selectClear(SelectElement select) /*-{
+    select.options.length = 0;
+  }-*/;
+
   public native int selectGetLength(SelectElement select) /*-{
     return select.options.length;
   }-*/;

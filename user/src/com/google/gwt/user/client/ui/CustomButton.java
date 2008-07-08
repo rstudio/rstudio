@@ -583,26 +583,28 @@ public abstract class CustomButton extends ButtonBase {
     super.onBrowserEvent(event);
 
     // Synthesize clicks based on keyboard events AFTER the normal key handling.
-    char keyCode = (char) DOM.eventGetKeyCode(event);
-    switch (type) {
-      case Event.ONKEYDOWN:
-        if (keyCode == ' ') {
-          isFocusing = true;
-          onClickStart();
-        }
-        break;
-      case Event.ONKEYUP:
-        if (isFocusing && keyCode == ' ') {
-          isFocusing = false;
-          onClick();
-        }
-        break;
-      case Event.ONKEYPRESS:
-        if (keyCode == '\n' || keyCode == '\r') {
-          onClickStart();
-          onClick();
-        }
-        break;
+    if ((event.getTypeInt() & Event.KEYEVENTS) != 0) {
+      char keyCode = (char) DOM.eventGetKeyCode(event);
+      switch (type) {
+        case Event.ONKEYDOWN:
+          if (keyCode == ' ') {
+            isFocusing = true;
+            onClickStart();
+          }
+          break;
+        case Event.ONKEYUP:
+          if (isFocusing && keyCode == ' ') {
+            isFocusing = false;
+            onClick();
+          }
+          break;
+        case Event.ONKEYPRESS:
+          if (keyCode == '\n' || keyCode == '\r') {
+            onClickStart();
+            onClick();
+          }
+          break;
+      }
     }
   }
 

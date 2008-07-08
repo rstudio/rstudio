@@ -159,7 +159,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     public int size() {
       return TreeMap.this.size();
     }
-  };
+  }
 
   /**
    * Tree node.
@@ -506,13 +506,16 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   // The number of nodes in the tree.
   private int size = 0;
 
-  @SuppressWarnings("unchecked")
   public TreeMap() {
-    this((Comparator<? super K>) DEFAULT_COMPARATOR);
+    this((Comparator<? super K>) null);
   }
 
+  @SuppressWarnings("unchecked")
   public TreeMap(Comparator<? super K> c) {
     root = null;
+    if (c == null) {
+      c = (Comparator<? super K>) DEFAULT_COMPARATOR;
+    }
     cmp = c;
   }
 
@@ -523,10 +526,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
 
   @SuppressWarnings("unchecked")
   public TreeMap(SortedMap<K, ? extends V> map) {
-    cmp = map.comparator();
-    if (cmp == null) {
-      cmp = (Comparator<? super K>) DEFAULT_COMPARATOR;
-    }
+    this(map.comparator());
     putAll(map); // TODO(jat): more efficient init from sorted map
   }
 

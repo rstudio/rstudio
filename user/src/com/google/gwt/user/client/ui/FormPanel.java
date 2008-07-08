@@ -18,11 +18,10 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.FormElement;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FormPanelImpl;
 import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
@@ -39,7 +38,9 @@ import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
  * <li>{@link com.google.gwt.user.client.ui.TextBox}</li>
  * <li>{@link com.google.gwt.user.client.ui.PasswordTextBox}</li>
  * <li>{@link com.google.gwt.user.client.ui.RadioButton}</li>
+ * <li>{@link com.google.gwt.user.client.ui.SimpleRadioButton}</li>
  * <li>{@link com.google.gwt.user.client.ui.CheckBox}</li>
+ * <li>{@link com.google.gwt.user.client.ui.SimpleCheckBox}</li>
  * <li>{@link com.google.gwt.user.client.ui.TextArea}</li>
  * <li>{@link com.google.gwt.user.client.ui.ListBox}</li>
  * <li>{@link com.google.gwt.user.client.ui.FileUpload}</li>
@@ -90,16 +91,17 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   /**
    * Creates a FormPanel that wraps an existing &lt;form&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static FormPanel wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    FormElement.as(element);
+  public static FormPanel wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    FormPanel formPanel = new FormPanel((Element) element);
+    FormPanel formPanel = new FormPanel(element);
 
     // Mark it attached and remember it for cleanup.
     formPanel.onAttach();
@@ -110,7 +112,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   private FormHandlerCollection formHandlers;
   private String frameName;
-  private Element iframe;
+  private Element synthesizedFrame;
 
   /**
    * Creates a new FormPanel. When created using this constructor, it will be
@@ -132,7 +134,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    *      cannot be made to work properly on all browsers.
    */
   public FormPanel() {
-    super(DOM.createForm());
+    super(Document.get().createFormElement());
 
     frameName = "FormPanel_" + (++formId);
     setTarget(frameName);
@@ -171,12 +173,19 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    *          page be replaced
    */
   public FormPanel(String target) {
-    super(DOM.createForm());
+    super(Document.get().createFormElement());
     setTarget(target);
   }
 
-  private FormPanel(Element elem) {
-    super(elem);
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be a &lt;form&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected FormPanel(Element element) {
+    super(element);
+    FormElement.as(element);
   }
 
   public void addFormHandler(FormHandler handler) {
@@ -193,7 +202,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return the form's action
    */
   public String getAction() {
-    return DOM.getElementProperty(getElement(), "action");
+    return getFormElement().getAction();
   }
 
   /**
@@ -213,7 +222,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return the form's method
    */
   public String getMethod() {
-    return DOM.getElementProperty(getElement(), "method");
+    return getFormElement().getMethod();
   }
 
   /**
@@ -224,7 +233,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @return the form's target.
    */
   public String getTarget() {
-    return DOM.getElementProperty(getElement(), "target");
+    return getFormElement().getTarget();
   }
 
   public boolean onFormSubmit() {
@@ -258,7 +267,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @param url the form's action
    */
   public void setAction(String url) {
-    DOM.setElementProperty(getElement(), "action", url);
+    getFormElement().setAction(url);
   }
 
   /**
@@ -278,7 +287,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * @param method the form's method
    */
   public void setMethod(String method) {
-    DOM.setElementProperty(getElement(), "method", method);
+    getFormElement().setMethod(method);
   }
 
   /**
@@ -299,34 +308,44 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       }
     }
 
-    impl.submit(getElement(), iframe);
+    impl.submit(getElement(), synthesizedFrame);
   }
 
   @Override
   protected void onAttach() {
     super.onAttach();
 
-    // Create and attach a hidden iframe to the body element.
-    createFrame();
-    DOM.appendChild(RootPanel.getBodyElement(), iframe);
+    if (frameName != null) {
+      // Create and attach a hidden iframe to the body element.
+      createFrame();
+      Document.get().getBody().appendChild(synthesizedFrame);
 
-    // Hook up the underlying iframe's onLoad event when attached to the DOM.
-    // Making this connection only when attached avoids memory-leak issues.
-    // The FormPanel cannot use the built-in GWT event-handling mechanism
-    // because there is no standard onLoad event on iframes that works across
-    // browsers.
-    impl.hookEvents(iframe, getElement(), this);
+      // Hook up the underlying iframe's onLoad event when attached to the DOM.
+      // Making this connection only when attached avoids memory-leak issues.
+      // The FormPanel cannot use the built-in GWT event-handling mechanism
+      // because there is no standard onLoad event on iframes that works across
+      // browsers.
+      impl.hookEvents(synthesizedFrame, getElement(), this);
+    }
   }
 
   @Override
   protected void onDetach() {
     super.onDetach();
 
-    // Unhook the iframe's onLoad when detached.
-    impl.unhookEvents(iframe, getElement());
+    if (synthesizedFrame != null) {
+      // Unhook the iframe's onLoad when detached.
+      impl.unhookEvents(synthesizedFrame, getElement());
 
-    DOM.removeChild(RootPanel.getBodyElement(), iframe);
-    iframe = null;
+      // And remove it from the document.
+      Document.get().getBody().removeChild(synthesizedFrame);
+      synthesizedFrame = null;
+    }
+  }
+
+  // For unit-tests.
+  Element getSynthesizedIFrame() {
+    return synthesizedFrame;
   }
 
   private void createFrame() {
@@ -334,11 +353,15 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     // the form will be submitted. We have to create the iframe using innerHTML,
     // because setting an iframe's 'name' property dynamically doesn't work on
     // most browsers.
-    Element dummy = DOM.createDiv();
-    DOM.setInnerHTML(dummy, "<iframe src=\"javascript:''\" name='" + frameName
+    Element dummy = Document.get().createDivElement();
+    dummy.setInnerHTML("<iframe src=\"javascript:''\" name='" + frameName
         + "' style='position:absolute;width:0;height:0;border:0'>");
 
-    iframe = DOM.getFirstChild(dummy);
+    synthesizedFrame = dummy.getFirstChildElement();
+  }
+
+  private FormElement getFormElement() {
+    return getElement().cast();
   }
 
   private boolean onFormSubmitAndCatch(UncaughtExceptionHandler handler) {
@@ -375,13 +398,13 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       // 'infinite loading' state. See issue 916.
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          formHandlers.fireOnComplete(FormPanel.this, impl.getContents(iframe));
+          formHandlers.fireOnComplete(FormPanel.this, impl.getContents(synthesizedFrame));
         }
       });
     }
   }
 
   private void setTarget(String target) {
-    DOM.setElementProperty(getElement(), "target", target);
+    getFormElement().setTarget(target);
   }
 }

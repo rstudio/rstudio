@@ -60,6 +60,13 @@ public class SelectElement extends Element {
   }-*/;
 
   /**
+   * Removes all OPTION elements from this SELECT.
+   */
+  public final void clear() {
+    DOMImpl.impl.selectClear(this);
+  }
+
+  /**
    * Gives keyboard focus to this element.
    */
   public final native void focus() /*-{

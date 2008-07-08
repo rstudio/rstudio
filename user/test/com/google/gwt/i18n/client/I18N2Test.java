@@ -113,8 +113,16 @@ public class I18N2Test extends GWTTestCase {
 
   public void testCheckColorsAndShapes() {
     ColorsAndShapes s = (ColorsAndShapes) GWT.create(ColorsAndShapes.class);
-    // should not have changed, because we included no shapesAndColor info.
-    assertEquals("ýéļļöŵ", s.yellow());
+    // Red comes from Colors_b_C_d
+    assertEquals("red_b_C_d", s.red());
+    // Blue comes from Colors_b_C
+    assertEquals("blue_b_C", s.blue());
+    // Yellow comes from Colors_b
+    assertEquals("yellow_b", s.yellow());
+    // RedSquare comes from ColorsAndShapes
+    assertEquals("red square", s.redSquare());
+    // Circle comes from Shapes
+    assertEquals("a circle", s.circle());
   }
 
   public void testWalkUpColorTree() {

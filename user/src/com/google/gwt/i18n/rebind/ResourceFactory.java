@@ -18,14 +18,15 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.MissingResourceException;
 import java.util.Set;
 
 /**
@@ -135,20 +136,7 @@ public abstract class ResourceFactory {
   public static final String DEFAULT_TOKEN = "default";
   public static final char LOCALE_SEPARATOR = '_';
 
-  public static final AbstractResource NOT_FOUND = new AbstractResource() {
-
-    @Override
-    public Object handleGetObject(String key) {
-      throw new IllegalStateException("Not found resource");
-    }
-
-    @Override
-    void addToKeySet(Set<String> s) {
-      throw new IllegalStateException("Not found resource");
-    }
-  };
-
-  private static Map<String, AbstractResource> cache = new HashMap<String, AbstractResource>();
+  private static Map<String, ResourceList> cache = new HashMap<String, ResourceList>();
 
   private static List<ResourceFactory> loaders = new ArrayList<ResourceFactory>();
   static {
@@ -162,48 +150,11 @@ public abstract class ResourceFactory {
     cache.clear();
   }
 
-  public static AbstractResource getAnnotations(TreeLogger logger, JClassType targetClass,
-      String locale, boolean isConstants) throws UnableToCompleteException {
-    Map<String, JClassType> matchingClasses
-        = LocalizableLinkageCreator.findDerivedClasses(logger, targetClass);
-    matchingClasses.put(ResourceFactory.DEFAULT_TOKEN, targetClass);
-    String localeSuffix = locale;
-    JClassType currentClass = null;
-    AnnotationsResource previous = null;
-    AbstractResource result = null;
-    while (true) {
-      currentClass = matchingClasses.get(localeSuffix);
-      if (currentClass != null) {
-        AnnotationsResource resource;
-        try {
-          resource = new AnnotationsResource(logger, currentClass, isConstants);
-        } catch (AnnotationsError e) {
-          logger.log(TreeLogger.ERROR, e.getMessage(), e);
-          throw new UnableToCompleteException();
-        }
-        if (resource.notEmpty()) {
-          if (result == null) {
-            result = resource;
-          }
-          if (previous != null) {
-            previous.setParentResource(resource);
-          }
-          previous = resource;
-        }
-      }
-      if (localeSuffix.equals(ResourceFactory.DEFAULT_TOKEN)) {
-        return result;
-      }
-      
-      localeSuffix = ResourceFactory.getParentLocaleName(localeSuffix);
-    }
-  }
-
-  public static AbstractResource getBundle(Class<?> clazz, String locale, boolean isConstants) {
+  public static ResourceList getBundle(Class<?> clazz, String locale, boolean isConstants) {
     return getBundle(TreeLogger.NULL, clazz, locale, isConstants);
   }
 
-  public static AbstractResource getBundle(String path, String locale, boolean isConstants) {
+  public static ResourceList getBundle(String path, String locale, boolean isConstants) {
     return getBundle(TreeLogger.NULL, path, locale, isConstants);
   }
 
@@ -214,7 +165,7 @@ public abstract class ResourceFactory {
    * @param locale locale name
    * @return the resource
    */
-  public static AbstractResource getBundle(TreeLogger logger, Class<?> javaInterface,
+  public static ResourceList getBundle(TreeLogger logger, Class<?> javaInterface,
       String locale, boolean isConstants) {
     if (javaInterface.isInterface() == false) {
       throw new IllegalArgumentException(javaInterface
@@ -231,7 +182,7 @@ public abstract class ResourceFactory {
    * @param locale locale name
    * @return the resource
    */
-  public static AbstractResource getBundle(TreeLogger logger, JClassType javaInterface,
+  public static ResourceList getBundle(TreeLogger logger, JClassType javaInterface,
       String locale, boolean isConstants) {
     return getBundleAux(logger, new JClassTypePathTree(javaInterface), javaInterface, locale,
         true, isConstants);
@@ -244,7 +195,7 @@ public abstract class ResourceFactory {
    * @param locale locale name
    * @return the resource
    */
-  public static AbstractResource getBundle(TreeLogger logger, String path, String locale,
+  public static ResourceList getBundle(TreeLogger logger, String path, String locale,
       boolean isConstants) {
     return getBundleAux(logger, new SimplePathTree(path), null, locale, true, isConstants);
   }
@@ -281,44 +232,49 @@ public abstract class ResourceFactory {
     return name;
   }
 
-  private static List<AbstractResource> findAlternativeParents(TreeLogger logger,
+  private static void addAlternativeParents(TreeLogger logger,
       ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
-      boolean isConstants) {
-    List<AbstractResource> altParents = null;
+      boolean useAlternativeParents, boolean isConstants,
+      ResourceList resources, Set<String> seenPaths) {
     if (tree != null) {
-      altParents = new ArrayList<AbstractResource>();
       for (int i = 0; i < tree.numChildren(); i++) {
         ResourceFactory.AbstractPathTree child = tree.getChild(i);
-        AbstractResource altParent = getBundleAux(logger, child, child.getJClassType(clazz),
-            locale, false, isConstants);
-        if (altParent != null) {
-          altParents.add(altParent);
-        }
+        addResources(logger, child, child.getJClassType(clazz),
+            locale, useAlternativeParents, isConstants, resources, seenPaths);
       }
     }
-    return altParents;
   }
 
-  private static AbstractResource findPrimaryParent(TreeLogger logger,
+  private static void addPrimaryParent(TreeLogger logger,
       ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
-      boolean isConstants) {
+      boolean isConstants, ResourceList resources, Set<String> seenPaths) {
 
     // If we are not in the default case, calculate parent
     if (!DEFAULT_TOKEN.equals(locale)) {
-      return getBundleAux(logger, tree, clazz, getParentLocaleName(locale), false, isConstants);
+      addResources(logger, tree, clazz, getParentLocaleName(locale),
+          false, isConstants, resources, seenPaths);
     }
-    return null;
   }
 
-  private static AbstractResource getBundleAux(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale, boolean required,
-      boolean isConstants) {
+  private static void addResources(TreeLogger logger,
+      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
+      boolean useAlternateParents, boolean isConstants,
+      ResourceList resources, Set<String> seenPaths) {
     String targetPath = tree.getPath();
+    String localizedPath = targetPath;
+    if (!DEFAULT_TOKEN.equals(locale)) {
+      localizedPath = targetPath + LOCALE_SEPARATOR + locale;
+    }
+    if (seenPaths.contains(localizedPath)) {
+      return;
+    }
+    seenPaths.add(localizedPath);
     ClassLoader loader = AbstractResource.class.getClassLoader();
     Map<String, JClassType> matchingClasses = null;
     if (clazz != null) {
       try {
-        matchingClasses = LocalizableLinkageCreator.findDerivedClasses(logger, clazz);
+        matchingClasses = LocalizableLinkageCreator.findDerivedClasses(logger,
+            clazz);
         /* 
          * In this case, we specifically want to be able to look at the interface
          * instead of just implementations.
@@ -344,76 +300,68 @@ public abstract class ResourceFactory {
       locale = DEFAULT_TOKEN;
     }
 
-    // Calculate baseName
-    String localizedPath = targetPath;
-    if (!DEFAULT_TOKEN.equals(locale)) {
-      localizedPath = targetPath + LOCALE_SEPARATOR + locale;
-    }
-    AbstractResource result = cache.get(localizedPath);
-    if (result != null) {
-      if (result == NOT_FOUND) {
-        return null;
-      } else {
-        return result;
+    // Check for file-based resources.
+    String partialPath = localizedPath.replace('.', '/');
+    for (int i = 0; i < loaders.size(); i++) {
+      ResourceFactory element = loaders.get(i);
+      String path = partialPath + "." + element.getExt();
+      InputStream m = loader.getResourceAsStream(path);
+      if (m != null) {
+        AbstractResource found = element.load(m);
+        found.setPath(path);
+        resources.add(found);
       }
     }
-    String partialPath = localizedPath.replace('.', '/');
-    AbstractResource parent = findPrimaryParent(logger, tree, clazz, locale, isConstants);
-    List<AbstractResource> altParents = findAlternativeParents(logger, tree, clazz, locale, isConstants);
 
-    AbstractResource found = null;
+    // Check for annotations
     JClassType currentClass = matchingClasses.get(locale);
     if (currentClass != null) {
       AnnotationsResource resource;
       try {
-        resource = new AnnotationsResource(logger, currentClass, isConstants);
+        resource = new AnnotationsResource(logger, currentClass, locale,
+            isConstants);
         if (resource.notEmpty()) {
-          found = resource;
-          found.setPath(currentClass.getQualifiedSourceName());
+          resource.setPath(currentClass.getQualifiedSourceName());
+          resources.add(resource);
         }
       } catch (AnnotationsError e) {
         logger.log(TreeLogger.ERROR, e.getMessage(), e);
       }
     }
-    for (int i = 0; found == null && i < loaders.size(); i++) {
-      ResourceFactory element = loaders.get(i);
-      String path = partialPath + "." + element.getExt();
-      InputStream m = loader.getResourceAsStream(path);
-      if (m != null) {
-        found = element.load(m);
-        found.setPath(path);
-      }
-    }
-    if (found == null) {
-      if (parent != null) {
-        found = parent;
-      } else {
-        found = NOT_FOUND;
-      }
-    } else {
-      found.setPrimaryParent(parent);
-      found.setLocaleName(locale);
-      for (int j = 0; j < altParents.size(); j++) {
-        AbstractResource altParent = altParents.get(j);
-        found.addAlternativeParent(altParent);
-      }
-      found.checkKeys();
-    }
+    
+    // Add our parent, if any
+    addPrimaryParent(logger, tree, clazz, locale, isConstants, resources,
+        seenPaths);
 
-    cache.put(localizedPath, found);
-
-    if (found == NOT_FOUND) {
-      if (required) {
-        throw new MissingResourceException(
-          "Could not find any resource associated with " + tree.getPath(),
-            null, null);
-      } else {
-        return null;
-      }
+    // Add our alternate parents
+    if (useAlternateParents) {
+      addAlternativeParents(logger, tree, clazz, locale, useAlternateParents,
+          isConstants, resources, seenPaths);
     }
+  }
 
-    // At this point, found cannot be equal to null or NOT_FOUND
-    return found;
+  private static ResourceList getBundleAux(TreeLogger logger,
+      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
+      boolean required, boolean isConstants) {
+    String cacheKey = tree.getPath() + "_" + locale;
+    if (cache.containsKey(cacheKey)) {
+      return cache.get(cacheKey);
+    }
+    Set<String> seenPaths = new HashSet<String>();
+    final ResourceList resources = new ResourceList();
+    addResources(logger, tree, clazz, locale, true, isConstants, resources,
+        seenPaths);
+    String className = tree.getPath();
+    if (clazz != null) {
+      className = clazz.getQualifiedSourceName();
+    }
+    TreeLogger branch = logger.branch(TreeLogger.SPAM, "Resource search order for "
+        + className + ", locale " + locale);
+    for (AbstractResource resource : resources) {
+      branch.log(TreeLogger.SPAM, resource.toString());
+    }
+    cache.put(cacheKey, resources);
+    return resources;
   }
 
   abstract String getExt();

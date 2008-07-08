@@ -65,8 +65,7 @@ class DelegateMembers extends AbstractMembers {
   protected Map<String, JField> doGetFields() {
     if (lazyFields != null) {
       /*
-       * Return if the fields are being initialized or have been
-       * initialized.
+       * Return if the fields are being initialized or have been initialized.
        */
       return lazyFields;
     }
@@ -86,8 +85,7 @@ class DelegateMembers extends AbstractMembers {
   protected Map<String, List<JMethod>> doGetMethods() {
     if (lazyMethods != null) {
       /*
-       * Return if the methods are being initialized or have been
-       * initialized.
+       * Return if the methods are being initialized or have been initialized.
        */
       return lazyMethods;
     }
@@ -98,10 +96,19 @@ class DelegateMembers extends AbstractMembers {
       JMethod newMethod = new JMethod(getParentType(), baseMethod);
       initializeParams(baseMethod, newMethod);
       newMethod.setReturnType(substitution.getSubstitution(baseMethod.getReturnType()));
+      initializeExceptions(baseMethod, newMethod);
       addMethod(newMethod);
     }
 
     return lazyMethods;
+  }
+
+  private void initializeExceptions(JAbstractMethod srcMethod,
+      JAbstractMethod newMethod) {
+    for (JType thrown : srcMethod.getThrows()) {
+      // exceptions cannot be parameterized; just copy them over
+      newMethod.addThrows(thrown);
+    }
   }
 
   private void initializeParams(JAbstractMethod srcMethod,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -69,23 +69,17 @@ class LocalizedPropertiesResource extends AbstractResource {
   @Override
   public String getStringExt(String key, String extension) {
     if (extension != null) {
-      key += '[' + extension + ']';
-      /*
-       * Do not look up key extensions in other files, as they may not be
-       * relevant.  For example, if you are looking up the "one" French
-       * plural form and it isn't present, using the default fallback (which
-       * will typically be English) will result in an incorrect translation.
-       * Better to give a warning about a missing plural form and use the
-       * default rather than silently use an incorrect one.
-       */
-      return (String) getObjectAux(key, false);
+      String s = getStringExt(getExtendedKey(key, extension), null);
+      if (s != null) {
+        return s;
+      }
     }
-    return getString(key);
+    return props.getProperty(key);
   }
 
   @Override
-  public Object handleGetObject(String key) {
-    return props.getProperty(key);
+  public boolean notEmpty() {
+    return props != null && !props.getPropertyMap().isEmpty();
   }
 
   @Override

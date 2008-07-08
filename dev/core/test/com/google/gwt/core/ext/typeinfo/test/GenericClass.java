@@ -29,7 +29,8 @@ import java.util.List;
  * definition of GenericClass is as follows: class GenericClass<T extends
  * Serializable & Comparable<T>> implements Comparable<T> { ... }
  */
-public class GenericClass<T extends Serializable> implements Comparable<T>, Serializable {
+public class GenericClass<T extends Serializable> implements Comparable<T>,
+    Serializable {
   /**
    * Non-static, generic inner class.
    * 
@@ -63,8 +64,7 @@ public class GenericClass<T extends Serializable> implements Comparable<T>, Seri
    * NOTE: The following is disabled because it violates an assumption in TOB
    * line 1228.
    */
-//  GenericClass.NonGenericInnerClass rawNonGenericInnerClassField;
-
+  // GenericClass.NonGenericInnerClass rawNonGenericInnerClassField;
   Class rawClazzField;
 
   /**
@@ -112,7 +112,7 @@ public class GenericClass<T extends Serializable> implements Comparable<T>, Seri
     return collection.iterator().next();
   }
 
-  public void setT(T t) {
+  public void setT(T t) throws Exception {
     this.typeParameterField = t;
   }
 }

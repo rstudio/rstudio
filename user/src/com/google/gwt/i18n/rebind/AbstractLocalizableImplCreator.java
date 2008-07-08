@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.LocalizableResource.Generate;
 import com.google.gwt.i18n.client.LocalizableResource.Key;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 import com.google.gwt.i18n.rebind.format.MessageCatalogFormat;
 import com.google.gwt.i18n.rebind.keygen.KeyGenerator;
@@ -86,14 +87,14 @@ abstract class AbstractLocalizableImplCreator extends
       throw error(logger, name + " must be an interface");
     }
 
-    AbstractResource resource = null;
+    ResourceList resourceList = null;
     try {
-      resource = ResourceFactory.getBundle(logger, targetClass, locale,
+      resourceList = ResourceFactory.getBundle(logger, targetClass, locale,
           assignableToConstants);
     } catch (MissingResourceException e) {
       throw error(
           logger,
-          "Localization failed; there must be at least one properties file accessible through"
+          "Localization failed; there must be at least one resource accessible through"
               + " the classpath in package '"
               + packageName
               + "' whose base name is '"
@@ -121,17 +122,17 @@ abstract class AbstractLocalizableImplCreator extends
       // Now that we have all the information set up, process the class
       if (constantsWithLookupClass.isAssignableFrom(targetClass)) {
         ConstantsWithLookupImplCreator c = new ConstantsWithLookupImplCreator(
-            logger, deprecatedLogger, writer, targetClass, resource,
+            logger, deprecatedLogger, writer, targetClass, resourceList,
             context.getTypeOracle());
         c.emitClass(logger, locale);
       } else if (constantsClass.isAssignableFrom(targetClass)) {
         ConstantsImplCreator c = new ConstantsImplCreator(logger,
-            deprecatedLogger, writer, targetClass, resource,
+            deprecatedLogger, writer, targetClass, resourceList,
             context.getTypeOracle());
         c.emitClass(logger, locale);
       } else {
         MessagesImplCreator messages = new MessagesImplCreator(logger,
-            deprecatedLogger, writer, targetClass, resource,
+            deprecatedLogger, writer, targetClass, resourceList,
             context.getTypeOracle());
         messages.emitClass(logger, locale);
       }
@@ -207,7 +208,7 @@ abstract class AbstractLocalizableImplCreator extends
               throw error(logger, e.getMessage());
             }
             try {
-              msgWriter.write(branch, resource, out, targetClass);
+              msgWriter.write(branch, locale, resourceList, out, targetClass);
               out.flush();
               context.commitResource(logger, outStr).setPrivate(true);
             } catch (UnableToCompleteException e) {
@@ -234,7 +235,7 @@ abstract class AbstractLocalizableImplCreator extends
   /**
    * The Dictionary/value bindings used to determine message contents.
    */
-  private AbstractResource messageBindings;
+  private ResourceList resourceList;
 
   /**
    * Logger to use for deprecated warnings.
@@ -252,14 +253,14 @@ abstract class AbstractLocalizableImplCreator extends
    * @param deprecatedLogger logger to use for deprecated warnings.
    * @param writer writer
    * @param targetClass current target
-   * @param messageBindings backing resource
+   * @param resourceList backing resource
    */
   public AbstractLocalizableImplCreator(TreeLogger logger,
       TreeLogger deprecatedLogger, SourceWriter writer, JClassType targetClass,
-      AbstractResource messageBindings, boolean isConstants) {
+      ResourceList resourceList, boolean isConstants) {
     super(writer, targetClass);
     this.deprecatedLogger = deprecatedLogger;
-    this.messageBindings = messageBindings;
+    this.resourceList = resourceList;
     this.isConstants = isConstants;
     try {
       keyGenerator = AnnotationsResource.getKeyGenerator(targetClass);
@@ -274,8 +275,8 @@ abstract class AbstractLocalizableImplCreator extends
    * 
    * @return the resource
    */
-  public AbstractResource getResourceBundle() {
-    return messageBindings;
+  public ResourceList getResourceBundle() {
+    return resourceList;
   }
 
   @Override
@@ -301,7 +302,7 @@ abstract class AbstractLocalizableImplCreator extends
           + method.getName(), null);
       throw new UnableToCompleteException();
     }
-    methodCreator.createMethodFor(logger, method, key, messageBindings, locale);
+    methodCreator.createMethodFor(logger, method, key, resourceList, locale);
   }
 
   /**

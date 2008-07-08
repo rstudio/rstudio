@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.i18n.client.ColorsAndShapes;
 import com.google.gwt.i18n.client.ColorsAndShapesAndConcepts;
 import com.google.gwt.i18n.client.gen.Colors;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 
 import junit.framework.TestCase;
 
@@ -38,23 +39,21 @@ public class AbstractResourceTest extends TestCase {
   public void testBundle() {
     // simple test
     String s = Colors.class.getName();
-    AbstractResource resource = ResourceFactory.getBundle(s, null, true);
-    assertNotNull(resource);
-    AbstractResource pigLatinResource =
+    ResourceList resourceList = ResourceFactory.getBundle(s, null, true);
+    assertNotNull(resourceList);
+    ResourceList pigLatinResourceList =
         ResourceFactory.getBundle(s, LOCALE_NAME_PIGLATIN, true);
-    assertEquals(LOCALE_NAME_PIGLATIN, pigLatinResource.getLocaleName());
-    assertNotNull(pigLatinResource);
-    assertEquals("ueblay", pigLatinResource.getString("blue"));
-    assertEquals("ĝréý", pigLatinResource.getString("grey"));
+    assertNotNull(pigLatinResourceList);
+    assertEquals("ueblay", pigLatinResourceList.getString("blue"));
+    assertEquals("ĝréý", pigLatinResourceList.getString("grey"));
   }
 
   public void testInheritence() {
     ResourceFactory.clearCache();
-    AbstractResource resource = ResourceFactory.getBundle(
+    ResourceList resourceList = ResourceFactory.getBundle(
       ColorsAndShapes.class, LOCALE_NAME_PIGLATIN, true);
-    assertEquals(LOCALE_NAME_PIGLATIN, resource.getLocaleName());
-    assertEquals("ueblay", resource.getString("blue"));
-    assertEquals("ĝréý", resource.getString("grey"));
+    assertEquals("ueblay", resourceList.getString("blue"));
+    assertEquals("ĝréý", resourceList.getString("grey"));
   }
 
   public void testByteStreamBehavior() throws UnsupportedEncodingException {
@@ -68,11 +67,11 @@ public class AbstractResourceTest extends TestCase {
   }
 
   public void testDoubleInherits() {
-    AbstractResource resource = ResourceFactory.getBundle(
+    ResourceList resourceList = ResourceFactory.getBundle(
       ColorsAndShapesAndConcepts.class, LOCALE_NAME_PIGLATIN_UK, true);
-    String s = resource.getString("internationalization");
+    String s = resourceList.getString("internationalization");
     assertEquals("Îñţérñåţîöñåļîžåţîöñ", s);
-    assertTrue(resource.keySet().size() > 5);
+    assertTrue(resourceList.keySet().size() > 5);
   }
 
   public void testCharArrayBehavior() {

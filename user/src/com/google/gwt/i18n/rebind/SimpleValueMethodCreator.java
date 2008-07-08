@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 /**
@@ -88,8 +89,8 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String key, AbstractResource resource, String locale) throws UnableToCompleteException {
-    String value = resource.getRequiredStringExt(logger, key, null);
+      String key, ResourceList resource, String locale) throws UnableToCompleteException {
+    String value = resource.getRequiredStringExt(key, null);
     try {
       String translatedValue = valueCreator.getValue(value);
       println("return " + translatedValue + ";");

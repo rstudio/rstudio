@@ -66,6 +66,16 @@ public abstract class TypeRefVisitor extends ASTVisitor {
 
   @Override
   public void endVisit(MessageSend messageSend, BlockScope scope) {
+    /*
+     * Counterintuitive: there's a reason we only need to record a reference for
+     * static method calls. For any non-static method call, there must be a
+     * qualifying instance expression. When that instance expression is visited,
+     * the type reference to its declared type will be recorded. Thus, recording
+     * for each instance call is unnecessary.
+     * 
+     * Note: when we tried recording for instance calls, we would get a null
+     * scope in some cases, which would cause compiler errors.
+     */
     if (messageSend.binding != null && messageSend.binding.isStatic()) {
       maybeDispatch(scope, messageSend, messageSend.actualReceiverType);
     }

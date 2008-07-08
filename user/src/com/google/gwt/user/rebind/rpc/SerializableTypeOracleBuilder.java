@@ -32,6 +32,7 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.rebind.rpc.TypeParameterExposureComputer.TypeParameterFlowInfo;
+import com.google.gwt.user.rebind.rpc.TypePaths.TypePath;
 
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -82,12 +83,6 @@ import java.util.Map.Entry;
  */
 public class SerializableTypeOracleBuilder {
 
-  interface Path {
-    Path getParent();
-
-    String toString();
-  }
-
   private class TypeInfoComputed {
 
     /**
@@ -127,7 +122,7 @@ public class SerializableTypeOracleBuilder {
     /**
      * Path used to discover this type.
      */
-    private final Path path;
+    private final TypePath path;
 
     /**
      * The state that this type is currently in.
@@ -139,7 +134,7 @@ public class SerializableTypeOracleBuilder {
      */
     private final JClassType type;
 
-    public TypeInfoComputed(JClassType type, Path path) {
+    public TypeInfoComputed(JClassType type, TypePath path) {
       this.type = type;
       this.path = path;
       autoSerializable = SerializableTypeOracleBuilder.isAutoSerializable(type);
@@ -151,7 +146,7 @@ public class SerializableTypeOracleBuilder {
       return manualSerializer;
     }
 
-    public Path getPath() {
+    public TypePath getPath() {
       return path;
     }
 
@@ -471,100 +466,6 @@ public class SerializableTypeOracleBuilder {
     return true;
   }
 
-  private static Path createArrayComponentPath(final JArrayType arrayType,
-      final Path parent) {
-    return new Path() {
-      public Path getParent() {
-        return parent;
-      }
-
-      @Override
-      public String toString() {
-        return "Type '"
-            + arrayType.getComponentType().getParameterizedQualifiedSourceName()
-            + "' is reachable from array type '"
-            + arrayType.getParameterizedQualifiedSourceName() + "'";
-      }
-    };
-  }
-
-  private static Path createFieldPath(final Path parent, final JField field) {
-    return new Path() {
-      public Path getParent() {
-        return parent;
-      }
-
-      @Override
-      public String toString() {
-        JType type = field.getType();
-        JClassType enclosingType = field.getEnclosingType();
-        return "'" + type.getParameterizedQualifiedSourceName()
-            + "' is reachable from field '" + field.getName() + "' of type '"
-            + enclosingType.getParameterizedQualifiedSourceName() + "'";
-      }
-    };
-  }
-
-  private static Path createRootPath(final JType type) {
-    return new Path() {
-      public Path getParent() {
-        return null;
-      }
-
-      @Override
-      public String toString() {
-        return "Started from '" + type.getParameterizedQualifiedSourceName()
-            + "'";
-      }
-    };
-  }
-
-  private static Path createSubtypePath(final Path parent, final JType type,
-      final JClassType supertype) {
-    return new Path() {
-      public Path getParent() {
-        return parent;
-      }
-
-      @Override
-      public String toString() {
-        return "'" + type.getParameterizedQualifiedSourceName()
-            + "' is reachable as a subtype of type '" + supertype + "'";
-      }
-    };
-  }
-
-  private static Path createSupertypePath(final Path parent, final JType type,
-      final JClassType subtype) {
-    return new Path() {
-      public Path getParent() {
-        return parent;
-      }
-
-      @Override
-      public String toString() {
-        return "'" + type.getParameterizedQualifiedSourceName()
-            + "' is reachable as a supertype of type '" + subtype + "'";
-      }
-    };
-  }
-
-  private static Path createTypeArgumentPath(final Path parent,
-      final JClassType type, final int typeArgIndex, final JClassType typeArg) {
-    return new Path() {
-      public Path getParent() {
-        return parent;
-      }
-
-      @Override
-      public String toString() {
-        return "'" + typeArg.getParameterizedQualifiedSourceName()
-            + "' is reachable from type argument " + typeArgIndex
-            + " of type '" + type.getParameterizedQualifiedSourceName() + "'";
-      }
-    };
-  }
-
   private static boolean directlyImplementsMarkerInterface(JClassType type) {
     try {
       return TypeHierarchyUtils.directlyImplementsInterface(type,
@@ -754,7 +655,7 @@ public class SerializableTypeOracleBuilder {
     boolean allSucceeded = true;
     for (Entry<JClassType, TreeLogger> entry : rootTypes.entrySet()) {
       allSucceeded &= checkTypeInstantiable(entry.getValue(), entry.getKey(),
-          false, createRootPath(entry.getKey()));
+          false, TypePaths.createRootPath(entry.getKey()));
     }
 
     if (!allSucceeded) {
@@ -827,18 +728,18 @@ public class SerializableTypeOracleBuilder {
    * The method is exposed using default access to enable testing.
    */
   final boolean checkTypeInstantiable(TreeLogger logger, JType type,
-      boolean isSpeculative, Path path) {
+      boolean isSpeculative, TypePath path) {
     return checkTypeInstantiable(logger, type, isSpeculative, path,
         new HashSet<JClassType>());
   }
 
   /**
    * Same as
-   * {@link #checkTypeInstantiable(TreeLogger, JType, boolean, com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder.Path)},
+   * {@link #checkTypeInstantiable(TreeLogger, JType, boolean, com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder.TypePath)},
    * except that returns the set of instantiable subtypes.
    */
   boolean checkTypeInstantiable(TreeLogger logger, JType type,
-      boolean isSpeculative, Path path, Set<JClassType> instSubtypes) {
+      boolean isSpeculative, TypePath path, Set<JClassType> instSubtypes) {
     assert (type != null);
     if (type.isPrimitive() != null) {
       return true;
@@ -856,8 +757,7 @@ public class SerializableTypeOracleBuilder {
       if (typeParametersInRootTypes.contains(isTypeParameter)) {
         return checkTypeInstantiable(localLogger,
             isTypeParameter.getFirstBound(), isSpeculative,
-            createTypeArgumentPath(path, isTypeParameter.getDeclaringClass(),
-                isTypeParameter.getOrdinal(), isTypeParameter.getFirstBound()),
+            TypePaths.createTypeParameterInRootPath(path, isTypeParameter),
             instSubtypes);
       }
 
@@ -948,7 +848,7 @@ public class SerializableTypeOracleBuilder {
    * 
    * @param logger
    */
-  private void checkAllSubtypesOfObject(TreeLogger logger, Path parent) {
+  private void checkAllSubtypesOfObject(TreeLogger logger, TypePath parent) {
     if (alreadyCheckedObject) {
       return;
     }
@@ -965,14 +865,15 @@ public class SerializableTypeOracleBuilder {
     JClassType[] allTypes = typeOracle.getJavaLangObject().getSubtypes();
     for (JClassType cls : allTypes) {
       if (isDeclaredSerializable(cls)) {
-        checkTypeInstantiable(localLogger, cls, true, createSubtypePath(parent,
-            cls, typeOracle.getJavaLangObject()));
+        checkTypeInstantiable(localLogger, cls, true,
+            TypePaths.createSubtypePath(parent, cls,
+                typeOracle.getJavaLangObject()));
       }
     }
   }
 
   private boolean checkArrayInstantiable(TreeLogger logger, JArrayType array,
-      boolean isSpeculative, Path path) {
+      boolean isSpeculative, TypePath path) {
 
     JType leafType = array.getLeafType();
     JWildcardType leafWild = leafType.isWildcard();
@@ -1007,7 +908,8 @@ public class SerializableTypeOracleBuilder {
     Set<JClassType> instantiableTypes = new HashSet<JClassType>();
 
     boolean succeeded = checkTypeInstantiable(branch, array.getComponentType(),
-        isSpeculative, createArrayComponentPath(array, path), instantiableTypes);
+        isSpeculative, TypePaths.createArrayComponentPath(array, path),
+        instantiableTypes);
     if (succeeded && leafClass != null) {
       TreeLogger covariantArrayLogger = logger.branch(TreeLogger.DEBUG,
           "Covariant array types");
@@ -1047,7 +949,7 @@ public class SerializableTypeOracleBuilder {
    * necessary types.
    */
   private boolean checkDeclaredFields(TreeLogger logger,
-      TypeInfoComputed typeInfo, boolean isSpeculative, Path parent) {
+      TypeInfoComputed typeInfo, boolean isSpeculative, TypePath parent) {
 
     JClassType classOrInterface = typeInfo.getType();
     if (classOrInterface.isEnum() != null) {
@@ -1079,7 +981,7 @@ public class SerializableTypeOracleBuilder {
             field.toString(), null);
         JType fieldType = field.getType();
 
-        Path path = createFieldPath(parent, field);
+        TypePath path = TypePaths.createFieldPath(parent, field);
         if (typeInfo.isManuallySerializable()
             && fieldType.getLeafType() == typeOracle.getJavaLangObject()) {
           checkAllSubtypesOfObject(fieldLogger.branch(TreeLogger.WARN,
@@ -1101,7 +1003,7 @@ public class SerializableTypeOracleBuilder {
   }
 
   private boolean checkSubtype(TreeLogger logger, JClassType classOrInterface,
-      JClassType originalType, boolean isSpeculative, Path parent) {
+      JClassType originalType, boolean isSpeculative, TypePath parent) {
     if (classOrInterface.isEnum() != null) {
       // The fields of an enum are never serialized; they are always okay.
       return true;
@@ -1145,7 +1047,7 @@ public class SerializableTypeOracleBuilder {
       boolean superTypeOk = false;
       if (superType != null) {
         superTypeOk = checkSubtype(logger, superType, originalType,
-            isSpeculative, createSupertypePath(parent, superType,
+            isSpeculative, TypePaths.createSupertypePath(parent, superType,
                 classOrInterface));
       }
 
@@ -1169,7 +1071,7 @@ public class SerializableTypeOracleBuilder {
    * instantiable relative to a known base type.
    */
   private boolean checkSubtypes(TreeLogger logger, JClassType originalType,
-      Set<JClassType> instSubtypes, Path path) {
+      Set<JClassType> instSubtypes, TypePath path) {
     JClassType baseType = getBaseType(originalType);
     TreeLogger computationLogger = logger.branch(TreeLogger.DEBUG,
         "Finding possibly instantiable subtypes");
@@ -1195,7 +1097,8 @@ public class SerializableTypeOracleBuilder {
         continue;
       }
 
-      Path subtypePath = createSubtypePath(path, candidate, originalType);
+      TypePath subtypePath = TypePaths.createSubtypePath(path, candidate,
+          originalType);
       TypeInfoComputed tic = getTypeInfoComputed(candidate, subtypePath);
       if (tic.isDone()) {
         anySubtypes |= tic.isInstantiable();
@@ -1247,7 +1150,7 @@ public class SerializableTypeOracleBuilder {
    *         <code>typeArg</code>.
    */
   private boolean checkTypeArgument(TreeLogger logger, JGenericType baseType,
-      int paramIndex, JClassType typeArg, boolean isSpeculative, Path parent) {
+      int paramIndex, JClassType typeArg, boolean isSpeculative, TypePath parent) {
     JWildcardType isWildcard = typeArg.isWildcard();
     if (isWildcard != null) {
       return checkTypeArgument(logger, baseType, paramIndex,
@@ -1279,7 +1182,8 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
-    Path path = createTypeArgumentPath(parent, baseType, paramIndex, typeArg);
+    TypePath path = TypePaths.createTypeArgumentPath(parent, baseType, paramIndex,
+        typeArg);
     int exposure = getTypeParameterExposure(baseType, paramIndex);
     switch (exposure) {
       case TypeParameterExposureComputer.EXPOSURE_DIRECT: {
@@ -1370,7 +1274,7 @@ public class SerializableTypeOracleBuilder {
     return possiblyInstantiableTypes;
   }
 
-  private TypeInfoComputed getTypeInfoComputed(JClassType type, Path path) {
+  private TypeInfoComputed getTypeInfoComputed(JClassType type, TypePath path) {
     TypeInfoComputed tic = typeToTypeInfoComputed.get(type);
     if (tic == null) {
       tic = new TypeInfoComputed(type, path);
@@ -1400,7 +1304,7 @@ public class SerializableTypeOracleBuilder {
     return false;
   }
 
-  private void logPath(TreeLogger logger, Path path) {
+  private void logPath(TreeLogger logger, TypePath path) {
     if (path == null) {
       return;
     }

@@ -17,8 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * A standard push-button widget.
@@ -33,7 +32,8 @@ import com.google.gwt.user.client.Element;
  * </ul>
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.ButtonExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.ButtonExample}
  * </p>
  */
 public class Button extends ButtonBase {
@@ -41,16 +41,17 @@ public class Button extends ButtonBase {
   /**
    * Creates a Button widget that wraps an existing &lt;button&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
   public static Button wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    ButtonElement.as(element);
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    Button button = new Button((Element) element);
+    Button button = new Button(element);
 
     // Mark it attached and remember it for cleanup.
     button.onAttach();
@@ -77,7 +78,7 @@ public class Button extends ButtonBase {
    * Creates a button with no caption.
    */
   public Button() {
-    super(DOM.createButton());
+    super(Document.get().createButtonElement());
     adjustType(getElement());
     setStyleName("gwt-Button");
   }
@@ -103,8 +104,15 @@ public class Button extends ButtonBase {
     addClickListener(listener);
   }
 
-  private Button(Element element) {
-    super(element);
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be a &lt;button&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected Button(com.google.gwt.dom.client.Element element) {
+    super(element.<Element>cast());
+    ButtonElement.as(element);
   }
 
   /**

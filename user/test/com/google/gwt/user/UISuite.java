@@ -70,6 +70,7 @@ import com.google.gwt.user.client.ui.VerticalPanelTest;
 import com.google.gwt.user.client.ui.WidgetCollectionTest;
 import com.google.gwt.user.client.ui.WidgetIteratorsTest;
 import com.google.gwt.user.client.ui.WidgetOnLoadTest;
+import com.google.gwt.user.client.ui.WidgetSubclassingTest;
 import com.google.gwt.user.client.ui.impl.ClippedImagePrototypeTest;
 import com.google.gwt.user.rebind.ui.ImageBundleGeneratorTest;
 import com.google.gwt.xml.client.XMLTest;
@@ -141,6 +142,7 @@ public class UISuite {
     suite.addTestSuite(WidgetCollectionTest.class);
     suite.addTestSuite(WidgetIteratorsTest.class);
     suite.addTestSuite(WidgetOnLoadTest.class);
+    suite.addTestSuite(WidgetSubclassingTest.class);
     suite.addTestSuite(WindowTest.class);
     suite.addTestSuite(XMLTest.class);
     suite.addTestSuite(ClassInitTest.class);

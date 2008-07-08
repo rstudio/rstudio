@@ -413,6 +413,9 @@ function __MODULE_FUNC__() {
   // Script resources are injected here
 // __MODULE_SCRIPTS_END__
 
+  // The 'defer' attribute here is a workaround for strange IE behavior where
+  // <script> tags that are doc.writ()en execute *immediately*, rather than
+  // in document-order, as they should. It has no effect on other browsers.
   $doc.write('<script defer="defer">__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
 }
 

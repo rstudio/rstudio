@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,12 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
+import com.google.gwt.user.server.ui.FormPanelTestServlet;
 
 /**
  * Tests the FormPanel.
@@ -28,6 +30,10 @@ import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
  */
 public class FormPanelTest extends GWTTestCase {
   public static boolean clicked = false;
+
+  private native boolean isHappyDivPresent(Element iframe) /*-{
+    return !!iframe.contentWindow.document.getElementById(':)');
+  }-*/;
 
   public String getModuleName() {
     return "com.google.gwt.user.FormPanelTest";
@@ -213,14 +219,42 @@ public class FormPanelTest extends GWTTestCase {
         assertTrue(isHappyDivPresent(frame.getElement()));
         finishTest();
       }
-
-      private native boolean isHappyDivPresent(Element iframe) /*-{
-        return !!iframe.contentWindow.document.getElementById(':)');
-      }-*/;
     };
 
     // Wait 5 seconds before checking the results.
     t.schedule(5000);
+    form.submit();
+  }
+
+  public void testWrappedForm() {
+    // Create a form and frame in the document we can wrap.
+    HTML formAndFrame = new HTML(
+        "<form id='wrapMe' method='post' target='targetFrame' action='"
+            + GWT.getModuleBaseURL() + "formHandler?sendHappyHtml'>"
+            + "<input type='hidden' name='foo' value='bar'></input></form>"
+            + "<iframe src='javascript:\'\'' id='targetMe' name='targetFrame'></iframe>");
+    RootPanel.get().add(formAndFrame);
+
+    // Wrap the form and make sure its target frame is intact.
+    FormPanel form = FormPanel.wrap(Document.get().getElementById("wrapMe"));
+    assertEquals("targetFrame", form.getTarget());
+
+    // Ensure that no synthesized iframe was created.
+    assertNull(form.getSynthesizedIFrame());
+
+    // Submit the form and make sure the target frame comes back with the right
+    // stuff (give it 2.5 s to complete).
+    delayTestFinish(5000);
+    new Timer() {
+      @Override
+      public void run() {
+        // Get the targeted frame and make sure it contains the requested
+        // 'happyElem'.
+        Frame frame = Frame.wrap(Document.get().getElementById("targetMe"));
+        assertTrue(isHappyDivPresent(frame.getElement()));
+        finishTest();
+      }
+    }.schedule(2500);
     form.submit();
   }
 }

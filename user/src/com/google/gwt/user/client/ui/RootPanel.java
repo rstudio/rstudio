@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,17 +15,18 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.i18n.client.BidiUtils;
+import com.google.gwt.i18n.client.HasDirection;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.WindowCloseListener;
-import com.google.gwt.i18n.client.LocaleInfo;
-import com.google.gwt.i18n.client.BidiUtils;
-import com.google.gwt.i18n.client.HasDirection;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * The panel to which all other widgets must ultimately be added. RootPanels are
@@ -38,21 +39,56 @@ import java.util.List;
  */
 public class RootPanel extends AbsolutePanel {
 
-  private static HashMap<String, RootPanel> rootPanels = new HashMap<String, RootPanel>();
-  private static List<Widget> widgetsToDetach = new ArrayList<Widget>();
+  private static Map<String, RootPanel> rootPanels = new HashMap<String, RootPanel>();
+  private static Set<Widget> widgetsToDetach = new HashSet<Widget>();
 
   /**
-   * Adds a widget to the list of widgets to be detached when the page unloads.
+   * Adds a widget to the detach list. This is the list of widgets to be
+   * detached when the page unloads.
    * 
    * This method must be called for all widgets that have no parent widgets.
    * These are most commonly {@link RootPanel RootPanels}, but can also be any
-   * widget used to wrap an existing element on the page. Failing to do this
-   * may cause these widgets to leak memory.
+   * widget used to wrap an existing element on the page. Failing to do this may
+   * cause these widgets to leak memory. This method is called automatically by
+   * widgets' wrap methods (e.g.
+   * {@link Button#wrap(com.google.gwt.dom.client.Element)}).
    * 
    * @param widget the widget to be cleaned up when the page closes
+   * @see #detachNow(Widget)
    */
   public static void detachOnWindowClose(Widget widget) {
+    assert !widgetsToDetach.contains(widget) : "detachOnUnload() called twice "
+        + "for the same widget";
+
     widgetsToDetach.add(widget);
+  }
+
+  /**
+   * Marks a widget as detached and removes it from the detach list.
+   * 
+   * If an element belonging to a widget originally passed to
+   * {@link #detachOnWindowClose(Widget)} has been removed from the document, calling
+   * this method will cause it to be marked as detached immediately. Failure to
+   * do so will keep the widget from being garbage collected until the page is
+   * unloaded.
+   * 
+   * This method may only be called per widget, and only for widgets that were
+   * originally passed to {@link #detachOnWindowClose(Widget)}. Any widget in the
+   * detach list, whose element is no longer in the document when the page
+   * unloads, will cause an assertion error.
+   * 
+   * @param widget the widget that no longer needs to be cleaned up when the
+   *          page closes
+   * @see #detachOnWindowClose(Widget)
+   */
+  public static void detachNow(Widget widget) {
+    assert !getBodyElement().isOrHasChild(widget.getElement()) : "detachNow() "
+        + "called on a widget whose element is still attached to the document";
+    assert widgetsToDetach.contains(widget) : "detachNow() called on a widget "
+        + "not currently in the detach list";
+
+    widget.onDetach();
+    widgetsToDetach.remove(widget);
   }
 
   /**
@@ -90,18 +126,18 @@ public class RootPanel extends AbsolutePanel {
       }
     }
 
-    // Note that the code in this if block only happens once - 
-    // on the first RootPanel.get(String) or RootPanel.get() 
+    // Note that the code in this if block only happens once -
+    // on the first RootPanel.get(String) or RootPanel.get()
     // call.
-    
     if (rootPanels.size() == 0) {
       hookWindowClosing();
-      
+
       // If we're in a RTL locale, set the RTL directionality
       // on the entire document.
       if (LocaleInfo.getCurrentLocale().isRTL()) {
-        BidiUtils.setDirectionOnElement(getRootElement(), HasDirection.Direction.RTL);
-      }      
+        BidiUtils.setDirectionOnElement(getRootElement(),
+            HasDirection.Direction.RTL);
+      }
     }
 
     // Create the panel and put it in the map.
@@ -110,7 +146,7 @@ public class RootPanel extends AbsolutePanel {
       elem = getBodyElement();
     }
     rootPanels.put(id, rp = new RootPanel(elem));
-    widgetsToDetach.add(rp);
+    detachOnWindowClose(rp);
     return rp;
   }
 
@@ -123,10 +159,30 @@ public class RootPanel extends AbsolutePanel {
     return $doc.body;
   }-*/;
 
+  // Package-protected for use by unit tests. Do not call this method directly.
+  static void detachWidgets() {
+    // When the window is closing, detach all widgets that need to be
+    // cleaned up. This will cause all of their event listeners
+    // to be unhooked, which will avoid potential memory leaks.
+    for (Widget widget : widgetsToDetach) {
+      if (widget.isAttached()) {
+        widget.onDetach();
+      }
+
+      // Assert that each widget's element is actually attached to the
+      // document. If not, then it was probably wrapped and removed, but not
+      // properly detached.
+      assert getBodyElement().isOrHasChild(widget.getElement()) : "A "
+          + "widget in the detach list was found not attached to the "
+          + "document. The is likely caused by wrapping an existing "
+          + "element and removing it from the document without calling "
+          + "RootPanel.detachNow().";
+    }
+  }
+
   /**
-   * Convenience method for getting the document's root 
-   * (<html>) element.
-   *
+   * Convenience method for getting the document's root (<html>) element.
+   * 
    * @return the document's root element
    */
   private static native Element getRootElement() /*-{
@@ -137,15 +193,7 @@ public class RootPanel extends AbsolutePanel {
     // Catch the window closing event.
     Window.addWindowCloseListener(new WindowCloseListener() {
       public void onWindowClosed() {
-        // When the window is closing, detach all widgets that need to be
-        // cleaned up. This will cause all of their event listeners
-        // to be unhooked, which will avoid potential memory leaks.
-        for (int i = 0; i < widgetsToDetach.size(); ++i) {
-          Widget widget = widgetsToDetach.get(i);
-          if (widget.isAttached()) {
-            widget.onDetach();
-          }
-        }
+        detachWidgets();
       }
 
       public String onWindowClosing() {

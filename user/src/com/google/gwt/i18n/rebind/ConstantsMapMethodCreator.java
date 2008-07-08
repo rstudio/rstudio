@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 /**
@@ -40,12 +41,12 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
    * @param logger TreeLogger instance for logging
    * @param method method body to create
    * @param key value to create map from
-   * @param resource AbstractResource for key lookup
+   * @param resourceList AbstractResource for key lookup
    * @param locale locale to use for localized string lookup
    */
   @Override
   public void createMethodFor(TreeLogger logger, JMethod method, String key,
-      AbstractResource resource, String locale) {
+      ResourceList resourceList, String locale) {
     String methodName = method.getName();
     if (method.getParameters().length > 0) {
       error(
@@ -66,7 +67,7 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     println("args = new " + constantMapClassName + "();");
     String value;
     try {
-      value = resource.getRequiredStringExt(logger, key, null);
+      value = resourceList.getRequiredStringExt(key, null);
     } catch (MissingResourceException e) {
       e.setDuring("getting key list");
       throw e;

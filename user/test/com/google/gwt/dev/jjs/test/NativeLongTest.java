@@ -23,6 +23,20 @@ import com.google.gwt.junit.client.GWTTestCase;
  * LongLibTest.
  */
 public class NativeLongTest extends GWTTestCase {
+  private static class RequestIdFactory {
+    static RequestIdFactory instance = new RequestIdFactory();
+
+    static RequestIdFactory getInstance() {
+      return instance;
+    }
+
+    long nextId;
+
+    long getNextId() {
+      return nextId++;
+    }
+  }
+
   /*
    * These constants are done as volatile fields so that the compiler will not
    * constant fold them. The problem is that if you write assertEquals(2L,
@@ -30,6 +44,7 @@ public class NativeLongTest extends GWTTestCase {
    */
   private static volatile byte BYTE_FOUR = (byte) 4;
   private static volatile char CHAR_FOUR = (char) 4;
+  private static volatile boolean FALSE = false;
   private static volatile int INT_FOUR = 4;
   private static volatile long LONG_100 = 100L;
   private static volatile long LONG_1234 = 0x1234123412341234L;
@@ -176,5 +191,58 @@ public class NativeLongTest extends GWTTestCase {
 
   public void testToString() {
     assertEquals("1234123412341234", "" + LONG_1234_DECIMAL);
+  }
+
+  /**
+   * It's important when allocating a new temporary that it is marked as in use.
+   */
+  public void testVariableReuseInCompoundAssignmentNormalizer1() {
+    if (FALSE) {
+      // Prevent inlining, so that CAN allocates temporaries predictably.
+      testVariableReuseInCompoundAssignmentNormalizer1();
+    }
+
+    assertEquals("0",
+        Long.toHexString(RequestIdFactory.getInstance().getNextId()));
+  }
+
+  /**
+   * Using differently typed temp variables can cause JArrayType to throw a
+   * class cast exception.
+   */
+  public void testVariableReuseInCompoundAssignmentNormalizer2() {
+    if (FALSE) {
+      // Prevent inlining, so that CAN allocates temporaries predictably.
+      testVariableReuseInCompoundAssignmentNormalizer2();
+    }
+    long ary[][] = new long[10][10];
+    long i = 3, j = 3;
+    assertEquals(0L, ary[(int) i++][(int) j++]++);
+    assertEquals(4L, i);
+    assertEquals(4L, j);
+    assertEquals(1L, ary[3][3]);
+  }
+
+  /**
+   * Using differently typed temp variables can cause LongEmulationNormalizer to
+   * fail an assertion.
+   */
+  public void testVariableReuseInCompoundAssignmentNormalizer3() {
+    if (FALSE) {
+      // Prevent inlining, so that CAN allocates temporaries predictably.
+      testVariableReuseInCompoundAssignmentNormalizer3();
+    }
+
+    long ary[] = new long[10];
+    int i = 3;
+    long j = 5;
+
+    assertEquals(0L, ary[i++]++);
+    assertEquals(4, i);
+    assertEquals(1L, ary[3]);
+
+    assertEquals(0L, ary[(int) j++]++);
+    assertEquals(6L, j);
+    assertEquals(1L, ary[5]);
   }
 }

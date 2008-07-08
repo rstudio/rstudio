@@ -18,8 +18,8 @@ package com.google.gwt.i18n.rebind.format;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.i18n.client.PluralRule.PluralForm;
-import com.google.gwt.i18n.rebind.AbstractResource;
 import com.google.gwt.i18n.rebind.AnnotationsResource;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.ArgumentInfo;
 
 import java.io.PrintWriter;
@@ -46,42 +46,44 @@ public class PropertiesFormat implements MessageCatalogFormat {
    * @see com.google.gwt.i18n.rebind.format.MessageCatalogFormat#write(com.google.gwt.i18n.rebind.util.AbstractResource,
    *      java.io.File, com.google.gwt.core.ext.typeinfo.JClassType)
    */
-  public void write(TreeLogger logger, AbstractResource resource, PrintWriter out,
-      JClassType messageInterface) {
-    AnnotationsResource annotResource = resource.getAnnotationsResource();
+  public void write(TreeLogger logger, String locale,
+      ResourceList resourceList, PrintWriter out, JClassType messageInterface) {
     writeComment(out, "Generated from "
         + messageInterface.getQualifiedSourceName());
-    String localeName = resource.getLocaleName();
-    if (localeName != null) {
-      writeComment(out, "for locale " + localeName);
+    if (locale != null) {
+      writeComment(out, "for locale " + locale);
     }
     // Sort keys for deterministic output.
-    Set<String> keySet = resource.keySet();
+    Set<String> keySet = resourceList.keySet();
     String[] sortedKeys = keySet.toArray(new String[keySet.size()]);
     Arrays.sort(sortedKeys);
     for (String key : sortedKeys) {
       out.println();
+      AnnotationsResource annotResource = resourceList.getAnnotationsResource(
+          logger, key);
       if (annotResource != null) {
         // Write comments from the annotations.
         writeAnnotComments(out, annotResource, key);
       }
       
       // Collect plural forms for this locale.
-      PluralForm[] pluralForms = resource.getPluralForms(key);
+      PluralForm[] pluralForms = resourceList.getPluralForms(key);
       if (pluralForms != null) {
         for (PluralForm form : pluralForms) {
           String name = form.getName();
           if ("other".equals(name)) {
             // write the "other" description here, and the default message
             writeComment(out, "- " + form.getDescription());
-            write(out, key, resource.getString(key));
+            write(out, key, resourceList.getString(key));
           } else {
-            String comment = "- plural form '" + form.getName() + "': " + form.getDescription();
+            String comment = "- plural form '" + form.getName() + "': "
+                + form.getDescription();
             if (!form.getWarnIfMissing()) {
               comment += " (optional)";
             }
             writeComment(out, comment);
-            String translated = resource.getStringExt(key, form.getName());
+            String translated = resourceList.getStringExt(key,
+                form.getName());
             if (translated == null) {
               translated = "";
             }
@@ -89,7 +91,7 @@ public class PropertiesFormat implements MessageCatalogFormat {
           }
         }
       } else {
-        write(out, key, resource.getString(key));
+        write(out, key, resourceList.getString(key));
       }
     }
   }

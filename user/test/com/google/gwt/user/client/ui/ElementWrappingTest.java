@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -126,21 +128,24 @@ public class ElementWrappingTest extends GWTTestCase {
 
   public void testPasswordTextBox() {
     ensureDiv().setInnerHTML("<input type='password' id='foo'></input>");
-    PasswordTextBox textBox = PasswordTextBox.wrap(Document.get().getElementById("foo"));
+    PasswordTextBox textBox = PasswordTextBox.wrap(Document.get().getElementById(
+        "foo"));
 
     assertExistsAndAttached(textBox);
   }
 
   public void testSimpleCheckBox() {
     ensureDiv().setInnerHTML("<input type='checkbox' id='foo'></input>");
-    SimpleCheckBox checkBox = SimpleCheckBox.wrap(Document.get().getElementById("foo"));
+    SimpleCheckBox checkBox = SimpleCheckBox.wrap(Document.get().getElementById(
+        "foo"));
 
     assertExistsAndAttached(checkBox);
   }
 
   public void testSimpleRadioButton() {
     ensureDiv().setInnerHTML("<input type='radio' id='foo'></input>");
-    SimpleRadioButton radio = SimpleRadioButton.wrap(Document.get().getElementById("foo"));
+    SimpleRadioButton radio = SimpleRadioButton.wrap(Document.get().getElementById(
+        "foo"));
 
     assertExistsAndAttached(radio);
   }
@@ -150,6 +155,78 @@ public class ElementWrappingTest extends GWTTestCase {
     TextBox textBox = TextBox.wrap(Document.get().getElementById("foo"));
 
     assertExistsAndAttached(textBox);
+  }
+
+  public void testDetachOnUnloadTwiceFails() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      try {
+        // Trying to pass the same widget to RootPanel.detachOnUnload() twice
+        // should fail an assertion (the first call is implicit through
+        // Anchor.wrap()).
+        ensureDiv().setInnerHTML(
+            "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
+        Anchor a = Anchor.wrap(Document.get().getElementById("foo")); // pass
+        RootPanel.detachOnWindowClose(a); // fail
+        fail("Expected assertion failure calling detachOnLoad() twice");
+      } catch (AssertionError e) {
+      }
+    }
+  }
+
+  public void testDetachNowTwiceFails() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      try {
+        // Trying to pass the same widget to RootPanel.detachNow() twice
+        // should fail an assertion.
+        ensureDiv().setInnerHTML(
+            "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
+        Anchor a = Anchor.wrap(Document.get().getElementById("foo"));
+        RootPanel.detachNow(a); // pass
+        RootPanel.detachNow(a); // fail
+        fail("Expected assertion failure calling detachNow() twice");
+      } catch (AssertionError e) {
+      }
+    }
+  }
+
+  public void testWrapUnattachedFails() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      try {
+        // Trying to wrap an unattached element should fail an assertion.
+        // We only test this for one element/widget type, because they
+        // all call RootPanel.detachOnUnload(), where the actual assertion
+        // occurs.
+        AnchorElement aElem = Document.get().createAnchorElement();
+        Anchor.wrap(aElem);
+        fail("Expected assertion failure wrapping unattached element");
+      } catch (AssertionError e) {
+      }
+    }
+  }
+
+  public void testOnUnloadAssertions() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      try {
+        // When a wrap()ed element is detached from the document without being
+        // properly unwrapped, there will be an assertion to catch this run on
+        // unload.
+        ensureDiv().setInnerHTML(
+            "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
+        Element aElem = Document.get().getElementById("foo");
+        Anchor.wrap(aElem);
+        aElem.getParentElement().removeChild(aElem);
+
+        // Fake an unload by telling the RootPanel to go ahead and detach all
+        // of its widgets.
+        RootPanel.detachWidgets();
+        fail("Assertion expected for orphaned wrap()ed widgets");
+      } catch (AssertionError e) {
+      }
+    }
   }
 
   private void assertExistsAndAttached(Widget widget) {

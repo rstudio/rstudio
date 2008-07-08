@@ -2113,8 +2113,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
-  public void testTypeParametersInRootTypes() throws UnableToCompleteException,
-      NotFoundException {
+  public void testTypeParametersInRootTypes1()
+      throws UnableToCompleteException, NotFoundException {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     addStandardClasses(units);
 
@@ -2158,6 +2158,63 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     assertInstantiable(so, rawA);
     assertInstantiable(so, b);
     assertSerializableTypes(so, rawA, b);
+  }
+
+  /**
+   * Tests root types that <em>are</em> type parameters.
+   * 
+   * @throws UnableToCompleteException
+   * @throws NotFoundException
+   */
+  public void testTypeParametersInRootTypes2()
+      throws UnableToCompleteException, NotFoundException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    addStandardClasses(units);
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public abstract class A<U extends B> implements Serializable {\n");
+      code.append("  <V extends C>  V getFoo() { return null; }\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("A", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class B implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("B", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("public class C implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("C", code));
+    }
+
+    TreeLogger logger = createLogger();
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+
+    JGenericType a = to.getType("A").isGenericType();
+    JClassType b = to.getType("B");
+    JClassType c = to.getType("C");
+    JTypeParameter u = a.getTypeParameters()[0];
+    JTypeParameter v = a.getMethod("getFoo", makeArray()).getReturnType().isTypeParameter();
+
+    SerializableTypeOracleBuilder sob = new SerializableTypeOracleBuilder(
+        logger, to);
+    sob.addRootType(logger, u);
+    sob.addRootType(logger, v);
+    SerializableTypeOracle so = sob.build(logger);
+
+    assertSerializableTypes(so, b, c);
+    assertInstantiable(so, b);
+    assertInstantiable(so, c);
+    assertNotInstantiableOrFieldSerializable(so, a.getRawType());
   }
 
   private JClassType[] makeArray(JClassType... elements) {

@@ -54,9 +54,9 @@ public class GWTMockUtilities {
    * }
    * 
    * public void testSomething() {
-   *   MyWidget mock = EasyMock.createMock(MyWidget.class);
-   *   mock.setText("expected text");
-   *   mock.replay();
+   *   MyStatusWidget mock = EasyMock.createMock(MyStatusWidget.class);
+   *   EasyMock.expect(mock.setText("expected text"));
+   *   EasyMock.replay(mock);
    *   
    *   StatusController controller = new StatusController(mock);
    *   controller.setStatus("expected text");
@@ -65,7 +65,7 @@ public class GWTMockUtilities {
    * }
    * </pre>
    */
-  public static void disarm(/* TearDownAccepter test */) {
+  public static void disarm() {
     GWTBridge bridge = new GWTDummyBridge();
     setGwtBridge(bridge);
   }

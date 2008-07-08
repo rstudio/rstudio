@@ -882,8 +882,8 @@ public class Arrays {
       return 0;
     }
     int hashCode = 1;
-    for (int i = 0, n = a.length; i < n; ++i) {
-      hashCode = (31 * hashCode + a[i].hashCode()) | 0;
+    for (Object e : a) {
+      hashCode = (31 * hashCode + (e == null ? 0 : e.hashCode())) | 0;
     }
 
     return hashCode;

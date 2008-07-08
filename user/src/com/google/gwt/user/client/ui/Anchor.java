@@ -33,16 +33,16 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     HasName, HasText, HasHTML, HasWordWrap, HasDirection {
 
   /**
-   * Creates an Anchor widget that wraps an existing &lt;div&gt; or &lt;span&gt;
-   * element.
+   * Creates an Anchor widget that wraps an existing &lt;a&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
   public static Anchor wrap(Element element) {
-    // Assert that the element is of the correct type and is attached.
-    AnchorElement.as(element);
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
     Anchor anchor = new Anchor(element);
@@ -147,7 +147,14 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     this(text, false, href, target);
   }
 
-  private Anchor(Element element) {
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be an &lt;a&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected Anchor(Element element) {
+    AnchorElement.as(element);
     setElement(element);
   }
 

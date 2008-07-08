@@ -353,17 +353,26 @@ function __MODULE_FUNC__() {
   // Script resources are injected here
 // __MODULE_SCRIPTS_END__
 
-  $doc.write('<script defer="defer">'
+  // This is a bit ugly, but serves a purpose. We need to ensure that the stats
+  // script runs before the compiled script. If they are both doc.write()n in
+  // sequence, that should be the effect. Except on IE it turns out that a
+  // script injected via doc.write() can execute immediately! Adding 'defer'
+  // attributes to both seemed to fix this, but caused startup problems for
+  // some apps. The final solution was simply to inject the compiled script
+  // from *within* the stats script, guaranteeing order at the expense of near
+  // total inscrutability :(
+  var compiledScriptTag = '"<script src=\\"' + base + strongName + '\\"></scr" + "ipt>"';
+  $doc.write('<script><!--\n'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:\'__MODULE_NAME__\', subSystem:\'startup\','
-    + 'evtGroup: \'loadExternalRefs\', millis:(new Date()).getTime(),'
-    + 'type: \'end\'});'
+    + 'moduleName:"__MODULE_NAME__", subSystem:"startup",'
+    + 'evtGroup: "loadExternalRefs", millis:(new Date()).getTime(),'
+    + 'type: "end"});'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
-    + 'moduleName:\'__MODULE_NAME__\', subSystem:\'startup\','
-    + 'evtGroup: \'moduleStartup\', millis:(new Date()).getTime(),'
-    + 'type: \'moduleRequested\'});'
-    + '</script>'
-    + '<script defer="defer" src="' + base + strongName + '"></script>');
+    + 'moduleName:"__MODULE_NAME__", subSystem:"startup",'
+    + 'evtGroup: "moduleStartup", millis:(new Date()).getTime(),'
+    + 'type: "moduleRequested"});'
+    + 'document.write(' + compiledScriptTag + ');'
+    + '\n--></script>');
 }
 
 // Called from compiled code to hook the window's resize & load events (the

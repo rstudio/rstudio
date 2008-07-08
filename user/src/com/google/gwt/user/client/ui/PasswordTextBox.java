@@ -16,9 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 /**
  * A text box that visually masks its input to prevent eavesdropping.
@@ -30,11 +29,13 @@ import com.google.gwt.user.client.Element;
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-PasswordTextBox { primary style }</li>
- * <li>.gwt-PasswordTextBox-readonly { dependent style set when the password text box is read-only }</li>
+ * <li>.gwt-PasswordTextBox-readonly { dependent style set when the password
+ * text box is read-only }</li>
  * </ul>
  * 
  * <p>
- * <h3>Example</h3> {@example com.google.gwt.examples.TextBoxExample}
+ * <h3>Example</h3>
+ * {@example com.google.gwt.examples.TextBoxExample}
  * </p>
  */
 public class PasswordTextBox extends TextBox {
@@ -43,16 +44,17 @@ public class PasswordTextBox extends TextBox {
    * Creates a PasswordTextBox widget that wraps an existing &lt;input
    * type='password'&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static PasswordTextBox wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    assert InputElement.as(element).getType().equalsIgnoreCase("password");
+  public static PasswordTextBox wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    PasswordTextBox textBox = new PasswordTextBox((Element) element);
+    PasswordTextBox textBox = new PasswordTextBox(element);
 
     // Mark it attached and remember it for cleanup.
     textBox.onAttach();
@@ -65,11 +67,18 @@ public class PasswordTextBox extends TextBox {
    * Creates an empty password text box.
    */
   public PasswordTextBox() {
-    super(DOM.createInputPassword());
-    setStyleName("gwt-PasswordTextBox");
+    super(Document.get().createPasswordInputElement(), "gwt-PasswordTextBox");
   }
 
-  private PasswordTextBox(Element element) {
-    super(element);
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be an &lt;input&gt; element whose type is
+   * 'password'.
+   * 
+   * @param element the element to be used
+   */
+  protected PasswordTextBox(Element element) {
+    super(element, null);
+    assert InputElement.as(element).getType().equalsIgnoreCase("password");
   }
 }

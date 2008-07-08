@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 /**
  * A widget that wraps the HTML &lt;input type='file'&gt; element. This widget
@@ -36,16 +35,17 @@ public class FileUpload extends Widget implements HasName {
    * Creates a FileUpload widget that wraps an existing &lt;input
    * type='file'&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static FileUpload wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the right type and is attached.
-    assert InputElement.as(element).getType().equalsIgnoreCase("file");
+  public static FileUpload wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    FileUpload fileUpload = new FileUpload((Element) element);
+    FileUpload fileUpload = new FileUpload(element);
 
     // Mark it attached and remember it for cleanup.
     fileUpload.onAttach();
@@ -58,12 +58,19 @@ public class FileUpload extends Widget implements HasName {
    * Constructs a new file upload widget.
    */
   public FileUpload() {
-    setElement(DOM.createElement("input"));
-    DOM.setElementProperty(getElement(), "type", "file");
+    setElement(Document.get().createFileInputElement());
     setStyleName("gwt-FileUpload");
   }
 
-  private FileUpload(Element element) {
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be an &lt;input&gt; element whose type is
+   * 'file'.
+   * 
+   * @param element the element to be used
+   */
+  protected FileUpload(Element element) {
+    assert InputElement.as(element).getType().equalsIgnoreCase("file");
     setElement(element);
   }
 
@@ -74,14 +81,18 @@ public class FileUpload extends Widget implements HasName {
    * @return the widget's filename
    */
   public String getFilename() {
-    return DOM.getElementProperty(getElement(), "value");
+    return getInputElement().getValue();
   }
 
   public String getName() {
-    return DOM.getElementProperty(getElement(), "name");
+    return getInputElement().getName();
   }
 
   public void setName(String name) {
-    DOM.setElementProperty(getElement(), "name", name);
+    getInputElement().setName(name);
+  }
+
+  private InputElement getInputElement() {
+    return getElement().cast();
   }
 }

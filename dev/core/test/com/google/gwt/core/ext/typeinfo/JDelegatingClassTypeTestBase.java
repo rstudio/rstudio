@@ -68,6 +68,10 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
       assertEquals(substitution.getSubstitution(preSubParam.getType()),
           postSubParam.getType());
     }
+
+    JType[] preSubThrows = preSubMethod.getThrows();
+    JType[] postSubThrows = postSubMethod.getThrows();
+    assertArraysEqual(preSubThrows, postSubThrows);
   }
 
   protected static void validateAnnotations(Annotation[] expected,

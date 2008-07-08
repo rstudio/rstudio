@@ -27,7 +27,8 @@ public class TableCellElement extends Element {
    * automatically typecast it.
    */
   public static TableCellElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("td");
+    assert elem.getTagName().equalsIgnoreCase("td")
+        || elem.getTagName().equalsIgnoreCase("th");
     return (TableCellElement) elem;
   }
 

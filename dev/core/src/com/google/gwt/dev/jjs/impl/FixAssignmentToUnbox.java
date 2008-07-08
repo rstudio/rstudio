@@ -62,6 +62,11 @@ public class FixAssignmentToUnbox extends JModVisitor {
     }
 
     @Override
+    protected String getTempPrefix() {
+      return "$tunbox";
+    }
+
+    @Override
     protected boolean shouldBreakUp(JBinaryOperation x) {
       return isUnboxExpression(x.getLhs());
     }

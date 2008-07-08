@@ -16,8 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -48,17 +47,17 @@ public class HTML extends Label implements HasHTML {
    * Creates an HTML widget that wraps an existing &lt;div&gt; or &lt;span&gt;
    * element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static HTML wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    assert element.getTagName().equalsIgnoreCase("div")
-        || element.getTagName().equalsIgnoreCase("span");
+  public static HTML wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    HTML html = new HTML((Element) element);
+    HTML html = new HTML(element);
 
     // Mark it attached and remember it for cleanup.
     html.onAttach();
@@ -71,7 +70,7 @@ public class HTML extends Label implements HasHTML {
    * Creates an empty HTML widget.
    */
   public HTML() {
-    super(DOM.createDiv());
+    super(Document.get().createDivElement());
     setStyleName("gwt-HTML");
   }
 
@@ -97,15 +96,23 @@ public class HTML extends Label implements HasHTML {
     setWordWrap(wordWrap);
   }
 
-  HTML(Element element) {
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be either a &lt;div&gt; or &lt;span&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected HTML(Element element) {
     super(element);
+    assert element.getTagName().equalsIgnoreCase("div")
+        || element.getTagName().equalsIgnoreCase("span");
   }
 
   public String getHTML() {
-    return DOM.getInnerHTML(getElement());
+    return getElement().getInnerHTML();
   }
 
   public void setHTML(String html) {
-    DOM.setInnerHTML(getElement(), html);
+    getElement().setInnerHTML(html);
   }
 }

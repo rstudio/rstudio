@@ -16,9 +16,9 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.FrameElement;
 import com.google.gwt.dom.client.IFrameElement;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 /**
  * A widget that wraps an IFRAME element, which can contain an arbitrary web
@@ -44,16 +44,17 @@ public class Frame extends Widget {
   /**
    * Creates a Frame widget that wraps an existing &lt;frame&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static Frame wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    IFrameElement.as(element);
+  public static Frame wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    Frame frame = new Frame((Element) element);
+    Frame frame = new Frame(element);
 
     // Mark it attached and remember it for cleanup.
     frame.onAttach();
@@ -66,7 +67,7 @@ public class Frame extends Widget {
    * Creates an empty frame.
    */
   public Frame() {
-    setElement(DOM.createIFrame());
+    setElement(Document.get().createIFrameElement());
     setStyleName(DEFAULT_STYLENAME);
   }
 
@@ -80,7 +81,14 @@ public class Frame extends Widget {
     setUrl(url);
   }
 
-  private Frame(Element element) {
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be an &lt;iframe&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected Frame(Element element) {
+    IFrameElement.as(element);
     setElement(element);
   }
 
@@ -90,7 +98,7 @@ public class Frame extends Widget {
    * @return the frame's URL
    */
   public String getUrl() {
-    return DOM.getElementProperty(getElement(), "src");
+    return getFrameElement().getSrc();
   }
 
   /**
@@ -99,6 +107,10 @@ public class Frame extends Widget {
    * @param url the frame's new URL
    */
   public void setUrl(String url) {
-    DOM.setElementProperty(getElement(), "src", url);
+    getFrameElement().setSrc(url);
+  }
+
+  private FrameElement getFrameElement() {
+    return getElement().cast();
   }
 }

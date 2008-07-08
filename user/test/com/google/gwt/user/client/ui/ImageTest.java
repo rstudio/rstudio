@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 
@@ -90,7 +91,7 @@ public class ImageTest extends GWTTestCase {
    * Tests the transition from the clipped state to the unclipped state.
    */
   public void testChangeClippedImageToUnclipped() {
-    final ArrayList onloadEventFireCounter = new ArrayList();
+    final ArrayList<Object> onloadEventFireCounter = new ArrayList<Object>();
     final Image image = new Image("counting-forwards.png",
         12, 13, 8, 8);
     assertEquals("clipped", getCurrentImageStateName(image));
@@ -167,7 +168,7 @@ public class ImageTest extends GWTTestCase {
    * Tests the creation of an image in clipped mode.
    */
   public void testCreateClippedImage() {
-    final ArrayList onloadEventFireCounter = new ArrayList();
+    final ArrayList<Object> onloadEventFireCounter = new ArrayList<Object>();
     final Image image = new Image("counting-forwards.png",
         16, 16, 16, 16);
 
@@ -246,7 +247,7 @@ public class ImageTest extends GWTTestCase {
    * on a clipped image.
    */
   public void testSetUrlAndVisibleRectOnClippedImage() {
-    final ArrayList onloadEventFireCounter = new ArrayList();
+    final ArrayList<Object> onloadEventFireCounter = new ArrayList<Object>();
     final Image image = new Image("counting-backwards.png",
         12, 12, 12, 12);
 
@@ -335,7 +336,7 @@ public class ImageTest extends GWTTestCase {
    * on a clipped image.
    */
   public void testSetVisibleRectAndLoadEventsOnClippedImage() {
-    final ArrayList onloadEventFireCounter = new ArrayList();
+    final ArrayList<Object> onloadEventFireCounter = new ArrayList<Object>();
     final Image image = new Image("counting-backwards.png",
         16, 16, 16, 16);
 
@@ -360,6 +361,39 @@ public class ImageTest extends GWTTestCase {
     Timer t = new Timer() {
       public void run() {
         assertEquals(4, onloadEventFireCounter.size());
+        finishTest();
+      }
+    };
+
+    t.schedule(1000);
+  }
+
+  /**
+   * Tests that wrapping an existing DOM element works if you call
+   * setUrlAndVisibleRect() on it.
+   */
+  public void testWrapThenSetUrlAndVisibleRect() {
+    String uid = Document.get().createUniqueId();
+    HTML html = new HTML("<img id='" + uid + "' src='counting-backwards.png' width='16' height='16'>");
+    RootPanel.get().add(html);
+    final Image image = Image.wrap(Document.get().getElementById(uid));
+
+    delayTestFinish(20000);
+
+    assertEquals(0, image.getOriginLeft());
+    assertEquals(0, image.getOriginTop());
+    assertEquals(16, image.getWidth());
+    assertEquals(16, image.getHeight());
+    assertEquals("unclipped", getCurrentImageStateName(image));
+
+    image.setUrlAndVisibleRect("counting-forwards.png", 0, 16, 16, 16);
+    Timer t = new Timer() {
+      public void run() {
+        assertEquals(0, image.getOriginLeft());
+        assertEquals(16, image.getOriginTop());
+        assertEquals(16, image.getWidth());
+        assertEquals(16, image.getHeight());
+        assertEquals("clipped", getCurrentImageStateName(image));
         finishTest();
       }
     };

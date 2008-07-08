@@ -16,8 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * A widget that can contain arbitrary HTML.
@@ -43,17 +42,17 @@ public class InlineHTML extends HTML {
    * Creates an InlineHTML widget that wraps an existing &lt;div&gt; or
    * &lt;span&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static InlineHTML wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    assert element.getTagName().equalsIgnoreCase("div")
-        || element.getTagName().equalsIgnoreCase("span");
+  public static InlineHTML wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    InlineHTML html = new InlineHTML((Element) element);
+    InlineHTML html = new InlineHTML(element);
 
     // Mark it attached and remember it for cleanup.
     html.onAttach();
@@ -66,7 +65,7 @@ public class InlineHTML extends HTML {
    * Creates an empty HTML widget.
    */
   public InlineHTML() {
-    super(DOM.createSpan());
+    super(Document.get().createSpanElement());
     setStyleName("gwt-InlineHTML");
   }
 
@@ -80,7 +79,15 @@ public class InlineHTML extends HTML {
     setHTML(html);
   }
 
-  private InlineHTML(Element element) {
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be either a &lt;div&gt; &lt;span&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected InlineHTML(Element element) {
     super(element);
+    assert element.getTagName().equalsIgnoreCase("div")
+        || element.getTagName().equalsIgnoreCase("span");
   }
 }

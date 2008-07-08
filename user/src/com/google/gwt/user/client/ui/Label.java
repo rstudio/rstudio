@@ -16,17 +16,16 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
  * 
- * This widget uses a &lt;div&gt; element, causing it to be displayed with
- * block layout.
+ * This widget uses a &lt;div&gt; element, causing it to be displayed with block
+ * layout.
  * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
@@ -46,17 +45,17 @@ public class Label extends Widget implements SourcesClickEvents,
    * Creates a Label widget that wraps an existing &lt;div&gt; or &lt;span&gt;
    * element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
-  public static Label wrap(com.google.gwt.dom.client.Element element) {
-    // Assert that the element is of the correct type and is attached.
-    assert element.getTagName().equalsIgnoreCase("div")
-        || element.getTagName().equalsIgnoreCase("span");
+  public static Label wrap(Element element) {
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
-    Label label = new Label((Element) element);
+    Label label = new Label(element);
 
     // Mark it attached and remember it for cleanup.
     label.onAttach();
@@ -74,7 +73,7 @@ public class Label extends Widget implements SourcesClickEvents,
    * Creates an empty label.
    */
   public Label() {
-    setElement(DOM.createDiv());
+    setElement(Document.get().createDivElement());
     setStyleName("gwt-Label");
   }
 
@@ -100,12 +99,15 @@ public class Label extends Widget implements SourcesClickEvents,
   }
 
   /**
-   * This constructor is used to let the HTML constructors avoid work.
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be either a &lt;div&gt; or &lt;span&gt; element.
    * 
-   * @param element element
+   * @param element the element to be used
    */
-  Label(Element element) {
+  protected Label(Element element) {
     setElement(element);
+    assert element.getTagName().equalsIgnoreCase("div")
+        || element.getTagName().equalsIgnoreCase("span");
   }
 
   public void addClickListener(ClickListener listener) {
@@ -135,22 +137,22 @@ public class Label extends Widget implements SourcesClickEvents,
   public Direction getDirection() {
     return BidiUtils.getDirectionOnElement(getElement());
   }
-  
+
   public HorizontalAlignmentConstant getHorizontalAlignment() {
     return horzAlign;
   }
 
   public String getText() {
-    return DOM.getInnerText(getElement());
+    return getElement().getInnerText();
   }
 
   public boolean getWordWrap() {
-    return !DOM.getStyleAttribute(getElement(), "whiteSpace").equals("nowrap");
+    return getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
   }
 
   @Override
   public void onBrowserEvent(Event event) {
-    switch (DOM.eventGetType(event)) {
+    switch (event.getTypeInt()) {
       case Event.ONCLICK:
         if (clickListeners != null) {
           clickListeners.fireClick(this);
@@ -192,22 +194,22 @@ public class Label extends Widget implements SourcesClickEvents,
       mouseWheelListeners.remove(listener);
     }
   }
-  
+
   public void setDirection(Direction direction) {
     BidiUtils.setDirectionOnElement(getElement(), direction);
   }
-  
+
   public void setHorizontalAlignment(HorizontalAlignmentConstant align) {
     horzAlign = align;
-    DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
+    getElement().getStyle().setProperty("textAlign", align.getTextAlignString());
   }
 
   public void setText(String text) {
-    DOM.setInnerText(getElement(), text);
+    getElement().setInnerText(text);
   }
 
   public void setWordWrap(boolean wrap) {
-    DOM.setStyleAttribute(getElement(), "whiteSpace", wrap ? "normal"
-        : "nowrap");
+    getElement().getStyle().setProperty("whiteSpace",
+        wrap ? "normal" : "nowrap");
   }
 }

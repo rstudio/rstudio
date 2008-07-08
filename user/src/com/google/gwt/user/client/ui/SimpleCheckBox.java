@@ -34,13 +34,14 @@ public class SimpleCheckBox extends FocusWidget implements HasName {
    * Creates a SimpleCheckBox widget that wraps an existing &lt;input
    * type='checkbox'&gt; element.
    * 
-   * This element must already be attached to the document.
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
    */
   public static SimpleCheckBox wrap(Element element) {
-    // Assert that the element is of the correct type and is attached.
-    assert InputElement.as(element).getType().equalsIgnoreCase("checkbox");
+    // Assert that the element is attached.
     assert Document.get().getBody().isOrHasChild(element);
 
     SimpleCheckBox checkBox = new SimpleCheckBox(element);
@@ -56,12 +57,26 @@ public class SimpleCheckBox extends FocusWidget implements HasName {
    * Creates a new simple checkbox.
    */
   public SimpleCheckBox() {
-    setElement(Document.get().createCheckInputElement());
-    setStyleName("gwt-SimpleCheckBox");
+    this(Document.get().createCheckInputElement(), "gwt-SimpleCheckBox");
   }
 
-  SimpleCheckBox(Element element) {
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be an &lt;input&gt; element whose type is either
+   * 'checkbox'.
+   * 
+   * @param element the element to be used
+   */
+  protected SimpleCheckBox(Element element) {
+    assert InputElement.as(element).getType().equalsIgnoreCase("checkbox");
     setElement(element);
+  }
+
+  SimpleCheckBox(Element element, String styleName) {
+    setElement(element);
+    if (styleName != null) {
+      setStyleName(styleName);
+    }
   }
 
   public String getName() {

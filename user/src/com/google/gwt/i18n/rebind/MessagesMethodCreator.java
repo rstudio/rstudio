@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,11 +26,12 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.i18n.client.PluralRule;
-import com.google.gwt.i18n.client.PluralRule.PluralForm;
 import com.google.gwt.i18n.client.Messages.Optional;
 import com.google.gwt.i18n.client.Messages.PluralCount;
 import com.google.gwt.i18n.client.Messages.PluralText;
+import com.google.gwt.i18n.client.PluralRule.PluralForm;
 import com.google.gwt.i18n.client.impl.plurals.DefaultRule;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 
@@ -289,7 +290,6 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * Constructor for <code>MessagesMethodCreator</code>.
    * 
    * @param classCreator associated class creator
-   * @param localizableClass class we are generating methods for
    */
   public MessagesMethodCreator(AbstractGeneratorClassCreator classCreator) {
     super(classCreator);
@@ -297,7 +297,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod m, String key,
-      AbstractResource resource, String locale)
+      ResourceList resourceList, String locale)
       throws UnableToCompleteException {
     JParameter[] params = m.getParameters();
     int pluralParamIndex = -1;
@@ -343,12 +343,15 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           + "();\n");
       generated.append("switch (rule.select(arg" + pluralParamIndex + ")) {\n");
       PluralForm[] pluralForms = rule.pluralForms();
-      resource.setPluralForms(key, pluralForms);
+      resourceList.setPluralForms(key, pluralForms);
       // Skip default plural form (index 0); the fall-through case will handle
       // it.
       for (int i = 1; i < pluralForms.length; ++i) {
-        String template = resource.getStringExt(key, pluralForms[i].getName());
+        String template = resourceList.getStringExt(key,
+            pluralForms[i].getName());
         if (template != null) {
+          generated.append("  // " + pluralForms[i].getName() + " - "
+              + pluralForms[i].getDescription() + "\n");
           generated.append("  case " + i + ": return ");
           generateString(logger, template, params, seenFlags, generated);
           generated.append(";\n");
@@ -362,7 +365,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       generated.append("}\n");
     }
     generated.append("return ");
-    String template = resource.getRequiredStringExt(logger, key, null);
+    String template = resourceList.getRequiredStringExt(key, null);
     generateString(logger, template, params, seenFlags, generated);
 
     // Generate an error if any required parameter was not used somewhere.
@@ -447,6 +450,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * @param outputBuf
    * @throws UnableToCompleteException
    */
+  @SuppressWarnings("fallthrough")
   private void generateString(TreeLogger logger, String template,
       JParameter[] params, boolean[] seenFlag, StringBuffer outputBuf)
       throws UnableToCompleteException {

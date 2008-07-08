@@ -45,66 +45,10 @@ import java.util.Set;
  * Tests Internationalization. Assumes locale is set to piglatin_UK
  */
 public class I18NTest extends GWTTestCase {
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest";
-  }
-
-  public void testLocalizableInner() {
-    // Check simple inner
-    LocalizableSimpleInner s = (LocalizableSimpleInner) GWT.create(Inners.LocalizableSimpleInner.class);
-    assertEquals("getLocalizableInner", s.getLocalizableInner());
-
-    LocalizableInnerInner localizableInnerInner = (LocalizableInnerInner) GWT.create(Inners.InnerClass.LocalizableInnerInner.class);
-    assertEquals("localizableInnerInner", localizableInnerInner.string());
-
-    // Check success of finding embedded
-    OuterLoc lock = (OuterLoc) GWT.create(OuterLoc.class);
-    assertEquals("piglatin", lock.string());
-
-    assertEquals("InnerLoc", Inners.testInnerLoc());
-  }
-
-  public void testLocalizableInterfaceInner() {
-    Inners inner = new Inners();
-
-    // Simple Inner
-    SimpleInner simpleInner = (SimpleInner) GWT.create(Inners.SimpleInner.class);
-    assertEquals(0, simpleInner.intZero());
-    assertEquals("Simple Inner", simpleInner.simpleInner());
-    assertTrue(inner.testProtectedInner());
-
-    // Has Inner
-    HasInner hasInner = (HasInner) GWT.create(Inners.HasInner.class);
-    assertEquals("Has Inner", hasInner.hasInner());
-    assertEquals(0, hasInner.floatZero(), .0001);
-
-    // Is Inner
-    IsInner isInner = (IsInner) GWT.create(IsInner.class);
-    assertEquals(2, isInner.isInner());
-
-    // Inner Inner
-    InnerInner innerInner = (InnerInner) GWT.create(InnerInner.class);
-    assertEquals(4.321, innerInner.innerInner(), .0001);
-    assertEquals("outer", innerInner.outer());
-
-    // Inner Inner Message
-    InnerInnerMessages innerInnerMessages = (InnerInnerMessages) GWT.create(InnerInnerMessages.class);
-    assertEquals("I am a person",
-        innerInnerMessages.innerClassMessages("person"));
-
-    // Extends Inner Inner
-    ExtendsInnerInner extendsInnerInner = (ExtendsInnerInner) GWT.create(ExtendsInnerInner.class);
-    assertEquals("Extends Inner Inner", extendsInnerInner.extendsInnerInner());
-
-    // Protected InnerClass
-    InnerClass innerClass = new Inners.InnerClass();
-    String extendsAnotherInner = innerClass.testExtendsAnotherInner();
-    assertEquals("{innerInner=4.321, outer=outer}", extendsAnotherInner);
-
-    // ExtendProtectedInner
-    String extendProtectedInner = innerClass.testExtendsProtectedInner();
-    assertEquals("Extend Protected Inner", extendProtectedInner);
   }
 
   public void testAnnotatedConstants() {
@@ -112,10 +56,12 @@ public class I18NTest extends GWTTestCase {
     assertEquals(14, c.fourteen());
     assertFalse(c.isFalse());
     assertTrue(c.isTrue());
-    assertArrayEquals(new String[] {"String array with one string"}, c.singleString());
-    assertArrayEquals(new String[] {"One", "Two", "Three,Comma"}, c.threeStrings());
+    assertArrayEquals(new String[] {"String array with one string"},
+        c.singleString());
+    assertArrayEquals(new String[] {"One", "Two", "Three,Comma"},
+        c.threeStrings());
     assertEquals("Properties value #s need quoting!", c.propertiesQuoting());
-    Map<String,String> stringMap = c.stringMap();
+    Map<String, String> stringMap = c.stringMap();
     assertTrue(stringMap.containsKey("key1"));
     assertTrue(stringMap.containsKey("key2"));
     assertEquals("value1", stringMap.get("key1"));
@@ -132,15 +78,16 @@ public class I18NTest extends GWTTestCase {
     assertEquals(3.14, c.threePointOneFour());
     assertEquals("Once more, with meaning", c.withMeaning());
   }
-  
+
   public void testAnnotatedConstantsGenMD5() {
     TestAnnotatedConstantsGenMD5 c = GWT.create(TestAnnotatedConstantsGenMD5.class);
     assertEquals(14, c.fourteen());
     assertFalse(c.isFalse());
     assertTrue(c.isTrue());
-    assertArrayEquals(new String[] {"String array with one string"}, c.singleString());
+    assertArrayEquals(new String[] {"String array with one string"},
+        c.singleString());
     assertArrayEquals(new String[] {"One", "Two"}, c.twoStrings());
-    Map<String,String> stringMap = c.stringMap();
+    Map<String, String> stringMap = c.stringMap();
     assertTrue(stringMap.containsKey("key1"));
     assertTrue(stringMap.containsKey("key2"));
     assertEquals("value1", stringMap.get("key1"));
@@ -151,7 +98,7 @@ public class I18NTest extends GWTTestCase {
     assertEquals(3.14, c.threePointOneFour());
     assertEquals("Once more, with meaning", c.withMeaning());
   }
-  
+
   public void testAnnotatedMessages() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
     assertEquals("Estay emay", m.basicText());
@@ -161,16 +108,20 @@ public class I18NTest extends GWTTestCase {
         m.optionalArgument("where am I?"));
     assertEquals("Two arguments, second and first, inverted",
         m.invertedArguments("first", "second")); // from default locale
-    assertEquals("PL: Don't tell me I can't {quote things in braces}", m.quotedText());
-    assertEquals("PL: This {0} would be an argument if not quoted", m.quotedArg());
+    assertEquals("PL: Don't tell me I can't {quote things in braces}",
+        m.quotedText());
+    assertEquals("PL: This {0} would be an argument if not quoted",
+        m.quotedArg());
     assertEquals("PL: Total is US$11,305.01", m.currencyFormat(11305.01));
-    assertEquals("PL: Default number format is 1,017.1", m.defaultNumberFormat(1017.1));
+    assertEquals("PL: Default number format is 1,017.1",
+        m.defaultNumberFormat(1017.1));
     assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
         m.getTimeDate(new Date(107, 11, 1, 12, 1, 2)));
     assertEquals("PL: 13 widgets", m.pluralWidgetsOther(13));
-    assertEquals("Too many widgets to count (150) in pig-latin", m.pluralWidgetsOther(150));
+    assertEquals("Too many widgets to count (150) in pig-latin",
+        m.pluralWidgetsOther(150));
   }
-  
+
   public void testBindings() {
     TestBinding b = (TestBinding) GWT.create(TestBinding.class);
     assertEquals("default", b.a());
@@ -453,28 +404,6 @@ public class I18NTest extends GWTTestCase {
     }
   }
 
-  // Uncomment for desk tests
-  // /**
-  // * Tests focus on correctness of entries, since ABCD exercises the map.
-  // */
-  // public void testConstantMapEmpty() {
-  // TestConstants types = (TestConstants) GWT.create(TestConstants.class);
-  //
-  // ConstantMap map = (ConstantMap) types.mapEmpty();
-  //
-  // assertEquals(0, map.size());
-  //
-  // Set keys = map.keySet();
-  // assertEquals(0, keys.size());
-  // Iterator keyIter = keys.iterator();
-  // assertFalse(keyIter.hasNext());
-  //
-  // Collection values = map.values();
-  // assertEquals(0, values.size());
-  // Iterator valueIter = values.iterator();
-  // assertFalse(valueIter.hasNext());
-  // }
-
   public void testDictionary() {
     createDummyDictionaries();
     Dictionary d = Dictionary.getDictionary("testDic");
@@ -511,6 +440,85 @@ public class I18NTest extends GWTTestCase {
     assertEquals(Integer.MIN_VALUE, types.intMin());
   }
 
+  // Uncomment for desk tests
+  // /**
+  // * Tests focus on correctness of entries, since ABCD exercises the map.
+  // */
+  // public void testConstantMapEmpty() {
+  // TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+  //
+  // ConstantMap map = (ConstantMap) types.mapEmpty();
+  //
+  // assertEquals(0, map.size());
+  //
+  // Set keys = map.keySet();
+  // assertEquals(0, keys.size());
+  // Iterator keyIter = keys.iterator();
+  // assertFalse(keyIter.hasNext());
+  //
+  // Collection values = map.values();
+  // assertEquals(0, values.size());
+  // Iterator valueIter = values.iterator();
+  // assertFalse(valueIter.hasNext());
+  // }
+
+  public void testLocalizableInner() {
+    // Check simple inner
+    LocalizableSimpleInner s = (LocalizableSimpleInner) GWT.create(Inners.LocalizableSimpleInner.class);
+    assertEquals("getLocalizableInner", s.getLocalizableInner());
+
+    LocalizableInnerInner localizableInnerInner = (LocalizableInnerInner) GWT.create(Inners.InnerClass.LocalizableInnerInner.class);
+    assertEquals("localizableInnerInner", localizableInnerInner.string());
+
+    // Check success of finding embedded
+    OuterLoc lock = (OuterLoc) GWT.create(OuterLoc.class);
+    assertEquals("piglatin", lock.string());
+
+    assertEquals("InnerLoc", Inners.testInnerLoc());
+  }
+
+  public void testLocalizableInterfaceInner() {
+    Inners inner = new Inners();
+
+    // Simple Inner
+    SimpleInner simpleInner = (SimpleInner) GWT.create(Inners.SimpleInner.class);
+    assertEquals(0, simpleInner.intZero());
+    assertEquals("Simple Inner", simpleInner.simpleInner());
+    assertTrue(inner.testProtectedInner());
+
+    // Has Inner
+    HasInner hasInner = (HasInner) GWT.create(Inners.HasInner.class);
+    assertEquals("Has Inner", hasInner.hasInner());
+    assertEquals(0, hasInner.floatZero(), .0001);
+
+    // Is Inner
+    IsInner isInner = (IsInner) GWT.create(IsInner.class);
+    assertEquals(2, isInner.isInner());
+
+    // Inner Inner
+    InnerInner innerInner = (InnerInner) GWT.create(InnerInner.class);
+    assertEquals(4.321, innerInner.innerInner(), .0001);
+    assertEquals("outer", innerInner.outer());
+
+    // Inner Inner Message
+    InnerInnerMessages innerInnerMessages = (InnerInnerMessages) GWT.create(InnerInnerMessages.class);
+    assertEquals("I am a person",
+        innerInnerMessages.innerClassMessages("person"));
+
+    // Extends Inner Inner
+    ExtendsInnerInner extendsInnerInner = (ExtendsInnerInner) GWT.create(ExtendsInnerInner.class);
+    assertEquals("Extends Inner Inner", extendsInnerInner.extendsInnerInner());
+
+    // Protected InnerClass
+    InnerClass innerClass = new Inners.InnerClass();
+    String extendsAnotherInner = innerClass.testExtendsAnotherInner();
+    assertEquals("{innerInner=4.321, outer=outer}", extendsAnotherInner);
+
+    // ExtendProtectedInner
+    String extendProtectedInner = innerClass.testExtendsProtectedInner();
+    assertEquals("Extend Protected Inner", extendProtectedInner);
+  }
+
   public void testShapesFamily() {
     Shapes shapes = (Shapes) GWT.create(Shapes.class);
     // test overload
@@ -540,8 +548,8 @@ public class I18NTest extends GWTTestCase {
   public void testTypedMessages() {
     TestTypedMessages typed = (TestTypedMessages) GWT.create(TestTypedMessages.class);
     String expected = "int(0) float(1.2), long(0), boolean(true), Object([], char(a), byte(127), short(-32768);";
-    assertEquals(expected, typed.testAllTypes(0, (float) 1.2, 0, true, new ArrayList<String>(),
-        'a', Byte.MAX_VALUE, Short.MIN_VALUE));
+    assertEquals(expected, typed.testAllTypes(0, (float) 1.2, 0, true,
+        new ArrayList<String>(), 'a', Byte.MAX_VALUE, Short.MIN_VALUE));
     String lotsOfInts = typed.testLotsOfInts(1, 2, 3, 4);
     assertEquals("1, 2,3,4 ", lotsOfInts);
     String oneFloat = typed.simpleMessageTest((float) 2.3);
@@ -552,7 +560,7 @@ public class I18NTest extends GWTTestCase {
         new StringBuffer("hello"), new Integer("34"), null);
     assertEquals(
         "this(null(com.google.gwt.i18n.client.I18NTest)), StringBuffer(hello), Integer(34), "
-        + "null(null);", testSomeObjectTypes);
+            + "null(null);", testSomeObjectTypes);
   }
 
   private void assertArrayEquals(String[] shouldBe, String[] test) {

@@ -62,6 +62,16 @@ public class ArraysTest extends EmulTestBase {
   }
 
   /**
+   * Verifies that calling Arrays.hashCode(Object[]) with an array with
+   * embedded null references works properly (and most importantly doesn't
+   * throw an NPE).
+   */
+  public void testArraysHashCodeWithNullElements() {
+    String[] a = new String[] { "foo", null, "bar", "baz" };
+    Arrays.hashCode(a);
+  }
+
+  /**
    * Tests {@link Arrays#asList(Object[])}.
    */
   @SuppressWarnings("unchecked")

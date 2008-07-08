@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 /**
@@ -60,7 +61,7 @@ class ConstantsStringArrayMethodCreator extends
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod method, String key,
-      AbstractResource resource, String locale) {
+      ResourceList resource, String locale) {
     String methodName = method.getName();
     // Make sure cache exists.
     enableCache();
@@ -71,7 +72,7 @@ class ConstantsStringArrayMethodCreator extends
     indent();
     println("String [] writer= {");
     indent();
-    String template = resource.getRequiredStringExt(logger, key, null);
+    String template = resource.getRequiredStringExt(key, null);
     String[] args = split(template);
     for (int i = 0; i < args.length; i++) {
       String toPrint = args[i].replaceAll("\\,", ",");

@@ -298,12 +298,12 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
           if (onModuleLoad == null) {
             module = rebindAndCreate(entryPointTypeName);
             onModuleLoad = module.getClass().getMethod("onModuleLoad");
+            // Record the rebound name of the class for stats (below).
+            entryPointTypeName = module.getClass().getName().replace('$', '.');
           }
           onModuleLoad.setAccessible(true);
-          String reboundSourceName = module.getClass().getName().replace('$',
-              '.');
           invokeNativeVoid("fireOnModuleLoadStart", null,
-              new Class[] {String.class}, new Object[] {reboundSourceName});
+              new Class[] {String.class}, new Object[] {entryPointTypeName});
           onModuleLoad.invoke(module);
         }
       } else {

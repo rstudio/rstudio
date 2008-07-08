@@ -124,6 +124,10 @@ class DOMImplSafari extends DOMImplStandard {
    * not work. However, this bug does not cause problems in the case of <SELECT>
    * elements, because their descendent elements are only one level deep.
    */
+  @Override
+  public native void selectClear(SelectElement select) /*-{
+    select.innerText = '';
+  }-*/;
 
   @Override
   public native int selectGetLength(SelectElement select) /*-{

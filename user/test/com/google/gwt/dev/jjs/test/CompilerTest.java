@@ -143,6 +143,8 @@ public class CompilerTest extends GWTTestCase {
 
   private static int sideEffectChecker;
 
+  private static volatile int THREE = 3;
+
   private static volatile boolean TRUE = true;
 
   private static volatile int volatileInt;
@@ -557,6 +559,21 @@ public class CompilerTest extends GWTTestCase {
     }
     assertEquals(1, i);
     assertEquals(1, j);
+
+    /*
+     * Issue 2069: a default with a break should not be stripped unless the
+     * break has no label.
+     */
+    outer : while (true) {
+      switch (THREE) {
+        case 0:
+        case 1:
+          break;
+        default:
+          break outer;
+      }
+      fail("should not be reached");
+    }
   }
 
   public void testLocalClasses() {

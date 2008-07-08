@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.util.Map;
@@ -47,14 +48,14 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
    * @param deprecatedLogger logger to use for deprecated warnings
    * @param writer <code>Writer</code> to print to
    * @param localizableClass class/interface to conform to
-   * @param messageBindings resource bundle used to generate the class
+   * @param resourceList resource bundle used to generate the class
    * @param oracle types
    * @throws UnableToCompleteException
    */
   public ConstantsImplCreator(TreeLogger logger, TreeLogger deprecatedLogger, SourceWriter writer,
-      JClassType localizableClass, AbstractResource messageBindings,
+      JClassType localizableClass, ResourceList resourceList,
       TypeOracle oracle) throws UnableToCompleteException {
-    super(logger, deprecatedLogger, writer, localizableClass, messageBindings, true);
+    super(logger, deprecatedLogger, writer, localizableClass, resourceList, true);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       JClassType mapClass = oracle.getType(Map.class.getName());

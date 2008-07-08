@@ -71,7 +71,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * An {@link Animation} used to enlarge the popup into view.
    */
-  private static class ResizeAnimation extends Animation {
+  static class ResizeAnimation extends Animation {
     /**
      * The offset height and width of the current {@link PopupPanel}.
      */
@@ -695,7 +695,18 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
     }
   }
-
+  
+  /**
+   * Sets the animation used to animate this popup. Used by gwt-incubator to
+   * allow DropDownPanel to override the default popup animation. Not protected
+   * because the exact API may change in gwt 1.6.
+   * 
+   * @param animation the animation to use for this popup
+   */
+  void setAnimation(ResizeAnimation animation) {
+    resizeAnimation = animation;
+  }
+  
   /**
    * Enable or disable animation of the {@link PopupPanel}.
    * 

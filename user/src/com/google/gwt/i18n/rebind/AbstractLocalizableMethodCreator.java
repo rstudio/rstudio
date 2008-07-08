@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 
@@ -41,20 +42,11 @@ abstract class AbstractLocalizableMethodCreator extends AbstractMethodCreator {
   }
 
   /**
-   * Gets the associated locale.
-   * 
-   * @return the locale
-   */
-  protected String getLocaleName() {
-    return getResources().getLocaleName();
-  }
-
-  /**
    * Get the resources associated with this class.
    * 
    * @return associated resources.
    */
-  protected AbstractResource getResources() {
+  protected ResourceList getResources() {
     return ((ConstantsImplCreator) currentCreator).getResourceBundle();
   }
 }

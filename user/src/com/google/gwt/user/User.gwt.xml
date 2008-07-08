@@ -35,7 +35,6 @@
    <inherits name="com.google.gwt.user.ClippedImage"/>
    <inherits name="com.google.gwt.user.RichText"/>
    <inherits name="com.google.gwt.user.SplitPanel"/>
-   <inherits name="com.google.gwt.user.ListBox" />
    <inherits name="com.google.gwt.user.CaptionPanel" />
    <inherits name="com.google.gwt.user.Window" />
    <inherits name="com.google.gwt.user.Accessibility"/>

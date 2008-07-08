@@ -15,8 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Abstract base class for {@link com.google.gwt.user.client.ui.Button},
@@ -35,18 +34,18 @@ public abstract class ButtonBase extends FocusWidget implements HasHTML {
   }
 
   public String getHTML() {
-    return DOM.getInnerHTML(getElement());
+    return getElement().getInnerHTML();
   }
 
   public String getText() {
-    return DOM.getInnerText(getElement());
+    return getElement().getInnerText();
   }
 
   public void setHTML(String html) {
-    DOM.setInnerHTML(getElement(), html);
+    getElement().setInnerHTML(html);
   }
 
   public void setText(String text) {
-    DOM.setInnerText(getElement(), text);
+    getElement().setInnerText(text);
   }
 }

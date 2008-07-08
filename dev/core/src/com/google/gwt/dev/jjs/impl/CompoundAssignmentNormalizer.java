@@ -36,7 +36,9 @@ import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 /**
@@ -57,12 +59,12 @@ import java.util.Stack;
  * 
  * <p>
  * If the <code>reuseTemps</code> constructor parameter is set to
- * <code>false</code>, then temps will be reused aggressively, even when
- * their types do not match the values assigned to them. To determine when a
- * temp can be reused, the current implementation uses a notion of "temp usage
- * scopes". Every time a temporary variable is allocated, it is recorded in the
- * current temp usage scope. Once the current temp usage scope is exited, all of
- * its temps become available for use for other purposes.
+ * <code>true</code>, then temps of the correct type will be reused once they
+ * become available. To determine when a temp can be reused, the current
+ * implementation uses a notion of "temp usage scopes". Every time a temporary
+ * variable is allocated, it is recorded in the current temp usage scope. Once
+ * the current temp usage scope is exited, all of its temps become available for
+ * use for other purposes.
  * </p>
  */
 public abstract class CompoundAssignmentNormalizer {
@@ -290,16 +292,87 @@ public abstract class CompoundAssignmentNormalizer {
     }
   }
 
-  private static int localCounter;
+  /**
+   * For some particular type, tracks all usage of temporary local variables of
+   * that type within the current method.
+   */
+  private static class TempLocalTracker {
+    /**
+     * Temps previously created in nested usage scopes that are now available
+     * for reuse by subsequent code.
+     */
+    private List<JLocal> reusable = new ArrayList<JLocal>();
+
+    /**
+     * Temps in use in active scopes. They cannot currently be reused; however,
+     * any time a scope is exited, the set of locals at the top of stack is
+     * popped off and all contained locals become reusable. The top of stack
+     * correlates to the current scope.
+     */
+    private Stack<List<JLocal>> usageStack = new Stack<List<JLocal>>();
+
+    public TempLocalTracker() {
+      /*
+       * Due to the lazy-creation nature, we must assume upon creation that
+       * we're already in a valid scope (and thus create the initial empty scope
+       * ourselves).
+       */
+      enterScope();
+    }
+
+    public void enterScope() {
+      usageStack.push(new ArrayList<JLocal>());
+    }
+
+    public void exitScope() {
+      /*
+       * Due to the lazy-creation nature, the program flow might be several
+       * levels deep already when this object is created. Since we don't know
+       * how many exitScope() calls to accept, we must be empty-tolerant. In
+       * other words, this isn't naively defensive programming. :)
+       */
+      if (!usageStack.isEmpty()) {
+        List<JLocal> freed = usageStack.pop();
+        reusable.addAll(freed);
+      }
+    }
+
+    public JLocal tryGetReusableLocal() {
+      if (!reusable.isEmpty()) {
+        return reusable.remove(reusable.size() - 1);
+      }
+      return null;
+    }
+
+    public void useLocal(JLocal local) {
+      usageStack.peek().add(local);
+    }
+  }
+
   protected final JProgram program;
   private final CloneExpressionVisitor cloner;
 
   private JMethodBody currentMethodBody;
 
+  /**
+   * Counter to generate a unique name for each temporary within the current
+   * method.
+   */
+  private int localCounter;
+
+  /**
+   * Map of type onto lazily-created local tracker.
+   */
+  private Map<JType, TempLocalTracker> localTrackers = new IdentityHashMap<JType, TempLocalTracker>();
+
+  /**
+   * If <code>true</code>, reuse temps. The pre-optimization subclass does
+   * not reuse temps because doing so can defeat optimizations because different
+   * uses impact each other and we do nothing to disambiguate usage. After
+   * optimizations, it makes sense to reuse temps to reduce code size and memory
+   * consumption of the output.
+   */
   private final boolean reuseTemps;
-  private List<JLocal> tempLocals;
-  private int tempLocalsIndex;
-  private Stack<Integer> usageScopeStarts;
 
   protected CompoundAssignmentNormalizer(JProgram program, boolean reuseTemps) {
     this.program = program;
@@ -322,6 +395,8 @@ public abstract class CompoundAssignmentNormalizer {
     return lhs;
   }
 
+  protected abstract String getTempPrefix();
+
   protected abstract boolean shouldBreakUp(JBinaryOperation x);
 
   protected abstract boolean shouldBreakUp(JPostfixOperation x);
@@ -329,32 +404,47 @@ public abstract class CompoundAssignmentNormalizer {
   protected abstract boolean shouldBreakUp(JPrefixOperation x);
 
   private void clearLocals() {
-    tempLocals = new ArrayList<JLocal>();
-    tempLocalsIndex = 0;
-    usageScopeStarts = new Stack<Integer>();
+    localCounter = 0;
+    localTrackers.clear();
   }
 
   private void enterTempUsageScope() {
-    usageScopeStarts.push(tempLocalsIndex);
+    for (TempLocalTracker tracker : localTrackers.values()) {
+      tracker.enterScope();
+    }
   }
 
   private void exitTempUsageScope() {
-    tempLocalsIndex = usageScopeStarts.pop();
+    for (TempLocalTracker tracker : localTrackers.values()) {
+      tracker.exitScope();
+    }
   }
 
   /**
    * Allocate a temporary local variable.
    */
   private JLocal getTempLocal(JType type) {
-    if (reuseTemps) {
-      if (tempLocalsIndex < tempLocals.size()) {
-        return tempLocals.get(tempLocalsIndex++);
-      }
+    TempLocalTracker tracker = localTrackers.get(type);
+    if (tracker == null) {
+      tracker = new TempLocalTracker();
+      localTrackers.put(type, tracker);
     }
 
-    JLocal newTemp = program.createLocal(null,
-        ("$t" + localCounter++).toCharArray(), type, false, currentMethodBody);
-    tempLocals.add(newTemp);
-    return newTemp;
+    JLocal temp = null;
+    if (reuseTemps) {
+      /*
+       * If the return is non-null, we now "own" the returned JLocal; it's
+       * important to call tracker.useLocal() on the returned value (below).
+       */
+      temp = tracker.tryGetReusableLocal();
+    }
+
+    if (temp == null) {
+      temp = program.createLocal(null,
+          (getTempPrefix() + localCounter++).toCharArray(), type, false,
+          currentMethodBody);
+    }
+    tracker.useLocal(temp);
+    return temp;
   }
 }
