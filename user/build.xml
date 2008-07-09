@@ -64,7 +64,6 @@
 			<fileset dir="super" excludes="**/package.html" />
 			<fileset dir="${javac.out}" />
 			<zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
-		        <zipfileset src="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
 		</gwt.jar>
 	</target>
 
