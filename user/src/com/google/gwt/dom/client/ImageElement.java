@@ -20,15 +20,18 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-IMG">W3C HTML Specification</a>
  */
+@TagName(ImageElement.TAG)
 public class ImageElement extends Element {
+
+  static final String TAG = "img";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static ImageElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("img");
-    return (ImageElement)elem;
+    assert elem.getTagName().equalsIgnoreCase(TAG);
+    return (ImageElement) elem;
   }
 
   protected ImageElement() {

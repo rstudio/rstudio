@@ -20,14 +20,19 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-Q">W3C HTML Specification</a>
  */
+@TagName({QuoteElement.TAG_BLOCKQUOTE, QuoteElement.TAG_Q})
 public class QuoteElement extends Element {
 
+  static final String TAG_BLOCKQUOTE = "blockquote";
+  static final String TAG_Q = "q";
+
   /**
-   * TODO
+   * Assert that the given {@link Element} is compatible with this class and
+   * automatically typecast it.
    */
   public static QuoteElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("q")
-        || elem.getTagName().equalsIgnoreCase("blockquote");
+    assert elem.getTagName().equalsIgnoreCase(TAG_Q)
+        || elem.getTagName().equalsIgnoreCase(TAG_BLOCKQUOTE);
     return (QuoteElement) elem;
   }
 

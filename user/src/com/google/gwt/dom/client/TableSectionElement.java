@@ -18,16 +18,25 @@ package com.google.gwt.dom.client;
 /**
  * The THEAD, TFOOT, and TBODY elements.
  */
+@TagName({TableSectionElement.TAG_TBODY, TableSectionElement.TAG_TFOOT, 
+  TableSectionElement.TAG_THEAD})
 public class TableSectionElement extends Element {
+  
+  static final String[] TAGS = {TableSectionElement.TAG_TBODY, TableSectionElement.TAG_TFOOT, 
+    TableSectionElement.TAG_THEAD};
+
+  static final String TAG_TBODY = "tbody";
+  static final String TAG_TFOOT = "tfoot";
+  static final String TAG_THEAD = "thead";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TableSectionElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("thead")
-        || elem.getTagName().equalsIgnoreCase("tfoot")
-        || elem.getTagName().equalsIgnoreCase("tbody");
+    assert elem.getTagName().equalsIgnoreCase(TAG_THEAD)
+        || elem.getTagName().equalsIgnoreCase(TAG_TFOOT)
+        || elem.getTagName().equalsIgnoreCase(TAG_TBODY);
     return (TableSectionElement) elem;
   }
 

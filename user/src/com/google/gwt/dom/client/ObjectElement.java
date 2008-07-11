@@ -24,14 +24,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-OBJECT">W3C HTML Specification</a>
  */
+@TagName(ObjectElement.TAG)
 public class ObjectElement extends Element {
+
+  static final String TAG = "object";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static ObjectElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("object");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (ObjectElement) elem;
   }
 

@@ -20,10 +20,13 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-DL">W3C HTML Specification</a>
  */
+@TagName(DListElement.TAG)
 public class DListElement extends Element {
 
+  static final String TAG = "dl";
+
   public static DListElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("dl");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (DListElement) elem;
   }
 

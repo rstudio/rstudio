@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TR">W3C HTML Specification</a>
  */
+@TagName(TableRowElement.TAG)
 public class TableRowElement extends Element {
+
+  static final String TAG = "tr";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TableRowElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("tr");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (TableRowElement) elem;
   }
 

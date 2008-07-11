@@ -20,15 +20,19 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-COL">W3C HTML Specification</a>
  */
+@TagName({TableColElement.TAG_COL, TableColElement.TAG_COLGROUP})
 public class TableColElement extends Element {
+
+  static final String TAG_COL = "col";
+  static final String TAG_COLGROUP = "colgroup";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TableColElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("col")
-        || elem.getTagName().equalsIgnoreCase("colgroup");
+    assert elem.getTagName().equalsIgnoreCase(TAG_COL)
+        || elem.getTagName().equalsIgnoreCase(TAG_COLGROUP);
     return (TableColElement) elem;
   }
 

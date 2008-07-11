@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-HEAD">W3C HTML Specification</a>
  */
+@TagName(HeadElement.TAG)
 public class HeadElement extends Element {
+
+  static final String TAG = "head";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static HeadElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("head");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (HeadElement) elem;
   }
 

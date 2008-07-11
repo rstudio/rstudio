@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-DIV">W3C HTML Specification</a>
  */
+@TagName(DivElement.TAG)
 public class DivElement extends Element {
+
+  static final String TAG = "div";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static DivElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("div");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (DivElement) elem;
   }
 

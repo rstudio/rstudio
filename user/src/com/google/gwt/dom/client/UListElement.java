@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-UL">W3C HTML Specification</a>
  */
+@TagName(UListElement.TAG)
 public class UListElement extends Element {
+
+  static final String TAG = "ul";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static UListElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("ul");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (UListElement) elem;
   }
 

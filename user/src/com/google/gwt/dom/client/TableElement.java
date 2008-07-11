@@ -24,14 +24,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TABLE">W3C HTML Specification</a>
  */
+@TagName(TableElement.TAG)
 public class TableElement extends Element {
+
+  static final String TAG = "table";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TableElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("table");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (TableElement) elem;
   }
 

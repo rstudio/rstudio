@@ -20,15 +20,18 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-FIELDSET">W3C HTML Specification</a>
  */
+@TagName(FieldSetElement.TAG)
 public class FieldSetElement extends Element {
+
+  static final String TAG = "fieldset";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static FieldSetElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("fieldset");
-    return (FieldSetElement)elem;
+    assert elem.getTagName().equalsIgnoreCase(TAG);
+    return (FieldSetElement) elem;
   }
 
   protected FieldSetElement() {

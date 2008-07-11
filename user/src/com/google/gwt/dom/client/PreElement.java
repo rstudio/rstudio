@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-PRE">W3C HTML Specification</a>
  */
+@TagName(PreElement.TAG)
 public class PreElement extends Element {
+
+  static final String TAG = "pre";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static PreElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("pre");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (PreElement) elem;
   }
 

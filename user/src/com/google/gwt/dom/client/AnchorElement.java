@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-A">W3C HTML Specification</a>
  */
+@TagName(AnchorElement.TAG)
 public class AnchorElement extends Element {
+
+  static final String TAG = "a";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static AnchorElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("a");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (AnchorElement) elem;
   }
 

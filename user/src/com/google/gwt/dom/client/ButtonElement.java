@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-BUTTON">W3C HTML Specification</a>
  */
+@TagName(ButtonElement.TAG)
 public class ButtonElement extends Element {
+
+  static final String TAG = "button";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static ButtonElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("button");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (ButtonElement) elem;
   }
 

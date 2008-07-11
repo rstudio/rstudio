@@ -22,14 +22,17 @@ package com.google.gwt.dom.client;
  * @see <a href="http://www.w3.org/TR/DOM-Level-2-HTML/references.html#DOMStyle">W3C HTML Specification</a>
  * @see <a href="http://www.w3.org/TR/DOM-Level-2-HTML/references.html#DOMStyle-inf">W3C HTML Specification</a>
  */
+@TagName(StyleElement.TAG)
 public class StyleElement extends Element {
+
+  static final String TAG = "style";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static StyleElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("style");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (StyleElement) elem;
   }
 

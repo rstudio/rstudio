@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-LI">W3C HTML Specification</a>
  */
+@TagName(LIElement.TAG)
 public class LIElement extends Element {
+
+  static final String TAG = "li";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static LIElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("li");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (LIElement) elem;
   }
 

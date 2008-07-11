@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#edef-FRAME">W3C HTML Specification</a>
  */
+@TagName(FrameElement.TAG)
 public class FrameElement extends Element {
+
+  static final String TAG = "frame";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static FrameElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("frame");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (FrameElement) elem;
   }
 

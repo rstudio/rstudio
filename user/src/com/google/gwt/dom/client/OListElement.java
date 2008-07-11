@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/lists.html#edef-OL">W3C HTML Specification</a>
  */
+@TagName(OListElement.TAG)
 public class OListElement extends Element {
+
+  static final String TAG = "ol";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static OListElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("ol");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (OListElement) elem;
   }
 

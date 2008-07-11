@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#edef-IFRAME">W3C HTML Specification</a>
  */
+@TagName(IFrameElement.TAG)
 public class IFrameElement extends Element {
+
+  static final String TAG = "iframe";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static IFrameElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("iframe");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (IFrameElement) elem;
   }
 

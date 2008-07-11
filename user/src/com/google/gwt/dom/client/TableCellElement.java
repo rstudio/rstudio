@@ -20,15 +20,19 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#edef-TD">W3C HTML Specification</a>
  */
+@TagName({TableCellElement.TAG_TD, TableCellElement.TAG_TH})
 public class TableCellElement extends Element {
+
+  static final String TAG_TD = "td";
+  static final String TAG_TH = "th";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TableCellElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("td")
-        || elem.getTagName().equalsIgnoreCase("th");
+    assert elem.getTagName().equalsIgnoreCase(TAG_TD)
+      || elem.getTagName().equalsIgnoreCase(TAG_TH);  
     return (TableCellElement) elem;
   }
 

@@ -23,14 +23,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-SELECT">W3C HTML Specification</a>
  */
+@TagName(SelectElement.TAG)
 public class SelectElement extends Element {
+
+  static final String TAG = "select";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static SelectElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("select");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (SelectElement) elem;
   }
 

@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-MAP">W3C HTML Specification</a>
  */
+@TagName(MapElement.TAG)
 public class MapElement extends Element {
+
+  static final String TAG = "map";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static MapElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("map");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (MapElement) elem;
   }
 

@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/scripts.html#edef-SCRIPT">W3C HTML Specification</a>
  */
+@TagName(ScriptElement.TAG)
 public class ScriptElement extends Element {
+
+  static final String TAG = "script";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static ScriptElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("script");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (ScriptElement) elem;
   }
 

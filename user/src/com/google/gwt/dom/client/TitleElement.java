@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-TITLE">W3C HTML Specification</a>
  */
+@TagName(TitleElement.TAG)
 public class TitleElement extends Element {
+
+  static final String TAG = "title";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TitleElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("title");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (TitleElement) elem;
   }
 

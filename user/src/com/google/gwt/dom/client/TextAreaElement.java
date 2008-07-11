@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-TEXTAREA">W3C HTML Specification</a>
  */
+@TagName(TextAreaElement.TAG)
 public class TextAreaElement extends Element {
+
+  static final String TAG = "textarea";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static TextAreaElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("textarea");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (TextAreaElement) elem;
   }
 

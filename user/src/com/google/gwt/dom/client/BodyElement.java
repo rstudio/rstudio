@@ -21,14 +21,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-BODY">W3C HTML Specification</a>
  */
+@TagName(BodyElement.TAG)
 public class BodyElement extends Element {
+
+  static final String TAG = "body";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static BodyElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("body");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (BodyElement) elem;
   }
 

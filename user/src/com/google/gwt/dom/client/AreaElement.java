@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#edef-AREA">W3C HTML Specification</a>
  */
+@TagName(AreaElement.TAG)
 public class AreaElement extends Element {
+
+  static final String TAG = "area";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static AreaElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("area");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (AreaElement) elem;
   }
 

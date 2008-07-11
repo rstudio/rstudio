@@ -15,25 +15,20 @@
  */
 package com.google.gwt.dom.client;
 
-/**
- * Generic inline container.
- * 
- * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-SPAN">W3C HTML Specification</a>
- */
-@TagName(SpanElement.TAG)
-public class SpanElement extends Element {
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
-  static final String TAG = "span";
+/**
+ * Indicates the tag name of an {@link Element} subclass.  
+ */
+@Documented
+@Target(ElementType.TYPE)
+public @interface TagName {
 
   /**
-   * Assert that the given {@link Element} is compatible with this class and
-   * automatically typecast it.
+   * @return The tag names that this {@link com.google.gwt.dom.client.Element} 
+   * subclass can represent
    */
-  public static SpanElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase(TAG);
-    return (SpanElement) elem;
-  }
-
-  protected SpanElement() {
-  }
+  String[] value();
 }

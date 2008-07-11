@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-LEGEND">W3C HTML Specification</a>
  */
+@TagName(LegendElement.TAG)
 public class LegendElement extends Element {
+
+  static final String TAG = "legend";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static LegendElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("legend");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (LegendElement) elem;
   }
 

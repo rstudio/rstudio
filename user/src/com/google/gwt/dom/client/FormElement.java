@@ -22,14 +22,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#edef-FORM">W3C HTML Specification</a>
  */
+@TagName(FormElement.TAG)
 public class FormElement extends Element {
+
+  static final String TAG = "form";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static FormElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("form");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (FormElement) elem;
   }
 

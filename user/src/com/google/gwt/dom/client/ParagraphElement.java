@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-P">W3C HTML Specification</a>
  */
+@TagName(ParagraphElement.TAG)
 public class ParagraphElement extends Element {
+
+  static final String TAG = "p";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static ParagraphElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("p");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (ParagraphElement) elem;
   }
 

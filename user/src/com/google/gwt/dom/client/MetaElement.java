@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#edef-META">W3C HTML Specification</a>
  */
+@TagName(MetaElement.TAG)
 public class MetaElement extends Element {
+
+  static final String TAG = "meta";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static MetaElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("meta");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (MetaElement) elem;
   }
 

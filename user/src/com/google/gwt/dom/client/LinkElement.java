@@ -21,14 +21,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-LINK">W3C HTML Specification</a>
  */
+@TagName(LinkElement.TAG)
 public class LinkElement extends Element {
+
+  static final String TAG = "link";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static LinkElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("link");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (LinkElement) elem;
   }
 

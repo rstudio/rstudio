@@ -20,14 +20,17 @@ package com.google.gwt.dom.client;
  * 
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/links.html#edef-BASE">W3C HTML Specification</a>
  */
+@TagName(BaseElement.TAG)
 public class BaseElement extends Element {
+
+  static final String TAG = "base";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static BaseElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("base");
+    assert elem.getTagName().equalsIgnoreCase(TAG);
     return (BaseElement) elem;
   }
 

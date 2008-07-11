@@ -21,15 +21,19 @@ package com.google.gwt.dom.client;
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-ins">W3C HTML Specification</a>
  * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/text.html#edef-del">W3C HTML Specification</a>
  */
+@TagName({ModElement.TAG_INS, ModElement.TAG_DEL})
 public class ModElement extends Element {
+
+  static final String TAG_INS = "ins";
+  static final String TAG_DEL = "del";
 
   /**
    * Assert that the given {@link Element} is compatible with this class and
    * automatically typecast it.
    */
   public static ModElement as(Element elem) {
-    assert elem.getTagName().equalsIgnoreCase("ins")
-        || elem.getTagName().equalsIgnoreCase("del");
+    assert elem.getTagName().equalsIgnoreCase(TAG_INS)
+        || elem.getTagName().equalsIgnoreCase(TAG_DEL);
     return (ModElement) elem;
   }
 
