@@ -15,28 +15,24 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.impl.StringBufferImpl;
+
 /**
- * A fast way to create strings using multiple appends. This
- * implementation is optimized for fast appends. Most methods will give expected
- * performance results, with the notable exception of
- * {@link #setCharAt(int, char)}, which is extremely slow and should be avoided
- * if possible.
+ * A fast way to create strings using multiple appends. This is implemented
+ * using a {@link StringBufferImpl} that is chosen with deferred binding.
+ * 
+ * Most methods will give expected performance results. Exceptions are
+ * {@link #setCharAt(int, char)}, which is O(n), and {@link #length()}, which
+ * forces a {@link #toString()} and thus should not be used many times on the
+ * same <code>StringBuilder</code>.
+ * 
+ * This class is an exact clone of {@link StringBuffer} except for the name. Any
+ * change made to one should be mirrored in the other.
  */
 public class StringBuilder implements CharSequence {
-
-  private static native String join(String[] stringArray) /*-{
-    return stringArray.join('');
-  }-*/;
-
-  private static native String setLength(String[] stringArray, int length) /*-{
-    stringArray.length = length;
-  }-*/;
-
-  private int arrayLen = 0;
-
-  private String[] stringArray = new String[0];
-
-  private int stringLength = 0;
+  private final StringBufferImpl impl = GWT.create(StringBufferImpl.class);
+  private final Object data = impl.createData();
 
   public StringBuilder() {
   }
@@ -58,73 +54,71 @@ public class StringBuilder implements CharSequence {
   }
 
   public StringBuilder append(boolean x) {
-    return append(String.valueOf(x));
+    impl.append(data, x);
+    return this;
   }
 
   public StringBuilder append(char x) {
-    return append(String.valueOf(x));
+    impl.appendNonNull(data, String.valueOf(x));
+    return this;
   }
 
   public StringBuilder append(char[] x) {
-    return append(String.valueOf(x));
+    impl.appendNonNull(data, String.valueOf(x));
+    return this;
   }
 
   public StringBuilder append(char[] x, int start, int len) {
-    return append(String.valueOf(x, start, len));
+    impl.appendNonNull(data, String.valueOf(x, start, len));
+    return this;
   }
 
   public StringBuilder append(CharSequence x) {
-    return append(x.toString());
+    impl.append(data, x);
+    return this;
   }
 
   public StringBuilder append(CharSequence x, int start, int end) {
-    return append(x.subSequence(start, end));
+    if (x == null) {
+      x = "null";
+    }
+    impl.append(data, x.subSequence(start, end));
+    return this;
   }
 
   public StringBuilder append(double x) {
-    return append(String.valueOf(x));
+    impl.append(data, x);
+    return this;
   }
 
   public StringBuilder append(float x) {
-    return append(String.valueOf(x));
+    impl.append(data, x);
+    return this;
   }
 
   public StringBuilder append(int x) {
-    return append(String.valueOf(x));
+    impl.append(data, x);
+    return this;
   }
 
   public StringBuilder append(long x) {
-    return append(String.valueOf(x));
+    impl.appendNonNull(data, String.valueOf(x));
+    return this;
   }
 
   public StringBuilder append(Object x) {
-    return append(String.valueOf(x));
+    impl.append(data, x);
+    return this;
   }
 
-  public StringBuilder append(String toAppend) {
-    // Coerce to "null" if null.
-    if (toAppend == null) {
-      toAppend = "null";
-    }
-    int appendLength = toAppend.length();
-    if (appendLength > 0) {
-      stringArray[arrayLen++] = toAppend;
-      stringLength += appendLength;
-      /*
-       * If we hit 1k elements, let's do a join to reduce the array size. This
-       * number was arrived at experimentally through benchmarking.
-       */
-      if (arrayLen > 1024) {
-        toString();
-        // Preallocate the next 1024 (faster on FF).
-        setLength(stringArray, 1024);
-      }
-    }
+  public StringBuilder append(String x) {
+    impl.append(data, x);
     return this;
-  };
+  }
 
-  public StringBuilder append(StringBuffer x) {
-    return append(String.valueOf(x));
+  public StringBuilder append(StringBuilder x) {
+    impl.append(data, x);
+    return this;
   }
 
   /**
@@ -156,7 +150,7 @@ public class StringBuilder implements CharSequence {
   }
 
   public void getChars(int srcStart, int srcEnd, char[] dst, int dstStart) {
-    String.__checkBounds(stringLength, srcStart, srcEnd);
+    String.__checkBounds(length(), srcStart, srcEnd);
     String.__checkBounds(dst.length, dstStart, dstStart + (srcEnd - srcStart));
     String s = toString();
     while (srcStart < srcEnd) {
@@ -229,21 +223,11 @@ public class StringBuilder implements CharSequence {
   }
 
   public int length() {
-    return stringLength;
+    return impl.length(data);
   }
 
   public StringBuilder replace(int start, int end, String toInsert) {
-    // Get the joined string.
-    String s = toString();
-
-    // Build a new buffer in pieces (will throw exceptions).
-    stringArray = new String[] {
-        s.substring(0, start), toInsert, s.substring(end)};
-    arrayLen = 3;
-
-    // Calculate the new string length.
-    stringLength += toInsert.length() - (end - start);
-
+    impl.replace(data, start, end, toInsert);
     return this;
   }
 
@@ -257,7 +241,7 @@ public class StringBuilder implements CharSequence {
   }
 
   public void setLength(int newLength) {
-    int oldLength = stringLength;
+    int oldLength = length();
     if (newLength < oldLength) {
       delete(newLength, oldLength);
     } else if (newLength > oldLength) {
@@ -279,18 +263,7 @@ public class StringBuilder implements CharSequence {
 
   @Override
   public String toString() {
-    /*
-     * Normalize the array to exactly one element (even if it's completely
-     * empty), so we can unconditionally grab the first element.
-     */
-    if (arrayLen != 1) {
-      setLength(stringArray, arrayLen);
-      String s = join(stringArray);
-      // Create a new array to allow everything to get GC'd.
-      stringArray = new String[] {s};
-      arrayLen = 1;
-    }
-    return stringArray[0];
+    return impl.toString(data);
   }
 
   public void trimToSize() {

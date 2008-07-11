@@ -69,13 +69,12 @@ public class StringBufferTest extends GWTTestCase {
     x.append((CharSequence) "abc");
     assertEquals("abc", x.toString());
     x = new StringBuffer();
-    x.append((CharSequence) "abcde", 2, 3);
+    x.append("abcde", 2, 3);
     assertEquals("c", x.toString());
   }
 
   /**
-   * Check that capacity methods are present, even though
-   * they do nothing.
+   * Check that capacity methods are present, even though they do nothing.
    */
   public void testCapacity() {
     StringBuffer buf = new StringBuffer();
@@ -170,7 +169,7 @@ public class StringBufferTest extends GWTTestCase {
     x.insert(2, (CharSequence) "abcde");
     assertEquals("01abcde234", x.toString());
     x = new StringBuffer("01234");
-    x.insert(2, (CharSequence) "abcde", 2, 4);
+    x.insert(2, "abcde", 2, 4);
     assertEquals("01cd234", x.toString());
     x = new StringBuffer("!");
     x.insert(1, C.FALSE_VALUE);
@@ -330,16 +329,16 @@ public class StringBufferTest extends GWTTestCase {
     assertEquals("abcde", bld.toString());
 
     bld = new StringBuilder();
-    bld.append((CharSequence) "abcde", 2, 4);
+    bld.append("abcde", 2, 4);
     assertEquals("cd", bld.toString());
 
     bld = new StringBuilder();
-    bld.append(1.0);
-    assertEquals("1.0", bld.toString());
+    bld.append(1.5);
+    assertEquals("1.5", bld.toString());
 
     bld = new StringBuilder();
-    bld.append(1.0F);
-    assertEquals("1.0", bld.toString());
+    bld.append(1.5F);
+    assertEquals("1.5", bld.toString());
 
     bld = new StringBuilder();
     bld.append(5);
@@ -420,7 +419,7 @@ public class StringBufferTest extends GWTTestCase {
     assertEquals("01abcde234", bld.toString());
 
     bld = new StringBuilder("01234");
-    bld.insert(2, (CharSequence) "abcde", 2, 4);
+    bld.insert(2, "abcde", 2, 4);
     assertEquals("01cd234", bld.toString());
 
     bld = new StringBuilder("01234");

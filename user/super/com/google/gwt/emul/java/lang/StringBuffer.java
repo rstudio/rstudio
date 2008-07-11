@@ -15,13 +15,24 @@
  */
 package java.lang;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.impl.StringBufferImpl;
+
 /**
  * A fast way to create strings using multiple appends. This is implemented
- * using {@link StringBuilder}, so see that class for implementation notes and
- * performance characteristics.
+ * using a {@link StringBufferImpl} that is chosen with deferred binding.
+ * 
+ * Most methods will give expected performance results. Exceptions are
+ * {@link #setCharAt(int, char)}, which is O(n), and {@link #length()}, which
+ * forces a {@link #toString()} and thus should not be used many times on the
+ * same <code>StringBuffer</code>.
+ * 
+ * This class is an exact clone of {@link StringBuilder} except for the name.
+ * Any change made to one should be mirrored in the other.
  */
 public class StringBuffer implements CharSequence {
-  private final StringBuilder builder = new StringBuilder();
+  private final StringBufferImpl impl = GWT.create(StringBufferImpl.class);
+  private final Object data = impl.createData();
 
   public StringBuffer() {
   }
@@ -43,67 +54,70 @@ public class StringBuffer implements CharSequence {
   }
 
   public StringBuffer append(boolean x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
   public StringBuffer append(char x) {
-    builder.append(x);
+    impl.appendNonNull(data, String.valueOf(x));
     return this;
   }
 
   public StringBuffer append(char[] x) {
-    builder.append(x);
+    impl.appendNonNull(data, String.valueOf(x));
     return this;
   }
 
   public StringBuffer append(char[] x, int start, int len) {
-    builder.append(x, start, len);
+    impl.appendNonNull(data, String.valueOf(x, start, len));
     return this;
   }
 
   public StringBuffer append(CharSequence x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
   public StringBuffer append(CharSequence x, int start, int end) {
-    builder.append(x, start, end);
+    if (x == null) {
+      x = "null";
+    }
+    impl.append(data, x.subSequence(start, end));
     return this;
   }
 
   public StringBuffer append(double x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
   public StringBuffer append(float x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
   public StringBuffer append(int x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
   public StringBuffer append(long x) {
-    builder.append(x);
+    impl.appendNonNull(data, String.valueOf(x));
     return this;
   }
 
   public StringBuffer append(Object x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
-  public StringBuffer append(String toAppend) {
-    builder.append(toAppend);
+  public StringBuffer append(String x) {
+    impl.append(data, x);
     return this;
-  };
+  }
 
   public StringBuffer append(StringBuffer x) {
-    builder.append(x);
+    impl.append(data, x);
     return this;
   }
 
@@ -112,146 +126,146 @@ public class StringBuffer implements CharSequence {
    * {@link Integer#MAX_VALUE}.
    */
   public int capacity() {
-    return builder.capacity();
+    return Integer.MAX_VALUE;
   }
 
   public char charAt(int index) {
-    return builder.charAt(index);
+    return toString().charAt(index);
   }
 
   public StringBuffer delete(int start, int end) {
-    builder.delete(start, end);
-    return this;
+    return replace(start, end, "");
   }
 
   public StringBuffer deleteCharAt(int start) {
-    builder.deleteCharAt(start);
-    return this;
+    return delete(start, start + 1);
   }
 
   /**
    * This implementation does not track capacity; calling this method has no
    * effect.
    */
+  @SuppressWarnings("unused")
   public void ensureCapacity(int ignoredCapacity) {
-    builder.ensureCapacity(ignoredCapacity);
   }
 
   public void getChars(int srcStart, int srcEnd, char[] dst, int dstStart) {
-    builder.getChars(srcStart, srcEnd, dst, dstStart);
+    String.__checkBounds(length(), srcStart, srcEnd);
+    String.__checkBounds(dst.length, dstStart, dstStart + (srcEnd - srcStart));
+    String s = toString();
+    while (srcStart < srcEnd) {
+      dst[dstStart++] = s.charAt(srcStart++);
+    }
   }
 
   public int indexOf(String x) {
-    return builder.indexOf(x);
+    return toString().indexOf(x);
   }
 
   public int indexOf(String x, int start) {
-    return builder.indexOf(x, start);
+    return toString().indexOf(x, start);
   }
 
   public StringBuffer insert(int index, boolean x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, char x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, char[] x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, char[] x, int offset, int len) {
-    builder.insert(index, x, offset, len);
-    return this;
+    return insert(index, String.valueOf(x, offset, len));
   }
 
   public StringBuffer insert(int index, CharSequence chars) {
-    builder.insert(index, chars);
-    return this;
+    return insert(index, chars.toString());
   }
 
   public StringBuffer insert(int index, CharSequence chars, int start, int end) {
-    builder.insert(index, chars, start, end);
-    return this;
+    return insert(index, chars.subSequence(start, end).toString());
   }
 
   public StringBuffer insert(int index, double x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, float x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, int x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, long x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, Object x) {
-    builder.insert(index, x);
-    return this;
+    return insert(index, String.valueOf(x));
   }
 
   public StringBuffer insert(int index, String x) {
-    builder.insert(index, x);
-    return this;
+    return replace(index, index, x);
   }
 
   public int lastIndexOf(String s) {
-    return builder.lastIndexOf(s);
+    return toString().lastIndexOf(s);
   }
 
   public int lastIndexOf(String s, int start) {
-    return builder.lastIndexOf(s, start);
+    return toString().lastIndexOf(s, start);
   }
 
   public int length() {
-    return builder.length();
+    return impl.length(data);
   }
 
   public StringBuffer replace(int start, int end, String toInsert) {
-    builder.replace(start, end, toInsert);
+    impl.replace(data, start, end, toInsert);
     return this;
   }
 
+  /**
+   * Warning! This method is <b>much</b> slower than the JRE implementation. If
+   * you need to do character level manipulation, you are strongly advised to
+   * use a char[] directly.
+   */
   public void setCharAt(int index, char x) {
-    builder.setCharAt(index, x);
+    replace(index, index + 1, String.valueOf(x));
   }
 
   public void setLength(int newLength) {
-    builder.setLength(newLength);
+    int oldLength = length();
+    if (newLength < oldLength) {
+      delete(newLength, oldLength);
+    } else if (newLength > oldLength) {
+      append(new char[newLength - oldLength]);
+    }
   }
 
   public CharSequence subSequence(int start, int end) {
-    return builder.subSequence(start, end);
+    return this.substring(start, end);
   }
 
   public String substring(int begin) {
-    return builder.substring(begin);
+    return toString().substring(begin);
   }
 
   public String substring(int begin, int end) {
-    return builder.substring(begin, end);
+    return toString().substring(begin, end);
   }
 
   @Override
   public String toString() {
-    return builder.toString();
+    return impl.toString(data);
   }
 
   public void trimToSize() {
-    builder.trimToSize();
   }
 }

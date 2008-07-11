@@ -12,11 +12,21 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<!-- A JavaScript-based emulation of the Java Runtime library.              -->
-<!-- Do not inherit this module directly; inherit com.google.gwt.core.Core. -->
+<!-- Deferred binding rules for optimized JRE implementations based on user agent. -->
 <module>
+  <inherits name="com.google.gwt.emul.Emulation"/>
+
+  <!-- If the user agent is known, use Append as the default StringBuffer implementation. -->
+  <replace-with class="com.google.gwt.core.client.impl.StringBufferImplAppend">
+    <when-type-is class="com.google.gwt.core.client.impl.StringBufferImpl"/>
+  </replace-with>
+
+  <!--  Append is awful on IE.  Use Array instead. -->
   <replace-with class="com.google.gwt.core.client.impl.StringBufferImplArray">
     <when-type-is class="com.google.gwt.core.client.impl.StringBufferImpl"/>
+    <any>
+      <when-property-is name="user.agent" value="ie6"/>
+    </any>
   </replace-with>
 
   <super-source/>

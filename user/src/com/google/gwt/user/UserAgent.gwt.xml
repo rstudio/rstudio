@@ -49,4 +49,6 @@
       return "unknown";
   ]]></property-provider>
 
+  <!-- Deferred binding to optimize JRE classes based on user agent. -->
+  <inherits name="com.google.gwt.emul.EmulationWithUserAgent"/>
 </module>
