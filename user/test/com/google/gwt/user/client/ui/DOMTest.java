@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.BodyElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -160,6 +162,22 @@ public class DOMTest extends GWTTestCase {
     outer.getStyle().setProperty("border", "2px solid blue");
     assertEquals(2, inner.getAbsoluteTop() - absTop);
     assertEquals(2, inner.getAbsoluteLeft() - absLeft);
+  }
+
+  /**
+   * Tests getAbsoluteLeft/Top() for the document.body element. This used to
+   * cause exceptions to be thrown on Opera (see issue 1556).
+   */
+  public void testGetBodyAbsolutePosition() {
+    try {
+      // The body's absolute left/top depends upon the browser, but we just
+      // need to make sure nothing goes wrong reading them.
+      BodyElement body = Document.get().getBody();
+      body.getAbsoluteLeft();
+      body.getAbsoluteTop();
+    } catch (Throwable e) {
+      fail("Exception occurred getting the absolute position of the body");
+    }
   }
 
   /**

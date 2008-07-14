@@ -22,47 +22,45 @@ class DOMImplMozilla extends DOMImplStandard {
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
-    // We cannot use DOMImpl here because offsetLeft/Top return erroneous
-    // values when overflow is not visible.  We have to difference screenX
-    // here due to a change in getBoxObjectFor which causes inconsistencies
-    // on whether the calculations are inside or outside of the element's
-    // border.
-    try {
+    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
+    // so we use getBoundingClientRect() whenever possible (but it's not
+    // supported on older versions). If changing this code, make sure to check
+    // the museum entry for issue 1932.
+    if (Element.prototype.getBoundingClientRect) {
+      // getBoundingClientRect().left is off by the document element's
+      // border-left-width.
+      var style = $wnd.getComputedStyle($doc.documentElement, '')
+      return elem.getBoundingClientRect().left + parseInt(style.borderLeftWidth);
+    } else {
+      // We cannot use DOMImpl here because offsetLeft/Top return erroneous
+      // values when overflow is not visible.  We have to difference screenX
+      // here due to a change in getBoxObjectFor which causes inconsistencies
+      // on whether the calculations are inside or outside of the element's
+      // border.
       return $doc.getBoxObjectFor(elem).screenX
           - $doc.getBoxObjectFor($doc.documentElement).screenX;
-    } catch (e) {
-      // This works around a bug in the FF3 betas. The bug
-      // should be fixed before they release, so this can
-      // be removed at a later date.
-      // https://bugzilla.mozilla.org/show_bug.cgi?id=409111
-      // DOMException.WRONG_DOCUMENT_ERR == 4
-      if (e.code == 4) {
-        return 0;
-      }
-      throw e;
     }
   }-*/;
 
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
-    // We cannot use DOMImpl here because offsetLeft/Top return erroneous
-    // values when overflow is not visible.  We have to difference screenY
-    // here due to a change in getBoxObjectFor which causes inconsistencies
-    // on whether the calculations are inside or outside of the element's
-    // border.
-    try {
+    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
+    // so we use getBoundingClientRect() whenever possible (but it's not
+    // supported on older versions). If changing this code, make sure to check
+    // the museum entry for issue 1932.
+    if (Element.prototype.getBoundingClientRect) {
+      // getBoundingClientRect().top is off by the document element's
+      // border-top-width.
+      var style = $wnd.getComputedStyle($doc.documentElement, '')
+      return elem.getBoundingClientRect().top + parseInt(style.borderTopWidth);
+    } else {
+      // We cannot use DOMImpl here because offsetLeft/Top return erroneous
+      // values when overflow is not visible.  We have to difference screenX
+      // here due to a change in getBoxObjectFor which causes inconsistencies
+      // on whether the calculations are inside or outside of the element's
+      // border.
       return $doc.getBoxObjectFor(elem).screenY
           - $doc.getBoxObjectFor($doc.documentElement).screenY;
-    } catch (e) {
-      // This works around a bug in the FF3 betas. The bug
-      // should be fixed before they release, so this can
-      // be removed at a later date.
-      // https://bugzilla.mozilla.org/show_bug.cgi?id=409111
-      // DOMException.WRONG_DOCUMENT_ERR == 4
-      if (e.code == 4) {
-        return 0;
-      }
-      throw e;
     }
   }-*/;
 

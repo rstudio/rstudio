@@ -23,10 +23,10 @@ class DOMImplOpera extends DOMImplStandard {
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var left = 0;
-    var curr = elem.parentNode;
-    // This intentionally excludes body
-    while (curr != $doc.body) {
 
+    // This intentionally excludes body and its ancestors
+    var curr = elem.parentNode;
+    while (curr && curr.offsetParent) {
       // see https://bugs.opera.com/show_bug.cgi?id=249965
       // The net effect is that TR and TBODY elemnts report the scroll offsets
       // of the BODY and HTML elements instead of 0.
@@ -47,9 +47,9 @@ class DOMImplOpera extends DOMImplStandard {
   public native int getAbsoluteTop(Element elem) /*-{
     var top = 0;
 
-    // This intentionally excludes body
+    // This intentionally excludes body and its ancestors
     var curr = elem.parentNode;
-    while (curr != $doc.body) {
+    while (curr && curr.offsetParent) {
       // see getAbsoluteLeft()
       if (curr.tagName != 'TR' && curr.tagName != 'TBODY') {
         top -= curr.scrollTop;

@@ -25,10 +25,15 @@ public class PopupImplIE6 extends PopupImpl {
 
   @Override
   public native void onHide(Element popup) /*-{
+    // It is at least rarely possible to get an onHide() without a matching
+    // onShow(), usually because of timing issues created by animations. So
+    // we're careful not to assume the existence of '__frame' here.
     var frame = popup.__frame;
-    frame.parentElement.removeChild(frame);
-    popup.__frame = null;
-    frame.__popup = null;
+    if (frame) {
+      frame.parentElement.removeChild(frame);
+      frame.__popup = null;
+      popup.__frame = null;
+    }
   }-*/;
 
   @Override

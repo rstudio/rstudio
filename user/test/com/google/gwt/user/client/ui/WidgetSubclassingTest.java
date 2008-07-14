@@ -33,194 +33,194 @@ public class WidgetSubclassingTest extends GWTTestCase {
   }
 
   // Correct subclasses.
-  public static class TestAnchor extends Anchor {
+  private static class TestAnchor extends Anchor {
     public TestAnchor() {
       super(Document.get().createAnchorElement());
     }
   }
 
-  public static class TestButton extends Button {
+  private static class TestButton extends Button {
     public TestButton() {
       super(Document.get().createButtonElement());
     }
   }
 
-  public static class TestFileUpload extends FileUpload {
+  private static class TestFileUpload extends FileUpload {
     public TestFileUpload() {
       super(Document.get().createFileInputElement());
     }
   }
 
-  public static class TestFormPanel extends FormPanel {
+  private static class TestFormPanel extends FormPanel {
     public TestFormPanel() {
       super(Document.get().createFormElement());
     }
   }
 
-  public static class TestFrame extends Frame {
+  private static class TestFrame extends Frame {
     public TestFrame() {
       super(Document.get().createIFrameElement());
     }
   }
 
-  public static class TestHidden extends Hidden {
+  private static class TestHidden extends Hidden {
     public TestHidden() {
       super(Document.get().createHiddenInputElement());
     }
   }
 
-  public static class TestHTML extends HTML {
+  private static class TestHTML extends HTML {
     public TestHTML() {
       super(Document.get().createDivElement());
     }
   }
 
-  public static class TestImage extends Image {
+  private static class TestImage extends Image {
     public TestImage() {
       super(Document.get().createImageElement());
     }
   }
 
-  public static class TestInlineHTML extends InlineHTML {
+  private static class TestInlineHTML extends InlineHTML {
     public TestInlineHTML() {
       super(Document.get().createSpanElement());
     }
   }
 
-  public static class TestInlineLabel extends InlineLabel {
+  private static class TestInlineLabel extends InlineLabel {
     public TestInlineLabel() {
       super(Document.get().createSpanElement());
     }
   }
 
-  public static class TestLabel extends Label {
+  private static class TestLabel extends Label {
     public TestLabel() {
       super(Document.get().createSpanElement());
     }
   }
 
-  public static class TestListBox extends ListBox {
+  private static class TestListBox extends ListBox {
     public TestListBox() {
       super(Document.get().createSelectElement());
     }
   }
 
-  public static class TestPasswordTextBox extends PasswordTextBox {
+  private static class TestPasswordTextBox extends PasswordTextBox {
     public TestPasswordTextBox() {
       super(Document.get().createPasswordInputElement());
     }
   }
 
-  public static class TestSimpleCheckBox extends SimpleCheckBox {
+  private static class TestSimpleCheckBox extends SimpleCheckBox {
     public TestSimpleCheckBox() {
       super(Document.get().createCheckInputElement());
     }
   }
 
-  public static class TestSimpleRadioButton extends SimpleRadioButton {
+  private static class TestSimpleRadioButton extends SimpleRadioButton {
     public TestSimpleRadioButton() {
       super(Document.get().createRadioInputElement("group"));
     }
   }
 
-  public static class TestTextBox extends TextBox {
+  private static class TestTextBox extends TextBox {
     public TestTextBox() {
       super(Document.get().createTextInputElement());
     }
   }
 
   // Broken subclasses.
-  public static class BrokenAnchor extends Anchor {
+  private static class BrokenAnchor extends Anchor {
     public BrokenAnchor() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenButton extends Button {
+  private static class BrokenButton extends Button {
     public BrokenButton() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenFileUpload extends FileUpload {
+  private static class BrokenFileUpload extends FileUpload {
     public BrokenFileUpload() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenFormPanel extends FormPanel {
+  private static class BrokenFormPanel extends FormPanel {
     public BrokenFormPanel() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenFrame extends Frame {
+  private static class BrokenFrame extends Frame {
     public BrokenFrame() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenHidden extends Hidden {
+  private static class BrokenHidden extends Hidden {
     public BrokenHidden() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenHTML extends HTML {
+  private static class BrokenHTML extends HTML {
     public BrokenHTML() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenImage extends Image {
+  private static class BrokenImage extends Image {
     public BrokenImage() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenInlineHTML extends InlineHTML {
+  private static class BrokenInlineHTML extends InlineHTML {
     public BrokenInlineHTML() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenInlineLabel extends InlineLabel {
+  private static class BrokenInlineLabel extends InlineLabel {
     public BrokenInlineLabel() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenLabel extends Label {
+  private static class BrokenLabel extends Label {
     public BrokenLabel() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenListBox extends ListBox {
+  private static class BrokenListBox extends ListBox {
     public BrokenListBox() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenPasswordTextBox extends PasswordTextBox {
+  private static class BrokenPasswordTextBox extends PasswordTextBox {
     public BrokenPasswordTextBox() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenSimpleCheckBox extends SimpleCheckBox {
+  private static class BrokenSimpleCheckBox extends SimpleCheckBox {
     public BrokenSimpleCheckBox() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenSimpleRadioButton extends SimpleRadioButton {
+  private static class BrokenSimpleRadioButton extends SimpleRadioButton {
     public BrokenSimpleRadioButton() {
       super(Document.get().createBRElement());
     }
   }
 
-  public static class BrokenTextBox extends TextBox {
+  private static class BrokenTextBox extends TextBox {
     public BrokenTextBox() {
       super(Document.get().createBRElement());
     }

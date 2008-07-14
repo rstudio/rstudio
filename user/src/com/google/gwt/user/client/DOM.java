@@ -884,7 +884,7 @@ public class DOM {
    * @param attr the name of the attribute to be retrieved
    * @return the style attribute's value as an integer
    */
-  public native int getIntStyleAttribute(Element elem, String attr) /*-{
+  public static native int getIntStyleAttribute(Element elem, String attr) /*-{
     return parseInt(elem.style[attr]) || 0;
   }-*/;
 

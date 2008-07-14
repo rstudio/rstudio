@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -25,12 +25,40 @@ class DOMImplMozilla extends DOMImplStandard {
 
   @Override
   public native int eventGetClientX(Event evt) /*-{
-    return evt.clientX - $doc.getBoxObjectFor($doc.getElementsByTagName('html')[0]).x || 0;
+    var htmlOffset;
+    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
+    // so we use getBoundingClientRect() whenever possible (but it's not
+    // supported on older versions). If changing this code, make sure to check
+    // the museum entry for issue 1932.
+    if (Element.prototype.getBoundingClientRect) {
+      // getBoundingClientRect().left is off by the document element's
+      // border-left-width.
+      var style = $wnd.getComputedStyle($doc.documentElement, '')
+      htmlOffset = $doc.documentElement.getBoundingClientRect().left +
+        parseInt(style.borderLeftWidth);
+    } else {
+      htmlOffset = $doc.getBoxObjectFor($doc.documentElement).x || 0;
+    }
+    return evt.clientX - htmlOffset;
   }-*/;
 
   @Override
   public native int eventGetClientY(Event evt) /*-{
-    return evt.clientY - $doc.getBoxObjectFor($doc.getElementsByTagName('html')[0]).y || 0;
+    var htmlOffset;
+    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
+    // so we use getBoundingClientRect() whenever possible (but it's not
+    // supported on older versions). If changing this code, make sure to check
+    // the museum entry for issue 1932.
+    if (Element.prototype.getBoundingClientRect) {
+      // getBoundingClientRect().top is off by the document element's
+      // border-top-width.
+      var style = $wnd.getComputedStyle($doc.documentElement, '')
+      htmlOffset = $doc.documentElement.getBoundingClientRect().top +
+        parseInt(style.borderTopWidth);
+    } else {
+      htmlOffset = $doc.getBoxObjectFor($doc.documentElement).y || 0;
+    }
+    return evt.clientY - htmlOffset;
   }-*/;
 
   @Override
