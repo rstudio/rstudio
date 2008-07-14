@@ -538,6 +538,9 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   filter: alpha(opacity=40);
   zoom: 1;
 }
+.gwt-PushButton .html-face {
+  color: #000;
+}
 
 .gwt-RadioButton {
   padding: 4px 4px 3px 3px;
@@ -884,6 +887,9 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   opacity: .5;
   zoom: 1;
   filter: alpha(opacity=40);
+}
+.gwt-ToggleButton .html-face {
+  color: #000;
 }
 
 .gwt-Tree .gwt-TreeItem {

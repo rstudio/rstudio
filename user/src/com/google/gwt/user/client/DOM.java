@@ -884,9 +884,9 @@ public class DOM {
    * @param attr the name of the attribute to be retrieved
    * @return the style attribute's value as an integer
    */
-  public static int getIntStyleAttribute(Element elem, String attr) {
-    return Integer.parseInt(elem.getStyle().getProperty(attr));
-  }
+  public native int getIntStyleAttribute(Element elem, String attr) /*-{
+    return parseInt(elem.style[attr]) || 0;
+  }-*/;
 
   /**
    * Gets an element's next sibling element.

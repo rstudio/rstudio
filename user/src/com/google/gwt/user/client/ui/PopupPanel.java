@@ -50,10 +50,25 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  */
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview, HasAnimation {
+
   /**
-   * The duration of the animation.
+   * A callback that is used to set the position of a {@link PopupPanel} right
+   * before it is shown.
    */
-  private static final int ANIMATION_DURATION = 200;
+  public interface PositionCallback {
+
+    /**
+     * Provides the opportunity to set the position of the PopupPanel right
+     * before the PopupPanel is shown. The offsetWidth and offsetHeight values
+     * of the PopupPanel are made available to allow for positioning based on
+     * its size.
+     * 
+     * @param offsetWidth the offsetWidth of the PopupPanel
+     * @param offsetHeight the offsetHeight of the PopupPanel
+     * @see PopupPanel#setPopupPositionAndShow(PositionCallback)
+     */
+    void setPosition(int offsetWidth, int offsetHeight);
+  }
 
   /**
    * The type of animation to use when opening the popup.
@@ -219,23 +234,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * A callback that is used to set the position of a {@link PopupPanel} right
-   * before it is shown.
+   * The duration of the animation.
    */
-  public interface PositionCallback {
-
-    /**
-     * Provides the opportunity to set the position of the PopupPanel right
-     * before the PopupPanel is shown. The offsetWidth and offsetHeight values
-     * of the PopupPanel are made available to allow for positioning based on
-     * its size.
-     * 
-     * @param offsetWidth the offsetWidth of the PopupPanel
-     * @param offsetHeight the offsetHeight of the PopupPanel
-     * @see PopupPanel#setPopupPositionAndShow(PositionCallback)
-     */
-    void setPosition(int offsetWidth, int offsetHeight);
-  }
+  private static final int ANIMATION_DURATION = 200;
 
   /**
    * The default style name.
@@ -398,6 +399,28 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public void hide() {
     hide(false);
+  }
+
+  /**
+   * Hides the popup. This has no effect if it is not currently visible.
+   * 
+   * @param autoClosed the value that will be passed to
+   *          {@link PopupListener#onPopupClosed(PopupPanel, boolean)} when the
+   *          popup is closed
+   */
+  public void hide(boolean autoClosed) {
+    if (!showing) {
+      return;
+    }
+    showing = false;
+
+    // Hide the popup
+    resizeAnimation.setState(false);
+
+    // Fire the event listeners
+    if (popupListeners != null) {
+      popupListeners.firePopupClosed(this, autoClosed);
+    }
   }
 
   public boolean isAnimationEnabled() {
@@ -669,7 +692,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.removeEventPreview(this);
     super.onDetach();
   }
-
+  
   /**
    * We control size by setting our child widget's size. However, if we don't
    * currently have a child, we record the size the user wanted so that when we
@@ -706,7 +729,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   void setAnimation(ResizeAnimation animation) {
     resizeAnimation = animation;
   }
-  
+
   /**
    * Enable or disable animation of the {@link PopupPanel}.
    * 
@@ -727,19 +750,4 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       elt.blur();
     }
   }-*/;
-
-  private void hide(boolean autoClosed) {
-    if (!showing) {
-      return;
-    }
-    showing = false;
-
-    // Hide the popup
-    resizeAnimation.setState(false);
-
-    // Fire the event listeners
-    if (popupListeners != null) {
-      popupListeners.firePopupClosed(this, autoClosed);
-    }
-  }
 }

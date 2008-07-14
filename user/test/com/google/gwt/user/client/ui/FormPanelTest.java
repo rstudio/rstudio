@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.HasWidgetsTester.WidgetAdder;
-import com.google.gwt.user.server.ui.FormPanelTestServlet;
 
 /**
  * Tests the FormPanel.
@@ -30,10 +29,6 @@ import com.google.gwt.user.server.ui.FormPanelTestServlet;
  */
 public class FormPanelTest extends GWTTestCase {
   public static boolean clicked = false;
-
-  private native boolean isHappyDivPresent(Element iframe) /*-{
-    return !!iframe.contentWindow.document.getElementById(':)');
-  }-*/;
 
   public String getModuleName() {
     return "com.google.gwt.user.FormPanelTest";
@@ -228,15 +223,19 @@ public class FormPanelTest extends GWTTestCase {
 
   public void testWrappedForm() {
     // Create a form and frame in the document we can wrap.
+    String uid = Document.get().createUniqueId();
     HTML formAndFrame = new HTML(
-        "<form id='wrapMe' method='post' target='targetFrame' action='"
-            + GWT.getModuleBaseURL() + "formHandler?sendHappyHtml'>"
+        "<form id='"
+            + uid
+            + "' method='post' target='targetFrame' action='"
+            + GWT.getModuleBaseURL()
+            + "formHandler?sendHappyHtml'>"
             + "<input type='hidden' name='foo' value='bar'></input></form>"
             + "<iframe src='javascript:\'\'' id='targetMe' name='targetFrame'></iframe>");
     RootPanel.get().add(formAndFrame);
 
     // Wrap the form and make sure its target frame is intact.
-    FormPanel form = FormPanel.wrap(Document.get().getElementById("wrapMe"));
+    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid));
     assertEquals("targetFrame", form.getTarget());
 
     // Ensure that no synthesized iframe was created.
@@ -257,4 +256,54 @@ public class FormPanelTest extends GWTTestCase {
     }.schedule(2500);
     form.submit();
   }
+
+  public void testWrappedFormTargetAssertion() {
+    // Testing a hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      // Create a form element with the target attribute already set.
+      String uid = Document.get().createUniqueId();
+      HTML form = new HTML("<form id='" + uid + "' target='foo'></form>");
+      RootPanel.get().add(form);
+
+      try {
+        // Attempt to wrap it, requesting that an iframe be created.
+        FormPanel.wrap(Document.get().getElementById(uid), true);
+        fail("Assertion expected wrapping a form with the target set");
+      } catch (Throwable e) {
+        // ok.
+      }
+    }
+  }
+
+  public void testWrappedFormWithIFrame() {
+    // Create a form and frame in the document we can wrap.
+    String uid = Document.get().createUniqueId();
+    HTML formAndFrame = new HTML("<form id='" + uid + "' method='get' "
+        + "encoding='application/x-www-form-urlencoded' action='"
+        + GWT.getModuleBaseURL() + "formHandler'>"
+        + "<input type='text' name='tb' value='text'></input></form>");
+    RootPanel.get().add(formAndFrame);
+
+    // Wrap the form, asking for an iframe to be created.
+    FormPanel form = FormPanel.wrap(Document.get().getElementById(uid), true);
+
+    // Give the submit 5s to complete.
+    delayTestFinish(5000);
+    form.addFormHandler(new FormHandler() {
+      public void onSubmit(FormSubmitEvent event) {
+      }
+
+      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+        // Make sure we get our results back.
+        assertTrue(event.getResults().equals("tb=text"));
+        finishTest();
+      }
+    });
+
+    form.submit();
+  }
+
+  private native boolean isHappyDivPresent(Element iframe) /*-{
+    return !!iframe.contentWindow.document.getElementById(':)');
+  }-*/;
 }

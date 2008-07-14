@@ -255,7 +255,12 @@ public class TokenStream {
         DEBUGGER    = 146,
         SCRIPT      = 147,   // top-level node for entire script
 
-        LAST_TOKEN  = 147;
+        LAST_TOKEN  = 147,
+    
+        // This value is only used as a return value for getTokenHelper,
+        // which is only called from getToken and exists to avoid an excessive
+        // recursion problem if a number of lines in a row are comments.
+        RETRY_TOKEN     = 65535;
 
     // end enum
 
@@ -751,6 +756,14 @@ public class TokenStream {
     }
 
     public int getToken() throws IOException {
+      int c;
+      do {
+        c = getTokenHelper();
+      } while (c == RETRY_TOKEN);
+      return c;
+    }
+
+    private int getTokenHelper() throws IOException {
         int c;
         tokenno++;
 
@@ -1155,7 +1168,7 @@ public class TokenStream {
                 if (in.match('-')) {
                     if (in.match('-')) {
                         skipLine();
-                        return getToken();  // in place of 'goto retry'
+                        return RETRY_TOKEN;  // in place of 'goto retry'
                     }
                     in.unread();
                 }
@@ -1220,7 +1233,7 @@ public class TokenStream {
             // is it a // comment?
             if (in.match('/')) {
                 skipLine();
-                return getToken();
+                return RETRY_TOKEN;
             }
             if (in.match('*')) {
                 while ((c = in.read()) != -1 &&
@@ -1231,7 +1244,7 @@ public class TokenStream {
                     reportSyntaxError("msg.unterminated.comment", null);
                     return ERROR;
                 }
-                return getToken();  // `goto retry'
+                return RETRY_TOKEN;  // `goto retry'
             }
 
             // is it a regexp?
@@ -1314,7 +1327,7 @@ public class TokenStream {
                     // after line start as comment-utill-eol
                     if (in.match('>')) {
                         skipLine();
-                        return getToken();
+                        return RETRY_TOKEN;
                     }
                 }
                 c = DEC;
@@ -1569,7 +1582,6 @@ public class TokenStream {
     String regExpFlags;
 
     private String sourceName;
-    private String line;
     private int pushbackToken;
     private int tokenno;
 

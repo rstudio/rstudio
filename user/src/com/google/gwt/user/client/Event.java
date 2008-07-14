@@ -193,14 +193,45 @@ public class Event extends JavaScriptObject {
   }
 
   /**
-   * TODO: doc.
+   * Gets the current set of events sunk by a given element.
+   * 
+   * @param elem the element whose events are to be retrieved
+   * @return a bitfield describing the events sunk on this element (its possible
+   *         values are described in {@link Event})
    */
   public static int getEventsSunk(Element elem) {
     return DOM.getEventsSunk((com.google.gwt.user.client.Element) elem);
   }
 
   /**
-   * TODO: doc.
+   * Releases mouse capture on the given element. Calling this method has no
+   * effect if the element does not currently have mouse capture.
+   * 
+   * @param elem the element to release capture
+   * @see #setCapture(Element)
+   */
+  public static void releaseCapture(Element elem) {
+    DOM.releaseCapture(elem.<com.google.gwt.user.client.Element>cast());
+  }
+
+  /**
+   * Sets mouse-capture on the given element. This element will directly receive
+   * all mouse events until {@link #releaseCapture(Element)} is called on it.
+   * 
+   * @param elem the element on which to set mouse capture
+   */
+  public static void setCapture(Element elem) {
+    DOM.setCapture(elem.<com.google.gwt.user.client.Element>cast());
+  }
+
+  /**
+   * Sets the current set of events sunk by a given element. These events will
+   * be fired to the nearest {@link EventListener} specified on any of the
+   * element's parents.
+   * 
+   * @param elem the element whose events are to be retrieved
+   * @param eventBits a bitfield describing the events sunk on this element (its
+   *          possible values are described in {@link Event})
    */
   public static void sinkEvents(Element elem, int eventBits) {
     DOM.sinkEvents((com.google.gwt.user.client.Element) elem, eventBits);

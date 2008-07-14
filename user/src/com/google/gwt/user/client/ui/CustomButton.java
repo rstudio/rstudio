@@ -523,18 +523,20 @@ public abstract class CustomButton extends ButtonBase {
     int type = DOM.eventGetType(event);
     switch (type) {
       case Event.ONMOUSEDOWN:
-        setFocus(true);
-        onClickStart();
-        DOM.setCapture(getElement());
-        isCapturing = true;
-        // Prevent dragging (on some browsers);
-        DOM.eventPreventDefault(event);
+        if (event.getButton() == Event.BUTTON_LEFT) {
+          setFocus(true);
+          onClickStart();
+          DOM.setCapture(getElement());
+          isCapturing = true;
+          // Prevent dragging (on some browsers);
+          DOM.eventPreventDefault(event);
+        }
         break;
       case Event.ONMOUSEUP:
         if (isCapturing) {
           isCapturing = false;
           DOM.releaseCapture(getElement());
-          if (isHovering()) {
+          if (isHovering() && event.getButton() == Event.BUTTON_LEFT) {
             onClick();
           }
         }

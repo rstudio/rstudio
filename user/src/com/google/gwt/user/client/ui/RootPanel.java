@@ -43,27 +43,6 @@ public class RootPanel extends AbsolutePanel {
   private static Set<Widget> widgetsToDetach = new HashSet<Widget>();
 
   /**
-   * Adds a widget to the detach list. This is the list of widgets to be
-   * detached when the page unloads.
-   * 
-   * This method must be called for all widgets that have no parent widgets.
-   * These are most commonly {@link RootPanel RootPanels}, but can also be any
-   * widget used to wrap an existing element on the page. Failing to do this may
-   * cause these widgets to leak memory. This method is called automatically by
-   * widgets' wrap methods (e.g.
-   * {@link Button#wrap(com.google.gwt.dom.client.Element)}).
-   * 
-   * @param widget the widget to be cleaned up when the page closes
-   * @see #detachNow(Widget)
-   */
-  public static void detachOnWindowClose(Widget widget) {
-    assert !widgetsToDetach.contains(widget) : "detachOnUnload() called twice "
-        + "for the same widget";
-
-    widgetsToDetach.add(widget);
-  }
-
-  /**
    * Marks a widget as detached and removes it from the detach list.
    * 
    * If an element belonging to a widget originally passed to
@@ -89,6 +68,27 @@ public class RootPanel extends AbsolutePanel {
 
     widget.onDetach();
     widgetsToDetach.remove(widget);
+  }
+
+  /**
+   * Adds a widget to the detach list. This is the list of widgets to be
+   * detached when the page unloads.
+   * 
+   * This method must be called for all widgets that have no parent widgets.
+   * These are most commonly {@link RootPanel RootPanels}, but can also be any
+   * widget used to wrap an existing element on the page. Failing to do this may
+   * cause these widgets to leak memory. This method is called automatically by
+   * widgets' wrap methods (e.g.
+   * {@link Button#wrap(com.google.gwt.dom.client.Element)}).
+   * 
+   * @param widget the widget to be cleaned up when the page closes
+   * @see #detachNow(Widget)
+   */
+  public static void detachOnWindowClose(Widget widget) {
+    assert !widgetsToDetach.contains(widget) : "detachOnUnload() called twice "
+        + "for the same widget";
+
+    widgetsToDetach.add(widget);
   }
 
   /**

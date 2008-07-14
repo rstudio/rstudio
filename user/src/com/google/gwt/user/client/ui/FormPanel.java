@@ -95,6 +95,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * removed from the document, you must call
    * {@link RootPanel#detachNow(Widget)}.
    * 
+   * <p>
+   * The specified form element's target attribute will not be set, and the
+   * {@link FormSubmitCompleteEvent} will not be fired.
+   * </p>
+   * 
    * @param element the element to be wrapped
    */
   public static FormPanel wrap(Element element) {
@@ -102,6 +107,37 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     assert Document.get().getBody().isOrHasChild(element);
 
     FormPanel formPanel = new FormPanel(element);
+
+    // Mark it attached and remember it for cleanup.
+    formPanel.onAttach();
+    RootPanel.detachOnWindowClose(formPanel);
+
+    return formPanel;
+  }
+
+  /**
+   * Creates a FormPanel that wraps an existing &lt;form&gt; element.
+   * 
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
+   * 
+   * <p>
+   * If the createIFrame parameter is set to <code>true</code>, then the
+   * wrapped form's target attribute will be set to a hidden iframe. If not, the
+   * form's target will be left alone, and the FormSubmitComplete event will not
+   * be fired.
+   * </p>
+   * 
+   * @param element the element to be wrapped
+   * @param createIFrame <code>true</code> to create an &lt;iframe&gt; element
+   *          that will be targeted by this form
+   */
+  public static FormPanel wrap(Element element, boolean createIFrame) {
+    // Assert that the element is attached.
+    assert Document.get().getBody().isOrHasChild(element);
+
+    FormPanel formPanel = new FormPanel(element, createIFrame);
 
     // Mark it attached and remember it for cleanup.
     formPanel.onAttach();
@@ -134,12 +170,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    *      cannot be made to work properly on all browsers.
    */
   public FormPanel() {
-    super(Document.get().createFormElement());
-
-    frameName = "FormPanel_" + (++formId);
-    setTarget(frameName);
-
-    sinkEvents(Event.ONLOAD);
+    this(Document.get().createFormElement(), true);
   }
 
   /**
@@ -149,7 +180,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * 
    * <p>
    * When the FormPanel targets an external frame in this way, it will not fire
-   * the onFormSubmit event.
+   * the FormSubmitComplete event.
    * </p>
    * 
    * @param frameTarget the {@link NamedFrame} to be targetted
@@ -165,7 +196,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * 
    * <p>
    * When the FormPanel targets an external frame in this way, it will not fire
-   * the onFormSubmit event.
+   * the FormSubmitComplete event.
    * </p>
    * 
    * @param target the name of the &lt;iframe&gt; to receive the results of the
@@ -181,11 +212,46 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * This constructor may be used by subclasses to explicitly use an existing
    * element. This element must be a &lt;form&gt; element.
    * 
+   * <p>
+   * The specified form element's target attribute will not be set, and the
+   * {@link FormSubmitCompleteEvent} will not be fired.
+   * </p>
+   * 
    * @param element the element to be used
+   * @param createIFrame <code>true</code> to create an &lt;iframe&gt; element
+   *          that will be targeted by this form
    */
   protected FormPanel(Element element) {
+    this(element, false);
+  }
+
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be a &lt;form&gt; element.
+   * 
+   * <p>
+   * If the createIFrame parameter is set to <code>true</code>, then the
+   * wrapped form's target attribute will be set to a hidden iframe. If not, the
+   * form's target will be left alone, and the FormSubmitComplete event will not
+   * be fired.
+   * </p>
+   * 
+   * @param element the element to be used
+   * @param createIFrame <code>true</code> to create an &lt;iframe&gt; element
+   *          that will be targeted by this form
+   */
+  protected FormPanel(Element element, boolean createIFrame) {
     super(element);
     FormElement.as(element);
+
+    if (createIFrame) {
+      assert ((getTarget() == null) || (getTarget().trim().length() == 0)) : "Cannot create target iframe if the form's target is already set.";
+
+      frameName = "FormPanel_" + (++formId);
+      setTarget(frameName);
+
+      sinkEvents(Event.ONLOAD);
+    }
   }
 
   public void addFormHandler(FormHandler handler) {
@@ -398,7 +464,8 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       // 'infinite loading' state. See issue 916.
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          formHandlers.fireOnComplete(FormPanel.this, impl.getContents(synthesizedFrame));
+          formHandlers.fireOnComplete(FormPanel.this,
+              impl.getContents(synthesizedFrame));
         }
       });
     }
