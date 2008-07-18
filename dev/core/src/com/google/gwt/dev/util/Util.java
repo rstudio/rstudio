@@ -967,6 +967,28 @@ public final class Util {
     }
   }
 
+  public static void writeStringAsFile(TreeLogger logger, File file,
+      String string) throws UnableToCompleteException {
+    FileOutputStream stream = null;
+    OutputStreamWriter writer = null;
+    BufferedWriter buffered = null;
+    try {
+      stream = new FileOutputStream(file);
+      writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
+      buffered = new BufferedWriter(writer);
+      file.getParentFile().mkdirs();
+      buffered.write(string);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to write file: "
+          + file.getAbsolutePath(), e);
+      throw new UnableToCompleteException();
+    } finally {
+      Utility.close(buffered);
+      Utility.close(writer);
+      Utility.close(stream);
+    }
+  }
+
   public static boolean writeStringAsFile(File file, String string) {
     FileOutputStream stream = null;
     OutputStreamWriter writer = null;
