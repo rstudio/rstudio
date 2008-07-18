@@ -225,9 +225,11 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       throws UnableToCompleteException {
 
     byte[] bytes = Util.getBytes(js);
-    StandardCompilationResult result = resultsByStrongName.get(Util.computeStrongName(bytes));
+    String strongName = Util.computeStrongName(bytes);
+    StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
-      result = new StandardCompilationResult(logger, js, compilationsDir);
+      result = new StandardCompilationResult(logger, js, strongName,
+          compilationsDir);
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
     }

@@ -72,16 +72,13 @@ public class StandardCompilationResult extends CompilationResult {
       MAP_COMPARATOR);
   private final String strongName;
 
-  public StandardCompilationResult(TreeLogger logger, String js, File cacheDir)
-      throws UnableToCompleteException {
+  public StandardCompilationResult(TreeLogger logger, String js,
+      String strongName, File cacheDir) throws UnableToCompleteException {
     super(StandardLinkerContext.class);
     this.js = new SoftReference<String>(js);
-
-    byte[] bytes = Util.getBytes(js);
-    strongName = Util.computeStrongName(bytes);
+    this.strongName = strongName;
     cacheFile = new File(cacheDir, strongName);
-
-    Util.writeBytesToFile(logger, cacheFile, bytes);
+    Util.writeStringAsFile(logger, cacheFile, js);
   }
 
   /**
