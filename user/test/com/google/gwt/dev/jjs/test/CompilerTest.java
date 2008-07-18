@@ -515,35 +515,6 @@ public class CompilerTest extends GWTTestCase {
     assertTrue(b);
     assertEquals("null true", test);
   }
-  
-  public void testInliningOrder() {
-    final StringBuffer buf = new StringBuffer();
-    class Misc {
-      // TODO(spoon) rename all this
-      String effect1() {
-        if (FALSE) {
-          return effect1();
-        }
-        buf.append("effect1");
-        return "effect2";
-      }
-      void effect2() {
-        if (FALSE) {
-          effect2();
-        }
-        buf.append("effect2");
-      }
-      void useBoth(Object x, Object y) {
-        StringBuffer b = buf;
-        b.append(x);
-        b.append(y);
-      }
-    }
-   
-    Misc misc = new Misc();
-    misc.useBoth("blah", buf.toString());
-    assertEquals("blah", buf.toString());
-  }
 
   public void testJavaScriptReservedWords() {
     boolean delete = TRUE;
