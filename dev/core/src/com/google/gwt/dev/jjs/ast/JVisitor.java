@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * A visitor for iterating through an AST.
  */
-@SuppressWarnings({"unused", "unchecked"})
+@SuppressWarnings("unused")
 public class JVisitor {
 
   protected static final Context UNMODIFIABLE_CONTEXT = new Context() {
@@ -61,24 +61,48 @@ public class JVisitor {
 
   };
 
-  public final JExpression accept(JExpression node) {
-    return (JExpression) doAccept(node);
+  protected static InternalCompilerException translateException(JNode node,
+      Throwable e) {
+    InternalCompilerException ice;
+    if (e instanceof InternalCompilerException) {
+      ice = (InternalCompilerException) e;
+    } else {
+      ice = new InternalCompilerException("Unexpected error during visit.", e);
+    }
+    ice.addNode(node);
+    return ice;
   }
 
-  public final JNode accept(JNode node) {
-    return doAccept(node);
+  public final JExpression accept(JExpression node) {
+    return (JExpression) accept((JNode) node);
+  }
+
+  public JNode accept(JNode node) {
+    try {
+      node.traverse(this, UNMODIFIABLE_CONTEXT);
+      return node;
+    } catch (Throwable e) {
+      throw translateException(node, e);
+    }
   }
 
   public final JStatement accept(JStatement node) {
-    return (JStatement) doAccept(node);
+    return (JStatement) accept((JNode) node);
   }
 
-  public final void accept(List list) {
-    doAccept(list);
+  public void accept(List<? extends JNode> list) {
+    int i = 0;
+    try {
+      for (int c = list.size(); i < c; ++i) {
+        list.get(i).traverse(this, UNMODIFIABLE_CONTEXT);
+      }
+    } catch (Throwable e) {
+      throw translateException(list.get(i), e);
+    }
   }
 
-  public final void acceptWithInsertRemove(List list) {
-    doAcceptWithInsertRemove(list);
+  public void acceptWithInsertRemove(List<? extends JNode> list) {
+    accept(list);
   }
 
   public boolean didChange() {
@@ -503,41 +527,5 @@ public class JVisitor {
 
   public boolean visit(JWhileStatement x, Context ctx) {
     return true;
-  }
-
-  protected JNode doAccept(JNode node) {
-    doTraverse(node, UNMODIFIABLE_CONTEXT);
-    return node;
-  }
-
-  protected void doAccept(List list) {
-    for (Object node : list) {
-      doTraverse((JNode) node, UNMODIFIABLE_CONTEXT);
-    }
-  }
-
-  protected void doAcceptWithInsertRemove(List list) {
-    for (Object node : list) {
-      doTraverse((JNode) node, UNMODIFIABLE_CONTEXT);
-    }
-  }
-
-  protected final void doTraverse(JNode node, Context ctx) {
-    try {
-      node.traverse(this, ctx);
-    } catch (Throwable e) {
-      throw translateException(node, e);
-    }
-  }
-
-  private InternalCompilerException translateException(JNode node, Throwable e) {
-    InternalCompilerException ice;
-    if (e instanceof InternalCompilerException) {
-      ice = (InternalCompilerException) e;
-    } else {
-      ice = new InternalCompilerException("Unexpected error during visit.", e);
-    }
-    ice.addNode(node);
-    return ice;
   }
 }
