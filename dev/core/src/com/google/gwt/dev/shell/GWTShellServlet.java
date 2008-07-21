@@ -29,6 +29,7 @@ import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.ServletContextTreeLogger;
+import com.google.gwt.util.tools.Utility;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
 import org.apache.commons.collections.map.ReferenceIdentityMap;
@@ -526,17 +527,10 @@ public class GWTShellServlet extends HttpServlet {
       }
 
       // Send the bytes.
-      is = foundResource.openStream();
+      is = conn.getInputStream();
       streamOut(is, response.getOutputStream(), 1024 * 8);
     } finally {
-      if (is != null) {
-        try {
-          is.close();
-        } catch (IOException swallowed) {
-          // Nothing we can do now.
-          //
-        }
-      }
+      Utility.close(is);
     }
   }
 
@@ -919,6 +913,7 @@ public class GWTShellServlet extends HttpServlet {
         out.write(buffer, 0, bytesRead);
       } else {
         // End of input stream.
+        out.flush();
         return;
       }
     }
