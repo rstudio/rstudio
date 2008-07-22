@@ -824,9 +824,17 @@ public class DeadCodeElimination {
                 res = left * right;
                 break;
               case DIV:
+                if (right == 0) {
+                  // Don't divide by zero
+                  return false;
+                }
                 res = left / right;
                 break;
               case MOD:
+                if (right == 0) {
+                  // Don't divide by zero
+                  return false;
+                }
                 res = left % right;
                 break;
               default:

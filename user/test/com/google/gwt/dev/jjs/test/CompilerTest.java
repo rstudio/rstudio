@@ -147,8 +147,9 @@ public class CompilerTest extends GWTTestCase {
 
   private static volatile boolean TRUE = true;
 
-  private static volatile int volatileInt;
   private static volatile boolean volatileBoolean;
+  private static volatile int volatileInt;
+  private static volatile long volatileLong;
   private static volatile UninstantiableType volatileUninstantiableType;
 
   private static native void accessUninstantiableField(UninstantiableType u) /*-{
@@ -352,6 +353,46 @@ public class CompilerTest extends GWTTestCase {
         }
       }
       new Foo().a();
+    }
+  }
+
+  /**
+   * Make sure that the compiler does not crash itself on user code that divides
+   * by zero. The actual behavior varies by the numeric type and whether it is
+   * hosted mode or web mode, but the important thing is that the compiler does
+   * not crash.
+   */
+  public void testDivByZero() {
+    assertTrue(Double.isNaN(0.0 / 0.0));
+
+    try {
+      // 0 / 0 is currently 0 in web mode.
+      assertEquals(0, 0 / 0);
+    } catch (ArithmeticException expected) {
+      // expected in hosted mode
+    }
+
+    try {
+      volatileLong = 0L / 0;
+      fail("expected an ArithmeticException");
+    } catch (ArithmeticException expected) {
+      // expected
+    }
+
+    assertTrue(Double.isNaN(0.0 % 0.0));
+
+    try {
+      // 0 % 0 is currently NaN in web mode.
+      assertTrue(Double.isNaN(0 % 0));
+    } catch (ArithmeticException expected) {
+      // expected in hosted mode
+    }
+
+    try {
+      volatileLong = 0L % 0;
+      fail("expected an ArithmeticException");
+    } catch (ArithmeticException expected) {
+      // expected
     }
   }
 
