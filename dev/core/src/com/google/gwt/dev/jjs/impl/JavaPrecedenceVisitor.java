@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -67,145 +68,152 @@ class JavaPrecedenceVisitor extends JVisitor {
   private JavaPrecedenceVisitor() {
   }
 
-  // @Override
+  @Override
   public boolean visit(JAbsentArrayDimension x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JArrayRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JBinaryOperation operation, Context ctx) {
     answer = operation.getOp().getPrecedence();
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JBooleanLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JCastOperation operation, Context ctx) {
     answer = 2;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JCharLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JClassLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JConditional conditional, Context ctx) {
     answer = 13;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JDoubleLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JFieldRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JFloatLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JInstanceOf of, Context ctx) {
     answer = 6;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JIntLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLocalRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JLongLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JMethodCall x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
+  public boolean visit(JGwtCreate x, Context ctx) {
+    // It's a method call.
+    answer = 0;
+    return false;
+  }
+
+  @Override
   public boolean visit(JNewArray array, Context ctx) {
     answer = 2;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JNewInstance instance, Context ctx) {
     answer = 2;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JNullLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JParameterRef x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JPostfixOperation operation, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JPrefixOperation operation, Context ctx) {
     answer = 1;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JStringLiteral x, Context ctx) {
     answer = 0;
     return false;
   }
 
-  // @Override
+  @Override
   public boolean visit(JThisRef x, Context ctx) {
     answer = 0;
     return false;

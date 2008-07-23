@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,77 +18,72 @@ package com.google.gwt.dev.js.ast;
 /**
  * Represents the operator in a JavaScript binary operation.
  */
-public final class JsBinaryOperator extends JsOperator {
+public enum JsBinaryOperator implements JsOperator {
 
-  // Precedence indices from "JavaScript - The Definitive Guide" 4th Edition
-  // (page 57)
-  //
+  /*
+   * Precedence indices from "JavaScript - The Definitive Guide" 4th Edition
+   * (page 57)
+   * 
+   * 
+   * Precedence 15 is for really important things that have their own AST
+   * classes.
+   * 
+   * Precedence 14 is for unary operators.
+   */
 
-  // Precendence 15 is for really important things that have their own AST
-  // classes.
+  MUL("*", 13, LEFT | INFIX), DIV("/", 13, LEFT | INFIX), MOD("%", 13, LEFT
+      | INFIX),
 
-  // Precendence 14 is for unary operators.
+  ADD("+", 12, LEFT | INFIX), SUB("-", 12, LEFT | INFIX),
 
-  private static final int LEFT_INFIX = LEFT | INFIX;
-  public static final JsBinaryOperator MUL = create("*", 13, LEFT_INFIX);
-  public static final JsBinaryOperator DIV = create("/", 13, LEFT_INFIX);
-  public static final JsBinaryOperator MOD = create("%", 13, LEFT_INFIX);
+  SHL("<<", 11, LEFT | INFIX), SHR(">>", 11, LEFT | INFIX), SHRU(">>>", 11,
+      LEFT | INFIX),
 
-  public static final JsBinaryOperator ADD = create("+", 12, LEFT_INFIX);
-  public static final JsBinaryOperator SUB = create("-", 12, LEFT_INFIX);
+  LT("<", 10, LEFT | INFIX), LTE("<=", 10, LEFT | INFIX), GT(">", 10, LEFT
+      | INFIX), GTE(">=", 10, LEFT | INFIX), INSTANCEOF("instanceof", 10, LEFT
+      | INFIX), INOP("in", 10, LEFT | INFIX),
 
-  public static final JsBinaryOperator SHL = create("<<", 11, LEFT_INFIX);
-  public static final JsBinaryOperator SHR = create(">>", 11, LEFT_INFIX);
-  public static final JsBinaryOperator SHRU = create(">>>", 11, LEFT_INFIX);
+  EQ("==", 9, LEFT | INFIX), NEQ("!=", 9, LEFT | INFIX), REF_EQ("===", 9, LEFT
+      | INFIX), REF_NEQ("!==", 9, LEFT | INFIX),
 
-  public static final JsBinaryOperator LT = create("<", 10, LEFT_INFIX);
-  public static final JsBinaryOperator LTE = create("<=", 10, LEFT_INFIX);
-  public static final JsBinaryOperator GT = create(">", 10, LEFT_INFIX);
-  public static final JsBinaryOperator GTE = create(">=", 10, LEFT_INFIX);
-  public static final JsBinaryOperator INSTANCEOF = create("instanceof", 10,
-      LEFT_INFIX);
-  public static final JsBinaryOperator INOP = create("in", 10, LEFT_INFIX);
+  BIT_AND("&", 8, LEFT | INFIX),
 
-  public static final JsBinaryOperator EQ = create("==", 9, LEFT_INFIX);
-  public static final JsBinaryOperator NEQ = create("!=", 9, LEFT_INFIX);
-  public static final JsBinaryOperator REF_EQ = create("===", 9, LEFT_INFIX);
-  public static final JsBinaryOperator REF_NEQ = create("!==", 9, LEFT_INFIX);
+  BIT_XOR("^", 7, LEFT | INFIX),
 
-  public static final JsBinaryOperator BIT_AND = create("&", 8, LEFT_INFIX);
+  BIT_OR("|", 6, LEFT | INFIX),
 
-  public static final JsBinaryOperator BIT_XOR = create("^", 7, LEFT_INFIX);
+  AND("&&", 5, LEFT | INFIX),
 
-  public static final JsBinaryOperator BIT_OR = create("|", 6, LEFT_INFIX);
+  OR("||", 4, LEFT | INFIX),
 
-  public static final JsBinaryOperator AND = create("&&", 5, LEFT_INFIX);
-
-  public static final JsBinaryOperator OR = create("||", 4, LEFT_INFIX);
-
-  // Precendence 3 is for the condition operator.
+  // Precedence 3 is for the condition operator.
 
   // These assignment operators are right-associative.
-  public static final JsBinaryOperator ASG = create("=", 2, INFIX);
-  public static final JsBinaryOperator ASG_ADD = create("+=", 2, INFIX);
-  public static final JsBinaryOperator ASG_SUB = create("-=", 2, INFIX);
-  public static final JsBinaryOperator ASG_MUL = create("*=", 2, INFIX);
-  public static final JsBinaryOperator ASG_DIV = create("/=", 2, INFIX);
-  public static final JsBinaryOperator ASG_MOD = create("%=", 2, INFIX);
-  public static final JsBinaryOperator ASG_SHL = create("<<=", 2, INFIX);
-  public static final JsBinaryOperator ASG_SHR = create(">>=", 2, INFIX);
-  public static final JsBinaryOperator ASG_SHRU = create(">>>=", 2, INFIX);
-  public static final JsBinaryOperator ASG_BIT_AND = create("&=", 2, INFIX);
-  public static final JsBinaryOperator ASG_BIT_OR = create("|=", 2, INFIX);
-  public static final JsBinaryOperator ASG_BIT_XOR = create("^=", 2, INFIX);
+  ASG("=", 2, INFIX), ASG_ADD("+=", 2, INFIX), ASG_SUB("-=", 2, INFIX), ASG_MUL(
+      "*=", 2, INFIX), ASG_DIV("/=", 2, INFIX), ASG_MOD("%=", 2, INFIX), ASG_SHL(
+      "<<=", 2, INFIX), ASG_SHR(">>=", 2, INFIX), ASG_SHRU(">>>=", 2, INFIX), ASG_BIT_AND(
+      "&=", 2, INFIX), ASG_BIT_OR("|=", 2, INFIX), ASG_BIT_XOR("^=", 2, INFIX),
 
-  public static final JsBinaryOperator COMMA = create(",", 1, LEFT_INFIX);
+  COMMA(",", 1, LEFT | INFIX);
 
-  private static JsBinaryOperator create(String symbol, int precedence, int mask) {
-    JsBinaryOperator op = new JsBinaryOperator(symbol, precedence, mask);
-    return op;
-  }
+  private final int mask;
+
+  private final int precedence;
+
+  private final String symbol;
 
   private JsBinaryOperator(String symbol, int precedence, int mask) {
-    super(symbol, precedence, mask);
+    this.symbol = symbol;
+    this.precedence = precedence;
+    this.mask = mask;
+  }
+
+  public int getPrecedence() {
+    return precedence;
+  }
+
+  public String getSymbol() {
+    return symbol;
   }
 
   public boolean isAssignment() {
@@ -99,9 +94,32 @@ public final class JsBinaryOperator extends JsOperator {
     return (getPrecedence() == ASG.getPrecedence());
   }
 
-  @Override
   public boolean isKeyword() {
     return this == INSTANCEOF || this == INOP;
   }
 
+  public boolean isLeftAssociative() {
+    return (mask & LEFT) != 0;
+  }
+
+  public boolean isPrecedenceLessThan(JsOperator other) {
+    return precedence < other.getPrecedence();
+  }
+
+  public boolean isValidInfix() {
+    return (mask & INFIX) != 0;
+  }
+
+  public boolean isValidPostfix() {
+    return (mask & POSTFIX) != 0;
+  }
+
+  public boolean isValidPrefix() {
+    return (mask & PREFIX) != 0;
+  }
+
+  @Override
+  public String toString() {
+    return symbol;
+  }
 }

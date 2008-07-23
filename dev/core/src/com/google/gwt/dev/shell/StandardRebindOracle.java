@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.Rules;
@@ -59,17 +58,10 @@ public class StandardRebindOracle implements RebindOracle {
         throws UnableToCompleteException {
 
       String result = tryRebind(logger, typeName);
+      genCtx.finish(logger);
       if (result == null) {
         result = typeName;
       }
-
-      // Announce the newly-generated types.
-      //
-      JClassType[] genTypes = genCtx.finish(logger);
-      if (genTypes.length > 0) {
-        onGeneratedTypes(result, genTypes);
-      }
-
       return result;
     }
 
@@ -169,8 +161,4 @@ public class StandardRebindOracle implements RebindOracle {
 
     return result;
   }
-
-  protected void onGeneratedTypes(String result, JClassType[] genTypes) {
-  }
-
 }

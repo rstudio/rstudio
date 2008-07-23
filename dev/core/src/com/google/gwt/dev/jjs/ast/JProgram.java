@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
@@ -25,6 +22,7 @@ import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +42,17 @@ import java.util.TreeSet;
  */
 public class JProgram extends JNode {
 
+  private static final class ArrayTypeComparator implements
+      Comparator<JArrayType>, Serializable {
+    public int compare(JArrayType o1, JArrayType o2) {
+      int comp = o1.getDims() - o2.getDims();
+      if (comp != 0) {
+        return comp;
+      }
+      return o1.getName().compareTo(o2.getName());
+    }
+  }
+
   public static final Set<String> CODEGEN_TYPES_SET = new LinkedHashSet<String>(
       Arrays.asList(new String[] {
           "com.google.gwt.lang.Array", "com.google.gwt.lang.Cast",
@@ -59,6 +68,8 @@ public class JProgram extends JNode {
           "com.google.gwt.core.client.JavaScriptObject"}));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
+
+  private static final Comparator<JArrayType> ARRAYTYPE_COMPARATOR = new ArrayTypeComparator();
 
   private static final int IS_ARRAY = 2;
 
@@ -120,7 +131,7 @@ public class JProgram extends JNode {
   }
 
   public static boolean isTracingEnabled() {
-    return System.getProperty("gwt.jjs.traceMethods") != null;
+    return traceMethods.size() > 0;
   }
 
   public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
@@ -174,15 +185,7 @@ public class JProgram extends JNode {
    * Sorted to avoid nondeterministic iteration.
    */
   private final Set<JArrayType> allArrayTypes = new TreeSet<JArrayType>(
-      new Comparator<JArrayType>() {
-        public int compare(JArrayType o1, JArrayType o2) {
-          int comp = o1.getDims() - o2.getDims();
-          if (comp != 0) {
-            return comp;
-          }
-          return o1.getName().compareTo(o2.getName());
-        }
-      });
+      ARRAYTYPE_COMPARATOR);
 
   private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
 
@@ -218,15 +221,11 @@ public class JProgram extends JNode {
 
   private final JBooleanLiteral literalTrue = new JBooleanLiteral(this, true);
 
-  private final TreeLogger logger;
-
   private JField nullField;
 
   private JMethod nullMethod;
 
   private Map<JReferenceType, Integer> queryIds;
-
-  private final RebindOracle rebindOracle;
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -273,10 +272,8 @@ public class JProgram extends JNode {
   private final JPrimitiveType typeVoid = new JPrimitiveType(this, "void", "V",
       "java.lang.Void", null);
 
-  public JProgram(TreeLogger logger, RebindOracle rebindOracle) {
+  public JProgram() {
     super(null, null);
-    this.logger = logger;
-    this.rebindOracle = rebindOracle;
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -440,10 +437,11 @@ public class JProgram extends JNode {
     return x;
   }
 
-  public JReferenceType generalizeTypes(Collection<JReferenceType> types) {
+  public JReferenceType generalizeTypes(
+      Collection<? extends JReferenceType> types) {
     assert (types != null);
     assert (!types.isEmpty());
-    Iterator<JReferenceType> it = types.iterator();
+    Iterator<? extends JReferenceType> it = types.iterator();
     JReferenceType curType = it.next();
     while (it.hasNext()) {
       curType = generalizeTypes(curType, it.next());
@@ -740,28 +738,6 @@ public class JProgram extends JNode {
     if (method.isTrace()) {
       staticImpl.setTrace();
     }
-  }
-
-  public JClassType rebind(JType type) {
-    JType result = type;
-    // Rebinds are always on a source type name.
-    String reqType = type.getName().replace('$', '.');
-    String reboundClassName;
-    try {
-      reboundClassName = rebindOracle.rebind(logger, reqType);
-    } catch (UnableToCompleteException e) {
-      // The fact that we already compute every rebind permutation before
-      // compiling should prevent this case from ever happening in real life.
-      //
-      throw new IllegalStateException("Unexpected failure to rebind '"
-          + reqType + "'");
-    }
-    if (reboundClassName != null) {
-      result = getFromTypeMap(reboundClassName);
-    }
-    assert (result != null);
-    assert (result instanceof JClassType);
-    return (JClassType) result;
   }
 
   public void recordQueryIds(Map<JReferenceType, Integer> queryIds) {

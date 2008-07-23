@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -230,6 +231,21 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JNewInstance x, Context ctx) {
     expression = new JNewInstance(program, x.getSourceInfo(), x.getClassType());
+    return false;
+  }
+
+  @Override
+  public boolean visit(JGwtCreate x, Context ctx) {
+    JGwtCreate gwtCreate = new JGwtCreate(program, x.getSourceInfo(),
+        x.getSourceType(), x.getResultTypes());
+
+    // Clone the internal instantiation expressions directly.
+    ArrayList<JExpression> exprs = x.getInstantiationExpressions();
+    ArrayList<JExpression> cloneExprs = gwtCreate.getInstantiationExpressions();
+    for (int i = 0; i < exprs.size(); ++i) {
+      cloneExprs.set(i, cloneExpression(exprs.get(i)));
+    }
+    expression = gwtCreate;
     return false;
   }
 

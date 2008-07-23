@@ -46,6 +46,7 @@ import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JFloatLiteral;
 import com.google.gwt.dev.jjs.ast.JForStatement;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
@@ -69,6 +70,7 @@ import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -345,6 +347,21 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
+  public boolean visit(JDeclarationStatement x, Context ctx) {
+    if (!suppressType) {
+      accept(x.getVariableRef().getTarget());
+    } else {
+      accept(x.getVariableRef());
+    }
+    JExpression initializer = x.getInitializer();
+    if (initializer != null) {
+      print(" = ");
+      accept(initializer);
+    }
+    return false;
+  }
+
+  @Override
   public boolean visit(JDoStatement x, Context ctx) {
     print(CHARS_DO);
     if (x.getBody() != null) {
@@ -447,6 +464,14 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
+  public boolean visit(JGwtCreate x, Context ctx) {
+    print("GWT.create(");
+    printTypeName(x.getSourceType());
+    print(".class)");
+    return false;
+  }
+
+  @Override
   public boolean visit(JIfStatement x, Context ctx) {
     print(CHARS_IF);
     lparen();
@@ -540,21 +565,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printType(x);
     space();
     printName(x);
-    return false;
-  }
-
-  @Override
-  public boolean visit(JDeclarationStatement x, Context ctx) {
-    if (!suppressType) {
-      accept(x.getVariableRef().getTarget());
-    } else {
-      accept(x.getVariableRef());
-    }
-    JExpression initializer = x.getInitializer();
-    if (initializer != null) {
-      print(" = ");
-      accept(initializer);
-    }
     return false;
   }
 
@@ -719,6 +729,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     return false;
   }
 
+  @Override
+  public boolean visit(JReboundEntryPoint x, Context ctx) {
+    print("<JReboundEntryPoint>");
+    printTypeName(x.getSourceType());
+    return false;
+  }
+  
   @Override
   public boolean visit(JReturnStatement x, Context ctx) {
     print(CHARS_RETURN);

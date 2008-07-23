@@ -21,10 +21,12 @@ import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.ToStringGenerationVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 
+import java.io.Serializable;
+
 /**
  * Base class for all visitable AST nodes.
  */
-public abstract class JNode implements JVisitable, HasSourceInfo {
+public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
 
   protected final JProgram program;
   private final SourceInfo info;

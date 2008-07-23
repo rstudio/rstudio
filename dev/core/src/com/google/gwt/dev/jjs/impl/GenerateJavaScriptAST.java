@@ -36,11 +36,11 @@ import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
-import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
@@ -59,6 +59,7 @@ import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReboundEntryPoint;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -127,6 +128,7 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -710,6 +712,11 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
+    public void endVisit(JGwtCreate x, Context ctx) {
+      throw new InternalCompilerException("Should not get here.");
+    }
+
+    @Override
     public void endVisit(JIfStatement x, Context ctx) {
       JsIf stmt = new JsIf();
 
@@ -1001,6 +1008,11 @@ public class GenerateJavaScriptAST {
     }
 
     @Override
+    public void endVisit(JReboundEntryPoint x, Context ctx) {
+      throw new InternalCompilerException("Should not get here.");
+    }
+
+    @Override
     public void endVisit(JReturnStatement x, Context ctx) {
       if (x.getExpr() != null) {
         push(new JsReturn((JsExpression) pop())); // expr
@@ -1194,18 +1206,6 @@ public class GenerateJavaScriptAST {
       }
 
       push(jsSwitch);
-      return false;
-    }
-
-    /**
-     * Return whether the expression could possibly evaluate to a string.
-     */
-    private boolean couldBeString(JExpression x) {
-      JType type = x.getType();
-      if (type instanceof JReferenceType) {
-        return typeOracle.canTheoreticallyCast((JReferenceType) type,
-            program.getTypeJavaLangString());
-      }
       return false;
     }
 
@@ -1514,8 +1514,10 @@ public class GenerateJavaScriptAST {
   }
 
   private static class JavaToJsOperatorMap {
-    private static final Map<JBinaryOperator, JsBinaryOperator> bOpMap = new IdentityHashMap<JBinaryOperator, JsBinaryOperator>();
-    private static final Map<JUnaryOperator, JsUnaryOperator> uOpMap = new IdentityHashMap<JUnaryOperator, JsUnaryOperator>();
+    private static final Map<JBinaryOperator, JsBinaryOperator> bOpMap = new EnumMap<JBinaryOperator, JsBinaryOperator>(
+        JBinaryOperator.class);
+    private static final Map<JUnaryOperator, JsUnaryOperator> uOpMap = new EnumMap<JUnaryOperator, JsUnaryOperator>(
+        JUnaryOperator.class);
 
     static {
       bOpMap.put(JBinaryOperator.MUL, JsBinaryOperator.MUL);

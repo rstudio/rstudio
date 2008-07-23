@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -444,6 +445,21 @@ public class TypeTightener {
     public void endVisit(JField x, Context ctx) {
       if (!x.isVolatile()) {
         tighten(x);
+      }
+    }
+
+    @Override
+    public void endVisit(JGwtCreate x, Context ctx) {
+      List<JClassType> typeList = new ArrayList<JClassType>();
+      for (JExpression expr : x.getInstantiationExpressions()) {
+        JType type = expr.getType();
+        typeList.add((JClassType) type);
+      }
+
+      JReferenceType resultType = program.generalizeTypes(typeList);
+      if (x.getType() != resultType) {
+        x.setType(resultType);
+        myDidChange = true;
       }
     }
 

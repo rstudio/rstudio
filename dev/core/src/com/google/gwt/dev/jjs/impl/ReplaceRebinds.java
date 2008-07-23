@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,19 +15,26 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.jdt.RebindPermutationOracle;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
-import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Replaces any "GWT.create()" calls with a new expression for the actual result
- * of the deferred binding decision.
+ * Replaces any "GWT.create()" calls with a special node.
  */
 public class ReplaceRebinds {
 
@@ -39,7 +46,7 @@ public class ReplaceRebinds {
       this.rebindCreateMethod = rebindCreateMethod;
     }
 
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
       if (method == rebindCreateMethod) {
@@ -47,40 +54,56 @@ public class ReplaceRebinds {
         JExpression arg = x.getArgs().get(0);
         assert (arg instanceof JClassLiteral);
         JClassLiteral classLiteral = (JClassLiteral) arg;
-        JClassType classType = program.rebind(classLiteral.getRefType());
-
-        /*
-         * Find the appropriate (noArg) constructor. In our AST, constructors
-         * are instance methods that should be qualified with a new expression.
-         */
-        JMethod noArgCtor = null;
-        for (int i = 0; i < classType.methods.size(); ++i) {
-          JMethod ctor = classType.methods.get(i);
-          if (ctor.getName().equals(classType.getShortName())) {
-            if (ctor.params.size() == 0) {
-              noArgCtor = ctor;
-            }
-          }
+        JReferenceType sourceType = (JReferenceType) classLiteral.getRefType();
+        List<JClassType> allRebindResults = getAllPossibleRebindResults(sourceType);
+        JGwtCreate gwtCreate = new JGwtCreate(program, x.getSourceInfo(),
+            sourceType, allRebindResults);
+        if (allRebindResults.size() == 1) {
+          // Just replace with the instantiation expression.
+          ctx.replaceMe(gwtCreate.getInstantiationExpressions().get(0));
+        } else {
+          ctx.replaceMe(gwtCreate);
         }
-        assert (noArgCtor != null);
-        // Call it, using a new expression as a qualifier
-        JNewInstance newInstance = new JNewInstance(program, x.getSourceInfo(),
-            classType);
-        JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
-            newInstance, noArgCtor);
-        ctx.replaceMe(call);
       }
     }
   }
 
-  public static boolean exec(JProgram program) {
-    return new ReplaceRebinds(program).execImpl();
+  public static boolean exec(TreeLogger logger, JProgram program,
+      RebindPermutationOracle rpo) {
+    return new ReplaceRebinds(logger, program, rpo).execImpl();
   }
 
+  private final TreeLogger logger;
   private final JProgram program;
+  private final RebindPermutationOracle rpo;
 
-  private ReplaceRebinds(JProgram program) {
+  private ReplaceRebinds(TreeLogger logger, JProgram program,
+      RebindPermutationOracle rpo) {
+    this.logger = logger;
     this.program = program;
+    this.rpo = rpo;
+  }
+
+  protected List<JClassType> getAllPossibleRebindResults(JReferenceType type) {
+    // Rebinds are always on a source type name.
+    String reqType = type.getName().replace('$', '.');
+    String[] answers;
+    try {
+      answers = rpo.getAllPossibleRebindAnswers(logger, reqType);
+    } catch (UnableToCompleteException e) {
+      // Should never happen.
+      throw new InternalCompilerException(
+          "Unexpected failure to get possible rebind answers for '" + reqType
+              + "'");
+    }
+    List<JClassType> rebindAnswers = new ArrayList<JClassType>();
+    for (String answer : answers) {
+      JReferenceType result = program.getFromTypeMap(answer);
+      assert (result != null);
+      rebindAnswers.add((JClassType) result);
+    }
+    assert rebindAnswers.size() > 0;
+    return rebindAnswers;
   }
 
   private boolean execImpl() {

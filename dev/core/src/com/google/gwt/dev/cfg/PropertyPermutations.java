@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,13 @@
  */
 package com.google.gwt.dev.cfg;
 
+import java.util.Arrays;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 /**
  * Generates all possible permutations of properties in a module.
  */
-public class PropertyPermutations {
+public class PropertyPermutations implements Iterable<String[]> {
 
   private int currPermIndex;
 
@@ -48,31 +48,21 @@ public class PropertyPermutations {
     return properties;
   }
 
+  public String[] getOrderedPropertyValues(int permutation) {
+    return values[permutation];
+  }
+
   /**
    * Enumerates each permutation as an array of strings such that the index of
    * each string in the array corresponds to the property at the same index in
    * the array returned from {@link #getOrderedProperties()}.
    */
   public Iterator<String[]> iterator() {
-    return new Iterator<String[]>() {
+    return Arrays.asList(values).iterator();
+  }
 
-      private int iterPermIndex;
-
-      public boolean hasNext() {
-        return iterPermIndex < values.length;
-      }
-
-      public String[] next() {
-        if (!hasNext()) {
-          throw new NoSuchElementException();
-        }
-        return values[iterPermIndex++];
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException("remove");
-      }
-    };
+  public int size() {
+    return values.length;
   }
 
   private int countPermutations() {

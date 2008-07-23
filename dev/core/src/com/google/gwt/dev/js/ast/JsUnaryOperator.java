@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,35 +18,66 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript unary operator.
  */
-public final class JsUnaryOperator extends JsOperator {
-  // Precedence indices from "JavaScript - The Definitive Guide" 4th Edition
-  // (page 57)
-  //
+public enum JsUnaryOperator implements JsOperator {
+  /*
+   * Precedence indices from "JavaScript - The Definitive Guide" 4th Edition
+   * (page 57)
+   */
 
-  public static final JsUnaryOperator BIT_NOT = create("~", 14, PREFIX);
-  public static final JsUnaryOperator NEG = create("-", 14, PREFIX);
-  public static final JsUnaryOperator NOT = create("!", 14, PREFIX);
-  public static final JsUnaryOperator DEC = create("--", 14, POSTFIX | PREFIX);
-  public static final JsUnaryOperator INC = create("++", 14, POSTFIX | PREFIX);
-  public static final JsUnaryOperator DELETE = create("delete", 14, PREFIX);
-  public static final JsUnaryOperator TYPEOF = create("typeof", 14, PREFIX);
-  public static final JsUnaryOperator VOID = create("void", 14, PREFIX);
+  BIT_NOT("~", 14, PREFIX), DEC("--", 14, POSTFIX | PREFIX), DELETE("delete",
+      14, PREFIX), INC("++", 14, POSTFIX | PREFIX), NEG("-", 14, PREFIX), NOT(
+      "!", 14, PREFIX), TYPEOF("typeof", 14, PREFIX), VOID("void", 14, PREFIX);
 
-  private static JsUnaryOperator create(String symbol, int precedence, int mask) {
-    JsUnaryOperator op = new JsUnaryOperator(symbol, precedence, mask);
-    return op;
-  }
+  private final int mask;
+
+  private final int precedence;
+
+  private final String symbol;
 
   private JsUnaryOperator(String symbol, int precedence, int mask) {
-    super(symbol, precedence, mask);
+    this.symbol = symbol;
+    this.precedence = precedence;
+    this.mask = mask;
   }
 
-  @Override
+  public int getPrecedence() {
+    return precedence;
+  }
+
+  public String getSymbol() {
+    return symbol;
+  }
+
   public boolean isKeyword() {
     return this == DELETE || this == TYPEOF || this == VOID;
   }
 
+  public boolean isLeftAssociative() {
+    return (mask & LEFT) != 0;
+  }
+
   public boolean isModifying() {
     return this == DEC || this == INC || this == DELETE;
+  }
+
+  public boolean isPrecedenceLessThan(JsOperator other) {
+    return precedence < other.getPrecedence();
+  }
+
+  public boolean isValidInfix() {
+    return (mask & INFIX) != 0;
+  }
+
+  public boolean isValidPostfix() {
+    return (mask & POSTFIX) != 0;
+  }
+
+  public boolean isValidPrefix() {
+    return (mask & PREFIX) != 0;
+  }
+
+  @Override
+  public String toString() {
+    return symbol;
   }
 }

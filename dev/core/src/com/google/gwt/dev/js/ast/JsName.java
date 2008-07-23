@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import java.io.Serializable;
+
 /**
  * An abstract base class for named JavaScript objects.
  */
-public class JsName {
+public class JsName implements Serializable {
 
   private final JsScope enclosing;
   private final String ident;

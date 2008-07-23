@@ -20,16 +20,27 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 
 /**
- * An implementation of {@link PropertyOracle} that maintains explicit property
- * values, rather than computing them.
+ * An implementation of {@link PropertyOracle} that contains property values,
+ * rather than computing them.
  */
 public class StaticPropertyOracle implements PropertyOracle {
 
-  private Property[] currentProps;
+  private final Property[] orderedProps;
 
-  private String[] currentValues;
+  private final String[] orderedPropValues;
 
-  public StaticPropertyOracle() {
+  public StaticPropertyOracle(Property[] orderedProps,
+      String[] orderedPropValues) {
+    this.orderedProps = orderedProps;
+    this.orderedPropValues = orderedPropValues;
+  }
+
+  public Property[] getOrderedProps() {
+    return orderedProps;
+  }
+
+  public String[] getOrderedPropValues() {
+    return orderedPropValues;
   }
 
   public String getPropertyValue(TreeLogger logger, String propertyName)
@@ -39,10 +50,10 @@ public class StaticPropertyOracle implements PropertyOracle {
     // If that turns out not to be the case, the ctor could build a
     // name-to-index map.
     //
-    for (int i = 0; i < currentProps.length; i++) {
-      Property prop = currentProps[i];
+    for (int i = 0; i < orderedProps.length; i++) {
+      Property prop = orderedProps[i];
       if (prop.getName().equals(propertyName)) {
-        String value = currentValues[i];
+        String value = orderedPropValues[i];
         if (prop.isKnownValue(value)) {
           return value;
         } else {
@@ -58,8 +69,8 @@ public class StaticPropertyOracle implements PropertyOracle {
 
   public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
-    for (int i = 0; i < currentProps.length; i++) {
-      Property prop = currentProps[i];
+    for (int i = 0; i < orderedProps.length; i++) {
+      Property prop = orderedProps[i];
       if (prop.getName().equals(propertyName)) {
         return prop.getKnownValues();
       }
@@ -68,10 +79,5 @@ public class StaticPropertyOracle implements PropertyOracle {
     // Didn't find it.
     //
     throw new BadPropertyValueException(propertyName);
-  }
-
-  public void setPropertyValues(Property[] props, String[] values) {
-    currentProps = props;
-    currentValues = values;
   }
 }

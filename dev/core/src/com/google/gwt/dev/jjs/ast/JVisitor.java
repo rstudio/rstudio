@@ -181,6 +181,9 @@ public class JVisitor {
   public void endVisit(JForStatement x, Context ctx) {
   }
 
+  public void endVisit(JGwtCreate x, Context ctx) {
+  }
+
   public void endVisit(JIfStatement x, Context ctx) {
   }
 
@@ -248,6 +251,9 @@ public class JVisitor {
   }
 
   public void endVisit(JProgram x, Context ctx) {
+  }
+
+  public void endVisit(JReboundEntryPoint x, Context ctx) {
   }
 
   public void endVisit(JReturnStatement x, Context ctx) {
@@ -385,6 +391,10 @@ public class JVisitor {
     return true;
   }
 
+  public boolean visit(JGwtCreate x, Context ctx) {
+    return true;
+  }
+
   public boolean visit(JIfStatement x, Context ctx) {
     return true;
   }
@@ -474,6 +484,10 @@ public class JVisitor {
   }
 
   public boolean visit(JProgram x, Context ctx) {
+    return true;
+  }
+
+  public boolean visit(JReboundEntryPoint x, Context ctx) {
     return true;
   }
 

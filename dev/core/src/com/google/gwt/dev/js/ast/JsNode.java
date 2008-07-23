@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,13 +21,15 @@ import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsToStringGenerationVisitor;
 import com.google.gwt.dev.util.DefaultTextOutput;
 
+import java.io.Serializable;
+
 /**
  * Base class for all JS AST elements.
  * 
  * @param <T>
  */
-public abstract class JsNode<T extends JsVisitable<T>> implements JsVisitable<T>,
-    HasSourceInfo {
+public abstract class JsNode<T extends JsVisitable<T>> implements
+    JsVisitable<T>, HasSourceInfo, Serializable {
 
   public SourceInfo getSourceInfo() {
     // TODO: make this real

@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -28,7 +29,7 @@ import java.util.Set;
 /**
  * Oracle that can answer questions regarding the types in a program.
  */
-public class JTypeOracle {
+public class JTypeOracle implements Serializable {
 
   /**
    * Checks a clinit method to find out a few things.

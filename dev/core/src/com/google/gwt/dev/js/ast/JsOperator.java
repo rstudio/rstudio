@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,57 +18,27 @@ package com.google.gwt.dev.js.ast;
 /**
  * A JavaScript operator.
  */
-public abstract class JsOperator {
+public interface JsOperator {
+  int INFIX = 0x02;
+  int LEFT = 0x01;
+  int POSTFIX = 0x04;
+  int PREFIX = 0x08;
 
-  protected static final int LEFT = 0x01;
-  protected static final int INFIX = 0x02;
-  protected static final int POSTFIX = 0x04;
-  protected static final int PREFIX = 0x08;
+  int getPrecedence();
 
-  private final int mask;
+  String getSymbol();
 
-  private final int precedence;
+  boolean isKeyword();
 
-  private final String symbol;
+  boolean isLeftAssociative();
 
-  protected JsOperator(String symbol, int precedence, int mask) {
-    this.symbol = symbol;
-    this.precedence = precedence;
-    this.mask = mask;
-  }
+  boolean isPrecedenceLessThan(JsOperator other);
 
-  public int getPrecedence() {
-    return precedence;
-  }
+  boolean isValidInfix();
 
-  public String getSymbol() {
-    return symbol;
-  }
+  boolean isValidPostfix();
 
-  public abstract boolean isKeyword();
+  boolean isValidPrefix();
 
-  public boolean isLeftAssociative() {
-    return (mask & LEFT) != 0;
-  }
-
-  public boolean isPrecedenceLessThan(JsOperator other) {
-    return precedence < other.precedence;
-  }
-
-  public boolean isValidInfix() {
-    return (mask & INFIX) != 0;
-  }
-
-  public boolean isValidPostfix() {
-    return (mask & POSTFIX) != 0;
-  }
-
-  public boolean isValidPrefix() {
-    return (mask & PREFIX) != 0;
-  }
-
-  @Override
-  public String toString() {
-    return symbol;
-  }
+  String toString();
 }

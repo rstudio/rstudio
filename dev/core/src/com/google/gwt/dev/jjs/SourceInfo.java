@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.jjs;
 
+import java.io.Serializable;
+
 /**
  * Tracks file and line information for AST nodes.
  */
-public class SourceInfo {
+public class SourceInfo implements Serializable {
 
   private final int endPos;
   private final String fileName;
