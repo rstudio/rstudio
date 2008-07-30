@@ -19,12 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.linker.SelectionProperty;
-import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.Rules;
@@ -36,7 +33,6 @@ import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
@@ -194,197 +190,6 @@ public class GWTCompiler extends ToolBase {
     }
   }
 
-  /**
-   * Represents the state of a single permutation for compile.
-   */
-  private static final class Permuation {
-    final TreeLogger logger;
-    final int number;
-    final CompilationRebindOracle rebindOracle;
-
-    public Permuation(TreeLogger logger, int number,
-        CompilationRebindOracle rebindOracle) {
-      this.logger = logger;
-      this.number = number;
-      this.rebindOracle = rebindOracle;
-    }
-  }
-
-  /**
-   * Contains all shared state and synchronizes among permutation workers and
-   * the main thread.
-   * 
-   * TODO: clean this up using java.util.concurrent
-   */
-  private static final class PermutationManager {
-
-    private boolean failed;
-    private final StandardLinkerContext linkerContext;
-    private final TreeLogger logger;
-    private int nextPerm = 0;
-    private int numThreads;
-    private final CompilationRebindOracle[] rebindOracles;
-
-    public PermutationManager(TreeLogger logger,
-        StandardLinkerContext linkerContext,
-        DistillerRebindPermutationOracle rpo, int numThreads) {
-      this.logger = logger;
-      this.linkerContext = linkerContext;
-      this.numThreads = numThreads;
-      rebindOracles = new CompilationRebindOracle[rpo.getPermuationCount()];
-      for (int i = 0; i < rebindOracles.length; ++i) {
-        rebindOracles[i] = rpo.getRebindOracle(i);
-      }
-    }
-
-    public synchronized void finishPermuation(Permuation perm, String js) {
-      StandardCompilationResult compilation;
-      try {
-        compilation = linkerContext.getCompilation(perm.logger, js);
-      } catch (UnableToCompleteException e) {
-        recordFailure();
-        return;
-      }
-      StaticPropertyOracle propOracle = perm.rebindOracle.getPropertyOracle();
-      Property[] orderedProps = propOracle.getOrderedProps();
-      String[] orderedPropValues = propOracle.getOrderedPropValues();
-      Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
-      for (int i = 0; i < orderedProps.length; i++) {
-        SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
-        if (key.tryGetValue() != null) {
-          /*
-           * The view of the Permutation doesn't include properties with defined
-           * values.
-           */
-          continue;
-        }
-        unboundProperties.put(key, orderedPropValues[i]);
-      }
-      compilation.addSelectionPermutation(unboundProperties);
-    }
-
-    public synchronized int getActiveThreadCount() {
-      return numThreads;
-    }
-
-    public synchronized Permuation getNextPermuation() {
-      if (hasNextPermutation()) {
-        // Make sure we have enough memory.
-        int permNumber = nextPerm++;
-        while (nextPerm < rebindOracles.length
-            && rebindOracles[nextPerm] == null) {
-          ++nextPerm;
-        }
-        TreeLogger branch = logger.branch(TreeLogger.TRACE,
-            "Analyzing permutation #" + (permNumber + 1), null);
-        return new Permuation(branch, permNumber, rebindOracles[permNumber]);
-      }
-      return null;
-    }
-
-    public synchronized boolean isFailed() {
-      return failed;
-    }
-
-    public synchronized void outOfMemory(Permuation perm, OutOfMemoryError e) {
-      if (getActiveThreadCount() > 1) {
-        // Recycle and try on a different thread.
-        perm.logger.log(TreeLogger.WARN,
-            "Out of memory; will retry permutation using fewer concurrent threads");
-        rebindOracles[perm.number] = perm.rebindOracle;
-        if (nextPerm > perm.number) {
-          nextPerm = perm.number;
-        }
-      } else {
-        // Only one thread, we're truly out of memory!
-        perm.logger.log(TreeLogger.ERROR, null, e);
-      }
-    }
-
-    @SuppressWarnings("unused")
-    public synchronized void recordFailure() {
-      failed = true;
-    }
-
-    public synchronized void threadDied() {
-      --numThreads;
-    }
-
-    private boolean hasNextPermutation() {
-      return !isFailed() && nextPerm < rebindOracles.length;
-    }
-  }
-
-  /**
-   * A worker thread for compiling individual permutations.
-   */
-  private static final class PermutationWorker implements Runnable {
-    private static void logProperties(TreeLogger logger,
-        StaticPropertyOracle propOracle) {
-      Property[] props = propOracle.getOrderedProps();
-      String[] values = propOracle.getOrderedPropValues();
-      if (logger.isLoggable(TreeLogger.DEBUG)) {
-        logger = logger.branch(TreeLogger.DEBUG, "Setting properties", null);
-        for (int i = 0; i < props.length; i++) {
-          String name = props[i].getName();
-          String value = values[i];
-          logger.log(TreeLogger.TRACE, name + " = " + value, null);
-        }
-      }
-    }
-
-    private final JavaToJavaScriptCompiler jjs;
-    private final PermutationManager manager;
-
-    public PermutationWorker(PermutationManager localState,
-        JavaToJavaScriptCompiler jjs) {
-      this.manager = localState;
-      this.jjs = jjs;
-    }
-
-    public void run() {
-      try {
-        while (hasEnoughMemory()) {
-          Permuation perm = manager.getNextPermuation();
-          if (perm == null) {
-            return;
-          }
-          PerfLogger.start("Permutation #" + (perm.number + 1));
-          try {
-            logProperties(perm.logger, perm.rebindOracle.getPropertyOracle());
-            String js = jjs.compile(perm.logger, perm.rebindOracle);
-            manager.finishPermuation(perm, js);
-            // Allow GC.
-            js = null;
-          } catch (OutOfMemoryError e) {
-            manager.outOfMemory(perm, e);
-            return;
-          } catch (Throwable e) {
-            perm.logger.log(TreeLogger.ERROR, "Permutation failed", e);
-            manager.recordFailure();
-            return;
-          } finally {
-            PerfLogger.end();
-          }
-        }
-      } finally {
-        manager.threadDied();
-      }
-    }
-
-    private boolean hasEnoughMemory() {
-      if (manager.getActiveThreadCount() == 1) {
-        // I'm the last thread, so it doesn't matter, we have to try.
-        return true;
-      }
-      if (jjs.getAstMemoryUsage() < getPotentialFreeMemory()) {
-        // Best effort memory reclaim.
-        System.gc();
-      }
-      return jjs.getAstMemoryUsage() < getPotentialFreeMemory();
-    }
-  }
-
   public static final String GWT_COMPILER_DIR = ".gwt-tmp" + File.separatorChar
       + "compiler";
 
@@ -406,18 +211,7 @@ public class GWTCompiler extends ToolBase {
     System.exit(1);
   }
 
-  private static long getPotentialFreeMemory() {
-    long used = Runtime.getRuntime().totalMemory()
-        - Runtime.getRuntime().freeMemory();
-    assert (used > 0);
-    long potentialFree = Runtime.getRuntime().maxMemory() - used;
-    assert (potentialFree >= 0);
-    return potentialFree;
-  }
-
   private CompilationState compilationState;
-
-  private String[] declEntryPts;
 
   private File genDir;
 
@@ -432,12 +226,6 @@ public class GWTCompiler extends ToolBase {
   private String moduleName;
 
   private File outDir;
-
-  private PropertyPermutations perms;
-
-  private Properties properties;
-
-  private DistillerRebindPermutationOracle rebindPermOracle;
 
   private Rules rules;
 
@@ -516,6 +304,7 @@ public class GWTCompiler extends ToolBase {
     compilationState.compile(logger);
 
     rules = module.getRules();
+    String[] declEntryPts;
     if (jjsOptions.isValidateOnly()) {
       // TODO: revisit this.. do we even need to run JJS?
       logger.log(TreeLogger.INFO, "Validating compilation " + module.getName(),
@@ -534,13 +323,11 @@ public class GWTCompiler extends ToolBase {
     }
 
     ArtifactSet generatorArtifacts = new ArtifactSet();
-    properties = module.getProperties();
-    perms = new PropertyPermutations(properties);
-    rebindPermOracle = new DistillerRebindPermutationOracle(generatorArtifacts,
-        perms);
+    DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
+        generatorArtifacts, new PropertyPermutations(module.getProperties()));
 
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-        compilationState, rebindPermOracle);
+        compilationState, rpo);
     JavaToJavaScriptCompiler jjs = new JavaToJavaScriptCompiler(logger,
         frontEnd, declEntryPts, jjsOptions);
 
@@ -551,7 +338,7 @@ public class GWTCompiler extends ToolBase {
 
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, outDir, generatorResourcesDir, jjsOptions);
-    compilePermutations(logger, jjs, linkerContext);
+    compilePermutations(logger, jjs, rpo, linkerContext);
 
     logger.log(TreeLogger.INFO, "Compilation succeeded", null);
     linkerContext.addOrReplaceArtifacts(generatorArtifacts);
@@ -622,100 +409,20 @@ public class GWTCompiler extends ToolBase {
   }
 
   private void compilePermutations(TreeLogger logger,
-      JavaToJavaScriptCompiler jjs, final StandardLinkerContext linkerContext)
-      throws UnableToCompleteException {
-    PerfLogger.start("Compiling " + perms.size() + " permutations");
+      JavaToJavaScriptCompiler jjs, DistillerRebindPermutationOracle rpo,
+      StandardLinkerContext linkerContext) throws UnableToCompleteException {
 
-    int threadCount = computeThreadCount(logger, jjs);
-
-    PermutationManager manager = new PermutationManager(logger.branch(
-        TreeLogger.DEBUG, "Compiling permutations", null), linkerContext,
-        rebindPermOracle, threadCount);
-
-    Thread[] threads = new Thread[threadCount];
-    for (int i = 0; i < threadCount; ++i) {
-      threads[i] = new Thread(new PermutationWorker(manager, jjs));
+    int permCount = rpo.getPermuationCount();
+    PerfLogger.start("Compiling " + permCount + " permutations");
+    Permutation[] perms = new Permutation[permCount];
+    for (int i = 0; i < permCount; ++i) {
+      CompilationRebindOracle rebindOracle = rpo.getRebindOracle(i);
+      perms[i] = new Permutation(i, rebindOracle,
+          rebindOracle.getPropertyOracle());
     }
-
-    for (Thread thread : threads) {
-      thread.start();
-    }
-
-    for (Thread thread : threads) {
-      try {
-        thread.join();
-      } catch (InterruptedException e) {
-        throw new RuntimeException("Unexpected interruption");
-      }
-    }
-
-    PerfLogger.end();
-
-    if (manager.failed) {
-      throw new UnableToCompleteException();
-    }
-  }
-
-  private int computeThreadCount(TreeLogger logger, JavaToJavaScriptCompiler jjs) {
-    /*
-     * Don't need more threads than the number of permutations.
-     */
-    int result = rebindPermOracle.getPermuationCount();
-
-    /*
-     * Computation is mostly CPU bound, so don't use more threads than
-     * processors.
-     */
-    result = Math.min(Runtime.getRuntime().availableProcessors(), result);
-
-    /*
-     * Allow user-defined override as an escape valve.
-     */
-    result = Math.min(result, Integer.getInteger("gwt.jjs.maxThreads", result));
-
-    if (result == 1) {
-      return 1;
-    }
-
-    // More than one thread would definitely be faster at this point.
-
-    if (JProgram.isTracingEnabled()) {
-      logger.log(TreeLogger.INFO,
-          "Parallel compilation disabled due to gwt.jjs.traceMethods being enabled");
-      return 1;
-    }
-
-    int desiredThreads = result;
-
-    /*
-     * Need to do some memory estimation to figure out how many concurrent
-     * threads we can safely run.
-     */
-    long potentialFreeMemory = getPotentialFreeMemory();
-    long astMemoryUsage = jjs.getAstMemoryUsage();
-    int memUsageThreads = (int) (potentialFreeMemory / astMemoryUsage) + 1;
-    logger.log(TreeLogger.TRACE,
-        "Extra threads constrained by estimated memory usage: "
-            + memUsageThreads + " = " + potentialFreeMemory + " / "
-            + astMemoryUsage);
-
-    if (memUsageThreads < desiredThreads) {
-      long currentMaxMemory = Runtime.getRuntime().maxMemory();
-      // Convert to megabytes.
-      currentMaxMemory /= 1024 * 1024;
-
-      long suggestedMaxMemory = currentMaxMemory * 2;
-
-      logger.log(TreeLogger.WARN, desiredThreads
-          + " threads could be run concurrently, but only " + memUsageThreads
-          + " threads will be run due to limited memory; "
-          + "increasing the amount of memory by using the -Xmx flag "
-          + "at startup (java -Xmx" + suggestedMaxMemory
-          + "M ...) may result in faster compiles");
-    }
-
-    result = Math.min(memUsageThreads, desiredThreads);
-    return result;
+    PermutationCompiler permCompiler = new PermutationCompiler(logger, jjs,
+        perms);
+    permCompiler.go(linkerContext);
   }
 
   /**

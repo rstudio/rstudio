@@ -427,6 +427,9 @@ public class JsVisitor {
       JsContext<T> ctx) {
     try {
       node.traverse(this, ctx);
+    } catch (OutOfMemoryError e) {
+      // Just rethrow, it's not our problem.
+      throw e;
     } catch (Throwable e) {
       throw translateException(node, e);
     }

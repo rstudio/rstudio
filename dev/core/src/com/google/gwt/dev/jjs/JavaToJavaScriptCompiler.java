@@ -443,116 +443,40 @@ public class JavaToJavaScriptCompiler {
         jsProgram = savedJsProgram;
         savedJProgram = null;
         savedJsProgram = null;
-      }
-    }
-
-    if (jprogram == null || jsProgram == null) {
-      if (serializedAst == null) {
-        throw new IllegalStateException("No serialized AST was cached.");
-      }
-      try {
-        PerfLogger.start("deserialize");
-        ByteArrayInputStream bais = new ByteArrayInputStream(serializedAst);
-        ObjectInputStream is;
-        is = new ObjectInputStream(bais);
-        jprogram = (JProgram) is.readObject();
-        jsProgram = (JsProgram) is.readObject();
-        PerfLogger.end();
-      } catch (IOException e) {
-        throw new RuntimeException(
-            "Should be impossible for memory based streams", e);
-      } catch (ClassNotFoundException e) {
-        throw new RuntimeException(
-            "Should be impossible when deserializing in process", e);
+      } else {
+        if (serializedAst == null) {
+          throw new IllegalStateException("No serialized AST was cached.");
+        }
+        try {
+          /*
+           * Force all AST deserializations to occur in sequence; this reduces
+           * the chance of multiple threads going OOM at the same time.
+           */
+          synchronized (myLockObject) {
+            PerfLogger.start("deserialize");
+            ByteArrayInputStream bais = new ByteArrayInputStream(serializedAst);
+            ObjectInputStream is;
+            is = new ObjectInputStream(bais);
+            jprogram = (JProgram) is.readObject();
+            jsProgram = (JsProgram) is.readObject();
+            PerfLogger.end();
+          }
+        } catch (IOException e) {
+          throw new RuntimeException(
+              "Should be impossible for memory based streams", e);
+        } catch (ClassNotFoundException e) {
+          throw new RuntimeException(
+              "Should be impossible when deserializing in process", e);
+        }
       }
     }
 
     try {
-      if (JProgram.isTracingEnabled()) {
-        System.out.println("------------------------------------------------------------");
-        System.out.println("|                     (new permuation)                     |");
-        System.out.println("------------------------------------------------------------");
-      }
-
-      ResolveRebinds.exec(logger, jprogram, rebindOracle);
-
-      // (4) Optimize the normalized Java AST for each permutation.
-      optimize(jprogram);
-
-      // (5) "Normalize" the high-level Java tree into a lower-level tree more
-      // suited for JavaScript code generation. Don't go reordering these
-      // willy-nilly because there are some subtle interdependencies.
-      LongCastNormalizer.exec(jprogram);
-      JsoDevirtualizer.exec(jprogram);
-      CatchBlockNormalizer.exec(jprogram);
-      PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
-      LongEmulationNormalizer.exec(jprogram);
-      CastNormalizer.exec(jprogram);
-      ArrayNormalizer.exec(jprogram);
-      EqualityNormalizer.exec(jprogram);
-
-      // (6) Perform further post-normalization optimizations
-      // Prune everything
-      Pruner.exec(jprogram, false);
-
-      // (7) Generate a JavaScript code DOM from the Java type declarations
-      jprogram.typeOracle.recomputeClinits();
-      GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
-
-      // Allow GC.
-      jprogram = null;
-
-      // (8) Normalize the JS AST.
-      // Fix invalid constructs created during JS AST gen.
-      JsNormalizer.exec(jsProgram);
-      // Resolve all unresolved JsNameRefs.
-      JsSymbolResolver.exec(jsProgram);
-
-      // (9) Optimize the JS AST.
-      if (options.isAggressivelyOptimize()) {
-        boolean didChange;
-        do {
-          didChange = false;
-          // Remove unused functions, possible
-          didChange = JsStaticEval.exec(jsProgram) || didChange;
-          // Inline JavaScript function invocations
-          didChange = JsInliner.exec(jsProgram) || didChange;
-          // Remove unused functions, possible
-          didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
-        } while (didChange);
-      }
-
-      // (10) Obfuscate
-      switch (options.getOutput()) {
-        case OBFUSCATED:
-          JsStringInterner.exec(jsProgram);
-          JsObfuscateNamer.exec(jsProgram);
-          break;
-        case PRETTY:
-          // We don't intern strings in pretty mode to improve readability
-          JsPrettyNamer.exec(jsProgram);
-          break;
-        case DETAILED:
-          JsStringInterner.exec(jsProgram);
-          JsVerboseNamer.exec(jsProgram);
-          break;
-        default:
-          throw new InternalCompilerException("Unknown output mode");
-      }
-
-      // (11) Perform any post-obfuscation normalizations.
-
-      // Work around an IE7 bug,
-      // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
-      JsIEBlockSizeVisitor.exec(jsProgram);
-
-      // (12) Generate the final output text.
-      DefaultTextOutput out = new DefaultTextOutput(
-          options.getOutput().shouldMinimize());
-      JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-      v.accept(jsProgram);
-      return out.toString();
+      return doCompile(logger, jprogram, jsProgram, rebindOracle);
     } catch (Throwable e) {
+      // Allow GC before logging exception in case it was an OOM.
+      jprogram = null;
+      jsProgram = null;
       throw logAndTranslateException(logger, e);
     }
   }
@@ -561,9 +485,106 @@ public class JavaToJavaScriptCompiler {
     return astMemoryUsage;
   }
 
-  protected void optimize(JProgram jprogram) {
+  protected String doCompile(TreeLogger logger, JProgram jprogram,
+      JsProgram jsProgram, RebindOracle rebindOracle)
+      throws InterruptedException {
+    if (JProgram.isTracingEnabled()) {
+      System.out.println("------------------------------------------------------------");
+      System.out.println("|                     (new permuation)                     |");
+      System.out.println("------------------------------------------------------------");
+    }
+
+    ResolveRebinds.exec(logger, jprogram, rebindOracle);
+
+    // (4) Optimize the normalized Java AST for each permutation.
+    optimize(jprogram);
+
+    // (5) "Normalize" the high-level Java tree into a lower-level tree more
+    // suited for JavaScript code generation. Don't go reordering these
+    // willy-nilly because there are some subtle interdependencies.
+    LongCastNormalizer.exec(jprogram);
+    JsoDevirtualizer.exec(jprogram);
+    CatchBlockNormalizer.exec(jprogram);
+    PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
+    LongEmulationNormalizer.exec(jprogram);
+    CastNormalizer.exec(jprogram);
+    ArrayNormalizer.exec(jprogram);
+    EqualityNormalizer.exec(jprogram);
+
+    // (6) Perform further post-normalization optimizations
+    // Prune everything
+    Pruner.exec(jprogram, false);
+
+    // (7) Generate a JavaScript code DOM from the Java type declarations
+    jprogram.typeOracle.recomputeClinits();
+    GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
+
+    // Allow GC.
+    jprogram = null;
+
+    // (8) Normalize the JS AST.
+    // Fix invalid constructs created during JS AST gen.
+    JsNormalizer.exec(jsProgram);
+    // Resolve all unresolved JsNameRefs.
+    JsSymbolResolver.exec(jsProgram);
+
+    // (9) Optimize the JS AST.
+    if (options.isAggressivelyOptimize()) {
+      boolean didChange;
+      do {
+        if (Thread.interrupted()) {
+          throw new InterruptedException();
+        }
+
+        didChange = false;
+        // Remove unused functions, possible
+        didChange = JsStaticEval.exec(jsProgram) || didChange;
+        // Inline JavaScript function invocations
+        didChange = JsInliner.exec(jsProgram) || didChange;
+        // Remove unused functions, possible
+        didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
+      } while (didChange);
+    }
+
+    // (10) Obfuscate
+    switch (options.getOutput()) {
+      case OBFUSCATED:
+        JsStringInterner.exec(jsProgram);
+        JsObfuscateNamer.exec(jsProgram);
+        break;
+      case PRETTY:
+        // We don't intern strings in pretty mode to improve readability
+        JsPrettyNamer.exec(jsProgram);
+        break;
+      case DETAILED:
+        JsStringInterner.exec(jsProgram);
+        JsVerboseNamer.exec(jsProgram);
+        break;
+      default:
+        throw new InternalCompilerException("Unknown output mode");
+    }
+
+    // (11) Perform any post-obfuscation normalizations.
+
+    // Work around an IE7 bug,
+    // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
+    JsIEBlockSizeVisitor.exec(jsProgram);
+
+    // (12) Generate the final output text.
+    DefaultTextOutput out = new DefaultTextOutput(
+        options.getOutput().shouldMinimize());
+    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
+    v.accept(jsProgram);
+    return out.toString();
+  }
+
+  protected void optimize(JProgram jprogram) throws InterruptedException {
     boolean didChange;
     do {
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+
       // Recompute clinits each time, they can become empty.
       jprogram.typeOracle.recomputeClinits();
 
@@ -681,6 +702,9 @@ public class JavaToJavaScriptCompiler {
         }
       }
       return new UnableToCompleteException();
+    } else if (e instanceof OutOfMemoryError) {
+      // Rethrow the original exception so the caller can deal with it.
+      throw (OutOfMemoryError) e;
     } else {
       logger.log(TreeLogger.ERROR, "Unexpected internal compiler error", e);
       return new UnableToCompleteException();
