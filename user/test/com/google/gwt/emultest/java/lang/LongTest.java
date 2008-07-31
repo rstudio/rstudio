@@ -22,6 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class LongTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -85,6 +86,72 @@ public class LongTest extends GWTTestCase {
     assertEquals(0, Long.numberOfTrailingZeros(Long.MAX_VALUE));
     assertEquals(63, Long.numberOfTrailingZeros(Long.MIN_VALUE));
     assertEquals(20, Long.numberOfTrailingZeros(-0x7ff00000L));
+  }
+
+  public void testParse() {
+    assertEquals(0L, Long.parseLong("0"));
+    assertEquals(100000000000L, Long.parseLong("100000000000"));
+    assertEquals(-100000000000L, Long.parseLong("-100000000000"));
+    assertEquals(10L, Long.parseLong("010"));
+    try {
+      Long.parseLong("10L");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      Long.parseLong("");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      // Issue 2636
+      new Long("");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      Long.parseLong("deadbeefbeef");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      Long.parseLong("123456789ab123456789ab123456789ab123456789ab", 12);
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+
+    assertEquals(0L, Long.parseLong("0", 12));
+    assertEquals(73686780563L, Long.parseLong("123456789ab", 12));
+    assertEquals(-73686780563L, Long.parseLong("-123456789ab", 12));
+    try {
+      Long.parseLong("c", 12);
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+
+    assertEquals(0L, Long.parseLong("0", 16));
+    assertEquals(-1L, Long.parseLong("-1", 16));
+    assertEquals(1L, Long.parseLong("1", 16));
+    assertEquals(0xdeadbeefdeadL, Long.parseLong("deadbeefdead", 16));
+    assertEquals(-0xdeadbeefdeadL, Long.parseLong("-deadbeefdead", 16));
+    try {
+      Long.parseLong("deadbeefdeadbeefdeadbeefdeadbeef", 16);
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      Long.parseLong("g", 16);
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
   }
 
   public void testReverse() {

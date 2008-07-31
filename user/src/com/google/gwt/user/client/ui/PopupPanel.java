@@ -744,9 +744,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * @param elt The Element on which <code>blur()</code> will be invoked
    */
-  private native void blur(Element elt)
-  /*-{
-    if (elt.blur) {
+  private native void blur(Element elt) /*-{
+    // Issue 2390: blurring the body causes IE to disappear to the background
+    if (elt.blur && elt != $doc.body) {
       elt.blur();
     }
   }-*/;

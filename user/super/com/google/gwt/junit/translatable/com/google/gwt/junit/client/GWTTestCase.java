@@ -172,6 +172,13 @@ public abstract class GWTTestCase extends TestCase {
 
   public abstract String getModuleName();
 
+  @Override
+  public void runBare() throws Throwable {
+    setUp();
+    runTest();
+    // No tearDown call here; we do it from reportResults.
+  }
+
   // CHECKSTYLE_OFF
   protected JUnitResult __getOrCreateTestResult() {
     if (result == null) {
@@ -249,6 +256,12 @@ public abstract class GWTTestCase extends TestCase {
    * @param ex The results of this test.
    */
   private void reportResultsAndRunNextMethod(Throwable ex) {
+    try {
+      tearDown();
+    } catch (Throwable e) {
+      // ignore any exceptions thrown from tearDown
+    }
+
     JUnitResult myResult = __getOrCreateTestResult();
     if (ex != null) {
       ExceptionWrapper ew = new ExceptionWrapper(ex);

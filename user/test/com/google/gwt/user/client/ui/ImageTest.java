@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,6 +38,7 @@ public class ImageTest extends GWTTestCase {
     return imgState.@com.google.gwt.user.client.ui.Image.State::getStateName() ();
   }-*/;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.UserTest";
   }
@@ -95,7 +96,11 @@ public class ImageTest extends GWTTestCase {
       }
 
       public void onLoad(Widget sender) {
-        if (++onLoadEventCount == 2) {
+        ++onLoadEventCount;
+        if (onLoadEventCount == 1) {
+          // Set the url after the first image loads
+          image.setUrl("counting-forwards.png");
+        } else if (onLoadEventCount == 2) {
           assertEquals(0, image.getOriginLeft());
           assertEquals(0, image.getOriginTop());
           assertEquals(32, image.getWidth());
@@ -107,7 +112,6 @@ public class ImageTest extends GWTTestCase {
     });
 
     RootPanel.get().add(image);
-    image.setUrl("counting-forwards.png");
 
     delayTestFinish(5000);
   }

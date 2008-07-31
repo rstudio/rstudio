@@ -19,6 +19,7 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
 
+import java.util.Formatter;
 import java.util.Vector;
 
 /**
@@ -30,7 +31,7 @@ public class Timer extends Task implements TaskContainer {
 
   private static final int MS_IN_HOUR = 60 * 60 * 1000;
   private static final int MS_IN_MINUTE =  60 * 1000;
-  private static final double MS_IN_SECOND_FLOAT =  1000.0;
+  private static final int MS_IN_SECOND =  1000;
 
   private Vector<Task> nested;
   private String name;
@@ -50,14 +51,19 @@ public class Timer extends Task implements TaskContainer {
     for (Task task : nested) {
       task.perform();
     }
-    long duration = (System.currentTimeMillis() - start);
-    long hrs = duration / MS_IN_HOUR;
-    long min = (duration - (hrs * MS_IN_HOUR)) / MS_IN_MINUTE;
-    double sec = (duration - (hrs * MS_IN_HOUR) - (min * MS_IN_MINUTE))
-                  / MS_IN_SECOND_FLOAT;
 
-    log("timer " + name + " timed " + duration + " ms. ("
-        + hrs + ":" + (min < 10 ? "0" : "") + min + ":" + sec + ")");
+    long duration_ms = (System.currentTimeMillis() - start);
+    long duration = duration_ms; 
+    long hrs = duration / MS_IN_HOUR;
+    duration -= hrs * MS_IN_HOUR;
+    long min = duration  / MS_IN_MINUTE;
+    duration -= min * MS_IN_MINUTE;
+    long sec = duration / MS_IN_SECOND;
+    duration -= sec * MS_IN_SECOND;
+    long msec = duration;
+
+    log("timer " + name + " timed " + duration_ms + " ms. " +
+        String.format("(%02d:%02d:%02d.%03d)", hrs, min, sec, msec)); 
   }
 
   public void setName(String newname) {

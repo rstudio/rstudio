@@ -24,6 +24,7 @@ import com.google.gwt.i18n.client.I18N2Test;
 import com.google.gwt.i18n.client.I18NTest;
 import com.google.gwt.i18n.client.LocaleInfoTest;
 import com.google.gwt.i18n.client.LocaleInfo_ar_Test;
+import com.google.gwt.i18n.client.NumberFormat_ar_Test;
 import com.google.gwt.i18n.client.NumberFormat_en_Test;
 import com.google.gwt.i18n.client.NumberFormat_fr_Test;
 import com.google.gwt.i18n.client.NumberParse_en_Test;
@@ -52,6 +53,7 @@ public class I18NSuite {
     suite.addTestSuite(I18N2Test.class);
     suite.addTestSuite(LocaleInfo_ar_Test.class);    
     suite.addTestSuite(LocaleInfoTest.class);
+    suite.addTestSuite(NumberFormat_ar_Test.class);
     suite.addTestSuite(NumberFormat_en_Test.class);
     suite.addTestSuite(NumberFormat_fr_Test.class);
     suite.addTestSuite(NumberParse_en_Test.class);

@@ -401,8 +401,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if ALT was depressed when the event occurred
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
+   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static boolean eventGetAltKey(Event evt) {
+  public static boolean eventGetAltKey(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK | Event.ONDBLCLICK
         | Event.KEYEVENTS | Event.ONCONTEXTMENU, "altKey");
     return impl.eventGetAltKey(evt);
@@ -414,8 +418,10 @@ public class DOM {
    * @param evt the event to be tested
    * @return a bit-field, defined by {@link Event#BUTTON_LEFT},
    *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#ONMOUSEDOWN} or {@link Event#ONMOUSEUP}
    */
-  public static int eventGetButton(Event evt) {
+  public static int eventGetButton(Event evt) throws AssertionError {
     assertEventType(evt, Event.ONMOUSEDOWN | Event.ONMOUSEUP, "button");
     return impl.eventGetButton(evt);
   }
@@ -425,8 +431,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse x-position
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
+   *           {@link Event#ONDBLCLICK}, {@link Event#ONMOUSEWHEEL}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static int eventGetClientX(Event evt) {
+  public static int eventGetClientX(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK | Event.ONDBLCLICK
         | Event.ONMOUSEWHEEL | Event.ONCONTEXTMENU, "clientX");
     return impl.eventGetClientX(evt);
@@ -437,8 +447,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse y-position
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
+   *           {@link Event#ONDBLCLICK}, {@link Event#ONMOUSEWHEEL}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static int eventGetClientY(Event evt) {
+  public static int eventGetClientY(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK | Event.ONDBLCLICK
         | Event.ONMOUSEWHEEL | Event.ONCONTEXTMENU, "clientY");
     return impl.eventGetClientY(evt);
@@ -449,8 +463,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if CTRL was depressed when the event occurred
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
+   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static boolean eventGetCtrlKey(Event evt) {
+  public static boolean eventGetCtrlKey(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK | Event.ONDBLCLICK
         | Event.KEYEVENTS | Event.ONCONTEXTMENU, "ctrlKey");
     return impl.eventGetCtrlKey(evt);
@@ -485,8 +503,10 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the element from which the mouse pointer was moved
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#ONMOUSEOVER} or {@link Event#ONMOUSEOUT}
    */
-  public static Element eventGetFromElement(Event evt) {
+  public static Element eventGetFromElement(Event evt) throws AssertionError {
     assertEventType(evt, Event.ONMOUSEOVER | Event.ONMOUSEOUT, "fromElement");
     return impl.eventGetFromElement(evt);
   }
@@ -502,9 +522,10 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the Unicode character or key code.
+   * @throws AssertionError if event type is not one of {@link Event#KEYEVENTS}
    * @see com.google.gwt.user.client.ui.KeyboardListener
    */
-  public static int eventGetKeyCode(Event evt) {
+  public static int eventGetKeyCode(Event evt) throws AssertionError {
     assertEventType(evt, Event.KEYEVENTS, "keyCode");
     return impl.eventGetKeyCode(evt);
   }
@@ -514,9 +535,13 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if META was depressed when the event occurred
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
+   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static boolean eventGetMetaKey(Event evt) {
-    assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK  | Event.ONDBLCLICK
+  public static boolean eventGetMetaKey(Event evt) throws AssertionError {
+    assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK | Event.ONDBLCLICK
         | Event.KEYEVENTS | Event.ONCONTEXTMENU, "metaKey");
     return impl.eventGetMetaKey(evt);
   }
@@ -535,8 +560,10 @@ public class DOM {
    * 
    * @param evt the event to be examined.
    * @return The velocity of the mouse wheel.
+   * @throws AssertionError if event type is not {@link Event#ONMOUSEWHEEL}
    */
-  public static int eventGetMouseWheelVelocityY(Event evt) {
+  public static int eventGetMouseWheelVelocityY(Event evt)
+      throws AssertionError {
     assertEventType(evt, Event.ONMOUSEWHEEL, "mouseWheelVelocityY");
     return impl.eventGetMouseWheelVelocityY(evt);
   }
@@ -546,8 +573,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if this key event was an auto-repeat
+   * @throws AssertionError if event type is not {@link Event#ONKEYDOWN}
    */
-  public static boolean eventGetRepeat(Event evt) {
+  public static boolean eventGetRepeat(Event evt) throws AssertionError {
     assertEventType(evt, Event.ONKEYDOWN, "repeat");
     return impl.eventGetRepeat(evt);
   }
@@ -557,8 +585,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse x-position
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONMOUSEWHEEL},
+   *           {@link Event#ONCLICK}, {@link Event#ONDBLCLICK}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static int eventGetScreenX(Event evt) {
+  public static int eventGetScreenX(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONMOUSEWHEEL | Event.ONCLICK
         | Event.ONDBLCLICK | Event.ONCONTEXTMENU, "screenX");
     return impl.eventGetScreenX(evt);
@@ -569,8 +601,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the mouse y-position
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONMOUSEWHEEL},
+   *           {@link Event#ONCLICK}, {@link Event#ONDBLCLICK}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static int eventGetScreenY(Event evt) {
+  public static int eventGetScreenY(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONMOUSEWHEEL | Event.ONCLICK
         | Event.ONDBLCLICK | Event.ONCONTEXTMENU, "screenY");
     return impl.eventGetScreenY(evt);
@@ -581,8 +617,12 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if shift was depressed when the event occurred
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
+   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
+   *           {@link Event#ONCONTEXTMENU}
    */
-  public static boolean eventGetShiftKey(Event evt) {
+  public static boolean eventGetShiftKey(Event evt) throws AssertionError {
     assertEventType(evt, Event.MOUSEEVENTS | Event.ONCLICK | Event.ONDBLCLICK
         | Event.KEYEVENTS | Event.ONCONTEXTMENU, "shiftKey");
     return impl.eventGetShiftKey(evt);
@@ -604,8 +644,10 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return the element to which the mouse pointer was moved
+   * @throws AssertionError if event type is not one of
+   *           {@link Event#ONMOUSEOVER} or {@link Event#ONMOUSEOUT}
    */
-  public static Element eventGetToElement(Event evt) {
+  public static Element eventGetToElement(Event evt) throws AssertionError {
     assertEventType(evt, Event.ONMOUSEOVER | Event.ONMOUSEOUT, "toElement");
     return impl.eventGetToElement(evt);
   }
@@ -644,8 +686,9 @@ public class DOM {
    * 
    * @param evt the event whose key code is to be set
    * @param key the new key code
+   * @throws AssertionError if event type is not one of {@link Event#KEYEVENTS}
    */
-  public static void eventSetKeyCode(Event evt, char key) {
+  public static void eventSetKeyCode(Event evt, char key) throws AssertionError {
     assertEventType(evt, Event.KEYEVENTS, "keyCode");
     impl.eventSetKeyCode(evt, key);
   }
@@ -657,7 +700,7 @@ public class DOM {
    * @param evt the event to stringize
    * @return a string form of the event
    */
-  public static String eventToString(Event evt) { 
+  public static String eventToString(Event evt) {
     return impl.eventToString(evt);
   }
 

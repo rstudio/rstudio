@@ -298,9 +298,6 @@ public class JavaToJavaScriptCompiler {
       }
       allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
       allEntryPoints.addAll(JProgram.INDEX_TYPES_SET);
-      allEntryPoints.add("java.lang.Object");
-      allEntryPoints.add("java.lang.String");
-      allEntryPoints.add("java.lang.Iterable");
       declEntryPts = allEntryPoints.toArray(new String[0]);
     }
 
@@ -579,6 +576,13 @@ public class JavaToJavaScriptCompiler {
   }
 
   protected void optimize(JProgram jprogram) throws InterruptedException {
+    /*
+     * Record the beginning of optimations; this turns on certain checks that
+     * guard against problematic late construction of things like class
+     * literals.
+     */
+    jprogram.beginOptimizations();
+
     boolean didChange;
     do {
       if (Thread.interrupted()) {

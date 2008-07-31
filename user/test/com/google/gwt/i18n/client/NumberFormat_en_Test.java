@@ -245,6 +245,28 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("1234567890", str);
   }
 
+  public void testNegative() {
+    String str;
+    
+    // verify default negative pattern
+    str = NumberFormat.getFormat("#,##0.0").format(-0.15);
+    assertEquals("-0.2", str);
+    str = NumberFormat.getFormat("#,##0.0%").format(-0.1534);
+    assertEquals("-15.3%", str);
+    str = NumberFormat.getFormat("X #,##0.0%").format(-0.1534);
+    assertEquals("-X 15.3%", str);
+    
+    // verify we can specify percent/permille suffixes in both parts
+    str = NumberFormat.getFormat("#,##0.0%;#,##0.0%-").format(-0.152);
+    assertEquals("15.2%-", str);
+    str = NumberFormat.getFormat("#,##0.0\u2030;#,##0.0\u2030-").format(-0.152);
+    assertEquals("152.0\u2030-", str);
+
+    // verify negative portion is only used for prefix/suffix
+    str = NumberFormat.getFormat("#,##0.00;-# X").format(-1014.336);
+    assertEquals("-1,014.34 X", str);
+  }
+
   public void testPerMill() {
     String str;
 

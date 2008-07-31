@@ -14,10 +14,14 @@
  * so we need to use the AlphaImageLoader in IE6 only.
  */
 
-body, table td, a, div, .p, pre {
-  font-family: Arial, sans-serif;
+body, table td, select {
+  font-family: Arial Unicode MS, Arial, sans-serif;
   font-size: small;
   color: #bec7cc;
+}
+pre {
+  font-family: "courier new", courier;
+  font-size: small;
 }
 body {
   margin: 0px;
@@ -82,7 +86,7 @@ a, a:visited, a:hover {
 .gwt-DecoratorPanel .topRight,
 .gwt-DecoratorPanel .bottomLeft,
 .gwt-DecoratorPanel .bottomRight {
-  background: #1e1e1e;
+  background: #00CCFF;
   zoom: 1;
 }
 .gwt-DecoratorPanel .topLeftInner,
@@ -95,24 +99,24 @@ a, a:visited, a:hover {
 }
 
 .gwt-DialogBox .Caption {
-  background: #888888;
+  background: #222222;
   padding: 4px 4px 4px 8px;
+  color: #00CCFF;
   cursor: default;
-  border-bottom: 1px solid #222222;
-  border-top: 5px solid #222222;
-  color: black;
+  border-bottom: 1px solid #888888;
+  border-top: 5px solid #00CCFF;
 }
 .gwt-DialogBox .dialogContent {
 }
 .gwt-DialogBox .dialogMiddleCenter {
   padding: 3px;
-  background: #4d4d4d;
+  background: #666666;
 }
 html>body .gwt-DialogBox .dialogBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
 * html .gwt-DialogBox .dialogBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
 .gwt-DialogBox .dialogMiddleLeft {
   background: url(images/vborder.png) repeat-y;
@@ -121,7 +125,7 @@ html>body .gwt-DialogBox .dialogMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
 * html .gwt-DialogBox .dialogMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
 .gwt-DialogBox .dialogTopLeftInner {
   width: 5px;
@@ -194,7 +198,7 @@ html>body .gwt-DialogBox .dialogBottomRight {
   cursor: hand;
 }
 .gwt-DisclosurePanel .content {
-  border-left: 3px solid #1e1e1e;
+  border-left: 3px solid #00CCFF;
   padding: 4px 0px 4px 8px;
   margin-left: 6px;
 }
@@ -214,18 +218,17 @@ html>body .gwt-DialogBox .dialogBottomRight {
 .gwt-HorizontalSplitPanel .hsplitter {
   cursor: move;
   border: 0px; 
-  background: #1E1E1E;
+  background: #00CCFF;
 }
 .gwt-VerticalSplitPanel {
 }
 .gwt-VerticalSplitPanel .vsplitter {
   cursor: move;
   border: 0px; 
-  background: #1E1E1E;
+  background: #00CCFF;
 }
 
 .gwt-HTML {
-  color: #BEC7CC;
 }
 
 .gwt-Hyperlink {
@@ -265,10 +268,11 @@ html>body .gwt-DialogBox .dialogBottomRight {
   margin: 0px;
   border: 0px;
   border-left: 1px solid #bec7cc;
-  background: white;
+  background: #000;
 }
 .gwt-MenuBar-horizontal .gwt-MenuItemSeparator .menuSeparatorInner {
   width: 1px;
+  height: 1px;
   background: #000; 
 }
 .gwt-MenuBar-vertical {
@@ -391,7 +395,7 @@ html>body .gwt-MenuBarPopup .menuPopupBottomRight {
 }
 
 .gwt-PopupPanel {
-  border: 3px solid #222222;
+  border: 3px solid #00CCFF;
   padding: 3px;
   background: #4D4D4D;
 }
@@ -400,7 +404,8 @@ html>body .gwt-MenuBarPopup .menuPopupBottomRight {
 }
 .gwt-DecoratedPopupPanel .popupMiddleCenter {
   padding: 3px;
-  background: #4D4D4D;
+  background: #00CCFF;
+  color: black;
 }
 .gwt-DecoratedPopupPanel .popupTopCenter {
   background: url(images/hborder.png) repeat-x;
@@ -409,7 +414,7 @@ html>body .gwt-DecoratedPopupPanel .popupBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
 * html .gwt-DecoratedPopupPanel .popupBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
 .gwt-DecoratedPopupPanel .popupMiddleLeft {
   background: url(images/vborder.png) repeat-y;
@@ -418,7 +423,7 @@ html>body .gwt-DecoratedPopupPanel .popupMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
 * html .gwt-DecoratedPopupPanel .popupMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
 .gwt-DecoratedPopupPanel .popupTopLeftInner {
   width: 5px;
@@ -610,7 +615,7 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
 }
 
 .gwt-StackPanel {
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #00CCFF;
 }
 .gwt-StackPanel .gwt-StackPanelItem {
   cursor: pointer;
@@ -618,22 +623,22 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   font-weight: bold;
   font-size: 1.3em;
   padding: 4px;
-  border: 1px solid #000;
+  border: 1px solid #00CCFF;
   border-bottom: 0px;
   background: #222;
 }
 .gwt-StackPanel .gwt-StackPanelContent {
-  border: 1px solid #000;
+  border: 1px solid #00CCFF;
   border-bottom: 0px;
   background: #666;
   padding: 2px 2px 10px 5px;
 }
 
 .gwt-DecoratedStackPanel {
-  border-bottom: 1px solid #000;
+  border-bottom: 1px solid #00CCFF;
 }
 .gwt-DecoratedStackPanel .gwt-StackPanelContent {
-  border: 1px solid #000;
+  border: 1px solid #00CCFF;
   border-bottom: 0px;
   background: #666;
   padding: 2px 2px 10px 5px;
@@ -644,7 +649,7 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
   font-weight: bold;
   font-size: 1.3em;
   padding: 4px;
-  border: 1px solid #000;
+  border: 1px solid #00CCFF;
   border-bottom: 0px;
   background: #222;
 }
@@ -679,7 +684,7 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomCenter {
   background: url(images/hborder.png) repeat-x 0px -4px;
 }
 * html .gwt-SuggestBoxPopup .suggestPopupBottomCenter {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/hborder_blue_shadow.png',sizingMethod='scale');
 }
 .gwt-SuggestBoxPopup .suggestPopupMiddleLeft {
   background: url(images/vborder.png) repeat-y;
@@ -688,7 +693,7 @@ html>body .gwt-SuggestBoxPopup .suggestPopupMiddleRight {
   background: url(images/vborder.png) repeat-y -4px 0px;
 }
 * html .gwt-SuggestBoxPopup .suggestPopupMiddleRight {
-  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_black_shadow.png',sizingMethod='scale');
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/ie6/vborder_blue_shadow.png',sizingMethod='scale');
 }
 .gwt-SuggestBoxPopup .suggestPopupTopLeftInner {
   width: 5px;
@@ -768,16 +773,17 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   color: #bec7cc;
   font-weight: bold;
   text-align: center;
-  background: #222;
+  background: #222222;
 }
 .gwt-TabBar .gwt-TabBarItem-selected {
   cursor: default;
-  background: #000;
+  color: black;
+  background: #00CCFF;
 } 
 .gwt-TabPanel {
 }
 .gwt-TabPanelBottom {
-  border-color: #000;
+  border-color: #00CCFF;
   border-style: solid;
   border-width: 3px 2px 2px;
   overflow: hidden;
@@ -795,24 +801,92 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   border-collapse: collapse;
   margin-left: 6px;
 }
+.gwt-DecoratedTabBar .tabTopCenter {
+  padding: 0px;
+  background: #222222;
+}
 .gwt-DecoratedTabBar .tabTopLeft,
-.gwt-DecoratedTabBar .tabTopRight,
+.gwt-DecoratedTabBar .tabTopRight {
+  padding: 0px;
+  zoom: 1;
+}
 .gwt-DecoratedTabBar .tabTopLeftInner,
 .gwt-DecoratedTabBar .tabTopRightInner {
-  display: none;
+  width: 6px;
+  height: 6px;
+}
+html>body .gwt-DecoratedTabBar .tabTopLeft {
+  background: url(images/corner.png) no-repeat 0px -55px;
+}
+html>body .gwt-DecoratedTabBar .tabTopRight {
+  background: url(images/corner.png) no-repeat -6px -55px;
+}
+* html .gwt-DecoratedTabBar .tabTopLeftInner {
+  width: 5px;
+  height: 61px;
+  margin-top: -55px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratedTabBar .tabTopRightInner {
+  width: 12px;
+  height: 61px;
+  margin-top: -55px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
+}
+.gwt-DecoratedTabBar .tabMiddleLeft,
+.gwt-DecoratedTabBar .tabMiddleRight {
+  width: 6px;
+  padding: 0px;
+  background: #222222;
+}
+.gwt-DecoratedTabBar .tabMiddleLeftInner,
+.gwt-DecoratedTabBar .tabMiddleRightInner {
+  width: 1px;
+  height: 1px;
 }
 .gwt-DecoratedTabBar .tabMiddleCenter {
-  padding: 4px 6px;
+  padding: 0px 4px 2px 4px;
   cursor: pointer;
   cursor: hand;
-  color: #bec7cc;
   font-weight: bold;
   text-align: center;
-  background: #222;
+  background: #222222;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopCenter {
+  background: #00CCFF;
+}
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopLeft {
+  background-position: 0px -61px;
+}
+html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
+  background-position: -6px -61px;
+}
+* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopLeftInner {
+  width: 5px;
+  height: 67px;
+  margin-top: -61px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
+}
+* html .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRightInner {
+  width: 12px;
+  height: 67px;
+  margin-top: -61px;
+  margin-left: -6px;
+  overflow: hidden;
+  filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='gwt/dark/images/corner.png',sizingMethod='crop');
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabMiddleLeft,
+.gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabMiddleRight {
+  background: #00CCFF;
 }
 .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabMiddleCenter {
   cursor: default;
-  background: #000;
+  color: black;
+  background: #00CCFF;
 }
 
 .gwt-TextArea {

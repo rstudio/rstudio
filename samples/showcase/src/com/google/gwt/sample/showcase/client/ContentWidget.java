@@ -27,7 +27,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.TabListener;
@@ -78,7 +77,7 @@ public abstract class ContentWidget extends Composite implements TabListener {
   /**
    * The static loading image displayed when loading CSS or source code.
    */
-  private static Image loadingImage;
+  private static String loadingImage;
 
   /**
    * An instance of the constants.
@@ -327,11 +326,11 @@ public abstract class ContentWidget extends Composite implements TabListener {
       final RequestCallback callback) {
     // Show the loading image
     if (loadingImage == null) {
-      loadingImage = new Image("images/loading.gif");
+      loadingImage = "<img src=\"images/loading.gif\">";
     }
     target.setDirection(HasDirection.Direction.LTR);
     DOM.setStyleAttribute(target.getElement(), "textAlign", "left");
-    target.setHTML("&nbsp;&nbsp;" + loadingImage.toString());
+    target.setHTML("&nbsp;&nbsp;" + loadingImage);
 
     // Request the contents of the file
     RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);

@@ -24,6 +24,23 @@ import java.util.Iterator;
  * A {@link PopupPanel} that wraps its content in a 3x3 grid, which allows users
  * to add rounded corners.
  * </p>
+ * 
+ * <h3>Setting the Size:</h3>
+ * <p>
+ * If you set the width or height of the {@link DecoratedPopupPanel}, you need
+ * to set the height and width of the middleCenter cell to 100% so that the
+ * middleCenter cell takes up all of the available space. If you do not set the
+ * width and height of the {@link DecoratedPopupPanel}, it will wrap its
+ * contents tightly.
+ * </p>
+ * 
+ * <pre>
+ * .gwt-DecoratedPopupPanel .popupMiddleCenter {
+ *   height: 100%;
+ *   width: 100%;
+ * }
+ * </pre>
+ * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-DecoratedPopupPanel { the outside of the popup }</li>

@@ -34,6 +34,21 @@ import com.google.gwt.user.client.Element;
  * 8-bit transparencies (anti-aliasing and shadows) in ie6, which does not
  * support them normally.
  * </p>
+ * <h3>Setting the Size:</h3>
+ * <p>
+ * If you set the width or height of the {@link DecoratorPanel}, you need to
+ * set the height and width of the middleCenter cell to 100% so that the
+ * middleCenter cell takes up all of the available space. If you do not set the
+ * width and height of the {@link DecoratorPanel}, it will wrap its contents
+ * tightly.
+ * </p>
+ * 
+ * <pre>
+ * .gwt-DecoratorPanel .middleCenter {
+ *   height: 100%;
+ *   width: 100%;
+ * }
+ * </pre>
  * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>

@@ -26,6 +26,7 @@ public class NumberParse_en_Test extends GWTTestCase {
   /**
    * Must refer to a valid module that inherits from com.google.gwt.junit.JUnit.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_en";
   }

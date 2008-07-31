@@ -33,6 +33,11 @@ public class BootStrapPlatform {
    * so SWT's Browser object can use it.
    */
   public static void init() {
+    String home = System.getenv("HOME");
+    if (home == null || home.length() == 0) {
+      System.err.println("The HOME environment variable must be defined.");
+      System.exit(1);
+    }
     MozillaInstall mozInstall = MozillaInstall.find();
     if (mozInstall == null) {
       System.err.println("** Unable to find a usable Mozilla install **");

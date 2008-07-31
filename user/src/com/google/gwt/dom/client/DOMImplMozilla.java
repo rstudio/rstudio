@@ -30,7 +30,9 @@ class DOMImplMozilla extends DOMImplStandard {
       // getBoundingClientRect().left is off by the document element's
       // border-left-width.
       var style = $wnd.getComputedStyle($doc.documentElement, '')
-      return elem.getBoundingClientRect().left + parseInt(style.borderLeftWidth);
+      return elem.getBoundingClientRect().left +
+        parseInt(style.borderLeftWidth) +
+        $doc.body.scrollLeft;
     } else {
       // We cannot use DOMImpl here because offsetLeft/Top return erroneous
       // values when overflow is not visible.  We have to difference screenX
@@ -52,7 +54,9 @@ class DOMImplMozilla extends DOMImplStandard {
       // getBoundingClientRect().top is off by the document element's
       // border-top-width.
       var style = $wnd.getComputedStyle($doc.documentElement, '')
-      return elem.getBoundingClientRect().top + parseInt(style.borderTopWidth);
+      return elem.getBoundingClientRect().top +
+        parseInt(style.borderTopWidth) +
+        $doc.body.scrollTop;
     } else {
       // We cannot use DOMImpl here because offsetLeft/Top return erroneous
       // values when overflow is not visible.  We have to difference screenX

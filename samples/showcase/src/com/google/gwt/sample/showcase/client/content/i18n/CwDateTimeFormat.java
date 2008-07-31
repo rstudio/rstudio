@@ -156,7 +156,7 @@ public class CwDateTimeFormat extends ContentWidget {
     // Add a field to set the value
     valueBox = new TextBox();
     valueBox.setWidth("17em");
-    valueBox.setText("13 September 1999");
+    valueBox.setText("13 September 1999 12:34:56");
     valueBox.addKeyboardListener(new KeyboardListenerAdapter() {
       @Override
       public void onKeyUp(Widget sender, char keyCode, int modifiers) {

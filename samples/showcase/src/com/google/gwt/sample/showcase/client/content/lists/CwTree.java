@@ -41,15 +41,43 @@ public class CwTree extends ContentWidget {
   @ShowcaseSource
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
+    String[] cwTreeBeethovenWorkConcertos();
+
+    String[] cwTreeBeethovenWorkQuartets();
+
+    String[] cwTreeBeethovenWorkSonatas();
+
+    String[] cwTreeBeethovenWorkSymphonies();
+
+    String[] cwTreeBrahmsWorkConcertos();
+
+    String[] cwTreeBrahmsWorkQuartets();
+
+    String[] cwTreeBrahmsWorkSonatas();
+
+    String[] cwTreeBrahmsWorkSymphonies();
+
+    String[] cwTreeComposers();
+
+    String cwTreeConcertos();
+
     String cwTreeDescription();
 
     String cwTreeDynamicLabel();
 
     String cwTreeItem();
 
+    String[] cwTreeMozartWorkConcertos();
+
     String cwTreeName();
 
+    String cwTreeQuartets();
+
+    String cwTreeSonatas();
+
     String cwTreeStaticLabel();
+
+    String cwTreeSymphonies();
   }
 
   /**
@@ -123,6 +151,22 @@ public class CwTree extends ContentWidget {
   }
 
   /**
+   * Add a new section of music created by a specific composer.
+   * 
+   * @param parent the parent {@link TreeItem} where the section will be added
+   * @param label the label of the new section of music
+   * @param composerWorks an array of works created by the composer
+   */
+  @ShowcaseSource
+  private void addMusicSection(TreeItem parent, String label,
+      String[] composerWorks) {
+    TreeItem section = parent.addItem(label);
+    for (String work : composerWorks) {
+      section.addItem(work);
+    }
+  }
+
+  /**
    * Create a dynamic tree that will add a random number of children to each
    * node as it is clicked.
    * 
@@ -180,63 +224,39 @@ public class CwTree extends ContentWidget {
   @ShowcaseSource
   private Tree createStaticTree() {
     // Create the tree
+    String[] composers = constants.cwTreeComposers();
+    String concertosLabel = constants.cwTreeConcertos();
+    String quartetsLabel = constants.cwTreeQuartets();
+    String sonatasLabel = constants.cwTreeSonatas();
+    String symphoniesLabel = constants.cwTreeSymphonies();
     Tree staticTree = new Tree();
 
     // Add some of Beethoven's music
-    TreeItem c1 = staticTree.addItem("Beethoven");
-    TreeItem c1g1 = c1.addItem("Concertos");
-    c1g1.addItem("No. 1 - C");
-    c1g1.addItem("No. 2 - B-Flat Major");
-    c1g1.addItem("No. 3 - C Minor");
-    c1g1.addItem("No. 4 - G Major");
-    c1g1.addItem("No. 5 - E-Flat Major");
-    TreeItem c1g2 = c1.addItem("Quartets");
-    c1g2.addItem("Six String Quartets");
-    c1g2.addItem("Three String Quartets");
-    c1g2.addItem("Grosse Fugue for String Quartets");
-    TreeItem c1g3 = c1.addItem("Sonatas");
-    c1g3.addItem("Sonata in A Minor");
-    c1g3.addItem("Sonata in F Major");
-    TreeItem c1g4 = c1.addItem("Symphonies");
-    c1g4.addItem("No. 2 - D Major");
-    c1g4.addItem("No. 2 - D Major");
-    c1g4.addItem("No. 3 - E-Flat Major");
-    c1g4.addItem("No. 4 - B-Flat Major");
-    c1g4.addItem("No. 5 - C Minor");
-    c1g4.addItem("No. 6 - F Major");
-    c1g4.addItem("No. 7 - A Major");
-    c1g4.addItem("No. 8 - F Major");
-    c1g4.addItem("No. 9 - D Minor");
+    TreeItem beethovenItem = staticTree.addItem(composers[0]);
+    addMusicSection(beethovenItem, concertosLabel,
+        constants.cwTreeBeethovenWorkConcertos());
+    addMusicSection(beethovenItem, quartetsLabel,
+        constants.cwTreeBeethovenWorkQuartets());
+    addMusicSection(beethovenItem, sonatasLabel,
+        constants.cwTreeBeethovenWorkSonatas());
+    addMusicSection(beethovenItem, symphoniesLabel,
+        constants.cwTreeBeethovenWorkSymphonies());
 
     // Add some of Brahms's music
-    TreeItem c2 = staticTree.addItem("Brahms");
-    TreeItem c2g1 = c2.addItem("Concertos");
-    c2g1.addItem("Violin Concerto");
-    c2g1.addItem("Double Concerto - A Minor");
-    c2g1.addItem("Piano Concerto No. 1 - D Minor");
-    c2g1.addItem("Piano Concerto No. 2 - B-Flat Major");
-    TreeItem c2g2 = c2.addItem("Quartets");
-    c2g2.addItem("Piano Quartet No. 1 - G Minor");
-    c2g2.addItem("Piano Quartet No. 2 - A Major");
-    c2g2.addItem("Piano Quartet No. 3 - C Minor");
-    c2g2.addItem("String Quartet No. 3 - B-Flat Minor");
-    TreeItem c2g3 = c2.addItem("Sonatas");
-    c2g3.addItem("Two Sonatas for Clarinet - F Minor");
-    c2g3.addItem("Two Sonatas for Clarinet - E-Flat Major");
-    TreeItem c2g4 = c2.addItem("Symphonies");
-    c2g4.addItem("No. 1 - C Minor");
-    c2g4.addItem("No. 2 - D Minor");
-    c2g4.addItem("No. 3 - F Major");
-    c2g4.addItem("No. 4 - E Minor");
+    TreeItem brahmsItem = staticTree.addItem(composers[1]);
+    addMusicSection(brahmsItem, concertosLabel,
+        constants.cwTreeBrahmsWorkConcertos());
+    addMusicSection(brahmsItem, quartetsLabel,
+        constants.cwTreeBrahmsWorkQuartets());
+    addMusicSection(brahmsItem, sonatasLabel,
+        constants.cwTreeBrahmsWorkSonatas());
+    addMusicSection(brahmsItem, symphoniesLabel,
+        constants.cwTreeBrahmsWorkSymphonies());
 
     // Add some of Mozart's music
-    TreeItem c3 = staticTree.addItem("Mozart");
-    TreeItem c3g1 = c3.addItem("Concertos");
-    c3g1.addItem("Piano Concerto No. 12");
-    c3g1.addItem("Piano Concerto No. 17");
-    c3g1.addItem("Clarinet Concerto");
-    c3g1.addItem("Violin Concerto No. 5");
-    c3g1.addItem("Violin Concerto No. 4");
+    TreeItem mozartItem = staticTree.addItem(composers[2]);
+    addMusicSection(mozartItem, concertosLabel,
+        constants.cwTreeMozartWorkConcertos());
 
     // Return the tree
     return staticTree;

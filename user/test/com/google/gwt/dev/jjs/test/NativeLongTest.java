@@ -124,6 +124,11 @@ public class NativeLongTest extends GWTTestCase {
     assertTrue(15 == l);
   }
 
+  public void testInlinedIntInitializer() {
+    long sum = 0; // int, not long!
+    assertEquals("0", "" + (sum / INT_FOUR));
+  }
+
   public void testLogicalAnd() {
     assertEquals(LONG_1234, LONG_1234 & -LONG_ONE);
     assertEquals(0x12341234L, LONG_1234 & LONG_FFFFFFFF);

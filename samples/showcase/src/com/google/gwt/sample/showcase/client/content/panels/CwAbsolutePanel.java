@@ -177,6 +177,20 @@ public class CwAbsolutePanel extends ContentWidget {
   }
 
   /**
+   * Initialize the options panel after the {@link AbsolutePanel} has been
+   * attached to the page.
+   */
+  @ShowcaseSource
+  @Override
+  public void onInitializeComplete() {
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        updateSelectedItem();
+      }
+    });
+  }
+
+  /**
    * Create an options panel that allows users to select a widget and reposition
    * it.
    * 
@@ -215,7 +229,7 @@ public class CwAbsolutePanel extends ContentWidget {
     // Move the item as the user changes the value in the left and top boxes
     KeyboardListenerAdapter repositionListener = new KeyboardListenerAdapter() {
       @Override
-      public void onKeyPress(Widget sender, char keyCode, int modifiers) {
+      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
         repositionItem();
       }
     };
@@ -232,24 +246,19 @@ public class CwAbsolutePanel extends ContentWidget {
    */
   @ShowcaseSource
   private void repositionItem() {
-    // Use a DeferredCommand to allow the key to take effect in the browser
-    DeferredCommand.addCommand(new Command() {
-      public void execute() {
-        // Get the selected item to move
-        String name = listBox.getValue(listBox.getSelectedIndex());
-        Widget item = widgetMap.get(name);
+    // Get the selected item to move
+    String name = listBox.getValue(listBox.getSelectedIndex());
+    Widget item = widgetMap.get(name);
 
-        // Reposition the item
-        try {
-          int top = Integer.parseInt(topPosBox.getText());
-          int left = Integer.parseInt(leftPosBox.getText());
-          absolutePanel.setWidgetPosition(item, left, top);
-        } catch (NumberFormatException e) {
-          // Ignore invalid user input
-          return;
-        }
-      }
-    });
+    // Reposition the item
+    try {
+      int top = Integer.parseInt(topPosBox.getText());
+      int left = Integer.parseInt(leftPosBox.getText());
+      absolutePanel.setWidgetPosition(item, left, top);
+    } catch (NumberFormatException e) {
+      // Ignore invalid user input
+      return;
+    }
   }
 
   /**
@@ -260,7 +269,7 @@ public class CwAbsolutePanel extends ContentWidget {
   private void updateSelectedItem() {
     String name = listBox.getValue(listBox.getSelectedIndex());
     Widget item = widgetMap.get(name);
-    topPosBox.setText((absolutePanel.getWidgetTop(item) - 1) + "");
-    leftPosBox.setText((absolutePanel.getWidgetLeft(item) - 1) + "");
+    topPosBox.setText(absolutePanel.getWidgetTop(item) + "");
+    leftPosBox.setText(absolutePanel.getWidgetLeft(item) + "");
   }
 }

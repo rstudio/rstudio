@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,10 +16,7 @@
 package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.impl.HistoryImpl;
-
-import java.util.ArrayList;
 
 /**
  * This class allows you to interact with the browser's history stack. Each
@@ -39,10 +36,24 @@ import java.util.ArrayList;
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.HistoryExample}
  * </p>
+ * 
+ * <p>
+ * <h3>URL Encoding</h3>
+ * Any valid characters may be used in the history token and will survive
+ * round-trips through newItem to getToken()/onHistoryChanged(), but most will
+ * be encoded in the user-visible URL. The following US-ASCII characters are not
+ * encoded on any currently supported browser (but may be in the future due to
+ * future browser changes):
+ * <ul>
+ * <li>a-z
+ * <li>A-Z
+ * <li>0-9
+ * <li>;,/?:@&=+$-_.!~*()
+ * </ul>
+ * </p>
  */
 public class History {
 
-  private static ArrayList<HistoryListener> historyListeners = new ArrayList<HistoryListener>();
   private static HistoryImpl impl;
 
   static {
@@ -55,7 +66,8 @@ public class History {
       GWT.log(
           "Unable to initialize the history subsystem; did you "
               + "include the history frame in your host page? Try "
-              + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' style='position:absolute;width:0;height:0;border:0'>"
+              + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
+              + "style='position:absolute;width:0;height:0;border:0'>"
               + "</iframe>", null);
     }
   }
@@ -66,11 +78,13 @@ public class History {
    * @param listener the listener to be added
    */
   public static void addHistoryListener(HistoryListener listener) {
-    historyListeners.add(listener);
+    HistoryImpl.addHistoryListener(listener);
   }
 
   /**
    * Programmatic equivalent to the user pressing the browser's 'back' button.
+   * 
+   * Note that this does not work correctly on Safari 2.
    */
   public static native void back() /*-{
     $wnd.history.back();
@@ -94,29 +108,33 @@ public class History {
    * @return the initial token, or the empty string if none is present.
    */
   public static String getToken() {
-    return impl != null ? impl.getToken() : "";
+    return impl != null ? HistoryImpl.getToken() : "";
   }
 
   /**
    * Adds a new browser history entry. In hosted mode, the 'back' and 'forward'
    * actions are accessible via the standard Alt-Left and Alt-Right keystrokes.
-   * Calling this method will cause {@link #onHistoryChanged} to be called as
-   * well.
+   * Calling this method will cause {@link HistoryListener#onHistoryChanged} to
+   * be called as well.
    * 
    * @param historyToken the token to associate with the new history item
    */
   public static void newItem(String historyToken) {
-    if (impl != null) {
-      impl.newItem(historyToken);
-    }
+    newItem(historyToken, true);
   }
 
-  public static void onHistoryChanged(String historyToken) {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireHistoryChangedAndCatch(historyToken, handler);
-    } else {
-      fireHistoryChangedImpl(historyToken);
+  /**
+   * Adds a new browser history entry. In hosted mode, the 'back' and 'forward'
+   * actions are accessible via the standard Alt-Left and Alt-Right keystrokes.
+   * Calling this method will cause {@link HistoryListener#onHistoryChanged} to
+   * be called as well if and only if issueEvent is true.
+   * 
+   * @param historyToken the token to associate with the new history item
+   * @param issueEvent true if an onHistoryChanged event should be issued
+   */
+  public static void newItem(String historyToken, boolean issueEvent) {
+    if (impl != null) {
+      impl.newItem(historyToken, issueEvent);
     }
   }
 
@@ -126,21 +144,6 @@ public class History {
    * @param listener the listener to be removed
    */
   public static void removeHistoryListener(HistoryListener listener) {
-    historyListeners.remove(listener);
-  }
-
-  private static void fireHistoryChangedAndCatch(String historyToken,
-      UncaughtExceptionHandler handler) {
-    try {
-      fireHistoryChangedImpl(historyToken);
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireHistoryChangedImpl(String historyToken) {
-    for (HistoryListener listener : historyListeners) {
-      listener.onHistoryChanged(historyToken);
-    }
+    HistoryImpl.removeHistoryListener(listener);
   }
 }

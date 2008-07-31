@@ -28,7 +28,8 @@
    <body>
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
-		    <li><a href="#Release_Notes_Current">@GWT_VERSION@ (RC)</a></li>
+		    <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+		    <li><a href="#Release_Notes_1_5_0">1.5.0 (RC)</a></li>
 		    <li><a href="#Release_Notes_1_4_60">1.4.60</a></li>
 		    <li><a href="#Release_Notes_1_4_59">1.4.59 (RC2)</a></li>
 		    <li><a href="#Release_Notes_1_4_10">1.4.10 (RC)</a></li>
@@ -43,7 +44,48 @@
 
       <hr/>
       <a name="Release_Notes_Current"></a>
-      <h2>Release Notes for @GWT_VERSION@ (RC)</h2>
+      <h2>Release Notes for @GWT_VERSION@</h2>
+      <h3>Support for Standards Mode</h3>
+      <p>
+      GWT 1.5 adds significantly more support for standards mode applications, but some widgets (especially those with table based layouts) may not behave as expected.  The low level standards mode bugs (such as with <code>getAbsoluteLeft/Top()</code>) have been addressed, but some of the constructs that our widgets rely on do not work in standards mode.  For example, you cannot set the height and width of a widget relative to its parent if its parent is a table cell, and <code>StackPanel</code> takes up much more vertical space than it should in Internet Explorer.  All of our samples have been reverted back to quirks mode, and the <code>applicationCreator</code> defaults to quirks mode when creating a new GWT app.
+      </p>
+      <p>
+You can still use standards mode for your GWT app, but please be aware that you may notice some layout issues.  If you are switching an app from quirks mode to standards mode, your CSS styles might be applied differently, which could also affect your application.  We will continue to address standards mode support in future GWT releases.
+      </p>
+      <h3>Potentially breaking changes and fixes</h3>
+      <ul>
+        <li><code>DOM.eventGetClientX/Y()</code> now takes into account the margin and border of the body element</li>
+        <li>In hosted mode, all <code>DOM.eventGetXXX()</code> methods now assert that the requested attribute is reliable across all supported browsers.  This means that attempting to retrieve an attribute for an event that does not support that attribute will now throw an assertion error instead of returning a coerced value.  Most notably, the click event throws an assertion error if you attempt to get the mouse button that was clicked.</li>
+        <li>The return value of <code>DOM.eventGetXXX()</code> methods are now coerced to 0 instead of -1 in web mode.  In hosted mode, an assertion error will be thrown if the attribute is not defined for the given event, as described in the previous bullet.</li>
+        <li>Opera specific code has been upgraded to work with Opera 9.5, but may not work with older versions of Opera as we only support the most recent release.  Specifically, some widgets may not be able to receive focus.</li>
+        <li>Calls to <code>History.newItem()</code> now trigger an <code>onHistoryChanged()</code> event synchronously instead of asynchronously</li>
+      </ul>
+      <h3>General Enhancements</h3>
+      <ul>
+        <li>Added support for the <code>contextmenu</code> event, which allows users to detect and override the browser's default context menu</li>
+        <li>Improved performance of <code>NumberFormat</code></li>
+	<li>Added support for altering the number of decimals in a currency in <code>NumberFormat</code></li>
+        <li>Improved performance of Animations</li>
+        <li>Improved the appearance of the default GWT style themes</li>
+        <li>Improved the Showcase sample with more robust examples and more language translations</li>
+        <li><code>FormPanel</code> can now wrap an existing form and still submit it to a hidden iframe</li>
+      </ul>
+      <h3>Fixed Issues</h3>
+      <ul>
+        <li><code>DOM.getAbsoluteLeft/Top()</code> and <code>DOM.eventGetClientX/Y()</code> no longer log an exception to the console in Firefox 3</li>
+        <li>Fixed a memory leak in Internet Explorer</li>
+        <li><code>DOM.getAbsoluteLeft/Top()</code> now takes into account the margin and border of the target element in Safari 3</li>
+        <li>Fixed some bugs associated with history support</li>
+      </ul>
+      <p>
+        See the GWT issue tracker for
+        <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&amp;q=&quot;status:Fixed+OR+status:FixedNotReleased&quot;+milestone:1_5_RC2&amp;num=1000">
+        the complete list of bug fixes and enhancements</a> in this release.
+      </p>
+
+      <hr/>
+      <a name="Release_Notes_1_5_0"></a>
+      <h2>Release Notes for 1.5.0 (RC)</h2>
       <p>
       This release candidate is, in a word, huge. Rather than including all the details here, please see <a href="http://code.google.com/docreader/#p(google-web-toolkit-doc-1-5)t(Whatsnewin15)">What's New in GWT 1.5?</a> for full details. The main thing you'll want to know is that GWT 1.5 supports the Java 5 language features (generics, enumerated types, annotations, etc.). But check out the full notes, because there's a lot of great stuff!
       </p>

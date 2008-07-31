@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
+import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -577,6 +578,15 @@ public class Pruner {
         }
       }
       return false;
+    }
+
+    @Override
+    public boolean visit(JClassLiteral x, Context ctx) {
+      // Works just like JFieldRef to a static field.
+      JField field = x.getField();
+      rescue(field.getEnclosingType(), true, false);
+      rescue(field);
+      return true;
     }
 
     @Override

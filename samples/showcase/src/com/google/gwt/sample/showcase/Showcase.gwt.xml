@@ -1,30 +1,27 @@
 <module>
-	<!-- Inherit the core Web Toolkit stuff. -->
-	<inherits name="com.google.gwt.core.Core"/>
-	<inherits name='com.google.gwt.user.User'/>
-	<inherits name="com.google.gwt.i18n.I18N"/>
-      <inherits name="com.google.gwt.user.theme.standard.Standard"/>
-      <inherits name="com.google.gwt.user.theme.chrome.ChromeResources"/>
-      <inherits name="com.google.gwt.user.theme.dark.DarkResources"/>
+  <!-- Inherit the core Web Toolkit stuff. -->
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name='com.google.gwt.user.User'/>
+  <inherits name="com.google.gwt.i18n.I18N"/>
+  <inherits name="com.google.gwt.user.theme.standard.StandardResources"/>
+  <inherits name="com.google.gwt.user.theme.chrome.ChromeResources"/>
+  <inherits name="com.google.gwt.user.theme.dark.DarkResources"/>
 
-	<!-- Enable debug ID. -->
-	<inherits name="com.google.gwt.user.Debug"/>
-	<set-property name="gwt.enableDebugId" value="true"/> 
+  <!-- Enable debug ID. -->
+  <inherits name="com.google.gwt.user.Debug"/>
+  <set-property name="gwt.enableDebugId" value="true"/> 
 
-	<!-- Use a generator to create the source code -->
-	<generate-with class="com.google.gwt.sample.showcase.generator.ShowcaseGenerator">
-		<when-type-assignable class="com.google.gwt.sample.showcase.client.Showcase.GeneratorInfo" />
-	</generate-with>
+  <!-- Use a generator to create the source code -->
+  <generate-with class="com.google.gwt.sample.showcase.generator.ShowcaseGenerator">
+    <when-type-assignable class="com.google.gwt.sample.showcase.client.Showcase.GeneratorInfo" />
+  </generate-with>
 
-	<!-- Specify the app entry point class. -->
-	<entry-point class='com.google.gwt.sample.showcase.client.Showcase'/>
+  <!-- Specify the app entry point class. -->
+  <entry-point class='com.google.gwt.sample.showcase.client.Showcase'/>
 
-	<!-- Internationalization support. -->
-	<extend-property name="locale" values="en"/>
-	<extend-property name="locale" values="ar"/>
-	<extend-property name="locale" values="fr"/>
-	<extend-property name="locale" values="zh"/>
-
-	<!-- Include style sheets. -->
-	<stylesheet src="standard/Showcase.css"/>
+  <!-- Internationalization support. -->
+  <extend-property name="locale" values="en"/>
+  <extend-property name="locale" values="ar"/>
+  <extend-property name="locale" values="fr"/>
+  <extend-property name="locale" values="zh"/>
 </module>

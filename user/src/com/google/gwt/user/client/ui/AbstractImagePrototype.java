@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,8 @@
  * the License.
  */
 package com.google.gwt.user.client.ui;
+
+import com.google.gwt.dom.client.Element;
 
 /**
  * An opaque representation of a particular image such that the image can be
@@ -34,6 +36,11 @@ package com.google.gwt.user.client.ui;
  * </p>
  * 
  * <p>
+ * This class also provide methods for working with raw elements, using
+ * {@link #createElement()} and {@link #applyTo(ImagePrototypeElement)}.
+ * </p>
+ * 
+ * <p>
  * This class is also a useful way to encapsulate complex HTML that represents
  * an image without actually instantiating <code>Image</code> objects. When
  * constructing large HTML fragments, especially those that contain many images,
@@ -41,6 +48,15 @@ package com.google.gwt.user.client.ui;
  * </p>
  */
 public abstract class AbstractImagePrototype {
+
+  /**
+   * This corresponds to the top Element of the DOM structure created by
+   * {@link #createElement()}.
+   */
+  public static class ImagePrototypeElement extends Element {
+    protected ImagePrototypeElement() {
+    };
+  }
 
   /**
    * Transforms an existing {@link Image} into the image represented by this
@@ -51,10 +67,38 @@ public abstract class AbstractImagePrototype {
   public abstract void applyTo(Image image);
 
   /**
+   * Transforms an existing {@link ImagePrototypeElement} into the image
+   * represented by this prototype.
+   * 
+   * @param imageElement an <code>ImagePrototypeElement</code> created by
+   *          {@link #createElement()}
+   */
+  public void applyTo(ImagePrototypeElement imageElement) {
+    // Because this is a new method on an existing base class, we need to throw
+    // UnsupportedOperationException to avoid static errors.
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Creates a new {@link Element} based on the image represented by this
+   * prototype. The DOM structure may not necessarily a simple
+   * <code>&lt;img&gt;</code> element. It may be a more complex structure that
+   * should be treated opaquely.
+   * 
+   * @return the <code>ImagePrototypeElement</code> corresponding to the image
+   *         represented by this prototype
+   */
+  public ImagePrototypeElement createElement() {
+    // Because this is a new method on an existing base class, we need to throw
+    // UnsupportedOperationException to avoid static errors.
+    throw new UnsupportedOperationException();
+  }
+
+  /**
    * Creates a new {@link Image} instance based on the image represented by this
    * prototype.
    * 
-   * @return a new <code>Image</code> based on this prototype
+   * @return a new {@link Image} based on this prototype
    */
   public abstract Image createImage();
 

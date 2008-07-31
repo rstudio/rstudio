@@ -33,6 +33,14 @@ public class WindowImpl {
    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientWidth;
   }-*/;
 
+  public native String getHash() /*-{
+    return $wnd.location.hash;
+  }-*/;
+
+  public native String getQueryString() /*-{
+    return $wnd.location.search;
+  }-*/;
+  
   public native int getScrollLeft() /*-{
    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
   }-*/;

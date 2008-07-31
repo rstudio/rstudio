@@ -18,6 +18,9 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
+import com.google.gwt.user.client.Timer;
+
+import java.util.ArrayList;
 
 /**
  * Tests for the history system.
@@ -26,53 +29,48 @@ import com.google.gwt.user.client.HistoryListener;
  */
 public class HistoryTest extends GWTTestCase {
 
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.user.User";
-  }
-
   private static native String getCurrentLocationHash() /*-{
     var href = $wnd.location.href;
-    
+
     splitted = href.split("#");
     if (splitted.length != 2) {
       return null;
     }
-    
+
     hashPortion = splitted[1];
-    
+
     return hashPortion;
   }-*/;
-  
-  public void testTokenEscaping() {
-    final String shouldBeEncoded = "% ^[]|\"<>{}\\`";
-    final String shouldBeEncodedAs = "%25%20%5E%5B%5D%7C%22%3C%3E%7B%7D%5C%60";
-    
-    delayTestFinish(5000);
-    History.addHistoryListener(new HistoryListener() {
-      public void onHistoryChanged(String token) {
-        assertEquals(shouldBeEncodedAs, getCurrentLocationHash());
-        assertEquals(shouldBeEncoded, token);
-        finishTest();
-        History.removeHistoryListener(this);
+
+  /*
+   * Copied from HistoryImplSafari.
+   */
+  private static native boolean isSafari2() /*-{
+    var exp = / AppleWebKit\/([\d]+)/;
+    var result = exp.exec(navigator.userAgent);
+    if (result) {
+      // The standard history implementation works fine on WebKit >= 522
+      // (Safari 3 beta).
+      if (parseInt(result[1]) >= 522) {
+        return false;
       }
-    });
-    History.newItem(shouldBeEncoded);
-  }
+    }
   
-  public void testTokenNonescaping() {
-    final String shouldNotChange = "abc;,/?:@&=+$-_.!~*'()ABC123foo";
-    
-    delayTestFinish(5000);
-    History.addHistoryListener(new HistoryListener() {
-      public void onHistoryChanged(String token) {
-        assertEquals(shouldNotChange, getCurrentLocationHash());
-        assertEquals(shouldNotChange, token);
-        finishTest();
-        History.removeHistoryListener(this);
-      }
-    });
-    History.newItem(shouldNotChange);
+    // The standard history implementation works just fine on the iPhone, which
+    // unfortunately reports itself as WebKit/420+.
+    if (navigator.userAgent.indexOf('iPhone') != -1) {
+      return false;
+    }
+  
+    return true;
+  }-*/;
+
+  private HistoryListener historyListener;
+  private Timer timer;
+
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.user.User";
   }
 
   /* Tests against issue #572: Double unescaping of history tokens. */
@@ -80,14 +78,64 @@ public class HistoryTest extends GWTTestCase {
     final String escToken = "%24%24%24";
 
     delayTestFinish(5000);
-    History.addHistoryListener(new HistoryListener() {
+    addHistoryListenerImpl(new HistoryListener() {
       public void onHistoryChanged(String token) {
         assertEquals(escToken, token);
         finishTest();
-        History.removeHistoryListener(this);
       }
     });
     History.newItem(escToken);
+  }
+
+  /*
+   * Tests against issue #879: Ensure that empty history tokens do not add
+   * additional characters after the '#' symbol in the URL.
+   */
+  public void testEmptyHistoryTokens() {
+    delayTestFinish(5000);
+
+    addHistoryListenerImpl(new HistoryListener() {
+      public void onHistoryChanged(String historyToken) {
+
+        if (historyToken == null) {
+          fail("historyToken should not be null");
+        }
+
+        if (historyToken.equals("foobar")) {
+          History.newItem("");
+        } else {
+          assertEquals(0, historyToken.length());
+          finishTest();
+        }
+      }
+    });
+
+    // We must first start out with a non-blank history token. Adding a blank
+    // history token in the initial state will not cause an onHistoryChanged
+    // event to fire.
+    History.newItem("foobar");
+  }
+
+  /**
+   * Verify that no events are issued via newItem if there were not reqeuested.
+   */
+  public void testNoEvents() {
+    addHistoryListenerImpl(new HistoryListener() {
+      {
+        timer = new Timer() {
+          public void run() {
+            finishTest();
+          }
+        };
+        timer.schedule(500);
+      }
+
+      public void onHistoryChanged(String historyToken) {
+        fail("onHistoryChanged should not have been called");
+      }
+    });
+    delayTestFinish(5000);
+    History.newItem("testNoEvents", false);
   }
 
   /*
@@ -95,8 +143,12 @@ public class HistoryTest extends GWTTestCase {
    * encoded/decoded correctly, and that programmatic 'back' works.
    */
   public void testHistory() {
+    if (isSafari2()) {
+      // History.back() is broken on Safari2, so we skip this test.
+      return;
+    }
     delayTestFinish(5000);
-    History.addHistoryListener(new HistoryListener() {
+    addHistoryListenerImpl(new HistoryListener() {
       private int state = 0;
 
       public void onHistoryChanged(String historyToken) {
@@ -123,10 +175,9 @@ public class HistoryTest extends GWTTestCase {
 
           case 2: {
             if (!historyToken.equals("foo bar")) {
-              fail("Expecting token 'foo bar', but got: " + historyToken);
+              fail("Expecting token 'foo bar' after back, but got: " + historyToken);
             }
             finishTest();
-            History.removeHistoryListener(this);
             break;
           }
         }
@@ -136,58 +187,110 @@ public class HistoryTest extends GWTTestCase {
     History.newItem("foo bar");
   }
 
-  /*
-   * Tests against issue #879: Ensure that empty history tokens do not add
-   * additional characters after the '#' symbol in the URL.
+  /**
+   * Verify that {@link HistoryListener#onHistoryChanged(String)} is only
+   * called once per {@link History#newItem(String)}. 
    */
-  public void testEmptyHistoryTokens() {
-    delayTestFinish(5000);
+  public void testHistoryChangedCount() {
+    timer = new Timer() {
+      private int count = 0;
 
-    History.addHistoryListener(new HistoryListener() {
-      public void onHistoryChanged(String historyToken) {
-
-        if (historyToken == null) {
-          fail("historyToken should not be null");
-        }
-
-        if (historyToken.equals("foobar")) {
-          History.newItem("");
+      public void run() {
+        if (count++ == 0) {
+          // verify that duplicates don't issue another event
+          History.newItem("testHistoryChangedCount");
+          timer.schedule(500);
         } else {
-          assertEquals(0, historyToken.length());
           finishTest();
-          History.removeHistoryListener(this);
         }
       }
-    });
+    };
+    addHistoryListenerImpl(new HistoryListener() {
+      final ArrayList<Object> counter = new ArrayList<Object>();
 
-    // We must first start out with a non-blank history token. Adding a blank
-    // history token in the initial state will not cause an onHistoryChanged
-    // event to fire.
-    History.newItem("foobar");
+      public void onHistoryChanged(String historyToken) {
+        counter.add(null);
+        if (counter.size() != 1) {
+          fail("onHistoryChanged called multiple times");
+        }
+        // wait 500ms to see if we get called multiple times
+        timer.schedule(500);
+      }
+    });
+    delayTestFinish(5000);
+    History.newItem("testHistoryChangedCount");
+  }
+
+  public void testTokenEscaping() {
+    final String shouldBeEncoded = "% ^[]|\"<>{}\\";
+    final String shouldBeEncodedAs = "%25%20%5E%5B%5D%7C%22%3C%3E%7B%7D%5C";
+
+    delayTestFinish(5000);
+    addHistoryListenerImpl(new HistoryListener() {
+      public void onHistoryChanged(String token) {
+        if (!isSafari2()) {
+          // Safari2 does not update the URL, so we don't verify it
+          assertEquals(shouldBeEncodedAs, getCurrentLocationHash());
+        }
+        assertEquals(shouldBeEncoded, token);
+        finishTest();
+      }
+    });
+    History.newItem(shouldBeEncoded);
+  }
+
+  public void testTokenNonescaping() {
+    final String shouldNotChange = "abc;,/?:@&=+$-_.!~*()ABC123foo";
+
+    delayTestFinish(5000);
+    addHistoryListenerImpl(new HistoryListener() {
+      public void onHistoryChanged(String token) {
+        if (!isSafari2()) {
+          // Safari2 does not update the URL, so we don't verify it
+          assertEquals(shouldNotChange, getCurrentLocationHash());
+        }
+        assertEquals(shouldNotChange, token);
+        finishTest();
+      }
+    });
+    History.newItem(shouldNotChange);
   }
 
   /*
    * Test against issue #2500. IE6 has a bug that causes it to not report any
-   * part of the current fragment after a '?' when read from location.hash;
-   * make sure that on affected browsers, we're not relying on this.
+   * part of the current fragment after a '?' when read from location.hash; make
+   * sure that on affected browsers, we're not relying on this.
    */
   public void testTokenWithQuestionmark() {
     delayTestFinish(5000);
     final String token = "foo?bar";
 
-    History.addHistoryListener(new HistoryListener() {
+    addHistoryListenerImpl(new HistoryListener() {
       public void onHistoryChanged(String historyToken) {
-
         if (historyToken == null) {
           fail("historyToken should not be null");
         }
-
         assertEquals(token, historyToken);
-        History.removeHistoryListener(this);
         finishTest();
       }
     });
-
     History.newItem(token);
   }
+
+  @Override
+  protected void gwtTearDown() throws Exception {
+    if (historyListener != null) {
+      History.removeHistoryListener(historyListener);
+      historyListener = null;
+    }
+    if (timer != null) {
+      timer.cancel();
+      timer = null;
+    }
+  }
+
+  private void addHistoryListenerImpl(HistoryListener historyListener) {
+    this.historyListener = historyListener;
+    History.addHistoryListener(historyListener);
+  }  
 }

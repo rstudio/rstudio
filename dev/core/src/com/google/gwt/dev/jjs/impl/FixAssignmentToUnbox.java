@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -34,6 +35,13 @@ import com.google.gwt.dev.jjs.ast.JProgram;
  * simple assignment expression. Second, this visitor replaces an assignment to
  * an unboxing method (<code>unbox(x) = unbox(x) + 1</code>) with an
  * assignment to the underlying box (<code>x = box(unbox(x) + 1)</code>).
+ * 
+ * <p>
+ * Update: GenerateJavaAST can also leave invalid AST structures of the form
+ * <code>(Foo) x = foo</code> due to the way generics are handled. This can
+ * happen when assigning into a field of a generic type. We'll go ahead and
+ * resolve that case here as well.
+ * </p>
  */
 public class FixAssignmentToUnbox extends JModVisitor {
   /**
@@ -101,20 +109,30 @@ public class FixAssignmentToUnbox extends JModVisitor {
 
   @Override
   public void endVisit(JBinaryOperation x, Context ctx) {
-    // unbox(x) = foo -> x = box(foo)
-
     if (x.getOp() != JBinaryOperator.ASG) {
       return;
     }
 
-    JExpression boxed = autoboxUtils.undoUnbox(x.getLhs());
-    if (boxed == null) {
+    JExpression lhs = x.getLhs();
+    JExpression boxed = autoboxUtils.undoUnbox(lhs);
+    if (boxed != null) {
+      // Assignment-to-unbox, e.g.
+      // unbox(x) = foo -> x = box(foo)
+      JClassType boxedType = (JClassType) boxed.getType();
+
+      ctx.replaceMe(new JBinaryOperation(program, x.getSourceInfo(), boxedType,
+          JBinaryOperator.ASG, boxed, autoboxUtils.box(x.getRhs(), boxedType)));
       return;
     }
 
-    JClassType boxedType = (JClassType) boxed.getType();
-
-    ctx.replaceMe(new JBinaryOperation(program, x.getSourceInfo(), boxedType,
-        JBinaryOperator.ASG, boxed, autoboxUtils.box(x.getRhs(), boxedType)));
+    if (lhs instanceof JCastOperation) {
+      // Assignment-to-cast-operation, e.g.
+      // (Foo) x = foo -> x = foo
+      JCastOperation cast = (JCastOperation) lhs;
+      JBinaryOperation newAsg = new JBinaryOperation(program,
+          x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, cast.getExpr(),
+          x.getRhs());
+      ctx.replaceMe(newAsg);
+    }
   }
 }

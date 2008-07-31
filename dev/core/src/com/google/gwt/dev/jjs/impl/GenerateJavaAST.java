@@ -791,43 +791,40 @@ public class GenerateJavaAST {
     JExpression processExpression(ArrayAllocationExpression x) {
       SourceInfo info = makeSourceInfo(x);
       JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
-      JNewArray newArray = new JNewArray(program, info, type);
 
       if (x.initializer != null) {
-        newArray.initializers = new ArrayList<JExpression>();
+        List<JExpression> initializers = new ArrayList<JExpression>();
         if (x.initializer.expressions != null) {
           for (Expression expression : x.initializer.expressions) {
-            newArray.initializers.add(dispProcessExpression(expression));
+            initializers.add(dispProcessExpression(expression));
           }
         }
+        return JNewArray.createInitializers(program, info, type, initializers);
       } else {
-        newArray.dims = new ArrayList<JExpression>();
+        List<JExpression> dims = new ArrayList<JExpression>();
         for (Expression dimension : x.dimensions) {
           // can be null if index expression was empty
           if (dimension == null) {
-            newArray.dims.add(program.getLiteralAbsentArrayDimension());
+            dims.add(program.getLiteralAbsentArrayDimension());
           } else {
-            newArray.dims.add(dispProcessExpression(dimension));
+            dims.add(dispProcessExpression(dimension));
           }
         }
+        return JNewArray.createDims(program, info, type, dims);
       }
-
-      return newArray;
     }
 
     JExpression processExpression(ArrayInitializer x) {
       SourceInfo info = makeSourceInfo(x);
       JArrayType type = (JArrayType) typeMap.get(x.resolvedType);
-      JNewArray newArray = new JNewArray(program, info, type);
 
-      newArray.initializers = new ArrayList<JExpression>();
+      List<JExpression> initializers = new ArrayList<JExpression>();
       if (x.expressions != null) {
         for (Expression expression : x.expressions) {
-          newArray.initializers.add(dispProcessExpression(expression));
+          initializers.add(dispProcessExpression(expression));
         }
       }
-
-      return newArray;
+      return JNewArray.createInitializers(program, info, type, initializers);
     }
 
     JExpression processExpression(ArrayReference x) {
@@ -1028,6 +1025,10 @@ public class GenerateJavaAST {
       JExpression fieldRef = new JFieldRef(program, info, instance, field,
           currentClass);
 
+      /*
+       * Note, this may result in an invalid AST due to an LHS cast operation.
+       * We fix this up in FixAssignmentToUnbox.
+       */
       return maybeCast(type, fieldRef);
     }
 
@@ -1923,11 +1924,12 @@ public class GenerateJavaAST {
           }
         }
 
-        JNewArray newArray = new JNewArray(program, call.getSourceInfo(), type);
-        newArray.initializers = new ArrayList<JExpression>();
+        List<JExpression> initializers = new ArrayList<JExpression>();
         for (int i = n; i < args.length; ++i) {
-          newArray.initializers.add(dispProcessExpression(args[i]));
+          initializers.add(dispProcessExpression(args[i]));
         }
+        JNewArray newArray = JNewArray.createInitializers(program,
+            call.getSourceInfo(), type, initializers);
         callArgs.add(newArray);
       }
     }
@@ -2444,13 +2446,13 @@ public class GenerateJavaAST {
 
     private void writeEnumValuesMethod(JEnumType type) {
       // return new E[]{A,B,C};
-      JNewArray newExpr = new JNewArray(program, null, program.getTypeArray(
-          type, 1));
-      newExpr.initializers = new ArrayList<JExpression>();
+      List<JExpression> initializers = new ArrayList<JExpression>();
       for (JEnumField field : type.enumList) {
         JFieldRef fieldRef = new JFieldRef(program, null, null, field, type);
-        newExpr.initializers.add(fieldRef);
+        initializers.add(fieldRef);
       }
+      JNewArray newExpr = JNewArray.createInitializers(program, null,
+          program.getTypeArray(type, 1), initializers);
       currentMethodBody.getStatements().add(
           new JReturnStatement(program, null, newExpr));
     }

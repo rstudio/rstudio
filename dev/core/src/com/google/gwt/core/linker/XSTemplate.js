@@ -113,9 +113,19 @@ function __MODULE_FUNC__() {
       thisScript = thisScript.previousSibling;
     }
 
+    // Gets the part of a url up to and including the 'path' portion.
     function getDirectoryOfFile(path) {
-      var eq = path.lastIndexOf('/');
-      return (eq >= 0) ? path.substring(0, eq + 1) : '';
+      // Truncate starting at the first '?' or '#', whichever comes first. 
+      var hashIndex = path.lastIndexOf('#');
+      if (hashIndex == -1) {
+        hashIndex = path.length;
+      }
+      var queryIndex = path.indexOf('?');
+      if (queryIndex == -1) {
+        queryIndex = path.length;
+      }
+      var slashIndex = path.lastIndexOf('/', Math.min(queryIndex, hashIndex));
+      return (slashIndex >= 0) ? path.substring(0, slashIndex + 1) : '';
     };
 
     if (thisScript && thisScript.src) {
@@ -132,10 +142,7 @@ function __MODULE_FUNC__() {
         base = baseElements[baseElements.length - 1].href;
       } else {
         // No base tag; the base must be the same as the document location.
-        var loc = $doc.location;
-        var href = loc.href;
-        base = getDirectoryOfFile(href.substr(0, href.length
-            - loc.hash.length));
+        base = getDirectoryOfFile($doc.location.href);
       }
     } else if ((base.match(/^\w+:\/\//))) {
       // If the URL is obviously absolute, do nothing.

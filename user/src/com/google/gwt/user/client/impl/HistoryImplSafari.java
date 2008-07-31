@@ -51,35 +51,35 @@ class HistoryImplSafari extends HistoryImplStandard {
     if (isOldSafari) {
       initImpl();
       return true;
+    } else {
+      return super.init();
     }
-
-    return super.init();
   }
 
   @Override
-  public void newItem(String historyToken) {
+  protected void nativeUpdate(String historyToken) {
     if (isOldSafari) {
-      newItemImpl(historyToken);
-      return;
+      nativeUpdateImpl(historyToken);
+    } else {
+      super.nativeUpdate(historyToken);
     }
-
-    super.newItem(historyToken);
   }
 
   private native void initImpl() /*-{
-    $wnd.__gwt_historyToken = '';
+    var token = '';
 
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
     if (hash.length > 0) {
-      $wnd.__gwt_historyToken =
-        this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
+      token = this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
     }
 
-    @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)($wnd.__gwt_historyToken);
+    @com.google.gwt.user.client.impl.HistoryImpl::setToken(Ljava/lang/String;)(token);
+
+    @com.google.gwt.user.client.impl.HistoryImpl::fireHistoryChangedImpl(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
 
-  private native void newItemImpl(String historyToken) /*-{
+  private native void nativeUpdateImpl(String historyToken) /*-{
     // Use a bizarre meta refresh trick to update the url's hash, without
     // creating a history entry.
     var meta = $doc.createElement('meta');
@@ -92,9 +92,5 @@ class HistoryImplSafari extends HistoryImplStandard {
     window.setTimeout(function() {
       $doc.body.removeChild(meta);
     }, 1);
-
-    // Update the global history token and fire the history event.
-    $wnd.__gwt_historyToken = historyToken;
-    @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,8 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Implements the clipped image as a IMG inside a custom tag because we can't
@@ -46,23 +45,23 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
   public void adjust(Element clipper, String url, int left, int top, int width,
       int height) {
 
-    DOM.setStyleAttribute(clipper, "width", width + "px");
-    DOM.setStyleAttribute(clipper, "height", height + "px");
+    clipper.getStyle().setPropertyPx("width", width);
+    clipper.getStyle().setPropertyPx("height", height);
 
     // Update the nested image's url.
-    Element img = DOM.getFirstChild(clipper);
-    DOM.setStyleAttribute(img, "filter",
+    Element img = clipper.getFirstChildElement();
+    img.getStyle().setProperty("filter",
         "progid:DXImageTransform.Microsoft.AlphaImageLoader(src='" + url
             + "',sizingMethod='crop')");
-    DOM.setStyleAttribute(img, "marginLeft", -left + "px");
-    DOM.setStyleAttribute(img, "marginTop", -top + "px");
+    img.getStyle().setPropertyPx("marginLeft", -left);
+    img.getStyle().setPropertyPx("marginTop", -top);
 
     // AlphaImageLoader requires that we size the image explicitly.
     // It really only needs to be enough to show the revealed portion.
     int imgWidth = left + width;
     int imgHeight = top + height;
-    DOM.setElementPropertyInt(img, "width", imgWidth);
-    DOM.setElementPropertyInt(img, "height", imgHeight);
+    img.setPropertyInt("width", imgWidth);
+    img.setPropertyInt("height", imgHeight);
   }
 
   @Override

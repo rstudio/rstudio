@@ -14,8 +14,12 @@
  * so we need to use the AlphaImageLoader in IE6 only.
  */
 
-body, table td, a, div, .p, pre {
-  font-family: Arial, sans-serif;
+body, table td, select {
+  font-family: Arial Unicode MS, Arial, sans-serif;
+  font-size: small;
+}
+pre {
+  font-family: "courier new", courier;
   font-size: small;
 }
 body {
@@ -305,6 +309,7 @@ html>body .gwt-DialogBox .dialogBottomRight {
 }
 .gwt-MenuBar-horizontal .gwt-MenuItemSeparator .menuSeparatorInner {
   width: 1px;
+  height: 1px;
   background: white; 
 }
 .gwt-MenuBar-vertical {
@@ -436,7 +441,7 @@ html>body .gwt-MenuBarPopup .menuPopupBottomRight {
 }
 .gwt-DecoratedPopupPanel .popupMiddleCenter {
   padding: 3px;
-  background: white;
+  background: #d0e4f6;
 }
 .gwt-DecoratedPopupPanel .popupTopCenter {
   background: url(images/hborder.png) repeat-x;

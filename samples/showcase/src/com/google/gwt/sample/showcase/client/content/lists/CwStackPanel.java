@@ -23,11 +23,12 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DecoratedStackPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -47,6 +48,8 @@ public class CwStackPanel extends ContentWidget {
   public static interface CwConstants extends Constants,
       ContentWidget.CwConstants {
     String[] cwStackPanelContacts();
+
+    String[] cwStackPanelContactsEmails();
 
     String cwStackPanelContactsHeader();
 
@@ -73,6 +76,8 @@ public class CwStackPanel extends ContentWidget {
   @ShowcaseSource
   public interface Images extends TreeImages {
     AbstractImagePrototype contactsgroup();
+
+    AbstractImagePrototype defaultContact();
 
     AbstractImagePrototype drafts();
 
@@ -139,7 +144,95 @@ public class CwStackPanel extends ContentWidget {
     DecoratedStackPanel stackPanel = new DecoratedStackPanel();
     stackPanel.setWidth("200px");
 
-    // Add links to Mail folders
+    // Add the Mail folders
+    String mailHeader = getHeaderString(constants.cwStackPanelMailHeader(),
+        images.mailgroup());
+    stackPanel.add(createMailItem(images), mailHeader, true);
+
+    // Add a list of filters
+    String filtersHeader = getHeaderString(
+        constants.cwStackPanelFiltersHeader(), images.filtersgroup());
+    stackPanel.add(createFiltersItem(), filtersHeader, true);
+
+    // Add a list of contacts
+    String contactsHeader = getHeaderString(
+        constants.cwStackPanelContactsHeader(), images.contactsgroup());
+    stackPanel.add(createContactsItem(images), contactsHeader, true);
+
+    // Return the stack panel
+    stackPanel.ensureDebugId("cwStackPanel");
+    return stackPanel;
+  }
+
+  /**
+   * Create the list of Contacts.
+   * 
+   * @param images the {@link Images} used in the Contacts
+   * @return the list of contacts
+   */
+  @ShowcaseSource
+  private VerticalPanel createContactsItem(Images images) {
+    // Create a popup to show the contact info when a contact is clicked
+    HorizontalPanel contactPopupContainer = new HorizontalPanel();
+    contactPopupContainer.setSpacing(5);
+    contactPopupContainer.add(images.defaultContact().createImage());
+    final HTML contactInfo = new HTML();
+    contactPopupContainer.add(contactInfo);
+    final PopupPanel contactPopup = new PopupPanel(true, false);
+    contactPopup.setWidget(contactPopupContainer);
+
+    // Create the list of contacts
+    VerticalPanel contactsPanel = new VerticalPanel();
+    contactsPanel.setSpacing(4);
+    String[] contactNames = constants.cwStackPanelContacts();
+    String[] contactEmails = constants.cwStackPanelContactsEmails();
+    for (int i = 0; i < contactNames.length; i++) {
+      final String contactName = contactNames[i];
+      final String contactEmail = contactEmails[i];
+      final HTML contactLink = new HTML("<a href=\"javascript:undefined;\">"
+          + contactName + "</a>");
+      contactsPanel.add(contactLink);
+
+      // Open the contact info popup when the user clicks a contact
+      contactLink.addClickListener(new ClickListener() {
+        public void onClick(Widget sender) {
+          // Set the info about the contact
+          contactInfo.setHTML(contactName + "<br><i>" + contactEmail + "</i>");
+
+          // Show the popup of contact info
+          int left = contactLink.getAbsoluteLeft() + 14;
+          int top = contactLink.getAbsoluteTop() + 14;
+          contactPopup.setPopupPosition(left, top);
+          contactPopup.show();
+        }
+      });
+    }
+    return contactsPanel;
+  }
+
+  /**
+   * Create the list of filters for the Filters item.
+   * 
+   * @return the list of filters
+   */
+  @ShowcaseSource
+  private VerticalPanel createFiltersItem() {
+    VerticalPanel filtersPanel = new VerticalPanel();
+    filtersPanel.setSpacing(4);
+    for (String filter : constants.cwStackPanelFilters()) {
+      filtersPanel.add(new CheckBox(filter));
+    }
+    return filtersPanel;
+  }
+
+  /**
+   * Create the {@link Tree} of Mail options.
+   * 
+   * @param images the {@link Images} used in the Mail options
+   * @return the {@link Tree} of mail options
+   */
+  @ShowcaseSource
+  private Tree createMailItem(Images images) {
     Tree mailPanel = new Tree(images);
     TreeItem mailPanelRoot = mailPanel.addItem("foo@example.com");
     String[] mailFolders = constants.cwStackPanelMailFolders();
@@ -149,33 +242,7 @@ public class CwStackPanel extends ContentWidget {
     mailPanelRoot.addItem(images.sent().getHTML() + " " + mailFolders[3]);
     mailPanelRoot.addItem(images.trash().getHTML() + " " + mailFolders[4]);
     mailPanelRoot.setState(true);
-    String mailHeader = getHeaderString(constants.cwStackPanelMailHeader(),
-        images.mailgroup());
-    stackPanel.add(mailPanel, mailHeader, true);
-
-    // Add a list of filters
-    VerticalPanel filtersPanel = new VerticalPanel();
-    filtersPanel.setSpacing(4);
-    for (String filter : constants.cwStackPanelFilters()) {
-      filtersPanel.add(new CheckBox(filter));
-    }
-    String filtersHeader = getHeaderString(
-        constants.cwStackPanelFiltersHeader(), images.filtersgroup());
-    stackPanel.add(filtersPanel, filtersHeader, true);
-
-    // Add links to each contact
-    VerticalPanel contactsPanel = new VerticalPanel();
-    contactsPanel.setSpacing(4);
-    for (String contact : constants.cwStackPanelContacts()) {
-      contactsPanel.add(new Label(contact));
-    }
-    String contactsHeader = getHeaderString(
-        constants.cwStackPanelContactsHeader(), images.contactsgroup());
-    stackPanel.add(contactsPanel, contactsHeader, true);
-
-    // Return the stack panel
-    stackPanel.ensureDebugId("cwStackPanel");
-    return stackPanel;
+    return mailPanel;
   }
 
   /**
@@ -198,6 +265,6 @@ public class CwStackPanel extends ContentWidget {
     hPanel.add(headerText);
 
     // Return the HTML string for the panel
-    return hPanel.toString();
+    return hPanel.getElement().getString();
   }
 }

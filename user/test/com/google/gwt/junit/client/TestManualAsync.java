@@ -15,30 +15,29 @@
  */
 package com.google.gwt.junit.client;
 
+import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_SETUP;
+import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_TORNDOWN;
+
 import com.google.gwt.user.client.Timer;
 
 /**
- * This test must be run manually to inspect for correct results. Five of these
- * tests are designed to fail in specific ways, the other five should succeed.
- * The name of each test method indicates how it should behave.
+ * This test must be run manually to inspect for correct results. Many of these
+ * tests are designed to fail in specific ways, the rest should succeed. The
+ * name of each test method indicates how it should behave.
  */
-public class TestManualAsync extends GWTTestCase {
-
-  public String getModuleName() {
-    return "com.google.gwt.junit.JUnit";
-  }
+public class TestManualAsync extends GWTTestCaseTest {
 
   /**
-   * Fails normally
+   * Fails normally.
    */
   public void testDelayFail() {
     delayTestFinish(100);
-    fail();
+    fail("Expected failure");
     finishTest();
   }
 
   /**
-   * Completes normally
+   * Completes normally.
    */
   public void testDelayNormal() {
     delayTestFinish(100);
@@ -46,32 +45,32 @@ public class TestManualAsync extends GWTTestCase {
   }
 
   /**
-   * Fails normally
+   * Fails normally.
    */
   public void testFail() {
-    fail();
+    fail("Expected failure");
   }
 
   /**
-   * Async fails
+   * Async fails.
    */
   public void testFailAsync() {
     delayTestFinish(200);
     new Timer() {
       public void run() {
-        fail();
+        fail("Expected failure");
       }
     }.schedule(100);
   }
 
   /**
-   * Completes normally
+   * Completes normally.
    */
   public void testNormal() {
   }
 
   /**
-   * Completes async
+   * Completes async.
    */
   public void testNormalAsync() {
     delayTestFinish(200);
@@ -83,11 +82,13 @@ public class TestManualAsync extends GWTTestCase {
   }
 
   /**
-   * Completes async
+   * Completes async.
    */
   public void testRepeatingNormal() {
     delayTestFinish(200);
     new Timer() {
+      private int i = 0;
+
       public void run() {
         if (++i < 4) {
           delayTestFinish(200);
@@ -96,24 +97,81 @@ public class TestManualAsync extends GWTTestCase {
           finishTest();
         }
       }
-
-      private int i = 0;
     }.scheduleRepeating(100);
   }
 
   /**
-   * Completes normally
+   * Fails async.
+   */
+  public void testSetUpTearDownFailAsync() {
+    assertEquals(IS_SETUP, setupTeardownFlag);
+    delayTestFinish(1000);
+    new Timer() {
+      @Override
+      public void run() {
+        fail("Expected failure");
+      }
+    }.schedule(1);
+
+    new Timer() {
+      @Override
+      public void run() {
+        /*
+         * The failing test should have triggered tearDown.
+         */
+        if (setupTeardownFlag != IS_TORNDOWN) {
+          recordOutofBandError("Bad async failure tearDown behavior not catchable by JUnit");
+        }
+      }
+    }.schedule(100);
+  }
+
+  /**
+   * Completes async.
+   */
+  public void testSetUpTearDownFailAsyncHadNoOutOfBandErrors() {
+    assertNoOutOfBandErrorsAsync();
+  }
+
+  /**
+   * Times out async.
+   */
+  public void testSetUpTearDownTimeoutAsync() {
+    assertSame(IS_SETUP, setupTeardownFlag);
+    delayTestFinish(1);
+    new Timer() {
+      @Override
+      public void run() {
+        /*
+         * The failing test should have triggered tearDown.
+         */
+        if (setupTeardownFlag != IS_TORNDOWN) {
+          recordOutofBandError("Bad async timeout tearDown behavior not catchable by JUnit");
+        }
+      }
+    }.schedule(100);
+  }
+
+  /**
+   * Completes async.
+   */
+  public void testSetUpTearDownTimeoutAsyncHadNoOutOfBandErrors() {
+    assertNoOutOfBandErrorsAsync();
+  }
+
+  /**
+   * Completes normally.
    */
   public void testSpuriousFinishTest() {
     try {
       finishTest();
-      fail();
-    } catch (IllegalArgumentException e) {
+      fail("Unexpected failure");
+    } catch (IllegalStateException e) {
     }
   }
 
   /**
-   * Times out
+   * Times out.
    */
   public void testTimeoutAsync() {
     delayTestFinish(100);

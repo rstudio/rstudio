@@ -47,6 +47,7 @@ import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JPostfixOperation;
 import com.google.gwt.dev.jjs.ast.JPrefixOperation;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStatement;
@@ -1548,7 +1549,20 @@ public class DeadCodeElimination {
 
     private JLiteral tryGetConstant(JVariableRef x) {
       if (!lvalues.contains(x)) {
-        return x.getTarget().getConstInitializer();
+        JLiteral lit = x.getTarget().getConstInitializer();
+        if (lit != null) {
+          /*
+           * Upcast the initializer so that the semantics of any arithmetic on
+           * this value is not changed.
+           */
+          // TODO(spoon): use simplifier.cast to shorten this
+          if ((x.getType() instanceof JPrimitiveType)
+              && (lit instanceof JValueLiteral)) {
+            JPrimitiveType xTypePrim = (JPrimitiveType) x.getType();
+            lit = xTypePrim.coerceLiteral((JValueLiteral) lit);
+          }
+          return lit;
+        }
       }
       return null;
     }

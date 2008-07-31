@@ -172,17 +172,7 @@ public class Showcase implements EntryPoint {
   /**
    * The {@link Application}.
    */
-  private Application app;
-
-  /**
-   * When the user selects a {@link TreeItem} from the main menu, we
-   * synchronously change the current example and add a history token for
-   * history support. However, adding the history token causes the history
-   * changed event to fire, which normally selects the associated menu item and
-   * displays the example. We don't want to repeat this twice, so we use a
-   * boolean to indicate that we want to ignore the history changed event.
-   */
-  private boolean ignoreNextHistoryEvent = false;
+  private Application app = new Application();
 
   /**
    * A mapping of history tokens to their associated menu items.
@@ -204,41 +194,29 @@ public class Showcase implements EntryPoint {
     // Create the constants
     ShowcaseConstants constants = (ShowcaseConstants) GWT.create(ShowcaseConstants.class);
 
+    // Swap out the style sheets for the RTL versions if needed.
+    updateStyleSheets();
+
     // Create the application
-    app = new Application();
     setupTitlePanel(constants);
     setupMainLinks(constants);
     setupOptionsPanel();
     setupMainMenu(constants);
 
-    // Swap out the style sheets for the RTL versions if needed. We need to do
-    // this after the app is loaded because the app will setup the layout based
-    // on the width of the main menu, which is defined in the style sheet. If
-    // we swap the style sheets first, the app may load without any style sheet
-    // to define the main menu width, because the RTL version is still being
-    // loaded. Note that we are basing the layout on the width defined in the
-    // LTR version, so both versions should use the same width for the main nav
-    // menu.
-    updateStyleSheets();
-
     // Setup a history listener to reselect the associate menu item
     final HistoryListener historyListener = new HistoryListener() {
       public void onHistoryChanged(String historyToken) {
-        // Ignore the event if the user selected the content from the main menu
-        if (ignoreNextHistoryEvent) {
-          ignoreNextHistoryEvent = false;
-          return;
-        }
-
         TreeItem item = itemTokens.get(historyToken);
-        if (item != null) {
-          // Select the associated TreeItem
-          app.getMainMenu().setSelectedItem(item, false);
-          app.getMainMenu().ensureSelectedItemVisible();
-
-          // Show the associated ContentWidget
-          displayContentWidget(itemWidgets.get(item));
+        if (item == null) {
+          item = app.getMainMenu().getItem(0).getChild(0);
         }
+
+        // Select the associated TreeItem
+        app.getMainMenu().setSelectedItem(item, false);
+        app.getMainMenu().ensureSelectedItemVisible();
+
+        // Show the associated ContentWidget
+        displayContentWidget(itemWidgets.get(item));
       }
     };
     History.addHistoryListener(historyListener);
@@ -248,36 +226,22 @@ public class Showcase implements EntryPoint {
       public void onMenuItemSelected(TreeItem item) {
         ContentWidget content = itemWidgets.get(item);
         if (content != null && !content.equals(app.getContent())) {
-          // Show the new example
-          displayContentWidget(content);
-
-          // Update the history token, but ignore the next history event
-          ignoreNextHistoryEvent = true;
           History.newItem(getContentWidgetToken(content));
         }
       }
     });
 
-    // When the style sheet has loaded, attach the app
-    StyleSheetLoader.waitForStyleSheet(getCurrentReferenceStyleName(),
-        new Command() {
-          public void execute() {
-            if (!app.isAttached()) {
-              RootPanel.get().add(app);
-            }
-
-            // Show the initial example
-            String initToken = History.getToken();
-            if (initToken.length() > 0) {
-              historyListener.onHistoryChanged(initToken);
-            } else {
-              // Use the first token available
-              TreeItem firstItem = app.getMainMenu().getItem(0).getChild(0);
-              app.getMainMenu().setSelectedItem(firstItem, true);
-              app.getMainMenu().ensureSelectedItemVisible();
-            }
-          }
-        });
+    // Show the initial example
+    String initToken = History.getToken();
+    if (initToken.length() > 0) {
+      historyListener.onHistoryChanged(initToken);
+    } else {
+      // Use the first token available
+      TreeItem firstItem = app.getMainMenu().getItem(0).getChild(0);
+      app.getMainMenu().setSelectedItem(firstItem, false);
+      app.getMainMenu().ensureSelectedItemVisible();
+      displayContentWidget(itemWidgets.get(firstItem));
+    }
   }
 
   /**
@@ -307,10 +271,11 @@ public class Showcase implements EntryPoint {
    * Get the style name of the reference element defined in the current GWT
    * theme style sheet.
    * 
+   * @param prefix the prefix of the reference style name
    * @return the style name
    */
-  private String getCurrentReferenceStyleName() {
-    String gwtRef = "gwt-Reference-" + CUR_THEME;
+  private String getCurrentReferenceStyleName(String prefix) {
+    String gwtRef = prefix + "-Reference-" + CUR_THEME;
     if (LocaleInfo.getCurrentLocale().isRTL()) {
       gwtRef += "-rtl";
     }
@@ -452,6 +417,11 @@ public class Showcase implements EntryPoint {
   private void setupOptionsPanel() {
     VerticalPanel vPanel = new VerticalPanel();
     vPanel.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      vPanel.getElement().setAttribute("align", "left");
+    } else {
+      vPanel.getElement().setAttribute("align", "right");
+    }
     app.setOptionsWidget(vPanel);
 
     // Add the option to change the locale
@@ -536,6 +506,7 @@ public class Showcase implements EntryPoint {
     }
 
     // Find existing style sheets that need to be removed
+    boolean styleSheetsFound = false;
     final HeadElement headElem = StyleSheetLoader.getHeadElement();
     final List<Element> toRemove = new ArrayList<Element>();
     NodeList<Node> children = headElem.getChildNodes();
@@ -545,6 +516,7 @@ public class Showcase implements EntryPoint {
         Element elem = Element.as(node);
         if (elem.getTagName().equalsIgnoreCase("link")
             && elem.getPropertyString("rel").equalsIgnoreCase("stylesheet")) {
+          styleSheetsFound = true;
           String href = elem.getPropertyString("href");
           // If the correct style sheets are already loaded, then we should have
           // nothing to remove.
@@ -557,7 +529,7 @@ public class Showcase implements EntryPoint {
     }
 
     // Return if we already have the correct style sheets
-    if (toRemove.size() == 0) {
+    if (styleSheetsFound && toRemove.size() == 0) {
       return;
     }
 
@@ -572,7 +544,19 @@ public class Showcase implements EntryPoint {
     // Load the GWT theme style sheet
     String modulePath = GWT.getModuleBaseURL();
     Command callback = new Command() {
+      /**
+       * The number of style sheets that have been loaded and executed this
+       * command.
+       */
+      private int numStyleSheetsLoaded = 0;
+
       public void execute() {
+        // Wait until all style sheets have loaded before re-attaching the app
+        numStyleSheetsLoaded++;
+        if (numStyleSheetsLoaded < 2) {
+          return;
+        }
+
         // Different themes use different background colors for the body
         // element, but IE only changes the background of the visible content
         // on the page instead of changing the background color of the entire
@@ -584,10 +568,11 @@ public class Showcase implements EntryPoint {
       }
     };
     StyleSheetLoader.loadStyleSheet(modulePath + gwtStyleSheet,
-        getCurrentReferenceStyleName(), callback);
+        getCurrentReferenceStyleName("gwt"), callback);
 
     // Load the showcase specific style sheet after the GWT theme style sheet so
     // that custom styles supercede the theme styles.
-    StyleSheetLoader.loadStyleSheet(modulePath + showcaseStyleSheet);
+    StyleSheetLoader.loadStyleSheet(modulePath + showcaseStyleSheet,
+        getCurrentReferenceStyleName("Application"), callback);
   }
 }

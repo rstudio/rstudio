@@ -59,13 +59,14 @@ public class JProgram extends JNode {
           "com.google.gwt.lang.Exceptions", "com.google.gwt.lang.LongLib",
           "com.google.gwt.lang.Stats",}));
 
-  public static final Set<String> INDEX_TYPES_SET = new HashSet<String>(
+  public static final Set<String> INDEX_TYPES_SET = new LinkedHashSet<String>(
       Arrays.asList(new String[] {
           "java.lang.Object", "java.lang.String", "java.lang.Class",
           "java.lang.CharSequence", "java.lang.Comparable", "java.lang.Enum",
           "java.lang.Iterable", "java.util.Iterator",
           "com.google.gwt.core.client.GWT",
-          "com.google.gwt.core.client.JavaScriptObject"}));
+          "com.google.gwt.core.client.JavaScriptObject",
+          "com.google.gwt.lang.ClassLiteralHolder",}));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
@@ -189,6 +190,8 @@ public class JProgram extends JNode {
 
   private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
 
+  private final Map<JType, JClassLiteral> classLiterals = new IdentityHashMap<JType, JClassLiteral>();
+
   /**
    * Each entry is a HashMap(JType => JArrayType), arranged such that the number
    * of dimensions is that index (plus one) at which the JArrayTypes having that
@@ -224,6 +227,11 @@ public class JProgram extends JNode {
   private JField nullField;
 
   private JMethod nullMethod;
+
+  /**
+   * Turned on once optimizations begin.
+   */
+  private boolean optimizationsStarted = false;
 
   private Map<JReferenceType, Integer> queryIds;
 
@@ -265,6 +273,8 @@ public class JProgram extends JNode {
   private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
       "S", "java.lang.Short", literalIntZero);
 
+  private JClassType typeSpecialClassLiteralHolder;
+
   private JClassType typeSpecialJavaScriptObject;
 
   private JClassType typeString;
@@ -280,6 +290,15 @@ public class JProgram extends JNode {
     if (!entryMethods.contains(entryPoint)) {
       entryMethods.add(entryPoint);
     }
+  }
+
+  /**
+   * Record the start of optimizations, which disables certain problematic
+   * constructions. In particular, new class literals cannot be created once
+   * optimization starts.
+   */
+  public void beginOptimizations() {
+    optimizationsStarted = true;
   }
 
   /**
@@ -315,6 +334,8 @@ public class JProgram extends JNode {
         typeClass = x;
       } else if (sname.equals("com.google.gwt.core.client.JavaScriptObject")) {
         typeSpecialJavaScriptObject = x;
+      } else if (sname.equals("com.google.gwt.lang.ClassLiteralHolder")) {
+        typeSpecialClassLiteralHolder = x;
       }
     }
 
@@ -518,19 +539,59 @@ public class JProgram extends JNode {
     return new JCharLiteral(this, c);
   }
 
+  /**
+   * May not be called once optimizations begin; all possible class literals
+   * must be created up front.
+   */
   public JClassLiteral getLiteralClass(JType type) {
-    /*
-     * Explicitly not interned. This is due to the underlying allocation
-     * expression, which can be mutated by some optimizations. If the same
-     * allocation expression could be visited multiple times within a single
-     * visitor, then every visitor would have to be idempotent. In fact,
-     * Pruner.CleanupRefsVisitor is not idempotent when removing arguments,
-     * because they are only implicitly (positionally) correlated with recently
-     * pruned parameters.
-     */
-    return new JClassLiteral(this, type);
+    JClassLiteral classLiteral = classLiterals.get(type);
+    if (classLiteral == null) {
+      if (optimizationsStarted) {
+        throw new InternalCompilerException(
+            "New class literals cannot be created once optimizations have started; type '"
+                + type + "'");
+      }
+
+      SourceInfo info = typeSpecialClassLiteralHolder.getSourceInfo();
+
+      // Create the allocation expression FIRST since this may be recursive on
+      // super type (this forces the super type classLit to be created first).
+      JExpression alloc = JClassLiteral.computeClassObjectAllocation(this,
+          info, type);
+
+      // Create a field in the class literal holder to hold the object.
+      JField field = new JField(this, info, type.getJavahSignatureName()
+          + "_classLit", typeSpecialClassLiteralHolder, getTypeJavaLangClass(),
+          true, Disposition.FINAL);
+      typeSpecialClassLiteralHolder.fields.add(field);
+
+      // Initialize the field.
+      JFieldRef fieldRef = new JFieldRef(this, info, null, field,
+          typeSpecialClassLiteralHolder);
+      JDeclarationStatement decl = new JDeclarationStatement(this, info,
+          fieldRef, alloc);
+      JMethodBody clinitBody = (JMethodBody) typeSpecialClassLiteralHolder.methods.get(
+          0).getBody();
+      clinitBody.getStatements().add(decl);
+
+      classLiteral = new JClassLiteral(this, type, field);
+      classLiterals.put(type, classLiteral);
+    } else {
+      // Make sure the field hasn't been pruned.
+      JField field = classLiteral.getField();
+      if (optimizationsStarted
+          && !field.getEnclosingType().fields.contains(field)) {
+        throw new InternalCompilerException(
+            "Getting a class literal whose field holder has already been pruned; type '"
+                + type + " '");
+      }
+    }
+    return classLiteral;
   }
 
+  /**
+   * TODO: unreferenced; remove this and JClassSeed?
+   */
   public JClassSeed getLiteralClassSeed(JClassType type) {
     // could be interned
     return new JClassSeed(this, type);
@@ -569,12 +630,12 @@ public class JProgram extends JNode {
   }
 
   public JStringLiteral getLiteralString(char[] s) {
-    // should conslidate so we can build a string table in output code later?
+    // should consolidate so we can build a string table in output code later?
     return new JStringLiteral(this, String.valueOf(s));
   }
 
   public JStringLiteral getLiteralString(String s) {
-    // should conslidate so we can build a string table in output code later?
+    // should consolidate so we can build a string table in output code later?
     return new JStringLiteral(this, s);
   }
 
@@ -638,6 +699,10 @@ public class JProgram extends JNode {
     }
 
     return arrayType;
+  }
+
+  public JClassType getTypeClassLiteralHolder() {
+    return typeSpecialClassLiteralHolder;
   }
 
   public int getTypeId(JClassType classType) {

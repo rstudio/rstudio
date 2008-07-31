@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test Case for {@link Cookies}.
@@ -74,6 +75,41 @@ public class WindowTest extends GWTTestCase {
     // Check that the sum is equal to its parts.
     assertEquals(host, hostName + ":" + port);
     assertEquals(href, protocol + "//" + host + path + query + hash);
+  }
+  
+  public void testLocationParsing() {
+    Map<String, List<String>> map;
+
+    // typical case
+    map = Window.Location.buildListParamMap("?fuzzy=bunnies&foo=bar&num=42");
+    assertEquals(map.size(), 3);
+    assertEquals(map.get("foo").get(0), "bar");
+    assertEquals(map.get("fuzzy").get(0), "bunnies");
+    
+    // multiple values for the same parameter
+    map = Window.Location.buildListParamMap(
+        "?fuzzy=bunnies&foo=bar&num=42&foo=baz");
+    assertEquals(map.size(), 3);
+    assertEquals(map.get("foo").get(0), "bar");
+    assertEquals(map.get("foo").get(1), "baz");
+    
+    // no query parameters.
+    map = Window.Location.buildListParamMap("");
+    assertEquals(map.size(), 0);
+    
+    // blank keys should be ignored, but blank values are OK. Also,
+    // keys can contain whitespace. (but the browser may give whitespace
+    // back as escaped).
+    map = Window.Location.buildListParamMap(
+        "?&& &a&b=&c=c&d=d=d&=e&f=2&f=1&");
+    assertEquals(map.size(), 6);
+    assertEquals(map.get(" ").get(0), "");
+    assertEquals(map.get("a").get(0), "");
+    assertEquals(map.get("b").get(0), "");
+    assertEquals(map.get("c").get(0), "c");
+    assertEquals(map.get("d").get(0), "d=d");
+    assertEquals(map.get("f").get(0), "2");
+    assertEquals(map.get("f").get(1), "1");
   }
 
   /**

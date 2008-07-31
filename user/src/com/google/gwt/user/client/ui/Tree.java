@@ -20,6 +20,7 @@ import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.AbstractImagePrototype.ImagePrototypeElement;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -110,11 +111,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       return baseUrl;
     }
   }
-  
-  private static final int OTHER_KEY_UP = 63232;
+
   private static final int OTHER_KEY_DOWN = 63233;
   private static final int OTHER_KEY_LEFT = 63234;
   private static final int OTHER_KEY_RIGHT = 63235;
+  private static final int OTHER_KEY_UP = 63232;
 
   static native boolean shouldTreeDelegateFocusToElement(Element elem) /*-{
     var name = elem.nodeName;
@@ -124,8 +125,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         (name == "OPTION") ||
         (name == "BUTTON") ||
         (name == "LABEL"));
-    }-*/;
-  
+  }-*/;
+
   private static boolean isArrowKey(int code) {
     switch (code) {
       case OTHER_KEY_DOWN:
@@ -179,17 +180,15 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   private Element focusable;
   private FocusListenerCollection focusListeners;
   private TreeImages images;
+  private String indentValue;
   private boolean isAnimationEnabled = false;
   private KeyboardListenerCollection keyboardListeners;
+  private boolean lastWasKeyDown;
+
   private TreeListenerCollection listeners;
   private MouseListenerCollection mouseListeners = null;
   private TreeItem root;
-  private boolean lastWasKeyDown;
-
-  private Image leafImage;
-  private Image openImage;
-  private Image closedImage;
-  private String indentValue;
+  private boolean useLeafImages;
 
   /**
    * Constructs an empty tree.
@@ -379,7 +378,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   @SuppressWarnings("fallthrough")
   public void onBrowserEvent(Event event) {
     int eventType = DOM.eventGetType(event);
-    
+
     switch (eventType) {
       case Event.ONKEYDOWN: {
         // If nothing's selected, select the first item.
@@ -391,8 +390,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           return;
         }
       }
- 
-      // Intentional fallthrough.
+
+        // Intentional fallthrough.
       case Event.ONKEYPRESS:
       case Event.ONKEYUP:
         // Issue 1890: Do not block history navigation via alt+left/right
@@ -402,7 +401,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         }
         break;
     }
-    
+
     switch (eventType) {
       case Event.ONCLICK: {
         Element e = DOM.eventGetTarget(event);
@@ -410,7 +409,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           // The click event should have given focus to this element already.
           // Avoid moving focus back up to the tree (so that focusable widgets
           // attached to TreeItems can receive keyboard events).
-        } else {
+        } else if (curSelection != null
+            && curSelection.getContentElem().isOrHasChild(e)) {
           setFocus(true);
         }
         break;
@@ -471,13 +471,13 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
         break;
       }
-      
+
       case Event.ONKEYDOWN: {
         keyboardNavigation(event);
-        lastWasKeyDown = true;  
+        lastWasKeyDown = true;
         break;
       }
-      
+
       case Event.ONKEYPRESS: {
         if (!lastWasKeyDown) {
           keyboardNavigation(event);
@@ -485,7 +485,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         lastWasKeyDown = false;
         break;
       }
-        
+
       case Event.ONKEYUP: {
         if (DOM.eventGetKeyCode(event) == KeyboardListener.KEY_TAB) {
           ArrayList<Element> chain = new ArrayList<Element>();
@@ -495,12 +495,12 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
             setSelectedItem(item, true);
           }
         }
-      
+
         lastWasKeyDown = false;
         break;
       }
     }
-    
+
     switch (eventType) {
       case Event.ONKEYDOWN:
       case Event.ONKEYUP:
@@ -519,7 +519,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     // We must call SynthesizedWidget's implementation for all other events.
     super.onBrowserEvent(event);
   }
-  
+
   public boolean remove(Widget w) {
     // Validate.
     TreeItem item = childWidgets.get(w);
@@ -754,7 +754,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * @param treeItem the tree item
    */
   void showClosedImage(TreeItem treeItem) {
-    showImage(treeItem, closedImage);
+    showImage(treeItem, images.treeClosed());
   }
 
   /**
@@ -763,8 +763,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * @param treeItem the tree item
    */
   void showLeafImage(TreeItem treeItem) {
-    if (leafImage != null) {
-      showImage(treeItem, leafImage);
+    if (useLeafImages) {
+      showImage(treeItem, images.treeLeaf());
     } else {
       DOM.setStyleAttribute(treeItem.getElement(), "paddingLeft", indentValue);
     }
@@ -776,7 +776,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * @param treeItem the tree item
    */
   void showOpenImage(TreeItem treeItem) {
-    showImage(treeItem, openImage);
+    showImage(treeItem, images.treeOpen());
   }
 
   /**
@@ -937,7 +937,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     // Handle keyboard events if keyboard navigation is enabled
     if (isKeyboardNavigationEnabled(curSelection)) {
       int code = DOM.eventGetKeyCode(event);
-      
+
       switch (standardizeKeycode(code)) {
         case KeyboardListener.KEY_UP: {
           moveSelectionUp(curSelection);
@@ -1122,9 +1122,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   private void setImages(TreeImages images, boolean useLeafImages) {
-    if (useLeafImages) {
-      leafImage = images.treeLeaf().createImage();
-    } else {
+    this.images = images;
+    this.useLeafImages = useLeafImages;
+
+    if (!useLeafImages) {
       Image image = images.treeLeaf().createImage();
       DOM.setStyleAttribute(image.getElement(), "visibility", "hidden");
       RootPanel.get().add(image);
@@ -1132,18 +1133,19 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       image.removeFromParent();
       indentValue = (size) + "px";
     }
-
-    openImage = images.treeOpen().createImage();
-    closedImage = images.treeClosed().createImage();
   }
 
-  private void showImage(TreeItem treeItem, Image image) {
-    Element element = treeItem.getImageHolderElement();
-    Element child = DOM.getFirstChild(element);
-    if (child != null) {
-      DOM.removeChild(element, child);
+  private void showImage(TreeItem treeItem, AbstractImagePrototype proto) {
+    Element holder = treeItem.getImageHolderElement();
+    Element child = DOM.getFirstChild(holder);
+    if (child == null) {
+      // If no image element has been created yet, create one from the
+      // prototype.
+      DOM.appendChild(holder, proto.createElement().<Element> cast());
+    } else {
+      // Otherwise, simply apply the prototype to the existing element.
+      proto.applyTo(child.<ImagePrototypeElement> cast());
     }
-    DOM.appendChild(element, DOM.clone(image.getElement(), true));
   }
 
   private void updateAriaAttributes() {
@@ -1216,4 +1218,3 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
         DOM.getElementAttribute(curSelectionContentElem, "id"));
   }
 }
-  

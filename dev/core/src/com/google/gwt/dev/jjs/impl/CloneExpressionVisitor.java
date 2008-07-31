@@ -47,8 +47,11 @@ import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A general purpose expression cloner.
@@ -61,10 +64,14 @@ public class CloneExpressionVisitor extends JVisitor {
     this.program = program;
   }
 
-  public JExpression cloneExpression(JExpression expr) {
+  @SuppressWarnings("unchecked")
+  public <T extends JExpression> T cloneExpression(T expr) {
     if (expr == null) {
       return null;
     }
+
+    // double check that the expression is successfully cloned
+    expression = null;
 
     this.accept(expr);
 
@@ -73,7 +80,19 @@ public class CloneExpressionVisitor extends JVisitor {
           null);
     }
 
-    return expression;
+    Class<T> originalClass = (Class<T>) expr.getClass();
+    return originalClass.cast(expression);
+  }
+
+  public List<JExpression> cloneExpressions(List<JExpression> exprs) {
+    if (exprs == null) {
+      return null;
+    }
+    List<JExpression> result = new ArrayList<JExpression>();
+    for (JExpression expr : exprs) {
+      result.add(cloneExpression(expr));
+    }
+    return result;
   }
 
   @Override
@@ -117,7 +136,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JClassLiteral x, Context ctx) {
-    expression = program.getLiteralClass(x.getRefType());
+    expression = x;
     return false;
   }
 
@@ -187,9 +206,7 @@ public class CloneExpressionVisitor extends JVisitor {
       newMethodCall.setCannotBePolymorphic();
     }
 
-    for (JExpression arg : x.getArgs()) {
-      newMethodCall.getArgs().add(cloneExpression(arg));
-    }
+    newMethodCall.getArgs().addAll(cloneExpressions(x.getArgs()));
 
     expression = newMethodCall;
     return false;
@@ -198,33 +215,16 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JMultiExpression x, Context ctx) {
     JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
-    for (JExpression expr : x.exprs) {
-      multi.exprs.add(cloneExpression(expr));
-    }
-
+    multi.exprs.addAll(cloneExpressions(x.exprs));
     expression = multi;
     return false;
   }
 
   @Override
   public boolean visit(JNewArray x, Context ctx) {
-    JNewArray newArray = new JNewArray(program, x.getSourceInfo(),
-        x.getArrayType());
-
-    if (x.dims != null) {
-      newArray.dims = new ArrayList<JExpression>();
-      for (JExpression dim : x.dims) {
-        newArray.dims.add(cloneExpression(dim));
-      }
-    }
-    if (x.initializers != null) {
-      newArray.initializers = new ArrayList<JExpression>();
-      for (JExpression initializer : x.initializers) {
-        newArray.initializers.add(cloneExpression(initializer));
-      }
-    }
-
-    expression = newArray;
+    expression = new JNewArray(program, x.getSourceInfo(), x.getArrayType(),
+        cloneExpressions(x.dims), cloneExpressions(x.initializers),
+        x.getClassLiterals());
     return false;
   }
 
@@ -272,6 +272,18 @@ public class CloneExpressionVisitor extends JVisitor {
   public boolean visit(JPrefixOperation x, Context ctx) {
     expression = new JPrefixOperation(program, x.getSourceInfo(), x.getOp(),
         cloneExpression(x.getArg()));
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsniFieldRef x, Context ctx) {
+    expression = x;
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsniMethodRef x, Context ctx) {
+    expression = x;
     return false;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -36,7 +36,7 @@ abstract class HistoryImplFrame extends HistoryImpl {
     }
   }-*/;
 
-  private Element historyFrame;
+  protected Element historyFrame;
 
   @Override
   public boolean init() {
@@ -53,16 +53,11 @@ abstract class HistoryImplFrame extends HistoryImpl {
     if (tokenElement != null) {
       setToken(getTokenElementContent(tokenElement));
     } else {
-      newItemImpl(historyFrame, getToken(), true);
+      navigateFrame(getToken());
     }
 
     injectGlobalHandler();
     return true;
-  }
-
-  @Override
-  public void newItem(String historyToken) {
-    newItemImpl(historyFrame, historyToken, false);
   }
 
   protected abstract String getTokenElementContent(Element tokenElement);
@@ -71,6 +66,22 @@ abstract class HistoryImplFrame extends HistoryImpl {
 
   protected abstract void injectGlobalHandler();
 
-  protected abstract void newItemImpl(Element historyFrame,
-      String historyToken, boolean forceAdd);
+  @Override
+  protected final void nativeUpdate(String historyToken) {
+    /*
+     * Must update the location hash since it isn't already correct.
+     */
+    updateHash(historyToken);
+    navigateFrame(historyToken);
+  }
+
+  @Override
+  protected final void nativeUpdateOnEvent(String historyToken) {
+    updateHash(historyToken);
+  }
+
+  protected abstract void navigateFrame(String historyToken);
+
+  protected abstract void updateHash(String historyToken);
+
 }

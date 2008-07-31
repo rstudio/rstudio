@@ -88,7 +88,7 @@ public class CwFlexTable extends ContentWidget {
     final FlexTable flexTable = new FlexTable();
     FlexCellFormatter cellFormatter = flexTable.getFlexCellFormatter();
     flexTable.addStyleName("cw-FlexTable");
-    flexTable.setWidth("350px");
+    flexTable.setWidth("32em");
     flexTable.setCellSpacing(5);
     flexTable.setCellPadding(3);
 

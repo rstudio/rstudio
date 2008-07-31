@@ -38,6 +38,91 @@ import java.util.List;
  */
 public class TreeItem extends UIObject implements HasHTML {
   /**
+   * Implementation class for {@link TreeItem}.
+   */
+  public static class TreeItemImpl {
+    public TreeItemImpl() {
+      initializeClonableElements();
+    }
+
+    void convertToFullNode(TreeItem item) {
+      if (item.imageHolder == null) {
+        // Extract the Elements from the object
+        Element itemTable = DOM.clone(BASE_INTERNAL_ELEM, true);
+        DOM.appendChild(item.getElement(), itemTable);
+        Element tr = DOM.getFirstChild(DOM.getFirstChild(itemTable));
+        Element tdImg = DOM.getFirstChild(tr);
+        Element tdContent = DOM.getNextSibling(tdImg);
+
+        // Undoes padding from table element.
+        DOM.setStyleAttribute(item.getElement(), "padding", "0px");
+        DOM.appendChild(tdContent, item.contentElem);
+        item.imageHolder = tdImg;
+      }
+    }
+
+    /**
+     * Setup clonable elements.
+     */
+    void initializeClonableElements() {
+      if (GWT.isClient()) {
+        // Create the base table element that will be cloned.
+        BASE_INTERNAL_ELEM = DOM.createTable();
+        Element contentElem = DOM.createSpan();
+        Element tbody = DOM.createTBody(), tr = DOM.createTR();
+        Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
+        DOM.appendChild(BASE_INTERNAL_ELEM, tbody);
+        DOM.appendChild(tbody, tr);
+        DOM.appendChild(tr, tdImg);
+        DOM.appendChild(tr, tdContent);
+        DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
+        DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
+        DOM.appendChild(tdContent, contentElem);
+        DOM.setStyleAttribute(contentElem, "display", "inline");
+        setStyleName(contentElem, "gwt-TreeItem");
+        DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
+
+        // Create the base element that will be cloned
+        BASE_BARE_ELEM = DOM.createDiv();
+
+        // Simulates padding from table element.
+        DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "3px");
+        DOM.appendChild(BASE_BARE_ELEM, contentElem);
+        Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
+      }
+    }
+  }
+
+  /**
+   * IE specific implementation class for {@link TreeItem}.
+   */
+  public static class TreeItemImplIE6 extends TreeItemImpl {
+    @Override
+    void convertToFullNode(TreeItem item) {
+      super.convertToFullNode(item);
+      DOM.setStyleAttribute(item.getElement(), "marginBottom", "0px");
+    }
+
+    @Override
+    void initializeClonableElements() {
+      super.initializeClonableElements();
+      if (GWT.isClient()) {
+        // Remove the padding from the cells and re-add it to the table element
+        DOM.setElementPropertyInt(BASE_INTERNAL_ELEM, "cellPadding", 0);
+        DOM.setElementPropertyInt(BASE_INTERNAL_ELEM, "cellSpacing", 0);
+        BASE_INTERNAL_ELEM.getStyle().setPropertyPx("paddingBottom", 3);
+
+        // We can't use a 3px padding all around because IE will wrap the
+        // childSpan to the next line, so we need to add a 3px margin on the top
+        // and bottom instead. However, margins overlap, so we need a 6px bottom
+        // margin.
+        DOM.setStyleAttribute(BASE_BARE_ELEM, "margin", "3px 0px 6px 0px");
+        DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "0px 3px");
+      }
+    }
+  }
+
+  /**
    * An {@link Animation} used to open the child elements. If a {@link TreeItem}
    * is in the process of opening, it will immediately be opened and the new
    * {@link TreeItem} will use this animation.
@@ -99,20 +184,20 @@ public class TreeItem extends UIObject implements HasHTML {
     @Override
     protected void onStart() {
       scrollHeight = 0;
-      
+
       // If the TreeItem is already open, we can get its scrollHeight
       // immediately.
       if (!opening) {
         scrollHeight = curItem.childSpanElem.getScrollHeight();
       }
       DOM.setStyleAttribute(curItem.childSpanElem, "overflow", "hidden");
-      
+
       // If the TreeItem is already open, onStart will set its height to its
-      // natural height.  If the TreeItem is currently closed, onStart will set
+      // natural height. If the TreeItem is currently closed, onStart will set
       // its height to 1px (see onUpdate below), and then we make the TreeItem
       // visible so we can get its correct scrollHeight.
       super.onStart();
-      
+
       // If the TreeItem is currently closed, we need to make it visible before
       // we can get its height.
       if (opening) {
@@ -149,7 +234,7 @@ public class TreeItem extends UIObject implements HasHTML {
   static final int IMAGE_PAD = 7;
 
   /**
-   * The duration of the animation. 
+   * The duration of the animation.
    */
   private static final int ANIMATION_DURATION = 200;
 
@@ -174,36 +259,9 @@ public class TreeItem extends UIObject implements HasHTML {
    * The base tree item element that will be cloned.
    */
   private static Element BASE_BARE_ELEM;
-  /**
-   * Static constructor to set up clonable elements.
-   */
-  static {
-    if (GWT.isClient()) {
-      // Create the base table element that will be cloned.
-      BASE_INTERNAL_ELEM = DOM.createTable();
-      Element contentElem = DOM.createSpan();
-      Element tbody = DOM.createTBody(), tr = DOM.createTR();
-      Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
-      DOM.appendChild(BASE_INTERNAL_ELEM, tbody);
-      DOM.appendChild(tbody, tr);
-      DOM.appendChild(tr, tdImg);
-      DOM.appendChild(tr, tdContent);
-      DOM.setStyleAttribute(tdImg, "verticalAlign", "middle");
-      DOM.setStyleAttribute(tdContent, "verticalAlign", "middle");
-      DOM.appendChild(tdContent, contentElem);
-      DOM.setStyleAttribute(contentElem, "display", "inline");
-      setStyleName(contentElem, "gwt-TreeItem");
-      DOM.setStyleAttribute(BASE_INTERNAL_ELEM, "whiteSpace", "nowrap");
 
-      // Create the base element that will be cloned
-      BASE_BARE_ELEM = DOM.createDiv();
+  private static TreeItemImpl impl = GWT.create(TreeItemImpl.class);
 
-      // Simulates padding from table element.
-      DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "3px");
-      DOM.appendChild(BASE_BARE_ELEM, contentElem);
-      Accessibility.setRole(contentElem, Accessibility.ROLE_TREEITEM);
-    }
-  }
   private ArrayList<TreeItem> children;
   private Element contentElem, childSpanElem, imageHolder;
   private boolean open;
@@ -641,7 +699,6 @@ public class TreeItem extends UIObject implements HasHTML {
     childSpanElem = DOM.createDiv();
     DOM.appendChild(getElement(), childSpanElem);
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
-    DOM.setStyleAttribute(childSpanElem, "overflow", "hidden");
     children = new ArrayList<TreeItem>();
   }
 
@@ -725,20 +782,7 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   private void convertToFullNode() {
-    if (imageHolder == null) {
-      // Extract the Elements from the object
-      Element itemTable = DOM.clone(BASE_INTERNAL_ELEM, true);
-      DOM.appendChild(getElement(), itemTable);
-      Element tr = DOM.getFirstChild(DOM.getFirstChild(itemTable));
-      Element tdImg = DOM.getFirstChild(tr);
-      Element tdContent = DOM.getNextSibling(tdImg);
-
-      // Undoes padding from table element.
-      DOM.setStyleAttribute(getElement(), "padding", "0px");
-      DOM.setStyleAttribute(getElement(), "paddingLeft", "0px");
-      DOM.appendChild(tdContent, contentElem);
-      imageHolder = tdImg;
-    }
+    impl.convertToFullNode(this);
   }
 
   private void updateStateRecursiveHelper() {

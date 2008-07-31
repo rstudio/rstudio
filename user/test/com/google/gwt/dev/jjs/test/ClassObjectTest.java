@@ -44,6 +44,7 @@ public class ClassObjectTest extends GWTTestCase {
     }
   }
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
@@ -68,15 +69,15 @@ public class ClassObjectTest extends GWTTestCase {
   }
 
   public void testAssertionStatus() {
-    boolean assertionStatus = ClassObjectTest.class.desiredAssertionStatus(); 
+    boolean assertionStatus = ClassObjectTest.class.desiredAssertionStatus();
     try {
       assert false;
       assertFalse(assertionStatus);
     } catch (AssertionError e) {
-      assertTrue(assertionStatus);        
+      assertTrue(assertionStatus);
     }
   }
-  
+
   public void testClass() {
     Object o = new Foo();
     assertEquals(Foo.class, o.getClass());
@@ -90,6 +91,12 @@ public class ClassObjectTest extends GWTTestCase {
     assertFalse(Foo.class.isInterface());
     assertFalse(Foo.class.isPrimitive());
     assertNull(o.getClass().getEnumConstants());
+  }
+
+  public void testCloneClassLiteral() {
+    // getBarClass() should inline, causing a clone of a class literal
+    assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+        getBarClass().getName());
   }
 
   public void testEnum() {
@@ -148,4 +155,7 @@ public class ClassObjectTest extends GWTTestCase {
     assertNull(int.class.getEnumConstants());
   }
 
+  private Class<? extends Bar> getBarClass() {
+    return Bar.class;
+  }
 }

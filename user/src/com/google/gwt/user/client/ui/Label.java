@@ -147,7 +147,7 @@ public class Label extends Widget implements SourcesClickEvents,
   }
 
   public boolean getWordWrap() {
-    return getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
+    return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
   }
 
   @Override

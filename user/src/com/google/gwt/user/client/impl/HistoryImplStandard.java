@@ -22,27 +22,27 @@ class HistoryImplStandard extends HistoryImpl {
 
   @Override
   public native boolean init() /*-{
-    $wnd.__gwt_historyToken = '';
+    var token = '';
 
     // Get the initial token from the url's hash component.
     var hash = $wnd.location.hash;
-    if (hash.length > 0)
-      $wnd.__gwt_historyToken = hash.substring(1);
+    if (hash.length > 0) {
+      token = this.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
+    }
+
+    @com.google.gwt.user.client.impl.HistoryImpl::setToken(Ljava/lang/String;)(token);
 
     // Create the timer that checks the browser's url hash every 1/4 s.
     var historyImpl = this;
     $wnd.__checkHistory = function() {
+      $wnd.setTimeout($wnd.__checkHistory, 250);
+
       var token = '', hash = $wnd.location.hash;
       if (hash.length > 0) {
         token = historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::decodeFragment(Ljava/lang/String;)(hash.substring(1));
       }
 
-      if (token != $wnd.__gwt_historyToken) {
-        $wnd.__gwt_historyToken = token;
-        @com.google.gwt.user.client.impl.HistoryImpl::onHistoryChanged(Ljava/lang/String;)(token);
-      }
-
-      $wnd.setTimeout($wnd.__checkHistory, 250);
+      historyImpl.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
     };
 
     // Kick off the timer.
@@ -50,11 +50,16 @@ class HistoryImplStandard extends HistoryImpl {
     return true;
   }-*/;
 
-  @Override
-  public native void newItem(String historyToken) /*-{
-    if (historyToken == null) {
-      historyToken = "";
-    }
+  /**
+   * The standard updateHash implementation assigns to location.hash() with an
+   * encoded history token.
+   */
+  protected native void nativeUpdate(String historyToken) /*-{
     $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
   }-*/;
+
+  @Override
+  protected void nativeUpdateOnEvent(String historyToken) {
+    // Do nothing, the hash is already updated.
+  }
 }

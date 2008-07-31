@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,9 +15,9 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 
 /**
  * Uses a combination of a clear image and a background image to clip all except
@@ -32,16 +32,16 @@ public class ClippedImageImpl {
                      int height) {
     String style = "url(" + url + ") no-repeat " + (-left + "px ")
         + (-top + "px");
-    DOM.setStyleAttribute(img, "background", style);
-    DOM.setStyleAttribute(img, "width", width + "px");
-    DOM.setStyleAttribute(img, "height", height + "px");
+    img.getStyle().setProperty("background", style);
+    img.getStyle().setPropertyPx("width", width);
+    img.getStyle().setPropertyPx("height", height);
   }
 
   public Element createStructure(String url, int left, int top, int width,
                                  int height) {
-    Element tmp = DOM.createSpan();
-    DOM.setInnerHTML(tmp, getHTML(url, left, top, width, height));
-    return DOM.getFirstChild(tmp);
+    Element tmp = Document.get().createSpanElement();
+    tmp.setInnerHTML(getHTML(url, left, top, width, height));
+    return tmp.getFirstChildElement();
   }
 
   public String getHTML(String url, int left, int top, int width, int height) {

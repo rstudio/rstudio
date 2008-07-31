@@ -1,6 +1,5 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <!--                                                                        -->
-<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Copyright 2007 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,20 +11,15 @@
 <!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
- 
-<html>
-	<head>
-	  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-		<link type="text/css" rel="stylesheet" href="SimpleRPC.css">
-		<title>SimpleRPC</title>
-	</head>
-	<body>
-		<iframe src="javascript:''" id='__gwt_historyFrame' tabIndex='-1' style='width:0;height:0;border:0'></iframe>
-		<script type="text/javascript" language='javascript' src='com.google.gwt.sample.simplerpc.SimpleRPC.nocache.js'>
-    </script>
-		<h1> Simple RPC</h1>
-		<p>
-		  Simple example of RPC, check out the DynaTable sample if you want to see real RPC coolness. 
-		</p>
-	</body>
-</html>
+
+<!-- Deferred binding rules for Tree.                                       -->
+<module>
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
+
+  <!-- IE-specific implementation -->
+  <replace-with class="com.google.gwt.user.client.ui.TreeItem.TreeItemImplIE6">
+    <when-type-is class="com.google.gwt.user.client.ui.TreeItem.TreeItemImpl"/>
+    <when-property-is name="user.agent" value="ie6"/>
+  </replace-with>
+</module>

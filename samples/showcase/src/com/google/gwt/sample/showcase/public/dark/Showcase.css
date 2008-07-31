@@ -1,6 +1,11 @@
 /**
  * Applied to the main layout of the page.
  */
+.Application-Reference-dark { 
+  height: 5px;
+  width: 5px;
+  zoom: 1;
+}
 .Application-top {
   width: 100%;
   margin-bottom: 10px;
@@ -43,6 +48,7 @@
   width: 36px;
   height: 16px;
   margin: 3px 0px 0px 10px;
+  padding: 0px;
 }
 .Application-options .gwt-ToggleButton-down,
 .Application-options .gwt-ToggleButton-down-hovering {
@@ -118,11 +124,6 @@
   cursor: hand;
 }
 
-.cw-DialogBox {
-  opacity: 0.8;
-  filter: alpha(opacity=80);
-}
-
 .cw-DictionaryExample-headerRow td {
   color: #7aa5d6;
   text-decoration: underline;
@@ -169,11 +170,4 @@
   padding-left: 7px;
   font-weight: bold;
   font-size: 1.4em;
-}
-
-/**
- * Make all buttons the same size.
- */
-.gwt-Button {
-  width: 10em;
 }

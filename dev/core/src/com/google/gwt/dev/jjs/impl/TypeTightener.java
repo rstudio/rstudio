@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
@@ -194,6 +195,8 @@ public class TypeTightener {
         JExpression lhs = x.getLhs();
         if (lhs instanceof JVariableRef) {
           addAssignment(((JVariableRef) lhs).getTarget(), x.getRhs());
+        } else {
+          assert lhs instanceof JArrayRef;
         }
       }
     }

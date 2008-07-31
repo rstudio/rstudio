@@ -16,56 +16,29 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 
 /**
  * Java class literal expression.
+ * 
+ * NOTE: This class is modeled as if it were a JFieldRef to a field declared in
+ * ClassLiteralHolder. That field contains the class object allocation
+ * initializer.
  */
 public class JClassLiteral extends JLiteral {
-  private static String getClassName(String fullName) {
-    int pos = fullName.lastIndexOf(".");
-    return fullName.substring(pos + 1);
-  }
-
-  private static String getPackageName(String fullName) {
-    int pos = fullName.lastIndexOf(".");
-    return fullName.substring(0, pos + 1);
-  }
-
-  private static String getTypeName(JProgram program, JType type) {
-    String typeName;
-    if (type instanceof JArrayType) {
-      typeName = type.getJsniSignatureName().replace('/', '.');
-      // Mangle the class name to match hosted mode.
-      if (program.isJavaScriptObject(((JArrayType) type).getLeafType())) {
-        typeName = typeName.replace(";", "$;");
-      }
-    } else {
-      typeName = type.getName();
-      // Mangle the class name to match hosted mode.
-      if (program.isJavaScriptObject(type)) {
-        typeName += '$';
-      }
-    }
-    return typeName;
-  }
-
-  private JExpression classObjectAllocation;
-  private final JType refType;
-
   /**
-   * These are only supposed to be constructed by JProgram.
+   * Create an expression that will evaluate, at run time, to the class literal.
+   * Cannot be called after optimizations begin.
    */
-  JClassLiteral(JProgram program, JType type) {
-    super(program);
-    refType = type;
-
+  static JMethodCall computeClassObjectAllocation(JProgram program,
+      SourceInfo info, JType type) {
     String typeName = getTypeName(program, type);
 
     JMethod method = program.getIndexedMethod(type.getClassLiteralFactoryMethod());
     assert method != null;
 
-    JMethodCall call = new JMethodCall(program, null, null, method);
+    JMethodCall call = new JMethodCall(program, info, null, method);
     call.getArgs().add(program.getLiteralString(getPackageName(typeName)));
     call.getArgs().add(program.getLiteralString(getClassName(typeName)));
 
@@ -104,15 +77,61 @@ public class JClassLiteral extends JLiteral {
           throw new InternalCompilerException(
               "Could not find enum values() method");
         }
-        JsniMethodRef jsniMethodRef = new JsniMethodRef(program.program, null,
-            null, valuesMethod);
+        JsniMethodRef jsniMethodRef = new JsniMethodRef(program, info, null,
+            valuesMethod);
         call.getArgs().add(jsniMethodRef);
       }
     } else {
       assert (type instanceof JArrayType || type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }
+    return call;
+  }
 
-    classObjectAllocation = call;
+  private static String getClassName(String fullName) {
+    int pos = fullName.lastIndexOf(".");
+    return fullName.substring(pos + 1);
+  }
+
+  private static String getPackageName(String fullName) {
+    int pos = fullName.lastIndexOf(".");
+    return fullName.substring(0, pos + 1);
+  }
+
+  private static String getTypeName(JProgram program, JType type) {
+    String typeName;
+    if (type instanceof JArrayType) {
+      typeName = type.getJsniSignatureName().replace('/', '.');
+      // Mangle the class name to match hosted mode.
+      if (program.isJavaScriptObject(((JArrayType) type).getLeafType())) {
+        typeName = typeName.replace(";", "$;");
+      }
+    } else {
+      typeName = type.getName();
+      // Mangle the class name to match hosted mode.
+      if (program.isJavaScriptObject(type)) {
+        typeName += '$';
+      }
+    }
+    return typeName;
+  }
+
+  private final JField field;
+  private final JType refType;
+
+  /**
+   * This constructor is only used by {@link JProgram}.
+   */
+  JClassLiteral(JProgram program, JType type, JField field) {
+    super(program);
+    refType = type;
+    this.field = field;
+  }
+
+  /**
+   * Returns the field holding my allocated object.
+   */
+  public JField getField() {
+    return field;
   }
 
   public JType getRefType() {
@@ -120,12 +139,11 @@ public class JClassLiteral extends JLiteral {
   }
 
   public JType getType() {
-    return classObjectAllocation.getType();
+    return field.getType();
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      classObjectAllocation = visitor.accept(classObjectAllocation);
     }
     visitor.endVisit(this, ctx);
   }

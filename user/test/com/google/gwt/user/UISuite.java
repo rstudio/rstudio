@@ -44,6 +44,7 @@ import com.google.gwt.user.client.ui.FocusPanelTest;
 import com.google.gwt.user.client.ui.GridTest;
 import com.google.gwt.user.client.ui.HTMLPanelTest;
 import com.google.gwt.user.client.ui.HiddenTest;
+import com.google.gwt.user.client.ui.HistoryTest;
 import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.HyperlinkTest;
 import com.google.gwt.user.client.ui.ImageTest;
@@ -113,7 +114,7 @@ public class UISuite {
     // suite.addTestSuite(FormPanelTest.class);
     suite.addTestSuite(GridTest.class);
     suite.addTestSuite(HiddenTest.class);
-    // suite.addTestSuite(HistoryTest.class);
+    suite.addTestSuite(HistoryTest.class);
     suite.addTestSuite(HorizontalPanelTest.class);
     suite.addTestSuite(HTMLPanelTest.class);
     suite.addTestSuite(HyperlinkTest.class);

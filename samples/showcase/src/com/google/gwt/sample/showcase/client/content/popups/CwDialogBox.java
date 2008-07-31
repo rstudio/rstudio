@@ -16,13 +16,13 @@
 package com.google.gwt.sample.showcase.client.content.popups;
 
 import com.google.gwt.i18n.client.Constants;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HTML;
@@ -35,8 +35,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-DialogBox", "html>body .gwt-DialogBox", "* html .gwt-DialogBox",
-    ".cw-DialogBox"})
+@ShowcaseStyle({".gwt-DialogBox", "html>body .gwt-DialogBox",
+    "* html .gwt-DialogBox", ".cw-DialogBox"})
 public class CwDialogBox extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -143,7 +143,6 @@ public class CwDialogBox extends ContentWidget {
 
     // Create a table to layout the content
     VerticalPanel dialogContents = new VerticalPanel();
-    dialogContents.setWidth("100%");
     dialogContents.setSpacing(4);
     dialogBox.setWidget(dialogContents);
 
@@ -159,22 +158,6 @@ public class CwDialogBox extends ContentWidget {
     dialogContents.setCellHorizontalAlignment(image,
         HasHorizontalAlignment.ALIGN_CENTER);
 
-    // Add option to make transparent
-    final CheckBox opacityOption = new CheckBox(
-        constants.cwDialogBoxMakeTransparent());
-    dialogContents.add(opacityOption);
-
-    // Listen for changes in opacity option
-    opacityOption.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
-        if (opacityOption.isChecked()) {
-          dialogBox.addStyleName("cw-DialogBox");
-        } else {
-          dialogBox.removeStyleName("cw-DialogBox");
-        }
-      }
-    });
-
     // Add a close button at the bottom of the dialog
     Button closeButton = new Button(constants.cwDialogBoxClose(),
         new ClickListener() {
@@ -183,8 +166,14 @@ public class CwDialogBox extends ContentWidget {
           }
         });
     dialogContents.add(closeButton);
-    dialogContents.setCellHorizontalAlignment(closeButton,
-        HasHorizontalAlignment.ALIGN_RIGHT);
+    if (LocaleInfo.getCurrentLocale().isRTL()) {
+      dialogContents.setCellHorizontalAlignment(closeButton,
+          HasHorizontalAlignment.ALIGN_LEFT);
+
+    } else {
+      dialogContents.setCellHorizontalAlignment(closeButton,
+          HasHorizontalAlignment.ALIGN_RIGHT);
+    }
 
     // Return the dialog box
     return dialogBox;

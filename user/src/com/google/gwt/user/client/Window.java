@@ -23,6 +23,7 @@ import com.google.gwt.user.client.impl.WindowImpl;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +41,7 @@ public class Window {
    */
   public static class Location {
     private static Map<String, String> paramMap;
-    private static Map<String, String> unmodifiableParamMap;
+    private static Map<String, List<String>> listParamMap;
 
     /**
      * Assigns the window to a new URL. All GWT state will be lost.
@@ -57,9 +58,9 @@ public class Window {
      * @return the string to the right of the URL's hash.
      */
 
-    public static native String getHash() /*-{
-      return $wnd.location.hash;
-    }-*/;
+    public static String getHash() {
+      return impl.getHash();
+    }
 
     /**
      * Gets the URL's host and port name.
@@ -89,7 +90,9 @@ public class Window {
     }-*/;
 
     /**
-     * Gets the URL's parameter of the specified name.
+     * Gets the URL's parameter of the specified name. Note that if multiple
+     * parameters have been specified with the same name, the last one will
+     * be returned.
      * 
      * @param name the name of the URL's parameter
      * @return the value of the URL's parameter
@@ -104,15 +107,13 @@ public class Window {
      * changing the map would not change the window's location, the map returned
      * is immutable.
      * 
-     * @return a map from URL query parameter names to values
+     * @return a map from URL query parameter names to a list of values
      */
-    public static Map<String, String> getParameterMap() {
-      ensureParameterMap();
-
-      if (unmodifiableParamMap == null) {
-        unmodifiableParamMap = Collections.unmodifiableMap(paramMap);
+    public static Map<String, List<String>> getParameterMap() {
+      if (listParamMap == null) {
+        listParamMap = buildListParamMap(getQueryString());
       }
-      return unmodifiableParamMap;
+      return listParamMap;
     }
 
     /**
@@ -147,9 +148,9 @@ public class Window {
      * 
      * @return the URL's query string
      */
-    public static native String getQueryString() /*-{
-      return $wnd.location.search;
-    }-*/;
+    public static String getQueryString() {
+      return impl.getQueryString();
+    }
 
     /**
      * Reloads the current browser window. All GWT state will be lost.
@@ -168,6 +169,41 @@ public class Window {
       $wnd.location.replace(newURL);
     }-*/;
 
+    /**
+     * Builds the immutable map from String to List<String> that we'll return
+     * in getParameterMap(). Package-protected for testing.
+     * @return a map from the 
+     */
+    static Map<String,List<String>> buildListParamMap(String queryString) {
+      Map<String,List<String>> out = new HashMap<String, List<String>>();
+
+      if (queryString != null && queryString.length() > 1) {
+        String qs = queryString.substring(1);
+
+        for (String kvPair : qs.split("&")) {
+          String[] kv = kvPair.split("=", 2);
+          if (kv[0].length() == 0) {
+            continue;
+          }
+
+          List<String> values = out.get(kv[0]);
+          if (values == null) {
+            values = new ArrayList<String>();
+            out.put(kv[0], values);
+          }
+          values.add(kv.length > 1 ? URL.decode(kv[1]) : "");
+        }
+      }
+
+      for (Map.Entry<String, List<String>> entry : out.entrySet()) {
+        entry.setValue(Collections.unmodifiableList(entry.getValue()));
+      }
+
+      out = Collections.unmodifiableMap(out);
+
+      return out;
+    }
+    
     private static void ensureParameterMap() {
       if (paramMap == null) {
         paramMap = new HashMap<String, String>();
@@ -175,7 +211,7 @@ public class Window {
         if (queryString != null && queryString.length() > 1) {
           String qs = queryString.substring(1);
           for (String kvPair : qs.split("&")) {
-            String[] kv = kvPair.split("=");
+            String[] kv = kvPair.split("=", 2);
             if (kv.length > 1) {
               paramMap.put(kv[0], URL.decode(kv[1]));
             } else {

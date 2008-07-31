@@ -86,6 +86,8 @@ public class CwDictionaryExample extends ContentWidget {
         + "&nbsp;&nbsp;name: \"Amelie Crutcher\",\n"
         + "&nbsp;&nbsp;timeZone: \"EST\",\n" + "&nbsp;&nbsp;userID: \"123\",\n"
         + "&nbsp;&nbsp;lastLogOn: \"2/2/2006\"\n" + "};</pre>\n");
+    source.getElement().setDir("ltr");
+    source.getElement().getStyle().setProperty("textAlign", "left");
     layout.add(new HTML(constants.cwDictionaryExampleLinkText()));
     layout.add(source);
 

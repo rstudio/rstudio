@@ -1,6 +1,11 @@
 /**
  * Applied to the main layout of the page.
  */
+.Application-Reference-chrome { 
+  height: 5px;
+  width: 5px;
+  zoom: 1;
+}
 .Application-top {
   width: 100%;
   margin-bottom: 10px;
@@ -43,6 +48,7 @@
   width: 36px;
   height: 16px;
   margin: 3px 0px 0px 10px;
+  padding: 0px;
 }
 .Application-options .gwt-ToggleButton-down,
 .Application-options .gwt-ToggleButton-down-hovering {
@@ -71,7 +77,7 @@
 .Application-content-title {
   padding: 4px 0px 3px 6px;
   text-align: left;
-  background: url(../gwt/chrome/images/hborder.png) repeat-x 0px -2003px;
+  background: #530a0a url(../gwt/chrome/images/hborder.png) repeat-x 0px -2003px;
   border-bottom: 2px solid #e3e3e3;
 }
 .Application-content-title .gwt-TabBarItem {
@@ -116,11 +122,6 @@
   cursor: hand;
 }
 
-.cw-DialogBox {
-  opacity: 0.8;
-  filter: alpha(opacity=80);
-}
-
 .cw-DictionaryExample-headerRow td {
   color: #7aa5d6;
   text-decoration: underline;
@@ -162,11 +163,4 @@
   padding-left: 7px;
   font-weight: bold;
   font-size: 1.4em;
-}
-
-/**
- * Make all buttons the same size.
- */
-.gwt-Button {
-  width: 10em;
 }

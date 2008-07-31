@@ -121,7 +121,7 @@ public class ArrayNormalizer {
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
           initDim, arrayType);
-      JLiteral classLit = program.getLiteralClass(arrayType);
+      JLiteral classLit = x.getClassLiteral();
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JExpression dim = x.dims.get(0);
@@ -148,7 +148,7 @@ public class ArrayNormalizer {
         // Walk down each type from most dims to least.
         JArrayType curArrayType = (JArrayType) cur;
 
-        JLiteral classLit = program.getLiteralClass(cur);
+        JLiteral classLit = x.getClassLiterals().get(i);
         classLitList.exprs.add(classLit);
 
         JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(curArrayType));
@@ -174,7 +174,7 @@ public class ArrayNormalizer {
       // override the type of the called method with the array's type
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
           initValues, arrayType);
-      JLiteral classLit = program.getLiteralClass(arrayType);
+      JLiteral classLit = x.getClassLiteral();
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JsonArray initList = new JsonArray(program);

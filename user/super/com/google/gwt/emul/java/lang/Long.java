@@ -109,6 +109,10 @@ public final class Long extends Number implements Comparable<Long> {
     if (orig == null) {
       throw new NumberFormatException("null");
     }
+    if (orig.length() == 0) {
+      throw NumberFormatException.forInputString(orig);
+    }
+
     if (intRadix < Character.MIN_RADIX || intRadix > Character.MAX_RADIX) {
       throw new NumberFormatException("radix " + intRadix + " out of range");
     }
