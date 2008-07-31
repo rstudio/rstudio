@@ -32,8 +32,7 @@ import java.util.Set;
 final class ApiPackageDiffGenerator implements
     Comparable<ApiPackageDiffGenerator> {
   private final ApiDiffGenerator apiDiffGenerator;
-  private Map<String, ApiClassDiffGenerator> intersectingClasses =
-      new HashMap<String, ApiClassDiffGenerator>();
+  private Map<String, ApiClassDiffGenerator> intersectingClasses = new HashMap<String, ApiClassDiffGenerator>();
   private Set<String> missingClassNames = null;
   private final String name;
   private final ApiPackage newPackage;
@@ -43,10 +42,10 @@ final class ApiPackageDiffGenerator implements
       throws NotFoundException {
     this.apiDiffGenerator = apiDiffGenerator;
     name = packageName;
-    newPackage =
-        apiDiffGenerator.getNewApiContainer().getApiPackage(packageName);
-    oldPackage =
-        apiDiffGenerator.getOldApiContainer().getApiPackage(packageName);
+    newPackage = apiDiffGenerator.getNewApiContainer().getApiPackage(
+        packageName);
+    oldPackage = apiDiffGenerator.getOldApiContainer().getApiPackage(
+        packageName);
     if (newPackage == null || oldPackage == null) {
       throw new NotFoundException("for package " + packageName
           + ", one of the package objects is null");
@@ -66,13 +65,13 @@ final class ApiPackageDiffGenerator implements
   void computeApiDiff() throws NotFoundException {
     Set<String> newClassNames = newPackage.getApiClassNames();
     missingClassNames = oldPackage.getApiClassNames();
-    Set<String> intersection =
-        ApiDiffGenerator.removeIntersection(newClassNames, missingClassNames);
+    Set<String> intersection = ApiDiffGenerator.removeIntersection(
+        newClassNames, missingClassNames);
 
     /* Inspect each of the classes in each of the packages in the intersection */
     for (String className : intersection) {
-      ApiClassDiffGenerator tempClassDiffGenerator =
-          new ApiClassDiffGenerator(className, this);
+      ApiClassDiffGenerator tempClassDiffGenerator = new ApiClassDiffGenerator(
+          className, this);
       intersectingClasses.put(className, tempClassDiffGenerator);
       tempClassDiffGenerator.computeApiDiff();
     }
@@ -84,13 +83,12 @@ final class ApiPackageDiffGenerator implements
 
   Collection<ApiChange> getApiDiff() {
     Collection<ApiChange> collection = new ArrayList<ApiChange>();
-    Collection<ApiClass> missingClasses =
-        oldPackage.getApiClassesBySet(missingClassNames);
+    Collection<ApiClass> missingClasses = oldPackage.getApiClassesBySet(missingClassNames);
     for (ApiClass missingClass : missingClasses) {
       collection.add(new ApiChange(missingClass, ApiChange.Status.MISSING));
     }
-    List<ApiClassDiffGenerator> intersectingClassesList =
-        new ArrayList<ApiClassDiffGenerator>(intersectingClasses.values());
+    List<ApiClassDiffGenerator> intersectingClassesList = new ArrayList<ApiClassDiffGenerator>(
+        intersectingClasses.values());
     Collections.sort(intersectingClassesList);
     for (ApiClassDiffGenerator intersectingClass : intersectingClasses.values()) {
       collection.addAll(intersectingClass.getApiDiff());

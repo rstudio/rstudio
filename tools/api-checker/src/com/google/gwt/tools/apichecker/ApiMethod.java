@@ -48,8 +48,8 @@ final class ApiMethod extends ApiAbstractMethod {
     if (firstType.getSimpleSourceName().indexOf("void") != -1) {
       return null;
     }
-    boolean compatible =
-        ApiDiffGenerator.isFirstTypeAssignableToSecond(secondType, firstType);
+    boolean compatible = ApiDiffGenerator.isFirstTypeAssignableToSecond(
+        secondType, firstType);
     if (compatible) {
       return null;
     }

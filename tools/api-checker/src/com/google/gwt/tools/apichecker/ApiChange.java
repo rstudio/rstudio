@@ -16,7 +16,6 @@
 
 package com.google.gwt.tools.apichecker;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -108,9 +107,8 @@ final class ApiChange implements Comparable<ApiChange> {
   @Override
   public String toString() {
     if (stringRepresentation == null) {
-      stringRepresentation =
-          element.getRelativeSignature() + ApiDiffGenerator.DELIMITER
-              + status.name();
+      stringRepresentation = element.getRelativeSignature()
+          + ApiDiffGenerator.DELIMITER + status.name();
     }
     return stringRepresentation;
   }

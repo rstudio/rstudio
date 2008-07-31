@@ -62,8 +62,8 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
   }
 
   List<JClassType> getAllClasses() {
-    List<JClassType> allClasses =
-        new ArrayList<JClassType>(Arrays.asList(packageObject.getTypes()));
+    List<JClassType> allClasses = new ArrayList<JClassType>(
+        Arrays.asList(packageObject.getTypes()));
     logger.log(TreeLogger.SPAM, "API " + packageObject + " has "
         + allClasses.size() + " outer classes", null);
     int index = 0;
@@ -80,8 +80,8 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
   String getApiAsString() {
     StringBuffer sb = new StringBuffer();
     sb.append(name + "\n");
-    ArrayList<ApiClass> apiClassesList =
-        new ArrayList<ApiClass>(apiClasses.values());
+    ArrayList<ApiClass> apiClassesList = new ArrayList<ApiClass>(
+        apiClasses.values());
     Collections.sort(apiClassesList);
     for (ApiClass apiClass : apiClassesList) {
       sb.append(apiClass.getApiAsString());

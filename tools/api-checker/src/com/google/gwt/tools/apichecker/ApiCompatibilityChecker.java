@@ -98,8 +98,7 @@ public class ApiCompatibilityChecker {
 
   public static final boolean PROCESS_NEW_API = true;
   // true by default
-  public static final boolean REMOVE_NON_SUBCLASSABLE_ABSTRACT_CLASS_FROM_API =
-      true;
+  public static final boolean REMOVE_NON_SUBCLASSABLE_ABSTRACT_CLASS_FROM_API = true;
 
   // Tweak for log output.
   public static final TreeLogger.Type type = TreeLogger.ERROR;
@@ -138,8 +137,8 @@ public class ApiCompatibilityChecker {
       }
 
       if (PROCESS_NEW_API && PROCESS_EXISTING_API) {
-        Collection<ApiChange> apiDifferences =
-            getApiDiff(newApi, existingApi, readWhiteListFromFile(args[0]));
+        Collection<ApiChange> apiDifferences = getApiDiff(newApi, existingApi,
+            readWhiteListFromFile(args[0]));
         for (ApiChange apiChange : apiDifferences) {
           System.out.println(apiChange);
         }

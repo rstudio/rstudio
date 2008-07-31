@@ -52,10 +52,8 @@ public final class ApiDiffGenerator {
     }
     TypeOracle newApiTypeOracle = classType2.getOracle();
     // get the appropriate classObject in the newApi
-    JClassType firstClassType =
-        newApiTypeOracle.findType(classType1.getQualifiedSourceName());
-    JClassType secondClassType =
-        newApiTypeOracle.findType(classType2.getQualifiedSourceName());
+    JClassType firstClassType = newApiTypeOracle.findType(classType1.getQualifiedSourceName());
+    JClassType secondClassType = newApiTypeOracle.findType(classType2.getQualifiedSourceName());
     // The types might not necessarily exist in the newApi
     if (firstClassType == null || secondClassType == null) {
       return false;
@@ -72,8 +70,7 @@ public final class ApiDiffGenerator {
     return intersection;
   }
 
-  Map<String, ApiPackageDiffGenerator> intersectingPackages =
-      new HashMap<String, ApiPackageDiffGenerator>();
+  Map<String, ApiPackageDiffGenerator> intersectingPackages = new HashMap<String, ApiPackageDiffGenerator>();
   Set<String> missingPackageNames;
   final ApiContainer newApi;
   final ApiContainer oldApi;
@@ -90,8 +87,7 @@ public final class ApiDiffGenerator {
       cleanApiDiff();
     }
     Collection<ApiChange> collection = new ArrayList<ApiChange>();
-    Set<ApiPackage> missingPackages =
-        oldApi.getApiPackagesBySet(missingPackageNames);
+    Set<ApiPackage> missingPackages = oldApi.getApiPackagesBySet(missingPackageNames);
     for (ApiPackage missingPackage : missingPackages) {
       collection.add(new ApiChange(missingPackage, ApiChange.Status.MISSING));
     }
@@ -114,8 +110,8 @@ public final class ApiDiffGenerator {
       } else {
         i = -1;
       }
-      ApiClassDiffGenerator result =
-          findApiClassDiffGenerator(pkgName, typeName);
+      ApiClassDiffGenerator result = findApiClassDiffGenerator(pkgName,
+          typeName);
       if (result != null) {
         return result;
       }
@@ -135,8 +131,8 @@ public final class ApiDiffGenerator {
       String typeName) {
     ApiPackageDiffGenerator pkg = findApiPackageDiffGenerator(pkgName);
     if (pkg != null) {
-      ApiClassDiffGenerator type =
-          pkg.findApiClassDiffGenerator(pkgName + "." + typeName);
+      ApiClassDiffGenerator type = pkg.findApiClassDiffGenerator(pkgName + "."
+          + typeName);
       if (type != null) {
         return type;
       }
@@ -171,12 +167,12 @@ public final class ApiDiffGenerator {
   private void computeApiDiff() throws NotFoundException {
     Set<String> newApiPackageNames = newApi.getApiPackageNames();
     missingPackageNames = oldApi.getApiPackageNames();
-    Set<String> intersection =
-        removeIntersection(newApiPackageNames, missingPackageNames);
+    Set<String> intersection = removeIntersection(newApiPackageNames,
+        missingPackageNames);
     // Inspect each of the classes in each of the packages in the intersection
     for (String packageName : intersection) {
-      ApiPackageDiffGenerator tempPackageDiffGenerator =
-          new ApiPackageDiffGenerator(packageName, this);
+      ApiPackageDiffGenerator tempPackageDiffGenerator = new ApiPackageDiffGenerator(
+          packageName, this);
       intersectingPackages.put(packageName, tempPackageDiffGenerator);
       tempPackageDiffGenerator.computeApiDiff();
     }

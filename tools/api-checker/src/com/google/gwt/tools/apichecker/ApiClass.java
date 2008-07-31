@@ -61,8 +61,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
    * 2 entries in the list: one for CONSTRUCTOR, and the other for METHOD. Each
    * entry is a mapping from MethodName#args to a set of ApiAbstractMethod
    */
-  private EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>> apiMembersByName =
-      null;
+  private EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>> apiMembersByName = null;
 
   private final ApiPackage apiPackage;
   private final JClassType classType;
@@ -78,8 +77,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     logger = apiPackage.getApiContainer().getLogger();
     ApiContainer apiContainer = apiPackage.getApiContainer();
     isSubclassableApiClass = apiContainer.isSubclassableApiClass(classType);
-    isNotsubclassableApiClass =
-        apiContainer.isNotsubclassableApiClass(classType);
+    isNotsubclassableApiClass = apiContainer.isNotsubclassableApiClass(classType);
     isInstantiableApiClass = apiContainer.isInstantiableApiClass(classType);
   }
 
@@ -100,8 +98,8 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     StringBuffer sb = new StringBuffer();
     sb.append("\t" + getName() + "\n");
     if (apiFields != null) {
-      ArrayList<ApiField> apiFieldsList =
-          new ArrayList<ApiField>(apiFields.values());
+      ArrayList<ApiField> apiFieldsList = new ArrayList<ApiField>(
+          apiFields.values());
       Collections.sort(apiFieldsList);
       for (ApiField apiField : apiFieldsList) {
         sb.append("\t\t" + apiField.getRelativeSignature() + "\n");
@@ -110,13 +108,12 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     if (apiMembersByName != null
         && apiMembersByName.get(MethodType.METHOD) != null) {
       for (MethodType method : MethodType.values()) {
-        HashSet<ApiAbstractMethod> apiMethodsSet =
-            new HashSet<ApiAbstractMethod>();
+        HashSet<ApiAbstractMethod> apiMethodsSet = new HashSet<ApiAbstractMethod>();
         for (Set<ApiAbstractMethod> methodsSets : apiMembersByName.get(method).values()) {
           apiMethodsSet.addAll(methodsSets);
         }
-        ArrayList<ApiAbstractMethod> apiMethodsList =
-            new ArrayList<ApiAbstractMethod>(apiMethodsSet);
+        ArrayList<ApiAbstractMethod> apiMethodsList = new ArrayList<ApiAbstractMethod>(
+            apiMethodsSet);
         Collections.sort(apiMethodsList);
         for (ApiAbstractMethod apiMethod : apiMethodsList) {
           sb.append("\t\t" + apiMethod.getRelativeSignature() + "\n");
@@ -308,14 +305,12 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
   }
 
   private void initializeApiConstructorsAndMethods() {
-    apiMembersByName =
-        new EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>>(
-            MethodType.class);
+    apiMembersByName = new EnumMap<MethodType, Map<String, Set<ApiAbstractMethod>>>(
+        MethodType.class);
     for (MethodType method : MethodType.values()) {
       apiMembersByName.put(method,
           new HashMap<String, Set<ApiAbstractMethod>>());
-      Map<String, Set<ApiAbstractMethod>> pointer =
-          apiMembersByName.get(method);
+      Map<String, Set<ApiAbstractMethod>> pointer = apiMembersByName.get(method);
       List<String> notAddedMembers = new ArrayList<String>();
       JAbstractMethod jams[] = getAccessibleMethods(method);
       for (JAbstractMethod jam : jams) {
