@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,39 +39,21 @@ public class JsObfuscateNamer {
       'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '0', '1', '2', '3',
       '4', '5', '6', '7', '8', '9', '$', '_'};
 
-  /**
-   * A temp buffer big enough to hold at least 32 bits worth of base-64 chars.
-   */
-  private static final char[] sIdentBuf = new char[6];
-
   public static void exec(JsProgram program) {
     new JsObfuscateNamer(program).execImpl();
-  }
-
-  private static String makeObfuscatedIdent(int id) {
-    // Use base-32 for the first character of the identifier,
-    // so that we don't use any numbers (which are illegal at
-    // the beginning of an identifier).
-    //
-    int i = 0;
-    sIdentBuf[i++] = sBase64Chars[id & 0x1f];
-    id >>= 5;
-
-    // Use base-64 for the rest of the identifier.
-    //
-    while (id != 0) {
-      sIdentBuf[i++] = sBase64Chars[id & 0x3f];
-      id >>= 6;
-    }
-
-    return new String(sIdentBuf, 0, i);
   }
 
   /**
    * Communicates to a parent scope the maximum id used by any of its children.
    */
   private int maxChildId = 0;
+
   private final JsProgram program;
+
+  /**
+   * A temp buffer big enough to hold at least 32 bits worth of base-64 chars.
+   */
+  private final char[] sIdentBuf = new char[6];
 
   public JsObfuscateNamer(JsProgram program) {
     this.program = program;
@@ -92,6 +74,25 @@ public class JsObfuscateNamer {
      * anyway.
      */
     return (scope.findExistingUnobfuscatableName(newIdent) == null);
+  }
+
+  private String makeObfuscatedIdent(int id) {
+    // Use base-32 for the first character of the identifier,
+    // so that we don't use any numbers (which are illegal at
+    // the beginning of an identifier).
+    //
+    int i = 0;
+    sIdentBuf[i++] = sBase64Chars[id & 0x1f];
+    id >>= 5;
+
+    // Use base-64 for the rest of the identifier.
+    //
+    while (id != 0) {
+      sIdentBuf[i++] = sBase64Chars[id & 0x3f];
+      id >>= 6;
+    }
+
+    return new String(sIdentBuf, 0, i);
   }
 
   private void visit(JsScope scope) {
