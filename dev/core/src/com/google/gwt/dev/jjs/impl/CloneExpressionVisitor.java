@@ -84,11 +84,11 @@ public class CloneExpressionVisitor extends JVisitor {
     return originalClass.cast(expression);
   }
 
-  public List<JExpression> cloneExpressions(List<JExpression> exprs) {
+  public ArrayList<JExpression> cloneExpressions(List<JExpression> exprs) {
     if (exprs == null) {
       return null;
     }
-    List<JExpression> result = new ArrayList<JExpression>();
+    ArrayList<JExpression> result = new ArrayList<JExpression>();
     for (JExpression expr : exprs) {
       result.add(cloneExpression(expr));
     }
@@ -174,6 +174,23 @@ public class CloneExpressionVisitor extends JVisitor {
   }
 
   @Override
+  public boolean visit(JGwtCreate x, Context ctx) {
+    // Clone the internal instantiation expressions directly.
+    ArrayList<JExpression> clonedExprs = new ArrayList<JExpression>();
+    for (JExpression expr : x.getInstantiationExpressions()) {
+      clonedExprs.add(cloneExpression(expr));
+    }
+
+    // Use the clone constructor.
+    JGwtCreate gwtCreate = new JGwtCreate(program, x.getSourceInfo(),
+        x.getSourceType(), x.getResultTypes(), x.getType(),
+        cloneExpressions(x.getInstantiationExpressions()));
+
+    expression = gwtCreate;
+    return false;
+  }
+
+  @Override
   public boolean visit(JInstanceOf x, Context ctx) {
     expression = new JInstanceOf(program, x.getSourceInfo(), x.getTestType(),
         cloneExpression(x.getExpr()));
@@ -231,21 +248,6 @@ public class CloneExpressionVisitor extends JVisitor {
   @Override
   public boolean visit(JNewInstance x, Context ctx) {
     expression = new JNewInstance(program, x.getSourceInfo(), x.getClassType());
-    return false;
-  }
-
-  @Override
-  public boolean visit(JGwtCreate x, Context ctx) {
-    JGwtCreate gwtCreate = new JGwtCreate(program, x.getSourceInfo(),
-        x.getSourceType(), x.getResultTypes());
-
-    // Clone the internal instantiation expressions directly.
-    ArrayList<JExpression> exprs = x.getInstantiationExpressions();
-    ArrayList<JExpression> cloneExprs = gwtCreate.getInstantiationExpressions();
-    for (int i = 0; i < exprs.size(); ++i) {
-      cloneExprs.set(i, cloneExpression(exprs.get(i)));
-    }
-    expression = gwtCreate;
     return false;
   }
 

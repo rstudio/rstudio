@@ -50,26 +50,48 @@ public class JGwtCreate extends JExpression implements HasSettableType {
     return new JMethodCall(program, info, newInstance, noArgCtor);
   }
 
-  private final ArrayList<JExpression> instantiationExpressions = new ArrayList<JExpression>();
+  private static ArrayList<JExpression> createInstantiationExpressions(
+      JProgram program, SourceInfo info, List<JClassType> classTypes) {
+    ArrayList<JExpression> exprs = new ArrayList<JExpression>();
+    for (JClassType classType : classTypes) {
+      JExpression expr = createInstantiationExpression(program, info, classType);
+      assert expr != null;
+      exprs.add(expr);
+    }
+    return exprs;
+  }
+
+  private final ArrayList<JExpression> instantiationExpressions;
   private final List<JClassType> resultTypes;
+
   private final JReferenceType sourceType;
 
+  /*
+   * Initially object; will be updated by type tightening.
+   */
   private JType type;
 
+  /**
+   * Public constructor used during AST creation.
+   */
   public JGwtCreate(JProgram program, SourceInfo info,
       JReferenceType sourceType, List<JClassType> resultTypes) {
+    this(program, info, sourceType, resultTypes,
+        program.getTypeJavaLangObject(), createInstantiationExpressions(
+            program, info, resultTypes));
+  }
+
+  /**
+   * Constructor used for cloning an existing node.
+   */
+  public JGwtCreate(JProgram program, SourceInfo info,
+      JReferenceType sourceType, List<JClassType> resultTypes, JType type,
+      ArrayList<JExpression> instantiationExpressions) {
     super(program, info);
     this.sourceType = sourceType;
     this.resultTypes = resultTypes;
-
-    // Initially object; will be updated by type tightening.
-    this.type = program.getTypeJavaLangObject();
-
-    for (JClassType classType : resultTypes) {
-      JExpression expr = createInstantiationExpression(program, info, classType);
-      assert expr != null;
-      instantiationExpressions.add(expr);
-    }
+    this.type = type;
+    this.instantiationExpressions = instantiationExpressions;
   }
 
   public ArrayList<JExpression> getInstantiationExpressions() {
