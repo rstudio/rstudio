@@ -53,18 +53,18 @@ import java.util.Vector;
  */
 public final class ApiContainer {
 
-  private Map<JClassType, Boolean> apiClassCache = new HashMap<JClassType, Boolean>();
-  private Map<String, ApiPackage> apiPackages = new HashMap<String, ApiPackage>();
+  private final Map<JClassType, Boolean> apiClassCache = new HashMap<JClassType, Boolean>();
+  private final Map<String, ApiPackage> apiPackages = new HashMap<String, ApiPackage>();
 
-  private Set<String> excludedFiles = null;
-  private Set<String> excludedPackages = null;
-  private TreeLogger logger = null;
+  private final Set<String> excludedFiles = new HashSet<String>();
+  private final Set<String> excludedPackages = new HashSet<String>();
+  private final TreeLogger logger;
 
-  private String name = null;
+  private final String name;
 
   private int numFilesCount = 0;
   private Collection<File> sourceTrees = null;
-  private TypeOracle typeOracle = null;
+  private final TypeOracle typeOracle;
 
   /**
    * A public constructor to create an {@code ApiContainer} from a config file.
@@ -126,13 +126,12 @@ public final class ApiContainer {
       for (String excludedFile : excludedFilesArray) {
         checkFileExistence("excluded file: ", dirRoot + excludedFile);
       }
-      this.excludedFiles = generateCanonicalFileSet(excludedFilesArray, dirRoot);
+      generateCanonicalFileSet(excludedFilesArray, dirRoot, excludedFiles);
 
       String excludedPackagesArray[] = allExcludedPackages.split(":");
-      this.excludedPackages = new HashSet<String>(
-          Arrays.asList(excludedPackagesArray));
+      excludedPackages.addAll(Arrays.asList(excludedPackagesArray));
       this.name = apiName;
-      createTypeOracleFromSources();
+      this.typeOracle = createTypeOracleFromSources();
       initializeApiPackages();
     } catch (MalformedURLException e1) {
       throw new IllegalArgumentException(e1);
@@ -301,7 +300,7 @@ public final class ApiContainer {
     if (excludedPackages.contains(classType.getPackage().getName())) {
       return false;
     }
-    
+
     // check for outer classes
     if (isPublicOuterClass(classType)) {
       return true;
@@ -321,9 +320,8 @@ public final class ApiContainer {
     return false;
   }
 
-  private void createTypeOracleFromSources() throws NotFoundException,
+  private TypeOracle createTypeOracleFromSources() throws NotFoundException,
       IOException, UnableToCompleteException {
-
     numFilesCount = 0;
     TypeOracleMediator mediator = new TypeOracleMediator();
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
@@ -332,10 +330,10 @@ public final class ApiContainer {
     }
     JdtCompiler.compile(units);
     mediator.refresh(logger, units);
-    typeOracle = mediator.getTypeOracle();
     logger.log(TreeLogger.INFO, "API " + name
         + ", Finished with building typeOracle, added " + numFilesCount
         + " files", null);
+    return mediator.getTypeOracle();
   }
 
   private String extractPackageNameFromFile(File file) {
@@ -369,11 +367,10 @@ public final class ApiContainer {
   /**
    * Convert a set into a HashMap for faster lookups.
    */
-  private Set<String> generateCanonicalFileSet(String strArray[], String dirRoot)
-      throws IOException {
-    Set<String> result = new HashSet<String>();
+  private void generateCanonicalFileSet(String strArray[], String dirRoot,
+      Set<String> result) throws IOException {
     if (strArray == null) {
-      return result;
+      return;
     }
     for (String str : strArray) {
       str = str.trim();
@@ -381,7 +378,6 @@ public final class ApiContainer {
       str = tempFile.getCanonicalPath();
       result.add(str);
     }
-    return result;
   }
 
   private boolean hasPublicOrProtectedConstructor(JClassType classType) {
