@@ -56,7 +56,8 @@ public final class ApiContainer {
   private Map<JClassType, Boolean> apiClassCache = new HashMap<JClassType, Boolean>();
   private Map<String, ApiPackage> apiPackages = new HashMap<String, ApiPackage>();
 
-  private Map<String, String> excludedFiles = null;
+  private Set<String> excludedFiles = null;
+  private Set<String> excludedPackages = null;
   private TreeLogger logger = null;
 
   private String name = null;
@@ -89,10 +90,14 @@ public final class ApiContainer {
       String apiName = config.getProperty("name" + suffix);
       String allSourceFiles = config.getProperty("sourceFiles" + suffix);
       String allExcludedFiles = config.getProperty("excludedFiles" + suffix);
-
       if (allExcludedFiles == null) {
         allExcludedFiles = "";
       }
+      String allExcludedPackages = config.getProperty("excludedPackages");
+      if (allExcludedPackages == null) {
+        allExcludedPackages = "";
+      }
+
       if (apiName == null || allSourceFiles == null) {
         throw new IllegalArgumentException(
             "in apiContainer constructor, either name (" + apiName
@@ -100,7 +105,8 @@ public final class ApiContainer {
       }
       logger.log(TreeLogger.DEBUG, "read from config file " + fileName
           + ", name = " + apiName + ", allSourceFiles = " + allSourceFiles
-          + ", allExcludedFiles = " + allExcludedFiles, null);
+          + ", allExcludedFiles = " + allExcludedFiles
+          + ", allExcludedPackages = " + allExcludedPackages, null);
 
       String dirRoot = config.getProperty("dirRoot" + suffix);
       if (dirRoot == null) {
@@ -115,16 +121,16 @@ public final class ApiContainer {
       }
       logger.log(TreeLogger.DEBUG, "fileCollection " + fileCollection, null);
       this.sourceTrees = fileCollection;
-      if (allExcludedFiles.equals("")) {
-        this.excludedFiles = generateCanonicalHashmap(new String[0], dirRoot);
-      } else {
-        String excludedFilesArray[] = allExcludedFiles.split(":");
-        for (String excludedFile : excludedFilesArray) {
-          checkFileExistence("excluded file: ", dirRoot + excludedFile);
-        }
-        this.excludedFiles = generateCanonicalHashmap(excludedFilesArray,
-            dirRoot);
+
+      String excludedFilesArray[] = allExcludedFiles.split(":");
+      for (String excludedFile : excludedFilesArray) {
+        checkFileExistence("excluded file: ", dirRoot + excludedFile);
       }
+      this.excludedFiles = generateCanonicalFileSet(excludedFilesArray, dirRoot);
+
+      String excludedPackagesArray[] = allExcludedPackages.split(":");
+      this.excludedPackages = new HashSet<String>(
+          Arrays.asList(excludedPackagesArray));
       this.name = apiName;
       createTypeOracleFromSources();
       initializeApiPackages();
@@ -292,6 +298,10 @@ public final class ApiContainer {
    * Notes: -- A class with only private constructors can be an API class.
    */
   private boolean computeIsApiClass(JClassType classType) {
+    if (excludedPackages.contains(classType.getPackage().getName())) {
+      return false;
+    }
+    
     // check for outer classes
     if (isPublicOuterClass(classType)) {
       return true;
@@ -359,19 +369,19 @@ public final class ApiContainer {
   /**
    * Convert a set into a HashMap for faster lookups.
    */
-  private HashMap<String, String> generateCanonicalHashmap(String strArray[],
-      String dirRoot) throws IOException {
-    HashMap<String, String> tempMap = new HashMap<String, String>();
+  private Set<String> generateCanonicalFileSet(String strArray[], String dirRoot)
+      throws IOException {
+    Set<String> result = new HashSet<String>();
     if (strArray == null) {
-      return tempMap;
+      return result;
     }
     for (String str : strArray) {
       str = str.trim();
       File tempFile = new File(dirRoot + str);
       str = tempFile.getCanonicalPath();
-      tempMap.put(str, str);
+      result.add(str);
     }
-    return tempMap;
+    return result;
   }
 
   private boolean hasPublicOrProtectedConstructor(JClassType classType) {
@@ -452,7 +462,7 @@ public final class ApiContainer {
     if (fileName.indexOf(pattern) == 0) {
       fileName = fileName.substring(pattern.length());
     }
-    return (excludedFiles.get(fileName) != null);
+    return excludedFiles.contains(fileName);
   }
 
   /**
