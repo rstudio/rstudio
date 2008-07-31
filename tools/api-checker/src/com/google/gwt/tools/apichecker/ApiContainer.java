@@ -53,10 +53,8 @@ import java.util.Vector;
  */
 public final class ApiContainer {
 
-  private Map<JClassType, Boolean> apiClassCache =
-      new HashMap<JClassType, Boolean>();
-  private Map<String, ApiPackage> apiPackages =
-      new HashMap<String, ApiPackage>();
+  private Map<JClassType, Boolean> apiClassCache = new HashMap<JClassType, Boolean>();
+  private Map<String, ApiPackage> apiPackages = new HashMap<String, ApiPackage>();
 
   private Map<String, String> excludedFiles = null;
   private TreeLogger logger = null;
@@ -124,8 +122,8 @@ public final class ApiContainer {
         for (String excludedFile : excludedFilesArray) {
           checkFileExistence("excluded file: ", dirRoot + excludedFile);
         }
-        this.excludedFiles =
-            generateCanonicalHashmap(excludedFilesArray, dirRoot);
+        this.excludedFiles = generateCanonicalHashmap(excludedFilesArray,
+            dirRoot);
       }
       this.name = apiName;
       createTypeOracleFromSources();
@@ -169,8 +167,8 @@ public final class ApiContainer {
   public String getApiAsString() {
     StringBuffer sb = new StringBuffer();
     sb.append("Api: " + name + "\n\n");
-    List<ApiPackage> sortedApiPackages =
-        new ArrayList<ApiPackage>(apiPackages.values());
+    List<ApiPackage> sortedApiPackages = new ArrayList<ApiPackage>(
+        apiPackages.values());
     Collections.sort(sortedApiPackages);
     for (ApiPackage apiPackage : apiPackages.values()) {
       sb.append(apiPackage.getApiAsString());
@@ -390,8 +388,8 @@ public final class ApiContainer {
    * Purge non API packages.
    */
   private void initializeApiPackages() {
-    Set<JPackage> allPackages =
-        new HashSet<JPackage>(Arrays.asList(typeOracle.getPackages()));
+    Set<JPackage> allPackages = new HashSet<JPackage>(
+        Arrays.asList(typeOracle.getPackages()));
     Set<String> packagesNotAdded = new HashSet<String>();
     for (JPackage packageObject : allPackages) {
       if (isApiPackage(packageObject)) {
