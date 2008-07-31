@@ -19,8 +19,10 @@ package com.google.gwt.tools.apichecker;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -50,14 +52,27 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
 
   private static List<ApiChange> checkExceptions(ApiAbstractMethod newMethod,
       ApiAbstractMethod oldMethod) {
-    JType newExceptions[] = newMethod.getMethod().getThrows();
-    JType oldExceptions[] = oldMethod.getMethod().getThrows();
+
+    ArrayList<JType> legalTypes = new ArrayList<JType>();
+
+    // A throw declaration for an unchecked exception does not change the API.
+    TypeOracle newTypeOracle = newMethod.getMethod().getEnclosingType().getOracle();
+    JClassType errorType = newTypeOracle.findType(Error.class.getName());
+    if (errorType != null) {
+      legalTypes.add(errorType);
+    }
+    JClassType rteType = newTypeOracle.findType(RuntimeException.class.getName());
+    if (rteType != null) {
+      legalTypes.add(rteType);
+    }
+
+    legalTypes.addAll(Arrays.asList(oldMethod.getMethod().getThrows()));
     List<ApiChange> ret = new ArrayList<ApiChange>();
-    for (JType newException : newExceptions) {
+    for (JType newException : newMethod.getMethod().getThrows()) {
       boolean isSubclass = false;
-      for (JType oldException : oldExceptions) {
+      for (JType legalType : legalTypes) {
         if (ApiDiffGenerator.isFirstTypeAssignableToSecond(newException,
-            oldException)) {
+            legalType)) {
           isSubclass = true;
           break;
         }
