@@ -157,8 +157,11 @@ public class PermutationCompiler {
           tryToExitNonFinalThread(null);
 
           // As the last thread, I must inform the main thread we're all done.
-          results.add(FINISHED_RESULT);
-          exitFinalThread();
+          exitFinalThread(new Runnable() {
+            public void run() {
+              results.add(FINISHED_RESULT);
+            }
+          });
         }
 
         if (!hasEnoughMemory()) {
@@ -177,9 +180,12 @@ public class PermutationCompiler {
           if (definitelyFinalThread) {
             // OOM on the final thread, this is a truly unrecoverable failure.
             currentTask.logger.log(TreeLogger.ERROR, "Out of memory", e);
-            results.add(new FailedResult(currentTask.getPermutation(),
-                new UnableToCompleteException()));
-            exitFinalThread();
+            exitFinalThread(new Runnable() {
+              public void run() {
+                results.add(new FailedResult(currentTask.getPermutation(),
+                    new UnableToCompleteException()));
+              }
+            });
           }
 
           /*
@@ -203,8 +209,12 @@ public class PermutationCompiler {
       }
     }
 
-    private void exitFinalThread() {
-      assert threadCount.compareAndSet(1, 0);
+    private void exitFinalThread(Runnable actionOnExit) {
+      boolean isFinalThread = threadCount.compareAndSet(1, 0);
+      assert isFinalThread;
+      if (actionOnExit != null) {
+        actionOnExit.run();
+      }
       throw new ThreadDeath();
     }
 
