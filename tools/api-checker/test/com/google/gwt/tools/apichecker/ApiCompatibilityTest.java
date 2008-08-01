@@ -118,18 +118,15 @@ public class ApiCompatibilityTest extends TestCase {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
-    api1 =
-        new ApiContainer("Api1", logger,
-            ApiContainerTest.getNewTypeOracleFromCompilationUnits(
-                ApiContainerTest.getScuArray(), logger));
-    apiSameAs1 =
-        new ApiContainer("Api2", logger,
-            ApiContainerTest.getNewTypeOracleFromCompilationUnits(
-                ApiContainerTest.getScuArray(), logger));
-    api2 =
-        new ApiContainer("Api2", logger,
-            ApiContainerTest.getNewTypeOracleFromCompilationUnits(
-                getScuArray(), logger));
+    api1 = new ApiContainer("Api1", logger,
+        ApiContainerTest.getNewTypeOracleFromCompilationUnits(
+            ApiContainerTest.getScuArray(), logger));
+    apiSameAs1 = new ApiContainer("Api2", logger,
+        ApiContainerTest.getNewTypeOracleFromCompilationUnits(
+            ApiContainerTest.getScuArray(), logger));
+    api2 = new ApiContainer("Api2", logger,
+        ApiContainerTest.getNewTypeOracleFromCompilationUnits(getScuArray(),
+            logger));
   }
 
   // setup is called before every test*. To avoid the overhead of setUp() each
@@ -145,12 +142,10 @@ public class ApiCompatibilityTest extends TestCase {
         hashSet).size());
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(api2, api1);
     boolean removeDuplicates = false;
-    String strWithDuplicates =
-        getStringRepresentation(ApiCompatibilityChecker.getApiDiff(apiDiff,
-            hashSet, removeDuplicates));
-    String strWithoutDuplicates =
-        getStringRepresentation(ApiCompatibilityChecker.getApiDiff(apiDiff,
-            hashSet, !removeDuplicates));
+    String strWithDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
+        apiDiff, hashSet, removeDuplicates));
+    String strWithoutDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
+        apiDiff, hashSet, !removeDuplicates));
 
     String delimiter = ApiDiffGenerator.DELIMITER;
     // test if missing packages are reported correctly
@@ -198,8 +193,7 @@ public class ApiCompatibilityTest extends TestCase {
         + ApiChange.Status.MISSING, strWithoutDuplicates));
 
     // test returnType error
-    String methodSignature =
-        "checkParametersAndReturnTypes(Ltest/apicontainer/ApiClass;)";
+    String methodSignature = "checkParametersAndReturnTypes(Ltest/apicontainer/ApiClass;)";
     assertEquals(1, countPresence(methodSignature + delimiter
         + ApiChange.Status.RETURN_TYPE_ERROR, strWithoutDuplicates));
     // test method exceptions
@@ -218,14 +212,12 @@ public class ApiCompatibilityTest extends TestCase {
   private void checkWhiteList() throws NotFoundException {
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(api2, api1);
     boolean removeDuplicates = false;
-    String whiteList =
-        "java.newpackage" + ApiDiffGenerator.DELIMITER
-            + ApiChange.Status.MISSING;
+    String whiteList = "java.newpackage" + ApiDiffGenerator.DELIMITER
+        + ApiChange.Status.MISSING;
     HashSet<String> hashSet = new HashSet<String>();
     hashSet.add(whiteList);
-    String strWithoutDuplicates =
-        getStringRepresentation(ApiCompatibilityChecker.getApiDiff(apiDiff,
-            hashSet, !removeDuplicates));
+    String strWithoutDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
+        apiDiff, hashSet, !removeDuplicates));
 
     // test if missing packages are reported correctly
     assertEquals(0, countPresence(whiteList, strWithoutDuplicates));

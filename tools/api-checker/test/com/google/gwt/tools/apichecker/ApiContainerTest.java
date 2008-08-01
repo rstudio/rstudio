@@ -100,8 +100,8 @@ public class ApiContainerTest extends TestCase {
       throws UnableToCompleteException {
 
     TypeOracleMediator mediator = new TypeOracleMediator();
-    Set<CompilationUnit> units =
-        new HashSet<CompilationUnit>(Arrays.asList(tempScuArray));
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>(
+        Arrays.asList(tempScuArray));
     JdtCompiler.compile(units);
     mediator.refresh(logger, units);
     return mediator.getTypeOracle();
@@ -205,15 +205,13 @@ public class ApiContainerTest extends TestCase {
   public void setUp() throws UnableToCompleteException {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(com.google.gwt.core.ext.TreeLogger.ERROR);
-    apiCheckLoop =
-        new ApiContainer("ApiClassTest", logger,
-            getNewTypeOracleFromCompilationUnits(
-                new StaticCompilationUnit[] {new StaticCompilationUnit(
-                    "java.lang.Object", getSourceForNewObject()),}, logger));
+    apiCheckLoop = new ApiContainer("ApiClassTest", logger,
+        getNewTypeOracleFromCompilationUnits(
+            new StaticCompilationUnit[] {new StaticCompilationUnit(
+                "java.lang.Object", getSourceForNewObject()),}, logger));
 
-    apiCheck =
-        new ApiContainer("ApiContainerTest", logger,
-            getNewTypeOracleFromCompilationUnits(getScuArray(), logger));
+    apiCheck = new ApiContainer("ApiContainerTest", logger,
+        getNewTypeOracleFromCompilationUnits(getScuArray(), logger));
   }
 
   public void testEverything() {
@@ -251,14 +249,12 @@ public class ApiContainerTest extends TestCase {
    * 
    */
   void checkApiMembers() {
-    ApiClass object =
-        apiCheck.getApiPackage("java.lang").getApiClass("java.lang.Object");
-    ApiClass apiClass =
-        apiCheck.getApiPackage("test.apicontainer").getApiClass(
-            "test.apicontainer.ApiClass");
-    ApiClass innerClass =
-        apiCheck.getApiPackage("test.apicontainer").getApiClass(
-            "test.apicontainer.NonApiClass.ApiClassInNonApiClass");
+    ApiClass object = apiCheck.getApiPackage("java.lang").getApiClass(
+        "java.lang.Object");
+    ApiClass apiClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
+        "test.apicontainer.ApiClass");
+    ApiClass innerClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
+        "test.apicontainer.NonApiClass.ApiClassInNonApiClass");
 
     // constructors
     assertEquals(1, innerClass.getApiMemberNames(
