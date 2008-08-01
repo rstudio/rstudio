@@ -37,6 +37,11 @@ public class TableRowElement extends Element {
   protected TableRowElement() {
   }
 
+  /**
+   * Delete a cell from the current row.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
+   */
   public final native void deleteCell(int index) /*-{
     this.deleteCell(index);
   }-*/;
@@ -102,6 +107,12 @@ public class TableRowElement extends Element {
     return this.vAlign;
   }-*/;
 
+  /**
+   * Insert an empty TD cell into this row. If index is -1 or equal to the
+   * number of cells, the new cell is appended.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/tables.html#adef-align-TD">W3C HTML Specification</a>
+   */
   public final native TableCellElement insertCell(int index) /*-{
     return this.insertCell(index);
   }-*/;

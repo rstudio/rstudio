@@ -71,6 +71,14 @@ abstract class DOMImpl {
     return top;
   }-*/;
 
+  public native int getBodyOffsetLeft() /*-{
+    return 0;
+  }-*/;
+
+  public native int getBodyOffsetTop() /*-{
+    return 0;
+  }-*/;
+
   public native Element getFirstChildElement(Element elem) /*-{
     var child = elem.firstChild;
     while (child && child.nodeType != 1)

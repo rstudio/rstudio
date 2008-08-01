@@ -35,18 +35,6 @@ class DOMImplIE6 extends DOMImpl {
   private static JavaScriptObject dispatchDblClickEvent;
 
   @Override
-  public native int eventGetClientX(Event evt) /*-{
-    return evt.clientX -
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
-  }-*/;
-
-  @Override
-  public native int eventGetClientY(Event evt) /*-{
-    return evt.clientY -
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
-  }-*/;
-
-  @Override
   public native Element eventGetCurrentTarget(Event evt) /*-{
     return @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget;
   }-*/;

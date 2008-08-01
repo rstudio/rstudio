@@ -86,8 +86,9 @@ public class DOMTest extends GWTTestCase {
     DOM.setStyleAttribute(elem, "padding", padding + "px");
     DOM.setStyleAttribute(elem, "margin", margin + "px");
 
-    DOM.setStyleAttribute(elem, "top", top + "px");
-    DOM.setStyleAttribute(elem, "left", left + "px");
+    Document doc = Document.get();
+    DOM.setStyleAttribute(elem, "top", (top - doc.getBodyOffsetLeft()) + "px");
+    DOM.setStyleAttribute(elem, "left", (left - doc.getBodyOffsetTop()) + "px");
 
     delayTestFinish(1000);
     DeferredCommand.addCommand(new Command() {
@@ -128,8 +129,9 @@ public class DOMTest extends GWTTestCase {
     assertTrue(DOM.getElementPropertyInt(outer, "scrollTop") > 0);
     assertTrue(DOM.getElementPropertyInt(outer, "scrollLeft") > 0);
 
-    assertEquals(0, DOM.getAbsoluteTop(outer));
-    assertEquals(0, DOM.getAbsoluteLeft(outer));
+    Document doc = Document.get();
+    assertEquals(doc.getBodyOffsetLeft(), DOM.getAbsoluteTop(outer));
+    assertEquals(doc.getBodyOffsetTop(), DOM.getAbsoluteLeft(outer));
   }
 
   /**

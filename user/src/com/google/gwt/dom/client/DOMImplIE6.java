@@ -41,16 +41,22 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
-    return elem.getBoundingClientRect().left
-        + @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft
-        - @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
+    return elem.getBoundingClientRect().left +
+      @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
   }-*/;
 
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
-    return elem.getBoundingClientRect().top
-        + @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop
-        - @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
+    return elem.getBoundingClientRect().top +
+      @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
+  }-*/;
+
+  public native int getBodyOffsetLeft() /*-{
+    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
+  }-*/;
+
+  public native int getBodyOffsetTop() /*-{
+    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
   }-*/;
 
   @Override

@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
 
 /**
  * <p>
@@ -184,6 +184,19 @@ public class Event extends JavaScriptObject {
   public static final int UNDEFINED = 0;
 
   /**
+   * Adds an event preview to the preview stack. As long as this preview remains
+   * on the top of the stack, it will receive all events before they are fired
+   * to their listeners. Note that the event preview will receive <u>all </u>
+   * events, including those received due to bubbling, whereas normal event
+   * handlers only receive explicitly sunk events.
+   * 
+   * @param preview the event preview to be added to the stack.
+   */
+  public static void addEventPreview(EventPreview preview) {
+    DOM.addEventPreview(preview);
+  }
+
+  /**
    * Gets the current event that is being fired. The current event is only
    * available within the lifetime of the onBrowserEvent function. Once the
    * onBrowserEvent method returns, the current event is reset to null.
@@ -214,6 +227,16 @@ public class Event extends JavaScriptObject {
    */
   public static void releaseCapture(Element elem) {
     DOM.releaseCapture(elem.<com.google.gwt.user.client.Element>cast());
+  }
+
+  /**
+   * Removes an element from the preview stack. This element will no longer
+   * capture events, though any preview underneath it will begin to do so.
+   * 
+   * @param preview the event preview to be removed from the stack
+   */
+  public static void removeEventPreview(EventPreview preview) {
+    DOM.removeEventPreview(preview);
   }
 
   /**

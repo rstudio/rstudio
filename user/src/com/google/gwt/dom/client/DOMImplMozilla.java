@@ -27,20 +27,16 @@ class DOMImplMozilla extends DOMImplStandard {
     // supported on older versions). If changing this code, make sure to check
     // the museum entry for issue 1932.
     if (Element.prototype.getBoundingClientRect) {
-      // getBoundingClientRect().left is off by the document element's
-      // border-left-width.
-      var style = $wnd.getComputedStyle($doc.documentElement, '')
       return elem.getBoundingClientRect().left +
-        parseInt(style.borderLeftWidth) +
-        $doc.body.scrollLeft;
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
     } else {
       // We cannot use DOMImpl here because offsetLeft/Top return erroneous
       // values when overflow is not visible.  We have to difference screenX
       // here due to a change in getBoxObjectFor which causes inconsistencies
       // on whether the calculations are inside or outside of the element's
       // border.
-      return $doc.getBoxObjectFor(elem).screenX
-          - $doc.getBoxObjectFor($doc.documentElement).screenX;
+      return $doc.getBoxObjectFor(elem).screenX -
+        $doc.getBoxObjectFor($doc.documentElement).screenX;
     }
   }-*/;
 
@@ -51,21 +47,27 @@ class DOMImplMozilla extends DOMImplStandard {
     // supported on older versions). If changing this code, make sure to check
     // the museum entry for issue 1932.
     if (Element.prototype.getBoundingClientRect) {
-      // getBoundingClientRect().top is off by the document element's
-      // border-top-width.
-      var style = $wnd.getComputedStyle($doc.documentElement, '')
       return elem.getBoundingClientRect().top +
-        parseInt(style.borderTopWidth) +
-        $doc.body.scrollTop;
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
     } else {
       // We cannot use DOMImpl here because offsetLeft/Top return erroneous
       // values when overflow is not visible.  We have to difference screenX
       // here due to a change in getBoxObjectFor which causes inconsistencies
       // on whether the calculations are inside or outside of the element's
       // border.
-      return $doc.getBoxObjectFor(elem).screenY
-          - $doc.getBoxObjectFor($doc.documentElement).screenY;
+      return $doc.getBoxObjectFor(elem).screenY -
+        $doc.getBoxObjectFor($doc.documentElement).screenY;
     }
+  }-*/;
+
+  public native int getBodyOffsetLeft() /*-{
+    var style = $wnd.getComputedStyle($doc.documentElement, '');
+    return parseInt(style.marginLeft) + parseInt(style.borderLeftWidth);
+  }-*/;
+
+  public native int getBodyOffsetTop() /*-{
+    var style = $wnd.getComputedStyle($doc.documentElement, '');
+    return parseInt(style.marginTop) + parseInt(style.borderTopWidth);
   }-*/;
 
   @Override

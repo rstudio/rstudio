@@ -82,11 +82,12 @@ class WriteJsoImpl extends ClassAdapter {
       jsoDescList.addAll(jsoDescriptors);
       interfaces = jsoDescList.toArray(new String[jsoDescList.size()]);
     } else {
+      // Reference the old superclass's implementation class.
+      superName += '$';
       interfaces = null;
     }
 
-    super.visit(version, access, name + '$', signature, "java/lang/Object",
-        interfaces);
+    super.visit(version, access, name + '$', signature, superName, interfaces);
 
     if (isJavaScriptObject()) {
       FieldVisitor fv = visitField(Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC,

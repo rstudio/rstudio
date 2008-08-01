@@ -20,10 +20,12 @@ import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -92,7 +94,6 @@ public class Issue1932 extends AbstractIssue {
   @Override
   public Widget createIssue() {
     // Setup the page size and cursor
-    Element bodyElement = RootPanel.getBodyElement();
     htmlElement = DOM.getParent(RootPanel.getBodyElement());
 
     // Create a crosshair to show the current position
@@ -102,6 +103,9 @@ public class Issue1932 extends AbstractIssue {
         "1px solid red");
     positioner.getElement().getStyle().setProperty("borderTop", "1px solid red");
     positioner.getElement().getStyle().setProperty("cursor", "crosshair");
+
+    // Create an area to echo position information.
+    final HTML echo = new HTML();
 
     // Create a target box to test inside
     final Label sandbox = new Label();
@@ -123,8 +127,16 @@ public class Issue1932 extends AbstractIssue {
 
         switch (DOM.eventGetType(event)) {
           case Event.ONMOUSEMOVE:
-            RootPanel.get().add(positioner, event.getClientX(),
-                event.getClientY());
+            int absX = event.getClientX() + Window.getScrollLeft();
+            int absY = event.getClientY() + Window.getScrollTop();
+            RootPanel.get().add(positioner, absX, absY);
+
+            echo.setHTML(
+              "event.clientX: " + event.getClientX() + "<br>" +
+              "event.clientY: " + event.getClientY() + "<br>" +
+              "absolute left: " + positioner.getAbsoluteLeft() + "<br>" +
+              "absolute top: " + positioner.getAbsoluteTop()
+            );
             break;
         }
         return true;
@@ -134,6 +146,7 @@ public class Issue1932 extends AbstractIssue {
     // Combine the control panel and return
     VerticalPanel vPanel = new VerticalPanel();
     vPanel.add(new ControlPanel());
+    vPanel.add(echo);
     vPanel.add(sandbox);
     return vPanel;
   }
@@ -142,9 +155,9 @@ public class Issue1932 extends AbstractIssue {
   public String getInstructions() {
     return "Move the cursor inside the blue box below and verify that the "
         + "point of the red positioner lines up directly beneath the center of "
-        + "the cursor (crosshair).  The buttons may not work on Safari 2 "
-        + "because Safari 2 has issues when you attempt to modify the HTML "
-        + "element programatically.";
+        + "the cursor (crosshair). Also confirm that event.clientX/Y == absolute "
+        + "left/top. The buttons may not work on Safari 2 because Safari 2 has "
+        + "issues when you attempt to modify the HTML element programatically.";
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -29,11 +30,18 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
- * client area (and any previously-created popups). <p/> The width and height of
- * the PopupPanel cannot be explicitly set; they are determined by the
- * PopupPanel's widget. Calls to {@link #setWidth(String)} and
+ * client area (and any previously-created popups).
+ * 
+ * <p>
+ * A PopupPanel should not generally be added to other panels; rather, it should
+ * be shown and hidden using the {@link #show()} and {@link #hide()} methods.
+ * </p>
+ * <p>
+ * The width and height of the PopupPanel cannot be explicitly set; they are
+ * determined by the PopupPanel's widget. Calls to {@link #setWidth(String)} and
  * {@link #setHeight(String)} will call these methods on the PopupPanel's
  * widget.
+ * </p>
  * <p>
  * <img class='gallery' src='PopupPanel.png'/>
  * </p>
@@ -377,7 +385,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return the popup's left position
    */
   public int getPopupLeft() {
-    return DOM.getElementPropertyInt(getElement(), "offsetLeft");
+    return DOM.getAbsoluteLeft(getElement());
   }
 
   /**
@@ -386,7 +394,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return the popup's top position
    */
   public int getPopupTop() {
-    return DOM.getElementPropertyInt(getElement(), "offsetTop");
+    return DOM.getAbsoluteTop(getElement());
   }
 
   @Override
@@ -579,6 +587,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // Save the position of the popup
     leftPosition = left;
     topPosition = top;
+
+    // Account for the difference between absolute position and the
+    // body's positioning context.
+    left -= Document.get().getBodyOffsetLeft();
+    top -= Document.get().getBodyOffsetTop();
 
     // Set the popup's position manually, allowing setPopupPosition() to be
     // called before show() is called (so a popup can be positioned without it

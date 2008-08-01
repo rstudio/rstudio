@@ -610,6 +610,48 @@ public class Document extends Node {
   }-*/;
 
   /**
+   * Returns the left offset between the absolute coordinate system and the
+   * body's positioning context. This method is useful for positioning children
+   * of the body element in absolute coordinates.
+   * 
+   * <p>
+   * For example, to position an element directly under the mouse cursor
+   * (assuming you are handling a mouse event), do the following:
+   * </p>
+   * <pre>
+   * Event event;
+   * Document doc;
+   * DivElement child;  // assume absolutely-positioned child of the body
+   * 
+   * // Get the event location in absolute coordinates.
+   * int absX = event.getClientX() + Window.getScrollLeft();
+   * int absY = event.getClientY() + Window.getScrollTop();
+   * 
+   * // Position the child element, adjusting for the difference between the
+   * // absolute coordinate system and the body's positioning coordinates.
+   * child.getStyle().setPropertyPx("left", absX - doc.getBodyOffsetLeft());
+   * child.getStyle().setPropertyPx("top", absY - doc.getBodyOffsetTop());
+   * </pre>
+   * 
+   * @return the left offset of the body's positioning coordinate system
+   */
+  public final int getBodyOffsetLeft() {
+    return DOMImpl.impl.getBodyOffsetLeft();
+  }
+
+  /**
+   * Returns the top offset between the absolute coordinate system and the
+   * body's positioning context. This method is useful for positioning children
+   * of the body element in absolute coordinates.
+   * 
+   * @return the top offset of the body's positioning coordinate system
+   * @see #getBodyOffsetLeft()
+   */
+  public final int getBodyOffsetTop() {
+    return DOMImpl.impl.getBodyOffsetTop();
+  }
+
+  /**
    * The domain name of the server that served the document, or null if the
    * server cannot be identified by a domain name.
    * 

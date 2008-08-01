@@ -25,9 +25,9 @@ class DOMImplSafari extends DOMImplStandard {
   @Override
   public native int eventGetClientX(Event evt) /*-{
     // In Safari2: clientX is wrong and pageX is returned instead.
+    // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
     if ($wnd.devicePixelRatio) {
-      // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
-      return evt.pageX - $doc.body.scrollLeft || 0; 
+      return evt.clientX || 0;
     } else {
       // Subtract the margin and border of the HTML element in Safari 2 
       // TODO: Remove this code when we drop Safari 2 support
@@ -41,9 +41,9 @@ class DOMImplSafari extends DOMImplStandard {
   @Override
   public native int eventGetClientY(Event evt) /*-{
     // In Safari2: clientY is wrong and pageY is returned instead.
+    // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
     if ($wnd.devicePixelRatio) {
-      // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
-      return evt.pageY - $doc.body.scrollTop || 0; 
+      return evt.clientY || 0;
     } else {
       // Subtract the margin and border of the HTML element in Safari 2 
       // TODO: Remove this code when we drop Safari 2 support

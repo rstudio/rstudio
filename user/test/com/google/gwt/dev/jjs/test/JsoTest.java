@@ -23,9 +23,9 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class JsoTest extends GWTTestCase {
 
-  private static class Bar extends JavaScriptObject {
+  static class Bar extends JavaScriptObject {
     public static int field;
-    
+
     public static native String staticNative() /*-{
       return "nativeBar";
     }-*/;
@@ -36,7 +36,7 @@ public class JsoTest extends GWTTestCase {
 
     protected Bar() {
     }
-    
+
     public final native String getBar() /*-{
       return this.bar;
     }-*/;
@@ -46,7 +46,7 @@ public class JsoTest extends GWTTestCase {
     }
   }
 
-  private static class Foo extends JavaScriptObject {
+  static class Foo extends JavaScriptObject {
     public static int field;
 
     public static native String staticNative() /*-{
@@ -69,7 +69,7 @@ public class JsoTest extends GWTTestCase {
     }
   }
 
-  private static class FooSub extends Foo {
+  static class FooSub extends Foo {
     protected FooSub() {
     }
 
@@ -82,7 +82,7 @@ public class JsoTest extends GWTTestCase {
     }
   }
 
-  private static class JsArray<T> extends JavaScriptObject {
+  static class JsArray<T> extends JavaScriptObject {
     public static native <T> JsArray<T> create() /*-{
       return [];
     }-*/;
@@ -103,7 +103,7 @@ public class JsoTest extends GWTTestCase {
     }-*/;
   }
 
-  private static class MethodMangleClash {
+  static class MethodMangleClash {
     @SuppressWarnings("unused")
     public static String func(JavaScriptObject this_) {
       return "funcJavaScriptObject";
@@ -120,26 +120,26 @@ public class JsoTest extends GWTTestCase {
     }
   }
 
-  private static class Overloads {
+  static class Overloads {
     private static volatile boolean FALSE = false;
 
     @SuppressWarnings("unused")
-    private static String sFunc(Bar b) {
+    static String sFunc(Bar b) {
       return "sFunc Bar";
     }
 
     @SuppressWarnings("unused")
-    private static String sFunc(Bar[][] b) {
+    static String sFunc(Bar[][] b) {
       return "sFunc Bar[][]";
     }
 
     @SuppressWarnings("unused")
-    private static String sFunc(Foo f) {
+    static String sFunc(Foo f) {
       return "sFunc Foo";
     }
 
     @SuppressWarnings("unused")
-    private static String sFunc(Foo[][] f) {
+    static String sFunc(Foo[][] f) {
       return "sFunc Foo[][]";
     }
 
@@ -160,7 +160,7 @@ public class JsoTest extends GWTTestCase {
     }
 
     @SuppressWarnings("unused")
-    private String func(Bar b) {
+    String func(Bar b) {
       if (FALSE) {
         // prevent inlining
         return func(b);
@@ -169,7 +169,7 @@ public class JsoTest extends GWTTestCase {
     }
 
     @SuppressWarnings("unused")
-    private String func(Bar[][] b) {
+    String func(Bar[][] b) {
       if (FALSE) {
         // prevent inlining
         return func(b);
@@ -178,7 +178,7 @@ public class JsoTest extends GWTTestCase {
     }
 
     @SuppressWarnings("unused")
-    private String func(Foo f) {
+    String func(Foo f) {
       if (FALSE) {
         // prevent inlining
         return func(f);
@@ -187,7 +187,7 @@ public class JsoTest extends GWTTestCase {
     }
 
     @SuppressWarnings("unused")
-    private String func(Foo[][] f) {
+    String func(Foo[][] f) {
       if (FALSE) {
         // prevent inlining
         return func(f);
@@ -443,7 +443,7 @@ public class JsoTest extends GWTTestCase {
     assertEquals("[[Lcom.google.gwt.core.client.JavaScriptObject$;",
         JavaScriptObject[][].class.getName());
   }
-  
+
   public void testEquality() {
     JavaScriptObject jso = makeJSO();
     assertEquals(jso, jso);
@@ -626,4 +626,11 @@ public class JsoTest extends GWTTestCase {
     @junit.framework.Assert::assertEquals(Ljava/lang/Object;Ljava/lang/Object;)("Bar11", @com.google.gwt.dev.jjs.test.JsoTest.Bar::staticValue()());
     @junit.framework.Assert::assertEquals(Ljava/lang/Object;Ljava/lang/Object;)("nativeBar", @com.google.gwt.dev.jjs.test.JsoTest.Bar::staticNative()());
   }-*/;
+
+  public void testStaticAccessSubclass() {
+    FooSub.field = 3;
+    assertEquals(3, FooSub.field--);
+    assertEquals("Foo2", FooSub.staticValue());
+    assertEquals("nativeFoo", FooSub.staticNative());
+  }
 }

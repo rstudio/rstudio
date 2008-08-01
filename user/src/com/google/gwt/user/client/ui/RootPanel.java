@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.client.LocaleInfo;
@@ -38,6 +39,26 @@ import java.util.Set;
  * </p>
  */
 public class RootPanel extends AbsolutePanel {
+
+  /**
+   * A default RootPanel implementation that wraps the body element.
+   */
+  private static class DefaultRootPanel extends RootPanel {
+
+    public DefaultRootPanel() {
+      super(getBodyElement());
+    }
+
+    @Override
+    protected void setWidgetPositionImpl(Widget w, int left, int top) {
+      // Account for the difference between absolute position and the
+      // body's positioning context.
+      left -= Document.get().getBodyOffsetLeft();
+      top -= Document.get().getBodyOffsetTop();
+
+      super.setWidgetPositionImpl(w, left, top);
+    }
+  }
 
   private static Map<String, RootPanel> rootPanels = new HashMap<String, RootPanel>();
   private static Set<Widget> widgetsToDetach = new HashSet<Widget>();
@@ -143,9 +164,13 @@ public class RootPanel extends AbsolutePanel {
     // Create the panel and put it in the map.
     if (elem == null) {
       // 'null' means use document's body element.
-      elem = getBodyElement();
+      rp = new DefaultRootPanel();
+    } else {
+      // Otherwise, wrap the existing element.
+      rp = new RootPanel(elem);
     }
-    rootPanels.put(id, rp = new RootPanel(elem));
+
+    rootPanels.put(id, rp);
     detachOnWindowClose(rp);
     return rp;
   }

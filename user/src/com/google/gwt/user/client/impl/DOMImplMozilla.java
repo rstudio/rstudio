@@ -24,44 +24,6 @@ import com.google.gwt.user.client.Event;
 class DOMImplMozilla extends DOMImplStandard {
 
   @Override
-  public native int eventGetClientX(Event evt) /*-{
-    var htmlOffset;
-    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
-    // so we use getBoundingClientRect() whenever possible (but it's not
-    // supported on older versions). If changing this code, make sure to check
-    // the museum entry for issue 1932.
-    if (Element.prototype.getBoundingClientRect) {
-      // getBoundingClientRect().left is off by the document element's
-      // border-left-width.
-      var style = $wnd.getComputedStyle($doc.documentElement, '')
-      htmlOffset = $doc.documentElement.getBoundingClientRect().left +
-        parseInt(style.borderLeftWidth);
-    } else {
-      htmlOffset = $doc.getBoxObjectFor($doc.documentElement).x || 0;
-    }
-    return evt.clientX - htmlOffset;
-  }-*/;
-
-  @Override
-  public native int eventGetClientY(Event evt) /*-{
-    var htmlOffset;
-    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
-    // so we use getBoundingClientRect() whenever possible (but it's not
-    // supported on older versions). If changing this code, make sure to check
-    // the museum entry for issue 1932.
-    if (Element.prototype.getBoundingClientRect) {
-      // getBoundingClientRect().top is off by the document element's
-      // border-top-width.
-      var style = $wnd.getComputedStyle($doc.documentElement, '')
-      htmlOffset = $doc.documentElement.getBoundingClientRect().top +
-        parseInt(style.borderTopWidth);
-    } else {
-      htmlOffset = $doc.getBoxObjectFor($doc.documentElement).y || 0;
-    }
-    return evt.clientY - htmlOffset;
-  }-*/;
-
-  @Override
   public native int eventGetMouseWheelVelocityY(Event evt) /*-{
     return evt.detail || 0;
   }-*/;

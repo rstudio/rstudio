@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Window;
 
@@ -32,13 +33,13 @@ public class AbsolutePanelTest extends GWTTestCase {
   }
 
   public void testPositioning() {
-    // Make an absolute panel with a label at (42, 43).
+    // Make an absolute panel with a label at (3, 7).
     AbsolutePanel abs = new AbsolutePanel();
     abs.setSize("128px", "128px");
     Label lbl = new Label("foo");
     abs.add(lbl, 3, 7);
 
-    // Put the panel in a grid that will place it at (32, 32) within the grid.
+    // Put the panel in a grid that will place it at (100, 200) within the grid.
     Grid g = new Grid(2, 2);
     g.setBorderWidth(0);
     g.setCellPadding(0);
@@ -57,11 +58,11 @@ public class AbsolutePanelTest extends GWTTestCase {
     // wacky positioning of its children.
     int x = abs.getWidgetLeft(lbl);
     int y = abs.getWidgetTop(lbl);
-    int absX = lbl.getAbsoluteLeft();
-    int absY = lbl.getAbsoluteTop();
-    assertEquals(x, 3);
-    assertEquals(y, 7);
-    assertEquals(absX, 3 + 100);
-    assertEquals(absY, 7 + 200);
+    int absX = lbl.getAbsoluteLeft() - Document.get().getBodyOffsetLeft();
+    int absY = lbl.getAbsoluteTop() - Document.get().getBodyOffsetTop();
+    assertEquals(3, x);
+    assertEquals(7, y);
+    assertEquals(3 + 100, absX);
+    assertEquals(7 + 200, absY);
   }
 }

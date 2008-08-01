@@ -62,8 +62,8 @@ public class ElementTest extends GWTTestCase {
     elem.getStyle().setProperty("padding", padding + "px");
     elem.getStyle().setProperty("margin", margin + "px");
 
-    elem.getStyle().setProperty("top", top + "px");
-    elem.getStyle().setProperty("left", left + "px");
+    elem.getStyle().setPropertyPx("top", top - doc.getBodyOffsetLeft());
+    elem.getStyle().setPropertyPx("left", left - doc.getBodyOffsetTop());
 
     delayTestFinish(1000);
     DeferredCommand.addCommand(new Command() {
