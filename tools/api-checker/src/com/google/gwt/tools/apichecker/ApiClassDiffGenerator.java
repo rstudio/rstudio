@@ -17,12 +17,9 @@
 package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -49,42 +46,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     sb.append("\n");
     return sb.toString();
   }
-
-  private static List<ApiChange> checkExceptions(ApiAbstractMethod newMethod,
-      ApiAbstractMethod oldMethod) {
-
-    ArrayList<JType> legalTypes = new ArrayList<JType>();
-
-    // A throw declaration for an unchecked exception does not change the API.
-    TypeOracle newTypeOracle = newMethod.getMethod().getEnclosingType().getOracle();
-    JClassType errorType = newTypeOracle.findType(Error.class.getName());
-    if (errorType != null) {
-      legalTypes.add(errorType);
-    }
-    JClassType rteType = newTypeOracle.findType(RuntimeException.class.getName());
-    if (rteType != null) {
-      legalTypes.add(rteType);
-    }
-
-    legalTypes.addAll(Arrays.asList(oldMethod.getMethod().getThrows()));
-    List<ApiChange> ret = new ArrayList<ApiChange>();
-    for (JType newException : newMethod.getMethod().getThrows()) {
-      boolean isSubclass = false;
-      for (JType legalType : legalTypes) {
-        if (ApiDiffGenerator.isFirstTypeAssignableToSecond(newException,
-            legalType)) {
-          isSubclass = true;
-          break;
-        }
-      }
-      if (!isSubclass) {
-        ret.add(new ApiChange(oldMethod, ApiChange.Status.EXCEPTION_TYPE_ERROR,
-            "unhandled exception in new code " + newException));
-      }
-    }
-    return ret;
-  }
-
+  
   private Set<ApiField> allIntersectingFields = new HashSet<ApiField>();
   /**
    * Find all constructors, methods, fields that are present in either
@@ -380,8 +342,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
             if (returnType != null) {
               addProperty(intersectingElements, methodInExisting, returnType);
             }
-            for (ApiChange apiChange : checkExceptions(methodInNew,
-                methodInExisting)) {
+            for (ApiChange apiChange : methodInExisting.checkExceptions(methodInNew)) {
               addProperty(intersectingElements, methodInExisting, apiChange);
             }
             for (ApiChange.Status status : methodInExisting.getModifierChanges(methodInNew)) {
