@@ -40,7 +40,6 @@ public class DeckPanelTest extends GWTTestCase {
       Label[] labels = new Label[3];
       for (int i = 0; i < labels.length; i++) {
         labels[i] = new Label("content" + i);
-        labels[i].setVisible(false);
         deck.add(labels[i]);
       }
 
@@ -53,7 +52,7 @@ public class DeckPanelTest extends GWTTestCase {
       // Show widget at index 0, make sure widget 1 is still visible
       deck.showWidget(0);
       assertTrue(labels[0].isVisible());
-      assertTrue(labels[1].isVisible());
+      assertFalse(labels[1].isVisible());
       assertFalse(labels[2].isVisible());
     }
 
@@ -64,7 +63,6 @@ public class DeckPanelTest extends GWTTestCase {
       Label[] labels = new Label[3];
       for (int i = 0; i < labels.length; i++) {
         labels[i] = new Label("content" + i);
-        labels[i].setVisible(false);
         deck.add(labels[i]);
       }
 
@@ -77,7 +75,7 @@ public class DeckPanelTest extends GWTTestCase {
       // Show widget at index 0, make sure widget 1 is still visible
       deck.showWidget(0);
       assertTrue(labels[0].isVisible());
-      assertTrue(labels[1].isVisible());
+      assertFalse(labels[1].isVisible());
       assertFalse(labels[2].isVisible());
     }
   }

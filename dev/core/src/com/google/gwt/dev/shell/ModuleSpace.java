@@ -22,6 +22,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.ListIterator;
 
 /**
  * The interface to the low-level browser, this class serves as a 'domain' for a
@@ -103,6 +107,15 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       caught = (Throwable) exception;
     } else {
       caught = createJavaScriptException(getIsolatedClassLoader(), exception);
+      // Remove excess stack frames from the new exception.
+      caught.fillInStackTrace();
+      StackTraceElement[] trace = caught.getStackTrace();
+      assert trace.length > 1;
+      assert trace[1].getClassName().equals(JavaScriptHost.class.getName());
+      assert trace[1].getMethodName().equals("exceptionCaught");
+      StackTraceElement[] newTrace = new StackTraceElement[trace.length - 1];
+      System.arraycopy(trace, 1, newTrace, 0, newTrace.length);
+      caught.setStackTrace(newTrace);
     }
     sCaughtJavaExceptionObject.set(caught);
   }
@@ -439,12 +452,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     }
     sCaughtJavaExceptionObject.set(null);
 
-    /*
-     * The stack trace on the stored exception will not be very useful due to
-     * how it was created. Using fillInStackTrace() resets the stack trace to
-     * this moment in time, which is usually far more useful.
-     */
-    thrown.fillInStackTrace();
+    scrubStackTrace(thrown);
     throw thrown;
   }
 
@@ -475,6 +483,28 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return "Something other than " + typePhrase + " was returned from JSNI method '" + name + "'";
   }
 
+  private boolean isUserFrame(StackTraceElement element) {
+    try {
+      CompilingClassLoader cl = getIsolatedClassLoader();
+      String className = element.getClassName();
+      Class<?> clazz = Class.forName(className, false, cl);
+      if (clazz.getClassLoader() == cl) {
+        // Lives in user classLoader.
+        return true;
+      }
+      // At this point, it must be a JRE class to qualify.
+      if (clazz.getClassLoader() != null || !className.startsWith("java.")) {
+        return false;
+      }
+      if (className.startsWith("java.lang.reflect.")) {
+        return false;
+      }
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
   /**
    * Handles loading a class that might be nested given a source type name.
    */
@@ -495,5 +525,45 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
         toTry = toTry.substring(0, i) + "$" + toTry.substring(i + 1);
       }
     }
+  }
+
+  /**
+   * Clean up the stack trace by removing our hosting frames. But don't do this
+   * if our own frames are at the top of the stack, because we may be the real
+   * cause of the exception.
+   */
+  private void scrubStackTrace(Throwable thrown) {
+    List<StackTraceElement> trace = new ArrayList<StackTraceElement>(
+        Arrays.asList(thrown.getStackTrace()));
+    boolean seenUserFrame = false;
+    for (ListIterator<StackTraceElement> it = trace.listIterator(); it.hasNext();) {
+      StackTraceElement element = it.next();
+      if (!isUserFrame(element)) {
+        if (seenUserFrame) {
+          it.remove();
+        }
+        continue;
+      }
+      seenUserFrame = true;
+
+      // Remove a JavaScriptHost.invokeNative*() frame.
+      if (element.getClassName().equals(JavaScriptHost.class.getName())) {
+        if (element.getMethodName().equals("exceptionCaught")) {
+          it.remove();
+        } else if (element.getMethodName().startsWith("invokeNative")) {
+          it.remove();
+          // Also try to convert the next frame to a true native.
+          if (it.hasNext()) {
+            StackTraceElement next = it.next();
+            if (next.getLineNumber() == -1) {
+              next = new StackTraceElement(next.getClassName(),
+                  next.getMethodName(), next.getFileName(), -2);
+              it.set(next);
+            }
+          }
+        }
+      }
+    }
+    thrown.setStackTrace(trace.toArray(new StackTraceElement[trace.size()]));
   }
 }

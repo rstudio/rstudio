@@ -797,7 +797,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     collectElementChain(chain, getElement(), hElem);
 
     TreeItem item = findItemByChain(chain, 0, root);
-    if (item != null) {
+    if (item != null && item != root) {
       if (item.getChildCount() > 0
           && DOM.isOrHasChild(item.getImageElement(), hElem)) {
         item.setState(!item.getState(), true);
@@ -993,8 +993,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   /**
    * Move the tree focus to the specified selected item.
-   * 
-   * @param
    */
   private void moveFocus() {
     HasFocus focusableWidget = curSelection.getFocusableWidget();

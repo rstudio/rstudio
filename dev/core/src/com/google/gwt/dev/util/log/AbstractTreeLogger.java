@@ -17,7 +17,6 @@ package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.TreeLogger;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -56,12 +55,11 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     while (currentCause != null && !seenCauses.contains(currentCause)) {
       seenCauses.add(currentCause);
 
-      StackTraceElement[] trace = currentCause.getStackTrace();
       message.append(causedBy);
       causedBy = "\nCaused by: "; // after 1st, all say "caused by"
       message.append(currentCause.getClass().getName());
       message.append(": " + currentCause.getMessage());
-      StackTraceElement[] stackElems = findMeaningfulStackTraceElements(trace);
+      StackTraceElement[] stackElems = currentCause.getStackTrace();
       if (stackElems != null) {
         for (int i = 0; i < stackElems.length; ++i) {
           message.append("\n\tat ");
@@ -72,31 +70,6 @@ public abstract class AbstractTreeLogger extends TreeLogger {
       currentCause = currentCause.getCause();
     }
     return message.toString();
-  }
-
-  private static StackTraceElement[] findMeaningfulStackTraceElements(
-      StackTraceElement[] elems) {
-    ArrayList<StackTraceElement> goodElems = new ArrayList<StackTraceElement>();
-    StackTraceElement prevElem = null;
-    for (int i = 0; i < elems.length; i++) {
-      StackTraceElement elem = elems[i];
-      if (elem.getLineNumber() > 0) {
-        goodElems.add(elem);
-        if (goodElems.size() < 10
-            || prevElem.getClassName().equals(elem.getClassName())) {
-          // Keep going.
-          prevElem = elem;
-        } else {
-          // That's enough.
-          break;
-        }
-      }
-    }
-    if (goodElems.size() > 0) {
-      return goodElems.toArray(new StackTraceElement[goodElems.size()]);
-    } else {
-      return null;
-    }
   }
 
   public int indexWithinMyParent;

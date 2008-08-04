@@ -63,6 +63,11 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     private int fixedHeight = -1;
 
     /**
+     * The old {@link Widget} that is being hidden.
+     */
+    private Widget oldWidget = null;
+
+    /**
      * Switch to a new {@link Widget}.
      * 
      * @param oldWidget the {@link Widget} to hide
@@ -84,6 +89,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
         newWidget.setVisible(true);
         return;
       }
+      this.oldWidget = oldWidget;
 
       // Get the container and index of the old widget
       Element oldContainer = getContainer(oldWidget);
@@ -132,6 +138,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       DOM.setStyleAttribute(container2, "overflow", "visible");
       container1 = null;
       container2 = null;
+      hideOldWidget();
     }
 
     @Override
@@ -190,11 +197,22 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       DOM.setStyleAttribute(container2, "height", height2 + "px");
     }
 
+    /**
+     * Hide the old widget when the animation completes.
+     */
+    private void hideOldWidget() {
+      // Issue 2510: Hiding the widget isn't necessary because we hide its
+      // wrapper, but its in here for legacy support.
+      oldWidget.setVisible(false);
+      oldWidget = null;
+    }
+
     private void onInstantaneousRun() {
       UIObject.setVisible(container1, growing);
       UIObject.setVisible(container2, !growing);
       container1 = null;
       container2 = null;
+      hideOldWidget();
     }
   }
 
@@ -335,6 +353,10 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     UIObject.setVisible(container, false);
     DOM.setStyleAttribute(container, "height", "100%");
     w.setSize("100%", "100%");
+
+    // Issue 2510: Hiding the widget isn't necessary because we hide its
+    // wrapper, but it's in here for legacy support.
+    w.setVisible(false);
   }
 
   /**
@@ -342,5 +364,6 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
    */
   private void resetChildWidget(Widget w) {
     w.setSize("", "");
+    w.setVisible(true);
   }
 }

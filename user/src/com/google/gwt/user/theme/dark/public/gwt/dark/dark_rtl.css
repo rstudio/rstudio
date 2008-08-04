@@ -19,6 +19,9 @@ body, table td, select {
   font-size: small;
   color: #bec7cc;
 }
+select {
+  color: #000;
+}
 pre {
   font-family: "courier new", courier;
   font-size: small;
