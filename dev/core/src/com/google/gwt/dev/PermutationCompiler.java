@@ -150,62 +150,69 @@ public class PermutationCompiler {
     };
 
     public void run() {
-      while (true) {
-        currentTask = tasks.poll();
-        if (currentTask == null) {
-          // Nothing left to do.
-          tryToExitNonFinalThread(null);
+      try {
+        while (true) {
+          doTask();
+        }
+      } catch (ThreadDeath expected) {
+      }
+    }
 
-          // As the last thread, I must inform the main thread we're all done.
+    protected void doTask() throws ThreadDeath {
+      currentTask = tasks.poll();
+      if (currentTask == null) {
+        // Nothing left to do.
+        tryToExitNonFinalThread(null);
+
+        // As the last thread, I must inform the main thread we're all done.
+        exitFinalThread(new Runnable() {
+          public void run() {
+            results.add(FINISHED_RESULT);
+          }
+        });
+      }
+
+      if (!hasEnoughMemory()) {
+        /*
+         * Not enough memory to run, but if there are multiple threads, we can
+         * try again with fewer threads.
+         */
+        tryToExitNonFinalThread(outOfMemoryRetryAction);
+      }
+
+      boolean definitelyFinalThread = (threadCount.get() == 1);
+      try {
+        String result = currentTask.call();
+        results.add(new SuccessResult(currentTask.getPermutation(), result));
+      } catch (OutOfMemoryError e) {
+        if (definitelyFinalThread) {
+          // OOM on the final thread, this is a truly unrecoverable failure.
+          currentTask.logger.log(TreeLogger.ERROR, "Out of memory", e);
           exitFinalThread(new Runnable() {
             public void run() {
-              results.add(FINISHED_RESULT);
+              results.add(new FailedResult(currentTask.getPermutation(),
+                  new UnableToCompleteException()));
             }
           });
         }
 
-        if (!hasEnoughMemory()) {
-          /*
-           * Not enough memory to run, but if there are multiple threads, we can
-           * try again with fewer threads.
-           */
-          tryToExitNonFinalThread(outOfMemoryRetryAction);
-        }
+        /*
+         * Try the task again with fewer threads, it may not OOM this time.
+         */
+        tryToExitNonFinalThread(outOfMemoryRetryAction);
 
-        boolean definitelyFinalThread = (threadCount.get() == 1);
-        try {
-          String result = currentTask.call();
-          results.add(new SuccessResult(currentTask.getPermutation(), result));
-        } catch (OutOfMemoryError e) {
-          if (definitelyFinalThread) {
-            // OOM on the final thread, this is a truly unrecoverable failure.
-            currentTask.logger.log(TreeLogger.ERROR, "Out of memory", e);
-            exitFinalThread(new Runnable() {
-              public void run() {
-                results.add(new FailedResult(currentTask.getPermutation(),
-                    new UnableToCompleteException()));
-              }
-            });
-          }
-
-          /*
-           * Try the task again with fewer threads, it may not OOM this time.
-           */
-          tryToExitNonFinalThread(outOfMemoryRetryAction);
-
-          /*
-           * Okay, so we actually are the final thread. However, we weren't the
-           * final thread at the beginning of the compilation, so it's possible
-           * that a retry may now succeed with only one active thread. Let's
-           * optimistically retry one last time, and if this doesn't work, it's
-           * a hard failure.
-           */
-          outOfMemoryRetryAction.run();
-        } catch (Throwable e) {
-          // Unexpected error compiling, this is unrecoverable.
-          results.add(new FailedResult(currentTask.getPermutation(), e));
-          throw new ThreadDeath();
-        }
+        /*
+         * Okay, so we actually are the final thread. However, we weren't the
+         * final thread at the beginning of the compilation, so it's possible
+         * that a retry may now succeed with only one active thread. Let's
+         * optimistically retry one last time, and if this doesn't work, it's a
+         * hard failure.
+         */
+        outOfMemoryRetryAction.run();
+      } catch (Throwable e) {
+        // Unexpected error compiling, this is unrecoverable.
+        results.add(new FailedResult(currentTask.getPermutation(), e));
+        throw new ThreadDeath();
       }
     }
 
