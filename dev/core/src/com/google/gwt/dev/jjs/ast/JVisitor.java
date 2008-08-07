@@ -66,6 +66,9 @@ public class JVisitor {
     InternalCompilerException ice;
     if (e instanceof InternalCompilerException) {
       ice = (InternalCompilerException) e;
+    } else if (e instanceof OutOfMemoryError) {
+      // Just rethrow, it's not our problem.
+      throw (OutOfMemoryError) e;
     } else {
       ice = new InternalCompilerException("Unexpected error during visit.", e);
     }

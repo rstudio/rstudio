@@ -427,9 +427,6 @@ public class JsVisitor {
       JsContext<T> ctx) {
     try {
       node.traverse(this, ctx);
-    } catch (OutOfMemoryError e) {
-      // Just rethrow, it's not our problem.
-      throw e;
     } catch (Throwable e) {
       throw translateException(node, e);
     }
@@ -440,6 +437,9 @@ public class JsVisitor {
     InternalCompilerException ice;
     if (e instanceof InternalCompilerException) {
       ice = (InternalCompilerException) e;
+    } else if (e instanceof OutOfMemoryError) {
+      // Just rethrow, it's not our problem.
+      throw (OutOfMemoryError) e;
     } else {
       ice = new InternalCompilerException("Unexpected error during visit.", e);
     }
