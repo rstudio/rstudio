@@ -43,6 +43,11 @@ public class GWTRunnerGenerator extends Generator {
 
   private static final String GWT_RUNNER_NAME = GWTRunner.class.getName();
 
+  private static String getPackagePrefix(JClassType classType) {
+    String name = classType.getPackage().getName();
+    return (name.length() == 0) ? name : (name + '.');
+  }
+
   /**
    * Create a new type that satisfies the rebind request.
    */
@@ -81,7 +86,7 @@ public class GWTRunnerGenerator extends Generator {
 
     // Get the stub class name, and see if its source file exists.
     //
-    String generatedClass = requestedClass.getSimpleSourceName() + "Impl";
+    String generatedClass = requestedClass.getName().replace('.', '_') + "Impl";
     String packageName = requestedClass.getPackage().getName();
     String qualifiedStubClassName = packageName + "." + generatedClass;
 
@@ -89,7 +94,7 @@ public class GWTRunnerGenerator extends Generator {
         generatedClass, GWT_RUNNER_NAME);
 
     if (sourceWriter != null) {
-      JClassType[] allTestTypes = getAllTestTypes(context.getTypeOracle());
+      JClassType[] allTestTypes = getAllPossibleTestTypes(context.getTypeOracle());
       Set<String> testClasses = getTestTypesForModule(logger, moduleName,
           allTestTypes);
       writeCreateNewTestCaseMethod(testClasses, sourceWriter);
@@ -99,7 +104,7 @@ public class GWTRunnerGenerator extends Generator {
     return qualifiedStubClassName;
   }
 
-  private JClassType[] getAllTestTypes(TypeOracle typeOracle) {
+  private JClassType[] getAllPossibleTestTypes(TypeOracle typeOracle) {
     JClassType gwtTestType = typeOracle.findType(GWTTestCase.class.getName());
     if (gwtTestType != null) {
       return gwtTestType.getSubtypes();
@@ -133,7 +138,8 @@ public class GWTRunnerGenerator extends Generator {
         continue;
       }
 
-      String className = classType.getQualifiedSourceName();
+      String className = getPackagePrefix(classType)
+          + classType.getName().replace('.', '$');
 
       try {
         Class<?> testClass = Class.forName(className);
@@ -150,7 +156,7 @@ public class GWTRunnerGenerator extends Generator {
             e);
         continue;
       }
-      testClasses.add(className);
+      testClasses.add(classType.getQualifiedSourceName());
     }
     return testClasses;
   }

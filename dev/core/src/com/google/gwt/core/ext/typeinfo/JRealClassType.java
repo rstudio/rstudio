@@ -294,7 +294,13 @@ public class JRealClassType extends JClassType {
    *         <code>false</code> otherwise
    */
   public boolean isDefaultInstantiable() {
-    if (isInterface() != null) {
+    if (isInterface() != null || isAbstract()) {
+      return false;
+    }
+    if (isMemberType() && !isStatic()) {
+      return false;
+    }
+    if (isLocalType()) {
       return false;
     }
     if (getConstructors().length == 0) {
