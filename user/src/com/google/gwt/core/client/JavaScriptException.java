@@ -115,8 +115,7 @@ public final class JavaScriptException extends RuntimeException {
    */
   protected JavaScriptException(String message) {
     super(message);
-    this.name = null;
-    this.description = message;
+    this.message = this.description = message;
     this.e = null;
   }
 
@@ -125,7 +124,7 @@ public final class JavaScriptException extends RuntimeException {
    * <code>null</code>.
    */
   public String getDescription() {
-    if (description == null) {
+    if (message == null) {
       init();
     }
     return description;
@@ -151,7 +150,7 @@ public final class JavaScriptException extends RuntimeException {
    * <code>null</code>.
    */
   public String getName() {
-    if (name == null) {
+    if (message == null) {
       init();
     }
     return name;
