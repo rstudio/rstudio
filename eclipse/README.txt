@@ -129,7 +129,7 @@ Set the location to "settings/code-style/gwt-checkstyle-tests.xml".
 2) Dismiss the welcome tab if you are setting up an Eclipse workspace
   for the first time.
 
-  You should noew have several new projects in your Eclipse workspace.
+  You should now have several new projects in your Eclipse workspace.
   If you are lucky, they will compile too!
 
   If they did not compile, recheck the setting of
@@ -162,7 +162,7 @@ Set the location to "settings/code-style/gwt-checkstyle-tests.xml".
 While the 'projectCreator' and 'applicationCreator' scripts are useful for
 setting up projects and launch configurations that target a GWT installation,
 they are not intended for GWT developers working against the source code.  You
-will want to run not against .jar files, but against the class files build by
+will want to run not against .jar files, but against the class files built by
 Eclipse.  The following instructions help you do just that.
 
 1) Import the 'Hello' project if you haven't already.
