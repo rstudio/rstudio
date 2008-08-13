@@ -1092,9 +1092,27 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     p.print(' ');
   }
 
+  /**
+   * Decide whether, if <code>op</code> is printed followed by
+   * <code>arg</code>, there needs to be a space between the operator and
+   * expression.
+   * 
+   * @return <code>true</code> if a space needs to be printed
+   */
   private boolean _spaceCalc(JsOperator op, JsExpression arg) {
     if (op.isKeyword()) {
       return true;
+    }
+    if (arg instanceof JsBinaryOperation) {
+      JsBinaryOperation binary = (JsBinaryOperation) arg;
+      /*
+       * If the binary operation has a higher precedence than op, then it won't
+       * be parenthesized, so check the first argument of the binary operation.
+       */
+      if (binary.getOperator().getPrecedence() > op.getPrecedence()) {
+        return _spaceCalc(op, binary.getArg1());
+      }
+      return false;
     }
     if (arg instanceof JsPrefixOperation) {
       JsOperator op2 = ((JsPrefixOperation) arg).getOperator();

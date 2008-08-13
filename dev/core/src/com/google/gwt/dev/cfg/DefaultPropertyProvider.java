@@ -41,7 +41,7 @@ public class DefaultPropertyProvider extends PropertyProvider {
   public DefaultPropertyProvider(ModuleDef module, Property property) {
     super(module, property);
     String src = "function () {";
-    src += "return _gwt_getMetaProperty(\"";
+    src += "return __gwt_getMetaProperty(\"";
     src += property.getName();
     src += "\"); }";
     setBody(parseFunction(src));

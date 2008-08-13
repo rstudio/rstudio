@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -48,10 +49,21 @@ public class AutoboxUtils {
     computeUnboxMethods();
   }
 
+  /**
+   * Box the expression <code>toBox</code> into an instance of
+   * <code>wrapperType</code>. If <code>toBox</code> is not already of the
+   * primitive corresponding to <code>wrapperType</code>, then a cast may be
+   * necessary.
+   */
   public JExpression box(JExpression toBox, JClassType wrapperType) {
     return box(toBox, primitiveTypeForBoxClass(wrapperType), wrapperType);
   }
 
+  /**
+   * Box the expression <code>toBox</code> into the wrapper type corresponding
+   * to <code>primitiveType</code>. If <code>toBox</code> is not already of
+   * type <code>primitiveType</code>, then a cast may be necessary.
+   */
   public JExpression box(JExpression toBox, JPrimitiveType primitiveType) {
     // Find the wrapper type for this primitive type.
     String wrapperTypeName = primitiveType.getWrapperTypeName();
@@ -66,8 +78,9 @@ public class AutoboxUtils {
   }
 
   /**
-   * Return the box class for a given primitive.  Note that this can return <code>null</code>
-   * if the source program does not actually need the requested box type.
+   * Return the box class for a given primitive. Note that this can return
+   * <code>null</code> if the source program does not actually need the
+   * requested box type.
    */
   public JClassType boxClassForPrimitive(JPrimitiveType prim) {
     return (JClassType) program.getFromTypeMap(prim.getWrapperTypeName());
@@ -89,6 +102,12 @@ public class AutoboxUtils {
 
   private JExpression box(JExpression toBox, JPrimitiveType primitiveType,
       JClassType wrapperType) {
+    // Add a cast to toBox if need be
+    if (toBox.getType() != primitiveType) {
+      toBox = new JCastOperation(program, toBox.getSourceInfo(), primitiveType,
+          toBox);
+    }
+
     // Find the correct valueOf() method.
     JMethod valueOfMethod = null;
     for (JMethod method : wrapperType.methods) {

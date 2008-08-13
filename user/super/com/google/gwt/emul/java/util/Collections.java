@@ -15,8 +15,6 @@
  */
 package java.util;
 
-import java.io.Serializable;
-
 /**
  * Utility methods that operate on collections. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Collections.html">[Sun
@@ -104,8 +102,16 @@ public class Collections {
       throw new UnsupportedOperationException();
     }
 
+    public boolean equals(Object o) {
+      return list.equals(o);
+    }
+
     public T get(int index) {
       return list.get(index);
+    }
+
+    public int hashCode() {
+      return list.hashCode();
     }
 
     public int indexOf(Object o) {
@@ -781,8 +787,10 @@ public class Collections {
     return new UnmodifiableCollection<T>(coll);
   }
 
-  public static <T> List<T> unmodifiableList(final List<? extends T> list) {
-    return new UnmodifiableList<T>(list);
+  public static <T> List<T> unmodifiableList(List<? extends T> list) {
+    return (list instanceof RandomAccess)
+        ? new UnmodifiableRandomAccessList<T>(list) : new UnmodifiableList<T>(
+            list);
   }
 
   public static <K, V> Map<K, V> unmodifiableMap(
@@ -790,7 +798,7 @@ public class Collections {
     return new UnmodifiableMap<K, V>(map);
   }
 
-  public static <T> Set<T> unmodifiableSet(final Set<? extends T> set) {
+  public static <T> Set<T> unmodifiableSet(Set<? extends T> set) {
     return new UnmodifiableSet<T>(set);
   }
 

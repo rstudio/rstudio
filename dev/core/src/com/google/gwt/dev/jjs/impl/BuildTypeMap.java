@@ -127,6 +127,10 @@ public class BuildTypeMap {
 
     private static InternalCompilerException translateException(
         AbstractMethodDeclaration amd, Throwable e) {
+      if (e instanceof OutOfMemoryError) {
+        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+        throw (OutOfMemoryError) e;
+      }
       InternalCompilerException ice;
       if (e instanceof InternalCompilerException) {
         ice = (InternalCompilerException) e;
@@ -602,6 +606,9 @@ public class BuildTypeMap {
 
         typeDecls.add(typeDeclaration);
         return true;
+      } catch (OutOfMemoryError e) {
+        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+        throw e;
       } catch (InternalCompilerException ice) {
         ice.addNode(type);
         throw ice;
@@ -747,6 +754,10 @@ public class BuildTypeMap {
 
     private InternalCompilerException translateException(Statement stmt,
         Throwable e) {
+      if (e instanceof OutOfMemoryError) {
+        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+        throw (OutOfMemoryError) e;
+      }
       InternalCompilerException ice;
       if (e instanceof InternalCompilerException) {
         ice = (InternalCompilerException) e;
@@ -779,6 +790,10 @@ public class BuildTypeMap {
 
     private static InternalCompilerException translateException(
         TypeDeclaration typeDecl, Throwable e) {
+      if (e instanceof OutOfMemoryError) {
+        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+        throw (OutOfMemoryError) e;
+      }
       InternalCompilerException ice;
       if (e instanceof InternalCompilerException) {
         ice = (InternalCompilerException) e;

@@ -99,6 +99,23 @@ public class AutoboxTest extends GWTTestCase {
   }
 
   /**
+   * JLS 5.2 has a special case for assignment of a constant to a variable of
+   * type Byte, Short, or Character. Such an assignment is allowed so long as
+   * the constant fits within the type's range. In such cases, the box type can
+   * be different from the type of the constant.
+   */
+  public void testBoxingDifferentType() {
+    Character c = 1;
+    assertEquals(Character.valueOf((char) 1), c);
+
+    Byte b = 2;
+    assertEquals(Byte.valueOf((byte) 2), b);
+
+    Short s = 3;
+    assertEquals(Short.valueOf((short) 3), s);
+  }
+
+  /**
    * Verify that .valueOf() methods return identical references for types within
    * certain ranges.
    */

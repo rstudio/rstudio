@@ -40,7 +40,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
       } 
       var elem = _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
       var doc = elem.contentWindow.document;
-      doc.write('<html><body CONTENTEDITABLE="true"></body></html>');
+      doc.contentEditable = true;
 
       // Send notification that the iframe has reached design mode.
       _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImplStandard::onElementInitialized()();

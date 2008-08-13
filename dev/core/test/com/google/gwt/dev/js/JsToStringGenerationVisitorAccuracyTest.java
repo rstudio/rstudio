@@ -47,6 +47,18 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     doTest("var x = [a, (b, c), d]");
   }
 
+  public void testBinaryBinaryUnary() throws Exception {
+    // there needs to be a space between the subtraction and negation
+    doTest("var x = a - (-b / c)");
+    doTest("var x = a - (-b * c)");
+    doTest("var x = a - (-b % c)");
+  }
+
+  public void testBinaryConditionalUnary() throws Exception {
+    // the subtraction operator has to be separated from the negation
+    doTest("var x = a - (-b ? c : d)");
+  }
+
   public void testComplexConstruction() throws Exception {
     doTest("(new (new (a(({a : 'b', c : 'd'}),[1,2,3,x,y,z]))())())()");
   }
@@ -67,6 +79,14 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
 
   public void testDecrement() throws Exception {
     doTest("(x--)-(-(--y))");
+  }
+
+  public void testEmptyStatements() throws Exception {
+    doTest("function f() {if (x);}");
+    doTest("function f() {while (x);}");
+    doTest("function f() {label:;}");
+    doTest("function f() {for (i=0;i<n;i++);}");
+    doTest("function f() {for (var x in s);}");
   }
 
   public void testFunctionDeclarationInvocation() throws Exception {
@@ -112,14 +132,6 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   public void testUnaryOperations() throws Exception {
     // spaces or parentheses are necessary to separate negation and decrement
     doTest("var x = -(-(--y))");
-  }
-
-  public void testEmptyStatements() throws Exception {
-    doTest("function f() {if (x);}");
-    doTest("function f() {while (x);}");
-    doTest("function f() {label:;}");
-    doTest("function f() {for (i=0;i<n;i++);}");
-    doTest("function f() {for (var x in s);}");
   }
 
   private void doTest(String js) throws Exception {

@@ -24,7 +24,6 @@ import com.google.gwt.dev.util.msg.Message1String;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -117,10 +116,8 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   public static ClassPathEntry createEntryForUrl(TreeLogger logger, URL url)
       throws URISyntaxException, IOException {
-    String urlString = url.toString();
     if (url.getProtocol().equals("file")) {
-      URI uri = new URI(urlString);
-      File f = new File(uri);
+      File f = new File(url.toURI());
       String lowerCaseFileName = f.getName().toLowerCase();
       if (f.isDirectory()) {
         return new DirectoryClassPathEntry(f);
@@ -144,7 +141,7 @@ public class ResourceOracleImpl implements ResourceOracle {
         return null;
       }
     } else {
-      logger.log(TreeLogger.WARN, "Unknown URL type for " + urlString, null);
+      logger.log(TreeLogger.WARN, "Unknown URL type for " + url, null);
       return null;
     }
   }

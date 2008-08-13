@@ -151,8 +151,7 @@ public class GWTShell extends ToolBase {
         try {
           port = Integer.parseInt(value);
         } catch (NumberFormatException e) {
-          String msg = "A port must be an integer or \"auto\"";
-          getTopLogger().log(TreeLogger.ERROR, msg, null);
+          System.err.println("A port must be an integer or \"auto\"");
           return false;
         }
       }

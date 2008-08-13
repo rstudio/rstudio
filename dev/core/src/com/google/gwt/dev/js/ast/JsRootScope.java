@@ -77,6 +77,7 @@ public final class JsRootScope extends JsScope {
         // Common browser-defined identifiers not defined in ECMAScript
         "window", "document", "event", "location", "history", "external",
         "Debug", "Enumerator", "Global", "Image", "ActiveXObject", "VBArray",
+        "Components",
 
         // Functions commonly defined on Object
         "toString", "getClass",

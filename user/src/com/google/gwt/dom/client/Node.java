@@ -50,7 +50,7 @@ public class Node extends JavaScriptObject {
    * @param newChild The node to add
    * @return The node added
    */
-  public final native Node appendChild(Node newChild) /*-{
+  public final native <T extends Node> T appendChild(T newChild) /*-{
     return this.appendChild(newChild);
   }-*/;
 

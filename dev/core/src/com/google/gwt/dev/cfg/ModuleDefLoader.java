@@ -26,7 +26,6 @@ import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.File;
 import java.io.Reader;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashSet;
@@ -210,7 +209,7 @@ public final class ModuleDefLoader {
             && (!(externalForm.startsWith("zip:file")))
             && (!(externalForm.startsWith("http://")))
             && (!(externalForm.startsWith("ftp://")))) {
-          File gwtXmlFile = new File(new URI(externalForm));
+          File gwtXmlFile = new File(moduleURL.toURI());
           moduleDef.addGwtXmlFile(gwtXmlFile);
         }
       } catch (URISyntaxException e) {

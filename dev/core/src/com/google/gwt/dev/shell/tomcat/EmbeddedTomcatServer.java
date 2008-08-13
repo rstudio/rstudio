@@ -44,6 +44,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -277,13 +278,18 @@ public class EmbeddedTomcatServer {
       if (srcLastModified < dstLastModified) {
         // Don't copy over it.
         //
-        logger.log(TreeLogger.TRACE, "Source is older than existing: "
+        logger.log(TreeLogger.SPAM, "Source is older than existing: "
             + dest.getAbsolutePath(), null);
         return;
       } else if (srcLastModified == dstLastModified) {
         // Exact same time; quietly don't overwrite.
         //
         return;
+      } else if (dest.exists()) {
+        // Warn about the overwrite
+        logger.log(TreeLogger.WARN, "Overwriting existing file '"
+            + dest.getAbsolutePath() + "' with '" + resource.getLocation()
+            + "', which has a newer timestamp");
       }
 
       // Make dest directories as required.

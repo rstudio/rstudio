@@ -503,14 +503,16 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
     switch (eventType) {
       case Event.ONKEYDOWN:
-      case Event.ONKEYUP:
-      case Event.ONKEYPRESS: {
-        if (keyboardListeners != null) {
-          keyboardListeners.fireKeyboardEvent(this, event);
-        }
+      case Event.ONKEYUP: {
         if (isArrowKey(DOM.eventGetKeyCode(event))) {
           DOM.eventCancelBubble(event, true);
           DOM.eventPreventDefault(event);
+        }
+      }
+      // Intentional fall through
+      case Event.ONKEYPRESS: {
+        if (keyboardListeners != null) {
+          keyboardListeners.fireKeyboardEvent(this, event);
         }
         break;
       }
