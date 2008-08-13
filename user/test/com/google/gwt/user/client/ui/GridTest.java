@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,10 +19,11 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * TODO: document me.
+ * Tests for {@link Grid}.
  */
 public class GridTest extends HTMLTableTestBase {
 
+  @Override
   public HTMLTable getTable(int row, int column) {
     return new Grid(row, column);
   }
@@ -105,18 +106,48 @@ public class GridTest extends HTMLTableTestBase {
   }
 
   /**
+   * Verify that rows can be inserted.
+   */
+  public void testInsertion() {
+    Grid r = new Grid(4, 3);
+    assertEquals(4, r.getRowCount());
+    assertEquals(3, r.getColumnCount());
+
+    int index = r.insertRow(2);
+    assertEquals(index, 2);
+    assertEquals(5, r.getRowCount());
+    assertEquals(3, r.getColumnCount());
+    assertEquals(5, r.getDOMRowCount());
+    assertEquals(3, r.getDOMCellCount(2));
+  }
+
+  /**
    * Ensures row and column counts stay in sync during resizing.
    */
   public void testResizing() {
-    Grid r = new Grid(4, 1);
-    assertEquals(4, r.getRowCount());
-    assertEquals(1, r.getColumnCount());
-    r.resizeRows(0);
-    assertEquals(0, r.getRowCount());
-    r.resizeColumns(0);
-    assertEquals(0, r.getColumnCount());
-    r.resize(3, 2);
-    assertEquals(3, r.getRowCount());
-    assertEquals(2, r.getColumnCount());
+    {
+      // Resize using resize/resizeRows/resizeColumns
+      Grid r = new Grid(4, 1);
+      assertEquals(4, r.getRowCount());
+      assertEquals(1, r.getColumnCount());
+      r.resizeRows(0);
+      assertEquals(0, r.getRowCount());
+      r.resizeColumns(0);
+      assertEquals(0, r.getColumnCount());
+      r.resize(3, 2);
+      assertEquals(3, r.getRowCount());
+      assertEquals(2, r.getColumnCount());
+    }
+
+    {
+      // Resize using removeRow
+      Grid r = new Grid(4, 1);
+      assertEquals(4, r.getRowCount());
+      assertEquals(1, r.getColumnCount());
+      r.removeRow(2);
+      assertEquals(3, r.getRowCount());
+      assertEquals(1, r.getColumnCount());
+      assertEquals(3, r.getDOMRowCount());
+    }
   }
 }

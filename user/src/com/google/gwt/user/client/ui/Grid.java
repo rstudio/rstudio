@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -127,6 +127,35 @@ public class Grid extends HTMLTable {
   }
 
   /**
+   * Inserts a new row into the table. If you want to add multiple rows at once,
+   * use {@link #resize(int, int)} or {@link #resizeRows(int)} as they are more
+   * efficient.
+   * 
+   * @param beforeRow the index before which the new row will be inserted
+   * @return the index of the newly-created row
+   * @throws IndexOutOfBoundsException
+   */
+  @Override
+  public int insertRow(int beforeRow) {
+    // Physically insert the row
+    int index = super.insertRow(beforeRow);
+    numRows++;
+
+    // Add the columns to the new row
+    for (int i = 0; i < numColumns; i++) {
+      insertCell(index, i);
+    }
+
+    return index;
+  }
+
+  @Override
+  public void removeRow(int row) {
+    super.removeRow(row);
+    numRows--;
+  }
+
+  /**
    * Resizes the grid.
    * 
    * @param rows the number of rows
@@ -191,7 +220,7 @@ public class Grid extends HTMLTable {
     } else {
       while (numRows > rows) {
         // Fewer rows. Remove extraneous ones.
-        removeRow(--numRows);
+        removeRow(numRows - 1);
       }
     }
   }
