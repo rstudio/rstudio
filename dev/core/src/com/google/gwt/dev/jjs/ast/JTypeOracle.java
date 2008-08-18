@@ -137,6 +137,39 @@ public class JTypeOracle implements Serializable {
     }
   }
 
+  /**
+   * Compare two methods based on name and original argument types
+   * {@link JMethod#getOriginalParamTypes()}. Note that nothing special is done
+   * here regarding methods with type parameters in their argument lists. The
+   * caller must be careful that this level of matching is sufficient.
+   */
+  private static boolean methodsDoMatch(JMethod method1, JMethod method2) {
+    // static methods cannot match each other
+    if (method1.isStatic() || method2.isStatic()) {
+      return false;
+    }
+
+    // names must be identical
+    if (!method1.getName().equals(method2.getName())) {
+      return false;
+    }
+
+    // original parameter types must be identical
+    List<JType> params1 = method1.getOriginalParamTypes();
+    List<JType> params2 = method2.getOriginalParamTypes();
+    int params1size = params1.size();
+    if (params1size != params2.size()) {
+      return false;
+    }
+
+    for (int i = 0; i < params1size; ++i) {
+      if (params1.get(i) != params2.get(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private final Map<JInterfaceType, Set<JClassType>> couldBeImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
   private final Map<JClassType, Set<JInterfaceType>> couldImplementMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
@@ -573,7 +606,7 @@ public class JTypeOracle implements Serializable {
   private void computeVirtualUpRefs(JClassType type, JInterfaceType intf) {
     outer : for (JMethod intfMethod : intf.methods) {
       for (JMethod classMethod : type.methods) {
-        if (JProgram.methodsDoMatch(intfMethod, classMethod)) {
+        if (methodsDoMatch(intfMethod, classMethod)) {
           // this class directly implements the interface method
           continue outer;
         }
@@ -583,7 +616,7 @@ public class JTypeOracle implements Serializable {
       // if any super classes do, create a virtual up ref
       for (JClassType superType = type.extnds; superType != javaLangObject; superType = superType.extnds) {
         for (JMethod superMethod : superType.methods) {
-          if (JProgram.methodsDoMatch(intfMethod, superMethod)) {
+          if (methodsDoMatch(intfMethod, superMethod)) {
             // this super class directly implements the interface method
             // create a virtual up ref
 

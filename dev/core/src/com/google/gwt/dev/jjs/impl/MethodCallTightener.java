@@ -44,7 +44,7 @@ public class MethodCallTightener {
    */
   public class MethodCallTighteningVisitor extends JModVisitor {
 
-    // @Override
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
       JExpression instance = x.getInstance();
@@ -86,7 +86,7 @@ public class MethodCallTightener {
           && type != enclosingType; type = type.extnds) {
         for (int i = 0; i < type.methods.size(); ++i) {
           JMethod methodIt = type.methods.get(i);
-          if (JProgram.methodsDoMatch(method, methodIt)) {
+          if (methodOverrides(methodIt, method)) {
             foundMethod = methodIt;
             break outer;
           }
@@ -105,6 +105,31 @@ public class MethodCallTightener {
           x.getInstance(), foundMethod);
       call.getArgs().addAll(x.getArgs());
       ctx.replaceMe(call);
+    }
+
+    /**
+     * Check whether <code>subMethod</code> overrides <code>supMethod</code>.
+     * For the purposes of this method, indirect overrides are considered
+     * overrides. For example, if method A.m overrides B.m, and B.m overrides
+     * C.m, then A.m is considered to override C.m. Additionally, implementing
+     * an interface is considered
+     * <q>overriding</q>
+     * for the purposes of this method.
+     * 
+     */
+    private boolean methodOverrides(JMethod subMethod, JMethod supMethod) {
+      if (subMethod.params.size() != supMethod.params.size()) {
+        // short cut: check the number of parameters
+        return false;
+      }
+
+      if (!subMethod.getName().equals(supMethod.getName())) {
+        // short cut: check the method names
+        return false;
+      }
+
+      // long way: get all overrides and see if supMethod is included
+      return program.typeOracle.getAllOverrides(subMethod).contains(supMethod);
     }
   }
 

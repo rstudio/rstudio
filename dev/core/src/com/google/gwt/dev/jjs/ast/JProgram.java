@@ -135,33 +135,6 @@ public class JProgram extends JNode {
     return traceMethods.size() > 0;
   }
 
-  public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
-    // static methods cannot match each other
-    if (method1.isStatic() || method2.isStatic()) {
-      return false;
-    }
-
-    // names must be identical
-    if (!method1.getName().equals(method2.getName())) {
-      return false;
-    }
-
-    // original parameter types must be identical
-    List<JType> params1 = method1.getOriginalParamTypes();
-    List<JType> params2 = method2.getOriginalParamTypes();
-    int params1size = params1.size();
-    if (params1size != params2.size()) {
-      return false;
-    }
-
-    for (int i = 0; i < params1size; ++i) {
-      if (params1.get(i) != params2.get(i)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   private static String dotify(char[][] name) {
     StringBuffer result = new StringBuffer();
     for (int i = 0; i < name.length; ++i) {
