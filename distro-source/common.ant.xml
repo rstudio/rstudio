@@ -17,14 +17,9 @@
 	</patternset>
 
 	<target name="filter" description="Filters distro files for versioning">
-		<!-- These files must be filtered for versioning -->
-		<mkdir dir="${project.build}" />
-		<copy todir="${project.build}">
+		<gwt.revfilter todir="${project.build}" >
 			<fileset dir="../core/src" />
-			<filterset>
-				<filter token="GWT_VERSION" value="${gwt.version}" />
-			</filterset>
-		</copy>
+		</gwt.revfilter>
 	</target>
 
 	<target name="clean" description="Cleans this project's intermediate and output files">

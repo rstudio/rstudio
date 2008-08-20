@@ -55,17 +55,13 @@
 		</gwt.jar>
 	</target>
 
-	<property name="filter.pattern" value="com/google/gwt/dev/About.java" />
+	<property name="filter.pattern" value="com/google/gwt/dev/About.properties" />
 
 	<target name="-filter.src" description="Creates filtered copies of source files" unless="filter.uptodate">
 		<delete dir="${src.filtered}" failonerror="false" />
-		<mkdir dir="${src.filtered}" />
-		<copy todir="${src.filtered}" overwrite="true">
+		<gwt.revfilter todir="${src.filtered}" >
 			<fileset dir="src" includes="${filter.pattern}" />
-			<filterset>
-				<filter token="GWT_VERSION" value="${gwt.version}" />
-			</filterset>
-		</copy>
+		</gwt.revfilter>
 		<touch file="${src.filtered}/gwt.version-${gwt.version}" />
 	</target>
 

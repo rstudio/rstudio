@@ -150,7 +150,7 @@
 				<classpath>
 					<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
 					<pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-                                        <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+					<pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
 				</classpath>
 			</taskdef>
 
@@ -172,7 +172,7 @@
 					<pathelement location="${javac.out}" />
 					<pathelement location="${gwt.dev.staging.jar}" />
 					<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-                                        <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+					<pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
 					<extraclasspaths />
 				</classpath>
 
@@ -196,6 +196,47 @@
 			<tar.cat destfile="@{destfile}" compression="@{compression}" longfile="gnu">
 				<tar.elements />
 			</tar.cat>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="gwt.revfilter" description="Filters files for versioning">
+		<attribute name="todir" description="Destination for the filtered copy"/>
+		<element name="src.fileset" implicit="true" 
+			description="Source for the filtered copy"/>
+		<sequential>
+			<exec outputproperty="svn.info" executable="svn" 
+					failifexecutionfails="false" logError="true">
+				<arg value="info"/>
+				<arg value="${gwt.root}"/>
+			</exec>
+			<propertyregex property="gwt.svn.branch"
+				input="${svn.info}" 
+				regexp="URL: https?://google-web-toolkit.googlecode.com/svn/([^\r\n]+)"
+				select="\1"
+				defaultValue="unknown"
+				casesensitive="false" />
+			<exec outputproperty="svn.version" executable="svnversion" 
+					failifexecutionfails="false"  logError="true">
+				<arg value="${gwt.root}"/>
+			</exec>
+			<propertyregex property="gwt.svn.version"
+				input="${svn.version}" 
+				regexp="^(\d+(:\d+)?[MSP]*)$"
+				replace="\1"
+				defaultValue="unknown"
+				casesensitive="false" />
+			<property name="gwt.svnrev" 
+				value="${gwt.svn.branch}@${gwt.svn.version}"/>
+			<!-- These files must be filtered for versioning -->
+			<mkdir dir="@{todir}" />
+			<copy todir="@{todir}" overwrite="true">
+				<src.fileset/>
+				<filterset>
+					<filter token="GWT_VERSION" value="${gwt.version}" />
+					<filter token="GWT_SVNREV" value="${gwt.svnrev}" />
+				</filterset>
+			</copy>
+			<echo message="Branding as GWT version ${gwt.version}, SVN rev ${gwt.svnrev}"/>
 		</sequential>
 	</macrodef>
 

@@ -15,18 +15,46 @@
  */
 package com.google.gwt.dev;
 
+import java.io.InputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 /**
- * About information for GWT. 
+ * About information for GWT.
  */
 public class About {
 
-  public static final String GWT_VERSION_NUM = "@GWT_VERSION@"; 
+  public static String GWT_SVNREV;
 
-  public static final String GWT_NAME = "Google Web Toolkit"; 
+  public static String GWT_VERSION_NUM;
 
-  public static final String GWT_VERSION = GWT_NAME + " " + GWT_VERSION_NUM; 
+  public static String GWT_NAME = "Google Web Toolkit";
+
+  public static String GWT_VERSION;
+
+  {
+    Class<? extends About> myClass = this.getClass();
+    String propsPath = myClass.getName().replace('.', '/').concat(".properties");
+    Properties props = new Properties();
+    try {
+      InputStream instream = myClass.getClassLoader().getResourceAsStream(
+          propsPath);
+      props.load(instream);
+    } catch (IOException iox) {
+      // okay... we use default values, then.
+    }
+
+    GWT_SVNREV = props.getProperty("gwt.svnrev");
+    if (GWT_SVNREV == null) {
+      GWT_SVNREV = "unknown";
+    }
+    GWT_VERSION_NUM = props.getProperty("gwt.version");
+    if (GWT_VERSION_NUM == null) {
+      GWT_VERSION_NUM = "0.0.0";
+    }
+    GWT_VERSION = GWT_NAME + " " + GWT_VERSION_NUM;
+  }
 
   private About() {
   }
-  
 }
