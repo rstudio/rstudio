@@ -140,9 +140,34 @@ public class WindowTest extends GWTTestCase {
         int newClientWidth = Window.getClientWidth();
         assertTrue(newClientHeight < oldClientHeight);
         assertTrue(newClientWidth < oldClientWidth);
+        RootPanel.get().remove(largeDOM);
         finishTest();
       }
     });
     delayTestFinish(200);
+  }
+
+  /**
+   * Tests the ability of scroll the Window and catch scroll events.
+   */
+  public void testScrolling() {
+    // Force scroll bars to appear
+    Window.enableScrolling(true);
+    int clientHeight = Window.getClientHeight();
+    int clientWidth = Window.getClientWidth();
+    final Label largeDOM = new Label();
+    largeDOM.setPixelSize(clientWidth + 500, clientHeight + 500);
+    RootPanel.get().add(largeDOM);
+
+    // Listener for scroll events
+    Window.scrollTo(100, 200);
+    assertEquals(100, Window.getScrollLeft());
+    assertEquals(200, Window.getScrollTop());
+    Window.scrollTo(0, 0);
+    assertEquals(0, Window.getScrollLeft());
+    assertEquals(0, Window.getScrollTop());
+
+    // Cleanup the window
+    RootPanel.get().remove(largeDOM);
   }
 }

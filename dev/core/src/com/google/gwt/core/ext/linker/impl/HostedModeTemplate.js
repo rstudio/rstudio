@@ -86,8 +86,6 @@ function __MODULE_FUNC__() {
     if (scriptsDone && loadDone) {
       var iframe = $doc.getElementById('__MODULE_NAME__');
       var frameWnd = iframe.contentWindow;
-      // copy the init handlers function into the iframe
-      frameWnd.__gwt_initHandlers = __MODULE_FUNC__.__gwt_initHandlers;
       // inject hosted mode property evaluation function
       if (isHostedMode()) {
         frameWnd.__gwt_getProperty = function(name) {
@@ -459,61 +457,5 @@ function __MODULE_FUNC__() {
 
   $doc.write('<script defer="defer">__MODULE_FUNC__.onInjectionDone(\'__MODULE_NAME__\')</script>');
 }
-
-// Called from compiled code to hook the window's resize & load events (the
-// code running in the script frame is not allowed to hook these directly).
-//
-// Notes:
-// 1) We declare it here in the global scope so that it won't closure the
-// internals of the module func.
-//
-// 2) We hang it off the module func to avoid polluting the global namespace.
-//
-// 3) This function will be copied directly into the script frame window!
-//
-__MODULE_FUNC__.__gwt_initHandlers = function(resize, beforeunload, unload) {
-  var $wnd = window
-  , oldOnResize = $wnd.onresize
-  , oldOnBeforeUnload = $wnd.onbeforeunload
-  , oldOnUnload = $wnd.onunload
-  ;
-
-  $wnd.onresize = function(evt) {
-    try {
-      resize();
-    } finally {
-      oldOnResize && oldOnResize(evt);
-    }
-  };
-
-  $wnd.onbeforeunload = function(evt) {
-    var ret, oldRet;
-    try {
-      ret = beforeunload();
-    } finally {
-      oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
-    }
-    // Avoid returning null as IE6 will coerce it into a string.
-    // Ensure that "" gets returned properly.
-    if (ret != null) {
-      return ret;
-    }
-    if (oldRet != null) {
-      return oldRet;
-    }
-    // returns undefined.
-  };
-
-  $wnd.onunload = function(evt) {
-    try {
-      unload();
-    } finally {
-      oldOnUnload && oldOnUnload(evt);
-      $wnd.onresize = null;
-      $wnd.onbeforeunload = null;
-      $wnd.onunload = null;
-    }
-  };
-};
 
 __MODULE_FUNC__();

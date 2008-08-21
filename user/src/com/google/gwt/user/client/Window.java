@@ -17,8 +17,11 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.impl.WindowImpl;
+import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +60,6 @@ public class Window {
      * 
      * @return the string to the right of the URL's hash.
      */
-
     public static String getHash() {
       return impl.getHash();
     }
@@ -231,6 +233,7 @@ public class Window {
 
   private static ArrayList<WindowCloseListener> closingListeners;
   private static ArrayList<WindowResizeListener> resizeListeners;
+  private static ArrayList<WindowScrollListener> scrollListeners;
 
   /**
    * Adds a listener to receive window closing events.
@@ -256,6 +259,19 @@ public class Window {
       resizeListeners = new ArrayList<WindowResizeListener>();
     }
     resizeListeners.add(listener);
+  }
+
+  /**
+   * Adds a listener to receive window scroll events.
+   * 
+   * @param listener the listener to be informed when the window is scrolled
+   */
+  public static void addWindowScrollListener(WindowScrollListener listener) {
+    maybeInitializeHandlers();
+    if (scrollListeners == null) {
+      scrollListeners = new ArrayList<WindowScrollListener>();
+    }
+    scrollListeners.add(listener);
   }
 
   /**
@@ -394,6 +410,27 @@ public class Window {
   }
 
   /**
+   * Removes a window scroll listener.
+   * 
+   * @param listener the listener to be removed
+   */
+  public static void removeWindowScrollListener(WindowScrollListener listener) {
+    if (scrollListeners != null) {
+      scrollListeners.remove(listener);
+    }
+  }
+
+  /**
+   * Scroll the window to the specified position.
+   * 
+   * @param left the left scroll position
+   * @param top the top scroll position
+   */
+  public static native void scrollTo(int left, int top) /*-{
+    $wnd.scrollTo(left, top);
+  }-*/;
+
+  /**
    * Sets the size of the margins used within the window's client area. It is
    * sometimes necessary to do this because some browsers, such as Internet
    * Explorer, add margins by default, which can confound attempts to resize
@@ -448,6 +485,15 @@ public class Window {
       fireResizedAndCatch(handler);
     } else {
       fireResizedImpl();
+    }
+  }
+
+  static void onScroll() {
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      fireScrollAndCatch(handler);
+    } else {
+      fireScrollImpl();
     }
   }
 
@@ -508,11 +554,102 @@ public class Window {
     }
   }
 
+  private static void fireScrollAndCatch(UncaughtExceptionHandler handler) {
+    try {
+      fireScrollImpl();
+    } catch (Throwable e) {
+      handler.onUncaughtException(e);
+    }
+  }
+
+  private static void fireScrollImpl() {
+    if (scrollListeners != null) {
+      for (WindowScrollListener listener : scrollListeners) {
+        listener.onScroll(getScrollLeft(), getScrollTop());
+      }
+    }
+  }
+
+  /**
+   * This method defines a function that will in turn define the
+   * __gwt_initWindowHandlers method that will be used to initialize the event
+   * handlers used by the {@link Window}. However, this method returns the
+   * function as a String so the __gwt_initWindowHandlers method can be added to
+   * the outer window.
+   * 
+   * We need to declare __gwt_initWindowHandlers on the outer window because you
+   * cannot attach Window listeners from within an iframe on IE6.
+   * 
+   * Per ECMAScript 262 spec 15.3.4.2, Function.prototype.toString() returns a
+   * string representation of the function that has the syntax of the function.
+   */
+  private static native String getInitHandlerMethodString() /*-{
+    return function __gwt_initWindowHandlers(resize, scroll, beforeunload, unload) {
+      var wnd = window
+      , oldOnResize = wnd.onresize
+      , oldOnBeforeUnload = wnd.onbeforeunload
+      , oldOnUnload = wnd.onunload
+      , oldOnScroll = wnd.onscroll
+      ;
+
+      wnd.onresize = function(evt) {
+        try {
+          resize();
+        } finally {
+          oldOnResize && oldOnResize(evt);
+        }
+      };
+
+      wnd.onscroll = function(evt) {
+        try {
+          scroll();
+        } finally {
+          oldOnScroll && oldOnScroll(evt);
+        }
+      };
+
+      wnd.onbeforeunload = function(evt) {
+        var ret, oldRet;
+        try {
+          ret = beforeunload();
+        } finally {
+          oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+        }
+        // Avoid returning null as IE6 will coerce it into a string.
+        // Ensure that "" gets returned properly.
+        if (ret != null) {
+          return ret;
+        }
+        if (oldRet != null) {
+          return oldRet;
+        }
+        // returns undefined.
+      };
+    
+      wnd.onunload = function(evt) {
+        try {
+          unload();
+        } finally {
+          oldOnUnload && oldOnUnload(evt);
+          wnd.onresize = null;
+          wnd.onscroll = null;
+          wnd.onbeforeunload = null;
+          wnd.onunload = null;
+        }
+      };
+      
+      // Remove the reference once we've initialize the handlers
+      wnd.__gwt_initWindowHandlers = undefined;
+    }.toString();
+  }-*/;
+
   private static native void init() /*-{
-    // Magic function defined by the selection script.
-    __gwt_initHandlers(
+    $wnd.__gwt_initWindowHandlers(
       function() {
         @com.google.gwt.user.client.Window::onResize()();
+      },
+      function() {
+        @com.google.gwt.user.client.Window::onScroll()();
       },
       function() {
         return @com.google.gwt.user.client.Window::onClosing()();
@@ -525,7 +662,16 @@ public class Window {
 
   private static void maybeInitializeHandlers() {
     if (GWT.isClient() && !handlersAreInitialized) {
+      // Embed the init script on the page
+      ScriptElement scriptElem = Document.get().createScriptElement();
+      scriptElem.setText(getInitHandlerMethodString());
+      Document.get().getBody().appendChild(scriptElem);
+      
+      // Initialize the handlers
       init();
+
+      // Remove the init script from the page
+      RootPanel.getBodyElement().removeChild(scriptElem);
       handlersAreInitialized = true;
     }
   }

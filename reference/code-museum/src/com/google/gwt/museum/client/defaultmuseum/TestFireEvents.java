@@ -18,6 +18,9 @@ package com.google.gwt.museum.client.defaultmuseum;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.WindowResizeListener;
+import com.google.gwt.user.client.WindowScrollListener;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -53,6 +56,7 @@ public class TestFireEvents extends AbstractIssue {
     layout.setHTML(0, 0, "<b>Action to Perform</b>");
     layout.setHTML(0, 1, "<b>Event</b>");
     layout.setHTML(0, 2, "<b>Status</b>");
+    FlexCellFormatter formatter = layout.getFlexCellFormatter();
 
     // Mouse and click events
     Button button = new Button("Double-click me") {
@@ -194,6 +198,32 @@ public class TestFireEvents extends AbstractIssue {
     addDependentTest(Event.ONLOAD, "load");
     addDependentTest(Event.ONCONTEXTMENU, "contextMenu");
     loadable.setUrl("imageDoesNotExist.abc");
+
+    // Window Scroll Event
+    {
+      final int row = layout.getRowCount();
+      layout.setText(row, 0, "Window level events");
+      layout.setText(row, 1, "window scroll");
+      layout.setText(row, 2, "?");
+      Window.addWindowScrollListener(new WindowScrollListener() {
+        public void onScroll(int scrollLeft, int scrollTop) {
+          layout.setText(row, 2, "pass");
+        }
+      });
+    }
+
+    // Window Resize Event
+    {
+      final int row = layout.getRowCount();
+      formatter.setRowSpan(row - 1, 0, 2);
+      layout.setText(row, 0, "window resize");
+      layout.setText(row, 1, "?");
+      Window.addWindowResizeListener(new WindowResizeListener() {
+        public void onWindowResized(int width, int height) {
+          layout.setText(row, 1, "pass");
+        }
+      });
+    }
 
     // The following are not testable or not supported in all browsers
     // onlosecapture
