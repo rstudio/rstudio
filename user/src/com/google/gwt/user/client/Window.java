@@ -584,7 +584,7 @@ public class Window {
    * string representation of the function that has the syntax of the function.
    */
   private static native String getInitHandlerMethodString() /*-{
-    return function __gwt_initWindowHandlers(resize, scroll, beforeunload, unload) {
+    return function(resize, scroll, beforeunload, unload) {
       var wnd = window
       , oldOnResize = wnd.onresize
       , oldOnBeforeUnload = wnd.onbeforeunload
@@ -662,9 +662,13 @@ public class Window {
 
   private static void maybeInitializeHandlers() {
     if (GWT.isClient() && !handlersAreInitialized) {
+      handlersAreInitialized = true;
+      
       // Embed the init script on the page
       ScriptElement scriptElem = Document.get().createScriptElement();
-      scriptElem.setText(getInitHandlerMethodString());
+      String initFunc = getInitHandlerMethodString().replaceFirst("function",
+          "function __gwt_initWindowHandlers");
+      scriptElem.setText(initFunc);
       Document.get().getBody().appendChild(scriptElem);
       
       // Initialize the handlers
@@ -672,7 +676,6 @@ public class Window {
 
       // Remove the init script from the page
       RootPanel.getBodyElement().removeChild(scriptElem);
-      handlersAreInitialized = true;
     }
   }
 
