@@ -1,97 +1,97 @@
 <project name="GWT" default="build" basedir=".">
-	<property name="gwt.root" location="." />
-	<property name="project.tail" value="" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="." />
+  <property name="project.tail" value="" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<!-- "build" is the default when subprojects are directly targetted  -->
-	<property name="target" value="build" />
+  <!-- "build" is the default when subprojects are directly targetted  -->
+  <property name="target" value="build" />
 
-	<property name="gwt.apicheck.config" 
-		location="tools/api-checker/config/gwt14_15userApi.conf"/>
-	<property name="gwt.apicheck.oldroot" 
-		location="../gwt-1.4"/>
+  <property name="gwt.apicheck.config" 
+    location="tools/api-checker/config/gwt14_15userApi.conf"/>
+  <property name="gwt.apicheck.oldroot" 
+    location="../gwt-1.4"/>
 
-	<target name="dist" depends="dev, user, servlet, tools, jni, doc, samples" description="Run the distributions">
-		<gwt.ant dir="distro-source" />
-	</target>
+  <target name="dist" depends="dev, user, servlet, tools, jni, doc, samples" description="Run the distributions">
+    <gwt.ant dir="distro-source" />
+  </target>
 
-	<target name="dev" depends="buildtools" description="Run dev">
-		<gwt.ant dir="dev" />
-	</target>
+  <target name="dev" depends="buildtools" description="Run dev">
+    <gwt.ant dir="dev" />
+  </target>
 
-	<target name="user" depends="buildtools, dev" description="Run user">
-		<gwt.ant dir="user" />
-	</target>
+  <target name="user" depends="buildtools, dev" description="Run user">
+    <gwt.ant dir="user" />
+  </target>
 
-	<target name="tools" depends="buildtools, user" description="Run tools">
-		<gwt.ant dir="tools" />
-	</target>
+  <target name="tools" depends="buildtools, user" description="Run tools">
+    <gwt.ant dir="tools" />
+  </target>
 
-	<target name="servlet" depends="buildtools, user" description="Run servlet">
-		<gwt.ant dir="servlet" />
-	</target>
+  <target name="servlet" depends="buildtools, user" description="Run servlet">
+    <gwt.ant dir="servlet" />
+  </target>
 
-	<target name="jni" description="Run jni">
-		<gwt.ant dir="jni" />
-	</target>
+  <target name="jni" description="Run jni">
+    <gwt.ant dir="jni" />
+  </target>
 
-	<target name="doc" depends="buildtools, user" description="Build doc">
-		<gwt.ant dir="doc" />
-	</target>
+  <target name="doc" depends="buildtools, user" description="Build doc">
+    <gwt.ant dir="doc" />
+  </target>
 
-	<target name="samples" depends="dev, user" description="Build samples">
-		<gwt.ant dir="samples" />
-	</target>
+  <target name="samples" depends="dev, user" description="Build samples">
+    <gwt.ant dir="samples" />
+  </target>
 
-	<target name="buildtools" description="Build the build tools">
-		<gwt.ant dir="build-tools" />
-	</target>
+  <target name="buildtools" description="Build the build tools">
+    <gwt.ant dir="build-tools" />
+  </target>
 
-	<target name="-do" depends="dist" description="Run all subprojects" />
+  <target name="-do" depends="dist" description="Run all subprojects" />
 
-	<target name="build" description="Builds GWT">
-		<antcall target="-do">
-			<param name="target" value="build" />
-		</antcall>
-	</target>
+  <target name="build" description="Builds GWT">
+    <antcall target="-do">
+      <param name="target" value="build" />
+    </antcall>
+  </target>
 
-	<target name="checkstyle" description="Static analysis of GWT source">
-		<antcall target="-do">
-			<param name="target" value="checkstyle" />
-		</antcall>
-	</target>
+  <target name="checkstyle" description="Static analysis of GWT source">
+    <antcall target="-do">
+      <param name="target" value="checkstyle" />
+    </antcall>
+  </target>
 
-	<target name="test" depends="build" description="Test GWT">
-		<antcall target="-do">
-			<param name="target" value="test" />
-		</antcall>
-	</target>
+  <target name="test" depends="build" description="Test GWT">
+    <antcall target="-do">
+      <param name="target" value="test" />
+    </antcall>
+  </target>
 
-	<target name="clean" description="Cleans the entire GWT build">
-		<delete dir="${gwt.build}" />
-	</target>
+  <target name="clean" description="Cleans the entire GWT build">
+    <delete dir="${gwt.build}" />
+  </target>
 
-	<target name="apicheck" depends="build"
-		description="Checks API compatibility to prior GWT revision">
-		<copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
-		      file="${gwt.apicheck.config}"
-		      overwrite="true">
-			<filterset>
-				<filter token="OLDROOT" 
-					value="${gwt.apicheck.oldroot}"/>
-			</filterset>
-		</copy>
-		<java failonerror="true" fork="true"
-		      classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
-			<classpath>
-				<pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
-				<pathelement location="${gwt.build.out}/dev/core/bin"/>
-				<pathelement location="${gwt.build.out}/user/bin"/>
-				<pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
-				<pathelement path="${java.class.path}"/>
-			</classpath>
-			<arg file="${gwt.build.out}/userApi.conf"/>
-		</java>
-	</target>
+  <target name="apicheck" depends="build"
+    description="Checks API compatibility to prior GWT revision">
+    <copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
+          file="${gwt.apicheck.config}"
+          overwrite="true">
+      <filterset>
+        <filter token="OLDROOT" 
+          value="${gwt.apicheck.oldroot}"/>
+      </filterset>
+    </copy>
+    <java failonerror="true" fork="true"
+          classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
+      <classpath>
+        <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
+        <pathelement location="${gwt.build.out}/dev/core/bin"/>
+        <pathelement location="${gwt.build.out}/user/bin"/>
+        <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
+        <pathelement path="${java.class.path}"/>
+      </classpath>
+      <arg file="${gwt.build.out}/userApi.conf"/>
+    </java>
+  </target>
 
 </project>

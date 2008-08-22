@@ -1,30 +1,30 @@
 <project name="dist-common">
-	<property name="gwt.root" location="../.." />
-	<property name="project.tail" value="distro-source/${dist.platform}" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="distro-source/${dist.platform}" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
-	<property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
+  <property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
+  <property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
 
-	<patternset id="chmod.executables">
-		<include name="*Creator" />
-		<include name="benchmarkViewer" />
-	</patternset>
+  <patternset id="chmod.executables">
+    <include name="*Creator" />
+    <include name="benchmarkViewer" />
+  </patternset>
 
-	<patternset id="chmod.not.executables">
-		<exclude name="*Creator" />
-		<exclude name="benchmarkViewer" />
-	</patternset>
+  <patternset id="chmod.not.executables">
+    <exclude name="*Creator" />
+    <exclude name="benchmarkViewer" />
+  </patternset>
 
-	<target name="filter" description="Filters distro files for versioning">
-		<gwt.revfilter todir="${project.build}" >
-			<fileset dir="../core/src" />
-		</gwt.revfilter>
-	</target>
+  <target name="filter" description="Filters distro files for versioning">
+    <gwt.revfilter todir="${project.build}" >
+      <fileset dir="../core/src" />
+    </gwt.revfilter>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" failonerror="false" />
-		<delete dir="${project.staging}" failonerror="false" />
-		<delete file="${project.dist}" failonerror="false" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" failonerror="false" />
+    <delete dir="${project.staging}" failonerror="false" />
+    <delete file="${project.dist}" failonerror="false" />
+  </target>
 </project>

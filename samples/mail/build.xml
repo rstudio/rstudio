@@ -1,5 +1,5 @@
 <project name="mail" default="build" basedir=".">
-	<property name="sample.root" value="mail" />
-	<property name="sample.module" value="Mail" />
-	<import file="../common.ant.xml" />
+  <property name="sample.root" value="mail" />
+  <property name="sample.module" value="Mail" />
+  <import file="../common.ant.xml" />
 </project>

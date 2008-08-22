@@ -1,77 +1,77 @@
 <project name="samples" default="build" basedir=".">
-	<property name="gwt.root" location=".." />
-	<property name="project.tail" value="samples" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="samples" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<!-- "build" is the default when subprojects are directly targetted -->
-	<property name="target" value="build" />
+  <!-- "build" is the default when subprojects are directly targetted -->
+  <property name="target" value="build" />
 
-	<target name="dynatable" description="Build dynatable">
-		<gwt.ant dir="dynatable" />
-	</target>
+  <target name="dynatable" description="Build dynatable">
+    <gwt.ant dir="dynatable" />
+  </target>
 
-	<target name="hello" description="Build hello">
-		<gwt.ant dir="hello" />
-	</target>
+  <target name="hello" description="Build hello">
+    <gwt.ant dir="hello" />
+  </target>
 
-	<target name="i18n" description="Build i18n">
-		<gwt.ant dir="i18n" />
-	</target>
+  <target name="i18n" description="Build i18n">
+    <gwt.ant dir="i18n" />
+  </target>
 
-	<target name="json" description="Build json">
-		<gwt.ant dir="json" />
-	</target>
+  <target name="json" description="Build json">
+    <gwt.ant dir="json" />
+  </target>
 
-	<target name="mail" description="Build mail">
-		<gwt.ant dir="mail" />
-	</target>
+  <target name="mail" description="Build mail">
+    <gwt.ant dir="mail" />
+  </target>
 
-	<target name="showcase" description="Build showcase">
-		<gwt.ant dir="showcase" />
-	</target>
+  <target name="showcase" description="Build showcase">
+    <gwt.ant dir="showcase" />
+  </target>
 
-	<target name="simplexml" description="Build simplexml">
-		<gwt.ant dir="simplexml" />
-	</target>
+  <target name="simplexml" description="Build simplexml">
+    <gwt.ant dir="simplexml" />
+  </target>
 
-	<target name="-do" description="Run all subprojects" >
-		<antcall target="dynatable" />
-		<antcall target="hello" />
-		<antcall target="i18n" />
-		<antcall target="json" />
-		<antcall target="mail" />
-		<antcall target="showcase" />
-		<antcall target="simplexml" />
-	</target>
+  <target name="-do" description="Run all subprojects" >
+    <antcall target="dynatable" />
+    <antcall target="hello" />
+    <antcall target="i18n" />
+    <antcall target="json" />
+    <antcall target="mail" />
+    <antcall target="showcase" />
+    <antcall target="simplexml" />
+  </target>
 
-	<target name="build" description="Builds GWT">
-		<gwt.timer name="all">
-			<antcall target="-do">
-				<param name="target" value="build" />
-			</antcall>
-		</gwt.timer>
-		<length property="gwt.sample.length">
-			<fileset dir="${gwt.build.out}/samples">
-				<include name="**/www/com*/**"/>
-			</fileset>
-		</length>
-		<echo message="compiled size of all samples is ${gwt.sample.length} bytes."/>
-	</target>
+  <target name="build" description="Builds GWT">
+    <gwt.timer name="all">
+      <antcall target="-do">
+        <param name="target" value="build" />
+      </antcall>
+    </gwt.timer>
+    <length property="gwt.sample.length">
+      <fileset dir="${gwt.build.out}/samples">
+        <include name="**/www/com*/**"/>
+      </fileset>
+    </length>
+    <echo message="compiled size of all samples is ${gwt.sample.length} bytes."/>
+  </target>
 
-	<target name="checkstyle" description="Static analysis of GWT source">
-		<antcall target="-do">
-			<param name="target" value="checkstyle" />
-		</antcall>
-	</target>
+  <target name="checkstyle" description="Static analysis of GWT source">
+    <antcall target="-do">
+      <param name="target" value="checkstyle" />
+    </antcall>
+  </target>
 
-	<target name="test" description="Test GWT">
-		<antcall target="-do">
-			<param name="target" value="test" />
-		</antcall>
-	</target>
+  <target name="test" description="Test GWT">
+    <antcall target="-do">
+      <param name="target" value="test" />
+    </antcall>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" />
-		<delete dir="${gwt.build.out}/samples-scripts" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+    <delete dir="${gwt.build.out}/samples-scripts" />
+  </target>
 </project>

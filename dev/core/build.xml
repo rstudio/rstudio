@@ -1,163 +1,163 @@
 <project name="dev-core" default="build" basedir=".">
-	<property name="gwt.root" location="../.." />
-	<property name="project.tail" value="dev/core" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="dev/core" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<property name="alldeps.jar" location="${project.build}/alldeps.jar" />
+  <property name="alldeps.jar" location="${project.build}/alldeps.jar" />
 
-	<fileset id="default.tests" dir="${javac.junit.out}">
-		<include name="**/*Test.class" />
-	</fileset>
+  <fileset id="default.tests" dir="${javac.junit.out}">
+    <include name="**/*Test.class" />
+  </fileset>
 
-	<target name="compile.tests" depends="build" description="Compiles the test code for this project">
-		<mkdir dir="${javac.junit.out}" />
-		<gwt.javac srcdir="test" destdir="${javac.junit.out}">
-			<classpath>
-				<pathelement location="${javac.out}" />
-				<pathelement location="${alldeps.jar}" />
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-			</classpath>
-		</gwt.javac>
-	</target>
+  <target name="compile.tests" depends="build" description="Compiles the test code for this project">
+    <mkdir dir="${javac.junit.out}" />
+    <gwt.javac srcdir="test" destdir="${javac.junit.out}">
+      <classpath>
+        <pathelement location="${javac.out}" />
+        <pathelement location="${alldeps.jar}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+      </classpath>
+    </gwt.javac>
+  </target>
 
-	<target name="build.alldeps.jar" description="Merges all dependency jars into a single jar">
-		<mkdir dir="${project.build}" />
-		<gwt.jar destfile="${alldeps.jar}">
-			<zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar" />
-			<zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
-			<zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/catalina-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/catalina-optional-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/commons-beanutils-1.6.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/commons-digester-1.5.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/commons-el-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/commons-logging-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/commons-modeler-1.1.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/jakarta-regexp-1.3.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/jasper-compiler-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/jasper-runtime-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/jsp-api-2.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/mx4j-jmx-1.1.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/naming-common-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/naming-factory-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/naming-java-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/naming-resources-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/servlets-common-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/servlets-default-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/servlets-invoker-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-coyote-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-http11-1.0.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-jk2-2.1.jar" />
-			<zipfileset src="${gwt.tools.lib}/tomcat/tomcat-util-5.1.jar" />
-		</gwt.jar>
-	</target>
+  <target name="build.alldeps.jar" description="Merges all dependency jars into a single jar">
+    <mkdir dir="${project.build}" />
+    <gwt.jar destfile="${alldeps.jar}">
+      <zipfileset src="${gwt.tools.lib}/apache/tapestry-util-text-4.0.2.jar" />
+      <zipfileset src="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
+      <zipfileset src="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/ant-launcher-1.6.5.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/catalina-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/catalina-optional-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/commons-beanutils-1.6.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/commons-digester-1.5.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/commons-el-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/commons-logging-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/commons-modeler-1.1.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/jakarta-regexp-1.3.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/jasper-compiler-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/jasper-runtime-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/jsp-api-2.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/mx4j-jmx-1.1.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/naming-common-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/naming-factory-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/naming-java-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/naming-resources-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/servlets-common-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/servlets-default-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/servlets-invoker-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-coyote-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-http11-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-jk2-2.1.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/tomcat-util-5.1.jar" />
+    </gwt.jar>
+  </target>
 
-	<property name="filter.pattern" value="com/google/gwt/dev/About.properties" />
+  <property name="filter.pattern" value="com/google/gwt/dev/About.properties" />
 
-	<target name="-filter.src" description="Creates filtered copies of source files" unless="filter.uptodate">
-		<delete dir="${src.filtered}" failonerror="false" />
-		<gwt.revfilter todir="${src.filtered}" >
-			<fileset dir="src" includes="${filter.pattern}" />
-		</gwt.revfilter>
-		<touch file="${src.filtered}/gwt.version-${gwt.version}" />
-	</target>
+  <target name="-filter.src" description="Creates filtered copies of source files" unless="filter.uptodate">
+    <delete dir="${src.filtered}" failonerror="false" />
+    <gwt.revfilter todir="${src.filtered}" >
+      <fileset dir="src" includes="${filter.pattern}" />
+    </gwt.revfilter>
+    <touch file="${src.filtered}/gwt.version-${gwt.version}" />
+  </target>
 
-	<target name="build" depends="build.alldeps.jar" description="Compiles this project">
-		<!--
-		There are classes missing from dev/core that are necessary
-		to compile the rest of dev/core (e.g. BootStrapPlatform); these are
-		provided by each platform implementation, but in order to compile the
-		core standalone, we need a dummy version of the class to build against.
-		-->
-		<property name="javac.out-dummy" location="${project.build}/bin-dummy" />
-		<mkdir dir="${javac.out-dummy}" />
-		<gwt.javac srcdir="src-dummy" destdir="${javac.out-dummy}" />
+  <target name="build" depends="build.alldeps.jar" description="Compiles this project">
+    <!--
+    There are classes missing from dev/core that are necessary
+    to compile the rest of dev/core (e.g. BootStrapPlatform); these are
+    provided by each platform implementation, but in order to compile the
+    core standalone, we need a dummy version of the class to build against.
+    -->
+    <property name="javac.out-dummy" location="${project.build}/bin-dummy" />
+    <mkdir dir="${javac.out-dummy}" />
+    <gwt.javac srcdir="src-dummy" destdir="${javac.out-dummy}" />
 
-		<!-- Files with hardcoded version information must be filtered -->
-		<property name="src.filtered" location="${project.build}/src-filtered" />
-		<condition property="filter.uptodate">
-			<and>
-				<available file="${src.filtered}/gwt.version-${gwt.version}" />
-				<uptodate>
-					<srcfiles dir="src" includes="${filter.pattern}" />
-					<globmapper from="*" to="${src.filtered}/*" />
-				</uptodate>
-			</and>
-		</condition>
-		<antcall target="-filter.src" />
+    <!-- Files with hardcoded version information must be filtered -->
+    <property name="src.filtered" location="${project.build}/src-filtered" />
+    <condition property="filter.uptodate">
+      <and>
+        <available file="${src.filtered}/gwt.version-${gwt.version}" />
+        <uptodate>
+          <srcfiles dir="src" includes="${filter.pattern}" />
+          <globmapper from="*" to="${src.filtered}/*" />
+        </uptodate>
+      </and>
+    </condition>
+    <antcall target="-filter.src" />
 
-		<mkdir dir="${javac.out}" />
-		<gwt.javac srcdir="super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
-		<gwt.javac srcdir="${src.filtered}" />
-		<gwt.javac srcdir="src" excludes="${filter.pattern}">
-			<classpath>
-				<pathelement location="${javac.out-dummy}" />
-				<pathelement location="${alldeps.jar}" />
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<!-- Must build against a version of SWT; just pick one -->
-				<pathelement location="${gwt.tools.lib}/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" />
-			</classpath>
-		</gwt.javac>
-		<copy todir="${javac.out}">
-			<fileset dir="src" includes="**/*.properties"/>
+    <mkdir dir="${javac.out}" />
+    <gwt.javac srcdir="super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
+    <gwt.javac srcdir="${src.filtered}" />
+    <gwt.javac srcdir="src" excludes="${filter.pattern}">
+      <classpath>
+        <pathelement location="${javac.out-dummy}" />
+        <pathelement location="${alldeps.jar}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <!-- Must build against a version of SWT; just pick one -->
+        <pathelement location="${gwt.tools.lib}/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" />
+      </classpath>
+    </gwt.javac>
+    <copy todir="${javac.out}">
+      <fileset dir="src" includes="**/*.properties"/>
                 </copy>
-	</target>
+  </target>
 
-	<target name="checkstyle" description="Static analysis of source">
-		<gwt.checkstyle>
-			<fileset dir="src">
-				<filename name="com/google/gwt/dev/asm/**/*.java" negate="yes" />
-				<filename name="com/google/gwt/dev/js/rhino/**/*.java" negate="yes" />
-				<filename name="org/eclipse/**/*.java" negate="yes" />
-				<filename name="org/apache/**/*.java" negate="yes" />
-			</fileset>
-		</gwt.checkstyle>
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src">
+        <filename name="com/google/gwt/dev/asm/**/*.java" negate="yes" />
+        <filename name="com/google/gwt/dev/js/rhino/**/*.java" negate="yes" />
+        <filename name="org/eclipse/**/*.java" negate="yes" />
+        <filename name="org/apache/**/*.java" negate="yes" />
+      </fileset>
+    </gwt.checkstyle>
 
-		<gwt.checkstyle>
-			<fileset dir="super/com/google/gwt/dev/jjs/intrinsic" />
-		</gwt.checkstyle>
-	</target>
+    <gwt.checkstyle>
+      <fileset dir="super/com/google/gwt/dev/jjs/intrinsic" />
+    </gwt.checkstyle>
+  </target>
 
-	<target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
-		<!-- TODO: refactor gwt.junit so it can be reused here -->
-		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-			<classpath>
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-			</classpath>
-		</taskdef>
-	
-		<echo message="Writing test results to ${junit.out}/reports for ${test.cases}" />
-		<mkdir dir="${junit.out}/reports" />
-	
-		<echo message="${javac.out} ${javac.junit.out}" />
-		<junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
-			<classpath>
-				<pathelement location="test" />
-				<pathelement location="${javac.junit.out}" />
-				<pathelement location="${javac.out}" />
-				<pathelement location="${alldeps.jar}" />
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<!-- Pull in gwt-dev and gwt-user sources for .gwt.xml files -->
-				<pathelement location="${gwt.root}/user/src/" />
-				<pathelement location="${gwt.root}/user/super/" />
-				<pathelement location="${gwt.root}/dev/core/super" />
-			</classpath>
-	
-			<formatter type="plain" />
-			<formatter type="xml" />
-	
-			<batchtest todir="${junit.out}/reports">
-				<fileset refid="default.tests" />
-			</batchtest>
-		</junit>
-	</target>
+  <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
+    <!-- TODO: refactor gwt.junit so it can be reused here -->
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+      <classpath>
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
+      </classpath>
+    </taskdef>
+  
+    <echo message="Writing test results to ${junit.out}/reports for ${test.cases}" />
+    <mkdir dir="${junit.out}/reports" />
+  
+    <echo message="${javac.out} ${javac.junit.out}" />
+    <junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
+      <classpath>
+        <pathelement location="test" />
+        <pathelement location="${javac.junit.out}" />
+        <pathelement location="${javac.out}" />
+        <pathelement location="${alldeps.jar}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <!-- Pull in gwt-dev and gwt-user sources for .gwt.xml files -->
+        <pathelement location="${gwt.root}/user/src/" />
+        <pathelement location="${gwt.root}/user/super/" />
+        <pathelement location="${gwt.root}/dev/core/super" />
+      </classpath>
+  
+      <formatter type="plain" />
+      <formatter type="xml" />
+  
+      <batchtest todir="${junit.out}/reports">
+        <fileset refid="default.tests" />
+      </batchtest>
+    </junit>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" />
-		<delete file="${project.lib}" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+    <delete file="${project.lib}" />
+  </target>
 </project>

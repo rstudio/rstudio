@@ -1,109 +1,109 @@
 <project name="samples-common">
-	<property name="gwt.root" location="../.." />
-	<property name="project.tail" value="samples/${sample.root}" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="samples/${sample.root}" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<property name="sample.package" value="${sample.root}" />
-	<property name="sample.main" value="${sample.module}" />
+  <property name="sample.package" value="${sample.root}" />
+  <property name="sample.main" value="${sample.module}" />
 
-	<property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
-	<!-- Platform shouldn't matter here, just picking one -->
-	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
+  <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+  <!-- Platform shouldn't matter here, just picking one -->
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
-	<!-- Mirror directory for scripts; makes building distro easier -->
-	<property name="samples.scripts" value="${gwt.build.out}/samples-scripts" />
-	<!-- Use the uppercase name rather than the lowercase name -->
-	<property name="sample.build" value="${gwt.build.out}/samples/${sample.main}" />
+  <!-- Mirror directory for scripts; makes building distro easier -->
+  <property name="samples.scripts" value="${gwt.build.out}/samples-scripts" />
+  <!-- Use the uppercase name rather than the lowercase name -->
+  <property name="sample.build" value="${gwt.build.out}/samples/${sample.main}" />
 
-	<target name="source" description="Copy source to the output folder">
-		<mkdir dir="${sample.build}/src" />
-		<copy todir="${sample.build}/src">
-			<fileset dir="src" />
-		</copy>
-	</target>
+  <target name="source" description="Copy source to the output folder">
+    <mkdir dir="${sample.build}/src" />
+    <copy todir="${sample.build}/src">
+      <fileset dir="src" />
+    </copy>
+  </target>
 
-	<target name="compile" description="Compile all java files">
-		<mkdir dir="${sample.build}/bin" />
-		<gwt.javac destdir="${sample.build}/bin">
-			<classpath>
-				<pathelement location="${gwt.user.jar}" />
-				<pathelement location="${gwt.dev.jar}" />
-			</classpath>
-		</gwt.javac>
-	</target>
+  <target name="compile" description="Compile all java files">
+    <mkdir dir="${sample.build}/bin" />
+    <gwt.javac destdir="${sample.build}/bin">
+      <classpath>
+        <pathelement location="${gwt.user.jar}" />
+        <pathelement location="${gwt.dev.jar}" />
+      </classpath>
+    </gwt.javac>
+  </target>
 
-	<target name="gwtc" description="Compile to JavaScript">
-		<outofdate>
-			<sourcefiles>
-				<fileset dir="src" />
-				<fileset dir="${sample.build}/bin" />
-				<fileset file="${gwt.user.jar}" />
-				<fileset file="${gwt.dev.jar}" />
-			</sourcefiles>
-			<targetfiles path="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}/com.google.gwt.sample.${sample.package}.${sample.module}.nocache.js" />
-			<sequential>
-				<mkdir dir="${sample.build}/www" />
-				<gwt.timer name="${sample.main}">
-					<java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
-						<jvmarg value="-Xmx256M"/>
-						<arg value="-out" />
-						<arg file="${sample.build}/www" />
-						<arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
-					</java>
-				</gwt.timer>
-				<length property="sample.size">
-					<fileset dir="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}"/>
-				</length>
-				<echo message="output size for ${sample.main} is ${sample.size} bytes"/>
-			</sequential>
-		</outofdate>
-	</target>
+  <target name="gwtc" description="Compile to JavaScript">
+    <outofdate>
+      <sourcefiles>
+        <fileset dir="src" />
+        <fileset dir="${sample.build}/bin" />
+        <fileset file="${gwt.user.jar}" />
+        <fileset file="${gwt.dev.jar}" />
+      </sourcefiles>
+      <targetfiles path="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}/com.google.gwt.sample.${sample.package}.${sample.module}.nocache.js" />
+      <sequential>
+        <mkdir dir="${sample.build}/www" />
+        <gwt.timer name="${sample.main}">
+          <java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+            <jvmarg value="-Xmx256M"/>
+            <arg value="-out" />
+            <arg file="${sample.build}/www" />
+            <arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
+          </java>
+        </gwt.timer>
+        <length property="sample.size">
+          <fileset dir="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}"/>
+        </length>
+        <echo message="output size for ${sample.main} is ${sample.size} bytes"/>
+      </sequential>
+    </outofdate>
+  </target>
 
-	<macrodef name="applicationCreator">
-		<attribute name="platform" />
-		<attribute name="extension" default="" />
-		<sequential>
-			<outofdate>
-				<sourcefiles />
-				<targetfiles>
-					<pathelement location="${samples.scripts}/@{platform}/${sample.main}/${sample.main}-compile@{extension}" />
-					<pathelement location="${samples.scripts}/@{platform}/${sample.main}/${sample.main}-shell@{extension}" />
-				</targetfiles>
-				<sequential>
-					<mkdir dir="${samples.scripts}/@{platform}/${sample.main}" />
-					<java classname="com.google.gwt.user.tools.ApplicationCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
-						<!-- Relative path is important! Paths will be relative in final distro -->
-						<sysproperty key="gwt.devjar" value="../../gwt-dev-@{platform}.jar" />
-						<arg value="-ignore" />
-						<arg value="-out" />
-						<arg file="${samples.scripts}/@{platform}/${sample.main}" />
-						<arg value="com.google.gwt.sample.${sample.package}.client.${sample.main}" />
-					</java>
-				</sequential>
-			</outofdate>
-		</sequential>
-	</macrodef>
+  <macrodef name="applicationCreator">
+    <attribute name="platform" />
+    <attribute name="extension" default="" />
+    <sequential>
+      <outofdate>
+        <sourcefiles />
+        <targetfiles>
+          <pathelement location="${samples.scripts}/@{platform}/${sample.main}/${sample.main}-compile@{extension}" />
+          <pathelement location="${samples.scripts}/@{platform}/${sample.main}/${sample.main}-shell@{extension}" />
+        </targetfiles>
+        <sequential>
+          <mkdir dir="${samples.scripts}/@{platform}/${sample.main}" />
+          <java classname="com.google.gwt.user.tools.ApplicationCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
+            <!-- Relative path is important! Paths will be relative in final distro -->
+            <sysproperty key="gwt.devjar" value="../../gwt-dev-@{platform}.jar" />
+            <arg value="-ignore" />
+            <arg value="-out" />
+            <arg file="${samples.scripts}/@{platform}/${sample.main}" />
+            <arg value="com.google.gwt.sample.${sample.package}.client.${sample.main}" />
+          </java>
+        </sequential>
+      </outofdate>
+    </sequential>
+  </macrodef>
 
-	<target name="scripts" description="Create launch scripts">
-		<applicationCreator platform="linux" />
-		<applicationCreator platform="windows" extension=".cmd" />
-		<applicationCreator platform="mac" />
-	</target>
+  <target name="scripts" description="Create launch scripts">
+    <applicationCreator platform="linux" />
+    <applicationCreator platform="windows" extension=".cmd" />
+    <applicationCreator platform="mac" />
+  </target>
 
-	<target name="build" depends="source, compile, gwtc, scripts" description="Build and package this project" />
+  <target name="build" depends="source, compile, gwtc, scripts" description="Build and package this project" />
 
-	<target name="checkstyle" description="Static analysis of source">
-		<gwt.checkstyle>
-			<fileset dir="src" />
-		</gwt.checkstyle>
-	</target>
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src" />
+    </gwt.checkstyle>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${sample.build}" />
-		<delete includeemptydirs="true">
-			<fileset dir="${samples.scripts}">
-				<include name="*/${sample.main}/**" />
-			</fileset>
-		</delete>
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${sample.build}" />
+    <delete includeemptydirs="true">
+      <fileset dir="${samples.scripts}">
+        <include name="*/${sample.main}/**" />
+      </fileset>
+    </delete>
+  </target>
 </project>

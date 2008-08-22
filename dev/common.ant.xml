@@ -1,40 +1,40 @@
 <project name="dev-common">
-	<property name="gwt.root" location="../.." />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="../.." />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<property.ensure name="gwt.core.root" location="../core" />
-	<property.ensure name="gwt.core.build" location="${project.build}/../core" />
+  <property.ensure name="gwt.core.root" location="../core" />
+  <property.ensure name="gwt.core.build" location="${project.build}/../core" />
 
-	<target name="compile" description="Compile all java files">
-		<mkdir dir="${javac.out}" />
-		<gwt.javac>
-			<classpath>
-				<pathelement location="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
-				<pathelement location="${gwt.core.build}/bin" />
-				<pathelement location="${gwt.core.build}/alldeps.jar" />
-			</classpath>
-		</gwt.javac>
-	</target>
+  <target name="compile" description="Compile all java files">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac>
+      <classpath>
+        <pathelement location="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
+        <pathelement location="${gwt.core.build}/bin" />
+        <pathelement location="${gwt.core.build}/alldeps.jar" />
+      </classpath>
+    </gwt.javac>
+  </target>
 
-	<target name="build" depends="compile" description="Build and package this project">
-		<mkdir dir="${gwt.build.lib}" />
-		<gwt.jar>
-			<fileset dir="src" excludes="**/package.html" />
-			<fileset dir="${gwt.core.root}/src" excludes="**/package.html" />
-			<fileset dir="${gwt.core.root}/super" excludes="**/package.html" />
-			<fileset dir="${javac.out}" />
-			<fileset dir="${gwt.core.build}/bin" />
-			<zipfileset src="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
-			<zipfileset src="${gwt.core.build}/alldeps.jar" />
-			<manifest>
-				<attribute name="Main-Class" value="com.google.gwt.dev.GWTMain" />
-			</manifest>
-		</gwt.jar>
-	</target>
+  <target name="build" depends="compile" description="Build and package this project">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar>
+      <fileset dir="src" excludes="**/package.html" />
+      <fileset dir="${gwt.core.root}/src" excludes="**/package.html" />
+      <fileset dir="${gwt.core.root}/super" excludes="**/package.html" />
+      <fileset dir="${javac.out}" />
+      <fileset dir="${gwt.core.build}/bin" />
+      <zipfileset src="${gwt.tools.lib}/eclipse/${gwt.dev.swt.jar}" />
+      <zipfileset src="${gwt.core.build}/alldeps.jar" />
+      <manifest>
+        <attribute name="Main-Class" value="com.google.gwt.dev.GWTMain" />
+      </manifest>
+    </gwt.jar>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" failonerror="false" />
-		<delete file="${project.lib}" failonerror="false" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" failonerror="false" />
+    <delete file="${project.lib}" failonerror="false" />
+  </target>
 
 </project>

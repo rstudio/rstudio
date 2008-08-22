@@ -1,34 +1,34 @@
 <project name="ant-gwt" default="build" basedir=".">
-	<property name="gwt.root" location="../.." />
-	<property name="project.tail" value="build-tools/ant-gwt" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="build-tools/ant-gwt" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<target name="compile" description="Compiles this project">
-		<mkdir dir="${javac.out}" />
-		<gwt.javac>
-			<classpath>
-				<pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
-			</classpath>
-		</gwt.javac>
-	</target>
+  <target name="compile" description="Compiles this project">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac>
+      <classpath>
+        <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
+      </classpath>
+    </gwt.javac>
+  </target>
 
-	<target name="build" depends="compile" description="Packages this project into a jar">
-		<mkdir dir="${gwt.build.lib}" />
-		<gwt.jar destfile="${gwt.build.lib}/${ant.project.name}.jar">
-			<fileset dir="src" />
-			<fileset dir="${javac.out}" />
-		</gwt.jar>
-	</target>
+  <target name="build" depends="compile" description="Packages this project into a jar">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar destfile="${gwt.build.lib}/${ant.project.name}.jar">
+      <fileset dir="src" />
+      <fileset dir="${javac.out}" />
+    </gwt.jar>
+  </target>
 
-	<target name="checkstyle" description="Static analysis of source">
-		<gwt.checkstyle>
-			<fileset dir="src" />
-		</gwt.checkstyle>
-	</target>
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src" />
+    </gwt.checkstyle>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" />
-		<delete file="${project.lib}" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+    <delete file="${project.lib}" />
+  </target>
 
 </project>

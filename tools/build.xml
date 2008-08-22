@@ -1,7 +1,7 @@
 <project name="tools" default="build" basedir=".">
-	<property name="gwt.root" location=".." />
-	<property name="project.tail" value="tools" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="tools" />
+  <import file="${gwt.root}/common.ant.xml" />
 
         <!-- "build" is the default when subprojects are directly targetted -->
         <property name="target" value="build" />
@@ -14,24 +14,24 @@
                 <gwt.ant dir="api-checker" />
         </target>
         
-	<target name="-do" depends="benchmark-viewer,api-checker" description="Run all subfolders" />
+  <target name="-do" depends="benchmark-viewer,api-checker" description="Run all subfolders" />
 
-	<target name="build" description="Build each subfolder">
-		<antcall target="-do">
-			<param name="target" value="build" />
-		</antcall>
-	</target>
+  <target name="build" description="Build each subfolder">
+    <antcall target="-do">
+      <param name="target" value="build" />
+    </antcall>
+  </target>
 
-	<target name="checkstyle" description="Static analysis of source for each subfolder">
-		<antcall target="-do">
-			<param name="target" value="checkstyle" />
-		</antcall>
-	</target>
+  <target name="checkstyle" description="Static analysis of source for each subfolder">
+    <antcall target="-do">
+      <param name="target" value="checkstyle" />
+    </antcall>
+  </target>
 
-	<target name="test" depends="build" description="Test each subfolder">
-		<antcall target="-do">
-			<param name="target" value="test" />
-		</antcall>
-	</target>
+  <target name="test" depends="build" description="Test each subfolder">
+    <antcall target="-do">
+      <param name="target" value="test" />
+    </antcall>
+  </target>
 </project>
 

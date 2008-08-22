@@ -1,86 +1,86 @@
 <project name="api-checker" default="build" basedir=".">
 
         <property name="gwt.root" location="../.." />
-	<property name="project.tail" value="tools/api-checker" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="project.tail" value="tools/api-checker" />
+  <import file="${gwt.root}/common.ant.xml" />
 
         <property name="tools.build" value="${gwt.build.out}/${project.tail}" />
 
-	<!-- Platform shouldn't matter here, just picking one -->
-	<property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
-	<property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
+  <!-- Platform shouldn't matter here, just picking one -->
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
+  <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
 
-	<target name="compile" description="Compile all class files">
-		<mkdir dir="${javac.out}" />
-		<gwt.javac>
-			<classpath>
-				<pathelement location="${gwt.dev.jar}" />
-				<pathelement location="${gwt.user.jar}" />
-			</classpath>
-		</gwt.javac>
-	</target>
+  <target name="compile" description="Compile all class files">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac>
+      <classpath>
+        <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.user.jar}" />
+      </classpath>
+    </gwt.javac>
+  </target>
 
-	<target name="compile.tests" description="Compiles the test code for this project">
-		<mkdir dir="${javac.junit.out}" />
-		<gwt.javac srcdir="test" destdir="${javac.junit.out}">
-			<classpath>
-				<pathelement location="${javac.out}" />
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<pathelement location="${gwt.dev.staging.jar}" />
-				<pathelement location="${gwt.dev.jar}" />
-				<pathelement location="${gwt.user.jar}" />
-			</classpath>
-		</gwt.javac>
-	</target>
+  <target name="compile.tests" description="Compiles the test code for this project">
+    <mkdir dir="${javac.junit.out}" />
+    <gwt.javac srcdir="test" destdir="${javac.junit.out}">
+      <classpath>
+        <pathelement location="${javac.out}" />
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.dev.staging.jar}" />
+        <pathelement location="${gwt.dev.jar}" />
+        <pathelement location="${gwt.user.jar}" />
+      </classpath>
+    </gwt.javac>
+  </target>
         
         <target name="build" depends="compile" description="Build and package this project">
-		<mkdir dir="${gwt.build.lib}" />
+    <mkdir dir="${gwt.build.lib}" />
                     
-		<gwt.jar>
-			<fileset dir="src" excludes="**/package.html" />
-			<fileset dir="${javac.out}" />
-		</gwt.jar>
-	</target>
+    <gwt.jar>
+      <fileset dir="src" excludes="**/package.html" />
+      <fileset dir="${javac.out}" />
+    </gwt.jar>
+  </target>
 
-	<target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
-		<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-			<classpath>
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-			</classpath>
-		</taskdef>
-	
-		<echo message="Writing test results to ${junit.out}/reports" />
-		<mkdir dir="${junit.out}/reports" />
-	
-		<junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
-			<classpath>
-				<pathelement location="test" />
-				<pathelement location="${gwt.build.out}/dev/core/bin"/>
-				<pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
-				<pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
-				<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-				<pathelement location="${javac.junit.out}" />
-			</classpath>
-	
-			<formatter type="plain" />
-			<formatter type="xml" />
-			<batchtest todir="${junit.out}/reports">
+  <target name="test" depends="build, compile.tests" description="Run unit tests for this project.">
+    <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+      <classpath>
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
+      </classpath>
+    </taskdef>
+  
+    <echo message="Writing test results to ${junit.out}/reports" />
+    <mkdir dir="${junit.out}/reports" />
+  
+    <junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
+      <classpath>
+        <pathelement location="test" />
+        <pathelement location="${gwt.build.out}/dev/core/bin"/>
+        <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
+        <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
+        <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${javac.junit.out}" />
+      </classpath>
+  
+      <formatter type="plain" />
+      <formatter type="xml" />
+      <batchtest todir="${junit.out}/reports">
                           <fileset dir="${javac.junit.out}"
                             includes="**/*Test.class"/> 
-			</batchtest>
-		</junit>
-	</target>
+      </batchtest>
+    </junit>
+  </target>
 
-	<target name="checkstyle" description="Static analysis of source">
-		<gwt.checkstyle>
-			<fileset dir="src"/>
-		</gwt.checkstyle>
-	</target>
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src"/>
+    </gwt.checkstyle>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" />
-		<delete file="${project.lib}" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+    <delete file="${project.lib}" />
+  </target>
 </project>
 

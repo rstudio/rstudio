@@ -1,12 +1,12 @@
 <project name="dev" default="build" basedir=".">
-	<property name="gwt.root" location=".." />
-	<property name="project.tail" value="dev" />
-	<import file="${gwt.root}/platforms.ant.xml" />
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="dev" />
+  <import file="${gwt.root}/platforms.ant.xml" />
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" failonerror="false" />
-		<delete failonerror="false">
-			<fileset dir="${gwt.build.lib}"  includes="gwt-dev-*.jar"/>
-		</delete>
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" failonerror="false" />
+    <delete failonerror="false">
+      <fileset dir="${gwt.build.lib}"  includes="gwt-dev-*.jar"/>
+    </delete>
+  </target>
 </project>

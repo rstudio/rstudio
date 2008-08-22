@@ -1,296 +1,296 @@
 <project name="common">
-	<!-- gwt.build.iscasesensitivefs is true if the filesystem of the
-	  build machine is case-sensitive, false otherwise.  Update with
-	  new lines for any supported platforms with case-insensitive
-	  filesystems
-	-->
-	<condition property="gwt.build.iscasesensitivefs" else="false">
-	  <not>
-	    <or>
-	      <os family="windows"/>
-	    </or>
-	  </not>
-	</condition>
+  <!-- gwt.build.iscasesensitivefs is true if the filesystem of the
+    build machine is case-sensitive, false otherwise.  Update with
+    new lines for any supported platforms with case-insensitive
+    filesystems
+  -->
+  <condition property="gwt.build.iscasesensitivefs" else="false">
+    <not>
+      <or>
+        <os family="windows"/>
+      </or>
+    </not>
+  </condition>
 
-	<property name="test.ant.file" location="${gwt.root}/${project.tail}/build.xml" />
-	<condition property="project.valid">
-		<equals arg1="${ant.file}" arg2="${test.ant.file}"
-		  casesensitive="${gwt.build.iscasesensitivefs}"/>
-	</condition>
-	<fail unless="project.valid" message="This build file is in an inconsistent state (${ant.file} != ${test.ant.file})." />
+  <property name="test.ant.file" location="${gwt.root}/${project.tail}/build.xml" />
+  <condition property="project.valid">
+    <equals arg1="${ant.file}" arg2="${test.ant.file}"
+      casesensitive="${gwt.build.iscasesensitivefs}"/>
+  </condition>
+  <fail unless="project.valid" message="This build file is in an inconsistent state (${ant.file} != ${test.ant.file})." />
 
-	<!-- Global Properties -->
-	<property environment="env" />
-	<condition property="gwt.version" value="${env.GWT_VERSION}" else="0.0.0">
-		<isset property="env.GWT_VERSION" />
-	</condition>
-	<condition property="gwt.tools.check" value="${env.GWT_TOOLS}" else="${gwt.root}/../tools">
-		<isset property="env.GWT_TOOLS" />
-	</condition>
-	<property name="gwt.tools" location="${gwt.tools.check}" />
-	<property name="gwt.tools.lib" location="${gwt.tools}/lib" />
-	<property name="gwt.tools.antlib" location="${gwt.tools}/antlib" />
-	<property name="gwt.tools.redist" location="${gwt.tools}/redist" />
-	<property name="gwt.build" location="${gwt.root}/build" />
-	<property name="gwt.build.out" location="${gwt.build}/out" />
-	<property name="gwt.build.lib" location="${gwt.build}/lib" />
-	<property name="gwt.build.jni" location="${gwt.build}/jni" />
-	<property name="gwt.build.staging" location="${gwt.build}/staging" />
-	<property name="gwt.build.dist" location="${gwt.build}/dist" />
-	<property name="project.build" location="${gwt.build.out}/${project.tail}" />
-	<property name="project.lib" location="${gwt.build.lib}/gwt-${ant.project.name}.jar" />
-	<property name="project.jni" location="${gwt.build}/${project.tail}" />
-	<property name="javac.out" location="${project.build}/bin" />
-	<property name="javac.junit.out" location="${project.build}/bin-test" />
-	<property name="javac.debug" value="true" />
-	<property name="javac.debuglevel" value="lines,vars,source" />
-	<property name="javac.encoding" value="utf-8" />
-	<property name="javac.source" value="1.5" />
-	<property name="javac.target" value="1.5" />
-	<property name="javac.nowarn" value="true" />
-	<property name="junit.out" location="${project.build}/test" />
-	
-	<!-- Sanity check -->
-	<available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
-	<fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
+  <!-- Global Properties -->
+  <property environment="env" />
+  <condition property="gwt.version" value="${env.GWT_VERSION}" else="0.0.0">
+    <isset property="env.GWT_VERSION" />
+  </condition>
+  <condition property="gwt.tools.check" value="${env.GWT_TOOLS}" else="${gwt.root}/../tools">
+    <isset property="env.GWT_TOOLS" />
+  </condition>
+  <property name="gwt.tools" location="${gwt.tools.check}" />
+  <property name="gwt.tools.lib" location="${gwt.tools}/lib" />
+  <property name="gwt.tools.antlib" location="${gwt.tools}/antlib" />
+  <property name="gwt.tools.redist" location="${gwt.tools}/redist" />
+  <property name="gwt.build" location="${gwt.root}/build" />
+  <property name="gwt.build.out" location="${gwt.build}/out" />
+  <property name="gwt.build.lib" location="${gwt.build}/lib" />
+  <property name="gwt.build.jni" location="${gwt.build}/jni" />
+  <property name="gwt.build.staging" location="${gwt.build}/staging" />
+  <property name="gwt.build.dist" location="${gwt.build}/dist" />
+  <property name="project.build" location="${gwt.build.out}/${project.tail}" />
+  <property name="project.lib" location="${gwt.build.lib}/gwt-${ant.project.name}.jar" />
+  <property name="project.jni" location="${gwt.build}/${project.tail}" />
+  <property name="javac.out" location="${project.build}/bin" />
+  <property name="javac.junit.out" location="${project.build}/bin-test" />
+  <property name="javac.debug" value="true" />
+  <property name="javac.debuglevel" value="lines,vars,source" />
+  <property name="javac.encoding" value="utf-8" />
+  <property name="javac.source" value="1.5" />
+  <property name="javac.target" value="1.5" />
+  <property name="javac.nowarn" value="true" />
+  <property name="junit.out" location="${project.build}/test" />
+  
+  <!-- Sanity check -->
+  <available file="${gwt.tools}" type="dir" property="gwt.tools.exists" />
+  <fail unless="gwt.tools.exists" message="Cannot find '${gwt.tools}' tools directory; perhaps you should define the GWT_TOOLS environment variable" />
 
-	<!-- Platform identification -->
-	<condition property="build.host.islinux">
-		<and>
-			<os family="unix" />
-			<not>
-				<contains string="${os.name}" substring="mac" casesensitive="false" />
-			</not>
-		</and>
-	</condition>
-	<condition property="build.host.platform" value="linux">
-		<isset property="build.host.islinux" />
-	</condition>
+  <!-- Platform identification -->
+  <condition property="build.host.islinux">
+    <and>
+      <os family="unix" />
+      <not>
+        <contains string="${os.name}" substring="mac" casesensitive="false" />
+      </not>
+    </and>
+  </condition>
+  <condition property="build.host.platform" value="linux">
+    <isset property="build.host.islinux" />
+  </condition>
 
-	<condition property="build.host.ismac">
-		<and>
-			<os family="unix" />
-			<contains string="${os.name}" substring="mac" casesensitive="false" />
-		</and>
-	</condition>
-	<condition property="build.host.platform" value="mac">
-		<isset property="build.host.ismac" />
-	</condition>
+  <condition property="build.host.ismac">
+    <and>
+      <os family="unix" />
+      <contains string="${os.name}" substring="mac" casesensitive="false" />
+    </and>
+  </condition>
+  <condition property="build.host.platform" value="mac">
+    <isset property="build.host.ismac" />
+  </condition>
 
-	<condition property="build.host.iswindows">
-		<os family="windows" />
-	</condition>
-	<condition property="build.host.platform" value="windows">
-		<isset property="build.host.iswindows" />
-	</condition>
-	<fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
+  <condition property="build.host.iswindows">
+    <os family="windows" />
+  </condition>
+  <condition property="build.host.platform" value="windows">
+    <isset property="build.host.iswindows" />
+  </condition>
+  <fail unless="build.host.platform" message="Building on ${os.name} is not supported" />
 
-	<condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
-		<isset property="build.host.ismac" />
-	</condition>
+  <condition property="junit.platform.args" value="-XstartOnFirstThread" else="">
+    <isset property="build.host.ismac" />
+  </condition>
 
-	<!-- JUnit support -->
-	<property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
-	<property name="gwt.junit.port" value="8888" />
-	<property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
+  <!-- JUnit support -->
+  <property name="gwt.dev.staging.jar" location="${gwt.build.staging}/gwt-${build.host.platform}-${gwt.version}/gwt-dev-${build.host.platform}.jar" />
+  <property name="gwt.junit.port" value="8888" />
+  <property name="gwt.junit.testcase.includes" value="**/*Suite.class"/>
 
-	<!-- Headless mode keeps the hosted mode browser and log window
-	     from popping up during a unit test run. This is usually desirable,
-	     but the WebKit layout engine performs some optimizations in
-	     headless mode that causes some GWT unit tests to break.  The 
-	     solution for the time being is to turn off headless mode on
-	     the mac.
-	  -->
-	<condition property="junit.headless">
-		<not>
-		     <isset property="build.host.ismac" />
-		</not>
-	</condition>
-	<condition property="junit.notheadless.arg" value="-notHeadless" else="">
-		<not>
-		     <isset property="junit.headless" />
-		</not>
-	</condition>
+  <!-- Headless mode keeps the hosted mode browser and log window
+       from popping up during a unit test run. This is usually desirable,
+       but the WebKit layout engine performs some optimizations in
+       headless mode that causes some GWT unit tests to break.  The 
+       solution for the time being is to turn off headless mode on
+       the mac.
+    -->
+  <condition property="junit.headless">
+    <not>
+         <isset property="build.host.ismac" />
+    </not>
+  </condition>
+  <condition property="junit.notheadless.arg" value="-notHeadless" else="">
+    <not>
+         <isset property="junit.headless" />
+    </not>
+  </condition>
 
-	<!-- Pulls in tasks defined in ant-contrib, i.e. foreach -->
-	<taskdef resource="net/sf/antcontrib/antlib.xml">
-		<classpath>
-			<pathelement location="${gwt.tools.antlib}/ant-contrib-1.0b3.jar" />
-		</classpath>
-	</taskdef>
+  <!-- Pulls in tasks defined in ant-contrib, i.e. foreach -->
+  <taskdef resource="net/sf/antcontrib/antlib.xml">
+    <classpath>
+      <pathelement location="${gwt.tools.antlib}/ant-contrib-1.0b3.jar" />
+    </classpath>
+  </taskdef>
 
-	<!-- Global Custom Tasks -->
-	<presetdef name="gwt.ant">
-		<ant inheritall="false" target="${target}">
-			<propertyset>
-				<propertyref name="gwt.version" />
-				<propertyref name="gwt.junit.port" />
-				<propertyref name="gwt.remote.browsers" />
-			</propertyset>
-		</ant>
-	</presetdef>
+  <!-- Global Custom Tasks -->
+  <presetdef name="gwt.ant">
+    <ant inheritall="false" target="${target}">
+      <propertyset>
+        <propertyref name="gwt.version" />
+        <propertyref name="gwt.junit.port" />
+        <propertyref name="gwt.remote.browsers" />
+      </propertyset>
+    </ant>
+  </presetdef>
 
-	<presetdef name="gwt.javac">
-		<javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" />
-	</presetdef>
+  <presetdef name="gwt.javac">
+    <javac srcdir="src" destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" />
+  </presetdef>
 
-	<presetdef name="gwt.jar">
-		<jar destfile="${project.lib}" update="true" duplicate="preserve" index="true" />
-	</presetdef>
+  <presetdef name="gwt.jar">
+    <jar destfile="${project.lib}" update="true" duplicate="preserve" index="true" />
+  </presetdef>
 
-	<macrodef name="gwt.junit">
-		<!-- TODO: make this more generic / refactor so it can be used from dev/core -->
-		<attribute name="test.args" default="" />
-		<attribute name="test.out" default="" />
-		<attribute name="test.reports" default="@{test.out}/reports" />
-		<attribute name="test.cases" default="" />
-		<element name="extraclasspaths" optional="true" />
-		<sequential>
-			<taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
-				<classpath>
-					<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-					<pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
-					<pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
-				</classpath>
-			</taskdef>
+  <macrodef name="gwt.junit">
+    <!-- TODO: make this more generic / refactor so it can be used from dev/core -->
+    <attribute name="test.args" default="" />
+    <attribute name="test.out" default="" />
+    <attribute name="test.reports" default="@{test.out}/reports" />
+    <attribute name="test.cases" default="" />
+    <element name="extraclasspaths" optional="true" />
+    <sequential>
+      <taskdef name="junit" classname="org.apache.tools.ant.taskdefs.optional.junit.JUnitTask">
+        <classpath>
+          <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+          <pathelement location="${gwt.tools.antlib}/ant-junit-1.6.5.jar" />
+          <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+        </classpath>
+      </taskdef>
 
-			<echo message="Writing test results to @{test.reports} for @{test.cases}" />
-			<mkdir dir="@{test.reports}" />
+      <echo message="Writing test results to @{test.reports} for @{test.cases}" />
+      <mkdir dir="@{test.reports}" />
 
-			<echo message="${javac.out} ${javac.junit.out}" />
-			<junit dir="@{test.out}" fork="yes" printsummary="yes" failureproperty="junit.failure" >
-				<jvmarg line="${junit.platform.args}" />
-				<jvmarg line="-Xmx512m" />
-				<sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
-				<sysproperty key="java.awt.headless" value="${junit.headless}" />
-				<sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
-				<classpath>
-					<pathelement location="${gwt.root}/${project.tail}/src" />
-					<pathelement location="${gwt.root}/${project.tail}/super" />
-					<pathelement location="${gwt.root}/${project.tail}/test" />
-					<pathelement location="${javac.junit.out}" />
-					<pathelement location="${javac.out}" />
-					<pathelement location="${gwt.dev.staging.jar}" />
-					<pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
-					<pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
-					<extraclasspaths />
-				</classpath>
+      <echo message="${javac.out} ${javac.junit.out}" />
+      <junit dir="@{test.out}" fork="yes" printsummary="yes" failureproperty="junit.failure" >
+        <jvmarg line="${junit.platform.args}" />
+        <jvmarg line="-Xmx512m" />
+        <sysproperty key="gwt.args" value="${junit.notheadless.arg} @{test.args}" />
+        <sysproperty key="java.awt.headless" value="${junit.headless}" />
+        <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
+        <classpath>
+          <pathelement location="${gwt.root}/${project.tail}/src" />
+          <pathelement location="${gwt.root}/${project.tail}/super" />
+          <pathelement location="${gwt.root}/${project.tail}/test" />
+          <pathelement location="${javac.junit.out}" />
+          <pathelement location="${javac.out}" />
+          <pathelement location="${gwt.dev.staging.jar}" />
+          <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+          <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
+          <extraclasspaths />
+        </classpath>
 
-				<formatter type="plain" />
-				<formatter type="xml" />
+        <formatter type="plain" />
+        <formatter type="xml" />
 
-				<batchtest todir="@{test.reports}">
-					<fileset refid="@{test.cases}" />
-				</batchtest>
-			</junit>
-			<fail message="One or more junit tests failed" if="junit.failure" />
-		</sequential>
-	</macrodef>
+        <batchtest todir="@{test.reports}">
+          <fileset refid="@{test.cases}" />
+        </batchtest>
+      </junit>
+      <fail message="One or more junit tests failed" if="junit.failure" />
+    </sequential>
+  </macrodef>
 
-	<macrodef name="gwt.tgz.cat">
-		<attribute name="destfile" />
-		<attribute name="compression" default="gzip" />
-		<element name="tar.elements" implicit="true" optional="true" />
-		<sequential>
-			<taskdef name="tar.cat" classname="com.google.gwt.ant.taskdefs.TarCat" classpath="${gwt.build.lib}/ant-gwt.jar" />
-			<tar.cat destfile="@{destfile}" compression="@{compression}" longfile="gnu">
-				<tar.elements />
-			</tar.cat>
-		</sequential>
-	</macrodef>
+  <macrodef name="gwt.tgz.cat">
+    <attribute name="destfile" />
+    <attribute name="compression" default="gzip" />
+    <element name="tar.elements" implicit="true" optional="true" />
+    <sequential>
+      <taskdef name="tar.cat" classname="com.google.gwt.ant.taskdefs.TarCat" classpath="${gwt.build.lib}/ant-gwt.jar" />
+      <tar.cat destfile="@{destfile}" compression="@{compression}" longfile="gnu">
+        <tar.elements />
+      </tar.cat>
+    </sequential>
+  </macrodef>
 
-	<macrodef name="gwt.revfilter" description="Filters files for versioning">
-		<attribute name="todir" description="Destination for the filtered copy"/>
-		<element name="src.fileset" implicit="true" 
-			description="Source for the filtered copy"/>
-		<sequential>
-			<exec outputproperty="svn.info" executable="svn" 
-					failifexecutionfails="false" logError="true">
-				<arg value="info"/>
-				<arg value="${gwt.root}"/>
-			</exec>
-			<propertyregex property="gwt.svn.branch"
-				input="${svn.info}" 
-				regexp="URL: https?://google-web-toolkit.googlecode.com/svn/([^\r\n]+)"
-				select="\1"
-				defaultValue="unknown"
-				casesensitive="false" />
-			<exec outputproperty="svn.version" executable="svnversion" 
-					failifexecutionfails="false"  logError="true">
-				<arg value="${gwt.root}"/>
-			</exec>
-			<propertyregex property="gwt.svn.version"
-				input="${svn.version}" 
-				regexp="^(\d+(:\d+)?[MSP]*)$"
-				replace="\1"
-				defaultValue="unknown"
-				casesensitive="false" />
-			<property name="gwt.svnrev" 
-				value="${gwt.svn.branch}@${gwt.svn.version}"/>
-			<!-- These files must be filtered for versioning -->
-			<mkdir dir="@{todir}" />
-			<copy todir="@{todir}" overwrite="true">
-				<src.fileset/>
-				<filterset>
-					<filter token="GWT_VERSION" value="${gwt.version}" />
-					<filter token="GWT_SVNREV" value="${gwt.svnrev}" />
-				</filterset>
-			</copy>
-			<echo message="Branding as GWT version ${gwt.version}, SVN rev ${gwt.svnrev}"/>
-		</sequential>
-	</macrodef>
+  <macrodef name="gwt.revfilter" description="Filters files for versioning">
+    <attribute name="todir" description="Destination for the filtered copy"/>
+    <element name="src.fileset" implicit="true" 
+      description="Source for the filtered copy"/>
+    <sequential>
+      <exec outputproperty="svn.info" executable="svn" 
+          failifexecutionfails="false" logError="true">
+        <arg value="info"/>
+        <arg value="${gwt.root}"/>
+      </exec>
+      <propertyregex property="gwt.svn.branch"
+        input="${svn.info}" 
+        regexp="URL: https?://google-web-toolkit.googlecode.com/svn/([^\r\n]+)"
+        select="\1"
+        defaultValue="unknown"
+        casesensitive="false" />
+      <exec outputproperty="svn.version" executable="svnversion" 
+          failifexecutionfails="false"  logError="true">
+        <arg value="${gwt.root}"/>
+      </exec>
+      <propertyregex property="gwt.svn.version"
+        input="${svn.version}" 
+        regexp="^(\d+(:\d+)?[MSP]*)$"
+        replace="\1"
+        defaultValue="unknown"
+        casesensitive="false" />
+      <property name="gwt.svnrev" 
+        value="${gwt.svn.branch}@${gwt.svn.version}"/>
+      <!-- These files must be filtered for versioning -->
+      <mkdir dir="@{todir}" />
+      <copy todir="@{todir}" overwrite="true">
+        <src.fileset/>
+        <filterset>
+          <filter token="GWT_VERSION" value="${gwt.version}" />
+          <filter token="GWT_SVNREV" value="${gwt.svnrev}" />
+        </filterset>
+      </copy>
+      <echo message="Branding as GWT version ${gwt.version}, SVN rev ${gwt.svnrev}"/>
+    </sequential>
+  </macrodef>
 
-	<macrodef name="gwt.timer">
-		<attribute name="name"/>
-		<element name="timer.elements" implicit="true" optional="false"/>
-		<sequential>
-			<taskdef name="timer" 
-				classname="com.google.gwt.ant.taskdefs.Timer"
-				classpath="${gwt.build.lib}/ant-gwt.jar" />
-			<timer name="@{name}">
-				<timer.elements/>
-			</timer>
-		</sequential>
-	</macrodef>
+  <macrodef name="gwt.timer">
+    <attribute name="name"/>
+    <element name="timer.elements" implicit="true" optional="false"/>
+    <sequential>
+      <taskdef name="timer" 
+        classname="com.google.gwt.ant.taskdefs.Timer"
+        classpath="${gwt.build.lib}/ant-gwt.jar" />
+      <timer name="@{name}">
+        <timer.elements/>
+      </timer>
+    </sequential>
+  </macrodef>
 
-	<macrodef name="gwt.checkstyle">
-		<element name="sourcepath" implicit="yes" optional="true" />
-		<sequential>
-			<taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
-			<checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxWarnings="0">
-				<property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
-				<sourcepath />
-			</checkstyle>
-		</sequential>
-	</macrodef>
+  <macrodef name="gwt.checkstyle">
+    <element name="sourcepath" implicit="yes" optional="true" />
+    <sequential>
+      <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
+      <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxWarnings="0">
+        <property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
+        <sourcepath />
+      </checkstyle>
+    </sequential>
+  </macrodef>
 
-	<macrodef name="property.ensure">
-		<attribute name="name" />
-		<attribute name="location" />
-		<attribute name="message" default="Cannot find dependency ${@{name}}" />
-		<attribute name="unless" default="__nonexistent_property__" />
-		<sequential>
-			<property name="@{name}" location="@{location}" />
-			<condition property="@{name}.exists">
-				<or>
-					<available file="${@{name}}" />
-					<isset property="@{unless}" />
-				</or>
-			</condition>
-			<fail unless="@{name}.exists" message="@{message}" />
-		</sequential>
-	</macrodef>
+  <macrodef name="property.ensure">
+    <attribute name="name" />
+    <attribute name="location" />
+    <attribute name="message" default="Cannot find dependency ${@{name}}" />
+    <attribute name="unless" default="__nonexistent_property__" />
+    <sequential>
+      <property name="@{name}" location="@{location}" />
+      <condition property="@{name}.exists">
+        <or>
+          <available file="${@{name}}" />
+          <isset property="@{unless}" />
+        </or>
+      </condition>
+      <fail unless="@{name}.exists" message="@{message}" />
+    </sequential>
+  </macrodef>
 
-	<!-- Default implementations of the required targets; projects should
-	override the ones that matter -->
-	<target name="all" depends="verify" />
-	<target name="verify" depends="checkstyle, test" description="Verify this project" />
-	<target name="checkstyle" description="Static analysis of source" />
-	<target name="test" depends="build" description="Test this project" />
-	<target name="build" description="Build and (maybe) package this project" />
+  <!-- Default implementations of the required targets; projects should
+  override the ones that matter -->
+  <target name="all" depends="verify" />
+  <target name="verify" depends="checkstyle, test" description="Verify this project" />
+  <target name="checkstyle" description="Static analysis of source" />
+  <target name="test" depends="build" description="Test this project" />
+  <target name="build" description="Build and (maybe) package this project" />
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${project.build}" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+  </target>
 
 </project>

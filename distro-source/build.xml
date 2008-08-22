@@ -1,10 +1,10 @@
 <project name="dist" default="build" basedir=".">
-	<property name="gwt.root" location=".." />
-	<property name="project.tail" value="distro-source" />
-	<import file="${gwt.root}/platforms.ant.xml" />
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="distro-source" />
+  <import file="${gwt.root}/platforms.ant.xml" />
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete dir="${gwt.build.dist}" failonerror="false" />
-		<delete dir="${gwt.build.staging}" failonerror="false" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${gwt.build.dist}" failonerror="false" />
+    <delete dir="${gwt.build.staging}" failonerror="false" />
+  </target>
 </project>

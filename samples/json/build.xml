@@ -1,5 +1,5 @@
 <project name="json" default="build" basedir=".">
-	<property name="sample.root" value="json" />
-	<property name="sample.module" value="JSON" />
-	<import file="../common.ant.xml" />
+  <property name="sample.root" value="json" />
+  <property name="sample.module" value="JSON" />
+  <import file="../common.ant.xml" />
 </project>

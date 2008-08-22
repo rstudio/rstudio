@@ -1,29 +1,29 @@
 <project name="servlet" default="build" basedir=".">
-	<property name="gwt.root" location=".." />
-	<property name="project.tail" value="servlet" />
-	<import file="${gwt.root}/common.ant.xml" />
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="servlet" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-	<property.ensure name="gwt.user.root" location="${gwt.root}/user" />
-	<property.ensure name="gwt.user.build" location="${gwt.build.out}/user" />
-	<property.ensure name="gwt.user.bin" location="${gwt.user.build}/bin" />
+  <property.ensure name="gwt.user.root" location="${gwt.root}/user" />
+  <property.ensure name="gwt.user.build" location="${gwt.build.out}/user" />
+  <property.ensure name="gwt.user.bin" location="${gwt.user.build}/bin" />
 
-	<target name="build" description="Packages this project into a jar">
-		<mkdir dir="${gwt.build.lib}" />
-		<gwt.jar>
-			<fileset dir="${gwt.user.bin}">
-				<exclude name="**/rebind/**" />
-				<exclude name="**/tools/**" />
-				<exclude name="com/google/gwt/json/**" />
-				<exclude name="com/google/gwt/junit/*" />
-				<exclude name="com/google/gwt/junit/client/GWTTestCase.*" />
-				<exclude name="com/google/gwt/junit/remote/**" />
-				<exclude name="com/google/gwt/junit/server/**" />
-				<exclude name="com/google/gwt/benchmarks/*" />
-			</fileset>
-		</gwt.jar>
-	</target>
+  <target name="build" description="Packages this project into a jar">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar>
+      <fileset dir="${gwt.user.bin}">
+        <exclude name="**/rebind/**" />
+        <exclude name="**/tools/**" />
+        <exclude name="com/google/gwt/json/**" />
+        <exclude name="com/google/gwt/junit/*" />
+        <exclude name="com/google/gwt/junit/client/GWTTestCase.*" />
+        <exclude name="com/google/gwt/junit/remote/**" />
+        <exclude name="com/google/gwt/junit/server/**" />
+        <exclude name="com/google/gwt/benchmarks/*" />
+      </fileset>
+    </gwt.jar>
+  </target>
 
-	<target name="clean" description="Cleans this project's intermediate and output files">
-		<delete file="${project.lib}" />
-	</target>
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete file="${project.lib}" />
+  </target>
 </project>
