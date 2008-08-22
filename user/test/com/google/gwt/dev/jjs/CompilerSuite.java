@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.test.MethodInterfaceTest;
 import com.google.gwt.dev.jjs.test.MiscellaneousTest;
 import com.google.gwt.dev.jjs.test.NativeLongTest;
 import com.google.gwt.dev.jjs.test.ObjectIdentityTest;
+import com.google.gwt.dev.jjs.test.UnstableGeneratorTest;
 import com.google.gwt.dev.jjs.test.VarargsTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -75,6 +76,7 @@ public class CompilerSuite {
     suite.addTestSuite(MiscellaneousTest.class);
     suite.addTestSuite(NativeLongTest.class);
     suite.addTestSuite(ObjectIdentityTest.class);
+    suite.addTestSuite(UnstableGeneratorTest.class);
     suite.addTestSuite(VarargsTest.class);
     // $JUnit-END$
 

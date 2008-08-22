@@ -23,7 +23,8 @@ public interface PropertyOracle {
   /**
    * Attempts to get a named deferred binding property. Throws
    * <code>BadPropertyValueException</code> if the property is either
-   * undefined or has a value that is unsupported.
+   * undefined or has a value that is unsupported. The result of invoking this
+   * method with the same <code>propertyName</code> must be stable.
    * 
    * @param logger the current logger
    * @param propertyName the name of the property
@@ -35,7 +36,8 @@ public interface PropertyOracle {
   /**
    * Attempts to get a named deferred binding property and returns the list of
    * possible values. Throws <code>BadPropertyValueException</code> if the
-   * property is undefined.
+   * property is undefined. The result of invoking this method with the same
+   * <code>propertyName</code> must be stable.
    * 
    * @param logger the current logger
    * @param propertyName the name of the property

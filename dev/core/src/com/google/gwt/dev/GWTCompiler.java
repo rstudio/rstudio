@@ -28,6 +28,7 @@ import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
@@ -51,9 +52,7 @@ import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ToolBase;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -104,64 +103,24 @@ public class GWTCompiler extends ToolBase {
     }
   }
 
-  /**
-   * Used to smartly deal with rebind across the production of an entire
-   * permutation, including cache checking and recording the inputs and outputs
-   * into a {@link Compilation}.
-   */
-  private class CompilationRebindOracle extends StandardRebindOracle {
-
-    private final Map<String, String> cache = new HashMap<String, String>();
-    private final StaticPropertyOracle propOracle;
-
-    public CompilationRebindOracle(ArtifactSet generatorArtifacts,
-        StaticPropertyOracle propOracle) {
-      super(compilationState, propOracle, module, rules, genDir,
-          generatorResourcesDir, generatorArtifacts);
-      this.propOracle = propOracle;
-    }
-
-    public StaticPropertyOracle getPropertyOracle() {
-      return propOracle;
-    }
-
-    /**
-     * Overridden so that we can cache answers.
-     */
-    @Override
-    public String rebind(TreeLogger logger, String in)
-        throws UnableToCompleteException {
-      String out = cache.get(in);
-      if (out == null) {
-        // Actually do the work, then cache it.
-        //
-        out = super.rebind(logger, in);
-        cache.put(in, out);
-      } else {
-        // Was cached.
-        //
-        String msg = "Rebind answer for '" + in + "' found in cache " + out;
-        logger.log(TreeLogger.DEBUG, msg, null);
-      }
-      return out;
-    }
-  }
-
   private class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
 
-    private CompilationRebindOracle[] rebindOracles;
+    private StaticPropertyOracle[] propertyOracles;
+    private RebindOracle[] rebindOracles;
 
     public DistillerRebindPermutationOracle(ArtifactSet generatorArtifacts,
         PropertyPermutations perms) {
-      rebindOracles = new CompilationRebindOracle[perms.size()];
+      propertyOracles = new StaticPropertyOracle[perms.size()];
+      rebindOracles = new RebindOracle[perms.size()];
       Property[] orderedProps = perms.getOrderedProperties();
       for (int i = 0; i < rebindOracles.length; ++i) {
         String[] orderedPropValues = perms.getOrderedPropertyValues(i);
-        StaticPropertyOracle propOracle = new StaticPropertyOracle(
-            orderedProps, orderedPropValues);
-        rebindOracles[i] = new CompilationRebindOracle(generatorArtifacts,
-            propOracle);
+        propertyOracles[i] = new StaticPropertyOracle(orderedProps,
+            orderedPropValues);
+        rebindOracles[i] = new StandardRebindOracle(compilationState,
+            propertyOracles[i], module, rules, genDir, generatorResourcesDir,
+            generatorArtifacts);
       }
     }
 
@@ -174,7 +133,7 @@ public class GWTCompiler extends ToolBase {
 
       Set<String> answers = new HashSet<String>();
 
-      for (CompilationRebindOracle rebindOracle : rebindOracles) {
+      for (RebindOracle rebindOracle : rebindOracles) {
         String resultTypeName = rebindOracle.rebind(logger, requestTypeName);
         answers.add(resultTypeName);
       }
@@ -185,7 +144,11 @@ public class GWTCompiler extends ToolBase {
       return rebindOracles.length;
     }
 
-    public CompilationRebindOracle getRebindOracle(int permNumber) {
+    public StaticPropertyOracle getPropertyOracle(int permNumber) {
+      return propertyOracles[permNumber];
+    }
+
+    public RebindOracle getRebindOracle(int permNumber) {
       return rebindOracles[permNumber];
     }
   }
@@ -416,9 +379,8 @@ public class GWTCompiler extends ToolBase {
     PerfLogger.start("Compiling " + permCount + " permutations");
     Permutation[] perms = new Permutation[permCount];
     for (int i = 0; i < permCount; ++i) {
-      CompilationRebindOracle rebindOracle = rpo.getRebindOracle(i);
-      perms[i] = new Permutation(i, rebindOracle,
-          rebindOracle.getPropertyOracle());
+      perms[i] = new Permutation(i, rpo.getRebindOracle(i),
+          rpo.getPropertyOracle(i));
     }
     PermutationCompiler permCompiler = new PermutationCompiler(logger, jjs,
         perms);

@@ -28,9 +28,11 @@ import com.google.gwt.dev.util.Util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -125,6 +127,8 @@ public class StandardRebindOracle implements RebindOracle {
 
   private final ArtifactSet artifactSet;
 
+  private final Map<String, String> cache = new HashMap<String, String>();
+
   private final CompilationState compilationState;
 
   private final File genDir;
@@ -152,13 +156,16 @@ public class StandardRebindOracle implements RebindOracle {
   public String rebind(TreeLogger logger, String typeName)
       throws UnableToCompleteException {
 
-    logger = Messages.TRACE_TOPLEVEL_REBIND.branch(logger, typeName, null);
+    String result = cache.get(typeName);
+    if (result == null) {
+      logger = Messages.TRACE_TOPLEVEL_REBIND.branch(logger, typeName, null);
 
-    Rebinder rebinder = new Rebinder();
-    String result = rebinder.rebind(logger, typeName);
+      Rebinder rebinder = new Rebinder();
+      result = rebinder.rebind(logger, typeName);
+      cache.put(typeName, result);
 
-    Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, result, null);
-
+      Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, result, null);
+    }
     return result;
   }
 }
