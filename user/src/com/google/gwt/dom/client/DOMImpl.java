@@ -33,6 +33,12 @@ abstract class DOMImpl {
 
   public abstract InputElement createInputRadioElement(String name);
 
+  public ScriptElement createScriptElement(String source) {
+    ScriptElement elem = (ScriptElement) createElement("script");
+    elem.setText(source);
+    return elem;
+  }
+
   public SelectElement createSelectElement(boolean multiple) {
     SelectElement select = (SelectElement) createElement("select");
     if (multiple) {

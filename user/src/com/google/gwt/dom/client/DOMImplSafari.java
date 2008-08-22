@@ -19,6 +19,15 @@ package com.google.gwt.dom.client;
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplSafari extends DOMImplStandard {
+  /**
+   * Safari 2 does not support {@link ScriptElement#setText(String)}.
+   */
+  @Override
+  public ScriptElement createScriptElement(String source) {
+    ScriptElement elem = (ScriptElement) createElement("script");
+    elem.setInnerText(source);
+    return elem;
+  }
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{

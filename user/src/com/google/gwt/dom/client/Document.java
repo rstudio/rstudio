@@ -437,6 +437,16 @@ public class Document extends Node {
   }
 
   /**
+   * Creates a &lt;script&gt; element.
+   * 
+   * @param source the source code to set inside the element
+   * @return the newly created element
+   */
+  public final ScriptElement createScriptElement(String source) {
+    return DOMImpl.impl.createScriptElement(source);
+  }
+
+  /**
    * Creates a &lt;select&gt; element.
    * 
    * @return the newly created element

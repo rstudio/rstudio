@@ -665,10 +665,9 @@ public class Window {
       handlersAreInitialized = true;
       
       // Embed the init script on the page
-      ScriptElement scriptElem = Document.get().createScriptElement();
       String initFunc = getInitHandlerMethodString().replaceFirst("function",
           "function __gwt_initWindowHandlers");
-      scriptElem.setText(initFunc);
+      ScriptElement scriptElem = Document.get().createScriptElement(initFunc);
       Document.get().getBody().appendChild(scriptElem);
       
       // Initialize the handlers
