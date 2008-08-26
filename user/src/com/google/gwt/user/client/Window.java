@@ -232,6 +232,7 @@ public class Window {
   private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
   private static ArrayList<WindowCloseListener> closingListeners;
+  private static ArrayList<WindowFocusListener> focusListeners;
   private static ArrayList<WindowResizeListener> resizeListeners;
   private static ArrayList<WindowScrollListener> scrollListeners;
 
@@ -241,11 +242,29 @@ public class Window {
    * @param listener the listener to be informed when the window is closing
    */
   public static void addWindowCloseListener(WindowCloseListener listener) {
-    maybeInitializeHandlers();
+    maybeInitializeCloseHandlers();
     if (closingListeners == null) {
       closingListeners = new ArrayList<WindowCloseListener>();
     }
     closingListeners.add(listener);
+  }
+
+  /**
+   * Adds a listener to receive window focus events.
+   * 
+   * @param listener the listener to be informed when the window is focused
+   */
+  public static void addWindowFocusListener(WindowFocusListener listener) {
+    if (focusListeners == null) {
+      focusListeners = new ArrayList<WindowFocusListener>();
+      initHandler(getWindowFocusHandlerMethodString(),
+          "__gwt_initWindowFocusHandler", new Command() {
+            public void execute() {
+              initWindowFocusHandler();
+            }
+          });
+    }
+    focusListeners.add(listener);
   }
 
   /**
@@ -254,9 +273,14 @@ public class Window {
    * @param listener the listener to be informed when the window is resized
    */
   public static void addWindowResizeListener(WindowResizeListener listener) {
-    maybeInitializeHandlers();
     if (resizeListeners == null) {
       resizeListeners = new ArrayList<WindowResizeListener>();
+      initHandler(getWindowResizeHandlerMethodString(),
+          "__gwt_initWindowResizeHandler", new Command() {
+            public void execute() {
+              initWindowResizeHandler();
+            }
+          });
     }
     resizeListeners.add(listener);
   }
@@ -267,9 +291,14 @@ public class Window {
    * @param listener the listener to be informed when the window is scrolled
    */
   public static void addWindowScrollListener(WindowScrollListener listener) {
-    maybeInitializeHandlers();
     if (scrollListeners == null) {
       scrollListeners = new ArrayList<WindowScrollListener>();
+      initHandler(getWindowScrollHandlerMethodString(),
+          "__gwt_initWindowScrollHandler", new Command() {
+            public void execute() {
+              initWindowScrollHandler();
+            }
+          });
     }
     scrollListeners.add(listener);
   }
@@ -399,6 +428,17 @@ public class Window {
   }
 
   /**
+   * Removes a window focus listener.
+   * 
+   * @param listener the listener to be removed
+   */
+  public static void removeWindowFocusListener(WindowFocusListener listener) {
+    if (focusListeners != null) {
+      focusListeners.remove(listener);
+    }
+  }
+
+  /**
    * Removes a window resize listener.
    * 
    * @param listener the listener to be removed
@@ -461,6 +501,15 @@ public class Window {
     $doc.title = title;
   }-*/;
 
+  static void onBlur() {
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      fireBlurAndCatch(handler);
+    } else {
+      fireBlurImpl();
+    }
+  }
+
   static void onClosed() {
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     if (handler != null) {
@@ -479,6 +528,15 @@ public class Window {
     }
   }
 
+  static void onFocus() {
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      fireFocusAndCatch(handler);
+    } else {
+      fireFocusImpl();
+    }
+  }
+
   static void onResize() {
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     if (handler != null) {
@@ -494,6 +552,22 @@ public class Window {
       fireScrollAndCatch(handler);
     } else {
       fireScrollImpl();
+    }
+  }
+
+  private static void fireBlurAndCatch(UncaughtExceptionHandler handler) {
+    try {
+      fireBlurImpl();
+    } catch (Throwable e) {
+      handler.onUncaughtException(e);
+    }
+  }
+
+  private static void fireBlurImpl() {
+    if (focusListeners != null) {
+      for (WindowFocusListener listener : focusListeners) {
+        listener.onWindowLostFocus();
+      }
     }
   }
 
@@ -538,6 +612,22 @@ public class Window {
     return ret;
   }
 
+  private static void fireFocusAndCatch(UncaughtExceptionHandler handler) {
+    try {
+      fireFocusImpl();
+    } catch (Throwable e) {
+      handler.onUncaughtException(e);
+    }
+  }
+
+  private static void fireFocusImpl() {
+    if (focusListeners != null) {
+      for (WindowFocusListener listener : focusListeners) {
+        listener.onWindowFocused();
+      }
+    }
+  }
+
   private static void fireResizedAndCatch(UncaughtExceptionHandler handler) {
     try {
       fireResizedImpl();
@@ -565,49 +655,28 @@ public class Window {
   private static void fireScrollImpl() {
     if (scrollListeners != null) {
       for (WindowScrollListener listener : scrollListeners) {
-        listener.onScroll(getScrollLeft(), getScrollTop());
+        listener.onWindowScrolled(getScrollLeft(), getScrollTop());
       }
     }
   }
 
   /**
-   * This method defines a function that will in turn define the
-   * __gwt_initWindowHandlers method that will be used to initialize the event
-   * handlers used by the {@link Window}. However, this method returns the
-   * function as a String so the __gwt_initWindowHandlers method can be added to
-   * the outer window.
+   * This method defines a function that sinks an event on the Window.  However,
+   * this method returns the function as a String so it can be added to the
+   * outer window.
    * 
-   * We need to declare __gwt_initWindowHandlers on the outer window because you
-   * cannot attach Window listeners from within an iframe on IE6.
+   * We need to declare this method on the outer window because you cannot
+   * attach Window listeners from within an iframe on IE6.
    * 
    * Per ECMAScript 262 spec 15.3.4.2, Function.prototype.toString() returns a
    * string representation of the function that has the syntax of the function.
    */
-  private static native String getInitHandlerMethodString() /*-{
-    return function(resize, scroll, beforeunload, unload) {
+  private static native String getWindowCloseHandlerMethodString() /*-{
+    return function(beforeunload, unload) {
       var wnd = window
-      , oldOnResize = wnd.onresize
       , oldOnBeforeUnload = wnd.onbeforeunload
-      , oldOnUnload = wnd.onunload
-      , oldOnScroll = wnd.onscroll
-      ;
-
-      wnd.onresize = function(evt) {
-        try {
-          resize();
-        } finally {
-          oldOnResize && oldOnResize(evt);
-        }
-      };
-
-      wnd.onscroll = function(evt) {
-        try {
-          scroll();
-        } finally {
-          oldOnScroll && oldOnScroll(evt);
-        }
-      };
-
+      , oldOnUnload = wnd.onunload;
+      
       wnd.onbeforeunload = function(evt) {
         var ret, oldRet;
         try {
@@ -625,7 +694,7 @@ public class Window {
         }
         // returns undefined.
       };
-    
+      
       wnd.onunload = function(evt) {
         try {
           unload();
@@ -633,24 +702,115 @@ public class Window {
           oldOnUnload && oldOnUnload(evt);
           wnd.onresize = null;
           wnd.onscroll = null;
+          wnd.onfocus = null;
+          wnd.onblur = null;
           wnd.onbeforeunload = null;
           wnd.onunload = null;
         }
       };
       
-      // Remove the reference once we've initialize the handlers
-      wnd.__gwt_initWindowHandlers = undefined;
+      // Remove the reference once we've initialize the handler
+      wnd.__gwt_initWindowCloseHandler = undefined;
     }.toString();
   }-*/;
 
-  private static native void init() /*-{
-    $wnd.__gwt_initWindowHandlers(
-      function() {
-        @com.google.gwt.user.client.Window::onResize()();
-      },
-      function() {
-        @com.google.gwt.user.client.Window::onScroll()();
-      },
+  /**
+   * @see #getWindowCloseHandlerMethodString()
+   */
+  private static native String getWindowFocusHandlerMethodString() /*-{
+    return function(focus, blur) {
+      var wnd = window
+      , oldOnFocus = wnd.onfocus
+      , oldOnBlur = wnd.onblur;
+      
+      wnd.onfocus = function(evt) {
+        try {
+          focus();
+        } finally {
+          oldOnFocus && oldOnFocus(evt);
+        }
+      };
+      
+      wnd.onblur = function(evt) {
+        try {
+          blur();
+        } finally {
+          oldOnBlur && oldOnBlur(evt);
+        }
+      };
+      
+      // Remove the reference once we've initialize the handler
+      wnd.__gwt_initWindowFocusHandler = undefined;
+    }.toString();
+  }-*/;
+  
+  /**
+   * @see #getWindowCloseHandlerMethodString()
+   */
+  private static native String getWindowResizeHandlerMethodString() /*-{
+    return function(resize) {
+      var wnd = window, oldOnResize = wnd.onresize;
+      
+      wnd.onresize = function(evt) {
+        try {
+          resize();
+        } finally {
+          oldOnResize && oldOnResize(evt);
+        }
+      };
+      
+      // Remove the reference once we've initialize the handler
+      wnd.__gwt_initWindowResizeHandler = undefined;
+    }.toString();
+  }-*/;
+
+  /**
+   * @see #getWindowCloseHandlerMethodString()
+   */
+  private static native String getWindowScrollHandlerMethodString() /*-{
+    return function(scroll) {
+      var wnd = window, oldOnScroll = wnd.onscroll;
+      
+      wnd.onscroll = function(evt) {
+        try {
+          scroll();
+        } finally {
+          oldOnScroll && oldOnScroll(evt);
+        }
+      };
+      
+      // Remove the reference once we've initialize the handler
+      wnd.__gwt_initWindowScrollHandler = undefined;
+    }.toString();
+  }-*/;
+
+  /**
+   * Embed a script on the outer window and use it to initialize an event.
+   * 
+   * @param initFunc the string representation of the init function
+   * @param funcName the name to assign to the init function
+   * @param cmd the command to execute the init function
+   */
+  private static void initHandler(String initFunc, String funcName, Command cmd) {
+    if (GWT.isClient()) {
+      // Always intialize the close handlers first
+      maybeInitializeCloseHandlers();
+
+      // Embed the init script on the page
+      initFunc = initFunc.replaceFirst("function", "function " + funcName);
+      ScriptElement scriptElem = Document.get().createScriptElement(initFunc);
+      Document.get().getBody().appendChild(scriptElem);
+
+      // Initialize the handler
+      cmd.execute();
+
+      // Remove the init script from the page
+      RootPanel.getBodyElement().removeChild(scriptElem);
+    }
+  }
+
+  private static native void initWindowCloseHandler() /*-{
+    $wnd.__gwt_initWindowCloseHandler(
       function() {
         return @com.google.gwt.user.client.Window::onClosing()();
       },
@@ -660,21 +820,42 @@ public class Window {
     );
   }-*/;
 
-  private static void maybeInitializeHandlers() {
-    if (GWT.isClient() && !handlersAreInitialized) {
-      handlersAreInitialized = true;
-      
-      // Embed the init script on the page
-      String initFunc = getInitHandlerMethodString().replaceFirst("function",
-          "function __gwt_initWindowHandlers");
-      ScriptElement scriptElem = Document.get().createScriptElement(initFunc);
-      Document.get().getBody().appendChild(scriptElem);
-      
-      // Initialize the handlers
-      init();
+  private static native void initWindowFocusHandler() /*-{
+    $wnd.__gwt_initWindowFocusHandler(
+      function() {
+        @com.google.gwt.user.client.Window::onFocus()();
+      },
+      function() {
+        @com.google.gwt.user.client.Window::onBlur()();
+      }
+    );
+  }-*/;
 
-      // Remove the init script from the page
-      RootPanel.getBodyElement().removeChild(scriptElem);
+  private static native void initWindowResizeHandler() /*-{
+    $wnd.__gwt_initWindowResizeHandler(
+      function() {
+        @com.google.gwt.user.client.Window::onResize()();
+      }
+    );
+  }-*/;
+
+  private static native void initWindowScrollHandler() /*-{
+    $wnd.__gwt_initWindowScrollHandler(
+      function() {
+        @com.google.gwt.user.client.Window::onScroll()();
+      }
+    );
+  }-*/;
+
+  private static void maybeInitializeCloseHandlers() {
+    if (GWT.isClient() && !handlersAreInitialized) {
+      handlersAreInitialized = true;      
+      initHandler(getWindowCloseHandlerMethodString(),
+          "__gwt_initWindowCloseHandler", new Command() {
+            public void execute() {
+              initWindowCloseHandler();
+            }
+          });
     }
   }
 

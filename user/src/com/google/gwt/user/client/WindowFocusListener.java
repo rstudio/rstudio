@@ -16,17 +16,19 @@
 package com.google.gwt.user.client;
 
 /**
- * Implement this interface to receive scroll events from the browser window.
+ * Implement this interface to receive focus events from the browser window.
  * 
- * @see com.google.gwt.user.client.Window#addWindowScrollListener(WindowScrollListener)
+ * @see com.google.gwt.user.client.Window#addWindowFocusListener(WindowFocusListener)
  */
-public interface WindowScrollListener extends java.util.EventListener {
+public interface WindowFocusListener extends java.util.EventListener {
 
   /**
-   * Called when the browser window is scrolled.
-   * 
-   * @param scrollLeft the left scroll position
-   * @param scrollTop the top scroll position
+   * Fired when the browser window receives focus.
    */
-  void onWindowScrolled(int scrollLeft, int scrollTop);
+  void onWindowFocused();
+
+  /**
+   * Fired when the browser window loses focus.
+   */
+  void onWindowLostFocus();
 }

@@ -16,9 +16,10 @@
 package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.museum.client.common.AbstractIssue;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.WindowCloseListener;
+import com.google.gwt.user.client.WindowFocusListener;
 import com.google.gwt.user.client.WindowResizeListener;
 import com.google.gwt.user.client.WindowScrollListener;
 import com.google.gwt.user.client.ui.Button;
@@ -27,6 +28,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -39,6 +41,12 @@ import java.util.Map;
  * Verify that events fire in all browsers.
  */
 public class TestFireEvents extends AbstractIssue {
+  private static final int WINDOW_EVENT_SCROLL = -1;
+  private static final int WINDOW_EVENT_RESIZE = -2;
+  private static final int WINDOW_EVENT_FOCUS = -3;
+  private static final int WINDOW_EVENT_BLUR = -4;
+  private static final int WINDOW_EVENT_CLOSING = -5;
+
   /**
    * The main grid used for layout.
    */
@@ -56,7 +64,6 @@ public class TestFireEvents extends AbstractIssue {
     layout.setHTML(0, 0, "<b>Action to Perform</b>");
     layout.setHTML(0, 1, "<b>Event</b>");
     layout.setHTML(0, 2, "<b>Status</b>");
-    FlexCellFormatter formatter = layout.getFlexCellFormatter();
 
     // Mouse and click events
     Button button = new Button("Double-click me") {
@@ -200,30 +207,46 @@ public class TestFireEvents extends AbstractIssue {
     loadable.setUrl("imageDoesNotExist.abc");
 
     // Window Scroll Event
-    {
-      final int row = layout.getRowCount();
-      layout.setText(row, 0, "Window level events");
-      layout.setText(row, 1, "window scroll");
-      layout.setText(row, 2, "?");
-      Window.addWindowScrollListener(new WindowScrollListener() {
-        public void onScroll(int scrollLeft, int scrollTop) {
-          layout.setText(row, 2, "pass");
-        }
-      });
-    }
+    Label windowLabel = new Label("Window level events");
+    addTest(WINDOW_EVENT_SCROLL, "window.onscroll", windowLabel);
+    Window.addWindowScrollListener(new WindowScrollListener() {
+      public void onWindowScrolled(int scrollLeft, int scrollTop) {
+        passTest(WINDOW_EVENT_SCROLL);
+      }
+    });
 
     // Window Resize Event
-    {
-      final int row = layout.getRowCount();
-      formatter.setRowSpan(row - 1, 0, 2);
-      layout.setText(row, 0, "window resize");
-      layout.setText(row, 1, "?");
-      Window.addWindowResizeListener(new WindowResizeListener() {
-        public void onWindowResized(int width, int height) {
-          layout.setText(row, 1, "pass");
-        }
-      });
-    }
+    addDependentTest(WINDOW_EVENT_RESIZE, "window.onresize");
+    Window.addWindowResizeListener(new WindowResizeListener() {
+      public void onWindowResized(int width, int height) {
+        passTest(WINDOW_EVENT_RESIZE);
+      }
+    });
+
+    // Window Focus/Blur Events
+    addDependentTest(WINDOW_EVENT_FOCUS, "window.onfocus");
+    addDependentTest(WINDOW_EVENT_BLUR, "window.onblur");
+    Window.addWindowFocusListener(new WindowFocusListener() {
+      public void onWindowFocused() {
+        passTest(WINDOW_EVENT_FOCUS);
+      }
+
+      public void onWindowLostFocus() {
+        passTest(WINDOW_EVENT_BLUR);
+      }
+    });
+
+    // Window Closing Event
+    addDependentTest(WINDOW_EVENT_CLOSING, "window.onbeforeunload");
+    Window.addWindowCloseListener(new WindowCloseListener() {
+      public void onWindowClosed() {
+      }
+
+      public String onWindowClosing() {
+        passTest(WINDOW_EVENT_CLOSING);
+        return "";
+      }
+    });
 
     // The following are not testable or not supported in all browsers
     // onlosecapture
@@ -297,7 +320,15 @@ public class TestFireEvents extends AbstractIssue {
    * @param event the event that was triggered
    */
   private void passTest(Event event) {
-    int eventType = DOM.eventGetType(event);
+    passTest(event.getTypeInt());
+  }
+
+  /**
+   * Mark the event as passed.
+   * 
+   * @param eventType the event type that was triggered
+   */
+  private void passTest(int eventType) {
     int rowIndex = eventMap.get(new Integer(eventType));
     if (layout.getCellCount(rowIndex) == 3) {
       layout.setHTML(rowIndex, 2, "pass");
