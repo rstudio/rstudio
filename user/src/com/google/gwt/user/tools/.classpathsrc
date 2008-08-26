@@ -4,7 +4,7 @@
    <classpathentry kind="src" path="test"/>
    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
    <classpathentry kind="lib" path="@gwtUserPath"/>
-   <classpathentry kind="var" path="JUNIT_HOME/junit.jar"/>
+   <classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
    <classpathentry kind="output" path="bin"/>
 @eclipseClassPathEntries
 </classpath>
