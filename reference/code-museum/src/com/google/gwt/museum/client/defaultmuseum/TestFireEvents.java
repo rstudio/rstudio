@@ -19,7 +19,6 @@ import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.WindowCloseListener;
-import com.google.gwt.user.client.WindowFocusListener;
 import com.google.gwt.user.client.WindowResizeListener;
 import com.google.gwt.user.client.WindowScrollListener;
 import com.google.gwt.user.client.ui.Button;
@@ -43,9 +42,7 @@ import java.util.Map;
 public class TestFireEvents extends AbstractIssue {
   private static final int WINDOW_EVENT_SCROLL = -1;
   private static final int WINDOW_EVENT_RESIZE = -2;
-  private static final int WINDOW_EVENT_FOCUS = -3;
-  private static final int WINDOW_EVENT_BLUR = -4;
-  private static final int WINDOW_EVENT_CLOSING = -5;
+  private static final int WINDOW_EVENT_CLOSING = -3;
 
   /**
    * The main grid used for layout.
@@ -220,19 +217,6 @@ public class TestFireEvents extends AbstractIssue {
     Window.addWindowResizeListener(new WindowResizeListener() {
       public void onWindowResized(int width, int height) {
         passTest(WINDOW_EVENT_RESIZE);
-      }
-    });
-
-    // Window Focus/Blur Events
-    addDependentTest(WINDOW_EVENT_FOCUS, "window.onfocus");
-    addDependentTest(WINDOW_EVENT_BLUR, "window.onblur");
-    Window.addWindowFocusListener(new WindowFocusListener() {
-      public void onWindowFocused() {
-        passTest(WINDOW_EVENT_FOCUS);
-      }
-
-      public void onWindowLostFocus() {
-        passTest(WINDOW_EVENT_BLUR);
       }
     });
 

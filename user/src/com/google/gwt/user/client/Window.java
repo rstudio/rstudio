@@ -232,7 +232,6 @@ public class Window {
   private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
   private static ArrayList<WindowCloseListener> closingListeners;
-  private static ArrayList<WindowFocusListener> focusListeners;
   private static ArrayList<WindowResizeListener> resizeListeners;
   private static ArrayList<WindowScrollListener> scrollListeners;
 
@@ -247,24 +246,6 @@ public class Window {
       closingListeners = new ArrayList<WindowCloseListener>();
     }
     closingListeners.add(listener);
-  }
-
-  /**
-   * Adds a listener to receive window focus events.
-   * 
-   * @param listener the listener to be informed when the window is focused
-   */
-  public static void addWindowFocusListener(WindowFocusListener listener) {
-    if (focusListeners == null) {
-      focusListeners = new ArrayList<WindowFocusListener>();
-      initHandler(getWindowFocusHandlerMethodString(),
-          "__gwt_initWindowFocusHandler", new Command() {
-            public void execute() {
-              initWindowFocusHandler();
-            }
-          });
-    }
-    focusListeners.add(listener);
   }
 
   /**
@@ -428,17 +409,6 @@ public class Window {
   }
 
   /**
-   * Removes a window focus listener.
-   * 
-   * @param listener the listener to be removed
-   */
-  public static void removeWindowFocusListener(WindowFocusListener listener) {
-    if (focusListeners != null) {
-      focusListeners.remove(listener);
-    }
-  }
-
-  /**
    * Removes a window resize listener.
    * 
    * @param listener the listener to be removed
@@ -501,15 +471,6 @@ public class Window {
     $doc.title = title;
   }-*/;
 
-  static void onBlur() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireBlurAndCatch(handler);
-    } else {
-      fireBlurImpl();
-    }
-  }
-
   static void onClosed() {
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     if (handler != null) {
@@ -528,15 +489,6 @@ public class Window {
     }
   }
 
-  static void onFocus() {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireFocusAndCatch(handler);
-    } else {
-      fireFocusImpl();
-    }
-  }
-
   static void onResize() {
     UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
     if (handler != null) {
@@ -552,22 +504,6 @@ public class Window {
       fireScrollAndCatch(handler);
     } else {
       fireScrollImpl();
-    }
-  }
-
-  private static void fireBlurAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      fireBlurImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireBlurImpl() {
-    if (focusListeners != null) {
-      for (WindowFocusListener listener : focusListeners) {
-        listener.onWindowLostFocus();
-      }
     }
   }
 
@@ -610,22 +546,6 @@ public class Window {
     }
 
     return ret;
-  }
-
-  private static void fireFocusAndCatch(UncaughtExceptionHandler handler) {
-    try {
-      fireFocusImpl();
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireFocusImpl() {
-    if (focusListeners != null) {
-      for (WindowFocusListener listener : focusListeners) {
-        listener.onWindowFocused();
-      }
-    }
   }
 
   private static void fireResizedAndCatch(UncaughtExceptionHandler handler) {
@@ -702,8 +622,6 @@ public class Window {
           oldOnUnload && oldOnUnload(evt);
           wnd.onresize = null;
           wnd.onscroll = null;
-          wnd.onfocus = null;
-          wnd.onblur = null;
           wnd.onbeforeunload = null;
           wnd.onunload = null;
         }
@@ -714,36 +632,6 @@ public class Window {
     }.toString();
   }-*/;
 
-  /**
-   * @see #getWindowCloseHandlerMethodString()
-   */
-  private static native String getWindowFocusHandlerMethodString() /*-{
-    return function(focus, blur) {
-      var wnd = window
-      , oldOnFocus = wnd.onfocus
-      , oldOnBlur = wnd.onblur;
-      
-      wnd.onfocus = function(evt) {
-        try {
-          focus();
-        } finally {
-          oldOnFocus && oldOnFocus(evt);
-        }
-      };
-      
-      wnd.onblur = function(evt) {
-        try {
-          blur();
-        } finally {
-          oldOnBlur && oldOnBlur(evt);
-        }
-      };
-      
-      // Remove the reference once we've initialize the handler
-      wnd.__gwt_initWindowFocusHandler = undefined;
-    }.toString();
-  }-*/;
-  
   /**
    * @see #getWindowCloseHandlerMethodString()
    */
@@ -816,17 +704,6 @@ public class Window {
       },
       function() {
         @com.google.gwt.user.client.Window::onClosed()();
-      }
-    );
-  }-*/;
-
-  private static native void initWindowFocusHandler() /*-{
-    $wnd.__gwt_initWindowFocusHandler(
-      function() {
-        @com.google.gwt.user.client.Window::onFocus()();
-      },
-      function() {
-        @com.google.gwt.user.client.Window::onBlur()();
       }
     );
   }-*/;
