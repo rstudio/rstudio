@@ -48,7 +48,7 @@ public class HeadingElement extends Element {
       assert tag.length() == 2;
       assert tag.charAt(0) == 'h';
 
-      int n = Integer.parseInt(tag.substring(1, 1));
+      int n = Integer.parseInt(tag.substring(1, 2));
       assert (n >= 1) && (n <= 6);
     }
 

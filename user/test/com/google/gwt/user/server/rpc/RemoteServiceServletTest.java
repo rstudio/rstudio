@@ -20,18 +20,13 @@ import com.google.gwt.user.client.rpc.SerializationException;
 
 import junit.framework.TestCase;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.Principal;
 import java.util.Enumeration;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.RequestDispatcher;
@@ -39,10 +34,6 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 
 /**
  * Test some of the failure modes associated with
@@ -61,223 +52,13 @@ public class RemoteServiceServletTest extends TestCase {
   private static class Foo implements IsSerializable {
   }
 
-  private static class MockHttpServletRequest implements HttpServletRequest {
+  private class MockHttpServletRequestContextPath extends
+      MockHttpServletRequest {
     private String contextPath;
-
-    public Object getAttribute(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public Enumeration getAttributeNames() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getAuthType() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getCharacterEncoding() {
-      throw new UnsupportedOperationException();
-    }
-
-    public int getContentLength() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getContentType() {
-      throw new UnsupportedOperationException();
-    }
-
+    
+    @Override
     public String getContextPath() {
       return contextPath;
-    }
-
-    public Cookie[] getCookies() {
-      throw new UnsupportedOperationException();
-    }
-
-    public long getDateHeader(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getHeader(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public Enumeration getHeaderNames() {
-      throw new UnsupportedOperationException();
-    }
-
-    public Enumeration getHeaders(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public ServletInputStream getInputStream() throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    public int getIntHeader(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getLocalAddr() {
-      throw new UnsupportedOperationException();
-    }
-
-    public Locale getLocale() {
-      throw new UnsupportedOperationException();
-    }
-
-    public Enumeration getLocales() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getLocalName() {
-      throw new UnsupportedOperationException();
-    }
-
-    public int getLocalPort() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getMethod() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getParameter(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public Map getParameterMap() {
-      throw new UnsupportedOperationException();
-    }
-
-    public Enumeration getParameterNames() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String[] getParameterValues(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getPathInfo() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getPathTranslated() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getProtocol() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getQueryString() {
-      throw new UnsupportedOperationException();
-    }
-
-    public BufferedReader getReader() throws IOException {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getRealPath(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getRemoteAddr() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getRemoteHost() {
-      throw new UnsupportedOperationException();
-    }
-
-    public int getRemotePort() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getRemoteUser() {
-      throw new UnsupportedOperationException();
-    }
-
-    public RequestDispatcher getRequestDispatcher(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getRequestedSessionId() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getRequestURI() {
-      throw new UnsupportedOperationException();
-    }
-
-    public StringBuffer getRequestURL() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getScheme() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getServerName() {
-      throw new UnsupportedOperationException();
-    }
-
-    public int getServerPort() {
-      throw new UnsupportedOperationException();
-    }
-
-    public String getServletPath() {
-      throw new UnsupportedOperationException();
-    }
-
-    public HttpSession getSession() {
-      throw new UnsupportedOperationException();
-    }
-
-    public HttpSession getSession(boolean arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public Principal getUserPrincipal() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean isRequestedSessionIdFromCookie() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean isRequestedSessionIdFromUrl() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean isRequestedSessionIdFromURL() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean isRequestedSessionIdValid() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean isSecure() {
-      throw new UnsupportedOperationException();
-    }
-
-    public boolean isUserInRole(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void removeAttribute(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void setAttribute(String arg0, Object arg1) {
-      throw new UnsupportedOperationException();
-    }
-
-    public void setCharacterEncoding(String arg0) {
-      throw new UnsupportedOperationException();
     }
   }
 
@@ -427,7 +208,7 @@ public class RemoteServiceServletTest extends TestCase {
 
     RemoteServiceServlet rss = new RemoteServiceServlet();
 
-    MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+    MockHttpServletRequestContextPath mockRequest = new MockHttpServletRequestContextPath();
     rss.init(mockConfig);
 
     mockRequest.contextPath = "/MyModule";
@@ -455,7 +236,7 @@ public class RemoteServiceServletTest extends TestCase {
 
     RemoteServiceServlet rss = new RemoteServiceServlet();
 
-    MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+    MockHttpServletRequestContextPath mockRequest = new MockHttpServletRequestContextPath();
     rss.init(mockConfig);
 
     mockRequest.contextPath = "/foo";
@@ -498,7 +279,7 @@ public class RemoteServiceServletTest extends TestCase {
 
     RemoteServiceServlet rss = new RemoteServiceServlet();
 
-    MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+    MockHttpServletRequestContextPath mockRequest = new MockHttpServletRequestContextPath();
     rss.init(mockConfig);
 
     mockRequest.contextPath = "/MyModule";

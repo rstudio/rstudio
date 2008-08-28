@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -31,7 +31,7 @@ public class CustomFieldSerializerTestSetValidator {
     return manuallySerializedClass.getA() == 4
         && manuallySerializedClass.getB() == 5
         && manuallySerializedClass.getC() == 6
-        && manuallySerializedClass.getObj().equals("bye");
+        && manuallySerializedClass.getString().equals("bye");
   }
 
   // Must be a non-null array with two == elements

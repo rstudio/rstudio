@@ -31,7 +31,12 @@ public class Arrays {
 
   private static final class ArrayList<E> extends AbstractList<E> implements
       RandomAccess, Serializable {
-    private final E[] array;
+
+    /**
+     * The only reason this is non-final is so that E[] (and E) will be exposed
+     * for serialization.
+     */
+    private E[] array;
 
     ArrayList(E[] array) {
       assert (array != null);

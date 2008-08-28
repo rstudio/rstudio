@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
@@ -212,7 +211,7 @@ class ProxyCreator {
 
     // Determine the set of serializable types
     SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
-        logger, typeOracle);
+        logger, context.getPropertyOracle(), typeOracle);
     try {
       addRequiredRoots(logger, typeOracle, stob);
 
@@ -229,8 +228,9 @@ class ProxyCreator {
         serviceIntf.getQualifiedSourceName() + ".rpc.log");
     stob.setLogOutputStream(pathInfo);
     SerializableTypeOracle sto = stob.build(logger);
-    GeneratedResource rpcLog = context.commitResource(logger, pathInfo);
-    rpcLog.setPrivate(true);
+    if (pathInfo != null) {
+      context.commitResource(logger, pathInfo).setPrivate(true);
+    }
 
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger, sto, context,
         sto.getTypeSerializerQualifiedName(serviceIntf));
@@ -346,7 +346,7 @@ class ProxyCreator {
     String requestIdName = nameFactory.createName("requestId");
     w.println("int " + requestIdName + " = getNextRequestId();");
 
-    String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName();        
+    String statsMethodExpr = getProxySimpleName() + "." + syncMethod.getName();
     String tossName = nameFactory.createName("toss");
     w.println("boolean " + tossName + " = isStatsAvailable() && stats("
         + "timeStat(\"" + statsMethodExpr + "\", getRequestId(), \"begin\"));");
@@ -411,8 +411,8 @@ class ProxyCreator {
     w.println("String " + payloadName + " = " + streamWriterName
         + ".toString();");
 
-    w.println(tossName + " = isStatsAvailable() && stats("
-        + "timeStat(\"" + statsMethodExpr + "\", getRequestId(), \"requestSerialized\"));");
+    w.println(tossName + " = isStatsAvailable() && stats(" + "timeStat(\""
+        + statsMethodExpr + "\", getRequestId(), \"requestSerialized\"));");
 
     /*
      * Depending on the return type for the async method, return a

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.rpc;
 
-import com.google.gwt.user.client.rpc.TestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
@@ -25,8 +24,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 import java.util.Map.Entry;
@@ -35,15 +34,6 @@ import java.util.Map.Entry;
  * TODO: document me.
  */
 public class TestSetValidator {
-
-  public static boolean equals(Iterator expected, Iterator actual) {
-    while (expected.hasNext() && actual.hasNext()) {
-      if (!expected.next().equals(actual.next())) {
-        return false;
-      }
-    }
-    return expected.hasNext() == actual.hasNext();
-  }
 
   public static boolean equals(boolean[] expected, boolean[] actual) {
     if (actual == null) {
@@ -153,6 +143,15 @@ public class TestSetValidator {
     return true;
   }
 
+  public static boolean equals(Iterator expected, Iterator actual) {
+    while (expected.hasNext() && actual.hasNext()) {
+      if (!expected.next().equals(actual.next())) {
+        return false;
+      }
+    }
+    return expected.hasNext() == actual.hasNext();
+  }
+
   public static boolean equals(long[] expected, long[] actual) {
     if (actual == null) {
       return false;
@@ -235,28 +234,7 @@ public class TestSetValidator {
     return reference.equals(list);
   }
 
-  public static boolean isValid(HashSet expected, HashSet actual) {
-    if (actual == null) {
-      return false;
-    }
-
-    if (expected.size() != actual.size()) {
-      return false;
-    }
-
-    Iterator entryIter = expected.iterator();
-    while (entryIter.hasNext()) {
-      Object entry = entryIter.next();
-
-      if (!actual.contains(entry)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  public static boolean isValid(Map expected, HashMap map) {
+  public static boolean isValid(HashMap expected, HashMap map) {
     if (map == null) {
       return false;
     }
@@ -286,8 +264,29 @@ public class TestSetValidator {
     return true;
   }
 
+  public static boolean isValid(HashSet expected, HashSet actual) {
+    if (actual == null) {
+      return false;
+    }
+
+    if (expected.size() != actual.size()) {
+      return false;
+    }
+
+    Iterator entryIter = expected.iterator();
+    while (entryIter.hasNext()) {
+      Object entry = entryIter.next();
+
+      if (!actual.contains(entry)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   public static boolean isValid(LinkedHashMap expected, LinkedHashMap map) {
-    if (isValid((Map) expected, (HashMap) map)) {
+    if (isValid((HashMap) expected, (HashMap) map)) {
       Iterator expectedEntries = expected.entrySet().iterator();
       Iterator actualEntries = map.entrySet().iterator();
       return equals(expectedEntries, actualEntries);
@@ -295,27 +294,13 @@ public class TestSetValidator {
     return false;
   }
 
-  public static boolean isValid(SerializableClass actual) {
-    if (actual == null) {
-      return false;
+  public static boolean isValid(LinkedHashSet expected, LinkedHashSet map) {
+    if (isValid((HashSet) expected, (HashSet) map)) {
+      Iterator expectedEntries = expected.iterator();
+      Iterator actualEntries = map.iterator();
+      return equals(expectedEntries, actualEntries);
     }
-
-    IsSerializable[] elements = actual.getElements();
-    IsSerializable elementRef = actual.getElementRef();
-
-    if (elements == null || elementRef == null) {
-      return false;
-    }
-
-    if (elements.length != 4) {
-      return false;
-    }
-
-    if (elements[3] != elementRef) {
-      return false;
-    }
-
-    return true;
+    return false;
   }
 
   public static boolean isValid(SerializablePrivateNoArg actual) {

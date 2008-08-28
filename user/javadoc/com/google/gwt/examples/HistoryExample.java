@@ -33,15 +33,12 @@ public class HistoryExample implements EntryPoint, HistoryListener {
     Hyperlink link1 = new Hyperlink("link to bar", "bar");
     Hyperlink link2 = new Hyperlink("link to baz", "baz");
 
-    // If the application starts with no history token, start it off in the
+    // If the application starts with no history token, redirect to a new
     // 'baz' state.
     String initToken = History.getToken();
-    if (initToken.length() == 0)
-      initToken = "baz";
-
-    // onHistoryChanged() is not called when the application first runs. Call
-    // it now in order to reflect the initial state.
-    onHistoryChanged(initToken);
+    if (initToken.length() == 0) {
+      History.newItem("baz");
+    }
 
     // Add widgets to the root panel.
     VerticalPanel panel = new VerticalPanel();
@@ -53,6 +50,9 @@ public class HistoryExample implements EntryPoint, HistoryListener {
 
     // Add history listener
     History.addHistoryListener(this);
+
+    // Now that we've setup our listener, fire the initial history state.
+    History.fireCurrentHistoryState();
   }
 
   public void onHistoryChanged(String historyToken) {

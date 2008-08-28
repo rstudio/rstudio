@@ -63,9 +63,11 @@ public class DispatchClassInfo {
   }
 
   private void addMember(Member member, String sig) {
-    memberById.add(member);
-    int index = memberById.size() - 1;
-    memberIdByName.put(sig, new Integer(index));
+    if (!memberIdByName.containsKey(sig)) {
+      memberById.add(member);
+      int index = memberById.size() - 1;
+      memberIdByName.put(sig, new Integer(index));
+    }
   }
 
   private String getJsniSignature(Member member) {
@@ -150,6 +152,9 @@ public class DispatchClassInfo {
     Class<?> superclass = targetClass.getSuperclass();
     if (superclass != null) {
       lazyInitTargetMembersUsingReflectionHelper(superclass, false);
+    }
+    for (Class<?> intf : targetClass.getInterfaces()) {
+      lazyInitTargetMembersUsingReflectionHelper(intf, false);
     }
 
     if (addConstructors) {

@@ -40,10 +40,10 @@ import com.google.gwt.user.client.impl.HistoryImpl;
  * <p>
  * <h3>URL Encoding</h3>
  * Any valid characters may be used in the history token and will survive
- * round-trips through newItem to getToken()/onHistoryChanged(), but most will
- * be encoded in the user-visible URL. The following US-ASCII characters are not
- * encoded on any currently supported browser (but may be in the future due to
- * future browser changes):
+ * round-trips through {@link #newItem(String)} to {@link #getToken()}/{@link HistoryListener#onHistoryChanged(String)},
+ * but most will be encoded in the user-visible URL. The following US-ASCII
+ * characters are not encoded on any currently supported browser (but may be in
+ * the future due to future browser changes):
  * <ul>
  * <li>a-z
  * <li>A-Z
@@ -63,12 +63,11 @@ public class History {
       impl = null;
 
       // Tell the user.
-      GWT.log(
-          "Unable to initialize the history subsystem; did you "
-              + "include the history frame in your host page? Try "
-              + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
-              + "style='position:absolute;width:0;height:0;border:0'>"
-              + "</iframe>", null);
+      GWT.log("Unable to initialize the history subsystem; did you "
+          + "include the history frame in your host page? Try "
+          + "<iframe src=\"javascript:''\" id='__gwt_historyFrame' "
+          + "style='position:absolute;width:0;height:0;border:0'>"
+          + "</iframe>", null);
     }
   }
 
@@ -91,6 +90,16 @@ public class History {
   }-*/;
 
   /**
+   * Fire {@link HistoryListener#onHistoryChanged(String)} events with the
+   * current history state. This is most often called at the end of an
+   * application's {@link com.google.gwt.core.client.EntryPoint#onModuleLoad()}
+   * to inform history listeners of the initial application state.
+   */
+  public static void fireCurrentHistoryState() {
+    HistoryImpl.fireHistoryChangedImpl(getToken());
+  }
+
+  /**
    * Programmatic equivalent to the user pressing the browser's 'forward'
    * button.
    */
@@ -99,11 +108,11 @@ public class History {
   }-*/;
 
   /**
-   * Gets the current history token. The listener will not receive an
-   * onHistoryChanged() event for the initial token; requiring that an
-   * application request the token explicitly on startup gives it an opportunity
-   * to run different initialization code in the presence or absence of an
-   * initial token.
+   * Gets the current history token. The listener will not receive a
+   * {@link HistoryListener#onHistoryChanged(String)} event for the initial
+   * token; requiring that an application request the token explicitly on
+   * startup gives it an opportunity to run different initialization code in the
+   * presence or absence of an initial token.
    * 
    * @return the initial token, or the empty string if none is present.
    */
@@ -114,8 +123,8 @@ public class History {
   /**
    * Adds a new browser history entry. In hosted mode, the 'back' and 'forward'
    * actions are accessible via the standard Alt-Left and Alt-Right keystrokes.
-   * Calling this method will cause {@link HistoryListener#onHistoryChanged} to
-   * be called as well.
+   * Calling this method will cause
+   * {@link HistoryListener#onHistoryChanged(String)} to be called as well.
    * 
    * @param historyToken the token to associate with the new history item
    */
@@ -126,16 +135,35 @@ public class History {
   /**
    * Adds a new browser history entry. In hosted mode, the 'back' and 'forward'
    * actions are accessible via the standard Alt-Left and Alt-Right keystrokes.
-   * Calling this method will cause {@link HistoryListener#onHistoryChanged} to
-   * be called as well if and only if issueEvent is true.
+   * Calling this method will cause
+   * {@link HistoryListener#onHistoryChanged(String)} to be called as well if
+   * and only if issueEvent is true.
    * 
    * @param historyToken the token to associate with the new history item
-   * @param issueEvent true if an onHistoryChanged event should be issued
+   * @param issueEvent true if a
+   *          {@link HistoryListener#onHistoryChanged(String)} event should be
+   *          issued
    */
   public static void newItem(String historyToken, boolean issueEvent) {
     if (impl != null) {
       impl.newItem(historyToken, issueEvent);
     }
+  }
+
+  /**
+   * Call all history listeners with the specified token. Note that this does
+   * not change the history system's idea of the current state and is only kept
+   * for backward compatibility. To fire history events for the initial state of
+   * the application, instead call {@link #fireCurrentHistoryState()} from the
+   * application {@link com.google.gwt.core.client.EntryPoint#onModuleLoad()}
+   * method.
+   * 
+   * @param historyToken history token to fire events for
+   * @deprecated Use {@link #fireCurrentHistoryState()} instead.
+   */
+  @Deprecated
+  public static void onHistoryChanged(String historyToken) {
+    HistoryImpl.fireHistoryChangedImpl(historyToken);
   }
 
   /**

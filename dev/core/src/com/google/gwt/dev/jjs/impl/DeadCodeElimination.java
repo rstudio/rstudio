@@ -1240,7 +1240,7 @@ public class DeadCodeElimination {
       for (JStatement statement : body.statements) {
         if (statement instanceof JCaseStatement) {
           potentialNoOpCaseStatements.add(statement);
-        } else if (isUnconditionalBreak(statement)) {
+        } else if (isUnconditionalUnlabeledBreak(statement)) {
           // If we have any potential no-ops, they now become real no-ops.
           noOpCaseStatements.addAll(potentialNoOpCaseStatements);
           potentialNoOpCaseStatements.clear();

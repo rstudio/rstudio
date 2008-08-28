@@ -20,10 +20,14 @@ public class @className implements EntryPoint {
   public void onModuleLoad() {
     Image img = new Image("http://code.google.com/webtoolkit/logo-185x175.png");
     Button button = new Button("Click me");
-
+    
+    // We can add style names
+    button.addStyleName("pc-template-btn");
+    // or we can set an id on a specific element for styling
+    img.getElement().setId("pc-template-img");
+    
     VerticalPanel vPanel = new VerticalPanel();
-    // We can add style names.
-    vPanel.addStyleName("widePanel");
+    vPanel.setWidth("100%");
     vPanel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
     vPanel.add(img);
     vPanel.add(button);

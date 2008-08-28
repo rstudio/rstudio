@@ -17,6 +17,12 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -29,7 +35,7 @@ import java.util.List;
 import java.util.Vector;
 
 /**
- * TODO: document me.
+ * Tests collections across RPC.
  */
 public class CollectionsTest extends GWTTestCase {
   /**
@@ -40,19 +46,22 @@ public class CollectionsTest extends GWTTestCase {
 
   private CollectionsTestServiceAsync collectionsTestService;
 
-  public void _testDateArray() {
+  /**
+   * TODO: Why is this disabled???
+   */
+  public void disabledTestDateArray() {
     delayTestFinish(TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Date[] expected = TestSetFactory.createDateArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Date[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Date[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Date[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -68,14 +77,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final int[] expected = TestSetFactory.createVeryLargeArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<int[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(int[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (int[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -89,36 +98,38 @@ public class CollectionsTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
-    service.echo(TestSetFactory.createArrayList(), new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
+    service.echo(TestSetFactory.createArrayList(),
+        new AsyncCallback<ArrayList<MarkerTypeArrayList>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
 
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(TestSetValidator.isValid((ArrayList) result));
-        finishTest();
-      }
-    });
+          public void onSuccess(ArrayList<MarkerTypeArrayList> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(result));
+            finishTest();
+          }
+        });
   }
 
   public void testArraysAsList() {
     delayTestFinish(TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
-    final List expected = TestSetFactory.createArraysAsList();
+    final List<MarkerTypeArraysAsList> expected = TestSetFactory.createArraysAsList();
 
-    service.echoArraysAsList(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
+    service.echoArraysAsList(expected,
+        new AsyncCallback<List<MarkerTypeArraysAsList>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
 
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertEquals(expected, result);
-        finishTest();
-      }
-    });
+          public void onSuccess(List<MarkerTypeArraysAsList> result) {
+            assertNotNull(result);
+            assertEquals(expected, result);
+            finishTest();
+          }
+        });
   }
 
   public void testBooleanArray() {
@@ -126,14 +137,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Boolean[] expected = TestSetFactory.createBooleanArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Boolean[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Boolean[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Boolean[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -144,14 +155,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Byte[] expected = TestSetFactory.createByteArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Byte[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Byte[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Byte[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -162,14 +173,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Character[] expected = TestSetFactory.createCharArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Character[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Character[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Character[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -180,14 +191,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Double[] expected = TestSetFactory.createDoubleArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Double[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Double[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Double[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -198,14 +209,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Float[] expected = TestSetFactory.createFloatArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Float[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Float[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Float[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -215,33 +226,34 @@ public class CollectionsTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
-    final HashMap expected = TestSetFactory.createHashMap();
-    service.echo(expected, new AsyncCallback() {
-      public void onFailure(Throwable caught) {
-        TestSetValidator.rethrowException(caught);
-      }
+    final HashMap<String, MarkerTypeHashMap> expected = TestSetFactory.createHashMap();
+    service.echo(expected,
+        new AsyncCallback<HashMap<String, MarkerTypeHashMap>>() {
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
 
-      public void onSuccess(Object result) {
-        assertNotNull(result);
-        assertTrue(TestSetValidator.isValid(expected, (HashMap) result));
-        finishTest();
-      }
-    });
+          public void onSuccess(HashMap<String, MarkerTypeHashMap> result) {
+            assertNotNull(result);
+            assertTrue(TestSetValidator.isValid(expected, result));
+            finishTest();
+          }
+        });
   }
 
   public void testHashSet() {
     delayTestFinish(TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
-    final HashSet expected = TestSetFactory.createHashSet();
-    service.echo(expected, new AsyncCallback() {
+    final HashSet<MarkerTypeHashSet> expected = TestSetFactory.createHashSet();
+    service.echo(expected, new AsyncCallback<HashSet<MarkerTypeHashSet>>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(HashSet<MarkerTypeHashSet> result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.isValid(expected, (HashSet) result));
+        assertTrue(TestSetValidator.isValid(expected, result));
         finishTest();
       }
     });
@@ -252,14 +264,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Integer[] expected = TestSetFactory.createIntegerArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Integer[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Integer[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Integer[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -269,20 +281,20 @@ public class CollectionsTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
     CollectionsTestServiceAsync service = getServiceAsync();
 
-    final LinkedHashMap<String, IsSerializable> expected = TestSetFactory.createLinkedHashMap();
+    final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLinkedHashMap();
 
     service.echo(expected,
-        new AsyncCallback<LinkedHashMap<String, IsSerializable>>() {
+        new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
-          public void onSuccess(LinkedHashMap<String, IsSerializable> result) {
+          public void onSuccess(
+              LinkedHashMap<String, MarkerTypeLinkedHashMap> result) {
             assertNotNull(result);
             expected.get("SerializableSet");
             result.get("SerializableSet");
-            assertTrue(TestSetValidator.isValid(expected,
-                (LinkedHashMap) result));
+            assertTrue(TestSetValidator.isValid(expected, result));
             finishTest();
           }
         });
@@ -292,15 +304,16 @@ public class CollectionsTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
     CollectionsTestServiceAsync service = getServiceAsync();
 
-    final LinkedHashMap<String, IsSerializable> expected = TestSetFactory.createLRULinkedHashMap();
+    final LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLRULinkedHashMap();
 
     service.echo(expected,
-        new AsyncCallback<LinkedHashMap<String, IsSerializable>>() {
+        new AsyncCallback<LinkedHashMap<String, MarkerTypeLinkedHashMap>>() {
           public void onFailure(Throwable caught) {
             TestSetValidator.rethrowException(caught);
           }
 
-          public void onSuccess(LinkedHashMap actual) {
+          public void onSuccess(
+              LinkedHashMap<String, MarkerTypeLinkedHashMap> actual) {
             assertNotNull(actual);
             expected.get("SerializableSet");
             actual.get("SerializableSet");
@@ -315,14 +328,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Long[] expected = TestSetFactory.createLongArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Long[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Long[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Long[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -333,13 +346,13 @@ public class CollectionsTest extends GWTTestCase {
 
     final boolean[] expected = TestSetFactory.createPrimitiveBooleanArray();
     CollectionsTestServiceAsync service = getServiceAsync();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<boolean[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
-        assertTrue(TestSetValidator.equals(expected, (boolean[]) result));
+      public void onSuccess(boolean[] result) {
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -350,13 +363,13 @@ public class CollectionsTest extends GWTTestCase {
 
     final byte[] expected = TestSetFactory.createPrimitiveByteArray();
     CollectionsTestServiceAsync service = getServiceAsync();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<byte[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
-        assertTrue(TestSetValidator.equals(expected, (byte[]) result));
+      public void onSuccess(byte[] result) {
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -367,14 +380,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final char[] expected = TestSetFactory.createPrimitiveCharArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<char[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(char[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (char[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -385,14 +398,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final double[] expected = TestSetFactory.createPrimitiveDoubleArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<double[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(double[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (double[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -403,14 +416,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final float[] expected = TestSetFactory.createPrimitiveFloatArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<float[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(float[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (float[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -421,14 +434,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final int[] expected = TestSetFactory.createPrimitiveIntegerArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<int[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(int[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (int[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -439,14 +452,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final long[] expected = TestSetFactory.createPrimitiveLongArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<long[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(long[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (long[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -457,14 +470,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final short[] expected = TestSetFactory.createPrimitiveShortArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<short[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(short[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (short[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -475,14 +488,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final Short[] expected = TestSetFactory.createShortArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<Short[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Short[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (Short[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -547,14 +560,14 @@ public class CollectionsTest extends GWTTestCase {
 
     CollectionsTestServiceAsync service = getServiceAsync();
     final String[] expected = TestSetFactory.createStringArray();
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<String[]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(String[] result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.equals(expected, (String[]) result));
+        assertTrue(TestSetValidator.equals(expected, result));
         finishTest();
       }
     });
@@ -566,12 +579,12 @@ public class CollectionsTest extends GWTTestCase {
     CollectionsTestServiceAsync service = getServiceAsync();
     final String[][] expected = new String[][] {
         new String[] {"hello"}, new String[] {"bye"}};
-    service.echo(expected, new AsyncCallback() {
+    service.echo(expected, new AsyncCallback<String[][]>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(String[][] result) {
         assertNotNull(result);
         finishTest();
       }
@@ -582,15 +595,15 @@ public class CollectionsTest extends GWTTestCase {
     delayTestFinish(TEST_DELAY);
 
     CollectionsTestServiceAsync service = getServiceAsync();
-    final Vector expected = TestSetFactory.createVector();
-    service.echo(expected, new AsyncCallback() {
+    final Vector<MarkerTypeVector> expected = TestSetFactory.createVector();
+    service.echo(expected, new AsyncCallback<Vector<MarkerTypeVector>>() {
       public void onFailure(Throwable caught) {
         TestSetValidator.rethrowException(caught);
       }
 
-      public void onSuccess(Object result) {
+      public void onSuccess(Vector<MarkerTypeVector> result) {
         assertNotNull(result);
-        assertTrue(TestSetValidator.isValid(expected, (Vector) result));
+        assertTrue(TestSetValidator.isValid(expected, result));
         finishTest();
       }
     });

@@ -148,10 +148,12 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
       int deckHeight = deckElem.getOffsetHeight();
       if (growing) {
         fixedHeight = container2.getOffsetHeight();
-        container2.getStyle().setPropertyPx("height", fixedHeight - 1);
+        container2.getStyle().setPropertyPx("height",
+            Math.max(1, fixedHeight - 1));
       } else {
         fixedHeight = container1.getOffsetHeight();
-        container1.getStyle().setPropertyPx("height", fixedHeight - 1);
+        container1.getStyle().setPropertyPx("height",
+            Math.max(1, fixedHeight - 1));
       }
       if (deckElem.getOffsetHeight() != deckHeight) {
         fixedHeight = -1;

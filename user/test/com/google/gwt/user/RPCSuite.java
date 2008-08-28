@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
+import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
 import com.google.gwt.user.server.rpc.impl.LegacySerializationPolicyTest;
@@ -66,7 +67,7 @@ public class RPCSuite {
     suite.addTestSuite(LegacySerializationPolicyTest.class);
     suite.addTestSuite(StandardSerializationPolicyTest.class);
     suite.addTestSuite(SerializationPolicyLoaderTest.class);
-
+    suite.addTestSuite(RPCServletUtilsTest.class);
     return suite;
   }
 }

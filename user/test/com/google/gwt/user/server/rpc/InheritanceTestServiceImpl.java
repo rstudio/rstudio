@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,16 +15,20 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
+import com.google.gwt.user.client.rpc.InheritanceTestServiceSubtype;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory;
 import com.google.gwt.user.client.rpc.InheritanceTestSetValidator;
-import com.google.gwt.user.client.rpc.InheritanceTestServiceSubtype;
+import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AbstractClass;
-import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.MySerializableInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializableClass;
+import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.MySerializableInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
+
+import javax.servlet.ServletContext;
 
 /**
  * Servlet used by the
@@ -33,6 +37,12 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClas
  */
 public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
     InheritanceTestServiceSubtype {
+
+  /**
+   * Filters log messages to avoid logging spurious warnings during successful
+   * tests.
+   */
+  private ServletContext wrappedServletContext;
 
   public AnonymousClassInterface echo(AnonymousClassInterface serializable) {
     return serializable;
@@ -83,6 +93,29 @@ public class InheritanceTestServiceImpl extends RemoteServiceServlet implements
   public MySerializableInterface getSerializableInterface2() {
     // never actually called, used in testing the RPC generator
     return null;
+  }
+
+  /**
+   * Overrides the default servlet context to filter expected log messages.
+   */
+  @Override
+  public ServletContext getServletContext() {
+    if (wrappedServletContext == null) {
+      wrappedServletContext = new LogFilterServletContext(
+          super.getServletContext()) {
+        @Override
+        protected boolean shouldLog(Throwable t, String msg) {
+          if ((t instanceof IncompatibleRemoteServiceException || t instanceof SerializationException)
+              && (t.getMessage().contains("com.google.gwt.user.client.rpc.InheritanceTest$1"))
+              || t.getMessage().contains(
+                  "com.google.gwt.user.client.rpc.InheritanceTestSetFactory$1")) {
+            return false;
+          }
+          return true;
+        }
+      };
+    }
+    return wrappedServletContext;
   }
 
   public SerializableClass getUnserializableClass() {

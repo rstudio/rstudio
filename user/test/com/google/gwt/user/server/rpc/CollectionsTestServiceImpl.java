@@ -18,6 +18,13 @@ package com.google.gwt.user.server.rpc;
 import com.google.gwt.user.client.rpc.CollectionsTestService;
 import com.google.gwt.user.client.rpc.TestSetFactory;
 import com.google.gwt.user.client.rpc.TestSetValidator;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -27,6 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Vector;
 
@@ -40,8 +48,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return Arrays.asList(values).toString();
   }
 
-  @SuppressWarnings("unchecked")
-  public ArrayList echo(ArrayList list) throws CollectionsTestServiceException {
+  public ArrayList<MarkerTypeArrayList> echo(ArrayList<MarkerTypeArrayList> list)
+      throws CollectionsTestServiceException {
     if (!TestSetValidator.isValid(list)) {
       throw new CollectionsTestServiceException();
     }
@@ -122,17 +130,6 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
-  public java.sql.Date[] echo(java.sql.Date[] actual)
-      throws CollectionsTestServiceException {
-    java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
-    if (!TestSetValidator.equals(expected, actual)) {
-      throw new CollectionsTestServiceException("expected: "
-          + toString(expected) + " actual: " + toString(actual));
-    }
-
-    return actual;
-  }
-
   public double[] echo(double[] actual) throws CollectionsTestServiceException {
     double[] expected = TestSetFactory.createPrimitiveDoubleArray();
     if (!TestSetValidator.equals(expected, actual)) {
@@ -173,9 +170,10 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
-  @SuppressWarnings("unchecked")
-  public HashMap echo(HashMap actual) throws CollectionsTestServiceException {
-    HashMap expected = TestSetFactory.createHashMap();
+  public HashMap<String, MarkerTypeHashMap> echo(
+      HashMap<String, MarkerTypeHashMap> actual)
+      throws CollectionsTestServiceException {
+    HashMap<String, MarkerTypeHashMap> expected = TestSetFactory.createHashMap();
     if (!TestSetValidator.isValid(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());
@@ -184,20 +182,9 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
-  @SuppressWarnings("unchecked")
-  public LinkedHashMap echo(LinkedHashMap actual)
+  public HashSet<MarkerTypeHashSet> echo(HashSet<MarkerTypeHashSet> actual)
       throws CollectionsTestServiceException {
-    HashMap expected = TestSetFactory.createLinkedHashMap();
-    if (!TestSetValidator.isValid(expected, actual)) {
-      throw new CollectionsTestServiceException("expected:"
-          + expected.toString() + " actual:" + actual.toString());
-    }
-    return actual;
-  }
-
-  @SuppressWarnings("unchecked")
-  public HashSet echo(HashSet actual) throws CollectionsTestServiceException {
-    HashSet expected = TestSetFactory.createHashSet();
+    HashSet<MarkerTypeHashSet> expected = TestSetFactory.createHashSet();
     if (!TestSetValidator.isValid(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());
@@ -229,6 +216,39 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
           + expected.toString() + " actual: " + actual.toString());
     }
 
+    return actual;
+  }
+
+  public java.sql.Date[] echo(java.sql.Date[] actual)
+      throws CollectionsTestServiceException {
+    java.sql.Date[] expected = TestSetFactory.createSqlDateArray();
+    if (!TestSetValidator.equals(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + toString(expected) + " actual: " + toString(actual));
+    }
+
+    return actual;
+  }
+
+  public LinkedHashMap<String, MarkerTypeLinkedHashMap> echo(
+      LinkedHashMap<String, MarkerTypeLinkedHashMap> actual)
+      throws CollectionsTestServiceException {
+    LinkedHashMap<String, MarkerTypeLinkedHashMap> expected = TestSetFactory.createLinkedHashMap();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+    return actual;
+  }
+
+  public LinkedHashSet<MarkerTypeLinkedHashSet> echo(
+      LinkedHashSet<MarkerTypeLinkedHashSet> actual)
+      throws CollectionsTestServiceException {
+    LinkedHashSet<MarkerTypeLinkedHashSet> expected = TestSetFactory.createLinkedHashSet();
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
     return actual;
   }
 
@@ -308,9 +328,9 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
-  @SuppressWarnings("unchecked")
-  public Vector echo(Vector actual) throws CollectionsTestServiceException {
-    Vector expected = TestSetFactory.createVector();
+  public Vector<MarkerTypeVector> echo(Vector<MarkerTypeVector> actual)
+      throws CollectionsTestServiceException {
+    Vector<MarkerTypeVector> expected = TestSetFactory.createVector();
     if (!TestSetValidator.isValid(expected, actual)) {
       throw new CollectionsTestServiceException("expected: "
           + expected.toString() + " actual: " + actual.toString());
@@ -319,12 +339,8 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
-  /**
-   * Return the result of Arrays.asList(Object[]) to force an
-   * InvocationException on the client.
-   */
-  @SuppressWarnings("unchecked")
-  public List echoArraysAsList(List value)
+  public List<MarkerTypeArraysAsList> echoArraysAsList(
+      List<MarkerTypeArraysAsList> value)
       throws CollectionsTestServiceException {
     if (!TestSetValidator.isValidAsList(value)) {
       throw new CollectionsTestServiceException();

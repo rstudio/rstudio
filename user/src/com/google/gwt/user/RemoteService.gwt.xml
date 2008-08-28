@@ -31,19 +31,11 @@
 	<!-- 
 		Declare a property to determine whether warnings for final instance 
 		fields should be suppressed.
-		
-		NOTE: We no longer emit warnings for final fields.  This property has 
-		been deprecated, is currently being ignored, and will be removed in a 
-		future version of GWT.
 	-->
 	<define-property name="gwt.suppressNonStaticFinalFieldWarnings" values="true,false" />
 	
 	<!-- 
 	    Default warning for non-static, final fields enabled 
-
-		NOTE: We no longer emit a warning for final fields.  This property has 
-		been deprecated, is currently being ignored, and will be removed in a 
-		future version of GWT.
 	-->
 	<set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="false" />
 

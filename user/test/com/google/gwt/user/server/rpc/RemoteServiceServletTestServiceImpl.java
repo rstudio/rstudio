@@ -15,9 +15,29 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import java.io.IOException;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * TODO: document me.
  */
 public class RemoteServiceServletTestServiceImpl extends
     RemoteServiceServletTestServiceImplBase {
+  /**
+   * Explicitly return a 404 for the "404" URL.
+   */
+  @Override
+  protected void service(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
+    if (req.getPathInfo() != null && req.getPathInfo().endsWith("404")) {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND,
+          "Intentionally not found URL");
+      return;
+    }
+    super.service(req, resp);
+  }
+
 }

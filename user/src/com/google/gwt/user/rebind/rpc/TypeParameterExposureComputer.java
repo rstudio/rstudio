@@ -87,7 +87,7 @@ class TypeParameterExposureComputer {
           JField[] fields = type.getFields();
           for (JField field : fields) {
             if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
-                TreeLogger.NULL, field)) {
+                TreeLogger.NULL, true, field)) {
               continue;
             }
 
@@ -271,7 +271,7 @@ class TypeParameterExposureComputer {
           JField[] fields = type.getFields();
           for (JField field : fields) {
             if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
-                TreeLogger.NULL, field)) {
+                TreeLogger.NULL, true, field)) {
               continue;
             }
 

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -303,5 +304,28 @@ public class ElementTest extends GWTTestCase {
     assertEquals(2, nodes.getLength());
     assertEquals("foo", nodes.getItem(0).getInnerText());
     assertEquals("bar", nodes.getItem(1).getInnerText());
+  }
+
+  /**
+   * Tests HeadingElement.as() (it has slightly more complex assertion logic
+   * than most).
+   */
+  public void testHeadingElementAs() {
+    DivElement placeHolder = Document.get().createDivElement();
+
+    for (int i = 0; i < 6; ++i) {
+      placeHolder.setInnerHTML("<H" + (i + 1) + "/>");
+      assertNotNull(HeadingElement.as(placeHolder.getFirstChildElement()));
+    }
+
+    if (!GWT.isScript()) {
+      Element notHeading = Document.get().createDivElement();
+      try {
+        HeadingElement.as(notHeading);
+        fail("Expected assertion failure");
+      } catch (AssertionError e) {
+        // this *should* happen.
+      }
+    }
   }
 }

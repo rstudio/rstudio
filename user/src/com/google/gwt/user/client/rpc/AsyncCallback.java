@@ -27,7 +27,8 @@ package com.google.gwt.user.client.rpc;
  * <p>
  * Each callable asynchronous method corresponds to a method in the correlated
  * service interface. The asynchronous method always takes an
- * <code>AsyncCallback</code> as its last parameter.
+ * <code>AsyncCallback&lt;T&gt;</code> as its last parameter, where
+ * <code>T</code> is the return type of the correlated synchronous method.
  * </p>
  * 
  * <p>
@@ -41,7 +42,7 @@ package com.google.gwt.user.client.rpc;
  * Its asynchronous counterpart method be declared as:
  * 
  * <pre>
- * void getShapes(String databaseName, AsyncCallback callback);
+ * void getShapes(String databaseName, AsyncCallback&lt;Shape[]&gt; callback);
  * </pre>
  * 
  * Note that <code>throws</code> declaration is not repeated in the async
@@ -53,11 +54,10 @@ package com.google.gwt.user.client.rpc;
  * this:
  * 
  * <pre class="code">
- * service.getShapes(dbName, new AsyncCallback() {
- *   public void onSuccess(Object result) {
+ * service.getShapes(dbName, new AsyncCallback<Shape[]>() {
+ *   public void onSuccess(Shape[] result) {
  *     // It's always safe to downcast to the known return type. 
- *     Shape[] shapes = (Shape[]) result;
- *     controller.processShapes(shapes);
+ *     controller.processShapes(result);
  *   }
  * 
  *   public void onFailure(Throwable caught) {
@@ -82,7 +82,12 @@ package com.google.gwt.user.client.rpc;
  * 
  * </p>
  * 
- * @param <T>
+ * @param <T> The type of the return value that was declared in the synchronous
+ *          version of the method. If the return type is a primitive, use the
+ *          boxed version of that primitive (for example, an <code>int</code>
+ *          return type becomes an {@link Integer} type argument, and a
+ *          <code>void</code> return type becomes a {@link Void} type
+ *          argument, which is always <code>null</code>).
  */
 public interface AsyncCallback<T> {
 
@@ -103,12 +108,9 @@ public interface AsyncCallback<T> {
   void onFailure(Throwable caught);
 
   /**
-   * Called when an asynchronous call completes successfully. It is always safe
-   * to downcast the parameter (of type <code>Object</code>) to the return
-   * type of the original method for which this is a callback. Note that if the
-   * return type of the synchronous service interface method is a primitive then
-   * the parameter will be the boxed version of the primitive (for example, an
-   * <code>int</code> return type becomes an {@link Integer}.
+   * Called when an asynchronous call completes successfully.
+   * 
+   * @param result the return value of the remote produced call
    */
   void onSuccess(T result);
 }

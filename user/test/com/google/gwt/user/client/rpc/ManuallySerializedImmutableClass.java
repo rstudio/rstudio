@@ -25,6 +25,13 @@ import java.util.Date;
  * factory.
  */
 public class ManuallySerializedImmutableClass {
+  /**
+   * Ensures that RPC will consider Date to be exposed. It will be pruned by
+   * dead code elimination.
+   */
+  @SuppressWarnings("unused")
+  private Date dateTypeExposeToSerialization;
+
   private final Date endDate;
   private final Date startDate;
 

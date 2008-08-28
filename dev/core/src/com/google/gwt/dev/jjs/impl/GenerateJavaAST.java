@@ -189,6 +189,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.TreeSet;
 
 /**
  * This is the big kahuna where most of the nitty gritty of creating our AST
@@ -2553,7 +2555,7 @@ public class GenerateJavaAST {
           return null;
         } else {
           // look for a method
-          String almostMatches = null;
+          TreeSet<String> almostMatches = new TreeSet<String>();
           String methodName = parsed.memberName();
           String jsniSig = parsed.memberSignature();
           if (type == null) {
@@ -2561,31 +2563,44 @@ public class GenerateJavaAST {
               return program.getNullMethod();
             }
           } else {
-            for (int i = 0; i < type.methods.size(); ++i) {
-              JMethod method = type.methods.get(i);
-              if (method.getName().equals(methodName)) {
-                String sig = JProgram.getJsniSig(method);
-                if (sig.equals(jsniSig)) {
-                  return method;
-                } else if (almostMatches == null) {
-                  almostMatches = "'" + sig + "'";
-                } else {
-                  almostMatches += ", '" + sig + "'";
+            Queue<JReferenceType> workList = new LinkedList<JReferenceType>();
+            workList.add(type);
+            while (!workList.isEmpty()) {
+              JReferenceType cur = workList.poll();
+              for (int i = 0; i < cur.methods.size(); ++i) {
+                JMethod method = cur.methods.get(i);
+                if (method.getName().equals(methodName)) {
+                  String sig = JProgram.getJsniSig(method);
+                  if (sig.equals(jsniSig)) {
+                    return method;
+                  } else {
+                    almostMatches.add(sig);
+                  }
                 }
               }
+              if (cur.extnds != null) {
+                workList.add(cur.extnds);
+              }
+              workList.addAll(cur.implments);
             }
           }
 
-          if (almostMatches == null) {
+          if (almostMatches.isEmpty()) {
             reportJsniError(info, methodDecl,
                 "Unresolvable native reference to method '" + methodName
                     + "' in type '" + className + "'");
             return null;
           } else {
+            StringBuilder suggestList = new StringBuilder();
+            String comma = "";
+            for (String almost : almostMatches) {
+              suggestList.append(comma + "'" + almost + "'");
+              comma = ", ";
+            }
             reportJsniError(info, methodDecl,
                 "Unresolvable native reference to method '" + methodName
                     + "' in type '" + className + "' (did you mean "
-                    + almostMatches + "?)");
+                    + suggestList.toString() + "?)");
             return null;
           }
         }
@@ -2638,7 +2653,8 @@ public class GenerateJavaAST {
 
       private void processMethod(JsNameRef nameRef, SourceInfo info,
           JMethod method, JsContext<JsExpression> ctx) {
-        if (method.getEnclosingType() != null) {
+        JReferenceType enclosingType = method.getEnclosingType();
+        if (enclosingType != null) {
           if (method.isStatic() && nameRef.getQualifier() != null) {
             reportJsniError(info, methodDecl,
                 "Cannot make a qualified reference to the static method "
@@ -2647,6 +2663,16 @@ public class GenerateJavaAST {
             reportJsniError(info, methodDecl,
                 "Cannot make an unqualified reference to the instance method "
                     + method.getName());
+          } else if (!method.isStatic()
+              && program.isJavaScriptObject(enclosingType)) {
+            reportJsniError(
+                info,
+                methodDecl,
+                "Illegal reference to instance method '"
+                    + method.getName()
+                    + "' in type '"
+                    + enclosingType.getName()
+                    + "', which is an overlay type; only static references to overlay types are allowed from JSNI");
           }
         }
         if (ctx.isLvalue()) {

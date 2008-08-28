@@ -393,24 +393,25 @@ public class StringTest extends GWTTestCase {
 
   public void testSplit() {
     compareList("fullSplit", new String[] {"abc", "", "", "de", "f"},
-        "abcxxxdexfxx".split("x"));
+        hideFromCompiler("abcxxxdexfxx").split("x"));
     compareList("emptyRegexSplit", new String[] {
         "", "a", "b", "c", "x", "x", "d", "e", "x", "f", "x"},
-        "abcxxdexfx".split(""));
-    compareList("2:", "boo:and:foo".split(":", 2), new String[] {
-        "boo", "and:foo"});
-    compareList("5:", "boo:and:foo".split(":", 5), new String[] {
-        "boo", "and", "foo"});
-    compareList("-2:", "boo:and:foo".split(":", -2), new String[] {
-        "boo", "and", "foo"});
-    compareList("5o", "boo:and:foo".split("o", 5), new String[] {
-        "b", "", ":and:f", "", ""});
-    compareList("-2o", "boo:and:foo".split("o", -2), new String[] {
-        "b", "", ":and:f", "", ""});
-    compareList("0o", "boo:and:foo".split("o", 0), new String[] {
-        "b", "", ":and:f"});
-    compareList("0:", "boo:and:foo".split(":", 0), new String[] {
-        "boo", "and", "foo"});
+        hideFromCompiler("abcxxdexfx").split(""));
+    String booAndFoo = hideFromCompiler("boo:and:foo");
+    compareList("2:", new String[] {"boo", "and:foo"}, booAndFoo.split(":", 2));
+    compareList("5:", new String[] {"boo", "and", "foo"}, booAndFoo.split(":",
+        5));
+    compareList("-2:", new String[] {"boo", "and", "foo"}, booAndFoo.split(":",
+        -2));
+    compareList("5o", new String[] {"b", "", ":and:f", "", ""},
+        booAndFoo.split("o", 5));
+    compareList("-2o", new String[] {"b", "", ":and:f", "", ""},
+        booAndFoo.split("o", -2));
+    compareList("0o", new String[] {"b", "", ":and:f"}, booAndFoo.split("o", 0));
+    compareList("0:", new String[] {"boo", "and", "foo"}, booAndFoo.split(":",
+        0));
+    // issue 2742
+    compareList("issue2742", new String[] {}, hideFromCompiler("/").split("/", 0));
   }
 
   public void testStartsWith() {

@@ -15,10 +15,118 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.SortedMap;
+
 /**
  * Tests <code>TreeMap</code> with Strings and the natural comparator.
  */
 public class TreeMapStringStringTest extends TreeMapTest<String, String> {
+
+  public void testHeadMapEqualsFirst() {
+    SortedMap<String, String> sortedMap = createKnownKeysMap();
+    SortedMap<String, String> subMap = sortedMap.headMap("aa");
+    assertEquals("length", 0, subMap.size());
+    Set<String> kset = subMap.keySet();
+    Iterator<String> it = kset.iterator();
+    assertFalse("iterator[0]", it.hasNext());
+  }
+
+  public void testHeadMapEqualsSecond() {
+    SortedMap<String, String> sortedMap = createKnownKeysMap();
+    SortedMap<String, String> subMap = sortedMap.headMap("bb");
+    assertEquals("length", 1, subMap.size());
+    Set<String> kset = subMap.keySet();
+    Iterator<String> it = kset.iterator();
+    assertTrue("iterator[0]", it.hasNext());
+    assertEquals("iterator[0]", "aa", it.next());
+    assertFalse("iterator[1]", it.hasNext());
+    assertEquals("firstKey", "aa", subMap.firstKey());
+    assertEquals("lastKey", "aa", subMap.lastKey());
+  }
+
+  /**
+   * Perform some tests on submap that are hard to do without specific knowledge
+   * of the keys used.
+   */
+  public void testHeadMapSimple() {
+    SortedMap<String, String> sortedMap = createKnownKeysMap();
+    SortedMap<String, String> subMap = sortedMap.headMap("bz");
+    assertEquals("length", 2, subMap.size());
+    Set<String> kset = subMap.keySet();
+    Iterator<String> it = kset.iterator();
+    assertTrue("iterator[0]", it.hasNext());
+    assertEquals("iterator[0]", "aa", it.next());
+    assertTrue("iterator[1]", it.hasNext());
+    assertEquals("iterator[1]", "bb", it.next());
+    assertFalse("iterator[2]", it.hasNext());
+    // issue 2638
+    assertEquals("firstKey", "aa", subMap.firstKey());
+    assertEquals("lastKey", "bb", subMap.lastKey());
+  }
+
+  /**
+   * Tests that compositing submap operations function as expected.
+   */
+  public void testSubMapComposite() {
+    SortedMap<String, String> sortedMap = createKnownKeysMap();
+    SortedMap<String, String> subMap1 = sortedMap.headMap("cz").tailMap("bb");
+    SortedMap<String, String> subMap2 = sortedMap.tailMap("bb").headMap("cz");
+    SortedMap<String, String> subMap3 = sortedMap.subMap("bb", "cz");
+    assertEquals("headMap(tailMap) should equal tailMap(headMap)", subMap1,
+        subMap2);
+    assertEquals("headMap(tailMap) should equal subMap", subMap1, subMap3);
+    assertEquals("headMap(tailMap) size", 2, subMap1.size());
+  }
+
+  public void testTailMapPastEnd() {
+    SortedMap<String, String> sortedMap = createKnownKeysMap();
+    SortedMap<String, String> subMap = sortedMap.tailMap("dz");
+    assertEquals("length", 0, subMap.size());
+    Set<String> kset = subMap.keySet();
+    Iterator<String> it = kset.iterator();
+    assertFalse("iterator[0]", it.hasNext());
+    try {
+      subMap.firstKey();
+      fail("firstKey should have thrown NoSuchElementException");
+    } catch (NoSuchElementException expected) {
+    }
+    try {
+      subMap.lastKey();
+      fail("lastKey should have thrown NoSuchElementException");
+    } catch (NoSuchElementException expected) {
+    }
+  }
+
+  public void testTailMapSimple() {
+    SortedMap<String, String> sortedMap = createKnownKeysMap();
+    SortedMap<String, String> subMap = sortedMap.tailMap("bb");
+    assertEquals("length", 3, subMap.size());
+    Set<String> kset = subMap.keySet();
+    Iterator<String> it = kset.iterator();
+    assertTrue("iterator[0]", it.hasNext());
+    assertEquals("iterator[0]", "bb", it.next());
+    assertTrue("iterator[1]", it.hasNext());
+    assertEquals("iterator[1]", "cc", it.next());
+    assertTrue("iterator[2]", it.hasNext());
+    assertEquals("iterator[2]", "dd", it.next());
+    assertFalse("iterator[3]", it.hasNext());
+    // issue 2638
+    assertEquals("firstKey", "bb", subMap.firstKey());
+    assertEquals("lastKey", "dd", subMap.lastKey());
+  }
+
+  @Override
+  protected Object getConflictingKey() {
+    return new Integer(1);
+  }
+
+  @Override
+  protected Object getConflictingValue() {
+    return new Long(42);
+  }
 
   @Override
   String getGreaterThanMaximumKey() {
@@ -28,12 +136,6 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
   @Override
   String[] getKeys() {
     return convertToStringArray(getSampleKeys());
-  }
-
-  private String[] convertToStringArray(Object[] objArray) {
-    String[] strArray = new String[objArray.length];
-    System.arraycopy(objArray, 0, strArray, 0, objArray.length);
-    return strArray;
   }
 
   @Override
@@ -56,13 +158,18 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
     return convertToStringArray(getOtherValues());
   }
 
-  @Override
-  protected Object getConflictingKey() {
-    return new Integer(1);
+  private String[] convertToStringArray(Object[] objArray) {
+    String[] strArray = new String[objArray.length];
+    System.arraycopy(objArray, 0, strArray, 0, objArray.length);
+    return strArray;
   }
 
-  @Override
-  protected Object getConflictingValue() {
-    return new Long(42);
+  private SortedMap<String, String> createKnownKeysMap() {
+    SortedMap<String, String> sortedMap = createSortedMap();
+    sortedMap.put("dd", "dval");
+    sortedMap.put("aa", "aval");
+    sortedMap.put("cc", "cval");
+    sortedMap.put("bb", "bval");
+    return sortedMap;
   }
 }

@@ -17,9 +17,12 @@ package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestService;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetValidator;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.ManuallySerializedClass;
 import com.google.gwt.user.client.rpc.ManuallySerializedImmutableClass;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
+
+import javax.servlet.ServletContext;
 
 /**
  * Servlet used by the
@@ -28,6 +31,12 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.Serial
  */
 public class CustomFieldSerializerTestServiceImpl extends RemoteServiceServlet
     implements CustomFieldSerializerTestService {
+
+  /**
+   * Filters log messages to avoid logging spurious warnings during successful
+   * tests.
+   */
+  private ServletContext wrappedServletContext;
 
   public ManuallySerializedClass echo(
       ManuallySerializedClass unserializableClass) {
@@ -53,5 +62,27 @@ public class CustomFieldSerializerTestServiceImpl extends RemoteServiceServlet
     }
 
     return serializableClass;
+  }
+
+  /**
+   * Overrides the default servlet context to filter expected log messages.
+   */
+  @Override
+  public ServletContext getServletContext() {
+    if (wrappedServletContext == null) {
+      wrappedServletContext = new LogFilterServletContext(
+          super.getServletContext()) {
+        @Override
+        protected boolean shouldLog(Throwable t, String msg) {
+          if (t instanceof IncompatibleRemoteServiceException
+              && t.getMessage().contains(
+                  "com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory$UnserializableSubclass")) {
+            return false;
+          }
+          return true;
+        }
+      };
+    }
+    return wrappedServletContext;
   }
 }

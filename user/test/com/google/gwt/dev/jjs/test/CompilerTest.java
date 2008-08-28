@@ -615,6 +615,23 @@ public class CompilerTest extends GWTTestCase {
       }
       fail("should not be reached");
     }
+
+    /*
+     * Issue 2770: labeled breaks in a switch statement with no default case
+     * should not be pruned.
+     */
+    outer : while (true) {
+      switch (THREE) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+          break outer;
+        case 4:
+        case 5:
+          break;
+      }
+    }
   }
 
   public void testLocalClasses() {

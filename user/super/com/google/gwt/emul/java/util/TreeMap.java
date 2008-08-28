@@ -71,13 +71,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     }
 
     public void remove() {
-      if (last == null) {
-        throw new IllegalStateException("Must call next() before remove().");
-      } else {
-        iter.remove();
-        TreeMap.this.remove(last.getKey());
-        last = null;
-      }
+      iter.remove();
+      TreeMap.this.remove(last.getKey());
     }
 
     private void inOrderAdd(List<Map.Entry<K, V>> list, SubMapType type,
@@ -97,12 +92,12 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     }
 
     private boolean inRange(SubMapType type, K key, K fromKey, K toKey) {
-      if (type == SubMapType.Head || type == SubMapType.Range) {
+      if (type.toKeyValid()) {
         if (cmp.compare(key, toKey) >= 0) {
           return false;
         }
       }
-      if (type == SubMapType.Tail || type == SubMapType.Range) {
+      if (type.fromKeyValid()) {
         if (cmp.compare(key, fromKey) < 0) {
           return false;
         }
@@ -337,6 +332,11 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
         }
 
         @Override
+        public boolean isEmpty() {
+          return SubMap.this.isEmpty();
+        }
+
+        @Override
         public Iterator<Entry<K, V>> iterator() {
           return new EntryIterator(type, fromKey, toKey);
         }
@@ -372,8 +372,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     }
 
     public K firstKey() {
-      Node<K, V> node = getNodeAtOrAfter(fromKey);
-      if (node == null || cmp.compare(node.key, toKey) > 0) {
+      Node<K, V> node = throwNSE(getFirstSubmapNode());
+      if (type.toKeyValid() && cmp.compare(node.key, toKey) > 0) {
         throw new NoSuchElementException();
       }
       return node.key;
@@ -390,20 +390,25 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     }
 
     public SortedMap<K, V> headMap(K toKey) {
-      if (cmp.compare(toKey, this.toKey) > 0) {
+      if (type.toKeyValid() && cmp.compare(toKey, this.toKey) > 0) {
         throw new IllegalArgumentException("subMap: " + toKey
             + " greater than " + this.toKey);
       }
-      if (type == SubMapType.Range || type == SubMapType.Tail) {
+      if (type.fromKeyValid()) {
         return TreeMap.this.subMap(fromKey, toKey);
       } else {
         return TreeMap.this.headMap(toKey);
       }
     }
 
+    @Override
+    public boolean isEmpty() {
+      return getFirstSubmapNode() == null;
+    }
+
     public K lastKey() {
-      Node<K, V> node = getNodeBefore(toKey);
-      if (node == null || cmp.compare(node.key, fromKey) < 0) {
+      Node<K, V> node = throwNSE(getLastSubmapNode());
+      if (type.fromKeyValid() && cmp.compare(node.key, fromKey) < 0) {
         throw new NoSuchElementException();
       }
       return node.key;
@@ -429,13 +434,11 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     }
 
     public SortedMap<K, V> subMap(K newFromKey, K newToKey) {
-      if ((type == SubMapType.Range || type == SubMapType.Tail)
-          && cmp.compare(newFromKey, fromKey) < 0) {
+      if (type.fromKeyValid() && cmp.compare(newFromKey, fromKey) < 0) {
         throw new IllegalArgumentException("subMap: " + newFromKey
             + " less than " + fromKey);
       }
-      if ((type == SubMapType.Range || type == SubMapType.Head)
-          && cmp.compare(newToKey, toKey) > 0) {
+      if (type.toKeyValid() && cmp.compare(newToKey, toKey) > 0) {
         throw new IllegalArgumentException("subMap: " + newToKey
             + " greater than " + toKey);
       }
@@ -443,25 +446,44 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     }
 
     public SortedMap<K, V> tailMap(K fromKey) {
-      if ((type == SubMapType.Range || type == SubMapType.Tail)
-          && cmp.compare(fromKey, this.fromKey) < 0) {
+      if (type.fromKeyValid() && cmp.compare(fromKey, this.fromKey) < 0) {
         throw new IllegalArgumentException("subMap: " + fromKey + " less than "
             + this.fromKey);
       }
-      if (type == SubMapType.Range || type == SubMapType.Head) {
+      if (type.toKeyValid()) {
         return TreeMap.this.subMap(fromKey, toKey);
       } else {
         return TreeMap.this.tailMap(fromKey);
       }
     }
 
+    private Node<K, V> getFirstSubmapNode() {
+      Node<K, V> node;
+      if (type.fromKeyValid()) {
+        node = getNodeAtOrAfter(fromKey);
+      } else {
+        node = getFirstNode();
+      }
+      return node;
+    }
+
+    private Node<K, V> getLastSubmapNode() {
+      Node<K, V> node;
+      if (type.toKeyValid()) {
+        node = getNodeBefore(toKey);
+      } else {
+        node = getLastNode();
+      }
+      return node;
+    }
+
     private boolean inRange(K key) {
-      if (type == SubMapType.Head || type == SubMapType.Range) {
+      if (type.toKeyValid()) {
         if (cmp.compare(key, toKey) >= 0) {
           return false;
         }
       }
-      if (type == SubMapType.Tail || type == SubMapType.Range) {
+      if (type.fromKeyValid()) {
         if (cmp.compare(key, fromKey) < 0) {
           return false;
         }
@@ -471,7 +493,47 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   }
 
   private enum SubMapType {
-    All, Head, Range, Tail,
+    All,
+    
+    Head {
+      @Override
+      public boolean toKeyValid() {
+        return true;
+      }
+    },
+    
+    Range {
+      @Override
+      public boolean fromKeyValid() {
+        return true;
+      }
+
+      @Override
+      public boolean toKeyValid() {
+        return true;
+      }
+    },
+    
+    Tail {
+      @Override
+      public boolean fromKeyValid() {
+        return true;
+      }
+    };
+    
+    /**
+     * @return true if this submap type uses a from-key.
+     */
+    public boolean fromKeyValid() {
+      return false;
+    }
+    
+    /**
+     * @return true if this submap type uses a to-key.
+     */
+    public boolean toKeyValid() {
+      return false;
+    }
   }
 
   /**
@@ -495,6 +557,24 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   private static int otherChild(int child) {
     assert (child == 0 || child == 1);
     return 1 - child;
+  }
+
+  /**
+   * Throw a NoSuchElementException if the specified node is null.
+   * 
+   * Used to clean up error checking at use sites.
+   * 
+   * @param node node to check
+   * @param <NK> key type
+   * @param <NV> value type
+   * @return node, guaranteed to be non-null
+   * @throws NoSuchElementException if node is null
+   */
+  private static <NK, NV> Node<NK, NV> throwNSE(Node<NK, NV> node) {
+    if (node == null) {
+      throw new NoSuchElementException();
+    }
+    return node;
   }
 
   // The comparator to use.
@@ -555,14 +635,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   }
 
   public K firstKey() {
-    if (root == null) {
-      throw new NoSuchElementException();
-    }
-    Node<K, V> node = root;
-    while (node.child[LEFT] != null) {
-      node = node.child[LEFT];
-    }
-    return node.key;
+    return throwNSE(getFirstNode()).key;
   }
 
   @SuppressWarnings("unchecked")
@@ -584,14 +657,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   }
 
   public K lastKey() {
-    if (root == null) {
-      throw new NoSuchElementException();
-    }
-    Node<K, V> node = root;
-    while (node.child[RIGHT] != null) {
-      node = node.child[RIGHT];
-    }
-    return node.key;
+    return throwNSE(getLastNode()).key;
   }
 
   @Override
@@ -633,66 +699,44 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
    * key.
    * 
    * @param key the key to search for
-   * @return the next node, or null if there is none.
+   * @return the next node, or null if there is none
    */
   protected Node<K, V> getNodeAtOrAfter(K key) {
-    if (root == null) {
-      return null;
-    }
     Node<K, V> foundNode = null;
     Node<K, V> node = root;
-    while (true) {
+    while (node != null) {
       int c = cmp.compare(key, node.key);
       if (c == 0) {
         return node;
       } else if (c > 0) {
         node = node.child[RIGHT];
-        if (node == null) {
-          // ran off the tree and we are past this node, so return best one
-          return foundNode;
-        }
       } else {
         foundNode = node;
-        Node<K, V> nextNode = node.child[LEFT];
-        if (nextNode == null) {
-          // ran off the tree and we are before this node, so return it
-          return node;
-        }
-        node = nextNode;
+        node = node.child[LEFT];
       }
     }
+    return foundNode;
   }
 
   /**
    * Return the last node which is strictly less than the given key.
    * 
    * @param key the key to search for
-   * @return the previous node, or null if there is none.
+   * @return the previous node, or null if there is none
    */
   protected Node<K, V> getNodeBefore(K key) {
-    if (root == null) {
-      return null;
-    }
     Node<K, V> foundNode = null;
     Node<K, V> node = root;
-    while (true) {
+    while (node != null) {
       int c = cmp.compare(key, node.key);
       if (c <= 0) {
         node = node.child[LEFT];
-        if (node == null) {
-          // ran off the tree and we are past this node, so return best one
-          return foundNode;
-        }
       } else {
         foundNode = node;
-        Node<K, V> nextNode = node.child[RIGHT];
-        if (nextNode == null) {
-          // ran off the tree and we are before this node, so return it
-          return node;
-        }
-        node = nextNode;
+        node = node.child[RIGHT];
       }
     }
+    return foundNode;
   }
 
   /**
@@ -712,7 +756,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   }
 
   /**
-   * Internal helper function for public (@see assertCorrectness()).
+   * Internal helper function for public {@link #assertCorrectness()}.
    * 
    * @param tree the subtree to validate.
    * @param isRed true if the parent of this node is red.
@@ -768,6 +812,47 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
     return null;
   }
 
+  /**
+   * @return the left-most node of the tree, or null if empty
+   */
+  private Node<K, V> getFirstNode() {
+    if (root == null) {
+      return null;
+    }
+    Node<K, V> node = root;
+    while (node.child[LEFT] != null) {
+      node = node.child[LEFT];
+    }
+    return node;
+  }
+
+  /**
+   * @return the right-most node of the tree, or null if empty
+   */
+  private Node<K, V> getLastNode() {
+    if (root == null) {
+      return null;
+    }
+    Node<K, V> node = root;
+    while (node.child[RIGHT] != null) {
+      node = node.child[RIGHT];
+    }
+    return node;
+  }
+
+  /**
+   * Insert a node into a subtree, collecting state about the insertion.
+   * 
+   * If the same key already exists, the value of the node is overwritten
+   * with the value from the new node instead.
+   * 
+   * @param tree subtree to insert into
+   * @param newNode new node to insert
+   * @param state result of the insertion:
+   *     state.found true if the key already existed in the tree
+   *     state.value the old value if the key existed 
+   * @return the new subtree root
+   */
   private Node<K, V> insert(Node<K, V> tree, Node<K, V> newNode, State<V> state) {
     if (tree == null) {
       return newNode;
@@ -779,7 +864,7 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
         tree.value = newNode.value;
         return tree;
       }
-      int childNum = (c > 0) ? 0 : 1;
+      int childNum = (c > 0) ? LEFT : RIGHT;
       tree.child[childNum] = insert(tree.child[childNum], newNode, state);
       if (isRed(tree.child[childNum])) {
         if (isRed(tree.child[otherChild(childNum)])) {

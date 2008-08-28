@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -73,7 +74,7 @@ public class RemoteServiceServlet extends HttpServlet implements
 
       // Read the request fully.
       //
-      String requestPayload = RPCServletUtils.readContentAsUtf8(request);
+      String requestPayload = readContent(request);
 
       // Let subclasses see the serialized request.
       //
@@ -228,7 +229,8 @@ public class RemoteServiceServlet extends HttpServlet implements
       try {
         if (is != null) {
           try {
-            serializationPolicy = SerializationPolicyLoader.loadFromStream(is, null);
+            serializationPolicy = SerializationPolicyLoader.loadFromStream(is,
+                null);
           } catch (ParseException e) {
             getServletContext().log(
                 "ERROR: Failed to parse the policy file '"
@@ -319,9 +321,24 @@ public class RemoteServiceServlet extends HttpServlet implements
   }
 
   /**
+   * Override this method in order to control the parsing of the incoming
+   * request. For example, you may want to bypass the check of the Content-Type
+   * and character encoding headers in the request, as some proxies re-write the
+   * request headers.  Note that bypassing these checks may expose the servlet to
+   * some cross-site vulnerabilities.
+   * 
+   * @param request the incoming request
+   * @return the content of the incoming request encoded as a string.
+   */
+  protected String readContent(HttpServletRequest request)
+      throws ServletException, IOException {
+    return RPCServletUtils.readContentAsUtf8(request, true);
+  }
+
+  /**
    * Determines whether the response to a given servlet request should or should
    * not be GZIP compressed. This method is only called in cases where the
-   * requestor accepts GZIP encoding.
+   * requester accepts GZIP encoding.
    * <p>
    * This implementation currently returns <code>true</code> if the response
    * string's estimated byte length is longer than 256 bytes. Subclasses can

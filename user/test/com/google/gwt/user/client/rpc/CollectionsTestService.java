@@ -15,6 +15,14 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArrayList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeArraysAsList;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
+
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -22,6 +30,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Vector;
 
@@ -33,7 +42,7 @@ public interface CollectionsTestService extends RemoteService {
   /**
    * TODO: document me.
    */
-  public static class CollectionsTestServiceException extends Exception {
+  final class CollectionsTestServiceException extends Exception {
     public CollectionsTestServiceException() {
     }
 
@@ -41,8 +50,7 @@ public interface CollectionsTestService extends RemoteService {
       super(msg);
     }
   }
-
-  ArrayList<IsSerializable> echo(ArrayList<IsSerializable> value)
+  ArrayList<MarkerTypeArrayList> echo(ArrayList<MarkerTypeArrayList> value)
       throws CollectionsTestServiceException;
 
   boolean[] echo(boolean[] value) throws CollectionsTestServiceException;
@@ -59,9 +67,6 @@ public interface CollectionsTestService extends RemoteService {
 
   Date[] echo(Date[] date) throws CollectionsTestServiceException;
 
-  java.sql.Date[] echo(java.sql.Date[] value)
-      throws CollectionsTestServiceException;
-
   double[] echo(double[] value) throws CollectionsTestServiceException;
 
   Double[] echo(Double[] value) throws CollectionsTestServiceException;
@@ -70,19 +75,27 @@ public interface CollectionsTestService extends RemoteService {
 
   Float[] echo(Float[] value) throws CollectionsTestServiceException;
 
-  HashMap<String, IsSerializable> echo(HashMap<String, IsSerializable> value)
+  HashMap<String, MarkerTypeHashMap> echo(
+      HashMap<String, MarkerTypeHashMap> value)
       throws CollectionsTestServiceException;
 
-  LinkedHashMap<String, IsSerializable> echo(
-      LinkedHashMap<String, IsSerializable> value)
-      throws CollectionsTestServiceException;
-
-  HashSet<IsSerializable> echo(HashSet<IsSerializable> value)
+  HashSet<MarkerTypeHashSet> echo(HashSet<MarkerTypeHashSet> value)
       throws CollectionsTestServiceException;
 
   int[] echo(int[] value) throws CollectionsTestServiceException;
 
   Integer[] echo(Integer[] value) throws CollectionsTestServiceException;
+
+  java.sql.Date[] echo(java.sql.Date[] value)
+      throws CollectionsTestServiceException;
+
+  LinkedHashMap<String, MarkerTypeLinkedHashMap> echo(
+      LinkedHashMap<String, MarkerTypeLinkedHashMap> value)
+      throws CollectionsTestServiceException;
+
+  LinkedHashSet<MarkerTypeLinkedHashSet> echo(
+      LinkedHashSet<MarkerTypeLinkedHashSet> value)
+      throws CollectionsTestServiceException;
 
   long[] echo(long[] value) throws CollectionsTestServiceException;
 
@@ -100,9 +113,10 @@ public interface CollectionsTestService extends RemoteService {
 
   Timestamp[] echo(Timestamp[] value) throws CollectionsTestServiceException;
 
-  Vector<IsSerializable> echo(Vector<IsSerializable> value)
+  Vector<MarkerTypeVector> echo(Vector<MarkerTypeVector> value)
       throws CollectionsTestServiceException;
 
-  List<IsSerializable> echoArraysAsList(List<IsSerializable> value)
+  List<MarkerTypeArraysAsList> echoArraysAsList(
+      List<MarkerTypeArraysAsList> value)
       throws CollectionsTestServiceException;
 }

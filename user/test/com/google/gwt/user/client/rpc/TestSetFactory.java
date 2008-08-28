@@ -23,36 +23,148 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Vector;
 
 /**
- * TODO: document me.
+ * Creates test collections.
  */
 public class TestSetFactory {
 
   /**
-   * TODO: document me.
+   * Base type for single-use marker types to independently check type parameter
+   * exposure in various collections.
    */
-  public static class SerializableClass implements IsSerializable {
-    IsSerializable elementRef;
+  public static class MarkerBase implements IsSerializable {
+    public String value;
 
-    IsSerializable[] elements;
-
-    public IsSerializable getElementRef() {
-      return elementRef;
+    public MarkerBase(String value) {
+      this.value = value;
     }
 
-    public IsSerializable[] getElements() {
-      return elements;
+    @Override
+    public boolean equals(Object obj) {
+      if (obj instanceof MarkerBase && obj.getClass() == this.getClass()) {
+        MarkerBase other = (MarkerBase) obj;
+        return value == other.value
+            || (value != null && value.equals(other.value));
+      }
+      return false;
     }
 
-    public void setElementRef(IsSerializable elementRef) {
-      this.elementRef = elementRef;
+    @Override
+    public int hashCode() {
+      return value.hashCode();
     }
 
-    public void setElements(IsSerializable[] elements) {
-      this.elements = elements;
+    @Override
+    public String toString() {
+      return value;
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeArrayList extends MarkerBase {
+    public MarkerTypeArrayList(String value) {
+      super(value);
+    }
+
+    MarkerTypeArrayList() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeArraysAsList extends MarkerBase {
+
+    public MarkerTypeArraysAsList(String value) {
+      super(value);
+    }
+
+    MarkerTypeArraysAsList() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeHashMap extends MarkerBase {
+
+    public MarkerTypeHashMap(String value) {
+      super(value);
+    }
+
+    MarkerTypeHashMap() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeHashSet extends MarkerBase {
+
+    public MarkerTypeHashSet(String value) {
+      super(value);
+    }
+
+    MarkerTypeHashSet() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeLinkedHashMap extends MarkerBase {
+
+    public MarkerTypeLinkedHashMap(String value) {
+      super(value);
+    }
+
+    MarkerTypeLinkedHashMap() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeLinkedHashSet extends MarkerBase {
+
+    public MarkerTypeLinkedHashSet(String value) {
+      super(value);
+    }
+
+    MarkerTypeLinkedHashSet() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
+  public static final class MarkerTypeVector extends MarkerBase {
+
+    public MarkerTypeVector(String value) {
+      super(value);
+    }
+
+    MarkerTypeVector() {
+      super(null);
     }
   }
 
@@ -92,94 +204,13 @@ public class TestSetFactory {
   }
 
   /**
-   * TODO: document me.
-   */
-  public static class SerializableList extends ArrayList implements
-      IsSerializable {
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public static class SerializableMap extends HashMap implements IsSerializable {
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public static class SerializableNode extends UnserializableNode implements
-      IsSerializable {
-
-    protected String data;
-
-    protected SerializableNode next;
-
-    public boolean equals(Object obj) {
-      if (this == obj) {
-        return true;
-      }
-
-      if (obj == null) {
-        return false;
-      }
-
-      if (!(obj instanceof SerializableNode)) {
-        return false;
-      }
-
-      SerializableNode other = (SerializableNode) obj;
-      if (data != other.data) {
-        if (data == null || !data.equals(other.data)) {
-          return false;
-        }
-      }
-
-      if (next != other.next) {
-        if (next == null || !next.equals(other.next)) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    public String getData() {
-      return data;
-    }
-
-    public SerializableNode getNext() {
-      return next;
-    }
-
-    public int hashCode() {
-      int hashValue = 0;
-      if (data != null) {
-        hashValue += data.hashCode();
-      }
-
-      if (next != null && next != this) {
-        hashValue += next.hashCode();
-      }
-
-      return hashValue;
-    }
-
-    public void setData(String data) {
-      this.data = data;
-    }
-
-    public void setNext(SerializableNode next) {
-      this.next = next;
-    }
-  }
-
-  /**
    * Tests that classes with a private no-arg constructor can be serialized.
    */
   public static class SerializablePrivateNoArg implements IsSerializable {
     private int value;
 
     public SerializablePrivateNoArg(int value) {
+      this();
       this.value = value;
     }
 
@@ -194,19 +225,6 @@ public class TestSetFactory {
   /**
    * TODO: document me.
    */
-  public static class SerializableSet extends HashSet implements IsSerializable {
-  }
-
-  /**
-   * TODO: document me.
-   */
-  public static class SerializableVector extends Vector implements
-      IsSerializable {
-  }
-
-  /**
-   * TODO: document me.
-   */
   public static class SerializableWithTwoArrays implements IsSerializable {
     String[] one;
     String[] two;
@@ -216,6 +234,22 @@ public class TestSetFactory {
    * TODO: document me.
    */
   public static class UnserializableNode {
+  }
+
+  public static ArrayList<MarkerTypeArrayList> createArrayList() {
+    ArrayList<MarkerTypeArrayList> list = new ArrayList<MarkerTypeArrayList>();
+    list.add(new MarkerTypeArrayList("foo"));
+    list.add(new MarkerTypeArrayList("bar"));
+    list.add(new MarkerTypeArrayList("baz"));
+    list.add(new MarkerTypeArrayList("bal"));
+    list.add(new MarkerTypeArrayList("w00t"));
+    return list;
+  }
+
+  public static List<MarkerTypeArraysAsList> createArraysAsList() {
+    return Arrays.asList(new MarkerTypeArraysAsList("foo"),
+        new MarkerTypeArraysAsList("bar"), new MarkerTypeArraysAsList("baz"),
+        new MarkerTypeArraysAsList("bal"), new MarkerTypeArraysAsList("w00t"));
   }
 
   public static Boolean[] createBooleanArray() {
@@ -236,6 +270,7 @@ public class TestSetFactory {
         new Character(Character.MAX_VALUE), new Character(Character.MIN_VALUE)};
   }
 
+  @SuppressWarnings("deprecation")
   public static Date[] createDateArray() {
     return new Date[] {
         new Date(1992 - 1900, 9, 18), new Date(1997 - 1900, 6, 6)};
@@ -253,45 +288,23 @@ public class TestSetFactory {
         new Float(Float.MAX_VALUE), new Float(Float.MIN_VALUE)};
   }
 
-  public static HashMap createHashMap() {
-    HashMap map = new HashMap();
-    map.put("SerializableNode", new SerializableNode());
-    map.put("SerializableList", new SerializableList());
-    map.put("SerializableMap", new SerializableMap());
-    map.put("SerializableSet", new SerializableSet());
-    map.put("SerializableVector", new SerializableVector());
+  public static HashMap<String, MarkerTypeHashMap> createHashMap() {
+    HashMap<String, MarkerTypeHashMap> map = new HashMap<String, MarkerTypeHashMap>();
+    map.put("foo", new MarkerTypeHashMap("foo"));
+    map.put("bar", new MarkerTypeHashMap("bar"));
+    map.put("baz", new MarkerTypeHashMap("baz"));
+    map.put("bal", new MarkerTypeHashMap("bal"));
+    map.put("w00t", new MarkerTypeHashMap("w00t"));
     return map;
   }
 
-  public static LinkedHashMap createLRULinkedHashMap() {
-    LinkedHashMap map = new LinkedHashMap(100, 1.0f, true);
-    map.put("SerializableNode", new SerializableNode());
-    map.put("SerializableList", new SerializableList());
-    map.put("SerializableMap", new SerializableMap());
-    map.put("SerializableSet", new SerializableSet());
-    map.put("SerializableVector", new SerializableVector());
-    map.get("SerializableMap");
-    return map;
-  }
-
-  public static LinkedHashMap createLinkedHashMap() {
-    LinkedHashMap map = new LinkedHashMap();
-    map.put("SerializableNode", new SerializableNode());
-    map.put("SerializableList", new SerializableList());
-    map.put("SerializableMap", new SerializableMap());
-    map.put("SerializableSet", new SerializableSet());
-    map.put("SerializableVector", new SerializableVector());
-    return map;
-  }
-
-  public static HashSet createHashSet() {
-    HashSet set = new HashSet();
-    set.add(new SerializableNode());
-    set.add(new SerializableList());
-    set.add(new SerializableMap());
-    set.add(new SerializableSet());
-    set.add(new SerializableVector());
-
+  public static HashSet<MarkerTypeHashSet> createHashSet() {
+    HashSet<MarkerTypeHashSet> set = new HashSet<MarkerTypeHashSet>();
+    set.add(new MarkerTypeHashSet("foo"));
+    set.add(new MarkerTypeHashSet("bar"));
+    set.add(new MarkerTypeHashSet("baz"));
+    set.add(new MarkerTypeHashSet("bal"));
+    set.add(new MarkerTypeHashSet("w00t"));
     return set;
   }
 
@@ -301,10 +314,41 @@ public class TestSetFactory {
         new Integer(Integer.MAX_VALUE), new Integer(Integer.MIN_VALUE)};
   }
 
+  public static LinkedHashMap<String, MarkerTypeLinkedHashMap> createLinkedHashMap() {
+    LinkedHashMap<String, MarkerTypeLinkedHashMap> map = new LinkedHashMap<String, MarkerTypeLinkedHashMap>();
+    map.put("foo", new MarkerTypeLinkedHashMap("foo"));
+    map.put("bar", new MarkerTypeLinkedHashMap("bar"));
+    map.put("baz", new MarkerTypeLinkedHashMap("baz"));
+    map.put("bal", new MarkerTypeLinkedHashMap("bal"));
+    map.put("w00t", new MarkerTypeLinkedHashMap("w00t"));
+    return map;
+  }
+
+  public static LinkedHashSet<MarkerTypeLinkedHashSet> createLinkedHashSet() {
+    LinkedHashSet<MarkerTypeLinkedHashSet> set = new LinkedHashSet<MarkerTypeLinkedHashSet>();
+    set.add(new MarkerTypeLinkedHashSet("foo"));
+    set.add(new MarkerTypeLinkedHashSet("bar"));
+    set.add(new MarkerTypeLinkedHashSet("baz"));
+    set.add(new MarkerTypeLinkedHashSet("bal"));
+    set.add(new MarkerTypeLinkedHashSet("w00t"));
+    return set;
+  }
+
   public static Long[] createLongArray() {
     return new Long[] {
         new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE),
         new Long(Long.MAX_VALUE), new Long(Long.MIN_VALUE)};
+  }
+
+  public static LinkedHashMap<String, MarkerTypeLinkedHashMap> createLRULinkedHashMap() {
+    LinkedHashMap<String, MarkerTypeLinkedHashMap> map = new LinkedHashMap<String, MarkerTypeLinkedHashMap>(
+        100, 1.0f, true);
+    map.put("foo", new MarkerTypeLinkedHashMap("foo"));
+    map.put("bar", new MarkerTypeLinkedHashMap("bar"));
+    map.put("baz", new MarkerTypeLinkedHashMap("baz"));
+    map.put("bal", new MarkerTypeLinkedHashMap("bal"));
+    map.put("w00t", new MarkerTypeLinkedHashMap("w00t"));
+    return map;
   }
 
   public static boolean[] createPrimitiveBooleanArray() {
@@ -381,13 +425,13 @@ public class TestSetFactory {
         "valueOf", "constructor", "__proto__"};
   }
 
-  public static Vector createVector() {
-    Vector vector = new Vector();
-    vector.add(new SerializableNode());
-    vector.add(new SerializableList());
-    vector.add(new SerializableMap());
-    vector.add(new SerializableSet());
-    vector.add(new SerializableVector());
+  public static Vector<MarkerTypeVector> createVector() {
+    Vector<MarkerTypeVector> vector = new Vector<MarkerTypeVector>();
+    vector.add(new MarkerTypeVector("foo"));
+    vector.add(new MarkerTypeVector("bar"));
+    vector.add(new MarkerTypeVector("baz"));
+    vector.add(new MarkerTypeVector("bal"));
+    vector.add(new MarkerTypeVector("w00t"));
     return vector;
   }
 
@@ -409,20 +453,6 @@ public class TestSetFactory {
     head.setRightChild(rightChild);
 
     return head;
-  }
-
-  static ArrayList createArrayList() {
-    ArrayList list = new ArrayList();
-    list.add(new SerializableNode());
-    list.add(new SerializableList());
-    list.add(new SerializableMap());
-    list.add(new SerializableSet());
-    list.add(new SerializableVector());
-    return list;
-  }
-
-  static List createArraysAsList() {
-    return Arrays.asList((byte) 0, (byte) 1, (byte) 2, (byte) 3);
   }
 
   static SerializableDoublyLinkedNode createComplexCyclicGraph() {
@@ -454,18 +484,6 @@ public class TestSetFactory {
     SerializableWithTwoArrays o = new SerializableWithTwoArrays();
     o.two = o.one = createStringArray();
     return o;
-  }
-
-  static SerializableClass createSerializableClass() {
-    SerializableClass cls = new SerializableClass();
-    IsSerializable[] elements = new IsSerializable[] {
-        new SerializableClass(), new SerializableClass(),
-        new SerializableClass(), new SerializableClass(),};
-
-    cls.setElements(elements);
-    cls.setElementRef(elements[3]);
-
-    return cls;
   }
 
   static SerializableDoublyLinkedNode createTrivialCyclicGraph() {

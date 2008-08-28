@@ -667,13 +667,14 @@ public final class String implements Comparable<String>, CharSequence,
         count++;
       }
     }
-    // all blank delimiters at the end are supposed to disappear if maxMatch ==0
+    // all blank delimiters at the end are supposed to disappear if maxMatch == 0
     if (maxMatch == 0) {
-      for (var i = out.length - 1; i >= 0; i--) {
-        if(out[i] != "") {
-          out.splice(i + 1,out.length - (i + 1));
-          break;
-        }
+      var lastNonEmpty = out.length;
+      while (lastNonEmpty > 0 && out[lastNonEmpty - 1] == "") {
+        --lastNonEmpty;
+      }
+      if (lastNonEmpty < out.length) {
+        out.splice(lastNonEmpty, out.length - lastNonEmpty);
       }
     }
     var jr = @java.lang.String::__createArray(I)(out.length);

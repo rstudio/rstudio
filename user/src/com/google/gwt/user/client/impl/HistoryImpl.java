@@ -40,6 +40,23 @@ public abstract class HistoryImpl {
     historyListeners.add(listener);
   }
 
+  /**
+   * Fires the {@link HistoryListener#onHistoryChanged(String)} event to all
+   * listeners with the given token.
+   */
+  public static void fireHistoryChangedImpl(String historyToken) {
+    // TODO: replace this copy when a more general solution to event handlers
+    // wanting to remove themselves from the listener list is implemented.
+
+    // This is necessary to avoid a CurrentModificationException in hosted
+    // mode, as the listeners may try to remove themselves from the list while
+    // it is being iterated, such as in HistoryTest.
+    HistoryListener[] listenersToInvoke = historyListeners.toArray(new HistoryListener[historyListeners.size()]);
+    for (HistoryListener listener : listenersToInvoke) {
+      listener.onHistoryChanged(historyToken);
+    }
+  }
+
   public static native String getToken() /*-{
     return $wnd.__gwt_historyToken || "";
   }-*/;
@@ -72,19 +89,6 @@ public abstract class HistoryImpl {
       fireHistoryChangedImpl(historyToken);
     } catch (Throwable e) {
       handler.onUncaughtException(e);
-    }
-  }
-
-  private static void fireHistoryChangedImpl(String historyToken) {
-    // TODO: replace this copy when a more general solution to event handlers
-    // wanting to remove themselves from the listener list is implemented.
-
-    // This is necessary to avoid a CurrentModificationException in hosted
-    // mode, as the listeners may try to remove themselves from the list while
-    // it is being iterated, such as in HistoryTest.
-    HistoryListener[] listenersToInvoke = historyListeners.toArray(new HistoryListener[historyListeners.size()]);
-    for (HistoryListener listener : listenersToInvoke) {
-      listener.onHistoryChanged(historyToken);
     }
   }
 

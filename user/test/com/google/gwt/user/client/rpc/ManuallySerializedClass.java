@@ -29,7 +29,7 @@ public class ManuallySerializedClass {
 
   private int c = 3;
 
-  private Object obj = "hello";
+  private String str = "hello";
 
   public int getA() {
     return a;
@@ -43,8 +43,8 @@ public class ManuallySerializedClass {
     return c;
   }
 
-  public Object getObj() {
-    return obj;
+  public String getString() {
+    return str;
   }
 
   public void setA(int a) {
@@ -59,7 +59,7 @@ public class ManuallySerializedClass {
     this.c = c;
   }
 
-  public void setObj(Object obj) {
-    this.obj = obj;
+  public void setString(String str) {
+    this.str = str;
   }
 }

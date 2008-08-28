@@ -54,18 +54,6 @@ public class HostedTest extends GWTTestCase {
     }
   }
 
-  private static class TestGenericList extends AbstractList<Object> {
-    @Override
-    public Object get(int index) {
-      return this;
-    }
-
-    @Override
-    public int size() {
-      return 42;
-    }
-  }
-
   private static class TestCovariantChild extends TestCovariantSuper {
     @Override
     public native String foo(String val) /*-{
@@ -94,6 +82,18 @@ public class HostedTest extends GWTTestCase {
     public native String foo() /*-{
       return "foo";
     }-*/;
+  }
+
+  private static class TestGenericList extends AbstractList<Object> {
+    @Override
+    public Object get(int index) {
+      return this;
+    }
+
+    @Override
+    public int size() {
+      return 42;
+    }
   }
 
   static String sFoo(String s) {

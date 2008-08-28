@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
@@ -452,13 +453,15 @@ public class SerializableTypeOracleBuilder {
    * Returns <code>true</code> if the field qualifies for serialization
    * without considering its type.
    */
-  static boolean shouldConsiderForSerialization(TreeLogger logger, JField field) {
+  static boolean shouldConsiderForSerialization(TreeLogger logger,
+      boolean suppressNonStaticFinalFieldWarnings, JField field) {
     if (field.isStatic() || field.isTransient()) {
       return false;
     }
 
     if (field.isFinal()) {
-      logger.branch(TreeLogger.DEBUG, "Field '" + field.toString()
+      logger.branch(suppressNonStaticFinalFieldWarnings ? TreeLogger.DEBUG
+          : TreeLogger.WARN, "Field '" + field.toString()
           + "' will not be serialized because it is final", null);
       return false;
     }
@@ -577,6 +580,12 @@ public class SerializableTypeOracleBuilder {
 
   private final Map<JClassType, TreeLogger> rootTypes = new LinkedHashMap<JClassType, TreeLogger>();
 
+  /**
+   * If <code>true</code> we will not warn if a serializable type contains a
+   * non-static final field. We warn because these fields are not serialized.
+   */
+  private final boolean suppressNonStaticFinalFieldWarnings;
+
   private final TypeConstrainer typeConstrainer;
   private TypeFilter typeFilter = DEFAULT_TYPE_FILTER;
 
@@ -602,12 +611,14 @@ public class SerializableTypeOracleBuilder {
    * Constructs a builder.
    * 
    * @param logger
+   * @param propertyOracle
    * @param typeOracle
    * 
    * @throws UnableToCompleteException if we fail to find one of our special
    *           types
    */
-  public SerializableTypeOracleBuilder(TreeLogger logger, TypeOracle typeOracle)
+  public SerializableTypeOracleBuilder(TreeLogger logger,
+      PropertyOracle propertyOracle, TypeOracle typeOracle)
       throws UnableToCompleteException {
     this.typeOracle = typeOracle;
     typeConstrainer = new TypeConstrainer(typeOracle);
@@ -619,6 +630,9 @@ public class SerializableTypeOracleBuilder {
       logger.log(TreeLogger.ERROR, null, e);
       throw new UnableToCompleteException();
     }
+
+    suppressNonStaticFinalFieldWarnings = Shared.shouldSuppressNonStaticFinalFieldWarnings(
+        logger, propertyOracle);
   }
 
   public void addRootType(TreeLogger logger, JType type) {
@@ -907,34 +921,31 @@ public class SerializableTypeOracleBuilder {
         "Analyzing component type:", null);
     Set<JClassType> instantiableTypes = new HashSet<JClassType>();
 
-    boolean succeeded = checkTypeInstantiable(branch, array.getComponentType(),
-        isSpeculative, TypePaths.createArrayComponentPath(array, path),
-        instantiableTypes);
-    if (succeeded && leafClass != null) {
-      TreeLogger covariantArrayLogger = logger.branch(TreeLogger.DEBUG,
-          "Covariant array types");
+    boolean succeeded = checkTypeInstantiable(branch, leafType, isSpeculative,
+        TypePaths.createArrayComponentPath(array, path), instantiableTypes);
+    if (succeeded) {
+      if (leafClass == null) {
+        assert leafType.isPrimitive() != null;
+        markArrayTypesInstantiable(leafType, array.getRank(), path);
+      } else {
+        TreeLogger covariantArrayLogger = logger.branch(TreeLogger.DEBUG,
+            "Covariant array types");
 
-      /*
-       * Compute covariant arrays for arrays of reference types.
-       */
-      for (JClassType instantiableType : TypeHierarchyUtils.getAllTypesBetweenRootTypeAndLeaves(
-          leafClass, instantiableTypes)) {
-        if (!isAccessibleToSerializer(instantiableType)) {
-          // Skip types that are not accessible from a serializer
-          continue;
-        }
+        /*
+         * Compute covariant arrays for arrays of reference types.
+         */
+        for (JClassType instantiableType : TypeHierarchyUtils.getAllTypesBetweenRootTypeAndLeaves(
+            leafClass, instantiableTypes)) {
+          if (!isAccessibleToSerializer(instantiableType)) {
+            // Skip types that are not accessible from a serializer
+            continue;
+          }
 
-        covariantArrayLogger.branch(
-            TreeLogger.DEBUG,
-            getArrayType(typeOracle, array.getRank(), instantiableType).getParameterizedQualifiedSourceName());
+          covariantArrayLogger.branch(
+              TreeLogger.DEBUG,
+              getArrayType(typeOracle, array.getRank(), instantiableType).getParameterizedQualifiedSourceName());
 
-        for (int rank = 1; rank <= array.getRank(); ++rank) {
-          JArrayType covariantArray = getArrayType(typeOracle, rank,
-              instantiableType);
-
-          TypeInfoComputed covariantArrayTic = getTypeInfoComputed(
-              covariantArray, path);
-          covariantArrayTic.setInstantiable(true);
+          markArrayTypesInstantiable(instantiableType, array.getRank(), path);
         }
       }
     }
@@ -973,7 +984,8 @@ public class SerializableTypeOracleBuilder {
               + "' that qualify for serialization", null);
 
       for (JField field : fields) {
-        if (!shouldConsiderForSerialization(localLogger, field)) {
+        if (!shouldConsiderForSerialization(localLogger,
+            suppressNonStaticFinalFieldWarnings, field)) {
           continue;
         }
 
@@ -1101,10 +1113,14 @@ public class SerializableTypeOracleBuilder {
           originalType);
       TypeInfoComputed tic = getTypeInfoComputed(candidate, subtypePath);
       if (tic.isDone()) {
-        anySubtypes |= tic.isInstantiable();
+        if (tic.isInstantiable()) {
+          anySubtypes = true;
+          instSubtypes.add(candidate);
+        }
         continue;
       } else if (tic.isPendingInstantiable()) {
         anySubtypes = true;
+        instSubtypes.add(candidate);
         continue;
       }
       tic.setPendingInstantiable();
@@ -1182,8 +1198,8 @@ public class SerializableTypeOracleBuilder {
       }
     }
 
-    TypePath path = TypePaths.createTypeArgumentPath(parent, baseType, paramIndex,
-        typeArg);
+    TypePath path = TypePaths.createTypeArgumentPath(parent, baseType,
+        paramIndex, typeArg);
     int exposure = getTypeParameterExposure(baseType, paramIndex);
     switch (exposure) {
       case TypeParameterExposureComputer.EXPOSURE_DIRECT: {
@@ -1356,6 +1372,21 @@ public class SerializableTypeOracleBuilder {
 
     if (printWriter != null) {
       printWriter.flush();
+    }
+  }
+
+  /**
+   * Mark arrays of <code>leafType</code> as instantiable, for arrays of
+   * dimension up to <code>maxRank</code>.
+   */
+  private void markArrayTypesInstantiable(JType leafType, int maxRank,
+      TypePath path) {
+    for (int rank = 1; rank <= maxRank; ++rank) {
+      JArrayType covariantArray = getArrayType(typeOracle, rank, leafType);
+
+      TypeInfoComputed covariantArrayTic = getTypeInfoComputed(covariantArray,
+          path);
+      covariantArrayTic.setInstantiable(true);
     }
   }
 

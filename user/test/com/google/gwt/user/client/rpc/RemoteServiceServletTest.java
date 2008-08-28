@@ -56,7 +56,9 @@ public class RemoteServiceServletTest extends GWTTestCase {
   public void testAlternateStatusCode() {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
     ((ServiceDefTarget) service).setServiceEntryPoint(GWT.getModuleBaseURL()
-        + "404");
+        + "servlettest/404");
+
+    delayTestFinish(TEST_DELAY);
 
     service.test(new AsyncCallback<Void>() {
 
@@ -71,7 +73,7 @@ public class RemoteServiceServletTest extends GWTTestCase {
       }
 
       public void onSuccess(Void result) {
-        fail();
+        fail("Should not have succeeded");
       }
     });
   }
