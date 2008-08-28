@@ -36,13 +36,17 @@ public class BrowserWidgetMoz extends BrowserWidget {
 
   private class ExternalObjectImpl implements ExternalObject {
 
-    public boolean gwtOnLoad(int scriptObject, String moduleName) {
+    public boolean gwtOnLoad(int scriptObject, String moduleName, String version) {
       try {
         if (moduleName == null) {
           // Indicates one or more modules are being unloaded.
           //
           handleUnload(scriptObject);
           return true;
+        }
+
+        if (!validHostedHtmlVersion(version)) {
+          return false;
         }
 
         Object key = new Integer(scriptObject);

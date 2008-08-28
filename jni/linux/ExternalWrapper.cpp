@@ -68,6 +68,11 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
     moduleName = JS_ValueToString(cx, argv[1]);
   }
 
+  JSString* version = 0;
+  if (argc > 2 && argv[2] != JSVAL_NULL && argv[2] != JSVAL_VOID) {
+    version = JS_ValueToString(cx, argv[2]);
+  }
+
   nsCOMPtr<nsIScriptGlobalObject> scriptGlobal(0);
   if (scriptWindow) {
     nsCOMPtr<nsIXPConnect> xpConnect = do_GetService(nsIXPConnect::GetCID());
@@ -93,6 +98,19 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
     tracer.log("null module name");
   }
 
+  jstring jVersion(0);
+  if (version) {
+    jVersion = savedJNIEnv->NewString(JS_GetStringChars(version),
+        JS_GetStringLength(version));
+    if (!jVersion || savedJNIEnv->ExceptionCheck()) {
+      tracer.setFail("can't get module name in Java string");
+      return JS_FALSE;
+    }
+    tracer.log("version=%s", JS_GetStringBytes(version));
+  } else {
+    tracer.log("null version");
+  }
+
   jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
   jclass objClass = savedJNIEnv->GetObjectClass(externalObject);
   if (!objClass || savedJNIEnv->ExceptionCheck()) {
@@ -101,7 +119,7 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
   }
 
   jmethodID methodID = savedJNIEnv->GetMethodID(objClass, "gwtOnLoad",
-      "(ILjava/lang/String;)Z");
+      "(ILjava/lang/String;Ljava/lang/String;)Z");
   if (!methodID || savedJNIEnv->ExceptionCheck()) {
     tracer.setFail("can't get gwtOnLoad method");
     return JS_FALSE;
@@ -110,7 +128,7 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
   tracer.log("scriptGlobal=%08x", unsigned(scriptGlobal.get()));
 
   jboolean result = savedJNIEnv->CallBooleanMethod(externalObject, methodID,
-      NS_REINTERPRET_CAST(jint, scriptGlobal.get()), jModuleName);
+      NS_REINTERPRET_CAST(jint, scriptGlobal.get()), jModuleName, jVersion);
   if (savedJNIEnv->ExceptionCheck()) {
     tracer.setFail("LowLevelMoz.ExternalObject.gwtOnLoad() threw an exception");
     return JS_FALSE;

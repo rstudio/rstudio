@@ -48,12 +48,16 @@ public class BrowserWidgetSaf extends BrowserWidget {
       return this;
     }
 
-    public boolean gwtOnLoad(int scriptObject, String moduleName) {
+    public boolean gwtOnLoad(int scriptObject, String moduleName, String version) {
       try {
         if (moduleName == null) {
           // Indicates one or more modules are being unloaded.
           handleUnload(scriptObject);
           return true;
+        }
+
+        if (!validHostedHtmlVersion(version)) {
+          return false;
         }
 
         // Attach a new ModuleSpace to make it programmable.
@@ -108,7 +112,7 @@ public class BrowserWidgetSaf extends BrowserWidget {
     }
   }
 
-  private static final class GwtOnLoad implements DispatchMethod {
+  private final class GwtOnLoad implements DispatchMethod {
 
     public int invoke(int jsContext, int jsthis, int[] jsargs, int[] exception) {
       int jsFalse = LowLevelSaf.toJsBoolean(jsContext, false);
@@ -124,6 +128,7 @@ public class BrowserWidgetSaf extends BrowserWidget {
         }
 
         if (jsargs.length < 2) {
+          reportIncorrectGwtOnLoadInvocation(jsargs.length);
           return jsFalse;
         }
 
@@ -136,8 +141,19 @@ public class BrowserWidgetSaf extends BrowserWidget {
         }
         String moduleName = LowLevelSaf.toString(jsContext, jsargs[1]);
 
+        /*
+         * gwtOnLoad may or may not be called with a third argument indicating
+         * which version of GWT the JavaScript bootstrap sequence assumes that
+         * its talking to.
+         */
+        String version = null;
+        if (jsargs.length == 3 && !LowLevelSaf.isJsNull(jsContext, jsargs[2])
+            && LowLevelSaf.isJsString(jsContext, jsargs[2])) {
+          version = LowLevelSaf.toString(jsContext, jsargs[2]);
+        }
+
         boolean result = ((ExternalObject) thisObj).gwtOnLoad(jsargs[0],
-            moduleName);
+            moduleName, version);
         // Native code eats the same ref it gave us.
         return LowLevelSaf.toJsBoolean(jsContext, result);
       } catch (Throwable e) {

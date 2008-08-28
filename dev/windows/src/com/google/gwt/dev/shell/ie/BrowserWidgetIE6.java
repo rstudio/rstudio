@@ -49,14 +49,19 @@ public class BrowserWidgetIE6 extends BrowserWidget {
      * @param moduleName the name of the module to load, null if this is being
      *          unloaded
      */
-    public boolean gwtOnLoad(IDispatch frameWnd, String moduleName) {
+    public boolean gwtOnLoad(IDispatch frameWnd, String moduleName,
+        String version) {
       try {
         if (moduleName == null) {
           // Indicates one or more modules are being unloaded.
           handleUnload(frameWnd);
           return true;
         }
-        
+
+        if (!validHostedHtmlVersion(version)) {
+          throw new HResultException(COM.E_INVALIDARG);
+        }
+
         // set the module ID
         int moduleID = ++nextModuleID;
         Integer key = new Integer(moduleID);
@@ -121,11 +126,17 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       } else if (dispId == 1) {
         if ((flags & COM.DISPATCH_METHOD) != 0) {
           try {
+            if (params.length < 2) {
+              reportIncorrectGwtOnLoadInvocation(params.length);
+              throw new HResultException(COM.E_INVALIDARG);
+            }
             IDispatch frameWnd = (params[0].getType() == COM.VT_DISPATCH)
                 ? params[0].getDispatch() : null;
             String moduleName = (params[1].getType() == COM.VT_BSTR)
                 ? params[1].getString() : null;
-            boolean success = gwtOnLoad(frameWnd, moduleName);
+            String version = (params.length > 2 && params[2].getType() == COM.VT_BSTR)
+                ? params[2].getString() : null;
+            boolean success = gwtOnLoad(frameWnd, moduleName, version);
 
             // boolean return type
             return new Variant(success);
@@ -136,7 +147,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
           // property get on the method itself
           try {
             Method gwtOnLoadMethod = getClass().getMethod("gwtOnLoad",
-                new Class[] {IDispatch.class, String.class});
+                new Class[] {IDispatch.class, String.class, String.class});
             MethodAdaptor methodAdaptor = new MethodAdaptor(gwtOnLoadMethod);
             IDispatchImpl funcObj = new MethodDispatch(null, methodAdaptor);
             IDispatch disp = new IDispatch(funcObj.getAddress());
@@ -170,7 +181,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
     OleAutomation window = null;
     try {
       window = new OleAutomation(frameWnd);
-      int[] dispID = window.getIDsOfNames(new String[] { propName });
+      int[] dispID = window.getIDsOfNames(new String[] {propName});
       if (dispID == null) {
         throw new RuntimeException("No such property " + propName);
       }
@@ -203,7 +214,7 @@ public class BrowserWidgetIE6 extends BrowserWidget {
     OleAutomation window = null;
     try {
       window = new OleAutomation(frameWnd);
-      int[] dispID = window.getIDsOfNames(new String[] { propName });
+      int[] dispID = window.getIDsOfNames(new String[] {propName});
       if (dispID == null) {
         throw new RuntimeException("No such property " + propName);
       }

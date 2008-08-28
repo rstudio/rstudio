@@ -27,11 +27,6 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import java.util.Locale;
 
 class Shared {
-  /**
-   * Property used to control whether or not the RPC system will enforce the
-   * versioning scheme or not.
-   */
-  static final String RPC_PROP_ENFORCE_TYPE_VERSIONING = "gwt.enforceRPCTypeVersioning";
 
   /**
    * Property used to control whether or not the RPC system will emit warnings
@@ -55,16 +50,6 @@ class Shared {
 
   static String getStreamWriteMethodNameFor(JType type) {
     return "write" + getCallSuffix(type);
-  }
-
-  /**
-   * Returns <code>true</code> if the generated code should enforce type
-   * versioning.
-   */
-  static boolean shouldEnforceTypeVersioning(TreeLogger logger,
-      PropertyOracle propertyOracle) {
-    return getBooleanProperty(logger, propertyOracle,
-        RPC_PROP_ENFORCE_TYPE_VERSIONING, true);
   }
 
   /**

@@ -51,20 +51,23 @@ package com.google.gwt.user.client.rpc;
  */
 public final class IncompatibleRemoteServiceException extends RuntimeException
     implements IsSerializable {
+
+  private static final String DEFAULT_MESSAGE = "This application is out of "
+      + "date, please click the refresh button on your browser.";
+
   /**
    * Constructor used by RPC serialization. Note that the client side code will
    * always get a generic error message.
    */
   public IncompatibleRemoteServiceException() {
-    super(
-        "This application is out of date, please click the refresh button on your browser");
+    super(DEFAULT_MESSAGE);
   }
 
   /**
    * Constructs an instance with the specified message.
    */
   public IncompatibleRemoteServiceException(String msg) {
-    super(msg);
+    super(DEFAULT_MESSAGE + " ( " + msg + " )");
   }
 
   /**

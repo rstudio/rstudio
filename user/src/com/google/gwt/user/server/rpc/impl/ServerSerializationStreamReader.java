@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.server.rpc.impl;
 
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStreamReader;
 import com.google.gwt.user.server.rpc.RPC;
@@ -381,23 +382,27 @@ public final class ServerSerializationStreamReader extends
 
     super.prepareToRead(encodedTokens);
 
+    // Check the RPC version number sent by the client
+    if (getVersion() != SERIALIZATION_STREAM_VERSION) {
+      throw new IncompatibleRemoteServiceException("Expecting version "
+          + SERIALIZATION_STREAM_VERSION + " from client, got " + getVersion()
+          + ".");
+    }
+
     // Read the type name table
     //
     deserializeStringTable();
 
-    // If this stream encodes resource file information, read it and get a
-    // SerializationPolicy
-    if (hasSerializationPolicyInfo()) {
-      String moduleBaseURL = readString();
-      String strongName = readString();
-      if (serializationPolicyProvider != null) {
-        serializationPolicy = serializationPolicyProvider.getSerializationPolicy(
-            moduleBaseURL, strongName);
+    // Write the serialization policy info
+    String moduleBaseURL = readString();
+    String strongName = readString();
+    if (serializationPolicyProvider != null) {
+      serializationPolicy = serializationPolicyProvider.getSerializationPolicy(
+          moduleBaseURL, strongName);
 
-        if (serializationPolicy == null) {
-          throw new NullPointerException(
-              "serializationPolicyProvider.getSerializationPolicy()");
-        }
+      if (serializationPolicy == null) {
+        throw new NullPointerException(
+            "serializationPolicyProvider.getSerializationPolicy()");
       }
     }
   }
@@ -646,12 +651,8 @@ public final class ServerSerializationStreamReader extends
       throws SerializationException {
     String clientTypeSignature = serializedInstRef.getSignature();
     if (clientTypeSignature.length() == 0) {
-      if (shouldEnforceTypeVersioning()) {
-        throw new SerializationException("Missing type signature for "
-            + instanceClass.getName());
-      }
-
-      return;
+      throw new SerializationException("Missing type signature for "
+          + instanceClass.getName());
     }
 
     String serverTypeSignature = SerializabilityUtil.getSerializationSignature(instanceClass);

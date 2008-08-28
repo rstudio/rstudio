@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,17 +22,12 @@ package com.google.gwt.user.client.rpc.impl;
  */
 public abstract class AbstractSerializationStream {
 
-  public static final int SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING = 1;
-  public static final int SERIALIZATION_STREAM_VERSION = 3;
-
   /**
-   * The last legacy stream version which does not use a
-   * {@link com.google.gwt.user.server.rpc.SerializationPolicy SerializationPolicy}.
+   * This is the only supported RPC protocol version.
    */
-  public static final int SERIALIZATION_STREAM_VERSION_WITHOUT_SERIALIZATION_POLICY = 2;
+  public static final int SERIALIZATION_STREAM_VERSION = 4;
 
   private int flags = 0;
-
   private int version = SERIALIZATION_STREAM_VERSION;
 
   public final void addFlags(int flags) {
@@ -49,21 +44,6 @@ public abstract class AbstractSerializationStream {
 
   public final void setFlags(int flags) {
     this.flags = flags;
-  }
-
-  public final boolean shouldEnforceTypeVersioning() {
-    return (flags & SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING) == 0;
-  }
-
-  /**
-   * Returns <code>true</code> if this stream encodes information which can be
-   * used to lookup a {@link com.google.gwt.user.server.rpc.SerializationPolicy}.
-   * 
-   * @return <code>true</code> if this stream encodes information which can be
-   *         used to lookup a <code>SerializationPolicy</code>
-   */
-  protected boolean hasSerializationPolicyInfo() {
-    return getVersion() > SERIALIZATION_STREAM_VERSION_WITHOUT_SERIALIZATION_POLICY;
   }
 
   protected final void setVersion(int version) {

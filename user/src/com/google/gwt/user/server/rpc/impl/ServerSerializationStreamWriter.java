@@ -568,11 +568,7 @@ public final class ServerSerializationStreamWriter extends
     assert (instance != null);
 
     Class<?> clazz = getClassForSerialization(instance);
-    if (shouldEnforceTypeVersioning()) {
-      return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
-    } else {
-      return SerializabilityUtil.getSerializedTypeName(clazz);
-    }
+    return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
   }
 
   @Override

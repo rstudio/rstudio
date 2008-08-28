@@ -18,6 +18,7 @@ package com.google.gwt.user.client.rpc.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.UnsafeNativeLong;
+import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 
 /**
@@ -56,6 +57,13 @@ public final class ClientSerializationStreamReader extends
     results = eval(encoded);
     index = getLength(results);
     super.prepareToRead(encoded);
+
+    if (getVersion() != SERIALIZATION_STREAM_VERSION) {
+      throw new IncompatibleRemoteServiceException("Expecting version "
+          + SERIALIZATION_STREAM_VERSION + " from server, got " + getVersion()
+          + ".");
+    }
+
     stringTable = readJavaScriptObject();
   }
 

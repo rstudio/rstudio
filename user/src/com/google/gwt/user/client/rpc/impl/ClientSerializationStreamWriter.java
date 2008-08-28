@@ -48,20 +48,6 @@ public final class ClientSerializationStreamWriter extends
   private final Serializer serializer;
 
   /**
-   * Constructs a <code>ClientSerializationStreamWriter</code> that does not
-   * use a serialization policy file.
-   * 
-   * @param serializer the {@link Serializer} to use
-   */
-  public ClientSerializationStreamWriter(Serializer serializer) {
-    this.serializer = serializer;
-    this.moduleBaseURL = null;
-    this.serializationPolicyStrongName = null;
-    // Override the default version if no policy info is given.
-    setVersion(SERIALIZATION_STREAM_VERSION_WITHOUT_SERIALIZATION_POLICY);
-  }
-
-  /**
    * Constructs a <code>ClientSerializationStreamWriter</code> using the
    * specified module base URL and the serialization policy.
    * 
@@ -85,10 +71,9 @@ public final class ClientSerializationStreamWriter extends
     super.prepareToWrite();
     encodeBuffer = new StringBuffer();
 
-    if (hasSerializationPolicyInfo()) {
-      writeString(moduleBaseURL);
-      writeString(serializationPolicyStrongName);
-    }
+    // Write serialization policy info
+    writeString(moduleBaseURL);
+    writeString(serializationPolicyStrongName);
   }
 
   @Override

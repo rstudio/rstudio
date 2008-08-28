@@ -36,7 +36,6 @@ import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamReader;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
@@ -139,8 +138,6 @@ class ProxyCreator {
     stob.addRootType(logger, icseType);
   }
 
-  private boolean enforceTypeVersioning;
-
   private JClassType serviceIntf;
 
   {
@@ -235,9 +232,6 @@ class ProxyCreator {
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger, sto, context,
         sto.getTypeSerializerQualifiedName(serviceIntf));
     tsc.realize(logger);
-
-    enforceTypeVersioning = Shared.shouldEnforceTypeVersioning(logger,
-        context.getPropertyOracle());
 
     String serializationPolicyStrongName = writeSerializationPolicyFile(logger,
         context, sto);
@@ -360,12 +354,6 @@ class ProxyCreator {
     if (needsTryCatchBlock) {
       w.println("try {");
       w.indent();
-    }
-
-    if (!shouldEnforceTypeVersioning()) {
-      w.println(streamWriterName + ".addFlags("
-          + ClientSerializationStreamReader.class.getName()
-          + ".SERIALIZATION_STREAM_FLAGS_NO_TYPE_VERSIONING);");
     }
 
     // Write the method name
@@ -539,10 +527,6 @@ class ProxyCreator {
     composerFactory.addImplementedInterface(serviceAsync.getErasedType().getQualifiedSourceName());
 
     return composerFactory.createSourceWriter(ctx, printWriter);
-  }
-
-  private boolean shouldEnforceTypeVersioning() {
-    return enforceTypeVersioning;
   }
 
   private String writeSerializationPolicyFile(TreeLogger logger,

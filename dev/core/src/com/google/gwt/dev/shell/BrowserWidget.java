@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -152,6 +152,11 @@ public abstract class BrowserWidget extends Composite {
       }
     }
   }
+
+  /**
+   * The version number that should be passed into gwtOnLoad.
+   */
+  private static final String EXPECTED_GWT_ONLOAD_VERSION = "1.5";
 
   public static void launchExternalBrowser(TreeLogger logger, String location) {
     // check GWT_EXTERNAL_BROWSER first, it overrides everything else
@@ -361,6 +366,23 @@ public abstract class BrowserWidget extends Composite {
   }
 
   /**
+   * Report that gwtOnLoad was called with the wrong number of
+   * arguments.
+   * 
+   * @param numArgs number of arguments supplied
+   */
+  protected void reportIncorrectGwtOnLoadInvocation(int numArgs) {
+    getHost().getLogger().log(
+        TreeLogger.ERROR,
+        "Not enough arguments ("
+        + numArgs
+        + ") passed to external.gwtOnLoad(), expected (3); "
+        + "your hosted mode bootstrap file may be out of date; "
+        + "if you are using -noserver try recompiling and redeploying "
+        + "your app");
+  }
+
+  /**
    * Unload the specified module.
    * 
    * @param moduleSpace a ModuleSpace instance to unload.
@@ -371,6 +393,31 @@ public abstract class BrowserWidget extends Composite {
     moduleSpace.dispose();
     logger.log(TreeLogger.SPAM, "Unloading module " + moduleName + " (id "
         + key.toString() + ")", null);
+  }
+
+  /**
+   * Validate that the supplied hosted.html version matches.
+   * 
+   * This is to detect cases where users upgrade to a new version
+   * but forget to update the generated hosted.html file.
+   * 
+   * @param version version supplied by hosted.html file
+   * @return true if the version is valid, false otherwise
+   */
+  protected boolean validHostedHtmlVersion(String version) {
+    if (!EXPECTED_GWT_ONLOAD_VERSION.equals(version)) {
+      getHost().getLogger().log(
+          TreeLogger.ERROR,
+          "Invalid version number \""
+              + version
+              + "\" passed to external.gwtOnLoad(), expected \""
+              + EXPECTED_GWT_ONLOAD_VERSION
+              + "\"; your hosted mode bootstrap file may be out of date; "
+              + "if you are using -noserver try recompiling and redeploying "
+              + "your app");
+     return false;
+    }
+    return true;
   }
 
   private Composite buildLocationBar(Composite parent) {
