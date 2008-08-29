@@ -18,11 +18,8 @@ package com.google.gwt.user.client.rpc.core.java.util;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
-import com.google.gwt.user.client.rpc.core.java.util.Map_CustomFieldSerializerBase;
 
 import java.util.LinkedHashMap;
-import java.util.Set;
-import java.util.Map.Entry;
 
 /**
  * Custom field serializer for {@link java.util.LinkedHashMap}, which uses
@@ -49,5 +46,5 @@ public final class LinkedHashMap_CustomFieldSerializer {
 
   private static native boolean getAccessOrder(LinkedHashMap instance) /*-{
     return instance.@java.util.LinkedHashMap::accessOrder;
-   }-*/;
+  }-*/;
 }

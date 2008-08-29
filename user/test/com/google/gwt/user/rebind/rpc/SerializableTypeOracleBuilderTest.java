@@ -234,9 +234,9 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   private static SerializableTypeOracleBuilder createSerializableTypeOracleBuilder(
       TreeLogger logger, TypeOracle to) throws UnableToCompleteException {
-    StaticPropertyOracle propertyOracle = new StaticPropertyOracle();
-    // PropertyOracle has no values.
-    propertyOracle.setPropertyValues(new Property[0], new String[0]);
+    // Make an empty property oracle.
+    StaticPropertyOracle propertyOracle = new StaticPropertyOracle(
+        new Property[0], new String[0]);
     return new SerializableTypeOracleBuilder(logger, propertyOracle, to);
   }
 

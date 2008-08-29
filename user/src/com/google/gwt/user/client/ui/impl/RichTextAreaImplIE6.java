@@ -48,8 +48,8 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
       var elem = _this.@com.google.gwt.user.client.ui.impl.RichTextAreaImpl::elem;
       var doc = elem.contentWindow.document;
       if (!doc.body) {
-      	// Retry in 50 ms. Faster would run the risk of pegging the CPU. Slower
-      	// would increase the probability of a user-visible delay.
+        // Retry in 50 ms. Faster would run the risk of pegging the CPU. Slower
+        // would increase the probability of a user-visible delay.
         setTimeout(arguments.callee, 50);
         return;
       }
