@@ -36,6 +36,11 @@ public final class MockAbstractResource extends AbstractResource {
   }
 
   @Override
+  public long getLastModified() {
+    return 0;
+  }
+
+  @Override
   public String getLocation() {
     return this.mockClassPathEntry.pathRoot + "/" + path;
   }

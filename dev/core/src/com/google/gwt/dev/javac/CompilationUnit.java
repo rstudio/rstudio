@@ -149,6 +149,11 @@ public abstract class CompilationUnit {
   public abstract String getDisplayLocation();
 
   /**
+   * Returns the last modified time of the compilation unit.
+   */
+  public abstract long getLastModified();
+
+  /**
    * Returns the source code for this unit.
    */
   public abstract String getSource();

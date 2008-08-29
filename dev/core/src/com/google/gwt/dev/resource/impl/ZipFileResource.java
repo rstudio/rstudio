@@ -41,8 +41,16 @@ public class ZipFileResource extends AbstractResource {
   }
 
   @Override
+  public long getLastModified() {
+    // Questionable: maybe we should do something with the jar's time instead.
+    return zipEntry.getTime();
+  }
+
+  @Override
   public String getLocation() {
+    // CHECKSTYLE_OFF
     String proto = zipEntry instanceof JarEntry ? "jar:" : "zip:";
+    // CHECKSTYLE_ON
     return proto + classPathEntry.getLocation() + "!/" + getPath();
   }
 

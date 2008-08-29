@@ -89,6 +89,11 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
 
     @Override
+    public long getLastModified() {
+      return resource.getLastModified();
+    }
+
+    @Override
     public String getLocation() {
       return resource.getLocation();
     }

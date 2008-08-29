@@ -29,6 +29,11 @@ public abstract class JavaSourceFile {
   }
 
   /**
+   * Returns the last modified time of the compilation unit.
+   */
+  public abstract long getLastModified();
+
+  /**
    * Returns the user-relevant location of the source file. No programmatic
    * assumptions should be made about the return value.
    */

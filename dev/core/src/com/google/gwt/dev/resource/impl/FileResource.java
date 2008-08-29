@@ -47,6 +47,11 @@ public class FileResource extends AbstractResource {
   }
 
   @Override
+  public long getLastModified() {
+    return file.lastModified();
+  }
+
+  @Override
   public String getLocation() {
     return file.getAbsoluteFile().toURI().toString();
   }

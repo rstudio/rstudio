@@ -33,6 +33,11 @@ public abstract class MockResource extends Resource {
   }
 
   @Override
+  public long getLastModified() {
+    return 0;
+  }
+
+  @Override
   public String getLocation() {
     return "/mock/" + path;
   }

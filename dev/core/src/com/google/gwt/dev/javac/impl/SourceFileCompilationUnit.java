@@ -36,6 +36,11 @@ public class SourceFileCompilationUnit extends CompilationUnit {
   }
 
   @Override
+  public long getLastModified() {
+    return sourceFile.getLastModified();
+  }
+
+  @Override
   public String getSource() {
     if (sourceCode == null) {
       sourceCode = sourceFile.readSource();
@@ -61,5 +66,5 @@ public class SourceFileCompilationUnit extends CompilationUnit {
   protected void dumpSource() {
     sourceCode = null;
   }
-  
+
 }

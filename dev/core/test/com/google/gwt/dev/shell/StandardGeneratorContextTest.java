@@ -100,6 +100,11 @@ public class StandardGeneratorContextTest extends TestCase {
         return new Resource() {
 
           @Override
+          public long getLastModified() {
+            return 0;
+          }
+
+          @Override
           public String getLocation() {
             return "/mock/onPublicPath.txt";
           }

@@ -35,6 +35,11 @@ public class MockCompilationUnit extends CompilationUnit {
   }
 
   @Override
+  public long getLastModified() {
+    return 0;
+  }
+
+  @Override
   public String getSource() {
     assert source != null;
     return source;

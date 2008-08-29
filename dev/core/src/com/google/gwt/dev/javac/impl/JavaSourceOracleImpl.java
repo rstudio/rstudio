@@ -60,6 +60,11 @@ public class JavaSourceOracleImpl implements JavaSourceOracle {
     }
 
     @Override
+    public long getLastModified() {
+      return resource.getLastModified();
+    }
+
+    @Override
     public String getLocation() {
       return location;
     }

@@ -32,6 +32,11 @@ public abstract class Resource {
   }
 
   /**
+   * Returns the last modified time of the compilation unit.
+   */
+  public abstract long getLastModified();
+
+  /**
    * Returns the user-relevant location of the resource. No programmatic
    * assumptions should be made about the return value.
    */

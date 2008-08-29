@@ -60,6 +60,8 @@ public class StandardGeneratorContext implements GeneratorContext {
    */
   private static class GeneratedUnitWithFile extends CompilationUnit {
 
+    private long creationTime;
+
     private File file;
 
     private PrintWriter pw;
@@ -83,6 +85,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       source = sw.toString();
       pw = null;
       sw = null;
+      creationTime = System.currentTimeMillis();
     }
 
     @Override
@@ -92,6 +95,11 @@ public class StandardGeneratorContext implements GeneratorContext {
       } else {
         return file.getAbsoluteFile().toURI().toString();
       }
+    }
+
+    @Override
+    public long getLastModified() {
+      return creationTime;
     }
 
     @Override

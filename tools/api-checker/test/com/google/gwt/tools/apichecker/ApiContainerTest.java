@@ -50,6 +50,11 @@ public class ApiContainerTest extends TestCase {
     }
 
     @Override
+    public long getLastModified() {
+      return 0;
+    }
+
+    @Override
     public String getSource() {
       return String.valueOf(source);
     }

@@ -45,6 +45,11 @@ public final class FileCompilationUnit extends CompilationUnit {
   }
 
   @Override
+  public long getLastModified() {
+    return file.lastModified();
+  }
+
+  @Override
   public String getSource() {
     return Util.readFileAsString(file);
   }
