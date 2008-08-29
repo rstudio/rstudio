@@ -67,8 +67,22 @@ public class CompilationState {
 
   protected final Map<String, CompilationUnit> unitMap = new HashMap<String, CompilationUnit>();
   private Set<JavaSourceFile> cachedSourceFiles = Collections.emptySet();
+
+  /**
+   * Classes mapped by binary name.
+   */
   private Map<String, CompiledClass> exposedClassFileMap = null;
+
+  /**
+   * Classes mapped by source name.
+   */
+  private Map<String, CompiledClass> exposedClassFileMapBySource = null;
+
+  /**
+   * Unmodifiable view of {@link #unitMap}.
+   */
   private final Map<String, CompilationUnit> exposedUnitMap = Collections.unmodifiableMap(unitMap);
+
   private Set<CompilationUnit> exposedUnits = Collections.emptySet();
   private final TypeOracleMediator mediator = new TypeOracleMediator();
   private final JavaSourceOracle sourceOracle;
@@ -138,17 +152,19 @@ public class CompilationState {
    */
   public Map<String, CompiledClass> getClassFileMap() {
     if (exposedClassFileMap == null) {
-      HashMap<String, CompiledClass> classFileMap = new HashMap<String, CompiledClass>();
-      for (CompilationUnit unit : getCompilationUnits()) {
-        if (unit.isCompiled()) {
-          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-            classFileMap.put(compiledClass.getBinaryName(), compiledClass);
-          }
-        }
-      }
-      exposedClassFileMap = Collections.unmodifiableMap(classFileMap);
+      rebuildClassMaps();
     }
     return exposedClassFileMap;
+  }
+
+  /**
+   * Returns a map of all compiled classes by source name.
+   */
+  public Map<String, CompiledClass> getClassFileMapBySource() {
+    if (exposedClassFileMapBySource == null) {
+      rebuildClassMaps();
+    }
+    return exposedClassFileMapBySource;
   }
 
   /**
@@ -192,6 +208,21 @@ public class CompilationState {
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(TreeLogger.NULL,
         getCompilationUnits());
     updateExposedUnits();
+  }
+
+  private void rebuildClassMaps() {
+    HashMap<String, CompiledClass> classFileMap = new HashMap<String, CompiledClass>();
+    HashMap<String, CompiledClass> classFileMapBySource = new HashMap<String, CompiledClass>();
+    for (CompilationUnit unit : getCompilationUnits()) {
+      if (unit.isCompiled()) {
+        for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+          classFileMap.put(compiledClass.getBinaryName(), compiledClass);
+          classFileMapBySource.put(compiledClass.getSourceName(), compiledClass);
+        }
+      }
+    }
+    exposedClassFileMap = Collections.unmodifiableMap(classFileMap);
+    exposedClassFileMapBySource = Collections.unmodifiableMap(classFileMapBySource);
   }
 
   private void refreshFromSourceOracle() {

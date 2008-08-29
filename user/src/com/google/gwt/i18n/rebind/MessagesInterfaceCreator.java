@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,11 +16,14 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.i18n.client.Messages;
+import com.google.gwt.i18n.rebind.MessageFormatParser.ArgumentChunk;
+import com.google.gwt.i18n.rebind.MessageFormatParser.TemplateChunk;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.text.ParseException;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Creates a MessagesInterface from a Resource file.
@@ -29,34 +32,22 @@ public class MessagesInterfaceCreator extends
     AbstractLocalizableInterfaceCreator {
 
   /**
-   * Calculates the number of arguments <code>MessageFormat</code> expects to
-   * see in a template.
+   * Searches for MessageFormat-style args in the template string and returns
+   * a set of argument indices seen.
    * 
    * @param template template to parse
-   * @return number of args
-   * @throws ParseException
+   * @return set of argument indices seen
+   * @throws ParseException if the template is incorrect.
    */
-  public static int numberOfMessageArgs(String template) throws ParseException {
-    /*
-     * As parse, unlike format, cannot deal with single quotes, we have to remove
-     * them. First, we remove doubled quotes (which go into the output as single
-     * quotes.  Then, we remove any quoted strings.
-     *
-     * If sub-formats are supported in the future, this code will
-     * have to change.
-     */
-    // strip doubled single-quotes
-    template = template.replace("''", "");
-    
-    // delete quoted sections
-    template = template.replaceAll("'[^']+'", "");
-    
-    if (template.length() == 0) {
-      // special case empty strings since MessageFormat.parse chokes on them.
-      return 0;
+  private static Set<Integer> numberOfMessageArgs(String template)
+      throws ParseException {
+    Set<Integer> seenArgs = new HashSet<Integer>();
+    for (TemplateChunk chunk : MessageFormatParser.parse(template)) {
+      if (chunk instanceof ArgumentChunk) {
+        seenArgs.add(((ArgumentChunk) chunk).getArgumentNumber());
+      }
     }
-    int numArgs = new MessageFormat(template).parse(template).length;
-    return numArgs;
+    return seenArgs;
   }
 
   /**
@@ -77,10 +68,19 @@ public class MessagesInterfaceCreator extends
   @Override
   protected void genMethodArgs(String defaultValue) {
     try {
-      int numArgs = numberOfMessageArgs(defaultValue);
-      for (int i = 0; i < numArgs; i++) {
+      Set<Integer> seenArgs = numberOfMessageArgs(defaultValue);
+      int maxArgSeen = -1;
+      for (int arg : seenArgs) {
+        if (arg > maxArgSeen) {
+          maxArgSeen = arg;
+        }
+      }
+      for (int i = 0; i <= maxArgSeen; i++) {
         if (i > 0) {
           composer.print(",  ");
+        }
+        if (!seenArgs.contains(i)) {
+          composer.print("@Optional ");
         }
         composer.print("String arg" + i);
       }
@@ -91,8 +91,14 @@ public class MessagesInterfaceCreator extends
   }
 
   @Override
+  protected void genValueAnnotation(String defaultValue) {
+    composer.println("@DefaultMessage(\"" + defaultValue.replace("\"", "\\\"")
+        + "\")");
+  }
+
+  @Override
   protected String javaDocComment(String path) {
-    return "Interface to represent the messages contained in resource  bundle:\n\t"
+    return "Interface to represent the messages contained in resource bundle:\n\t"
       + path + "'.";
   }
 }

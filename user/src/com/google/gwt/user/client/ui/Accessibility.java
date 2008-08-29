@@ -15,33 +15,33 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.impl.AccessibilityImpl;
 import com.google.gwt.user.client.Element;
 
 /**
- * Allows ARIA attributes to be added to widgets so that they can be
- * identified by assistive technologies. FireFox 3 is the only browser that
- * currently supports this feature. However, in the future, a new version of
- * FireVox will be created that will support this implementation and work with
- * FireFox 2.
+ * <p>Allows ARIA attributes to be added to widgets so that they can be
+ * identified by assistive technologies. Firefox 3, Firefox 2 (via FireVox),
+ * and Opera 9.5 are the only released browsers that currently support this
+ * feature, but in the near future it will be available in Safari and Internet
+ * Explorer 8. Individual screen reader applications may also support ARIA, to
+ * varying extents.</p>
  *
- * A 'role' describes the role a widget plays in a page: i.e. a checkbox widget
- * is assigned a "checkbox" role.
+ * <p>A 'role' describes the role a widget plays in a page: i.e. a checkbox
+ * widget is assigned a "checkbox" role.</p>
  *
- * A 'state' describes the current state of the widget. For example, a checkbox
- * widget has the state "checked", which is given a value of "true" or "false"
- * depending on whether it is currently checked or unchecked.
+ * <p>A 'state' describes the current state of the widget. For example, a
+ * checkbox widget has the state "checked", which is given a value of "true" or
+ * "false" depending on whether it is currently checked or unchecked.</p>
  *
- * See {@see <a href="http://developer.mozilla.org/en/docs/Accessible_DHTML">http://developer.mozilla.org/en/docs/Accessible_DHTML</a>}
- * for more information.
+ * <p>See <a href="http://developer.mozilla.org/en/docs/Accessible_DHTML">the
+ * MDC page on Accessible DHTML</a> for more information.</p>
  *
- * Note that this API is package protected. At this time, the ARIA specification is still
- * in flux, which means that this API is subject to change. Once we are fairly confident
- * that this API will remain stable, we will make it public.
+ * <p>Note that although this API is public, the ARIA specification is still
+ * somewhat in flux. As a result, this API is subject to change as the
+ * specification stabilizes; we will do our best to keep the community
+ * updated on changes.</p>
  */
 
-final class Accessibility {
+public final class Accessibility {
 
   public static final String ROLE_TREE = "tree";
   public static final String ROLE_TREEITEM = "treeitem";
@@ -59,8 +59,8 @@ final class Accessibility {
   public static final String STATE_EXPANDED = "aria-expanded";
   public static final String STATE_LEVEL = "aria-level";
   public static final String STATE_HASPOPUP = "aria-haspopup";
-
-  private static AccessibilityImpl impl = (AccessibilityImpl) GWT.create(AccessibilityImpl.class);
+  
+  private static final String ATTR_NAME_ROLE = "role";
 
   /**
    * Requests the string value of the role with the specified namespace.
@@ -69,7 +69,7 @@ final class Accessibility {
    * @return the value of the role, or an empty string if none exists
    */
   public static String getRole(Element elem) {
-    return impl.getRole(elem);
+    return elem.getAttribute(ATTR_NAME_ROLE);
   }
 
   /**
@@ -80,7 +80,7 @@ final class Accessibility {
    * @return the value of the state, or an empty string if none exists
    */
   public static String getState(Element elem, String stateName) {
-    return impl.getState(elem, stateName);
+    return elem.getAttribute(stateName);
   }
 
   /**
@@ -90,7 +90,7 @@ final class Accessibility {
    * @param stateName the name of the state to remove
    */
   public static void removeState(Element elem, String stateName)  {
-    impl.removeState(elem, stateName);
+    elem.removeAttribute(stateName);
   }
   /**
    * Assigns the specified element the specified role and value for that role.
@@ -99,7 +99,7 @@ final class Accessibility {
    * @param roleName the name of the role
    */
   public static void setRole(Element elem, String roleName) {
-    impl.setRole(elem, roleName);
+    elem.setAttribute(ATTR_NAME_ROLE, roleName);
   }
 
   /**
@@ -110,7 +110,7 @@ final class Accessibility {
    * @param stateValue the value of the state
    */
   public static void setState(Element elem, String stateName, String stateValue) {
-    impl.setState(elem, stateName, stateValue);
+    elem.setAttribute(stateName, stateValue);
   }
 
   private Accessibility() {

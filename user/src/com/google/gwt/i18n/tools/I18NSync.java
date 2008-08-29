@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -195,10 +195,8 @@ public class I18NSync extends ToolBase {
             "Internal Error: Unable to create i18n class derived from " +
             interfaceType.getName());
       }
-      // The compiler whines about this cast, but the isAssignableFrom()
-      // check above should insure that interfaceType is compatible.
       createConstantsInterfaceFromClassName(className, sourceDir,
-          (Class<? extends Constants>) interfaceType);
+          interfaceType.asSubclass(Constants.class));
     }
   }
 

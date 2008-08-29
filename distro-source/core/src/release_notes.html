@@ -29,6 +29,7 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
 		    <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+		    <li><a href="#Release_Notes_1_5_1">1.5.1 (RC2)</a></li>
 		    <li><a href="#Release_Notes_1_5_0">1.5.0 (RC)</a></li>
 		    <li><a href="#Release_Notes_1_4_60">1.4.60</a></li>
 		    <li><a href="#Release_Notes_1_4_59">1.4.59 (RC2)</a></li>
@@ -45,12 +46,39 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <h3>Potentially breaking changes and fixes</h3>
+      <ul>
+        <li><code>History.onHistoryChanged()</code> has been added back (it was missing from 1.5 RC2) but is now deprecated.  Application startup should be handled by calling the new <code>History.fireCurrentHistoryState()</code>.</li>
+        <li>Fields marked <code>final</code> in serializable types will now generate a warning; the fact that they were not being serialized was a source of confusion.  Mark such fields both <code>final</code> and <code>transient</code> to avoid the warning.</li>
+        <li>Instance methods on overlay types cannot be accessed from JSNI.  (This used to work in hosted mode, but failed at runtime in web mode.)</li>
+        <li>The hosted mode server no longer serves <code>hosted.html</code> from a module's public path; instead the file is read directly from the classpath.  This file is tightly coupled with the hosted mode implementation and was not meant to be user overridable.</li>
+      </ul>
+      <h3>General Enhancements</h3>
+      <ul>
+        <li><code>Collections.unmodifiableSortedSet()</code> and <code>Collections.unmodifiableSortedMap()</code> are now implemented.</li>
+        <li>The new <code>Accessibility</code> class enables widget authors to add ARIA support to their widgets.  Many GWT widgets come with ARIA support by default.</li>
+        <li>Improved exception stack traces in hosted mode when JSNI stack frames are present.</li>
+      </ul>
+      <h3>Fixed Issues</h3>
+      <ul>
+        <li>Fixed the relationship between the coordinates returned by <code>Element.getAbsoluteLeft/Top()</code> and <code>Event.getClientX/Y()</code>.  <code>Document.getBodyOffsetLeft/Top()</code> can be used to account for the difference between these two coordinate systems.</li>
+        <li><b>Ctrl-Z</b> should correctly perform an undo operation in RichTextArea on IE.</li>
+      </ul>
+      <p>
+        See the GWT issue tracker for
+        <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&q=status%3AFixed%2CFixedNotReleased%20milestone%3A1_5_Final%20type%3Adefect&num=1000">
+        the complete list of bug fixes and enhancements</a> in this release.
+      </p>
+
+      <hr/>
+      <a name="Release_Notes_1_5_1"></a>
+      <h2>Release Notes for 1.5.1 (RC2)</h2>
       <h3>Support for Standards Mode</h3>
       <p>
       GWT 1.5 adds significantly more support for standards mode applications, but some widgets (especially those with table based layouts) may not behave as expected.  The low level standards mode bugs (such as with <code>getAbsoluteLeft/Top()</code>) have been addressed, but some of the constructs that our widgets rely on do not work in standards mode.  For example, you cannot set the height and width of a widget relative to its parent if its parent is a table cell, and <code>StackPanel</code> takes up much more vertical space than it should in Internet Explorer.  All of our samples have been reverted back to quirks mode, and the <code>applicationCreator</code> defaults to quirks mode when creating a new GWT app.
       </p>
       <p>
-You can still use standards mode for your GWT app, but please be aware that you may notice some layout issues.  If you are switching an app from quirks mode to standards mode, your CSS styles might be applied differently, which could also affect your application.  We will continue to address standards mode support in future GWT releases.
+      You can still use standards mode for your GWT app, but please be aware that you may notice some layout issues.  If you are switching an app from quirks mode to standards mode, your CSS styles might be applied differently, which could also affect your application.  We will continue to address standards mode support in future GWT releases.
       </p>
       <h3>Potentially breaking changes and fixes</h3>
       <ul>
@@ -79,7 +107,7 @@ You can still use standards mode for your GWT app, but please be aware that you 
       </ul>
       <p>
         See the GWT issue tracker for
-        <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&amp;q=&quot;status:Fixed+OR+status:FixedNotReleased&quot;+milestone:1_5_RC2&amp;num=1000">
+        <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&q=status%3AFixed%20milestone%3A1_5_RC2%20type%3Adefect&num=1000">
         the complete list of bug fixes and enhancements</a> in this release.
       </p>
 

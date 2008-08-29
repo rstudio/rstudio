@@ -63,7 +63,7 @@ public class DOMTest extends GWTTestCase {
     assertEquals("testClass", cssClass);
     DOM.removeElementAttribute(div, "class");
     cssClass = DOM.getElementAttribute(div, "class");
-    assertNull(cssClass);
+    assertEquals("", cssClass);
   }
 
   /**

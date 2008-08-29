@@ -88,7 +88,8 @@ public abstract class CompilationUnit {
        * uninstantiable, it won't bother allocating a local name.
        */
       if (typeDecl.binding.constantPoolName() != null) {
-        CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
+        CompiledClass newClass = new CompiledClass(CompilationUnit.this,
+            typeDecl, enclosingClass);
         map.put(typeDecl.binding, newClass);
       }
       return true;
@@ -98,7 +99,8 @@ public abstract class CompilationUnit {
     public boolean visit(TypeDeclaration typeDecl, ClassScope scope) {
       CompiledClass enclosingClass = map.get(typeDecl.binding.enclosingType());
       assert (enclosingClass != null);
-      CompiledClass newClass = new CompiledClass(typeDecl, enclosingClass);
+      CompiledClass newClass = new CompiledClass(CompilationUnit.this,
+          typeDecl, enclosingClass);
       map.put(typeDecl.binding, newClass);
       return true;
     }
@@ -106,7 +108,8 @@ public abstract class CompilationUnit {
     @Override
     public boolean visit(TypeDeclaration typeDecl, CompilationUnitScope scope) {
       assert (typeDecl.binding.enclosingType() == null);
-      CompiledClass newClass = new CompiledClass(typeDecl, null);
+      CompiledClass newClass = new CompiledClass(CompilationUnit.this,
+          typeDecl, null);
       map.put(typeDecl.binding, newClass);
       return true;
     }

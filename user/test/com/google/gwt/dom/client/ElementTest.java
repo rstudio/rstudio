@@ -40,7 +40,7 @@ public class ElementTest extends GWTTestCase {
     assertEquals("testClass", cssClass);
     div.removeAttribute("class");
     cssClass = div.getAttribute("class");
-    assertNull(cssClass);
+    assertEquals("", cssClass);
   }
 
   /**

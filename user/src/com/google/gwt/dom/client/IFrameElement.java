@@ -42,7 +42,8 @@ public class IFrameElement extends Element {
    * null otherwise.
    */
   public final native Document getContentDocument() /*-{
-     return this.contentDocument;
+  	 // This is known to work on all modern browsers.
+     return this.contentWindow.document;
    }-*/;
 
   /**

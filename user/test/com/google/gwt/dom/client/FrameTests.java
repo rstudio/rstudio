@@ -13,30 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.ui.impl;
+package com.google.gwt.dom.client;
 
-import com.google.gwt.user.client.Element;
+import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Native implementation class used with
- * {@link com.google.gwt.user.client.ui.Accessibility}.
+ * Tests for the FrameElement and IFrameElement classes.
  */
-public class AccessibilityImpl {
+public class FrameTests extends GWTTestCase {
 
-  public String getRole(Element elem) {
-    return "";
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.dom.DOMTest";
   }
 
-  public String getState(Element elem, String stateName) {
-    return "";
-  }
-
-  public void removeState(Element elem, String stateName) {    
-  }
-
-  public void setRole(Element elem, String roleName) {
-  }
-
-  public void setState(Element elem, String stateName, String stateValue) {
+  public void testContentDocument() {
+    Document doc = Document.get();
+    final IFrameElement iframe = doc.createIFrameElement();
+    iframe.setSrc("about:blank");
+    doc.getBody().appendChild(iframe);
+    assertNotNull(iframe.getContentDocument());
   }
 }

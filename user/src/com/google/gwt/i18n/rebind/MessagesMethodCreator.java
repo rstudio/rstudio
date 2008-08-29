@@ -32,9 +32,12 @@ import com.google.gwt.i18n.client.Messages.PluralText;
 import com.google.gwt.i18n.client.PluralRule.PluralForm;
 import com.google.gwt.i18n.client.impl.plurals.DefaultRule;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.rebind.MessageFormatParser.ArgumentChunk;
+import com.google.gwt.i18n.rebind.MessageFormatParser.TemplateChunk;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -456,85 +459,44 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       throws UnableToCompleteException {
     StringGenerator buf = new StringGenerator(outputBuf);
     Matcher match = argPattern.matcher(template);
-    int curPos = 0;
-    boolean inQuote = false;
-    int templateLen = template.length();
-    while (curPos < templateLen) {
-      char ch = template.charAt(curPos++);
-      switch (ch) {
-        case '\'':
-          if (curPos < templateLen && template.charAt(curPos) == '\'') {
-            buf.appendStringLiteral(ch);
-            ++curPos;
-            break;
+    try {
+      for (TemplateChunk chunk : MessageFormatParser.parse(template)) {
+        if (chunk.isLiteral()) {
+          buf.appendStringLiteral(chunk.getString());
+        } else if (chunk instanceof ArgumentChunk) {
+          ArgumentChunk argChunk = (ArgumentChunk) chunk;
+          int argNumber = argChunk.getArgumentNumber();
+          if (argNumber >= params.length) {
+            throw error(logger, "Argument " + argNumber
+                + " beyond range of arguments: " + template);
           }
-          inQuote = !inQuote;
-          break;
-
-        case '{':
-          if (!inQuote) {
-            if (match.find(curPos - 1) && match.start() == curPos - 1) {
-              // match group 1 is the argument number (zero-based)
-              // match group 3 is the format name or null if none
-              // match group 5 is the subformat string or null if none
-              int argNumber = Integer.valueOf(match.group(1));
-              if (argNumber >= params.length) {
-                throw error(logger, "Argument " + argNumber
-                    + " beyond range of arguments: " + template);
+          seenFlag[argNumber] = true;
+          String arg = "arg" + argNumber;
+          String format = argChunk.getFormat();
+          if (format != null) {
+            String subformat = argChunk.getSubFormat();
+            ValueFormatter formatter = formatters.get(format);
+            if (formatter != null) {
+              String err = formatter.format(buf, subformat, arg,
+                  params[argNumber].getType());
+              if (err != null) {
+                throw error(logger, err);
               }
-              seenFlag[argNumber] = true;
-              String arg = "arg" + match.group(1);
-              curPos = match.end();
-              String format = match.group(3);
-              if (format != null) {
-                String subformat = match.group(5);
-                ValueFormatter formatter = formatters.get(format);
-                if (formatter != null) {
-                  String err = formatter.format(buf, subformat, arg,
-                      params[argNumber].getType());
-                  if (err != null) {
-                    throw error(logger, err);
-                  }
-                  continue;
-                }
-              }
-              // no format specified or unknown format
-              // have to ensure that the result is stringified if necessary
-              buf.appendExpression(
-                  arg,
-                  "java.lang.String".equals(params[argNumber].getType().getQualifiedSourceName()));
-            } else {
-              throw error(logger,
-                  "Invalid message format - { not start of valid argument"
-                      + template);
+              continue;
             }
-            break;
           }
-          buf.appendStringLiteral(ch);
-          break;
-
-        case '\n':
-          buf.appendStringLiteral("\\n");
-          break;
-
-        case '\r':
-          buf.appendStringLiteral("\\r");
-          break;
-
-        case '\\':
-        case '"':
-          buf.appendStringLiteral('\\');
-          // CHECKSTYLE_OFF
-          // fall-through
-
-        default:
-          // CHECKSTYLE_ON
-          buf.appendStringLiteral(ch);
-          break;
+          // no format specified or unknown format
+          // have to ensure that the result is stringified if necessary
+          buf.appendExpression(
+              arg,
+              "java.lang.String".equals(params[argNumber].getType().getQualifiedSourceName()));
+        } else {
+          throw error(logger, "Unexpected result from parsing template "
+              + template);
+        }
       }
-    }
-    if (inQuote) {
-      throw error(logger, "Unterminated single quote: " + template);
+    } catch (ParseException e) {
+      throw error(logger, e);
     }
     buf.completeString();
   }

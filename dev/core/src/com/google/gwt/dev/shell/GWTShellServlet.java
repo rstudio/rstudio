@@ -17,8 +17,6 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.GWTShell;
@@ -311,11 +309,7 @@ public class GWTShellServlet extends HttpServlet {
       HttpServletResponse response, TreeLogger logger, String partialPath,
       String moduleName) throws IOException {
 
-    // If the request is of the form ".../moduleName.nocache.js" or
-    // ".../moduleName-xs.nocache.js" then generate the selection script for
-    // them.
-    boolean generateScript = partialPath.equals(moduleName + ".nocache.js");
-    if (generateScript) {
+    if (partialPath.equals(moduleName + ".nocache.js")) {
       // If the '?compiled' request property is specified, don't auto-generate.
       if (request.getParameter("compiled") == null) {
         // Generate the .js file.
@@ -332,6 +326,13 @@ public class GWTShellServlet extends HttpServlet {
           // unfortunately confusing name.
         }
       }
+    } else if (partialPath.equals("hosted.html")) {
+      String html = HostedModeLinker.getHostedHtml();
+      setResponseCacheHeaders(response, DEFAULT_CACHE_SECONDS);
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.setContentType("text/html");
+      response.getWriter().println(html);
+      return true;
     }
 
     return false;
@@ -542,24 +543,12 @@ public class GWTShellServlet extends HttpServlet {
    */
   private String genSelectionScript(TreeLogger logger, String moduleName)
       throws UnableToCompleteException {
-    String msg = "Generating a script selection script for module ";
-    msg += moduleName;
-    logger.log(TreeLogger.TRACE, msg, null);
+    logger.log(TreeLogger.TRACE,
+        "Generating a script selection script for module " + moduleName);
 
-    ModuleDef moduleDef = getModuleDef(logger, moduleName);
-
-    File linkerDir = new File(getOutputDir(), GWTShell.GWT_SHELL_PATH
-        + File.separator + moduleName);
     StandardLinkerContext context = new StandardLinkerContext(logger,
-        moduleDef, null, null, new JJSOptions());
+        getModuleDef(logger, moduleName), null, null, new JJSOptions());
     HostedModeLinker linker = new HostedModeLinker();
-
-    ArtifactSet artifacts = linker.link(logger, context, new ArtifactSet());
-    for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-      File out = new File(linkerDir, artifact.getPartialPath());
-      Util.copy(logger, artifact.getContents(logger), out);
-    }
-
     return linker.generateSelectionScript(logger, context,
         context.getArtifacts());
   }

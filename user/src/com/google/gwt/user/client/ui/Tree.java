@@ -75,6 +75,18 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
       }
 
       @Override
+      public void applyTo(ImagePrototypeElement img) {
+        DOM.setImgSrc(img.<Element>cast(), imageUrl);
+      }
+
+      @Override
+      public ImagePrototypeElement createElement() {
+        Element img = DOM.createImg();
+        applyTo(img.<ImagePrototypeElement>cast());
+        return img.cast();
+      }
+
+      @Override
       public Image createImage() {
         // NOTE: This class is only used internally and, therefore only needs
         // to support applyTo(Image).

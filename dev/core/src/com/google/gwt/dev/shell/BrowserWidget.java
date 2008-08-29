@@ -376,10 +376,10 @@ public abstract class BrowserWidget extends Composite {
         TreeLogger.ERROR,
         "Not enough arguments ("
         + numArgs
-        + ") passed to external.gwtOnLoad(), expected (3); "
-        + "your hosted mode bootstrap file may be out of date; "
-        + "if you are using -noserver try recompiling and redeploying "
-        + "your app");
+            + ") passed to external.gwtOnLoad(), expected (3); "
+            + "your hosted mode bootstrap file may be out of date; "
+            + "if you are using -noserver try recompiling and redeploying "
+            + "your app");
   }
 
   /**
@@ -415,7 +415,7 @@ public abstract class BrowserWidget extends Composite {
               + "\"; your hosted mode bootstrap file may be out of date; "
               + "if you are using -noserver try recompiling and redeploying "
               + "your app");
-     return false;
+      return false;
     }
     return true;
   }
@@ -573,15 +573,8 @@ public abstract class BrowserWidget extends Composite {
                 evt.doit = true;
                 break;
               } else {
-                String msg = "Cannot find file '" + file.getAbsolutePath()
-                    + "'";
-                TreeLogger branch = logger.branch(TreeLogger.ERROR, msg, null);
-                if ("gwt-hosted.html".equalsIgnoreCase(file.getName())) {
-                  branch.log(
-                      TreeLogger.ERROR,
-                      "If you want to open compiled output within this hosted browser, add '?gwt.hybrid' to the end of the URL",
-                      null);
-                }
+                logger.log(TreeLogger.ERROR, "Cannot find file '"
+                    + file.getAbsolutePath() + "'");
               }
               file = file.getParentFile();
             }

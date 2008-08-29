@@ -49,4 +49,10 @@ public class Duration {
     return uncheckedConversion(currentTimeMillis() - start);
   }
 
+  /**
+   * Returns the time when the object was created.
+   */
+  public double getStartMillis() {
+    return start;
+  }
 }

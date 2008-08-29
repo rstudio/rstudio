@@ -19,7 +19,6 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.TaskContainer;
 
-import java.util.Formatter;
 import java.util.Vector;
 
 /**
@@ -52,8 +51,8 @@ public class Timer extends Task implements TaskContainer {
       task.perform();
     }
 
-    long duration_ms = (System.currentTimeMillis() - start);
-    long duration = duration_ms; 
+    long durationMsec = (System.currentTimeMillis() - start);
+    long duration = durationMsec; 
     long hrs = duration / MS_IN_HOUR;
     duration -= hrs * MS_IN_HOUR;
     long min = duration  / MS_IN_MINUTE;
@@ -62,7 +61,7 @@ public class Timer extends Task implements TaskContainer {
     duration -= sec * MS_IN_SECOND;
     long msec = duration;
 
-    log("timer " + name + " timed " + duration_ms + " ms. " +
+    log("timer " + name + " timed " + durationMsec + " ms. " +
         String.format("(%02d:%02d:%02d.%03d)", hrs, min, sec, msec)); 
   }
 

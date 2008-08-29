@@ -56,7 +56,7 @@ public class Element extends Node {
    *         does not have a specified or default value
    */
   public final native String getAttribute(String name) /*-{
-    return this.getAttribute(name);
+    return this.getAttribute(name) || '';
   }-*/;
 
   /**

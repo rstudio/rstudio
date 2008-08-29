@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,6 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.i18n.client.Localizable;
-import com.google.gwt.i18n.tools.I18NSync;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -134,7 +133,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
    * @param defaultValue default value
    */
   public void genSimpleMethodDecl(String key, String defaultValue) {
-    genMethodDecl("String", defaultValue, key, key);
+    genMethodDecl("String", defaultValue, key);
   }
 
   /**
@@ -144,6 +143,11 @@ public abstract class AbstractLocalizableInterfaceCreator {
    */
   protected abstract void genMethodArgs(String defaultValue);
 
+  /**
+   * Create an annotation to hold the default value.
+   */
+  protected abstract void genValueAnnotation(String defaultValue);
+  
   /**
    * Returns the javaDocComment for the class.
    * 
@@ -187,20 +191,20 @@ public abstract class AbstractLocalizableInterfaceCreator {
       key = formatter.format(key);
     }
     if (Util.isValidJavaIdent(key) == false) {
-      System.err.println("Warning: " + key
-          + " is not a legitimate method name. " + sourceFile
-          + " will have compiler errors");
+      // TODO(jat): we could synthesize legal method names and add an
+      // @Key annotation to keep the matching key name.
+      throw new IllegalArgumentException(key
+          + " is not a legitimate method name.");
     }
     return key;
   }
 
-  private void genMethodDecl(String type, String defaultValue, String key,
-      String typeArg) {
+  private void genMethodDecl(String type, String defaultValue, String key) {
     composer.beginJavaDocComment();
     composer.println("Translated \"" + defaultValue + "\".\n");
     composer.println("@return translated \"" + defaultValue + "\"");
-    composer.print(I18NSync.ID + typeArg);
     composer.endJavaDocComment();
+    genValueAnnotation(defaultValue);
     key = formatKey(key);
     composer.print(type + " " + key);
     composer.print("(");
@@ -214,6 +218,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
     ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
         packageName, className);
     factory.makeInterface();
+    // TODO(jat): need a way to add an @GeneratedFrom annotation.
     factory.setJavaDocCommentForClass(javaDocComment(resourceBundle.getCanonicalPath().replace(
         File.separatorChar, '/')));
     factory.addImplementedInterface(interfaceClass.getName());

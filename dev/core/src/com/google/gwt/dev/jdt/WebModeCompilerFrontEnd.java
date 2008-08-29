@@ -18,7 +18,7 @@ package com.google.gwt.dev.jdt;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.DeferredBindingSite;
 import com.google.gwt.dev.util.Empty;
@@ -54,23 +54,17 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
       throws UnableToCompleteException {
 
     // Build the initial set of compilation units.
-    Map<String, CompilationUnit> unitMap = compilationState.getCompilationUnitMap();
+    Map<String, CompiledClass> classMapBySource = compilationState.getClassFileMapBySource();
     ICompilationUnit[] icus = new ICompilationUnit[seedTypeNames.length];
     for (int i = 0; i < seedTypeNames.length; i++) {
       String seedTypeName = seedTypeNames[i];
-      CompilationUnit unit = unitMap.get(seedTypeName);
-      while (unit == null) {
-        int pos = seedTypeName.lastIndexOf('.');
-        if (pos < 0) {
-          logger.log(TreeLogger.ERROR,
-              "Unable to find compilation unit for type '" + seedTypeNames[i]
-                  + "'");
-          throw new UnableToCompleteException();
-        }
-        seedTypeName = seedTypeName.substring(0, pos);
-        unit = unitMap.get(seedTypeName);
+      CompiledClass compiledClass = classMapBySource.get(seedTypeName);
+      if (compiledClass == null) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to find compilation unit for type '" + seedTypeName + "'");
+        throw new UnableToCompleteException();
       }
-      icus[i] = new CompilationUnitAdapter(unit);
+      icus[i] = new CompilationUnitAdapter(compiledClass.getUnit());
     }
 
     // Compile, which will pull in everything else via

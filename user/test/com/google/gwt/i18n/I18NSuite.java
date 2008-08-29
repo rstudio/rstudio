@@ -30,6 +30,7 @@ import com.google.gwt.i18n.client.NumberFormat_fr_Test;
 import com.google.gwt.i18n.client.NumberParse_en_Test;
 import com.google.gwt.i18n.client.NumberParse_fr_Test;
 import com.google.gwt.i18n.rebind.AbstractResourceTest;
+import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -53,6 +54,7 @@ public class I18NSuite {
     suite.addTestSuite(I18N2Test.class);
     suite.addTestSuite(LocaleInfo_ar_Test.class);    
     suite.addTestSuite(LocaleInfoTest.class);
+    suite.addTestSuite(MessageFormatParserTest.class);
     suite.addTestSuite(NumberFormat_ar_Test.class);
     suite.addTestSuite(NumberFormat_en_Test.class);
     suite.addTestSuite(NumberFormat_fr_Test.class);

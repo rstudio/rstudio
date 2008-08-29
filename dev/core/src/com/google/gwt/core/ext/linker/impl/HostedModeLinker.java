@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
@@ -28,8 +27,15 @@ import java.io.IOException;
  * This is a partial implementation of the Linker interface to support hosted
  * mode.
  */
-// TODO When this class is removed, move SelectionScriptLinker to gwt-user
 public final class HostedModeLinker extends SelectionScriptLinker {
+
+  public static String getHostedHtml() throws IOException {
+    return Utility.getFileFromClassPath("com/google/gwt/core/ext/linker/impl/hosted.html");
+  }
+
+  /**
+   * TODO: When this class is removed, move SelectionScriptLinker to gwt-user.
+   */
 
   @Override
   public String generateSelectionScript(TreeLogger logger,
@@ -45,18 +51,7 @@ public final class HostedModeLinker extends SelectionScriptLinker {
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
       ArtifactSet artifacts) throws UnableToCompleteException {
-    ArtifactSet toReturn = new ArtifactSet(artifacts);
-
-    try {
-      // Add hosted mode iframe contents
-      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/core/ext/linker/impl/hosted.html");
-      toReturn.add(emitBytes(logger, Util.getBytes(hostedHtml), "hosted.html"));
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
-      throw new UnableToCompleteException();
-    }
-
-    return toReturn;
+    return unsupported(logger);
   }
 
   @Override

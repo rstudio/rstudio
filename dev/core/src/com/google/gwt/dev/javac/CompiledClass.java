@@ -58,6 +58,7 @@ public final class CompiledClass {
   protected final String location;
   protected final String packageName;
   protected final String sourceName;
+  protected final CompilationUnit unit;
 
   // The state below is transient.
   private List<JsniMethod> jsniMethods;
@@ -66,10 +67,12 @@ public final class CompiledClass {
   // Can be killed after parent is CHECKED.
   private TypeDeclaration typeDeclaration;
 
-  CompiledClass(TypeDeclaration typeDeclaration, CompiledClass enclosingClass) {
-    SourceTypeBinding binding = typeDeclaration.binding;
+  CompiledClass(CompilationUnit unit, TypeDeclaration typeDeclaration,
+      CompiledClass enclosingClass) {
+    this.unit = unit;
     this.typeDeclaration = typeDeclaration;
     this.enclosingClass = enclosingClass;
+    SourceTypeBinding binding = typeDeclaration.binding;
     this.binaryName = CharOperation.charToString(binding.constantPoolName());
     this.packageName = Shared.getPackageNameFromBinary(binaryName);
     if (binding instanceof LocalTypeBinding) {
@@ -119,6 +122,10 @@ public final class CompiledClass {
    */
   public String getSourceName() {
     return sourceName;
+  }
+
+  public CompilationUnit getUnit() {
+    return unit;
   }
 
   @Override
