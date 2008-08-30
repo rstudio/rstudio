@@ -45,19 +45,26 @@ public class RuleGenerateWith extends Rule {
     }
 
     long before = System.currentTimeMillis();
-    String className = generator.generate(logger, context, typeName);
-    long after = System.currentTimeMillis();
-    if (className == null) {
-      msg = "Generator returned null, so the requested type will be used as is";
-    } else {
-      msg = "Generator returned class '" + className + "'";
+    try {
+      String className = generator.generate(logger, context, typeName);
+      long after = System.currentTimeMillis();
+      if (className == null) {
+        msg = "Generator returned null, so the requested type will be used as is";
+      } else {
+        msg = "Generator returned class '" + className + "'";
+      }
+      logger.log(TreeLogger.DEBUG, msg, null);
+
+      msg = "Finished in " + (after - before) + " ms";
+      logger.log(TreeLogger.DEBUG, msg, null);
+
+      return className;
+    } catch (RuntimeException e) {
+      logger.log(TreeLogger.ERROR, "Generator '"
+          + generator.getClass().getName()
+          + "' threw threw an exception while rebinding '" + typeName + "'", e);
+      throw new UnableToCompleteException();
     }
-    logger.log(TreeLogger.DEBUG, msg, null);
-
-    msg = "Finished in " + (after - before) + " ms";
-    logger.log(TreeLogger.DEBUG, msg, null);
-
-    return className;
   }
 
   public String toString() {
