@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.impl;
 
+import com.google.gwt.user.client.Command;
+
 /**
  * Native implementation associated with
  * {@link com.google.gwt.user.client.Window}.
@@ -47,5 +49,18 @@ public class WindowImpl {
 
   public native int getScrollTop() /*-{
    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
+  }-*/;
+
+  public void initHandler(String initFunc, String funcName, Command cmd) {
+    // Eval the init script
+    initFunc = initFunc.replaceFirst("function", "function " + funcName);
+    eval(initFunc);
+
+    // Initialize the handler
+    cmd.execute();
+  }
+
+  private native void eval(String expr) /*-{
+    $wnd.eval(expr);
   }-*/;
 }

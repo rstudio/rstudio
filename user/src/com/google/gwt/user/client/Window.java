@@ -17,11 +17,8 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.ScriptElement;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.impl.WindowImpl;
-import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -673,7 +670,7 @@ public class Window {
   }-*/;
 
   /**
-   * Embed a script on the outer window and use it to initialize an event.
+   * Initialize an event on the outer window.
    * 
    * @param initFunc the string representation of the init function
    * @param funcName the name to assign to the init function
@@ -681,19 +678,10 @@ public class Window {
    */
   private static void initHandler(String initFunc, String funcName, Command cmd) {
     if (GWT.isClient()) {
-      // Always intialize the close handlers first
+      // Always initialize the close handlers first
       maybeInitializeCloseHandlers();
 
-      // Embed the init script on the page
-      initFunc = initFunc.replaceFirst("function", "function " + funcName);
-      ScriptElement scriptElem = Document.get().createScriptElement(initFunc);
-      Document.get().getBody().appendChild(scriptElem);
-
-      // Initialize the handler
-      cmd.execute();
-
-      // Remove the init script from the page
-      RootPanel.getBodyElement().removeChild(scriptElem);
+      impl.initHandler(initFunc, funcName, cmd);
     }
   }
 
