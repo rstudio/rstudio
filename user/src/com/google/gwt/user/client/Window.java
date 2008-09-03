@@ -253,12 +253,8 @@ public class Window {
   public static void addWindowResizeListener(WindowResizeListener listener) {
     if (resizeListeners == null) {
       resizeListeners = new ArrayList<WindowResizeListener>();
-      initHandler(getWindowResizeHandlerMethodString(),
-          "__gwt_initWindowResizeHandler", new Command() {
-            public void execute() {
-              initWindowResizeHandler();
-            }
-          });
+      maybeInitializeCloseHandlers();
+      impl.initWindowResizeHandler();
     }
     resizeListeners.add(listener);
   }
@@ -271,12 +267,8 @@ public class Window {
   public static void addWindowScrollListener(WindowScrollListener listener) {
     if (scrollListeners == null) {
       scrollListeners = new ArrayList<WindowScrollListener>();
-      initHandler(getWindowScrollHandlerMethodString(),
-          "__gwt_initWindowScrollHandler", new Command() {
-            public void execute() {
-              initWindowScrollHandler();
-            }
-          });
+      maybeInitializeCloseHandlers();
+      impl.initWindowScrollHandler();
     }
     scrollListeners.add(listener);
   }
@@ -577,150 +569,10 @@ public class Window {
     }
   }
 
-  /**
-   * This method defines a function that sinks an event on the Window.  However,
-   * this method returns the function as a String so it can be added to the
-   * outer window.
-   * 
-   * We need to declare this method on the outer window because you cannot
-   * attach Window listeners from within an iframe on IE6.
-   * 
-   * Per ECMAScript 262 spec 15.3.4.2, Function.prototype.toString() returns a
-   * string representation of the function that has the syntax of the function.
-   */
-  private static native String getWindowCloseHandlerMethodString() /*-{
-    return function(beforeunload, unload) {
-      var wnd = window
-      , oldOnBeforeUnload = wnd.onbeforeunload
-      , oldOnUnload = wnd.onunload;
-      
-      wnd.onbeforeunload = function(evt) {
-        var ret, oldRet;
-        try {
-          ret = beforeunload();
-        } finally {
-          oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
-        }
-        // Avoid returning null as IE6 will coerce it into a string.
-        // Ensure that "" gets returned properly.
-        if (ret != null) {
-          return ret;
-        }
-        if (oldRet != null) {
-          return oldRet;
-        }
-        // returns undefined.
-      };
-      
-      wnd.onunload = function(evt) {
-        try {
-          unload();
-        } finally {
-          oldOnUnload && oldOnUnload(evt);
-          wnd.onresize = null;
-          wnd.onscroll = null;
-          wnd.onbeforeunload = null;
-          wnd.onunload = null;
-        }
-      };
-      
-      // Remove the reference once we've initialize the handler
-      wnd.__gwt_initWindowCloseHandler = undefined;
-    }.toString();
-  }-*/;
-
-  /**
-   * @see #getWindowCloseHandlerMethodString()
-   */
-  private static native String getWindowResizeHandlerMethodString() /*-{
-    return function(resize) {
-      var wnd = window, oldOnResize = wnd.onresize;
-      
-      wnd.onresize = function(evt) {
-        try {
-          resize();
-        } finally {
-          oldOnResize && oldOnResize(evt);
-        }
-      };
-      
-      // Remove the reference once we've initialize the handler
-      wnd.__gwt_initWindowResizeHandler = undefined;
-    }.toString();
-  }-*/;
-
-  /**
-   * @see #getWindowCloseHandlerMethodString()
-   */
-  private static native String getWindowScrollHandlerMethodString() /*-{
-    return function(scroll) {
-      var wnd = window, oldOnScroll = wnd.onscroll;
-      
-      wnd.onscroll = function(evt) {
-        try {
-          scroll();
-        } finally {
-          oldOnScroll && oldOnScroll(evt);
-        }
-      };
-      
-      // Remove the reference once we've initialize the handler
-      wnd.__gwt_initWindowScrollHandler = undefined;
-    }.toString();
-  }-*/;
-
-  /**
-   * Initialize an event on the outer window.
-   * 
-   * @param initFunc the string representation of the init function
-   * @param funcName the name to assign to the init function
-   * @param cmd the command to execute the init function
-   */
-  private static void initHandler(String initFunc, String funcName, Command cmd) {
-    if (GWT.isClient()) {
-      // Always initialize the close handlers first
-      maybeInitializeCloseHandlers();
-
-      impl.initHandler(initFunc, funcName, cmd);
-    }
-  }
-
-  private static native void initWindowCloseHandler() /*-{
-    $wnd.__gwt_initWindowCloseHandler(
-      function() {
-        return @com.google.gwt.user.client.Window::onClosing()();
-      },
-      function() {
-        @com.google.gwt.user.client.Window::onClosed()();
-      }
-    );
-  }-*/;
-
-  private static native void initWindowResizeHandler() /*-{
-    $wnd.__gwt_initWindowResizeHandler(
-      function() {
-        @com.google.gwt.user.client.Window::onResize()();
-      }
-    );
-  }-*/;
-
-  private static native void initWindowScrollHandler() /*-{
-    $wnd.__gwt_initWindowScrollHandler(
-      function() {
-        @com.google.gwt.user.client.Window::onScroll()();
-      }
-    );
-  }-*/;
-
   private static void maybeInitializeCloseHandlers() {
     if (GWT.isClient() && !handlersAreInitialized) {
-      handlersAreInitialized = true;      
-      initHandler(getWindowCloseHandlerMethodString(),
-          "__gwt_initWindowCloseHandler", new Command() {
-            public void execute() {
-              initWindowCloseHandler();
-            }
-          });
+      handlersAreInitialized = true;
+      impl.initWindowCloseHandler();
     }
   }
 

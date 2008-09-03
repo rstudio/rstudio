@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.impl;
 
-import com.google.gwt.user.client.Command;
-
 /**
  * Native implementation associated with
  * {@link com.google.gwt.user.client.Window}.
@@ -51,16 +49,60 @@ public class WindowImpl {
    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
   }-*/;
 
-  public void initHandler(String initFunc, String funcName, Command cmd) {
-    // Eval the init script
-    initFunc = initFunc.replaceFirst("function", "function " + funcName);
-    eval(initFunc);
+  public native void initWindowCloseHandler() /*-{
+    var oldOnBeforeUnload = $wnd.onbeforeunload;
+    var oldOnUnload = $wnd.onunload;
+    
+    $wnd.onbeforeunload = function(evt) {
+      var ret, oldRet;
+      try {
+        ret = @com.google.gwt.user.client.Window::onClosing()();
+      } finally {
+        oldRet = oldOnBeforeUnload && oldOnBeforeUnload(evt);
+      }
+      // Avoid returning null as IE6 will coerce it into a string.
+      // Ensure that "" gets returned properly.
+      if (ret != null) {
+        return ret;
+      }
+      if (oldRet != null) {
+        return oldRet;
+      }
+      // returns undefined.
+    };
+    
+    $wnd.onunload = function(evt) {
+      try {
+        @com.google.gwt.user.client.Window::onClosed()();
+      } finally {
+        oldOnUnload && oldOnUnload(evt);
+        $wnd.onresize = null;
+        $wnd.onscroll = null;
+        $wnd.onbeforeunload = null;
+        $wnd.onunload = null;
+      }
+    };
+  }-*/;
 
-    // Initialize the handler
-    cmd.execute();
-  }
+  public native void initWindowResizeHandler() /*-{
+    var oldOnResize = $wnd.onresize;
+    $wnd.onresize = function(evt) {
+      try {
+        @com.google.gwt.user.client.Window::onResize()();
+      } finally {
+        oldOnResize && oldOnResize(evt);
+      }
+    };
+  }-*/;
 
-  private native void eval(String expr) /*-{
-    $wnd.eval(expr);
+  public native void initWindowScrollHandler() /*-{
+    var oldOnScroll = $wnd.onscroll;
+    $wnd.onscroll = function(evt) {
+      try {
+        @com.google.gwt.user.client.Window::onScroll()();
+      } finally {
+        oldOnScroll && oldOnScroll(evt);
+      }
+    };
   }-*/;
 }
