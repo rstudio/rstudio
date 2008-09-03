@@ -20,6 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 /**
  * TODO: document me.
  */
+@SuppressWarnings("unused")
 public class ClassCastTest extends GWTTestCase {
 
   static class Apple extends Food implements CanEatRaw {
@@ -31,87 +32,89 @@ public class ClassCastTest extends GWTTestCase {
   static abstract class Food {
   }
 
+  private final Food foodItem = new Apple();
+
+  private final CanEatRaw rawFoodItem = new Apple();
+
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
 
   public void testBaseToInterface() {
-    Apple apple = (Apple) m_foodItem;
+    Apple apple = (Apple) foodItem;
   }
 
-  public void testBaseToInterface_method() {
+  public void testBaseToInterfaceMethod() {
     Apple apple = (Apple) getFoodItem();
   }
 
-  public void testBaseToInterfaceToConcrete_crazyInline() {
+  @SuppressWarnings("cast")
+  public void testBaseToInterfaceToConcreteCrazyInline() {
     Apple apple = (Apple) (CanEatRaw) (Food) new Apple();
   }
 
-  public void testBaseToInterfaceToConcrete_field() {
-    Apple apple = (Apple) getFoodAsRawFood_field();
+  public void testBaseToInterfaceToConcreteField() {
+    Apple apple = (Apple) getFoodAsRawFoodField();
   }
 
-  public void testBaseToInterfaceToConcrete_inline() {
-    Apple apple = (Apple) (CanEatRaw) m_foodItem;
+  public void testBaseToInterfaceToConcreteInline() {
+    Apple apple = (Apple) (CanEatRaw) foodItem;
   }
 
-  public void testBaseToInterfaceToConcrete_method() {
-    Apple apple = (Apple) getFoodAsRawFood_method();
+  public void testBaseToInterfaceToConcreteMethod() {
+    Apple apple = (Apple) getFoodAsRawFoodMethod();
   }
 
   public void testDownCastClass() {
-    Apple apple = (Apple) m_foodItem;
+    Apple apple = (Apple) foodItem;
   }
 
-  public void testDownCastClass_method() {
+  public void testDownCastClassMethod() {
     Apple apple = (Apple) getFoodItem();
   }
 
   public void testDownCastInterface() {
-    Apple apple = (Apple) m_rawFoodItem;
+    Apple apple = (Apple) rawFoodItem;
   }
 
-  public void testDownCastInterface_method() {
+  public void testDownCastInterfaceMethod() {
     Apple apple = (Apple) getRawFoodItem();
   }
 
-  public void testInterfaceToBaseToConcrete_field() {
-    Apple apple = (Apple) getRawFoodAsFood_field();
+  public void testInterfaceToBaseToConcreteField() {
+    Apple apple = (Apple) getRawFoodAsFoodField();
   }
 
-  public void testInterfaceToBaseToConcrete_inline() {
-    Apple apple = (Apple) (Food) m_rawFoodItem;
+  public void testInterfaceToBaseToConcreteInline() {
+    Apple apple = (Apple) (Food) rawFoodItem;
   }
 
-  public void testInterfaceToBaseToConcrete_method() {
-    Apple apple = (Apple) getRawFoodAsFood_method();
+  public void testInterfaceToBaseToConcreteMethod() {
+    Apple apple = (Apple) getRawFoodAsFoodMethod();
   }
 
-  private CanEatRaw getFoodAsRawFood_field() {
-    return (CanEatRaw) m_foodItem;
+  private CanEatRaw getFoodAsRawFoodField() {
+    return (CanEatRaw) foodItem;
   }
 
-  private CanEatRaw getFoodAsRawFood_method() {
+  private CanEatRaw getFoodAsRawFoodMethod() {
     return (CanEatRaw) getFoodItem();
   }
 
   private Food getFoodItem() {
-    return m_foodItem;
+    return foodItem;
   }
 
-  private Food getRawFoodAsFood_field() {
-    return (Food) m_rawFoodItem;
+  private Food getRawFoodAsFoodField() {
+    return (Food) rawFoodItem;
   }
 
-  private Food getRawFoodAsFood_method() {
+  private Food getRawFoodAsFoodMethod() {
     return (Food) getRawFoodItem();
   }
 
   private CanEatRaw getRawFoodItem() {
-    return m_rawFoodItem;
+    return rawFoodItem;
   }
-
-  private final Food m_foodItem = new Apple();
-  private final CanEatRaw m_rawFoodItem = new Apple();
 
 }
