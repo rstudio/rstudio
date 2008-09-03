@@ -16,6 +16,7 @@
 package com.google.gwt.dev.util.log;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.util.HashSet;
 
@@ -45,8 +46,12 @@ public abstract class AbstractTreeLogger extends TreeLogger {
       + "amount of memory, use the -Xmx flag at startup (java -Xmx128M ...)";
 
   public static String getStackTraceAsString(Throwable e) {
-    // For each cause, print the requested number of entries of its stack trace,
-    // being careful to avoid getting stuck in an infinite loop.
+    // Show the exception info for anything other than "UnableToComplete".
+    if (e == null || e instanceof UnableToCompleteException) {
+      return null;
+    }
+    // For each cause, print the requested number of entries of its stack
+    // trace, being careful to avoid getting stuck in an infinite loop.
     //
     StringBuffer message = new StringBuffer();
     Throwable currentCause = e;
@@ -70,6 +75,13 @@ public abstract class AbstractTreeLogger extends TreeLogger {
       currentCause = currentCause.getCause();
     }
     return message.toString();
+  }
+
+  protected static String getExceptionName(Throwable e) {
+    if (e == null || e instanceof UnableToCompleteException) {
+      return null;
+    }
+    return e.getClass().getSimpleName();
   }
 
   public int indexWithinMyParent;

@@ -41,7 +41,9 @@ public final class TreeItemLogger extends AbstractTreeLogger {
    * Represents an individual log event.
    */
   public static class LogEvent {
-    public final Throwable caught;
+    public final String exceptionDetail;
+
+    public final String exceptionName;
 
     public final HelpInfo helpInfo;
 
@@ -57,12 +59,13 @@ public final class TreeItemLogger extends AbstractTreeLogger {
 
     public LogEvent(TreeItemLogger logger, boolean isBranchCommit, int index,
         Type type, String message, Throwable caught, HelpInfo helpInfo) {
+      this.exceptionDetail = AbstractTreeLogger.getStackTraceAsString(caught);
+      this.exceptionName = AbstractTreeLogger.getExceptionName(caught);
       this.logger = logger;
       this.isBranchCommit = isBranchCommit;
       this.index = index;
       this.type = type;
       this.message = message;
-      this.caught = caught;
       this.helpInfo = helpInfo;
     }
 
@@ -161,13 +164,8 @@ public final class TreeItemLogger extends AbstractTreeLogger {
       //
       String label = message;
       if (label == null) {
-        if (caught != null) {
-          label = caught.getMessage();
-
-          if (label == null || label.trim().length() == 0) {
-            label = caught.toString();
-          }
-        }
+        assert (exceptionName != null);
+        label = exceptionName;
       }
       treeItem.setText(label);
 

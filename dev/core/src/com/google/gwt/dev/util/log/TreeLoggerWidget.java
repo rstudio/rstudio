@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util.log;
 
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.util.log.TreeItemLogger.LogEvent;
@@ -317,11 +316,8 @@ public class TreeLoggerWidget extends Composite implements TreeListener,
 
     // Show the exception info for anything other than "UnableToComplete".
     //
-    if (logEvent != null && logEvent.caught != null) {
-      if (!(logEvent.caught instanceof UnableToCompleteException)) {
-        String stackTrace = AbstractTreeLogger.getStackTraceAsString(logEvent.caught);
-        sb.append(stackTrace);
-      }
+    if (logEvent != null && logEvent.exceptionDetail != null) {
+      sb.append(logEvent.exceptionDetail);
     }
 
     details.setText(sb.toString());
