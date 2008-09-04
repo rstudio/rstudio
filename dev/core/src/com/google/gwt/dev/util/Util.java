@@ -599,11 +599,31 @@ public final class Util {
    * @return null if the file could not be read
    */
   public static byte[] readURLAsBytes(URL url) {
+    try {
+      URLConnection conn = url.openConnection();
+      conn.setUseCaches(false);
+      return readURLConnectionAsBytes(conn);
+    } catch (IOException e) {
+      return null;
+    }
+  }
+
+  /**
+   * @return null if the file could not be read
+   */
+  public static char[] readURLAsChars(URL url) {
+    byte[] bytes = readURLAsBytes(url);
+    if (bytes != null) {
+      return toString(bytes, DEFAULT_ENCODING).toCharArray();
+    }
+
+    return null;
+  }
+
+  public static byte[] readURLConnectionAsBytes(URLConnection connection) {
     // ENH: add a weak cache that has an additional check against the file date
     InputStream input = null;
     try {
-      URLConnection connection = url.openConnection();
-      connection.setUseCaches(false);
       input = connection.getInputStream();
       int contentLength = connection.getContentLength();
       if (contentLength < 0) {
@@ -616,19 +636,6 @@ public final class Util {
     } finally {
       Utility.close(input);
     }
-  }
-
-  /**
-   * @return null if the file could not be read
-   */
-  public static char[] readURLAsChars(URL url) {
-    // ENH: add a weak cache that has an additional check against the file date
-    byte[] bytes = readURLAsBytes(url);
-    if (bytes != null) {
-      return toString(bytes, DEFAULT_ENCODING).toCharArray();
-    }
-
-    return null;
   }
 
   /**

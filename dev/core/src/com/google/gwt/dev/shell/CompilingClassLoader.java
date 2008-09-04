@@ -354,10 +354,25 @@ public final class CompilingClassLoader extends ClassLoader {
    */
   private static byte[] javaScriptHostBytes;
 
+  private static EmmaStrategy emmaStrategy;
+
   static {
     for (Class<?> c : BRIDGE_CLASSES) {
       BRIDGE_CLASS_NAMES.put(c.getName(), c);
     }
+    /*
+     * Specific support for bridging to Emma since the user classloader is
+     * generally completely isolated.
+     */
+    boolean emmaIsAvailable = false;
+    try {
+      Class<?> emmaBridge = Class.forName(EmmaStrategy.EMMA_RT_CLASSNAME,
+          false, Thread.currentThread().getContextClassLoader());
+      BRIDGE_CLASS_NAMES.put(EmmaStrategy.EMMA_RT_CLASSNAME, emmaBridge);
+      emmaIsAvailable = true;
+    } catch (ClassNotFoundException ignored) {
+    }
+    emmaStrategy = EmmaStrategy.get(emmaIsAvailable);
   }
 
   private static void classDump(String name, byte[] bytes) {
@@ -637,6 +652,8 @@ public final class CompilingClassLoader extends ClassLoader {
       injectJsniFor(compiledClass);
 
       byte[] classBytes = compiledClass.getBytes();
+      classBytes = emmaStrategy.getEmmaClassBytes(classBytes, lookupClassName,
+          compiledClass.getUnit().getLastModified());
       if (classRewriter != null) {
         byte[] newBytes = classRewriter.rewrite(className, classBytes);
         if (CLASS_DUMP) {
