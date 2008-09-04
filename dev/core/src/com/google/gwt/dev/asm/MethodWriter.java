@@ -1163,26 +1163,30 @@ class MethodWriter implements MethodVisitor {
         final Label end,
         final int index)
     {
-        if (signature != null) {
-            if (localVarType == null) {
-                localVarType = new ByteVector();
+        // GOOGLE: skip debug info if either label is unresolved.
+        if (((start.status & labels.RESOLVED) != 0)
+                && ((end.status & labels.RESOLVED) != 0)) {
+            if (signature != null) {
+                if (localVarType == null) {
+                    localVarType = new ByteVector();
+                }
+                ++localVarTypeCount;
+                localVarType.putShort(start.position)
+                        .putShort(end.position - start.position)
+                        .putShort(cw.newUTF8(name))
+                        .putShort(cw.newUTF8(signature))
+                        .putShort(index);
             }
-            ++localVarTypeCount;
-            localVarType.putShort(start.position)
+            if (localVar == null) {
+                localVar = new ByteVector();
+            }
+            ++localVarCount;
+            localVar.putShort(start.position)
                     .putShort(end.position - start.position)
                     .putShort(cw.newUTF8(name))
-                    .putShort(cw.newUTF8(signature))
+                    .putShort(cw.newUTF8(desc))
                     .putShort(index);
         }
-        if (localVar == null) {
-            localVar = new ByteVector();
-        }
-        ++localVarCount;
-        localVar.putShort(start.position)
-                .putShort(end.position - start.position)
-                .putShort(cw.newUTF8(name))
-                .putShort(cw.newUTF8(desc))
-                .putShort(index);
         if (compute != NOTHING) {
             // updates max locals
             char c = desc.charAt(0);
