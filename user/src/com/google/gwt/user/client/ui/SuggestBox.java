@@ -173,7 +173,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     public void selectItem(int index) {
       List<MenuItem> items = getItems();
       if (index > -1 && index < items.size()) {
-        itemOver(items.get(index));
+        itemOver(items.get(index), false);
       }
     }
   }

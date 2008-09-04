@@ -329,14 +329,14 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
 
       case Event.ONMOUSEOVER: {
         if (item != null) {
-          itemOver(item);
+          itemOver(item, true);
         }
         break;
       }
 
       case Event.ONMOUSEOUT: {
         if (item != null) {
-          itemOver(null);
+          itemOver(null, true);
         }
         break;
       }
@@ -555,7 +555,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     }
   }
 
-  void itemOver(MenuItem item) {
+  void itemOver(MenuItem item, boolean focus) {
     if (item == null) {
       // Don't clear selection if the currently selected item's menu is showing.
       if ((selectedItem != null)
@@ -566,7 +566,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
 
     // Style the item selected when the mouse enters.
     selectItem(item);
-    focus();
+    if (focus) {
+      focus();
+    }
 
     // If child menus are being shown, or this menu is itself
     // a child menu, automatically show an item's child menu

@@ -114,7 +114,7 @@ public class MenuBarTest extends GWTTestCase {
     RootPanel.get().add(bar);
     
     // Open the item with a submenu
-    bar.itemOver(top2);
+    bar.itemOver(top2, true);
 
     // Set the Debug Id
     bar.ensureDebugId("myMenu");
