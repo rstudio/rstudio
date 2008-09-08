@@ -185,13 +185,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * @return the {@link MenuItem} object
    */
   public MenuItem addItem(MenuItem item) {
-    addItemElement(item.getElement());
-    item.setParentMenu(this);
-    item.setSelectionStyle(false);
-    items.add(item);
-    allItems.add(item);
-    updateSubmenuIcon(item);
-    return item;
+    return insertItem(item, allItems.size());
   }
 
   /**
@@ -262,13 +256,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * @return the {@link MenuItemSeparator} object
    */
   public MenuItemSeparator addSeparator(MenuItemSeparator separator) {
-    if (vertical) {
-      setItemColSpan(separator, 2);
-    }
-    addItemElement(separator.getElement());
-    separator.setParentMenu(this);
-    allItems.add(separator);
-    return separator;
+    return insertSeparator(separator, allItems.size());
   }
 
   /**
@@ -306,6 +294,98 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    */
   public boolean getAutoOpen() {
     return autoOpen;
+  }
+
+  /**
+   * Get the index of a {@link MenuItem}.
+   * 
+   * @return the index of the item, or -1 if it is not contained by this MenuBar
+   */
+  public int getItemIndex(MenuItem item) {
+    return allItems.indexOf(item);
+  }
+
+  /**
+   * Get the index of a {@link MenuItemSerpator}.
+   * 
+   * @return the index of the separator, or -1 if it is not contained by this
+   *         MenuBar
+   */
+  public int getSeparatorIndex(MenuItemSeparator item) {
+    return allItems.indexOf(item);
+  }
+
+  /**
+   * Adds a menu item to the bar at a specific index.
+   * 
+   * @param item the item to be inserted
+   * @param beforeIndex the index where the item should be inserted
+   * @return the {@link MenuItem} object
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public MenuItem insertItem(MenuItem item, int beforeIndex)
+      throws IndexOutOfBoundsException {
+    // Check the bounds
+    if (beforeIndex < 0 || beforeIndex > allItems.size()) {
+      throw new IndexOutOfBoundsException();
+    }
+
+    // Add to the list of items
+    allItems.add(beforeIndex, item);
+    int itemsIndex = 0;
+    for (int i = 0; i < beforeIndex; i++) {
+      if (allItems.get(i) instanceof MenuItem) {
+        itemsIndex++;
+      }
+    }
+    items.add(itemsIndex, item);
+
+    // Setup the menu item
+    addItemElement(beforeIndex, item.getElement());
+    item.setParentMenu(this);
+    item.setSelectionStyle(false);
+    updateSubmenuIcon(item);
+    return item;
+  }
+
+  /**
+   * Adds a thin line to the {@link MenuBar} to separate sections of
+   * {@link MenuItem}s at the specified index.
+   * 
+   * @param beforeIndex the index where the seperator should be inserted
+   * @return the {@link MenuItemSeparator} object
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public MenuItemSeparator insertSeparator(int beforeIndex) {
+    return insertSeparator(new MenuItemSeparator(), beforeIndex); 
+  }
+
+  /**
+   * Adds a thin line to the {@link MenuBar} to separate sections of
+   * {@link MenuItem}s at the specified index.
+   * 
+   * @param separator the {@link MenuItemSeparator} to be inserted
+   * @param beforeIndex the index where the seperator should be inserted
+   * @return the {@link MenuItemSeparator} object
+   * @throws IndexOutOfBoundsException if <code>beforeIndex</code> is out of
+   *           range
+   */
+  public MenuItemSeparator insertSeparator(MenuItemSeparator separator,
+      int beforeIndex) throws IndexOutOfBoundsException {
+    // Check the bounds
+    if (beforeIndex < 0 || beforeIndex > allItems.size()) {
+      throw new IndexOutOfBoundsException();
+    }
+
+    if (vertical) {
+      setItemColSpan(separator, 2);
+    }
+    addItemElement(beforeIndex, separator.getElement());
+    separator.setParentMenu(this);
+    allItems.add(beforeIndex, separator);
+    return separator;
   }
 
   public boolean isAnimationEnabled() {
@@ -551,6 +631,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
           shownChildMenu = null;
           selectItem(null);
         }
+      } else if (autoOpen && shownChildMenu != null) {
+        // close submenu
+        shownChildMenu.onHide();
+        popup.hide();
+        shownChildMenu = null;
       }
     }
   }
@@ -671,17 +756,18 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * Physically add the td element of a {@link MenuItem} or
    * {@link MenuItemSeparator} to this {@link MenuBar}.
    * 
+   * @param beforeIndex the index where the seperator should be inserted
    * @param tdElem the td element to be added
    */
-  private void addItemElement(Element tdElem) {
-    Element tr;
+  private void addItemElement(int beforeIndex, Element tdElem) {
     if (vertical) {
-      tr = DOM.createTR();
-      DOM.appendChild(body, tr);
+      Element tr = DOM.createTR();
+      DOM.insertChild(body, tr, beforeIndex);
+      DOM.appendChild(tr, tdElem);
     } else {
-      tr = DOM.getChild(body, 0);
+      Element tr = DOM.getChild(body, 0);
+      DOM.insertChild(tr, tdElem, beforeIndex);
     }
-    DOM.appendChild(tr, tdElem);
   }
 
   /**

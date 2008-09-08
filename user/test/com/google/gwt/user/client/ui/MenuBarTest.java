@@ -92,6 +92,96 @@ public class MenuBarTest extends GWTTestCase {
     assertNull(separator3.getParentMenu());
   }
 
+  /**
+   * Test inserting {@link MenuItem}s and {@link MenuItemSeparator}s into the
+   * menu.
+   */
+  public void testInsertItems() {
+    // Create a menu bar
+    MenuBar bar = new MenuBar(true);
+
+    // Create a blank command
+    Command blankCommand = new Command() {
+      public void execute() {
+      }
+    };
+
+    // Insert first item
+    MenuItem item0 = bar.insertItem(new MenuItem("test", blankCommand), 0);
+    assertEquals(bar.getItemIndex(item0), 0);
+
+    // Insert item at 0
+    MenuItem item1 = bar.insertItem(new MenuItem("test", blankCommand), 0);
+    assertEquals(bar.getItemIndex(item1), 0);
+    assertEquals(bar.getItemIndex(item0), 1);
+
+    // Insert item at end
+    MenuItem item2 = bar.insertItem(new MenuItem("test", blankCommand), 2);
+    assertEquals(bar.getItemIndex(item1), 0);
+    assertEquals(bar.getItemIndex(item0), 1);
+    assertEquals(bar.getItemIndex(item2), 2);
+
+    // Insert a separator at 0
+    MenuItemSeparator separator0 = bar.insertSeparator(0);
+    assertEquals(bar.getSeparatorIndex(separator0), 0);
+    assertEquals(bar.getItemIndex(item1), 1);
+    assertEquals(bar.getItemIndex(item0), 2);
+    assertEquals(bar.getItemIndex(item2), 3);
+
+    // Insert a separator at end
+    MenuItemSeparator separator1 = bar.insertSeparator(4);
+    assertEquals(bar.getSeparatorIndex(separator0), 0);
+    assertEquals(bar.getItemIndex(item1), 1);
+    assertEquals(bar.getItemIndex(item0), 2);
+    assertEquals(bar.getItemIndex(item2), 3);
+    assertEquals(bar.getSeparatorIndex(separator1), 4);
+
+    // Insert a separator at middle
+    MenuItemSeparator separator2 = bar.insertSeparator(2);
+    assertEquals(bar.getSeparatorIndex(separator0), 0);
+    assertEquals(bar.getItemIndex(item1), 1);
+    assertEquals(bar.getSeparatorIndex(separator2), 2);
+    assertEquals(bar.getItemIndex(item0), 3);
+    assertEquals(bar.getItemIndex(item2), 4);
+    assertEquals(bar.getSeparatorIndex(separator1), 5);
+  }
+
+  /**
+   * Test inserting {@link MenuItem}s and {@link MenuItemSeparator}s into the
+   * menu at indexes that are out of bounds.
+   */
+  public void testInsertItemsOutOfBounds() {
+    // Create a menu bar
+    MenuBar bar = new MenuBar(true);
+
+    // Create a blank command
+    Command blankCommand = new Command() {
+      public void execute() {
+      }
+    };
+
+    // Add some items to the menu
+    for (int i = 0; i < 3; i++) {
+      bar.addItem("item", blankCommand);
+    }
+
+    // Add an item at a negative index
+    try {
+      bar.insertItem(new MenuItem("test", blankCommand), -1);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected exception
+    }
+
+    // Add an item at a high index
+    try {
+      bar.insertItem(new MenuItem("test", blankCommand), 4);
+      fail("Expected IndexOutOfBoundsException");
+    } catch (IndexOutOfBoundsException e) {
+      // Expected exception
+    }
+  }
+
   public void testDebugId() {
     Command emptyCommand = new Command() {
       public void execute() {
@@ -149,11 +239,9 @@ public class MenuBarTest extends GWTTestCase {
     };
 
     // Add some items
-    MenuItem item0 = bar.addItem("item0", blankCommand);
     MenuItem item1 = bar.addItem("item1", blankCommand);
     MenuItem item2 = bar.addItem("item2", blankCommand);
     MenuItem item3 = bar.addItem("item3", blankCommand);
-    MenuItem item4 = bar.addItem("item4", blankCommand);
 
     // Test setting the selected item
     assertNull(bar.getSelectedItem());
