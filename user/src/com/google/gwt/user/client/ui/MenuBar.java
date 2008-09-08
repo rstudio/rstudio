@@ -624,12 +624,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
           shownChildMenu.onHide();
           popup.hide();
           openPopup(item);
-        } else if (fireCommand) {
+        } else if (fireCommand && !autoOpen) {
           // close this submenu
           shownChildMenu.onHide();
           popup.hide();
           shownChildMenu = null;
-          selectItem(null);
+          selectItem(item);
         }
       } else if (autoOpen && shownChildMenu != null) {
         // close submenu
