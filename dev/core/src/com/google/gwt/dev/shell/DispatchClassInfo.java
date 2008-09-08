@@ -63,11 +63,12 @@ public class DispatchClassInfo {
   }
 
   private void addMember(Member member, String sig) {
-    if (!memberIdByName.containsKey(sig)) {
-      memberById.add(member);
-      int index = memberById.size() - 1;
-      memberIdByName.put(sig, new Integer(index));
+    if (member.isSynthetic()) {
+      return;
     }
+    int index = memberById.size();
+    memberById.add(member);
+    memberIdByName.put(sig, index);
   }
 
   private String getJsniSignature(Member member) {
@@ -148,7 +149,8 @@ public class DispatchClassInfo {
 
   private void lazyInitTargetMembersUsingReflectionHelper(Class<?> targetClass,
       boolean addConstructors) {
-    // Start by analyzing the superclass recursively.
+    // Start by analyzing the superclass recursively; the concrete class will
+    // clobber on overrides.
     Class<?> superclass = targetClass.getSuperclass();
     if (superclass != null) {
       lazyInitTargetMembersUsingReflectionHelper(superclass, false);
@@ -158,11 +160,10 @@ public class DispatchClassInfo {
     }
 
     if (addConstructors) {
-      Constructor<?>[] constructors = targetClass.getDeclaredConstructors();
-      for (Constructor<?> c : constructors) {
-        c.setAccessible(true);
-        String sig = getJsniSignature(c);
-        addMember(c, sig);
+      for (Constructor<?> ctor : targetClass.getDeclaredConstructors()) {
+        ctor.setAccessible(true);
+        String sig = getJsniSignature(ctor);
+        addMember(ctor, sig);
       }
     }
 
@@ -180,19 +181,17 @@ public class DispatchClassInfo {
      */
 
     // Get the methods on this class/interface.
-    //
-    Method[] methods = targetClass.getDeclaredMethods();
-    for (int i = 0; i < methods.length; i++) {
-      methods[i].setAccessible(true);
-      String sig = getJsniSignature(methods[i]);
-      addMember(methods[i], sig);
+    for (Method method : targetClass.getDeclaredMethods()) {
+      method.setAccessible(true);
+      String sig = getJsniSignature(method);
+      addMember(method, sig);
     }
 
     // Get the fields on this class/interface.
     Field[] fields = targetClass.getDeclaredFields();
-    for (int i = 0; i < fields.length; i++) {
-      fields[i].setAccessible(true);
-      addMember(fields[i], fields[i].getName());
+    for (Field field : fields) {
+      field.setAccessible(true);
+      addMember(field, field.getName());
     }
   }
 }

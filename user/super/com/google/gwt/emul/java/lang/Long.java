@@ -225,21 +225,22 @@ public final class Long extends Number implements Comparable<Long> {
 
     final int bufSize = 65;
     char[] buf = new char[bufSize];
+    char[] digits = __Digits.digits;
     int pos = bufSize - 1;
     // Cache a converted version for performance (pure long ops are faster).
     long radix = intRadix;
     if (value >= 0) {
       while (value >= radix) {
-        buf[pos--] = __Digits.digits[(int) (value % radix)];
+        buf[pos--] = digits[(int) (value % radix)];
         value /= radix;
       }
-      buf[pos] = __Digits.digits[(int) value];
+      buf[pos] = digits[(int) value];
     } else {
       while (value <= -radix) {
-        buf[pos--] = __Digits.digits[(int) -(value % radix)];
+        buf[pos--] = digits[(int) -(value % radix)];
         value /= radix;
       }
-      buf[pos--] = __Digits.digits[(int) -value];
+      buf[pos--] = digits[(int) -value];
       buf[pos] = '-';
     }
     return String.__valueOf(buf, pos, bufSize);
@@ -292,19 +293,20 @@ public final class Long extends Number implements Comparable<Long> {
     final int bufSize = 64 / shift;
     long bitMask = (1 << shift) - 1;
     char[] buf = new char[bufSize];
+    char[] digits = __Digits.digits;
     int pos = bufSize - 1;
     if (value >= 0) {
       while (value > bitMask) {
-        buf[pos--] = __Digits.digits[(int) (value & bitMask)];
+        buf[pos--] = digits[(int) (value & bitMask)];
         value >>= shift;
       }
     } else {
       while (pos > 0) {
-        buf[pos--] = __Digits.digits[(int) (value & bitMask)];
+        buf[pos--] = digits[(int) (value & bitMask)];
         value >>= shift;
       }
     }
-    buf[pos] = __Digits.digits[(int) (value & bitMask)];
+    buf[pos] = digits[(int) (value & bitMask)];
     return String.__valueOf(buf, pos, bufSize);
   }
 

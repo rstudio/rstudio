@@ -997,7 +997,6 @@ public class GenerateJavaAST {
     JExpression processExpression(FieldReference x) {
       SourceInfo info = makeSourceInfo(x);
       FieldBinding fieldBinding = x.binding;
-      JType type = (JType) typeMap.get(x.resolvedType);
       JField field;
       if (fieldBinding.declaringClass == null) {
         // probably array.length
@@ -1012,11 +1011,15 @@ public class GenerateJavaAST {
       JExpression fieldRef = new JFieldRef(program, info, instance, field,
           currentClass);
 
-      /*
-       * Note, this may result in an invalid AST due to an LHS cast operation.
-       * We fix this up in FixAssignmentToUnbox.
-       */
-      return maybeCast(type, fieldRef);
+      if (x.genericCast != null) {
+        JType castType = (JType) typeMap.get(x.genericCast);
+        /*
+         * Note, this may result in an invalid AST due to an LHS cast operation.
+         * We fix this up in FixAssignmentToUnbox.
+         */
+        return maybeCast(castType, fieldRef);
+      }
+      return fieldRef;
     }
 
     JExpression processExpression(InstanceOfExpression x) {
@@ -1028,7 +1031,6 @@ public class GenerateJavaAST {
 
     JExpression processExpression(MessageSend x) {
       SourceInfo info = makeSourceInfo(x);
-      JType type = (JType) typeMap.get(x.resolvedType);
       JMethod method = (JMethod) typeMap.get(x.binding);
 
       JExpression qualifier;
@@ -1064,7 +1066,11 @@ public class GenerateJavaAST {
       // The arguments come first...
       addCallArgs(x.arguments, call, x.binding);
 
-      return maybeCast(type, call);
+      if (x.valueCast != null) {
+        JType castType = (JType) typeMap.get(x.valueCast);
+        return maybeCast(castType, call);
+      }
+      return call;
     }
 
     @SuppressWarnings("unused")
@@ -1197,6 +1203,10 @@ public class GenerateJavaAST {
       JVariable variable = (JVariable) node;
 
       JExpression curRef = createVariableRef(info, variable, binding);
+      if (x.genericCast != null) {
+        JType castType = (JType) typeMap.get(x.genericCast);
+        curRef = maybeCast(castType, curRef);
+      }
 
       /*
        * Wackiness: JDT represents multiple field access as an array of fields,
@@ -1204,7 +1214,8 @@ public class GenerateJavaAST {
        * otherBindings takes the current expression as a qualifier.
        */
       if (x.otherBindings != null) {
-        for (FieldBinding fieldBinding : x.otherBindings) {
+        for (int i = 0; i < x.otherBindings.length; ++i) {
+          FieldBinding fieldBinding = x.otherBindings[i];
           JField field;
           if (fieldBinding.declaringClass == null) {
             // probably array.length
@@ -1217,6 +1228,10 @@ public class GenerateJavaAST {
             field = (JField) typeMap.get(fieldBinding);
           }
           curRef = new JFieldRef(program, info, curRef, field, currentClass);
+          if (x.otherGenericCasts != null && x.otherGenericCasts[i] != null) {
+            JType castType = (JType) typeMap.get(x.otherGenericCasts[i]);
+            curRef = maybeCast(castType, curRef);
+          }
         }
       }
 
@@ -1254,15 +1269,22 @@ public class GenerateJavaAST {
        * instance. CreateThisRef should compute a "this" access of the
        * appropriate type, unless the field is static.
        */
+      JExpression result = null;
       if (x.syntheticAccessors != null) {
         JField field = (JField) variable;
         if (!field.isStatic()) {
           JExpression instance = createThisRef(info, field.getEnclosingType());
-          return new JFieldRef(program, info, instance, field, currentClass);
+          result = new JFieldRef(program, info, instance, field, currentClass);
         }
       }
-
-      return createVariableRef(info, variable, binding);
+      if (result == null) {
+        result = createVariableRef(info, variable, binding);
+      }
+      if (x.genericCast != null) {
+        JType castType = (JType) typeMap.get(x.genericCast);
+        result = maybeCast(castType, result);
+      }
+      return result;
     }
 
     JExpression processExpression(SuperReference x) {
