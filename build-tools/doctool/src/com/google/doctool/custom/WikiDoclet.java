@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.regex.Pattern;
 
 /**
  * A doclet for using producing wiki output listing the specified classes and
@@ -40,11 +41,17 @@ import java.util.Iterator;
  */
 public class WikiDoclet {
 
+  private static final String JAVADOC_URL = "http://java.sun.com/j2se/1.5.0/docs/api/";
   private static final String OPT_WKHEADER = "-wkhead";
   private static final String OPT_WKOUT = "-wkout";
-  private static final String JAVADOC_URL = "http://java.sun.com/j2se/1.5.0/docs/api/";
 
   private static WikiDoclet sWikiDoclet;
+
+  /*
+   * Finds any compound Pascal-cased words (LikeThisExample), which Google Code
+   * will try to interpret as wiki links.
+   */
+  private static final Pattern wikiWordPattern = Pattern.compile("\\b([A-Z]+\\w+[A-Z]+\\w*)\\b");
 
   public static int optionLength(String option) {
     if (option.equals(OPT_WKOUT)) {
@@ -65,6 +72,11 @@ public class WikiDoclet {
   public static boolean validOptions(String[][] options,
       DocErrorReporter reporter) {
     return getDoclet().analyzeOptions(options, reporter);
+  }
+
+  private static String escapeWikiWords(String text) {
+    // Prefix each match with '!' to suppress automatic wiki-linking
+    return wikiWordPattern.matcher(text).replaceAll("!$1");
   }
 
   private static WikiDoclet getDoclet() {
@@ -101,7 +113,7 @@ public class WikiDoclet {
     Iterator<ExecutableMemberDoc> iter = members.iterator();
     while (iter.hasNext()) {
       ExecutableMemberDoc member = iter.next();
-      buffer.append(member.name() + member.flatSignature());
+      buffer.append(escapeWikiWords(member.name() + member.flatSignature()));
       if (iter.hasNext()) {
         buffer.append(", ");
       }
