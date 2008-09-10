@@ -83,6 +83,8 @@ public class ImageTest extends GWTTestCase {
   /**
    * Tests the transition from the clipped state to the unclipped state.
    */
+  /* This test is commented out because of issue #863 & #864
+     It fails intermittently in linux hosted mode tests.
   public void testChangeClippedImageToUnclipped() {
     final Image image = new Image("counting-forwards.png",
         12, 13, 8, 8);
@@ -115,7 +117,8 @@ public class ImageTest extends GWTTestCase {
 
     delayTestFinish(5000);
   }
-
+  */
+  
   /**
    *  Tests the creation of an image in unclipped mode
    */
