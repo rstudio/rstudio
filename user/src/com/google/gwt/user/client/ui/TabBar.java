@@ -28,7 +28,11 @@ import com.google.gwt.user.client.Event;
  * <ul class='css'>
  * <li>.gwt-TabBar { the tab bar itself }</li>
  * <li>.gwt-TabBar .gwt-TabBarFirst { the left edge of the bar }</li>
+ * <li>.gwt-TabBar .gwt-TabBarFirst-wrapper { table cell around the left edge }
+ * </li>
  * <li>.gwt-TabBar .gwt-TabBarRest { the right edge of the bar }</li>
+ * <li>.gwt-TabBar .gwt-TabBarRest-wrapper { table cell around the right edge }
+ * </li>
  * <li>.gwt-TabBar .gwt-TabBarItem { unselected tabs }</li>
  * <li>.gwt-TabBar .gwt-TabBarItem-wrapper { table cell around tab }</li>
  * <li>.gwt-TabBar .gwt-TabBarItem-selected { additional style for selected
@@ -122,6 +126,10 @@ public class TabBar extends Composite implements SourcesTabEvents,
     first.setHeight("100%");
     panel.setCellHeight(first, "100%");
     panel.setCellWidth(rest, "100%");
+    setStyleName(first.getElement().getParentElement(),
+        "gwt-TabBarFirst-wrapper");
+    setStyleName(rest.getElement().getParentElement(),
+        "gwt-TabBarRest-wrapper");
   }
 
   /**
