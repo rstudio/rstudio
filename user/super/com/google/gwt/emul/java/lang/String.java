@@ -678,8 +678,7 @@ public final class String implements Comparable<String>, CharSequence,
       }
     }
     var jr = @java.lang.String::__createArray(I)(out.length);
-    var i = 0;
-    for(i = 0; i < out.length; ++i) {
+    for(var i = 0; i < out.length; ++i) {
       jr[i] = out[i]; 
     }
     return jr;
