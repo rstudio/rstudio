@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.TreeLogger.HelpInfo;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.GWTProblem;
+import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.CharArrayComparator;
@@ -446,33 +447,12 @@ public abstract class AbstractCompiler {
     IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
-    Map<String, String> settings = new HashMap<String, String>();
-    settings.put(CompilerOptions.OPTION_LineNumberAttribute,
-        CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_SourceFileAttribute,
-        CompilerOptions.GENERATE);
-    /*
-     * Tricks like "boolean stopHere = true;" depend on this setting to work in
-     * hosted mode. In web mode, our compiler should optimize them out once we
-     * do real data flow.
-     */
-    settings.put(CompilerOptions.OPTION_PreserveUnusedLocal,
-        CompilerOptions.PRESERVE);
-    settings.put(CompilerOptions.OPTION_ReportDeprecation,
-        CompilerOptions.IGNORE);
-    settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
-        CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
-    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
-    settings.put(CompilerOptions.OPTION_TargetPlatform,
-        CompilerOptions.VERSION_1_5);
+    CompilerOptions options = JdtCompiler.getCompilerOptions(true);
 
-    // This is needed by TypeOracleBuilder to parse metadata.
-    settings.put(CompilerOptions.OPTION_DocCommentSupport,
-        CompilerOptions.ENABLED);
+    // This is only needed by TypeOracleBuilder to parse metadata.
+    options.docCommentSupport = false;
 
-    compiler = new CompilerImpl(env, pol, new CompilerOptions(settings), req,
-        probFact);
+    compiler = new CompilerImpl(env, pol, options, req, probFact);
   }
 
   protected final CompilationUnitDeclaration[] compile(TreeLogger logger,

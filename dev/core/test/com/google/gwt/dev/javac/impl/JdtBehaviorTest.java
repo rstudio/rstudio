@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.javac.impl;
 
+import com.google.gwt.dev.javac.JdtCompiler;
+
 import junit.framework.TestCase;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
@@ -29,7 +31,6 @@ import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
 import org.eclipse.jdt.internal.compiler.env.INameEnvironment;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
-import org.eclipse.jdt.internal.compiler.impl.CompilerOptions;
 import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
 import java.util.ArrayList;
@@ -57,8 +58,8 @@ public class JdtBehaviorTest extends TestCase {
     public CompilerImpl(INameEnvironment environment,
         ICompilerRequestor requestor) {
       super(environment, DefaultErrorHandlingPolicies.proceedWithAllProblems(),
-          getCompilerOptions(), requestor, new DefaultProblemFactory(
-              Locale.getDefault()));
+          JdtCompiler.getCompilerOptions(false), requestor,
+          new DefaultProblemFactory(Locale.getDefault()));
     }
   }
 
@@ -168,34 +169,6 @@ public class JdtBehaviorTest extends TestCase {
     public String toString() {
       return sourceFile.toString();
     }
-  }
-
-  private static CompilerOptions getCompilerOptions() {
-    Map<String, String> settings = new HashMap<String, String>();
-    settings.put(CompilerOptions.OPTION_LineNumberAttribute,
-        CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_SourceFileAttribute,
-        CompilerOptions.GENERATE);
-    /*
-     * Tricks like "boolean stopHere = true;" depend on this setting to work in
-     * hosted mode. In web mode, our compiler should optimize them out once we
-     * do real data flow.
-     */
-    settings.put(CompilerOptions.OPTION_PreserveUnusedLocal,
-        CompilerOptions.PRESERVE);
-    settings.put(CompilerOptions.OPTION_ReportDeprecation,
-        CompilerOptions.IGNORE);
-    settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
-        CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
-    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
-    settings.put(CompilerOptions.OPTION_TargetPlatform,
-        CompilerOptions.VERSION_1_5);
-
-    // This is needed by TypeOracleBuilder to parse metadata.
-    settings.put(CompilerOptions.OPTION_DocCommentSupport,
-        CompilerOptions.ENABLED);
-    return new CompilerOptions(settings);
   }
 
   protected Map<String, ClassFile> classFiles = new HashMap<String, ClassFile>();

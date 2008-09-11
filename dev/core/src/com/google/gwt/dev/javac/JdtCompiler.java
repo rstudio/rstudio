@@ -92,7 +92,7 @@ public class JdtCompiler {
     public CompilerImpl() {
       super(new INameEnvironmentImpl(),
           DefaultErrorHandlingPolicies.proceedWithAllProblems(),
-          getCompilerOptions(), new ICompilerRequestorImpl(),
+          getCompilerOptions(true), new ICompilerRequestorImpl(),
           new DefaultProblemFactory(Locale.getDefault()));
     }
 
@@ -193,7 +193,8 @@ public class JdtCompiler {
     return new JdtCompiler().doCompile(units);
   }
 
-  private static CompilerOptions getCompilerOptions() {
+  public static CompilerOptions getCompilerOptions(
+      boolean enableDocCommentSupport) {
     Map<String, String> settings = new HashMap<String, String>();
     settings.put(CompilerOptions.OPTION_LineNumberAttribute,
         CompilerOptions.GENERATE);
@@ -216,8 +217,10 @@ public class JdtCompiler {
         CompilerOptions.VERSION_1_5);
 
     // This is needed by TypeOracleBuilder to parse metadata.
-    settings.put(CompilerOptions.OPTION_DocCommentSupport,
-        CompilerOptions.ENABLED);
+    if (enableDocCommentSupport) {
+      settings.put(CompilerOptions.OPTION_DocCommentSupport,
+          CompilerOptions.ENABLED);
+    }
     return new CompilerOptions(settings);
   }
 
