@@ -32,13 +32,10 @@ public class About {
 
   public static String GWT_VERSION;
 
-  {
-    Class<? extends About> myClass = this.getClass();
-    String propsPath = myClass.getName().replace('.', '/').concat(".properties");
+  static {
     Properties props = new Properties();
     try {
-      InputStream instream = myClass.getClassLoader().getResourceAsStream(
-          propsPath);
+      InputStream instream = About.class.getResourceAsStream("About.properties");
       props.load(instream);
     } catch (IOException iox) {
       // okay... we use default values, then.

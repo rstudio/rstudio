@@ -20,7 +20,9 @@
       </zipfileset>
 
       <!-- raw files -->
-      <zipfileset dir="${project.build}" prefix="${project.distname}" />
+      <zipfileset dir="${project.build}" prefix="${project.distname}">
+        <exclude name="sentinels/**"/>
+      </zipfileset>
       <zipfileset dir="src" prefix="${project.distname}" />
 
       <!-- doc -->

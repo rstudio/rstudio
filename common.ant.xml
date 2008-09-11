@@ -199,10 +199,7 @@
     </sequential>
   </macrodef>
 
-  <macrodef name="gwt.revfilter" description="Filters files for versioning">
-    <attribute name="todir" description="Destination for the filtered copy"/>
-    <element name="src.fileset" implicit="true" 
-      description="Source for the filtered copy"/>
+  <macrodef name="gwt.getsvninfo" description="Identifies the SVN info of a workspace">
     <sequential>
       <exec outputproperty="svn.info" executable="svn" 
           failifexecutionfails="false" logError="true">
@@ -227,7 +224,31 @@
         casesensitive="false" />
       <property name="gwt.svnrev" 
         value="${gwt.svn.branch}@${gwt.svn.version}"/>
+      <!-- Windows NTFS and FAT don't like ':' or '@', and we need a sentinel file to test
+           for out-of-dateness, so this is a filename-acceptable equivalent to svnrev -->
+      <propertyregex property="gwt.svnrev.filename"
+        input="${gwt.svnrev}"
+        regexp="[:@]"
+        replace="-"
+        defaultValue="${gwt.svnrev}"/>
+      <!-- Generally, filtering requires a sentinel file so that changes to svn rev will
+         be noticed as invalidating the previously-generated filter output.  This property
+         names where such a sentinel lives; it is tested with <available/> and created
+         with <touch/> -->
+      <mkdir dir="${project.build}/sentinels" /> 
+      <property name="filter.sentinel" 
+          location="${project.build}/sentinels/gwt-${gwt.version}-svn-${gwt.svnrev.filename}" /> 
+    </sequential>
+  </macrodef>
+  
+  <macrodef name="gwt.revfilter" description="Filters files for versioning">
+    <attribute name="todir" description="Destination for the filtered copy"/>
+    
+    <element name="src.fileset" implicit="true" 
+      description="Source for the filtered copy"/>
+    <sequential>
       <!-- These files must be filtered for versioning -->
+      <echo message="Branding as GWT version ${gwt.version}, SVN rev ${gwt.svnrev}"/>
       <mkdir dir="@{todir}" />
       <copy todir="@{todir}" overwrite="true">
         <src.fileset/>
@@ -236,7 +257,6 @@
           <filter token="GWT_SVNREV" value="${gwt.svnrev}" />
         </filterset>
       </copy>
-      <echo message="Branding as GWT version ${gwt.version}, SVN rev ${gwt.svnrev}"/>
     </sequential>
   </macrodef>
 

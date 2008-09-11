@@ -25,6 +25,7 @@
       </tarfileset>
       <tarfileset dir="${project.build}" prefix="${project.distname}">
         <patternset refid="chmod.not.executables" />
+        <exclude name="sentinels/**"/>
       </tarfileset>
       <tarfileset dir="src" prefix="${project.distname}" mode="755">
         <patternset refid="chmod.executables" />

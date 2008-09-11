@@ -17,9 +17,24 @@
   </patternset>
 
   <target name="filter" description="Filters distro files for versioning">
+    <gwt.getsvninfo />
+    <condition property="filter.uptodate">
+      <and>
+        <available file="${filter.sentinel}" />
+        <uptodate>
+          <srcfiles dir="../core/src" />
+          <globmapper from="*" to="${project.build}/*" />
+        </uptodate>
+      </and>
+    </condition>
+    <antcall target="-filter.props" />
+  </target>
+ 
+  <target name="-filter.props" unless="filter.uptodate">
     <gwt.revfilter todir="${project.build}" >
       <fileset dir="../core/src" />
     </gwt.revfilter>
+    <touch file="${filter.sentinel}" />
   </target>
 
   <target name="clean" description="Cleans this project's intermediate and output files">

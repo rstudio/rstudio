@@ -57,12 +57,12 @@
 
   <property name="filter.pattern" value="com/google/gwt/dev/About.properties" />
 
-  <target name="-filter.src" description="Creates filtered copies of source files" unless="filter.uptodate">
-    <delete dir="${src.filtered}" failonerror="false" />
-    <gwt.revfilter todir="${src.filtered}" >
+  <target name="-filter.props" description="Creates filtered About.properties with version info"
+     unless="filter.uptodate">
+    <gwt.revfilter todir="${javac.out}">
       <fileset dir="src" includes="${filter.pattern}" />
     </gwt.revfilter>
-    <touch file="${src.filtered}/gwt.version-${gwt.version}" />
+    <touch file="${filter.sentinel}" />
   </target>
 
   <target name="build" depends="build.alldeps.jar" description="Compiles this project">
@@ -76,22 +76,8 @@
     <mkdir dir="${javac.out-dummy}" />
     <gwt.javac srcdir="src-dummy" destdir="${javac.out-dummy}" />
 
-    <!-- Files with hardcoded version information must be filtered -->
-    <property name="src.filtered" location="${project.build}/src-filtered" />
-    <condition property="filter.uptodate">
-      <and>
-        <available file="${src.filtered}/gwt.version-${gwt.version}" />
-        <uptodate>
-          <srcfiles dir="src" includes="${filter.pattern}" />
-          <globmapper from="*" to="${src.filtered}/*" />
-        </uptodate>
-      </and>
-    </condition>
-    <antcall target="-filter.src" />
-
     <mkdir dir="${javac.out}" />
     <gwt.javac srcdir="super" excludes="com/google/gwt/dev/jjs/intrinsic/"/>
-    <gwt.javac srcdir="${src.filtered}" />
     <gwt.javac srcdir="src" excludes="${filter.pattern}">
       <classpath>
         <pathelement location="${javac.out-dummy}" />
@@ -102,8 +88,21 @@
       </classpath>
     </gwt.javac>
     <copy todir="${javac.out}">
-      <fileset dir="src" includes="**/*.properties"/>
-                </copy>
+      <fileset dir="src" includes="**/*.properties" excludes="${filter.pattern}"/>
+    </copy>
+
+    <!-- Files with hardcoded version information must be filtered -->
+    <gwt.getsvninfo />
+    <condition property="filter.uptodate">
+      <and>
+        <available file="${filter.sentinel}" />
+        <uptodate>
+          <srcfiles dir="src" includes="${filter.pattern}" />
+          <globmapper from="*" to="${javac.out}/*" />
+        </uptodate>
+      </and>
+    </condition>
+    <antcall target="-filter.props" />
   </target>
 
   <target name="checkstyle" description="Static analysis of source">
