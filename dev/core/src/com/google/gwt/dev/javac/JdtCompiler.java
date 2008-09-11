@@ -211,10 +211,14 @@ public class JdtCompiler {
         CompilerOptions.IGNORE);
     settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
         CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_5);
-    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_5);
+
+    /*
+     * Wish we could target 1.5 class file, but this isn't allowed. :(
+     */
+    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_6);
+    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_6);
     settings.put(CompilerOptions.OPTION_TargetPlatform,
-        CompilerOptions.VERSION_1_5);
+        CompilerOptions.VERSION_1_6);
 
     // This is needed by TypeOracleBuilder to parse metadata.
     if (enableDocCommentSupport) {

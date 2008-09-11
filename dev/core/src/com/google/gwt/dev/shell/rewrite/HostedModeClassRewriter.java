@@ -187,6 +187,10 @@ public class HostedModeClassRewriter {
 
     v = new RewriteJsniMethods(v);
 
+    if (Double.parseDouble(System.getProperty("java.class.version")) < Opcodes.V1_6) {
+      v = new ForceClassVersion15(v);
+    }
+
     new ClassReader(classBytes).accept(v, 0);
     return writer.toByteArray();
   }
