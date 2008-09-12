@@ -150,6 +150,13 @@ public class ElementWrappingTest extends GWTTestCase {
     assertExistsAndAttached(radio);
   }
 
+  public void testTextArea() {
+    ensureDiv().setInnerHTML("<textarea rows='1' cols='1' id='foo'></textarea>");
+    TextArea textArea = TextArea.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(textArea);
+  }
+
   public void testTextBox() {
     ensureDiv().setInnerHTML("<input type='text' id='foo'></input>");
     TextBox textBox = TextBox.wrap(Document.get().getElementById("foo"));

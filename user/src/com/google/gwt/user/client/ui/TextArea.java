@@ -15,7 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.TextAreaElement;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.client.BidiUtils;
 
@@ -39,11 +41,45 @@ import com.google.gwt.i18n.client.BidiUtils;
 public class TextArea extends TextBoxBase implements HasDirection {
 
   /**
+   * Creates a TextArea widget that wraps an existing &lt;textarea&gt;
+   * element.
+   * 
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
+   * 
+   * @param element the element to be wrapped
+   */
+  public static TextArea wrap(Element element) {
+    // Assert that the element is attached.
+    assert Document.get().getBody().isOrHasChild(element);
+
+    TextArea textArea = new TextArea(element);
+
+    // Mark it attached and remember it for cleanup.
+    textArea.onAttach();
+    RootPanel.detachOnWindowClose(textArea);
+
+    return textArea;
+  }
+
+  /**
    * Creates an empty text area.
    */
   public TextArea() {
-    super(DOM.createTextArea());
+    super(Document.get().createTextAreaElement());
     setStyleName("gwt-TextArea");
+  }
+
+  /**
+   * This constructor may be used by subclasses to explicitly use an existing
+   * element. This element must be a &lt;textarea&gt; element.
+   * 
+   * @param element the element to be used
+   */
+  protected TextArea(Element element) {
+    super(element.<Element>cast());
+    TextAreaElement.as(element);
   }
 
   /**
@@ -53,7 +89,7 @@ public class TextArea extends TextBoxBase implements HasDirection {
    * @return the requested width, in characters
    */
   public int getCharacterWidth() {
-    return DOM.getElementPropertyInt(getElement(), "cols");
+    return getTextAreaElement().getCols();
   }
 
   @Override
@@ -64,7 +100,7 @@ public class TextArea extends TextBoxBase implements HasDirection {
   public Direction getDirection() {
     return BidiUtils.getDirectionOnElement(getElement());
   }
-  
+
   @Override
   public int getSelectionLength() {
     return getImpl().getSelectionLength(getElement());
@@ -76,7 +112,7 @@ public class TextArea extends TextBoxBase implements HasDirection {
    * @return the number of visible lines
    */
   public int getVisibleLines() {
-    return DOM.getElementPropertyInt(getElement(), "rows");
+    return getTextAreaElement().getRows();
   }
 
   /**
@@ -86,7 +122,7 @@ public class TextArea extends TextBoxBase implements HasDirection {
    * @param width the requested width, in characters
    */
   public void setCharacterWidth(int width) {
-    DOM.setElementPropertyInt(getElement(), "cols", width);
+    getTextAreaElement().setCols(width);
   }
 
   public void setDirection(Direction direction) {
@@ -99,6 +135,10 @@ public class TextArea extends TextBoxBase implements HasDirection {
    * @param lines the number of visible lines
    */
   public void setVisibleLines(int lines) {
-    DOM.setElementPropertyInt(getElement(), "rows", lines);
+    getTextAreaElement().setRows(lines);
+  }
+
+  private TextAreaElement getTextAreaElement() {
+    return getElement().cast();
   }
 }
