@@ -21,6 +21,55 @@ package com.google.gwt.lang;
  */
 public final class Array {
 
+  private static final class ExpandoWrapper {
+    /**
+     * A JS array containing the names of any expandos we need to add to arrays
+     * (such as "hashCode", "equals", "toString").
+     */
+    private static final Object expandoNames = makeEmptyJsArray();
+
+    /**
+     * A JS array containing the values of any expandos we need to add to arrays
+     * (such as hashCode(), equals(), toString()).
+     */
+    private static final Object expandoValues = makeEmptyJsArray();
+
+    static {
+      initExpandos(new Array(), expandoNames, expandoValues);
+    }
+
+    public static void wrapArray(Array array) {
+      wrapArray(array, expandoNames, expandoValues);
+    }
+
+    private static native void initExpandos(Array protoType,
+        Object expandoNames, Object expandoValues) /*-{
+      var i = 0, value;
+      for (var name in protoType) {
+        // Only copy non-null values over; this generally means only functions
+        // will get copied over, and not fields, which is good because we will
+        // setup the fields manually and it's best if length doesn't get blown
+        // away.
+        if (value = protoType[name]) {
+          expandoNames[i] = name;
+          expandoValues[i] = value;
+          ++i;
+        }
+      }
+    }-*/;
+
+    private static native Object makeEmptyJsArray() /*-{
+      return [];
+    }-*/;
+
+    private static native void wrapArray(Array array, Object expandoNames,
+        Object expandoValues) /*-{
+      for (var i = 0, c = expandoNames.length; i < c; ++i) {
+        array[expandoNames[i]] = expandoValues[i];
+      }
+    }-*/;
+  }
+
   /*
    * TODO: static init instead of lazy init when we can elide the clinit calls.
    */
@@ -32,12 +81,6 @@ public final class Array {
   static final int NULL_SEED_TYPE = 0;
 
   static final int ZERO_SEED_TYPE = 1;
-
-  /**
-   * Stores the prototype Array so that arrays can get their polymorphic methods
-   * via expando.
-   */
-  private static Array protoTypeArray;
 
   /**
    * Creates a copy of the specified array.
@@ -123,10 +166,7 @@ public final class Array {
    */
   public static Array initValues(Class arrayClass, int typeId, int queryId,
       Array array) {
-    if (protoTypeArray == null) {
-      protoTypeArray = new Array();
-    }
-    wrapArray(array, protoTypeArray);
+    ExpandoWrapper.wrapArray(array);
     array.arrayClass = arrayClass;
     Util.setTypeId(array, typeId);
     array.queryId = queryId;
@@ -151,7 +191,7 @@ public final class Array {
   private static native Array arraySlice(Array array, int fromIndex, int toIndex) /*-{
     return array.slice(fromIndex, toIndex);
   }-*/;
-  
+
   /**
    * Use JSNI to effect a castless type change.
    */
@@ -177,11 +217,12 @@ public final class Array {
    * @return the new JSON array
    */
   private static native Array createFromSeed(int seedType, int length) /*-{
-    var seedArray = [null, 0, false, [0, 0]];
-    var value = seedArray[seedType];
     var array = new Array(length);
-    for (var i = 0; i < length; ++i) {
-      array[i] = value;
+    if (seedType > 0) {
+      var value = [null, 0, false, [0, 0]][seedType];
+      for (var i = 0; i < length; ++i) {
+        array[i] = value;
+      }
     }
     return array;
   }-*/;
@@ -212,23 +253,9 @@ public final class Array {
     return array[index] = value;
   }-*/;
 
-  private static native Array wrapArray(Array array, Array protoTypeArray) /*-{
-    for (var i in protoTypeArray) {
-      // Only copy non-null values over; this generally means only functions
-      // will get copied over, and not fields, which is fine because we will
-      // setup the fields manually and it's best if length doesn't get blown
-      // away.
-      var toCopy = protoTypeArray[i];
-      if (toCopy) {
-        array[i] = toCopy;
-      }
-    }
-    return array;
-  }-*/;
-
   /*
    * Explicitly initialize all fields to JS false values; see comment in
-   * wrapArray(Array, Array).
+   * ExpandoWrapper.initExpandos().
    */
   public volatile int length = 0;
   protected Class arrayClass = null;
