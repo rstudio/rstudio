@@ -16,6 +16,7 @@
 package com.google.gwt.module;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.module.client.ConfigurationPropertiesTest;
 import com.google.gwt.module.client.DoubleScriptInjectionTest;
 import com.google.gwt.module.client.NoDeployTest;
 import com.google.gwt.module.client.SingleScriptInjectionTest;
@@ -29,6 +30,7 @@ public class ModuleSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite();
 
+    suite.addTestSuite(ConfigurationPropertiesTest.class);
     suite.addTestSuite(SingleScriptInjectionTest.class);
     suite.addTestSuite(DoubleScriptInjectionTest.class);
     suite.addTestSuite(NoDeployTest.class);

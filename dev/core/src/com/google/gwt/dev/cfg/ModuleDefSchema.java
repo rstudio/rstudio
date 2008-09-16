@@ -88,6 +88,10 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __servlet_2_class = null;
 
+    protected final String __set_configuration_property_1_name = null;
+
+    protected final String __set_configuration_property_2_value = null;
+
     protected final String __set_property_1_name = null;
 
     protected final String __set_property_2_value = null;
@@ -144,16 +148,30 @@ public class ModuleDefSchema extends Schema {
 
     protected Schema __define_property_begin(PropertyName name,
         PropertyValue[] values) throws UnableToCompleteException {
-      if (moduleDef.getProperties().find(name.token) != null) {
-        // Disallow redefinition.
-        String msg = "Attempt to redefine property '" + name.token + "'";
-        logger.log(TreeLogger.ERROR, msg, null);
+
+      Property existingProperty = moduleDef.getProperties().find(name.token);
+      if (existingProperty != null) {
+        // Disallow redefinition of properties, but provide a type-sensitive
+        // error message to aid in diagnosis.
+        if (existingProperty instanceof BindingProperty) {
+          logger.log(TreeLogger.ERROR, "The deferred-binding property named "
+              + name.token + " may not be redefined.");
+        } else if (existingProperty instanceof ConfigurationProperty) {
+          logger.log(TreeLogger.ERROR, "A configuration property named "
+              + name.token + " has already been set.");
+        } else {
+          // Future proofing if other subclasses are added.
+          logger.log(TreeLogger.ERROR, "May not replace property named "
+              + name.token + " of unknown type "
+              + existingProperty.getClass().getName());
+        }
         throw new UnableToCompleteException();
       }
 
-      Property prop = moduleDef.getProperties().create(name.token);
+      BindingProperty prop = moduleDef.getProperties().createBinding(name.token);
+
       for (int i = 0; i < values.length; i++) {
-        prop.addKnownValue(values[i].token);
+        prop.addDefinedValue(values[i].token);
       }
 
       // No children.
@@ -165,10 +183,10 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    protected Schema __extend_property_begin(Property property,
+    protected Schema __extend_property_begin(BindingProperty property,
         PropertyValue[] values) {
       for (int i = 0; i < values.length; i++) {
-        property.addKnownValue(values[i].token);
+        property.addDefinedValue(values[i].token);
       }
 
       // No children.
@@ -195,12 +213,12 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    protected Schema __property_provider_begin(Property property) {
+    protected Schema __property_provider_begin(BindingProperty property) {
       property.setProvider(new PropertyProvider(moduleDef, property));
       return fChild = new PropertyProviderBodySchema();
     }
 
-    protected void __property_provider_end(Property property)
+    protected void __property_provider_end(BindingProperty property)
         throws UnableToCompleteException {
       PropertyProviderBodySchema childSchema = ((PropertyProviderBodySchema) fChild);
       String script = childSchema.getScript();
@@ -295,8 +313,42 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    protected Schema __set_property_begin(Property prop, PropertyValue value) {
-      prop.setActiveValue(value.token);
+    protected Schema __set_configuration_property_begin(PropertyName name,
+        String value) throws UnableToCompleteException {
+
+      // Don't allow configuration properties with the same name as a
+      // deferred-binding property.
+      Property prop = moduleDef.getProperties().find(name.token);
+      if (prop != null && !(prop instanceof ConfigurationProperty)) {
+        logger.log(TreeLogger.ERROR, "A deferred-binding property named "
+            + name.token + " has already been defined");
+        throw new UnableToCompleteException();
+      } else {
+        prop = moduleDef.getProperties().createConfiguration(name.token);
+      }
+
+      ((ConfigurationProperty) prop).setValue(value);
+
+      // No children.
+      return null;
+    }
+
+    protected Schema __set_property_begin(BindingProperty prop,
+        PropertyValue[] value) throws UnableToCompleteException {
+      boolean error = false;
+      String[] stringValues = new String[value.length];
+      for (int i = 0, len = stringValues.length; i < len; i++) {
+        if (!prop.isDefinedValue(stringValues[i] = value[i].token)) {
+          logger.log(TreeLogger.ERROR, "The value " + stringValues[i]
+              + " was not previously defined.");
+          error = true;
+        }
+      }
+      if (error) {
+        throw new UnableToCompleteException();
+      }
+
+      prop.setAllowedValues(stringValues);
 
       // No children.
       return null;
@@ -513,11 +565,13 @@ public class ModuleDefSchema extends Schema {
       return new ConditionSchema(cond);
     }
 
-    // We intentionally use the Property type here for tough-love on module
-    // writers. It prevents them from trying to create property providers for
-    // unknown properties.
-    //
-    protected Schema __when_property_is_begin(Property prop, PropertyValue value) {
+    /*
+     * We intentionally use the BindingProperty type here for tough-love on
+     * module writers. It prevents them from trying to create property providers
+     * for unknown properties.
+     */
+    protected Schema __when_property_is_begin(BindingProperty prop,
+        PropertyValue value) {
       Condition cond = new ConditionWhenPropertyIs(prop.getName(), value.token);
       parentCondition.getConditions().add(cond);
 
@@ -691,6 +745,12 @@ public class ModuleDefSchema extends Schema {
    * Converts property names into their corresponding property objects.
    */
   private final class PropertyAttrCvt extends AttributeConverter {
+    private Class<? extends Property> concreteType;
+
+    public PropertyAttrCvt(Class<? extends Property> concreteType) {
+      this.concreteType = concreteType;
+    }
+
     public Object convertToArg(Schema schema, int line, String elem,
         String attr, String value) throws UnableToCompleteException {
       // Find the named property.
@@ -700,13 +760,19 @@ public class ModuleDefSchema extends Schema {
       if (prop != null) {
         // Found it.
         //
-        return prop;
+        if (concreteType.isInstance(prop)) {
+          return prop;
+        }
+        logger.log(TreeLogger.ERROR, "The specified property '" + attr
+            + "' is not of the correct type; found '"
+            + prop.getClass().getSimpleName() + "' expecting '"
+            + concreteType.getSimpleName() + "'");
       } else {
         // Property not defined. This is a problem.
         //
         Messages.PROPERTY_NOT_FOUND.log(logger, value, null);
-        throw new UnableToCompleteException();
       }
+      throw new UnableToCompleteException();
     }
   }
 
@@ -857,10 +923,12 @@ public class ModuleDefSchema extends Schema {
 
   protected final String __module_1_rename_to = "";
 
+  private final PropertyAttrCvt bindingPropAttrCvt = new PropertyAttrCvt(
+      BindingProperty.class);
   private final BodySchema bodySchema;
-
   private final ClassAttrCvt classAttrCvt = new ClassAttrCvt();
-
+  private final PropertyAttrCvt configurationPropAttrCvt = new PropertyAttrCvt(
+      ConfigurationProperty.class);
   private boolean foundAnyPublic;
   private boolean foundExplicitSourceOrSuperSource;
   private final ObjAttrCvt<Generator> genAttrCvt = new ObjAttrCvt<Generator>(
@@ -874,7 +942,6 @@ public class ModuleDefSchema extends Schema {
   private final String modulePackageAsPath;
   private final URL moduleURL;
   private final NullableNameAttrCvt nullableNameAttrCvt = new NullableNameAttrCvt();
-  private final PropertyAttrCvt propAttrCvt = new PropertyAttrCvt();
   private final PropertyNameAttrCvt propNameAttrCvt = new PropertyNameAttrCvt();
   private final PropertyValueArrayAttrCvt propValueArrayAttrCvt = new PropertyValueArrayAttrCvt();
   private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
@@ -890,7 +957,9 @@ public class ModuleDefSchema extends Schema {
     this.bodySchema = new BodySchema();
 
     registerAttributeConverter(PropertyName.class, propNameAttrCvt);
-    registerAttributeConverter(Property.class, propAttrCvt);
+    registerAttributeConverter(BindingProperty.class, bindingPropAttrCvt);
+    registerAttributeConverter(ConfigurationProperty.class,
+        configurationPropAttrCvt);
     registerAttributeConverter(PropertyValue.class, propValueAttrCvt);
     registerAttributeConverter(PropertyValue[].class, propValueArrayAttrCvt);
     registerAttributeConverter(Generator.class, genAttrCvt);

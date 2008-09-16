@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--                                                                        -->
-<!-- Copyright 2007 Google Inc.                                             -->
+<!-- Copyright 2008 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -16,8 +16,8 @@
 <!-- The module root element -->
 <!ELEMENT module (inherits | source | public | super-source | entry-point | 
   stylesheet | script | servlet | replace-with | generate-with |
-  define-property | extend-property | set-property | property-provider |
-  define-linker | add-linker)*>
+  define-property | extend-property | set-property | set-configuration-property |
+  property-provider | define-linker | add-linker)*>
 <!ATTLIST module
 	rename-to CDATA #IMPLIED
 >
@@ -89,14 +89,14 @@
 <!ELEMENT add-linker EMPTY>
 <!-- A comma-separated list of linker names -->
 <!ATTLIST add-linker
-  name CDATA #REQUIRED
+	name CDATA #REQUIRED
 >
 
 <!-- Defines a Linker type to package compiler output -->
 <!ELEMENT define-linker EMPTY>
 <!ATTLIST define-linker
-  class CDATA #REQUIRED
-  name CDATA #REQUIRED
+	class CDATA #REQUIRED
+	name CDATA #REQUIRED
 >
 
 <!--                 ^^^ Commonly-used elements ^^^                -->
@@ -111,6 +111,12 @@
 <!-- Set the value of a previously-defined property -->
 <!ELEMENT set-property EMPTY>
 <!ATTLIST set-property
+	name CDATA #REQUIRED
+	value CDATA #REQUIRED
+>
+<!-- Set the value of a configuration property -->
+<!ELEMENT set-configuration-property EMPTY>
+<!ATTLIST set-configuration-property
 	name CDATA #REQUIRED
 	value CDATA #REQUIRED
 >

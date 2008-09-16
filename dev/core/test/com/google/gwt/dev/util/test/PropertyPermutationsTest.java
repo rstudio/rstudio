@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@ package com.google.gwt.dev.util.test;
 
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Properties;
-import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 
 import junit.framework.TestCase;
@@ -31,9 +31,9 @@ public class PropertyPermutationsTest extends TestCase {
     Properties props = md.getProperties();
 
     {
-      Property prop = props.create("debug");
-      prop.addKnownValue("false");
-      prop.addKnownValue("true");
+      BindingProperty prop = props.createBinding("debug");
+      prop.addDefinedValue("false");
+      prop.addDefinedValue("true");
     }
 
     // Permutations and their values are in stable alphabetical order.
@@ -56,16 +56,16 @@ public class PropertyPermutationsTest extends TestCase {
     Properties props = md.getProperties();
 
     {
-      Property prop = props.create("user.agent");
-      prop.addKnownValue("moz");
-      prop.addKnownValue("ie6");
-      prop.addKnownValue("opera");
+      BindingProperty prop = props.createBinding("user.agent");
+      prop.addDefinedValue("moz");
+      prop.addDefinedValue("ie6");
+      prop.addDefinedValue("opera");
     }
 
     {
-      Property prop = props.create("debug");
-      prop.addKnownValue("false");
-      prop.addKnownValue("true");
+      BindingProperty prop = props.createBinding("debug");
+      prop.addDefinedValue("false");
+      prop.addDefinedValue("true");
     }
 
     // String[]s and their values are in stable alphabetical order.

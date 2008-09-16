@@ -400,22 +400,15 @@ public class ModuleDef implements PublicOracle {
 
     // Normalize property providers.
     //
-    for (Iterator<Property> iter = getProperties().iterator(); iter.hasNext();) {
-      Property prop = iter.next();
-      if (prop.getActiveValue() == null) {
-        // If there are more than one possible values, then create a provider.
-        // Otherwise, pretend the one value is an active value.
-        //
-        String[] knownValues = prop.getKnownValues();
-        assert (knownValues.length > 0);
-        if (knownValues.length > 1) {
-          if (prop.getProvider() == null) {
-            // Create a default provider.
-            //
-            prop.setProvider(new DefaultPropertyProvider(this, prop));
-          }
-        } else {
-          prop.setActiveValue(knownValues[0]);
+    for (Property current : getProperties()) {
+      if (current instanceof BindingProperty) {
+        BindingProperty prop = (BindingProperty) current;
+        /*
+         * Create a default property provider for any properties with more than
+         * one possible value and no existing provider.
+         */
+        if (prop.getProvider() == null && prop.getAllowedValues().length > 1) {
+          prop.setProvider(new DefaultPropertyProvider(this, prop));
         }
       }
     }

@@ -20,9 +20,10 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
+import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
@@ -54,6 +55,7 @@ import com.google.gwt.util.tools.ToolBase;
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
@@ -113,11 +115,13 @@ public class GWTCompiler extends ToolBase {
         PropertyPermutations perms) {
       propertyOracles = new StaticPropertyOracle[perms.size()];
       rebindOracles = new RebindOracle[perms.size()];
-      Property[] orderedProps = perms.getOrderedProperties();
+      BindingProperty[] orderedProps = perms.getOrderedProperties();
+      SortedSet<ConfigurationProperty> configPropSet = module.getProperties().getConfigurationProperties();
+      ConfigurationProperty[] configProps = configPropSet.toArray(new ConfigurationProperty[configPropSet.size()]);
       for (int i = 0; i < rebindOracles.length; ++i) {
         String[] orderedPropValues = perms.getOrderedPropertyValues(i);
         propertyOracles[i] = new StaticPropertyOracle(orderedProps,
-            orderedPropValues);
+            orderedPropValues, configProps);
         rebindOracles[i] = new StandardRebindOracle(compilationState,
             propertyOracles[i], module, rules, genDir, generatorResourcesDir,
             generatorArtifacts);

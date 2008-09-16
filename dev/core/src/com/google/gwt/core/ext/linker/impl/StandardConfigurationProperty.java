@@ -13,28 +13,30 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.cfg;
+package com.google.gwt.core.ext.linker.impl;
+
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 
 /**
- * Represents an abstract module property.
+ * The standard implementation of {@link ConfigurationProperty} from a
+ * {@link com.google.gwt.dev.cfg.ConfigurationProperty}.
  */
-public abstract class Property implements Comparable<Property> {
+public class StandardConfigurationProperty implements ConfigurationProperty {
 
-  protected final String name;
+  private final String name;
+  private final String value;
 
-  protected Property(String name) {
-    this.name = name;
-  }
-
-  public int compareTo(Property o) {
-    return name.compareTo(o.name);
+  public StandardConfigurationProperty(
+      com.google.gwt.dev.cfg.ConfigurationProperty p) {
+    this.name = p.getName();
+    this.value = p.getValue();
   }
 
   public String getName() {
     return name;
   }
 
-  public String toString() {
-    return name;
+  public String getValue() {
+    return value;
   }
 }

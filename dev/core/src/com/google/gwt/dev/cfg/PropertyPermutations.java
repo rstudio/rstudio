@@ -17,6 +17,7 @@ package com.google.gwt.dev.cfg;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.SortedSet;
 
 /**
  * Generates all possible permutations of properties in a module.
@@ -27,12 +28,13 @@ public class PropertyPermutations implements Iterable<String[]> {
 
   private final int lastProp;
 
-  private final Property[] properties;
+  private final BindingProperty[] properties;
 
   private final String[][] values;
 
   public PropertyPermutations(Properties properties) {
-    this.properties = properties.toArray();
+    SortedSet<BindingProperty> bindingProps = properties.getBindingProperties();
+    this.properties = bindingProps.toArray(new BindingProperty[bindingProps.size()]);
     lastProp = this.properties.length - 1;
     int permCount = countPermutations();
     values = new String[permCount][];
@@ -44,7 +46,7 @@ public class PropertyPermutations implements Iterable<String[]> {
     }
   }
 
-  public Property[] getOrderedProperties() {
+  public BindingProperty[] getOrderedProperties() {
     return properties;
   }
 
@@ -68,7 +70,7 @@ public class PropertyPermutations implements Iterable<String[]> {
   private int countPermutations() {
     int count = 1;
     for (int i = 0; i < properties.length; i++) {
-      Property prop = properties[i];
+      BindingProperty prop = properties[i];
       String[] options = getPossibilities(prop);
       assert (options.length > 0);
       count *= options.length;
@@ -76,21 +78,12 @@ public class PropertyPermutations implements Iterable<String[]> {
     return count;
   }
 
-  private String[] getPossibilities(Property prop) {
-    String activeValue = prop.getActiveValue();
-    if (activeValue != null) {
-      // This property is fixed.
-      //
-      return new String[] {activeValue};
-    } else {
-      // This property is determined on the client.
-      //
-      return prop.getKnownValues();
-    }
+  private String[] getPossibilities(BindingProperty prop) {
+    return prop.getAllowedValues();
   }
 
   private void permute(String[] soFar, int whichProp) {
-    Property prop = properties[whichProp];
+    BindingProperty prop = properties[whichProp];
     String[] options = getPossibilities(prop);
 
     for (int i = 0; i < options.length; i++) {

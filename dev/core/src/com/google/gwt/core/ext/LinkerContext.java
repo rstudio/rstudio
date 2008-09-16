@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext;
 
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 
 import java.util.SortedSet;
@@ -26,6 +27,13 @@ import java.util.SortedSet;
  * iteration order is left as an implementation detail.
  */
 public interface LinkerContext {
+  /**
+   * Returns all configuration properties defined in the module. Configuration
+   * properties do not have any impact on deferred-binding decisions, but may
+   * affect the behaviors of Generators and Linkers.
+   */
+  SortedSet<ConfigurationProperty> getConfigurationProperties();
+
   /**
    * Returns the name of the module's bootstrap function.
    */

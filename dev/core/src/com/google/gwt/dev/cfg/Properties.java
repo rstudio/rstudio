@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,57 +15,96 @@
  */
 package com.google.gwt.dev.cfg;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * A typed map of deferred binding properties.
  */
 public class Properties implements Iterable<Property> {
 
-  private final Map<String, Property> map = new HashMap<String, Property>();
+  private final SortedSet<BindingProperty> bindingProps = new TreeSet<BindingProperty>();
 
-  private Property[] propertiesLazyArray;
+  private final SortedSet<ConfigurationProperty> configProps = new TreeSet<ConfigurationProperty>();
+
+  private final SortedMap<String, Property> map = new TreeMap<String, Property>();
 
   /**
-   * Creates the specified property, or returns an existing one by the specified
-   * name if present.
+   * Creates the specified deferred-binding property, or returns an existing one
+   * by the specified name if present.
    */
-  public Property create(String name) {
-    if (name == null) {
-      throw new NullPointerException("name");
-    }
+  public BindingProperty createBinding(String name) {
+    BindingProperty prop = create(name, BindingProperty.class);
+    bindingProps.add(prop);
+    return prop;
+  }
 
-    Property property = find(name);
-    if (property == null) {
-      property = new Property(name);
-      map.put(name, property);
-    }
-
-    return property;
+  /**
+   * Creates the specified configuration property, or returns an existing one by
+   * the specified name if present.
+   */
+  public ConfigurationProperty createConfiguration(String name) {
+    ConfigurationProperty prop = create(name, ConfigurationProperty.class);
+    configProps.add(prop);
+    return prop;
   }
 
   public Property find(String name) {
     return map.get(name);
   }
 
+  /**
+   * Gets all deferred binding properties in sorted order.
+   */
+  public SortedSet<BindingProperty> getBindingProperties() {
+    return bindingProps;
+  }
+
+  public SortedSet<ConfigurationProperty> getConfigurationProperties() {
+    return configProps;
+  }
+
   public Iterator<Property> iterator() {
     return map.values().iterator();
   }
 
-  /**
-   * Lists all properties in sorted order.
-   */
-  public Property[] toArray() {
-    if (propertiesLazyArray == null) {
-      Collection<Property> properties = map.values();
-      int n = properties.size();
-      propertiesLazyArray = properties.toArray(new Property[n]);
-      Arrays.sort(propertiesLazyArray);
+  private <T extends Property> T create(String name, Class<T> clazz) {
+    if (clazz == null) {
+      throw new NullPointerException("clazz");
+    } else if (name == null) {
+      throw new NullPointerException("name");
     }
-    return propertiesLazyArray;
+
+    Property property = find(name);
+    if (property != null) {
+      try {
+        return clazz.cast(property);
+      } catch (ClassCastException e) {
+        throw new IllegalArgumentException("Cannot create property " + name
+            + " because one of another type ("
+            + property.getClass().getSimpleName() + ") already exists.");
+      }
+    }
+
+    Exception ex = null;
+    try {
+      T newInstance = clazz.getConstructor(String.class).newInstance(name);
+      map.put(name, newInstance);
+      return newInstance;
+    } catch (NoSuchMethodException e) {
+      ex = e;
+    } catch (InstantiationException e) {
+      ex = e;
+    } catch (IllegalAccessException e) {
+      ex = e;
+    } catch (InvocationTargetException e) {
+      ex = e;
+    }
+
+    throw new RuntimeException("Unable to create Property instance", ex);
   }
 }

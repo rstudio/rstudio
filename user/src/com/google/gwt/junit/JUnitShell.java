@@ -22,6 +22,8 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.BootStrapPlatform;
 import com.google.gwt.dev.GWTShell;
+import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
@@ -578,8 +580,8 @@ public class JUnitShell extends GWTShell {
     if (userAgentString != null) {
       Properties props = module.getProperties();
       Property userAgent = props.find("user.agent");
-      if (userAgent != null) {
-        userAgent.setActiveValue(userAgentString);
+      if (userAgent instanceof BindingProperty) {
+        ((BindingProperty) userAgent).setAllowedValues(userAgentString);
       }
     }
     BrowserWidgetHost browserHost = getBrowserHost();
@@ -618,10 +620,9 @@ public class JUnitShell extends GWTShell {
       currentModule.clearEntryPoints();
       currentModule.addEntryPointTypeName(GWTRunner.class.getName());
       // Squirrel away the name of the active module for GWTRunnerGenerator
-      Property moduleNameProp = currentModule.getProperties().create(
+      ConfigurationProperty moduleNameProp = currentModule.getProperties().createConfiguration(
           "junit.moduleName");
-      moduleNameProp.addKnownValue(moduleName);
-      moduleNameProp.setActiveValue(moduleName);
+      moduleNameProp.setValue(moduleName);
       runStyle.maybeCompileModule(syntheticModuleName);
     }
 
@@ -711,7 +712,7 @@ public class JUnitShell extends GWTShell {
       Pattern pattern = Pattern.compile("[^\\s\"]+|\"[^\"\\\\]*(\\\\.[^\"\\\\]*)*\"");
       Matcher matcher = pattern.matcher(args);
       Pattern quotedArgsPattern = Pattern.compile("^([\"'])(.*)([\"'])$");
-      
+
       while (matcher.find()) {
         // Strip leading and trailing quotes from the arg
         String arg = matcher.group();

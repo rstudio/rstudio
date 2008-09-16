@@ -20,12 +20,14 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.ConfigurationProperty;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.dev.GWTCompiler;
+import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.Script;
@@ -90,6 +92,12 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
   }
 
+  static final Comparator<ConfigurationProperty> CONFIGURATION_PROPERTY_COMPARATOR = new Comparator<ConfigurationProperty>() {
+    public int compare(ConfigurationProperty o1, ConfigurationProperty o2) {
+      return o1.getName().compareTo(o2.getName());
+    }
+  };
+
   static final Comparator<SelectionProperty> SELECTION_PROPERTY_COMPARATOR = new Comparator<SelectionProperty>() {
     public int compare(SelectionProperty o1, SelectionProperty o2) {
       return o1.getName().compareTo(o2.getName());
@@ -98,6 +106,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   private final ArtifactSet artifacts = new ArtifactSet();
   private final File compilationsDir;
+  private final SortedSet<ConfigurationProperty> configurationProperties;
   private final JJSOptions jjsOptions;
   private final List<Class<? extends Linker>> linkerClasses;
   private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
@@ -114,9 +123,9 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    * compilation.
    */
   private final File moduleOutDir;
-  private final SortedSet<SelectionProperty> properties;
   private final Map<String, StandardSelectionProperty> propertiesByName = new HashMap<String, StandardSelectionProperty>();
   private final Map<String, StandardCompilationResult> resultsByStrongName = new HashMap<String, StandardCompilationResult>();
+  private final SortedSet<SelectionProperty> selectionProperties;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
       File moduleOutDir, File generatorDir, JJSOptions jjsOptions) {
@@ -163,17 +172,35 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
      */
     linkerShortNames.put(this.getClass(), "");
 
-    // Always return the properties in the same order as a convenience
-    SortedSet<SelectionProperty> mutableProperties = new TreeSet<SelectionProperty>(
-        SELECTION_PROPERTY_COMPARATOR);
-    for (Property p : module.getProperties()) {
-      // Create a new view
-      StandardSelectionProperty newProp = new StandardSelectionProperty(p);
-      mutableProperties.add(newProp);
-      propertiesByName.put(newProp.getName(), newProp);
-      logger.log(TreeLogger.SPAM, "Added property " + newProp, null);
+    // Break ModuleDef properties out into LinkerContext interfaces
+    {
+      SortedSet<ConfigurationProperty> mutableConfigurationProperties = new TreeSet<ConfigurationProperty>(
+          CONFIGURATION_PROPERTY_COMPARATOR);
+      SortedSet<SelectionProperty> mutableSelectionProperties = new TreeSet<SelectionProperty>(
+          SELECTION_PROPERTY_COMPARATOR);
+      for (Property p : module.getProperties()) {
+        // Create a new view
+        if (p instanceof com.google.gwt.dev.cfg.ConfigurationProperty) {
+          StandardConfigurationProperty newProp = new StandardConfigurationProperty(
+              (com.google.gwt.dev.cfg.ConfigurationProperty) p);
+          mutableConfigurationProperties.add(newProp);
+          logger.log(TreeLogger.SPAM,
+              "Added configuration property " + newProp, null);
+        } else if (p instanceof BindingProperty) {
+          StandardSelectionProperty newProp = new StandardSelectionProperty(
+              (BindingProperty) p);
+          mutableSelectionProperties.add(newProp);
+          propertiesByName.put(newProp.getName(), newProp);
+          logger.log(TreeLogger.SPAM, "Added selection property " + newProp,
+              null);
+        } else {
+          logger.log(TreeLogger.ERROR, "Unknown property type "
+              + p.getClass().getName());
+        }
+      }
+      selectionProperties = Collections.unmodifiableSortedSet(mutableSelectionProperties);
+      configurationProperties = Collections.unmodifiableSortedSet(mutableConfigurationProperties);
     }
-    properties = Collections.unmodifiableSortedSet(mutableProperties);
 
     {
       int index = 0;
@@ -236,6 +263,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return result;
   }
 
+  public SortedSet<ConfigurationProperty> getConfigurationProperties() {
+    return configurationProperties;
+  }
+
   @Override
   public String getDescription() {
     return "Root Linker";
@@ -250,7 +281,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   }
 
   public SortedSet<SelectionProperty> getProperties() {
-    return properties;
+    return selectionProperties;
   }
 
   public StandardSelectionProperty getProperty(String name) {

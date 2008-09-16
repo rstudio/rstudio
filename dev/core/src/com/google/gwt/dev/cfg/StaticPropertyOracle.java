@@ -25,17 +25,20 @@ import com.google.gwt.core.ext.TreeLogger;
  */
 public class StaticPropertyOracle implements PropertyOracle {
 
-  private final Property[] orderedProps;
+  private final ConfigurationProperty[] configProps;
+
+  private final BindingProperty[] orderedProps;
 
   private final String[] orderedPropValues;
 
-  public StaticPropertyOracle(Property[] orderedProps,
-      String[] orderedPropValues) {
+  public StaticPropertyOracle(BindingProperty[] orderedProps,
+      String[] orderedPropValues, ConfigurationProperty[] configProps) {
     this.orderedProps = orderedProps;
     this.orderedPropValues = orderedPropValues;
+    this.configProps = configProps;
   }
 
-  public Property[] getOrderedProps() {
+  public BindingProperty[] getOrderedProps() {
     return orderedProps;
   }
 
@@ -51,14 +54,20 @@ public class StaticPropertyOracle implements PropertyOracle {
     // name-to-index map.
     //
     for (int i = 0; i < orderedProps.length; i++) {
-      Property prop = orderedProps[i];
+      BindingProperty prop = orderedProps[i];
       if (prop.getName().equals(propertyName)) {
         String value = orderedPropValues[i];
-        if (prop.isKnownValue(value)) {
+        if (prop.isAllowedValue(value)) {
           return value;
         } else {
           throw new BadPropertyValueException(propertyName, value);
         }
+      }
+    }
+
+    for (ConfigurationProperty configProp : configProps) {
+      if (configProp.getName().equals(propertyName)) {
+        return configProp.getValue();
       }
     }
 
@@ -70,11 +79,13 @@ public class StaticPropertyOracle implements PropertyOracle {
   public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     for (int i = 0; i < orderedProps.length; i++) {
-      Property prop = orderedProps[i];
+      BindingProperty prop = orderedProps[i];
       if (prop.getName().equals(propertyName)) {
-        return prop.getKnownValues();
+        return prop.getAllowedValues();
       }
     }
+
+    // Configuration properties throw exception per javadoc.
 
     // Didn't find it.
     //

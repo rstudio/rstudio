@@ -16,7 +16,7 @@
 package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.SelectionProperty;
-import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.cfg.BindingProperty;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -25,7 +25,7 @@ import java.util.TreeSet;
 
 /**
  * The standard implementation of {@link SelectionProperty} from a
- * {@link Property}.
+ * {@link BindingProperty}.
  */
 public class StandardSelectionProperty implements SelectionProperty {
   private final String activeValue;
@@ -33,13 +33,17 @@ public class StandardSelectionProperty implements SelectionProperty {
   private final String provider;
   private final SortedSet<String> values;
 
-  public StandardSelectionProperty(Property p) {
-    activeValue = p.getActiveValue();
+  public StandardSelectionProperty(BindingProperty p) {
+    if (p.getAllowedValues().length == 1) {
+      activeValue = p.getAllowedValues()[0];
+    } else {
+      activeValue = null;
+    }
     name = p.getName();
     provider = p.getProvider() == null ? null
         : p.getProvider().getBody().toSource();
     values = Collections.unmodifiableSortedSet(new TreeSet<String>(
-        Arrays.asList(p.getKnownValues())));
+        Arrays.asList(p.getDefinedValues())));
   }
 
   public String getName() {

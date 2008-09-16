@@ -16,25 +16,26 @@
 package com.google.gwt.dev.cfg;
 
 /**
- * Represents an abstract module property.
+ * Represents a module property which does not impact deferred-binding
+ * decisions.
  */
-public abstract class Property implements Comparable<Property> {
+public class ConfigurationProperty extends Property {
+  private String value;
 
-  protected final String name;
-
-  protected Property(String name) {
-    this.name = name;
+  public ConfigurationProperty(String name) {
+    this(name, null);
   }
 
-  public int compareTo(Property o) {
-    return name.compareTo(o.name);
+  public ConfigurationProperty(String name, String value) {
+    super(name);
+    setValue(value);
   }
 
-  public String getName() {
-    return name;
+  public String getValue() {
+    return value;
   }
 
-  public String toString() {
-    return name;
+  public void setValue(String value) {
+    this.value = value;
   }
 }

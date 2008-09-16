@@ -20,7 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
-import com.google.gwt.dev.cfg.Property;
+import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -61,7 +61,7 @@ public class PermutationCompiler {
   private static final class PermutationTask implements Callable<String> {
     private static void logProperties(TreeLogger logger,
         StaticPropertyOracle propOracle) {
-      Property[] props = propOracle.getOrderedProps();
+      BindingProperty[] props = propOracle.getOrderedProps();
       String[] values = propOracle.getOrderedPropValues();
       if (logger.isLoggable(TreeLogger.DEBUG)) {
         logger = logger.branch(TreeLogger.DEBUG, "Setting properties", null);
@@ -422,7 +422,7 @@ public class PermutationCompiler {
     StandardCompilationResult compilation = linkerContext.getCompilation(
         logger, result.getJs());
     StaticPropertyOracle propOracle = perm.getPropertyOracle();
-    Property[] orderedProps = propOracle.getOrderedProps();
+    BindingProperty[] orderedProps = propOracle.getOrderedProps();
     String[] orderedPropValues = propOracle.getOrderedPropValues();
     Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
     for (int i = 0; i < orderedProps.length; i++) {

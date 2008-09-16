@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,7 +21,7 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import junit.framework.Test;
 
 /**
- * Tests all classes in GWT JRE emulation library.
+ * Tests various tags in gwt.xml files.
  */
 public class TagSuite {
 
@@ -33,12 +33,13 @@ public class TagSuite {
      */
     BootStrapPlatform.applyPlatformHacks();
   }
-  
+
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(
         "Tests for public, source, and super-source tags");
 
     // $JUnit-BEGIN$
+    suite.addTestSuite(PropertyTest.class);
     suite.addTestSuite(PublicTagTest.class);
     suite.addTestSuite(SourceTagTest.class);
     suite.addTestSuite(SuperSourceTagTest.class);

@@ -28,9 +28,10 @@ import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.JavaSourceCodeBase;
@@ -236,7 +237,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
       TreeLogger logger, TypeOracle to) throws UnableToCompleteException {
     // Make an empty property oracle.
     StaticPropertyOracle propertyOracle = new StaticPropertyOracle(
-        new Property[0], new String[0]);
+        new BindingProperty[0], new String[0], new ConfigurationProperty[0]);
     return new SerializableTypeOracleBuilder(logger, propertyOracle, to);
   }
 

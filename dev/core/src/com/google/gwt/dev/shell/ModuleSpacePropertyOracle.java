@@ -18,6 +18,8 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.cfg.BindingProperty;
+import com.google.gwt.dev.cfg.ConfigurationProperty;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 
@@ -56,7 +58,15 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     if (prevAnswers.containsKey(propertyName)) {
       return prevAnswers.get(propertyName);
     } else {
-      String value = computePropertyValue(logger, propertyName, prop);
+      String value;
+      if (prop instanceof ConfigurationProperty) {
+        value = ((ConfigurationProperty) prop).getValue();
+      } else if (prop instanceof BindingProperty) {
+        value = computePropertyValue(logger, propertyName,
+            (BindingProperty) prop);
+      } else {
+        throw new BadPropertyValueException(propertyName);
+      }
       prevAnswers.put(propertyName, value);
       return value;
     }
@@ -68,7 +78,10 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
   public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
-    return prop.getKnownValues();
+    if (prop instanceof BindingProperty) {
+      return ((BindingProperty) prop).getAllowedValues();
+    }
+    throw new BadPropertyValueException(propertyName);
   }
 
   /**
@@ -79,33 +92,32 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
    *           property.
    */
   private String computePropertyValue(TreeLogger logger, String propertyName,
-      Property prop) throws BadPropertyValueException {
-    String value;
-    // If there is an active value, use that.
-    //
-    value = prop.getActiveValue();
+      BindingProperty prop) throws BadPropertyValueException {
 
-    // In case there isn't an active value...
-    if (value == null) {
-      // Invokes the script function.
+    if (prop.getAllowedValues().length == 1) {
+      // If there is only one legal value, use that.
+      return prop.getAllowedValues()[0];
+    }
+
+    String value;
+    // Invokes the script function.
+    //
+    try {
+      // Invoke the property provider function in JavaScript.
       //
-      try {
-        // Invoke the property provider function in JavaScript.
-        //
-        value = (String) space.invokeNativeObject("__gwt_getProperty", null,
-            new Class[] {String.class}, new Object[] {prop.getName()});
-      } catch (Throwable e) {
-        // Treat as an unknown value.
-        //
-        String msg = "Error while executing the JavaScript provider for property '"
-            + propertyName + "'";
-        logger.log(TreeLogger.ERROR, msg, e);
-        throw new BadPropertyValueException(propertyName, "<failed to compute>");
-      }
+      value = (String) space.invokeNativeObject("__gwt_getProperty", null,
+          new Class[] {String.class}, new Object[] {prop.getName()});
+    } catch (Throwable e) {
+      // Treat as an unknown value.
+      //
+      String msg = "Error while executing the JavaScript provider for property '"
+          + propertyName + "'";
+      logger.log(TreeLogger.ERROR, msg, e);
+      throw new BadPropertyValueException(propertyName, "<failed to compute>");
     }
 
     // value may be null if the provider returned an unknown property value.
-    if (prop.isKnownValue(value)) {
+    if (prop.isAllowedValue(value)) {
       return value;
     } else {
       // Bad value due to the provider returning an unknown value.
