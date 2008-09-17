@@ -17,6 +17,6 @@
 	<source path='resolutiontest' />
 	<source path = 'client'/>
 	<!-- Browser-sensitive code should use the 'user.agent' property -->
-	<set-property name="locale" value="piglatin_UK_win" />
 	<extend-property name = "locale" values ="piglatin,piglatin_UK, piglatin_UK_win"/>
+	<set-property name="locale" value="piglatin_UK_win" />
  </module>

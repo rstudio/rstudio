@@ -81,7 +81,7 @@ public class StaticPropertyOracle implements PropertyOracle {
     for (int i = 0; i < orderedProps.length; i++) {
       BindingProperty prop = orderedProps[i];
       if (prop.getName().equals(propertyName)) {
-        return prop.getAllowedValues();
+        return prop.getDefinedValues();
       }
     }
 

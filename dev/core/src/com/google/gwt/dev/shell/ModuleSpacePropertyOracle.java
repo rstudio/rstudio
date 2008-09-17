@@ -79,7 +79,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
     if (prop instanceof BindingProperty) {
-      return ((BindingProperty) prop).getAllowedValues();
+      return ((BindingProperty) prop).getDefinedValues();
     }
     throw new BadPropertyValueException(propertyName);
   }
