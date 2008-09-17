@@ -131,21 +131,21 @@ import java.util.Date;
  * <td><code>z</code></td>
  * <td>time zone</td>
  * <td>Text</td>
- * <td><code>Pacific Standard Time</code></td>
+ * <td><code>Pacific Standard Time(see comment)</code></td>
  * </tr>
  * 
  * <tr>
  * <td><code>Z</code></td>
  * <td>time zone (RFC 822)</td>
- * <td>Number</td>
- * <td><code>-0800</code></td>
+ * <td>Text</td>
+ * <td><code>-0800(See comment)</code></td>
  * </tr>
  * 
  * <tr>
  * <td><code>v</code></td>
- * <td>time zone (generic)</td>
+ * <td>time zone id</td>
  * <td>Text</td>
- * <td><code>Pacific Time</code></td>
+ * <td><code>America/Los_Angeles(See comment)</code></td>
  * </tr>
  * 
  * <tr>
@@ -197,15 +197,63 @@ import java.util.Date;
  * resulting time text even they are not embraced within single quotes.
  * </p>
  * 
+ * <p>
+ * [Time Zone Handling] Web browsers don't provide all the information we need
+ * for proper time zone formating -- so GWT has a copy of the required data, for
+ * your convenience. For simpler cases, one can also use a fallback
+ * implementation that only keeps track of the current timezone offset. These two
+ * approaches are called, respectively, Common TimeZones and Simple TimeZones,
+ * although both are implemented with the same TimeZone class.
+ * 
+ *  "TimeZone createTimeZone(String timezoneData)"
+ * returns a Common TimeZone object, and  
+ * "TimeZone createTimeZone(int timeZoneOffsetInMinutes)" returns a Simple
+ * TimeZone object. The one provided by OS fall into to Simple TimeZone category.
+ * For formatting purpose, following table shows the behavior of GWT 
+ * DateTimeFormat.  
+ * </p>
+ * <table>
+ * <tr>
+ * <th>Pattern</th>
+ * <th>Common TimeZone</th>
+ * <th>Simple TimeZone</th>
+ * </tr>
+ * <tr>
+ * <td>z, zz, zzz</td>
+ * <td>PDT</td>
+ * <td>UTC-7</td>
+ * </tr>
+ * <tr>
+ * <td>zzzz</td>
+ * <td>Pacific Daylight Time</td>
+ * <td>UTC-7</td>
+ * </tr>
+ * <tr>
+ * <td>Z, ZZ, ZZZ</td>
+ * <td>-0700</td>
+ * <td>-0700</td>
+ * </tr>
+ * <tr>
+ * <td>ZZZZ</td>
+ * <td>GMT-07:00</td>
+ * <td>GMT-07:00</td>
+ * </tr>
+ * <tr>
+ * <td>v, vv, vvv, vvvv</td>
+ * <td>America/Los_Angeles</td>
+ * <td>Etc/GMT+7</td>
+ * </tr>
+ * </table>
+ * 
  * <h3>Parsing Dates and Times</h3>
  * <p>
- * This implementation could parse partial date/time. Current date will be used
- * to fill in the unavailable date part. 00:00:00 will be used to fill in the
- * time part.
+ * This implementation can parse partial date/time. Current date will be used
+ * to fill in an unspecified date part. 00:00:00 will be used to fill in an
+ * unspecified time.
  * </p>
  * 
  * <p>
- * As with formatting (described above), the count of pattern letters determine
+ * As with formatting (described above), the count of pattern letters determines
  * the parsing behavior.
  * </p>
  * 
@@ -224,8 +272,18 @@ import java.util.Date;
  * 
  * <p>
  * Although the current pattern specification doesn't not specify behavior for
- * all letters, it may in the future. It is strongly discouraged to used
- * unspecified letters as literal text without being surrounded by quotes.
+ * all letters, it may in the future. It is strongly discouraged to use
+ * unspecified letters as literal text without quoting them.
+ * </p>
+ * <p>
+ * [Note on TimeZone] The time zone support for parsing is limited. Only
+ * standard GMT and RFC format are supported. Time zone specification using
+ * time zone id (like America/Los_Angeles), time zone names (like PST, Pacific
+ * Standard Time) are not supported. Normally, it is too much a burden for a
+ * client application to load all the time zone symbols. And in almost all
+ * those cases, it is a better choice to do such parsing on server side
+ * through certain RPC mechanism. This decision is based on particular use
+ * cases we have studied; in principle, it could be changed in future versions.
  * </p>
  * 
  * <h3>Examples</h3>
@@ -237,7 +295,7 @@ import java.util.Date;
  * 
  * <tr>
  * <td><code>"yyyy.MM.dd G 'at' HH:mm:ss vvvv"</code></td>
- * <td><code>1996.07.10 AD at 15:08:56 Pacific Time</code></td>
+ * <td><code>1996.07.10 AD at 15:08:56 America/Los_Angeles</code></td>
  * </tr>
  * 
  * <tr>
@@ -256,8 +314,8 @@ import java.util.Date;
  * </tr>
  * 
  * <tr>
- * <td><code>"K:mm a, vvv"</code></td>
- * <td><code> 0:00 PM, PT</code></td>
+ * <td><code>"K:mm a, vvvv"</code></td>
+ * <td><code> 0:00 PM, America/Los_Angeles</code></td>
  * </tr>
  * 
  * <tr>
@@ -347,7 +405,8 @@ public class DateTimeFormat {
   private static DateTimeFormat cachedLongDateTimeFormat;
   private static DateTimeFormat cachedMediumDateTimeFormat;
   private static DateTimeFormat cachedShortDateTimeFormat;
-
+  
+  private static final int NUM_MILLISECONDS_IN_DAY = 24 * 60 * 60000;
   private static final DateTimeConstants defaultDateTimeConstants = (DateTimeConstants) GWT.create(DateTimeConstants.class);
 
   private static final String PATTERN_CHARS = "GyMdkHmsSEDahKzZv";
@@ -361,11 +420,10 @@ public class DateTimeFormat {
   private static final int MINUTES_PER_HOUR = 60;
 
   /**
-   * Returns a format object using the specified pattern and the date time
-   * constants for the default locale. If you need to format or parse repeatedly
-   * using the same pattern, it is highly recommended that you cache the
-   * returned <code>DateTimeFormat</code> object and reuse it rather than
-   * calling this method repeatedly.
+   * Returns a DateTimeFormat object using the specified pattern. If you need 
+   * to format or parse repeatedly using the same pattern, it is highly 
+   * recommended that you cache the returned <code>DateTimeFormat</code> 
+   * object and reuse it rather than calling this method repeatedly.
    * 
    * @param pattern string to specify how the date should be formatted
    * 
@@ -379,6 +437,12 @@ public class DateTimeFormat {
     return new DateTimeFormat(pattern, defaultDateTimeConstants);
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for full date format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getFullDateFormat() {
     if (cachedFullDateFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[FULL_DATE_FORMAT];
@@ -387,6 +451,12 @@ public class DateTimeFormat {
     return cachedFullDateFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for full date and time format. The 
+   * pattern for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getFullDateTimeFormat() {
     if (cachedFullDateTimeFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[FULL_DATE_FORMAT]
@@ -396,6 +466,12 @@ public class DateTimeFormat {
     return cachedFullDateTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for full time format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getFullTimeFormat() {
     if (cachedFullTimeFormat == null) {
       String pattern = defaultDateTimeConstants.timeFormats()[FULL_TIME_FORMAT];
@@ -404,6 +480,12 @@ public class DateTimeFormat {
     return cachedFullTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for long date format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getLongDateFormat() {
     if (cachedLongDateFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[LONG_DATE_FORMAT];
@@ -412,6 +494,12 @@ public class DateTimeFormat {
     return cachedLongDateFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for long date and time format. The 
+   * pattern for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getLongDateTimeFormat() {
     if (cachedLongDateTimeFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[LONG_DATE_FORMAT]
@@ -421,6 +509,12 @@ public class DateTimeFormat {
     return cachedLongDateTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for long time format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getLongTimeFormat() {
     if (cachedLongTimeFormat == null) {
       String pattern = defaultDateTimeConstants.timeFormats()[LONG_TIME_FORMAT];
@@ -429,6 +523,12 @@ public class DateTimeFormat {
     return cachedLongTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for medium date format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getMediumDateFormat() {
     if (cachedMediumDateFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[MEDIUM_DATE_FORMAT];
@@ -437,6 +537,12 @@ public class DateTimeFormat {
     return cachedMediumDateFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for medium date and time format. The 
+   * pattern for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getMediumDateTimeFormat() {
     if (cachedMediumDateTimeFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[MEDIUM_DATE_FORMAT]
@@ -446,6 +552,12 @@ public class DateTimeFormat {
     return cachedMediumDateTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for medium time format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getMediumTimeFormat() {
     if (cachedMediumTimeFormat == null) {
       String pattern = defaultDateTimeConstants.timeFormats()[MEDIUM_TIME_FORMAT];
@@ -454,6 +566,12 @@ public class DateTimeFormat {
     return cachedMediumTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for short date format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getShortDateFormat() {
     if (cachedShortDateFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[SHORT_DATE_FORMAT];
@@ -462,6 +580,12 @@ public class DateTimeFormat {
     return cachedShortDateFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for short date and time format. The 
+   * pattern for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getShortDateTimeFormat() {
     if (cachedShortDateTimeFormat == null) {
       String pattern = defaultDateTimeConstants.dateFormats()[SHORT_DATE_FORMAT]
@@ -471,6 +595,12 @@ public class DateTimeFormat {
     return cachedShortDateTimeFormat;
   }
 
+  /**
+   * Retrieve the DateTimeFormat object for short time format. The pattern
+   * for this format is predefined for each locale.
+   * 
+   * @return A DateTimeFormat object.
+   */
   public static DateTimeFormat getShortTimeFormat() {
     if (cachedShortTimeFormat == null) {
       String pattern = defaultDateTimeConstants.timeFormats()[SHORT_TIME_FORMAT];
@@ -519,9 +649,59 @@ public class DateTimeFormat {
    * 
    * @param date the date object being formatted
    * 
-   * @return formatted date representation
+   * @return string representation for this date in desired format
    */
   public String format(Date date) {
+    TimeZone timeZone = TimeZone.createTimeZone(date.getTimezoneOffset());
+    return format(date, timeZone);
+  }
+  
+  /**
+   * Format a date object using specified time zone.
+   * 
+   * @param date the date object being formatted
+   * @param timeZone a TimeZone object that holds time zone information
+   * 
+   * @return string representation for this date in the format defined by this object
+   */
+  public String format(Date date, TimeZone timeZone) {
+    // We use the Date class to calculate each date/time field in order
+    // to maximize performance and minimize code size.
+    // JavaScript only provides an API for rendering local time (in the os time
+    // zone). Here we want to render time in any timezone. So suppose we try to
+    // render the date (20:00 GMT0000, or 16:00 GMT-0400, or 12:00 GMT-0800) for
+    // time zone GMT-0400, and OS has time zone GMT-0800. By adding the
+    // difference between OS time zone (GMT-0800) and target time zone
+    // (GMT-0400) to "date", we end up with 16:00 GMT-0800. This date object
+    // has the same date/time fields (year, month, date, hour, minutes, etc)
+    // in GMT-0800 as original date in our target time zone (GMT-0400). We
+    // just need to take care of time zone display, but that's needed anyway.
+ 
+    // Things get a little bit more tricky when a daylight time transition 
+    // happens. For example, if the OS timezone is America/Los_Angeles, 
+    // it is just impossible to have a Date represent 2006/4/2 02:30, because
+    // 2:00 to 3:00 on that day does not exist in  US Pacific time zone because
+    // of the daylight time switch.
+    
+    // But we can use 2 separate date objects, one to represent 2006/4/2, one
+    // to represent 02:30. Of course, for the 2nd date object its date can be
+    // any other day in that year, except 2006/4/2. So we end up have 3 Date
+    // objects: one for resolving "Year, month, day", one for time within that
+    // day, and the original date object, which is needed for figuring out
+    // actual time zone offset.
+    
+    int diff = (date.getTimezoneOffset() - timeZone.getOffset(date)) * 60000;
+    Date keepDate = new Date(date.getTime() + diff);
+    Date keepTime = keepDate;
+    if (keepDate.getTimezoneOffset() != date.getTimezoneOffset()) {
+      if (diff > 0) {
+        diff -= NUM_MILLISECONDS_IN_DAY;
+      } else {
+        diff += NUM_MILLISECONDS_IN_DAY;
+      }
+      keepTime = new Date(date.getTime() + diff);
+    }
+    
     StringBuffer toAppendTo = new StringBuffer(64);
     int j, n = pattern.length();
     for (int i = 0; i < n;) {
@@ -531,7 +711,7 @@ public class DateTimeFormat {
         // Count the number of times it is repeated.
         for (j = i + 1; j < n && pattern.charAt(j) == ch; ++j) {
         }
-        subFormat(toAppendTo, ch, j - i, date);
+        subFormat(toAppendTo, ch, j - i, date, keepDate, keepTime, timeZone);
         i = j;
       } else if (ch == '\'') {
         // Handle an entire quoted string, included embedded
@@ -579,7 +759,12 @@ public class DateTimeFormat {
 
     return toAppendTo.toString();
   }
-
+  
+  /**
+   * Retrieve the pattern used in this DateTimeFormat object.
+   * 
+   * @return pattern string
+   */
   public String getPattern() {
     return pattern;
   }
@@ -667,27 +852,6 @@ public class DateTimeFormat {
   }
 
   /**
-   * Generate GMT timezone string for given date.
-   * 
-   * @param buf where timezone string will be appended to
-   * @param date whose value being evaluated
-   */
-  private void appendGMT(StringBuffer buf, Date date) {
-    int value = -date.getTimezoneOffset();
-
-    if (value < 0) {
-      buf.append("GMT-");
-      value = -value; // suppress the '-' sign for text display.
-    } else {
-      buf.append("GMT+");
-    }
-
-    zeroPaddingNumber(buf, value / MINUTES_PER_HOUR, 2);
-    buf.append(':');
-    zeroPaddingNumber(buf, value % MINUTES_PER_HOUR, 2);
-  }
-
-  /**
    * Formats (0..11) Hours field according to pattern specified.
    * 
    * @param buf where formatted string will be appended to
@@ -755,7 +919,7 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatAmPm(StringBuffer buf, int count, Date date) {
+  private void formatAmPm(StringBuffer buf, Date date) {
     if (date.getHours() >= 12 && date.getHours() < 24) {
       buf.append(dateTimeConstants.ampms()[1]);
     } else {
@@ -949,6 +1113,23 @@ public class DateTimeFormat {
   }
 
   /**
+   * Formats Timezone field.
+   * 
+   * @param buf where formatted string will be appended to
+   * @param count number of time pattern char repeats; this controls how a field
+   *          should be formatted
+   * @param date hold the date object to be formatted
+   */
+  private void formatTimeZone(StringBuffer buf, int count, Date date,
+      TimeZone timeZone) {
+    if (count < 4) {
+      buf.append(timeZone.getShortName(date));
+    } else {
+      buf.append(timeZone.getLongName(date));
+    }
+  }
+
+  /**
    * Formats Timezone field following RFC.
    * 
    * @param buf where formatted string will be appended to
@@ -956,21 +1137,12 @@ public class DateTimeFormat {
    *          should be formatted
    * @param date hold the date object to be formatted
    */
-  private void formatTimeZoneRFC(StringBuffer buf, int count, Date date) {
+  private void formatTimeZoneRFC(StringBuffer buf, int count, Date date,
+      TimeZone timeZone) {
     if (count < 4) {
-      // 'short' (standard Java) form, must use ASCII digits
-      int val = date.getTimezoneOffset();
-      char sign = '-';
-      if (val < 0) {
-        val = -val;
-        sign = '+';
-      }
-
-      val = (val / 3) * 5 + (val % MINUTES_PER_HOUR); // minutes => KKmm
-      buf.append(sign);
-      zeroPaddingNumber(buf, val, 4);
+      buf.append(timeZone.getRFCTimeZoneString(date));
     } else {
-      appendGMT(buf, date);
+      buf.append(timeZone.getGMTString(date));
     }
   }
 
@@ -1404,70 +1576,75 @@ public class DateTimeFormat {
   /**
    * Formats a single field according to pattern specified.
    * 
-   * @param buf where formatted string will be appended to
-   * @param ch pattern for this field
-   * @param count number of time pattern char repeats; this controls how a field
-   *          should be formatted
-   * @param date hold the date object to be formatted
+   * @param ch pattern character for this field
+   * @param count number of time pattern char repeats; this controls how a field 
+   * should be formatted
+   * @param date the date object to be formatted
+   * @param adjustedDate holds the time zone adjusted date fields
+   * @param adjustedTime holds the time zone adjusted time fields
    * 
    * @return <code>true</code> if pattern valid, otherwise <code>false</code>
+   * 
    */
-  private boolean subFormat(StringBuffer buf, char ch, int count, Date date) {
+  private boolean subFormat(StringBuffer buf, char ch, int count, Date date,
+      Date adjustedDate, Date adjustedTime, TimeZone timezone) {
     switch (ch) {
       case 'G':
-        formatEra(buf, count, date);
+        formatEra(buf, count, adjustedDate);
         break;
       case 'y':
-        formatYear(buf, count, date);
+        formatYear(buf, count, adjustedDate);
         break;
       case 'M':
-        formatMonth(buf, count, date);
+        formatMonth(buf, count, adjustedDate);
         break;
       case 'k':
-        format24Hours(buf, count, date);
+        format24Hours(buf, count, adjustedTime);
         break;
       case 'S':
-        formatFractionalSeconds(buf, count, date);
+        formatFractionalSeconds(buf, count, adjustedTime);
         break;
       case 'E':
-        formatDayOfWeek(buf, count, date);
+        formatDayOfWeek(buf, count, adjustedDate);
         break;
       case 'a':
-        formatAmPm(buf, count, date);
+        formatAmPm(buf, adjustedTime);
         break;
       case 'h':
-        format1To12Hours(buf, count, date);
+        format1To12Hours(buf, count, adjustedTime);
         break;
       case 'K':
-        format0To11Hours(buf, count, date);
+        format0To11Hours(buf, count, adjustedTime);
         break;
       case 'H':
-        format0To23Hours(buf, count, date);
+        format0To23Hours(buf, count, adjustedTime);
         break;
       case 'c':
-        formatStandaloneDay(buf, count, date);
+        formatStandaloneDay(buf, count, adjustedDate);
         break;
       case 'L':
-        formatStandaloneMonth(buf, count, date);
+        formatStandaloneMonth(buf, count, adjustedDate);
         break;
       case 'Q':
-        formatQuarter(buf, count, date);
+        formatQuarter(buf, count, adjustedDate);
         break;
       case 'd':
-        formatDate(buf, count, date);
+        formatDate(buf, count, adjustedDate);
         break;
       case 'm':
-        formatMinutes(buf, count, date);
+        formatMinutes(buf, count, adjustedTime);
         break;
       case 's':
-        formatSeconds(buf, count, date);
+        formatSeconds(buf, count, adjustedTime);
         break;
       case 'z':
+        formatTimeZone(buf, count, date, timezone);
+        break;
       case 'v':
-        appendGMT(buf, date);
+        buf.append(timezone.getID());
         break;
       case 'Z':
-        formatTimeZoneRFC(buf, count, date);
+        formatTimeZoneRFC(buf, count, date, timezone);
         break;
       default:
         return false;

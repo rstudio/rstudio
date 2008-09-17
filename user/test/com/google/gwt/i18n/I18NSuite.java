@@ -29,6 +29,8 @@ import com.google.gwt.i18n.client.NumberFormat_en_Test;
 import com.google.gwt.i18n.client.NumberFormat_fr_Test;
 import com.google.gwt.i18n.client.NumberParse_en_Test;
 import com.google.gwt.i18n.client.NumberParse_fr_Test;
+import com.google.gwt.i18n.client.TimeZoneInfoTest;
+import com.google.gwt.i18n.client.TimeZoneTest;
 import com.google.gwt.i18n.rebind.AbstractResourceTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
@@ -60,6 +62,8 @@ public class I18NSuite {
     suite.addTestSuite(NumberFormat_fr_Test.class);
     suite.addTestSuite(NumberParse_en_Test.class);
     suite.addTestSuite(NumberParse_fr_Test.class);
+    suite.addTestSuite(TimeZoneInfoTest.class);
+    suite.addTestSuite(TimeZoneTest.class);
     // $JUnit-END$
 
     return suite;
