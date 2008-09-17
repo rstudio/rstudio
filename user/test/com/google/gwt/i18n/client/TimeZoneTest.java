@@ -16,9 +16,9 @@
 
 package com.google.gwt.i18n.client;
 
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.TimeZoneConstants;
+import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
 
@@ -55,18 +55,18 @@ public class TimeZoneTest  extends GWTTestCase {
     
     DateTimeFormat fmt = DateTimeFormat.getLongDateTimeFormat(); 
     Date dateMarchBefore = fmt.parse("March 11, 2007 01:00:00 AM GMT-800");
-    Date dateMarchAfter = fmt.parse("March 11, 2007 02:00:00 AM GMT-800");
+    Date dateMarchAfter = fmt.parse("March 11, 2007 03:01:00 AM GMT-800");
     Date dateJuly = fmt.parse("July 11, 2007 07:00:00 AM GMT-800");
     
     Date dateNovemberBefore = fmt.parse("November 4, 2007 00:00:00 AM GMT-800");
     Date dateNovemberAfter = fmt.parse("November 4, 2007 02:00:00 AM GMT-800");
+        
+    assertTrue("July should be DST.", usPacific.isDaylightTime(dateJuly));
+    assertTrue("Late March should be DST", usPacific.isDaylightTime(dateMarchAfter));
+    assertTrue("Early March should not be DST", !usPacific.isDaylightTime(dateMarchBefore));
     
-    assertTrue(usPacific.isDaylightTime(dateJuly));
-    assertTrue(usPacific.isDaylightTime(dateMarchAfter));
-    assertTrue(!usPacific.isDaylightTime(dateMarchBefore));
-    
-    assertTrue(!usPacific.isDaylightTime(dateNovemberAfter));
-    assertTrue(usPacific.isDaylightTime(dateNovemberBefore));
+    assertTrue("Late November should not be DST", !usPacific.isDaylightTime(dateNovemberAfter));
+    assertTrue("Early November should be DST", usPacific.isDaylightTime(dateNovemberBefore));
   }
   
   public void testNames() {
