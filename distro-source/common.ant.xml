@@ -5,6 +5,7 @@
 
   <property name="project.distname" value="gwt-${dist.platform}-${gwt.version}" />
   <property name="project.staging" location="${gwt.build.staging}/${project.distname}" />
+  <property name="dist.resources" location="${project.build}/resources" />
 
   <patternset id="chmod.executables">
     <include name="*Creator" />
@@ -23,7 +24,7 @@
         <available file="${filter.sentinel}" />
         <uptodate>
           <srcfiles dir="../core/src" />
-          <globmapper from="*" to="${project.build}/*" />
+          <globmapper from="*" to="${dist.resources}/*" />
         </uptodate>
       </and>
     </condition>
@@ -31,7 +32,7 @@
   </target>
  
   <target name="-filter.props" unless="filter.uptodate">
-    <gwt.revfilter todir="${project.build}" >
+    <gwt.revfilter todir="${dist.resources}" >
       <fileset dir="../core/src" />
     </gwt.revfilter>
     <touch file="${filter.sentinel}" />
