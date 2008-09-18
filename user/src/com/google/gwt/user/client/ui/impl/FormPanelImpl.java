@@ -83,6 +83,15 @@ public class FormPanelImpl {
   }-*/;
 
   /**
+   * Resets a form.
+   * 
+   * @param form the form to be reset
+   */
+  public native void reset(Element form) /*-{
+    form.reset();
+  }-*/;
+
+  /**
    * Sets the form element's encoding.
    * 
    * @param form the form whose encoding is to be set

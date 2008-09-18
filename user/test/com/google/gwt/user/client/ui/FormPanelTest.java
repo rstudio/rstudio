@@ -162,6 +162,16 @@ public class FormPanelTest extends GWTTestCase {
     form.submit();
   }
 
+  public void testReset() {
+    FormPanel form = new FormPanel();
+    TextBox textBox = new TextBox();
+    textBox.setText("Hello World");
+    form.setWidget(textBox);
+    assertEquals("Hello World", textBox.getText());
+    form.reset();
+    assertEquals("", textBox.getText());
+  }
+
   public void testSubmitAndHideDialog() {
     final FormPanel form = new FormPanel();
     form.setMethod(FormPanel.METHOD_GET);

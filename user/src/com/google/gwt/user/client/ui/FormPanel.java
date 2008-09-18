@@ -327,6 +327,13 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
   }
 
   /**
+   * Resets the form, clearing all fields.
+   */
+  public void reset() {
+    impl.reset(getElement());
+  }
+
+  /**
    * Sets the 'action' associated with this form. This is the URL to which it
    * will be submitted.
    * 
