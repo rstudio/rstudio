@@ -121,7 +121,11 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
    * @return the selected text, or an empty string if none is selected
    */
   public String getSelectedText() {
-    int start = getCursorPos(), length = getSelectionLength();
+    int start = getCursorPos();
+    if (start < 0) {
+      return "";
+    }
+    int length = getSelectionLength();
     return getText().substring(start, start + length);
   }
 
@@ -179,7 +183,8 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   /**
    * Selects all of the text in the box.
    * 
-   * This will only work when the widget is attached to the document.
+   * This will only work when the widget is attached to the document and not
+   * hidden.
    */
   public void selectAll() {
     int length = getText().length();
@@ -190,6 +195,9 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Sets the cursor position.
+   * 
+   * This will only work when the widget is attached to the document and not
+   * hidden.
    * 
    * @param pos the new cursor position
    */
@@ -233,7 +241,8 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   /**
    * Sets the range of text to be selected.
    * 
-   * This will only work when the widget is attached to the document.
+   * This will only work when the widget is attached to the document and not
+   * hidden.
    * 
    * @param pos the position of the first character to be selected
    * @param length the number of characters to be selected

@@ -84,5 +84,13 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
 
     // Check for setting 0;
     area.setSelectionRange(0, 0);
+
+    // Issue 1996: Cannot select text if TextBox is hidden
+    {
+      TextBoxBase area2 = createTextBoxBase();
+      area2.setVisible(false);
+      RootPanel.get().add(area2);
+      area.selectAll();
+    }
   }
 }

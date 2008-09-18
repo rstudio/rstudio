@@ -45,6 +45,10 @@ public class TextBoxImpl {
   }
 
   public native void setSelectionRange(Element elem, int pos, int length) /*-{
-    elem.setSelectionRange(pos, pos + length);
+    try {
+      elem.setSelectionRange(pos, pos + length);
+    } catch (e) {
+      // Firefox throws exception if TextBox is not visible, even if attached
+    }
   }-*/;
 }
