@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -187,6 +187,15 @@ public final class GWT {
     if (sGWTBridge != null) {
       sGWTBridge.log(message, e);
     }
+  }
+
+  /**
+   * Run the supplied callback. The system is allowed to delay before running
+   * the callback while additional code is downloaded, but that feature is not
+   * yet implemented. Currently, the callback runs immediately.
+   */
+  public static void runAsync(RunAsyncCallback callback) {
+    callback.onSuccess();
   }
 
   /**
