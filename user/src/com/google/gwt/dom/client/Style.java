@@ -30,23 +30,59 @@ public class Style extends JavaScriptObject {
   /**
    * Gets the value of a named property.
    */
-  public final native String getProperty(String name) /*-{
-    return this[name];
-  }-*/;
+  public final String getProperty(String name) {
+    assertCamelCase(name);
+    return getPropertyImpl(name);
+  }
 
   /**
    * Sets the value of a named property.
    */
-  public final native void setProperty(String name, String value) /*-{
-    this[name] = value;
-  }-*/;
+  public final void setProperty(String name, String value) {
+    assertCamelCase(name);
+    setPropertyImpl(name, value);
+  }
 
   /**
    * Sets the value of a named property, in pixels.
    * 
    * This is shorthand for <code>value + "px"</code>.
    */
-  public final native void setPropertyPx(String name, int value) /*-{
-    this[name] = value + "px";
-  }-*/;
+  public final void setPropertyPx(String name, int value) {
+    assertCamelCase(name);
+    setPropertyPxImpl(name, value);
+  }
+
+  /**
+   * Assert that the specified property does not contain a hyphen.
+   * 
+   * @param name the property name
+   */
+  private void assertCamelCase(String name) {
+    assert !name.contains("-") : "The style name '" + name
+        + "' should be in camelCase format";
+  }
+
+  /**
+   * Gets the value of a named property.
+   */
+  private native String getPropertyImpl(String name) /*-{
+     return this[name];
+   }-*/;
+
+  /**
+   * Sets the value of a named property.
+   */
+  private native void setPropertyImpl(String name, String value) /*-{
+     this[name] = value;
+   }-*/;
+
+  /**
+   * Sets the value of a named property, in pixels.
+   * 
+   * This is shorthand for <code>value + "px"</code>.
+   */
+  private native void setPropertyPxImpl(String name, int value) /*-{
+     this[name] = value + "px";
+   }-*/;
 }

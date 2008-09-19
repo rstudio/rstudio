@@ -268,6 +268,39 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
+   * Test that styles only allow camelCase.
+   */
+  public void testStyleCamelCase() {
+    DivElement div = Document.get().createDivElement();
+
+    // Use a camelCase property
+    div.getStyle().setProperty("backgroundColor", "black");
+    assertEquals("black", div.getStyle().getProperty("backgroundColor"));
+    div.getStyle().setPropertyPx("marginLeft", 10);
+    assertEquals("10px", div.getStyle().getProperty("marginLeft"));
+
+    // Use a hyphenated style
+    try {
+      div.getStyle().setProperty("background-color", "red");
+      fail("Expected assertion error: background-color should be in camelCase");
+    } catch (AssertionError e) {
+      // expected
+    }
+    try {
+      div.getStyle().setPropertyPx("margin-left", 20);
+      fail("Expected assertion error: margin-left should be in camelCase");
+    } catch (AssertionError e) {
+      // expected
+    }
+    try {
+      div.getStyle().getProperty("margin-right");
+      fail("Expected assertion error: margin-right should be in camelCase");
+    } catch (AssertionError e) {
+      // expected
+    }
+  }
+
+  /**
    * offset[Left|Top|Width|Height], offsetParent
    */
   public void testOffsets() {
