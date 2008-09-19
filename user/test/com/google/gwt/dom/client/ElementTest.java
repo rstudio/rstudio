@@ -280,23 +280,25 @@ public class ElementTest extends GWTTestCase {
     assertEquals("10px", div.getStyle().getProperty("marginLeft"));
 
     // Use a hyphenated style
-    try {
-      div.getStyle().setProperty("background-color", "red");
-      fail("Expected assertion error: background-color should be in camelCase");
-    } catch (AssertionError e) {
-      // expected
-    }
-    try {
-      div.getStyle().setPropertyPx("margin-left", 20);
-      fail("Expected assertion error: margin-left should be in camelCase");
-    } catch (AssertionError e) {
-      // expected
-    }
-    try {
-      div.getStyle().getProperty("margin-right");
-      fail("Expected assertion error: margin-right should be in camelCase");
-    } catch (AssertionError e) {
-      // expected
+    if (Style.class.desiredAssertionStatus()) {
+      try {
+        div.getStyle().setProperty("background-color", "red");
+        fail("Expected assertion error: background-color should be in camelCase");
+      } catch (AssertionError e) {
+        // expected
+      }
+      try {
+        div.getStyle().setPropertyPx("margin-left", 20);
+        fail("Expected assertion error: margin-left should be in camelCase");
+      } catch (AssertionError e) {
+        // expected
+      }
+      try {
+        div.getStyle().getProperty("margin-right");
+        fail("Expected assertion error: margin-right should be in camelCase");
+      } catch (AssertionError e) {
+        // expected
+      }
     }
   }
 
