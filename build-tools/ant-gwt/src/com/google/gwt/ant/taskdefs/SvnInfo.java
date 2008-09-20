@@ -123,7 +123,7 @@ public class SvnInfo extends Task {
   private String getSvnVersion(File workdir) {
     String line = null;
 
-    LineNumberReader svnout = runCommand(workdir, "svnversion");
+    LineNumberReader svnout = runCommand(workdir, "svnversion", ".");
     try {
       line = svnout.readLine();
     } catch (IOException e) {
