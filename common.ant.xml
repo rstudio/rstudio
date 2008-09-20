@@ -201,36 +201,11 @@
 
   <macrodef name="gwt.getsvninfo" description="Identifies the SVN info of a workspace">
     <sequential>
-      <exec outputproperty="svn.info" executable="svn" 
-          failifexecutionfails="false" logError="true">
-        <arg value="info"/>
-        <arg value="${gwt.root}"/>
-      </exec>
-      <propertyregex property="gwt.svn.branch"
-        input="${svn.info}" 
-        regexp="URL: https?://google-web-toolkit.googlecode.com/svn/([^\r\n]+)"
-        select="\1"
-        defaultValue="unknown"
-        casesensitive="false" />
-      <exec outputproperty="svn.version" executable="svnversion" 
-          failifexecutionfails="false"  logError="true">
-        <arg value="${gwt.root}"/>
-      </exec>
-      <propertyregex property="gwt.svn.version"
-        input="${svn.version}" 
-        regexp="^(\d+(:\d+)?[MSP]*)$"
-        replace="\1"
-        defaultValue="unknown"
-        casesensitive="false" />
-      <property name="gwt.svnrev" 
-        value="${gwt.svn.branch}@${gwt.svn.version}"/>
-      <!-- Windows NTFS and FAT don't like ':' or '@', and we need a sentinel file to test
-           for out-of-dateness, so this is a filename-acceptable equivalent to svnrev -->
-      <propertyregex property="gwt.svnrev.filename"
-        input="${gwt.svnrev}"
-        regexp="[:@]"
-        replace="-"
-        defaultValue="${gwt.svnrev}"/>
+      <taskdef name="svninfo"
+         classname="com.google.gwt.ant.taskdefs.SvnInfo"
+         classpath="${gwt.build.lib}/ant-gwt.jar" />
+      <svninfo outputproperty="gwt.svnrev"
+          outputfileproperty="gwt.svnrev.filename" />
       <!-- Generally, filtering requires a sentinel file so that changes to svn rev will
          be noticed as invalidating the previously-generated filter output.  This property
          names where such a sentinel lives; it is tested with <available/> and created
