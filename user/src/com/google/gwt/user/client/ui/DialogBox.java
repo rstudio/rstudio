@@ -68,6 +68,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   private HTML caption = new HTML();
   private boolean dragging;
   private int dragStartX, dragStartY;
+  private MouseListenerCollection mouseListeners = new MouseListenerCollection();
 
   /**
    * Creates an empty dialog box. It should not be shown until its child widget
@@ -108,10 +109,11 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     DOM.appendChild(td, caption.getElement());
     adopt(caption);
     caption.setStyleName("Caption");
-    caption.addMouseListener(this);
+    mouseListeners.add(this);
 
     // Set the style name
     setStyleName(DEFAULT_STYLENAME);
+    sinkEvents(Event.MOUSEEVENTS);
   }
 
   public String getHTML() {
@@ -120,6 +122,29 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
 
   public String getText() {
     return caption.getText();
+  }
+
+  @Override
+  public void onBrowserEvent(Event event) {
+    super.onBrowserEvent(event);
+
+    // Only trigger mouse events if the event occurs in the caption wrapper
+    if (!dragging
+        && !getCellElement(0, 1).getParentElement().isOrHasChild(
+            event.getTarget())) {
+      return;
+    }
+
+    // Trigger a mouse event as if it originated in the caption
+    switch (event.getTypeInt()) {
+      case Event.ONMOUSEDOWN:
+      case Event.ONMOUSEUP:
+      case Event.ONMOUSEMOVE:
+      case Event.ONMOUSEOVER:
+      case Event.ONMOUSEOUT:
+        mouseListeners.fireMouseEvent(caption, event);
+        break;
+    }
   }
 
   @Override
@@ -138,7 +163,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
 
   public void onMouseDown(Widget sender, int x, int y) {
     dragging = true;
-    DOM.setCapture(caption.getElement());
+    DOM.setCapture(getElement());
     dragStartX = x;
     dragStartY = y;
   }
@@ -159,7 +184,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
 
   public void onMouseUp(Widget sender, int x, int y) {
     dragging = false;
-    DOM.releaseCapture(caption.getElement());
+    DOM.releaseCapture(getElement());
   }
 
   /**
