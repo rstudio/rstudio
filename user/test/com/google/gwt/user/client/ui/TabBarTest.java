@@ -54,6 +54,19 @@ public class TabBarTest extends GWTTestCase {
     UIObjectTest.assertDebugId("myBar-tab-wrapper2", DOM.getChild(tr, 3));
   }
 
+  public void testEnableDisable() {
+    final TabBar bar = createTabBar();
+    bar.addTab("foo");
+    bar.addTab("bar");
+    bar.addTab("baz");
+
+    assertTrue(bar.isTabEnabled(1));
+    bar.setTabEnabled(1, false);
+    assertFalse(bar.isTabEnabled(1));
+    bar.setTabEnabled(1, true);
+    assertTrue(bar.isTabEnabled(1));
+  }
+
   public void testSelect() {
     // Create a tab bar with three items.
     final TabBar bar = createTabBar();

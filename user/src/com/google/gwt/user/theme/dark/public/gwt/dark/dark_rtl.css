@@ -783,6 +783,10 @@ html>body .gwt-SuggestBoxPopup .suggestPopupBottomRight {
   color: black;
   background: #00CCFF;
 } 
+.gwt-TabBar .gwt-TabBarItem-disabled {
+  cursor: default;
+  color: #777777;
+}
 .gwt-TabPanel {
 }
 .gwt-TabPanelBottom {
@@ -890,6 +894,10 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
   cursor: default;
   color: black;
   background: #00CCFF;
+}
+.gwt-DecoratedTabBar .gwt-TabBarItem-disabled .tabMiddleCenter {
+  cursor: default;
+  color: #777777;
 }
 
 .gwt-TextArea {

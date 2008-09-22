@@ -39,6 +39,10 @@ import com.google.gwt.user.client.Event;
  * tabs } </li>
  * <li>.gwt-TabBar .gwt-TabBarItem-wrapper-selected { table cell around
  * selected tab }</li>
+ * <li>.gwt-TabBar .gwt-TabBarItem-disabled { additional style for disabled
+ * tabs } </li>
+ * <li>.gwt-TabBar .gwt-TabBarItem-wrapper-disabled { table cell around
+ * disabled tab }</li>
  * </ul>
  * <p>
  * <h3>Example</h3>
@@ -57,6 +61,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
     private SimplePanel focusablePanel;
     private ClickListener clickDelegate;
     private KeyboardListener keyDelegate;
+    private boolean enabled = true;
 
     ClickDelegatePanel(Widget child, ClickListener cDelegate,
         KeyboardListener kDelegate) {
@@ -80,8 +85,16 @@ public class TabBar extends Composite implements SourcesTabEvents,
       return focusablePanel;
     }
 
+    public boolean isEnabled() {
+      return enabled;
+    }
+
     @Override
     public void onBrowserEvent(Event event) {
+      if (!enabled) {
+        return;
+      }
+      
       // No need for call to super.
       switch (DOM.eventGetType(event)) {
 
@@ -94,6 +107,10 @@ public class TabBar extends Composite implements SourcesTabEvents,
               KeyboardListenerCollection.getKeyboardModifiers(event));
           break;
       }
+    }
+
+    public void setEnabled(boolean enabled) {
+      this.enabled = enabled;
     }
   }
 
@@ -252,6 +269,19 @@ public class TabBar extends Composite implements SourcesTabEvents,
     insertTabWidget(widget, beforeIndex);
   }
 
+  /**
+   * Check if a tab is enabled or disabled.  If disabled, the user cannot
+   * select the tab.
+   * 
+   * @param index the index of the tab
+   * @return true if the tab is enabled, false if disabled
+   */
+  public boolean isTabEnabled(int index) {
+    assert (index >= 0) && (index < getTabCount()) : "Tab index out of bounds";
+    ClickDelegatePanel delPanel = (ClickDelegatePanel) panel.getWidget(index + 1);
+    return delPanel.isEnabled();
+  }
+
   public void onClick(Widget sender) {
     selectTabByTabWidget(sender);
   }
@@ -321,6 +351,23 @@ public class TabBar extends Composite implements SourcesTabEvents,
       tabListeners.fireTabSelected(this, index);
     }
     return true;
+  }
+
+  /**
+   * Enable or disable a tab.  When disabled, users cannot select the tab.
+   * 
+   * @param index the index of the tab to enable or disable
+   * @param enabled true to enable, false to disable
+   */
+  public void setTabEnabled(int index, boolean enabled) {
+    assert (index >= 0) && (index < getTabCount()) : "Tab index out of bounds";
+
+    // Style the wrapper
+    ClickDelegatePanel delPanel = (ClickDelegatePanel) panel.getWidget(index + 1);
+    delPanel.setEnabled(enabled);
+    setStyleName(delPanel.getElement(), "gwt-TabBarItem-disabled", !enabled);
+    setStyleName(delPanel.getElement().getParentElement(),
+        "gwt-TabBarItem-wrapper-disabled", !enabled);
   }
 
   /**
