@@ -23,12 +23,6 @@ import com.google.gwt.core.client.impl.Impl;
  * deferred binding.
  */
 public final class GWT {
-  /*
-   * This is the web mode version of this class. Because it's so special,
-   * there's also a hosted mode version. See GWT.java-hosted. Do NOT change the
-   * public API of this class without also updating GWT.java-hosted!
-   */
-
   /**
    * This interface is used to catch exceptions at the "top level" just before
    * they escape to the browser. This is used in places where the browser calls
