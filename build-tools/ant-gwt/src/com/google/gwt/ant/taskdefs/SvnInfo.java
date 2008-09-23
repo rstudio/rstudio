@@ -51,7 +51,7 @@ public class SvnInfo extends Task {
           "<svninfo> task requires an outputproperty attribute");
     }
     if (workdir == null) {
-      workdir = ".";
+      workdir = getProject().getProperty("basedir");
     }
     File workDirFile = new File(workdir);
     if (!workDirFile.isDirectory()) {

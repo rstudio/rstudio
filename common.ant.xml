@@ -204,7 +204,7 @@
       <taskdef name="svninfo"
          classname="com.google.gwt.ant.taskdefs.SvnInfo"
          classpath="${gwt.build.lib}/ant-gwt.jar" />
-      <svninfo outputproperty="gwt.svnrev"
+      <svninfo directory="${gwt.root}" outputproperty="gwt.svnrev"
           outputfileproperty="gwt.svnrev.filename" />
       <!-- Generally, filtering requires a sentinel file so that changes to svn rev will
          be noticed as invalidating the previously-generated filter output.  This property
