@@ -59,9 +59,9 @@ class HistoryImplSafari extends HistoryImplStandard {
   @Override
   protected void nativeUpdate(String historyToken) {
     if (isOldSafari) {
-      nativeUpdateImpl(historyToken);
+      oldNativeUpdate(historyToken);
     } else {
-      super.nativeUpdate(historyToken);
+      newNativeUpdate(historyToken);
     }
   }
 
@@ -79,7 +79,16 @@ class HistoryImplSafari extends HistoryImplStandard {
     @com.google.gwt.user.client.impl.HistoryImpl::fireHistoryChangedImpl(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
 
-  private native void nativeUpdateImpl(String historyToken) /*-{
+  private native void newNativeUpdate(String historyToken) /*-{
+    // Safari gets into a weird state (issue 2905) when setting the hash
+    // component of the url to an empty string, but works fine as long as you
+    // at least add a '#' to the end of the url. So we get around this by
+    // recreating the url, rather than just setting location.hash.
+    $wnd.location = $wnd.location.href.split('#')[0] + '#' +
+      this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
+  }-*/;
+
+  private native void oldNativeUpdate(String historyToken) /*-{
     // Use a bizarre meta refresh trick to update the url's hash, without
     // creating a history entry.
     var meta = $doc.createElement('meta');

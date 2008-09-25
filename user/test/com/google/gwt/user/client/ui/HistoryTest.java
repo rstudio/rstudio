@@ -15,12 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
+import java.util.ArrayList;
+
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.Timer;
-
-import java.util.ArrayList;
 
 /**
  * Tests for the history system.
@@ -275,6 +277,33 @@ public class HistoryTest extends GWTTestCase {
       }
     });
     History.newItem(token);
+  }
+
+  /**
+   * Test that using an empty history token works properly. There have been
+   * problems (see issue 2905) with this in the past on Safari.
+   */
+  public void testEmptyHistoryToken() {
+    final ArrayList<Object> counter = new ArrayList<Object>();
+
+    addHistoryListenerImpl(new HistoryListener() {
+      public void onHistoryChanged(String historyToken) {
+        counter.add(new Object());
+        assertFalse("Browser is borked by empty history token", isBorked());
+      }
+    });
+
+    History.newItem("x");
+    History.newItem("");
+
+    assertEquals("Expected two history events", 2, counter.size());
+  }
+
+  // Used by testEmptyHistoryToken() to catch a bizarre failure mode on Safari.
+  private static boolean isBorked() {
+    Element e = Document.get().createDivElement();
+    e.setInnerHTML("string");
+    return e.getInnerHTML().length() == 0;
   }
 
   @Override
