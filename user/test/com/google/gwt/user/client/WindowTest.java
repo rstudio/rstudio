@@ -61,6 +61,11 @@ public class WindowTest extends GWTTestCase {
     // testing reload, replace, and assign seemed to hang our junit harness.
     // Therefore only testing subset of Location that is testable.
 
+    // Use History to get the #hash part of the url into a known state (if the
+    // url has somehow been set to http://host/#, location.hash returns the
+    // empty string, but location.href includes the trailing hash).
+    History.newItem("foo");
+
     // As we have no control over these values we cannot assert much about them.
     String hash = Window.Location.getHash();
     String host = Window.Location.getHost();
@@ -76,7 +81,7 @@ public class WindowTest extends GWTTestCase {
     assertEquals(host, hostName + ":" + port);
     assertEquals(href, protocol + "//" + host + path + query + hash);
   }
-  
+
   public void testLocationParsing() {
     Map<String, List<String>> map;
 
