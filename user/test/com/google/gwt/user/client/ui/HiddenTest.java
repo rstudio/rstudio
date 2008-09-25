@@ -34,7 +34,7 @@ public class HiddenTest extends GWTTestCase {
       // Expected
     }
     try {
-      Hidden d = new Hidden((String)null);
+      Hidden d = new Hidden((String) null);
       fail("expected null pointer exception");
     } catch (NullPointerException e) {
       // Expected
