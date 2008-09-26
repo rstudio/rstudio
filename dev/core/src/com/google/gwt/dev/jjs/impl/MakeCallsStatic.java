@@ -83,7 +83,8 @@ public class MakeCallsStatic {
 
       @Override
       public void endVisit(JsThisRef x, JsContext<JsExpression> ctx) {
-        ctx.replaceMe(thisParam.makeRef());
+        ctx.replaceMe(thisParam.makeRef(x.getSourceInfo().makeChild(
+            "Devirtualized instance")));
       }
 
       @Override
@@ -113,14 +114,16 @@ public class MakeCallsStatic {
       public void endVisit(JParameterRef x, Context ctx) {
         JParameter param = varMap.get(x.getTarget());
         JParameterRef paramRef = new JParameterRef(x.getProgram(),
-            x.getSourceInfo(), param);
+            x.getSourceInfo().makeChild("Reference to devirtualized parameter"),
+            param);
         ctx.replaceMe(paramRef);
       }
 
       @Override
       public void endVisit(JThisRef x, Context ctx) {
         JParameterRef paramRef = new JParameterRef(x.getProgram(),
-            x.getSourceInfo(), thisParam);
+            x.getSourceInfo().makeChild("Reference to devirtualized instance"),
+            thisParam);
         ctx.replaceMe(paramRef);
       }
     }
@@ -142,12 +145,14 @@ public class MakeCallsStatic {
        * its enclosing class.
        */
       JProgram program = x.getProgram();
-      JMethod newMethod = new JMethod(program, sourceInfo, newName,
-          enclosingType, returnType, false, true, true, x.isPrivate());
+      JMethod newMethod = new JMethod(program,
+          sourceInfo.makeChild("Devirtualized function"), newName, enclosingType,
+          returnType, false, true, true, x.isPrivate());
 
       // Setup parameters; map from the old params to the new params
-      JParameter thisParam = program.createParameter(null,
-          "this$static".toCharArray(), enclosingType, true, true, newMethod);
+      JParameter thisParam = program.createParameter(
+          sourceInfo.makeChild("Instance parameter"), "this$static".toCharArray(),
+          enclosingType, true, true, newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.params.size(); ++i) {
         JParameter oldVar = x.params.get(i);
@@ -168,20 +173,24 @@ public class MakeCallsStatic {
       newMethod.setBody(movedBody);
 
       // Create a new body for the instance method that delegates to the static
-      JMethodBody newBody = new JMethodBody(program, sourceInfo);
+      SourceInfo delegateCallSourceInfo = sourceInfo.makeChild("Degelgating to devirtualized method");
+      JMethodBody newBody = new JMethodBody(program, delegateCallSourceInfo);
       x.setBody(newBody);
-      JMethodCall newCall = new JMethodCall(program, sourceInfo, null,
-          newMethod);
-      newCall.getArgs().add(program.getExprThisRef(sourceInfo, enclosingType));
+      JMethodCall newCall = new JMethodCall(program, delegateCallSourceInfo,
+          null, newMethod);
+      newCall.getArgs().add(
+          program.getExprThisRef(delegateCallSourceInfo, enclosingType));
       for (int i = 0; i < x.params.size(); ++i) {
         JParameter param = x.params.get(i);
-        newCall.getArgs().add(new JParameterRef(program, sourceInfo, param));
+        newCall.getArgs().add(
+            new JParameterRef(program, delegateCallSourceInfo, param));
       }
       JStatement statement;
       if (returnType == program.getTypeVoid()) {
         statement = newCall.makeStatement();
       } else {
-        statement = new JReturnStatement(program, sourceInfo, newCall);
+        statement = new JReturnStatement(program, delegateCallSourceInfo,
+            newCall);
       }
       newBody.getStatements().add(statement);
 
@@ -195,7 +204,8 @@ public class MakeCallsStatic {
         // TODO: Do we really need to do that in BuildTypeMap?
         JsFunction jsFunc = ((JsniMethodBody) movedBody).getFunc();
         JsName paramName = jsFunc.getScope().declareName("this$static");
-        jsFunc.getParameters().add(0, new JsParameter(paramName));
+        jsFunc.getParameters().add(0,
+            new JsParameter(sourceInfo.makeChild("Static accessor"), paramName));
         RewriteJsniMethodBody rewriter = new RewriteJsniMethodBody(paramName);
         // Accept the body to avoid the recursion blocker.
         rewriter.accept(jsFunc.getBody());
@@ -282,8 +292,9 @@ public class MakeCallsStatic {
 
   static JMethodCall makeStaticCall(JMethodCall x, JMethod newMethod) {
     // Update the call site
-    JMethodCall newCall = new JMethodCall(x.getProgram(), x.getSourceInfo(),
-        null, newMethod);
+    JMethodCall newCall = new JMethodCall(x.getProgram(),
+        x.getSourceInfo().makeChild("Devirtualized function call"), null,
+        newMethod);
 
     // The qualifier becomes the first arg
     newCall.getArgs().add(x.getInstance());

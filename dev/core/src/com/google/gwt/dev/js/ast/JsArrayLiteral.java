@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,7 +27,8 @@ public final class JsArrayLiteral extends JsLiteral {
 
   private final List<JsExpression> exprs = new ArrayList<JsExpression>();
 
-  public JsArrayLiteral() {
+  public JsArrayLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public List<JsExpression> getExpressions() {

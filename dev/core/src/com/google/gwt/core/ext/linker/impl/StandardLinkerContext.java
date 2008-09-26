@@ -33,6 +33,7 @@ import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.cfg.Script;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
@@ -80,14 +81,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   private static class TopFunctionStringInterner extends JsModVisitor {
 
     public static boolean exec(JsProgram program) {
-      TopFunctionStringInterner v = new TopFunctionStringInterner();
+      TopFunctionStringInterner v = new TopFunctionStringInterner(program);
       v.accept(program);
       return v.didChange();
     }
 
+    private final JsProgram program;
+
+    public TopFunctionStringInterner(JsProgram program) {
+      this.program = program;
+    }
+
     @Override
     public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
-      didChange |= JsStringInterner.exec(x.getBody(), x.getScope());
+      didChange |= JsStringInterner.exec(program, x.getBody(), x.getScope());
       return false;
     }
   }
@@ -331,6 +338,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     funcName.setObfuscatable(false);
 
     try {
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Linker-derived JS");
+      parser.setSourceInfo(sourceInfo);
       parser.parseInto(topScope, jsProgram.getGlobalBlock(), r, 1);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -32,8 +33,8 @@ public class JsonArray extends JExpression {
 
   public List<JExpression> exprs = new ArrayList<JExpression>();
 
-  public JsonArray(JProgram program) {
-    super(program, null);
+  public JsonArray(JProgram program, SourceInfo sourceInfo) {
+    super(program, sourceInfo);
   }
 
   public JType getType() {

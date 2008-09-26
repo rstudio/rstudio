@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,7 +60,7 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsArrayAccess x, JsContext<JsExpression> ctx) {
-      JsArrayAccess newExpression = new JsArrayAccess();
+      JsArrayAccess newExpression = new JsArrayAccess(x.getSourceInfo());
       newExpression.setIndexExpr(stack.pop());
       newExpression.setArrayExpr(stack.pop());
       stack.push(newExpression);
@@ -68,7 +68,7 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsArrayLiteral x, JsContext<JsExpression> ctx) {
-      JsArrayLiteral toReturn = new JsArrayLiteral();
+      JsArrayLiteral toReturn = new JsArrayLiteral(x.getSourceInfo());
       List<JsExpression> expressions = toReturn.getExpressions();
       for (JsExpression e : x.getExpressions()) {
         expressions.add(0, stack.pop());
@@ -78,7 +78,7 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-      JsBinaryOperation toReturn = new JsBinaryOperation(x.getOperator());
+      JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(), x.getOperator());
       toReturn.setArg2(stack.pop());
       toReturn.setArg1(stack.pop());
       stack.push(toReturn);
@@ -91,7 +91,7 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsConditional x, JsContext<JsExpression> ctx) {
-      JsConditional toReturn = new JsConditional();
+      JsConditional toReturn = new JsConditional(x.getSourceInfo());
       toReturn.setElseExpression(stack.pop());
       toReturn.setThenExpression(stack.pop());
       toReturn.setTestExpression(stack.pop());
@@ -116,7 +116,7 @@ final class JsHoister {
      */
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
-      JsInvocation toReturn = new JsInvocation();
+      JsInvocation toReturn = new JsInvocation(x.getSourceInfo());
       List<JsExpression> params = toReturn.getArguments();
       for (JsExpression e : x.getArguments()) {
         params.add(0, stack.pop());
@@ -132,7 +132,7 @@ final class JsHoister {
      */
     @Override
     public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
-      JsNameRef toReturn = new JsNameRef(x.getName());
+      JsNameRef toReturn = new JsNameRef(x.getSourceInfo(), x.getName());
 
       if (x.getQualifier() != null) {
         toReturn.setQualifier(stack.pop());
@@ -142,7 +142,7 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsNew x, JsContext<JsExpression> ctx) {
-      JsNew toReturn = new JsNew();
+      JsNew toReturn = new JsNew(x.getSourceInfo());
 
       List<JsExpression> arguments = toReturn.getArguments();
       for (JsExpression a : x.getArguments()) {
@@ -164,7 +164,7 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsObjectLiteral x, JsContext<JsExpression> ctx) {
-      JsObjectLiteral toReturn = new JsObjectLiteral();
+      JsObjectLiteral toReturn = new JsObjectLiteral(x.getSourceInfo());
       List<JsPropertyInitializer> inits = toReturn.getPropertyInitializers();
 
       for (JsPropertyInitializer init : x.getPropertyInitializers()) {
@@ -174,7 +174,7 @@ final class JsHoister {
          * rather than expecting it to be on the stack and having to perform
          * narrowing casts at all stack.pop() invocations.
          */
-        JsPropertyInitializer newInit = new JsPropertyInitializer();
+        JsPropertyInitializer newInit = new JsPropertyInitializer(x.getSourceInfo());
         newInit.setValueExpr(stack.pop());
         newInit.setLabelExpr(stack.pop());
 
@@ -185,14 +185,14 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-      JsPostfixOperation toReturn = new JsPostfixOperation(x.getOperator());
+      JsPostfixOperation toReturn = new JsPostfixOperation(x.getSourceInfo(), x.getOperator());
       toReturn.setArg(stack.pop());
       stack.push(toReturn);
     }
 
     @Override
     public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-      JsPrefixOperation toReturn = new JsPrefixOperation(x.getOperator());
+      JsPrefixOperation toReturn = new JsPrefixOperation(x.getSourceInfo(), x.getOperator());
       toReturn.setArg(stack.pop());
       stack.push(toReturn);
     }

@@ -82,7 +82,7 @@ public class CatchBlockNormalizer {
        * Go backwards so we can nest the else statements in the correct order!
        */
       // rethrow the current exception if no one caught it
-      JStatement cur = new JThrowStatement(program, null, exRef);
+      JStatement cur = new JThrowStatement(program, catchInfo, exRef);
       for (int i = x.getCatchBlocks().size() - 1; i >= 0; --i) {
         JBlock block = x.getCatchBlocks().get(i);
         JLocalRef arg = x.getCatchArgs().get(i);
@@ -118,7 +118,7 @@ public class CatchBlockNormalizer {
     @Override
     public boolean visit(JTryStatement x, Context ctx) {
       if (!x.getCatchBlocks().isEmpty()) {
-        pushTempLocal();
+        pushTempLocal(x.getSourceInfo());
       }
       return true;
     }
@@ -151,9 +151,9 @@ public class CatchBlockNormalizer {
     return tempLocals.get(--localIndex);
   }
 
-  private void pushTempLocal() {
+  private void pushTempLocal(SourceInfo sourceInfo) {
     if (localIndex == tempLocals.size()) {
-      JLocal newTemp = program.createLocal(null,
+      JLocal newTemp = program.createLocal(sourceInfo,
           ("$e" + localIndex).toCharArray(), program.getTypeJavaLangObject(),
           false, currentMethodBody);
       tempLocals.add(newTemp);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a javascript expression for array access.
  */
@@ -24,10 +26,13 @@ public final class JsArrayAccess extends JsExpression {
 
   private JsExpression indexExpr;
 
-  public JsArrayAccess() {
+  public JsArrayAccess(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
-  public JsArrayAccess(JsExpression arrayExpr, JsExpression indexExpr) {
+  public JsArrayAccess(SourceInfo sourceInfo, JsExpression arrayExpr,
+      JsExpression indexExpr) {
+    super(sourceInfo);
     this.arrayExpr = arrayExpr;
     this.indexExpr = indexExpr;
   }

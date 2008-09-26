@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a JavaScript conditional expression.
  */
@@ -26,11 +28,13 @@ public final class JsConditional extends JsExpression {
 
   private JsExpression thenExpr;
 
-  public JsConditional() {
+  public JsConditional(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
-  public JsConditional(JsExpression testExpr, JsExpression thenExpr,
-      JsExpression elseExpr) {
+  public JsConditional(SourceInfo sourceInfo, JsExpression testExpr,
+      JsExpression thenExpr, JsExpression elseExpr) {
+    super(sourceInfo);
     this.testExpr = testExpr;
     this.thenExpr = thenExpr;
     this.elseExpr = elseExpr;

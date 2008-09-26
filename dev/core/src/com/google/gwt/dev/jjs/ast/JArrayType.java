@@ -35,7 +35,8 @@ public class JArrayType extends JClassType {
    * These are only supposed to be constructed by JProgram.
    */
   JArrayType(JProgram program, JType leafType, int dims) {
-    super(program, null, calcName(leafType, dims), false, false);
+    super(program, leafType.getSourceInfo().makeChild("Array type"), calcName(
+        leafType, dims), false, false);
     this.leafType = leafType;
     this.dims = dims;
   }

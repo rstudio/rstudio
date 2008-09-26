@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsCase;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -51,6 +52,12 @@ public class JsIEBlockSizeVisitor {
    */
   private static class BlockVisitor extends JsVisitor {
 
+    private final JsProgram program;
+
+    public BlockVisitor(JsProgram program) {
+      this.program = program;
+    }
+
     @Override
     public void endVisit(JsBlock x, JsContext<JsStatement> ctx) {
       restructure(x.getStatements());
@@ -71,6 +78,7 @@ public class JsIEBlockSizeVisitor {
      * necessary to prevent any given block from exceeding the maximum size.
      */
     private void restructure(List<JsStatement> statements) {
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic("Restructured to reduce block size");
       // This outer loop will collapse the newly-created block into super-blocks
       while (statements.size() > MAX_BLOCK_SIZE) {
         ListIterator<JsStatement> i = statements.listIterator();
@@ -82,7 +90,7 @@ public class JsIEBlockSizeVisitor {
 
           if (statementsInNewBlock == null) {
             // Replace the current statement with a new block
-            JsBlock newBlock = new JsBlock();
+            JsBlock newBlock = new JsBlock(sourceInfo);
             statementsInNewBlock = newBlock.getStatements();
             i.set(newBlock);
           } else {
@@ -118,6 +126,6 @@ public class JsIEBlockSizeVisitor {
    * Entry point.
    */
   public static void exec(JsProgram program) {
-    (new BlockVisitor()).accept(program);
+    (new BlockVisitor(program)).accept(program);
   }
 }

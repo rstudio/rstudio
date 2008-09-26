@@ -126,15 +126,16 @@ public class JsoDevirtualizer {
    */
   private JMethod createDevirtualMethod(JMethod objectMethod, JMethod jsoImpl) {
     JClassType jsoType = program.getJavaScriptObject();
-    SourceInfo sourceInfo = null;
+    SourceInfo sourceInfo = jsoType.getSourceInfo();
 
     // Create the new method.
     String name = objectMethod.getName() + "__devirtual$";
-    JMethod newMethod = program.createMethod(sourceInfo, name.toCharArray(),
-        jsoType, objectMethod.getType(), false, true, true, false, false);
+    JMethod newMethod = program.createMethod(
+        sourceInfo.makeChild("Devirtualized method"), name.toCharArray(), jsoType,
+        objectMethod.getType(), false, true, true, false, false);
 
     // Setup parameters.
-    JParameter thisParam = program.createParameter(null,
+    JParameter thisParam = program.createParameter(sourceInfo,
         "this$static".toCharArray(), program.getTypeJavaLangObject(), true,
         true, newMethod);
     for (JParameter oldParam : objectMethod.params) {

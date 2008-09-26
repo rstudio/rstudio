@@ -16,6 +16,7 @@
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
 import com.google.gwt.dev.js.ast.JsArrayLiteral;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
@@ -189,7 +190,8 @@ public class JsInliner {
        * Create a new comma expression with the original LHS and the LHS of the
        * nested comma expression.
        */
-      JsBinaryOperation newOp = new JsBinaryOperation(JsBinaryOperator.COMMA);
+      JsBinaryOperation newOp = new JsBinaryOperation(x.getSourceInfo().makeChild(
+          "Simplifying comma expression"), JsBinaryOperator.COMMA);
       newOp.setArg1(x.getArg1());
       newOp.setArg2(toUpdate.getArg1());
 
@@ -727,7 +729,7 @@ public class JsInliner {
          * side-effects.
          */
         if (op.getArg2().hasSideEffects()) {
-          statements.add(0, new JsExprStmt(op.getArg2()));
+          statements.add(0, op.getArg2().makeStmt());
         }
 
         e = op.getArg1();
@@ -739,7 +741,7 @@ public class JsInliner {
        * side-effects.
        */
       if (e.hasSideEffects()) {
-        statements.add(0, new JsExprStmt(e));
+        statements.add(0, e.makeStmt());
       }
 
       if (statements.size() == 0) {
@@ -760,7 +762,8 @@ public class JsInliner {
            * single JsExprStmt with a JsBlock that contains all of the
            * statements.
            */
-          JsBlock b = new JsBlock();
+          JsBlock b = new JsBlock(x.getSourceInfo().makeChild(
+              "Block required for control function"));
           b.getStatements().addAll(statements);
           ctx.replaceMe(b);
           return;
@@ -794,17 +797,18 @@ public class JsInliner {
       assert !statements.isEmpty();
 
       // Find or create the JsVars as the first statement
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild("Synthetic locals");
       JsVars vars;
       if (statements.get(0) instanceof JsVars) {
         vars = (JsVars) statements.get(0);
       } else {
-        vars = new JsVars();
+        vars = new JsVars(sourceInfo);
         statements.add(0, vars);
       }
 
       // Add all variables
       for (JsName name : newLocalVariables) {
-        vars.add(new JsVar(name));
+        vars.add(new JsVar(sourceInfo, name));
       }
     }
 
@@ -893,10 +897,11 @@ public class JsInliner {
        * ensures that this logic will function correctly in the case of a single
        * expression.
        */
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild("Inlined invocation");
       ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
       JsExpression op = i.previous();
       while (i.hasPrevious()) {
-        JsBinaryOperation outerOp = new JsBinaryOperation(
+        JsBinaryOperation outerOp = new JsBinaryOperation(sourceInfo,
             JsBinaryOperator.COMMA);
         outerOp.setArg1(i.previous());
         outerOp.setArg2(op);
@@ -1067,7 +1072,8 @@ public class JsInliner {
         return;
       }
 
-      JsExpression replacement = tryGetReplacementExpression(x.getName());
+      JsExpression replacement = tryGetReplacementExpression(
+          x.getSourceInfo().makeChild("Inlined expression"), x.getName());
 
       if (replacement != null) {
         ctx.replaceMe(replacement);
@@ -1092,7 +1098,8 @@ public class JsInliner {
      * given name. Returns <code>null</code> if no replacement has been set
      * for the name.
      */
-    private JsExpression tryGetReplacementExpression(JsName name) {
+    private JsExpression tryGetReplacementExpression(SourceInfo sourceInfo,
+        JsName name) {
       if (paramsToArgsMap.containsKey(name)) {
         /*
          * TODO if we ever allow mutable JsExpression types to be considered
@@ -1101,7 +1108,7 @@ public class JsInliner {
         return paramsToArgsMap.get(name);
 
       } else if (nameReplacements.containsKey(name)) {
-        return nameReplacements.get(name).makeRef();
+        return nameReplacements.get(name).makeRef(sourceInfo);
 
       } else {
         return null;
@@ -1512,13 +1519,15 @@ public class JsInliner {
         // Extract the initialization expression
         JsExpression init = var.getInitExpr();
         if (init != null) {
-          JsBinaryOperation assignment = new JsBinaryOperation(
+          SourceInfo sourceInfo = var.getSourceInfo().makeChild(
+              "Hoisted initializer into inline site");
+          JsBinaryOperation assignment = new JsBinaryOperation(sourceInfo,
               JsBinaryOperator.ASG);
-          assignment.setArg1(var.getName().makeRef());
+          assignment.setArg1(var.getName().makeRef(sourceInfo));
           assignment.setArg2(init);
 
           // Multiple initializers go into a comma expression
-          JsBinaryOperation comma = new JsBinaryOperation(
+          JsBinaryOperation comma = new JsBinaryOperation(sourceInfo,
               JsBinaryOperator.COMMA);
           comma.setArg1(expression);
           comma.setArg2(assignment);

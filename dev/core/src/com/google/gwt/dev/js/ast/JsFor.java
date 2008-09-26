@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,8 @@
  * the License.
  */
 package com.google.gwt.dev.js.ast;
+
+import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
  * A <code>for</code> statement. If specified at all, the initializer part is
@@ -38,7 +40,8 @@ public class JsFor extends JsStatement {
 
   private JsVars initVars;
 
-  public JsFor() {
+  public JsFor(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public JsStatement getBody() {

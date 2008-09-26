@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a JavaScript expression that references a name.
  */
@@ -25,11 +27,13 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
   private JsName name;
   private JsExpression qualifier;
 
-  public JsNameRef(JsName name) {
+  public JsNameRef(SourceInfo sourceInfo, JsName name) {
+    super(sourceInfo);
     this.name = name;
   }
 
-  public JsNameRef(String ident) {
+  public JsNameRef(SourceInfo sourceInfo, String ident) {
+    super(sourceInfo);
     this.ident = ident;
   }
 

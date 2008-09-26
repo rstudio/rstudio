@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript <code>throw</code> statement.
  */
@@ -22,10 +24,12 @@ public class JsThrow extends JsStatement {
 
   private JsExpression expr;
 
-  public JsThrow() {
+  public JsThrow(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
-  public JsThrow(JsExpression expr) {
+  public JsThrow(SourceInfo sourceInfo, JsExpression expr) {
+    super(sourceInfo);
     this.expr = expr;
   }
 

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a JavaScript binary operation.
  */
@@ -26,12 +28,13 @@ public final class JsBinaryOperation extends JsExpression {
 
   private final JsBinaryOperator op;
 
-  public JsBinaryOperation(JsBinaryOperator op) {
-    this(op, null, null);
+  public JsBinaryOperation(SourceInfo sourceInfo, JsBinaryOperator op) {
+    this(sourceInfo, op, null, null);
   }
 
-  public JsBinaryOperation(JsBinaryOperator op, JsExpression arg1,
-      JsExpression arg2) {
+  public JsBinaryOperation(SourceInfo sourceInfo, JsBinaryOperator op,
+      JsExpression arg1, JsExpression arg2) {
+    super(sourceInfo);
     this.op = op;
     this.arg1 = arg1;
     this.arg2 = arg2;

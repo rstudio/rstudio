@@ -23,6 +23,7 @@ public class JJSOptions {
   private boolean aggressivelyOptimize = true;
   private boolean enableAssertions = false;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
+  private String soycOutputPath = null;
   private boolean validateOnly = false;
 
   public JJSOptions() {
@@ -35,6 +36,7 @@ public class JJSOptions {
   public void copyFrom(JJSOptions other) {
     this.aggressivelyOptimize = other.aggressivelyOptimize;
     this.enableAssertions = other.enableAssertions;
+    this.soycOutputPath = other.soycOutputPath;
     this.output = other.output;
     this.validateOnly = other.validateOnly;
   }
@@ -44,6 +46,13 @@ public class JJSOptions {
    */
   public JsOutputOption getOutput() {
     return output;
+  }
+
+  /**
+   * Returns the path of the SOYC output directory, if it has been set.
+   */
+  public String getSoycOutputDir() {
+    return soycOutputPath;
   }
 
   /**
@@ -61,8 +70,8 @@ public class JJSOptions {
   }
 
   /**
-   * Returns true if the compiler should run in validation mode, not producing
-   * any output.
+   * /** Returns true if the compiler should run in validation mode, not
+   * producing any output.
    */
   public boolean isValidateOnly() {
     return validateOnly;
@@ -87,6 +96,13 @@ public class JJSOptions {
    */
   public void setOutput(JsOutputOption output) {
     this.output = output;
+  }
+
+  /**
+   * Sets the output path of the SOYC reports.
+   */
+  public void setSoycOutputDir(String path) {
+    this.soycOutputPath = path;
   }
 
   /**

@@ -531,7 +531,8 @@ public class GenerateJavaAST {
     }
 
     JStringLiteral processConstant(StringConstant x) {
-      return program.getLiteralString(x.stringValue().toCharArray());
+      return program.getLiteralString(currentMethod.getSourceInfo().makeChild(
+          "String literal"), x.stringValue().toCharArray());
     }
 
     /**
@@ -677,7 +678,7 @@ public class GenerateJavaAST {
         currentMethod = null;
 
         // synthesize a return statement to emulate returning the new object
-        statements.add(new JReturnStatement(program, null, thisRef));
+        statements.add(new JReturnStatement(program, info, thisRef));
       } catch (Throwable e) {
         throw translateException(ctor, e);
       }
@@ -734,7 +735,7 @@ public class GenerateJavaAST {
 
       // Enums: hidden arguments for the name and id.
       if (x.enumConstant != null) {
-        call.getArgs().add(program.getLiteralString(x.enumConstant.name));
+        call.getArgs().add(program.getLiteralString(info, x.enumConstant.name));
         call.getArgs().add(
             program.getLiteralInt(x.enumConstant.binding.original().id));
       }
@@ -1955,20 +1956,25 @@ public class GenerateJavaAST {
     }
 
     private JField createEnumValueMap(JEnumType type) {
-      JsonObject map = new JsonObject(program);
+      SourceInfo sourceInfo = type.getSourceInfo().makeChild(
+          "enum value lookup map");
+      JsonObject map = new JsonObject(program, sourceInfo);
       for (JEnumField field : type.enumList) {
         // JSON maps require leading underscores to prevent collisions.
-        JStringLiteral key = program.getLiteralString("_" + field.getName());
-        JFieldRef value = new JFieldRef(program, null, null, field, type);
-        map.propInits.add(new JsonObject.JsonPropInit(program, key, value));
+        JStringLiteral key = program.getLiteralString(field.getSourceInfo(),
+            "_" + field.getName());
+        JFieldRef value = new JFieldRef(program, sourceInfo, null, field, type);
+        map.propInits.add(new JsonObject.JsonPropInit(program, sourceInfo, key,
+            value));
       }
-      JField mapField = program.createField(null, "enum$map".toCharArray(),
-          type, map.getType(), true, Disposition.FINAL);
+      JField mapField = program.createField(sourceInfo,
+          "enum$map".toCharArray(), type, map.getType(), true,
+          Disposition.FINAL);
 
       // Initialize in clinit.
       JMethodBody clinitBody = (JMethodBody) type.methods.get(0).getBody();
-      JExpressionStatement assignment = program.createAssignmentStmt(null,
-          createVariableRef(null, mapField), map);
+      JExpressionStatement assignment = program.createAssignmentStmt(
+          sourceInfo, createVariableRef(sourceInfo, mapField), map);
       clinitBody.getStatements().add(assignment);
       return mapField;
     }
@@ -2197,14 +2203,15 @@ public class GenerateJavaAST {
      * expression. Beware that when autoboxing, the type of the expression is
      * not necessarily the same as the type of the box to be created. The JDT
      * figures out what the necessary conversion is, depending on the context
-     * the expression appears in, and stores it in <code>x.implicitConversion</code>,
-     * so extract it from there.
+     * the expression appears in, and stores it in
+     * <code>x.implicitConversion</code>, so extract it from there.
      */
     private JPrimitiveType implicitConversionTargetType(Expression x)
         throws InternalCompilerException {
       /*
        * This algorithm for finding the target type is copied from
-       * org.eclipse.jdt.internal.compiler.codegen.CodeStream.generateReturnBytecode() .
+       * org.eclipse.jdt
+       * .internal.compiler.codegen.CodeStream.generateReturnBytecode() .
        */
       switch ((x.implicitConversion & TypeIds.IMPLICIT_CONVERSION_MASK) >> 4) {
         case TypeIds.T_boolean:
@@ -2232,7 +2239,7 @@ public class GenerateJavaAST {
     private SourceInfo makeSourceInfo(Statement x) {
       int startLine = Util.getLineNumber(x.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      return new SourceInfo(x.sourceStart, x.sourceEnd, startLine,
+      return program.createSourceInfo(x.sourceStart, x.sourceEnd, startLine,
           currentFileName);
     }
 
@@ -2488,28 +2495,34 @@ public class GenerateJavaAST {
 
     private void writeEnumValueOfMethod(JEnumType type, JField mapField) {
       // return Enum.valueOf(map, name);
-      JFieldRef mapRef = new JFieldRef(program, null, null, mapField, type);
-      JVariableRef nameRef = createVariableRef(null,
+      SourceInfo sourceInfo = mapField.getSourceInfo().makeChild(
+          "enum accessor method");
+      JFieldRef mapRef = new JFieldRef(program, sourceInfo, null, mapField,
+          type);
+      JVariableRef nameRef = createVariableRef(sourceInfo,
           currentMethod.params.get(0));
       JMethod delegateTo = program.getIndexedMethod("Enum.valueOf");
-      JMethodCall call = new JMethodCall(program, null, null, delegateTo);
+      JMethodCall call = new JMethodCall(program, sourceInfo, null, delegateTo);
       call.getArgs().add(mapRef);
       call.getArgs().add(nameRef);
       currentMethodBody.getStatements().add(
-          new JReturnStatement(program, null, call));
+          new JReturnStatement(program, sourceInfo, call));
     }
 
     private void writeEnumValuesMethod(JEnumType type) {
       // return new E[]{A,B,C};
+      SourceInfo sourceInfo = type.getSourceInfo().makeChild(
+          "enum values method");
       List<JExpression> initializers = new ArrayList<JExpression>();
       for (JEnumField field : type.enumList) {
-        JFieldRef fieldRef = new JFieldRef(program, null, null, field, type);
+        JFieldRef fieldRef = new JFieldRef(program, sourceInfo, null, field,
+            type);
         initializers.add(fieldRef);
       }
-      JNewArray newExpr = JNewArray.createInitializers(program, null,
+      JNewArray newExpr = JNewArray.createInitializers(program, sourceInfo,
           program.getTypeArray(type, 1), initializers);
       currentMethodBody.getStatements().add(
-          new JReturnStatement(program, null, newExpr));
+          new JReturnStatement(program, sourceInfo, newExpr));
     }
   }
 

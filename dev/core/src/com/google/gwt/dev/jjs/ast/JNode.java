@@ -38,7 +38,14 @@ public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
     } else {
       this.program = program;
     }
-    this.info = info;
+    
+    if (info != null) {
+      this.info = info;
+    } else {
+      // This indicates a deficiency in the compiler
+      this.info = SourceInfo.UNKNOWN.makeChild("Unknown "
+          + getClass().getSimpleName());
+    }
   }
 
   public JProgram getProgram() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,13 +15,15 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Base class for any Java literal expression.
  */
 public abstract class JValueLiteral extends JLiteral {
 
-  public JValueLiteral(JProgram program) {
-    super(program);
+  public JValueLiteral(JProgram program, SourceInfo sourceInfo) {
+    super(program, sourceInfo);
   }
 
   public abstract Object getValueObj();

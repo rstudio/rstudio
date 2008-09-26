@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.js.ast.SourceInfoJs;
 
 /**
  * Searches for method invocations in constructor expressions that would not
@@ -33,7 +34,8 @@ import com.google.gwt.dev.js.ast.JsVisitor;
  */
 public class JsConstructExpressionVisitor extends JsVisitor {
 
-  private static final int PRECEDENCE_NEW = JsPrecedenceVisitor.exec(new JsNew());
+  private static final int PRECEDENCE_NEW = JsPrecedenceVisitor.exec(new JsNew(
+      SourceInfoJs.INTRINSIC));
 
   public static boolean exec(JsExpression expression) {
     if (JsPrecedenceVisitor.exec(expression) < PRECEDENCE_NEW) {

@@ -114,40 +114,14 @@ public class BuildTypeMap {
    */
   private static class BuildDeclMapVisitor extends ASTVisitor {
 
-    private static SourceInfo makeSourceInfo(
-        AbstractMethodDeclaration methodDecl) {
-      CompilationResult compResult = methodDecl.compilationResult;
-      int[] indexes = compResult.lineSeparatorPositions;
-      String fileName = String.valueOf(compResult.fileName);
-      int startLine = Util.getLineNumber(methodDecl.sourceStart, indexes, 0,
-          indexes.length - 1);
-      return new SourceInfo(methodDecl.sourceStart, methodDecl.bodyEnd,
-          startLine, fileName);
-    }
-
-    private static InternalCompilerException translateException(
-        AbstractMethodDeclaration amd, Throwable e) {
-      if (e instanceof OutOfMemoryError) {
-        // Always rethrow OOMs (might have no memory to load ICE class anyway).
-        throw (OutOfMemoryError) e;
-      }
-      InternalCompilerException ice;
-      if (e instanceof InternalCompilerException) {
-        ice = (InternalCompilerException) e;
-      } else {
-        ice = new InternalCompilerException("Error building type map", e);
-      }
-      ice.addNode(amd.getClass().getName(), amd.toString(), makeSourceInfo(amd));
-      return ice;
-    }
-
     private String currentFileName;
+
     private int[] currentSeparatorPositions;
+
     private final JsParser jsParser = new JsParser();
     private final JsProgram jsProgram;
     private JProgram program;
     private List<TypeDeclaration> typeDecls = new ArrayList<TypeDeclaration>();
-
     private final TypeMap typeMap;
 
     public BuildDeclMapVisitor(TypeMap typeMap, JsProgram jsProgram) {
@@ -378,8 +352,10 @@ public class BuildTypeMap {
     private JField createField(SyntheticArgumentBinding binding,
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field = program.createField(null, binding.name, enclosingType,
-          type, false, Disposition.FINAL);
+      JField field = program.createField(
+          enclosingType.getSourceInfo().makeChild(
+              "Field " + String.valueOf(binding.name)), binding.name,
+          enclosingType, type, false, Disposition.FINAL);
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
       }
@@ -400,8 +376,9 @@ public class BuildTypeMap {
     private JParameter createParameter(SyntheticArgumentBinding arg,
         String argName, JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(arg.type);
-      JParameter param = program.createParameter(null, argName.toCharArray(),
-          type, true, false, enclosingMethod);
+      JParameter param = program.createParameter(
+          enclosingMethod.getSourceInfo().makeChild("Parameter " + argName),
+          argName.toCharArray(), type, true, false, enclosingMethod);
       return param;
     }
 
@@ -421,15 +398,18 @@ public class BuildTypeMap {
       JClassType type = (JClassType) constructor.getEnclosingType();
 
       // Define the method
-      JMethod synthetic = program.createMethod(null, "new".toCharArray(), type,
-          type, false, true, true, false, false);
+      JMethod synthetic = program.createMethod(type.getSourceInfo().makeChild(
+          "Synthetic constructor"), "new".toCharArray(), type, type, false,
+          true, true, false, false);
 
       // new Foo() : Create the instance
-      JNewInstance newInstance = new JNewInstance(program, null, type);
+      JNewInstance newInstance = new JNewInstance(program,
+          type.getSourceInfo().makeChild("new instance"), type);
 
       // (new Foo()).Foo() : Invoke the constructor method on the instance
-      JMethodCall call = new JMethodCall(program, null, newInstance,
-          constructor);
+      JMethodCall call = new JMethodCall(program,
+          type.getSourceInfo().makeChild("constructor invocation"),
+          newInstance, constructor);
       List<JExpression> args = call.getArgs();
 
       /*
@@ -439,7 +419,8 @@ public class BuildTypeMap {
        */
       JParameter enclosingInstance = null;
       if (!staticClass) {
-        enclosingInstance = program.createParameter(null,
+        enclosingInstance = program.createParameter(
+            synthetic.getSourceInfo().makeChild("outer instance"),
             "this$outer".toCharArray(), enclosingType, false, false, synthetic);
       }
 
@@ -454,12 +435,17 @@ public class BuildTypeMap {
          * implicitly as the last argument to the constructor.
          */
         if (enclosingInstance != null && !i.hasNext()) {
-          args.add(new JParameterRef(program, null, enclosingInstance));
+          args.add(new JParameterRef(program,
+              synthetic.getSourceInfo().makeChild("enclosing instance"),
+              enclosingInstance));
         } else {
-          JParameter syntheticParam = program.createParameter(null,
+          JParameter syntheticParam = program.createParameter(
+              synthetic.getSourceInfo().makeChild("Argument " + param.getName()),
               param.getName().toCharArray(), param.getType(), true, false,
               synthetic);
-          args.add(new JParameterRef(program, null, syntheticParam));
+          args.add(new JParameterRef(program,
+              syntheticParam.getSourceInfo().makeChild("reference"),
+              syntheticParam));
         }
       }
 
@@ -467,7 +453,8 @@ public class BuildTypeMap {
       synthetic.freezeParamTypes();
 
       // return (new Foo()).Foo() : The only statement in the function
-      JReturnStatement ret = new JReturnStatement(program, null, call);
+      JReturnStatement ret = new JReturnStatement(program,
+          synthetic.getSourceInfo().makeChild("Return statement"), call);
 
       // Add the return statement to the method body
       JMethodBody body = (JMethodBody) synthetic.getBody();
@@ -499,11 +486,21 @@ public class BuildTypeMap {
       return (JMethodBody) method.getBody();
     }
 
+    private SourceInfo makeSourceInfo(AbstractMethodDeclaration methodDecl) {
+      CompilationResult compResult = methodDecl.compilationResult;
+      int[] indexes = compResult.lineSeparatorPositions;
+      String fileName = String.valueOf(compResult.fileName);
+      int startLine = Util.getLineNumber(methodDecl.sourceStart, indexes, 0,
+          indexes.length - 1);
+      return program.createSourceInfo(methodDecl.sourceStart,
+          methodDecl.bodyEnd, startLine, fileName);
+    }
+
     private SourceInfo makeSourceInfo(Statement stmt) {
       int startLine = Util.getLineNumber(stmt.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      return new SourceInfo(stmt.sourceStart, stmt.sourceEnd, startLine,
-          currentFileName);
+      return program.createSourceInfo(stmt.sourceStart, stmt.sourceEnd,
+          startLine, currentFileName);
     }
 
     private void mapParameters(JMethod method, AbstractMethodDeclaration x) {
@@ -556,7 +553,8 @@ public class BuildTypeMap {
         if (type instanceof JClassType
             && type != program.getTypeJavaLangObject()
             && type != program.getIndexedType("Array")) {
-          JMethod getClassMethod = program.createMethod(null,
+          JMethod getClassMethod = program.createMethod(
+              type.getSourceInfo().makeChild("Synthetic getClass()"),
               "getClass".toCharArray(), type, program.getTypeJavaLangClass(),
               false, false, false, false, false);
           assert (type.methods.get(2) == getClassMethod);
@@ -621,14 +619,16 @@ public class BuildTypeMap {
       // Visit the synthetic values() and valueOf() methods.
       for (MethodBinding methodBinding : binding.methods()) {
         if (methodBinding instanceof SyntheticMethodBinding) {
-          JMethod newMethod = processMethodBinding(methodBinding, type, null);
+          JMethod newMethod = processMethodBinding(methodBinding, type,
+              type.getSourceInfo());
           TypeBinding[] parameters = methodBinding.parameters;
           if (parameters.length == 0) {
             assert newMethod.getName().equals("values");
           } else if (parameters.length == 1) {
             assert newMethod.getName().equals("valueOf");
             assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
-            program.createParameter(null, "name".toCharArray(),
+            program.createParameter(newMethod.getSourceInfo().makeChild(
+                "name parameter"), "name".toCharArray(),
                 program.getTypeJavaLangString(), true, false, newMethod);
           } else {
             assert false;
@@ -702,6 +702,7 @@ public class BuildTypeMap {
       try {
         // start at -1 to avoid counting our synthetic header
         // TODO: get the character position start correct
+        jsParser.setSourceInfo(info);
         List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
         JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
         JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
@@ -746,10 +747,26 @@ public class BuildTypeMap {
         // TODO: check this
         // Map into the original source stream;
         i += startPos + detail.getLineOffset();
-        info = new SourceInfo(i, i, info.getStartLine() + detail.getLine(),
-            info.getFileName());
+        info = program.createSourceInfo(i, i, info.getStartLine()
+            + detail.getLine(), info.getFileName());
         GenerateJavaAST.reportJsniError(info, methodDeclaration, e.getMessage());
       }
+    }
+
+    private InternalCompilerException translateException(
+        AbstractMethodDeclaration amd, Throwable e) {
+      if (e instanceof OutOfMemoryError) {
+        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+        throw (OutOfMemoryError) e;
+      }
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+      } else {
+        ice = new InternalCompilerException("Error building type map", e);
+      }
+      ice.addNode(amd.getClass().getName(), amd.toString(), makeSourceInfo(amd));
+      return ice;
     }
 
     private InternalCompilerException translateException(Statement stmt,
@@ -778,34 +795,8 @@ public class BuildTypeMap {
    */
   private static class BuildTypeMapVisitor extends ASTVisitor {
 
-    private static SourceInfo makeSourceInfo(TypeDeclaration typeDecl) {
-      CompilationResult compResult = typeDecl.compilationResult;
-      int[] indexes = compResult.lineSeparatorPositions;
-      String fileName = String.valueOf(compResult.fileName);
-      int startLine = Util.getLineNumber(typeDecl.sourceStart, indexes, 0,
-          indexes.length - 1);
-      return new SourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd, startLine,
-          fileName);
-    }
-
-    private static InternalCompilerException translateException(
-        TypeDeclaration typeDecl, Throwable e) {
-      if (e instanceof OutOfMemoryError) {
-        // Always rethrow OOMs (might have no memory to load ICE class anyway).
-        throw (OutOfMemoryError) e;
-      }
-      InternalCompilerException ice;
-      if (e instanceof InternalCompilerException) {
-        ice = (InternalCompilerException) e;
-      } else {
-        ice = new InternalCompilerException("Error building type map", e);
-      }
-      ice.addNode(typeDecl.getClass().getName(), typeDecl.toString(),
-          makeSourceInfo(typeDecl));
-      return ice;
-    }
-
     private final JProgram program;
+
     private final TypeMap typeMap;
 
     public BuildTypeMapVisitor(TypeMap typeMap) {
@@ -828,6 +819,16 @@ public class BuildTypeMap {
     public boolean visit(TypeDeclaration typeDeclaration,
         CompilationUnitScope scope) {
       return process(typeDeclaration);
+    }
+
+    private SourceInfo makeSourceInfo(TypeDeclaration typeDecl) {
+      CompilationResult compResult = typeDecl.compilationResult;
+      int[] indexes = compResult.lineSeparatorPositions;
+      String fileName = String.valueOf(compResult.fileName);
+      int startLine = Util.getLineNumber(typeDecl.sourceStart, indexes, 0,
+          indexes.length - 1);
+      return program.createSourceInfo(typeDecl.sourceStart, typeDecl.bodyEnd,
+          startLine, fileName);
     }
 
     private boolean process(TypeDeclaration typeDeclaration) {
@@ -878,12 +879,14 @@ public class BuildTypeMap {
          * more like output JavaScript. Clinit is always in slot 0, init (if it
          * exists) is always in slot 1.
          */
-        JMethod clinit = program.createMethod(null, "$clinit".toCharArray(),
+        JMethod clinit = program.createMethod(
+            info.makeChild("Class initializer"), "$clinit".toCharArray(),
             newType, program.getTypeVoid(), false, true, true, true, false);
         clinit.freezeParamTypes();
 
         if (newType instanceof JClassType) {
-          JMethod init = program.createMethod(null, "$init".toCharArray(),
+          JMethod init = program.createMethod(
+              info.makeChild("Instance initializer"), "$init".toCharArray(),
               newType, program.getTypeVoid(), false, false, true, true, false);
           init.freezeParamTypes();
         }
@@ -893,6 +896,23 @@ public class BuildTypeMap {
       } catch (Throwable e) {
         throw translateException(typeDeclaration, e);
       }
+    }
+
+    private InternalCompilerException translateException(
+        TypeDeclaration typeDecl, Throwable e) {
+      if (e instanceof OutOfMemoryError) {
+        // Always rethrow OOMs (might have no memory to load ICE class anyway).
+        throw (OutOfMemoryError) e;
+      }
+      InternalCompilerException ice;
+      if (e instanceof InternalCompilerException) {
+        ice = (InternalCompilerException) e;
+      } else {
+        ice = new InternalCompilerException("Error building type map", e);
+      }
+      ice.addNode(typeDecl.getClass().getName(), typeDecl.toString(),
+          makeSourceInfo(typeDecl));
+      return ice;
     }
   }
 

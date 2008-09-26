@@ -15,13 +15,16 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript null literal.
  */
 public final class JsNullLiteral extends JsValueLiteral {
 
   // Should only be instantiated in JsProgram
-  JsNullLiteral() {
+  JsNullLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public boolean isBooleanFalse() {

@@ -28,7 +28,8 @@ public class JPrimitiveType extends JType {
    */
   JPrimitiveType(JProgram program, String name, String signatureName,
       String wrapperTypeName, JLiteral defaultValue) {
-    super(program, null, name, defaultValue);
+    super(program, program.createSourceInfoSynthetic(name + " primitive type"),
+        name, defaultValue);
     this.signatureName = signatureName;
     this.wrapperTypeName = wrapperTypeName;
   }

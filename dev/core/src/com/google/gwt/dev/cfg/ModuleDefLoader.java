@@ -241,6 +241,8 @@ public final class ModuleDefLoader {
       ModuleDefSchema schema = new ModuleDefSchema(logger, this, moduleURL,
           moduleDir, moduleDef);
       ReflectiveParser.parse(logger, schema, r);
+    } catch (Throwable e) {
+      e.printStackTrace();
     } finally {
       Utility.close(r);
     }

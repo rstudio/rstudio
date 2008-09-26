@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript regular expression.
  */
@@ -24,7 +26,8 @@ public final class JsRegExp extends JsValueLiteral {
 
   private String pattern;
 
-  public JsRegExp() {
+  public JsRegExp(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public String getFlags() {

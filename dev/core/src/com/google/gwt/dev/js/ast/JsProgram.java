@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,15 +25,19 @@ import java.util.Map;
  */
 public final class JsProgram extends JsNode<JsProgram> {
 
-  private final JsStatement debuggerStmt = new JsDebugger();
+  private final JsStatement debuggerStmt = new JsDebugger(
+      createSourceInfoSynthetic("debugger statement"));
 
-  private final JsEmpty emptyStmt = new JsEmpty();
+  private final JsEmpty emptyStmt = new JsEmpty(
+      createSourceInfoSynthetic("Empty statement"));
 
-  private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(false);
+  private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(
+      createSourceInfoSynthetic("false literal"), false);
 
   private final JsGlobalBlock globalBlock;
 
-  private final JsNullLiteral nullLiteral = new JsNullLiteral();
+  private final JsNullLiteral nullLiteral = new JsNullLiteral(
+      createSourceInfoSynthetic("null literal"));
 
   private final Map<Double, JsNumberLiteral> numberLiteralMap = new HashMap<Double, JsNumberLiteral>();
 
@@ -43,16 +49,29 @@ public final class JsProgram extends JsNode<JsProgram> {
 
   private final JsScope topScope;
 
-  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(true);
+  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(
+      createSourceInfoSynthetic("true literal"), true);
+
+  private boolean enableSourceInfoDescendants;
 
   /**
    * Constructs a JavaScript program object.
    */
   public JsProgram() {
+    super(SourceInfoJs.INTRINSIC.makeChild("JavaScript program"));
     rootScope = new JsRootScope(this);
-    globalBlock = new JsGlobalBlock();
+    globalBlock = new JsGlobalBlock(createSourceInfoSynthetic("global block"));
     topScope = new JsScope(rootScope, "Global");
     objectScope = new JsScope(rootScope, "Object");
+  }
+
+  public SourceInfo createSourceInfo(int lineNumber, String location) {
+    return new SourceInfoJs(-1, -1, lineNumber, location,
+        enableSourceInfoDescendants);
+  }
+
+  public SourceInfo createSourceInfoSynthetic(String description) {
+    return createSourceInfo(0, SourceInfoJs.findCaller()).makeChild(description);
   }
 
   public JsBooleanLiteral getBooleanLiteral(boolean truth) {
@@ -94,7 +113,8 @@ public final class JsProgram extends JsNode<JsProgram> {
   public JsNumberLiteral getNumberLiteral(double value) {
     JsNumberLiteral lit = numberLiteralMap.get(value);
     if (lit == null) {
-      lit = new JsNumberLiteral(value);
+      lit = new JsNumberLiteral(createSourceInfoSynthetic("Number literal "
+          + value), value);
       numberLiteralMap.put(value, lit);
     }
     return lit;
@@ -121,11 +141,13 @@ public final class JsProgram extends JsNode<JsProgram> {
     return topScope;
   }
 
-  public JsStringLiteral getStringLiteral(String value) {
+  public JsStringLiteral getStringLiteral(SourceInfo sourceInfo, String value) {
     JsStringLiteral lit = stringLiteralMap.get(value);
     if (lit == null) {
-      lit = new JsStringLiteral(value);
+      lit = new JsStringLiteral(sourceInfo, value);
       stringLiteralMap.put(value, lit);
+    } else {
+      lit.getSourceInfo().addAdditonalAncestors(sourceInfo);
     }
     return lit;
   }
@@ -135,7 +157,18 @@ public final class JsProgram extends JsNode<JsProgram> {
   }
 
   public JsNameRef getUndefinedLiteral() {
-    return rootScope.findExistingName("undefined").makeRef();
+    return rootScope.findExistingName("undefined").makeRef(
+        createSourceInfoSynthetic("undefined reference"));
+  }
+
+  /**
+   * Controls whether or not SourceInfo nodes created via the JsProgram will
+   * record descendant information. Enabling this feature will collect extra
+   * data during the compilation cycle, but at a cost of memory and object
+   * allocations.
+   */
+  public void setEnableSourceInfoDescendants(boolean enable) {
+    enableSourceInfoDescendants = enable;
   }
 
   public void traverse(JsVisitor v, JsContext<JsProgram> ctx) {

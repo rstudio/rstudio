@@ -914,8 +914,8 @@ public class ModuleDefSchema extends Schema {
   }
 
   /**
-   * Returns <code>true</code> if the string equals "true" or "yes" using a
-   * case insensitive comparison.
+   * Returns <code>true</code> if the string equals "true" or "yes" using a case
+   * insensitive comparison.
    */
   private static boolean toPrimitiveBoolean(String s) {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
@@ -1005,6 +1005,8 @@ public class ModuleDefSchema extends Schema {
     StringReader r = new StringReader(script);
     List<JsStatement> stmts;
     try {
+      // TODO Provide more context here
+      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic("Module.xml"));
       stmts = jsParser.parse(jsPgm.getScope(), r, startLineNumber);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Error reading script source", e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.ast.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -39,9 +40,9 @@ public class JsonObject extends JExpression {
     public JExpression labelExpr;
     public JExpression valueExpr;
 
-    public JsonPropInit(JProgram program, JExpression labelExpr,
+    public JsonPropInit(JProgram program, SourceInfo sourceInfo, JExpression labelExpr,
         JExpression valueExpr) {
-      super(program, null);
+      super(program, sourceInfo);
       this.labelExpr = labelExpr;
       this.valueExpr = valueExpr;
     }
@@ -57,8 +58,8 @@ public class JsonObject extends JExpression {
 
   public final List<JsonPropInit> propInits = new ArrayList<JsonPropInit>();
 
-  public JsonObject(JProgram program) {
-    super(program, null);
+  public JsonObject(JProgram program, SourceInfo sourceInfo) {
+    super(program, sourceInfo);
   }
 
   public JType getType() {

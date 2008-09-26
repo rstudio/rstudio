@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +29,8 @@ public final class JsNew extends JsExpression implements HasArguments {
 
   private JsExpression ctorExpr;
 
-  public JsNew() {
+  public JsNew(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public List<JsExpression> getArguments() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBlock;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -131,7 +132,8 @@ public class JsStringInterner {
         toCreate.put(x, name);
       }
 
-      ctx.replaceMe(name.makeRef());
+      ctx.replaceMe(name.makeRef(x.getSourceInfo().makeChild(
+          "Interned reference")));
 
       return false;
     }
@@ -156,15 +158,17 @@ public class JsStringInterner {
    * @param scope the JsScope in which to reserve the new identifiers
    * @return <code>true</code> if any changes were made to the block
    */
-  public static boolean exec(JsBlock block, JsScope scope) {
+  public static boolean exec(JsProgram program, JsBlock block, JsScope scope) {
     StringVisitor v = new StringVisitor(scope);
     v.accept(block);
 
     if (v.toCreate.size() > 0) {
       // Create the pool of variable names.
-      JsVars vars = new JsVars();
+      JsVars vars = new JsVars(
+          program.createSourceInfoSynthetic("Interned string pool"));
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic("Interned string assignment");
       for (Map.Entry<JsStringLiteral, JsName> entry : v.toCreate.entrySet()) {
-        JsVar var = new JsVar(entry.getValue());
+        JsVar var = new JsVar(sourceInfo, entry.getValue());
         var.setInitExpr(entry.getKey());
         vars.add(var);
       }
@@ -184,7 +188,7 @@ public class JsStringInterner {
    * @return <code>true</code> if any changes were made to the program
    */
   public static boolean exec(JsProgram program) {
-    return exec(program.getGlobalBlock(), program.getScope());
+    return exec(program, program.getGlobalBlock(), program.getScope());
   }
 
   /**

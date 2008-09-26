@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents the JavaScript break statement.
  */
@@ -22,11 +24,12 @@ public final class JsBreak extends JsStatement {
 
   private final JsNameRef label;
 
-  public JsBreak() {
-    this(null);
+  public JsBreak(SourceInfo sourceInfo) {
+    this(sourceInfo, null);
   }
 
-  public JsBreak(JsNameRef label) {
+  public JsBreak(SourceInfo sourceInfo, JsNameRef label) {
+    super(sourceInfo);
     this.label = label;
   }
 

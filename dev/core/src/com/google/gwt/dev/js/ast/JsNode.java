@@ -30,10 +30,16 @@ import java.io.Serializable;
  */
 public abstract class JsNode<T extends JsVisitable<T>> implements
     JsVisitable<T>, HasSourceInfo, Serializable {
+  
+  private final SourceInfo sourceInfo;
+  
+  protected JsNode(SourceInfo sourceInfo) {
+    assert sourceInfo != null : "SourceInfo must be provided for JsNodes";
+    this.sourceInfo = sourceInfo;
+  }
 
   public SourceInfo getSourceInfo() {
-    // TODO: make this real
-    return null;
+    return sourceInfo;
   }
 
   // Causes source generation to delegate to the one visitor

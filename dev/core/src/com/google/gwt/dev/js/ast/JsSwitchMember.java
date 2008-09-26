@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +26,10 @@ import java.util.List;
 public abstract class JsSwitchMember extends JsNode<JsSwitchMember> {
 
   protected final List<JsStatement> stmts = new ArrayList<JsStatement>();
+
+  protected JsSwitchMember(SourceInfo sourceInfo) {
+    super(sourceInfo);
+  }
 
   public List<JsStatement> getStmts() {
     return stmts;

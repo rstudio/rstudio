@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Used in object literals to specify property values by name.
  */
@@ -24,10 +26,12 @@ public class JsPropertyInitializer extends JsNode<JsPropertyInitializer> {
 
   private JsExpression valueExpr;
 
-  public JsPropertyInitializer() {
+  public JsPropertyInitializer(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
-  public JsPropertyInitializer(JsExpression labelExpr, JsExpression valueExpr) {
+  public JsPropertyInitializer(SourceInfo sourceInfo, JsExpression labelExpr, JsExpression valueExpr) {
+    super(sourceInfo);
     this.labelExpr = labelExpr;
     this.valueExpr = valueExpr;
   }

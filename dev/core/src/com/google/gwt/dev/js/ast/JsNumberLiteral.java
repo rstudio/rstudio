@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a JavaScript literal decimal expression.
  */
@@ -23,7 +25,8 @@ public final class JsNumberLiteral extends JsValueLiteral {
   private final double value;
 
   // Should be interned by JsProgram
-  JsNumberLiteral(double value) {
+  JsNumberLiteral(SourceInfo sourceInfo, double value) {
+    super(sourceInfo);
     this.value = value;
   }
 

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.io.Serializable;
 
 /**
@@ -62,8 +64,8 @@ public class JsName implements Serializable {
     return isObfuscatable;
   }
 
-  public JsNameRef makeRef() {
-    return new JsNameRef(this);
+  public JsNameRef makeRef(SourceInfo sourceInfo) {
+    return new JsNameRef(sourceInfo, this);
   }
 
   public void setObfuscatable(boolean isObfuscatable) {

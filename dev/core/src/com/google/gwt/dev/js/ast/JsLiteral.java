@@ -15,8 +15,13 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript string literal expression.
  */
 public abstract class JsLiteral extends JsExpression implements CanBooleanEval {
+  protected JsLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
+  }
 }

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript prefix or postfix operation.
  */
@@ -24,11 +26,13 @@ public abstract class JsUnaryOperation extends JsExpression {
 
   private final JsUnaryOperator op;
 
-  public JsUnaryOperation(JsUnaryOperator op) {
-    this(op, null);
+  public JsUnaryOperation(SourceInfo sourceInfo, JsUnaryOperator op) {
+    this(sourceInfo, op, null);
   }
 
-  public JsUnaryOperation(JsUnaryOperator op, JsExpression arg) {
+  public JsUnaryOperation(SourceInfo sourceInfo, JsUnaryOperator op,
+      JsExpression arg) {
+    super(sourceInfo);
     this.op = op;
     this.arg = arg;
   }

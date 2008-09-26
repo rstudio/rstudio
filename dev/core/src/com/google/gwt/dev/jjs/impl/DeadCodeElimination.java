@@ -84,8 +84,8 @@ public class DeadCodeElimination {
    * operations in favor of pure side effects.
    * 
    * TODO(spoon): move more simplifications into methods like
-   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast},
-   * so that more simplifications can be made on a single pass through a tree.
+   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast}, so
+   * that more simplifications can be made on a single pass through a tree.
    */
   public class DeadCodeVisitor extends JModVisitor {
 
@@ -94,8 +94,8 @@ public class DeadCodeElimination {
     /**
      * Expressions whose result does not matter. A parent node should add any
      * children whose result does not matter to this set during the parent's
-     * <code>visit()</code> method. It should then remove those children
-     * during its own <code>endVisit()</code>.
+     * <code>visit()</code> method. It should then remove those children during
+     * its own <code>endVisit()</code>.
      * 
      * TODO: there's a latent bug here: some immutable nodes (such as literals)
      * can be multiply referenced in the AST. In theory, one reference to that
@@ -666,8 +666,9 @@ public class DeadCodeElimination {
       if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
         Object lhsObj = ((JValueLiteral) lhs).getValueObj();
         Object rhsObj = ((JValueLiteral) rhs).getValueObj();
-        ctx.replaceMe(program.getLiteralString(String.valueOf(lhsObj)
-            + String.valueOf(rhsObj)));
+        ctx.replaceMe(program.getLiteralString(lhs.getSourceInfo().makeChild(
+            "String concatenation", rhs.getSourceInfo()),
+            String.valueOf(lhsObj) + String.valueOf(rhsObj)));
       }
     }
 
@@ -1344,8 +1345,8 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify <code>exp == bool</code>, where <code>bool</code> is a
-     * boolean literal.
+     * Simplify <code>exp == bool</code>, where <code>bool</code> is a boolean
+     * literal.
      */
     private void simplifyBooleanEq(JExpression exp, boolean bool, Context ctx) {
       if (bool) {
@@ -1359,8 +1360,8 @@ public class DeadCodeElimination {
     /**
      * Simplify <code>lhs == rhs</code>, where <code>lhs</code> and
      * <code>rhs</code> are known to be boolean. If <code>negate</code> is
-     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead
-     * of <code>lhs == rhs</code>. Assumes that the case where both sides are
+     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead of
+     * <code>lhs == rhs</code>. Assumes that the case where both sides are
      * literals has already been checked.
      */
     private void simplifyBooleanEq(JExpression lhs, JExpression rhs,
@@ -1392,8 +1393,8 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true,
-     * then it's actually static evaluation of <code>lhs != rhs</code>.
+     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true, then
+     * it's actually static evaluation of <code>lhs != rhs</code>.
      */
     private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx,
         boolean negated) {
@@ -1626,7 +1627,8 @@ public class DeadCodeElimination {
         }
         Object result = actual.invoke(instance, paramValues);
         if (result instanceof String) {
-          ctx.replaceMe(program.getLiteralString((String) result));
+          ctx.replaceMe(program.getLiteralString(x.getSourceInfo().makeChild(
+              "Optimized String call"), (String) result));
         } else if (result instanceof Boolean) {
           ctx.replaceMe(program.getLiteralBoolean(((Boolean) result).booleanValue()));
         } else if (result instanceof Character) {

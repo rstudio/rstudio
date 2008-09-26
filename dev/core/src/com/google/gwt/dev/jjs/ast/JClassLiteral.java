@@ -39,8 +39,8 @@ public class JClassLiteral extends JLiteral {
     assert method != null;
 
     JMethodCall call = new JMethodCall(program, info, null, method);
-    call.getArgs().add(program.getLiteralString(getPackageName(typeName)));
-    call.getArgs().add(program.getLiteralString(getClassName(typeName)));
+    call.getArgs().add(program.getLiteralString(info, getPackageName(typeName)));
+    call.getArgs().add(program.getLiteralString(info, getClassName(typeName)));
 
     if (type instanceof JClassType && !(type instanceof JArrayType)) {
       /*
@@ -121,8 +121,9 @@ public class JClassLiteral extends JLiteral {
   /**
    * This constructor is only used by {@link JProgram}.
    */
-  JClassLiteral(JProgram program, JType type, JField field) {
-    super(program);
+  JClassLiteral(JProgram program, SourceInfo sourceInfo, JType type,
+      JField field) {
+    super(program, sourceInfo);
     refType = type;
     this.field = field;
   }

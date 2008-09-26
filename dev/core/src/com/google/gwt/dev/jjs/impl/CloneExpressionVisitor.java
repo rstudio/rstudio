@@ -142,7 +142,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JClassSeed x, Context ctx) {
-    expression = new JClassSeed(program, x.getRefType());
+    expression = new JClassSeed(program, x.getSourceInfo(), x.getRefType());
     return false;
   }
 

@@ -15,10 +15,16 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript string literal expression.
  */
 public abstract class JsValueLiteral extends JsLiteral {
+
+  protected JsValueLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
+  }
 
   @Override
   public final boolean hasSideEffects() {

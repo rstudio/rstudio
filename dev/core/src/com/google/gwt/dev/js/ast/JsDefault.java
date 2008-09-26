@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,12 +15,15 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents the default option in a JavaScript swtich statement.
  */
 public final class JsDefault extends JsSwitchMember {
 
-  public JsDefault() {
+  public JsDefault(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public void traverse(JsVisitor v, JsContext<JsSwitchMember> ctx) {

@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
 import com.google.gwt.dev.jjs.ast.HasName;
@@ -315,7 +316,8 @@ public class GenerateJavaScriptAST {
         jsFunction.setName(globalName);
       } else {
         // create a new peer JsFunction
-        jsFunction = new JsFunction(topScope, globalName, true);
+        jsFunction = new JsFunction(x.getSourceInfo(), topScope, globalName,
+            true);
         methodBodyMap.put(x.getBody(), jsFunction);
       }
       push(jsFunction.getScope());
@@ -331,7 +333,8 @@ public class GenerateJavaScriptAST {
       for (int i = 0, c = catchArgs.size(); i < c; ++i) {
         JLocalRef arg = catchArgs.get(i);
         JBlock catchBlock = catchBlocks.get(i);
-        JsCatch jsCatch = new JsCatch(peek(), arg.getTarget().getName());
+        JsCatch jsCatch = new JsCatch(x.getSourceInfo(), peek(),
+            arg.getTarget().getName());
         JsParameter jsParam = jsCatch.getParameter();
         names.put(arg.getTarget(), jsParam.getName());
         catchMap.put(catchBlock, jsCatch);
@@ -389,7 +392,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JArrayRef x, Context ctx) {
-      JsArrayAccess jsArrayAccess = new JsArrayAccess();
+      JsArrayAccess jsArrayAccess = new JsArrayAccess(x.getSourceInfo());
       jsArrayAccess.setIndexExpr((JsExpression) pop());
       jsArrayAccess.setArrayExpr((JsExpression) pop());
       push(jsArrayAccess);
@@ -420,12 +423,12 @@ public class GenerateJavaScriptAST {
         myOp = JsBinaryOperator.REF_NEQ;
       }
 
-      push(new JsBinaryOperation(myOp, lhs, rhs));
+      push(new JsBinaryOperation(x.getSourceInfo(), myOp, lhs, rhs));
     }
 
     @Override
     public void endVisit(JBlock x, Context ctx) {
-      JsBlock jsBlock = new JsBlock();
+      JsBlock jsBlock = new JsBlock(x.getSourceInfo());
       List<JsStatement> stmts = jsBlock.getStatements();
       popList(stmts, x.statements.size()); // stmts
       Iterator<JsStatement> iterator = stmts.iterator();
@@ -443,17 +446,17 @@ public class GenerateJavaScriptAST {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
         JsLabel label = (JsLabel) pop(); // label
-        labelRef = label.getName().makeRef();
+        labelRef = label.getName().makeRef(x.getSourceInfo());
       }
-      push(new JsBreak(labelRef));
+      push(new JsBreak(x.getSourceInfo(), labelRef));
     }
 
     @Override
     public void endVisit(JCaseStatement x, Context ctx) {
       if (x.getExpr() == null) {
-        push(new JsDefault());
+        push(new JsDefault(x.getSourceInfo()));
       } else {
-        JsCase jsCase = new JsCase();
+        JsCase jsCase = new JsCase(x.getSourceInfo());
         jsCase.setCaseExpr((JsExpression) pop()); // expr
         push(jsCase);
       }
@@ -467,12 +470,12 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JClassLiteral x, Context ctx) {
       JsName classLit = names.get(x.getField());
-      push(classLit.makeRef());
+      push(classLit.makeRef(x.getSourceInfo()));
     }
 
     @Override
     public void endVisit(JClassSeed x, Context ctx) {
-      push(names.get(x.getRefType()).makeRef());
+      push(names.get(x.getRefType()).makeRef(x.getSourceInfo()));
     }
 
     @SuppressWarnings("unchecked")
@@ -516,7 +519,7 @@ public class GenerateJavaScriptAST {
       }
 
       // setup fields
-      JsVars vars = new JsVars();
+      JsVars vars = new JsVars(x.getSourceInfo());
       for (int i = 0; i < jsFields.size(); ++i) {
         JsNode node = jsFields.get(i);
         if (node instanceof JsVar) {
@@ -537,7 +540,7 @@ public class GenerateJavaScriptAST {
       JsExpression elseExpr = (JsExpression) pop(); // elseExpr
       JsExpression thenExpr = (JsExpression) pop(); // thenExpr
       JsExpression ifTest = (JsExpression) pop(); // ifTest
-      push(new JsConditional(ifTest, thenExpr, elseExpr));
+      push(new JsConditional(x.getSourceInfo(), ifTest, thenExpr, elseExpr));
     }
 
     @Override
@@ -545,9 +548,9 @@ public class GenerateJavaScriptAST {
       JsNameRef labelRef = null;
       if (x.getLabel() != null) {
         JsLabel label = (JsLabel) pop(); // label
-        labelRef = label.getName().makeRef();
+        labelRef = label.getName().makeRef(x.getSourceInfo());
       }
-      push(new JsContinue(labelRef));
+      push(new JsContinue(x.getSourceInfo(), labelRef));
     }
 
     @Override
@@ -573,15 +576,15 @@ public class GenerateJavaScriptAST {
         return;
       }
 
-      JsBinaryOperation binOp = new JsBinaryOperation(JsBinaryOperator.ASG,
-          localRef, initializer);
+      JsBinaryOperation binOp = new JsBinaryOperation(x.getSourceInfo(),
+          JsBinaryOperator.ASG, localRef, initializer);
 
       push(binOp.makeStmt());
     }
 
     @Override
     public void endVisit(JDoStatement x, Context ctx) {
-      JsDoWhile stmt = new JsDoWhile();
+      JsDoWhile stmt = new JsDoWhile(x.getSourceInfo());
       if (x.getBody() != null) {
         stmt.setBody((JsStatement) pop()); // body
       } else {
@@ -619,16 +622,16 @@ public class GenerateJavaScriptAST {
 
       if (x.isStatic()) {
         // setup a var for the static
-        JsVar var = new JsVar(name);
+        JsVar var = new JsVar(x.getSourceInfo(), name);
         var.setInitExpr(rhs);
         push(var);
       } else {
         // for non-statics, only setup an assignment if needed
         if (rhs != null) {
-          JsNameRef fieldRef = name.makeRef();
-          fieldRef.setQualifier(globalTemp.makeRef());
+          JsNameRef fieldRef = name.makeRef(x.getSourceInfo());
+          fieldRef.setQualifier(globalTemp.makeRef(x.getSourceInfo()));
           JsExpression asg = createAssignment(fieldRef, rhs);
-          push(new JsExprStmt(asg));
+          push(new JsExprStmt(x.getSourceInfo(), asg));
         } else {
           push(null);
         }
@@ -639,7 +642,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JFieldRef x, Context ctx) {
       JField field = x.getField();
       JsName jsFieldName = names.get(field);
-      JsNameRef nameRef = jsFieldName.makeRef();
+      JsNameRef nameRef = jsFieldName.makeRef(x.getSourceInfo());
       JsExpression curExpr = nameRef;
 
       /*
@@ -670,7 +673,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JForStatement x, Context ctx) {
-      JsFor jsFor = new JsFor();
+      JsFor jsFor = new JsFor(x.getSourceInfo());
 
       // body
       if (x.getBody() != null) {
@@ -716,7 +719,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JIfStatement x, Context ctx) {
-      JsIf stmt = new JsIf();
+      JsIf stmt = new JsIf(x.getSourceInfo());
 
       if (x.getElseStmt() != null) {
         stmt.setElseStmt((JsStatement) pop()); // elseStmt
@@ -750,7 +753,7 @@ public class GenerateJavaScriptAST {
       }
 
       // setup fields
-      JsVars vars = new JsVars();
+      JsVars vars = new JsVars(x.getSourceInfo());
       for (int i = 0; i < jsFields.size(); ++i) {
         vars.add(jsFields.get(i));
       }
@@ -761,7 +764,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLabel x, Context ctx) {
-      push(new JsLabel(names.get(x)));
+      push(new JsLabel(x.getSourceInfo(), names.get(x)));
     }
 
     @Override
@@ -774,12 +777,12 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JLocal x, Context ctx) {
-      push(names.get(x).makeRef());
+      push(names.get(x).makeRef(x.getSourceInfo()));
     }
 
     @Override
     public void endVisit(JLocalRef x, Context ctx) {
-      push(names.get(x.getTarget()).makeRef());
+      push(names.get(x.getTarget()).makeRef(x.getSourceInfo()));
     }
 
     @Override
@@ -798,7 +801,7 @@ public class GenerateJavaScriptAST {
       JsName longLit = topScope.declareName(nameString);
       longLits.put(x.getValue(), longLit);
       longObjects.put(longLit, longLiteralAllocation);
-      push(longLit.makeRef());
+      push(longLit.makeRef(x.getSourceInfo()));
     }
 
     @Override
@@ -856,14 +859,14 @@ public class GenerateJavaScriptAST {
        * other in Java. We use the alreadySeen set to make sure we don't declare
        * the same-named local var twice.
        */
-      JsVars vars = new JsVars();
+      JsVars vars = new JsVars(x.getSourceInfo());
       Set<String> alreadySeen = new HashSet<String>();
       for (int i = 0; i < locals.size(); ++i) {
         JsName name = names.get(x.locals.get(i));
         String ident = name.getIdent();
         if (!alreadySeen.contains(ident)) {
           alreadySeen.add(ident);
-          vars.add(new JsVar(name));
+          vars.add(new JsVar(x.getSourceInfo(), name));
         }
       }
 
@@ -877,7 +880,7 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
-      JsInvocation jsInvocation = new JsInvocation();
+      JsInvocation jsInvocation = new JsInvocation(x.getSourceInfo());
 
       popList(jsInvocation.getArguments(), x.getArgs().size()); // args
 
@@ -887,7 +890,7 @@ public class GenerateJavaScriptAST {
         if (x.getInstance() != null) {
           unnecessaryQualifier = (JsExpression) pop(); // instance
         }
-        qualifier = names.get(method).makeRef();
+        qualifier = names.get(method).makeRef(x.getSourceInfo());
       } else {
         if (x.isStaticDispatchOnly()) {
           /*
@@ -901,12 +904,12 @@ public class GenerateJavaScriptAST {
            */
           JsName callName = objectScope.declareName("call");
           callName.setObfuscatable(false);
-          qualifier = callName.makeRef();
-          qualifier.setQualifier(names.get(method).makeRef());
+          qualifier = callName.makeRef(x.getSourceInfo());
+          qualifier.setQualifier(names.get(method).makeRef(x.getSourceInfo()));
           jsInvocation.getArguments().add(0, (JsExpression) pop()); // instance
         } else {
           // Dispatch polymorphically (normal case).
-          qualifier = polymorphicNames.get(method).makeRef();
+          qualifier = polymorphicNames.get(method).makeRef(x.getSourceInfo());
           qualifier.setQualifier((JsExpression) pop()); // instance
         }
       }
@@ -936,32 +939,32 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JNewInstance x, Context ctx) {
-      JsNew newOp = new JsNew();
-      JsNameRef nameRef = names.get(x.getType()).makeRef();
+      JsNew newOp = new JsNew(x.getSourceInfo());
+      JsNameRef nameRef = names.get(x.getType()).makeRef(x.getSourceInfo());
       newOp.setConstructorExpression(nameRef);
       push(newOp);
     }
 
     @Override
     public void endVisit(JParameter x, Context ctx) {
-      push(new JsParameter(names.get(x)));
+      push(new JsParameter(x.getSourceInfo(), names.get(x)));
     }
 
     @Override
     public void endVisit(JParameterRef x, Context ctx) {
-      push(names.get(x.getTarget()).makeRef());
+      push(names.get(x.getTarget()).makeRef(x.getSourceInfo()));
     }
 
     @Override
     public void endVisit(JPostfixOperation x, Context ctx) {
-      JsUnaryOperation op = new JsPostfixOperation(
+      JsUnaryOperation op = new JsPostfixOperation(x.getSourceInfo(),
           JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
       push(op);
     }
 
     @Override
     public void endVisit(JPrefixOperation x, Context ctx) {
-      JsUnaryOperation op = new JsPrefixOperation(
+      JsUnaryOperation op = new JsPrefixOperation(x.getSourceInfo(),
           JavaToJsOperatorMap.get(x.getOp()), ((JsExpression) pop())); // arg
       push(op);
     }
@@ -987,8 +990,8 @@ public class GenerateJavaScriptAST {
       // Add a few things onto the beginning.
 
       // Reserve the "_" identifier.
-      JsVars vars = new JsVars();
-      vars.add(new JsVar(globalTemp));
+      JsVars vars = new JsVars(x.getSourceInfo());
+      vars.add(new JsVar(x.getSourceInfo(), globalTemp));
       globalStmts.add(0, vars);
 
       // Long lits must go at the top, they can be constant field initializers.
@@ -997,7 +1000,7 @@ public class GenerateJavaScriptAST {
       // Class objects, but only if there are any.
       if (x.getDeclaredTypes().contains(x.getTypeClassLiteralHolder())) {
         // TODO: perhaps they could be constant field initializers also?
-        vars = new JsVars();
+        vars = new JsVars(x.getSourceInfo());
         generateClassLiterals(vars);
         if (!vars.isEmpty()) {
           globalStmts.add(vars);
@@ -1013,29 +1016,29 @@ public class GenerateJavaScriptAST {
     @Override
     public void endVisit(JReturnStatement x, Context ctx) {
       if (x.getExpr() != null) {
-        push(new JsReturn((JsExpression) pop())); // expr
+        push(new JsReturn(x.getSourceInfo(), (JsExpression) pop())); // expr
       } else {
-        push(new JsReturn());
+        push(new JsReturn(x.getSourceInfo()));
       }
     }
 
     @Override
     public void endVisit(JsniMethodRef x, Context ctx) {
       JMethod method = x.getTarget();
-      JsNameRef nameRef = names.get(method).makeRef();
+      JsNameRef nameRef = names.get(method).makeRef(x.getSourceInfo());
       push(nameRef);
     }
 
     @Override
     public void endVisit(JsonArray x, Context ctx) {
-      JsArrayLiteral jsArrayLiteral = new JsArrayLiteral();
+      JsArrayLiteral jsArrayLiteral = new JsArrayLiteral(x.getSourceInfo());
       popList(jsArrayLiteral.getExpressions(), x.exprs.size());
       push(jsArrayLiteral);
     }
 
     @Override
     public void endVisit(JsonObject x, Context ctx) {
-      JsObjectLiteral jsObjectLiteral = new JsObjectLiteral();
+      JsObjectLiteral jsObjectLiteral = new JsObjectLiteral(x.getSourceInfo());
       popList(jsObjectLiteral.getPropertyInitializers(), x.propInits.size());
       push(jsObjectLiteral);
     }
@@ -1044,22 +1047,22 @@ public class GenerateJavaScriptAST {
     public void endVisit(JsonPropInit init, Context ctx) {
       JsExpression valueExpr = (JsExpression) pop();
       JsExpression labelExpr = (JsExpression) pop();
-      push(new JsPropertyInitializer(labelExpr, valueExpr));
+      push(new JsPropertyInitializer(init.getSourceInfo(), labelExpr, valueExpr));
     }
 
     @Override
     public void endVisit(JThisRef x, Context ctx) {
-      push(new JsThisRef());
+      push(new JsThisRef(x.getSourceInfo()));
     }
 
     @Override
     public void endVisit(JThrowStatement x, Context ctx) {
-      push(new JsThrow((JsExpression) pop())); // expr
+      push(new JsThrow(x.getSourceInfo(), (JsExpression) pop())); // expr
     }
 
     @Override
     public void endVisit(JTryStatement x, Context ctx) {
-      JsTry jsTry = new JsTry();
+      JsTry jsTry = new JsTry(x.getSourceInfo());
 
       if (x.getFinallyBlock() != null) {
         JsBlock finallyBlock = (JsBlock) pop(); // finallyBlock
@@ -1085,7 +1088,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JWhileStatement x, Context ctx) {
-      JsWhile stmt = new JsWhile();
+      JsWhile stmt = new JsWhile(x.getSourceInfo());
       if (x.getBody() != null) {
         stmt.setBody((JsStatement) pop()); // body
       } else {
@@ -1181,7 +1184,7 @@ public class GenerateJavaScriptAST {
        * What a pain.. JSwitchStatement and JsSwitch are modeled completely
        * differently. Here we try to resolve those differences.
        */
-      JsSwitch jsSwitch = new JsSwitch();
+      JsSwitch jsSwitch = new JsSwitch(x.getSourceInfo());
       accept(x.getExpr());
       jsSwitch.setExpr((JsExpression) pop()); // expr
 
@@ -1213,7 +1216,8 @@ public class GenerateJavaScriptAST {
     }
 
     private JsExpression createAssignment(JsExpression lhs, JsExpression rhs) {
-      return new JsBinaryOperation(JsBinaryOperator.ASG, lhs, rhs);
+      return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.ASG,
+          lhs, rhs);
     }
 
     private JsExpression createCommaExpression(JsExpression lhs,
@@ -1223,7 +1227,8 @@ public class GenerateJavaScriptAST {
       } else if (rhs == null) {
         return lhs;
       }
-      return new JsBinaryOperation(JsBinaryOperator.COMMA, lhs, rhs);
+      return new JsBinaryOperation(lhs.getSourceInfo(), JsBinaryOperator.COMMA,
+          lhs, rhs);
     }
 
     private void generateClassLiteral(JDeclarationStatement decl, JsVars vars) {
@@ -1231,7 +1236,7 @@ public class GenerateJavaScriptAST {
       JsName jsName = names.get(field);
       this.accept(decl.getInitializer());
       JsExpression classObjectAlloc = pop();
-      JsVar var = new JsVar(jsName);
+      JsVar var = new JsVar(decl.getSourceInfo(), jsName);
       var.setInitExpr(classObjectAlloc);
       vars.add(var);
     }
@@ -1283,58 +1288,61 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic("gwtOnLoad");
       JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
       gwtOnLoadName.setObfuscatable(false);
-      JsFunction gwtOnLoad = new JsFunction(topScope, gwtOnLoadName, true);
+      JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope,
+          gwtOnLoadName, true);
       globalStmts.add(gwtOnLoad.makeStmt());
-      JsBlock body = new JsBlock();
+      JsBlock body = new JsBlock(sourceInfo);
       gwtOnLoad.setBody(body);
       JsScope fnScope = gwtOnLoad.getScope();
       List<JsParameter> params = gwtOnLoad.getParameters();
       JsName errFn = fnScope.declareName("errFn");
       JsName modName = fnScope.declareName("modName");
       JsName modBase = fnScope.declareName("modBase");
-      params.add(new JsParameter(errFn));
-      params.add(new JsParameter(modName));
-      params.add(new JsParameter(modBase));
+      params.add(new JsParameter(sourceInfo, errFn));
+      params.add(new JsParameter(sourceInfo, modName));
+      params.add(new JsParameter(sourceInfo, modBase));
       JsExpression asg = createAssignment(
-          topScope.findExistingUnobfuscatableName("$moduleName").makeRef(),
-          modName.makeRef());
+          topScope.findExistingUnobfuscatableName("$moduleName").makeRef(
+              sourceInfo), modName.makeRef(sourceInfo));
       body.getStatements().add(asg.makeStmt());
       asg = createAssignment(topScope.findExistingUnobfuscatableName(
-          "$moduleBase").makeRef(), modBase.makeRef());
+          "$moduleBase").makeRef(sourceInfo), modBase.makeRef(sourceInfo));
       body.getStatements().add(asg.makeStmt());
-      JsIf jsIf = new JsIf();
+      JsIf jsIf = new JsIf(sourceInfo);
       body.getStatements().add(jsIf);
-      jsIf.setIfExpr(errFn.makeRef());
-      JsTry jsTry = new JsTry();
+      jsIf.setIfExpr(errFn.makeRef(sourceInfo));
+      JsTry jsTry = new JsTry(sourceInfo);
       jsIf.setThenStmt(jsTry);
-      JsBlock callBlock = new JsBlock();
+      JsBlock callBlock = new JsBlock(sourceInfo);
       jsIf.setElseStmt(callBlock);
       jsTry.setTryBlock(callBlock);
       for (int i = 0; i < entryFuncs.size(); ++i) {
         JsFunction func = entryFuncs.get(i);
         if (func != null) {
-          JsInvocation call = new JsInvocation();
-          call.setQualifier(func.getName().makeRef());
+          JsInvocation call = new JsInvocation(sourceInfo);
+          call.setQualifier(func.getName().makeRef(sourceInfo));
           callBlock.getStatements().add(call.makeStmt());
         }
       }
-      JsCatch jsCatch = new JsCatch(fnScope, "e");
+      JsCatch jsCatch = new JsCatch(sourceInfo, fnScope, "e");
       jsTry.getCatches().add(jsCatch);
-      JsBlock catchBlock = new JsBlock();
+      JsBlock catchBlock = new JsBlock(sourceInfo);
       jsCatch.setBody(catchBlock);
-      JsInvocation errCall = new JsInvocation();
+      JsInvocation errCall = new JsInvocation(sourceInfo);
       catchBlock.getStatements().add(errCall.makeStmt());
-      errCall.setQualifier(errFn.makeRef());
-      errCall.getArguments().add(modName.makeRef());
+      errCall.setQualifier(errFn.makeRef(sourceInfo));
+      errCall.getArguments().add(modName.makeRef(sourceInfo));
     }
 
     private void generateLongLiterals(JsVars vars) {
       for (Entry<Long, JsName> entry : longLits.entrySet()) {
         JsName jsName = entry.getValue();
         JsExpression longObjectAlloc = longObjects.get(jsName);
-        JsVar var = new JsVar(jsName);
+        JsVar var = new JsVar(vars.getSourceInfo().makeChild(
+            "Long literal " + entry.getKey()), jsName);
         var.setInitExpr(longObjectAlloc);
         vars.add(var);
       }
@@ -1342,46 +1350,55 @@ public class GenerateJavaScriptAST {
 
     private void generateNullFunc(List<JsStatement> globalStatements) {
       // handle null method
-      JsFunction nullFunc = new JsFunction(topScope, nullMethodName, true);
-      nullFunc.setBody(new JsBlock());
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Null function");
+      JsFunction nullFunc = new JsFunction(sourceInfo, topScope,
+          nullMethodName, true);
+      nullFunc.setBody(new JsBlock(sourceInfo));
       globalStatements.add(nullFunc.makeStmt());
     }
 
     private void generateSeedFuncAndPrototype(JClassType x,
         List<JsStatement> globalStmts) {
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          "Seed and function prototype");
       if (x != program.getTypeJavaLangString()) {
         JsName seedFuncName = names.get(x);
 
         // seed function
         // function com_example_foo_Foo() { }
-        JsFunction seedFunc = new JsFunction(topScope, seedFuncName, true);
-        JsBlock body = new JsBlock();
+        JsFunction seedFunc = new JsFunction(sourceInfo, topScope,
+            seedFuncName, true);
+        JsBlock body = new JsBlock(sourceInfo);
         seedFunc.setBody(body);
         globalStmts.add(seedFunc.makeStmt());
 
         // setup prototype, assign to temp
         // _ = com_example_foo_Foo.prototype = new com_example_foo_FooSuper();
-        JsNameRef lhs = prototype.makeRef();
-        lhs.setQualifier(seedFuncName.makeRef());
+        JsNameRef lhs = prototype.makeRef(sourceInfo);
+        lhs.setQualifier(seedFuncName.makeRef(sourceInfo));
         JsExpression rhs;
         if (x.extnds != null) {
-          JsNew newExpr = new JsNew();
-          newExpr.setConstructorExpression(names.get(x.extnds).makeRef());
+          JsNew newExpr = new JsNew(sourceInfo);
+          newExpr.setConstructorExpression(names.get(x.extnds).makeRef(
+              sourceInfo));
           rhs = newExpr;
         } else {
-          rhs = new JsObjectLiteral();
+          rhs = new JsObjectLiteral(sourceInfo);
         }
         JsExpression protoAsg = createAssignment(lhs, rhs);
-        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), protoAsg);
+        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo),
+            protoAsg);
         globalStmts.add(tmpAsg.makeStmt());
       } else {
         /*
          * MAGIC: java.lang.String is implemented as a JavaScript String
          * primitive with a modified prototype.
          */
-        JsNameRef rhs = prototype.makeRef();
-        rhs.setQualifier(jsProgram.getRootScope().declareName("String").makeRef());
-        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(), rhs);
+        JsNameRef rhs = prototype.makeRef(sourceInfo);
+        rhs.setQualifier(jsProgram.getRootScope().declareName("String").makeRef(
+            sourceInfo));
+        JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo),
+            rhs);
         globalStmts.add(tmpAsg.makeStmt());
       }
     }
@@ -1390,29 +1407,30 @@ public class GenerateJavaScriptAST {
         List<JsStatement> globalStmts) {
       JMethod toStringMeth = program.getIndexedMethod("Object.toString");
       if (x.methods.contains(toStringMeth)) {
+        SourceInfo sourceInfo = x.getSourceInfo().makeChild("_.toString");
         // _.toString = function(){return this.java_lang_Object_toString();}
 
         // lhs
         JsName lhsName = objectScope.declareName("toString");
         lhsName.setObfuscatable(false);
-        JsNameRef lhs = lhsName.makeRef();
-        lhs.setQualifier(globalTemp.makeRef());
+        JsNameRef lhs = lhsName.makeRef(sourceInfo);
+        lhs.setQualifier(globalTemp.makeRef(sourceInfo));
 
         // rhs
-        JsInvocation call = new JsInvocation();
-        JsNameRef toStringRef = new JsNameRef(
+        JsInvocation call = new JsInvocation(sourceInfo);
+        JsNameRef toStringRef = new JsNameRef(sourceInfo,
             polymorphicNames.get(toStringMeth));
-        toStringRef.setQualifier(new JsThisRef());
+        toStringRef.setQualifier(new JsThisRef(sourceInfo));
         call.setQualifier(toStringRef);
-        JsReturn jsReturn = new JsReturn(call);
-        JsFunction rhs = new JsFunction(topScope);
-        JsBlock body = new JsBlock();
+        JsReturn jsReturn = new JsReturn(sourceInfo, call);
+        JsFunction rhs = new JsFunction(sourceInfo, topScope);
+        JsBlock body = new JsBlock(sourceInfo);
         body.getStatements().add(jsReturn);
         rhs.setBody(body);
 
         // asg
         JsExpression asg = createAssignment(lhs, rhs);
-        globalStmts.add(new JsExprStmt(asg));
+        globalStmts.add(new JsExprStmt(sourceInfo, asg));
       }
     }
 
@@ -1425,11 +1443,13 @@ public class GenerateJavaScriptAST {
           // Was pruned; this compilation must have no dynamic casts.
           return;
         }
-        JsNameRef fieldRef = typeIdName.makeRef();
-        fieldRef.setQualifier(globalTemp.makeRef());
+        SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+            "Type id assignment");
+        JsNameRef fieldRef = typeIdName.makeRef(sourceInfo);
+        fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
         JsNumberLiteral typeIdLit = jsProgram.getNumberLiteral(typeId);
         JsExpression asg = createAssignment(fieldRef, typeIdLit);
-        globalStmts.add(new JsExprStmt(asg));
+        globalStmts.add(new JsExprStmt(sourceInfo, asg));
       }
     }
 
@@ -1440,14 +1460,17 @@ public class GenerateJavaScriptAST {
         // Was pruned; this compilation must have no JSO instanceof tests.
         return;
       }
-      JsNameRef fieldRef = typeMarkerName.makeRef();
-      fieldRef.setQualifier(globalTemp.makeRef());
-      JsExpression asg = createAssignment(fieldRef, nullMethodName.makeRef());
-      globalStmts.add(new JsExprStmt(asg));
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Type marker");
+      JsNameRef fieldRef = typeMarkerName.makeRef(sourceInfo);
+      fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
+      JsExpression asg = createAssignment(fieldRef,
+          nullMethodName.makeRef(sourceInfo));
+      globalStmts.add(new JsExprStmt(sourceInfo, asg));
     }
 
     private JsExpression generateTypeTable() {
-      JsArrayLiteral arrayLit = new JsArrayLiteral();
+      JsArrayLiteral arrayLit = new JsArrayLiteral(
+          jsProgram.createSourceInfoSynthetic("Type table"));
       for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
         JsonObject jsonObject = program.getJsonTypeTable().get(i);
         accept(jsonObject);
@@ -1459,12 +1482,14 @@ public class GenerateJavaScriptAST {
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = x.methods.get(i);
+        SourceInfo sourceInfo = method.getSourceInfo().makeChild(
+            "vtable assignment");
         if (!method.isStatic() && !method.isAbstract()) {
-          JsNameRef lhs = polymorphicNames.get(method).makeRef();
-          lhs.setQualifier(globalTemp.makeRef());
-          JsNameRef rhs = names.get(method).makeRef();
+          JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
+          lhs.setQualifier(globalTemp.makeRef(sourceInfo));
+          JsNameRef rhs = names.get(method).makeRef(sourceInfo);
           JsExpression asg = createAssignment(lhs, rhs);
-          globalStmts.add(new JsExprStmt(asg));
+          globalStmts.add(new JsExprStmt(x.getSourceInfo(), asg));
         }
       }
     }
@@ -1473,9 +1498,11 @@ public class GenerateJavaScriptAST {
       clinitFunc.setExecuteOnce(true);
       clinitFunc.setImpliedExecute(superClinit);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
+      SourceInfo sourceInfo = clinitFunc.getSourceInfo().makeChild(
+          "clinit reassignment");
       // self-assign to the null method immediately (to prevent reentrancy)
-      JsExpression asg = createAssignment(clinitFunc.getName().makeRef(),
-          nullMethodName.makeRef());
+      JsExpression asg = createAssignment(clinitFunc.getName().makeRef(
+          sourceInfo), nullMethodName.makeRef(sourceInfo));
       statements.add(0, asg.makeStmt());
     }
 
@@ -1491,8 +1518,9 @@ public class GenerateJavaScriptAST {
       }
 
       JMethod clinitMethod = enclosingType.methods.get(0);
-      JsInvocation jsInvocation = new JsInvocation();
-      jsInvocation.setQualifier(names.get(clinitMethod).makeRef());
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild("clinit invocation");
+      JsInvocation jsInvocation = new JsInvocation(sourceInfo);
+      jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
       return jsInvocation;
     }
 
@@ -1513,8 +1541,9 @@ public class GenerateJavaScriptAST {
       }
 
       JMethod clinitMethod = enclosingType.methods.get(0);
-      JsInvocation jsInvocation = new JsInvocation();
-      jsInvocation.setQualifier(names.get(clinitMethod).makeRef());
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild("clinit call");
+      JsInvocation jsInvocation = new JsInvocation(sourceInfo);
+      jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
       return jsInvocation;
     }
   }

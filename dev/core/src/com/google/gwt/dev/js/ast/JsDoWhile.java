@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a JavaScript do..while statement.
  */
@@ -24,10 +26,13 @@ public class JsDoWhile extends JsStatement {
 
   private JsExpression condition;
 
-  public JsDoWhile() {
+  public JsDoWhile(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
-  public JsDoWhile(JsExpression condition, JsStatement body) {
+  public JsDoWhile(SourceInfo sourceInfo, JsExpression condition,
+      JsStatement body) {
+    super(sourceInfo);
     this.condition = condition;
     this.body = body;
   }

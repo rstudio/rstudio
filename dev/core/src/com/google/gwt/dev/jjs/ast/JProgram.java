@@ -172,6 +172,8 @@ public class JProgram extends JNode {
    */
   private final ArrayList<HashMap<JType, JArrayType>> dimensions = new ArrayList<HashMap<JType, JArrayType>>();
 
+  private boolean enableSourceInfoDescendants;
+
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
   private final Map<String, JMethod> indexedMethods = new HashMap<String, JMethod>();
@@ -183,19 +185,25 @@ public class JProgram extends JNode {
   private List<JsonObject> jsonTypeTable;
 
   private final JAbsentArrayDimension literalAbsentArrayDim = new JAbsentArrayDimension(
-      this);
+      this, createSourceInfoSynthetic("Absent array dimension"));
 
-  private final JBooleanLiteral literalFalse = new JBooleanLiteral(this, false);
+  private final JBooleanLiteral literalFalse = new JBooleanLiteral(this,
+      createSourceInfoSynthetic("false literal"), false);
 
-  private final JIntLiteral literalIntNegOne = new JIntLiteral(this, -1);
+  private final JIntLiteral literalIntNegOne = new JIntLiteral(this,
+      createSourceInfoSynthetic("-1 literal"), -1);
 
-  private final JIntLiteral literalIntOne = new JIntLiteral(this, 1);
+  private final JIntLiteral literalIntOne = new JIntLiteral(this,
+      createSourceInfoSynthetic("1 literal"), 1);
 
-  private final JIntLiteral literalIntZero = new JIntLiteral(this, 0);
+  private final JIntLiteral literalIntZero = new JIntLiteral(this,
+      createSourceInfoSynthetic("0 literal"), 0);
 
-  private final JNullLiteral literalNull = new JNullLiteral(this);
+  private final JNullLiteral literalNull = new JNullLiteral(this,
+      createSourceInfoSynthetic("null literal"));
 
-  private final JBooleanLiteral literalTrue = new JBooleanLiteral(this, true);
+  private final JBooleanLiteral literalTrue = new JBooleanLiteral(this,
+      createSourceInfoSynthetic("true literal"), true);
 
   private JField nullField;
 
@@ -241,7 +249,8 @@ public class JProgram extends JNode {
 
   private final Map<String, JReferenceType> typeNameMap = new HashMap<String, JReferenceType>();
 
-  private final JNullType typeNull = new JNullType(this);
+  private final JNullType typeNull = new JNullType(this,
+      createSourceInfoSynthetic("null type"));
 
   private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
       "S", "java.lang.Short", literalIntZero);
@@ -256,7 +265,7 @@ public class JProgram extends JNode {
       "java.lang.Void", null);
 
   public JProgram() {
-    super(null, null);
+    super(null, SourceInfoJava.INTRINSIC.makeChild("Top-level program"));
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -431,6 +440,34 @@ public class JProgram extends JNode {
     return x;
   }
 
+  /**
+   * Create a SourceInfo object when the source is derived from a physical
+   * location.
+   */
+  public SourceInfo createSourceInfo(int startPos, int endPos, int startLine,
+      String fileName) {
+    return new SourceInfoJava(startPos, endPos, startLine, fileName,
+        enableSourceInfoDescendants);
+  }
+
+  /**
+   * Create a SourceInfo object when the source is derived from a physical
+   * location.
+   */
+  public SourceInfo createSourceInfo(int startLine, String fileName) {
+    return new SourceInfoJava(-1, -1, startLine, fileName,
+        enableSourceInfoDescendants);
+  }
+
+  /**
+   * Create a SourceInfo object when the source is created by the compiler
+   * itself.
+   */
+  public SourceInfo createSourceInfoSynthetic(String description) {
+    return createSourceInfo(0, SourceInfoJava.findCaller()).makeChild(
+        description);
+  }
+
   public JReferenceType generalizeTypes(
       Collection<? extends JReferenceType> types) {
     assert (types != null);
@@ -509,7 +546,7 @@ public class JProgram extends JNode {
 
   public JCharLiteral getLiteralChar(char c) {
     // could be interned
-    return new JCharLiteral(this, c);
+    return new JCharLiteral(this, createSourceInfoSynthetic(c + " literal"), c);
   }
 
   /**
@@ -547,7 +584,9 @@ public class JProgram extends JNode {
           0).getBody();
       clinitBody.getStatements().add(decl);
 
-      classLiteral = new JClassLiteral(this, type, field);
+      classLiteral = new JClassLiteral(this,
+          createSourceInfoSynthetic("class literal for " + type.getName()),
+          type, field);
       classLiterals.put(type, classLiteral);
     } else {
       // Make sure the field hasn't been pruned.
@@ -567,17 +606,18 @@ public class JProgram extends JNode {
    */
   public JClassSeed getLiteralClassSeed(JClassType type) {
     // could be interned
-    return new JClassSeed(this, type);
+    return new JClassSeed(this, createSourceInfoSynthetic("class seed"), type);
   }
 
   public JDoubleLiteral getLiteralDouble(double d) {
     // could be interned
-    return new JDoubleLiteral(this, d);
+    return new JDoubleLiteral(this, createSourceInfoSynthetic(d + " literal"),
+        d);
   }
 
   public JFloatLiteral getLiteralFloat(float f) {
     // could be interned
-    return new JFloatLiteral(this, f);
+    return new JFloatLiteral(this, createSourceInfoSynthetic(f + " literal"), f);
   }
 
   public JIntLiteral getLiteralInt(int i) {
@@ -590,40 +630,41 @@ public class JProgram extends JNode {
         return literalIntOne;
       default:
         // could be interned
-        return new JIntLiteral(this, i);
+        return new JIntLiteral(this, createSourceInfoSynthetic(i + " literal"),
+            i);
     }
   }
 
   public JLongLiteral getLiteralLong(long l) {
-    return new JLongLiteral(this, l);
+    return new JLongLiteral(this, createSourceInfoSynthetic(l + " literal"), l);
   }
 
   public JNullLiteral getLiteralNull() {
     return literalNull;
   }
 
-  public JStringLiteral getLiteralString(char[] s) {
+  public JStringLiteral getLiteralString(SourceInfo sourceInfo, char[] s) {
     // should consolidate so we can build a string table in output code later?
-    return new JStringLiteral(this, String.valueOf(s));
+    return new JStringLiteral(this, sourceInfo, String.valueOf(s));
   }
 
-  public JStringLiteral getLiteralString(String s) {
+  public JStringLiteral getLiteralString(SourceInfo sourceInfo, String s) {
     // should consolidate so we can build a string table in output code later?
-    return new JStringLiteral(this, s);
+    return new JStringLiteral(this, sourceInfo, s);
   }
 
   public JField getNullField() {
     if (nullField == null) {
-      nullField = new JField(this, null, "nullField", null, typeNull, false,
-          Disposition.FINAL);
+      nullField = new JField(this, createSourceInfoSynthetic("Null field"),
+          "nullField", null, typeNull, false, Disposition.FINAL);
     }
     return nullField;
   }
 
   public JMethod getNullMethod() {
     if (nullMethod == null) {
-      nullMethod = new JMethod(this, null, "nullMethod", null, typeNull, false,
-          false, true, true);
+      nullMethod = new JMethod(this, createSourceInfoSynthetic("Null method"),
+          "nullMethod", null, typeNull, false, false, true, true);
     }
     return nullMethod;
   }
@@ -783,9 +824,19 @@ public class JProgram extends JNode {
   }
 
   /**
-   * If <code>method</code> is a static impl method, returns the instance
-   * method that <code>method</code> is the implementation of. Otherwise,
-   * returns <code>null</code>.
+   * Controls whether or not SourceInfo nodes created via the JProgram will
+   * record descendant information. Enabling this feature will collect extra
+   * data during the compilation cycle, but at a cost of memory and object
+   * allocations.
+   */
+  public void setEnableSourceInfoDescendants(boolean enable) {
+    enableSourceInfoDescendants = enable;
+  }
+
+  /**
+   * If <code>method</code> is a static impl method, returns the instance method
+   * that <code>method</code> is the implementation of. Otherwise, returns
+   * <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
     return staticToInstanceMap.get(method);

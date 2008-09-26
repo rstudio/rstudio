@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbsentArrayDimension;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
@@ -137,12 +138,13 @@ public class ArrayNormalizer {
     private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
         int dims) {
       // override the type of the called method with the array's type
-      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-          initDims, arrayType);
-      JsonArray classLitList = new JsonArray(program);
-      JsonArray typeIdList = new JsonArray(program);
-      JsonArray queryIdList = new JsonArray(program);
-      JsonArray dimList = new JsonArray(program);
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild("Creating dimensions");
+      JMethodCall call = new JMethodCall(program, sourceInfo, null, initDims,
+          arrayType);
+      JsonArray classLitList = new JsonArray(program, sourceInfo);
+      JsonArray typeIdList = new JsonArray(program, sourceInfo);
+      JsonArray queryIdList = new JsonArray(program, sourceInfo);
+      JsonArray dimList = new JsonArray(program, sourceInfo);
       JType cur = arrayType;
       for (int i = 0; i < dims; ++i) {
         // Walk down each type from most dims to least.
@@ -172,12 +174,13 @@ public class ArrayNormalizer {
     private void processInitializers(JNewArray x, Context ctx,
         JArrayType arrayType) {
       // override the type of the called method with the array's type
-      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild("Array initializer");
+      JMethodCall call = new JMethodCall(program, sourceInfo, null,
           initValues, arrayType);
       JLiteral classLit = x.getClassLiteral();
       JLiteral typeIdLit = program.getLiteralInt(program.getTypeId(arrayType));
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
-      JsonArray initList = new JsonArray(program);
+      JsonArray initList = new JsonArray(program, sourceInfo);
       for (int i = 0; i < x.initializers.size(); ++i) {
         initList.exprs.add(x.initializers.get(i));
       }

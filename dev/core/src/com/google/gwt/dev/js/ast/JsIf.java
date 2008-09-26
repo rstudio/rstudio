@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Represents a JavaScript if statement.
  */
@@ -26,10 +28,13 @@ public final class JsIf extends JsStatement {
 
   private JsStatement elseStmt;
 
-  public JsIf() {
+  public JsIf(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
-  public JsIf(JsExpression ifExpr, JsStatement thenStmt, JsStatement elseStmt) {
+  public JsIf(SourceInfo sourceInfo, JsExpression ifExpr, JsStatement thenStmt,
+      JsStatement elseStmt) {
+    super(sourceInfo);
     this.ifExpr = ifExpr;
     this.thenStmt = thenStmt;
     this.elseStmt = elseStmt;

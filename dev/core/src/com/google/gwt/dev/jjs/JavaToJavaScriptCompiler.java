@@ -69,6 +69,8 @@ import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
+import com.google.gwt.dev.js.SourceInfoHistogram;
+import com.google.gwt.dev.js.SourceInfoHistogram.HistogramData;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.PerfLogger;
@@ -91,8 +93,8 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its
- * corresponding JavaScript source.
+ * Compiles the Java <code>JProgram</code> representation into its corresponding
+ * JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
 
@@ -127,9 +129,11 @@ public class JavaToJavaScriptCompiler {
       throw new UnableToCompleteException();
     }
 
+    SourceInfo sourceInfo = reboundEntryType.getSourceInfo().makeChild(
+        "Rebound entry point");
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
-      qualifier = JGwtCreate.createInstantiationExpression(program, null,
+      qualifier = JGwtCreate.createInstantiationExpression(program, sourceInfo,
           entryClass);
 
       if (qualifier == null) {
@@ -142,14 +146,16 @@ public class JavaToJavaScriptCompiler {
         throw new UnableToCompleteException();
       }
     }
-    return new JMethodCall(program, null, qualifier, entryMethod);
+    return new JMethodCall(program, sourceInfo, qualifier, entryMethod);
   }
 
   private static void findEntryPoints(TreeLogger logger,
       RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
-    JMethod bootStrapMethod = program.createMethod(null, "init".toCharArray(),
-        null, program.getTypeVoid(), false, true, true, false, false);
+    JMethod bootStrapMethod = program.createMethod(
+        program.createSourceInfoSynthetic("Bootstrap method"),
+        "init".toCharArray(), null, program.getTypeVoid(), false, true, true,
+        false, false);
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
@@ -242,16 +248,18 @@ public class JavaToJavaScriptCompiler {
    */
   private static JStatement makeStatsCalls(JProgram program,
       String mainClassName) {
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic("onModuleStart() stats call");
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
     JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 
-    JMethodCall availableCall = new JMethodCall(program, null, null,
+    JMethodCall availableCall = new JMethodCall(program, sourceInfo, null,
         isStatsAvailableMethod);
-    JMethodCall onModuleStartCall = new JMethodCall(program, null, null,
+    JMethodCall onModuleStartCall = new JMethodCall(program, sourceInfo, null,
         onModuleStartMethod);
-    onModuleStartCall.getArgs().add(program.getLiteralString(mainClassName));
+    onModuleStartCall.getArgs().add(
+        program.getLiteralString(sourceInfo, mainClassName));
 
-    JBinaryOperation amp = new JBinaryOperation(program, null,
+    JBinaryOperation amp = new JBinaryOperation(program, sourceInfo,
         program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
         onModuleStartCall);
 
@@ -260,6 +268,7 @@ public class JavaToJavaScriptCompiler {
 
   private final long astMemoryUsage;
   private final String[] declEntryPoints;
+  private final HistogramData histogramData;
   private final Object myLockObject = new Object();
   private final JJSOptions options;
   private final Set<IProblem> problemSet = new HashSet<IProblem>();
@@ -312,8 +321,11 @@ public class JavaToJavaScriptCompiler {
     checkForErrors(logger, goldenCuds, false);
 
     PerfLogger.start("Build AST");
+    boolean enableDescendants = compilerOptions.getSoycOutputDir() != null;
     JProgram jprogram = savedJProgram = new JProgram();
+    jprogram.setEnableSourceInfoDescendants(enableDescendants);
     JsProgram jsProgram = savedJsProgram = new JsProgram();
+    jsProgram.setEnableSourceInfoDescendants(enableDescendants);
 
     long memoryDelta;
     try {
@@ -330,6 +342,12 @@ public class JavaToJavaScriptCompiler {
 
       // BuildTypeMap can uncover syntactic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);
+
+      if (enableDescendants) {
+        histogramData = SourceInfoHistogram.exec(jprogram);
+      } else {
+        histogramData = null;
+      }
 
       // Compute all super type/sub type info
       jprogram.typeOracle.computeBeforeAST();
@@ -566,6 +584,12 @@ public class JavaToJavaScriptCompiler {
     // Work around an IE7 bug,
     // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
     JsIEBlockSizeVisitor.exec(jsProgram);
+
+    // Write the SOYC reports into the output
+    if (histogramData != null) {
+      SourceInfoHistogram.exec(jsProgram, histogramData,
+          options.getSoycOutputDir());
+    }
 
     // (12) Generate the final output text.
     DefaultTextOutput out = new DefaultTextOutput(

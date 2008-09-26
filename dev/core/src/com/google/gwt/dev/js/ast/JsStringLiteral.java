@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript string literal expression.
  */
@@ -23,7 +25,8 @@ public final class JsStringLiteral extends JsValueLiteral {
   private final String value;
 
   // These only get created by JsProgram so that they can be interned.
-  JsStringLiteral(String value) {
+  JsStringLiteral(SourceInfo sourceInfo, String value) {
+    super(sourceInfo);
     this.value = value;
   }
 

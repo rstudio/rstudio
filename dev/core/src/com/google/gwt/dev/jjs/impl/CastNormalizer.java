@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
 import com.google.gwt.dev.jjs.ast.JArrayType;
@@ -102,7 +103,8 @@ public class CastNormalizer {
 
       // the 0th entry is the "always false" entry
       classes.add(null);
-      jsonObjects.add(new JsonObject(program));
+      jsonObjects.add(new JsonObject(program,
+          program.createSourceInfoSynthetic("always-false typeinfo entry")));
 
       /*
        * Do String first to reserve typeIds 1 and 2 for Object and String,
@@ -256,14 +258,15 @@ public class CastNormalizer {
       }
 
       // Create a sparse lookup object.
-      JsonObject jsonObject = new JsonObject(program);
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic("typeinfo lookup");
+      JsonObject jsonObject = new JsonObject(program, sourceInfo);
       // Start at 1; 0 is Object and always true.
       for (int i = 1; i < nextQueryId; ++i) {
         if (yesArray[i] != null) {
           JIntLiteral labelExpr = program.getLiteralInt(i);
           JIntLiteral valueExpr = program.getLiteralInt(1);
-          jsonObject.propInits.add(new JsonPropInit(program, labelExpr,
-              valueExpr));
+          jsonObject.propInits.add(new JsonPropInit(program, sourceInfo,
+              labelExpr, valueExpr));
         }
       }
 
@@ -354,7 +357,8 @@ public class CastNormalizer {
       if (expr.getType() == charType) {
         if (expr instanceof JCharLiteral) {
           JCharLiteral charLit = (JCharLiteral) expr;
-          return program.getLiteralString(new char[] {charLit.getValue()});
+          return program.getLiteralString(expr.getSourceInfo(),
+              new char[] {charLit.getValue()});
         } else {
           // Replace with Cast.charToString(c)
           JMethodCall call = new JMethodCall(program, expr.getSourceInfo(),

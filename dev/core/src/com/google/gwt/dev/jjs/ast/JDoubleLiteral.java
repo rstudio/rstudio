@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java double literal expression.
  */
@@ -25,8 +27,8 @@ public class JDoubleLiteral extends JValueLiteral {
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JDoubleLiteral(JProgram program, double value) {
-    super(program);
+  JDoubleLiteral(JProgram program, SourceInfo sourceInfo, double value) {
+    super(program, sourceInfo);
     this.value = value;
   }
 

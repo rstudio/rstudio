@@ -15,12 +15,15 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript <code>this</code> reference.
  */
 public final class JsThisRef extends JsValueLiteral {
 
-  public JsThisRef() {
+  public JsThisRef(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public boolean isBooleanFalse() {

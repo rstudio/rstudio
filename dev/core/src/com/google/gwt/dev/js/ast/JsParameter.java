@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * A JavaScript parameter.
  */
@@ -22,7 +24,8 @@ public final class JsParameter extends JsNode<JsParameter> implements HasName {
 
   private final JsName name;
 
-  public JsParameter(JsName name) {
+  public JsParameter(SourceInfo sourceInfo, JsName name) {
+    super(sourceInfo);
     this.name = name;
     name.setStaticRef(this);
   }

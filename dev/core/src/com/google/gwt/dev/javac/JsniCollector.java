@@ -268,8 +268,9 @@ public class JsniCollector {
     }
 
     try {
-      List<JsStatement> stmts = new JsParser().parse(program.getScope(), r,
-          startLine);
+      JsParser parser = new JsParser();
+      parser.setSourceInfo(program.createSourceInfo(startLine, location));
+      List<JsStatement> stmts = parser.parse(program.getScope(), r, startLine);
 
       return (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
     } catch (IOException e) {

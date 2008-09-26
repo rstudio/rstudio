@@ -275,7 +275,8 @@ public class TypeTightener {
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
       for (JParameter param : method.params) {
-        addAssignment(param, new JParameterRef(program, null, param));
+        addAssignment(param, new JParameterRef(program,
+            program.createSourceInfoSynthetic("Fake assignment"), param));
       }
     }
 
@@ -392,8 +393,8 @@ public class TypeTightener {
   public class TightenTypesVisitor extends JModVisitor {
 
     /**
-     * <code>true</code> if this visitor has changed the AST apart from calls
-     * to Context.
+     * <code>true</code> if this visitor has changed the AST apart from calls to
+     * Context.
      */
     private boolean myDidChange = false;
 

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,21 +45,23 @@ public final class JsFunction extends JsLiteral implements HasName {
   /**
    * Creates an anonymous function.
    */
-  public JsFunction(JsScope parent) {
-    this(parent, null, false);
+  public JsFunction(SourceInfo sourceInfo, JsScope parent) {
+    this(sourceInfo, parent, null, false);
   }
 
   /**
    * Creates a function that is not derived from Java source.
    */
-  public JsFunction(JsScope parent, JsName name) {
-    this(parent, name, false);
+  public JsFunction(SourceInfo sourceInfo, JsScope parent, JsName name) {
+    this(sourceInfo, parent, name, false);
   }
 
   /**
    * Creates a named function, possibly derived from Java source.
    */
-  public JsFunction(JsScope parent, JsName name, boolean fromJava) {
+  public JsFunction(SourceInfo sourceInfo, JsScope parent, JsName name,
+      boolean fromJava) {
+    super(sourceInfo);
     assert (parent != null);
     this.fromJava = fromJava;
     setName(name);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,6 +53,8 @@ public class DefaultPropertyProvider extends PropertyProvider {
       JsProgram jsPgm = new JsProgram();
       JsParser jsParser = new JsParser();
       StringReader r = new StringReader(jsniSrc);
+      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic("Default property provider for "
+          + getProperty().getName()));
       List<JsStatement> stmts = jsParser.parse(jsPgm.getScope(), r, 1);
       JsFunction fn = (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
       return fn.getBody();

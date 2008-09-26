@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+import com.google.gwt.dev.jjs.SourceInfo;
+
 /**
  * Java literal typed as a float.
  */
@@ -25,8 +27,8 @@ public class JFloatLiteral extends JValueLiteral {
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JFloatLiteral(JProgram program, float value) {
-    super(program);
+  JFloatLiteral(JProgram program, SourceInfo sourceInfo, float value) {
+    super(program, sourceInfo);
     this.value = value;
   }
 

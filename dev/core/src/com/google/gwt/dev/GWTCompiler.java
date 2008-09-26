@@ -50,6 +50,7 @@ import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
+import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 
 import java.io.File;
@@ -82,6 +83,29 @@ public class GWTCompiler extends ToolBase {
 
     @Override
     public boolean isRequired() {
+      return true;
+    }
+  }
+
+  private class ArgHandlerStoryOfYourCompile extends ArgHandlerString {
+    @Override
+    public String getPurpose() {
+      return "Generate the story of your compile";
+    }
+
+    @Override
+    public String getTag() {
+      return "-soyc";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"/path/to/report/dir"};
+    }
+
+    @Override
+    public boolean setString(String str) {
+      jjsOptions.setSoycOutputDir(str);
       return true;
     }
   }
@@ -231,6 +255,8 @@ public class GWTCompiler extends ToolBase {
     registerHandler(new ArgHandlerModuleName());
 
     registerHandler(new ArgHandlerScriptStyle(jjsOptions));
+
+    registerHandler(new ArgHandlerStoryOfYourCompile());
 
     registerHandler(new ArgHandlerEnableAssertions(jjsOptions));
 

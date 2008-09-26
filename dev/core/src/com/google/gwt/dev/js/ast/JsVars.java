@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +14,8 @@
  * the License.
  */
 package com.google.gwt.dev.js.ast;
+
+import com.google.gwt.dev.jjs.SourceInfo;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +35,8 @@ public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
 
     private final JsName name;
 
-    public JsVar(JsName name) {
+    public JsVar(SourceInfo sourceInfo, JsName name) {
+      super(sourceInfo);
       this.name = name;
     }
 
@@ -61,7 +64,8 @@ public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
 
   private final List<JsVar> vars = new ArrayList<JsVar>();
 
-  public JsVars() {
+  public JsVars(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public void add(JsVar var) {
