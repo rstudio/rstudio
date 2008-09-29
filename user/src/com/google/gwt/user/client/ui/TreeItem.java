@@ -688,7 +688,7 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   Element getImageHolderElement() {
-    if (imageHolder == null) {
+    if (!isFullNode()) {
       convertToFullNode();
     }
     return imageHolder;
@@ -700,6 +700,10 @@ public class TreeItem extends UIObject implements HasHTML {
     DOM.appendChild(getElement(), childSpanElem);
     DOM.setStyleAttribute(childSpanElem, "whiteSpace", "nowrap");
     children = new ArrayList<TreeItem>();
+  }
+
+  boolean isFullNode() {
+    return imageHolder != null;
   }
 
   void setParentItem(TreeItem parent) {

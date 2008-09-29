@@ -777,7 +777,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * @param treeItem the tree item
    */
   void showLeafImage(TreeItem treeItem) {
-    if (useLeafImages) {
+    if (useLeafImages || treeItem.isFullNode()) {
       showImage(treeItem, images.treeLeaf());
     } else {
       DOM.setStyleAttribute(treeItem.getElement(), "paddingLeft", indentValue);
