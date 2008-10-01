@@ -464,8 +464,9 @@ public class JProgram extends JNode {
    * itself.
    */
   public SourceInfo createSourceInfoSynthetic(String description) {
-    return createSourceInfo(0, SourceInfoJava.findCaller()).makeChild(
-        description);
+    String caller = enableSourceInfoDescendants ? SourceInfoJava.findCaller()
+        : "Unknown caller";
+    return createSourceInfo(0, caller).makeChild(description);
   }
 
   public JReferenceType generalizeTypes(

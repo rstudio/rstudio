@@ -71,7 +71,9 @@ public final class JsProgram extends JsNode<JsProgram> {
   }
 
   public SourceInfo createSourceInfoSynthetic(String description) {
-    return createSourceInfo(0, SourceInfoJs.findCaller()).makeChild(description);
+    String caller = enableSourceInfoDescendants ? SourceInfoJs.findCaller()
+        : "Unknown caller";
+    return createSourceInfo(0, caller).makeChild(description);
   }
 
   public JsBooleanLiteral getBooleanLiteral(boolean truth) {
