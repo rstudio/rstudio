@@ -107,11 +107,6 @@ public class TreeItem extends UIObject implements HasHTML {
     void initializeClonableElements() {
       super.initializeClonableElements();
       if (GWT.isClient()) {
-        // Remove the padding from the cells and re-add it to the table element
-        DOM.setElementPropertyInt(BASE_INTERNAL_ELEM, "cellPadding", 0);
-        DOM.setElementPropertyInt(BASE_INTERNAL_ELEM, "cellSpacing", 0);
-        BASE_INTERNAL_ELEM.getStyle().setPropertyPx("paddingBottom", 3);
-
         // We can't use a 3px padding all around because IE will wrap the
         // childSpan to the next line, so we need to add a 3px margin on the top
         // and bottom instead. However, margins overlap, so we need a 6px bottom
