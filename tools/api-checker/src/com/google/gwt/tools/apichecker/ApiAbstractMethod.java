@@ -54,8 +54,18 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
     return sb.toString();
   }
 
+  /*
+   * 4 different signatures for a method: (a) internalSignature: just the
+   * JniSignature of the arguments. does not include any class name. (b)
+   * apiSignature: internalSignature, plus the className in which it was
+   * declared. (c) relativeSignature: internalSignature + the current class from
+   * which the Api method can be accessed. (d) coarseSignature: instead of
+   * jniSignature of each parameter, just record whether the parameter is a
+   * class type or a primitive type.
+   */
   final ApiClass apiClass;
   String apiSignature = null;
+  String internalSignature = null;
   final JAbstractMethod method;
   String relativeSignature = null;
 
@@ -78,6 +88,10 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
       return getApiSignature().equals(other.getApiSignature());
     }
     return false;
+  }
+
+  public ApiClass getApiClass() {
+    return apiClass;
   }
 
   public JAbstractMethod getMethod() {
@@ -114,38 +128,97 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
     return true;
   }
 
-  // Not sure the above implementation is sufficient. If need be, look at the
-  // implementation below.
-  // public String getCoarseSignature() {
-  // StringBuffer returnStr = new StringBuffer();
-  // JParameter[] parameters = method.getParameters();
-  // JArrayType jat = null;
-  // for (JParameter parameter : parameters) {
-  // JType type = parameter.getType();
-  // while ((jat = type.isArray()) != null) {
-  // returnStr.append("a");
-  // type = jat.getComponentType();
-  // }
-  // if (type.isPrimitive() != null) {
-  // returnStr.append("p");
-  // } else {
-  // returnStr.append("c");
-  // }
-  // returnStr.append(";"); // to mark the end of a type
-  // }
-  // return returnStr.toString();
-  // }
+  public abstract boolean isOverridable();
 
   @Override
   public String toString() {
     return method.toString();
   }
 
-  protected String computeApiSignature() {
-    return computeApiSignature(method);
+  List<ApiChange> checkExceptionsAndReturnType(ApiAbstractMethod newMethod) {
+    List<ApiChange> apiChanges = checkExceptions(newMethod);
+    ApiChange returnApiChange = checkReturnTypeCompatibility(newMethod);
+    if (returnApiChange == null) {
+      return apiChanges;
+    }
+    apiChanges.add(returnApiChange);
+    return apiChanges;
+  }
+  
+  abstract ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod);
+
+  abstract List<ApiChange> getAllChangesInApi(ApiAbstractMethod newMethod);
+  
+  String getApiSignature() {
+    if (apiSignature == null) {
+      apiSignature = computeApiSignature(method);
+    }
+    return apiSignature;
   }
 
-  List<ApiChange> checkExceptions(ApiAbstractMethod newMethod) {
+  /**
+   * Gets the signature of a method distinguishing just the non-primitive types
+   * from the primitive types.
+   * <p>
+   * Useful to determine the method overloading because a null could be passed
+   * for a primitive type.
+   * <p> 
+   * Not sure if the implementation is sufficient. If need be, look at the
+   * implementation below.
+   * 
+   * <pre>
+   * public String getCoarseSignature() {
+   *   StringBuffer returnStr = new StringBuffer();
+   *   JParameter[] parameters = method.getParameters();
+   *   JArrayType jat = null;
+   *   JType type = parameter.getType();
+   *   for (JParameter parameter : parameters) {
+   *     while ((jat = type.isArray()) != null) {
+   *       returnStr.append("a");
+   *       type = jat.getComponentType();
+   *     }
+   *     if (type.isPrimitive() != null) {
+   *       returnStr.append("p");
+   *     } else {
+   *       returnStr.append("c");
+   *     }
+   *     returnStr.append(";"); // to mark the end of a type
+   *   }
+   *   return returnStr.toString();
+   * }
+   * </pre>
+   *
+   * @return the coarse signature as a String
+   */
+  String getCoarseSignature() {
+    StringBuffer returnStr = new StringBuffer();
+    JParameter[] parameters = method.getParameters();
+    for (JParameter parameter : parameters) {
+      JType type = parameter.getType();
+      if (type.isPrimitive() != null) {
+        returnStr.append(type.getJNISignature());
+      } else {
+        returnStr.append("c");
+      }
+      returnStr.append(";"); // to mark the end of a type
+    }
+    return returnStr.toString();
+  }
+
+  String getInternalSignature() {
+    if (internalSignature == null) {
+      internalSignature = computeInternalSignature(method);
+    }
+    return internalSignature;
+  }
+
+  /**
+   * Find changes in modifiers. returns a possibly immutable list.
+   * 
+   */
+  abstract List<ApiChange.Status> getModifierChanges(ApiAbstractMethod newMethod);
+
+  private List<ApiChange> checkExceptions(ApiAbstractMethod newMethod) {
     ArrayList<JType> legalTypes = new ArrayList<JType>();
 
     // A throw declaration for an unchecked exception does not change the API.
@@ -178,37 +251,6 @@ abstract class ApiAbstractMethod implements Comparable<ApiAbstractMethod>,
     return ret;
   }
 
-  abstract ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod);
-
-  String getApiSignature() {
-    if (apiSignature == null) {
-      apiSignature = computeApiSignature();
-    }
-    return apiSignature;
-  }
-
-  // for a non-primitive type, someone can pass it null as a parameter
-  String getCoarseSignature() {
-    StringBuffer returnStr = new StringBuffer();
-    JParameter[] parameters = method.getParameters();
-    for (JParameter parameter : parameters) {
-      JType type = parameter.getType();
-      if (type.isPrimitive() != null) {
-        returnStr.append(type.getJNISignature());
-      } else {
-        returnStr.append("c");
-      }
-      returnStr.append(";"); // to mark the end of a type
-    }
-    return returnStr.toString();
-  }
-
-  /**
-   * Find changes in modifiers. returns a possibly immutable list.
-   * 
-   */
-  abstract List<ApiChange.Status> getModifierChanges(ApiAbstractMethod newMethod);
-  
   private String computeRelativeSignature() {
     String signature = computeInternalSignature(method);
     if (ApiCompatibilityChecker.DEBUG) {

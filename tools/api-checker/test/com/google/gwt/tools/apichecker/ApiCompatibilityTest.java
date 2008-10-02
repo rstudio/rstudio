@@ -40,6 +40,7 @@ import java.util.HashSet;
 public class ApiCompatibilityTest extends TestCase {
 
   // These cups are slightly different from the cups in ApiContainerTest
+  private static final boolean DEBUG = false;
 
   private static StaticCompilationUnit[] getScuArray() {
     return new StaticCompilationUnit[] {
@@ -51,7 +52,11 @@ public class ApiCompatibilityTest extends TestCase {
             getSourceForTestClass()),
         new StaticCompilationUnit("java.lang.Object", getSourceForObject()),
         new StaticCompilationUnit("java.lang.Throwable",
-            getSourceForThrowable()),};
+            getSourceForThrowable()),
+        new StaticCompilationUnit("test.apicontainer.OneMoreApiClass",
+            getSourceForOneMoreApiClass()),
+        new StaticCompilationUnit("java.lang.RuntimeException",
+            getSourceForRuntimeException()),};
   }
 
   private static char[] getSourceForApiClass() {
@@ -60,6 +65,7 @@ public class ApiCompatibilityTest extends TestCase {
     sb.append("public class ApiClass extends NonApiClass {\n");
     sb.append("\tpublic void apiMethod() { };\n");
     sb.append("\tpublic void checkParametersAndReturnTypes(java.lang.Object x) throws java.lang.Throwable { };\n");
+    sb.append("\tpublic final void checkParametersAndReturnTypesFinalVersion(java.lang.Object x) throws java.lang.Throwable { };\n");
     sb.append("};\n");
     return sb.toString().toCharArray();
   }
@@ -83,11 +89,32 @@ public class ApiCompatibilityTest extends TestCase {
     sb.append("package java.lang;\n");
     sb.append("public class Object {\n");
     sb.append("\tpublic void apiMethod() { }\n");
+    sb.append("\tprotected void checkOverloadedAndOverridableDetection(java.lang.Object b) { }\n");
+    sb.append("\tprotected final void checkOverloadedMethodAccounted(java.lang.Object b) { }\n");
     sb.append("\tprivate void internalMethod() { }\n");
     sb.append("\tprotected final void protectedMethod() { }\n");
     sb.append("\tpublic final int apiField = 0;\n");
     sb.append("\tprivate int internalField = 0;\n");
     sb.append("\tprotected static int protectedField=2;\n");
+    sb.append("}\n");
+    return sb.toString().toCharArray();
+  }
+
+  private static char[] getSourceForOneMoreApiClass() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("package test.apicontainer;\n");
+    sb.append("public class OneMoreApiClass extends java.lang.Object {\n");
+    sb.append("\tprotected void checkOverloadedAndOverridableDetection(test.apicontainer.OneMoreApiClass b) { }\n");
+    sb.append("\tprotected final void checkOverloadedMethodAccounted(test.apicontainer.ApiClass b) throws java.lang.Throwable { }\n");
+    sb.append("\tpublic void testUncheckedExceptions() throws RuntimeException { }\n");
+    sb.append("};\n");
+    return sb.toString().toCharArray();
+  }
+
+  private static char[] getSourceForRuntimeException() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("package java.lang;\n");
+    sb.append("public class RuntimeException extends Throwable {\n");
     sb.append("}\n");
     return sb.toString().toCharArray();
   }
@@ -141,31 +168,37 @@ public class ApiCompatibilityTest extends TestCase {
     assertEquals(0, ApiCompatibilityChecker.getApiDiff(api1, apiSameAs1,
         hashSet).size());
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(api2, api1);
-    boolean removeDuplicates = false;
     String strWithDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
-        apiDiff, hashSet, removeDuplicates));
+        apiDiff, hashSet, !ApiCompatibilityChecker.FILTER_DUPLICATES));
+    if (DEBUG) {
+      System.out.println("computing apiDiff, now with duplicates");
+      System.out.println(strWithDuplicates);
+    }
     String strWithoutDuplicates = getStringRepresentation(ApiCompatibilityChecker.getApiDiff(
-        apiDiff, hashSet, !removeDuplicates));
+        apiDiff, hashSet, ApiCompatibilityChecker.FILTER_DUPLICATES));
+    if (DEBUG) {
+      System.out.println("computing apiDiff, now without duplicates");
+      System.out.println(strWithoutDuplicates);
+    }
 
     String delimiter = ApiDiffGenerator.DELIMITER;
     // test if missing packages are reported correctly
-    String status = "java.newpackage" + delimiter + ApiChange.Status.MISSING;
-    assertEquals(1, countPresence(status, strWithDuplicates));
-    assertEquals(1, countPresence(status, strWithoutDuplicates));
+    String statusString = "java.newpackage" + delimiter
+        + ApiChange.Status.MISSING;
+    assertEquals(1, countPresence(statusString, strWithDuplicates));
+    assertEquals(1, countPresence(statusString, strWithoutDuplicates));
 
     // test if missing classes are reported correctly
     assertEquals(1, countPresence(
         "test.apicontainer.NonApiClass.AnotherApiClassInNonApiClass"
             + delimiter + ApiChange.Status.MISSING, strWithoutDuplicates));
-    // System.out.println(strWithDuplicates);
-    // System.out.println(strWithoutDuplicates);
 
     // test if modifier changes of a class are reported
     assertEquals(1, countPresence(
         "test.apicontainer.NonApiClass.ApiClassInNonApiClass" + delimiter
             + ApiChange.Status.ABSTRACT_ADDED, strWithoutDuplicates));
 
-    // test if methods are staill reported even if class becomes abstract (as
+    // test if methods are still reported even if class becomes abstract (as
     // long as it is sub-classable)
     assertEquals(0, countPresence(
         "test.apicontainer.NonApiClass.ApiClassInNonApiClass::ApiClassInNonApiClass()"
@@ -181,32 +214,67 @@ public class ApiCompatibilityTest extends TestCase {
         + delimiter + ApiChange.Status.FINAL_ADDED, strWithoutDuplicates));
 
     // test if duplicates are weeded out from intersecting methods
-    assertEquals(3, countPresence("protectedMethod()" + delimiter
+    assertEquals(4, countPresence("protectedMethod()" + delimiter
         + ApiChange.Status.FINAL_ADDED, strWithDuplicates));
     assertEquals(1, countPresence("protectedMethod()" + delimiter
         + ApiChange.Status.FINAL_ADDED, strWithoutDuplicates));
 
     // test if duplicates are weeded out from missing fields
-    assertEquals(3, countPresence("apiFieldWillBeMissing" + delimiter
+    assertEquals(4, countPresence("apiFieldWillBeMissing" + delimiter
         + ApiChange.Status.MISSING, strWithDuplicates));
     assertEquals(1, countPresence("apiFieldWillBeMissing" + delimiter
         + ApiChange.Status.MISSING, strWithoutDuplicates));
 
-    // test returnType error
-    String methodSignature = "checkParametersAndReturnTypes(Ltest/apicontainer/ApiClass;)";
-    assertEquals(1, countPresence(methodSignature + delimiter
+    // test error in non-final version
+    String nonFinalMethodSignature = "checkParametersAndReturnTypes(Ltest/apicontainer/ApiClass;)";
+    for (ApiChange.Status status : new ApiChange.Status[] {
+        ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
+        ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
+        ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE}) {
+      assertEquals(1, countPresence(nonFinalMethodSignature + delimiter
+          + status, strWithoutDuplicates));
+    }
+    // test return type and exception type error in final version
+    String finalMethodSignature = "checkParametersAndReturnTypesFinalVersion(Ltest/apicontainer/ApiClass;)";
+    assertEquals(1, countPresence(finalMethodSignature + delimiter
         + ApiChange.Status.RETURN_TYPE_ERROR, strWithoutDuplicates));
-    // test method exceptions
-    assertEquals(1, countPresence(methodSignature + delimiter
+    assertEquals(1, countPresence(finalMethodSignature + delimiter
         + ApiChange.Status.EXCEPTION_TYPE_ERROR, strWithoutDuplicates));
 
     // checking if changes in parameter types were okay
-    assertEquals(2, countPresence(methodSignature, strWithoutDuplicates));
+    assertEquals(2, countPresence(finalMethodSignature, strWithoutDuplicates));
 
     // test method_overloading
-    methodSignature = "methodInNonApiClass(Ljava/lang/Object;)";
+    finalMethodSignature = "methodInNonApiClass(Ljava/lang/Object;)";
+    assertEquals(1, countPresence(finalMethodSignature + delimiter
+        + ApiChange.Status.OVERLOADED_METHOD_CALL, strWithoutDuplicates));
+
+    // test unchecked exceptions
+    assertEquals(0, countPresence("testUncheckedExceptions",
+        strWithoutDuplicates));
+
+    // test overloaded and overridable detection
+    String methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedAndOverridableDetection(Ljava/lang/Object;)";
+    for (ApiChange.Status status : new ApiChange.Status[] {
+        ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
+        ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
+        ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE}) {
+      assertEquals(0, countPresence(methodSignature + delimiter + status,
+          strWithoutDuplicates));
+    }
+
     assertEquals(1, countPresence(methodSignature + delimiter
         + ApiChange.Status.OVERLOADED_METHOD_CALL, strWithoutDuplicates));
+
+    // the method should be satisfied by the method in the super-class
+    methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ltest/apicontainer/OneMoreApiClass;)";
+    assertEquals(0, countPresence(methodSignature + delimiter
+        + ApiChange.Status.MISSING, strWithoutDuplicates));
+
+    // the method should throw unchecked exceptions error
+    methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ljava/lang/Object;)";
+    assertEquals(1, countPresence(methodSignature + delimiter
+        + ApiChange.Status.EXCEPTION_TYPE_ERROR, strWithoutDuplicates));
   }
 
   private void checkWhiteList() throws NotFoundException {
@@ -236,9 +304,7 @@ public class ApiCompatibilityTest extends TestCase {
   private String getStringRepresentation(Collection<ApiChange> collection) {
     StringBuffer sb = new StringBuffer();
     for (ApiChange apiChange : collection) {
-      sb.append(apiChange.getApiElement().getRelativeSignature());
-      sb.append(ApiDiffGenerator.DELIMITER);
-      sb.append(apiChange.getStatus());
+      sb.append(apiChange);
       sb.append("\n");
     }
     return sb.toString();

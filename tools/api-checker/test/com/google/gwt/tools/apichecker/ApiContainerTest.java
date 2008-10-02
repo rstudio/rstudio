@@ -121,6 +121,8 @@ public class ApiContainerTest extends TestCase {
         new StaticCompilationUnit("test.nonapipackage.TestClass",
             getSourceForTestClass()),
         new StaticCompilationUnit("java.lang.Object", getSourceForObject()),
+        new StaticCompilationUnit("test.apicontainer.OneMoreApiClass",
+            getSourceForOneMoreApiClass()),
         new StaticCompilationUnit("java.newpackage.Test", getSourceForTest()),};
   }
 
@@ -135,6 +137,7 @@ public class ApiContainerTest extends TestCase {
     sb.append("public class ApiClass extends NonApiClass {\n");
     sb.append("\tpublic void apiMethod() { };\n");
     sb.append("\tpublic java.lang.Object checkParametersAndReturnTypes(ApiClass a) { return this; };\n");
+    sb.append("\tpublic final java.lang.Object checkParametersAndReturnTypesFinalVersion(ApiClass a) { return this; };\n");
     sb.append("};\n");
     return sb.toString().toCharArray();
   }
@@ -174,11 +177,23 @@ public class ApiContainerTest extends TestCase {
     sb.append("\tpublic void apiMethod() { }\n");
     sb.append("\tprivate void internalMethod() { }\n");
     sb.append("\tprotected native long protectedMethod();\n");
+    sb.append("\tprotected void checkOverloadedAndOverridableDetection(java.lang.Object b) { }\n");
+    sb.append("\tprotected final void checkOverloadedMethodAccounted(java.lang.Object b) { }\n");
     sb.append("\tpublic int apiField = 0;\n");
     sb.append("\tprotected transient int apiFieldWillBeMissing = 1;\n");
     sb.append("\tprivate int internalField = 0;\n");
     sb.append("\tprotected int protectedField=2;\n");
     sb.append("}\n");
+    return sb.toString().toCharArray();
+  }
+
+  private static char[] getSourceForOneMoreApiClass() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("package test.apicontainer;\n");
+    sb.append("public class OneMoreApiClass extends java.lang.Object {\n");
+    sb.append("\tprotected final void checkOverloadedMethodAccounted(test.apicontainer.OneMoreApiClass b) { }\n");
+    sb.append("\tpublic void testUncheckedExceptions () { }\n");
+    sb.append("};\n");
     return sb.toString().toCharArray();
   }
 
@@ -242,7 +257,7 @@ public class ApiContainerTest extends TestCase {
     assertNotNull(package2.getApiClass("test.apicontainer.NonApiClass.ApiClassInNonApiClass"));
     assertNotNull(package2.getApiClass("test.apicontainer.NonApiClass.AnotherApiClassInNonApiClass"));
     assertEquals(1, package1.getApiClassNames().size());
-    assertEquals(3, package2.getApiClassNames().size());
+    assertEquals(4, package2.getApiClassNames().size());
   }
 
   /**
@@ -260,6 +275,8 @@ public class ApiContainerTest extends TestCase {
         "test.apicontainer.ApiClass");
     ApiClass innerClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
         "test.apicontainer.NonApiClass.ApiClassInNonApiClass");
+    ApiClass oneMoreApiClass = apiCheck.getApiPackage("test.apicontainer").getApiClass(
+        "test.apicontainer.OneMoreApiClass");
 
     // constructors
     assertEquals(1, innerClass.getApiMemberNames(
@@ -268,10 +285,11 @@ public class ApiContainerTest extends TestCase {
     // fields
     assertEquals(3, object.getApiFieldNames().size());
     assertEquals(4, apiClass.getApiFieldNames().size());
+    assertEquals(3, oneMoreApiClass.getApiFieldNames().size());
 
     // methods
-    assertEquals(2, object.getApiMemberNames(ApiClass.MethodType.METHOD).size());
-    assertEquals(4,
+    assertEquals(4, object.getApiMemberNames(ApiClass.MethodType.METHOD).size());
+    assertEquals(7,
         apiClass.getApiMemberNames(ApiClass.MethodType.METHOD).size());
     // the method definition lowest in the class hierarchy is kept
     assertNotSame(getMethodByName("apiMethod0", apiClass), getMethodByName(
@@ -279,6 +297,19 @@ public class ApiContainerTest extends TestCase {
     assertEquals(getMethodByName("protectedMethod0", apiClass),
         getMethodByName("protectedMethod0", object));
     assertNotNull(getMethodByName("methodInNonApiClass1", apiClass));
+
+    assertEquals(5, oneMoreApiClass.getApiMemberNames(
+        ApiClass.MethodType.METHOD).size());
+    Set<String> methodNames = new HashSet<String>(
+        Arrays.asList(new String[] {"checkOverloadedAndOverridableDetection1"}));
+    assertEquals(1, oneMoreApiClass.getApiMembersBySet(methodNames,
+        ApiClass.MethodType.METHOD).size());
+
+    // checkOverloadedMethodAccounted should appear twice.
+    methodNames = new HashSet<String>(
+        Arrays.asList(new String[] {"checkOverloadedMethodAccounted1"}));
+    assertEquals(2, oneMoreApiClass.getApiMembersBySet(methodNames,
+        ApiClass.MethodType.METHOD).size());
   }
 
   /**

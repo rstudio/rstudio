@@ -34,7 +34,14 @@ import java.util.Set;
  */
 public final class ApiDiffGenerator {
 
+  private static enum Relation {
+    NONE, SUBCLASS, SUPERCLASS;
+  }
+
   public static final String DELIMITER = " ";
+
+  /* variable just for debugging -- find why an apiChange is being removed */
+  static final String HAY_API_CHANGE = "";
 
   /**
    * The two types might belong to different typeOracles.
@@ -61,7 +68,6 @@ public final class ApiDiffGenerator {
     return firstClassType.isAssignableTo(secondClassType);
   }
 
-  @SuppressWarnings("unchecked")
   static Set<String> removeIntersection(Set<String> s1, Set<String> s2) {
     Set<String> intersection = new HashSet<String>(s1);
     intersection.retainAll(s2);
@@ -72,29 +78,14 @@ public final class ApiDiffGenerator {
 
   Map<String, ApiPackageDiffGenerator> intersectingPackages = new HashMap<String, ApiPackageDiffGenerator>();
   Set<String> missingPackageNames;
+
   final ApiContainer newApi;
+
   final ApiContainer oldApi;
 
   ApiDiffGenerator(ApiContainer newApi, ApiContainer oldApi) {
     this.newApi = newApi;
     this.oldApi = oldApi;
-  }
-
-  Collection<ApiChange> getApiDiff(boolean removeDuplicates)
-      throws NotFoundException {
-    computeApiDiff();
-    if (removeDuplicates) {
-      cleanApiDiff();
-    }
-    Collection<ApiChange> collection = new ArrayList<ApiChange>();
-    Set<ApiPackage> missingPackages = oldApi.getApiPackagesBySet(missingPackageNames);
-    for (ApiPackage missingPackage : missingPackages) {
-      collection.add(new ApiChange(missingPackage, ApiChange.Status.MISSING));
-    }
-    for (ApiPackageDiffGenerator intersectingPackage : intersectingPackages.values()) {
-      collection.addAll(intersectingPackage.getApiDiff());
-    }
-    return collection;
   }
 
   ApiClassDiffGenerator findApiClassDiffGenerator(String className) {
@@ -144,6 +135,21 @@ public final class ApiDiffGenerator {
     return intersectingPackages.get(key);
   }
 
+  Collection<ApiChange> getApiDiff() throws NotFoundException {
+
+    computeApiDiff();
+
+    Collection<ApiChange> collection = new ArrayList<ApiChange>();
+    Set<ApiPackage> missingPackages = oldApi.getApiPackagesBySet(missingPackageNames);
+    for (ApiPackage missingPackage : missingPackages) {
+      collection.add(new ApiChange(missingPackage, ApiChange.Status.MISSING));
+    }
+    for (ApiPackageDiffGenerator intersectingPackage : intersectingPackages.values()) {
+      collection.addAll(intersectingPackage.getApiDiff());
+    }
+    return collection;
+  }
+
   ApiContainer getNewApiContainer() {
     return newApi;
   }
@@ -152,10 +158,63 @@ public final class ApiDiffGenerator {
     return oldApi;
   }
 
-  private void cleanApiDiff() {
-    for (ApiPackageDiffGenerator intersectingPackage : intersectingPackages.values()) {
-      intersectingPackage.cleanApiDiff();
+  /**
+   * Remove any apiChange x if there is another apiChange y such that the
+   * apiElement and status for both x and y are the same and the apiClass for x
+   * is a subclass of the apiClass for y.
+   * 
+   * @param originalCollection collection with duplicates.
+   * @return collection minus duplicates.
+   */
+  Collection<ApiChange> removeDuplicates(
+      Collection<ApiChange> originalCollection) {
+    /*
+     * Map from the hashCode of an apiChange to the list of ApiChanges. There
+     * can be multiple ApiChanges that have the same hashCode, but neither is a
+     * subset of another. Example: if B and C both extend A, and there is an
+     * ApiChange in B and C due to an api element of A.
+     */
+    Map<Integer, Collection<ApiChange>> apiChangeMap = new HashMap<Integer, Collection<ApiChange>>();
+    for (ApiChange apiChange : originalCollection) {
+      String apiChangeStr = apiChange.getApiElement().getRelativeSignature();
+      Collection<ApiChange> apiChangesSameHashCode = apiChangeMap.get(apiChange.hashCodeForDuplication());
+      if (apiChangesSameHashCode == null) {
+        apiChangesSameHashCode = new HashSet<ApiChange>();
+        apiChangeMap.put(apiChange.hashCodeForDuplication(),
+            apiChangesSameHashCode);
+      }
+      Collection<ApiChange> apiChangesToRemove = new HashSet<ApiChange>();
+      boolean addNewElement = true;
+
+      for (ApiChange oldApiChange : apiChangesSameHashCode) {
+        String oldApiChangeStr = oldApiChange.getApiElement().getRelativeSignature();
+        Relation relation = getRelationOfApiClassOfFirstArgToThatOfSecond(
+            apiChange.getApiElement(), oldApiChange.getApiElement());
+        if (relation == Relation.SUPERCLASS) {
+          apiChangesToRemove.add(oldApiChange);
+          if (ApiCompatibilityChecker.DEBUG_DUPLICATE_REMOVAL
+              && oldApiChangeStr.indexOf(HAY_API_CHANGE) != -1) {
+            System.out.println(oldApiChangeStr + " replaced by " + apiChangeStr
+                + ", status = " + oldApiChange.getStatus());
+          }
+        } else if (relation == Relation.SUBCLASS) {
+          addNewElement = false;
+          if (ApiCompatibilityChecker.DEBUG_DUPLICATE_REMOVAL
+              && apiChangeStr.indexOf(HAY_API_CHANGE) != -1) {
+            System.out.println(apiChangeStr + " replaced by " + oldApiChangeStr);
+          }
+        }
+      }
+      apiChangesSameHashCode.removeAll(apiChangesToRemove);
+      if (addNewElement) {
+        apiChangesSameHashCode.add(apiChange);
+      }
     }
+    Collection<ApiChange> prunedCollection = new HashSet<ApiChange>();
+    for (Integer hashCode : apiChangeMap.keySet()) {
+      prunedCollection.addAll(apiChangeMap.get(hashCode));
+    }
+    return prunedCollection;
   }
 
   /**
@@ -176,6 +235,36 @@ public final class ApiDiffGenerator {
       intersectingPackages.put(packageName, tempPackageDiffGenerator);
       tempPackageDiffGenerator.computeApiDiff();
     }
+  }
+
+  /**
+   * Returns how ApiClass for first element is "related" to the ApiClass for
+   * secondElement.
+   */
+  private Relation getRelationOfApiClassOfFirstArgToThatOfSecond(
+      ApiElement firstApiElement, ApiElement secondApiElement) {
+    JClassType firstClassType = null;
+    JClassType secondClassType = null;
+    if (firstApiElement instanceof ApiField) {
+      firstClassType = ((ApiField) firstApiElement).getApiClass().getClassObject();
+      secondClassType = ((ApiField) secondApiElement).getApiClass().getClassObject();
+    }
+    if (firstApiElement instanceof ApiAbstractMethod) {
+      firstClassType = ((ApiAbstractMethod) firstApiElement).getApiClass().getClassObject();
+      secondClassType = ((ApiAbstractMethod) secondApiElement).getApiClass().getClassObject();
+    }
+    if (firstClassType != null && secondClassType != null) {
+      if (secondClassType.isAssignableTo(firstClassType)) {
+        return Relation.SUPERCLASS;
+      }
+      if (firstClassType.isAssignableTo(secondClassType)) {
+        return Relation.SUBCLASS;
+      }
+      return Relation.NONE;
+    }
+    throw new RuntimeException(
+        "Inconsistent types for ApiElements: newApiElement " + firstApiElement
+            + ", oldApiElement : " + secondApiElement);
   }
 
 }

@@ -30,8 +30,18 @@ final class ApiConstructor extends ApiAbstractMethod {
   }
 
   @Override
+  public boolean isOverridable() {
+    return false;
+  }
+
+  @Override
   ApiChange checkReturnTypeCompatibility(ApiAbstractMethod newMethod) {
     return null;
+  }
+
+  @Override
+  List<ApiChange> getAllChangesInApi(ApiAbstractMethod newMethod) {
+    return Collections.emptyList();
   }
 
   /**

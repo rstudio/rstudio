@@ -16,11 +16,19 @@
 package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
+import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
+import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates an API method. Useful for set-operations.
@@ -29,6 +37,15 @@ final class ApiMethod extends ApiAbstractMethod {
 
   ApiMethod(JAbstractMethod method, ApiClass apiClass) {
     super(method, apiClass);
+  }
+
+  @Override
+  public boolean isOverridable() {
+    JMethod methodType = (JMethod) method;
+    if (methodType.isStatic() || methodType.isFinal()) {
+      return false;
+    }
+    return apiClass.isSubclassableApiClass();
   }
 
   @Override
@@ -53,12 +70,87 @@ final class ApiMethod extends ApiAbstractMethod {
     if (compatible) {
       return null;
     }
-    sb.append("Return type changed from ");
+    sb.append(" from ");
     sb.append(firstType.getQualifiedSourceName());
     sb.append(" to ");
     sb.append(secondType.getQualifiedSourceName());
     return new ApiChange(this, ApiChange.Status.RETURN_TYPE_ERROR,
         sb.toString());
+  }
+
+  /**
+   * check for changes in: (i) argument types, (ii) return type, (iii)
+   * exceptions thrown. use getJNISignature() for type equality, it does type
+   * erasure
+   */
+  @Override
+  List<ApiChange> getAllChangesInApi(ApiAbstractMethod newApiMethod) {
+    if (!(newApiMethod.getMethod() instanceof JMethod)) {
+      return Collections.emptyList();
+    }
+    List<ApiChange> changeApis = new ArrayList<ApiChange>();
+    JMethod existingMethod = (JMethod) method;
+    JMethod newMethod = (JMethod) newApiMethod.getMethod();
+    // check return type
+    if (!existingMethod.getReturnType().getJNISignature().equals(
+        newMethod.getReturnType().getJNISignature())) {
+      changeApis.add(new ApiChange(this,
+          ApiChange.Status.OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE, " from "
+              + existingMethod.getReturnType() + " to "
+              + newMethod.getReturnType()));
+    }
+    // check argument type
+    JParameter[] newParametersList = newMethod.getParameters();
+    JParameter[] existingParametersList = existingMethod.getParameters();
+    if (newParametersList.length != existingParametersList.length) {
+      changeApis.add(new ApiChange(this,
+          ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
+          "number of parameters changed"));
+    } else {
+      int length = newParametersList.length;
+      for (int i = 0; i < length; i++) {
+        if (!existingParametersList[i].getType().getJNISignature().equals(
+            newParametersList[i].getType().getJNISignature())) {
+          changeApis.add(new ApiChange(this,
+              ApiChange.Status.OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE,
+              " at position " + i + " from "
+                  + existingParametersList[i].getType() + " to "
+                  + newParametersList[i].getType()));
+        }
+      }
+    }
+
+    // check exceptions
+    Set<String> newExceptionsSet = new HashSet<String>();
+    Map<String, JType> newExceptionsMap = new HashMap<String, JType>();
+    for (JType newType : newMethod.getThrows()) {
+      String jniSignature = newType.getJNISignature();
+      newExceptionsMap.put(jniSignature, newType);
+      newExceptionsSet.add(jniSignature);
+    }
+
+    Set<String> existingExceptionsSet = new HashSet<String>();
+    Map<String, JType> existingExceptionsMap = new HashMap<String, JType>();
+    for (JType existingType : existingMethod.getThrows()) {
+      String jniSignature = existingType.getJNISignature();
+      existingExceptionsMap.put(jniSignature, existingType);
+      existingExceptionsSet.add(jniSignature);
+    }
+    ApiDiffGenerator.removeIntersection(existingExceptionsSet, newExceptionsSet);
+    removeUncheckedExceptions(newMethod, newExceptionsSet, newExceptionsMap);
+    removeUncheckedExceptions(existingMethod, existingExceptionsSet,
+        existingExceptionsMap);
+    if (existingExceptionsSet.size() > 0) {
+      changeApis.add(new ApiChange(this,
+          ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
+          "existing method had more exceptions: " + existingExceptionsSet));
+    }
+    if (newExceptionsSet.size() > 0) {
+      changeApis.add(new ApiChange(this,
+          ApiChange.Status.OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE,
+          "new method has more exceptions: " + newExceptionsSet));
+    }
+    return changeApis;
   }
 
   /*
@@ -93,6 +185,30 @@ final class ApiMethod extends ApiAbstractMethod {
       statuses.add(ApiChange.Status.STATIC_REMOVED);
     }
     return statuses;
+  }
+
+  // remove Error.class, RuntimeException.class, and their sub-classes
+  private void removeUncheckedExceptions(JMethod method,
+      Set<String> exceptionsSet, Map<String, JType> exceptionsMap) {
+    if (exceptionsSet.size() == 0) {
+      return;
+    }
+    TypeOracle typeOracle = method.getEnclosingType().getOracle();
+    JClassType errorType = typeOracle.findType(Error.class.getName());
+    JClassType rteType = typeOracle.findType(RuntimeException.class.getName());
+    Set<String> exceptionsToRemove = new HashSet<String>();
+    for (String exceptionString : exceptionsSet) {
+      JType exception = exceptionsMap.get(exceptionString);
+      assert (exception != null);
+      boolean remove = (errorType != null && ApiDiffGenerator.isFirstTypeAssignableToSecond(
+          exception, errorType))
+          || (rteType != null && ApiDiffGenerator.isFirstTypeAssignableToSecond(
+              exception, rteType));
+      if (remove) {
+        exceptionsToRemove.add(exceptionString);
+      }
+    }
+    exceptionsSet.removeAll(exceptionsToRemove);
   }
 }
 /*

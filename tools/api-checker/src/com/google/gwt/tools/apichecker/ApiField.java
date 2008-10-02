@@ -22,7 +22,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Immutable class that encapsulates an API Field. Useful for set-operations.
+ * Immutable class that encapsulates an API Field. Useful for set-operations. An
+ * ApiField is attached to an ApiClass.
  */
 final class ApiField implements Comparable<ApiField>, ApiElement {
 
@@ -59,6 +60,10 @@ final class ApiField implements Comparable<ApiField>, ApiElement {
     return false;
   }
 
+  public ApiClass getApiClass() {
+    return apiClass;
+  }
+
   public String getRelativeSignature() {
     if (relativeSignature == null) {
       relativeSignature = computeRelativeSignature();
@@ -87,13 +92,13 @@ final class ApiField implements Comparable<ApiField>, ApiElement {
     return field;
   }
 
-  Set<ApiChange.Status> getModifierChanges(ApiField newField) {
-    Set<ApiChange.Status> statuses = new HashSet<ApiChange.Status>();
+  Set<ApiChange> getModifierChanges(ApiField newField) {
+    Set<ApiChange> statuses = new HashSet<ApiChange>();
     if (!field.isFinal() && newField.getField().isFinal()) {
-      statuses.add(ApiChange.Status.FINAL_ADDED);
+      statuses.add(new ApiChange(this, ApiChange.Status.FINAL_ADDED));
     }
     if ((field.isStatic() && !newField.getField().isStatic())) {
-      statuses.add(ApiChange.Status.STATIC_REMOVED);
+      statuses.add(new ApiChange(this, ApiChange.Status.STATIC_REMOVED));
     }
     return statuses;
   }

@@ -56,12 +56,6 @@ final class ApiPackageDiffGenerator implements
     return this.getName().compareTo(other.getName());
   }
 
-  void cleanApiDiff() {
-    for (ApiClassDiffGenerator intersectingClass : intersectingClasses.values()) {
-      intersectingClass.cleanApiDiff();
-    }
-  }
-
   void computeApiDiff() throws NotFoundException {
     Set<String> newClassNames = newPackage.getApiClassNames();
     missingClassNames = oldPackage.getApiClassNames();
