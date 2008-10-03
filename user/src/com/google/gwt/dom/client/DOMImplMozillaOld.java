@@ -63,4 +63,34 @@ package com.google.gwt.dom.client;
     return top +
       @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
   }-*/;
+  
+  @Override
+  public native String getInnerText(Element node) /*-{
+    // To mimic IE's 'innerText' property in the W3C DOM, we need to recursively
+    // concatenate all child text nodes (depth first).
+    var text = '', child = node.firstChild;
+    while (child) {
+      // 1 == Element node
+      if (child.nodeType == 1) {
+        text += this.@com.google.gwt.dom.client.DOMImpl::getInnerText(Lcom/google/gwt/dom/client/Element;)(child);
+      } else if (child.nodeValue) {
+        text += child.nodeValue;
+      }
+      child = child.nextSibling;
+    }
+    return text;
+  }-*/;
+  
+  @Override
+  public native void setInnerText(Element elem, String text) /*-{
+    // Remove all children first.
+    while (elem.firstChild) {
+      elem.removeChild(elem.firstChild);
+    }
+    // Add a new text node.
+    if (text != null) {
+      elem.appendChild($doc.createTextNode(text));
+    }
+  }-*/;
+
 }
