@@ -71,22 +71,12 @@ class DOMImplMozilla extends DOMImplStandard {
     var style = $wnd.getComputedStyle($doc.documentElement, '');
     return parseInt(style.marginTop) + parseInt(style.borderTopWidth);
   }-*/;
-
-  @Override
-  public native String getInnerText(Element elem) /*-{
-    return elem.textContent;
-  }-*/;
   
   @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     // For more information about compareDocumentPosition, see:
     // http://www.quirksmode.org/blog/archives/2006/01/contains_for_mo.html
     return (parent === child) || !!(parent.compareDocumentPosition(child) & 16);  
-  }-*/;
-  
-  @Override
-  public native void setInnerText(Element elem, String text) /*-{
-    elem.textContent = text || '';
   }-*/;
 
   @Override
