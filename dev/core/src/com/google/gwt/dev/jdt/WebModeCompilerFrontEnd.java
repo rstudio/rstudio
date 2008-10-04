@@ -165,9 +165,7 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
             continue;
           }
           // Look for a noArg ctor.
-          MethodBinding noArgCtor = type.getExactMethod("<init>".toCharArray(),
-              TypeBinding.NO_PARAMETERS, cud.scope);
-
+          MethodBinding noArgCtor = type.getExactConstructor(TypeBinding.NO_PARAMETERS);
           if (noArgCtor == null) {
             FindDeferredBindingSitesVisitor.reportRebindProblem(site,
                 "Rebind result '" + typeName
