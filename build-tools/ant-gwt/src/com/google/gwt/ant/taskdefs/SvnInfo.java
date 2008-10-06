@@ -57,9 +57,20 @@ public class SvnInfo extends Task {
     if (!workDirFile.isDirectory()) {
       throw new BuildException(workdir + " is not a directory");
     }
+    
+    String branch;
+    String revision;
 
-    String branch = getSvnBranch(workDirFile);
-    String revision = getSvnVersion(workDirFile);
+    File svnDirFile = new File(workdir, ".svn");
+    if (!svnDirFile.exists()) {
+      // This is not svn workdir. We can't guess the version... 
+      branch = "unknown";
+      revision = "unknown";
+    } else {
+      branch = getSvnBranch(workDirFile);
+      revision = getSvnVersion(workDirFile);
+    }
+
     getProject().setNewProperty(outprop, branch + "@" + revision);
     if (fileprop != null) {
       getProject().setNewProperty(fileprop, branch + "-" 
