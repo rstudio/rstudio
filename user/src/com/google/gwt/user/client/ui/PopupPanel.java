@@ -573,17 +573,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param top the top position, in pixels
    */
   public void setPopupPosition(int left, int top) {
-    // Keep the popup within the browser's client area, so that they can't get
-    // 'lost' and become impossible to interact with. Note that we don't attempt
-    // to keep popups pegged to the bottom and right edges, as they will then
-    // cause scrollbars to appear, so the user can't lose them.
-    if (left < 0) {
-      left = 0;
-    }
-    if (top < 0) {
-      top = 0;
-    }
-
     // Save the position of the popup
     leftPosition = left;
     topPosition = top;

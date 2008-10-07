@@ -15,9 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.WindowResizeListener;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
@@ -69,6 +72,10 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   private boolean dragging;
   private int dragStartX, dragStartY;
   private MouseListenerCollection mouseListeners = new MouseListenerCollection();
+  private WindowResizeListener resizeListener;
+  private int windowWidth;
+  private int clientLeft;
+  private int clientTop;
 
   /**
    * Creates an empty dialog box. It should not be shown until its child widget
@@ -114,6 +121,10 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     // Set the style name
     setStyleName(DEFAULT_STYLENAME);
     sinkEvents(Event.MOUSEEVENTS);
+
+    windowWidth = Window.getClientWidth();
+    clientLeft = Document.get().getBodyOffsetLeft();
+    clientTop = Document.get().getBodyOffsetTop();
   }
 
   public String getHTML() {
@@ -122,6 +133,12 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
 
   public String getText() {
     return caption.getText();
+  }
+
+  @Override
+  public void hide() {
+    Window.removeWindowResizeListener(resizeListener);
+    super.hide();
   }
 
   @Override
@@ -178,6 +195,14 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     if (dragging) {
       int absX = x + getAbsoluteLeft();
       int absY = y + getAbsoluteTop();
+
+      // if the mouse is off the screen to the left, right, or top, don't
+      // move the dialog box. This would let users lose dialog boxes, which
+      // would be bad for modal popups.
+      if (absX < clientLeft || absX >= windowWidth || absY < clientTop) {
+        return;
+      }
+
       setPopupPosition(absX - dragStartX, absY - dragStartY);
     }
   }
@@ -209,6 +234,19 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
    */
   public void setText(String text) {
     caption.setText(text);
+  }
+
+  @Override
+  public void show() {
+    if (resizeListener == null) {
+      resizeListener = new WindowResizeListener() {
+        public void onWindowResized(int width, int height) {
+          windowWidth = width;
+        }
+      };
+    }
+    Window.addWindowResizeListener(resizeListener);
+    super.show();
   }
 
   @Override
