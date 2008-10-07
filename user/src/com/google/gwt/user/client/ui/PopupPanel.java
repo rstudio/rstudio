@@ -435,6 +435,26 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return isAnimationEnabled;
   }
 
+  /**
+   * Returns <code>true</code> if the popup should be automatically hidden when
+   * the user clicks outside of it.
+   * 
+   * @return true if autoHide is enabled, false if disabled
+   */
+  public boolean isAutoHideEnabled() {
+    return autoHide;
+  }
+
+  /**
+   * Returns <code>true</code> if keyboard or mouse events that do not target
+   * the PopupPanel or its children should be ignored.
+   * 
+   * @return true if popup is modal, false if not
+   */
+  public boolean isModal() {
+    return modal;
+  }
+
   public boolean onEventPreview(Event event) {
     Element target = DOM.eventGetTarget(event);
 
@@ -542,6 +562,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * Enable or disable the autoHide feature. When enabled, the popup will be
+   * automatically hidden when the user clicks outside of it.
+   * 
+   * @param autoHide true to enable autoHide, false to disable
+   */
+  public void setAutoHideEnabled(boolean autoHide) {
+    this.autoHide = autoHide;
+  }
+
+  /**
    * Sets the height of the panel's child widget. If the panel's child widget
    * has not been set, the height passed in will be cached and used to set the
    * height immediately after the child widget is set.
@@ -563,6 +593,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (height.length() == 0) {
       desiredHeight = null;
     }
+  }
+
+  /**
+   * When the popup is modal, keyboard or mouse events that do not target the
+   * PopupPanel or its children will be ignored.
+   * 
+   * @param modal true to make the popup modal
+   */
+  public void setModal(boolean modal) {
+    this.modal = modal;
   }
 
   /**

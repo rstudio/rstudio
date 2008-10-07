@@ -50,6 +50,18 @@ public class PopupTest extends GWTTestCase {
     assertFalse(popup.isAnimationEnabled());
     popup.setAnimationEnabled(true);
     assertTrue(popup.isAnimationEnabled());
+
+    // Modal
+    popup.setModal(true);
+    assertTrue(popup.isModal());
+    popup.setModal(false);
+    assertFalse(popup.isModal());
+
+    // AutoHide enabled
+    popup.setAutoHideEnabled(true);
+    assertTrue(popup.isAutoHideEnabled());
+    popup.setAutoHideEnabled(false);
+    assertFalse(popup.isAutoHideEnabled());
   }
 
   /**
