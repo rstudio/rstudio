@@ -24,6 +24,14 @@ class HTTPRequestImplIE6 extends HTTPRequestImpl {
 
   @Override
   protected native JavaScriptObject doCreateXmlHTTPRequest() /*-{
-    return new ActiveXObject("Microsoft.XMLHTTP");
+    if ($wnd.XMLHttpRequest) {
+      return new XMLHttpRequest();
+    } else {
+      try {
+        return new ActiveXObject('MSXML2.XMLHTTP.3.0');
+      } catch (e) {
+        return new ActiveXObject("Microsoft.XMLHTTP");
+      }
+    }
   }-*/;
 }
