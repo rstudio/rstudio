@@ -1,0 +1,9 @@
+branch-info.txt for GWT 1.6 release:
+Tracks interactions between this branch and other branches. 
+See: http://code.google.com/p/google-web-toolkit/wiki/ManagingMerges
+
+Copies:
+/releases/1.6/ was created (r3732) as a straight copy from /trunk/@r3683
+
+Merges:
+---> The next merge into trunk is not yet determined, we will need to skip a few revisions to first back-port changes from trunk.
