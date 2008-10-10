@@ -28,7 +28,7 @@ public class JsCatch extends JsNode<JsCatch> implements HasCondition {
 
   private JsExpression condition;
 
-  private final JsParameter param;
+  private JsParameter param;
 
   public JsCatch(SourceInfo sourceInfo, JsScope parent, String ident) {
     super(sourceInfo);
@@ -63,6 +63,7 @@ public class JsCatch extends JsNode<JsCatch> implements HasCondition {
 
   public void traverse(JsVisitor v, JsContext<JsCatch> ctx) {
     if (v.visit(this, ctx)) {
+      param = v.accept(param);
       if (condition != null) {
         condition = v.accept(condition);
       }
