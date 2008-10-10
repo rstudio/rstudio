@@ -6,4 +6,6 @@ Copies:
 /releases/1.6/ was created (r3732) as a straight copy from /trunk/@r3683
 
 Merges:
----> The next merge into trunk is not yet determined, we will need to skip a few revisions to first back-port changes from trunk.
+/trunk revisions c3688,c3703,c3700,c3704,c3707,c3715,c3717,c3724,3725 were merged (r3739) into this branch
+
+---> The next merge into trunk will be 3739:HEAD
