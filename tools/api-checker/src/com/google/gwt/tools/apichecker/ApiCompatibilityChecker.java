@@ -38,27 +38,27 @@ import java.util.Set;
  * <p>
  * To compute API diffs, follow these 2 steps:
  * <ol>
- * <li> for each of the two repositories, construct an {@link ApiContainer}
- * <li> call getApiDiff on the {@code ApiDiffGenerator}
+ * <li>for each of the two repositories, construct an {@link ApiContainer}
+ * <li>call getApiDiff on the {@code ApiDiffGenerator}
  * </ol>
  * </p>
  * 
  * <p>
  * An {@code ApiContainer} object is a list of {@link ApiPackage} objects.
  * {@code ApiPackage} objects themselves are list of {@link ApiClass} objects.
- * {@code ApiClass} objects contain list of {@code ApiConstructor},
- * {@code ApiMethod}, and {@code JField} objects.
+ * {@code ApiClass} objects contain list of {@code ApiConstructor}, {@code
+ * ApiMethod}, and {@code JField} objects.
  * </p>
  * 
  * <p>
  * Each {@code ApiDiffGenerator} object computes the list of intersecting and
- * missing {@link ApiPackageDiffGenerator} objects. Each
- * {@code ApiPackageDiffGenerator} object in turn computes the list of
- * intersecting and missing {@link ApiClassDiffGenerator} objects. Each
- * {@code ApiClassDiffGenerator} object in turn computes the list of
- * intersecting and missing API members. The members are represented by
- * {@link ApiConstructor} for constructors, {@link ApiMethod} for methods, and
- * {@link ApiField} for fields.
+ * missing {@link ApiPackageDiffGenerator} objects. Each {@code
+ * ApiPackageDiffGenerator} object in turn computes the list of intersecting and
+ * missing {@link ApiClassDiffGenerator} objects. Each {@code
+ * ApiClassDiffGenerator} object in turn computes the list of intersecting and
+ * missing API members. The members are represented by {@link ApiConstructor}
+ * for constructors, {@link ApiMethod} for methods, and {@link ApiField} for
+ * fields.
  * </p>
  * 
  * <p>
@@ -82,7 +82,8 @@ public class ApiCompatibilityChecker {
   // currently doing only source_compatibility. true by default.
   public static final boolean API_SOURCE_COMPATIBILITY = true;
 
-  // prints which class the member was declared in, false by default
+  // prints which class the member was declared in plus the string message in
+  // ApiChange, false by default
   public static final boolean DEBUG = false;
 
   // prints the API of the two containers, false by default.
@@ -100,6 +101,10 @@ public class ApiCompatibilityChecker {
   // true by default
   public static final boolean REMOVE_NON_SUBCLASSABLE_ABSTRACT_CLASS_FROM_API = true;
 
+  public static final boolean FILTER_DUPLICATES = true;
+
+  public static final boolean DEBUG_DUPLICATE_REMOVAL = false;
+
   // Tweak for log output.
   public static final TreeLogger.Type type = TreeLogger.ERROR;
 
@@ -107,7 +112,7 @@ public class ApiCompatibilityChecker {
   public static Collection<ApiChange> getApiDiff(ApiContainer newApi,
       ApiContainer existingApi, Set<String> whiteList) throws NotFoundException {
     ApiDiffGenerator apiDiff = new ApiDiffGenerator(newApi, existingApi);
-    return getApiDiff(apiDiff, whiteList, true);
+    return getApiDiff(apiDiff, whiteList, FILTER_DUPLICATES);
   }
 
   // Call APIBuilders for each of the 2 source trees
@@ -199,10 +204,14 @@ public class ApiCompatibilityChecker {
   // interface for testing, since do not want to build ApiDiff frequently
   static Collection<ApiChange> getApiDiff(ApiDiffGenerator apiDiff,
       Set<String> whiteList, boolean removeDuplicates) throws NotFoundException {
-    Collection<ApiChange> collection = apiDiff.getApiDiff(removeDuplicates);
-    Set<ApiChange> prunedCollection = new HashSet<ApiChange>();
+    Collection<ApiChange> collection = apiDiff.getApiDiff();
+    if (removeDuplicates) {
+      collection = apiDiff.removeDuplicates(collection);
+    }
+
+    Collection<ApiChange> prunedCollection = new ArrayList<ApiChange>();
     for (ApiChange apiChange : collection) {
-      String apiChangeAsString = apiChange.toString();
+      String apiChangeAsString = apiChange.getStringRepresentationWithoutMessage();
       apiChangeAsString = apiChangeAsString.trim();
       if (whiteList.remove(apiChangeAsString)) {
         continue;
@@ -221,9 +230,11 @@ public class ApiCompatibilityChecker {
     if (whiteList.size() > 0) {
       List<String> al = new ArrayList<String>(whiteList);
       Collections.sort(al);
-      System.err.println("ApiChanges "
-          + al
-          + ",  not found. Are you using a properly formatted configuration file?");
+      System.err.println("ApiChanges [");
+      for (String apiChange : al) {
+        System.err.println(apiChange);
+      }
+      System.err.println("],  not found. Are you using a properly formatted configuration file?");
     }
     List<ApiChange> apiChangeList = new ArrayList<ApiChange>(prunedCollection);
     Collections.sort(apiChangeList);
@@ -237,8 +248,6 @@ public class ApiCompatibilityChecker {
    * represented as the string obtained by invoking the getRelativeSignature()
    * method on {@link ApiElement}.
    * 
-   * @param fileName
-   * @return
    */
   private static Set<String> readWhiteListFromFile(String fileName)
       throws IOException {

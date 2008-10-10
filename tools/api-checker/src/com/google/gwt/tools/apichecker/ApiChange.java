@@ -49,6 +49,13 @@ final class ApiChange implements Comparable<ApiChange> {
 
     OVERLOADED_METHOD_CALL,
 
+    /*
+     * The api (argument types, return types, exceptions in throws clause) for
+     * an api method that can be overridden CANNOT change without breaking api
+     * compatibility
+     */
+    OVERRIDABLE_METHOD_ARGUMENT_TYPE_CHANGE, OVERRIDABLE_METHOD_EXCEPTION_TYPE_CHANGE, OVERRIDABLE_METHOD_RETURN_TYPE_CHANGE,
+
     RETURN_TYPE_ERROR,
 
     STATIC_ADDED,
@@ -78,6 +85,8 @@ final class ApiChange implements Comparable<ApiChange> {
 
   private String stringRepresentation = null;
 
+  private String stringRepresentationWithoutMessage = null;
+
   public ApiChange(ApiElement element, Status status) {
     this(element, status, null);
   }
@@ -104,11 +113,24 @@ final class ApiChange implements Comparable<ApiChange> {
     return status;
   }
 
+  public String getStringRepresentationWithoutMessage() {
+    if (stringRepresentationWithoutMessage == null) {
+      stringRepresentationWithoutMessage = element.getRelativeSignature()
+          + ApiDiffGenerator.DELIMITER + status.name();
+    }
+    return stringRepresentationWithoutMessage;
+  }
+
+  public int hashCodeForDuplication() {
+    return element.hashCode() * 31 + status.hashCode() * 23
+        + (message == null ? 0 : message.hashCode());
+  }
+
   @Override
   public String toString() {
     if (stringRepresentation == null) {
-      stringRepresentation = element.getRelativeSignature()
-          + ApiDiffGenerator.DELIMITER + status.name();
+      stringRepresentation = getStringRepresentationWithoutMessage()
+          + (message == null ? "" : (ApiDiffGenerator.DELIMITER + message));
     }
     return stringRepresentation;
   }

@@ -435,6 +435,26 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return isAnimationEnabled;
   }
 
+  /**
+   * Returns <code>true</code> if the popup should be automatically hidden when
+   * the user clicks outside of it.
+   * 
+   * @return true if autoHide is enabled, false if disabled
+   */
+  public boolean isAutoHideEnabled() {
+    return autoHide;
+  }
+
+  /**
+   * Returns <code>true</code> if keyboard or mouse events that do not target
+   * the PopupPanel or its children should be ignored.
+   * 
+   * @return true if popup is modal, false if not
+   */
+  public boolean isModal() {
+    return modal;
+  }
+
   public boolean onEventPreview(Event event) {
     Element target = DOM.eventGetTarget(event);
 
@@ -542,6 +562,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * Enable or disable the autoHide feature. When enabled, the popup will be
+   * automatically hidden when the user clicks outside of it.
+   * 
+   * @param autoHide true to enable autoHide, false to disable
+   */
+  public void setAutoHideEnabled(boolean autoHide) {
+    this.autoHide = autoHide;
+  }
+
+  /**
    * Sets the height of the panel's child widget. If the panel's child widget
    * has not been set, the height passed in will be cached and used to set the
    * height immediately after the child widget is set.
@@ -566,6 +596,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
+   * When the popup is modal, keyboard or mouse events that do not target the
+   * PopupPanel or its children will be ignored.
+   * 
+   * @param modal true to make the popup modal
+   */
+  public void setModal(boolean modal) {
+    this.modal = modal;
+  }
+
+  /**
    * Sets the popup's position relative to the browser's client area. The
    * popup's position may be set before calling {@link #show()}.
    * 
@@ -573,17 +613,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param top the top position, in pixels
    */
   public void setPopupPosition(int left, int top) {
-    // Keep the popup within the browser's client area, so that they can't get
-    // 'lost' and become impossible to interact with. Note that we don't attempt
-    // to keep popups pegged to the bottom and right edges, as they will then
-    // cause scrollbars to appear, so the user can't lose them.
-    if (left < 0) {
-      left = 0;
-    }
-    if (top < 0) {
-      top = 0;
-    }
-
     // Save the position of the popup
     leftPosition = left;
     topPosition = top;

@@ -16,7 +16,6 @@
 
 package com.google.gwt.tools.apichecker;
 
-import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 
 import java.util.ArrayList;
@@ -46,21 +45,10 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     sb.append("\n");
     return sb.toString();
   }
-  
-  private Set<ApiField> allIntersectingFields = new HashSet<ApiField>();
-  /**
-   * Find all constructors, methods, fields that are present in either
-   * intersection or missing members of this class or any superclass. Total of 6
-   * things to keep track of. These variables are useful for memoization.
-   */
-  private EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>> allIntersectingMethods = null;
-
-  private Set<ApiField> allMissingFields = null;
-  private EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>> allMissingMethods = null;
 
   private final ApiDiffGenerator apiDiffGenerator;
   private final String className;
-  private HashMap<ApiField, Set<ApiChange.Status>> intersectingFields = null;
+  private HashMap<ApiField, Set<ApiChange>> intersectingFields = null;
 
   /**
    * Map from methods and constructors in intersection to a string describing
@@ -90,7 +78,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
           + ", one of the class objects is null");
     }
 
-    intersectingFields = new HashMap<ApiField, Set<ApiChange.Status>>();
+    intersectingFields = new HashMap<ApiField, Set<ApiChange>>();
     intersectingMethods = new EnumMap<ApiClass.MethodType, Map<ApiAbstractMethod, Set<ApiChange>>>(
         ApiClass.MethodType.class);
     missingMethods = new EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>>(
@@ -110,67 +98,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     return getName().compareTo(other.getName());
   }
 
-  /**
-   * 
-   * cleanApiDiff: remove an ApiDiff message from this class, if it is present
-   * in the apiDiffs of any of the super-classes.
-   * 
-   * Compute the union of apiDiffs of all superclasses as part of this method.
-   * Must be invoked only after intersectingMembers et al. have been computed.
-   * Algorithm: - Find the immediate superclass that has computed these
-   * apiDiffs. - Compute the union of apiDiffs of superClass with own apiDiffs.
-   */
-  void cleanApiDiff() {
-    // check if unions have already been computed.
-    if (allMissingMethods != null) {
-      return;
-    }
-    ApiClassDiffGenerator other = getSuperclassApiClassDiffGenerator();
-    // compute 'all*' fields for the 'other' object.
-    if (other != null) {
-      other.cleanApiDiff();
-    }
-    allIntersectingMethods = new EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>>(
-        ApiClass.MethodType.class);
-    allMissingMethods = new EnumMap<ApiClass.MethodType, Set<ApiAbstractMethod>>(
-        ApiClass.MethodType.class);
-
-    for (ApiClass.MethodType methodType : ApiClass.MethodType.values()) {
-      // for methods/constructors: clean the current apiDiffs
-      if (other != null) {
-        removeAll(intersectingMethods.get(methodType),
-            other.allIntersectingMethods.get(methodType));
-        missingMethods.get(methodType).removeAll(
-            other.allMissingMethods.get(methodType));
-      }
-      // for methods/constructors: compute the allIntersecting*, allMissing*
-      HashSet<ApiAbstractMethod> tempSet1 = new HashSet<ApiAbstractMethod>(
-          intersectingMethods.get(methodType).keySet());
-      HashSet<ApiAbstractMethod> tempSet2 = new HashSet<ApiAbstractMethod>(
-          missingMethods.get(methodType));
-      if (other != null) {
-        tempSet1.addAll(other.allIntersectingMethods.get(methodType));
-        tempSet2.addAll(other.allMissingMethods.get(methodType));
-      }
-      allIntersectingMethods.put(methodType, tempSet1);
-      allMissingMethods.put(methodType, tempSet2);
-    }
-
-    // for fields: clean the current apiDiffs
-    if (other != null) {
-      removeAll(intersectingFields, other.allIntersectingFields);
-      missingFields.removeAll(other.allMissingFields);
-    }
-    // for fields: compute allIntersectingFields, allMissingFields
-    allIntersectingFields = new HashSet<ApiField>(intersectingFields.keySet());
-    allMissingFields = new HashSet<ApiField>(missingFields);
-    if (other != null) {
-      allIntersectingFields.addAll(other.allIntersectingFields);
-      allMissingFields.addAll(other.allMissingFields);
-    }
-  }
-
-  // TODO(amitmanjhi): for methods, think about variable length arguments
+  // TODO(amitmanjhi): handle methods with variable length arguments
   void computeApiDiff() {
     Set<String> newFieldNames = newClass.getApiFieldNames();
     Set<String> oldFieldNames = oldClass.getApiFieldNames();
@@ -192,13 +120,6 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
 
   Collection<ApiChange> getApiDiff() {
     Collection<ApiChange.Status> apiStatusChanges = oldClass.getModifierChanges(newClass);
-    /*
-     * int totalSize = missingFields.size() + intersectingFields.size() +
-     * apiStatusChanges.size(); for (ApiClass.MethodType methodType :
-     * ApiClass.MethodType.values()) { totalSize +=
-     * (missingMethods.get(methodType).size() + intersectingMethods.get(
-     * methodType).size()); } if (totalSize == 0) { return EMPTY_COLLECTION; }
-     */
     Collection<ApiChange> apiChangeCollection = new ArrayList<ApiChange>();
     for (ApiChange.Status apiStatus : apiStatusChanges) {
       apiChangeCollection.add(new ApiChange(oldClass, apiStatus));
@@ -225,12 +146,6 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
    */
   private <T> void addProperty(Map<T, Set<ApiChange>> hashMap, T key,
       ApiChange property) {
-    /*
-     * if (!ApiCompatibilityChecker.PRINT_COMPATIBLE && (property.getStatus() ==
-     * ApiChange.Status.COMPATIBLE)) { return; } if
-     * (!ApiCompatibilityChecker.PRINT_COMPATIBLE_WITH && property.getStatus() ==
-     * ApiChange.Status.COMPATIBLE_WITH) { return; }
-     */
     Set<ApiChange> value = hashMap.get(key);
     if (value == null) {
       value = new HashSet<ApiChange>();
@@ -245,8 +160,8 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
         intersectingFields.keySet());
     Collections.sort(intersectingFieldsList);
     for (ApiField apiField : intersectingFieldsList) {
-      for (ApiChange.Status status : intersectingFields.get(apiField)) {
-        collection.add(new ApiChange(apiField, status));
+      for (ApiChange apiChange : intersectingFields.get(apiField)) {
+        collection.add(apiChange);
       }
     }
     return collection;
@@ -275,22 +190,6 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     return collection;
   }
 
-  /**
-   * return the ApiClassDiffGenerator object for the "closest" ancestor of
-   * oldClass. return null if no ancestor of oldClass has ApiClassDiffGenerator
-   */
-  private ApiClassDiffGenerator getSuperclassApiClassDiffGenerator() {
-    ApiClassDiffGenerator other = null;
-    JClassType classType = oldClass.getClassObject();
-    while ((classType = classType.getSuperclass()) != null) {
-      other = apiDiffGenerator.findApiClassDiffGenerator(classType.getQualifiedSourceName());
-      if (other != null) {
-        return other;
-      }
-    }
-    return null;
-  }
-
   private boolean isIncompatibileDueToMethodOverloading(
       Set<ApiAbstractMethod> methodsInNew,
       Set<ApiAbstractMethod> methodsInExisting) {
@@ -308,6 +207,12 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     return numMatchingSignature > 1;
   }
 
+  /**
+   * Processes elements in intersection, checking for incompatibilities.
+   * 
+   * @param intersection
+   * @param methodType
+   */
   private void processElementsInIntersection(Set<String> intersection,
       ApiClass.MethodType methodType) {
 
@@ -332,39 +237,113 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
             "Many methods in the new API with similar signatures. Methods = "
                 + methodsInNew + " This might break API source compatibility"));
       }
-      // We want to find out which method calls that the current API supports
-      // will succeed even with the new API. Determine this by iterating over
-      // the methods of the current API
+
+      /*
+       * We want to find out which method calls that the current API supports
+       * will succeed even with the new API. Determine this by iterating over
+       * the methods of the current API. Keep track of a method that has the
+       * same exact argument types as the old method. If such a method exists,
+       * check Api compatibility with just that method. Otherwise, check api
+       * compatibility with ALL methods that might be compatible. (This
+       * conservative estimate will work as long as we do not change the Api in
+       * pathological ways.)
+       */
       for (ApiAbstractMethod methodInExisting : methodsInExisting) {
+        Set<ApiChange> allPossibleApiChanges = new HashSet<ApiChange>();
+        ApiAbstractMethod sameSignatureMethod = null;
         for (ApiAbstractMethod methodInNew : methodsInNew) {
+          Set<ApiChange> currentApiChange = new HashSet<ApiChange>();
+          boolean hasSameSignature = false;
           if (methodInExisting.isCompatible(methodInNew)) {
-            ApiChange returnType = methodInExisting.checkReturnTypeCompatibility(methodInNew);
-            if (returnType != null) {
-              addProperty(intersectingElements, methodInExisting, returnType);
-            }
-            for (ApiChange apiChange : methodInExisting.checkExceptions(methodInNew)) {
-              addProperty(intersectingElements, methodInExisting, apiChange);
+            if (methodInExisting.isOverridable()) {
+              // check if the new method's api is exactly the same
+              currentApiChange.addAll(methodInExisting.getAllChangesInApi(methodInNew));
+            } else {
+              // check for changes to return type and exceptions
+              currentApiChange.addAll(methodInExisting.checkExceptionsAndReturnType(methodInNew));
             }
             for (ApiChange.Status status : methodInExisting.getModifierChanges(methodInNew)) {
-              addProperty(intersectingElements, methodInExisting,
-                  new ApiChange(methodInExisting, status));
+              currentApiChange.add(new ApiChange(methodInExisting, status));
             }
-            onlyInNew.remove(methodInNew);
-            onlyInExisting.remove(methodInExisting);
-            String signatureInNew = methodInNew.getApiSignature();
-            String signatureInExisting = methodInExisting.getApiSignature();
-            if (signatureInNew.equals(signatureInExisting)) {
-              commonSignature.add(signatureInNew);
-              addProperty(intersectingElements, methodInExisting,
-                  new ApiChange(methodInExisting, ApiChange.Status.COMPATIBLE));
+            if (methodInNew.getInternalSignature().equals(
+                methodInExisting.getInternalSignature())) {
+              currentApiChange.add(new ApiChange(methodInExisting,
+                  ApiChange.Status.COMPATIBLE));
+              hasSameSignature = true;
             } else {
-              addProperty(intersectingElements, methodInExisting,
-                  new ApiChange(methodInExisting,
-                      ApiChange.Status.COMPATIBLE_WITH, signatureInNew));
+              currentApiChange.add(new ApiChange(methodInExisting,
+                  ApiChange.Status.COMPATIBLE_WITH,
+                  methodInNew.getApiSignature()));
+            }
+          }
+
+          if (currentApiChange.size() > 0) {
+            if (hasSameSignature) {
+              allPossibleApiChanges = currentApiChange;
+              sameSignatureMethod = methodInNew;
+            } else if (sameSignatureMethod == null) {
+              allPossibleApiChanges.addAll(currentApiChange);
+            }
+          }
+        }
+        // put the best Api match
+        if (allPossibleApiChanges.size() > 0) {
+          onlyInExisting.remove(methodInExisting);
+          String signatureInExisting = methodInExisting.getInternalSignature();
+          if (sameSignatureMethod != null
+              && signatureInExisting.equals(sameSignatureMethod.getInternalSignature())) {
+            commonSignature.add(signatureInExisting);
+          }
+          for (ApiChange apiChange : allPossibleApiChanges) {
+            addProperty(intersectingElements, methodInExisting, apiChange);
+          }
+        }
+      }
+
+      /**
+       * Look for incompatiblities that might result due to new methods
+       * over-loading existing methods. Instead of applying JLS to determine the
+       * best match, just be conservative and report all possible
+       * incompatibilities if there is no old method with the exact same
+       * signature.
+       * 
+       * <pre>
+       * class A { // old version 
+       *   final void foo(Set<String> p1, Set<String> p2); 
+       * }
+       * 
+       * class A { // new version 
+       *   final void foo(Set<String> p1, Set<String> p2); 
+       *   void foo(HashSet<String> p1, Set<String> p2) throws ...; 
+       * }
+       * </pre>
+       */
+      for (ApiAbstractMethod methodInNew : methodsInNew) {
+        ApiAbstractMethod sameSignatureMethod = null;
+        for (ApiAbstractMethod methodInExisting : methodsInExisting) {
+          if (methodInNew.getInternalSignature().equals(
+              methodInExisting.getInternalSignature())) {
+            sameSignatureMethod = methodInExisting;
+            break;
+          }
+        }
+
+        // do not look for incompatibilities with overloaded methods, if exact
+        // match exists.
+        if (sameSignatureMethod != null) {
+          continue;
+        }
+        for (ApiAbstractMethod methodInExisting : methodsInExisting) {
+          if (methodInNew.isCompatible(methodInExisting)) {
+            // new method is going to be called instead of existing method,
+            // determine incompatibilities
+            for (ApiChange apiChange : methodInExisting.checkExceptionsAndReturnType(methodInNew)) {
+              addProperty(intersectingElements, methodInExisting, apiChange);
             }
           }
         }
       }
+
       // printOutput(commonSignature, onlyInExisting, onlyInNew);
     }
     missingElements.addAll(onlyInExisting);
@@ -374,16 +353,10 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     for (String fieldName : intersection) {
       ApiField newField = newClass.getApiFieldByName(fieldName);
       ApiField oldField = oldClass.getApiFieldByName(fieldName);
-      Set<ApiChange.Status> apiChanges = oldField.getModifierChanges(newField);
+      Set<ApiChange> apiChanges = oldField.getModifierChanges(newField);
       if (apiChanges.size() > 0) {
         intersectingFields.put(oldField, apiChanges);
       }
-    }
-  }
-
-  private <E, V> void removeAll(Map<E, Set<V>> tempMap, Set<E> removeKeys) {
-    for (E element : removeKeys) {
-      tempMap.remove(element);
     }
   }
 

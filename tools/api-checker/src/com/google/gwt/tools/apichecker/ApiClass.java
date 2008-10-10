@@ -237,6 +237,10 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     }
   }
 
+  boolean isSubclassableApiClass() {
+    return isSubclassableApiClass;
+  }
+
   private JField[] getAccessibleFields() {
     Map<String, JField> fieldsBySignature = new HashMap<String, JField>();
     JClassType tempClassType = classType;

@@ -18,13 +18,12 @@ package com.google.gwt.museum.client.defaultmuseum;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuBar;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * The {@link PopupPanel} used to display sub menus in a {@link MenuBar} is not
- * accessible, nor is it under the {@link MenuBar MenuBar's} DOM structure, so
- * it cannot be uniquely styled.
+ * The {@link com.google.gwt.user.client.ui.PopupPanel} used to display sub
+ * menus in a {@link MenuBar} is not accessible, nor is it under the
+ * {@link MenuBar MenuBar's} DOM structure, so it cannot be uniquely styled.
  */
 public class Issue1169 extends AbstractIssue {
   /**
