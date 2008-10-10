@@ -66,7 +66,8 @@ public class JProgram extends JNode {
           "java.lang.Iterable", "java.util.Iterator",
           "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject",
-          "com.google.gwt.lang.ClassLiteralHolder",}));
+          "com.google.gwt.lang.ClassLiteralHolder",
+          "com.google.gwt.lang.EntryMethodHolder",}));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
 
@@ -269,6 +270,7 @@ public class JProgram extends JNode {
   }
 
   public void addEntryMethod(JMethod entryPoint) {
+    assert entryPoint.isStatic();
     if (!entryMethods.contains(entryPoint)) {
       entryMethods.add(entryPoint);
     }
@@ -404,6 +406,7 @@ public class JProgram extends JNode {
       JReferenceType enclosingType, JType returnType, boolean isAbstract,
       boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
     assert (name != null);
+    assert (enclosingType != null);
     assert (returnType != null);
     assert (!isAbstract || !isNative);
 
@@ -863,7 +866,6 @@ public class JProgram extends JNode {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.accept(entryMethods);
       visitor.accept(allTypes);
     }
     visitor.endVisit(this, ctx);

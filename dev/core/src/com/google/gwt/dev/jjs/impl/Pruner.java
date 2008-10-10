@@ -640,6 +640,18 @@ public class Pruner {
 
     @Override
     public boolean visit(final JMethod x, Context ctx) {
+      JReferenceType enclosingType = x.getEnclosingType();
+      if (program.isJavaScriptObject(enclosingType)) {
+        // Calls to JavaScriptObject types rescue those types.
+        boolean instance = !x.isStatic() || program.isStaticImpl(x);
+        rescue(enclosingType, true, instance);
+      }
+
+      if (x.isStatic()) {
+        // JLS 12.4.1: references to static methods rescue the enclosing class
+        rescue(enclosingType, true, false);
+      }
+
       if (x.isNative()) {
         // Manually rescue native parameter references
         final JsniMethodBody body = (JsniMethodBody) x.getBody();
@@ -667,17 +679,7 @@ public class Pruner {
 
     @Override
     public boolean visit(JMethodCall call, Context ctx) {
-      JMethod target = call.getTarget();
-      JReferenceType enclosingType = target.getEnclosingType();
-      if (program.isJavaScriptObject(enclosingType)) {
-        // Calls to JavaScriptObject types rescue those types.
-        boolean instance = !target.isStatic() || program.isStaticImpl(target);
-        rescue(enclosingType, true, instance);
-      } else if (target.isStatic()) {
-        // JLS 12.4.1: references to static methods rescue the enclosing class
-        rescue(enclosingType, true, false);
-      }
-      rescue(target);
+      rescue(call.getTarget());
       return true;
     }
 

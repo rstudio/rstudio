@@ -107,12 +107,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
 
   @Override
   public boolean visit(JProgram x, Context ctx) {
-    for (int i = 0; i < x.entryMethods.size(); ++i) {
-      JMethod method = x.entryMethods.get(i);
-      accept(method);
-      newline();
-      newline();
-    }
     for (int i = 0; i < x.getDeclaredTypes().size(); ++i) {
       JReferenceType type = x.getDeclaredTypes().get(i);
       accept(type);

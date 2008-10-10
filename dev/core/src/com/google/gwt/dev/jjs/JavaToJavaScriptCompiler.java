@@ -154,8 +154,8 @@ public class JavaToJavaScriptCompiler {
       throws UnableToCompleteException {
     JMethod bootStrapMethod = program.createMethod(
         program.createSourceInfoSynthetic("Bootstrap method"),
-        "init".toCharArray(), null, program.getTypeVoid(), false, true, true,
-        false, false);
+        "init".toCharArray(), program.getIndexedType("EntryMethodHolder"),
+        program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();

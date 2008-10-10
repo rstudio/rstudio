@@ -376,6 +376,18 @@ public class GenerateJavaScriptAST {
 
     private final JsName prototype = objectScope.declareName("prototype");
 
+    /**
+     * The JavaScript functions corresponding to the entry methods of the
+     * program ({@link JProgram#entryMethods}).
+     */
+    private JsFunction[] entryFunctions;
+
+    /**
+     * A reverse index for {@link JProgram#entryMethods}.  Each entry method
+     * is mapped to its integer index.
+     */
+    private Map<JMethod, Integer> entryMethodToIndex;
+
     {
       globalTemp.setObfuscatable(false);
       prototype.setObfuscatable(false);
@@ -835,6 +847,10 @@ public class GenerateJavaScriptAST {
       }
 
       push(jsFunc);
+      Integer entryIndex = entryMethodToIndex.get(x);
+      if (entryIndex != null) {
+        entryFunctions[entryIndex] = jsFunc;
+      }
       currentMethod = null;
     }
 
@@ -976,15 +992,7 @@ public class GenerateJavaScriptAST {
       // types don't push
 
       // Generate entry methods
-      List<JsFunction> entryFuncs = popList(x.entryMethods.size()); // entryMethods
-      for (int i = 0; i < entryFuncs.size(); ++i) {
-        JsFunction func = entryFuncs.get(i);
-        if (func != null) {
-          globalStmts.add(func.makeStmt());
-        }
-      }
-
-      generateGwtOnLoad(entryFuncs, globalStmts);
+      generateGwtOnLoad(entryFunctions, globalStmts);
       generateNullFunc(globalStmts);
 
       // Add a few things onto the beginning.
@@ -1124,6 +1132,16 @@ public class GenerateJavaScriptAST {
         return false;
       }
       currentMethod = x;
+      return true;
+    }
+
+    @Override
+    public boolean visit(JProgram x, Context ctx) {
+      entryFunctions = new JsFunction[x.entryMethods.size()];
+      entryMethodToIndex = new IdentityHashMap<JMethod, Integer>();
+      for (int i = 0; i < x.entryMethods.size(); i++) {
+        entryMethodToIndex.put(x.entryMethods.get(i), i);
+      }
       return true;
     }
 
@@ -1269,7 +1287,7 @@ public class GenerateJavaScriptAST {
       generateTypeId(x, globalStmts);
     }
 
-    private void generateGwtOnLoad(List<JsFunction> entryFuncs,
+    private void generateGwtOnLoad(JsFunction[] entryFuncs,
         List<JsStatement> globalStmts) {
       /**
        * <pre>
@@ -1319,8 +1337,7 @@ public class GenerateJavaScriptAST {
       JsBlock callBlock = new JsBlock(sourceInfo);
       jsIf.setElseStmt(callBlock);
       jsTry.setTryBlock(callBlock);
-      for (int i = 0; i < entryFuncs.size(); ++i) {
-        JsFunction func = entryFuncs.get(i);
+      for (JsFunction func : entryFuncs) {
         if (func != null) {
           JsInvocation call = new JsInvocation(sourceInfo);
           call.setQualifier(func.getName().makeRef(sourceInfo));
