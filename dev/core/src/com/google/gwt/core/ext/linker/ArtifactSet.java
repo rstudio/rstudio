@@ -15,6 +15,7 @@
  */
 package com.google.gwt.core.ext.linker;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -25,7 +26,7 @@ import java.util.TreeSet;
 /**
  * Provides stable ordering and de-duplication of artifacts.
  */
-public final class ArtifactSet implements SortedSet<Artifact<?>> {
+public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
 
   private SortedSet<Artifact<?>> treeSet = new TreeSet<Artifact<?>>();
 

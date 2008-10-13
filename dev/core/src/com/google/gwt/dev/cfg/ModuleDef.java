@@ -408,7 +408,11 @@ public class ModuleDef implements PublicOracle {
          * one possible value and no existing provider.
          */
         if (prop.getProvider() == null && prop.getAllowedValues().length > 1) {
-          prop.setProvider(new DefaultPropertyProvider(this, prop));
+          String src = "{";
+          src += "return __gwt_getMetaProperty(\"";
+          src += prop.getName();
+          src += "\"); }";
+          prop.setProvider(new PropertyProvider(src));
         }
       }
     }

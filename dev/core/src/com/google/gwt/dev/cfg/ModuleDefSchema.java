@@ -214,7 +214,6 @@ public class ModuleDefSchema extends Schema {
     }
 
     protected Schema __property_provider_begin(BindingProperty property) {
-      property.setProvider(new PropertyProvider(moduleDef, property));
       return fChild = new PropertyProviderBodySchema();
     }
 
@@ -233,7 +232,7 @@ public class ModuleDefSchema extends Schema {
       int lineNumber = childSchema.getStartLineNumber();
       JsFunction fn = parseJsBlock(lineNumber, script);
 
-      property.getProvider().setBody(fn.getBody());
+      property.setProvider(new PropertyProvider(fn.getBody().toSource()));
     }
 
     protected Schema __public_begin(String path, String includes,

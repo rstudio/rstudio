@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,36 +15,20 @@
  */
 package com.google.gwt.dev.cfg;
 
-import com.google.gwt.dev.js.ast.JsBlock;
+import java.io.Serializable;
 
 /**
  * Produces a deferred binding property value by executing JavaScript code.
  */
-public class PropertyProvider {
+public class PropertyProvider implements Serializable {
 
-  private JsBlock body;
+  private final String body;
 
-  private final ModuleDef module;
-  private final Property property;
-
-  public PropertyProvider(ModuleDef module, Property property) {
-    this.module = module;
-    this.property = property;
-  }
-
-  public JsBlock getBody() {
-    return body;
-  }
-
-  public ModuleDef getModule() {
-    return module;
-  }
-
-  public Property getProperty() {
-    return property;
-  }
-
-  public void setBody(JsBlock body) {
+  public PropertyProvider(String body) {
     this.body = body;
+  }
+
+  public String getBody() {
+    return body;
   }
 }

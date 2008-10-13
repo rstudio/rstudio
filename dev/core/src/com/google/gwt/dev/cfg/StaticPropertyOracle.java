@@ -19,11 +19,13 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 
+import java.io.Serializable;
+
 /**
  * An implementation of {@link PropertyOracle} that contains property values,
  * rather than computing them.
  */
-public class StaticPropertyOracle implements PropertyOracle {
+public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
   private final ConfigurationProperty[] configProps;
 

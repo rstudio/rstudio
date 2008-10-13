@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.cfg;
 
+import java.io.Serializable;
+
 /**
  * Represents an abstract module property.
  */
-public abstract class Property implements Comparable<Property> {
+public abstract class Property implements Comparable<Property>, Serializable {
 
   protected final String name;
 
