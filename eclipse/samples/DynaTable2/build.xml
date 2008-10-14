@@ -46,6 +46,18 @@
     </java>
   </target>
 
+  <target name="server" depends="deploy" description="Run the deployed app in a Jetty server">
+    <echo message="PLEASE BROWSE TO: http://localhost:8888/DynaTable.html"/>
+    <java classname="org.mortbay.jetty.Main" fork="yes">
+      <arg value="8888" />
+      <arg value="-webapp" />
+      <arg file="war" />
+      <classpath>
+        <pathelement location="jetty-6.1.11.jar" />
+      </classpath>
+    </java>
+  </target>
+
   <target name="build" depends="javac, gwtc, deploy" description="Build this project" />
 
   <target name="clean" description="Cleans this project's intermediate and output files">
