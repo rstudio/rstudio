@@ -17,7 +17,6 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.BindingProperty;
@@ -32,24 +31,22 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
-import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
+import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
+import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerTreeLoggerFlag;
+import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.DetachedTreeLoggerWindow;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
-import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
-import com.google.gwt.util.tools.ArgHandlerExtra;
-import com.google.gwt.util.tools.ArgHandlerFlag;
-import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ToolBase;
 
 import java.io.File;
@@ -61,49 +58,6 @@ import java.util.SortedSet;
  * The main executable entry point for the GWT Java to JavaScript compiler.
  */
 public class GWTCompiler extends ToolBase {
-
-  private class ArgHandlerModuleName extends ArgHandlerExtra {
-
-    @Override
-    public boolean addExtraArg(String arg) {
-      setModuleName(arg);
-      return true;
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Specifies the name of the module to compile";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"module"};
-    }
-
-    @Override
-    public boolean isRequired() {
-      return true;
-    }
-  }
-
-  /**
-   * Argument handler for making the compiler run in "validation" mode.
-   */
-  private class ArgHandlerValidateOnlyFlag extends ArgHandlerFlag {
-
-    public String getPurpose() {
-      return "Validate all source code, but do not compile";
-    }
-
-    public String getTag() {
-      return "-validateOnly";
-    }
-
-    public boolean setFlag() {
-      jjsOptions.setValidateOnly(true);
-      return true;
-    }
-  }
 
   private class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
@@ -123,8 +77,8 @@ public class GWTCompiler extends ToolBase {
         propertyOracles[i] = new StaticPropertyOracle(orderedProps,
             orderedPropValues, configProps);
         rebindOracles[i] = new StandardRebindOracle(compilationState,
-            propertyOracles[i], module, rules, genDir, generatorResourcesDir,
-            generatorArtifacts);
+            propertyOracles[i], module, rules, options.getGenDir(),
+            generatorResourcesDir, generatorArtifacts);
       }
     }
 
@@ -180,69 +134,27 @@ public class GWTCompiler extends ToolBase {
 
   private CompilationState compilationState;
 
-  private File genDir;
-
   private File generatorResourcesDir;
-
-  private JJSOptions jjsOptions = new JJSOptions();
-
-  private Type logLevel;
 
   private ModuleDef module;
 
-  private String moduleName;
-
-  private File outDir;
+  private CompilerOptionsImpl options = new CompilerOptionsImpl();
 
   private Rules rules;
 
-  private boolean useGuiLogger;
-
   public GWTCompiler() {
-    registerHandler(new ArgHandlerLogLevel() {
-      @Override
-      public void setLogLevel(Type level) {
-        logLevel = level;
-      }
-    });
+    registerHandler(new ArgHandlerLogLevel(options));
+    registerHandler(new ArgHandlerGenDir(options));
+    registerHandler(new ArgHandlerOutDir(options));
+    registerHandler(new ArgHandlerTreeLoggerFlag(options));
 
-    registerHandler(new ArgHandlerGenDir() {
-      @Override
-      public void setDir(File dir) {
-        genDir = dir;
-      }
-    });
+    registerHandler(new ArgHandlerModuleName(options));
 
-    registerHandler(new ArgHandlerOutDir() {
-      @Override
-      public void setDir(File dir) {
-        outDir = dir;
-      }
-    });
+    registerHandler(new ArgHandlerScriptStyle(options));
+    registerHandler(new ArgHandlerEnableAssertions(options));
+    registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
 
-    registerHandler(new ArgHandlerTreeLoggerFlag() {
-      @Override
-      public boolean setFlag() {
-        useGuiLogger = true;
-        return true;
-      }
-    });
-
-    registerHandler(new ArgHandlerModuleName());
-
-    registerHandler(new ArgHandlerScriptStyle(jjsOptions));
-
-    registerHandler(new ArgHandlerEnableAssertions(jjsOptions));
-
-    registerHandler(new ArgHandlerDisableAggressiveOptimization() {
-      @Override
-      public boolean setFlag() {
-        GWTCompiler.this.setAggressivelyOptimize(false);
-        return true;
-      }
-    });
-
-    registerHandler(new ArgHandlerValidateOnlyFlag());
+    registerHandler(new ArgHandlerValidateOnlyFlag(options));
   }
 
   public void distill(TreeLogger logger, ModuleDef moduleDef)
@@ -254,6 +166,7 @@ public class GWTCompiler extends ToolBase {
     checkModule(logger);
 
     // Place generated resources inside the out dir as a sibling to the module
+    File outDir = options.getOutDir();
     generatorResourcesDir = new File(outDir, GWT_COMPILER_DIR + File.separator
         + moduleDef.getName() + File.separator + "generated");
 
@@ -272,7 +185,7 @@ public class GWTCompiler extends ToolBase {
 
     rules = module.getRules();
     String[] declEntryPts;
-    if (jjsOptions.isValidateOnly()) {
+    if (options.isValidateOnly()) {
       // TODO: revisit this.. do we even need to run JJS?
       logger.log(TreeLogger.INFO, "Validating compilation " + module.getName(),
           null);
@@ -296,15 +209,15 @@ public class GWTCompiler extends ToolBase {
     WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
         compilationState, rpo);
     JavaToJavaScriptCompiler jjs = new JavaToJavaScriptCompiler(logger,
-        frontEnd, declEntryPts, jjsOptions);
+        frontEnd, declEntryPts, options, options.isValidateOnly());
 
-    if (jjsOptions.isValidateOnly()) {
+    if (options.isValidateOnly()) {
       logger.log(TreeLogger.INFO, "Validation succeeded", null);
       return;
     }
 
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
-        module, outDir, generatorResourcesDir, jjsOptions);
+        module, outDir, generatorResourcesDir, options);
     compilePermutations(logger, jjs, rpo, linkerContext);
 
     logger.log(TreeLogger.INFO, "Compilation succeeded", null);
@@ -312,63 +225,19 @@ public class GWTCompiler extends ToolBase {
     linkerContext.link(logger, linkerContext, null);
   }
 
-  public File getGenDir() {
-    return genDir;
+  public CompilerOptions getCompilerOptions() {
+    return new CompilerOptionsImpl(options);
   }
 
-  public Type getLogLevel() {
-    return logLevel;
-  }
-
-  public String getModuleName() {
-    return moduleName;
-  }
-
-  public boolean getUseGuiLogger() {
-    return useGuiLogger;
-  }
-
-  public void setAggressivelyOptimize(boolean aggressive) {
-    jjsOptions.setAggressivelyOptimize(aggressive);
-  }
-
-  public void setCompilerOptions(JJSOptions options) {
-    jjsOptions.copyFrom(options);
-  }
-
-  public void setGenDir(File dir) {
-    genDir = dir;
-  }
-
-  public void setLogLevel(Type level) {
-    this.logLevel = level;
-  }
-
-  public void setModuleName(String name) {
-    moduleName = name;
-  }
-
-  public void setOutDir(File outDir) {
-    this.outDir = outDir;
-  }
-
-  public void setStyleDetailed() {
-    jjsOptions.setOutput(JsOutputOption.DETAILED);
-  }
-
-  public void setStyleObfuscated() {
-    jjsOptions.setOutput(JsOutputOption.OBFUSCATED);
-  }
-
-  public void setStylePretty() {
-    jjsOptions.setOutput(JsOutputOption.PRETTY);
+  public void setCompilerOptions(CompilerOptions options) {
+    this.options.copyFrom(options);
   }
 
   /**
    * Ensure the module has at least one entry point (except in validation mode).
    */
   private void checkModule(TreeLogger logger) throws UnableToCompleteException {
-    if (!jjsOptions.isValidateOnly()
+    if (!options.isValidateOnly()
         && module.getEntryPointTypeNames().length == 0) {
       logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
       throw new UnableToCompleteException();
@@ -402,10 +271,10 @@ public class GWTCompiler extends ToolBase {
     // Set any platform specific system properties.
     BootStrapPlatform.applyPlatformHacks();
 
-    if (useGuiLogger) {
+    if (options.isUseGuiLogger()) {
       // Initialize a tree logger window.
       DetachedTreeLoggerWindow loggerWindow = DetachedTreeLoggerWindow.getInstance(
-          "Build Output for " + moduleName, 800, 600, true);
+          "Build Output for " + options.getModuleName(), 800, 600, true);
 
       // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
       BootStrapPlatform.maybeInitializeAWT();
@@ -437,10 +306,10 @@ public class GWTCompiler extends ToolBase {
 
   private boolean run(AbstractTreeLogger logger) {
     try {
-      logger.setMaxDetail(logLevel);
+      logger.setMaxDetail(options.getLogLevel());
 
       ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger,
-          moduleName);
+          options.getModuleName());
       distill(logger, moduleDef);
       return true;
     } catch (UnableToCompleteException e) {

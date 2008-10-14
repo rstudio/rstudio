@@ -13,15 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionScriptStyle;
+import com.google.gwt.dev.jjs.JsOutputOption;
 
 /**
- * Controls options for the {@link JavaToJavaScriptCompiler}.
+ * Option for setting the compiler output style.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+public interface OptionScriptStyle {
+
+  /**
+   * Returns the compiler output style.
+   */
+  JsOutputOption getOutput();
+
+  /**
+   * Sets the compiler output style.
+   */
+  void setOutput(JsOutputOption obfuscated);
 }

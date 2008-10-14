@@ -13,19 +13,19 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.util.tools;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
  * Handles the -ea command line flag.
  */
-public class ArgHandlerEnableAssertions extends ArgHandlerFlag {
+public final class ArgHandlerEnableAssertions extends ArgHandlerFlag {
 
-  private final JJSOptions optionsToModify;
+  private final OptionEnableAssertions option;
 
-  public ArgHandlerEnableAssertions(JJSOptions optionsToModify) {
-    this.optionsToModify = optionsToModify;
+  public ArgHandlerEnableAssertions(OptionEnableAssertions option) {
+    this.option = option;
   }
 
   @Override
@@ -40,7 +40,7 @@ public class ArgHandlerEnableAssertions extends ArgHandlerFlag {
 
   @Override
   public boolean setFlag() {
-    optionsToModify.setEnableAssertions(true);
+    option.setEnableAssertions(true);
     return true;
   }
 }

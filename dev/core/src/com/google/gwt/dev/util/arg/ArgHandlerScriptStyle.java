@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.util.tools.ArgHandler;
 
@@ -24,10 +23,10 @@ import com.google.gwt.util.tools.ArgHandler;
  */
 public final class ArgHandlerScriptStyle extends ArgHandler {
 
-  private final JJSOptions optionsToModify;
+  private final OptionScriptStyle option;
 
-  public ArgHandlerScriptStyle(JJSOptions optionsToModify) {
-    this.optionsToModify = optionsToModify;
+  public ArgHandlerScriptStyle(OptionScriptStyle option) {
+    this.option = option;
   }
 
   public String[] getDefaultArgs() {
@@ -50,13 +49,13 @@ public final class ArgHandlerScriptStyle extends ArgHandler {
     if (startIndex + 1 < args.length) {
       String style = args[startIndex + 1].toLowerCase();
       if (style.startsWith("obf")) {
-        optionsToModify.setOutput(JsOutputOption.OBFUSCATED);
+        option.setOutput(JsOutputOption.OBFUSCATED);
         return 1;
       } else if ("pretty".equals(style)) {
-        optionsToModify.setOutput(JsOutputOption.PRETTY);
+        option.setOutput(JsOutputOption.PRETTY);
         return 1;
       } else if ("detailed".equals(style)) {
-        optionsToModify.setOutput(JsOutputOption.DETAILED);
+        option.setOutput(JsOutputOption.DETAILED);
         return 1;
       }
     }

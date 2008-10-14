@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2007 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,31 +15,39 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerDir;
-
-import java.io.File;
+import com.google.gwt.util.tools.ArgHandlerFlag;
 
 /**
- * Argument handler for processing the code generation directory flag.
+ * Handles the -XdisableAggressiveOptimization command line flag.
  */
-public final class ArgHandlerGenDir extends ArgHandlerDir {
+public final class ArgHandlerDisableAggressiveOptimization extends
+    ArgHandlerFlag {
+  private final OptionAggressivelyOptimize option;
 
-  private final OptionGenDir option;
-
-  public ArgHandlerGenDir(OptionGenDir option) {
+  public ArgHandlerDisableAggressiveOptimization(
+      OptionAggressivelyOptimize option) {
     this.option = option;
   }
 
+  @Override
   public String getPurpose() {
-    return "The directory into which generated files will be written for review";
-  }
-
-  public String getTag() {
-    return "-gen";
+    return "Troubleshooting: Prevent the web mode compiler from performing "
+        + "aggressive optimizations.";
   }
 
   @Override
-  public void setDir(File dir) {
-    option.setGenDir(dir);
+  public String getTag() {
+    return "-XdisableAggressiveOptimization";
+  }
+
+  @Override
+  public boolean isUndocumented() {
+    return true;
+  }
+
+  @Override
+  public boolean setFlag() {
+    option.setAggressivelyOptimize(false);
+    return true;
   }
 }

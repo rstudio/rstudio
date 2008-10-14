@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,26 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.util.tools;
+package com.google.gwt.dev.util.arg;
+
+import java.io.File;
 
 /**
- * Handles the -XdisableAggressiveOptimization command line flag.
+ * Option to set the output directory.
  */
-public abstract class ArgHandlerDisableAggressiveOptimization extends
-    ArgHandlerFlag {
-  @Override
-  public String getPurpose() {
-    return "Troubleshooting: Prevent the web mode compiler from performing "
-        + "aggressive optimizations.";
-  }
+public interface OptionOutDir {
 
-  @Override
-  public String getTag() {
-    return "-XdisableAggressiveOptimization";
-  }
+  /**
+   * Returns the output directory.
+   */
+  File getOutDir();
 
-  @Override
-  public boolean isUndocumented() {
-    return true;
-  }
+  /**
+   * Sets the output directory.
+   */
+  void setOutDir(File dir);
 }

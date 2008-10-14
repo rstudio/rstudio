@@ -13,15 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionScriptStyle;
+import java.io.File;
 
 /**
- * Controls options for the {@link JavaToJavaScriptCompiler}.
+ * Option to set the generated resource directory.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+public interface OptionGenDir {
+
+  /**
+   * Returns the generated resource directory.
+   */
+  File getGenDir();
+
+  /**
+   * Sets the generated resource directory.
+   */
+  void setGenDir(File dir);
 }

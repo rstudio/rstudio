@@ -13,15 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
-
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionScriptStyle;
+package com.google.gwt.dev.util.arg;
 
 /**
- * Controls options for the {@link JavaToJavaScriptCompiler}.
+ * Option to set whether to use a GUI logger instead of stdout.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+public interface OptionGuiLogger {
+
+  /**
+   * Returns true if a GUI logger should be used.
+   */
+  boolean isUseGuiLogger();
+
+  /**
+   * Sets whether or not to use a GUI logger.
+   */
+  void setUseGuiLogger(boolean useGuiLogger);
 }

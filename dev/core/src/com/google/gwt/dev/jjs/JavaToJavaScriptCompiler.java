@@ -270,18 +270,18 @@ public class JavaToJavaScriptCompiler {
   public JavaToJavaScriptCompiler(TreeLogger logger,
       WebModeCompilerFrontEnd compiler, String[] declEntryPts)
       throws UnableToCompleteException {
-    this(logger, compiler, declEntryPts, new JJSOptions());
+    this(logger, compiler, declEntryPts, new JJSOptionsImpl(), false);
   }
 
   public JavaToJavaScriptCompiler(TreeLogger logger,
       WebModeCompilerFrontEnd compiler, String[] declEntryPts,
-      JJSOptions compilerOptions) throws UnableToCompleteException {
+      JJSOptions compilerOptions, boolean isValidateOnly) throws UnableToCompleteException {
 
     if (declEntryPts.length == 0) {
       throw new IllegalArgumentException("entry point(s) required");
     }
 
-    this.options = new JJSOptions(compilerOptions);
+    this.options = new JJSOptionsImpl(compilerOptions);
 
     // Remember these for subsequent compiles.
     //
@@ -289,7 +289,7 @@ public class JavaToJavaScriptCompiler {
 
     RebindPermutationOracle rpo = compiler.getRebindPermutationOracle();
 
-    if (!options.isValidateOnly()) {
+    if (!isValidateOnly) {
       // Find all the possible rebound entry points.
       Set<String> allEntryPoints = new TreeSet<String>();
       for (String element : declEntryPts) {

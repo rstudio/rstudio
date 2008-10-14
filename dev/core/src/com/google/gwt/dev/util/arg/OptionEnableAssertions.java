@@ -13,15 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
-
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionScriptStyle;
+package com.google.gwt.dev.util.arg;
 
 /**
- * Controls options for the {@link JavaToJavaScriptCompiler}.
+ * Option to determine whether the compiler should generate code to check
+ * assertions.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+public interface OptionEnableAssertions {
+
+  /**
+   * Returns true if the compiler should generate code to check assertions.
+   */
+  boolean isEnableAssertions();
+
+  /**
+   * Sets whether or not the compiler should generate code to check assertions.
+   */
+  void setEnableAssertions(boolean enableAssertions);
 }

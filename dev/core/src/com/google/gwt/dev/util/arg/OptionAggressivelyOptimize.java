@@ -13,15 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
-
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionScriptStyle;
+package com.google.gwt.dev.util.arg;
 
 /**
- * Controls options for the {@link JavaToJavaScriptCompiler}.
+ * Option to determine whether the compiler should aggressively optimize.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+public interface OptionAggressivelyOptimize {
+
+  /**
+   * Returns true if the compiler should aggressively optimize.
+   */
+  boolean isAggressivelyOptimize();
+
+  /**
+   * Sets whether or not the compiler should aggressively optimize.
+   */
+  void setAggressivelyOptimize(boolean aggressivelyOptimize);
 }

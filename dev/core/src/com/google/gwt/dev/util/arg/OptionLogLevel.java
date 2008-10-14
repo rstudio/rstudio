@@ -13,15 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.jjs;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
-import com.google.gwt.dev.util.arg.OptionEnableAssertions;
-import com.google.gwt.dev.util.arg.OptionScriptStyle;
+import com.google.gwt.core.ext.TreeLogger;
 
 /**
- * Controls options for the {@link JavaToJavaScriptCompiler}.
+ * Option to set the tree logger log level.
  */
-public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+public interface OptionLogLevel {
+
+  /**
+   * Returns the tree logger level.
+   */
+  TreeLogger.Type getLogLevel();
+
+  /**
+   * Sets the tree logger level.
+   */
+  void setLogLevel(TreeLogger.Type logLevel);
 }

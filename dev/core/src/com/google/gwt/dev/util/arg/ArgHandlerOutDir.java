@@ -20,26 +20,31 @@ import com.google.gwt.util.tools.ArgHandlerDir;
 import java.io.File;
 
 /**
- * Argument handler for processing the code generation directory flag.
+ * Argument handler for processing the output directory flag.
  */
-public final class ArgHandlerGenDir extends ArgHandlerDir {
+public final class ArgHandlerOutDir extends ArgHandlerDir {
 
-  private final OptionGenDir option;
+  private final OptionOutDir option;
 
-  public ArgHandlerGenDir(OptionGenDir option) {
+  public ArgHandlerOutDir(OptionOutDir option) {
     this.option = option;
   }
 
+  public String[] getDefaultArgs() {
+    return new String[] {"-out", System.getProperty("user.dir")};
+  }
+
   public String getPurpose() {
-    return "The directory into which generated files will be written for review";
+    return "The directory to write output files into (defaults to current)";
   }
 
   public String getTag() {
-    return "-gen";
+    return "-out";
   }
 
   @Override
   public void setDir(File dir) {
-    option.setGenDir(dir);
+    option.setOutDir(dir);
   }
+
 }
