@@ -23,13 +23,15 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public final class JsNameRef extends JsExpression implements CanBooleanEval,
     HasName {
 
+  private boolean hasStaticRef;
   private String ident;
   private JsName name;
   private JsExpression qualifier;
 
   public JsNameRef(SourceInfo sourceInfo, JsName name) {
-    super(sourceInfo);
+    super(sourceInfo.makeChild("Reference"));
     this.name = name;
+    maybeUpdateSourceInfo();
   }
 
   public JsNameRef(SourceInfo sourceInfo, String ident) {
@@ -51,6 +53,11 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
 
   public String getShortIdent() {
     return (name == null) ? ident : name.getShortIdent();
+  }
+
+  @Override
+  public SourceInfo getSourceInfo() {
+    return maybeUpdateSourceInfo();
   }
 
   @Override
@@ -116,5 +123,23 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
       }
     }
     v.endVisit(this, ctx);
+  }
+
+  /**
+   * This corrects the JsNameRef's SourceInfo derivation when the JsName is
+   * created with a JsName that has not yet had its static reference set. This
+   * is the case in GenerateJavaScriptAST after the names and scopes visitor has
+   * been run, but before the AST is fully realized.
+   */
+  private SourceInfo maybeUpdateSourceInfo() {
+    SourceInfo toReturn = super.getSourceInfo();
+    if (!hasStaticRef && name != null) {
+      JsNode<?> staticRef = name.getStaticRef();
+      if (staticRef != null) {
+        toReturn.addAdditonalAncestors(name.getStaticRef().getSourceInfo());
+        hasStaticRef = true;
+      }
+    }
+    return toReturn;
   }
 }

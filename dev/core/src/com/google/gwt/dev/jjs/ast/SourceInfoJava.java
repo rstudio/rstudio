@@ -21,13 +21,13 @@ import com.google.gwt.dev.jjs.SourceInfo;
  * An implementation of SourceInfo representing SourceInfo nodes derived from
  * the Java AST. Instances of this class should only be constructed by JProgram.
  */
-class SourceInfoJava extends SourceInfo {
+public class SourceInfoJava extends SourceInfo {
   /**
    * Indicates that an AST element is an intrinsic element of the AST and has no
    * meaningful source location. This is typically used by singleton AST
    * elements or for literal values.
    */
-  public static final SourceInfo INTRINSIC = new SourceInfoJava(0, 0, 0,
+  public static final SourceInfo INTRINSIC = new Immutable(0, 0, 0,
       "Java intrinsics", true);
 
   /**

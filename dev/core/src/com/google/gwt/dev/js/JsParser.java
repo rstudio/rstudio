@@ -79,8 +79,9 @@ import java.util.Stack;
 public class JsParser {
 
   private JsProgram program;
+  private SourceInfo rootSourceInfo = SourceInfo.UNKNOWN;
   private final Stack<JsScope> scopeStack = new Stack<JsScope>();
-  private SourceInfo sourceInfo = SourceInfo.UNKNOWN;
+  private final Stack<SourceInfo> sourceInfoStack = new Stack<SourceInfo>();
 
   public JsParser() {
     // Create a custom error handler so that we can throw our own exceptions.
@@ -116,7 +117,7 @@ public class JsParser {
       // Map the Rhino AST to ours.
       //
       program = scope.getProgram();
-      pushScope(scope);
+      pushScope(scope, rootSourceInfo);
       List<JsStatement> stmts = mapStatements(topNode);
       popScope();
 
@@ -139,7 +140,7 @@ public class JsParser {
    * Set the base SourceInfo object to use when creating new JS AST nodes.
    */
   public void setSourceInfo(SourceInfo sourceInfo) {
-    this.sourceInfo = sourceInfo;
+    rootSourceInfo = sourceInfo;
   }
 
   private JsParserException createParserException(String msg, Node offender) {
@@ -153,8 +154,11 @@ public class JsParser {
   }
 
   private SourceInfo makeSourceInfo(Node node) {
-    return program.createSourceInfo(node.getLineno()
-        + sourceInfo.getStartLine() + 1, sourceInfo.getFileName());
+    SourceInfo parent = sourceInfoStack.peek();
+    SourceInfo toReturn = program.createSourceInfo(node.getLineno()
+        + parent.getStartLine() + 1, parent.getFileName());
+    toReturn.addAdditonalAncestors(parent);
+    return toReturn;
   }
 
   private JsNode<?> map(Node node) throws JsParserException {
@@ -237,8 +241,8 @@ public class JsParser {
         return mapName(node);
 
       case TokenStream.STRING:
-        return program.getStringLiteral(
-            sourceInfo.makeChild("JS String literal"), node.getString());
+        return program.getStringLiteral(sourceInfoStack.peek().makeChild(
+            "JS String literal"), node.getString());
 
       case TokenStream.NUMBER:
         return mapNumber(node);
@@ -671,7 +675,7 @@ public class JsParser {
     // Creating a function also creates a new scope, which we push onto
     // the scope stack.
     //
-    pushScope(toFn.getScope());
+    pushScope(toFn.getScope(), fnSourceInfo);
 
     while (fromParamNode != null) {
       String fromParamName = fromParamNode.getString();
@@ -1126,7 +1130,7 @@ public class JsParser {
       // Map the catch body.
       //
       Node fromCatchBody = fromCondition.getNext();
-      pushScope(catchBlock.getScope());
+      pushScope(catchBlock.getScope(), catchBlock.getSourceInfo());
       catchBlock.setBody(mapBlock(fromCatchBody));
       popScope();
 
@@ -1208,9 +1212,11 @@ public class JsParser {
 
   private void popScope() {
     scopeStack.pop();
+    sourceInfoStack.pop();
   }
 
-  private void pushScope(JsScope scope) {
+  private void pushScope(JsScope scope, SourceInfo sourceInfo) {
     scopeStack.push(scope);
+    sourceInfoStack.push(sourceInfo);
   }
 }

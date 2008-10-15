@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -316,10 +317,12 @@ public class GenerateJavaScriptAST {
         jsFunction.setName(globalName);
       } else {
         // create a new peer JsFunction
-        jsFunction = new JsFunction(x.getSourceInfo(), topScope, globalName,
-            true);
+        SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+            "Translated JS function");
+        jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
         methodBodyMap.put(x.getBody(), jsFunction);
       }
+      jsFunction.getSourceInfo().addCorrelation(Correlation.by(jsFunction));
       push(jsFunction.getScope());
       return true;
     }
@@ -383,8 +386,8 @@ public class GenerateJavaScriptAST {
     private JsFunction[] entryFunctions;
 
     /**
-     * A reverse index for {@link JProgram#entryMethods}.  Each entry method
-     * is mapped to its integer index.
+     * A reverse index for {@link JProgram#entryMethods}. Each entry method is
+     * mapped to its integer index.
      */
     private Map<JMethod, Integer> entryMethodToIndex;
 
@@ -1311,6 +1314,7 @@ public class GenerateJavaScriptAST {
       gwtOnLoadName.setObfuscatable(false);
       JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope,
           gwtOnLoadName, true);
+      sourceInfo.addCorrelation(Correlation.by(gwtOnLoad));
       globalStmts.add(gwtOnLoad.makeStmt());
       JsBlock body = new JsBlock(sourceInfo);
       gwtOnLoad.setBody(body);
@@ -1370,6 +1374,7 @@ public class GenerateJavaScriptAST {
       SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Null function");
       JsFunction nullFunc = new JsFunction(sourceInfo, topScope,
           nullMethodName, true);
+      sourceInfo.addCorrelation(Correlation.by(nullFunc));
       nullFunc.setBody(new JsBlock(sourceInfo));
       globalStatements.add(nullFunc.makeStmt());
     }
@@ -1385,6 +1390,8 @@ public class GenerateJavaScriptAST {
         // function com_example_foo_Foo() { }
         JsFunction seedFunc = new JsFunction(sourceInfo, topScope,
             seedFuncName, true);
+        seedFuncName.setStaticRef(seedFunc);
+        sourceInfo.addCorrelation(Correlation.by(seedFunc));
         JsBlock body = new JsBlock(sourceInfo);
         seedFunc.setBody(body);
         globalStmts.add(seedFunc.makeStmt());
@@ -1396,8 +1403,13 @@ public class GenerateJavaScriptAST {
         JsExpression rhs;
         if (x.extnds != null) {
           JsNew newExpr = new JsNew(sourceInfo);
-          newExpr.setConstructorExpression(names.get(x.extnds).makeRef(
-              sourceInfo));
+          JsNameRef superPrototypeRef = names.get(x.extnds).makeRef(sourceInfo);
+          newExpr.setConstructorExpression(superPrototypeRef);
+          JsNode<?> staticRef = superPrototypeRef.getName().getStaticRef();
+          if (staticRef != null) {
+            seedFunc.getSourceInfo().addSupertypeAncestors(
+                staticRef.getSourceInfo());
+          }
           rhs = newExpr;
         } else {
           rhs = new JsObjectLiteral(sourceInfo);

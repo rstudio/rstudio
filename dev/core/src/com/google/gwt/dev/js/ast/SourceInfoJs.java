@@ -28,7 +28,7 @@ public class SourceInfoJs extends SourceInfo {
    * meaningful source location. This is typically used by singleton AST
    * elements or for literal values.
    */
-  public static final SourceInfo INTRINSIC = new SourceInfoJs(0, 0, 0,
+  public static final SourceInfo INTRINSIC = new Immutable(0, 0, 0,
       "Js intrinsics", true);
 
   /**

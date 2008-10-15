@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,109 +17,26 @@ package com.google.gwt.dev.util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Arrays;
 
 /**
- * Adapts {@link TextOutput} to a print writer.
+ * Adapts {@link TextOutput} to an internal text buffer.
  */
-public final class DefaultTextOutput implements TextOutput {
+public class DefaultTextOutput extends AbstractTextOutput {
 
-  private final boolean compact;
-  private int identLevel = 0;
-  private int indentGranularity = 2;
-  private char[][] indents = new char[][] {new char[0]};
-  private boolean justNewlined;
-  private final PrintWriter p;
-  private final StringWriter sw;
+  private final StringWriter sw = new StringWriter();
+  private final PrintWriter out;
 
   public DefaultTextOutput(boolean compact) {
-    this.compact = compact;
-    sw = new StringWriter();
-    p = new PrintWriter(sw, false);
-  }
-
-  public void indentIn() {
-    ++identLevel;
-    if (identLevel >= indents.length) {
-      // Cache a new level of indentation string.
-      //
-      char[] newIndentLevel = new char[identLevel * indentGranularity];
-      Arrays.fill(newIndentLevel, ' ');
-      char[][] newIndents = new char[indents.length + 1][];
-      System.arraycopy(indents, 0, newIndents, 0, indents.length);
-      newIndents[identLevel] = newIndentLevel;
-      indents = newIndents;
-    }
-  }
-  
-  public void indentOut() {
-    --identLevel;
-  }
-
-  public void newline() {
-    if (compact) {
-      p.print('\n');
-    } else {
-      p.println();
-    }
-    justNewlined = true;
-  }
-
-  public void newlineOpt() {
-    if (!compact) {
-      p.println();
-      justNewlined = true;
-    }
-  }
-
-  public void print(char c) {
-    maybeIndent();
-    p.print(c);
-    justNewlined = false;
-  }
-
-  public void print(char[] s) {
-    maybeIndent();
-    p.print(s);
-    justNewlined = false;
-  }
-
-  public void print(String s) {
-    maybeIndent();
-    p.print(s);
-    justNewlined = false;
-  }
-
-  public void printOpt(char c) {
-    if (!compact) {
-      maybeIndent();
-      p.print(c);
-    }
-  }
-
-  public void printOpt(char[] s) {
-    if (!compact) {
-      maybeIndent();
-      p.print(s);
-    }
-  }
-
-  public void printOpt(String s) {
-    if (!compact) {
-      maybeIndent();
-      p.print(s);
-    }
+    super(compact);
+    setPrintWriter(out = new PrintWriter(sw));
   }
 
   public String toString() {
-    p.flush();
-    return sw.toString();
-  }
-
-  private void maybeIndent() {
-    if (justNewlined && !compact) {
-      p.print(indents[identLevel]);
-      justNewlined = false;
+    out.flush();
+    if (sw != null) {
+      return sw.toString();
+    } else {
+      return super.toString();
     }
   }
 }

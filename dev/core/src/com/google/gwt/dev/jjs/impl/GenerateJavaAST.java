@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -996,7 +997,6 @@ public class GenerateJavaAST {
     }
 
     JExpression processExpression(FieldReference x) {
-      SourceInfo info = makeSourceInfo(x);
       FieldBinding fieldBinding = x.binding;
       JField field;
       if (fieldBinding.declaringClass == null) {
@@ -1008,6 +1008,7 @@ public class GenerateJavaAST {
       } else {
         field = (JField) typeMap.get(fieldBinding);
       }
+      SourceInfo info = makeSourceInfo(x);
       JExpression instance = dispProcessExpression(x.receiver);
       JExpression fieldRef = new JFieldRef(program, info, instance, field,
           currentClass);
@@ -2092,7 +2093,8 @@ public class GenerateJavaAST {
                 "FieldRef referencing field in a different type.");
           }
         }
-        return new JFieldRef(program, info, instance, field, currentClass);
+        return new JFieldRef(program, info.makeChild("Reference",
+            variable.getSourceInfo()), instance, field, currentClass);
       }
       throw new InternalCompilerException("Unknown JVariable subclass.");
     }
@@ -2239,8 +2241,15 @@ public class GenerateJavaAST {
     private SourceInfo makeSourceInfo(Statement x) {
       int startLine = Util.getLineNumber(x.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      return program.createSourceInfo(x.sourceStart, x.sourceEnd, startLine,
-          currentFileName);
+      SourceInfo toReturn = program.createSourceInfo(x.sourceStart,
+          x.sourceEnd, startLine, currentFileName);
+      if (currentClass != null) {
+        toReturn.addCorrelation(Correlation.by(currentClass));
+      }
+      if (currentMethod != null) {
+        toReturn.addCorrelation(Correlation.by(currentMethod));
+      }
+      return toReturn;
     }
 
     private JExpression maybeCast(JType expected, JExpression expression) {
@@ -2410,6 +2419,7 @@ public class GenerateJavaAST {
 
           if (!method.overrides.contains(upRef)) {
             method.overrides.add(upRef);
+            method.getSourceInfo().addSupertypeAncestors(upRef.getSourceInfo());
             break;
           }
         }
@@ -2440,6 +2450,8 @@ public class GenerateJavaAST {
             JMethod upRef = (JMethod) typeMap.get(tryMethod);
             if (!method.overrides.contains(upRef)) {
               method.overrides.add(upRef);
+              method.getSourceInfo().addSupertypeAncestors(
+                  upRef.getSourceInfo());
               break;
             }
           }

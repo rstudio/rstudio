@@ -70,7 +70,6 @@ import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.SourceInfoHistogram;
-import com.google.gwt.dev.js.SourceInfoHistogram.HistogramData;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.PerfLogger;
@@ -268,7 +267,6 @@ public class JavaToJavaScriptCompiler {
 
   private final long astMemoryUsage;
   private final String[] declEntryPoints;
-  private final HistogramData histogramData;
   private final Object myLockObject = new Object();
   private final JJSOptions options;
   private final Set<IProblem> problemSet = new HashSet<IProblem>();
@@ -342,12 +340,6 @@ public class JavaToJavaScriptCompiler {
 
       // BuildTypeMap can uncover syntactic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);
-
-      if (enableDescendants) {
-        histogramData = SourceInfoHistogram.exec(jprogram);
-      } else {
-        histogramData = null;
-      }
 
       // Compute all super type/sub type info
       jprogram.typeOracle.computeBeforeAST();
@@ -426,7 +418,8 @@ public class JavaToJavaScriptCompiler {
       }
     } catch (IOException e) {
       throw new RuntimeException(
-          "Should be impossible to get an IOException reading an in-memory stream");
+          "Should be impossible to get an IOException reading an in-memory stream",
+          e);
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
     } finally {
@@ -586,9 +579,8 @@ public class JavaToJavaScriptCompiler {
     JsIEBlockSizeVisitor.exec(jsProgram);
 
     // Write the SOYC reports into the output
-    if (histogramData != null) {
-      SourceInfoHistogram.exec(jsProgram, histogramData,
-          options.getSoycOutputDir());
+    if (options.getSoycOutputDir() != null) {
+      SourceInfoHistogram.exec(jsProgram, options.getSoycOutputDir());
     }
 
     // (12) Generate the final output text.

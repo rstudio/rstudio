@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.dev.jjs.Correlation;
+import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -147,10 +149,10 @@ public class BuildTypeMap {
           return true;
         }
 
-        SourceInfo info = makeSourceInfo(argument);
+        JMethodBody enclosingBody = findEnclosingMethod(scope);
+        SourceInfo info = makeSourceInfo(argument, enclosingBody.getMethod());
         LocalVariableBinding b = argument.binding;
         JType localType = (JType) typeMap.get(b.type);
-        JMethodBody enclosingBody = findEnclosingMethod(scope);
         JLocal newLocal = program.createLocal(info, argument.name, localType,
             b.isFinal(), enclosingBody);
         typeMap.put(b, newLocal);
@@ -173,7 +175,7 @@ public class BuildTypeMap {
         MethodBinding b = ctorDecl.binding;
         JClassType enclosingType = (JClassType) typeMap.get(scope.enclosingSourceType());
         String name = enclosingType.getShortName();
-        SourceInfo info = makeSourceInfo(ctorDecl);
+        SourceInfo info = makeSourceInfo(ctorDecl, enclosingType);
         JMethod newMethod = program.createMethod(info, name.toCharArray(),
             enclosingType, enclosingType, false, false, true, b.isPrivate(),
             false);
@@ -190,6 +192,8 @@ public class BuildTypeMap {
         // user args
         mapParameters(newMethod, ctorDecl);
         // original params are now frozen
+
+        info.addCorrelation(Correlation.by(newMethod));
 
         int syntheticParamCount = 0;
         ReferenceBinding declaringClass = b.declaringClass;
@@ -246,8 +250,8 @@ public class BuildTypeMap {
     public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
       try {
         FieldBinding b = fieldDeclaration.binding;
-        SourceInfo info = makeSourceInfo(fieldDeclaration);
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+        SourceInfo info = makeSourceInfo(fieldDeclaration, enclosingType);
         Expression initialization = fieldDeclaration.initialization;
         if (initialization != null
             && initialization instanceof AllocationExpression
@@ -268,7 +272,8 @@ public class BuildTypeMap {
         LocalVariableBinding b = localDeclaration.binding;
         JType localType = (JType) typeMap.get(localDeclaration.type.resolvedType);
         JMethodBody enclosingBody = findEnclosingMethod(scope);
-        SourceInfo info = makeSourceInfo(localDeclaration);
+        SourceInfo info = makeSourceInfo(localDeclaration,
+            enclosingBody.getMethod());
         JLocal newLocal = program.createLocal(info, localDeclaration.name,
             localType, b.isFinal(), enclosingBody);
         typeMap.put(b, newLocal);
@@ -282,10 +287,11 @@ public class BuildTypeMap {
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
       try {
         MethodBinding b = methodDeclaration.binding;
-        SourceInfo info = makeSourceInfo(methodDeclaration);
         JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+        SourceInfo info = makeSourceInfo(methodDeclaration, enclosingType);
         JMethod newMethod = processMethodBinding(b, enclosingType, info);
         mapParameters(newMethod, methodDeclaration);
+        info.addCorrelation(Correlation.by(newMethod));
 
         if (newMethod.isNative()) {
           processNativeMethod(methodDeclaration, info, enclosingType, newMethod);
@@ -318,6 +324,7 @@ public class BuildTypeMap {
       JType type = (JType) typeMap.get(binding.type);
       JField field = program.createEnumField(info, binding.name,
           (JEnumType) enclosingType, (JClassType) type, binding.original().id);
+      info.addCorrelation(Correlation.by(field));
       typeMap.put(binding, field);
       return field;
     }
@@ -346,16 +353,18 @@ public class BuildTypeMap {
       JField field = program.createField(info, binding.name, enclosingType,
           type, binding.isStatic(), disposition);
       typeMap.put(binding, field);
+      info.addCorrelation(Correlation.by(field));
       return field;
     }
 
     private JField createField(SyntheticArgumentBinding binding,
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
-      JField field = program.createField(
-          enclosingType.getSourceInfo().makeChild(
-              "Field " + String.valueOf(binding.name)), binding.name,
-          enclosingType, type, false, Disposition.FINAL);
+      SourceInfo info = enclosingType.getSourceInfo().makeChild(
+          "Field " + String.valueOf(binding.name));
+      JField field = program.createField(info, binding.name, enclosingType,
+          type, false, Disposition.FINAL);
+      info.addCorrelation(Correlation.by(field));
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
       }
@@ -366,7 +375,7 @@ public class BuildTypeMap {
     private JParameter createParameter(LocalVariableBinding binding,
         JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(binding.type);
-      SourceInfo info = makeSourceInfo(binding.declaration);
+      SourceInfo info = makeSourceInfo(binding.declaration, enclosingMethod);
       JParameter param = program.createParameter(info, binding.name, type,
           binding.isFinal(), false, enclosingMethod);
       typeMap.put(binding, param);
@@ -486,21 +495,36 @@ public class BuildTypeMap {
       return (JMethodBody) method.getBody();
     }
 
-    private SourceInfo makeSourceInfo(AbstractMethodDeclaration methodDecl) {
+    private SourceInfo makeSourceInfo(AbstractMethodDeclaration methodDecl,
+        HasSourceInfo enclosing) {
       CompilationResult compResult = methodDecl.compilationResult;
       int[] indexes = compResult.lineSeparatorPositions;
       String fileName = String.valueOf(compResult.fileName);
       int startLine = Util.getLineNumber(methodDecl.sourceStart, indexes, 0,
           indexes.length - 1);
-      return program.createSourceInfo(methodDecl.sourceStart,
+      SourceInfo toReturn = program.createSourceInfo(methodDecl.sourceStart,
           methodDecl.bodyEnd, startLine, fileName);
+
+      // The SourceInfo will inherit Correlations from its enclosing object
+      if (enclosing != null) {
+        toReturn.addAdditonalAncestors(enclosing.getSourceInfo());
+      }
+
+      return toReturn;
     }
 
-    private SourceInfo makeSourceInfo(Statement stmt) {
+    private SourceInfo makeSourceInfo(Statement stmt, HasSourceInfo enclosing) {
       int startLine = Util.getLineNumber(stmt.sourceStart,
           currentSeparatorPositions, 0, currentSeparatorPositions.length - 1);
-      return program.createSourceInfo(stmt.sourceStart, stmt.sourceEnd,
-          startLine, currentFileName);
+      SourceInfo toReturn = program.createSourceInfo(stmt.sourceStart,
+          stmt.sourceEnd, startLine, currentFileName);
+
+      // The SourceInfo will inherit Correlations from its enclosing object
+      if (enclosing != null) {
+        toReturn.addAdditonalAncestors(enclosing.getSourceInfo());
+      }
+
+      return toReturn;
     }
 
     private void mapParameters(JMethod method, AbstractMethodDeclaration x) {
@@ -588,6 +612,7 @@ public class BuildTypeMap {
           assert (binding.superclass().isClass() || binding.superclass().isEnum());
           JClassType superClass = (JClassType) typeMap.get(superClassBinding);
           type.extnds = superClass;
+          type.getSourceInfo().addSupertypeAncestors(superClass.getSourceInfo());
         }
 
         ReferenceBinding[] superInterfaces = binding.superInterfaces();
@@ -596,6 +621,8 @@ public class BuildTypeMap {
           assert (superInterfaceBinding.isInterface());
           JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
           type.implments.add(superInterface);
+          type.getSourceInfo().addSupertypeAncestors(
+              superInterface.getSourceInfo());
         }
 
         if (type instanceof JEnumType) {
@@ -765,7 +792,8 @@ public class BuildTypeMap {
       } else {
         ice = new InternalCompilerException("Error building type map", e);
       }
-      ice.addNode(amd.getClass().getName(), amd.toString(), makeSourceInfo(amd));
+      ice.addNode(amd.getClass().getName(), amd.toString(), makeSourceInfo(amd,
+          null));
       return ice;
     }
 
@@ -781,8 +809,8 @@ public class BuildTypeMap {
       } else {
         ice = new InternalCompilerException("Error building type map", e);
       }
-      ice.addNode(stmt.getClass().getName(), stmt.toString(),
-          makeSourceInfo(stmt));
+      ice.addNode(stmt.getClass().getName(), stmt.toString(), makeSourceInfo(
+          stmt, null));
       return ice;
     }
   }
@@ -872,6 +900,7 @@ public class BuildTypeMap {
           assert (false);
           return false;
         }
+        info.addCorrelation(Correlation.by(newType));
 
         /**
          * We emulate static initializers and instance initializers as methods.
