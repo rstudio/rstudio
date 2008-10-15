@@ -547,7 +547,7 @@ public class GWTShellServlet extends HttpServlet {
         "Generating a script selection script for module " + moduleName);
 
     StandardLinkerContext context = new StandardLinkerContext(logger,
-        getModuleDef(logger, moduleName), null, null, new JJSOptionsImpl());
+        getModuleDef(logger, moduleName), new JJSOptionsImpl());
     HostedModeLinker linker = new HostedModeLinker();
     return linker.generateSelectionScript(logger, context,
         context.getArtifacts());

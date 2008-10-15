@@ -15,13 +15,14 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.util.arg.OptionGenDir;
-import com.google.gwt.dev.util.arg.OptionValidateOnly;
+import com.google.gwt.dev.util.arg.OptionGuiLogger;
+import com.google.gwt.dev.util.arg.OptionLogLevel;
+import com.google.gwt.dev.util.arg.OptionModuleName;
+import com.google.gwt.dev.util.arg.OptionOutDir;
 
 /**
- * The complete set of options for the GWT compiler.
+ * A common set of options for all compile tasks.
  */
-public interface CompilerOptions extends JJSOptions, CompileTaskOptions,
-    OptionGenDir, OptionValidateOnly {
+public interface CompileTaskOptions extends OptionGuiLogger, OptionModuleName,
+    OptionLogLevel, OptionOutDir {
 }

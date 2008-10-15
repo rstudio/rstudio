@@ -15,10 +15,12 @@
  */
 package com.google.gwt.dev.jjs;
 
+import java.io.Serializable;
+
 /**
  * Concrete class to implement all JJS options.
  */
-public class JJSOptionsImpl implements JJSOptions {
+public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
   private boolean enableAssertions;
@@ -26,7 +28,7 @@ public class JJSOptionsImpl implements JJSOptions {
 
   public JJSOptionsImpl() {
   }
-  
+
   public JJSOptionsImpl(JJSOptions other) {
     copyFrom(other);
   }

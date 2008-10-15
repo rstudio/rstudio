@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.Precompile.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.shell.BrowserWidget;
@@ -577,11 +578,9 @@ public class GWTShell extends ToolBase {
    */
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    GWTCompiler compiler = new GWTCompiler();
     CompilerOptions newOptions = new CompilerOptionsImpl(options);
     newOptions.setModuleName(moduleDef.getName());
-    compiler.setCompilerOptions(options);
-    compiler.distill(logger, moduleDef);
+    new GWTCompiler(newOptions).run(logger);
   }
 
   /**

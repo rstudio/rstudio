@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.util.Util;
@@ -76,13 +74,11 @@ public class StandardCompilationResult extends CompilationResult {
       MAP_COMPARATOR);
   private final String strongName;
 
-  public StandardCompilationResult(TreeLogger logger, String js,
-      String strongName, File cacheDir) throws UnableToCompleteException {
+  public StandardCompilationResult(String js, String strongName, File cacheFile) {
     super(StandardLinkerContext.class);
     this.js = new SoftReference<String>(js);
     this.strongName = strongName;
-    cacheFile = new File(cacheDir, strongName);
-    Util.writeStringAsFile(logger, cacheFile, js);
+    this.cacheFile = cacheFile;
   }
 
   /**
