@@ -33,6 +33,11 @@ public class XMLParserImplSafari extends XMLParserImplStandard {
     return ((result) ? parseInt(result[1]) : 0) || 0;
   }-*/;
   
+  @SuppressWarnings("unused")
+  private static void throwDOMParseException(String message) {
+    throw new DOMParseException(message);
+  }
+  
   @Override
   protected native JavaScriptObject getElementsByTagNameImpl(JavaScriptObject o,
       String tagName) /*-{
@@ -73,9 +78,8 @@ public class XMLParserImplSafari extends XMLParserImplStandard {
     var parseerrors = result.getElementsByTagName("parsererror");
     if (parseerrors.length > 0) {
       var err = parseerrors.item(0);
-      var safariErrStyle = "white-space: pre; border: 2px solid #c77; padding: 0 1em 0 1em; margin: 1em; background-color: #fdd; color: black";
-      if(err.getAttribute("style") == safariErrStyle) {
-        throw new Error(err.item(1).innerHTML);
+      if (err.parentNode.tagName == 'body') {
+        @com.google.gwt.xml.client.impl.XMLParserImplSafari::throwDOMParseException(Ljava/lang/String;)(err.childNodes[1].innerHTML);
       }
     } 
     return result;
