@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Implements a TreeMap using a red-black tree. This guarantees O(log n)
  * performance on lookups, inserts, and deletes while maintaining linear
@@ -24,7 +26,8 @@ package java.util;
  * @param <K> key type
  * @param <V> value type
  */
-public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> {
+public class TreeMap<K, V> extends AbstractMap<K, V> implements
+    SortedMap<K, V>, Serializable {
   /*
    * Implementation derived from public domain C implementation as of 5
    * September 2007 at:
@@ -32,8 +35,6 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
    * written by Julienne Walker.
    * 
    * This version does not require a parent pointer kept in each node.
-   * 
-   * TODO: should this class be serializable? What to do about the comparator?
    */
 
   /**
@@ -494,14 +495,14 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
 
   private enum SubMapType {
     All,
-    
+
     Head {
       @Override
       public boolean toKeyValid() {
         return true;
       }
     },
-    
+
     Range {
       @Override
       public boolean fromKeyValid() {
@@ -513,21 +514,21 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
         return true;
       }
     },
-    
+
     Tail {
       @Override
       public boolean fromKeyValid() {
         return true;
       }
     };
-    
+
     /**
      * @return true if this submap type uses a from-key.
      */
     public boolean fromKeyValid() {
       return false;
     }
-    
+
     /**
      * @return true if this submap type uses a to-key.
      */
@@ -580,8 +581,17 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   // The comparator to use.
   private Comparator<? super K> cmp;
 
+  /*
+   * These two fields are just hints to STOB so that it generates serializers
+   * for K and V
+   */
+  @SuppressWarnings("unused")
+  private K exposeKeyType;
+  @SuppressWarnings("unused")
+  private V exposeValueType;
+
   // The root of the tree.
-  private Node<K, V> root;
+  private transient Node<K, V> root;
 
   // The number of nodes in the tree.
   private int size = 0;
@@ -843,14 +853,13 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements SortedMap<K, V> 
   /**
    * Insert a node into a subtree, collecting state about the insertion.
    * 
-   * If the same key already exists, the value of the node is overwritten
-   * with the value from the new node instead.
+   * If the same key already exists, the value of the node is overwritten with
+   * the value from the new node instead.
    * 
    * @param tree subtree to insert into
    * @param newNode new node to insert
-   * @param state result of the insertion:
-   *     state.found true if the key already existed in the tree
-   *     state.value the old value if the key existed 
+   * @param state result of the insertion: state.found true if the key already
+   *          existed in the tree state.value the old value if the key existed
    * @return the new subtree root
    */
   private Node<K, V> insert(Node<K, V> tree, Node<K, V> newNode, State<V> state) {

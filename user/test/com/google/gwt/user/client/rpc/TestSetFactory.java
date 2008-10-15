@@ -15,16 +15,19 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import java.io.Serializable;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.Vector;
 
 /**
@@ -157,6 +160,21 @@ public class TestSetFactory {
    * A single-use marker type to independently check type parameter exposure in
    * various collections.
    */
+  public static final class MarkerTypeTreeMap extends MarkerBase {
+
+    public MarkerTypeTreeMap(String value) {
+      super(value);
+    }
+
+    MarkerTypeTreeMap() {
+      super(null);
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
   public static final class MarkerTypeVector extends MarkerBase {
 
     public MarkerTypeVector(String value) {
@@ -234,6 +252,34 @@ public class TestSetFactory {
    * TODO: document me.
    */
   public static class UnserializableNode {
+  }
+
+  static class ReverseSorter implements Comparator<String>, Serializable {
+
+    // for gwt-serialization
+    ReverseSorter() {
+    }
+
+    public int compare(String a, String b) {
+      // Explicit null check to match JRE specs
+      if (a == null || b == null) {
+        throw new NullPointerException();
+      }
+      return b.compareTo(a);
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    @Override
+    public boolean equals(Object ob) {
+      if (!(ob instanceof ReverseSorter)) {
+        return false;
+      }
+      return true;
+    }
   }
 
   public static ArrayList<MarkerTypeArrayList> createArrayList() {
@@ -423,6 +469,22 @@ public class TestSetFactory {
     return new String[] {
         null, "", "one", "two", "toString", "watch", "prototype", "eval",
         "valueOf", "constructor", "__proto__"};
+  }
+
+  public static TreeMap<String, MarkerTypeTreeMap> createTreeMap(
+      boolean defaultComparator) {
+    TreeMap<String, MarkerTypeTreeMap> map;
+    if (defaultComparator) {
+      map = new TreeMap<String, MarkerTypeTreeMap>();
+    } else {
+      map = new TreeMap<String, MarkerTypeTreeMap>(new ReverseSorter());
+    }
+    map.put("foo", new MarkerTypeTreeMap("foo"));
+    map.put("bar", new MarkerTypeTreeMap("bar"));
+    map.put("baz", new MarkerTypeTreeMap("baz"));
+    map.put("bal", new MarkerTypeTreeMap("bal"));
+    map.put("w00t", new MarkerTypeTreeMap("w00t"));
+    return map;
   }
 
   public static Vector<MarkerTypeVector> createVector() {

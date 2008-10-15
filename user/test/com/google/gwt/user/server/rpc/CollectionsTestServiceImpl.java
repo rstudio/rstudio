@@ -24,6 +24,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.Vector;
 
 /**
@@ -328,6 +330,18 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
     return actual;
   }
 
+  public TreeMap<String, MarkerTypeTreeMap> echo(
+      TreeMap<String, MarkerTypeTreeMap> actual, boolean option)
+      throws CollectionsTestServiceException {
+    TreeMap<String, MarkerTypeTreeMap> expected = TestSetFactory.createTreeMap(option);
+    if (!TestSetValidator.isValid(expected, actual)) {
+      throw new CollectionsTestServiceException("expected: "
+          + expected.toString() + " actual: " + actual.toString());
+    }
+
+    return actual;
+  }
+  
   public Vector<MarkerTypeVector> echo(Vector<MarkerTypeVector> actual)
       throws CollectionsTestServiceException {
     Vector<MarkerTypeVector> expected = TestSetFactory.createVector();
@@ -348,4 +362,5 @@ public class CollectionsTestServiceImpl extends RemoteServiceServlet implements
 
     return value;
   }
+  
 }
