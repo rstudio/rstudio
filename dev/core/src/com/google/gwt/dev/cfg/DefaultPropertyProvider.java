@@ -53,8 +53,9 @@ public class DefaultPropertyProvider extends PropertyProvider {
       JsProgram jsPgm = new JsProgram();
       JsParser jsParser = new JsParser();
       StringReader r = new StringReader(jsniSrc);
-      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic("Default property provider for "
-          + getProperty().getName()));
+      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic(
+          DefaultPropertyProvider.class, "Default property provider for "
+              + getProperty().getName()));
       List<JsStatement> stmts = jsParser.parse(jsPgm.getScope(), r, 1);
       JsFunction fn = (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
       return fn.getBody();

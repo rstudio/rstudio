@@ -104,7 +104,8 @@ public class CastNormalizer {
       // the 0th entry is the "always false" entry
       classes.add(null);
       jsonObjects.add(new JsonObject(program,
-          program.createSourceInfoSynthetic("always-false typeinfo entry")));
+          program.createSourceInfoSynthetic(AssignTypeIdsVisitor.class,
+              "always-false typeinfo entry")));
 
       /*
        * Do String first to reserve typeIds 1 and 2 for Object and String,
@@ -258,7 +259,8 @@ public class CastNormalizer {
       }
 
       // Create a sparse lookup object.
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic("typeinfo lookup");
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+          AssignTypeIdsVisitor.class, "typeinfo lookup");
       JsonObject jsonObject = new JsonObject(program, sourceInfo);
       // Start at 1; 0 is Object and always true.
       for (int i = 1; i < nextQueryId; ++i) {

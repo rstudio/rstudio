@@ -1006,7 +1006,8 @@ public class ModuleDefSchema extends Schema {
     List<JsStatement> stmts;
     try {
       // TODO Provide more context here
-      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic("Module.xml"));
+      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic(
+          ModuleDefSchema.class, "Module.xml"));
       stmts = jsParser.parse(jsPgm.getScope(), r, startLineNumber);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Error reading script source", e);

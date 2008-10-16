@@ -242,7 +242,7 @@ public class JsParser {
 
       case TokenStream.STRING:
         return program.getStringLiteral(sourceInfoStack.peek().makeChild(
-            "JS String literal"), node.getString());
+            JsParser.class, "JS String literal"), node.getString());
 
       case TokenStream.NUMBER:
         return mapNumber(node);

@@ -361,7 +361,7 @@ public class BuildTypeMap {
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
       SourceInfo info = enclosingType.getSourceInfo().makeChild(
-          "Field " + String.valueOf(binding.name));
+          BuildDeclMapVisitor.class, "Field " + String.valueOf(binding.name));
       JField field = program.createField(info, binding.name, enclosingType,
           type, false, Disposition.FINAL);
       info.addCorrelation(Correlation.by(field));
@@ -386,8 +386,9 @@ public class BuildTypeMap {
         String argName, JMethod enclosingMethod) {
       JType type = (JType) typeMap.get(arg.type);
       JParameter param = program.createParameter(
-          enclosingMethod.getSourceInfo().makeChild("Parameter " + argName),
-          argName.toCharArray(), type, true, false, enclosingMethod);
+          enclosingMethod.getSourceInfo().makeChild(BuildTypeMap.class,
+              "Parameter " + argName), argName.toCharArray(), type, true,
+          false, enclosingMethod);
       return param;
     }
 
@@ -408,17 +409,18 @@ public class BuildTypeMap {
 
       // Define the method
       JMethod synthetic = program.createMethod(type.getSourceInfo().makeChild(
-          "Synthetic constructor"), "new".toCharArray(), type, type, false,
-          true, true, false, false);
+          BuildDeclMapVisitor.class, "Synthetic constructor"),
+          "new".toCharArray(), type, type, false, true, true, false, false);
 
       // new Foo() : Create the instance
       JNewInstance newInstance = new JNewInstance(program,
-          type.getSourceInfo().makeChild("new instance"), type);
+          type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+              "new instance"), type);
 
       // (new Foo()).Foo() : Invoke the constructor method on the instance
       JMethodCall call = new JMethodCall(program,
-          type.getSourceInfo().makeChild("constructor invocation"),
-          newInstance, constructor);
+          type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+              "constructor invocation"), newInstance, constructor);
       List<JExpression> args = call.getArgs();
 
       /*
@@ -429,8 +431,9 @@ public class BuildTypeMap {
       JParameter enclosingInstance = null;
       if (!staticClass) {
         enclosingInstance = program.createParameter(
-            synthetic.getSourceInfo().makeChild("outer instance"),
-            "this$outer".toCharArray(), enclosingType, false, false, synthetic);
+            synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                "outer instance"), "this$outer".toCharArray(), enclosingType,
+            false, false, synthetic);
       }
 
       /*
@@ -445,16 +448,17 @@ public class BuildTypeMap {
          */
         if (enclosingInstance != null && !i.hasNext()) {
           args.add(new JParameterRef(program,
-              synthetic.getSourceInfo().makeChild("enclosing instance"),
-              enclosingInstance));
+              synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                  "enclosing instance"), enclosingInstance));
         } else {
           JParameter syntheticParam = program.createParameter(
-              synthetic.getSourceInfo().makeChild("Argument " + param.getName()),
+              synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                  "Argument " + param.getName()),
               param.getName().toCharArray(), param.getType(), true, false,
               synthetic);
           args.add(new JParameterRef(program,
-              syntheticParam.getSourceInfo().makeChild("reference"),
-              syntheticParam));
+              syntheticParam.getSourceInfo().makeChild(
+                  BuildDeclMapVisitor.class, "reference"), syntheticParam));
         }
       }
 
@@ -463,7 +467,8 @@ public class BuildTypeMap {
 
       // return (new Foo()).Foo() : The only statement in the function
       JReturnStatement ret = new JReturnStatement(program,
-          synthetic.getSourceInfo().makeChild("Return statement"), call);
+          synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+              "Return statement"), call);
 
       // Add the return statement to the method body
       JMethodBody body = (JMethodBody) synthetic.getBody();
@@ -578,9 +583,9 @@ public class BuildTypeMap {
             && type != program.getTypeJavaLangObject()
             && type != program.getIndexedType("Array")) {
           JMethod getClassMethod = program.createMethod(
-              type.getSourceInfo().makeChild("Synthetic getClass()"),
-              "getClass".toCharArray(), type, program.getTypeJavaLangClass(),
-              false, false, false, false, false);
+              type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
+                  "Synthetic getClass()"), "getClass".toCharArray(), type,
+              program.getTypeJavaLangClass(), false, false, false, false, false);
           assert (type.methods.get(2) == getClassMethod);
           getClassMethod.freezeParamTypes();
         }
@@ -655,8 +660,9 @@ public class BuildTypeMap {
             assert newMethod.getName().equals("valueOf");
             assert typeMap.get(parameters[0]) == program.getTypeJavaLangString();
             program.createParameter(newMethod.getSourceInfo().makeChild(
-                "name parameter"), "name".toCharArray(),
-                program.getTypeJavaLangString(), true, false, newMethod);
+                BuildDeclMapVisitor.class, "name parameter"),
+                "name".toCharArray(), program.getTypeJavaLangString(), true,
+                false, newMethod);
           } else {
             assert false;
           }
@@ -908,15 +914,17 @@ public class BuildTypeMap {
          * more like output JavaScript. Clinit is always in slot 0, init (if it
          * exists) is always in slot 1.
          */
-        JMethod clinit = program.createMethod(
-            info.makeChild("Class initializer"), "$clinit".toCharArray(),
-            newType, program.getTypeVoid(), false, true, true, true, false);
+        JMethod clinit = program.createMethod(info.makeChild(
+            BuildTypeMapVisitor.class, "Class initializer"),
+            "$clinit".toCharArray(), newType, program.getTypeVoid(), false,
+            true, true, true, false);
         clinit.freezeParamTypes();
 
         if (newType instanceof JClassType) {
-          JMethod init = program.createMethod(
-              info.makeChild("Instance initializer"), "$init".toCharArray(),
-              newType, program.getTypeVoid(), false, false, true, true, false);
+          JMethod init = program.createMethod(info.makeChild(
+              BuildTypeMapVisitor.class, "Instance initializer"),
+              "$init".toCharArray(), newType, program.getTypeVoid(), false,
+              false, true, true, false);
           init.freezeParamTypes();
         }
 

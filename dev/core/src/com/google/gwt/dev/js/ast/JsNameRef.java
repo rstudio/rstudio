@@ -29,7 +29,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
   private JsExpression qualifier;
 
   public JsNameRef(SourceInfo sourceInfo, JsName name) {
-    super(sourceInfo.makeChild("Reference"));
+    super(sourceInfo.makeChild(JsNameRef.class, "Reference"));
     this.name = name;
     maybeUpdateSourceInfo();
   }

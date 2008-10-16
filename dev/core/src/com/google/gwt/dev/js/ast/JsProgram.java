@@ -26,18 +26,18 @@ import java.util.Map;
 public final class JsProgram extends JsNode<JsProgram> {
 
   private final JsStatement debuggerStmt = new JsDebugger(
-      createSourceInfoSynthetic("debugger statement"));
+      createSourceInfoSynthetic(JsProgram.class, "debugger statement"));
 
-  private final JsEmpty emptyStmt = new JsEmpty(
-      createSourceInfoSynthetic("Empty statement"));
+  private final JsEmpty emptyStmt = new JsEmpty(createSourceInfoSynthetic(
+      JsProgram.class, "Empty statement"));
 
   private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(
-      createSourceInfoSynthetic("false literal"), false);
+      createSourceInfoSynthetic(JsProgram.class, "false literal"), false);
 
   private final JsGlobalBlock globalBlock;
 
   private final JsNullLiteral nullLiteral = new JsNullLiteral(
-      createSourceInfoSynthetic("null literal"));
+      createSourceInfoSynthetic(JsProgram.class, "null literal"));
 
   private final Map<Double, JsNumberLiteral> numberLiteralMap = new HashMap<Double, JsNumberLiteral>();
 
@@ -50,7 +50,7 @@ public final class JsProgram extends JsNode<JsProgram> {
   private final JsScope topScope;
 
   private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(
-      createSourceInfoSynthetic("true literal"), true);
+      createSourceInfoSynthetic(JsProgram.class, "true literal"), true);
 
   private boolean enableSourceInfoDescendants;
 
@@ -58,9 +58,11 @@ public final class JsProgram extends JsNode<JsProgram> {
    * Constructs a JavaScript program object.
    */
   public JsProgram() {
-    super(SourceInfoJs.INTRINSIC.makeChild("JavaScript program"));
+    super(SourceInfoJs.INTRINSIC.makeChild(JsProgram.class,
+        "JavaScript program"));
     rootScope = new JsRootScope(this);
-    globalBlock = new JsGlobalBlock(createSourceInfoSynthetic("global block"));
+    globalBlock = new JsGlobalBlock(createSourceInfoSynthetic(JsProgram.class,
+        "global block"));
     topScope = new JsScope(rootScope, "Global");
     objectScope = new JsScope(rootScope, "Object");
   }
@@ -70,9 +72,9 @@ public final class JsProgram extends JsNode<JsProgram> {
         enableSourceInfoDescendants);
   }
 
-  public SourceInfo createSourceInfoSynthetic(String description) {
-    // TODO : Force the caller to be passed in
-    return createSourceInfo(0, "Synthetic").makeChild(description);
+  public SourceInfo createSourceInfoSynthetic(Class<?> caller,
+      String description) {
+    return createSourceInfo(0, caller.getName()).makeChild(caller, description);
   }
 
   public JsBooleanLiteral getBooleanLiteral(boolean truth) {
@@ -114,8 +116,8 @@ public final class JsProgram extends JsNode<JsProgram> {
   public JsNumberLiteral getNumberLiteral(double value) {
     JsNumberLiteral lit = numberLiteralMap.get(value);
     if (lit == null) {
-      lit = new JsNumberLiteral(createSourceInfoSynthetic("Number literal "
-          + value), value);
+      lit = new JsNumberLiteral(createSourceInfoSynthetic(JsProgram.class,
+          "Number literal " + value), value);
       numberLiteralMap.put(value, lit);
     }
     return lit;
@@ -159,7 +161,7 @@ public final class JsProgram extends JsNode<JsProgram> {
 
   public JsNameRef getUndefinedLiteral() {
     return rootScope.findExistingName("undefined").makeRef(
-        createSourceInfoSynthetic("undefined reference"));
+        createSourceInfoSynthetic(JsProgram.class, "undefined reference"));
   }
 
   /**

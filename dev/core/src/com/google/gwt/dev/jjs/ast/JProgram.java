@@ -186,25 +186,25 @@ public class JProgram extends JNode {
   private List<JsonObject> jsonTypeTable;
 
   private final JAbsentArrayDimension literalAbsentArrayDim = new JAbsentArrayDimension(
-      this, createSourceInfoSynthetic("Absent array dimension"));
+      this, createSourceInfoSynthetic(JProgram.class, "Absent array dimension"));
 
   private final JBooleanLiteral literalFalse = new JBooleanLiteral(this,
-      createSourceInfoSynthetic("false literal"), false);
+      createSourceInfoSynthetic(JProgram.class, "false literal"), false);
 
   private final JIntLiteral literalIntNegOne = new JIntLiteral(this,
-      createSourceInfoSynthetic("-1 literal"), -1);
+      createSourceInfoSynthetic(JProgram.class, "-1 literal"), -1);
 
   private final JIntLiteral literalIntOne = new JIntLiteral(this,
-      createSourceInfoSynthetic("1 literal"), 1);
+      createSourceInfoSynthetic(JProgram.class, "1 literal"), 1);
 
   private final JIntLiteral literalIntZero = new JIntLiteral(this,
-      createSourceInfoSynthetic("0 literal"), 0);
+      createSourceInfoSynthetic(JProgram.class, "0 literal"), 0);
 
   private final JNullLiteral literalNull = new JNullLiteral(this,
-      createSourceInfoSynthetic("null literal"));
+      createSourceInfoSynthetic(JProgram.class, "null literal"));
 
   private final JBooleanLiteral literalTrue = new JBooleanLiteral(this,
-      createSourceInfoSynthetic("true literal"), true);
+      createSourceInfoSynthetic(JProgram.class, "true literal"), true);
 
   private JField nullField;
 
@@ -251,7 +251,7 @@ public class JProgram extends JNode {
   private final Map<String, JReferenceType> typeNameMap = new HashMap<String, JReferenceType>();
 
   private final JNullType typeNull = new JNullType(this,
-      createSourceInfoSynthetic("null type"));
+      createSourceInfoSynthetic(JProgram.class, "null type"));
 
   private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
       "S", "java.lang.Short", literalIntZero);
@@ -266,7 +266,8 @@ public class JProgram extends JNode {
       "java.lang.Void", null);
 
   public JProgram() {
-    super(null, SourceInfoJava.INTRINSIC.makeChild("Top-level program"));
+    super(null, SourceInfoJava.INTRINSIC.makeChild(JProgram.class,
+        "Top-level program"));
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -466,9 +467,9 @@ public class JProgram extends JNode {
    * Create a SourceInfo object when the source is created by the compiler
    * itself.
    */
-  public SourceInfo createSourceInfoSynthetic(String description) {
-    // TODO : Force the caller to be passed in
-    return createSourceInfo(0, "Synthetic").makeChild(description);
+  public SourceInfo createSourceInfoSynthetic(Class<?> caller,
+      String description) {
+    return createSourceInfo(0, caller.getName()).makeChild(caller, description);
   }
 
   public JReferenceType generalizeTypes(
@@ -549,7 +550,8 @@ public class JProgram extends JNode {
 
   public JCharLiteral getLiteralChar(char c) {
     // could be interned
-    return new JCharLiteral(this, createSourceInfoSynthetic(c + " literal"), c);
+    return new JCharLiteral(this, createSourceInfoSynthetic(JProgram.class, c
+        + " literal"), c);
   }
 
   /**
@@ -587,9 +589,8 @@ public class JProgram extends JNode {
           0).getBody();
       clinitBody.getStatements().add(decl);
 
-      classLiteral = new JClassLiteral(this,
-          createSourceInfoSynthetic("class literal for " + type.getName()),
-          type, field);
+      classLiteral = new JClassLiteral(this, createSourceInfoSynthetic(
+          JProgram.class, "class literal for " + type.getName()), type, field);
       classLiterals.put(type, classLiteral);
     } else {
       // Make sure the field hasn't been pruned.
@@ -609,18 +610,20 @@ public class JProgram extends JNode {
    */
   public JClassSeed getLiteralClassSeed(JClassType type) {
     // could be interned
-    return new JClassSeed(this, createSourceInfoSynthetic("class seed"), type);
+    return new JClassSeed(this, createSourceInfoSynthetic(JProgram.class,
+        "class seed"), type);
   }
 
   public JDoubleLiteral getLiteralDouble(double d) {
     // could be interned
-    return new JDoubleLiteral(this, createSourceInfoSynthetic(d + " literal"),
-        d);
+    return new JDoubleLiteral(this, createSourceInfoSynthetic(JProgram.class, d
+        + " literal"), d);
   }
 
   public JFloatLiteral getLiteralFloat(float f) {
     // could be interned
-    return new JFloatLiteral(this, createSourceInfoSynthetic(f + " literal"), f);
+    return new JFloatLiteral(this, createSourceInfoSynthetic(JProgram.class, f
+        + " literal"), f);
   }
 
   public JIntLiteral getLiteralInt(int i) {
@@ -633,13 +636,14 @@ public class JProgram extends JNode {
         return literalIntOne;
       default:
         // could be interned
-        return new JIntLiteral(this, createSourceInfoSynthetic(i + " literal"),
-            i);
+        return new JIntLiteral(this, createSourceInfoSynthetic(JProgram.class,
+            i + " literal"), i);
     }
   }
 
   public JLongLiteral getLiteralLong(long l) {
-    return new JLongLiteral(this, createSourceInfoSynthetic(l + " literal"), l);
+    return new JLongLiteral(this, createSourceInfoSynthetic(JProgram.class, l
+        + " literal"), l);
   }
 
   public JNullLiteral getLiteralNull() {
@@ -658,16 +662,17 @@ public class JProgram extends JNode {
 
   public JField getNullField() {
     if (nullField == null) {
-      nullField = new JField(this, createSourceInfoSynthetic("Null field"),
-          "nullField", null, typeNull, false, Disposition.FINAL);
+      nullField = new JField(this, createSourceInfoSynthetic(JProgram.class,
+          "Null field"), "nullField", null, typeNull, false, Disposition.FINAL);
     }
     return nullField;
   }
 
   public JMethod getNullMethod() {
     if (nullMethod == null) {
-      nullMethod = new JMethod(this, createSourceInfoSynthetic("Null method"),
-          "nullMethod", null, typeNull, false, false, true, true);
+      nullMethod = new JMethod(this, createSourceInfoSynthetic(JProgram.class,
+          "Null method"), "nullMethod", null, typeNull, false, false, true,
+          true);
     }
     return nullMethod;
   }

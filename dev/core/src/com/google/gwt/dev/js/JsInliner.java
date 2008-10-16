@@ -72,7 +72,7 @@ import java.util.Stack;
 /**
  * Perform inlining optimizations on the JavaScript AST.
  * 
- * TODO(bobv): remove anything that's duplicating work with {@link JsStaticEval};
+ * TODO(bobv): remove anything that's duplicating work with {@link JsStaticEval}
  * migrate other stuff to that class perhaps.
  */
 public class JsInliner {
@@ -190,8 +190,9 @@ public class JsInliner {
        * Create a new comma expression with the original LHS and the LHS of the
        * nested comma expression.
        */
-      JsBinaryOperation newOp = new JsBinaryOperation(x.getSourceInfo().makeChild(
-          "Simplifying comma expression"), JsBinaryOperator.COMMA);
+      JsBinaryOperation newOp = new JsBinaryOperation(
+          x.getSourceInfo().makeChild(CommaNormalizer.class,
+              "Simplifying comma expression"), JsBinaryOperator.COMMA);
       newOp.setArg1(x.getArg1());
       newOp.setArg2(toUpdate.getArg1());
 
@@ -595,9 +596,9 @@ public class JsInliner {
      * parameters to ensure that an exception does not prevent their evaluation.
      * 
      * In the case of a nested invocation, such as
-     * <code>F(r1, r2, G(r3, r4), f1);</code> the evaluation order is
-     * guaranteed to be maintained, provided that no required parameters occur
-     * after the nested invocation.
+     * <code>F(r1, r2, G(r3, r4), f1);</code> the evaluation order is guaranteed
+     * to be maintained, provided that no required parameters occur after the
+     * nested invocation.
      */
     @Override
     public void endVisit(JsInvocation x, JsContext<JsExpression> ctx) {
@@ -763,7 +764,7 @@ public class JsInliner {
            * statements.
            */
           JsBlock b = new JsBlock(x.getSourceInfo().makeChild(
-              "Block required for control function"));
+              InliningVisitor.class, "Block required for control function"));
           b.getStatements().addAll(statements);
           ctx.replaceMe(b);
           return;
@@ -797,7 +798,8 @@ public class JsInliner {
       assert !statements.isEmpty();
 
       // Find or create the JsVars as the first statement
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild("Synthetic locals");
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          InliningVisitor.class, "Synthetic locals");
       JsVars vars;
       if (statements.get(0) instanceof JsVars) {
         vars = (JsVars) statements.get(0);
@@ -897,7 +899,8 @@ public class JsInliner {
        * ensures that this logic will function correctly in the case of a single
        * expression.
        */
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild("Inlined invocation");
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          InliningVisitor.class, "Inlined invocation");
       ListIterator<JsExpression> i = hoisted.listIterator(hoisted.size());
       JsExpression op = i.previous();
       while (i.hasPrevious()) {
@@ -1013,7 +1016,7 @@ public class JsInliner {
     }
 
     /**
-     * Like accept(), but remove counts for all invocations in <code>expr</code>.
+     * Like accept(), but remove counts for all invocations in expr.
      */
     public void removeCountsFor(JsExpression expr) {
       assert (!removingCounts);
@@ -1073,7 +1076,8 @@ public class JsInliner {
       }
 
       JsExpression replacement = tryGetReplacementExpression(
-          x.getSourceInfo().makeChild("Inlined expression"), x.getName());
+          x.getSourceInfo().makeChild(NameRefReplacerVisitor.class,
+              "Inlined expression"), x.getName());
 
       if (replacement != null) {
         ctx.replaceMe(replacement);
@@ -1095,8 +1099,8 @@ public class JsInliner {
 
     /**
      * Determine the replacement expression to use in place of a reference to a
-     * given name. Returns <code>null</code> if no replacement has been set
-     * for the name.
+     * given name. Returns <code>null</code> if no replacement has been set for
+     * the name.
      */
     private JsExpression tryGetReplacementExpression(SourceInfo sourceInfo,
         JsName name) {
@@ -1520,7 +1524,7 @@ public class JsInliner {
         JsExpression init = var.getInitExpr();
         if (init != null) {
           SourceInfo sourceInfo = var.getSourceInfo().makeChild(
-              "Hoisted initializer into inline site");
+              JsInliner.class, "Hoisted initializer into inline site");
           JsBinaryOperation assignment = new JsBinaryOperation(sourceInfo,
               JsBinaryOperator.ASG);
           assignment.setArg1(var.getName().makeRef(sourceInfo));
@@ -1616,7 +1620,6 @@ public class JsInliner {
      * are disjoint. This prevents inlining of the following:
      * 
      * static int i; public void add(int a) { i += a; }; add(i++);
-     * 
      */
     if (hasCommonIdents(arguments, toInline, parameterIdents)) {
       return false;

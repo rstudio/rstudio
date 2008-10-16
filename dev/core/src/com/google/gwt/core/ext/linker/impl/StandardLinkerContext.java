@@ -338,7 +338,8 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     funcName.setObfuscatable(false);
 
     try {
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Linker-derived JS");
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
+          StandardLinkerContext.class, "Linker-derived JS");
       parser.setSourceInfo(sourceInfo);
       parser.parseInto(topScope, jsProgram.getGlobalBlock(), r, 1);
     } catch (IOException e) {

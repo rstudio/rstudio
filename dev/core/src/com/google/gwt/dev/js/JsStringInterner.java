@@ -133,7 +133,7 @@ public class JsStringInterner {
       }
 
       ctx.replaceMe(name.makeRef(x.getSourceInfo().makeChild(
-          "Interned reference")));
+          JsStringInterner.class, "Interned reference")));
 
       return false;
     }
@@ -164,9 +164,10 @@ public class JsStringInterner {
 
     if (v.toCreate.size() > 0) {
       // Create the pool of variable names.
-      JsVars vars = new JsVars(
-          program.createSourceInfoSynthetic("Interned string pool"));
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic("Interned string assignment");
+      JsVars vars = new JsVars(program.createSourceInfoSynthetic(
+          JsStringInterner.class, "Interned string pool"));
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+          JsStringInterner.class, "Interned string assignment");
       for (Map.Entry<JsStringLiteral, JsName> entry : v.toCreate.entrySet()) {
         JsVar var = new JsVar(sourceInfo, entry.getValue());
         var.setInitExpr(entry.getKey());

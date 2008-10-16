@@ -619,7 +619,7 @@ public class SourceInfoHistogram {
         + ".node {display:inline; z-index: 0;}" + ".story {display: none;}"
         + "div.node:hover > .story {"
         + "  display:block; float:right; clear: right; background: inherit; "
-        + "  position: relative; border-left: 8px solid white; z-index: 1;}"
+        + "  position: relative; border-left: 8px solid white; z-index: 1; max-width:50%;}"
         + "</style>");
     out.println("</head><body>");
 

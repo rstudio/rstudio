@@ -276,7 +276,8 @@ public class TypeTightener {
       JMethod method = x.getTarget();
       for (JParameter param : method.params) {
         addAssignment(param, new JParameterRef(program,
-            program.createSourceInfoSynthetic("Fake assignment"), param));
+            program.createSourceInfoSynthetic(RecordVisitor.class,
+                "Fake assignment"), param));
       }
     }
 

@@ -106,7 +106,7 @@ public class SourceInfo implements Serializable {
   private final EnumMap<Axis, Correlation> correlations = new EnumMap<Axis, Correlation>(
       Axis.class);
   /**
-   * This flag controls the behavior of {@link #makeChild(String)}.
+   * This flag controls the behavior of {@link #makeChild}.
    */
   private final boolean createDescendants;
   private final int endPos;
@@ -364,10 +364,12 @@ public class SourceInfo implements Serializable {
     }
 
     Set<Correlation> allCorrelations = getAllCorrelations();
+    Set<Correlation> primaryCorrelations = getPrimaryCorrelations();
     if (!allCorrelations.isEmpty()) {
       toReturn.append("\nCorrelations:\n");
       for (Correlation c : allCorrelations) {
-        toReturn.append("  " + c + "\n");
+        toReturn.append((primaryCorrelations.contains(c) ? " *" : "  ") + c
+            + "\n");
       }
     }
 
@@ -416,8 +418,8 @@ public class SourceInfo implements Serializable {
    * Create a derived SourceInfo object. If SourceInfo collection is disabled,
    * this method will return the current object.
    */
-  public SourceInfo makeChild(String description) {
-    return makeChild(description, EMPTY_SOURCEINFO_ARRAY);
+  public SourceInfo makeChild(Class<?> caller, String description) {
+    return makeChild(caller, description, EMPTY_SOURCEINFO_ARRAY);
   }
 
   /**
@@ -425,15 +427,14 @@ public class SourceInfo implements Serializable {
    * nodes were merged to create a new node. The derived node will inherit its
    * location from the SourceInfo object on which the method is invoked.
    */
-  public SourceInfo makeChild(String description,
+  public SourceInfo makeChild(Class<?> caller, String description,
       SourceInfo... additionalAncestors) {
     if (!createDescendants) {
       return this;
     }
 
-    // TODO : Force the caller to be passed in
-    return new SourceInfo(this, description, "Unrecorded caller",
-        additionalAncestors);
+    String callerName = caller == null ? "Unrecorded caller" : caller.getName();
+    return new SourceInfo(this, description, callerName, additionalAncestors);
   }
 
   /**

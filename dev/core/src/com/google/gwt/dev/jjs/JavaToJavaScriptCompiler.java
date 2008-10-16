@@ -129,7 +129,7 @@ public class JavaToJavaScriptCompiler {
     }
 
     SourceInfo sourceInfo = reboundEntryType.getSourceInfo().makeChild(
-        "Rebound entry point");
+        JavaToJavaScriptCompiler.class, "Rebound entry point");
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
       qualifier = JGwtCreate.createInstantiationExpression(program, sourceInfo,
@@ -152,9 +152,10 @@ public class JavaToJavaScriptCompiler {
       RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
     JMethod bootStrapMethod = program.createMethod(
-        program.createSourceInfoSynthetic("Bootstrap method"),
-        "init".toCharArray(), program.getIndexedType("EntryMethodHolder"),
-        program.getTypeVoid(), false, true, true, false, false);
+        program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class,
+            "Bootstrap method"), "init".toCharArray(),
+        program.getIndexedType("EntryMethodHolder"), program.getTypeVoid(),
+        false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
@@ -247,7 +248,8 @@ public class JavaToJavaScriptCompiler {
    */
   private static JStatement makeStatsCalls(JProgram program,
       String mainClassName) {
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic("onModuleStart() stats call");
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+        JavaToJavaScriptCompiler.class, "onModuleStart() stats call");
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
     JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 

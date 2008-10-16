@@ -666,8 +666,9 @@ public class DeadCodeElimination {
       if (lhs instanceof JValueLiteral && rhs instanceof JValueLiteral) {
         Object lhsObj = ((JValueLiteral) lhs).getValueObj();
         Object rhsObj = ((JValueLiteral) rhs).getValueObj();
-        ctx.replaceMe(program.getLiteralString(lhs.getSourceInfo().makeChild(
-            "String concatenation", rhs.getSourceInfo()),
+        ctx.replaceMe(program.getLiteralString(
+            lhs.getSourceInfo().makeChild(DeadCodeVisitor.class,
+                "String concatenation", rhs.getSourceInfo()),
             String.valueOf(lhsObj) + String.valueOf(rhsObj)));
       }
     }
@@ -1628,7 +1629,7 @@ public class DeadCodeElimination {
         Object result = actual.invoke(instance, paramValues);
         if (result instanceof String) {
           ctx.replaceMe(program.getLiteralString(x.getSourceInfo().makeChild(
-              "Optimized String call"), (String) result));
+              DeadCodeVisitor.class, "Optimized String call"), (String) result));
         } else if (result instanceof Boolean) {
           ctx.replaceMe(program.getLiteralBoolean(((Boolean) result).booleanValue()));
         } else if (result instanceof Character) {

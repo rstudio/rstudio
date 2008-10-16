@@ -533,7 +533,8 @@ public class GenerateJavaAST {
 
     JStringLiteral processConstant(StringConstant x) {
       return program.getLiteralString(currentMethod.getSourceInfo().makeChild(
-          "String literal"), x.stringValue().toCharArray());
+          JavaASTGenerationVisitor.class, "String literal"),
+          x.stringValue().toCharArray());
     }
 
     /**
@@ -1958,7 +1959,7 @@ public class GenerateJavaAST {
 
     private JField createEnumValueMap(JEnumType type) {
       SourceInfo sourceInfo = type.getSourceInfo().makeChild(
-          "enum value lookup map");
+          JavaASTGenerationVisitor.class, "enum value lookup map");
       JsonObject map = new JsonObject(program, sourceInfo);
       for (JEnumField field : type.enumList) {
         // JSON maps require leading underscores to prevent collisions.
@@ -2093,7 +2094,8 @@ public class GenerateJavaAST {
                 "FieldRef referencing field in a different type.");
           }
         }
-        return new JFieldRef(program, info.makeChild("Reference",
+        return new JFieldRef(program, info.makeChild(
+            JavaASTGenerationVisitor.class, "Reference",
             variable.getSourceInfo()), instance, field, currentClass);
       }
       throw new InternalCompilerException("Unknown JVariable subclass.");
@@ -2508,7 +2510,7 @@ public class GenerateJavaAST {
     private void writeEnumValueOfMethod(JEnumType type, JField mapField) {
       // return Enum.valueOf(map, name);
       SourceInfo sourceInfo = mapField.getSourceInfo().makeChild(
-          "enum accessor method");
+          JavaASTGenerationVisitor.class, "enum accessor method");
       JFieldRef mapRef = new JFieldRef(program, sourceInfo, null, mapField,
           type);
       JVariableRef nameRef = createVariableRef(sourceInfo,
@@ -2524,7 +2526,7 @@ public class GenerateJavaAST {
     private void writeEnumValuesMethod(JEnumType type) {
       // return new E[]{A,B,C};
       SourceInfo sourceInfo = type.getSourceInfo().makeChild(
-          "enum values method");
+          JavaASTGenerationVisitor.class, "enum values method");
       List<JExpression> initializers = new ArrayList<JExpression>();
       for (JEnumField field : type.enumList) {
         JFieldRef fieldRef = new JFieldRef(program, sourceInfo, null, field,

@@ -318,7 +318,7 @@ public class GenerateJavaScriptAST {
       } else {
         // create a new peer JsFunction
         SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-            "Translated JS function");
+            CreateNamesAndScopesVisitor.class, "Translated JS function");
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
         methodBodyMap.put(x.getBody(), jsFunction);
       }
@@ -1309,7 +1309,8 @@ public class GenerateJavaScriptAST {
        * }
        * </pre>
        */
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic("gwtOnLoad");
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+          GenerateJavaScriptAST.class, "gwtOnLoad");
       JsName gwtOnLoadName = topScope.declareName("gwtOnLoad");
       gwtOnLoadName.setObfuscatable(false);
       JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope,
@@ -1363,7 +1364,8 @@ public class GenerateJavaScriptAST {
         JsName jsName = entry.getValue();
         JsExpression longObjectAlloc = longObjects.get(jsName);
         JsVar var = new JsVar(vars.getSourceInfo().makeChild(
-            "Long literal " + entry.getKey()), jsName);
+            GenerateJavaScriptVisitor.class, "Long literal " + entry.getKey()),
+            jsName);
         var.setInitExpr(longObjectAlloc);
         vars.add(var);
       }
@@ -1371,7 +1373,8 @@ public class GenerateJavaScriptAST {
 
     private void generateNullFunc(List<JsStatement> globalStatements) {
       // handle null method
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Null function");
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
+          GenerateJavaScriptAST.class, "Null function");
       JsFunction nullFunc = new JsFunction(sourceInfo, topScope,
           nullMethodName, true);
       sourceInfo.addCorrelation(Correlation.by(nullFunc));
@@ -1382,7 +1385,7 @@ public class GenerateJavaScriptAST {
     private void generateSeedFuncAndPrototype(JClassType x,
         List<JsStatement> globalStmts) {
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          "Seed and function prototype");
+          GenerateJavaScriptVisitor.class, "Seed and function prototype");
       if (x != program.getTypeJavaLangString()) {
         JsName seedFuncName = names.get(x);
 
@@ -1436,7 +1439,8 @@ public class GenerateJavaScriptAST {
         List<JsStatement> globalStmts) {
       JMethod toStringMeth = program.getIndexedMethod("Object.toString");
       if (x.methods.contains(toStringMeth)) {
-        SourceInfo sourceInfo = x.getSourceInfo().makeChild("_.toString");
+        SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+            GenerateJavaScriptVisitor.class, "_.toString");
         // _.toString = function(){return this.java_lang_Object_toString();}
 
         // lhs
@@ -1473,7 +1477,7 @@ public class GenerateJavaScriptAST {
           return;
         }
         SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-            "Type id assignment");
+            GenerateJavaScriptVisitor.class, "Type id assignment");
         JsNameRef fieldRef = typeIdName.makeRef(sourceInfo);
         fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
         JsNumberLiteral typeIdLit = jsProgram.getNumberLiteral(typeId);
@@ -1489,7 +1493,8 @@ public class GenerateJavaScriptAST {
         // Was pruned; this compilation must have no JSO instanceof tests.
         return;
       }
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic("Type marker");
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
+          GenerateJavaScriptAST.class, "Type marker");
       JsNameRef fieldRef = typeMarkerName.makeRef(sourceInfo);
       fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
       JsExpression asg = createAssignment(fieldRef,
@@ -1499,7 +1504,8 @@ public class GenerateJavaScriptAST {
 
     private JsExpression generateTypeTable() {
       JsArrayLiteral arrayLit = new JsArrayLiteral(
-          jsProgram.createSourceInfoSynthetic("Type table"));
+          jsProgram.createSourceInfoSynthetic(GenerateJavaScriptAST.class,
+              "Type table"));
       for (int i = 0; i < program.getJsonTypeTable().size(); ++i) {
         JsonObject jsonObject = program.getJsonTypeTable().get(i);
         accept(jsonObject);
@@ -1512,7 +1518,7 @@ public class GenerateJavaScriptAST {
       for (int i = 0; i < x.methods.size(); ++i) {
         JMethod method = x.methods.get(i);
         SourceInfo sourceInfo = method.getSourceInfo().makeChild(
-            "vtable assignment");
+            GenerateJavaScriptVisitor.class, "vtable assignment");
         if (!method.isStatic() && !method.isAbstract()) {
           JsNameRef lhs = polymorphicNames.get(method).makeRef(sourceInfo);
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
@@ -1528,7 +1534,7 @@ public class GenerateJavaScriptAST {
       clinitFunc.setImpliedExecute(superClinit);
       List<JsStatement> statements = clinitFunc.getBody().getStatements();
       SourceInfo sourceInfo = clinitFunc.getSourceInfo().makeChild(
-          "clinit reassignment");
+          GenerateJavaScriptVisitor.class, "clinit reassignment");
       // self-assign to the null method immediately (to prevent reentrancy)
       JsExpression asg = createAssignment(clinitFunc.getName().makeRef(
           sourceInfo), nullMethodName.makeRef(sourceInfo));
@@ -1547,7 +1553,8 @@ public class GenerateJavaScriptAST {
       }
 
       JMethod clinitMethod = enclosingType.methods.get(0);
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild("clinit invocation");
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          GenerateJavaScriptVisitor.class, "clinit invocation");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
       return jsInvocation;
@@ -1570,7 +1577,8 @@ public class GenerateJavaScriptAST {
       }
 
       JMethod clinitMethod = enclosingType.methods.get(0);
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild("clinit call");
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          GenerateJavaScriptVisitor.class, "clinit call");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
       jsInvocation.setQualifier(names.get(clinitMethod).makeRef(sourceInfo));
       return jsInvocation;
