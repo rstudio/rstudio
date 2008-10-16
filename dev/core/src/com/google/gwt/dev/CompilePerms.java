@@ -145,6 +145,7 @@ public class CompilePerms {
 
     public void copyFrom(CompilePermsOptions other) {
       super.copyFrom(other);
+
       setPermsToCompile(other.getPermsToCompile());
     }
 

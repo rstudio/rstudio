@@ -90,9 +90,13 @@ public class Precompile {
 
     public void copyFrom(CompilerOptions other) {
       super.copyFrom(other);
-      copyFrom((CompileTaskOptions) other);
+
       setGenDir(other.getGenDir());
       setValidateOnly(other.isValidateOnly());
+
+      setAggressivelyOptimize(other.isAggressivelyOptimize());
+      setEnableAssertions(other.isEnableAssertions());
+      setOutput(other.getOutput());
     }
 
     public File getGenDir() {
