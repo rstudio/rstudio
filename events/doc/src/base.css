@@ -1,0 +1,289 @@
+body {
+  background-color: white;
+  color: black;
+  font-family: Arial, sans-serif;
+  font-size: small;
+  margin: 8px;
+  margin-top: 3px;
+}
+
+img {
+  border: 0;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0;
+  vertical-align: top;
+  text-align: left;
+}
+
+a:link {
+  color: #0000cc;
+}
+
+a:active {
+  color: #cc0000;
+}
+
+a:visited {
+  color: #551a8b;
+}
+
+h1 {
+  font-size: x-large;
+  margin-top: 0px;
+}
+
+h2 {
+  font-size: large;
+}
+
+h3 {
+  font-size: medium;
+}
+
+h4 {
+  font-size: small;
+}
+
+form {
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  margin-bottom: 0.25em;
+}
+
+pre, code {
+  color: #007000;
+  font-family: "bogus font here", monospace;
+  font-size: 100%;
+}
+
+pre {
+  border: 1px solid silver;
+  background-color: #f5f5f5;
+  padding: 0.5em;
+  overflow: auto;
+  margin: 2em;
+}
+
+pre ins {
+  color: #cc0000;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.newmark {
+  color: red;
+  font-size: 80%;
+  vertical-align: top;
+}
+
+/* "Selected" links */
+
+a.selected, .selected a, .selected {
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+a.selected:visited, .selected a:visited {
+  color: black;
+}
+
+
+/* Header */
+
+#gaia {
+  text-align: right;
+}
+
+#header {
+  height: 50px;
+  margin-bottom: 11px;
+  position: relative;
+}
+
+#logo {
+  padding-right: 18px;
+  position: absolute;
+  left: 0;
+  top: -5px;
+}
+
+#logo img {
+  width: 153px;
+  height: 55px;
+}
+
+#title {
+  border-top: 1px solid #3366cc;
+  background-color: #e5ecf9;
+  font-size: large;
+  font-weight: bold;
+  margin: 0;
+  padding: 0;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  margin-top: 5px;
+}
+
+#title, #breadcrumbs {
+  margin-left: 174px;
+  padding-left: 3px;
+}
+
+#breadcrumbs {
+  margin-top: 3px;
+}
+
+
+/* Side panel section */
+
+#side {
+  width: 167px;
+  margin-bottom: 3em;
+  float: left;
+}
+
+
+/* Menu */
+
+#menu ul {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+  margin-bottom: 1em;
+}
+
+#menu ul ul {
+  margin-left: 10px;
+  margin-bottom: 0;
+}
+
+#menu li {
+  margin-top: 4px;
+}
+
+#menu h4 {
+  margin: 0;
+  padding: 0;
+  margin-bottom: 1em;
+}
+
+
+/* Search box */
+
+#search {
+  margin-top: 2em;
+}
+
+#search .header {
+  font-weight: bold;
+  font-size: 90%;
+  margin-bottom: 1px;
+}
+
+#search .button {
+  margin-top: 1px;
+}
+
+#search .input input {
+  width: 125px;
+}
+
+
+/* Body */
+
+#body {
+  border-left: 1px dotted silver;
+  margin-left: 169px;
+  margin-right: 25px;
+  padding-left: 18px;
+  padding-bottom: 25px;
+}
+
+
+/* Footer */
+
+#footer {
+  clear: both;
+  text-align: center;
+  margin-top: 3.5em;
+  margin-bottom: 1em;
+  background-image: url("http://www.google.com/images/art.gif");
+  height: 53px;
+  background-repeat: no-repeat;
+  background-position: left center;
+}
+
+#footer .text {
+  padding-top: 20px;
+}
+
+
+/* Download links */
+
+div.download {
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+div.download a {
+  border: 1px solid #3366cc;
+  background-color: #e5ecf9;
+  padding: 0.5em;
+  position: relative;
+  font-weight: bold;
+}
+
+
+/* Terms of Service form */
+
+.termsagree {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  background-color: #e5ecf9;
+  padding: 0.5em;
+}
+
+.termsagree .button {
+  padding-top: 0.5em;
+}
+
+.termsagree .text {
+  font-weight: bold;
+}
+
+.termsagree .text .printable {
+  font-weight: normal;
+}
+
+.termsagree .text, .termsagree .button {
+  padding-left: 5px;
+}
+
+
+/* Print styles */
+
+@media print {
+  .noprint {
+    display: none;
+  }
+
+  #header, #side, #gaia {
+    display: none;
+  }
+
+  #body {
+    margin: 0;
+    border: 0;
+    padding: 0;
+  }
+}

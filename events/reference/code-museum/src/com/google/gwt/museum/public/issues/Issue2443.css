@@ -1,0 +1,5 @@
+@import url("Default.css");
+
+iframe {
+  border: 2px solid black;
+}

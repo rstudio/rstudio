@@ -1,0 +1,32 @@
+<project name="customchecks" default="build" basedir=".">
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="build-tools/customchecks" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <target name="compile" description="Compiles this project">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac>
+      <classpath>
+        <pathelement location="${gwt.tools.antlib}/checkstyle-all-4.2.jar" />
+      </classpath>
+    </gwt.javac>
+  </target>
+
+  <target name="build" depends="compile" description="Packages this project into a jar">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar>
+      <fileset dir="src" />
+      <fileset dir="${javac.out}" />
+    </gwt.jar>
+  </target>
+
+  <target name="checkstyle">
+    <!-- NOTE: This project doesn't have the checkstyle rule since it participates in bootstrapping. -->
+  </target>
+
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+    <delete file="${project.lib}" />
+  </target>
+
+</project>

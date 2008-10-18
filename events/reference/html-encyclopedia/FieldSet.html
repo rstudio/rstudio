@@ -1,0 +1,60 @@
+<html>
+<body>
+
+<h1>Fieldset examples</h1>
+
+<h2>Fieldsets take HTML captions</h2>
+Everything below is confirmed to work in FF 1.5, FF 2.0, IE 6, IE 7, Safari 3.1
+
+<fieldset>
+  <legend><b>Bold</b> is supported</legend>
+  <button>Button</button>
+</fieldset>
+
+<fieldset>
+  <legend><u>Underline</u> is supported</legend>
+  <button>Button</button>
+</fieldset>
+
+<fieldset>
+  <legend><button>Buttons</button> are supported</legend>
+  <button>Button</button>
+</fieldset>
+
+<fieldset>
+  <legend><img src="http://www.google.com/images/logo.gif"> (images are supported)</legend>
+  <button>Button</button>
+</fieldset>
+
+<fieldset>
+  <legend>
+    <table>
+      <tr><td colspan="2">Tables work</td></tr>
+      <tr><td>row 1, col 1</td><td>row 1, col 2</td></tr>
+      <tr><td>row 2, col 1</td><td>row 2, col 2</td></tr>
+    </table>
+  </legend>
+  <button>Button</button>
+</fieldset>
+  
+<fieldset>
+  <legend>
+    <span><input id="mycheckbox" type="checkbox"><label for="mycheckbox">GWT-structured checkboxes work</label></span>
+  </legend>
+  <button>Button</button>
+</fieldset>
+  
+<h2>Fieldsets without a &lt;legend&gt; element shows no gap</h2>
+<fieldset>
+  <button>Button</button>
+</fieldset>
+
+<h2>Fieldsets with an empty &lt;legend&gt; element show a gap in some browsers</h2>
+<fieldset>
+  <legend></legend>
+  <button>Button</button>
+</fieldset>
+
+</body>
+</html>
+

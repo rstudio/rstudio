@@ -1,0 +1,47 @@
+
+body {
+	background-color: white;
+	color: black;
+	font-family: Arial, sans-serif;
+	font-size: small;
+	margin: 8px;
+	margin-top: 3px;
+}
+
+table {
+	empty-cells: hide;
+}
+
+.intro {
+	border: 1px solid #C3D9FF;
+	background-color: #E8EEF7;
+	padding: 0.5em;
+}
+
+#search {
+	text-align: center;
+}
+
+#tree {
+	background-color: white;
+	border: 1px solid #C3D9FF;
+	margin: 2em 2em 0 2em;
+}
+
+.gwt-Tree {
+}
+
+.gwt-Tree img {
+	vertical-align: middle;
+}
+
+.gwt-Tree .gwt-TreeItem {
+	background-color: white;
+	font-size: x-small;
+	margin: 4px 0px 0px 4px;
+}
+
+.gwt-Tree .gwt-TreeItem-selected {
+	background-color: #E8EEF7;
+	text-decoration: underline;
+}

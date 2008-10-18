@@ -1,0 +1,8 @@
+<!-- Types and resources required to support HTTP requests.                 -->
+<!--                                                                        -->
+<module>
+  <inherits name="com.google.gwt.user.User"/>
+  <inherits name="com.google.gwt.http.HTTP"/>
+  
+  <entry-point class="com.google.gwt.examples.http.client.GetExample"/>
+</module>

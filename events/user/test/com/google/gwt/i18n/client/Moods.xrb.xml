@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- <!DOCTYPE messagebundle SYSTEM
+  "/home/build/nonconf/google3/i18n/messagebundle.dtd">
+-->
+<messagebundle class="com.google.gwt.sample.international.client.Moods"> 
+  <msg id = "Sad">
+  	sad
+  </msg>
+  <msg name="Happy" id="123">
+    happy
+  </msg>
+  <msg id="Moods" type="String[]">
+ 	Sad	123
+  </msg>
+</messagebundle>

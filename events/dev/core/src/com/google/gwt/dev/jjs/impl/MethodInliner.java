@@ -1,0 +1,523 @@
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+package com.google.gwt.dev.jjs.impl;
+
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JCastOperation;
+import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JExpressionStatement;
+import com.google.gwt.dev.jjs.ast.JLocalRef;
+import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
+import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JParameter;
+import com.google.gwt.dev.jjs.ast.JParameterRef;
+import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JReturnStatement;
+import com.google.gwt.dev.jjs.ast.JStatement;
+import com.google.gwt.dev.jjs.ast.JThisRef;
+import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+/**
+ * Inline methods that can be inlined. The current implementation limits the
+ * methods that can be inlined to those that are composed of at most two
+ * top-level expressions.
+ * 
+ * Future improvements will allow more complex methods to be inlined based on
+ * the number of call sites, as well as adding support for more complex target
+ * method expressions.
+ */
+public class MethodInliner {
+
+  /**
+   * Clones an expression, ensuring no local or this refs.
+   */
+  private class CloneCalleeExpressionVisitor extends CloneExpressionVisitor {
+
+    public CloneCalleeExpressionVisitor() {
+      super(program);
+    }
+
+    @Override
+    public boolean visit(JLocalRef x, Context ctx) {
+      throw new InternalCompilerException(
+          "Unable to clone a local reference in a function being inlined");
+    }
+
+    @Override
+    public boolean visit(JThisRef x, Context ctx) {
+      throw new InternalCompilerException("Should not encounter a JThisRef "
+          + "within a static method");
+    }
+  }
+
+  /**
+   * Method inlining visitor.
+   */
+  private class InliningVisitor extends JModVisitor {
+
+    protected final Set<JMethod> modifiedMethods = new HashSet<JMethod>();
+
+    /**
+     * Resets with each new visitor, which is good since things that couldn't be
+     * inlined before might become inlinable.
+     */
+    private final Set<JMethod> cannotInline = new HashSet<JMethod>();
+    private JExpression ignoringReturnValueFor;
+
+    @Override
+    public void endVisit(JMethod x, Context ctx) {
+      currentMethod = null;
+    }
+
+    @Override
+    public void endVisit(JMethodCall x, Context ctx) {
+      JMethod method = x.getTarget();
+
+      if (currentMethod == method) {
+        // Never try to inline a recursive call!
+        return;
+      }
+
+      if (cannotInline.contains(method)) {
+        return;
+      }
+
+      boolean possibleToInline = false;
+
+      if (method.isStatic() && !method.isNative()) {
+        JMethodBody body = (JMethodBody) method.getBody();
+        List<JStatement> stmts = body.getStatements();
+
+        if (method.getEnclosingType() != null
+            && method.getEnclosingType().methods.get(0) == method
+            && !stmts.isEmpty()) {
+          // clinit() calls cannot be inlined unless they are empty
+          possibleToInline = false;
+        } else {
+          JMultiExpression multi = createMultiExpressionFromBody(body,
+              ignoringReturnValueFor == x);
+          if (multi != null) {
+            possibleToInline = tryInlineExpression(x, ctx, multi);
+          }
+        }
+      }
+
+      // If it will never be possible to inline the method, add it to a
+      // blacklist
+      if (!possibleToInline) {
+        cannotInline.add(method);
+      }
+    }
+
+    @Override
+    public boolean visit(JExpressionStatement x, Context ctx) {
+      ignoringReturnValueFor = x.getExpr();
+      return true;
+    }
+
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      currentMethod = x;
+      return true;
+    }
+
+    private JMethodCall createClinitCall(JMethodCall x) {
+      JReferenceType targetEnclosingType = x.getTarget().getEnclosingType();
+      if (!program.typeOracle.checkClinit(currentMethod.getEnclosingType(),
+          targetEnclosingType)) {
+        // Access from this class to the target class won't trigger a clinit
+        return null;
+      }
+      if (program.isStaticImpl(x.getTarget())) {
+        // No clinit needed; target is really an instance method.
+        return null;
+      }
+      if (x.getTarget() == x.getTarget().getEnclosingType().methods.get(0)) {
+        // This is a clinit call, doesn't need another clinit
+        return null;
+      }
+
+      JMethod clinit = targetEnclosingType.methods.get(0);
+
+      // If the clinit is a non-native, empty body we can optimize it out here
+      if (!clinit.isNative()
+          && (((JMethodBody) clinit.getBody())).getStatements().size() == 0) {
+        return null;
+      }
+
+      return new JMethodCall(program, x.getSourceInfo(), null, clinit);
+    }
+
+    /**
+     * Creates a multi expression for evaluating a method call instance and
+     * possible clinit. This is a precursor for inlining the remainder of a
+     * method.
+     */
+    private JMultiExpression createMultiExpressionForInstanceAndClinit(
+        JMethodCall x) {
+      JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
+
+      // Any instance expression goes first (this can happen even with statics).
+      if (x.getInstance() != null) {
+        multi.exprs.add(x.getInstance());
+      }
+
+      // If we need a clinit call, add it first
+      JMethodCall clinit = createClinitCall(x);
+      if (clinit != null) {
+        multi.exprs.add(clinit);
+      }
+      return multi;
+    }
+
+    /**
+     * Creates a JMultiExpression from a set of JExpressionStatements,
+     * optionally terminated by a JReturnStatement. If the method doesn't match
+     * this pattern, it returns <code>null</code>.
+     * 
+     * If a method has a non-void return statement and can be represented as a
+     * multi-expression, the output of the multi-expression will be the return
+     * expression of the method. If the method is void, the output of the
+     * multi-expression should be considered undefined.
+     */
+    private JMultiExpression createMultiExpressionFromBody(JMethodBody body,
+        boolean ignoringReturnValue) {
+      JMultiExpression multi = new JMultiExpression(program,
+          body.getSourceInfo());
+      CloneCalleeExpressionVisitor cloner = new CloneCalleeExpressionVisitor();
+
+      for (JStatement stmt : body.getStatements()) {
+        if (stmt instanceof JExpressionStatement) {
+          JExpressionStatement exprStmt = (JExpressionStatement) stmt;
+          JExpression expr = exprStmt.getExpr();
+          JExpression clone = cloner.cloneExpression(expr);
+          multi.exprs.add(clone);
+        } else if (stmt instanceof JReturnStatement) {
+          JReturnStatement returnStatement = (JReturnStatement) stmt;
+          JExpression expr = returnStatement.getExpr();
+          if (expr != null) {
+            if (!ignoringReturnValue || expr.hasSideEffects()) {
+              JExpression clone = cloner.cloneExpression(expr);
+              multi.exprs.add(clone);
+            }
+          }
+          // We hit an unconditional return; no need to evaluate anything else.
+          break;
+        } else {
+          // Any other kind of statement won't be inlinable.
+          return null;
+        }
+      }
+
+      return multi;
+    }
+
+    /**
+     * Creates a multi expression for evaluating a method call instance,
+     * possible clinit, and all arguments. This is a precursor for inlining the
+     * remainder of a method that does not reference any parameters.
+     */
+    private JMultiExpression createMultiExpressionIncludingArgs(JMethodCall x) {
+      JMultiExpression multi = createMultiExpressionForInstanceAndClinit(x);
+
+      for (int i = 0, c = x.getArgs().size(); i < c; ++i) {
+        JExpression arg = x.getArgs().get(i);
+        ExpressionAnalyzer analyzer = new ExpressionAnalyzer();
+        analyzer.accept(arg);
+
+        if (analyzer.hasAssignment() || analyzer.canThrowException()) {
+          multi.exprs.add(arg);
+        }
+      }
+      return multi;
+    }
+
+    /**
+     * Replace the current expression with a given multi-expression and mark the
+     * method as modified. The dead-code elimination pass will optimize this if
+     * necessary.
+     */
+    private void replaceWithMulti(Context ctx, JMultiExpression multi) {
+      ctx.replaceMe(multi);
+      modifiedMethods.add(currentMethod);
+    }
+
+    /**
+     * Inline a call to an expression.
+     */
+    private boolean tryInlineExpression(JMethodCall x, Context ctx,
+        JMultiExpression targetExpr) {
+      List<JParameter> params = x.getTarget().params;
+      ArrayList<JExpression> args = x.getArgs();
+
+      /*
+       * Limit inlined methods to multiexpressions of length 2 for now. This
+       * handles the simple { return JVariableRef; } or { expression; return
+       * something; } cases.
+       * 
+       * TODO: add an expression complexity analyzer.
+       */
+      if (targetExpr.exprs.size() > 2) {
+        return false;
+      }
+
+      // Do not inline anything that modifies one of its params.
+      ExpressionAnalyzer targetAnalyzer = new ExpressionAnalyzer();
+      targetAnalyzer.accept(targetExpr);
+      if (targetAnalyzer.hasAssignmentToParameter()) {
+        return false;
+      }
+
+      // Make sure the expression we're about to inline doesn't include a call
+      // to the target method!
+      RecursionCheckVisitor recursionCheckVisitor = new RecursionCheckVisitor(
+          x.getTarget());
+      recursionCheckVisitor.accept(targetExpr);
+      if (recursionCheckVisitor.isRecursive()) {
+        return false;
+      }
+
+      /*
+       * After this point, it's possible that the method might be inlinable at
+       * some call sites, depending on its arguments. From here on return 'true'
+       * as the method might be inlinable elsewhere.
+       */
+
+      /*
+       * There are a different number of parameters than args - this is likely a
+       * result of parameter pruning. Don't consider this call site a candidate.
+       * 
+       * TODO: would this be possible in the trivial delegation case?
+       */
+      if (params.size() != args.size()) {
+        return true;
+      }
+
+      // Run the order check. This verifies that all the parameters are
+      // referenced once and only once, not within a conditionally-executing
+      // expression and before any tricky target expressions, such as:
+      // - assignments to any variable
+      // - expressions that throw exceptions
+      // - field references
+
+      /*
+       * Ensure correct evaluation order or params relative to each other and to
+       * other expressions.
+       */
+      OrderVisitor orderVisitor = new OrderVisitor(x.getTarget().params);
+      orderVisitor.accept(targetExpr);
+
+      /*
+       * A method that doesn't touch any parameters is trivially inlinable (this
+       * covers the empty method case)
+       */
+      if (orderVisitor.checkResults() == SideEffectCheck.NO_REFERENCES) {
+        JMultiExpression multi = createMultiExpressionIncludingArgs(x);
+        multi.exprs.add(targetExpr);
+        replaceWithMulti(ctx, multi);
+        return true;
+      }
+
+      /*
+       * We can still inline in the case where all of the actual arguments are
+       * "safe". They must have no side effects, and also have values which
+       * could not be affected by the execution of any code within the callee.
+       */
+      if (orderVisitor.checkResults() == SideEffectCheck.FAILS) {
+        for (JExpression arg : x.getArgs()) {
+          ExpressionAnalyzer argAnalyzer = new ExpressionAnalyzer();
+          argAnalyzer.accept(arg);
+
+          if (argAnalyzer.hasAssignment() || argAnalyzer.accessesField()
+              || argAnalyzer.createsObject() || argAnalyzer.canThrowException()) {
+
+            /*
+             * This argument evaluation could affect or be affected by the
+             * callee so we cannot inline here.
+             */
+            return true;
+          }
+        }
+      }
+
+      // We're safe to inline.
+      JMultiExpression multi = createMultiExpressionForInstanceAndClinit(x);
+
+      // Replace all params in the target expression with the actual arguments.
+      new ParameterReplacer(x).accept(targetExpr);
+
+      multi.exprs.add(targetExpr);
+      replaceWithMulti(ctx, multi);
+      return true;
+    }
+  }
+
+  /**
+   * Verifies that all the parameters are referenced once and only once, not
+   * within a conditionally-executing expression, and any before trouble some
+   * expressions evaluate. Examples of troublesome expressions include:
+   * 
+   * <ul>
+   * <li>assignments to any variable</li>
+   * <li>expressions that throw exceptions</li>
+   * <li>field references</li>
+   * </ul>
+   */
+  private class OrderVisitor extends ExpressionAnalyzer {
+    private int currentIndex = 0;
+    private final List<JParameter> parameters;
+    private boolean succeeded = true;
+
+    public OrderVisitor(List<JParameter> parameters) {
+      this.parameters = parameters;
+    }
+
+    public SideEffectCheck checkResults() {
+      if (succeeded && currentIndex == parameters.size()) {
+        return SideEffectCheck.CORRECT_ORDER;
+      }
+
+      if (succeeded && currentIndex == 0) {
+        return SideEffectCheck.NO_REFERENCES;
+      }
+
+      return SideEffectCheck.FAILS;
+    }
+
+    @Override
+    public void endVisit(JParameterRef x, Context ctx) {
+      JParameter param = x.getParameter();
+
+      // If the expression has side-effects before a parameter reference, fail
+      if (hasAssignment() || accessesField() || canThrowException()) {
+        succeeded = false;
+      }
+
+      // If this parameter reference won't always execute, fail
+      if (isInConditional()) {
+        succeeded = false;
+      }
+
+      // Ensure this parameter is evaluated in the correct order relative to
+      // other parameters.
+      if (parameters.indexOf(param) == currentIndex) {
+        currentIndex++;
+      } else {
+        succeeded = false;
+      }
+
+      super.endVisit(x, ctx);
+    }
+  }
+
+  /**
+   * Replace parameters inside an inlined expression with arguments to the
+   * inlined method.
+   */
+  private class ParameterReplacer extends JModVisitor {
+    private final JMethodCall methodCall;
+
+    public ParameterReplacer(JMethodCall methodCall) {
+      this.methodCall = methodCall;
+    }
+
+    @Override
+    public void endVisit(JParameterRef x, Context ctx) {
+      int paramIndex = methodCall.getTarget().params.indexOf(x.getParameter());
+      assert paramIndex != -1;
+
+      // Replace with a cloned call argument.
+      CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
+      JExpression arg = methodCall.getArgs().get(paramIndex);
+      JExpression clone = cloner.cloneExpression(arg);
+
+      /*
+       * Insert an implicit cast if the types differ; it might get optimized out
+       * later, but in some cases it will force correct math evaluation.
+       */
+      if (clone.getType() != x.getType()) {
+        clone = new JCastOperation(program, clone.getSourceInfo(), x.getType(),
+            clone);
+      }
+      ctx.replaceMe(clone);
+    }
+  }
+
+  private static class RecursionCheckVisitor extends JVisitor {
+    private boolean isRecursive = false;
+    private JMethod method;
+
+    public RecursionCheckVisitor(JMethod method) {
+      this.method = method;
+    }
+
+    public void endVisit(JMethodCall x, Context ctx) {
+      if (x.getTarget() == method) {
+        isRecursive = true;
+      }
+    }
+
+    public boolean isRecursive() {
+      return isRecursive;
+    }
+  }
+
+  /**
+   * Results of a side-effect and order check.
+   */
+  private enum SideEffectCheck {
+    CORRECT_ORDER, FAILS, NO_REFERENCES
+  }
+
+  public static boolean exec(JProgram program) {
+    return new MethodInliner(program).execImpl();
+  }
+
+  private JMethod currentMethod;
+  private final JProgram program;
+
+  private MethodInliner(JProgram program) {
+    this.program = program;
+  }
+
+  private boolean execImpl() {
+    boolean madeChanges = false;
+    while (true) {
+      InliningVisitor inliner = new InliningVisitor();
+      inliner.accept(program);
+      if (!inliner.didChange()) {
+        break;
+      }
+      madeChanges = true;
+
+      // Run a cleanup on the methods we just modified
+      for (JMethod method : inliner.modifiedMethods) {
+        DeadCodeElimination.exec(program, method);
+      }
+    }
+    return madeChanges;
+  }
+}

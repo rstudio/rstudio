@@ -1,0 +1,4 @@
+#summary The JRE types and methods that GWT emulates.
+
+=JRE Emulation=
+Google Web Toolkit includes a library that emulates a subset of the Java runtime library. The list below shows the set of JRE types and methods that GWT can translate automatically. Note that in some cases, only a subset of methods is supported for a given type.

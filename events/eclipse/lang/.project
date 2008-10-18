@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>gwt-lang</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+		<buildCommand>
+			<name>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>user</name>
+			<type>2</type>
+			<location>GWT_ROOT/user</location>
+		</link>
+		<link>
+			<name>dev</name>
+			<type>2</type>
+			<location>GWT_ROOT/dev/core</location>
+		</link>
+	</linkedResources>
+</projectDescription>

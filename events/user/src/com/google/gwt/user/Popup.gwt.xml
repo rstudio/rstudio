@@ -1,0 +1,42 @@
+<!--                                                                        -->
+<!-- Copyright 2007 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- Deferred binding rules for browser selection.                          -->
+<!--                                                                        -->
+<!-- This module is typically inherited via com.google.gwt.user.User        -->
+<!--                                                                        -->
+<module>
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
+
+  <!-- Fall through to this rule is the browser isn't IE or Mozilla -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.PopupImpl">
+    <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
+  </replace-with>
+
+  <!-- Mozilla needs a different implementation due to issue #410 -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.PopupImplMozilla">
+    <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
+    <any>
+      <when-property-is name="user.agent" value="gecko"/>
+      <when-property-is name="user.agent" value="gecko1_8"/>
+    </any>
+  </replace-with>
+  
+  <!-- IE has a completely different popup implementation -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.PopupImplIE6">
+    <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
+    <when-property-is name="user.agent" value="ie6"/>
+  </replace-with>
+</module>

@@ -1,0 +1,5 @@
+<module>
+  <!-- other inherited modules, such as com.google.gwt.user.User -->
+  <inherits name="com.google.gwt.http.HTTP"/>
+  <!-- additional module settings -->
+</module>

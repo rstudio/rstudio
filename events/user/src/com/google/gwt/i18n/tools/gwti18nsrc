@@ -1,0 +1,4 @@
+#!/bin/sh
+APPDIR=`dirname $0`;
+java -cp "$APPDIR/src:$APPDIR/bin:@gwtUserPath:@gwtDevPath" @i18nClass -out $APPDIR/src @className @createMessages ;
+

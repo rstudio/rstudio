@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fileset-config file-format-version="1.2.0" simple-config="false">
+    <fileset name="Java source for production code" enabled="true" check-config-name="GWT Checks" local="false">
+        <file-match-pattern match-pattern=".*src.*\.java" include-pattern="true"/>
+    </fileset>
+    <fileset name="Java source for test cases" enabled="true" check-config-name="GWT Checks for Tests" local="false">
+        <file-match-pattern match-pattern=".*test.*com[/\\]google[/\\].*\.java$" include-pattern="true"/>
+        <file-match-pattern match-pattern=".*test.*test[/\\].*\.java$" include-pattern="true"/>
+    </fileset>
+    <filter name="NonSrcDirs" enabled="true"/>
+</fileset-config>

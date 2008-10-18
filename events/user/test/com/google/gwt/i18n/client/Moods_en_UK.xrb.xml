@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE messagebundle SYSTEM
+  "/home/build/nonconf/google3/i18n/messagebundle.dtd">
+
+<messagebundle> 
+  <msg id = "Sad">
+  	blue
+  </msg>
+  <msg id="123">
+    chipper
+  </msg>
+</messagebundle>

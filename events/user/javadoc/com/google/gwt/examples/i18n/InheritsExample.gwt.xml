@@ -1,0 +1,5 @@
+<module>
+  <!-- other inherited modules, such as com.google.gwt.user.User -->
+  <inherits name="com.google.gwt.i18n.I18N"/>
+  <!-- additional module settings -->
+</module>

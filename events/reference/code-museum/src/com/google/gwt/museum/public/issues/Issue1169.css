@@ -1,0 +1,14 @@
+@import url("Default.css");
+
+.myMenuBar {
+  width: 300px;
+}
+.myMenuBarPopup {
+  border: 1px solid red;
+}
+.myMenuBarPopup .menuPopupTopLeft,
+.myMenuBarPopup .menuPopupTopRight,
+.myMenuBarPopup .menuPopupBottomLeft,
+.myMenuBarPopup .menuPopupBottomRight {
+  display: none;
+}

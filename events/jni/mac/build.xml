@@ -1,0 +1,18 @@
+<project name="jni-mac" default="build" basedir=".">
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="jni/mac" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <target name="build" description="Builds a JNI lib">
+    <mkdir dir="${project.jni}" />
+    <!-- TODO: Actually build this from source! -->
+    <copy todir="${project.jni}">
+      <fileset dir="prebuilt" />
+    </copy>
+  </target>
+
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" failonerror="false" />
+    <delete dir="${project.jni}" failonerror="false" />
+  </target>
+</project>

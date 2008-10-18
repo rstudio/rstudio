@@ -1,0 +1,340 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+
+<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+<title>Google Web Toolkit - Getting Started Guide</title>
+<link href="../css/base.css" rel="stylesheet" type="text/css">
+<link href="./doc.css" rel="stylesheet" type="text/css">
+<link href="../css/print.css" rel="stylesheet" media="print" type="text/css">
+
+<style type="text/css">
+
+#footer .text {
+  padding-top: 5px;
+}
+
+.documentation {
+  margin-left: 0.25in;  
+}
+
+.documentation h1 {
+  margin-left: -0.25in;
+}
+
+.documentation h2 {
+  margin-left: -0.25in;
+  margin-top: 1.5em;
+}
+
+.documentation h3 {
+  margin-left: -0.125in;
+}
+
+.documentation ul.toc {
+  margin: 0;
+  padding: 0;
+  margin-left: 2em;
+}
+
+</style>
+
+    <style type="text/css">
+
+    ol.instructions {
+      margin: 0;
+      padding: 0;
+      margin-left: 2em;
+    }
+
+    .instructions .header {
+      font-weight: bold;
+    }
+
+    .instructions li {
+      margin-bottom: 1em;
+    }
+
+    div.screenshot {
+      text-align: center;
+      margin: 1em;
+    }
+
+    </style>
+  </head>
+  <body>
+    
+<div id="gaia">
+  &nbsp;
+</div>
+
+<div id="header">
+  <div id="logo"><a href="http://code.google.com/"><img src="http://code.google.com/images/code_sm.png" alt="Google"/></a></div>
+  <div id="title">
+      Google Web Toolkit
+  </div>
+  <div id="breadcrumbs">
+    
+      <span class="item"><a href="http://code.google.com">Google Code Home</a></span> &gt;
+      
+<span class="item"><a href="http://code.google.com/webtoolkit">Google Web Toolkit</a></span> &gt;
+<span class="item"><a href="">Getting Started Guide</a></span>
+    
+  </div>
+</div>
+
+<div id="side" dir="ltr">
+  <div id="menu">
+    
+      
+<h4><a href="http://code.google.com/webtoolkit/">Google Web Toolkit</a></h4>
+<ul>
+  <li><a href="http://code.google.com/webtoolkit/download.html">Download GWT</a></li>
+</ul>
+<ul>
+  <li><a href="http://code.google.com/webtoolkit/overview.html">Product Overview</a></li>
+  <li><a href="">Getting Started Guide</a></li>
+  <li><a href="http://code.google.com/webtoolkit/documentation/examples/">Example Projects</a></li>
+</ul>
+<ul>
+  <li><a href="./com.google.gwt.doc.DeveloperGuide.html">Developer Guide</a></li>
+  <li><a href="./gwt.html">Class Reference</a></li>
+  <li><a href="http://code.google.com/p/google-web-toolkit/issues/list">Issue Tracking</a></li>
+  <li><a href="http://groups.google.com/group/Google-Web-Toolkit">Developer Forum</a></li>
+</ul>
+<ul>
+  <li><a href="http://googlewebtoolkit.blogspot.com/">GWT Blog</a></li>
+  <li><a href="http://code.google.com/webtoolkit/faq.html">GWT FAQ</a></li>
+  <li><a href="http://code.google.com/webtoolkit/makinggwtbetter.html">Making GWT Better</a></li>
+</ul>
+<ul>
+  <li><a href="http://code.google.com/webtoolkit/thirdparty.html">Third Party Tools</a></li>
+</ul>
+    
+  </div>
+
+  <div id="search">
+    <form id="searchbox_015986126177484454297:pfmwlvdl42y" action="http://www.google.com/cse">
+      <input type="hidden" name="cx" value="015986126177484454297:pfmwlvdl42y" />
+      <input type="hidden" name="cof" value="FORID:0" />
+	  <div class="header">Search Google Code:</div>
+      <input name="q" type="text" size="20" />
+      <input type="submit" name="sa" value="Search" /><br/>
+    </form>
+    <script type="text/javascript" src="http://google.com/coop/cse/brand?form=searchbox_015986126177484454297:pfmwlvdl42y"></script>
+  </div>
+
+</div>
+
+
+<script type="text/javascript">
+//<![CDATA[
+
+function walk(element, condition, operation) {
+  if (!element) return;
+  if (condition(element)) {
+    operation(element);
+    return;
+  }
+  for (var e = element.firstChild; e != null; e = e.nextSibling) {
+    walk(e, condition, operation);
+  }
+}
+
+function isCurrentLink(e) {
+  return e.tagName == "A" && e.href == window.location.href;
+}
+
+function makeSelected(e) {
+  e.className = "selected";
+}
+
+walk(document.getElementById("breadcrumbs"), isCurrentLink, makeSelected);
+walk(document.getElementById("menu"), isCurrentLink, makeSelected);
+
+//]]>
+</script>
+
+<div id="body">
+
+
+
+<div class="documentation">
+
+<h1>Google Web Toolkit Getting Started Guide</h1>
+
+<h2>Table of Contents</h2>
+
+<ul class="toc">
+  <li><a href="#Install">Installing Google Web Toolkit</a></li>
+  <li><a href="#Sample">Building a Sample Application</a></li>
+  <li><a href="#New">Creating an Application from Scratch (without Eclipse)</a></li>
+  <li><a href="#NewEclipse">Creating an Application from Scratch (with Eclipse)</a></li>
+</ul>
+
+
+<a name="Install"></a>
+<h2>Installing Google Web Toolkit</h2>
+
+<ol class="instructions">
+  <li>
+    <div class="header">Install the Java SDK.</div>
+    <div class="details">If you don't have a recent version of the Java SDK installed, download and install <a href="http://java.sun.com/javase/downloads/" rel="nofollow">Sun Java Standard Edition SDK</a>.</div>
+  </li>
+  <li>
+    <div class="header">Download Google Web Toolkit.</div>
+    <div class="details">Download the <a href="http://code.google.com/webtoolkit/download.html">Google Web Toolkit package</a> for your operating system.</div>
+  </li>
+  <li>
+    <div class="header">Unzip the Google Web Toolkit package.</div>
+    <div class="details">On Windows, extract the files from <code>gwt-windows-@GWT_VERSION@.zip</code> with a program like <a 
+href="http://www.winzip.com/" rel="nofollow">WinZip</a>.  On Mac and Linux, you can 
+unpack the package with a command like <pre class="code">tar xvzf gwt-mac-@GWT_VERSION@.tar.gz</pre></div>
+  </li>
+  <li>
+    <div class="header">Done! Start using Google Web Toolkit.</div>
+    <div class="details">GWT doesn't have an installer application.  All the files you need to run and use GWT are located in the extracted directory. The main application you'll need to use GWT is <code>applicationCreator</code>, which is <a href="#New">described below</a>. It may be easiest to start out by building one of the <a href="#Sample">sample applications</a> shipped with GWT.</div>
+  </li>
+</ol>
+
+
+
+<a name="Sample"></a>
+<h2>Building a Sample Application</h2>
+
+<p>All the sample applications are in the <code>samples/</code> directory in your GWT package. Each sample has a script you can run to start it in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a> and a script you can use to compile it into JavaScript and HTML to run it <a href="com.google.gwt.doc.DeveloperGuide.Fundamentals.WebMode.html">web mode</a>.</p>
+
+<h3>Running in Hosted Mode</h3>
+
+<p>To run the Mail sample in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a>, navigate to the <code>samples/Mail/</code> directory and run the <code>Mail-shell</code> script. This will open the GWT browser with the Mail application running inside:</p>
+
+<div class="screenshot"><img src="./mail-hosted.png" alt="Screenshot"/></div>
+
+<p>Since you're running in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a>, the application is running in the Java Virtual Machine (JVM).  This is typically the mode you'll use to debug your applications.</p>
+
+<h3>Running in Web Mode</h3>
+
+<p>To run the application in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.WebMode.html">web mode</a>, compile the application by running the <code>Mail-compile</code> script. The GWT compiler will generate a number of JavaScript and HTML files from the Mail Java source code in the <code>www/</code> subdirectory.  To see the application, open the file <code>www/com.google.gwt.sample.mail.Mail/Mail.html</code> in your favorite web browser.</p>
+
+<div class="screenshot"><img src="./mail-web.png" alt="Screenshot"/></div>
+
+<p>Since you've compiled the project, you're now running pure JavaScript and HTML that should work in IE, Firefox, or Safari. If you were to deploy the Mail example project in production, you would distribute the files in your <code>www/com.google.com.google.gwt.sample.mail.Mail/</code> directory to your web servers.</p>
+
+<h3>Make a Few Changes</h3>
+
+<p>The source code for Mail sample is in the <code>src/</code> subdirectory. Try closing your browser windows, and open the file 
+<code>src/com/google/gwt/sample/mail/client/Shortcuts.java</code> in a text editor.  Line 55 of the file adds a new &quot;Tasks&quot;
+section to the main StackPanel on the left side of the application:</p>
+
+<pre class="code">add(images, new Tasks(), images.tasksgroup(), &quot;Tasks&quot;);</pre>
+
+<p>Change the string from <code>&quot;Tasks&quot;</code> to <code>&quot;To-Do List&quot;</code>:</p>
+
+<pre class="code">add(images, new Tasks(), images.tasksgroup(), &quot;To-Do List&quot;);</pre>
+
+<p>Now, save the file and simply click "Refresh" in the hosted mode application to see your recent change (if you previously closed 
+hosted mode, go ahead and re-run the <code>Mail-shell</code> script). The second item in the main StackPanel should now say
+&quot;To-Do List&quot; instead of &quot;Tasks&quot;:</p>
+
+<div class="screenshot"><img src="./mail-modified.png" alt="Screenshot" style="border: 1px solid silver"/></div>
+
+<a name="New"></a>
+<h2>Creating an Application from Scratch (without Eclipse)</h2>
+
+<p>GWT ships with a command line utility called <code>applicationCreator</code> that automatically generates all the files you'll need in order to start a GWT project.  It can also generate <a href="http://www.eclipse.org/" rel="nofollow">Eclipse</a> project files and launch config files for easy hosted mode debugging, as <a href="#NewEclipse">described below</a>.</p>
+
+<p>Based on the <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.ProjectStructure.html">recommended GWT project structure</a>, your main GWT application class should be in a subpackage <code>client</code>.  You can create a new application called MyApplication with the command:</p>
+
+<pre class="code">applicationCreator com.mycompany.client.MyApplication</pre>
+
+<p>The <code>applicationCreator</code> script will generate a number of files in <code>src/com/mycompany/</code>, including some basic &quot;Hello, world&quot; functionality in the class <code>src/com/mycompany/client/MyApplication.java</code>.  The script also generates a <a href="overview.html#Modes">hosted mode</a> launch script called <code>MyApplication-shell</code> and a compilation script called <code>MyApplication-compile</code>, just like the <a href="#Sample">sample application</a> above.</p>
+
+<p>To run your newly created application in hosted mode, run the <code>MyApplication-shell</code> script:</p>
+
+<div class="screenshot"><img src="./myapplication-hosted.jpg" alt="Screenshot"/></div>
+
+<p>Try editing the files <code>src/com/mycompany/client/MyApplication.java</code> and <code>src/com/mycompany/public/MyApplication.html</code> to see how it changes your application.</p>
+
+
+<a name="NewEclipse"></a>
+<h2>Creating an Application from Scratch (with Eclipse)</h2>
+
+<p>GWT includes a command line utility called <code>applicationCreator</code> that automatically generates all the files you'll need in order to start a GWT project.  It can also generate <a href="http://www.eclipse.org/" rel="nofollow">Eclipse</a> project files and launch config files for easy hosted mode debugging.  To generate an Eclipse project for a new application, first use the <code>projectCreator</code> script to generate a shell Eclipse project for your application:</p>
+
+<pre class="code">projectCreator -eclipse MyProject</pre>
+
+<p>Then generate your GWT application as <a href="#New">described above</a>, but with an additional <code>-eclipse</code> flag specifying the name of your Eclipse project:</p>
+
+<pre class="code">applicationCreator -eclipse MyProject com.mycompany.client.MyApplication</pre>
+
+<p>When you're done with these scripts, in addition to the <code>MyApplication-shell</code> and <code>MyApplication-compile</code> scripts, you should see <code>.project</code>, <code>.classpath</code>, and <code>MyApplication.launch</code> files in your current directory.</p>
+
+<p>To open your project in Eclipse, launch Eclipse and click the File -> Import menu.  Choose &quot;Existing Projects into Workspace&quot; in the first screen of the wizard, and enter the directory in which you genetrated the <code>.project</code> file in the next screen of the wizard.  When you are complete, you should see your GWT project loaded into your Eclipse workspace:</p>
+
+<div class="screenshot"><img src="./myapplication-eclipse.jpg" alt="Screenshot" style="border: 1px solid silver"/></div>
+
+<p>Just click the green &quot;Run&quot; button at the top of the window to start your project in <a href="./com.google.gwt.doc.DeveloperGuide.Fundamentals.HostedMode.html">hosted mode</a>.</p>
+
+</div>
+
+    
+
+
+
+</div> 
+
+<div id="footer" dir="ltr">
+  
+  <div class="text">
+  
+    
+<div style="margin-bottom: 0.5em">Java&trade; is a trademark of Sun Microsystems.</div>
+<div style="margin-bottom:0.5em">
+  &copy;2007 Google -
+  <a href="http://www.google.com/">Google Home</a> -
+  <a href="http://www.google.com/jobs/">We're Hiring</a> -
+  <a href="/webtoolkit/terms.html">Terms and Conditions</a> -
+  <a href="http://groups.google.com/group/Google-Web-Toolkit">Developer Forum</a>
+</div>
+<div id="notice" style="text-align: center; border: 1em 0em 1em 0em">
+  Except as otherwise <a
+  href="http://code.google.com/policies.html#restrictions">noted</a>,
+  the content of this page is licensed under the <a rel="license"
+  href="http://creativecommons.org/licenses/by/2.5/">Creative Commons
+  Attribution 2.5 License</a>.
+<!-- <rdf:RDF xmlns="http://web.resource.org/cc/" 
+              xmlns:dc="http://purl.org/dc/elements/1.1/"
+              xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+  <Work rdf:about="">
+    <license rdf:resource="http://creativecommons.org/licenses/by/2.5/" />
+  </Work>
+  <License rdf:about="http://creativecommons.org/licenses/by/2.5/">
+    <permits rdf:resource="http://web.resource.org/cc/Reproduction"/>
+    <permits rdf:resource="http://web.resource.org/cc/Distribution"/>
+    <requires rdf:resource="http://web.resource.org/cc/Notice"/>
+    <requires rdf:resource="http://web.resource.org/cc/Attribution"/>
+    <permits rdf:resource="http://web.resource.org/cc/DerivativeWorks"/>
+  </License>
+</rdf:RDF> -->
+</div>
+
+
+
+  
+  </div>
+</div>
+
+<script src="http://www.google-analytics.com/urchin.js" type="text/javascript">
+</script>
+
+
+<script type="text/javascript">
+  _uacct="UA-18071-1"; // code.google.com site-wide tracking
+  _uanchor=1;
+  _uff=0;
+  urchinTracker();
+</script>
+
+
+  </body>
+</html>

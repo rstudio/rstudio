@@ -1,0 +1,239 @@
+/*
+ * Copyright 2007 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+TABLE {
+   font-family: Arial, sans-serif;
+   font-size: small;
+}
+
+H2.api {
+   background-color: #f5f5f5;
+}
+
+H3.api {
+   margin-bottom: 0.5em;
+}
+
+H4.api {
+   margin-bottom: 0.5em;
+}
+
+UL.featurelist LI {
+   margin-bottom: 0.5em;
+}
+
+#nextprev {
+   float: right;
+   padding-right: 6px;
+}
+
+#nextprev nobr {
+   margin: 0 0.2em 0 0.2em;
+}
+
+DD {
+   margin-bottom: 1em;
+}
+
+DIV.tipContainer {
+   position: relative;
+   background-color: #e5ecf9;
+   padding: 0.8em 1em 1em 0em;
+   margin: 1em 0 1em 0;
+}
+
+DIV.tipCallout {
+   position: absolute;
+   padding: 0;
+   top: 0.8em;
+   left: 0.8em;
+   font-weight: bold;
+}
+
+DIV.tipBody {
+   padding-left: 3.2em;
+}
+
+DIV.topicHeader {
+   border-bottom: 2px solid blue;
+   margin: 0 1em 1em 1em;
+}
+
+DIV.topicHeader A {
+   text-decoration: none;
+}
+
+DIV.topicHeader A:hover {
+   text-decoration: underline;
+}
+
+DIV.topicHeader NOBR A {
+   text-decoration: none;
+}
+
+DIV.topicHeader NOBR A:hover {
+   text-decoration: underline;
+}
+
+DIV.topicBody {
+   margin: 1em 1em 1em 1em;
+}
+
+DIV.topicChildren {
+   margin-left: 1em;
+}
+
+DIV.topicSeeAlso {
+   margin-left: 2em;
+}
+
+DIV.topicSeeAlso H2 {
+   margin-left: -1em;
+}
+
+DIV.memberOf {
+   font-size: small;
+   margin-bottom: 1em;
+}
+
+DIV.apiSection {
+   margin-left: 2em;
+}
+
+TABLE.members {
+   font-size: 100%;
+}
+
+TABLE.members TR {
+   vertical-align: top;
+}
+
+TABLE.members TR TH {
+   font-weight: bold;
+   background-color: #CCCCCC;
+   text-align: left;
+   padding: 4px 6px 4px 6px;
+}
+
+TABLE.members TR TD {
+   background-color: white;
+   text-align: left;
+   padding: 4px 6px 4px 6px;
+   margin: 1px;
+}
+
+DIV.memberSig {
+   font-family: "bogus font here" , monospace;
+   font-size: 100%;
+   margin-bottom: 1em;
+   overflow: auto;
+}
+
+DIV.classSig {
+   color: #007000;
+   font-family: "bogus font here" , monospace;
+   font-size: 100%;
+   background-color: #f5f5f5;
+   padding: 0.5em;
+   margin-bottom: 1em;
+   overflow: auto;
+}
+
+UL.css LI {
+   font-style: normal;
+   font-family: Courier New;
+   list-style-type: none;
+}
+
+DL.fixed DT {
+   font-style: normal;
+   font-family: Courier New;
+}
+
+DL.memberDetail {
+   margin-top: 0em;
+}
+
+DL.memberDetail DT {
+   font-family: "bogus font here" , monospace;
+}
+
+DL.memberDetail DD {
+   margin-bottom: 1em;
+}
+
+TD {
+   padding: 0.2em;
+   vertical-align: top;
+}
+
+TH {
+   text-align: left;
+}
+
+TR.gallery-link TD {
+   text-align: center;
+   vertical-align: bottom;
+   padding-top: 1em;
+}
+
+TR.gallery TD {
+   text-align: center;
+   vertical-align: top;
+   padding-top: 0.25em;
+   padding-bottom: 1em;
+   padding-left: 1em;
+   padding-right: 1em;
+}
+
+IMG.gallery {
+   border: 1px solid #95BBFC;
+   padding: 4px;
+}
+
+UL.childToc {
+	margin: 0;
+	padding: 0;
+	list-style-type: none;
+}
+
+UL.childToc LI {
+	margin: 0 0 18pt 0;
+	padding: 0;
+}
+
+UL.childToc LI DIV.heading {
+	font-weight: bold;
+}
+
+UL.childToc LI DIV.synopsis A {
+	text-decoration: none;
+	color: black;
+}
+
+UL.childToc UL {
+	width: 80%;
+	list-style-type: none;
+	padding: 0;
+	margin: 4pt 0 0 24pt;
+}
+
+UL.childToc UL LI {
+	white-space: nowrap;
+	display: inline;
+	margin: 0;
+	padding: 0;
+}

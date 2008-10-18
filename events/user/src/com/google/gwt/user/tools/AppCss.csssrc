@@ -1,0 +1,12 @@
+/** Add css rules here for your application. */
+
+
+/** Example rules used by the template application (remove for your app) */
+.pc-template-btn {
+  display: block;
+  font-size: 16pt
+}
+
+#pc-template-img {
+  margin-top: 20px;
+}

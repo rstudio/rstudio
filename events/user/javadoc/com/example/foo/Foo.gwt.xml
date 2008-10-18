@@ -1,0 +1,17 @@
+<module>
+  <!-- Module com.example.foo.Foo -->
+
+  <!-- Standard inherit.                                           -->
+  <inherits name='com.google.gwt.user.User'/>
+
+  <!-- implicitly includes com.example.foo.client package          -->
+
+  <!-- OPTIONAL STUFF FOLLOWS -->
+
+  <!-- It's okay for your module to declare an entry point.        -->
+  <!-- This gets ignored when running under JUnit.                 -->
+  <entry-point class='com.example.foo.FooModule'/>
+
+  <!-- You can also test remote services during a JUnit run.       -->
+  <servlet path='/foo' class='com.example.foo.server.FooServiceImpl'/>
+</module>

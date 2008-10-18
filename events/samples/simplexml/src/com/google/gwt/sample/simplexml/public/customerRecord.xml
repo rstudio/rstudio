@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<CustomerRecord id="123">
+	<name>Karen Smith</name>
+	<notes>Karen likes to be addressed as Dr. Smith</notes>
+	<orderHistory>
+		<order id="123-1" status="completed">
+			<item upc="5 55543 44443">Set of lock picks</item>
+			<orderedOn>2/2/2004</orderedOn>
+			<shippingInfo>
+				<shippedOn title="Date">2/3/2004</shippedOn>
+				<shippedBy title="Shipped By">USPS</shippedBy>
+				<postOffice title="Post office"> Mt. Vernon Branch</postOffice>
+			</shippingInfo>
+			<address>
+				<street>34 Baker lane</street>
+				<city>Atlanta</city>
+				<state>Georgia</state>
+				<zipCode>30311</zipCode>
+			</address>
+		</order>
+
+		<order id="123-2" status="completed">
+			<item upc="3 45122 31116">Gold Shield</item>
+			<address>
+				<street>43 Butcher lane</street>
+				<city>Atlanta</city>
+				<state>Georgia</state>
+				<zipCode>30366</zipCode>
+			</address>
+			<orderedOn>2/3/2005</orderedOn>
+			<shippingInfo>
+				<shipedOn title="Date">2/5/2005</shipedOn>
+				<shippedBy title="Shipped By">UPC</shippedBy>
+				<trackingNumber title="Tracking Number">12321356546433</trackingNumber>
+				<signedFor title="Signed for">Jane Smith </signedFor>
+			</shippingInfo>
+		</order>
+		<order id="123-2" status="pending">
+			<item upc="3 45122 34566">Bronze Sword</item>
+			<address>
+				<street>43 Butcher lane</street>
+				<city>Atlanta</city>
+				<state>Georgia</state>
+				<zipCode>30366</zipCode>
+			</address>
+			<orderedOn>2/3/2006</orderedOn>
+		</order>
+	</orderHistory>
+</CustomerRecord>

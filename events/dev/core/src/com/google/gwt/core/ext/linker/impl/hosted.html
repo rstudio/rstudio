@@ -1,0 +1,40 @@
+<html>
+<head><script>
+var $wnd = parent;
+var $doc = $wnd.document;
+var $moduleName, $moduleBase
+,$stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;
+if ($stats) {
+  var moduleFuncName = location.search.substr(1);
+  var moduleFunc = $wnd[moduleFuncName];
+  var moduleName = moduleFunc ? moduleFunc.moduleName : "unknown";
+  $stats({moduleName:moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
+}
+</script></head>
+<body>
+<font face='arial' size='-1'>This html file is for hosted mode support.</font>
+<script><!--
+function gwtOnLoad(errFn, modName, modBase){
+  $moduleName = modName;
+  $moduleBase = modBase;
+  if (!external.gwtOnLoad(window, modName, "1.5")) {
+    if (errFn) {
+      errFn(modName);
+    }
+  }
+}
+
+window.fireOnModuleLoadStart = function(className) {
+  $stats && $stats({moduleName:$moduleName, subSystem:'startup', evtGroup:'moduleStartup', millis:(new Date()).getTime(), type:'onModuleLoadStart', className:className});
+};
+
+window.onunload = function() {
+  external.gwtOnLoad(window, null, "1.5");
+};
+
+window.__gwt_module_id = 0;
+
+var query = window.location.search.substr(1);
+$stats && $stats({moduleName:$moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
+if (query && $wnd[query]) $wnd[query].onScriptLoad();
+--></script></body></html>

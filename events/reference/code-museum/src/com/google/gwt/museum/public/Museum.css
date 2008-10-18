@@ -1,0 +1,77 @@
+body {
+    padding: 0px;
+    margin: 0px;
+}
+
+.isLoaded {
+    width: 40px;
+    height: 1px;
+    visibility: hidden;
+    position: absolute;
+}
+
+.museum-optionsPanel {
+    background: #D6E9F8;
+    border-bottom: 1px solid #aaf;
+}
+
+.museum-optionsPanel td {
+    padding: 2px 0px;
+    font-size: 10pt;
+    font-weight: bold;
+}
+
+.museum-optionsPanel .gwt-ListBox {
+    font-size: 9pt;
+    color: blue;
+    margin: 0px 6px;
+}
+
+.museum-optionsPanel .gwt-Button {
+    font-size: 8pt;
+    margin: 0px 6px;
+}
+
+.museum-optionsPanel .nextButton, .museum-optionsPanel .prevButton {
+    font-weight: normal;
+    color: blue;
+    margin: 0px 2px;
+    cursor: pointer;
+}
+
+.museum-issueDescription {
+    margin: 5px;
+    border: 1px solid #bbb;
+    padding: 8px 3px;
+    background: #fafafa;
+    font-size: 10pt;
+}
+
+.museum-issueContainer {
+    padding: 15px 20px;
+}
+/**
+ * Applied to the suggest box.
+ */
+.gwt-SuggestBox .topLeft,
+.gwt-SuggestBox .topRight,
+.gwt-SuggestBox .bottomLeft,
+.gwt-SuggestBox .bottomRight {
+	display: none;
+}
+
+
+.gwt-SuggestBoxPopup .item {
+    padding: 2px 6px;
+    color: #424242;
+    cursor: default;
+}
+
+.gwt-SuggestBoxPopup .item-selected {
+    background: #b7d6f6;
+}
+
+.gwt-SuggestBoxPopup .middleCenter {
+    border: 1px solid black;
+    background: white;
+}

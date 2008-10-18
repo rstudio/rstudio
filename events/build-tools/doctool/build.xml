@@ -1,0 +1,36 @@
+<project name="doctool" default="build" basedir=".">
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="build-tools/doctool" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <property.ensure name="java.tools.path" location="${java.home}/../lib/tools.jar" unless="build.host.ismac" message="Cannot find ${java.home}/../lib/tools.jar; please use a JDK when building doc rather than a JRE." />
+
+  <target name="compile" description="Compiles this project">
+    <mkdir dir="${javac.out}" />
+    <gwt.javac>
+      <classpath>
+        <pathelement location="${java.tools.path}" />
+      </classpath>
+    </gwt.javac>
+  </target>
+
+  <target name="build" depends="compile" description="Packages this project into a jar">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar>
+      <fileset dir="src" />
+      <fileset dir="${javac.out}" />
+    </gwt.jar>
+  </target>
+
+  <target name="checkstyle" description="Static analysis of source">
+    <gwt.checkstyle>
+      <fileset dir="src" />
+    </gwt.checkstyle>
+  </target>
+
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete dir="${project.build}" />
+    <delete file="${project.lib}" />
+  </target>
+
+</project>
