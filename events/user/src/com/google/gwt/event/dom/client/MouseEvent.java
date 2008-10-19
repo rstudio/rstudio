@@ -64,8 +64,6 @@ public abstract class MouseEvent<T extends EventHandler> extends DomEvent {
     }
   }
 
- 
-  
   /**
    * Gets the x coordinate relative to the given element.
    * 
@@ -88,10 +86,6 @@ public abstract class MouseEvent<T extends EventHandler> extends DomEvent {
   public static int getRelativeY(Event nativeEvent, Element relativeTo) {
     return nativeEvent.getClientY() - relativeTo.getAbsoluteTop()
         + relativeTo.getScrollTop() + Window.getScrollTop();
-  }
-
-  MouseEvent(Event e) {
-    super(e);
   }
 
   /**
@@ -120,9 +114,6 @@ public abstract class MouseEvent<T extends EventHandler> extends DomEvent {
   public int getClientY() {
     return getNativeEvent().getClientY();
   }
-  
-  
-  
 
   /**
    * Gets the x coordinate relative to the given element.

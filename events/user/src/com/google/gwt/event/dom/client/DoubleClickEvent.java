@@ -26,27 +26,14 @@ public class DoubleClickEvent extends DomEvent {
     Event type for double click events. Represents the meta-data associated with this event.
   */
   public static final Type<DoubleClickEvent, DoubleClickHandler> TYPE = new Type<DoubleClickEvent,DoubleClickHandler>(
-      Event.ONDBLCLICK) {
+      Event.ONDBLCLICK, "dblclick", new DoubleClickEvent()) {
      @Override
      public void fire(DoubleClickHandler handler, DoubleClickEvent event) {
        handler.onDoubleClick(event);
      }
-
-     @Override     
-    DoubleClickEvent wrap(Event nativeEvent) {
-       return new DoubleClickEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public DoubleClickEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

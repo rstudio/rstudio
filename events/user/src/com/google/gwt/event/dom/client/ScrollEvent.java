@@ -26,27 +26,14 @@ public class ScrollEvent extends DomEvent {
     Event type for scroll events. Represents the meta-data associated with this event.
   */
   public static final Type<ScrollEvent, ScrollHandler> TYPE = new Type<ScrollEvent,ScrollHandler>(
-      Event.ONSCROLL) {
+      Event.ONSCROLL, "scroll", new ScrollEvent()) {
      @Override
      public void fire(ScrollHandler handler, ScrollEvent event) {
        handler.onScroll(event);
      }
-
-     @Override     
-    ScrollEvent wrap(Event nativeEvent) {
-       return new ScrollEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public ScrollEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

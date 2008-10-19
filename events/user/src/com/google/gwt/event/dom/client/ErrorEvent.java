@@ -26,27 +26,14 @@ public class ErrorEvent extends DomEvent {
     Event type for error events. Represents the meta-data associated with this event.
   */
   public static final Type<ErrorEvent, ErrorHandler> TYPE = new Type<ErrorEvent,ErrorHandler>(
-      Event.ONERROR) {
+      Event.ONERROR, "error", new ErrorEvent()) {
      @Override
      public void fire(ErrorHandler handler, ErrorEvent event) {
        handler.onError(event);
      }
-
-     @Override     
-    ErrorEvent wrap(Event nativeEvent) {
-       return new ErrorEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public ErrorEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

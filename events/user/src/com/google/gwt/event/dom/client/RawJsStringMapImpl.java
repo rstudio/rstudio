@@ -23,8 +23,8 @@ import java.util.HashMap;
 
 /**
  * A raw js string map implementation. public so we can avoid creating multiple
- * versions for our internal code, the API is completely unsafe with two versions of get and put, so
- * please don't use!
+ * versions for our internal code, the API is completely unsafe with two
+ * versions of get and put, so please don't use!
  * 
  * @param <ValueType> value type
  */
@@ -43,7 +43,15 @@ public class RawJsStringMapImpl<ValueType> {
       return this[key];
     }-*/;
 
+    public final native ValueType get(int key) /*-{
+      return this[key];
+    }-*/;
+
     public final native void put(String key, ValueType value) /*-{
+      this[key] = value;
+    }-*/;
+
+    public final native void put(int key, ValueType value) /*-{
       this[key] = value;
     }-*/;
   }
@@ -66,6 +74,24 @@ public class RawJsStringMapImpl<ValueType> {
       return map.get(key);
     } else {
       return javaMap.get(key);
+    }
+  }
+
+  // int get only use with int get.
+  public final ValueType get(int key) {
+    if (GWT.isScript()) {
+      return map.get(key);
+    } else {
+      return javaMap.get(key + "");
+    }
+  }
+
+  // Raw put, only use with int get.
+  public final void put(int key, ValueType value) {
+    if (GWT.isScript()) {
+      map.put(key, value);
+    } else {
+      javaMap.put(key + "", value);
     }
   }
 

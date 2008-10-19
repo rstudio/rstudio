@@ -26,27 +26,14 @@ public class ClickEvent extends DomEvent {
     Event type for click events. Represents the meta-data associated with this event.
   */
   public static final Type<ClickEvent, ClickHandler> TYPE = new Type<ClickEvent,ClickHandler>(
-      Event.ONCLICK) {
+      Event.ONCLICK, "click", new ClickEvent()) {
      @Override
      public void fire(ClickHandler handler, ClickEvent event) {
        handler.onClick(event);
      }
-
-     @Override     
-    ClickEvent wrap(Event nativeEvent) {
-       return new ClickEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public ClickEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

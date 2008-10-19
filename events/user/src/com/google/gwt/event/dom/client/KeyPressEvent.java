@@ -27,30 +27,12 @@ public class KeyPressEvent extends KeyEvent {
    * this event.
    */
   public static final Type<KeyPressEvent, KeyPressHandler> TYPE = new Type<KeyPressEvent, KeyPressHandler>(
-      Event.ONKEYPRESS) {
+      Event.ONKEYPRESS, "keypress", new KeyPressEvent()) {
     @Override
     public void fire(KeyPressHandler handler, KeyPressEvent event) {
       handler.onKeyPress(event);
     }
-
-    @Override
-    KeyPressEvent wrap(Event nativeEvent) {
-      return new KeyPressEvent(nativeEvent);
-    }
   };
-  private static final int OTHER_KEY_DOWN = 63233;
-  private static final int OTHER_KEY_LEFT = 63234;
-  private static final int OTHER_KEY_RIGHT = 63235;
-  private static final int OTHER_KEY_UP = 63232;
-
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public KeyPressEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
 
   /**
    * Gets the char code for this event.
@@ -61,45 +43,6 @@ public class KeyPressEvent extends KeyEvent {
     return getCharCode(getNativeEvent());
   }
 
-  /**
-   * Is this a key down arrow?
-   * 
-   * @return whether this is a down arrow key event
-   */
-  public boolean isDownArrow() {
-    return getKeyCode() == KeyCodeEvent.KEY_DOWN
-        || getKeyCode() == OTHER_KEY_DOWN;
-  }
-
-  /**
-   * Is this a left arrow?
-   * 
-   * @return whether this is a left arrow key event
-   */
-  public boolean isLeftArrow() {
-    return getKeyCode() == KeyCodeEvent.KEY_LEFT
-        || getKeyCode() == OTHER_KEY_LEFT;
-  }
-
-  /**
-   * Is this a right arrow?
-   * 
-   * @return whether this is a right arrow key event
-   */
-  public boolean isRightArrow() {
-    return getKeyCode() == KeyCodeEvent.KEY_RIGHT
-        || getKeyCode() == OTHER_KEY_RIGHT;
-  }
-
-  /**
-   * Is this a up arrow?
-   * 
-   * @return whether this is a right arrow key event
-   */
-  public boolean isUpArrow() {
-    return getKeyCode() == KeyCodeEvent.KEY_UP || getKeyCode() == OTHER_KEY_UP;
-  }
-
   @Override
   protected Type getType() {
     return TYPE;
@@ -108,9 +51,5 @@ public class KeyPressEvent extends KeyEvent {
   private native char getCharCode(Event e)/*-{
     return e.charCode || e.keyCode;
   }-*/;
-
-  private int getKeyCode() {
-    return getNativeEvent().getKeyCode();
-  }
 
 }

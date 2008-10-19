@@ -26,27 +26,14 @@ public class FocusEvent extends DomEvent {
     Event type for focus events. Represents the meta-data associated with this event.
   */
   public static final Type<FocusEvent, FocusHandler> TYPE = new Type<FocusEvent,FocusHandler>(
-      Event.ONFOCUS) {
+      Event.ONFOCUS, "focus", new FocusEvent()) {
      @Override
      public void fire(FocusHandler handler, FocusEvent event) {
        handler.onFocus(event);
      }
-
-     @Override     
-    FocusEvent wrap(Event nativeEvent) {
-       return new FocusEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public FocusEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

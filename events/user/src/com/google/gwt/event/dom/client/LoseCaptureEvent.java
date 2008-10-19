@@ -26,27 +26,14 @@ public class LoseCaptureEvent extends DomEvent {
     Event type for lose capture events. Represents the meta-data associated with this event.
   */
   public static final Type<LoseCaptureEvent, LoseCaptureHandler> TYPE = new Type<LoseCaptureEvent,LoseCaptureHandler>(
-      Event.ONLOSECAPTURE) {
+      Event.ONLOSECAPTURE, "losecapture", new LoseCaptureEvent()) {
      @Override
      public void fire(LoseCaptureHandler handler, LoseCaptureEvent event) {
        handler.onLoseCapture(event);
      }
-
-     @Override     
-    LoseCaptureEvent wrap(Event nativeEvent) {
-       return new LoseCaptureEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public LoseCaptureEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

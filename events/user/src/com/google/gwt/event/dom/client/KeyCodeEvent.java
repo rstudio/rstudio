@@ -16,8 +16,6 @@
 
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Key up and key down are both events based upon a given key code.
  */
@@ -38,15 +36,6 @@ public abstract class KeyCodeEvent extends KeyEvent implements HasKeyCodes {
       default:
         return false;
     }
-  }
-
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the wrapped native event
-   */
-  protected KeyCodeEvent(Event nativeEvent) {
-    super(nativeEvent);
   }
 
   /**

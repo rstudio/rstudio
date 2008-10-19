@@ -26,27 +26,14 @@ public class MouseMoveEvent extends MouseEvent {
     Event type for mouse move events. Represents the meta-data associated with this event.
   */
   public static final Type<MouseMoveEvent, MouseMoveHandler> TYPE = new Type<MouseMoveEvent,MouseMoveHandler>(
-      Event.ONMOUSEMOVE) {
+      Event.ONMOUSEMOVE, "mousemove", new MouseMoveEvent()) {
      @Override
      public void fire(MouseMoveHandler handler, MouseMoveEvent event) {
        handler.onMouseMove(event);
      }
-
-     @Override     
-    MouseMoveEvent wrap(Event nativeEvent) {
-       return new MouseMoveEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public MouseMoveEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

@@ -26,27 +26,14 @@ public class MouseDownEvent extends MouseEvent {
     Event type for mouse down events. Represents the meta-data associated with this event.
   */
   public static final Type<MouseDownEvent, MouseDownHandler> TYPE = new Type<MouseDownEvent,MouseDownHandler>(
-      Event.ONMOUSEDOWN) {
+      Event.ONMOUSEDOWN, "mousedown", new MouseDownEvent()) {
      @Override
      public void fire(MouseDownHandler handler, MouseDownEvent event) {
        handler.onMouseDown(event);
      }
-
-     @Override     
-    MouseDownEvent wrap(Event nativeEvent) {
-       return new MouseDownEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public MouseDownEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

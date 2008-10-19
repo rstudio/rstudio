@@ -26,27 +26,14 @@ public class LoadEvent extends DomEvent {
     Event type for load events. Represents the meta-data associated with this event.
   */
   public static final Type<LoadEvent, LoadHandler> TYPE = new Type<LoadEvent,LoadHandler>(
-      Event.ONLOAD) {
+      Event.ONLOAD, "load", new LoadEvent()) {
      @Override
      public void fire(LoadHandler handler, LoadEvent event) {
        handler.onLoad(event);
      }
-
-     @Override     
-    LoadEvent wrap(Event nativeEvent) {
-       return new LoadEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public LoadEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

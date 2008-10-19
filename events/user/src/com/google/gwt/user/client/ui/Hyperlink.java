@@ -95,7 +95,7 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   public HandlerRegistration addClickHandler(ClickHandler handler) {
     return addHandler(ClickEvent.TYPE, handler);
   }
-  
+
   @Deprecated
   public void addClickListener(ClickListener listener) {
     addClickHandler(new L.Click(listener));
@@ -122,11 +122,12 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   @Override
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
-      fireEvent(new ClickEvent(event));
+      super.onBrowserEvent(event);
       History.newItem(targetHistoryToken);
       DOM.eventPreventDefault(event);
     }
   }
+
   @Deprecated
   public void removeClickListener(ClickListener listener) {
     L.Click.remove(this, listener);

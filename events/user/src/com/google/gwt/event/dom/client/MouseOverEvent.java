@@ -26,27 +26,14 @@ public class MouseOverEvent extends MouseEvent {
     Event type for mouse over events. Represents the meta-data associated with this event.
   */
   public static final Type<MouseOverEvent, MouseOverHandler> TYPE = new Type<MouseOverEvent,MouseOverHandler>(
-      Event.ONMOUSEOVER) {
+      Event.ONMOUSEOVER, "mouseover", new MouseOverEvent()) {
      @Override
      public void fire(MouseOverHandler handler, MouseOverEvent event) {
        handler.onMouseOver(event);
      }
-
-     @Override     
-    MouseOverEvent wrap(Event nativeEvent) {
-       return new MouseOverEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public MouseOverEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

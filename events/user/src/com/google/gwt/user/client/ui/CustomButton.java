@@ -16,8 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -797,7 +797,7 @@ public abstract class CustomButton extends ButtonBase {
   }
 
   void fireClickListeners(Event nativeEvent) {
-    fireEvent(new ClickEvent(nativeEvent));
+    DomEvent.unsafeFireNativeEvent(Event.ONCLICK, getHandlerManager());
   }
 
   /**

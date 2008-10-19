@@ -26,27 +26,14 @@ public class MouseOutEvent extends MouseEvent {
     Event type for mouse out events. Represents the meta-data associated with this event.
   */
   public static final Type<MouseOutEvent, MouseOutHandler> TYPE = new Type<MouseOutEvent,MouseOutHandler>(
-      Event.ONMOUSEOUT) {
+      Event.ONMOUSEOUT, "mouseout", new MouseOutEvent()) {
      @Override
      public void fire(MouseOutHandler handler, MouseOutEvent event) {
        handler.onMouseOut(event);
      }
-
-     @Override     
-    MouseOutEvent wrap(Event nativeEvent) {
-       return new MouseOutEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public MouseOutEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

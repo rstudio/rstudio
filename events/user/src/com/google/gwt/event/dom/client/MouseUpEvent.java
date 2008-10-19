@@ -26,27 +26,14 @@ public class MouseUpEvent extends MouseEvent {
     Event type for mouse up events. Represents the meta-data associated with this event.
   */
   public static final Type<MouseUpEvent, MouseUpHandler> TYPE = new Type<MouseUpEvent,MouseUpHandler>(
-      Event.ONMOUSEUP) {
+      Event.ONMOUSEUP, "mouseup", new MouseUpEvent()) {
      @Override
      public void fire(MouseUpHandler handler, MouseUpEvent event) {
        handler.onMouseUp(event);
      }
-
-     @Override     
-    MouseUpEvent wrap(Event nativeEvent) {
-       return new MouseUpEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public MouseUpEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

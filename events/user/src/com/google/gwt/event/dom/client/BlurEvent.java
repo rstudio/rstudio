@@ -26,27 +26,14 @@ public class BlurEvent extends DomEvent {
     Event type for blur events. Represents the meta-data associated with this event.
   */
   public static final Type<BlurEvent, BlurHandler> TYPE = new Type<BlurEvent,BlurHandler>(
-      Event.ONBLUR) {
+      Event.ONBLUR, "blur", new BlurEvent()) {
      @Override
      public void fire(BlurHandler handler, BlurEvent event) {
        handler.onBlur(event);
      }
-
-     @Override     
-    BlurEvent wrap(Event nativeEvent) {
-       return new BlurEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public BlurEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

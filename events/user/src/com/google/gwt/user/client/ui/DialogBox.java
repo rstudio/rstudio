@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.WindowResizeListener;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
@@ -64,6 +63,7 @@ import com.google.gwt.user.client.WindowResizeListener;
  * </p>
  */
 public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText {
+
   private class MouseHandlers implements MouseDownHandler, MouseMoveHandler,
       MouseUpHandler {
 
@@ -72,6 +72,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText {
       DOM.setCapture(getElement());
       dragStartX = event.getRelativeX(getElement());
       dragStartY = event.getRelativeY(getElement());
+      windowWidth = Window.getClientWidth();
     }
 
     public void onMouseMove(MouseMoveEvent event) {
@@ -103,13 +104,9 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText {
   private HTML caption = new HTML();
   private boolean dragging;
   private int dragStartX, dragStartY;
-  private WindowResizeListener resizeListener;
   private int windowWidth;
-  private int windowHeight;
   private int clientLeft;
   private int clientTop;
-
-  private MouseHandlers mouse = new MouseHandlers();
 
   /**
    * Creates an empty dialog box. It should not be shown until its child widget
@@ -156,6 +153,10 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText {
     // Sink the events
     sinkEvents(Event.MOUSEEVENTS);
 
+    MouseHandlers mouse = new MouseHandlers();
+    addDomHandler(MouseDownEvent.TYPE, mouse);
+    addDomHandler(MouseUpEvent.TYPE, mouse);
+    addDomHandler(MouseMoveEvent.TYPE, mouse);
     windowWidth = Window.getClientWidth();
     clientLeft = Document.get().getBodyOffsetLeft();
     clientTop = Document.get().getBodyOffsetTop();
@@ -170,32 +171,15 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText {
   }
 
   @Override
-  public void onBrowserEvent(Event nativeEvent) {
-    switch (DOM.eventGetType(nativeEvent)) {
-      case Event.ONMOUSEDOWN:
-        // Start dragging
-        mouse.onMouseDown(new MouseDownEvent(nativeEvent));
-        break;
-    }
-  }
-
-  @Override
   public boolean onEventPreview(Event event) {
-    // We need to preventDefault() on mouseDown events (outside of the
-    // DialogBox content) to keep text from being selected when it
-    // is dragged.
-    switch (DOM.eventGetType(event)) {
-      case Event.ONMOUSEMOVE:
-        // While dragging,just drag.
-        mouse.onMouseMove(new MouseMoveEvent(event));
-        DOM.eventPreventDefault(event);
-        break;
-      case Event.ONMOUSEUP:
-        mouse.onMouseUp(new MouseUpEvent(event));
-        break;
+    // When dragging ignore all other events.
+    if (dragging) {
+      // While dragging, all normal operations should be suspended.
+      DOM.eventPreventDefault(event);
+      return true;
+    } else {
+      return super.onEventPreview(event);
     }
-
-    return super.onEventPreview(event);
   }
 
   /**

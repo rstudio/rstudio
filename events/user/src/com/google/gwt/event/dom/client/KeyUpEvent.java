@@ -26,27 +26,14 @@ public class KeyUpEvent extends KeyCodeEvent {
     Event type for key up events. Represents the meta-data associated with this event.
   */
   public static final Type<KeyUpEvent, KeyUpHandler> TYPE = new Type<KeyUpEvent,KeyUpHandler>(
-      Event.ONKEYUP) {
+      Event.ONKEYUP, "keyup", new KeyUpEvent()) {
      @Override
      public void fire(KeyUpHandler handler, KeyUpEvent event) {
        handler.onKeyUp(event);
      }
-
-     @Override     
-    KeyUpEvent wrap(Event nativeEvent) {
-       return new KeyUpEvent(nativeEvent);
-     }
    };
 
-  /**
-   * Constructor.
-   * 
-   * @param nativeEvent the native event object
-   */
-  public KeyUpEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-  
+   
  @Override
   protected Type getType() {
     return TYPE;

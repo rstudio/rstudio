@@ -57,15 +57,6 @@ public abstract class KeyEvent extends DomEvent {
   }
 
   /**
-   * Constructor.
-   * 
-   * @param nativeEvent the wrapped native event
-   */
-  protected KeyEvent(Event nativeEvent) {
-    super(nativeEvent);
-  }
-
-  /**
    * Gets the key modifiers associated with this event.
    * 
    * @return the modifiers as defined in {@link KeyCodeEvent}.

@@ -190,7 +190,8 @@ public class Image extends MousableWidget implements SourcesLoadEvents,
        */
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          DomEvent.fireNativeEvent(Event.ONLOAD, image.getHandlerManager());
+          DomEvent.unsafeFireNativeEvent(Event.ONLOAD,
+              image.getHandlerManager());
         }
       });
     }
