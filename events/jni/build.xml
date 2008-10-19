@@ -1,5 +1,0 @@
-<project name="jni" default="build" basedir=".">
-  <property name="gwt.root" location=".." />
-  <property name="project.tail" value="jni" />
-  <import file="${gwt.root}/platforms.ant.xml" />
-</project>

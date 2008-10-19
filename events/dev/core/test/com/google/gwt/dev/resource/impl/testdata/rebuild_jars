@@ -1,7 +1,0 @@
-cd cpe1
-find . -type f | grep -v "\.svn" | xargs jar cvf ../cpe1.jar
-cd ..
-cd cpe2
-find . -type f | grep -v "\.svn" | xargs jar cvf ../cpe2.jar
-cd ..
-

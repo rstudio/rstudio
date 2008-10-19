@@ -1,1 +1,0 @@
-@java -Xmx256M -cp "%~dp0\src;%~dp0\bin;@gwtUserPath;@gwtDevPath@extraClassPathsSemicolon" @compileClass -out "%~dp0\www" %* @moduleName

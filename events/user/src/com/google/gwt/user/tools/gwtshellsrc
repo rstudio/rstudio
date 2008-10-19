@@ -1,3 +1,0 @@
-#!/bin/sh
-APPDIR=`dirname $0`;
-java @vmargs -Xmx256M -cp "$APPDIR/src:$APPDIR/bin:@gwtUserPath:@gwtDevPath@extraClassPathsColon" @shellClass -out "$APPDIR/www" "$@" @startupUrl;
