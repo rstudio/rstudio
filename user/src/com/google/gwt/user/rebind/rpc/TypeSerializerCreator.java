@@ -487,7 +487,7 @@ public class TypeSerializerCreator {
         last = n;
       }
       for (int i = outerIndex; i < last; ++i) {
-        JType type = types.get(outerIndex);
+        JType type = types.get(i);
         String typeString = getTypeString(type);
         srcWriter.print("map[\"" + typeString + "\"]=[");
         writeTypeMethods(type);
