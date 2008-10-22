@@ -216,6 +216,10 @@ public abstract class GWTTestCase extends TestCase {
    */
   @Override
   protected void runTest() throws Throwable {
+    if (this.getName() == null) {
+      throw new IllegalArgumentException("GWTTestCases require a name; \"" + this.toString() 
+          + "\" has none.  Perhaps you used TestSuite.addTest() instead of addTestClass()?");
+    }
     JUnitShell.runTest(getModuleName(), this, testResult);
   }
 
