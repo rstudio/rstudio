@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 
 /**
@@ -40,7 +41,7 @@ public class TestSetFactory {
    * exposure in various collections.
    */
   public static class MarkerBase implements IsSerializable {
-    public String value;
+    private String value;
 
     public MarkerBase(String value) {
       this.value = value;
@@ -54,6 +55,10 @@ public class TestSetFactory {
             || (value != null && value.equals(other.value));
       }
       return false;
+    }
+
+    public String getValue() {
+      return value;
     }
 
     @Override
@@ -175,6 +180,28 @@ public class TestSetFactory {
    * A single-use marker type to independently check type parameter exposure in
    * various collections.
    */
+  public static final class MarkerTypeTreeSet extends MarkerBase implements
+      Comparable<MarkerTypeTreeSet> {
+
+    public MarkerTypeTreeSet(String value) {
+      super(value);
+    }
+
+    MarkerTypeTreeSet() {
+      super(null);
+    }
+
+    // if getValue() returns null, a null-pointer expection will be thrown,
+    // which is the intended effect
+    public int compareTo(MarkerTypeTreeSet arg0) {
+      return getValue().compareTo(arg0.getValue());
+    }
+  }
+
+  /**
+   * A single-use marker type to independently check type parameter exposure in
+   * various collections.
+   */
   public static final class MarkerTypeVector extends MarkerBase {
 
     public MarkerTypeVector(String value) {
@@ -254,13 +281,14 @@ public class TestSetFactory {
   public static class UnserializableNode {
   }
 
-  static class ReverseSorter implements Comparator<String>, Serializable {
+  static class ReverseSorter<T extends Comparable<T>> implements Comparator<T>,
+      Serializable {
 
     // for gwt-serialization
     ReverseSorter() {
     }
 
-    public int compare(String a, String b) {
+    public int compare(T a, T b) {
       // Explicit null check to match JRE specs
       if (a == null || b == null) {
         throw new NullPointerException();
@@ -477,7 +505,7 @@ public class TestSetFactory {
     if (defaultComparator) {
       map = new TreeMap<String, MarkerTypeTreeMap>();
     } else {
-      map = new TreeMap<String, MarkerTypeTreeMap>(new ReverseSorter());
+      map = new TreeMap<String, MarkerTypeTreeMap>(new ReverseSorter<String>());
     }
     map.put("foo", new MarkerTypeTreeMap("foo"));
     map.put("bar", new MarkerTypeTreeMap("bar"));
@@ -485,6 +513,22 @@ public class TestSetFactory {
     map.put("bal", new MarkerTypeTreeMap("bal"));
     map.put("w00t", new MarkerTypeTreeMap("w00t"));
     return map;
+  }
+
+  public static TreeSet<MarkerTypeTreeSet> createTreeSet(
+      boolean defaultComparator) {
+    TreeSet<MarkerTypeTreeSet> set;
+    if (defaultComparator) {
+      set = new TreeSet<MarkerTypeTreeSet>();
+    } else {
+      set = new TreeSet<MarkerTypeTreeSet>(new ReverseSorter<MarkerTypeTreeSet>());
+    }
+    set.add(new MarkerTypeTreeSet("foo"));
+    set.add(new MarkerTypeTreeSet("bar"));
+    set.add(new MarkerTypeTreeSet("baz"));
+    set.add(new MarkerTypeTreeSet("bal"));
+    set.add(new MarkerTypeTreeSet("w00t"));
+    return set;
   }
 
   public static Vector<MarkerTypeVector> createVector() {

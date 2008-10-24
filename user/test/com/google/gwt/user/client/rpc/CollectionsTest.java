@@ -23,6 +23,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
@@ -34,6 +35,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 
 /**
@@ -606,6 +608,27 @@ public class CollectionsTest extends GWTTestCase {
             }
 
             public void onSuccess(TreeMap<String, MarkerTypeTreeMap> result) {
+              assertNotNull(result);
+              assertTrue(TestSetValidator.isValid(expected, result));
+              finishTest();
+            }
+          });
+    }
+  }
+
+  public void testTreeSet() {
+    delayTestFinish(TEST_DELAY);
+    
+    CollectionsTestServiceAsync service = getServiceAsync();
+    for (boolean option : new boolean[] {true, false}) {
+      final TreeSet<MarkerTypeTreeSet> expected = TestSetFactory.createTreeSet(option);
+      service.echo(expected, option,
+          new AsyncCallback<TreeSet<MarkerTypeTreeSet>>() {
+            public void onFailure(Throwable caught) {
+              TestSetValidator.rethrowException(caught);
+            }
+
+            public void onSuccess(TreeSet<MarkerTypeTreeSet> result) {
               assertNotNull(result);
               assertTrue(TestSetValidator.isValid(expected, result));
               finishTest();

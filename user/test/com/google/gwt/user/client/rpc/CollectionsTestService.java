@@ -22,6 +22,7 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
@@ -34,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 
 /**
@@ -52,6 +54,7 @@ public interface CollectionsTestService extends RemoteService {
       super(msg);
     }
   }
+
   ArrayList<MarkerTypeArrayList> echo(ArrayList<MarkerTypeArrayList> value)
       throws CollectionsTestServiceException;
 
@@ -118,7 +121,10 @@ public interface CollectionsTestService extends RemoteService {
   TreeMap<String, MarkerTypeTreeMap> echo(
       TreeMap<String, MarkerTypeTreeMap> value, boolean option)
       throws CollectionsTestServiceException;
-  
+
+  TreeSet<MarkerTypeTreeSet> echo(TreeSet<MarkerTypeTreeSet> value,
+      boolean option) throws CollectionsTestServiceException;
+
   Vector<MarkerTypeVector> echo(Vector<MarkerTypeVector> value)
       throws CollectionsTestServiceException;
 
