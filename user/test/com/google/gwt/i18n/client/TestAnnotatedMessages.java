@@ -31,6 +31,15 @@ import java.util.Date;
 @Generate(format = "com.google.gwt.i18n.rebind.format.PropertiesFormat")
 public interface TestAnnotatedMessages extends Messages {
 
+  public interface Nested extends Messages {
+
+    @DefaultMessage("nested dollar")
+    String nestedDollar();
+
+    @DefaultMessage("nested underscore")
+    String nestedUnderscore();
+}
+
   @DefaultMessage("Test me")
   String basicText();
   
