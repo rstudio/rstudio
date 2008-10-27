@@ -99,6 +99,10 @@ public class StandardCompilationResult extends CompilationResult {
     }
     if (toReturn == null) {
       toReturn = Util.readFileAsString(cacheFile);
+      if (toReturn == null) {
+        throw new RuntimeException("Unexpectedly unable to read JS file '"
+            + cacheFile.getAbsolutePath() + "'");
+      }
       js = new SoftReference<String>(toReturn);
     }
     return toReturn;
