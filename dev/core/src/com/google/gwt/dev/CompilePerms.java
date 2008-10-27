@@ -201,7 +201,7 @@ public class CompilePerms {
     return new File(compilerWorkDir, "permutation-" + permNumber + ".js");
   }
 
-  private CompilePermsOptionsImpl options;
+  private final CompilePermsOptionsImpl options;
 
   public CompilePerms(CompilePermsOptions options) {
     this.options = new CompilePermsOptionsImpl(options);

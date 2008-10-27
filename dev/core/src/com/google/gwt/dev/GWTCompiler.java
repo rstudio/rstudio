@@ -60,7 +60,7 @@ public class GWTCompiler {
     System.exit(1);
   }
 
-  private CompilerOptionsImpl options;
+  private final CompilerOptionsImpl options;
 
   public GWTCompiler(CompilerOptions options) {
     this.options = new CompilerOptionsImpl(options);
