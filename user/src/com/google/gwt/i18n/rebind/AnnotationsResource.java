@@ -13,8 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.rebind;
+
+import static com.google.gwt.i18n.rebind.AnnotationUtil.getClassAnnotation;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
@@ -167,7 +168,7 @@ public class AnnotationsResource extends AbstractResource {
    */
   public static KeyGenerator getKeyGenerator(JClassType targetClass)
       throws AnnotationsError {
-    GenerateKeys generator = targetClass.getAnnotation(GenerateKeys.class);
+    GenerateKeys generator = getClassAnnotation(targetClass, GenerateKeys.class);
     if (generator != null) {
       String className = generator.value();
       try {
@@ -377,7 +378,7 @@ public class AnnotationsResource extends AbstractResource {
     KeyGenerator keyGenerator = getKeyGenerator(clazz);
     map = new HashMap<String, MethodEntry>();
     setPath(clazz.getQualifiedSourceName());
-    DefaultLocale defLocale = clazz.getAnnotation(DefaultLocale.class);
+    DefaultLocale defLocale = getClassAnnotation(clazz, DefaultLocale.class);
     if (defLocale != null && !ResourceFactory.DEFAULT_TOKEN.equals(locale)
         && !locale.equalsIgnoreCase(defLocale.value())) {
       logger.log(TreeLogger.WARN, "@DefaultLocale on "

@@ -126,6 +126,13 @@ public class I18NTest extends GWTTestCase {
         m.pluralWidgetsOther(150));
   }
 
+  public void testAnnotationInheritance() {
+    TestAnnotationGrandchild m = GWT.create(TestAnnotationGrandchild.class);
+    assertEquals("foo", m.foo());
+    assertEquals("bar_piglatin", m.bar());
+    assertEquals("baz_piglatin", m.baz());
+  }
+
   public void testBindings() {
     TestBinding b = (TestBinding) GWT.create(TestBinding.class);
     assertEquals("default", b.a());

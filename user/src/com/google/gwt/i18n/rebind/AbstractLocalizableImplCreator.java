@@ -15,6 +15,8 @@
  */
 package com.google.gwt.i18n.rebind;
 
+import static com.google.gwt.i18n.rebind.AnnotationUtil.getClassAnnotation;
+
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -139,7 +141,7 @@ abstract class AbstractLocalizableImplCreator extends
       context.commit(logger, pw);
     }
     // Generate a translatable output file if requested.
-    Generate generate = targetClass.getAnnotation(Generate.class);
+    Generate generate = getClassAnnotation(targetClass, Generate.class);
     if (generate != null) {
       String path = generate.fileName();
       if (Generate.DEFAULT.equals(path)) {
