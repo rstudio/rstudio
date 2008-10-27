@@ -20,9 +20,7 @@ import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 
 import java.util.Comparator;
-import java.util.Set;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 /**
  * Custom field serializer for {@link java.util.TreeMap}.
@@ -33,10 +31,7 @@ public class TreeSet_CustomFieldSerializer {
   /* for now, build it entry by entry. Can optimize later via bulk loading */
   public static void deserialize(SerializationStreamReader streamReader,
       TreeSet instance) throws SerializationException {
-    int size = streamReader.readInt();
-    for (int i = 0; i < size; ++i) {
-      instance.add(streamReader.readObject());
-    }
+    Collection_CustomFieldSerializerBase.deserialize(streamReader, instance);
   }
 
   public static TreeSet instantiate(SerializationStreamReader streamReader)
@@ -47,9 +42,6 @@ public class TreeSet_CustomFieldSerializer {
   public static void serialize(SerializationStreamWriter streamWriter,
       TreeSet instance) throws SerializationException {
     streamWriter.writeObject(instance.comparator());
-    streamWriter.writeInt(instance.size());
-    for (Object entry :  instance) {
-      streamWriter.writeObject(entry);
-    }
+    Collection_CustomFieldSerializerBase.serialize(streamWriter, instance);
   }
 }
