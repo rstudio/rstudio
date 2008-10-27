@@ -17,10 +17,11 @@ package com.google.gwt.i18n.client.gen;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * 	'com/google/gwt/i18n/client/gen/TestConstantsQuoting.properties'.
+ * 'com/google/gwt/i18n/client/gen/TestConstantsQuoting.properties'.
  */
-public interface TestConstantsQuoting extends com.google.gwt.i18n.client.Constants {
-  
+public interface TestConstantsQuoting extends
+    com.google.gwt.i18n.client.Constants {
+
   /**
    * Translated "Doesn''t work this way here".
    * 

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamWriter;
-
 /**
  * Base class for the client and server serialization streams. This class
  * handles the basic serialization and deserialization formatting for primitive
@@ -27,8 +25,8 @@ public abstract class AbstractSerializationStream {
   /**
    * The character used to separate fields in client->server RPC messages.
    * 
-   * Note that this character is referenced in the following places not
-   * using this constant, and they must be changed if this is:
+   * Note that this character is referenced in the following places not using
+   * this constant, and they must be changed if this is:
    * <ul>
    * <li>{@link ServerSerializationStreamWriter}.deserializeStringTable
    * <li>{@link ClientSerializationStreamReader}.getQuotingRegex

@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.user.client.rpc.SerializationException;
-import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public final class ClientSerializationStreamWriter extends
    */
   @SuppressWarnings("unused")
   private static JavaScriptObject regex = getQuotingRegex();
-  
+
   private static void append(StringBuffer sb, String token) {
     assert (token != null);
     sb.append(token);
@@ -42,15 +41,15 @@ public final class ClientSerializationStreamWriter extends
   }
 
   /**
-   * Create the RegExp instance used for quoting dangerous characters in
-   * user payload strings.
-   *
+   * Create the RegExp instance used for quoting dangerous characters in user
+   * payload strings.
+   * 
    * Note that {@link AbstractSerializationStream#RPC_SEPARATOR_CHAR} is used in
    * this expression, which must be updated if the separator character is
    * changed.
    * 
-   * For Android WebKit, we quote many more characters to keep them from
-   * being mangled.
+   * For Android WebKit, we quote many more characters to keep them from being
+   * mangled.
    * 
    * @return RegExp object
    */
@@ -89,10 +88,10 @@ public final class ClientSerializationStreamWriter extends
   /**
    * Quote characters in a user-supplied string to make sure they are safe to
    * send to the server.
-   *
-   * See {@link ServerSerializationStreamReader#deserializeStringTable}
-   * for the corresponding dequoting.
-   *
+   * 
+   * See {@link ServerSerializationStreamReader#deserializeStringTable} for the
+   * corresponding dequoting.
+   * 
    * @param str string to quote
    * @return quoted string
    */

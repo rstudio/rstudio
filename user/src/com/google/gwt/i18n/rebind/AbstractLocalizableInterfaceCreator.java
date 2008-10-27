@@ -86,18 +86,8 @@ public abstract class AbstractLocalizableInterfaceCreator {
    * hexadecimal character representation.
    */
   private static final char NIBBLE_TO_HEX_CHAR[] = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
-        'E', 'F'
-    };
-
-  private static void unicodeEscape(char ch, StringBuilder buf) {
-    buf.append('\\');
-    buf.append('u');
-    buf.append(NIBBLE_TO_HEX_CHAR[(ch >> 12) & 0x0F]);
-    buf.append(NIBBLE_TO_HEX_CHAR[(ch >> 8) & 0x0F]);
-    buf.append(NIBBLE_TO_HEX_CHAR[(ch >> 4) & 0x0F]);
-    buf.append(NIBBLE_TO_HEX_CHAR[ch & 0x0F]);
-  }
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
+      'E', 'F'};
 
   private static boolean needsUnicodeEscape(char ch) {
     if (ch == ' ') {
@@ -116,11 +106,20 @@ public abstract class AbstractLocalizableInterfaceCreator {
       case Character.PARAGRAPH_SEPARATOR:
       case Character.SURROGATE:
         return true;
-  
+
       default:
         break;
     }
     return false;
+  }
+
+  private static void unicodeEscape(char ch, StringBuilder buf) {
+    buf.append('\\');
+    buf.append('u');
+    buf.append(NIBBLE_TO_HEX_CHAR[(ch >> 12) & 0x0F]);
+    buf.append(NIBBLE_TO_HEX_CHAR[(ch >> 8) & 0x0F]);
+    buf.append(NIBBLE_TO_HEX_CHAR[(ch >> 4) & 0x0F]);
+    buf.append(NIBBLE_TO_HEX_CHAR[ch & 0x0F]);
   }
 
   /**
@@ -128,8 +127,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
    */
   protected SourceWriter composer;
 
-  private List<ResourceKeyFormatter> formatters = 
-    new ArrayList<ResourceKeyFormatter>();
+  private List<ResourceKeyFormatter> formatters = new ArrayList<ResourceKeyFormatter>();
 
   private File resourceFile;
 
@@ -197,7 +195,7 @@ public abstract class AbstractLocalizableInterfaceCreator {
    * Create an annotation to hold the default value.
    */
   protected abstract void genValueAnnotation(String defaultValue);
-  
+
   /**
    * Returns the javaDocComment for the class.
    * 
@@ -206,7 +204,36 @@ public abstract class AbstractLocalizableInterfaceCreator {
    */
   protected abstract String javaDocComment(String path);
 
-  @SuppressWarnings("unchecked") // use of raw type from LocalizedProperties
+  protected String makeJavaString(String value) {
+    StringBuilder buf = new StringBuilder();
+    buf.append('\"');
+    for (int i = 0; i < value.length(); ++i) {
+      char c = value.charAt(i);
+      switch (c) {
+        case '\r':
+          buf.append("\\r");
+          break;
+        case '\n':
+          buf.append("\\n");
+          break;
+        case '\"':
+          buf.append("\\\"");
+          break;
+        default:
+          if (needsUnicodeEscape(c)) {
+            unicodeEscape(c, buf);
+          } else {
+            buf.append(c);
+          }
+          break;
+      }
+    }
+    buf.append('\"');
+    return buf.toString();
+  }
+
+  @SuppressWarnings("unchecked")
+  // use of raw type from LocalizedProperties
   void generateFromPropertiesFile() throws IOException {
     InputStream propStream = new FileInputStream(resourceFile);
     LocalizedProperties p = new LocalizedProperties();
@@ -276,33 +303,5 @@ public abstract class AbstractLocalizableInterfaceCreator {
     composer = factory.createSourceWriter(writer);
     resourceFile = resourceBundle;
     sourceFile = targetLocation;
-  }
-
-  protected String makeJavaString(String value) {
-    StringBuilder buf = new StringBuilder();
-    buf.append('\"');
-    for (int i = 0; i < value.length(); ++i) {
-      char c = value.charAt(i);
-      switch (c) {
-        case '\r':
-          buf.append("\\r");
-          break;
-        case '\n':
-          buf.append("\\n");
-          break;
-        case '\"':
-          buf.append("\\\"");
-          break;
-        default:
-          if (needsUnicodeEscape(c)) {
-            unicodeEscape(c, buf);
-          } else {
-            buf.append(c);
-          }
-          break;
-      }
-    }
-    buf.append('\"');
-    return buf.toString();
   }
 }

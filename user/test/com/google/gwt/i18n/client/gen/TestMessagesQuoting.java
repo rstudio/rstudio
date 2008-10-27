@@ -17,10 +17,11 @@ package com.google.gwt.i18n.client.gen;
 
 /**
  * Interface to represent the messages contained in resource bundle:
- * 	'com/google/gwt/i18n/client/gen/TestMessagesQuoting.properties'.
+ * 'com/google/gwt/i18n/client/gen/TestMessagesQuoting.properties'.
  */
-public interface TestMessagesQuoting extends com.google.gwt.i18n.client.Messages {
-  
+public interface TestMessagesQuoting extends
+    com.google.gwt.i18n.client.Messages {
+
   /**
    * Translated "Embedded\r\ncr-nl.".
    * 
