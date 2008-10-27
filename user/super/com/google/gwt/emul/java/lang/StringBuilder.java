@@ -30,7 +30,7 @@ import com.google.gwt.core.client.impl.StringBufferImpl;
  * This class is an exact clone of {@link StringBuffer} except for the name. Any
  * change made to one should be mirrored in the other.
  */
-public class StringBuilder implements CharSequence {
+public class StringBuilder implements CharSequence, Appendable {
   private final StringBufferImpl impl = GWT.create(StringBufferImpl.class);
   private final Object data = impl.createData();
 
