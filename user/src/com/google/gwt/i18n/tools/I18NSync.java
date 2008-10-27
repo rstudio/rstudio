@@ -337,7 +337,11 @@ public class I18NSync extends ToolBase {
               + "'should not contain an extension. \"com.google.gwt.SomeClass\" is an example of a correctly formed class string");
     }
     String resourcePath = className.replace('.', '/') + ".properties";
-    URL r = ClassLoader.getSystemResource(resourcePath);
+    ClassLoader cl = Thread.currentThread().getContextClassLoader();
+    if (cl == null) {
+      cl = ClassLoader.getSystemClassLoader();
+    }
+    URL r = cl.getResource(resourcePath);
     if (r == null) {
       throw new FileNotFoundException("Could not find the resource '"
           + resourcePath + " matching '" + className

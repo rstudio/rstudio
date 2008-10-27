@@ -27,9 +27,9 @@ public class Time extends java.util.Date {
     }
 
     try {
-      int hh = Integer.decode(split[0]);
-      int mm = Integer.decode(split[1]);
-      int ss = Integer.decode(split[2]);
+      int hh = Integer.parseInt(split[0]);
+      int mm = Integer.parseInt(split[1]);
+      int ss = Integer.parseInt(split[2]);
 
       return new Time(hh, mm, ss);
     } catch (NumberFormatException e) {

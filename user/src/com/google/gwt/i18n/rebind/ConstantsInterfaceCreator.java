@@ -50,13 +50,13 @@ public class ConstantsInterfaceCreator extends
 
   @Override
   protected void genValueAnnotation(String defaultValue) {
-    composer.println("@DefaultStringValue(\"" + defaultValue.replace("\"", "\\\"")
-        + "\")");
+    composer.println("@DefaultStringValue(" + makeJavaString(defaultValue)
+        + ")");
   }
 
   @Override
   protected String javaDocComment(String path) {
-    return "Interface to represent the constants contained in resource  bundle:\n\t'"
+    return "Interface to represent the constants contained in resource bundle:\n\t'"
       + path + "'.";
   }
 }

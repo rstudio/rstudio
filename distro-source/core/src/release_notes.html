@@ -29,6 +29,7 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
 		    <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+		    <li><a href="#Release_Notes_1_5_2">1.5.2</a></li>
 		    <li><a href="#Release_Notes_1_5_1">1.5.1 (RC2)</a></li>
 		    <li><a href="#Release_Notes_1_5_0">1.5.0 (RC)</a></li>
 		    <li><a href="#Release_Notes_1_4_60">1.4.60</a></li>
@@ -46,6 +47,25 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <h3>Fixed Issues</h3>
+      <ul>
+        <li>RPC requests no longer fail on the embedded Android web browser</li>
+        <li>Leaf <code>TreeItems</code> now line up with their non-leaf siblings</li>
+        <li>Removing the last child node from a <code>TreeItem</code> no longer creates extra margins on the left</li>
+        <li><code>HTTPRequest</code> no longer uses POST instead of GET on some IE installs because of incorrect XHR selection</li>
+        <li>Compiler now uses a more reliable check to prevent methods with local variables from being inlined</li>
+        <li><code>getAbsoluteTop()/Left()</code> can no longer return non-integral values</li>
+        <li><code>Time.valueOf()</code> no longer fails to parse <code>"08:00:00"</code> or incorrectly accepts <code>"0xC:0xB:0xA"</code>.</li>
+      </ul>
+      <p>
+        See the GWT issue tracker for
+        <a href="http://code.google.com/p/google-web-toolkit/issues/list?can=1&q=status%3AFixed%2CFixedNotReleased%20milestone%3A1_5_3&num=1000">
+        the complete list of bug fixes and enhancements</a> in this release.
+      </p>
+
+      <hr/>
+      <a name="Release_Notes_1_5_2"></a>
+      <h2>Release Notes for 1.5.2</h2>
       <h3>Potentially breaking changes and fixes</h3>
       <ul>
         <li><code>History.onHistoryChanged()</code> has been added back (it was missing from 1.5 RC2) but is now deprecated.  Application startup should be handled by calling the new <code>History.fireCurrentHistoryState()</code>.</li>

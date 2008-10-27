@@ -105,6 +105,10 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("a_b_c", test.a_b_c());
     assertEquals("a_b_c", test.getString("a_b_c"));
     assertEquals("__s_dup_dup", test.__s_dup_dup());
+    assertEquals("e in b_C_d", test.getString("__dup_dup"));
+    assertEquals("e in b_C_d", test.__dup_dup());
+    assertEquals("andStar", test.getString("__"));
+    assertEquals("andStar", test.__());
   }
 
   public void testBinding() {

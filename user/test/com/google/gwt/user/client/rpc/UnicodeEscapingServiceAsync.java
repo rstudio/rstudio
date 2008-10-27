@@ -15,10 +15,14 @@
  */
 package com.google.gwt.user.client.rpc;
 
+import com.google.gwt.user.client.rpc.UnicodeEscapingService.InvalidCharacterException;
+
 /**
  * Async version of the {@link UnicodeEscapingService} interface.
  */
 public interface UnicodeEscapingServiceAsync {
   void getStringContainingCharacterRange(int start, int end,
-      AsyncCallback callback);
+      AsyncCallback<String> callback);
+  void verifyStringContainingCharacterRange(int start, int end, String str,
+      AsyncCallback<Boolean> callback) throws InvalidCharacterException;
 }

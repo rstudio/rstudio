@@ -50,7 +50,12 @@ public class I18NSyncTest_ extends TestCase {
       // Should be caught
     }
   }
-
+  
+  public void testConstantsQuoting() throws IOException  {
+    String className = CLIENT_SOURCE_PACKAGE + "TestConstantsQuoting";
+    I18NSync.createConstantsInterfaceFromClassName(className, CLIENT_SOURCE_DIR);
+  }
+  
   public void testFileIsDirCase() {
     try {
       I18NSync.createMessagesInterfaceFromClassName(CLIENT_SOURCE_PACKAGE, null);
@@ -77,15 +82,14 @@ public class I18NSyncTest_ extends TestCase {
     I18NSync.createMessagesInterfaceFromClassName(className, CLIENT_SOURCE_DIR);
   }
 
+  public void testMessagesQuoting() throws IOException  {
+    String className = CLIENT_SOURCE_PACKAGE + "TestMessagesQuoting";
+    I18NSync.createMessagesInterfaceFromClassName(className, CLIENT_SOURCE_DIR);
+  }
+
   public void testMethodRenaming() throws IOException {
     String className = CLIENT_SOURCE_PACKAGE + "TestBadKeys";
     I18NSync.createConstantsWithLookupInterfaceFromClassName(className,
         CLIENT_SOURCE_DIR);
   }
-
-  public void testWarning() throws IOException {
-    String className = CLIENT_SOURCE_PACKAGE + "TestReallyBadKeys";
-    I18NSync.createConstantsWithLookupInterfaceFromClassName(className);
-  }
-
 }
