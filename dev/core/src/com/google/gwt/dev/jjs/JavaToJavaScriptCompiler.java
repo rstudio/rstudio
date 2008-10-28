@@ -490,10 +490,11 @@ public class JavaToJavaScriptCompiler {
   private static void findEntryPoints(TreeLogger logger,
       RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class,
-        "Bootstrap method");
-    JMethod bootStrapMethod = program.createMethod(sourceInfo, "init".toCharArray(),
-        null, program.getTypeVoid(), false, true, true, false, false);
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+        JavaToJavaScriptCompiler.class, "Bootstrap method");
+    JMethod bootStrapMethod = program.createMethod(sourceInfo,
+        "init".toCharArray(), program.getIndexedType("EntryMethodHolder"),
+        program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
