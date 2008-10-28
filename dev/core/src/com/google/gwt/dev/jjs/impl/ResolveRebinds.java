@@ -15,9 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -29,6 +26,7 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Replaces any "GWT.create()" calls with a new expression for the actual result
@@ -70,29 +68,23 @@ public class ResolveRebinds {
     }
   }
 
-  public static boolean exec(TreeLogger logger, JProgram program,
-      RebindOracle rebindOracle) {
-    return new ResolveRebinds(logger, program, rebindOracle).execImpl();
+  public static boolean exec(JProgram program, Map<String, String> rebindAnswers) {
+    return new ResolveRebinds(program, rebindAnswers).execImpl();
   }
 
-  private final TreeLogger logger;
   private final JProgram program;
-  private final RebindOracle rebindOracle;
+  private final Map<String, String> rebindAnswers;
 
-  private ResolveRebinds(TreeLogger logger, JProgram program,
-      RebindOracle rebindOracle) {
-    this.logger = logger;
+  private ResolveRebinds(JProgram program, Map<String, String> rebindAnswers) {
     this.program = program;
-    this.rebindOracle = rebindOracle;
+    this.rebindAnswers = rebindAnswers;
   }
 
   public JClassType rebind(JType type) {
     // Rebinds are always on a source type name.
     String reqType = type.getName().replace('$', '.');
-    String reboundClassName;
-    try {
-      reboundClassName = rebindOracle.rebind(logger, reqType);
-    } catch (UnableToCompleteException e) {
+    String reboundClassName = rebindAnswers.get(reqType);
+    if (reboundClassName == null) {
       // The fact that we already compute every rebind permutation before
       // compiling should prevent this case from ever happening in real life.
       //

@@ -511,7 +511,7 @@ public class JUnitShell extends GWTShell {
   protected void initializeLogger() {
     if (isHeadless()) {
       consoleLogger = new PrintWriterTreeLogger();
-      consoleLogger.setMaxDetail(getLogLevel());
+      consoleLogger.setMaxDetail(getCompilerOptions().getLogLevel());
     } else {
       super.initializeLogger();
     }

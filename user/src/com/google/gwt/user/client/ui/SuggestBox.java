@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
@@ -23,7 +24,6 @@ import com.google.gwt.user.client.ui.SuggestOracle.Callback;
 import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
-import com.google.gwt.i18n.client.LocaleInfo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -370,6 +370,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   private static final String STYLENAME_DEFAULT = "gwt-SuggestBox";
 
   private int limit = 20;
+  private boolean selectsFirstItem = false;
   private SuggestOracle oracle;
   private String currentText;
   private final SuggestionMenu suggestionMenu;
@@ -500,6 +501,16 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
+   * Returns whether or not the first suggestion will be automatically
+   * selected. This behavior is off by default.
+   *
+   * @return true if the first suggestion will be automatically selected
+   */
+  public boolean getSelectsFirstItem() {
+    return selectsFirstItem;
+  }
+
+  /**
    * Gets the suggest box's {@link com.google.gwt.user.client.ui.SuggestOracle}.
    * 
    * @return the {@link SuggestOracle}
@@ -582,7 +593,18 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   public void setPopupStyleName(String style) {
     suggestionPopup.setStyleName(style);
   }
-  
+
+  /**
+   * Turns on or off the behavior that automatically selects the first suggested
+   * item. It defaults to off.
+   *
+   * @param selectsFirstItem Whether or not to automatically select the first
+   *          suggested
+   */
+  public void setSelectsFirstItem(boolean selectsFirstItem) {
+    this.selectsFirstItem = selectsFirstItem;
+  }
+
   public void setTabIndex(int index) {
     box.setTabIndex(index);
   }
@@ -638,8 +660,10 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
         suggestionMenu.addItem(menuItem);
       }
 
-      // Select the first item in the suggestion menu.
-      suggestionMenu.selectItem(0);
+      if (selectsFirstItem) {
+        // Select the first item in the suggestion menu.
+        suggestionMenu.selectItem(0);
+      }
 
       suggestionPopup.showAlignedPopup();
       suggestionPopup.setAnimationEnabled(isAnimationEnabled);
@@ -665,7 +689,11 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
               break;
             case KeyboardListener.KEY_ENTER:
             case KeyboardListener.KEY_TAB:
-              suggestionMenu.doSelectedItemAction();
+              if (suggestionMenu.getSelectedItemIndex() < 0) {
+                suggestionPopup.hide();
+              } else {
+                suggestionMenu.doSelectedItemAction();
+              }
               break;
           }
         }

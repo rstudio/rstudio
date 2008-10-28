@@ -15,13 +15,12 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.util.Util;
 
 import java.io.File;
+import java.io.Serializable;
 import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.Comparator;
@@ -37,11 +36,8 @@ import java.util.TreeSet;
  */
 public class StandardCompilationResult extends CompilationResult {
 
-  /**
-   * Smaller maps come before larger maps, then we compare the concatenation of
-   * every value.
-   */
-  public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new Comparator<SortedMap<SelectionProperty, String>>() {
+  private static final class MapComparator implements
+      Comparator<SortedMap<SelectionProperty, String>>, Serializable {
     public int compare(SortedMap<SelectionProperty, String> arg0,
         SortedMap<SelectionProperty, String> arg1) {
       int diff = arg0.size() - arg1.size();
@@ -64,21 +60,25 @@ public class StandardCompilationResult extends CompilationResult {
 
       return sb0.toString().compareTo(sb1.toString());
     }
-  };
+  }
+
+  /**
+   * Smaller maps come before larger maps, then we compare the concatenation of
+   * every value.
+   */
+  public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
   private final File cacheFile;
-  private SoftReference<String> js;
+  private transient SoftReference<String> js;
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
   private final String strongName;
 
-  public StandardCompilationResult(TreeLogger logger, String js,
-      String strongName, File cacheDir) throws UnableToCompleteException {
+  public StandardCompilationResult(String js, String strongName, File cacheFile) {
     super(StandardLinkerContext.class);
     this.js = new SoftReference<String>(js);
     this.strongName = strongName;
-    cacheFile = new File(cacheDir, strongName);
-    Util.writeStringAsFile(logger, cacheFile, js);
+    this.cacheFile = cacheFile;
   }
 
   /**
@@ -93,9 +93,16 @@ public class StandardCompilationResult extends CompilationResult {
   }
 
   public String getJavaScript() {
-    String toReturn = js.get();
+    String toReturn = null;
+    if (js != null) {
+      toReturn = js.get();
+    }
     if (toReturn == null) {
       toReturn = Util.readFileAsString(cacheFile);
+      if (toReturn == null) {
+        throw new RuntimeException("Unexpectedly unable to read JS file '"
+            + cacheFile.getAbsolutePath() + "'");
+      }
       js = new SoftReference<String>(toReturn);
     }
     return toReturn;

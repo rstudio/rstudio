@@ -92,8 +92,7 @@ public class MessagesInterfaceCreator extends
 
   @Override
   protected void genValueAnnotation(String defaultValue) {
-    composer.println("@DefaultMessage(\"" + defaultValue.replace("\"", "\\\"")
-        + "\")");
+    composer.println("@DefaultMessage(" + makeJavaString(defaultValue) + ")");
   }
 
   @Override

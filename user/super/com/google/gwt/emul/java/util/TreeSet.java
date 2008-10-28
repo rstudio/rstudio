@@ -15,6 +15,8 @@
  */
 package java.util;
 
+import java.io.Serializable;
+
 /**
  * Implements a set using a TreeMap. <a
  * href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/TreeSet.html">[Sun
@@ -22,15 +24,15 @@ package java.util;
  * 
  * @param <E> element type.
  */
-public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E> {
+public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E>, Serializable {
 
   /**
-   * TreeSet is stored as a TreeMap of the requested type to null Objects.
+   * TreeSet is stored as a TreeMap of the requested type to a constant integer.
    */
-  private SortedMap<E, Object> map;
+  SortedMap<E, Boolean> map;
 
   public TreeSet() {
-    map = new TreeMap<E, Object>();
+    map = new TreeMap<E, Boolean>();
   }
 
   public TreeSet(Collection<? extends E> c) {
@@ -40,9 +42,9 @@ public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E> {
 
   public TreeSet(Comparator<? super E> c) {
     if (c == null) {
-      map = new TreeMap<E, Object>();
+      map = new TreeMap<E, Boolean>();
     } else {
-      map = new TreeMap<E, Object>(c);
+      map = new TreeMap<E, Boolean>(c);
     }
   }
 
@@ -57,14 +59,14 @@ public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E> {
    * 
    * @param map map to use for backing store
    */
-  private TreeSet(SortedMap<E, Object> map) {
+  private TreeSet(SortedMap<E, Boolean> map) {
     this.map = map;
   }
 
   @Override
   public boolean add(E o) {
     // Use "this" as a convenient non-null value to store in the map
-    return map.put(o, this) == null;
+    return map.put(o, Boolean.FALSE) == null;
   }
 
   @Override

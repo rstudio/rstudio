@@ -1,0 +1,82 @@
+<project name="dynatable2" default="build" basedir=".">
+  <property name="gwt.install" location="../../../build/lib" />
+  <property name="wardir" location="war" />
+
+  <target name="javac" description="Compile project to WEB-INF/classes">
+    <mkdir dir="${wardir}/WEB-INF/classes" />
+    <javac srcdir="../../../samples/dynatable/src"
+        destdir="${wardir}/WEB-INF/classes"
+        debug="true"
+        debuglevel="lines,vars,source"
+        source="1.5"
+        target="1.5"
+        nowarn="true"
+        encoding="utf-8">
+      <classpath>
+        <pathelement location="${gwt.install}/gwt-user.jar" />
+        <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="deploy" description="Copy output to the war folder">
+    <mkdir dir="${wardir}/WEB-INF/lib" />
+    <copy todir="${wardir}/WEB-INF/lib" file="${gwt.install}/gwt-servlet.jar" />
+  </target>
+
+  <target name="gwtc" depends="javac" description="Compile to JavaScript">
+    <java classname="com.google.gwt.dev.GWTCompiler" fork="yes" failonerror="true">
+      <jvmarg value="-Xmx256M"/>
+      <arg value="-wardir" />
+      <arg file="war" />
+      <arg value="com.google.gwt.sample.dynatable.DynaTable" />
+      <classpath>
+        <pathelement location="../../../samples/dynatable/src" />
+        <pathelement location="${wardir}/WEB-INF/classes" />
+        <pathelement location="${gwt.install}/gwt-user.jar" />
+        <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
+      </classpath>
+    </java>
+  </target>
+
+  <target name="server" depends="deploy" description="Run the deployed app in a Jetty server">
+    <echo message="PLEASE BROWSE TO: http://localhost:8888/DynaTable.html"/>
+    <java classname="org.mortbay.jetty.Main" fork="yes">
+      <arg value="8888" />
+      <arg value="-webapp" />
+      <arg file="war" />
+      <classpath>
+        <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
+      </classpath>
+    </java>
+  </target>
+
+  <target name="shell" depends="javac" description="Run the deployed app in GWT hosted mode">
+    <java classname="com.google.gwt.dev.GWTShell" fork="yes" failonerror="true">
+      <jvmarg value="-Xmx256M"/>
+      <jvmarg value="-Dgwt.devjar=C:\gwt\releases\1.6\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar"/>
+      <arg value="-wardir" />
+      <arg file="war" />
+      <arg value="http://localhost:8888/DynaTable.html" />
+      <classpath>
+        <pathelement location="../../../samples/dynatable/src" />
+        <pathelement location="${wardir}/WEB-INF/classes" />
+        <pathelement location="${gwt.install}/gwt-user.jar" />
+        <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
+      </classpath>
+    </java>
+  </target>
+
+  <target name="build" depends="javac, gwtc, deploy" description="Build this project" />
+
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete includeemptydirs="true" failonerror="false">
+      <fileset dir="${wardir}" includes="*" excludes="DynaTable.html"/>
+    </delete>
+    <delete dir="${wardir}/WEB-INF/classes" failonerror="false" />
+    <delete dir="${wardir}/WEB-INF/lib" failonerror="false" />
+    <delete dir="${wardir}/WEB-INF/gwt-aux" failonerror="false" />
+    <delete dir="${wardir}/WEB-INF/.gwt-tmp" failonerror="false" />
+    <delete dir="www" failonerror="false" />
+  </target>
+</project>

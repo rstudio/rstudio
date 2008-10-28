@@ -652,9 +652,13 @@ public class TypeTightener {
      * Find a replacement method. If the original method is abstract, this will
      * return the leaf, final implementation of the method. If the method is
      * already concrete, but enclosed by an abstract type, the overriding method
-     * from the leaf concrete type will be returned.
+     * from the leaf concrete type will be returned. If the method is static,
+     * return <code>null</code> no matter what.
      */
     private JMethod getSingleConcreteMethod(JMethod method) {
+      if (method.isStatic()) {
+        return null;
+      }
       if (getSingleConcreteType(method.getEnclosingType()) != null) {
         return getSingleConcrete(method, overriders);
       } else {

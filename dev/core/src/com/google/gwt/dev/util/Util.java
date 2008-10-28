@@ -40,11 +40,14 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
@@ -138,6 +141,19 @@ public final class Util {
 
     md5.update(content);
     return toHexString(md5.digest());
+  }
+
+  public static void copy(InputStream is, OutputStream os) throws IOException {
+    try {
+      byte[] buf = new byte[8 * 1024];
+      int i;
+      while ((i = is.read(buf)) != -1) {
+        os.write(buf, 0, i);
+      }
+    } finally {
+      Utility.close(is);
+      Utility.close(os);
+    }
   }
 
   public static boolean copy(TreeLogger logger, File in, File out)
@@ -546,6 +562,43 @@ public final class Util {
       return string.toCharArray();
     }
     return null;
+  }
+
+  public static <T extends Serializable> T readFileAsObject(File file,
+      Class<T> type) throws ClassNotFoundException {
+    FileInputStream fileInputStream = null;
+    ObjectInputStream objectInputStream = null;
+    try {
+      fileInputStream = new FileInputStream(file);
+      objectInputStream = new ObjectInputStream(fileInputStream);
+      return type.cast(objectInputStream.readObject());
+    } catch (IOException e) {
+      return null;
+    } finally {
+      Utility.close(objectInputStream);
+      Utility.close(fileInputStream);
+    }
+  }
+
+  public static Serializable[] readFileAsObjects(File file,
+      Class<? extends Serializable>... types) throws ClassNotFoundException {
+    FileInputStream fileInputStream = null;
+    ObjectInputStream objectInputStream = null;
+    try {
+      fileInputStream = new FileInputStream(file);
+      objectInputStream = new ObjectInputStream(fileInputStream);
+      Serializable[] results = new Serializable[types.length];
+      for (int i = 0; i < results.length; ++i) {
+        Object object = objectInputStream.readObject();
+        results[i] = types[i].cast(object);
+      }
+      return results;
+    } catch (IOException e) {
+      return null;
+    } finally {
+      Utility.close(objectInputStream);
+      Utility.close(fileInputStream);
+    }
   }
 
   public static String readFileAsString(File file) {
@@ -974,24 +1027,26 @@ public final class Util {
     }
   }
 
-  public static void writeStringAsFile(TreeLogger logger, File file,
-      String string) throws UnableToCompleteException {
+  /**
+   * Serializes an object and writes it to a file.
+   */
+  public static void writeObjectAsFile(TreeLogger logger, File file,
+      Serializable... objects) throws UnableToCompleteException {
     FileOutputStream stream = null;
-    OutputStreamWriter writer = null;
-    BufferedWriter buffered = null;
+    ObjectOutputStream objectStream = null;
     try {
-      stream = new FileOutputStream(file);
-      writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
-      buffered = new BufferedWriter(writer);
       file.getParentFile().mkdirs();
-      buffered.write(string);
+      stream = new FileOutputStream(file);
+      objectStream = new ObjectOutputStream(stream);
+      for (Serializable object : objects) {
+        objectStream.writeObject(object);
+      }
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to write file: "
           + file.getAbsolutePath(), e);
       throw new UnableToCompleteException();
     } finally {
-      Utility.close(buffered);
-      Utility.close(writer);
+      Utility.close(objectStream);
       Utility.close(stream);
     }
   }
@@ -1016,16 +1071,25 @@ public final class Util {
     return true;
   }
 
-  private static void copy(InputStream is, OutputStream os) throws IOException {
+  public static void writeStringAsFile(TreeLogger logger, File file,
+      String string) throws UnableToCompleteException {
+    FileOutputStream stream = null;
+    OutputStreamWriter writer = null;
+    BufferedWriter buffered = null;
     try {
-      byte[] buf = new byte[8 * 1024];
-      int i;
-      while ((i = is.read(buf)) != -1) {
-        os.write(buf, 0, i);
-      }
+      stream = new FileOutputStream(file);
+      writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
+      buffered = new BufferedWriter(writer);
+      file.getParentFile().mkdirs();
+      buffered.write(string);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to write file: "
+          + file.getAbsolutePath(), e);
+      throw new UnableToCompleteException();
     } finally {
-      Utility.close(is);
-      Utility.close(os);
+      Utility.close(buffered);
+      Utility.close(writer);
+      Utility.close(stream);
     }
   }
 

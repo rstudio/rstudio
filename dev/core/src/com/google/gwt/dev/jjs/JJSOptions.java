@@ -15,100 +15,13 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionEnableAssertions;
+import com.google.gwt.dev.util.arg.OptionScriptStyle;
+
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
-public class JJSOptions {
-
-  private boolean aggressivelyOptimize = true;
-  private boolean enableAssertions = false;
-  private JsOutputOption output = JsOutputOption.OBFUSCATED;
-  private String soycOutputPath = null;
-  private boolean validateOnly = false;
-
-  public JJSOptions() {
-  }
-
-  public JJSOptions(JJSOptions other) {
-    copyFrom(other);
-  }
-
-  public void copyFrom(JJSOptions other) {
-    this.aggressivelyOptimize = other.aggressivelyOptimize;
-    this.enableAssertions = other.enableAssertions;
-    this.soycOutputPath = other.soycOutputPath;
-    this.output = other.output;
-    this.validateOnly = other.validateOnly;
-  }
-
-  /**
-   * Returns the output format setting.
-   */
-  public JsOutputOption getOutput() {
-    return output;
-  }
-
-  /**
-   * Returns the path of the SOYC output directory, if it has been set.
-   */
-  public String getSoycOutputDir() {
-    return soycOutputPath;
-  }
-
-  /**
-   * Returns true if the compiler should aggressively optimize.
-   */
-  public boolean isAggressivelyOptimize() {
-    return aggressivelyOptimize;
-  }
-
-  /**
-   * Returns true if the compiler should generate code to check assertions.
-   */
-  public boolean isEnableAssertions() {
-    return enableAssertions;
-  }
-
-  /**
-   * /** Returns true if the compiler should run in validation mode, not
-   * producing any output.
-   */
-  public boolean isValidateOnly() {
-    return validateOnly;
-  }
-
-  /**
-   * Sets whether or not the compiler should aggressively optimize.
-   */
-  public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
-    this.aggressivelyOptimize = aggressivelyOptimize;
-  }
-
-  /**
-   * Sets whether or not the compiler should generate code to check assertions.
-   */
-  public void setEnableAssertions(boolean enableAssertions) {
-    this.enableAssertions = enableAssertions;
-  }
-
-  /**
-   * Sets the compiler output option.
-   */
-  public void setOutput(JsOutputOption output) {
-    this.output = output;
-  }
-
-  /**
-   * Sets the output path of the SOYC reports.
-   */
-  public void setSoycOutputDir(String path) {
-    this.soycOutputPath = path;
-  }
-
-  /**
-   * Sets whether or not the compiler should run in validation mode.
-   */
-  public void setValidateOnly(boolean validateOnly) {
-    this.validateOnly = validateOnly;
-  }
+public interface JJSOptions extends OptionAggressivelyOptimize,
+    OptionEnableAssertions, OptionScriptStyle {
 }

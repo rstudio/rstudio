@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,71 +17,79 @@ package com.google.gwt.i18n.client.gen;
 
 /**
  * Interface to represent the constants contained in resource bundle:
- * com/google/gwt/i18n/client/gen/Colors.properties.
+ * 'com/google/gwt/i18n/client/gen/Colors.properties'.
  */
 public interface Colors extends com.google.gwt.i18n.client.Constants {
-
-  /**
-   * Translated "ĝrééñ".
-   * 
-   * @return translated "ĝrééñ"
-   * @gwt.key green
-   */
-  String green();
-
-  /**
-   * Translated "réd ".
-   * 
-   * @return translated "réd "
-   * @gwt.key red
-   */
-  String red();
-
-  /**
-   * Translated "ŵĥîţé".
-   * 
-   * @return translated "ŵĥîţé"
-   * @gwt.key white
-   */
-  String white();
-
-  /**
-   * Translated "ĝréý".
-   * 
-   * @return translated "ĝréý"
-   * @gwt.key grey
-   */
-  String grey();
-
-  /**
-   * Translated "bļûç".
-   * 
-   * @return translated "bļûç"
-   * @gwt.key blue
-   */
-  String blue();
-
-  /**
-   * Translated "ýéļļöŵ".
-   * 
-   * @return translated "ýéļļöŵ"
-   * @gwt.key yellow
-   */
-  String yellow();
 
   /**
    * Translated "bļåçķ".
    * 
    * @return translated "bļåçķ"
-   * @gwt.key black
    */
+  @DefaultStringValue("bļåçķ")
+  @Key("black")
   String black();
+
+  /**
+   * Translated "bļûç".
+   * 
+   * @return translated "bļûç"
+   */
+  @DefaultStringValue("bļûç")
+  @Key("blue")
+  String blue();
+
+  /**
+   * Translated "ĝrééñ".
+   * 
+   * @return translated "ĝrééñ"
+   */
+  @DefaultStringValue("ĝrééñ")
+  @Key("green")
+  String green();
+
+  /**
+   * Translated "ĝréý".
+   * 
+   * @return translated "ĝréý"
+   */
+  @DefaultStringValue("ĝréý")
+  @Key("grey")
+  String grey();
+
+  /**
+   * Translated "réd ".
+   * 
+   * @return translated "réd "
+   */
+  @DefaultStringValue("réd ")
+  @Key("red")
+  String red();
 
   /**
    * Translated "any primary color".
    * 
    * @return translated "any primary color"
-   * @gwt.key shapeColor
    */
+  @DefaultStringValue("any primary color")
+  @Key("shapeColor")
   String shapeColor();
+
+  /**
+   * Translated "ŵĥîţé".
+   * 
+   * @return translated "ŵĥîţé"
+   */
+  @DefaultStringValue("ŵĥîţé")
+  @Key("white")
+  String white();
+
+  /**
+   * Translated "ýéļļöŵ".
+   * 
+   * @return translated "ýéļļöŵ"
+   */
+  @DefaultStringValue("ýéļļöŵ")
+  @Key("yellow")
+  String yellow();
 }

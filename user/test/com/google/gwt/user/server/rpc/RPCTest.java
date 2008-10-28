@@ -15,10 +15,14 @@
  */
 package com.google.gwt.user.server.rpc;
 
+import static com.google.gwt.user.client.rpc.impl.AbstractSerializationStream.RPC_SEPARATOR_CHAR;
+
 import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.SerializableException;
 import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
+import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
 
 import junit.framework.TestCase;
 
@@ -27,6 +31,7 @@ import java.lang.reflect.Method;
 /**
  * Tests for the {@link com.google.gwt.user.server.rpc.RPC RPC} class.
  */
+@SuppressWarnings("deprecation")
 public class RPCTest extends TestCase {
 
   private static interface A extends RemoteService {
@@ -41,50 +46,74 @@ public class RPCTest extends TestCase {
     void method1();
   }
 
-  private static final String VALID_ENCODED_REQUEST = "4\uffff" + // version
-      "0\uffff" + // flags
-      "4\uffff" + // string table entry count
-      A.class.getName() + "\uffff" + // string table entry #0
-      "method2" + "\uffff" + // string table entry #1
-      "moduleBaseURL" + "\uffff" + // string table entry #2
-      "whitelistHashcode" + "\uffff" + // string table entry #4
-      "3\uffff" + // module base URL
-      "4\uffff" + // whitelist hashcode
-      "1\uffff" + // interface name
-      "2\uffff" + // method name
-      "0\uffff"; // param count
+  private static final String VALID_ENCODED_REQUEST = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "0" + RPC_SEPARATOR_CHAR + // flags
+      "4" + RPC_SEPARATOR_CHAR + // string table entry count
+      A.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
+      "method2" + RPC_SEPARATOR_CHAR + // string table entry #2
+      "moduleBaseURL" + RPC_SEPARATOR_CHAR + // string table entry #3
+      "whitelistHashcode" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "3" + RPC_SEPARATOR_CHAR + // module base URL
+      "4" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "1" + RPC_SEPARATOR_CHAR + // interface name
+      "2" + RPC_SEPARATOR_CHAR + // method name
+      "0" + RPC_SEPARATOR_CHAR; // param count
 
-  private static final String INVALID_METHOD_REQUEST = "4\uffff" + // version
-      "0\uffff" + // flags
-      "4\uffff" + // string table entry count
-      A.class.getName() + "\uffff" + // string table entry #0
-      "method3" + "\uffff" + // string table entry #1
-      "moduleBaseURL" + "\uffff" + // string table entry #2
-      "whitelistHashcode" + "\uffff" + // string table entry #4
-      "3\uffff" + // module base URL
-      "4\uffff" + // whitelist hashcode
-      "1\uffff" + // interface name
-      "2\uffff" + // method name
-      "0\uffff"; // param count
+  private static final String INVALID_METHOD_REQUEST = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "0" + RPC_SEPARATOR_CHAR + // flags
+      "4" + RPC_SEPARATOR_CHAR + // string table entry count
+      A.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
+      "method3" + RPC_SEPARATOR_CHAR + // string table entry #2
+      "moduleBaseURL" + RPC_SEPARATOR_CHAR + // string table entry #3
+      "whitelistHashcode" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "3" + RPC_SEPARATOR_CHAR + // module base URL
+      "4" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "1" + RPC_SEPARATOR_CHAR + // interface name
+      "2" + RPC_SEPARATOR_CHAR + // method name
+      "0" + RPC_SEPARATOR_CHAR; // param count
 
-  private static final String INVALID_INTERFACE_REQUEST = "4\uffff" + // version
-      "0\uffff" + // flags
-      "4\uffff" + // string table entry count
-      B.class.getName() + "\uffff" + // string table entry #0
-      "method1" + "\uffff" + // string table entry #1
-      "moduleBaseURL" + "\uffff" + // string table entry #2
-      "whitelistHashcode" + "\uffff" + // string table entry #4
-      "3\uffff" + // module base URL
-      "4\uffff" + // whitelist hashcode
-      "1\uffff" + // interface name
-      "2\uffff" + // method name
-      "0\uffff"; // param count
+  private static final String INVALID_INTERFACE_REQUEST = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "0" + RPC_SEPARATOR_CHAR + // flags
+      "4" + RPC_SEPARATOR_CHAR + // string table entry count
+      B.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
+      "method1" + RPC_SEPARATOR_CHAR + // string table entry #2
+      "moduleBaseURL" + RPC_SEPARATOR_CHAR + // string table entry #3
+      "whitelistHashcode" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "3" + RPC_SEPARATOR_CHAR + // module base URL
+      "4" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "1" + RPC_SEPARATOR_CHAR + // interface name
+      "2" + RPC_SEPARATOR_CHAR + // method name
+      "0" + RPC_SEPARATOR_CHAR; // param count
+
+  private static final String STRING_QUOTE_REQUEST = "" +
+      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
+      RPC_SEPARATOR_CHAR + // version
+      "0" + RPC_SEPARATOR_CHAR + // flags
+      "7" + RPC_SEPARATOR_CHAR + // string table entry count
+      A.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
+      "method2" + RPC_SEPARATOR_CHAR + // string table entry #2
+      "moduleBaseURL" + RPC_SEPARATOR_CHAR + // string table entry #3
+      "whitelistHashcode" + RPC_SEPARATOR_CHAR + // string table entry #4
+      "Raw backslash \\\\" + RPC_SEPARATOR_CHAR + // string table entry #5
+      "Quoted separator \\!" + RPC_SEPARATOR_CHAR + // string table entry #6
+      "\\uffff\\\\!\\\\0\\0" + RPC_SEPARATOR_CHAR + // string table entry #7
+      "3" + RPC_SEPARATOR_CHAR + // module base URL
+      "4" + RPC_SEPARATOR_CHAR + // whitelist hashcode
+      "5" + RPC_SEPARATOR_CHAR + // begin test data
+      "6" + RPC_SEPARATOR_CHAR +
+      "7" + RPC_SEPARATOR_CHAR;
 
   private static final String VALID_V2_ENCODED_REQUEST = "2\uffff" + // version
       "0\uffff" + // flags
       "2\uffff" + // string table entry count
-      A.class.getName() + "\uffff" + // string table entry #0
-      "method2" + "\uffff" + // string table entry #1
+      A.class.getName() + "\uffff" + // string table entry #1
+      "method2\uffff" + // string table entry #2
       "1\uffff" + // interface name
       "2\uffff" + // method name
       "0\uffff"; // param count
@@ -92,9 +121,22 @@ public class RPCTest extends TestCase {
   private static final String VALID_V3_ENCODED_REQUEST = "3\uffff" + // version
       "0\uffff" + // flags
       "4\uffff" + // string table entry count
-      A.class.getName() + "\uffff" + // string table entry #0
-      "method2" + "\uffff" + // string table entry #1
-      "moduleBaseURL" + "\uffff" + // string table entry #2
+      A.class.getName() + "\uffff" + // string table entry #1
+      "method2\uffff" + // string table entry #2
+      "moduleBaseURL\uffff" + // string table entry #3
+      "whitelistHashcode\uffff" + // string table entry #4
+      "3\uffff" + // module base URL
+      "4\uffff" + // whitelist hashcode
+      "1\uffff" + // interface name
+      "2\uffff" + // method name
+      "0\uffff"; // param count
+
+  private static final String VALID_V4_ENCODED_REQUEST = "4\uffff" + // version
+      "0\uffff" + // flags
+      "4\uffff" + // string table entry count
+      A.class.getName() + "\uffff" + // string table entry #1
+      "method2" + "\uffff" + // string table entry #2
+      "moduleBaseURL" + "\uffff" + // string table entry #3
       "whitelistHashcode" + "\uffff" + // string table entry #4
       "3\uffff" + // module base URL
       "4\uffff" + // whitelist hashcode
@@ -116,6 +158,13 @@ public class RPCTest extends TestCase {
 
     try {
       RPC.decodeRequest(VALID_V3_ENCODED_REQUEST, A.class, null);
+      fail("Should have thrown an IncompatibleRemoteServiceException");
+    } catch (IncompatibleRemoteServiceException e) {
+      // Expected
+    }
+
+    try {
+      RPC.decodeRequest(VALID_V4_ENCODED_REQUEST, A.class, null);
       fail("Should have thrown an IncompatibleRemoteServiceException");
     } catch (IncompatibleRemoteServiceException e) {
       // Expected
@@ -401,5 +450,13 @@ public class RPCTest extends TestCase {
         return 0;
       }
     }, A_method1, null);
+  }
+  
+  public void testSerializationStreamDequote() throws SerializationException {
+    ServerSerializationStreamReader reader = new ServerSerializationStreamReader(null, null);
+    reader.prepareToRead(STRING_QUOTE_REQUEST);
+    assertEquals("Raw backslash \\", reader.readString());
+    assertEquals("Quoted separator " + RPC_SEPARATOR_CHAR, reader.readString());
+    assertEquals("\uffff\\!\\0\u0000", reader.readString());
   }
 }

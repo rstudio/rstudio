@@ -29,6 +29,4 @@ public interface RebindPermutationOracle {
    */
   String[] getAllPossibleRebindAnswers(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException;
-
-  int getPermuationCount();
 }

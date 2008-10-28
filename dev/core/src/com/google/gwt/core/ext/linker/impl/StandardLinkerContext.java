@@ -26,7 +26,6 @@ import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
-import com.google.gwt.dev.GWTCompiler;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Property;
@@ -112,62 +111,30 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   };
 
   private final ArtifactSet artifacts = new ArtifactSet();
-  private final File compilationsDir;
+
   private final SortedSet<ConfigurationProperty> configurationProperties;
   private final JJSOptions jjsOptions;
   private final List<Class<? extends Linker>> linkerClasses;
   private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
 
-  /**
-   * This is the output directory for private files.
-   */
-  private final File moduleAuxDir;
   private final String moduleFunctionName;
   private final String moduleName;
 
-  /**
-   * This is the root directory for the output of a particular module's
-   * compilation.
-   */
-  private final File moduleOutDir;
   private final Map<String, StandardSelectionProperty> propertiesByName = new HashMap<String, StandardSelectionProperty>();
   private final Map<String, StandardCompilationResult> resultsByStrongName = new HashMap<String, StandardCompilationResult>();
   private final SortedSet<SelectionProperty> selectionProperties;
 
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
-      File moduleOutDir, File generatorDir, JJSOptions jjsOptions) {
+      JJSOptions jjsOptions) {
     logger = logger.branch(TreeLogger.DEBUG,
         "Constructing StandardLinkerContext", null);
 
     this.jjsOptions = jjsOptions;
     this.moduleFunctionName = module.getFunctionName();
     this.moduleName = module.getName();
-    this.moduleOutDir = moduleOutDir;
     this.linkerClasses = new ArrayList<Class<? extends Linker>>(
         module.getActiveLinkers());
     linkerClasses.add(module.getActivePrimaryLinker());
-
-    if (moduleOutDir != null) {
-      compilationsDir = new File(moduleOutDir.getParentFile(),
-          GWTCompiler.GWT_COMPILER_DIR + File.separator + moduleName
-              + File.separator + "compilations");
-
-      Util.recursiveDelete(compilationsDir, true);
-      compilationsDir.mkdirs();
-      logger.log(TreeLogger.SPAM, "compilationsDir: "
-          + compilationsDir.getPath(), null);
-
-      this.moduleAuxDir = new File(moduleOutDir.getParentFile(), moduleName
-          + "-aux");
-      if (moduleAuxDir.exists()) {
-        Util.recursiveDelete(moduleAuxDir, false);
-      }
-      logger.log(TreeLogger.SPAM, "mouduleAuxDir: " + moduleAuxDir.getPath(),
-          null);
-    } else {
-      compilationsDir = null;
-      moduleAuxDir = null;
-    }
 
     for (Map.Entry<String, Class<? extends Linker>> entry : module.getLinkers().entrySet()) {
       linkerShortNames.put(entry.getValue(), entry.getKey());
@@ -255,15 +222,19 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   /**
    * Gets or creates a CompilationResult for the given JavaScript program.
    */
-  public StandardCompilationResult getCompilation(TreeLogger logger, String js)
+  public StandardCompilationResult getCompilation(TreeLogger logger, File jsFile)
       throws UnableToCompleteException {
-
-    byte[] bytes = Util.getBytes(js);
+    byte[] bytes = Util.readFileAsBytes(jsFile);
+    if (bytes == null) {
+      logger.log(TreeLogger.ERROR, "Unable to read file '"
+          + jsFile.getAbsolutePath() + "'");
+      throw new UnableToCompleteException();
+    }
     String strongName = Util.computeStrongName(bytes);
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
-      result = new StandardCompilationResult(logger, js, strongName,
-          compilationsDir);
+      result = new StandardCompilationResult(Util.toString(bytes), strongName,
+          jsFile);
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
     }
@@ -295,119 +266,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return propertiesByName.get(name);
   }
 
-  public boolean isOutputCompact() {
-    return jjsOptions.getOutput().shouldMinimize();
-  }
-
-  @Override
-  public ArtifactSet link(TreeLogger logger, LinkerContext context,
-      ArtifactSet artifacts) throws UnableToCompleteException {
-
-    logger = logger.branch(TreeLogger.INFO, "Linking compilation into "
-        + moduleOutDir.getPath(), null);
-
-    artifacts = invokeLinkerStack(logger);
-
-    for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-          "Emitting resource " + artifact.getPartialPath(), null);
-
-      File outFile;
-      if (artifact.isPrivate()) {
-        outFile = new File(getLinkerAuxDir(artifact.getLinker()),
-            artifact.getPartialPath());
-      } else {
-        outFile = new File(moduleOutDir, artifact.getPartialPath());
-      }
-
-      assert !outFile.exists() : "Attempted to overwrite " + outFile.getPath();
-      Util.copy(logger, artifact.getContents(artifactLogger), outFile);
-    }
-
-    return artifacts;
-  }
-
-  public String optimizeJavaScript(TreeLogger logger, String program)
-      throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.DEBUG, "Attempting to optimize JS", null);
-    JsParser parser = new JsParser();
-    Reader r = new StringReader(program);
-    JsProgram jsProgram = new JsProgram();
-    JsScope topScope = jsProgram.getScope();
-    JsName funcName = topScope.declareName(getModuleFunctionName());
-    funcName.setObfuscatable(false);
-
-    try {
-      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
-          StandardLinkerContext.class, "Linker-derived JS");
-      parser.setSourceInfo(sourceInfo);
-      parser.parseInto(topScope, jsProgram.getGlobalBlock(), r, 1);
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
-      throw new UnableToCompleteException();
-    } catch (JsParserException e) {
-      logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
-      throw new UnableToCompleteException();
-    }
-
-    JsSymbolResolver.exec(jsProgram);
-    JsUnusedFunctionRemover.exec(jsProgram);
-
-    switch (jjsOptions.getOutput()) {
-      case OBFUSCATED:
-        /*
-         * We can't apply the regular JsStringInterner to the JsProgram that
-         * we've just created. In the normal case, the JsStringInterner adds an
-         * additional statement to the program's global JsBlock, however we
-         * don't know exactly what the form and structure of our JsProgram are,
-         * so we'll limit the scope of the modifications to each top-level
-         * function within the program.
-         */
-        TopFunctionStringInterner.exec(jsProgram);
-        JsObfuscateNamer.exec(jsProgram);
-        break;
-      case PRETTY:
-        // We don't intern strings in pretty mode to improve readability
-        JsPrettyNamer.exec(jsProgram);
-        break;
-      case DETAILED:
-        // As above with OBFUSCATED
-        TopFunctionStringInterner.exec(jsProgram);
-        JsVerboseNamer.exec(jsProgram);
-        break;
-      default:
-        throw new InternalCompilerException("Unknown output mode");
-    }
-
-    DefaultTextOutput out = new DefaultTextOutput(
-        jjsOptions.getOutput().shouldMinimize());
-    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-    v.accept(jsProgram);
-    return out.toString();
-  }
-
-  /**
-   * Creates a linker-specific subdirectory in the module's auxiliary output
-   * directory.
-   */
-  private File getLinkerAuxDir(Class<? extends Linker> linkerType) {
-    // The auxiliary directory is create lazily
-    if (!moduleAuxDir.exists()) {
-      moduleAuxDir.mkdirs();
-    }
-    assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
-        + " unknown";
-    File toReturn = new File(moduleAuxDir, linkerShortNames.get(linkerType));
-    if (!toReturn.exists()) {
-      toReturn.mkdirs();
-    }
-    return toReturn;
-  }
-
   /**
    * Run the linker stack.
    */
-  private ArtifactSet invokeLinkerStack(TreeLogger logger)
+  public ArtifactSet invokeLinkerStack(TreeLogger logger)
       throws UnableToCompleteException {
     ArtifactSet workingArtifacts = new ArtifactSet(artifacts);
     Stack<Linker> linkerStack = new Stack<Linker>();
@@ -479,5 +341,116 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
 
     return workingArtifacts;
+  }
+
+  public boolean isOutputCompact() {
+    return jjsOptions.getOutput().shouldMinimize();
+  }
+
+  @Override
+  public ArtifactSet link(TreeLogger logger, LinkerContext context,
+      ArtifactSet artifacts) throws UnableToCompleteException {
+    throw new UnsupportedOperationException();
+  }
+
+  public String optimizeJavaScript(TreeLogger logger, String program)
+      throws UnableToCompleteException {
+    logger = logger.branch(TreeLogger.DEBUG, "Attempting to optimize JS", null);
+    JsParser parser = new JsParser();
+    Reader r = new StringReader(program);
+    JsProgram jsProgram = new JsProgram();
+    JsScope topScope = jsProgram.getScope();
+    JsName funcName = topScope.declareName(getModuleFunctionName());
+    funcName.setObfuscatable(false);
+
+    try {
+      SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
+          StandardLinkerContext.class, "Linker-derived JS");
+      parser.setSourceInfo(sourceInfo);
+      parser.parseInto(topScope, jsProgram.getGlobalBlock(), r, 1);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
+      throw new UnableToCompleteException();
+    } catch (JsParserException e) {
+      logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
+      throw new UnableToCompleteException();
+    }
+
+    JsSymbolResolver.exec(jsProgram);
+    JsUnusedFunctionRemover.exec(jsProgram);
+
+    switch (jjsOptions.getOutput()) {
+      case OBFUSCATED:
+        /*
+         * We can't apply the regular JsStringInterner to the JsProgram that
+         * we've just created. In the normal case, the JsStringInterner adds an
+         * additional statement to the program's global JsBlock, however we
+         * don't know exactly what the form and structure of our JsProgram are,
+         * so we'll limit the scope of the modifications to each top-level
+         * function within the program.
+         */
+        TopFunctionStringInterner.exec(jsProgram);
+        JsObfuscateNamer.exec(jsProgram);
+        break;
+      case PRETTY:
+        // We don't intern strings in pretty mode to improve readability
+        JsPrettyNamer.exec(jsProgram);
+        break;
+      case DETAILED:
+        // As above with OBFUSCATED
+        TopFunctionStringInterner.exec(jsProgram);
+        JsVerboseNamer.exec(jsProgram);
+        break;
+      default:
+        throw new InternalCompilerException("Unknown output mode");
+    }
+
+    DefaultTextOutput out = new DefaultTextOutput(
+        jjsOptions.getOutput().shouldMinimize());
+    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
+    v.accept(jsProgram);
+    return out.toString();
+  }
+
+  public void produceOutputDirectory(TreeLogger logger, ArtifactSet artifacts,
+      File moduleOutDir, File moduleAuxDir) throws UnableToCompleteException {
+
+    logger = logger.branch(TreeLogger.INFO, "Linking compilation into "
+        + moduleOutDir.getPath(), null);
+
+    for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
+      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
+          "Emitting resource " + artifact.getPartialPath(), null);
+
+      File outFile;
+      if (artifact.isPrivate()) {
+        outFile = new File(getLinkerAuxDir(moduleAuxDir, artifact.getLinker()),
+            artifact.getPartialPath());
+      } else {
+        outFile = new File(moduleOutDir, artifact.getPartialPath());
+      }
+
+      assert !outFile.exists() : "Attempted to overwrite " + outFile.getPath();
+      Util.copy(logger, artifact.getContents(artifactLogger), outFile);
+    }
+  }
+
+  /**
+   * Creates a linker-specific subdirectory in the module's auxiliary output
+   * directory.
+   */
+  private File getLinkerAuxDir(File moduleAuxDir,
+      Class<? extends Linker> linkerType) {
+    // The auxiliary directory is create lazily
+    if (!moduleAuxDir.exists()) {
+      moduleAuxDir.mkdirs();
+    }
+    assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
+        + " unknown";
+    File toReturn = new File(moduleAuxDir, linkerShortNames.get(linkerType));
+    if (!toReturn.exists()) {
+      toReturn.mkdirs();
+    }
+    return toReturn;
   }
 }

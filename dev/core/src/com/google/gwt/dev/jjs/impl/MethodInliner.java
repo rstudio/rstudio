@@ -116,6 +116,9 @@ public class MethodInliner {
             && !stmts.isEmpty()) {
           // clinit() calls cannot be inlined unless they are empty
           possibleToInline = false;
+        } else if (!body.locals.isEmpty()) {
+          // methods with local variables cannot be inlined
+          possibleToInline = false;
         } else {
           JMultiExpression multi = createMultiExpressionFromBody(body,
               ignoringReturnValueFor == x);
@@ -474,6 +477,7 @@ public class MethodInliner {
       this.method = method;
     }
 
+    @Override
     public void endVisit(JMethodCall x, Context ctx) {
       if (x.getTarget() == method) {
         isRecursive = true;

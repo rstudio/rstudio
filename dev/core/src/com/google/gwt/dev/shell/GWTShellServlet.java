@@ -22,7 +22,7 @@ import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.HttpHeaders;
 import com.google.gwt.dev.util.Util;
@@ -547,7 +547,7 @@ public class GWTShellServlet extends HttpServlet {
         "Generating a script selection script for module " + moduleName);
 
     StandardLinkerContext context = new StandardLinkerContext(logger,
-        getModuleDef(logger, moduleName), null, null, new JJSOptions());
+        getModuleDef(logger, moduleName), new JJSOptionsImpl());
     HostedModeLinker linker = new HostedModeLinker();
     return linker.generateSelectionScript(logger, context,
         context.getArtifacts());

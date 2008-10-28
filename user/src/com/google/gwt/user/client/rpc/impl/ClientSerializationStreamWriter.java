@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.rpc.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.UnsafeNativeLong;
 import com.google.gwt.user.client.rpc.SerializationException;
 
@@ -27,16 +28,95 @@ import java.util.List;
 public final class ClientSerializationStreamWriter extends
     AbstractSerializationStreamWriter {
 
+  /**
+   * Used by JSNI, see {@link #quoteString(String)}.
+   */
+  @SuppressWarnings("unused")
+  private static JavaScriptObject regex = getQuotingRegex();
+
   private static void append(StringBuffer sb, String token) {
     assert (token != null);
     sb.append(token);
-    sb.append('\uffff');
+    sb.append(RPC_SEPARATOR_CHAR);
   }
+
+  /**
+   * Create the RegExp instance used for quoting dangerous characters in user
+   * payload strings.
+   * 
+   * Note that {@link AbstractSerializationStream#RPC_SEPARATOR_CHAR} is used in
+   * this expression, which must be updated if the separator character is
+   * changed.
+   * 
+   * For Android WebKit, we quote many more characters to keep them from being
+   * mangled.
+   * 
+   * @return RegExp object
+   */
+  private static native JavaScriptObject getQuotingRegex() /*-{
+    // "|" = AbstractSerializationStream.RPC_SEPARATOR_CHAR
+    var ua = navigator.userAgent.toLowerCase();
+    var webkitregex = /webkit\/([\d]+)/;
+    var webkit = 0;
+    var result = webkitregex.exec(ua);
+    if (result) {
+      webkit = parseInt(result[1]);
+    }
+    if (ua.indexOf("android") != -1) {
+      // initial version of Android WebKit has a double-encoding bug for UTF8,
+      // so we have to encode every non-ASCII character.
+      // TODO(jat): revisit when this bug is fixed in Android
+      return /[\u0000\|\\\u0080-\uFFFF]/g;
+    } else if (webkit < 522) {
+      // Safari 2 doesn't handle \\uXXXX in regexes
+      // TODO(jat): should iPhone be treated specially?
+      return /[\x00\|\\]/g;
+    } else if (webkit > 0) {
+      // other WebKit-based browsers need some additional quoting
+      return /[\u0000\|\\\u0300-\u036F\u0590-\u05FF\uD800-\uFFFF]/g;
+    } else {
+      return /[\u0000\|\\\uD800-\uFFFF]/g;
+    }
+  }-*/;
 
   @UnsafeNativeLong
   // Keep synchronized with LongLib
   private static native double[] makeLongComponents0(long value) /*-{
     return value;
+  }-*/;
+
+  /**
+   * Quote characters in a user-supplied string to make sure they are safe to
+   * send to the server.
+   * 
+   * See {@link ServerSerializationStreamReader#deserializeStringTable} for the
+   * corresponding dequoting.
+   * 
+   * @param str string to quote
+   * @return quoted string
+   */
+  private static native String quoteString(String str) /*-{
+    var regex = @com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter::regex;
+    var idx = 0;
+    var out = "";
+    var result;
+    while ((result = regex.exec(str)) != null) {
+       out += str.substring(idx, result.index);
+       idx = result.index + 1;
+       var ch = result[0].charCodeAt(0);
+       if (ch == 0) {
+         out += "\\0";
+       } else if (ch == 92) { // backslash
+         out += "\\\\";
+       } else if (ch == 124) { // vertical bar
+         // 124 = "|" = AbstractSerializationStream.RPC_SEPARATOR_CHAR
+         out += "\\!";
+       } else {
+         var hex = ch.toString(16);
+         out += "\\u0000".substring(0, 6 - hex.length) + hex;
+       }
+    }
+    return out + str.substring(idx);
   }-*/;
 
   private StringBuffer encodeBuffer;
@@ -67,6 +147,7 @@ public final class ClientSerializationStreamWriter extends
    * Call this method before attempting to append any tokens. This method
    * implementation <b>must</b> be called by any overridden version.
    */
+  @Override
   public void prepareToWrite() {
     super.prepareToWrite();
     encodeBuffer = new StringBuffer();
@@ -148,7 +229,7 @@ public final class ClientSerializationStreamWriter extends
     List<String> stringTable = getStringTable();
     append(buffer, String.valueOf(stringTable.size()));
     for (String s : stringTable) {
-      append(buffer, s);
+      append(buffer, quoteString(s));
     }
     return buffer;
   }

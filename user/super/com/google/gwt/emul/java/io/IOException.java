@@ -13,34 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.util.tools;
-
-import com.google.gwt.dev.jjs.JJSOptions;
+package java.io;
 
 /**
- * Handles the -ea command line flag.
+ * See <a
+ * href="http://java.sun.com/javase/6/docs/api/java/io/IOException.html">the
+ * official Java API doc</a> for details.
  */
-public class ArgHandlerEnableAssertions extends ArgHandlerFlag {
+public class IOException extends Exception {
 
-  private final JJSOptions optionsToModify;
-
-  public ArgHandlerEnableAssertions(JJSOptions optionsToModify) {
-    this.optionsToModify = optionsToModify;
+  public IOException() {
+    super();
   }
 
-  @Override
-  public String getPurpose() {
-    return "Debugging: causes the compiled output to check assert statements.";
+  public IOException(String message) {
+    super(message);
   }
 
-  @Override
-  public String getTag() {
-    return "-ea";
+  public IOException(String message, Throwable throwable) {
+    super(message, throwable);
   }
 
-  @Override
-  public boolean setFlag() {
-    optionsToModify.setEnableAssertions(true);
-    return true;
+  public IOException(Throwable throwable) {
+    super(throwable);
   }
 }

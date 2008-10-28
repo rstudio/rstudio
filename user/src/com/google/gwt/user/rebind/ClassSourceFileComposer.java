@@ -57,22 +57,24 @@ class ClassSourceFileComposer implements SourceWriter {
       throw new IllegalArgumentException("Cannot supply a null package name to"
           + targetClassShortName);
     }
-    // Inlined header to only have one method with a huge number of methods.
+    // TODO: support a user-specified file header
     if (targetPackageName.length() > 0) {
       println("package " + targetPackageName + ";");
     }
     
-    println();
     if (imports != null && imports.length > 0) {
+      println();
       for (int i = 0, n = imports.length; i < n; ++i) {
         println("import " + imports[i] + ";");
       }
-      println();
     }
     if (classJavaDocComment != null) {
       beginJavaDocComment();
       print(classJavaDocComment);
       endJavaDocComment();
+    } else {
+      // beginJavaDocComment adds its own leading newline, make up for it here.
+      println();
     }
     if (category == JavaSourceCategory.CLASS) {
       emitClassDecl(targetClassShortName, superClassName, interfaceNames);

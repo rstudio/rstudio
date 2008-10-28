@@ -16,34 +16,46 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
-import com.google.gwt.dev.jdt.RebindOracle;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Represents the state of a single permutation for compile.
- * 
- * @see PermutationCompiler
  */
-public final class Permutation {
-  private final int number;
-  private final StaticPropertyOracle propertyOracle;
-  private final RebindOracle rebindOracle;
+public final class Permutation implements Serializable {
+  private final List<StaticPropertyOracle> propertyOracles = new ArrayList<StaticPropertyOracle>();
+  private final SortedMap<String, String> rebindAnswers = new TreeMap<String, String>();
 
-  public Permutation(int number, RebindOracle rebindOracle,
-      StaticPropertyOracle propertyOracle) {
-    this.number = number;
-    this.rebindOracle = rebindOracle;
-    this.propertyOracle = propertyOracle;
+  public Permutation(StaticPropertyOracle propertyOracle) {
+    this.propertyOracles.add(propertyOracle);
   }
 
-  public int getNumber() {
-    return number;
+  public StaticPropertyOracle[] getPropertyOracles() {
+    return propertyOracles.toArray(new StaticPropertyOracle[propertyOracles.size()]);
   }
 
-  public StaticPropertyOracle getPropertyOracle() {
-    return propertyOracle;
+  public SortedMap<String, String> getRebindAnswers() {
+    return rebindAnswers;
   }
 
-  public RebindOracle getRebindOracle() {
-    return rebindOracle;
+  public void mergeFrom(Permutation other) {
+    assert rebindAnswers.equals(other.rebindAnswers);
+    assert !propertyOracles.isEmpty();
+    assert !other.propertyOracles.isEmpty();
+    propertyOracles.addAll(other.propertyOracles);
+    other.propertyOracles.clear();
+  }
+
+  public void putRebindAnswer(String requestType, String resultType) {
+    rebindAnswers.put(requestType, resultType);
+  }
+
+  public void reduceRebindAnswers(Set<String> liveRebindRequests) {
+    rebindAnswers.keySet().retainAll(liveRebindRequests);
   }
 }

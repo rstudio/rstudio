@@ -17,10 +17,18 @@ package com.google.gwt.dev.util.arg;
 
 import com.google.gwt.util.tools.ArgHandlerDir;
 
+import java.io.File;
+
 /**
- * Argument handler for processing the code generation directory flag. 
+ * Argument handler for processing the code generation directory flag.
  */
-public abstract class ArgHandlerGenDir extends ArgHandlerDir {
+public final class ArgHandlerGenDir extends ArgHandlerDir {
+
+  private final OptionGenDir option;
+
+  public ArgHandlerGenDir(OptionGenDir option) {
+    this.option = option;
+  }
 
   public String getPurpose() {
     return "The directory into which generated files will be written for review";
@@ -28,5 +36,10 @@ public abstract class ArgHandlerGenDir extends ArgHandlerDir {
 
   public String getTag() {
     return "-gen";
+  }
+
+  @Override
+  public void setDir(File dir) {
+    option.setGenDir(dir);
   }
 }

@@ -26,7 +26,27 @@ import junit.framework.Assert;
 @SuppressWarnings("unused")
 public class CompilerTest extends GWTTestCase {
 
+  private abstract static class AbstractSuper {
+    public static String foo() {
+      if (FALSE) {
+        // prevent inlining
+        return foo();
+      }
+      return "AbstractSuper";
+    }
+  }
+
   private abstract static class Apple implements Fruit {
+  }
+
+  private static class ConcreteSub extends AbstractSuper {
+    public static String foo() {
+      if (FALSE) {
+        // prevent inlining
+        return foo();
+      }
+      return "ConcreteSub";
+    }
   }
 
   private static interface Fruit {
@@ -173,6 +193,8 @@ public class CompilerTest extends GWTTestCase {
   private static native String jsniReadSideEffectCauser5() /*-{
     return @com.google.gwt.dev.jjs.test.CompilerTest$SideEffectCauser5::causeClinitSideEffectOnRead;
   }-*/;
+
+  private Integer boxedInteger = 0;
 
   @Override
   public String getModuleName() {
@@ -557,6 +579,16 @@ public class CompilerTest extends GWTTestCase {
     assertEquals("null true", test);
   }
 
+  /**
+   * Issue 2886: inlining should cope with local variables that do not have an
+   * explicit declaration node.
+   */
+  public void testInliningBoxedIncrement() {
+    // should not actually inline, because it has a temp variable
+    incrementBoxedInteger();
+    assertEquals((Integer) 1, boxedInteger);
+  }
+
   public void testJavaScriptReservedWords() {
     boolean delete = TRUE;
     for (int in = 0; in < 10; ++in) {
@@ -777,6 +809,11 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(new Foo(2).i, 2);
   }
 
+  public void testStaticMethodResolution() {
+    // Issue 2922
+    assertEquals("AbstractSuper", AbstractSuper.foo());
+  }
+
   public void testStringOptimizations() {
     assertEquals("Herro, AJAX", "Hello, AJAX".replace('l', 'r'));
     assertEquals('J', "Hello, AJAX".charAt(8));
@@ -986,6 +1023,11 @@ public class CompilerTest extends GWTTestCase {
       fail("Expected NullPointerException (7)");
     } catch (Exception expected) {
     }
+  }
+
+  private void incrementBoxedInteger() {
+    // the following will need a temporary variable created
+    boxedInteger++;
   }
 
   private boolean returnFalse() {

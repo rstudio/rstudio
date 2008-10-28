@@ -21,6 +21,8 @@ import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeHashSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashMap;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeLinkedHashSet;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeMap;
+import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeTreeSet;
 import com.google.gwt.user.client.rpc.TestSetFactory.MarkerTypeVector;
 
 import java.sql.Time;
@@ -32,6 +34,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.Vector;
 
 /**
@@ -94,7 +98,13 @@ public interface CollectionsTestServiceAsync {
   void echo(String[][] value, AsyncCallback<String[][]> callback);
 
   void echo(Time[] value, AsyncCallback<Time[]> callback);
+  
+  void echo(TreeMap<String, MarkerTypeTreeMap> value, boolean option,
+      AsyncCallback<TreeMap<String, MarkerTypeTreeMap>> callback);
 
+  void echo(TreeSet<MarkerTypeTreeSet> value, boolean option,
+      AsyncCallback<TreeSet<MarkerTypeTreeSet>> callback);
+  
   void echo(Timestamp[] value, AsyncCallback<Timestamp[]> callback);
 
   void echo(Vector<MarkerTypeVector> value,

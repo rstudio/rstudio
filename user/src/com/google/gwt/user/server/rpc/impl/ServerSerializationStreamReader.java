@@ -77,43 +77,50 @@ public final class ServerSerializationStreamReader extends
   private enum ValueReader {
     BOOLEAN {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readBoolean();
       }
     },
     BYTE {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readByte();
       }
     },
     CHAR {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readChar();
       }
     },
     DOUBLE {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readDouble();
       }
     },
     FLOAT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readFloat();
       }
     },
     INT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readInt();
       }
     },
     LONG {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readLong();
       }
     },
@@ -126,13 +133,15 @@ public final class ServerSerializationStreamReader extends
     },
     SHORT {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readShort();
       }
     },
     STRING {
       @Override
-      Object readValue(ServerSerializationStreamReader stream) {
+      Object readValue(ServerSerializationStreamReader stream)
+          throws SerializationException {
         return stream.readString();
       }
     };
@@ -323,6 +332,7 @@ public final class ServerSerializationStreamReader extends
   private final ArrayList<String> tokenList = new ArrayList<String>();
 
   private int tokenListIndex;
+
   {
     CLASS_TO_VECTOR_READER.put(boolean[].class, VectorReader.BOOLEAN_VECTOR);
     CLASS_TO_VECTOR_READER.put(byte[].class, VectorReader.BYTE_VECTOR);
@@ -374,10 +384,29 @@ public final class ServerSerializationStreamReader extends
     stringTable = null;
 
     int idx = 0, nextIdx;
-    while (-1 != (nextIdx = encodedTokens.indexOf('\uffff', idx))) {
+    while (-1 != (nextIdx = encodedTokens.indexOf(RPC_SEPARATOR_CHAR, idx))) {
       String current = encodedTokens.substring(idx, nextIdx);
       tokenList.add(current);
       idx = nextIdx + 1;
+    }
+    if (idx == 0) {
+      // Didn't find any separator, assume an older version with different
+      // separators and get the version as the sequence of digits at the
+      // beginning of the encoded string.
+      while (idx < encodedTokens.length()
+          && Character.isDigit(encodedTokens.charAt(idx))) {
+        ++idx;
+      }
+      if (idx == 0) {
+        throw new IncompatibleRemoteServiceException(
+            "Malformed or old RPC message received - expecting version "
+            + SERIALIZATION_STREAM_VERSION);
+      } else {
+        int version = Integer.valueOf(encodedTokens.substring(0, idx));
+        throw new IncompatibleRemoteServiceException("Expecting version "
+            + SERIALIZATION_STREAM_VERSION + " from client, got " + version
+            + ".");
+      }
     }
 
     super.prepareToRead(encodedTokens);
@@ -407,42 +436,42 @@ public final class ServerSerializationStreamReader extends
     }
   }
 
-  public boolean readBoolean() {
+  public boolean readBoolean() throws SerializationException {
     return !extract().equals("0");
   }
 
-  public byte readByte() {
+  public byte readByte() throws SerializationException {
     return Byte.parseByte(extract());
   }
 
-  public char readChar() {
+  public char readChar() throws SerializationException {
     // just use an int, it's more foolproof
     return (char) Integer.parseInt(extract());
   }
 
-  public double readDouble() {
+  public double readDouble() throws SerializationException {
     return Double.parseDouble(extract());
   }
 
-  public float readFloat() {
+  public float readFloat() throws SerializationException {
     return (float) Double.parseDouble(extract());
   }
 
-  public int readInt() {
+  public int readInt() throws SerializationException {
     return Integer.parseInt(extract());
   }
 
-  public long readLong() {
+  public long readLong() throws SerializationException {
     // Keep synchronized with LongLib. The wire format are the two component
     // parts of the double in the client code.
     return (long) readDouble() + (long) readDouble();
   }
 
-  public short readShort() {
+  public short readShort() throws SerializationException {
     return Short.parseShort(extract());
   }
 
-  public String readString() {
+  public String readString() throws SerializationException {
     return getString(readInt());
   }
 
@@ -587,7 +616,50 @@ public final class ServerSerializationStreamReader extends
     BoundedList<String> buffer = new BoundedList<String>(String.class,
         typeNameCount);
     for (int typeNameIndex = 0; typeNameIndex < typeNameCount; ++typeNameIndex) {
-      buffer.add(extract());
+      String str = extract();
+      // Change quoted characters back.
+      int idx = str.indexOf('\\');
+      if (idx >= 0) {
+        StringBuilder buf = new StringBuilder();
+        int pos = 0;
+        while (idx >= 0) {
+          buf.append(str.substring(pos, idx));
+          if (++idx == str.length()) {
+            throw new SerializationException("Unmatched backslash: \""
+                + str + "\"");
+          }
+          char ch = str.charAt(idx);
+          pos = idx + 1;
+          switch (ch) {
+            case '0':
+              buf.append('\u0000');
+              break;
+            case '!':
+              buf.append(RPC_SEPARATOR_CHAR);
+              break;
+            case '\\':
+              buf.append(ch);
+              break;
+            case 'u':
+              try {
+                ch = (char) Integer.parseInt(str.substring(idx + 1, idx + 5), 16);
+              } catch (NumberFormatException e) {
+                throw new SerializationException(
+                    "Invalid Unicode escape sequence in \"" + str + "\"");
+              }
+              buf.append(ch);
+              pos += 4;
+              break;
+            default:
+              throw new SerializationException("Unexpected escape character "
+                  + ch + " after backslash: \"" + str + "\"");
+          }
+          idx = str.indexOf('\\', pos);
+        }
+        buf.append(str.substring(pos));
+        str = buf.toString();
+      }
+      buffer.add(str);
     }
 
     if (buffer.size() != buffer.getExpectedSize()) {
@@ -613,14 +685,18 @@ public final class ServerSerializationStreamReader extends
     throw new NoSuchMethodException("deserialize");
   }
 
-  private String extract() {
-    return tokenList.get(tokenListIndex++);
+  private String extract() throws SerializationException {
+    try {
+      return tokenList.get(tokenListIndex++);
+    } catch (IndexOutOfBoundsException e) {
+      throw new SerializationException("Too few tokens in RPC request", e);
+    }
   }
 
   private Object instantiate(Class<?> customSerializer, Class<?> instanceClass)
       throws InstantiationException, IllegalAccessException,
       IllegalArgumentException, InvocationTargetException,
-      NoSuchMethodException {
+      NoSuchMethodException, SerializationException {
     if (customSerializer != null) {
       for (Method method : customSerializer.getMethods()) {
         if ("instantiate".equals(method.getName())) {

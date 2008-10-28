@@ -21,7 +21,7 @@ import com.google.gwt.util.tools.ArgHandler;
 /**
  * Argument handler for processing the log level flag.
  */
-public abstract class ArgHandlerLogLevel extends ArgHandler {
+public final class ArgHandlerLogLevel extends ArgHandler {
 
   private static final String OPTIONS_STRING = computeOptionsString();
 
@@ -40,7 +40,13 @@ public abstract class ArgHandlerLogLevel extends ArgHandler {
     return sb.toString();
   }
 
-  public final String[] getDefaultArgs() {
+  private final OptionLogLevel options;
+
+  public ArgHandlerLogLevel(OptionLogLevel options) {
+    this.options = options;
+  }
+
+  public String[] getDefaultArgs() {
     return new String[] {getTag(), getDefaultLogLevel().name()};
   }
 
@@ -60,7 +66,7 @@ public abstract class ArgHandlerLogLevel extends ArgHandler {
     if (startIndex + 1 < args.length) {
       try {
         Type level = Type.valueOf(args[startIndex + 1]);
-        setLogLevel(level);
+        options.setLogLevel(level);
         return 1;
       } catch (IllegalArgumentException e) {
         // Argument did not match any enum value; fall through to error case.
@@ -71,8 +77,6 @@ public abstract class ArgHandlerLogLevel extends ArgHandler {
     System.err.println("  " + OPTIONS_STRING);
     return -1;
   }
-
-  public abstract void setLogLevel(Type level);
 
   protected Type getDefaultLogLevel() {
     return Type.INFO;

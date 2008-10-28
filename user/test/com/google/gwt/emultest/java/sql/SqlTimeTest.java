@@ -102,13 +102,20 @@ public class SqlTimeTest extends GWTTestCase {
     }
 
     Time t = Time.valueOf("13:01:30");
-    // Months are 0-based, days are 1-based
     assertEquals(13, t.getHours());
     assertEquals(1, t.getMinutes());
     assertEquals(30, t.getSeconds());
 
     Time d2 = Time.valueOf(t.toString());
     assertEquals(t, d2);
+
+    // tests to see if the various parts are indeed decoded in base-10 (till
+    // r3728 the base was first inferred)
+    Time t2 = Time.valueOf("08:09:01");
+    assertEquals(8, t2.getHours());
+    assertEquals(9, t2.getMinutes());
+    assertEquals(1, t2.getSeconds());
+    assertEquals(t2, Time.valueOf(t2.toString()));
   }
 
   public void testToString() {

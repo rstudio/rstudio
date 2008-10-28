@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.TestAnnotatedMessages.Nested;
 import com.google.gwt.i18n.client.gen.Colors;
 import com.google.gwt.i18n.client.gen.Shapes;
 import com.google.gwt.i18n.client.gen.TestMessages;
@@ -51,6 +52,7 @@ public class I18NTest extends GWTTestCase {
     return "com.google.gwt.i18n.I18NTest";
   }
 
+  @SuppressWarnings("unchecked") // intentional test of raw map
   public void testAnnotatedConstants() {
     TestAnnotatedConstants c = GWT.create(TestAnnotatedConstants.class);
     assertEquals(14, c.fourteen());
@@ -115,11 +117,20 @@ public class I18NTest extends GWTTestCase {
     assertEquals("PL: Total is US$11,305.01", m.currencyFormat(11305.01));
     assertEquals("PL: Default number format is 1,017.1",
         m.defaultNumberFormat(1017.1));
+    @SuppressWarnings("deprecation")
+    Date date = new Date(107, 11, 1, 12, 1, 2);
     assertEquals("PL: It is 12:01 PM on Saturday, December 1, 2007",
-        m.getTimeDate(new Date(107, 11, 1, 12, 1, 2)));
+        m.getTimeDate(date));
     assertEquals("PL: 13 widgets", m.pluralWidgetsOther(13));
     assertEquals("Too many widgets to count (150) in pig-latin",
         m.pluralWidgetsOther(150));
+  }
+
+  public void testAnnotationInheritance() {
+    TestAnnotationGrandchild m = GWT.create(TestAnnotationGrandchild.class);
+    assertEquals("foo", m.foo());
+    assertEquals("bar_piglatin", m.bar());
+    assertEquals("baz_piglatin", m.baz());
   }
 
   public void testBindings() {
@@ -517,6 +528,13 @@ public class I18NTest extends GWTTestCase {
     // ExtendProtectedInner
     String extendProtectedInner = innerClass.testExtendsProtectedInner();
     assertEquals("Extend Protected Inner", extendProtectedInner);
+  }
+
+  public void testNestedAnnotations() {
+    Nested m = GWT.create(Nested.class);
+    // no translation exists in piglatin for nested dollar
+    assertEquals("nested dollar", m.nestedDollar());
+    assertEquals("estednay underscoray", m.nestedUnderscore());
   }
 
   public void testShapesFamily() {

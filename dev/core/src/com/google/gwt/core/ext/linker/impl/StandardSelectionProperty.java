@@ -40,8 +40,7 @@ public class StandardSelectionProperty implements SelectionProperty {
       activeValue = null;
     }
     name = p.getName();
-    provider = p.getProvider() == null ? null
-        : p.getProvider().getBody().toSource();
+    provider = p.getProvider() == null ? null : p.getProvider().getBody();
     values = Collections.unmodifiableSortedSet(new TreeSet<String>(
         Arrays.asList(p.getDefinedValues())));
   }

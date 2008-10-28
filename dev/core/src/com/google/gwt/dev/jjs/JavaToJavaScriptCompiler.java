@@ -17,10 +17,10 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
+import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -54,6 +54,7 @@ import com.google.gwt.dev.jjs.impl.MethodCallTightener;
 import com.google.gwt.dev.jjs.impl.MethodInliner;
 import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
+import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
@@ -69,7 +70,6 @@ import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
-import com.google.gwt.dev.js.SourceInfoHistogram;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.PerfLogger;
@@ -80,22 +80,361 @@ import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its corresponding
- * JavaScript source.
+ * Compiles the Java <code>JProgram</code> representation into its
+ * corresponding JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
+
+  /**
+   * Compiles a particular permutation, based on a precompiled unified AST.
+   * 
+   * @param logger the logger to use
+   * @param unifiedAst the result of a
+   *          {@link #precompile(TreeLogger, WebModeCompilerFrontEnd, String[], JJSOptions, boolean)}
+   * @param rebindAnswers the set of rebind answers to resolve all outstanding
+   *          rebind decisions
+   * @return the output JavaScript
+   * @throws UnableToCompleteException if an error other than
+   *           {@link OutOfMemoryError} occurs
+   */
+  public static String compilePermutation(TreeLogger logger,
+      UnifiedAst unifiedAst, Map<String, String> rebindAnswers)
+      throws UnableToCompleteException {
+    try {
+      if (JProgram.isTracingEnabled()) {
+        System.out.println("------------------------------------------------------------");
+        System.out.println("|                     (new permuation)                     |");
+        System.out.println("------------------------------------------------------------");
+      }
+
+      AST ast = unifiedAst.getFreshAst();
+      JProgram jprogram = ast.getJProgram();
+      JsProgram jsProgram = ast.getJsProgram();
+      JJSOptions options = unifiedAst.getOptions();
+
+      ResolveRebinds.exec(jprogram, rebindAnswers);
+
+      // (4) Optimize the normalized Java AST for each permutation.
+      optimize(options, jprogram);
+
+      // (5) "Normalize" the high-level Java tree into a lower-level tree more
+      // suited for JavaScript code generation. Don't go reordering these
+      // willy-nilly because there are some subtle interdependencies.
+      LongCastNormalizer.exec(jprogram);
+      JsoDevirtualizer.exec(jprogram);
+      CatchBlockNormalizer.exec(jprogram);
+      PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
+      LongEmulationNormalizer.exec(jprogram);
+      CastNormalizer.exec(jprogram);
+      ArrayNormalizer.exec(jprogram);
+      EqualityNormalizer.exec(jprogram);
+
+      // (6) Perform further post-normalization optimizations
+      // Prune everything
+      Pruner.exec(jprogram, false);
+
+      // (7) Generate a JavaScript code DOM from the Java type declarations
+      jprogram.typeOracle.recomputeClinits();
+      GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
+
+      // Allow GC.
+      jprogram = null;
+
+      // (8) Normalize the JS AST.
+      // Fix invalid constructs created during JS AST gen.
+      JsNormalizer.exec(jsProgram);
+      // Resolve all unresolved JsNameRefs.
+      JsSymbolResolver.exec(jsProgram);
+
+      // (9) Optimize the JS AST.
+      if (options.isAggressivelyOptimize()) {
+        boolean didChange;
+        do {
+          if (Thread.interrupted()) {
+            throw new InterruptedException();
+          }
+
+          didChange = false;
+          // Remove unused functions, possible
+          didChange = JsStaticEval.exec(jsProgram) || didChange;
+          // Inline JavaScript function invocations
+          didChange = JsInliner.exec(jsProgram) || didChange;
+          // Remove unused functions, possible
+          didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
+        } while (didChange);
+      }
+
+      // (10) Obfuscate
+      switch (options.getOutput()) {
+        case OBFUSCATED:
+          JsStringInterner.exec(jsProgram);
+          JsObfuscateNamer.exec(jsProgram);
+          break;
+        case PRETTY:
+          // We don't intern strings in pretty mode to improve readability
+          JsPrettyNamer.exec(jsProgram);
+          break;
+        case DETAILED:
+          JsStringInterner.exec(jsProgram);
+          JsVerboseNamer.exec(jsProgram);
+          break;
+        default:
+          throw new InternalCompilerException("Unknown output mode");
+      }
+
+      // (11) Perform any post-obfuscation normalizations.
+
+      // Work around an IE7 bug,
+      // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
+      JsIEBlockSizeVisitor.exec(jsProgram);
+
+      // (12) Generate the final output text.
+      DefaultTextOutput out = new DefaultTextOutput(
+          options.getOutput().shouldMinimize());
+      JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
+      v.accept(jsProgram);
+      return out.toString();
+    } catch (Throwable e) {
+      throw logAndTranslateException(logger, e);
+    }
+  }
+
+  /**
+   * Performs a precompilation, returning a unified AST.
+   * 
+   * @param logger the logger to use
+   * @param compilerFrontEnd the compiler front ent
+   * @param declEntryPts the set of entry classes
+   * @param options the compiler options
+   * @param singlePermutation if true, do not pre-optimize the resulting AST or
+   *          allow serialization of the result
+   * @return the unified AST used to drive permutation compiles
+   * @throws UnableToCompleteException if an error other than
+   *           {@link OutOfMemoryError} occurs
+   */
+  public static UnifiedAst precompile(TreeLogger logger,
+      WebModeCompilerFrontEnd compilerFrontEnd, String[] declEntryPts,
+      JJSOptions options, boolean singlePermutation)
+      throws UnableToCompleteException {
+
+    if (declEntryPts.length == 0) {
+      throw new IllegalArgumentException("entry point(s) required");
+    }
+
+    RebindPermutationOracle rpo = compilerFrontEnd.getRebindPermutationOracle();
+
+    // Find all the possible rebound entry points.
+    Set<String> allEntryPoints = new TreeSet<String>();
+    for (String element : declEntryPts) {
+      String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
+      Util.addAll(allEntryPoints, all);
+    }
+    allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
+    allEntryPoints.addAll(JProgram.INDEX_TYPES_SET);
+
+    // Compile the source and get the compiler so we can get the parse tree
+    //
+    CompilationUnitDeclaration[] goldenCuds = compilerFrontEnd.getCompilationUnitDeclarations(
+        logger, allEntryPoints.toArray(new String[0]));
+
+    // Check for compilation problems. We don't log here because any problems
+    // found here will have already been logged by AbstractCompiler.
+    //
+    checkForErrors(logger, goldenCuds, false);
+
+    PerfLogger.start("Build AST");
+    JProgram jprogram = new JProgram();
+    JsProgram jsProgram = new JsProgram();
+
+    try {
+      long usedMemoryBefore = singlePermutation ? 0 : getUsedMemory();
+
+      /*
+       * (1) Build a flattened map of TypeDeclarations => JType. The resulting
+       * map contains entries for all reference types. BuildTypeMap also parses
+       * all JSNI.
+       */
+      TypeMap typeMap = new TypeMap(jprogram);
+      TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
+          goldenCuds, jsProgram);
+
+      // BuildTypeMap can uncover syntactic JSNI errors; report & abort
+      checkForErrors(logger, goldenCuds, true);
+
+      // Compute all super type/sub type info
+      jprogram.typeOracle.computeBeforeAST();
+
+      // (2) Create our own Java AST from the JDT AST.
+      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
+          options.isEnableAssertions());
+
+      long usedMemoryAfter = singlePermutation ? 0 : getUsedMemory();
+      long memoryDelta = usedMemoryAfter - usedMemoryBefore;
+      long astMemoryUsage = (long) (memoryDelta * 1.5);
+
+      // GenerateJavaAST can uncover semantic JSNI errors; report & abort
+      checkForErrors(logger, goldenCuds, true);
+
+      // Allow GC
+      goldenCuds = null;
+      typeMap = null;
+      allTypeDeclarations = null;
+
+      // (3) Perform Java AST normalizations.
+
+      FixAssignmentToUnbox.exec(jprogram);
+
+      /*
+       * TODO: If we defer this until later, we could maybe use the results of
+       * the assertions to enable more optimizations.
+       */
+      if (options.isEnableAssertions()) {
+        // Turn into assertion checking calls.
+        AssertionNormalizer.exec(jprogram);
+      } else {
+        // Remove all assert statements.
+        AssertionRemover.exec(jprogram);
+      }
+
+      // Replace GWT.create calls with JGwtCreate nodes.
+      ReplaceRebinds.exec(logger, jprogram, rpo);
+
+      // Resolve entry points, rebinding non-static entry points.
+      findEntryPoints(logger, rpo, declEntryPts, jprogram);
+
+      // Replace references to JSO subtypes with JSO itself.
+      JavaScriptObjectNormalizer.exec(jprogram);
+
+      /*
+       * (4) Optimize the normalized Java AST for the common AST. By doing
+       * optimizations early in the multiple permutation scenario, we're saving
+       * work. However, we can't fully optimize because we don't yet know the
+       * deferred binding decisions.
+       * 
+       * Don't bother optimizing early if there's only one permutation.
+       */
+      if (!singlePermutation) {
+        optimize(options, jprogram);
+      }
+
+      Set<String> rebindRequests = new HashSet<String>();
+      RecordRebinds.exec(jprogram, rebindRequests);
+
+      return new UnifiedAst(options, new AST(jprogram, jsProgram),
+          singlePermutation, astMemoryUsage, rebindRequests);
+    } catch (Throwable e) {
+      throw logAndTranslateException(logger, e);
+    } finally {
+      PerfLogger.end();
+    }
+  }
+
+  protected static void optimize(JJSOptions options, JProgram jprogram)
+      throws InterruptedException {
+    /*
+     * Record the beginning of optimizations; this turns on certain checks that
+     * guard against problematic late construction of things like class
+     * literals.
+     */
+    jprogram.beginOptimizations();
+
+    boolean didChange;
+    do {
+      if (Thread.interrupted()) {
+        throw new InterruptedException();
+      }
+
+      // Recompute clinits each time, they can become empty.
+      jprogram.typeOracle.recomputeClinits();
+
+      didChange = false;
+      // Remove unreferenced types, fields, methods, [params, locals]
+      didChange = Pruner.exec(jprogram, true) || didChange;
+      // finalize locals, params, fields, methods, classes
+      didChange = Finalizer.exec(jprogram) || didChange;
+      // rewrite non-polymorphic calls as static calls; update all call sites
+      didChange = MakeCallsStatic.exec(jprogram) || didChange;
+
+      // type flow tightening
+      // - fields, locals based on assignment
+      // - params based on assignment and call sites
+      // - method bodies based on return statements
+      // - polymorphic methods based on return types of all implementors
+      // - optimize casts and instance of
+      didChange = TypeTightener.exec(jprogram) || didChange;
+
+      // tighten method call bindings
+      didChange = MethodCallTightener.exec(jprogram) || didChange;
+
+      // dead code removal??
+      didChange = DeadCodeElimination.exec(jprogram) || didChange;
+
+      if (options.isAggressivelyOptimize()) {
+        // inlining
+        didChange = MethodInliner.exec(jprogram) || didChange;
+      }
+      // prove that any types that have been culled from the main tree are
+      // unreferenced due to type tightening?
+    } while (didChange);
+  }
+
+  private static void checkForErrors(TreeLogger logger,
+      CompilationUnitDeclaration[] cuds, boolean itemizeErrors)
+      throws UnableToCompleteException {
+    boolean compilationFailed = false;
+    if (cuds.length == 0) {
+      compilationFailed = true;
+    }
+    Set<IProblem> problemSet = new HashSet<IProblem>();
+    for (CompilationUnitDeclaration cud : cuds) {
+      CompilationResult result = cud.compilationResult();
+      if (result.hasErrors()) {
+        compilationFailed = true;
+        // Early out if we don't need to itemize.
+        if (!itemizeErrors) {
+          break;
+        }
+        TreeLogger branch = logger.branch(TreeLogger.ERROR, "Errors in "
+            + String.valueOf(result.getFileName()), null);
+        IProblem[] errors = result.getErrors();
+        for (IProblem problem : errors) {
+          if (problemSet.contains(problem)) {
+            continue;
+          }
+
+          problemSet.add(problem);
+
+          // Strip the initial code from each error.
+          //
+          String msg = problem.toString();
+          msg = msg.substring(msg.indexOf(' '));
+
+          // Append 'file (line): msg' to the error message.
+          //
+          int line = problem.getSourceLineNumber();
+          StringBuffer msgBuf = new StringBuffer();
+          msgBuf.append("Line ");
+          msgBuf.append(line);
+          msgBuf.append(": ");
+          msgBuf.append(msg);
+          branch.log(TreeLogger.ERROR, msgBuf.toString(), null);
+        }
+      }
+    }
+    if (compilationFailed) {
+      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
+          null);
+      throw new UnableToCompleteException();
+    }
+  }
 
   private static JMethodCall createReboundModuleLoad(TreeLogger logger,
       JProgram program, JReferenceType reboundEntryType,
@@ -127,9 +466,9 @@ public class JavaToJavaScriptCompiler {
               + originalMainClassName + "' must not be abstract", null);
       throw new UnableToCompleteException();
     }
-
     SourceInfo sourceInfo = reboundEntryType.getSourceInfo().makeChild(
         JavaToJavaScriptCompiler.class, "Rebound entry point");
+
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
       qualifier = JGwtCreate.createInstantiationExpression(program, sourceInfo,
@@ -151,11 +490,10 @@ public class JavaToJavaScriptCompiler {
   private static void findEntryPoints(TreeLogger logger,
       RebindPermutationOracle rpo, String[] mainClassNames, JProgram program)
       throws UnableToCompleteException {
-    JMethod bootStrapMethod = program.createMethod(
-        program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class,
-            "Bootstrap method"), "init".toCharArray(),
-        program.getIndexedType("EntryMethodHolder"), program.getTypeVoid(),
-        false, true, true, false, false);
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic(JavaToJavaScriptCompiler.class,
+        "Bootstrap method");
+    JMethod bootStrapMethod = program.createMethod(sourceInfo, "init".toCharArray(),
+        null, program.getTypeVoid(), false, true, true, false, false);
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
@@ -232,466 +570,15 @@ public class JavaToJavaScriptCompiler {
   }
 
   private static long getUsedMemory() {
+    System.gc();
     long used = Runtime.getRuntime().totalMemory()
         - Runtime.getRuntime().freeMemory();
     assert (used > 0);
     return used;
   }
 
-  /**
-   * Create a variable assignment to invoke a call to the statistics collector.
-   * 
-   * <pre>
-   * Stats.isStatsAvailable() &&
-   *   Stats.onModuleStart("mainClassName");
-   * </pre>
-   */
-  private static JStatement makeStatsCalls(JProgram program,
-      String mainClassName) {
-    SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-        JavaToJavaScriptCompiler.class, "onModuleStart() stats call");
-    JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
-    JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
-
-    JMethodCall availableCall = new JMethodCall(program, sourceInfo, null,
-        isStatsAvailableMethod);
-    JMethodCall onModuleStartCall = new JMethodCall(program, sourceInfo, null,
-        onModuleStartMethod);
-    onModuleStartCall.getArgs().add(
-        program.getLiteralString(sourceInfo, mainClassName));
-
-    JBinaryOperation amp = new JBinaryOperation(program, sourceInfo,
-        program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
-        onModuleStartCall);
-
-    return amp.makeStatement();
-  }
-
-  private final long astMemoryUsage;
-  private final String[] declEntryPoints;
-  private final Object myLockObject = new Object();
-  private final JJSOptions options;
-  private final Set<IProblem> problemSet = new HashSet<IProblem>();
-  private JProgram savedJProgram = null;
-  private JsProgram savedJsProgram = null;
-  private final byte[] serializedAst;
-
-  public JavaToJavaScriptCompiler(TreeLogger logger,
-      WebModeCompilerFrontEnd compiler, String[] declEntryPts)
-      throws UnableToCompleteException {
-    this(logger, compiler, declEntryPts, new JJSOptions());
-  }
-
-  public JavaToJavaScriptCompiler(TreeLogger logger,
-      WebModeCompilerFrontEnd compiler, String[] declEntryPts,
-      JJSOptions compilerOptions) throws UnableToCompleteException {
-
-    if (declEntryPts.length == 0) {
-      throw new IllegalArgumentException("entry point(s) required");
-    }
-
-    this.options = new JJSOptions(compilerOptions);
-
-    // Remember these for subsequent compiles.
-    //
-    this.declEntryPoints = declEntryPts;
-
-    RebindPermutationOracle rpo = compiler.getRebindPermutationOracle();
-
-    if (!options.isValidateOnly()) {
-      // Find all the possible rebound entry points.
-      Set<String> allEntryPoints = new TreeSet<String>();
-      for (String element : declEntryPts) {
-        String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
-        Util.addAll(allEntryPoints, all);
-      }
-      allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
-      allEntryPoints.addAll(JProgram.INDEX_TYPES_SET);
-      declEntryPts = allEntryPoints.toArray(new String[0]);
-    }
-
-    // Compile the source and get the compiler so we can get the parse tree
-    //
-    CompilationUnitDeclaration[] goldenCuds = compiler.getCompilationUnitDeclarations(
-        logger, declEntryPts);
-
-    // Check for compilation problems. We don't log here because any problems
-    // found here will have already been logged by AbstractCompiler.
-    //
-    checkForErrors(logger, goldenCuds, false);
-
-    PerfLogger.start("Build AST");
-    boolean enableDescendants = compilerOptions.getSoycOutputDir() != null;
-    JProgram jprogram = savedJProgram = new JProgram();
-    jprogram.setEnableSourceInfoDescendants(enableDescendants);
-    JsProgram jsProgram = savedJsProgram = new JsProgram();
-    jsProgram.setEnableSourceInfoDescendants(enableDescendants);
-
-    long memoryDelta;
-    try {
-      System.gc();
-      long usedMemoryBefore = getUsedMemory();
-      /*
-       * (1) Build a flattened map of TypeDeclarations => JType. The resulting
-       * map contains entries for all reference types. BuildTypeMap also parses
-       * all JSNI.
-       */
-      TypeMap typeMap = new TypeMap(jprogram);
-      TypeDeclaration[] allTypeDeclarations = BuildTypeMap.exec(typeMap,
-          goldenCuds, jsProgram);
-
-      // BuildTypeMap can uncover syntactic JSNI errors; report & abort
-      checkForErrors(logger, goldenCuds, true);
-
-      // Compute all super type/sub type info
-      jprogram.typeOracle.computeBeforeAST();
-
-      // (2) Create our own Java AST from the JDT AST.
-      GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
-          options.isEnableAssertions());
-
-      System.gc();
-      long usedMemoryAfter = getUsedMemory();
-      memoryDelta = usedMemoryAfter - usedMemoryBefore;
-      long localAstMemoryUsage = (long) (memoryDelta * 1.5);
-
-      // GenerateJavaAST can uncover semantic JSNI errors; report & abort
-      checkForErrors(logger, goldenCuds, true);
-
-      // Allow GC
-      goldenCuds = null;
-      typeMap = null;
-      allTypeDeclarations = null;
-
-      // (3) Perform Java AST normalizations.
-
-      FixAssignmentToUnbox.exec(jprogram);
-
-      /*
-       * TODO: If we defer this until later, we could maybe use the results of
-       * the assertions to enable more optimizations.
-       */
-      if (options.isEnableAssertions()) {
-        // Turn into assertion checking calls.
-        AssertionNormalizer.exec(jprogram);
-      } else {
-        // Remove all assert statements.
-        AssertionRemover.exec(jprogram);
-      }
-
-      // Replace GWT.create calls with JGwtCreate nodes.
-      ReplaceRebinds.exec(logger, jprogram, rpo);
-
-      // Resolve entry points, rebinding non-static entry points.
-      findEntryPoints(logger, rpo, declEntryPoints, jprogram);
-
-      // Replace references to JSO subtypes with JSO itself.
-      JavaScriptObjectNormalizer.exec(jprogram);
-
-      /*
-       * (4) Optimize the normalized Java AST for the common AST. By doing
-       * optimizations early in the multiple permutation scenario, we're saving
-       * work. However, we can't fully optimized because we don't yet know the
-       * deferred binding decisions.
-       * 
-       * Don't bother optimizing early if there's only one permutation.
-       */
-      if (rpo.getPermuationCount() > 1) {
-        optimize(jprogram);
-
-        PerfLogger.start("serialize");
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ObjectOutputStream os = new ObjectOutputStream(baos);
-        os.writeObject(jprogram);
-        os.writeObject(jsProgram);
-        os.close();
-        serializedAst = baos.toByteArray();
-        PerfLogger.end();
-
-        // Very rough heuristic.
-        this.astMemoryUsage = Math.max(localAstMemoryUsage,
-            serializedAst.length * 4);
-        logger.log(TreeLogger.TRACE, "Estimated AST memory usage: "
-            + astMemoryUsage + " = Math.max(" + memoryDelta + " * 1.5, "
-            + serializedAst.length + " * 4)");
-      } else {
-        this.astMemoryUsage = localAstMemoryUsage;
-        this.serializedAst = null;
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Should be impossible to get an IOException reading an in-memory stream",
-          e);
-    } catch (Throwable e) {
-      throw logAndTranslateException(logger, e);
-    } finally {
-      PerfLogger.end();
-      synchronized (myLockObject) {
-        /*
-         * JLS 17.4.4: ensure all changes are visible to any other thread
-         * calling compile.
-         * 
-         * TODO: is this necessary?
-         */
-      }
-    }
-  }
-
-  /**
-   * Creates finished JavaScript source code from the specified Java compilation
-   * units.
-   */
-  public String compile(TreeLogger logger, RebindOracle rebindOracle)
-      throws UnableToCompleteException {
-
-    JProgram jprogram = null;
-    JsProgram jsProgram = null;
-
-    synchronized (myLockObject) {
-      if (savedJProgram != null && savedJsProgram != null) {
-        jprogram = savedJProgram;
-        jsProgram = savedJsProgram;
-        savedJProgram = null;
-        savedJsProgram = null;
-      } else {
-        if (serializedAst == null) {
-          throw new IllegalStateException("No serialized AST was cached.");
-        }
-        try {
-          /*
-           * Force all AST deserializations to occur in sequence; this reduces
-           * the chance of multiple threads going OOM at the same time.
-           */
-          synchronized (myLockObject) {
-            PerfLogger.start("deserialize");
-            ByteArrayInputStream bais = new ByteArrayInputStream(serializedAst);
-            ObjectInputStream is;
-            is = new ObjectInputStream(bais);
-            jprogram = (JProgram) is.readObject();
-            jsProgram = (JsProgram) is.readObject();
-            PerfLogger.end();
-          }
-        } catch (IOException e) {
-          throw new RuntimeException(
-              "Should be impossible for memory based streams", e);
-        } catch (ClassNotFoundException e) {
-          throw new RuntimeException(
-              "Should be impossible when deserializing in process", e);
-        }
-      }
-    }
-
-    try {
-      return doCompile(logger, jprogram, jsProgram, rebindOracle);
-    } catch (Throwable e) {
-      // Allow GC before logging exception in case it was an OOM.
-      jprogram = null;
-      jsProgram = null;
-      throw logAndTranslateException(logger, e);
-    }
-  }
-
-  public long getAstMemoryUsage() {
-    return astMemoryUsage;
-  }
-
-  protected String doCompile(TreeLogger logger, JProgram jprogram,
-      JsProgram jsProgram, RebindOracle rebindOracle)
-      throws InterruptedException {
-    if (JProgram.isTracingEnabled()) {
-      System.out.println("------------------------------------------------------------");
-      System.out.println("|                     (new permuation)                     |");
-      System.out.println("------------------------------------------------------------");
-    }
-
-    ResolveRebinds.exec(logger, jprogram, rebindOracle);
-
-    // (4) Optimize the normalized Java AST for each permutation.
-    optimize(jprogram);
-
-    // (5) "Normalize" the high-level Java tree into a lower-level tree more
-    // suited for JavaScript code generation. Don't go reordering these
-    // willy-nilly because there are some subtle interdependencies.
-    LongCastNormalizer.exec(jprogram);
-    JsoDevirtualizer.exec(jprogram);
-    CatchBlockNormalizer.exec(jprogram);
-    PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
-    LongEmulationNormalizer.exec(jprogram);
-    CastNormalizer.exec(jprogram);
-    ArrayNormalizer.exec(jprogram);
-    EqualityNormalizer.exec(jprogram);
-
-    // (6) Perform further post-normalization optimizations
-    // Prune everything
-    Pruner.exec(jprogram, false);
-
-    // (7) Generate a JavaScript code DOM from the Java type declarations
-    jprogram.typeOracle.recomputeClinits();
-    GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
-
-    // Allow GC.
-    jprogram = null;
-
-    // (8) Normalize the JS AST.
-    // Fix invalid constructs created during JS AST gen.
-    JsNormalizer.exec(jsProgram);
-    // Resolve all unresolved JsNameRefs.
-    JsSymbolResolver.exec(jsProgram);
-
-    // (9) Optimize the JS AST.
-    if (options.isAggressivelyOptimize()) {
-      boolean didChange;
-      do {
-        if (Thread.interrupted()) {
-          throw new InterruptedException();
-        }
-
-        didChange = false;
-        // Remove unused functions, possible
-        didChange = JsStaticEval.exec(jsProgram) || didChange;
-        // Inline JavaScript function invocations
-        didChange = JsInliner.exec(jsProgram) || didChange;
-        // Remove unused functions, possible
-        didChange = JsUnusedFunctionRemover.exec(jsProgram) || didChange;
-      } while (didChange);
-    }
-
-    // (10) Obfuscate
-    switch (options.getOutput()) {
-      case OBFUSCATED:
-        JsStringInterner.exec(jsProgram);
-        JsObfuscateNamer.exec(jsProgram);
-        break;
-      case PRETTY:
-        // We don't intern strings in pretty mode to improve readability
-        JsPrettyNamer.exec(jsProgram);
-        break;
-      case DETAILED:
-        JsStringInterner.exec(jsProgram);
-        JsVerboseNamer.exec(jsProgram);
-        break;
-      default:
-        throw new InternalCompilerException("Unknown output mode");
-    }
-
-    // (11) Perform any post-obfuscation normalizations.
-
-    // Work around an IE7 bug,
-    // http://code.google.com/p/google-web-toolkit/issues/detail?id=1440
-    JsIEBlockSizeVisitor.exec(jsProgram);
-
-    // Write the SOYC reports into the output
-    if (options.getSoycOutputDir() != null) {
-      SourceInfoHistogram.exec(jsProgram, options.getSoycOutputDir());
-    }
-
-    // (12) Generate the final output text.
-    DefaultTextOutput out = new DefaultTextOutput(
-        options.getOutput().shouldMinimize());
-    JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-    v.accept(jsProgram);
-    return out.toString();
-  }
-
-  protected void optimize(JProgram jprogram) throws InterruptedException {
-    /*
-     * Record the beginning of optimations; this turns on certain checks that
-     * guard against problematic late construction of things like class
-     * literals.
-     */
-    jprogram.beginOptimizations();
-
-    boolean didChange;
-    do {
-      if (Thread.interrupted()) {
-        throw new InterruptedException();
-      }
-
-      // Recompute clinits each time, they can become empty.
-      jprogram.typeOracle.recomputeClinits();
-
-      didChange = false;
-      // Remove unreferenced types, fields, methods, [params, locals]
-      didChange = Pruner.exec(jprogram, true) || didChange;
-      // finalize locals, params, fields, methods, classes
-      didChange = Finalizer.exec(jprogram) || didChange;
-      // rewrite non-polymorphic calls as static calls; update all call sites
-      didChange = MakeCallsStatic.exec(jprogram) || didChange;
-
-      // type flow tightening
-      // - fields, locals based on assignment
-      // - params based on assignment and call sites
-      // - method bodies based on return statements
-      // - polymorphic methods based on return types of all implementors
-      // - optimize casts and instance of
-      didChange = TypeTightener.exec(jprogram) || didChange;
-
-      // tighten method call bindings
-      didChange = MethodCallTightener.exec(jprogram) || didChange;
-
-      // dead code removal??
-      didChange = DeadCodeElimination.exec(jprogram) || didChange;
-
-      if (options.isAggressivelyOptimize()) {
-        // inlining
-        didChange = MethodInliner.exec(jprogram) || didChange;
-      }
-      // prove that any types that have been culled from the main tree are
-      // unreferenced due to type tightening?
-    } while (didChange);
-  }
-
-  private void checkForErrors(TreeLogger logger,
-      CompilationUnitDeclaration[] cuds, boolean itemizeErrors)
-      throws UnableToCompleteException {
-    boolean compilationFailed = false;
-    if (cuds.length == 0) {
-      compilationFailed = true;
-    }
-    for (CompilationUnitDeclaration cud : cuds) {
-      CompilationResult result = cud.compilationResult();
-      if (result.hasErrors()) {
-        compilationFailed = true;
-        // Early out if we don't need to itemize.
-        if (!itemizeErrors) {
-          break;
-        }
-        TreeLogger branch = logger.branch(TreeLogger.ERROR, "Errors in "
-            + String.valueOf(result.getFileName()), null);
-        IProblem[] errors = result.getErrors();
-        for (IProblem problem : errors) {
-          if (problemSet.contains(problem)) {
-            continue;
-          }
-
-          problemSet.add(problem);
-
-          // Strip the initial code from each error.
-          //
-          String msg = problem.toString();
-          msg = msg.substring(msg.indexOf(' '));
-
-          // Append 'file (line): msg' to the error message.
-          //
-          int line = problem.getSourceLineNumber();
-          StringBuffer msgBuf = new StringBuffer();
-          msgBuf.append("Line ");
-          msgBuf.append(line);
-          msgBuf.append(": ");
-          msgBuf.append(msg);
-          branch.log(TreeLogger.ERROR, msgBuf.toString(), null);
-        }
-      }
-    }
-    if (compilationFailed) {
-      logger.log(TreeLogger.ERROR, "Cannot proceed due to previous errors",
-          null);
-      throw new UnableToCompleteException();
-    }
-  }
-
-  private UnableToCompleteException logAndTranslateException(TreeLogger logger,
-      Throwable e) {
+  private static UnableToCompleteException logAndTranslateException(
+      TreeLogger logger, Throwable e) {
     if (e instanceof UnableToCompleteException) {
       // just rethrow
       return (UnableToCompleteException) e;
@@ -732,4 +619,33 @@ public class JavaToJavaScriptCompiler {
       return new UnableToCompleteException();
     }
   }
+
+  /**
+   * Create a variable assignment to invoke a call to the statistics collector.
+   * 
+   * <pre>
+   * Stats.isStatsAvailable() &&
+   *   Stats.onModuleStart("mainClassName");
+   * </pre>
+   */
+  private static JStatement makeStatsCalls(JProgram program,
+      String mainClassName) {
+    SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+        JavaToJavaScriptCompiler.class, "onModuleStart() stats call");
+    JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
+    JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
+
+    JMethodCall availableCall = new JMethodCall(program, sourceInfo, null,
+        isStatsAvailableMethod);
+    JMethodCall onModuleStartCall = new JMethodCall(program, sourceInfo, null,
+        onModuleStartMethod);
+    onModuleStartCall.getArgs().add(program.getLiteralString(sourceInfo, mainClassName));
+
+    JBinaryOperation amp = new JBinaryOperation(program, sourceInfo,
+        program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
+        onModuleStartCall);
+
+    return amp.makeStatement();
+  }
+
 }

@@ -304,8 +304,15 @@ public abstract class ResourceFactory {
     String partialPath = localizedPath.replace('.', '/');
     for (int i = 0; i < loaders.size(); i++) {
       ResourceFactory element = loaders.get(i);
-      String path = partialPath + "." + element.getExt();
+      String ext = "." + element.getExt();
+      String path = partialPath + ext;
       InputStream m = loader.getResourceAsStream(path);
+      if (m == null && partialPath.contains("$")) {
+        // Also look for A_B for inner classes, as $ in path names
+        // can cause issues for some build tools.
+        path = partialPath.replace('$', '_') + ext;
+        m = loader.getResourceAsStream(path);
+      }
       if (m != null) {
         AbstractResource found = element.load(m);
         found.setPath(path);

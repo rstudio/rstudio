@@ -24,11 +24,13 @@ import com.google.gwt.core.ext.Linker;
  * during the compilation process.
  */
 public abstract class GeneratedResource extends EmittedArtifact {
-  private final Class<? extends Generator> generatorType;
+  private final String generatorTypeName;
+  private transient Class<? extends Generator> generatorType;
 
   protected GeneratedResource(Class<? extends Linker> linkerType,
       Class<? extends Generator> generatorType, String partialPath) {
     super(linkerType, partialPath);
+    this.generatorTypeName = generatorType.getName();
     this.generatorType = generatorType;
   }
 
@@ -36,6 +38,17 @@ public abstract class GeneratedResource extends EmittedArtifact {
    * The type of Generator that created the resource.
    */
   public final Class<? extends Generator> getGenerator() {
+    // generatorType is null when deserialized.
+    if (generatorType == null) {
+      try {
+        Class<?> clazz = Class.forName(generatorTypeName, false,
+            Thread.currentThread().getContextClassLoader());
+        generatorType = clazz.asSubclass(Generator.class);
+      } catch (ClassNotFoundException e) {
+        // The class may not be available.
+        generatorType = Generator.class;
+      }
+    }
     return generatorType;
   }
 }

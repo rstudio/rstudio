@@ -26,9 +26,10 @@ class DOMImplMozilla extends DOMImplStandard {
     // so we use getBoundingClientRect() whenever possible (but it's not
     // supported on older versions). If changing this code, make sure to check
     // the museum entry for issue 1932.
+    // (x) | 0 is used to coerce the value to an integer
     if (Element.prototype.getBoundingClientRect) {
-      return elem.getBoundingClientRect().left +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
+      return (elem.getBoundingClientRect().left +
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft) | 0;
     } else {
       // We cannot use DOMImpl here because offsetLeft/Top return erroneous
       // values when overflow is not visible.  We have to difference screenX
@@ -46,9 +47,10 @@ class DOMImplMozilla extends DOMImplStandard {
     // so we use getBoundingClientRect() whenever possible (but it's not
     // supported on older versions). If changing this code, make sure to check
     // the museum entry for issue 1932.
+    // (x) | 0 is used to coerce the value to an integer
     if (Element.prototype.getBoundingClientRect) {
-      return elem.getBoundingClientRect().top +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
+      return (elem.getBoundingClientRect().top +
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop) | 0;
     } else {
       // We cannot use DOMImpl here because offsetLeft/Top return erroneous
       // values when overflow is not visible.  We have to difference screenX

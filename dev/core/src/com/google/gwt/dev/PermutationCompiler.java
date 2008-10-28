@@ -17,17 +17,13 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.SelectionProperty;
-import com.google.gwt.core.ext.linker.impl.StandardCompilationResult;
-import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.PerfLogger;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -40,13 +36,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class PermutationCompiler {
 
   /**
+   * Hands back results as they are finished.
+   */
+  public interface ResultsHandler {
+    void addResult(Permutation permutation, int permNum, String js)
+        throws UnableToCompleteException;
+  }
+
+  /**
    * A Result for a permutation that failed to compile.
    */
   private static final class FailedResult extends Result {
     private Throwable exception;
 
-    public FailedResult(Permutation perm, Throwable exception) {
-      super(perm);
+    public FailedResult(Permutation perm, int permNum, Throwable exception) {
+      super(perm, permNum);
       this.exception = exception;
     }
 
@@ -60,40 +64,49 @@ public class PermutationCompiler {
    */
   private static final class PermutationTask implements Callable<String> {
     private static void logProperties(TreeLogger logger,
-        StaticPropertyOracle propOracle) {
-      BindingProperty[] props = propOracle.getOrderedProps();
-      String[] values = propOracle.getOrderedPropValues();
-      if (logger.isLoggable(TreeLogger.DEBUG)) {
-        logger = logger.branch(TreeLogger.DEBUG, "Setting properties", null);
-        for (int i = 0; i < props.length; i++) {
-          String name = props[i].getName();
-          String value = values[i];
-          logger.log(TreeLogger.TRACE, name + " = " + value, null);
+        StaticPropertyOracle[] propOracles) {
+      for (StaticPropertyOracle propOracle : propOracles) {
+        BindingProperty[] props = propOracle.getOrderedProps();
+        String[] values = propOracle.getOrderedPropValues();
+        if (logger.isLoggable(TreeLogger.DEBUG)) {
+          logger = logger.branch(TreeLogger.DEBUG, "Setting properties", null);
+          for (int i = 0; i < props.length; i++) {
+            String name = props[i].getName();
+            String value = values[i];
+            logger.log(TreeLogger.TRACE, name + " = " + value, null);
+          }
         }
       }
     }
 
-    private final JavaToJavaScriptCompiler jjs;
+    private final UnifiedAst unifiedAst;
     private final TreeLogger logger;
     private final Permutation perm;
+    private final int permNum;
 
-    public PermutationTask(TreeLogger logger, JavaToJavaScriptCompiler jjs,
-        Permutation perm) {
+    public PermutationTask(TreeLogger logger, UnifiedAst unifiedAst,
+        Permutation perm, int permNum) {
       this.logger = logger;
-      this.jjs = jjs;
+      this.unifiedAst = unifiedAst;
       this.perm = perm;
+      this.permNum = permNum;
     }
 
     public String call() throws Exception {
-      PerfLogger.start("Permutation #" + (perm.getNumber() + 1));
+      PerfLogger.start("Permutation #" + permNum);
       try {
-        TreeLogger branch = logger.branch(TreeLogger.TRACE,
-            "Analyzing permutation #" + (perm.getNumber() + 1));
-        logProperties(branch, perm.getPropertyOracle());
-        return jjs.compile(branch, perm.getRebindOracle());
+        TreeLogger branch = logger.branch(TreeLogger.TRACE, "Permutation #"
+            + permNum);
+        logProperties(branch, perm.getPropertyOracles());
+        return JavaToJavaScriptCompiler.compilePermutation(branch, unifiedAst,
+            perm.getRebindAnswers());
       } finally {
         PerfLogger.end();
       }
+    }
+
+    public int getPermNum() {
+      return permNum;
     }
 
     public Permutation getPermutation() {
@@ -106,9 +119,15 @@ public class PermutationCompiler {
    */
   private abstract static class Result {
     private final Permutation perm;
+    private final int permNum;
 
-    public Result(Permutation perm) {
+    public Result(Permutation perm, int permNum) {
       this.perm = perm;
+      this.permNum = permNum;
+    }
+
+    public int getPermNum() {
+      return permNum;
     }
 
     public Permutation getPermutation() {
@@ -122,8 +141,8 @@ public class PermutationCompiler {
   private static final class SuccessResult extends Result {
     private final String js;
 
-    public SuccessResult(Permutation perm, String js) {
-      super(perm);
+    public SuccessResult(Permutation perm, int permNum, String js) {
+      super(perm, permNum);
       this.js = js;
     }
 
@@ -183,7 +202,8 @@ public class PermutationCompiler {
       boolean definitelyFinalThread = (threadCount.get() == 1);
       try {
         String result = currentTask.call();
-        results.add(new SuccessResult(currentTask.getPermutation(), result));
+        results.add(new SuccessResult(currentTask.getPermutation(),
+            currentTask.getPermNum(), result));
       } catch (OutOfMemoryError e) {
         if (definitelyFinalThread) {
           // OOM on the final thread, this is a truly unrecoverable failure.
@@ -191,7 +211,7 @@ public class PermutationCompiler {
           exitFinalThread(new Runnable() {
             public void run() {
               results.add(new FailedResult(currentTask.getPermutation(),
-                  new UnableToCompleteException()));
+                  currentTask.getPermNum(), new UnableToCompleteException()));
             }
           });
         }
@@ -211,7 +231,8 @@ public class PermutationCompiler {
         outOfMemoryRetryAction.run();
       } catch (Throwable e) {
         // Unexpected error compiling, this is unrecoverable.
-        results.add(new FailedResult(currentTask.getPermutation(), e));
+        results.add(new FailedResult(currentTask.getPermutation(),
+            currentTask.getPermNum(), e));
         throw new ThreadDeath();
       }
     }
@@ -270,7 +291,7 @@ public class PermutationCompiler {
   /**
    * A marker Result that tells the main thread all work is done.
    */
-  private static final Result FINISHED_RESULT = new Result(null) {
+  private static final Result FINISHED_RESULT = new Result(null, -1) {
   };
 
   private static long getPotentialFreeMemory() {
@@ -305,18 +326,17 @@ public class PermutationCompiler {
 
   private final TreeLogger logger;
 
-  public PermutationCompiler(TreeLogger logger, JavaToJavaScriptCompiler jjs,
-      Permutation[] perms) {
-    this.logger = logger.branch(TreeLogger.DEBUG, "Compiling " + perms.length
-        + " permutations");
-    this.astMemoryUsage = jjs.getAstMemoryUsage();
-    for (Permutation perm : perms) {
-      tasks.add(new PermutationTask(this.logger, jjs, perm));
+  public PermutationCompiler(TreeLogger logger, UnifiedAst unifiedAst,
+      Permutation[] perms, int[] permsToRun) {
+    this.logger = logger;
+    this.astMemoryUsage = unifiedAst.getAstMemoryUsage();
+    for (int permToRun : permsToRun) {
+      tasks.add(new PermutationTask(logger, unifiedAst, perms[permToRun],
+          permToRun));
     }
   }
 
-  public void go(StandardLinkerContext linkerContext)
-      throws UnableToCompleteException {
+  public void go(ResultsHandler handler) throws UnableToCompleteException {
     int initialThreadCount = computeInitialThreadCount();
     Thread[] workerThreads = new Thread[initialThreadCount];
     for (int i = 0; i < initialThreadCount; ++i) {
@@ -333,7 +353,8 @@ public class PermutationCompiler {
           assert threadCount.get() == 0;
           return;
         } else if (result instanceof SuccessResult) {
-          finishPermuation(logger, linkerContext, (SuccessResult) result);
+          String js = ((SuccessResult) result).getJs();
+          handler.addResult(result.getPermutation(), result.getPermNum(), js);
         } else if (result instanceof FailedResult) {
           FailedResult failedResult = (FailedResult) result;
           throw logAndTranslateException(failedResult.getException());
@@ -413,30 +434,6 @@ public class PermutationCompiler {
 
     result = Math.min(memUsageThreads, desiredThreads);
     return result;
-  }
-
-  private void finishPermuation(TreeLogger logger,
-      StandardLinkerContext linkerContext, SuccessResult result)
-      throws UnableToCompleteException {
-    Permutation perm = result.getPermutation();
-    StandardCompilationResult compilation = linkerContext.getCompilation(
-        logger, result.getJs());
-    StaticPropertyOracle propOracle = perm.getPropertyOracle();
-    BindingProperty[] orderedProps = propOracle.getOrderedProps();
-    String[] orderedPropValues = propOracle.getOrderedPropValues();
-    Map<SelectionProperty, String> unboundProperties = new HashMap<SelectionProperty, String>();
-    for (int i = 0; i < orderedProps.length; i++) {
-      SelectionProperty key = linkerContext.getProperty(orderedProps[i].getName());
-      if (key.tryGetValue() != null) {
-        /*
-         * The view of the Permutation doesn't include properties with defined
-         * values.
-         */
-        continue;
-      }
-      unboundProperties.put(key, orderedPropValues[i]);
-    }
-    compilation.addSelectionPermutation(unboundProperties);
   }
 
   private UnableToCompleteException logAndTranslateException(Throwable e) {

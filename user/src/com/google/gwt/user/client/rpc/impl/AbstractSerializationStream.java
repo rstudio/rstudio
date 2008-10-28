@@ -23,9 +23,21 @@ package com.google.gwt.user.client.rpc.impl;
 public abstract class AbstractSerializationStream {
 
   /**
+   * The character used to separate fields in client->server RPC messages.
+   * 
+   * Note that this character is referenced in the following places not using
+   * this constant, and they must be changed if this is:
+   * <ul>
+   * <li>{@link ServerSerializationStreamWriter}.deserializeStringTable
+   * <li>{@link ClientSerializationStreamReader}.getQuotingRegex
+   * </ul>
+   */
+  public static final char RPC_SEPARATOR_CHAR = '|';
+
+  /**
    * This is the only supported RPC protocol version.
    */
-  public static final int SERIALIZATION_STREAM_VERSION = 4;
+  public static final int SERIALIZATION_STREAM_VERSION = 5;
 
   private int flags = 0;
   private int version = SERIALIZATION_STREAM_VERSION;

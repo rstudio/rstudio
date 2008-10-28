@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.TestAnnotatedMessages.Nested;
 import com.google.gwt.i18n.client.gen.Colors;
 import com.google.gwt.i18n.client.gen.TestBadKeys;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -32,6 +33,7 @@ public class I18N2Test extends GWTTestCase {
     return "com.google.gwt.i18n.I18N2Test";
   }
 
+  @SuppressWarnings("deprecation")
   public void testAnnotatedMessages() {
     TestAnnotatedMessages m = GWT.create(TestAnnotatedMessages.class);
     assertEquals("Test me", m.basicText());
@@ -103,6 +105,10 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("a_b_c", test.a_b_c());
     assertEquals("a_b_c", test.getString("a_b_c"));
     assertEquals("__s_dup_dup", test.__s_dup_dup());
+    assertEquals("e in b_C_d", test.getString("__dup_dup"));
+    assertEquals("e in b_C_d", test.__dup_dup());
+    assertEquals("andStar", test.getString("__"));
+    assertEquals("andStar", test.__());
   }
 
   public void testBinding() {
@@ -123,6 +129,18 @@ public class I18N2Test extends GWTTestCase {
     assertEquals("red square", s.redSquare());
     // Circle comes from Shapes
     assertEquals("a circle", s.circle());
+  }
+
+  /**
+   * Verify that nested annotations are looked up with both A$B names
+   * and A_B names.  Note that $ takes precedence and only one file for a
+   * given level in the inheritance tree will be used, so A$B_locale will
+   * be used and A_B_locale ignored.
+   */
+  public void testNestedAnnotations() {
+    Nested m = GWT.create(Nested.class);
+    assertEquals("nested dollar b_C", m.nestedDollar());
+    assertEquals("nested underscore b", m.nestedUnderscore());
   }
 
   public void testWalkUpColorTree() {

@@ -479,7 +479,7 @@ public class Pruner {
     @Override
     public boolean visit(JBinaryOperation x, Context ctx) {
       // special string concat handling
-      if (x.getOp() == JBinaryOperator.ADD
+      if ((x.getOp() == JBinaryOperator.ADD || x.getOp() == JBinaryOperator.ASG_ADD)
           && x.getType() == program.getTypeJavaLangString()) {
         rescueByConcat(x.getLhs().getType());
         rescueByConcat(x.getRhs().getType());

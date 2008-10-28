@@ -19,9 +19,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.Precompile.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
@@ -32,15 +32,15 @@ import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
+import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
-import com.google.gwt.util.tools.ArgHandlerDisableAggressiveOptimization;
-import com.google.gwt.util.tools.ArgHandlerEnableAssertions;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
-import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 
@@ -246,12 +246,12 @@ public class GWTShell extends ToolBase {
 
         // Create a sandbox for the module.
         //
-        File shellDir = new File(outDir, GWT_SHELL_PATH + File.separator
-            + moduleName);
+        File shellDir = new File(options.getOutDir(), GWT_SHELL_PATH
+            + File.separator + moduleName);
 
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef, genDir, shellDir);
+            typeOracle, moduleDef, options.getGenDir(), shellDir);
         return host;
       } finally {
         Cursor normalCursor = display.getSystemCursor(SWT.CURSOR_ARROW);
@@ -365,8 +365,6 @@ public class GWTShell extends ToolBase {
    */
   protected final Display display = Display.getDefault();
 
-  protected File outDir;
-
   /**
    * Cheat on the first load's refresh by assuming the module loaded by
    * {@link com.google.gwt.dev.shell.GWTShellServlet} is still fresh. This
@@ -379,15 +377,11 @@ public class GWTShell extends ToolBase {
 
   private final List<Shell> browserShells = new ArrayList<Shell>();
 
-  private File genDir;
-
   private boolean headlessMode = false;
 
-  private final JJSOptions jjsOptions = new JJSOptions();
-
-  private TreeLogger.Type logLevel;
-
   private ShellMainWindow mainWnd;
+
+  private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
   private int port;
 
@@ -411,47 +405,21 @@ public class GWTShell extends ToolBase {
     registerHandler(new ArgHandlerWhitelist());
     registerHandler(new ArgHandlerBlacklist());
 
-    registerHandler(new ArgHandlerLogLevel() {
-      @Override
-      protected Type getDefaultLogLevel() {
-        return doGetDefaultLogLevel();
-      }
+    registerHandler(new ArgHandlerLogLevel(options));
 
-      @Override
-      public void setLogLevel(Type level) {
-        logLevel = level;
-      }
-    });
-
-    registerHandler(new ArgHandlerGenDir() {
-      @Override
-      public void setDir(File dir) {
-        genDir = dir;
-      }
-    });
+    registerHandler(new ArgHandlerGenDir(options));
 
     if (!noURLs) {
       registerHandler(new ArgHandlerStartupURLs());
     }
 
-    registerHandler(new ArgHandlerOutDir() {
-      @Override
-      public void setDir(File dir) {
-        outDir = dir;
-      }
-    });
+    registerHandler(new ArgHandlerOutDir(options));
 
-    registerHandler(new ArgHandlerScriptStyle(jjsOptions));
+    registerHandler(new ArgHandlerScriptStyle(options));
 
-    registerHandler(new ArgHandlerEnableAssertions(jjsOptions));
+    registerHandler(new ArgHandlerEnableAssertions(options));
 
-    registerHandler(new ArgHandlerDisableAggressiveOptimization() {
-      @Override
-      public boolean setFlag() {
-        jjsOptions.setAggressivelyOptimize(false);
-        return true;
-      }
-    });
+    registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
   }
 
   public void addStartupURL(String url) {
@@ -464,16 +432,8 @@ public class GWTShell extends ToolBase {
     }
   }
 
-  public File getGenDir() {
-    return genDir;
-  }
-
-  public Type getLogLevel() {
-    return logLevel;
-  }
-
-  public File getOutDir() {
-    return outDir;
+  public CompilerOptions getCompilerOptions() {
+    return new CompilerOptionsImpl(options);
   }
 
   public int getPort() {
@@ -599,20 +559,8 @@ public class GWTShell extends ToolBase {
     }
   }
 
-  public void setCompilerOptions(JJSOptions options) {
-    jjsOptions.copyFrom(options);
-  }
-
-  public void setGenDir(File genDir) {
-    this.genDir = genDir;
-  }
-
-  public void setLogLevel(Type level) {
-    this.logLevel = level;
-  }
-
-  public void setOutDir(File outDir) {
-    this.outDir = outDir;
+  public void setCompilerOptions(CompilerOptions options) {
+    this.options.copyFrom(options);
   }
 
   public void setPort(int port) {
@@ -630,13 +578,9 @@ public class GWTShell extends ToolBase {
    */
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    GWTCompiler compiler = new GWTCompiler();
-    compiler.setCompilerOptions(jjsOptions);
-    compiler.setGenDir(genDir);
-    compiler.setOutDir(outDir);
-    compiler.setModuleName(moduleDef.getName());
-    compiler.setLogLevel(logLevel);
-    compiler.distill(logger, moduleDef);
+    CompilerOptions newOptions = new CompilerOptionsImpl(options);
+    newOptions.setModuleName(moduleDef.getName());
+    new GWTCompiler(newOptions).run(logger);
   }
 
   /**
@@ -685,7 +629,7 @@ public class GWTShell extends ToolBase {
 
   protected void initializeLogger() {
     final AbstractTreeLogger logger = mainWnd.getLogger();
-    logger.setMaxDetail(logLevel);
+    logger.setMaxDetail(options.getLogLevel());
   }
 
   /**
@@ -776,7 +720,7 @@ public class GWTShell extends ToolBase {
 
       PerfLogger.start("GWTShell.startup (Tomcat launch)");
       String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), serverPort,
-          outDir);
+          options.getOutDir());
       PerfLogger.end();
 
       if (whyFailed != null) {

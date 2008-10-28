@@ -17,6 +17,8 @@ package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
 
+import java.io.Serializable;
+
 /**
  * A base type for all artifacts relating to the link process. In order to
  * ensure stable output between runs of the compiler, Artifact types must
@@ -27,8 +29,9 @@ import com.google.gwt.core.ext.Linker;
  *          to.
  */
 public abstract class Artifact<C extends Artifact<C>> implements
-    Comparable<Artifact<?>> {
-  private final Class<? extends Linker> linker;
+    Comparable<Artifact<?>>, Serializable {
+  private final String linkerName;
+  private transient Class<? extends Linker> linker;
 
   /**
    * Constructor.
@@ -37,6 +40,7 @@ public abstract class Artifact<C extends Artifact<C>> implements
    */
   protected Artifact(Class<? extends Linker> linker) {
     assert linker != null;
+    this.linkerName = linker.getName();
     this.linker = linker;
   }
 
@@ -65,6 +69,17 @@ public abstract class Artifact<C extends Artifact<C>> implements
    * Returns the Linker that created the Artifact.
    */
   public final Class<? extends Linker> getLinker() {
+    // linker is null when deserialized.
+    if (linker == null) {
+      try {
+        Class<?> clazz = Class.forName(linkerName, false,
+            Thread.currentThread().getContextClassLoader());
+        linker = clazz.asSubclass(Linker.class);
+      } catch (ClassNotFoundException e) {
+        // The class may not be available.
+        linker = Linker.class;
+      }
+    }
     return linker;
   }
 
