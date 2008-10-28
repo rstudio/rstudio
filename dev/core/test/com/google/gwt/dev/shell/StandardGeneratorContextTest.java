@@ -155,6 +155,7 @@ public class StandardGeneratorContextTest extends TestCase {
     tempOutDir = createTempDir("gwt-out-");
     genCtx = new StandardGeneratorContext(mockCompilationState, mockPropOracle,
         mockPublicOracle, tempGenDir, tempOutDir, artifactSet);
+    genCtx.setCurrentGenerator(Generator.class);
   }
 
   public void testTryCreateResource_badFileName() {
@@ -355,7 +356,8 @@ public class StandardGeneratorContextTest extends TestCase {
   protected void tearDown() throws Exception {
     for (int i = toDelete.size() - 1; i >= 0; --i) {
       File f = toDelete.get(i);
-      assertTrue(f.delete());
+      Util.recursiveDelete(f, false);
+      assertFalse("Unable to delete " + f.getAbsolutePath(), f.exists());
     }
   }
 
