@@ -8,5 +8,7 @@ Copies:
 Merges:
 /trunk revisions c3688,c3703,c3700,c3704,c3707,c3715,c3717,c3724,3725 were merged (r3739) into this branch
 /releases/1.5/@r3630:3863 was merged (r3864) into this branch
+/releases/1.6/@r3739:3876 was merged (r3877) into trunk
+r3878 was a build-break fix committed to trunk in r3877, and should not be merged to trunk
 
----> The next merge into trunk will be 3739:HEAD
+---> The next merge into trunk will be 3879:HEAD
