@@ -1,11 +1,12 @@
 <project name="dynatable2" default="build" basedir=".">
   <property name="gwt.install" location="../../../build/lib" />
-  <property name="wardir" location="war" />
+  <property name="outdir" location="war" />
+  <property name="extradir" location="extra" />
 
   <target name="javac" description="Compile project to WEB-INF/classes">
-    <mkdir dir="${wardir}/WEB-INF/classes" />
+    <mkdir dir="${outdir}/WEB-INF/classes" />
     <javac srcdir="../../../samples/dynatable/src"
-        destdir="${wardir}/WEB-INF/classes"
+        destdir="${outdir}/WEB-INF/classes"
         debug="true"
         debuglevel="lines,vars,source"
         source="1.5"
@@ -20,19 +21,21 @@
   </target>
 
   <target name="deploy" description="Copy output to the war folder">
-    <mkdir dir="${wardir}/WEB-INF/lib" />
-    <copy todir="${wardir}/WEB-INF/lib" file="${gwt.install}/gwt-servlet.jar" />
+    <mkdir dir="${outdir}/WEB-INF/lib" />
+    <copy todir="${outdir}/WEB-INF/lib" file="${gwt.install}/gwt-servlet.jar" />
   </target>
 
   <target name="gwtc" depends="javac" description="Compile to JavaScript">
     <java classname="com.google.gwt.dev.GWTCompiler" fork="yes" failonerror="true">
       <jvmarg value="-Xmx256M"/>
-      <arg value="-wardir" />
-      <arg file="war" />
-      <arg value="com.google.gwt.sample.dynatable.DynaTable" />
+      <arg value="-out" />
+      <arg file="${outdir}" />
+      <arg value="-extra" />
+      <arg file="${extradir}" />
+      <arg value="com.google.gwt.sample.dynatable.DynaTable2" />
       <classpath>
         <pathelement location="../../../samples/dynatable/src" />
-        <pathelement location="${wardir}/WEB-INF/classes" />
+        <pathelement location="${outdir}/WEB-INF/classes" />
         <pathelement location="${gwt.install}/gwt-user.jar" />
         <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
       </classpath>
@@ -40,11 +43,11 @@
   </target>
 
   <target name="server" depends="deploy" description="Run the deployed app in a Jetty server">
-    <echo message="PLEASE BROWSE TO: http://localhost:8888/DynaTable.html"/>
+    <echo message="PLEASE BROWSE TO: http://localhost:8888/DynaTable2.html"/>
     <java classname="org.mortbay.jetty.Main" fork="yes">
       <arg value="8888" />
       <arg value="-webapp" />
-      <arg file="war" />
+      <arg file="${outdir}" />
       <classpath>
         <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
       </classpath>
@@ -55,12 +58,14 @@
     <java classname="com.google.gwt.dev.GWTShell" fork="yes" failonerror="true">
       <jvmarg value="-Xmx256M"/>
       <jvmarg value="-Dgwt.devjar=C:\gwt\releases\1.6\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar"/>
-      <arg value="-wardir" />
-      <arg file="war" />
-      <arg value="http://localhost:8888/DynaTable.html" />
+      <arg value="-out" />
+      <arg file="${outdir}" />
+      <arg value="-extra" />
+      <arg file="${extradir}" />
+      <arg value="http://localhost:8888/DynaTable2.html" />
       <classpath>
         <pathelement location="../../../samples/dynatable/src" />
-        <pathelement location="${wardir}/WEB-INF/classes" />
+        <pathelement location="${outdir}/WEB-INF/classes" />
         <pathelement location="${gwt.install}/gwt-user.jar" />
         <pathelement location="${gwt.install}/gwt-dev-windows.jar" />
       </classpath>
@@ -70,13 +75,8 @@
   <target name="build" depends="javac, gwtc, deploy" description="Build this project" />
 
   <target name="clean" description="Cleans this project's intermediate and output files">
-    <delete includeemptydirs="true" failonerror="false">
-      <fileset dir="${wardir}" includes="*" excludes="DynaTable.html"/>
-    </delete>
-    <delete dir="${wardir}/WEB-INF/classes" failonerror="false" />
-    <delete dir="${wardir}/WEB-INF/lib" failonerror="false" />
-    <delete dir="${wardir}/WEB-INF/gwt-aux" failonerror="false" />
-    <delete dir="${wardir}/WEB-INF/.gwt-tmp" failonerror="false" />
-    <delete dir="www" failonerror="false" />
+    <delete dir="${outdir}/WEB-INF/classes" failonerror="false" />
+    <delete dir="${outdir}/gwtc" failonerror="false" />
+    <delete dir="${extradir}" failonerror="false" />
   </target>
 </project>

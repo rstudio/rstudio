@@ -4,7 +4,7 @@
 <listEntry value="/DynaTable2"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
-<listEntry value="4"/>
+<listEntry value="1"/>
 </listAttribute>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <listAttribute key="org.eclipse.jdt.launching.CLASSPATH">
@@ -17,7 +17,7 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.jdt.launching.DEFAULT_CLASSPATH" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.GWTCompiler"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-wardir war&#13;&#10;-style PRETTY&#13;&#10;-logLevel INFO&#13;&#10;com.google.gwt.sample.dynatable.DynaTable"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out war&#13;&#10;-style PRETTY&#13;&#10;-logLevel INFO&#13;&#10;-extra extra&#13;&#10;com.google.gwt.sample.dynatable.DynaTable2"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="DynaTable2"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#13;&#10;-Dgwt.devjar=C:\gwt\releases\1.6\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar"/>
 </launchConfiguration>
