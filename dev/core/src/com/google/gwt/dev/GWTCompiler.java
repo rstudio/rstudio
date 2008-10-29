@@ -19,7 +19,10 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilePerms.CompilePermsOptionsImpl;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.Precompile.CompilerOptionsImpl;
+import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
+import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+
+import java.io.File;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
@@ -29,11 +32,38 @@ public class GWTCompiler {
   static final class ArgProcessor extends Precompile.ArgProcessor {
     public ArgProcessor(CompilerOptions options) {
       super(options);
+      registerHandler(new ArgHandlerExtraDir(options));
     }
 
     @Override
     protected String getName() {
       return GWTCompiler.class.getName();
+    }
+  }
+
+  static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl implements
+      CompilerOptions {
+
+    private File extraDir;
+
+    public GWTCompilerOptionsImpl() {
+    }
+
+    public GWTCompilerOptionsImpl(CompilerOptions other) {
+      copyFrom(other);
+    }
+
+    public void copyFrom(CompilerOptions other) {
+      super.copyFrom(other);
+      setExtraDir(other.getExtraDir());
+    }
+
+    public File getExtraDir() {
+      return extraDir;
+    }
+
+    public void setExtraDir(File extraDir) {
+      this.extraDir = extraDir;
     }
   }
 
@@ -44,7 +74,7 @@ public class GWTCompiler {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    final CompilerOptions options = new CompilerOptionsImpl();
+    final CompilerOptions options = new GWTCompilerOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -60,10 +90,10 @@ public class GWTCompiler {
     System.exit(1);
   }
 
-  private final CompilerOptionsImpl options;
+  private final GWTCompilerOptionsImpl options;
 
   public GWTCompiler(CompilerOptions options) {
-    this.options = new CompilerOptionsImpl(options);
+    this.options = new GWTCompilerOptionsImpl(options);
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {

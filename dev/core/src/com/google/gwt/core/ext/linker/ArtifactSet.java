@@ -177,4 +177,9 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
   public <T> T[] toArray(T[] a) {
     return treeSet.toArray(a);
   }
+
+  @Override
+  public String toString() {
+    return treeSet.toString();
+  }
 }

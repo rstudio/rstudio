@@ -25,7 +25,6 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.linker.impl.StandardGeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.javac.CompilationState;
@@ -175,7 +174,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
   }
 
-  private final ArtifactSet artifactSet;
+  private final ArtifactSet allGeneratedArtifacts;
 
   private final Set<GeneratedUnitWithFile> committedGeneratedCups = new HashSet<GeneratedUnitWithFile>();
 
@@ -185,9 +184,11 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final File genDir;
 
-  private final Set<String> generatedTypeNames = new HashSet<String>();
+  private final File generatorResourcesDir;
 
-  private final File outDir;
+  private ArtifactSet newlyGeneratedArtifacts = new ArtifactSet();
+
+  private final Set<String> newlyGeneratedTypeNames = new HashSet<String>();
 
   private final Map<OutputStream, PendingResource> pendingResourcesByOutputStream = new IdentityHashMap<OutputStream, PendingResource>();
 
@@ -203,13 +204,13 @@ public class StandardGeneratorContext implements GeneratorContext {
    */
   public StandardGeneratorContext(CompilationState compilationState,
       PropertyOracle propOracle, PublicOracle publicOracle, File genDir,
-      File outDir, ArtifactSet artifactSet) {
+      File generatorResourcesDir, ArtifactSet allGeneratedArtifacts) {
     this.compilationState = compilationState;
     this.propOracle = propOracle;
     this.publicOracle = publicOracle;
     this.genDir = genDir;
-    this.outDir = outDir;
-    this.artifactSet = artifactSet;
+    this.generatorResourcesDir = generatorResourcesDir;
+    this.allGeneratedArtifacts = allGeneratedArtifacts;
   }
 
   /**
@@ -233,8 +234,8 @@ public class StandardGeneratorContext implements GeneratorContext {
    */
   public void commitArtifact(TreeLogger logger, Artifact<?> artifact)
       throws UnableToCompleteException {
-    // The artifactSet will be null in hosted mode, since we never run Linkers
-    artifactSet.replace(artifact);
+    allGeneratedArtifacts.replace(artifact);
+    newlyGeneratedArtifacts.add(artifact);
   }
 
   public GeneratedResource commitResource(TreeLogger logger, OutputStream os)
@@ -279,9 +280,9 @@ public class StandardGeneratorContext implements GeneratorContext {
    * uncommitted compilation units and to force committed compilation units to
    * be parsed and added to the type oracle.
    * 
-   * @return types generated during this object's lifetime
+   * @return any newly generated artifacts since the last call
    */
-  public final JClassType[] finish(TreeLogger logger)
+  public final ArtifactSet finish(TreeLogger logger)
       throws UnableToCompleteException {
 
     abortUncommittedResources(logger);
@@ -317,21 +318,16 @@ public class StandardGeneratorContext implements GeneratorContext {
         compilationState.compile(logger);
       }
 
-      // Return the generated types.
+      // Make sure all generated types can be found in TypeOracle.
       TypeOracle typeOracle = getTypeOracle();
-      JClassType[] genTypes = new JClassType[genTypeNames.size()];
-      int next = 0;
-      for (Iterator<String> iter = genTypeNames.iterator(); iter.hasNext();) {
-        String genTypeName = iter.next();
-        try {
-          genTypes[next++] = typeOracle.getType(genTypeName);
-        } catch (NotFoundException e) {
+      for (String genTypeName : genTypeNames) {
+        if (typeOracle.findType(genTypeName) == null) {
           String msg = "Unable to find recently-generated type '" + genTypeName;
           logger.log(TreeLogger.ERROR, msg, null);
           throw new UnableToCompleteException();
         }
       }
-      return genTypes;
+      return newlyGeneratedArtifacts;
     } finally {
 
       // Remind the user if there uncommitted cups.
@@ -346,12 +342,9 @@ public class StandardGeneratorContext implements GeneratorContext {
 
       uncommittedGeneratedCupsByPrintWriter.clear();
       committedGeneratedCups.clear();
-      generatedTypeNames.clear();
+      newlyGeneratedTypeNames.clear();
+      newlyGeneratedArtifacts = new ArtifactSet();
     }
-  }
-
-  public File getOutputDir() {
-    return outDir;
   }
 
   public final PropertyOracle getPropertyOracle() {
@@ -380,7 +373,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Has anybody tried to create this type during this iteration?
-    if (generatedTypeNames.contains(typeName)) {
+    if (newlyGeneratedTypeNames.contains(typeName)) {
       final String msg = "A request to create type '"
           + typeName
           + "' was received while the type itself was being created; this might be a generator or configuration bug";
@@ -398,7 +391,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
     GeneratedUnitWithFile gcup = new GeneratedUnitWithFile(qualifiedSourceName);
     uncommittedGeneratedCupsByPrintWriter.put(gcup.pw, gcup);
-    generatedTypeNames.add(typeName);
+    newlyGeneratedTypeNames.add(typeName);
 
     return gcup.pw;
   }
@@ -443,7 +436,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // See if the file is already committed.
-    SortedSet<GeneratedResource> resources = artifactSet.find(GeneratedResource.class);
+    SortedSet<GeneratedResource> resources = allGeneratedArtifacts.find(GeneratedResource.class);
     for (GeneratedResource resource : resources) {
       if (partialPath.equals(resource.getPartialPath())) {
         return null;
@@ -462,7 +455,8 @@ public class StandardGeneratorContext implements GeneratorContext {
     }
 
     // Record that this file is pending.
-    PendingResource pendingResource = new PendingResource(outDir, partialPath);
+    PendingResource pendingResource = new PendingResource(
+        generatorResourcesDir, partialPath);
     OutputStream os = pendingResource.getOutputStream();
     pendingResourcesByOutputStream.put(os, pendingResource);
 

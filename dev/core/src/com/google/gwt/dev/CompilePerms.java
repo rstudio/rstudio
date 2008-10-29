@@ -116,7 +116,8 @@ public class CompilePerms {
       return true;
     }
   }
-  static class ArgProcessor extends Link.ArgProcessor {
+
+  static class ArgProcessor extends CompileArgProcessor {
     public ArgProcessor(CompilePermsOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerms(options));
@@ -129,7 +130,7 @@ public class CompilePerms {
   }
 
   /**
-   * Concrete class to implement all compiler options.
+   * Concrete class to implement compiler perm options.
    */
   static class CompilePermsOptionsImpl extends CompileTaskOptionsImpl implements
       CompilePermsOptions {

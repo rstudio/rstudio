@@ -21,7 +21,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.jdt.RebindOracle;
+import com.google.gwt.dev.shell.StandardRebindOracle.ArtifactAcceptor;
 
 import java.io.File;
 
@@ -41,7 +41,9 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   private final ModuleDef module;
 
-  private RebindOracle rebindOracle;
+  private StandardRebindOracle rebindOracle;
+
+  private final GWTShellServletFilter servletFilter;
 
   private final File shellDir;
 
@@ -52,15 +54,14 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    * @param saveJsni
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir, File shellDir) {
+      ModuleDef module, File genDir, File shellDir,
+      GWTShellServletFilter servletFilter) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
     this.genDir = genDir;
-
-    // Combine the user's output dir with the module name to get the
-    // module-specific output dir.
     this.shellDir = shellDir;
+    this.servletFilter = servletFilter;
   }
 
   public CompilingClassLoader getClassLoader() {
@@ -108,10 +109,19 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
         module.getCompilationState(), readySpace);
   }
 
-  public String rebind(TreeLogger rebindLogger, String sourceTypeName)
+  public String rebind(final TreeLogger rebindLogger, String sourceTypeName)
       throws UnableToCompleteException {
     checkForModuleSpace();
-    return rebindOracle.rebind(rebindLogger, sourceTypeName);
+
+    ArtifactAcceptor artifactAcceptor = (servletFilter == null) ? null
+        : new ArtifactAcceptor() {
+          public void accept(ArtifactSet newlyGeneratedArtifacts)
+              throws UnableToCompleteException {
+            servletFilter.relink(rebindLogger, module, newlyGeneratedArtifacts);
+          }
+        };
+
+    return rebindOracle.rebind(rebindLogger, sourceTypeName, artifactAcceptor);
   }
 
   private void checkForModuleSpace() {

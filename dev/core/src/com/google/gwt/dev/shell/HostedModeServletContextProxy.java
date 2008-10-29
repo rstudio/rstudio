@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.resource.Resource;
 
@@ -43,13 +42,13 @@ class HostedModeServletContextProxy implements ServletContext {
    * Avoid pinning my moduleDef.
    */
   private final WeakReference<ModuleDef> moduleDefRef;
-  private final File outDir;
+  private final WorkDirs workDirs;
 
   HostedModeServletContextProxy(ServletContext context, ModuleDef moduleDef,
-      File outDir) {
+      WorkDirs workDirs) {
     this.context = context;
     this.moduleDefRef = new WeakReference<ModuleDef>(moduleDef);
-    this.outDir = outDir;
+    this.workDirs = workDirs;
   }
 
   /**
@@ -76,6 +75,10 @@ class HostedModeServletContextProxy implements ServletContext {
    */
   public ServletContext getContext(String arg0) {
     return context.getContext(arg0);
+  }
+
+  public String getContextPath() {
+    return context.getContextPath();
   }
 
   /**
@@ -179,8 +182,7 @@ class HostedModeServletContextProxy implements ServletContext {
     }
 
     // Otherwise try the path but rooted in the shell's output directory
-    File shellDir = new File(outDir, GWTShell.GWT_SHELL_PATH + File.separator
-        + moduleDef.getName());
+    File shellDir = workDirs.getShellWorkDir(moduleDef);
     File requestedFile = new File(shellDir, partialPath);
     if (requestedFile.exists()) {
       return requestedFile.toURI().toURL();
@@ -191,7 +193,8 @@ class HostedModeServletContextProxy implements ServletContext {
      * directory for the file. We'll default to using the output directory of
      * the first linker defined in the <set-linker> tab.
      */
-    requestedFile = new File(new File(outDir, moduleDef.getName()), partialPath);
+    File linkDir = workDirs.getCompilerOutputDir(moduleDef);
+    requestedFile = new File(linkDir, partialPath);
     if (requestedFile.exists()) {
       try {
         return requestedFile.toURI().toURL();

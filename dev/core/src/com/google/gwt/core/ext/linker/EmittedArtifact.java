@@ -27,6 +27,9 @@ import java.io.InputStream;
  * be emitted by the compiler into the module's output directory. This type may
  * be extended by Linker providers to provide alternative implementations of
  * {@link #getContents(TreeLogger)}.
+ * 
+ * TODO(bobv): provide a timestamp so we can make the time on output files match
+ * that of input files?
  */
 public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
 
