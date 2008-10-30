@@ -220,7 +220,7 @@ public class GWTShell extends ToolBase {
   static class ShellOptionsImpl extends GWTCompilerOptionsImpl implements
       ShellOptions, WorkDirs {
     public File getCompilerOutputDir(ModuleDef moduleDef) {
-      return new File(getWorkDir(), moduleDef.getDeployTo());
+      return new File(getOutDir(), moduleDef.getDeployTo());
     }
 
     public File getShellWorkDir(ModuleDef moduleDef) {
