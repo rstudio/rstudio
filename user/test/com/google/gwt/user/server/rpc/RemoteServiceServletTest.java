@@ -55,7 +55,7 @@ public class RemoteServiceServletTest extends TestCase {
   private class MockHttpServletRequestContextPath extends
       MockHttpServletRequest {
     private String contextPath;
-    
+
     @Override
     public String getContextPath() {
       return contextPath;
@@ -65,11 +65,15 @@ public class RemoteServiceServletTest extends TestCase {
   private class MockServletConfig implements ServletConfig {
     private ServletContext context;
 
+    public MockServletConfig(ServletContext context) {
+      this.context = context;
+    }
+
     public String getInitParameter(String arg0) {
       throw new UnsupportedOperationException();
     }
 
-    public Enumeration getInitParameterNames() {
+    public Enumeration<String> getInitParameterNames() {
       throw new UnsupportedOperationException();
     }
 
@@ -78,17 +82,11 @@ public class RemoteServiceServletTest extends TestCase {
     }
 
     public String getServletName() {
-      throw new UnsupportedOperationException();
-    }
-
-    void setContext(ServletContext context) {
-      this.context = context;
+      return "MockServlet";
     }
   }
 
   private class MockServletContext implements ServletContext {
-    private ServletConfig config;
-    private Throwable exLogged;
     private String messageLogged;
 
     public MockServletContext() {
@@ -98,7 +96,7 @@ public class RemoteServiceServletTest extends TestCase {
       throw new UnsupportedOperationException();
     }
 
-    public Enumeration getAttributeNames() {
+    public Enumeration<String> getAttributeNames() {
       throw new UnsupportedOperationException();
     }
 
@@ -110,7 +108,7 @@ public class RemoteServiceServletTest extends TestCase {
       throw new UnsupportedOperationException();
     }
 
-    public Enumeration getInitParameterNames() {
+    public Enumeration<String> getInitParameterNames() {
       throw new UnsupportedOperationException();
     }
 
@@ -146,7 +144,7 @@ public class RemoteServiceServletTest extends TestCase {
       throw new UnsupportedOperationException();
     }
 
-    public Set getResourcePaths(String arg0) {
+    public Set<String> getResourcePaths(String arg0) {
       throw new UnsupportedOperationException();
     }
 
@@ -162,11 +160,11 @@ public class RemoteServiceServletTest extends TestCase {
       throw new UnsupportedOperationException();
     }
 
-    public Enumeration getServletNames() {
+    public Enumeration<String> getServletNames() {
       throw new UnsupportedOperationException();
     }
 
-    public Enumeration getServlets() {
+    public Enumeration<String> getServlets() {
       throw new UnsupportedOperationException();
     }
 
@@ -180,7 +178,6 @@ public class RemoteServiceServletTest extends TestCase {
 
     public void log(String arg0, Throwable arg1) {
       messageLogged = arg0;
-      exLogged = arg1;
     }
 
     public void removeAttribute(String arg0) {
@@ -189,22 +186,16 @@ public class RemoteServiceServletTest extends TestCase {
     public void setAttribute(String arg0, Object arg1) {
       throw new UnsupportedOperationException();
     }
-
-    void setConfig(ServletConfig config) {
-      this.config = config;
-    }
   }
 
   public void testDoGetSerializationPolicy_FailToOpenMD5Resource()
       throws ServletException {
-    MockServletConfig mockConfig = new MockServletConfig();
     MockServletContext mockContext = new MockServletContext() {
       public InputStream getResourceAsStream(String resource) {
         return null;
       }
     };
-    mockConfig.context = mockContext;
-    mockContext.config = mockConfig;
+    MockServletConfig mockConfig = new MockServletConfig(mockContext);
 
     RemoteServiceServlet rss = new RemoteServiceServlet();
 
@@ -229,10 +220,8 @@ public class RemoteServiceServletTest extends TestCase {
    */
   public void testDoGetSerializationPolicy_ModuleInSeparateServlet()
       throws ServletException {
-    MockServletConfig mockConfig = new MockServletConfig();
     MockServletContext mockContext = new MockServletContext();
-    mockConfig.context = mockContext;
-    mockContext.config = mockConfig;
+    MockServletConfig mockConfig = new MockServletConfig(mockContext);
 
     RemoteServiceServlet rss = new RemoteServiceServlet();
 
@@ -257,7 +246,6 @@ public class RemoteServiceServletTest extends TestCase {
       SerializationException {
     final String resourceHash = "12345";
     final String resourcePath = SerializationPolicyLoader.getSerializationPolicyFileName(resourceHash);
-    MockServletConfig mockConfig = new MockServletConfig();
     MockServletContext mockContext = new MockServletContext() {
       public InputStream getResourceAsStream(String resource) {
         if (resourcePath.equals(resource)) {
@@ -274,8 +262,7 @@ public class RemoteServiceServletTest extends TestCase {
         return null;
       }
     };
-    mockConfig.context = mockContext;
-    mockContext.config = mockConfig;
+    MockServletConfig mockConfig = new MockServletConfig(mockContext);
 
     RemoteServiceServlet rss = new RemoteServiceServlet();
 
@@ -298,16 +285,18 @@ public class RemoteServiceServletTest extends TestCase {
     assertNotValidDeserialize(serializationPolicy, Baz.class);
   }
 
-  private void assertDeserializeFields(SerializationPolicy policy, Class clazz) {
+  private void assertDeserializeFields(SerializationPolicy policy,
+      Class<?> clazz) {
     assertTrue(policy.shouldDeserializeFields(clazz));
   }
 
   private void assertNotDeserializeFields(SerializationPolicy policy,
-      Class clazz) {
+      Class<?> clazz) {
     assertFalse(policy.shouldDeserializeFields(clazz));
   }
 
-  private void assertNotValidDeserialize(SerializationPolicy policy, Class clazz) {
+  private void assertNotValidDeserialize(SerializationPolicy policy,
+      Class<?> clazz) {
     try {
       policy.validateDeserialize(clazz);
       fail("assertNotValidDeserialize: " + clazz.getName()
@@ -317,7 +306,7 @@ public class RemoteServiceServletTest extends TestCase {
     }
   }
 
-  private void assertValidDeserialize(SerializationPolicy policy, Class clazz)
+  private void assertValidDeserialize(SerializationPolicy policy, Class<?> clazz)
       throws SerializationException {
     policy.validateDeserialize(clazz);
   }
