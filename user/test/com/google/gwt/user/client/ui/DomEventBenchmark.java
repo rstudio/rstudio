@@ -41,7 +41,7 @@ public class DomEventBenchmark extends Benchmark {
   private static final int NUM_WIDGETS = 250;
 
   protected final IntRange listenerRange =
-      new IntRange(10, 10000, Operator.MULTIPLY, 10);
+      new IntRange(4, 400, Operator.MULTIPLY, 10);
 
   private List<SimpleCheckBox> widgets;
 
