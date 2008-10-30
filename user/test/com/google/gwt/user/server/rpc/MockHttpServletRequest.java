@@ -37,7 +37,7 @@ class MockHttpServletRequest implements HttpServletRequest {
     throw new UnsupportedOperationException();
   }
 
-  public Enumeration getAttributeNames() {
+  public Enumeration<String> getAttributeNames() {
     throw new UnsupportedOperationException();
   }
 
@@ -73,11 +73,11 @@ class MockHttpServletRequest implements HttpServletRequest {
     throw new UnsupportedOperationException();
   }
 
-  public Enumeration getHeaderNames() {
+  public Enumeration<String> getHeaderNames() {
     throw new UnsupportedOperationException();
   }
 
-  public Enumeration getHeaders(String arg0) {
+  public Enumeration<String> getHeaders(String arg0) {
     throw new UnsupportedOperationException();
   }
 
@@ -97,7 +97,7 @@ class MockHttpServletRequest implements HttpServletRequest {
     throw new UnsupportedOperationException();
   }
 
-  public Enumeration getLocales() {
+  public Enumeration<Locale> getLocales() {
     throw new UnsupportedOperationException();
   }
 
@@ -117,11 +117,11 @@ class MockHttpServletRequest implements HttpServletRequest {
     throw new UnsupportedOperationException();
   }
 
-  public Map getParameterMap() {
+  public Map<String, String[]> getParameterMap() {
     throw new UnsupportedOperationException();
   }
 
-  public Enumeration getParameterNames() {
+  public Enumeration<String> getParameterNames() {
     throw new UnsupportedOperationException();
   }
 

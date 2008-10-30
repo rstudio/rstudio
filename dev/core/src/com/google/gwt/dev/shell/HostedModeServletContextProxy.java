@@ -64,6 +64,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getAttributeNames()
    */
+  @SuppressWarnings("unchecked")
   public Enumeration<String> getAttributeNames() {
     return context.getAttributeNames();
   }
@@ -233,6 +234,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getResourcePaths(java.lang.String)
    */
+  @SuppressWarnings("unchecked")
   public Set<String> getResourcePaths(String path) {
     return context.getResourcePaths(path);
   }
@@ -271,6 +273,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#getServletNames()
    */
   @Deprecated
+  @SuppressWarnings("unchecked")
   public Enumeration<String> getServletNames() {
     return context.getServletNames();
   }
@@ -281,6 +284,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#getServlets()
    */
   @Deprecated
+  @SuppressWarnings("unchecked")
   public Enumeration<Servlet> getServlets() {
     return context.getServlets();
   }
