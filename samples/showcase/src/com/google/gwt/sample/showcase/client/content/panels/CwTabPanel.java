@@ -15,12 +15,15 @@
  */
 package com.google.gwt.sample.showcase.client.content.panels;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DecoratedTabPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -29,7 +32,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
+@ShowcaseStyle({
+    ".gwt-DecoratedTabBar", "html>body .gwt-DecoratedTabBar",
     "* html .gwt-DecoratedTabBar", ".gwt-TabPanel"})
 public class CwTabPanel extends ContentWidget {
   /**
@@ -104,5 +108,19 @@ public class CwTabPanel extends ContentWidget {
     tabPanel.selectTab(0);
     tabPanel.ensureDebugId("cwTabPanel");
     return tabPanel;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 }

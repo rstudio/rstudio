@@ -44,6 +44,7 @@ public final class HostedModeLinker extends SelectionScriptLinker {
     return super.generateSelectionScript(logger, context, artifacts);
   }
 
+  @Override
   public String getDescription() {
     return "Hosted Mode";
   }
@@ -61,8 +62,8 @@ public final class HostedModeLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModulePrefix(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName) throws UnableToCompleteException {
     return unsupported(logger);
   }
 

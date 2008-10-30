@@ -71,7 +71,7 @@ public class ShowcaseGenerator extends Generator {
       String typeName) throws UnableToCompleteException {
     this.logger = logger;
     this.context = context;
-    this.classLoader = getClass().getClassLoader();
+    this.classLoader = Thread.currentThread().getContextClassLoader();
 
     // Only generate files on the first permutation
     if (!isFirstPass()) {

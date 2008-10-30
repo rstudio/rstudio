@@ -32,6 +32,7 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -162,19 +163,7 @@ public class JsStringInterner {
     StringVisitor v = new StringVisitor(scope);
     v.accept(block);
 
-    if (v.toCreate.size() > 0) {
-      // Create the pool of variable names.
-      JsVars vars = new JsVars(program.createSourceInfoSynthetic(
-          JsStringInterner.class, "Interned string pool"));
-      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
-          JsStringInterner.class, "Interned string assignment");
-      for (Map.Entry<JsStringLiteral, JsName> entry : v.toCreate.entrySet()) {
-        JsVar var = new JsVar(sourceInfo, entry.getValue());
-        var.setInitExpr(entry.getKey());
-        vars.add(var);
-      }
-      block.getStatements().add(0, vars);
-    }
+    createVars(program, block, v.toCreate);
 
     return v.didChange();
   }
@@ -186,10 +175,39 @@ public class JsStringInterner {
    * global block.
    * 
    * @param program the JsProgram
-   * @return <code>true</code> if any changes were made to the program
+   * @return a map from each created JsName to the string it is a literal for.
    */
-  public static boolean exec(JsProgram program) {
-    return exec(program, program.getGlobalBlock(), program.getScope());
+  public static Map<JsName, String> exec(JsProgram program) {
+    StringVisitor v = new StringVisitor(program.getScope());
+    for (int i = 0; i < program.getFragmentCount(); i++) {
+      v.accept(program.getFragmentBlock(i));
+    }
+
+    Map<JsName, String> map = new HashMap<JsName, String>();
+    for (JsStringLiteral stringLit : v.toCreate.keySet()) {
+      map.put(v.toCreate.get(stringLit), stringLit.getValue());
+    }
+
+    createVars(program, program.getGlobalBlock(), v.toCreate);
+
+    return map;
+  }
+
+  private static void createVars(JsProgram program, JsBlock block,
+      SortedMap<JsStringLiteral, JsName> toCreate) {
+    if (toCreate.size() > 0) {
+      // Create the pool of variable names.
+      JsVars vars = new JsVars(program.createSourceInfoSynthetic(
+          JsStringInterner.class, "Interned string pool"));
+      SourceInfo sourceInfo = program.createSourceInfoSynthetic(
+          JsStringInterner.class, "Interned string assignment");
+      for (Map.Entry<JsStringLiteral, JsName> entry : toCreate.entrySet()) {
+        JsVar var = new JsVar(sourceInfo, entry.getValue());
+        var.setInitExpr(entry.getKey());
+        vars.add(var);
+      }
+      block.getStatements().add(0, vars);
+    }
   }
 
   /**

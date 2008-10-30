@@ -158,7 +158,7 @@ public class CompilePerms {
     }
   }
 
-  public static String compile(TreeLogger logger, Permutation permutation,
+  public static String[] compile(TreeLogger logger, Permutation permutation,
       UnifiedAst unifiedAst) {
     try {
       return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
@@ -255,9 +255,9 @@ public class CompilePerms {
     PermutationCompiler multiThread = new PermutationCompiler(branch,
         unifiedAst, perms, permsToRun);
     multiThread.go(new ResultsHandler() {
-      public void addResult(Permutation permutation, int permNum, String js)
+      public void addResult(Permutation permutation, int permNum, String[] js)
           throws UnableToCompleteException {
-        Util.writeStringAsFile(branch, makePermFilename(
+        Util.writeStringsAsFile(branch, makePermFilename(
             options.getCompilerWorkDir(), permNum), js);
       }
     });

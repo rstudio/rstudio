@@ -69,14 +69,16 @@ public class StandardCompilationResult extends CompilationResult {
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
   private final File cacheFile;
-  private transient SoftReference<String> js;
+  private transient SoftReference<String[]> js;
+
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
   private final String strongName;
 
-  public StandardCompilationResult(String js, String strongName, File cacheFile) {
+  public StandardCompilationResult(String[] js, String strongName,
+      File cacheFile) {
     super(StandardLinkerContext.class);
-    this.js = new SoftReference<String>(js);
+    this.js = new SoftReference<String[]>(js);
     this.strongName = strongName;
     this.cacheFile = cacheFile;
   }
@@ -92,26 +94,31 @@ public class StandardCompilationResult extends CompilationResult {
     propertyValues.add(Collections.unmodifiableSortedMap(map));
   }
 
-  public String getJavaScript() {
-    String toReturn = null;
+  @Override
+  public String[] getJavaScript() {
+    String[] toReturn = null;
     if (js != null) {
       toReturn = js.get();
     }
+
     if (toReturn == null) {
-      toReturn = Util.readFileAsString(cacheFile);
-      if (toReturn == null) {
+      byte[][] bytes = Util.readFileAndSplit(cacheFile);
+      if (bytes == null) {
         throw new RuntimeException("Unexpectedly unable to read JS file '"
             + cacheFile.getAbsolutePath() + "'");
       }
-      js = new SoftReference<String>(toReturn);
+      toReturn = Util.toStrings(bytes);
+      js = new SoftReference<String[]>(toReturn);
     }
     return toReturn;
   }
 
+  @Override
   public SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap() {
     return Collections.unmodifiableSortedSet(propertyValues);
   }
 
+  @Override
   public String getStrongName() {
     return strongName;
   }

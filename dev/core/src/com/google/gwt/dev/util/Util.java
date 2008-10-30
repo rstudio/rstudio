@@ -56,6 +56,7 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -132,6 +133,16 @@ public final class Util {
    *         formatted for use as a file name
    */
   public static String computeStrongName(byte[] content) {
+    return computeStrongName(new byte[][] {content});
+  }
+
+  /**
+   * Computes the MD5 hash of the specified byte arrays.
+   * 
+   * @return a big fat string encoding of the MD5 for the content, suitably
+   *         formatted for use as a file name
+   */
+  public static String computeStrongName(byte[][] contents) {
     MessageDigest md5;
     try {
       md5 = MessageDigest.getInstance("MD5");
@@ -139,7 +150,23 @@ public final class Util {
       throw new RuntimeException("Error initializing MD5", e);
     }
 
-    md5.update(content);
+    /*
+     * Include the lengths of the contents components in the hash, so that the
+     * hashed sequence of bytes is in a one-to-one correspondence with the
+     * possible arguments to this method.
+     */
+    ByteBuffer b = ByteBuffer.allocate((contents.length + 1) * 4);
+    b.putInt(contents.length);
+    for (int i = 0; i < contents.length; i++) {
+      b.putInt(contents[i].length);
+    }
+    b.flip();
+    md5.update(b);
+
+    // Now hash the actual contents of the arrays
+    for (int i = 0; i < contents.length; i++) {
+      md5.update(contents[i]);
+    }
     return toHexString(md5.digest());
   }
 
@@ -294,6 +321,14 @@ public final class Util {
       throw new RuntimeException(
           "The JVM does not support the compiler's default encoding.", e);
     }
+  }
+
+  public static byte[][] getBytes(String[] s) {
+    byte[][] bytes = new byte[s.length][];
+    for (int i = 0; i < s.length; i++) {
+      bytes[i] = getBytes(s[i]);
+    }
+    return bytes;
   }
 
   /**
@@ -541,6 +576,25 @@ public final class Util {
       caught = e;
     }
     logger.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
+  }
+
+  public static byte[][] readFileAndSplit(File file) {
+    RandomAccessFile f = null;
+    try {
+      f = new RandomAccessFile(file, "r");
+      int length = f.readInt();
+      byte[][] results = new byte[length][];
+      for (int i = 0; i < length; i++) {
+        int nextLength = f.readInt();
+        results[i] = new byte[nextLength];
+        f.read(results[i]);
+      }
+      return results;
+    } catch (IOException e) {
+      return null;
+    } finally {
+      Utility.close(f);
+    }
   }
 
   public static byte[] readFileAsBytes(File file) {
@@ -877,6 +931,14 @@ public final class Util {
     return toArray(String.class, coll);
   }
 
+  public static String[] toStrings(byte[][] bytes) {
+    String[] strings = new String[bytes.length];
+    for (int i = 0; i < bytes.length; i++) {
+      strings[i] = toString(bytes[i]);
+    }
+    return strings;
+  }
+
   public static URL toURL(File f) {
     try {
       return f.toURI().toURL();
@@ -1090,6 +1152,31 @@ public final class Util {
       Utility.close(buffered);
       Utility.close(writer);
       Utility.close(stream);
+    }
+  }
+
+  /**
+   * Write all of the supplied bytes to the file, in a way that they can be read
+   * back by {@link #readFileAndSplit(File).
+   */
+  public static boolean writeStringsAsFile(TreeLogger branch,
+      File makePermFilename, String[] js) {
+    RandomAccessFile f = null;
+    try {
+      makePermFilename.delete();
+      makePermFilename.getParentFile().mkdirs();
+      f = new RandomAccessFile(makePermFilename, "rwd");
+      f.writeInt(js.length);
+      for (String s : js) {
+        byte[] b = getBytes(s);
+        f.writeInt(b.length);
+        f.write(b);
+      }
+      return true;
+    } catch (IOException e) {
+      return false;
+    } finally {
+      Utility.close(f);
     }
   }
 

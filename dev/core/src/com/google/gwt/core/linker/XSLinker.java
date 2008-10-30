@@ -18,20 +18,37 @@ package com.google.gwt.core.linker;
 import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.CompilationResult;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
 
+import java.util.Collection;
+
 /**
  * Generates a cross-site compatible bootstrap sequence.
  */
 @LinkerOrder(Order.PRIMARY)
 public class XSLinker extends SelectionScriptLinker {
-
+  @Override
   public String getDescription() {
     return "Cross-Site";
+  }
+
+  @Override
+  protected Collection<EmittedArtifact> doEmitCompilation(TreeLogger logger,
+      LinkerContext context, CompilationResult result)
+      throws UnableToCompleteException {
+    if (result.getJavaScript().length != 1) {
+      logger.branch(TreeLogger.ERROR,
+          "The module must not have multiple fragments when using the "
+              + getDescription() + " Linker.", null);
+      throw new UnableToCompleteException();
+    }
+    return super.doEmitCompilation(logger, context, result);
   }
 
   @Override
@@ -41,8 +58,8 @@ public class XSLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModulePrefix(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName) throws UnableToCompleteException {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
 
     out.print("(function(){");

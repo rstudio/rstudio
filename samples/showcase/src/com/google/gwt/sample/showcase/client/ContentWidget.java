@@ -24,6 +24,8 @@ import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -80,6 +82,11 @@ public abstract class ContentWidget extends Composite implements TabListener {
   private static String loadingImage;
 
   /**
+   * The tab bar of options.
+   */
+  protected TabBar tabBar = null;
+
+  /**
    * An instance of the constants.
    */
   private CwConstants constants;
@@ -114,11 +121,6 @@ public abstract class ContentWidget extends Composite implements TabListener {
    * The widget used to display css style.
    */
   private HTML styleWidget = null;
-
-  /**
-   * The tab bar of options.
-   */
-  private TabBar tabBar = null;
 
   /**
    * Constructor.
@@ -223,12 +225,21 @@ public abstract class ContentWidget extends Composite implements TabListener {
         add(styleWidget, constants.contentWidgetStyle());
       }
 
-      // Initialize the widget and add it to the page
-      Widget widget = onInitialize();
-      if (widget != null) {
-        vPanel.add(widget);
-      }
-      onInitializeComplete();
+      asyncOnInitialize(new AsyncCallback<Widget>() {
+
+        public void onFailure(Throwable caught) {
+          Window.alert("exception: " + caught);
+        }
+
+        public void onSuccess(Widget result) {
+          // Initialize the widget and add it to the page
+          Widget widget = result;
+          if (widget != null) {
+            vPanel.add(widget);
+          }
+          onInitializeComplete();
+        }
+      });
     }
   }
 
@@ -303,6 +314,8 @@ public abstract class ContentWidget extends Composite implements TabListener {
   public void selectTab(int index) {
     tabBar.selectTab(index);
   }
+
+  protected abstract void asyncOnInitialize(final AsyncCallback<Widget> callback);
 
   @Override
   protected void onLoad() {

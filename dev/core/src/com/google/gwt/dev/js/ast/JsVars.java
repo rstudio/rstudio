@@ -72,6 +72,10 @@ public class JsVars extends JsStatement implements Iterable<JsVars.JsVar> {
     vars.add(var);
   }
 
+  public int getNumVars() {
+    return vars.size();
+  }
+
   public boolean isEmpty() {
     return vars.isEmpty();
   }

@@ -31,6 +31,8 @@ import com.google.gwt.util.tools.Utility;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -46,6 +48,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * TODO(bobv): Move this class into c.g.g.core.linker when HostedModeLinker
    * goes away?
    */
+
+  /**
+   * The extension added to demand-loaded fragment files.
+   */
+  protected static final String FRAGMENT_EXTENSION = ".cache.js";
 
   /**
    * Determines whether or not the URL is relative.
@@ -84,7 +91,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     }
   }
 
-  private final Map<CompilationResult, String> compilationPartialPaths = new IdentityHashMap<CompilationResult, String>();
+  private final Map<CompilationResult, String> compilationStrongNames = new IdentityHashMap<CompilationResult, String>();
 
   @Override
   public ArtifactSet link(TreeLogger logger, LinkerContext context,
@@ -92,24 +99,33 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     ArtifactSet toReturn = new ArtifactSet(artifacts);
 
     for (CompilationResult compilation : toReturn.find(CompilationResult.class)) {
-      toReturn.add(doEmitCompilation(logger, context, compilation));
+      toReturn.addAll(doEmitCompilation(logger, context, compilation));
     }
 
     toReturn.add(emitSelectionScript(logger, context, artifacts));
     return toReturn;
   }
 
-  protected EmittedArtifact doEmitCompilation(TreeLogger logger,
+  protected Collection<EmittedArtifact> doEmitCompilation(TreeLogger logger,
       LinkerContext context, CompilationResult result)
       throws UnableToCompleteException {
-    StringBuffer b = new StringBuffer();
-    b.append(getModulePrefix(logger, context));
-    b.append(result.getJavaScript());
-    b.append(getModuleSuffix(logger, context));
-    EmittedArtifact toReturn = emitWithStrongName(logger,
-        Util.getBytes(b.toString()), "", getCompilationExtension(logger,
-            context));
-    compilationPartialPaths.put(result, toReturn.getPartialPath());
+    String[] js = result.getJavaScript();
+    byte[][] bytes = new byte[js.length][];
+    bytes[0] = generatePrimaryFragment(logger, context, js[0], result.getStrongName());
+    for (int i = 1; i < js.length; i++) {
+      bytes[i] = Util.getBytes(js[i]);
+    }
+
+    Collection<EmittedArtifact> toReturn = new ArrayList<EmittedArtifact>();
+    toReturn.add(emitBytes(logger, bytes[0], result.getStrongName()
+        + getCompilationExtension(logger, context)));
+    for (int i = 1; i < js.length; i++) {
+      toReturn.add(emitBytes(logger, bytes[i], result.getStrongName() + "-" + i
+          + FRAGMENT_EXTENSION));
+    }
+
+    compilationStrongNames.put(result, result.getStrongName());
+
     return toReturn;
   }
 
@@ -231,9 +247,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
         // Just one distinct compilation; no need to evaluate properties
         Iterator<CompilationResult> iter = compilations.iterator();
         CompilationResult result = iter.next();
-        text.append("strongName = '" + compilationPartialPaths.get(result)
+        text.append("strongName = '" + compilationStrongNames.get(result)
             + "';");
-
       } else {
         for (CompilationResult r : compilations) {
           for (Map<SelectionProperty, String> propertyMap : r.getPropertyMap()) {
@@ -252,7 +267,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
               }
               text.append("'" + propertyMap.get(p) + "'");
             }
-            text.append("], '").append(compilationPartialPaths.get(r)).append(
+            text.append("], '").append(compilationStrongNames.get(r)).append(
                 "');\n");
           }
         }
@@ -316,16 +331,25 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * @return the partial path, or <code>null</code> if the CompilationResult
    *         has not been emitted.
    */
-  protected String getCompilationPartialPath(CompilationResult result) {
-    return compilationPartialPaths.get(result);
+  protected String getCompilationStrongName(CompilationResult result) {
+    return compilationStrongNames.get(result);
   }
 
   protected abstract String getModulePrefix(TreeLogger logger,
-      LinkerContext context) throws UnableToCompleteException;
+      LinkerContext context, String strongName) throws UnableToCompleteException;
 
   protected abstract String getModuleSuffix(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
 
   protected abstract String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
+
+  private byte[] generatePrimaryFragment(TreeLogger logger,
+      LinkerContext context, String js, String strongName) throws UnableToCompleteException {
+    StringBuffer b = new StringBuffer();
+    b.append(getModulePrefix(logger, context, strongName));
+    b.append(js);
+    b.append(getModuleSuffix(logger, context));
+    return Util.getBytes(b.toString());
+  }
 }

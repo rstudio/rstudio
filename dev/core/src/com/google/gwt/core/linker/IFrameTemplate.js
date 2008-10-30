@@ -295,7 +295,7 @@ function __MODULE_FUNC__() {
         millis:(new Date()).getTime(), 
         type: 'moduleRequested'
       });
-      iframe.contentWindow.location.replace(base + strongName);
+      iframe.contentWindow.location.replace(base + strongName + '.cache.html');
     }
   }
 

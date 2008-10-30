@@ -320,8 +320,8 @@ public class GenerateJavaScriptAST {
         SourceInfo sourceInfo = x.getSourceInfo().makeChild(
             CreateNamesAndScopesVisitor.class, "Translated JS function");
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
-        methodBodyMap.put(x.getBody(), jsFunction);
       }
+      methodBodyMap.put(x.getBody(), jsFunction);
       jsFunction.getSourceInfo().addCorrelation(Correlation.by(jsFunction));
       push(jsFunction.getScope());
       return true;
@@ -375,21 +375,21 @@ public class GenerateJavaScriptAST {
 
     private JMethod currentMethod = null;
 
-    private final JsName globalTemp = topScope.declareName("_");
-
-    private final JsName prototype = objectScope.declareName("prototype");
-
     /**
      * The JavaScript functions corresponding to the entry methods of the
-     * program ({@link JProgram#entryMethods}).
+     * program ({@link JProgram#getAllEntryMethods()}).
      */
     private JsFunction[] entryFunctions;
 
     /**
-     * A reverse index for {@link JProgram#entryMethods}. Each entry method is
-     * mapped to its integer index.
+     * A reverse index for the entry methods of the program ({@link JProgram#getAllEntryMethods()}).
+     * Each entry method is mapped to its integer index.
      */
     private Map<JMethod, Integer> entryMethodToIndex;
+
+    private final JsName globalTemp = topScope.declareName("_");
+
+    private final JsName prototype = objectScope.declareName("prototype");
 
     {
       globalTemp.setObfuscatable(false);
@@ -541,10 +541,12 @@ public class GenerateJavaScriptAST {
           vars.add((JsVar) node);
         } else {
           assert (node instanceof JsStatement);
-          JsStatement stmt = (JsStatement) jsFields.get(i);
+          JsStatement stmt = (JsStatement) node;
           globalStmts.add(stmt);
+          typeForStatMap.put(stmt, x);
         }
       }
+
       if (!vars.isEmpty()) {
         globalStmts.add(vars);
       }
@@ -992,17 +994,16 @@ public class GenerateJavaScriptAST {
     public void endVisit(JProgram x, Context ctx) {
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
-      // types don't push
-
       // Generate entry methods
-      generateGwtOnLoad(entryFunctions, globalStmts);
+      generateGwtOnLoad(Arrays.asList(entryFunctions).subList(0,
+          x.getEntryCount(0)), globalStmts);
       generateNullFunc(globalStmts);
 
       // Add a few things onto the beginning.
 
       // Reserve the "_" identifier.
-      JsVars vars = new JsVars(x.getSourceInfo());
-      vars.add(new JsVar(x.getSourceInfo(), globalTemp));
+      JsVars vars = new JsVars(jsProgram.getSourceInfo());
+      vars.add(new JsVar(jsProgram.getSourceInfo(), globalTemp));
       globalStmts.add(0, vars);
 
       // Long lits must go at the top, they can be constant field initializers.
@@ -1011,10 +1012,26 @@ public class GenerateJavaScriptAST {
       // Class objects, but only if there are any.
       if (x.getDeclaredTypes().contains(x.getTypeClassLiteralHolder())) {
         // TODO: perhaps they could be constant field initializers also?
-        vars = new JsVars(x.getSourceInfo());
+        vars = new JsVars(jsProgram.getSourceInfo());
         generateClassLiterals(vars);
         if (!vars.isEmpty()) {
           globalStmts.add(vars);
+        }
+      }
+
+      /*
+       * Add calls to all split points other than the initial ones. That way, if
+       * the code splitter does not run, the resulting code will still function.
+       */
+      List<JsFunction> nonInitialEntries = Arrays.asList(entryFunctions).subList(
+          x.getEntryCount(0), entryFunctions.length);
+      for (JsFunction func : nonInitialEntries) {
+        if (func != null) {
+          SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(GenerateJavaScriptAST.class,
+              "call to entry non-initial entry function");
+          JsInvocation call = new JsInvocation(sourceInfo);
+          call.setQualifier(func.getName().makeRef(sourceInfo));
+          globalStmts.add(call.makeStmt());
         }
       }
     }
@@ -1140,10 +1157,15 @@ public class GenerateJavaScriptAST {
 
     @Override
     public boolean visit(JProgram x, Context ctx) {
-      entryFunctions = new JsFunction[x.entryMethods.size()];
+      /*
+       * Arrange for entryFunctions to be filled in as functions are visited.
+       * See their Javadoc comments for more details.
+       */
+      List<JMethod> entryMethods = x.getAllEntryMethods();
+      entryFunctions = new JsFunction[entryMethods.size()];
       entryMethodToIndex = new IdentityHashMap<JMethod, Integer>();
-      for (int i = 0; i < x.entryMethods.size(); i++) {
-        entryMethodToIndex.put(x.entryMethods.get(i), i);
+      for (int i = 0; i < entryMethods.size(); i++) {
+        entryMethodToIndex.put(entryMethods.get(i), i);
       }
       return true;
     }
@@ -1290,7 +1312,7 @@ public class GenerateJavaScriptAST {
       generateTypeId(x, globalStmts);
     }
 
-    private void generateGwtOnLoad(JsFunction[] entryFuncs,
+    private void generateGwtOnLoad(List<JsFunction> entryFuncs,
         List<JsStatement> globalStmts) {
       /**
        * <pre>
@@ -1397,7 +1419,9 @@ public class GenerateJavaScriptAST {
         sourceInfo.addCorrelation(Correlation.by(seedFunc));
         JsBlock body = new JsBlock(sourceInfo);
         seedFunc.setBody(body);
-        globalStmts.add(seedFunc.makeStmt());
+        JsExprStmt seedFuncStmt = seedFunc.makeStmt();
+        globalStmts.add(seedFuncStmt);
+        typeForStatMap.put(seedFuncStmt, x);
 
         // setup prototype, assign to temp
         // _ = com_example_foo_Foo.prototype = new com_example_foo_FooSuper();
@@ -1420,7 +1444,9 @@ public class GenerateJavaScriptAST {
         JsExpression protoAsg = createAssignment(lhs, rhs);
         JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo),
             protoAsg);
-        globalStmts.add(tmpAsg.makeStmt());
+        JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
+        globalStmts.add(tmpAsgStmt);
+        typeForStatMap.put(tmpAsgStmt, x);
       } else {
         /*
          * MAGIC: java.lang.String is implemented as a JavaScript String
@@ -1431,7 +1457,9 @@ public class GenerateJavaScriptAST {
             sourceInfo));
         JsExpression tmpAsg = createAssignment(globalTemp.makeRef(sourceInfo),
             rhs);
-        globalStmts.add(tmpAsg.makeStmt());
+        JsExprStmt tmpAsgStmt = tmpAsg.makeStmt();
+        globalStmts.add(tmpAsgStmt);
+        typeForStatMap.put(tmpAsgStmt, x);
       }
     }
 
@@ -1463,7 +1491,9 @@ public class GenerateJavaScriptAST {
 
         // asg
         JsExpression asg = createAssignment(lhs, rhs);
-        globalStmts.add(new JsExprStmt(sourceInfo, asg));
+        JsExprStmt stmt = asg.makeStmt();
+        globalStmts.add(stmt);
+        typeForStatMap.put(stmt, program.getTypeJavaLangObject());
       }
     }
 
@@ -1482,7 +1512,9 @@ public class GenerateJavaScriptAST {
         fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
         JsNumberLiteral typeIdLit = jsProgram.getNumberLiteral(typeId);
         JsExpression asg = createAssignment(fieldRef, typeIdLit);
-        globalStmts.add(new JsExprStmt(sourceInfo, asg));
+        JsExprStmt asgStmt = asg.makeStmt();
+        globalStmts.add(asgStmt);
+        typeForStatMap.put(asgStmt, x);
       }
     }
 
@@ -1499,7 +1531,9 @@ public class GenerateJavaScriptAST {
       fieldRef.setQualifier(globalTemp.makeRef(sourceInfo));
       JsExpression asg = createAssignment(fieldRef,
           nullMethodName.makeRef(sourceInfo));
-      globalStmts.add(new JsExprStmt(sourceInfo, asg));
+      JsExprStmt stmt = asg.makeStmt();
+      globalStmts.add(stmt);
+      typeForStatMap.put(stmt, program.getTypeJavaLangObject());
     }
 
     private JsExpression generateTypeTable() {
@@ -1524,7 +1558,9 @@ public class GenerateJavaScriptAST {
           lhs.setQualifier(globalTemp.makeRef(sourceInfo));
           JsNameRef rhs = names.get(method).makeRef(sourceInfo);
           JsExpression asg = createAssignment(lhs, rhs);
-          globalStmts.add(new JsExprStmt(x.getSourceInfo(), asg));
+          JsExprStmt asgStat = new JsExprStmt(x.getSourceInfo(), asg);
+          globalStmts.add(asgStat);
+          vtableInitForMethodMap.put(asgStat, method);
         }
       }
     }
@@ -1700,16 +1736,18 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JProgram x, Context ctx) {
-      Collections.sort(x.entryMethods, hasNameSort);
+      for (List<JMethod> methods : x.entryMethods) {
+        Collections.sort(methods, hasNameSort);
+      }
       Collections.sort(x.getDeclaredTypes(), hasNameSort);
     }
   }
 
-  public static void exec(JProgram program, JsProgram jsProgram,
+  public static JavaToJavaScriptMap exec(JProgram program, JsProgram jsProgram,
       JsOutputOption output) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
         program, jsProgram, output);
-    generateJavaScriptAST.execImpl();
+    return generateJavaScriptAST.execImpl();
   }
 
   private final Map<JBlock, JsCatch> catchMap = new IdentityHashMap<JBlock, JsCatch>();
@@ -1721,6 +1759,7 @@ public class GenerateJavaScriptAST {
    * clinit).
    */
   private Set<JMethod> crossClassTargets = new HashSet<JMethod>();
+
   /**
    * Contains JsNames for all interface methods. A special scope is needed so
    * that independent classes will obfuscate their interface implementation
@@ -1734,7 +1773,6 @@ public class GenerateJavaScriptAST {
    * Sorted to avoid nondeterministic iteration.
    */
   private final Map<Long, JsName> longLits = new TreeMap<Long, JsName>();
-
   private final Map<JsName, JsExpression> longObjects = new IdentityHashMap<JsName, JsExpression>();
   private final Map<JAbstractMethodBody, JsFunction> methodBodyMap = new IdentityHashMap<JAbstractMethodBody, JsFunction>();
   private final Map<HasName, JsName> names = new IdentityHashMap<HasName, JsName>();
@@ -1770,7 +1808,12 @@ public class GenerateJavaScriptAST {
    * Contains JsNames for all globals, such as static fields and methods.
    */
   private final JsScope topScope;
+
+  private final Map<JsStatement, JReferenceType> typeForStatMap = new HashMap<JsStatement, JReferenceType>();
+
   private final JTypeOracle typeOracle;
+
+  private final Map<JsStatement, JMethod> vtableInitForMethodMap = new HashMap<JsStatement, JMethod>();
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
       JsOutputOption output) {
@@ -1899,7 +1942,7 @@ public class GenerateJavaScriptAST {
     throw new InternalCompilerException("Unknown output mode");
   }
 
-  private void execImpl() {
+  private JavaToJavaScriptMap execImpl() {
     SortVisitor sorter = new SortVisitor();
     sorter.accept(program);
     RecordCrossClassCalls recorder = new RecordCrossClassCalls();
@@ -1908,6 +1951,61 @@ public class GenerateJavaScriptAST {
     creator.accept(program);
     GenerateJavaScriptVisitor generator = new GenerateJavaScriptVisitor();
     generator.accept(program);
-  }
+    final Map<JsName, JMethod> nameToMethodMap = new HashMap<JsName, JMethod>();
+    for (JAbstractMethodBody body : methodBodyMap.keySet()) {
+      nameToMethodMap.put(methodBodyMap.get(body).getName(), body.getMethod());
+    }
+    final HashMap<JsName, JField> nameToFieldMap = new HashMap<JsName, JField>();
+    final HashMap<JsName, JReferenceType> constructorNameToTypeMap = new HashMap<JsName, JReferenceType>();
+    for (JReferenceType type : program.getDeclaredTypes()) {
+      JsName typeName = names.get(type);
+      if (typeName != null) {
+        constructorNameToTypeMap.put(typeName, type);
+      }
+      for (JField field : type.fields) {
+        if (field.isStatic()) {
+          JsName fieldName = names.get(field);
+          if (fieldName != null) {
+            nameToFieldMap.put(fieldName, field);
+          }
+        }
+      }
+    }
 
+    // TODO(spoon): Instead of gathering the information here, get it via
+    // SourceInfo
+    return new JavaToJavaScriptMap() {
+      public JsName nameForMethod(JMethod method) {
+        return names.get(method);
+      }
+
+      public JsName nameForType(JReferenceType type) {
+        return names.get(type);
+      }
+
+      public JField nameToField(JsName name) {
+        return nameToFieldMap.get(name);
+      }
+
+      public JMethod nameToMethod(JsName name) {
+        return nameToMethodMap.get(name);
+      }
+
+      public String stringLiteralForName(JsName var) {
+        /*
+         * This method will be supplied non-trivially elsewhere.
+         * GenerateJavaScriptAST doesn't have the information to implement it.
+         */
+        return null;
+      }
+
+      public JReferenceType typeForStatement(JsStatement stat) {
+        return typeForStatMap.get(stat);
+      }
+
+      public JMethod vtableInitToMethod(JsStatement stat) {
+        return vtableInitForMethodMap.get(stat);
+      }
+    };
+  }
 }

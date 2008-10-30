@@ -16,11 +16,14 @@
 package com.google.gwt.sample.showcase.client.content.other;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -236,6 +239,20 @@ public class CwAnimation extends ContentWidget {
 
     // Return the layout
     return mainLayout;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 
   /**

@@ -15,10 +15,13 @@
  */
 package com.google.gwt.sample.showcase.client.content.panels;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -89,5 +92,19 @@ public class CwVerticalPanel extends ContentWidget {
     // Return the content
     vPanel.ensureDebugId("cwVerticalPanel");
     return vPanel;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 }

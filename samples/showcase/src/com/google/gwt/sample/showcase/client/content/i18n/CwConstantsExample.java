@@ -16,12 +16,14 @@
 package com.google.gwt.sample.showcase.client.content.i18n;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseConstants;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
@@ -37,7 +39,7 @@ import java.util.Map;
 /**
  * Example file.
  */
-@ShowcaseRaw({"ExampleConstants.java", "ExampleConstants.properties"})
+@ShowcaseRaw( {"ExampleConstants.java", "ExampleConstants.properties"})
 public class CwConstantsExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -187,6 +189,20 @@ public class CwConstantsExample extends ContentWidget {
       requestSourceContents(ShowcaseConstants.DST_SOURCE_RAW + className
           + ".properties.html", propertiesWidget, null);
     }
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 
   /**

@@ -20,10 +20,16 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JAbstractMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JVisitor;
+import com.google.gwt.dev.js.ast.JsContext;
+import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsStringLiteral;
+import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Represents a the body of a method. Can be Java or JSNI.
@@ -31,8 +37,8 @@ import java.util.List;
 public class JsniMethodBody extends JAbstractMethodBody {
 
   public final List<JsniFieldRef> jsniFieldRefs = new ArrayList<JsniFieldRef>();
-
   public final List<JsniMethodRef> jsniMethodRefs = new ArrayList<JsniMethodRef>();
+  private final Set<String> stringLiterals = new HashSet<String>();
 
   private JsFunction jsFunction = null;
 
@@ -45,6 +51,11 @@ public class JsniMethodBody extends JAbstractMethodBody {
     return jsFunction;
   }
 
+  public Set<String> getUsedStrings() {
+    return stringLiterals;
+  }
+
+  @Override
   public boolean isNative() {
     return true;
   }
@@ -52,6 +63,13 @@ public class JsniMethodBody extends JAbstractMethodBody {
   public void setFunc(JsFunction jsFunction) {
     assert (this.jsFunction == null);
     this.jsFunction = jsFunction;
+    class RecordStrings extends JsVisitor {
+      @Override
+      public void endVisit(JsStringLiteral lit, JsContext<JsExpression> ctx) {
+        stringLiterals.add(lit.getValue());
+      }
+    }
+    (new RecordStrings()).accept(jsFunction);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

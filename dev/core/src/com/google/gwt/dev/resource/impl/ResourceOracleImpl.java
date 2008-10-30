@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -164,6 +165,9 @@ public class ResourceOracleImpl implements ResourceOracle {
             if (entry != null) {
               classPath.add(entry);
             }
+            continue;
+          } catch (AccessControlException e) {
+            logger.log(TreeLogger.DEBUG, "Skipping URL due to access restrictions: " + url);
             continue;
           } catch (URISyntaxException e) {
             caught = e;

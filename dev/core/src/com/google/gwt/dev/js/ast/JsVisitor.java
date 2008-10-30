@@ -91,6 +91,8 @@ public class JsVisitor {
   };
 
   public final <T extends JsVisitable> T accept(T node) {
+    // The following cast to T is needed for javac 1.5.0_13
+    // as shipped on OS X
     return (T) doAccept(node);
   }
 
@@ -199,6 +201,9 @@ public class JsVisitor {
   }
 
   public void endVisit(JsProgram x, JsContext<JsProgram> ctx) {
+  }
+
+  public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
   }
 
   public void endVisit(JsPropertyInitializer x,
@@ -352,6 +357,10 @@ public class JsVisitor {
   }
 
   public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+    return true;
+  }
+
+  public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
     return true;
   }
 

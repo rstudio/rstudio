@@ -28,6 +28,7 @@ import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Util;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -37,6 +38,7 @@ import java.util.Set;
  */
 @LinkerOrder(Order.PRIMARY)
 public class SingleScriptLinker extends SelectionScriptLinker {
+  @Override
   public String getDescription() {
     return "Single Script";
   }
@@ -49,6 +51,19 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     toReturn.add(emitSelectionScript(logger, context, artifacts));
 
     return toReturn;
+  }
+
+  @Override
+  protected Collection<EmittedArtifact> doEmitCompilation(TreeLogger logger,
+      LinkerContext context, CompilationResult result)
+      throws UnableToCompleteException {
+    if (result.getJavaScript().length != 1) {
+      logger.branch(TreeLogger.ERROR,
+          "The module must not have multiple fragments when using the "
+              + getDescription() + " Linker.", null);
+      throw new UnableToCompleteException();
+    }
+    return super.doEmitCompilation(logger, context, result);
   }
 
   @Override
@@ -92,7 +107,14 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     }
     CompilationResult result = results.iterator().next();
 
-    out.print(result.getJavaScript());
+    String[] js = result.getJavaScript();
+    if (js.length != 1) {
+      logger = logger.branch(TreeLogger.ERROR,
+          "The module must not have multiple fragments when using the "
+              + getDescription() + " Linker.", null);
+      throw new UnableToCompleteException();
+    }
+    out.print(js[0]);
 
     // Add a callback to the selection script
     out.newlineOpt();
@@ -128,8 +150,8 @@ public class SingleScriptLinker extends SelectionScriptLinker {
    * {@link #doEmitCompilation(TreeLogger, LinkerContext, CompilationResult).
    */
   @Override
-  protected String getModulePrefix(TreeLogger logger, LinkerContext context)
-      throws UnableToCompleteException {
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName) throws UnableToCompleteException {
     throw new UnableToCompleteException();
   }
 

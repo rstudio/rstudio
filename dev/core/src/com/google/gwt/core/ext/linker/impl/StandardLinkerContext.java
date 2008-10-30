@@ -224,16 +224,18 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    */
   public StandardCompilationResult getCompilation(TreeLogger logger, File jsFile)
       throws UnableToCompleteException {
-    byte[] bytes = Util.readFileAsBytes(jsFile);
-    if (bytes == null) {
+    byte[][] results = Util.readFileAndSplit(jsFile);
+
+    if (results == null) {
       logger.log(TreeLogger.ERROR, "Unable to read file '"
           + jsFile.getAbsolutePath() + "'");
       throw new UnableToCompleteException();
     }
-    String strongName = Util.computeStrongName(bytes);
+
+    String strongName = Util.computeStrongName(results);
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
-      result = new StandardCompilationResult(Util.toString(bytes), strongName,
+      result = new StandardCompilationResult(Util.toStrings(results), strongName,
           jsFile);
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);

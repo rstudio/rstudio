@@ -138,6 +138,35 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * Determine whether a type is instantiated, given an assumed list of
+   * instantiated types.
+   * 
+   * @param type any type
+   * @param instantiatedTypes a set of types assumed to be instantiated. If
+   *          <code>null</code>, then there are no assumptions about which
+   *          types are instantiated.
+   * @return whether the type is instantiated
+   */
+  private static boolean isInstantiatedType(JReferenceType type,
+      Set<JReferenceType> instantiatedTypes) {
+    if (instantiatedTypes == null) {
+      return true;
+    }
+
+    if (type instanceof JNullType) {
+      return true;
+    }
+
+    if (type instanceof JArrayType) {
+      JArrayType arrayType = (JArrayType) type;
+      if (arrayType.getLeafType() instanceof JNullType) {
+        return true;
+      }
+    }
+    return instantiatedTypes.contains(type);
+  }
+
+  /**
    * Compare two methods based on name and original argument types
    * {@link JMethod#getOriginalParamTypes()}. Note that nothing special is done
    * here regarding methods with type parameters in their argument lists. The
@@ -389,14 +418,19 @@ public class JTypeOracle implements Serializable {
     return getOrCreate(superInterfaceMap, type).contains(qType);
   }
 
+  public Set<JMethod> getAllOverrides(JMethod method) {
+    return getAllOverrides(method, instantiatedTypes);
+  }
+
   /**
    * References to any methods which this method implementation might override
    * or implement in any instantiable class.
    */
-  public Set<JMethod> getAllOverrides(JMethod method) {
+  public Set<JMethod> getAllOverrides(JMethod method,
+      Set<JReferenceType> instantiatedTypes) {
     Set<JMethod> results = new HashSet<JMethod>();
     getAllRealOverrides(method, results);
-    getAllVirtualOverrides(method, results);
+    getAllVirtualOverrides(method, instantiatedTypes, results);
     return results;
   }
 
@@ -419,7 +453,7 @@ public class JTypeOracle implements Serializable {
    */
   public Set<JMethod> getAllVirtualOverrides(JMethod method) {
     Set<JMethod> results = new HashSet<JMethod>();
-    getAllVirtualOverrides(method, results);
+    getAllVirtualOverrides(method, instantiatedTypes, results);
     return results;
   }
 
@@ -436,22 +470,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public boolean isInstantiatedType(JReferenceType type) {
-    if (instantiatedTypes == null) {
-      // The instantiated types have not yet been computed.
-      return true;
-    }
-
-    if (type instanceof JNullType) {
-      return true;
-    }
-
-    if (type instanceof JArrayType) {
-      JArrayType arrayType = (JArrayType) type;
-      if (arrayType.getLeafType() instanceof JNullType) {
-        return true;
-      }
-    }
-    return instantiatedTypes.contains(type);
+    return isInstantiatedType(type, instantiatedTypes);
   }
 
   /**
@@ -637,19 +656,19 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
+  private void getAllRealOverrides(JMethod method,
+      Set<JMethod> results) {
     for (JMethod possibleOverride : method.overrides) {
-      // if (instantiatedTypes.contains(possibleOverride.getEnclosingType())) {
       results.add(possibleOverride);
-      // }
     }
   }
 
-  private void getAllVirtualOverrides(JMethod method, Set<JMethod> results) {
+  private void getAllVirtualOverrides(JMethod method,
+      Set<JReferenceType> instantiatedTypes, Set<JMethod> results) {
     Map<JClassType, Set<JMethod>> overrideMap = getOrCreateMap(virtualUpRefMap,
         method);
     for (JClassType classType : overrideMap.keySet()) {
-      if (isInstantiatedType(classType)) {
+      if (isInstantiatedType(classType, instantiatedTypes)) {
         Set<JMethod> set = overrideMap.get(classType);
         results.addAll(set);
       }

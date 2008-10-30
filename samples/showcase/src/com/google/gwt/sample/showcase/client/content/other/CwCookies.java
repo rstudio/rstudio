@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.showcase.client.content.other;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
@@ -23,6 +25,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -110,12 +113,12 @@ public class CwCookies extends ContentWidget {
   public String getName() {
     return constants.cwCookiesName();
   }
-  
+
   @Override
   public boolean hasStyle() {
     return false;
   }
-  
+
   /**
    * Initialize this example.
    */
@@ -175,7 +178,8 @@ public class CwCookies extends ContentWidget {
     deleteCookieButton.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
         int selectedIndex = existingCookiesBox.getSelectedIndex();
-        if (selectedIndex > -1 && selectedIndex < existingCookiesBox.getItemCount()) {
+        if (selectedIndex > -1
+            && selectedIndex < existingCookiesBox.getItemCount()) {
           String cookieName = existingCookiesBox.getValue(selectedIndex);
           Cookies.removeCookie(cookieName);
           existingCookiesBox.removeItem(selectedIndex);
@@ -187,6 +191,20 @@ public class CwCookies extends ContentWidget {
     // Return the main layout
     refreshExistingCookies(null);
     return mainLayout;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 
   /**

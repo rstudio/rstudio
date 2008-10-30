@@ -184,11 +184,13 @@ public final class GWT {
   }
 
   /**
-   * Run the supplied callback. The system is allowed to delay before running
-   * the callback while additional code is downloaded, but that feature is not
-   * yet implemented. Currently, the callback runs immediately.
+   * Run the specified callback once the necessary code for it has been loaded.
    */
   public static void runAsync(RunAsyncCallback callback) {
+    /*
+     * By default, just call the callback. This allows using <code>runAsync</code>
+     * in code that might or might not run in a web browser.
+     */
     callback.onSuccess();
   }
 

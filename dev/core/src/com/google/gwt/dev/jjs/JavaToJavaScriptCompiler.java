@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
@@ -39,13 +40,17 @@ import com.google.gwt.dev.jjs.impl.AssertionRemover;
 import com.google.gwt.dev.jjs.impl.BuildTypeMap;
 import com.google.gwt.dev.jjs.impl.CastNormalizer;
 import com.google.gwt.dev.jjs.impl.CatchBlockNormalizer;
+import com.google.gwt.dev.jjs.impl.CodeSplitter;
 import com.google.gwt.dev.jjs.impl.DeadCodeElimination;
 import com.google.gwt.dev.jjs.impl.EqualityNormalizer;
 import com.google.gwt.dev.jjs.impl.Finalizer;
 import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
+import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
+import com.google.gwt.dev.jjs.impl.JavaAndJavaScript;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
+import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
 import com.google.gwt.dev.jjs.impl.LongCastNormalizer;
 import com.google.gwt.dev.jjs.impl.LongEmulationNormalizer;
@@ -56,6 +61,7 @@ import com.google.gwt.dev.jjs.impl.PostOptimizationCompoundAssignmentNormalizer;
 import com.google.gwt.dev.jjs.impl.Pruner;
 import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
+import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
@@ -70,7 +76,9 @@ import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
+import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
@@ -81,6 +89,7 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -105,9 +114,16 @@ public class JavaToJavaScriptCompiler {
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
-  public static String compilePermutation(TreeLogger logger,
+  public static String[] compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Map<String, String> rebindAnswers)
       throws UnableToCompleteException {
+    return compilePermutationToJavaAndJavaScript(logger, unifiedAst,
+        rebindAnswers).jscode;
+  }
+
+  public static JavaAndJavaScript compilePermutationToJavaAndJavaScript(
+      TreeLogger logger, UnifiedAst unifiedAst,
+      Map<String, String> rebindAnswers) throws UnableToCompleteException {
     try {
       if (JProgram.isTracingEnabled()) {
         System.out.println("------------------------------------------------------------");
@@ -143,10 +159,8 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeClinits();
-      GenerateJavaScriptAST.exec(jprogram, jsProgram, options.getOutput());
-
-      // Allow GC.
-      jprogram = null;
+      final JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(jprogram,
+          jsProgram, options.getOutput());
 
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
@@ -173,21 +187,31 @@ public class JavaToJavaScriptCompiler {
       }
 
       // (10) Obfuscate
+      final Map<JsName, String> stringLiteralMap;
       switch (options.getOutput()) {
         case OBFUSCATED:
-          JsStringInterner.exec(jsProgram);
+          stringLiteralMap = JsStringInterner.exec(jsProgram);
           JsObfuscateNamer.exec(jsProgram);
           break;
         case PRETTY:
           // We don't intern strings in pretty mode to improve readability
+          stringLiteralMap = new HashMap<JsName, String>();
           JsPrettyNamer.exec(jsProgram);
           break;
         case DETAILED:
-          JsStringInterner.exec(jsProgram);
+          stringLiteralMap = JsStringInterner.exec(jsProgram);
           JsVerboseNamer.exec(jsProgram);
           break;
         default:
           throw new InternalCompilerException("Unknown output mode");
+      }
+
+      JavaToJavaScriptMap postStringInterningMap = addStringLiteralMap(map,
+          stringLiteralMap);
+
+      // (10.5) Split up the program into fragments
+      if (options.isAggressivelyOptimize()) {
+        CodeSplitter.exec(jprogram, jsProgram, postStringInterningMap);
       }
 
       // (11) Perform any post-obfuscation normalizations.
@@ -197,11 +221,18 @@ public class JavaToJavaScriptCompiler {
       JsIEBlockSizeVisitor.exec(jsProgram);
 
       // (12) Generate the final output text.
-      DefaultTextOutput out = new DefaultTextOutput(
-          options.getOutput().shouldMinimize());
-      JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-      v.accept(jsProgram);
-      return out.toString();
+      String[] js = new String[jsProgram.getFragmentCount()];
+      for (int i = 0; i < js.length; i++) {
+
+        DefaultTextOutput out = new DefaultTextOutput(
+            options.getOutput().shouldMinimize());
+        JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
+        v.accept(jsProgram.getFragmentBlock(i));
+        js[i] = out.toString();
+      }
+
+      return new JavaAndJavaScript(jprogram, jsProgram, js,
+          postStringInterningMap);
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
     }
@@ -239,6 +270,7 @@ public class JavaToJavaScriptCompiler {
     }
     allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
     allEntryPoints.addAll(JProgram.INDEX_TYPES_SET);
+    allEntryPoints.add(FragmentLoaderCreator.ASYNC_FRAGMENT_LOADER);
 
     // Compile the source and get the compiler so we can get the parse tree
     //
@@ -306,6 +338,11 @@ public class JavaToJavaScriptCompiler {
 
       // Replace GWT.create calls with JGwtCreate nodes.
       ReplaceRebinds.exec(logger, jprogram, rpo);
+
+      // Fix up GWT.runAsync()
+      if (options.isAggressivelyOptimize()) {
+        ReplaceRunAsyncs.exec(logger, jprogram);
+      }
 
       // Resolve entry points, rebinding non-static entry points.
       findEntryPoints(logger, rpo, declEntryPts, jprogram);
@@ -384,6 +421,40 @@ public class JavaToJavaScriptCompiler {
       // prove that any types that have been culled from the main tree are
       // unreferenced due to type tightening?
     } while (didChange);
+  }
+
+  private static JavaToJavaScriptMap addStringLiteralMap(
+      final JavaToJavaScriptMap map, final Map<JsName, String> stringLiteralMap) {
+    JavaToJavaScriptMap postStringInterningMap = new JavaToJavaScriptMap() {
+      public JsName nameForMethod(JMethod method) {
+        return map.nameForMethod(method);
+      }
+
+      public JsName nameForType(JReferenceType type) {
+        return map.nameForType(type);
+      }
+
+      public JField nameToField(JsName name) {
+        return map.nameToField(name);
+      }
+
+      public JMethod nameToMethod(JsName name) {
+        return map.nameToMethod(name);
+      }
+
+      public String stringLiteralForName(JsName name) {
+        return stringLiteralMap.get(name);
+      }
+
+      public JReferenceType typeForStatement(JsStatement stat) {
+        return map.typeForStatement(stat);
+      }
+
+      public JMethod vtableInitToMethod(JsStatement stat) {
+        return map.vtableInitToMethod(stat);
+      }
+    };
+    return postStringInterningMap;
   }
 
   private static void checkForErrors(TreeLogger logger,
@@ -640,7 +711,8 @@ public class JavaToJavaScriptCompiler {
         isStatsAvailableMethod);
     JMethodCall onModuleStartCall = new JMethodCall(program, sourceInfo, null,
         onModuleStartMethod);
-    onModuleStartCall.getArgs().add(program.getLiteralString(sourceInfo, mainClassName));
+    onModuleStartCall.getArgs().add(
+        program.getLiteralString(sourceInfo, mainClassName));
 
     JBinaryOperation amp = new JBinaryOperation(program, sourceInfo,
         program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,

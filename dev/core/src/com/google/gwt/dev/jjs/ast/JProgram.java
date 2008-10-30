@@ -67,6 +67,8 @@ public class JProgram extends JNode {
           "com.google.gwt.core.client.GWT",
           "com.google.gwt.core.client.JavaScriptObject",
           "com.google.gwt.lang.ClassLiteralHolder",
+          "com.google.gwt.core.client.RunAsyncCallback",
+          "com.google.gwt.core.client.AsyncFragmentLoader",
           "com.google.gwt.lang.EntryMethodHolder",}));
 
   static final Map<String, Set<String>> traceMethods = new HashMap<String, Set<String>>();
@@ -150,7 +152,13 @@ public class JProgram extends JNode {
 
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
 
-  public final List<JMethod> entryMethods = new ArrayList<JMethod>();
+  /**
+   * There is a list containing the main entry methods as well as the entry methods for
+   * each split point.  The main entry methods are at entry 0 of this list.  Split
+   * points are numbered sequentially from 1, and the entry methods for split point
+   * <em>i</em> are at entry <em>i</em> of this list.
+   */
+  public final List<List<JMethod>> entryMethods = new ArrayList<List<JMethod>>();
 
   public final Map<String, HasEnclosingType> jsniMap = new HashMap<String, HasEnclosingType>();
 
@@ -271,9 +279,17 @@ public class JProgram extends JNode {
   }
 
   public void addEntryMethod(JMethod entryPoint) {
+    addEntryMethod(entryPoint, 0);
+  }
+
+  public void addEntryMethod(JMethod entryPoint, int fragmentNumber) {
     assert entryPoint.isStatic();
-    if (!entryMethods.contains(entryPoint)) {
-      entryMethods.add(entryPoint);
+    while (fragmentNumber >= entryMethods.size()) {
+      entryMethods.add(new ArrayList<JMethod>());
+    }
+    List<JMethod> methods = entryMethods.get(fragmentNumber);
+    if (!methods.contains(entryPoint)) {
+      methods.add(entryPoint);
     }
   }
 
@@ -406,12 +422,11 @@ public class JProgram extends JNode {
   public JMethod createMethod(SourceInfo info, char[] name,
       JReferenceType enclosingType, JType returnType, boolean isAbstract,
       boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
-    assert (name != null);
+    String sname = String.valueOf(name);
+    assert (sname != null);
     assert (enclosingType != null);
     assert (returnType != null);
     assert (!isAbstract || !isNative);
-
-    String sname = String.valueOf(name);
     JMethod x = new JMethod(this, info, sname, enclosingType, returnType,
         isAbstract, isStatic, isFinal, isPrivate);
     if (isNative) {
@@ -492,12 +507,28 @@ public class JProgram extends JNode {
     return allArrayTypes;
   }
 
+  public List<JMethod> getAllEntryMethods() {
+    List<JMethod> allEntryMethods = new ArrayList<JMethod>();
+    for (List<JMethod> entries : entryMethods) {
+      allEntryMethods.addAll(entries);
+    }
+    return allEntryMethods;
+  }
+
   public List<JReferenceType> getDeclaredTypes() {
     return allTypes;
   }
 
+  public int getEntryCount(int fragment) {
+    return entryMethods.get(fragment).size();
+  }
+
   public JThisRef getExprThisRef(SourceInfo info, JClassType enclosingType) {
     return new JThisRef(this, info, enclosingType);
+  }
+
+  public int getFragmentCount() {
+    return entryMethods.size();
   }
 
   public JReferenceType getFromTypeMap(String qualifiedBinaryOrSourceName) {
@@ -842,9 +873,9 @@ public class JProgram extends JNode {
   }
 
   /**
-   * If <code>method</code> is a static impl method, returns the instance method
-   * that <code>method</code> is the implementation of. Otherwise, returns
-   * <code>null</code>.
+   * If <code>method</code> is a static impl method, returns the instance
+   * method that <code>method</code> is the implementation of. Otherwise,
+   * returns <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
     return staticToInstanceMap.get(method);

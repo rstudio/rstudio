@@ -26,16 +26,22 @@ import java.util.SortedSet;
  * result in identical JavaScript.
  */
 public abstract class CompilationResult extends Artifact<CompilationResult> {
-
   protected CompilationResult(Class<? extends Linker> linkerType) {
     super(linkerType);
   }
 
   /**
-   * Returns the JavaScript compilation. The exact form and function of the
-   * JavaScript should be considered opaque.
+   * Returns the JavaScript compilation. The first element of the array contains
+   * the code that should be run when the application starts up. The remaining
+   * elements are loaded via
+   * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback) GWT.runAsync}.
+   * The linker should provide a function named
+   * <code>__gwtStartLoadingFragment</code> that can takes an integer as argument
+   * and loads that specified code segment. To see how this function is used,
+   * see
+   * {@link com.google.gwt.core.client.AsyncFragmentLoader AsyncFragmentLoader}.
    */
-  public abstract String getJavaScript();
+  public abstract String[] getJavaScript();
 
   /**
    * Provides values for {@link SelectionProperty} instances that are not
@@ -45,9 +51,19 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
    */
   public abstract SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap();
 
+  /**
+   * Return a string that uniquely identifies this compilation result.  Typically
+   * this is a cryptographic hash of the compiled data.
+   */
+  public abstract String getStrongName();
+
   @Override
   public final int hashCode() {
-    return getJavaScript().hashCode();
+    int hash = 17;
+    for (String js : getJavaScript()) {
+      hash = hash * 37 + js.hashCode();
+    }
+    return hash;
   }
 
   @Override
@@ -69,7 +85,18 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
 
   @Override
   protected final int compareToComparableArtifact(CompilationResult o) {
-    return getJavaScript().compareTo(o.getJavaScript());
+    String[] js = getJavaScript();
+    String[] otherJs = o.getJavaScript();
+    if (js.length != otherJs.length) {
+      return js.length - otherJs.length;
+    }
+    for (int i = 0; i < js.length; i++) {
+      int diff = js[i].compareTo(otherJs[i]);
+      if (diff != 0) {
+        return diff;
+      }
+    }
+    return 0;
   }
 
   @Override

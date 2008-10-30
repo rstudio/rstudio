@@ -15,11 +15,14 @@
  */
 package com.google.gwt.sample.showcase.client.content.lists;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SuggestBox;
@@ -29,7 +32,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-SuggestBox", ".gwt-SuggestBoxPopup",
+@ShowcaseStyle({
+    ".gwt-SuggestBox", ".gwt-SuggestBoxPopup",
     "html>body .gwt-SuggestBoxPopup", "* html .gwt-SuggestBoxPopup"})
 public class CwSuggestBox extends ContentWidget {
   /**
@@ -95,5 +99,19 @@ public class CwSuggestBox extends ContentWidget {
 
     // Return the panel
     return suggestPanel;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 }

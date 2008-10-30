@@ -26,8 +26,10 @@ import org.eclipse.jdt.internal.compiler.ast.MessageSend;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.Scope;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -42,21 +44,22 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
    * Information about the site at which a rebind request was found, used to
    * report problems.
    */
-  public static class DeferredBindingSite {
+  public static class MessageSendSite {
     public final MessageSend messageSend;
 
     public final Scope scope;
 
-    public DeferredBindingSite(MessageSend messageSend, Scope scope) {
+    public MessageSendSite(MessageSend messageSend, Scope scope) {
       this.messageSend = messageSend;
       this.scope = scope;
     }
   }
 
-  public static final String REBIND_MAGIC_CLASS = "com.google.gwt.core.client.GWT";
+  public static final String MAGIC_CLASS = "com.google.gwt.core.client.GWT";
   public static final String REBIND_MAGIC_METHOD = "create";
+  public static final String ASYNC_MAGIC_METHOD = "runAsync";
 
-  public static void reportRebindProblem(DeferredBindingSite site,
+  public static void reportRebindProblem(MessageSendSite site,
       String message) {
     MessageSend messageSend = site.messageSend;
     Scope scope = site.scope;
@@ -65,52 +68,77 @@ public class FindDeferredBindingSitesVisitor extends ASTVisitor {
     GWTProblem.recordInCud(messageSend, cud, message, null);
   }
 
-  private final Map<String, DeferredBindingSite> results = new HashMap<String, DeferredBindingSite>();
+  private final Map<String, MessageSendSite> results = new HashMap<String, MessageSendSite>();
 
+  private final List<MessageSendSite> runAsyncCalls = new ArrayList<MessageSendSite>();
+
+  @Override
   public void endVisit(MessageSend messageSend, BlockScope scope) {
     if (messageSend.binding == null) {
       // Some sort of problem.
-      //
       return;
     }
 
     String methodName = String.valueOf(messageSend.selector);
-    if (!methodName.equals(REBIND_MAGIC_METHOD)) {
-      // Not the create() method.
-      //
+    boolean rebindMagicMethod = methodName.equals(REBIND_MAGIC_METHOD);
+    boolean asyncMagicMethod = methodName.equals(ASYNC_MAGIC_METHOD);
+    if (!(rebindMagicMethod || asyncMagicMethod)) {
+      // Not the create() method or the runAsync() method.
       return;
     }
 
     char[][] targetClass = messageSend.binding.declaringClass.compoundName;
     String targetClassName = CharOperation.toString(targetClass);
-    if (!targetClassName.equals(REBIND_MAGIC_CLASS)) {
+    if (!targetClassName.equals(MAGIC_CLASS)) {
       // Not being called on the Rebind class.
       return;
     }
 
-    DeferredBindingSite site = new DeferredBindingSite(messageSend, scope);
+    MessageSendSite site = new MessageSendSite(messageSend, scope);
 
     Expression[] args = messageSend.arguments;
-    if (args.length != 1) {
-      reportRebindProblem(site, "GWT.create() should take exactly one argument");
+    if (rebindMagicMethod) {
+      if (args.length != 1) {
+        reportRebindProblem(site,
+            "GWT.create() should take exactly one argument");
+        return;
+      }
+
+      if (!(args[0] instanceof ClassLiteralAccess)) {
+        reportRebindProblem(site,
+            "Only class literals may be used as arguments to GWT.create()");
+        return;
+      }
+    } else {
+      assert asyncMagicMethod;
+      if (args.length != 1) {
+        reportRebindProblem(site,
+            "GWT.runAsync() should take exactly one argument");
+        return;
+      }
+    }
+
+    if (asyncMagicMethod) {
+      runAsyncCalls.add(new MessageSendSite(messageSend, scope));
       return;
     }
 
-    Expression arg = args[0];
-    if (!(arg instanceof ClassLiteralAccess)) {
-      reportRebindProblem(site,
-          "Only class literals may be used as arguments to GWT.create()");
-      return;
-    }
-
-    ClassLiteralAccess cla = (ClassLiteralAccess) arg;
+    ClassLiteralAccess cla = (ClassLiteralAccess) args[0];
     String typeName = String.valueOf(cla.targetType.readableName());
+
     if (!results.containsKey(typeName)) {
       results.put(typeName, site);
     }
   }
 
-  public Map<String, DeferredBindingSite> getSites() {
+  /**
+   * Return the calls to GWT.runAsync() that were seen.
+   */
+  public List<MessageSendSite> getRunAsyncSites() {
+    return runAsyncCalls;
+  }
+
+  public Map<String, MessageSendSite> getSites() {
     return Collections.unmodifiableMap(results);
   }
 }

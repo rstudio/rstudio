@@ -39,7 +39,7 @@ public class PermutationCompiler {
    * Hands back results as they are finished.
    */
   public interface ResultsHandler {
-    void addResult(Permutation permutation, int permNum, String js)
+    void addResult(Permutation permutation, int permNum, String[] js)
         throws UnableToCompleteException;
   }
 
@@ -62,7 +62,7 @@ public class PermutationCompiler {
   /**
    * Represents the task of compiling a single permutation.
    */
-  private static final class PermutationTask implements Callable<String> {
+  private static final class PermutationTask implements Callable<String[]> {
     private static void logProperties(TreeLogger logger,
         StaticPropertyOracle[] propOracles) {
       for (StaticPropertyOracle propOracle : propOracles) {
@@ -92,7 +92,7 @@ public class PermutationCompiler {
       this.permNum = permNum;
     }
 
-    public String call() throws Exception {
+    public String[] call() throws Exception {
       PerfLogger.start("Permutation #" + permNum);
       try {
         TreeLogger branch = logger.branch(TreeLogger.TRACE, "Permutation #"
@@ -139,14 +139,14 @@ public class PermutationCompiler {
    * A Result for a permutation that succeeded.
    */
   private static final class SuccessResult extends Result {
-    private final String js;
+    private final String[] js;
 
-    public SuccessResult(Permutation perm, int permNum, String js) {
+    public SuccessResult(Permutation perm, int permNum, String[] result) {
       super(perm, permNum);
-      this.js = js;
+      this.js = result;
     }
 
-    public String getJs() {
+    public String[] getJs() {
       return js;
     }
   }
@@ -201,7 +201,7 @@ public class PermutationCompiler {
 
       boolean definitelyFinalThread = (threadCount.get() == 1);
       try {
-        String result = currentTask.call();
+        String[] result = currentTask.call();
         results.add(new SuccessResult(currentTask.getPermutation(),
             currentTask.getPermNum(), result));
       } catch (OutOfMemoryError e) {
@@ -353,7 +353,7 @@ public class PermutationCompiler {
           assert threadCount.get() == 0;
           return;
         } else if (result instanceof SuccessResult) {
-          String js = ((SuccessResult) result).getJs();
+          String[] js = ((SuccessResult) result).getJs();
           handler.addResult(result.getPermutation(), result.getPermNum(), js);
         } else if (result instanceof FailedResult) {
           FailedResult failedResult = (FailedResult) result;

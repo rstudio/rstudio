@@ -35,7 +35,7 @@ import java.io.IOException;
  */
 @LinkerOrder(Order.PRIMARY)
 public class IFrameLinker extends SelectionScriptLinker {
-
+  @Override
   public String getDescription() {
     return "Standard";
   }
@@ -65,13 +65,13 @@ public class IFrameLinker extends SelectionScriptLinker {
   }
 
   @Override
-  protected String getModulePrefix(TreeLogger logger, LinkerContext context) {
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName) {
     DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
     out.print("<html>");
     out.newlineOpt();
 
     // Setup the well-known variables.
-    //
     out.print("<head><script>");
     out.newlineOpt();
     out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
@@ -81,6 +81,17 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
+    out.newlineOpt();
+    out.print("function __gwtStartLoadingFragment(frag) {");
+    out.newlineOpt();
+    out.indentIn();
+    out.print("  var script = $doc.createElement('script');");
+    out.newlineOpt();
+    out.print("  script.src = '" + strongName + "-' + frag + '" + FRAGMENT_EXTENSION + "';");
+    out.print("  document.getElementsByTagName('head').item(0).appendChild(script);");
+    out.indentOut();
+    out.newlineOpt();
+    out.print("};");
     out.newlineOpt();
     out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
     out.newlineOpt();

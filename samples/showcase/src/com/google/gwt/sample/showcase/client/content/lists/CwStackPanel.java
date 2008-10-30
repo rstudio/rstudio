@@ -16,11 +16,13 @@
 package com.google.gwt.sample.showcase.client.content.lists;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -38,7 +40,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-DecoratedStackPanel", "html>body .gwt-DecoratedStackPanel",
+@ShowcaseStyle( {
+    ".gwt-DecoratedStackPanel", "html>body .gwt-DecoratedStackPanel",
     "* html .gwt-DecoratedStackPanel", ".cw-StackPanelHeader"})
 public class CwStackPanel extends ContentWidget {
   /**
@@ -162,6 +165,20 @@ public class CwStackPanel extends ContentWidget {
     // Return the stack panel
     stackPanel.ensureDebugId("cwStackPanel");
     return stackPanel;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 
   /**

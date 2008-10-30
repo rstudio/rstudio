@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.showcase.client.content.lists;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
@@ -22,6 +24,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
@@ -29,7 +32,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-MenuBar", ".gwt-MenuBarPopup", "html>body .gwt-MenuBarPopup",
+@ShowcaseStyle( {
+    ".gwt-MenuBar", ".gwt-MenuBarPopup", "html>body .gwt-MenuBarPopup",
     "* html .gwt-MenuBarPopup"})
 public class CwMenuBar extends ContentWidget {
   /**
@@ -160,5 +164,19 @@ public class CwMenuBar extends ContentWidget {
     // Return the menu
     menu.ensureDebugId("cwMenuBar");
     return menu;
+  }
+
+  @Override
+  protected void asyncOnInitialize(final AsyncCallback<Widget> callback) {
+    GWT.runAsync(new RunAsyncCallback() {
+
+      public void onFailure(Throwable caught) {
+        callback.onFailure(caught);
+      }
+
+      public void onSuccess() {
+        callback.onSuccess(onInitialize());
+      }
+    });
   }
 }

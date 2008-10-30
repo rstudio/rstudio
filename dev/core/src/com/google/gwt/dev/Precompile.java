@@ -30,11 +30,12 @@ import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
-import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
+import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
@@ -258,9 +259,10 @@ public class Precompile {
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
           module, generatedArtifacts, new PropertyPermutations(
               module.getProperties()), genDir, generatorResourcesDir);
-
+      FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
+          module.getCompilationState(), module, genDir, generatorResourcesDir, generatedArtifacts);
       WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-          module.getCompilationState(), rpo);
+          module.getCompilationState(), rpo, fragmentLoaderCreator);
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
           frontEnd, declEntryPts, jjsOptions, rpo.getPermuationCount() == 1);
 
@@ -316,9 +318,10 @@ public class Precompile {
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
           module, generatorArtifacts, new PropertyPermutations(
               module.getProperties()), genDir, generatorResourcesDir);
-
+      FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
+          module.getCompilationState(), module, genDir, generatorResourcesDir, generatorArtifacts);
       WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-          module.getCompilationState(), rpo);
+          module.getCompilationState(), rpo, fragmentLoaderCreator);
       JavaToJavaScriptCompiler.precompile(logger, frontEnd, declEntryPts,
           jjsOptions, true);
       return true;

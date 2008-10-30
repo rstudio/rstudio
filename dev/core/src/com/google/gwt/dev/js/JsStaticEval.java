@@ -34,6 +34,7 @@ import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsUnaryOperator;
 import com.google.gwt.dev.js.ast.JsValueLiteral;
@@ -103,6 +104,11 @@ public class JsStaticEval {
     }
 
     @Override
+    public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+      scopeStack.pop();
+    }
+
+    @Override
     public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
       if (x == scopeStack.peek()) {
         ListIterator<JsStatement> itr = x.getStatements().listIterator();
@@ -156,6 +162,12 @@ public class JsStaticEval {
 
     @Override
     public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
+      scopeStack.push(x.getGlobalBlock());
+      return true;
+    }
+
+    @Override
+    public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
       scopeStack.push(x.getGlobalBlock());
       return true;
     }

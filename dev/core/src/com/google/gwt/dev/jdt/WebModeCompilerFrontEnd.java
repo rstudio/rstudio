@@ -20,7 +20,8 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
-import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.DeferredBindingSite;
+import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.MessageSendSite;
+import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
 import com.google.gwt.dev.util.Util;
@@ -41,12 +42,21 @@ import java.util.Set;
  */
 public class WebModeCompilerFrontEnd extends AbstractCompiler {
 
+  private final FragmentLoaderCreator fragmentLoaderCreator;
   private final RebindPermutationOracle rebindPermOracle;
 
+  /**
+   * Construct a WebModeCompilerFrontEnd. The reason a
+   * {@link FragmentLoaderCreator} needs to be passed in is that it uses
+   * generator infrastructure, and therefore needs access to more parts of the
+   * compiler than WebModeCompilerFrontEnd currently has.
+   */
   public WebModeCompilerFrontEnd(CompilationState compilationState,
-      RebindPermutationOracle rebindPermOracle) {
+      RebindPermutationOracle rebindPermOracle,
+      FragmentLoaderCreator fragmentLoaderCreator) {
     super(compilationState, false);
     this.rebindPermOracle = rebindPermOracle;
+    this.fragmentLoaderCreator = fragmentLoaderCreator;
   }
 
   public CompilationUnitDeclaration[] getCompilationUnitDeclarations(
@@ -90,6 +100,7 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
   /**
    * Pull in types referenced only via JSNI.
    */
+  @Override
   protected String[] doFindAdditionalTypesUsingJsni(TreeLogger logger,
       CompilationUnitDeclaration cud) {
     FindJsniRefVisitor v = new FindJsniRefVisitor();
@@ -109,20 +120,19 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
   /**
    * Pull in types implicitly referenced through rebind answers.
    */
+  @Override
   protected String[] doFindAdditionalTypesUsingRebinds(TreeLogger logger,
       CompilationUnitDeclaration cud) {
     Set<String> dependentTypeNames = new HashSet<String>();
 
     // Find all the deferred binding request types.
-    //
     FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor();
     cud.traverse(v, cud.scope);
-    Map<String, DeferredBindingSite> requestedTypes = v.getSites();
+    Map<String, MessageSendSite> requestedTypes = v.getSites();
 
     // For each, ask the host for every possible deferred binding answer.
-    //
     for (String reqType : requestedTypes.keySet()) {
-      DeferredBindingSite site = requestedTypes.get(reqType);
+      MessageSendSite site = requestedTypes.get(reqType);
 
       try {
         String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
@@ -134,7 +144,6 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
           // This causes the compiler to find the additional type, possibly
           // winding its back to ask for the compilation unit from the source
           // oracle.
-          //
           ReferenceBinding type = resolvePossiblyNestedType(typeName);
 
           // Sanity check rebind results.
@@ -180,6 +189,27 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
             "Failed to resolve '" + reqType + "' via deferred binding");
       }
     }
+
+    /*
+     * Create a a fragment loader for each GWT.runAsync call. They must be
+     * created now, rather than in ReplaceRunAsyncs, because all generated
+     * classes need to be created before GenerateJavaAST. Note that the loaders
+     * created are not yet associated with the specific sites. The present task
+     * is only to make sure that enough loaders exist. The real association
+     * between loaders and runAsync sites will be made in ReplaceRunAsyncs.
+     */
+    for (MessageSendSite site : v.getRunAsyncSites()) {
+      FragmentLoaderCreator loaderCreator = fragmentLoaderCreator;
+      String resultType;
+      try {
+        resultType = loaderCreator.create(logger);
+        dependentTypeNames.add(resultType);
+      } catch (UnableToCompleteException e) {
+        FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+            "Failed to create a runAsync fragment loader");
+      }
+    }
+
     return dependentTypeNames.toArray(Empty.STRINGS);
   }
 }

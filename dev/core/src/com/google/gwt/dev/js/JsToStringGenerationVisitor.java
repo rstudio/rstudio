@@ -51,6 +51,7 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsPropertyInitializer;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
@@ -654,6 +655,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   @Override
   public boolean visit(JsProgram x, JsContext<JsProgram> ctx) {
     p.print("<JsProgram>");
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+    p.print("<JsProgramFragment>");
     return false;
   }
 

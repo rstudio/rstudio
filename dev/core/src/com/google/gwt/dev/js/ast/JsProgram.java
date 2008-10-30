@@ -31,10 +31,12 @@ public final class JsProgram extends JsNode<JsProgram> {
   private final JsEmpty emptyStmt = new JsEmpty(createSourceInfoSynthetic(
       JsProgram.class, "Empty statement"));
 
+  private boolean enableSourceInfoDescendants;
+
   private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(
       createSourceInfoSynthetic(JsProgram.class, "false literal"), false);
 
-  private final JsGlobalBlock globalBlock;
+  private JsProgramFragment[] fragments;
 
   private final JsNullLiteral nullLiteral = new JsNullLiteral(
       createSourceInfoSynthetic(JsProgram.class, "null literal"));
@@ -52,8 +54,6 @@ public final class JsProgram extends JsNode<JsProgram> {
   private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(
       createSourceInfoSynthetic(JsProgram.class, "true literal"), true);
 
-  private boolean enableSourceInfoDescendants;
-
   /**
    * Constructs a JavaScript program object.
    */
@@ -61,10 +61,9 @@ public final class JsProgram extends JsNode<JsProgram> {
     super(SourceInfoJs.INTRINSIC.makeChild(JsProgram.class,
         "JavaScript program"));
     rootScope = new JsRootScope(this);
-    globalBlock = new JsGlobalBlock(createSourceInfoSynthetic(JsProgram.class,
-        "global block"));
     topScope = new JsScope(rootScope, "Global");
     objectScope = new JsScope(rootScope, "Object");
+    setFragmentCount(1);
   }
 
   public SourceInfo createSourceInfo(int lineNumber, String location) {
@@ -102,11 +101,22 @@ public final class JsProgram extends JsNode<JsProgram> {
     return falseLiteral;
   }
 
+  public JsBlock getFragmentBlock(int fragment) {
+    if (fragment < 0 || fragment >= fragments.length) {
+      throw new IllegalArgumentException("Invalid fragment: " + fragment);
+    }
+    return fragments[fragment].getGlobalBlock();
+  }
+
+  public int getFragmentCount() {
+    return this.fragments.length;
+  }
+
   /**
    * Gets the one and only global block.
    */
   public JsBlock getGlobalBlock() {
-    return globalBlock;
+    return getFragmentBlock(0);
   }
 
   public JsNullLiteral getNullLiteral() {
@@ -144,6 +154,11 @@ public final class JsProgram extends JsNode<JsProgram> {
     return topScope;
   }
 
+  /**
+   * Note: This is currently assumed not to be called after
+   * GenerateJavaScriptAST has finished. If it ever is, then GWT.runAsync needs
+   * to be updated to account for such string literals.
+   */
   public JsStringLiteral getStringLiteral(SourceInfo sourceInfo, String value) {
     JsStringLiteral lit = stringLiteralMap.get(value);
     if (lit == null) {
@@ -174,9 +189,19 @@ public final class JsProgram extends JsNode<JsProgram> {
     enableSourceInfoDescendants = enable;
   }
 
+  public void setFragmentCount(int fragments) {
+    this.fragments = new JsProgramFragment[fragments];
+    for (int i = 0; i < fragments; i++) {
+      this.fragments[i] = new JsProgramFragment(createSourceInfoSynthetic(
+          JsProgram.class, "fragment " + i));
+    }
+  }
+
   public void traverse(JsVisitor v, JsContext<JsProgram> ctx) {
     if (v.visit(this, ctx)) {
-      v.accept(globalBlock);
+      for (JsProgramFragment fragment : fragments) {
+        v.accept(fragment);
+      }
     }
     v.endVisit(this, ctx);
   }
