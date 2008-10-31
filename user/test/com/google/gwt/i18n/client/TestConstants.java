@@ -84,6 +84,10 @@ public interface TestConstants extends com.google.gwt.i18n.client.Constants {
   @SuppressWarnings("unchecked")
   Map mapDCBA();
 
+  Map<String, String> mapEmpty();
+
+  // Map<String, String> mapWithMissingKey();
+
   Map<String, String> mapXYZ();
 
   String[] stringArrayABCDEFG();
@@ -113,10 +117,4 @@ public interface TestConstants extends com.google.gwt.i18n.client.Constants {
   String stringJapaneseRed();
 
   String stringTrimsLeadingWhitespace();
-
-  // uncomment for desk tests
-  // Map mapWithMissingKey();
-
-  // uncomment for desk tests
-  // Map mapEmpty();
 }

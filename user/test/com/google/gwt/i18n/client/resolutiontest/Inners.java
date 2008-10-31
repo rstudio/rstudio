@@ -140,10 +140,10 @@ public class Inners {
     }
 
     /** Tests Protected Inner Class. */
-    public String testExtendsAnotherInner() {
+    public Map<String, String> testExtendsAnotherInner() {
       ExtendsAnotherInner clazz = (ExtendsAnotherInner) GWT.create(ExtendsAnotherInner.class);
-      Map answer = clazz.extendsAnotherInner();
-      return answer.toString();
+      Map<String, String> answer = clazz.extendsAnotherInner();
+      return answer;
     }
 
     /** Test for ExtendProtectedInner. */
@@ -164,7 +164,7 @@ public class Inners {
         }
 
         /** Test maps in extension. */
-        Map extendsAnotherInner();
+        Map<String, String> extendsAnotherInner();
       }
 
       /**

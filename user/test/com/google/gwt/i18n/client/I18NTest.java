@@ -20,7 +20,6 @@ import com.google.gwt.i18n.client.TestAnnotatedMessages.Nested;
 import com.google.gwt.i18n.client.gen.Colors;
 import com.google.gwt.i18n.client.gen.Shapes;
 import com.google.gwt.i18n.client.gen.TestMessages;
-import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.i18n.client.resolutiontest.Inners;
 import com.google.gwt.i18n.client.resolutiontest.Inners.ExtendsInnerInner;
 import com.google.gwt.i18n.client.resolutiontest.Inners.HasInner;
@@ -37,6 +36,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.MissingResourceException;
@@ -189,161 +189,157 @@ public class I18NTest extends GWTTestCase {
     TestConstants types = (TestConstants) GWT.create(TestConstants.class);
 
     Map<String, String> map = types.mapABCD();
-    assertEquals(4, map.size());
-    assertEquals("valueA", map.get("keyA"));
-    assertEquals("valueB", map.get("keyB"));
-    assertEquals("valueC", map.get("keyC"));
-    assertEquals("valueD", map.get("keyD"));
-
+    Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {
+        "A", "B", "C", "D"});
     assertNull(map.get("bogus"));
+    compareMapsComprehensively(map, expectedMap);
 
-    Set<String> keys = map.keySet();
-    Iterator<String> keyIter = keys.iterator();
-    assertEquals("keyA", keyIter.next());
-    assertEquals("keyB", keyIter.next());
-    assertEquals("keyC", keyIter.next());
-    assertEquals("keyD", keyIter.next());
-    assertFalse(keyIter.hasNext());
-
-    Collection<String> values = map.values();
-    Iterator<String> valueIter = values.iterator();
-    assertEquals("valueA", valueIter.next());
-    assertEquals("valueB", valueIter.next());
-    assertEquals("valueC", valueIter.next());
-    assertEquals("valueD", valueIter.next());
-    assertFalse(keyIter.hasNext());
-
+    /*
+     * Test if the returned map can be modified in any way. Things are working
+     * as expected if exceptions are thrown in each case.
+     */
+    String failureMessage = "Should have thrown UnsupportedOperationException";
+    /* test map operations */
     try {
       map.remove("keyA");
-      fail("Should have thrown UnsupportedOperationException");
+      fail(failureMessage + " on map.remove");
     } catch (UnsupportedOperationException e) {
-      // good if an exception was caught
     }
-
     try {
-      keys.clear();
-      fail("Should have thrown UnsupportedOperationException");
+      map.put("keyA", "allA");
+      fail(failureMessage + "on map.put of existing key");
     } catch (UnsupportedOperationException e) {
-      // good if an exception was caught
+    }
+    try {
+      map.put("keyZ", "allZ");
+      fail(failureMessage + "on map.put of new key");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.clear();
+      fail(failureMessage + " on map.clear");
+    } catch (UnsupportedOperationException e) {
     }
 
-    // TODO: fixme -- values are supposed to be backed by the map and should
-    // fail if modified
-    // try {
-    // Iterator nonmutableIter = keys.iterator();
-    // nonmutableIter.next();
-    // nonmutableIter.remove();
-    // fail("Should have thrown UnsupportedOperationException");
-    // } catch (UnsupportedOperationException e) {
-    // // good if an exception was caught
-    // }
+    /* test map.keySet() operations */
+    try {
+      map.keySet().add("keyZ");
+      fail(failureMessage + " on map.keySet().add");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.keySet().remove("keyA");
+      fail(failureMessage + " on map.keySet().remove");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.keySet().clear();
+      fail(failureMessage + " on map.keySet().clear");
+    } catch (UnsupportedOperationException e) {
+    }
+
+    /* test map.values() operations */
+    try {
+      map.values().add("valueZ");
+      fail(failureMessage + " on map.values().add");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.values().remove("valueA");
+      fail(failureMessage + " on map.values().clear()");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.values().clear();
+      fail(failureMessage + " on map.values().clear()");
+    } catch (UnsupportedOperationException e) {
+    }
+
+    /* test map.entrySet() operations */
+    Map.Entry<String, String> firstEntry = map.entrySet().iterator().next();
+    try {
+      map.entrySet().clear();
+      fail(failureMessage + "on map.entrySet().clear");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.entrySet().remove(firstEntry);
+      fail(failureMessage + " on map.entrySet().remove");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.entrySet().add(firstEntry);
+      fail(failureMessage + "on map.entrySet().add");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      firstEntry.setValue("allZ");
+      fail(failureMessage + "on firstEntry.setValue");
+    } catch (UnsupportedOperationException e) {
+    }
+    try {
+      map.clear();
+      fail(failureMessage + " on map.clear");
+    } catch (UnsupportedOperationException e) {
+    }
   }
 
   /**
-   * Tests focus on just the key order, since ABCD exercises the map.
+   * Tests exercise the cache.
    */
   public void testConstantMapBACD() {
     TestConstants types = (TestConstants) GWT.create(TestConstants.class);
-
-    ConstantMap map = (ConstantMap) types.mapBACD();
-
-    Set<String> keys = map.keySet();
-    Iterator<String> keyIter = keys.iterator();
-    assertEquals("keyB", keyIter.next());
-    assertEquals("keyA", keyIter.next());
-    assertEquals("keyC", keyIter.next());
-    assertEquals("keyD", keyIter.next());
-
-    Collection<String> values = map.values();
-    Iterator<String> valueIter = values.iterator();
-    assertEquals("valueB", valueIter.next());
-    assertEquals("valueA", valueIter.next());
-    assertEquals("valueC", valueIter.next());
-    assertEquals("valueD", valueIter.next());
+    Map<String, String> map = types.mapBACD();
+    Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {
+        "B", "A", "C", "D"});
+    compareMapsComprehensively(map, expectedMap);
   }
 
   /**
-   * Tests focus on correctness of entries, since ABCD exercises the map.
+   * Tests exercise the cache.
    */
   public void testConstantMapBBB() {
     TestConstants types = (TestConstants) GWT.create(TestConstants.class);
-
-    ConstantMap map = (ConstantMap) types.mapBBB();
-
-    assertEquals(1, map.size());
-
-    Set<String> keys = map.keySet();
-    assertEquals(1, keys.size());
-    Iterator<String> keyIter = keys.iterator();
-    assertEquals("keyB", keyIter.next());
-
-    Collection<String> values = map.values();
-    assertEquals(1, values.size());
-    Iterator<String> valueIter = values.iterator();
-    assertEquals("valueB", valueIter.next());
+    Map<String, String> map = types.mapBBB();
+    Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {"B"});
+    compareMapsComprehensively(map, expectedMap);
   }
 
   /**
-   * Tests focus on just the key order, since ABCD exercises the map.
+   * Tests exercise the cache and check if Map works as the declared return
+   * type.
    */
-  public void testConstantMapDBCA() {
+  @SuppressWarnings("unchecked")
+  public void testConstantMapDCBA() {
     TestConstants types = (TestConstants) GWT.create(TestConstants.class);
-
-    ConstantMap map = (ConstantMap) types.mapDCBA();
-
-    Set<String> keys = map.keySet();
-    Iterator<String> keyIter = keys.iterator();
-    assertEquals("keyD", keyIter.next());
-    assertEquals("keyC", keyIter.next());
-    assertEquals("keyB", keyIter.next());
-    assertEquals("keyA", keyIter.next());
-
-    Collection<String> values = map.values();
-    Iterator<String> valueIter = values.iterator();
-    assertEquals("valueD", valueIter.next());
-    assertEquals("valueC", valueIter.next());
-    assertEquals("valueB", valueIter.next());
-    assertEquals("valueA", valueIter.next());
+    Map<String, String> map = types.mapDCBA();
+    Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {
+        "D", "C", "B", "A"});
+    compareMapsComprehensively(map, expectedMap);
   }
 
   /**
    * Tests focus on correctness of entries, since ABCD exercises the map.
    */
+  public void testConstantMapEmpty() {
+    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    Map<String, String> map = types.mapEmpty();
+    Map<String, String> expectedMap = new HashMap<String, String>();
+    compareMapsComprehensively(map, expectedMap);
+  }
+
+  /**
+   * Tests exercise the cache and check if Map works as the declared return
+   * type.
+   */
   public void testConstantMapXYZ() {
     TestConstants types = (TestConstants) GWT.create(TestConstants.class);
-
-    ConstantMap map = (ConstantMap) types.mapXYZ();
-
-    assertEquals(3, map.size());
-
-    Set<String> keys = map.keySet();
-    assertEquals(3, keys.size());
-    Iterator<String> keyIter = keys.iterator();
-    assertEquals("keyX", keyIter.next());
-    assertEquals("keyY", keyIter.next());
-    assertEquals("keyZ", keyIter.next());
-
-    Collection<String> values = map.values();
-    assertEquals(3, values.size());
-    Iterator<String> valueIter = values.iterator();
-    assertEquals("valueZ", valueIter.next());
-    assertEquals("valueZ", valueIter.next());
-    assertEquals("valueZ", valueIter.next());
-
-    Set<Map.Entry<String, String>> entries = map.entrySet();
-    assertEquals(3, entries.size());
-    Iterator<Map.Entry<String, String>> entryIter = entries.iterator();
-    Map.Entry<String, String> entry;
-
-    entry = entryIter.next();
-    assertEquals("keyX", entry.getKey());
-    assertEquals("valueZ", entry.getValue());
-    entry = entryIter.next();
-    assertEquals("keyY", entry.getKey());
-    assertEquals("valueZ", entry.getValue());
-    entry = entryIter.next();
-    assertEquals("keyZ", entry.getKey());
-    assertEquals("valueZ", entry.getValue());
+    Map<String, String> map = types.mapXYZ();
+    Map<String, String> expectedMap = new HashMap<String, String>();
+    expectedMap.put("keyX", "valueZ");
+    expectedMap.put("keyY", "valueZ");
+    expectedMap.put("keyZ", "valueZ");
+    compareMapsComprehensively(map, expectedMap);
   }
 
   public void testConstantStringArrays() {
@@ -451,28 +447,6 @@ public class I18NTest extends GWTTestCase {
     assertEquals(Integer.MIN_VALUE, types.intMin());
   }
 
-  // Uncomment for desk tests
-  // /**
-  // * Tests focus on correctness of entries, since ABCD exercises the map.
-  // */
-  // public void testConstantMapEmpty() {
-  // TestConstants types = (TestConstants) GWT.create(TestConstants.class);
-  //
-  // ConstantMap map = (ConstantMap) types.mapEmpty();
-  //
-  // assertEquals(0, map.size());
-  //
-  // Set keys = map.keySet();
-  // assertEquals(0, keys.size());
-  // Iterator keyIter = keys.iterator();
-  // assertFalse(keyIter.hasNext());
-  //
-  // Collection values = map.values();
-  // assertEquals(0, values.size());
-  // Iterator valueIter = values.iterator();
-  // assertFalse(valueIter.hasNext());
-  // }
-
   public void testLocalizableInner() {
     // Check simple inner
     LocalizableSimpleInner s = (LocalizableSimpleInner) GWT.create(Inners.LocalizableSimpleInner.class);
@@ -522,8 +496,9 @@ public class I18NTest extends GWTTestCase {
 
     // Protected InnerClass
     InnerClass innerClass = new Inners.InnerClass();
-    String extendsAnotherInner = innerClass.testExtendsAnotherInner();
-    assertEquals("{innerInner=4.321, outer=outer}", extendsAnotherInner);
+    Map<String, String> extendsAnotherInner = innerClass.testExtendsAnotherInner();
+    assertEquals("4.321", extendsAnotherInner.get("innerInner"));
+    assertEquals("outer", extendsAnotherInner.get("outer"));
 
     // ExtendProtectedInner
     String extendProtectedInner = innerClass.testExtendsProtectedInner();
@@ -588,6 +563,47 @@ public class I18NTest extends GWTTestCase {
     }
   }
 
+  private <T> boolean compare(Collection<T> collection1,
+      Collection<T> collection2) {
+    if (collection1 == null) {
+      return (collection2 == null);
+    }
+    if (collection2 == null) {
+      return false;
+    }
+    if (collection1.size() != collection2.size()) {
+      return false;
+    }
+    for (T element1 : collection1) {
+      boolean found = false;
+      for (T element2 : collection2) {
+        if (element1.equals(element2)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  // compare the map, entrySet, keySet, and values
+  private void compareMapsComprehensively(Map<String, String> map,
+      Map<String, String> expectedMap) {
+    // checking both directions to verify that the equals implementation is
+    // correct both ways
+    assertEquals(expectedMap, map);
+    assertEquals(map, expectedMap);
+    assertEquals(expectedMap.entrySet(), map.entrySet());
+    assertEquals(map.entrySet(), expectedMap.entrySet());
+    assertEquals(expectedMap.keySet(), map.keySet());
+    assertEquals(map.keySet(), expectedMap.keySet());
+    assertTrue(compare(expectedMap.values(), map.values()));
+    assertTrue(compare(map.values(), expectedMap.values()));
+  }
+
   private native void createDummyDictionaries() /*-{
     $wnd.testDic = new Object();
     $wnd.testDic.formattedMessage = "3 {2},{2},{2}, one {0}, two {1} {1}";
@@ -597,4 +613,12 @@ public class I18NTest extends GWTTestCase {
     $wnd.emptyDic = new Object();
     $wnd.malformedDic = 4;
   }-*/;
+
+  private Map<String, String> getMapFromArrayUsingASimpleRule(String array[]) {
+    Map<String, String> map = new HashMap<String, String>();
+    for (String str : array) {
+      map.put("key" + str, "value" + str);
+    }
+    return map;
+  }
 }

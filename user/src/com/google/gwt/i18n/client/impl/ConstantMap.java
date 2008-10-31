@@ -15,137 +15,112 @@
  */
 package com.google.gwt.i18n.client.impl;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import com.google.gwt.core.client.JavaScriptObject;
+
+import java.util.AbstractMap;
+import java.util.AbstractSet;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Read only Map used when returning <code>Constants</code> maps. Preserves
- * order. ConstantMap should only be created or modified by GWT, as constant
- * maps are constructed using a very stereotyped algorithm, which allows
- * <code>ConstantMap</code> to maintain order with very little code. In
- * specific, no elements are every removed from them and all elements are added
- * before the first user operation.
+ * Map used when creating <code>Constants</code> maps. This class is to be
+ * used only by the GWT code. The map is immediately wrapped in
+ * Collections.unmodifiableMap(..) preventing any changes after construction.
  */
-public class ConstantMap extends HashMap<String, String> {
+public class ConstantMap extends AbstractMap<String, String> {
 
-  private static class DummyMapEntry implements Map.Entry<String, String> {
-    private final String key;
+  /**
+   * A cache of a synthesized entry set.
+   */
+  private Set<Map.Entry<String, String>> entries;
 
-    private final String value;
+  /**
+   * The original set of keys.
+   */
+  private final String[] keys;
 
-    DummyMapEntry(String key, String value) {
-      this.key = key;
-      this.value = value;
-    }
+  /*
+   * Stores a fast lookup in a JSO using ':' to prevent conflict with built-in
+   * JavaScript properties.
+   */
+  @SuppressWarnings("unused")
+  private JavaScriptObject map;
 
-    public String getKey() {
-      return key;
-    }
+  public ConstantMap(String keys[], String values[]) {
+    this.keys = keys;
 
-    public String getValue() {
-      return value;
-    }
+    init();
 
-    public String setValue(String arg0) {
-      throw new UnsupportedOperationException();
-    }
-  }
-
-  private class OrderedConstantSet<T> extends ArrayList<T> implements Set<T> {
-    private class ImmutableIterator implements Iterator<T> {
-      private final Iterator<T> base;
-
-      ImmutableIterator(Iterator<T> base) {
-        this.base = base;
-      }
-
-      public boolean hasNext() {
-        return base.hasNext();
-      }
-
-      public T next() {
-        return base.next();
-      }
-
-      public void remove() {
-        throw new UnsupportedOperationException("Immutable set");
-      }
-    }
-
-    @Override
-    public void clear() {
-      throw new UnsupportedOperationException("Immutable set");
-    }
-
-    @Override
-    public Iterator<T> iterator() {
-      Iterator<T> base = super.iterator();
-      return new ImmutableIterator(base);
+    for (int i = 0; i < keys.length; ++i) {
+      putImpl(keys[i], values[i]);
     }
   }
-
-  private OrderedConstantSet<Map.Entry<String, String>> entries;
-
-  private final OrderedConstantSet<String> keys = new OrderedConstantSet<String>();
-
-  private OrderedConstantSet<String> values;
 
   @Override
-  public void clear() {
-    throw unsupported("clear");
+  public boolean containsKey(Object key) {
+    return get(key) != null;
   }
 
   @Override
   public Set<Map.Entry<String, String>> entrySet() {
     if (entries == null) {
-      entries = new OrderedConstantSet<Map.Entry<String, String>>();
-      for (int i = 0; i < keys.size(); i++) {
-        String key = keys.get(i);
-        String value = get(key);
-        entries.add(new DummyMapEntry(key, value));
+      Map<String, String> copy = new HashMap<String, String>();
+      for (String key : keys) {
+        copy.put(key, get(key));
       }
+      entries = Collections.unmodifiableMap(copy).entrySet();
     }
     return entries;
   }
 
   @Override
+  public String get(Object key) {
+    return (key instanceof String) ? get((String) key) : null;
+  }
+
+  public native String get(String key) /*-{
+    // Prepend ':' to avoid conflicts with built-in Object properties.
+    return this.@com.google.gwt.i18n.client.impl.ConstantMap::map[':' + key];
+  }-*/;
+
+  @Override
   public Set<String> keySet() {
-    return keys;
-  }
-
-  @Override
-  public String put(String key, String value) {
-    // We may want to find a more efficient implementation later.
-    boolean exists = keys.contains(key);
-    if (!exists) {
-      keys.add(key);
-    }
-    return super.put(key, value);
-  }
-
-  @Override
-  public String remove(Object key) {
-    throw unsupported("remove");
-  }
-
-  @Override
-  public Collection<String> values() {
-    if (values == null) {
-      values = new OrderedConstantSet<String>();
-      for (int i = 0; i < keys.size(); i++) {
-        Object element = keys.get(i);
-        values.add(this.get(element));
+    return new AbstractSet<String>() {
+      @Override
+      public boolean contains(Object o) {
+        return containsKey(o);
       }
-    }
-    return values;
+
+      @Override
+      public Iterator<String> iterator() {
+        return Arrays.asList(keys).iterator();
+      }
+
+      @Override
+      public int size() {
+        return ConstantMap.this.size();
+      }
+    };
   }
 
-  private UnsupportedOperationException unsupported(String operation) {
-    return new UnsupportedOperationException(operation
-        + " not supported on a constant map");
+  @Override
+  public int size() {
+    return keys.length;
   }
+
+  /**
+   * Overridable for testing purposes, see ConstantMapTest.
+   */
+  protected void init() {
+    map = JavaScriptObject.createObject();
+  }
+
+  protected native void putImpl(String key, String value) /*-{
+    // Prepend ':' to avoid conflicts with built-in Object properties.
+    this.@com.google.gwt.i18n.client.impl.ConstantMap::map[':' + key] = value;
+  }-*/;
 }
