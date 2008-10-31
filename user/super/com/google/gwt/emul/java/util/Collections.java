@@ -227,7 +227,10 @@ public class Collections {
       }
     }
 
+    private transient UnmodifiableSet<Map.Entry<K, V>> entrySet;
+    private transient UnmodifiableSet<K> keySet;
     private final Map<? extends K, ? extends V> map;
+    private transient UnmodifiableCollection<V> values;
 
     public UnmodifiableMap(Map<? extends K, ? extends V> map) {
       this.map = map;
@@ -246,7 +249,10 @@ public class Collections {
     }
 
     public Set<Map.Entry<K, V>> entrySet() {
-      return new UnmodifiableEntrySet<K, V>(map.entrySet());
+      if (entrySet == null) {
+        entrySet = new UnmodifiableEntrySet<K, V>(map.entrySet());
+      }
+      return entrySet;
     }
 
     public boolean equals(Object o) {
@@ -266,7 +272,10 @@ public class Collections {
     }
 
     public Set<K> keySet() {
-      return unmodifiableSet(map.keySet());
+      if (keySet == null) {
+        keySet = new UnmodifiableSet<K>(map.keySet());
+      }
+      return keySet;
     }
 
     public V put(K key, V value) {
@@ -290,7 +299,10 @@ public class Collections {
     }
 
     public Collection<V> values() {
-      return unmodifiableCollection(map.values());
+      if (values == null) {
+        values = new UnmodifiableCollection<V>(map.values());
+      }
+      return values;
     }
   }
 
