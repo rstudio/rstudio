@@ -425,8 +425,8 @@ public class GWTShellServlet extends HttpServlet {
       }
 
       if (foundResource == null) {
-        // Look for generated files
-        File shellDir = getShellWorkDirs().getShellWorkDir(moduleDef);
+        // Look for public generated files
+        File shellDir = getShellWorkDirs().getShellPublicGenDir(moduleDef);
         File requestedFile = new File(shellDir, partialPath);
         if (requestedFile.exists()) {
           try {

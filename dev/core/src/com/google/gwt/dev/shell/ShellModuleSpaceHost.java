@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.shell.StandardRebindOracle.ArtifactAcceptor;
 
 import java.io.File;
 
@@ -35,6 +34,8 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   protected final TypeOracle typeOracle;
 
+  private final ArtifactAcceptor artifactAcceptor;
+
   private CompilingClassLoader classLoader;
 
   private final TreeLogger logger;
@@ -42,8 +43,6 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
   private final ModuleDef module;
 
   private StandardRebindOracle rebindOracle;
-
-  private final GWTShellServletFilter servletFilter;
 
   private final File shellDir;
 
@@ -55,13 +54,13 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
       ModuleDef module, File genDir, File shellDir,
-      GWTShellServletFilter servletFilter) {
+      ArtifactAcceptor artifactAcceptor) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
     this.genDir = genDir;
     this.shellDir = shellDir;
-    this.servletFilter = servletFilter;
+    this.artifactAcceptor = artifactAcceptor;
   }
 
   public CompilingClassLoader getClassLoader() {
@@ -109,19 +108,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
         module.getCompilationState(), readySpace);
   }
 
-  public String rebind(final TreeLogger rebindLogger, String sourceTypeName)
+  public String rebind(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException {
     checkForModuleSpace();
-
-    ArtifactAcceptor artifactAcceptor = (servletFilter == null) ? null
-        : new ArtifactAcceptor() {
-          public void accept(ArtifactSet newlyGeneratedArtifacts)
-              throws UnableToCompleteException {
-            servletFilter.relink(rebindLogger, module, newlyGeneratedArtifacts);
-          }
-        };
-
-    return rebindOracle.rebind(rebindLogger, sourceTypeName, artifactAcceptor);
+    return rebindOracle.rebind(logger, sourceTypeName, new ArtifactAcceptor() {
+      public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+          throws UnableToCompleteException {
+        artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+      }
+    });
   }
 
   private void checkForModuleSpace() {

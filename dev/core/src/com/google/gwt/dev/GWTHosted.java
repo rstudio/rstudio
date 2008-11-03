@@ -17,12 +17,12 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.GWTShellServletFilter;
 import com.google.gwt.dev.shell.ServletContainer;
-import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -133,10 +133,13 @@ public class GWTHosted extends GWTShell {
   }
 
   @Override
-  protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef) {
-    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef,
-        options.getGenDir(), options.getShellWorkDir(moduleDef), servletFilter);
+  protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
+    return new ArtifactAcceptor() {
+      public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+          throws UnableToCompleteException {
+        servletFilter.relink(logger, module, newlyGeneratedArtifacts);
+      }
+    };
   }
 
   @Override

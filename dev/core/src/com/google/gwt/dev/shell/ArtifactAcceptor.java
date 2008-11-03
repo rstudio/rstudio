@@ -15,22 +15,18 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.cfg.ModuleDef;
-
-import java.io.File;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 
 /**
- * Provides information about work directories.
+ * A callback interface to be notified when new resources are generated.
+ * 
  */
-public interface WorkDirs {
+public interface ArtifactAcceptor {
   /**
-   * Gets the compiler output directory for a particular module.
+   * Called whenever new artifacts are generated.
    */
-  File getCompilerOutputDir(ModuleDef moduleDef);
-
-  /**
-   * Gets the shell work directory for public generated files for a particular
-   * module.
-   */
-  File getShellPublicGenDir(ModuleDef moduleDef);
+  void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+      throws UnableToCompleteException;
 }

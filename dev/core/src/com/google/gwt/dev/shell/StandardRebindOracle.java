@@ -41,18 +41,6 @@ import java.util.Set;
 public class StandardRebindOracle implements RebindOracle {
 
   /**
-   * A call-back interface to be notified when new types are generated.
-   * 
-   */
-  public interface ArtifactAcceptor {
-    /**
-     * Called if new artifacts are generated.
-     */
-    void accept(ArtifactSet newlyGeneratedArtifacts)
-        throws UnableToCompleteException;
-  }
-
-  /**
    * Makes the actual deferred binding decision by examining rules.
    */
   private final class Rebinder {
@@ -74,7 +62,7 @@ public class StandardRebindOracle implements RebindOracle {
       String result = tryRebind(logger, typeName);
       ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
       if (!newlyGeneratedArtifacts.isEmpty() && artifactAcceptor != null) {
-        artifactAcceptor.accept(newlyGeneratedArtifacts);
+        artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
       }
       if (result == null) {
         result = typeName;

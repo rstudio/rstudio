@@ -18,10 +18,13 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
@@ -32,6 +35,7 @@ import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -223,8 +227,23 @@ public class GWTShell extends ToolBase {
       return new File(getOutDir(), moduleDef.getDeployTo());
     }
 
-    public File getShellWorkDir(ModuleDef moduleDef) {
+    public File getShellPublicGenDir(ModuleDef moduleDef) {
+      return new File(getShellBaseWorkDir(moduleDef), "public");
+    }
+
+    /**
+     * The base shell work directory.
+     */
+    protected File getShellBaseWorkDir(ModuleDef moduleDef) {
       return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
+    }
+
+    /**
+     * Where generated files go by default until we are sure they are public;
+     * then they are copied into {@link #getShellPublicGenDir(ModuleDef)}.
+     */
+    protected File getShellPrivateGenDir(ModuleDef moduleDef) {
+      return new File(getShellBaseWorkDir(moduleDef), "gen");
     }
   }
 
@@ -590,6 +609,26 @@ public class GWTShell extends ToolBase {
     new GWTCompiler(newOptions).run(logger);
   }
 
+  protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
+    return new ArtifactAcceptor() {
+      public void accept(TreeLogger logger, ArtifactSet artifacts)
+          throws UnableToCompleteException {
+
+        /*
+         * Copied from StandardLinkerContext.produceOutputDirectory() for legacy
+         * GWTShellServlet support.
+         */
+        for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
+          if (!artifact.isPrivate()) {
+            File outFile = new File(options.getShellPublicGenDir(module),
+                artifact.getPartialPath());
+            Util.copy(logger, artifact.getContents(logger), outFile);
+          }
+        }
+      }
+    };
+  }
+
   /**
    * Creates an instance of ShellModuleSpaceHost (or a derived class) using the
    * specified constituent parts. This method is made to be overridden for
@@ -603,8 +642,11 @@ public class GWTShell extends ToolBase {
    */
   protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
       TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef) {
+    // Clear out the shell temp directory.
+    Util.recursiveDelete(options.getShellBaseWorkDir(moduleDef), true);
     return new ShellModuleSpaceHost(logger, typeOracle, moduleDef,
-        options.getGenDir(), options.getShellWorkDir(moduleDef), null);
+        options.getGenDir(), options.getShellPrivateGenDir(moduleDef),
+        doCreateArtifactAcceptor(moduleDef));
   }
 
   /**

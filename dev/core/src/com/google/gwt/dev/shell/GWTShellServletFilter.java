@@ -116,8 +116,8 @@ public class GWTShellServletFilter implements Filter {
   /**
    * Called when new generated artifacts are produced.
    */
-  void relink(TreeLogger logger, ModuleDef moduleDef, ArtifactSet newArtifacts)
-      throws UnableToCompleteException {
+  public void relink(TreeLogger logger, ModuleDef moduleDef,
+      ArtifactSet newArtifacts) throws UnableToCompleteException {
     StandardLinkerContext context = linkerContextsByModule.get(moduleDef);
     assert context != null;
 

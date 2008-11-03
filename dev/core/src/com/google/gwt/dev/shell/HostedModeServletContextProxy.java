@@ -182,8 +182,8 @@ class HostedModeServletContextProxy implements ServletContext {
       return publicResource.getURL();
     }
 
-    // Otherwise try the path but rooted in the shell's output directory
-    File shellDir = workDirs.getShellWorkDir(moduleDef);
+    // Otherwise try the path in the shell's public generated directory
+    File shellDir = workDirs.getShellPublicGenDir(moduleDef);
     File requestedFile = new File(shellDir, partialPath);
     if (requestedFile.exists()) {
       return requestedFile.toURI().toURL();
