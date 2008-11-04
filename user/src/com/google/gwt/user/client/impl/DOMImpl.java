@@ -33,16 +33,16 @@ public abstract class DOMImpl {
    */
   protected static boolean isMyListener(Object object) {
     /*
-     * The first test ensures the Object belongs to this module in hosted mode,
-     * because this hosted mode class loader will have a different copy of the
-     * EventListener class than some other module would have.
+     * The first test ensures the Object belongs to this module in web mode by
+     * ensuring this is not a JavaScriptObject. In web mode, foreign Java
+     * objects appear to be JavaScriptObject. See Cast.isJavaScriptObject().
      * 
-     * However, in web mode we could still get a collision where another module
-     * happens to use the same typeId. The second test ensures the Object is not
-     * "foreign". See Cast.isJavaScriptObject().
+     * The second test then checks the exact type.
+     * 
+     * TODO: make the generated code smaller!
      */
-    return object instanceof com.google.gwt.user.client.EventListener
-        && !(object instanceof JavaScriptObject);
+    return !(object instanceof JavaScriptObject)
+        && (object instanceof com.google.gwt.user.client.EventListener);
   }
 
   public native void eventCancelBubble(Event evt, boolean cancel) /*-{
