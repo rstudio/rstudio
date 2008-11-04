@@ -7,9 +7,9 @@
   <property name="target" value="build" />
 
   <property name="gwt.apicheck.config" 
-    location="tools/api-checker/config/gwt14_15userApi.conf"/>
+    location="tools/api-checker/config/gwt15_16userApi.conf"/>
   <property name="gwt.apicheck.oldroot" 
-    location="../gwt-1.4"/>
+    location="../gwt-1.5"/>
 
   <target name="dist" depends="dev, user, servlet, tools, jni, doc, samples" description="Run the distributions">
     <gwt.ant dir="distro-source" />

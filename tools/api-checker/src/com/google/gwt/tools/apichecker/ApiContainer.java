@@ -201,6 +201,10 @@ public final class ApiContainer {
     return logger;
   }
 
+  String getName() {
+    return name;
+  }
+  
   boolean isApiClass(JClassType classType) {
     Boolean ret = apiClassCache.get(classType);
     if (ret != null) {
@@ -264,8 +268,13 @@ public final class ApiContainer {
         String pkgName = null;
         if (file.getName().endsWith("java")) {
           pkgName = extractPackageNameFromFile(file);
-          logger.log(TreeLogger.DEBUG, "adding pkgName = " + pkgName
-              + ", file = " + file.toString(), null);
+          if (pkgName == null) {
+            logger.log(TreeLogger.WARN, "Not adding file = "
+                + file.toString() + ", because packageName = null", null);
+          } else {
+            logger.log(TreeLogger.DEBUG, "adding pkgName = " + pkgName
+                + ", file = " + file.toString(), null);
+          }
         }
         if (isValidPackage(pkgName, sourcePathEntry.toURL().toString())) {
           // Add if it's a source file and the package and fileNames are okay
