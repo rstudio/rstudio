@@ -119,12 +119,13 @@ public class RemoteServiceServlet extends HttpServlet implements
 
     if (serializationPolicy == null) {
       // Failed to get the requested serialization policy; use the default
-      getServletContext().log(
+      log(
           "WARNING: Failed to get the SerializationPolicy '"
               + strongName
               + "' for module '"
               + moduleBaseURL
-              + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.");
+              + "'; a legacy, 1.3.3 compatible, serialization policy will be used.  You may experience SerializationExceptions as a result.",
+          null);
       serializationPolicy = RPC.getDefaultSerializationPolicy();
     }
 
@@ -164,7 +165,7 @@ public class RemoteServiceServlet extends HttpServlet implements
       return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
           rpcRequest.getParameters(), rpcRequest.getSerializationPolicy());
     } catch (IncompatibleRemoteServiceException ex) {
-      getServletContext().log(
+      log(
           "An IncompatibleRemoteServiceException was thrown while processing this call.",
           ex);
       return RPC.encodeResponseForFailure(null, ex);
@@ -197,7 +198,7 @@ public class RemoteServiceServlet extends HttpServlet implements
         modulePath = new URL(moduleBaseURL).getPath();
       } catch (MalformedURLException ex) {
         // log the information, we will default
-        getServletContext().log("Malformed moduleBaseURL: " + moduleBaseURL, ex);
+        log("Malformed moduleBaseURL: " + moduleBaseURL, ex);
       }
     }
 
@@ -214,7 +215,7 @@ public class RemoteServiceServlet extends HttpServlet implements
           + ", is not in the same web application as this servlet, "
           + contextPath
           + ".  Your module may not be properly configured or your client and server code maybe out of date.";
-      getServletContext().log(message);
+      log(message, null);
     } else {
       // Strip off the context path from the module base URL. It should be a
       // strict prefix.
@@ -232,19 +233,17 @@ public class RemoteServiceServlet extends HttpServlet implements
             serializationPolicy = SerializationPolicyLoader.loadFromStream(is,
                 null);
           } catch (ParseException e) {
-            getServletContext().log(
-                "ERROR: Failed to parse the policy file '"
-                    + serializationPolicyFilePath + "'", e);
+            log("ERROR: Failed to parse the policy file '"
+                + serializationPolicyFilePath + "'", e);
           } catch (IOException e) {
-            getServletContext().log(
-                "ERROR: Could not read the policy file '"
-                    + serializationPolicyFilePath + "'", e);
+            log("ERROR: Could not read the policy file '"
+                + serializationPolicyFilePath + "'", e);
           }
         } else {
           String message = "ERROR: The serialization policy file '"
               + serializationPolicyFilePath
               + "' was not found; did you forget to include it in this deployment?";
-          getServletContext().log(message);
+          log(message, null);
         }
       } finally {
         if (is != null) {
@@ -324,7 +323,7 @@ public class RemoteServiceServlet extends HttpServlet implements
    * Override this method in order to control the parsing of the incoming
    * request. For example, you may want to bypass the check of the Content-Type
    * and character encoding headers in the request, as some proxies re-write the
-   * request headers.  Note that bypassing these checks may expose the servlet to
+   * request headers. Note that bypassing these checks may expose the servlet to
    * some cross-site vulnerabilities.
    * 
    * @param request the incoming request

@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
-import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
@@ -117,7 +116,7 @@ public class GWTShellServlet extends HttpServlet {
 
   private int nextRequestId;
 
-  private File outDir;
+  private WorkDirs workDirs;
 
   private final Object requestIdLock = new Object();
 
@@ -426,9 +425,8 @@ public class GWTShellServlet extends HttpServlet {
       }
 
       if (foundResource == null) {
-        // Look for generated files
-        File shellDir = new File(getOutputDir(), GWTShell.GWT_SHELL_PATH
-            + File.separator + moduleName);
+        // Look for public generated files
+        File shellDir = getShellWorkDirs().getShellPublicGenDir(moduleDef);
         File requestedFile = new File(shellDir, partialPath);
         if (requestedFile.exists()) {
           try {
@@ -441,11 +439,10 @@ public class GWTShellServlet extends HttpServlet {
 
       /*
        * If the user is coming from compiled web-mode, check the linker output
-       * directory for the real bootstrap file. We'll default to using the
-       * output directory of the first linker defined in the <set-linker> tab.
+       * directory for the real bootstrap file.
        */
       if (foundResource == null) {
-        File moduleDir = new File(getOutputDir(), moduleName);
+        File moduleDir = getShellWorkDirs().getCompilerOutputDir(moduleDef);
         File requestedFile = new File(moduleDir, partialPath);
         if (requestedFile.exists()) {
           try {
@@ -617,19 +614,19 @@ public class GWTShellServlet extends HttpServlet {
     }
   }
 
-  private synchronized File getOutputDir() {
-    if (outDir == null) {
-      ServletContext servletContext = getServletContext();
-      final String attr = "com.google.gwt.dev.shell.outdir";
-      outDir = (File) servletContext.getAttribute(attr);
-      assert (outDir != null);
-    }
-    return outDir;
-  }
-
   @SuppressWarnings("unchecked")
   private Map<String, String[]> getParameterMap(HttpServletRequest request) {
     return request.getParameterMap();
+  }
+
+  private synchronized WorkDirs getShellWorkDirs() {
+    if (workDirs == null) {
+      ServletContext servletContext = getServletContext();
+      final String attr = "com.google.gwt.dev.shell.workdirs";
+      workDirs = (WorkDirs) servletContext.getAttribute(attr);
+      assert (workDirs != null);
+    }
+    return workDirs;
   }
 
   private String guessMimeType(String fullPath) {
@@ -951,7 +948,7 @@ public class GWTShellServlet extends HttpServlet {
         // ServeletContext.getResourceAsStream()
         //
         ServletContext context = new HostedModeServletContextProxy(
-            getServletContext(), moduleDef, getOutputDir());
+            getServletContext(), moduleDef, getShellWorkDirs());
         ServletConfig config = new HostedModeServletConfigProxy(
             getServletConfig(), context);
 

@@ -43,6 +43,8 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
+import com.google.gwt.dev.util.arg.OptionGenDir;
+import com.google.gwt.dev.util.arg.OptionValidateOnly;
 
 import java.io.File;
 import java.util.HashSet;
@@ -57,8 +59,15 @@ import java.util.TreeMap;
  */
 public class Precompile {
 
-  static class ArgProcessor extends Link.ArgProcessor {
-    public ArgProcessor(CompilerOptions options) {
+  /**
+   * The set of options for the precompiler.
+   */
+  public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
+      OptionGenDir, OptionValidateOnly {
+  }
+
+  static class ArgProcessor extends CompileArgProcessor {
+    public ArgProcessor(PrecompileOptions options) {
       super(options);
       registerHandler(new ArgHandlerGenDir(options));
       registerHandler(new ArgHandlerScriptStyle(options));
@@ -72,32 +81,27 @@ public class Precompile {
       return Precompile.class.getName();
     }
   }
-  /**
-   * Concrete class to implement all compiler options.
-   */
-  static class CompilerOptionsImpl extends CompileTaskOptionsImpl implements
-      CompilerOptions {
 
+  static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
+      PrecompileOptions {
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
     private boolean validateOnly;
 
-    public CompilerOptionsImpl() {
+    public PrecompileOptionsImpl() {
     }
 
-    public CompilerOptionsImpl(CompilerOptions other) {
+    public PrecompileOptionsImpl(PrecompileOptions other) {
       copyFrom(other);
     }
 
-    public void copyFrom(CompilerOptions other) {
+    public void copyFrom(PrecompileOptions other) {
       super.copyFrom(other);
+
+      jjsOptions.copyFrom(other);
 
       setGenDir(other.getGenDir());
       setValidateOnly(other.isValidateOnly());
-
-      setAggressivelyOptimize(other.isAggressivelyOptimize());
-      setEnableAssertions(other.isEnableAssertions());
-      setOutput(other.getOutput());
     }
 
     public File getGenDir() {
@@ -218,7 +222,7 @@ public class Precompile {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    final CompilerOptions options = new CompilerOptionsImpl();
+    final PrecompileOptions options = new PrecompileOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -331,14 +335,12 @@ public class Precompile {
     }
   }
 
-  private File generatorResourcesDir;
-
   private ModuleDef module;
 
-  private final CompilerOptionsImpl options;
+  private final PrecompileOptionsImpl options;
 
-  public Precompile(CompilerOptions options) {
-    this.options = new CompilerOptionsImpl(options);
+  public Precompile(PrecompileOptions options) {
+    this.options = new PrecompileOptionsImpl(options);
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -347,7 +349,7 @@ public class Precompile {
       TreeLogger branch = logger.branch(TreeLogger.INFO,
           "Validating compilation " + module.getName());
       if (validate(branch, options, module, options.getGenDir(),
-          generatorResourcesDir)) {
+          options.getCompilerWorkDir())) {
         branch.log(TreeLogger.INFO, "Validation succeeded");
         return true;
       } else {
@@ -359,7 +361,7 @@ public class Precompile {
       TreeLogger branch = logger.branch(TreeLogger.INFO, "Precompiling module "
           + module.getName());
       Precompilation precompilation = precompile(branch, options, module,
-          options.getGenDir(), generatorResourcesDir);
+          options.getGenDir(), options.getCompilerWorkDir());
       if (precompilation != null) {
         Util.writeObjectAsFile(branch, new File(options.getCompilerWorkDir(),
             PRECOMPILATION_FILENAME), precompilation);
@@ -384,10 +386,6 @@ public class Precompile {
 
     this.module = ModuleDefLoader.loadFromClassPath(logger,
         options.getModuleName());
-
-    // Place generated resources inside the work dir.
-    generatorResourcesDir = new File(compilerWorkDir, "generated");
-    generatorResourcesDir.mkdirs();
 
     // TODO: All JDT checks now before even building TypeOracle?
     module.getCompilationState().compile(logger);

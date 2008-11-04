@@ -23,100 +23,98 @@ import java.util.Map;
  */
 public interface TestConstants extends com.google.gwt.i18n.client.Constants {
 
-  /**
-   * @gwt.key string
-   */
-  String getString();
+  boolean booleanFalse();
 
-  String stringTrimsLeadingWhitespace();
-
-  String stringDoesNotTrimTrailingThreeSpaces();
-
-  String stringEmpty();
-
-  String stringJapaneseRed();
-
-  String stringJapaneseGreen();
-
-  String stringJapaneseBlue();
-
-  int intZero();
-
-  int intOne();
-
-  int intNegOne();
-
-  int intMax();
-
-  int intMin();
-
-  float floatPi();
-
-  float floatZero();
-
-  float floatOne();
-
-  float floatNegOne();
-
-  float floatPosMax();
-
-  float floatPosMin();
-
-  float floatNegMax();
-
-  float floatNegMin();
-
-  double doublePi();
-
-  double doubleZero();
-
-  double doubleOne();
-
-  double doubleNegOne();
-
-  double doublePosMax();
-
-  double doublePosMin();
+  boolean booleanTrue();
 
   double doubleNegMax();
 
   double doubleNegMin();
 
-  String[] stringArrayABCDEFG();
+  double doubleNegOne();
 
-  String[] stringArraySizeOneEmptyString();
+  double doubleOne();
 
-  String[] stringArraySizeOneX();
+  double doublePi();
 
-  String[] stringArraySizeTwoBothEmpty();
+  double doublePosMax();
 
-  String[] stringArraySizeThreeAllEmpty();
+  double doublePosMin();
 
-  String[] stringArraySizeTwoWithEscapedComma();
+  double doubleZero();
 
-  String[] stringArraySizeOneWithBackslashX();
+  float floatNegMax();
 
-  String[] stringArraySizeThreeWithDoubleBackslash();
+  float floatNegMin();
 
-  boolean booleanFalse();
+  float floatNegOne();
 
-  boolean booleanTrue();
+  float floatOne();
+
+  float floatPi();
+
+  float floatPosMax();
+
+  float floatPosMin();
+
+  float floatZero();
+
+  /**
+   * @gwt.key string
+   */
+  String getString();
+
+  int intMax();
+
+  int intMin();
+
+  int intNegOne();
+
+  int intOne();
+
+  int intZero();
 
   Map<String, String> mapABCD();
-
-  // raw type test
-  @SuppressWarnings("unchecked")
-  Map mapDCBA();
 
   Map<String, String> mapBACD();
 
   Map<String, String> mapBBB();
 
+  // raw type test
+  @SuppressWarnings("unchecked")
+  Map mapDCBA();
+
+  Map<String, String> mapEmpty();
+
+  // Map<String, String> mapWithMissingKey();
+
   Map<String, String> mapXYZ();
 
-  // uncomment for desk tests
-  // Map mapWithMissingKey();
+  String[] stringArrayABCDEFG();
 
-  // uncomment for desk tests
-  // Map mapEmpty();
+  String[] stringArraySizeOneEmptyString();
+
+  String[] stringArraySizeOneWithBackslashX();
+
+  String[] stringArraySizeOneX();
+
+  String[] stringArraySizeThreeAllEmpty();
+
+  String[] stringArraySizeThreeWithDoubleBackslash();
+
+  String[] stringArraySizeTwoBothEmpty();
+
+  String[] stringArraySizeTwoWithEscapedComma();
+
+  String stringDoesNotTrimTrailingThreeSpaces();
+
+  String stringEmpty();
+
+  String stringJapaneseBlue();
+
+  String stringJapaneseGreen();
+
+  String stringJapaneseRed();
+
+  String stringTrimsLeadingWhitespace();
 }

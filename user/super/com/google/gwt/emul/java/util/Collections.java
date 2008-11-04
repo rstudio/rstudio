@@ -102,6 +102,7 @@ public class Collections {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean equals(Object o) {
       return list.equals(o);
     }
@@ -110,6 +111,7 @@ public class Collections {
       return list.get(index);
     }
 
+    @Override
     public int hashCode() {
       return list.hashCode();
     }
@@ -118,6 +120,7 @@ public class Collections {
       return list.indexOf(o);
     }
 
+    @Override
     public boolean isEmpty() {
       return list.isEmpty();
     }
@@ -155,6 +158,7 @@ public class Collections {
           this.entry = entry;
         }
 
+        @Override
         public boolean equals(Object o) {
           return entry.equals(o);
         }
@@ -167,6 +171,7 @@ public class Collections {
           return entry.getValue();
         }
 
+        @Override
         public int hashCode() {
           return entry.hashCode();
         }
@@ -175,6 +180,7 @@ public class Collections {
           throw new UnsupportedOperationException();
         }
 
+        @Override
         public String toString() {
           return entry.toString();
         }
@@ -186,14 +192,17 @@ public class Collections {
         super((Set<? extends Entry<K, V>>) s);
       }
 
+      @Override
       public boolean contains(Object o) {
         return coll.contains(o);
       }
 
+      @Override
       public boolean containsAll(Collection<?> o) {
         return coll.containsAll(o);
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public Iterator<Map.Entry<K, V>> iterator() {
         final Iterator<Map.Entry<K, V>> it = (Iterator<Entry<K, V>>) coll.iterator();
@@ -212,11 +221,13 @@ public class Collections {
         };
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public Object[] toArray() {
         return toArray(super.toArray());
       }
 
+      @Override
       @SuppressWarnings("unchecked")
       public <T> T[] toArray(T[] a) {
         Object[] result = super.toArray(a);
@@ -227,7 +238,10 @@ public class Collections {
       }
     }
 
+    private transient UnmodifiableSet<Map.Entry<K, V>> entrySet;
+    private transient UnmodifiableSet<K> keySet;
     private final Map<? extends K, ? extends V> map;
+    private transient UnmodifiableCollection<V> values;
 
     public UnmodifiableMap(Map<? extends K, ? extends V> map) {
       this.map = map;
@@ -246,9 +260,13 @@ public class Collections {
     }
 
     public Set<Map.Entry<K, V>> entrySet() {
-      return new UnmodifiableEntrySet<K, V>(map.entrySet());
+      if (entrySet == null) {
+        entrySet = new UnmodifiableEntrySet<K, V>(map.entrySet());
+      }
+      return entrySet;
     }
 
+    @Override
     public boolean equals(Object o) {
       return map.equals(o);
     }
@@ -257,6 +275,7 @@ public class Collections {
       return map.get(key);
     }
 
+    @Override
     public int hashCode() {
       return map.hashCode();
     }
@@ -266,7 +285,10 @@ public class Collections {
     }
 
     public Set<K> keySet() {
-      return unmodifiableSet(map.keySet());
+      if (keySet == null) {
+        keySet = new UnmodifiableSet<K>(map.keySet());
+      }
+      return keySet;
     }
 
     public V put(K key, V value) {
@@ -285,12 +307,16 @@ public class Collections {
       return map.size();
     }
 
+    @Override
     public String toString() {
       return map.toString();
     }
 
     public Collection<V> values() {
-      return unmodifiableCollection(map.values());
+      if (values == null) {
+        values = new UnmodifiableCollection<V>(map.values());
+      }
+      return values;
     }
   }
 
@@ -307,10 +333,12 @@ public class Collections {
       super(set);
     }
 
+    @Override
     public boolean equals(Object o) {
       return coll.equals(o);
     }
 
+    @Override
     public int hashCode() {
       return coll.hashCode();
     }

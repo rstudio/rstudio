@@ -21,6 +21,7 @@ import com.google.gwt.dev.resource.impl.ClassPathEntry;
 import com.google.gwt.dev.resource.impl.PathPrefix;
 import com.google.gwt.dev.resource.impl.PathPrefixSet;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
+import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.util.tools.Utility;
 
 import org.apache.catalina.Connector;
@@ -60,13 +61,13 @@ public class EmbeddedTomcatServer {
   }
 
   public static synchronized String start(TreeLogger topLogger, int port,
-      File outDir) {
+      WorkDirs workDirs) {
     if (sTomcat != null) {
       throw new IllegalStateException("Embedded Tomcat is already running");
     }
 
     try {
-      new EmbeddedTomcatServer(topLogger, port, outDir);
+      new EmbeddedTomcatServer(topLogger, port, workDirs);
       return null;
     } catch (LifecycleException e) {
       String msg = e.getMessage();
@@ -145,7 +146,7 @@ public class EmbeddedTomcatServer {
   private final TreeLogger startupBranchLogger;
 
   private EmbeddedTomcatServer(final TreeLogger topLogger, int listeningPort,
-      final File outDir) throws LifecycleException {
+      final WorkDirs workDirs) throws LifecycleException {
     if (topLogger == null) {
       throw new NullPointerException("No logger specified");
     }
@@ -222,7 +223,7 @@ public class EmbeddedTomcatServer {
         if (StandardHost.PRE_INSTALL_EVENT.equals(event.getType())) {
           StandardContext webapp = (StandardContext) event.getData();
           publishShellLoggerAttribute(logger, topLogger, webapp);
-          publishShellOutDirAttribute(logger, outDir, webapp);
+          publishShellWorkDirsAttribute(logger, workDirs, webapp);
         }
       }
     });
@@ -411,12 +412,12 @@ public class EmbeddedTomcatServer {
   }
 
   /**
-   * Publish the shell's output dir as an attribute. This attribute is used to
+   * Publish the shell's work dir as an attribute. This attribute is used to
    * find it out of the thin air within the shell servlet.
    */
-  private void publishShellOutDirAttribute(TreeLogger logger,
-      File outDirToPublish, StandardContext webapp) {
-    final String attr = "com.google.gwt.dev.shell.outdir";
-    publishAttributeToWebApp(logger, webapp, attr, outDirToPublish);
+  private void publishShellWorkDirsAttribute(TreeLogger logger,
+      WorkDirs workDirs, StandardContext webapp) {
+    final String attr = "com.google.gwt.dev.shell.workdirs";
+    publishAttributeToWebApp(logger, webapp, attr, workDirs);
   }
 }

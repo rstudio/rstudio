@@ -13,13 +13,24 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
+import com.google.gwt.dev.cfg.ModuleDef;
+
+import java.io.File;
 
 /**
- * The complete set of options for the GWT compiler.
+ * Provides information about work directories.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions {
+public interface WorkDirs {
+  /**
+   * Gets the compiler output directory for a particular module.
+   */
+  File getCompilerOutputDir(ModuleDef moduleDef);
+
+  /**
+   * Gets the shell work directory for public generated files for a particular
+   * module.
+   */
+  File getShellPublicGenDir(ModuleDef moduleDef);
 }

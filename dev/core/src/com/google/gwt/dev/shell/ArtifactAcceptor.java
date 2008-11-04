@@ -13,13 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 
 /**
- * The complete set of options for the GWT compiler.
+ * A callback interface to be notified when new resources are generated.
+ * 
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions {
+public interface ArtifactAcceptor {
+  /**
+   * Called whenever new artifacts are generated.
+   */
+  void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+      throws UnableToCompleteException;
 }

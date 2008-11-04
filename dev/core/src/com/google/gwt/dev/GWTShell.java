@@ -18,10 +18,13 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.Precompile.CompilerOptionsImpl;
+import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
@@ -30,10 +33,12 @@ import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
+import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
-import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
+import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
@@ -160,9 +165,10 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * Handles the list of startup urls that can be passed on the command line.
+   * Handles the list of startup urls that can be passed at the end of the
+   * command line.
    */
-  protected class ArgHandlerStartupURLs extends ArgHandlerExtra {
+  protected class ArgHandlerStartupURLsExtra extends ArgHandlerExtra {
 
     @Override
     public boolean addExtraArg(String arg) {
@@ -212,6 +218,35 @@ public class GWTShell extends ToolBase {
     }
   }
 
+  /**
+   * Concrete class to implement all compiler options.
+   */
+  static class ShellOptionsImpl extends GWTCompilerOptionsImpl implements
+      ShellOptions, WorkDirs {
+    public File getCompilerOutputDir(ModuleDef moduleDef) {
+      return new File(getOutDir(), moduleDef.getDeployTo());
+    }
+
+    public File getShellPublicGenDir(ModuleDef moduleDef) {
+      return new File(getShellBaseWorkDir(moduleDef), "public");
+    }
+
+    /**
+     * The base shell work directory.
+     */
+    protected File getShellBaseWorkDir(ModuleDef moduleDef) {
+      return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
+    }
+
+    /**
+     * Where generated files go by default until we are sure they are public;
+     * then they are copied into {@link #getShellPublicGenDir(ModuleDef)}.
+     */
+    protected File getShellPrivateGenDir(ModuleDef moduleDef) {
+      return new File(getShellBaseWorkDir(moduleDef), "gen");
+    }
+  }
+
   private class BrowserWidgetHostImpl implements BrowserWidgetHost {
     public BrowserWidgetHostImpl() {
     }
@@ -244,14 +279,9 @@ public class GWTShell extends ToolBase {
         ModuleDef moduleDef = loadModule(moduleName, logger);
         assert (moduleDef != null);
 
-        // Create a sandbox for the module.
-        //
-        File shellDir = new File(options.getOutDir(), GWT_SHELL_PATH
-            + File.separator + moduleName);
-
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef, options.getGenDir(), shellDir);
+            typeOracle, moduleDef);
         return host;
       } finally {
         Cursor normalCursor = display.getSystemCursor(SWT.CURSOR_ARROW);
@@ -291,9 +321,6 @@ public class GWTShell extends ToolBase {
     }
   }
 
-  public static final String GWT_SHELL_PATH = ".gwt-tmp" + File.separator
-      + "shell";
-
   private static Image[] icons;
 
   static {
@@ -314,7 +341,7 @@ public class GWTShell extends ToolBase {
   }
 
   public static String computeHostRegex(String url) {
-    // the enture URL up to the first slash not prefixed by a slash or colon.
+    // the entire URL up to the first slash not prefixed by a slash or colon.
     String raw = url.split("(?<![:/])/")[0];
     // escape the dots and put a begin line specifier on the result
     return "^" + raw.replaceAll("[.]", "[.]");
@@ -365,6 +392,8 @@ public class GWTShell extends ToolBase {
    */
   protected final Display display = Display.getDefault();
 
+  protected final ShellOptionsImpl options = new ShellOptionsImpl();
+
   /**
    * Cheat on the first load's refresh by assuming the module loaded by
    * {@link com.google.gwt.dev.shell.GWTShellServlet} is still fresh. This
@@ -380,8 +409,6 @@ public class GWTShell extends ToolBase {
   private boolean headlessMode = false;
 
   private ShellMainWindow mainWnd;
-
-  private final CompilerOptionsImpl options = new CompilerOptionsImpl();
 
   private int port;
 
@@ -408,17 +435,16 @@ public class GWTShell extends ToolBase {
     registerHandler(new ArgHandlerLogLevel(options));
 
     registerHandler(new ArgHandlerGenDir(options));
+    registerHandler(new ArgHandlerExtraDir(options));
 
     if (!noURLs) {
-      registerHandler(new ArgHandlerStartupURLs());
+      registerHandler(new ArgHandlerStartupURLsExtra());
     }
 
     registerHandler(new ArgHandlerOutDir(options));
 
     registerHandler(new ArgHandlerScriptStyle(options));
-
     registerHandler(new ArgHandlerEnableAssertions(options));
-
     registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
   }
 
@@ -433,7 +459,7 @@ public class GWTShell extends ToolBase {
   }
 
   public CompilerOptions getCompilerOptions() {
-    return new CompilerOptionsImpl(options);
+    return new GWTCompilerOptionsImpl(options);
   }
 
   public int getPort() {
@@ -578,9 +604,29 @@ public class GWTShell extends ToolBase {
    */
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    CompilerOptions newOptions = new CompilerOptionsImpl(options);
+    CompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
     newOptions.setModuleName(moduleDef.getName());
     new GWTCompiler(newOptions).run(logger);
+  }
+
+  protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
+    return new ArtifactAcceptor() {
+      public void accept(TreeLogger logger, ArtifactSet artifacts)
+          throws UnableToCompleteException {
+
+        /*
+         * Copied from StandardLinkerContext.produceOutputDirectory() for legacy
+         * GWTShellServlet support.
+         */
+        for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
+          if (!artifact.isPrivate()) {
+            File outFile = new File(options.getShellPublicGenDir(module),
+                artifact.getPartialPath());
+            Util.copy(logger, artifact.getContents(logger), outFile);
+          }
+        }
+      }
+    };
   }
 
   /**
@@ -595,10 +641,12 @@ public class GWTShell extends ToolBase {
    * @return ShellModuleSpaceHost instance
    */
   protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef,
-      File genDir, File shellDir) {
-    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef, genDir,
-        shellDir);
+      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef) {
+    // Clear out the shell temp directory.
+    Util.recursiveDelete(options.getShellBaseWorkDir(moduleDef), true);
+    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef,
+        options.getGenDir(), options.getShellPrivateGenDir(moduleDef),
+        doCreateArtifactAcceptor(moduleDef));
   }
 
   /**
@@ -712,27 +760,28 @@ public class GWTShell extends ToolBase {
     initializeLogger();
 
     if (runTomcat) {
-      // Start the HTTP server.
-      // Use a new thread so that logging that occurs during startup is
-      // displayed immediately.
-      //
-      final int serverPort = getPort();
-
-      PerfLogger.start("GWTShell.startup (Tomcat launch)");
-      String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), serverPort,
-          options.getOutDir());
-      PerfLogger.end();
-
-      if (whyFailed != null) {
-        System.err.println(whyFailed);
+      int resultPort = startUpServer();
+      if (resultPort < 0) {
         return false;
       }
-
-      // Record what port Tomcat is actually running on.
-      port = EmbeddedTomcatServer.getPort();
+      port = resultPort;
     }
 
     return true;
+  }
+
+  protected int startUpServer() {
+    // TODO(bruce): make tomcat work in terms of the modular launcher
+    String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), getPort(),
+        options);
+
+    // TODO(bruce): test that we can remove this old approach in favor of
+    // a better, logger-based error reporting
+    if (whyFailed != null) {
+      System.err.println(whyFailed);
+      return -1;
+    }
+    return EmbeddedTomcatServer.getPort();
   }
 
   private Shell createTrackedBrowserShell() {

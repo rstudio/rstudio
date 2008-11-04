@@ -24,14 +24,13 @@ import java.io.File;
  */
 class CompileTaskOptionsImpl implements CompileTaskOptions {
 
-  public static final String GWT_COMPILER_DIR = ".gwt-tmp" + File.separatorChar
-      + "compiler";
+  public static final String GWT_TMP_DIR = "gwt-tmp";
 
-  private File compilerWorkDir;
   private Type logLevel;
   private String moduleName;
   private File outDir;
   private boolean useGuiLogger;
+  private File workDir;
 
   public CompileTaskOptionsImpl() {
   }
@@ -48,11 +47,7 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   }
 
   public File getCompilerWorkDir() {
-    if (compilerWorkDir == null) {
-      compilerWorkDir = new File(getOutDir(), GWT_COMPILER_DIR + File.separator
-          + moduleName);
-    }
-    return compilerWorkDir;
+    return new File(new File(getWorkDir(), getModuleName()), "compiler");
   }
 
   public Type getLogLevel() {
@@ -87,4 +82,14 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     this.useGuiLogger = useGuiLogger;
   }
 
+  /**
+   * TODO: add a command line option to pass files between compile phases?
+   */
+  protected File getWorkDir() {
+    if (workDir == null) {
+      workDir = new File(System.getProperty("java.io.tmpdir"), GWT_TMP_DIR);
+      workDir.mkdirs();
+    }
+    return workDir;
+  }
 }

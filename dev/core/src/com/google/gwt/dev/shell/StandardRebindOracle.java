@@ -53,14 +53,17 @@ public class StandardRebindOracle implements RebindOracle {
 
     public Rebinder() {
       genCtx = new StandardGeneratorContext(compilationState, propOracle,
-          publicOracle, genDir, outDir, artifactSet);
+          publicOracle, genDir, generatorResourcesDir, allGeneratedArtifacts);
     }
 
-    public String rebind(TreeLogger logger, String typeName)
-        throws UnableToCompleteException {
+    public String rebind(TreeLogger logger, String typeName,
+        ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
 
       String result = tryRebind(logger, typeName);
-      genCtx.finish(logger);
+      ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
+      if (!newlyGeneratedArtifacts.isEmpty() && artifactAcceptor != null) {
+        artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+      }
       if (result == null) {
         result = typeName;
       }
@@ -125,7 +128,7 @@ public class StandardRebindOracle implements RebindOracle {
     }
   }
 
-  private final ArtifactSet artifactSet;
+  private final ArtifactSet allGeneratedArtifacts;
 
   private final Map<String, String> cache = new HashMap<String, String>();
 
@@ -133,7 +136,7 @@ public class StandardRebindOracle implements RebindOracle {
 
   private final File genDir;
 
-  private final File outDir;
+  private final File generatorResourcesDir;
 
   private final PropertyOracle propOracle;
 
@@ -143,25 +146,30 @@ public class StandardRebindOracle implements RebindOracle {
 
   public StandardRebindOracle(CompilationState compilationState,
       PropertyOracle propOracle, PublicOracle publicOracle, Rules rules,
-      File genDir, File moduleOutDir, ArtifactSet artifactSet) {
+      File genDir, File generatorResourcesDir, ArtifactSet allGeneratedArtifacts) {
     this.compilationState = compilationState;
     this.propOracle = propOracle;
     this.publicOracle = publicOracle;
     this.rules = rules;
     this.genDir = genDir;
-    this.outDir = moduleOutDir;
-    this.artifactSet = artifactSet;
+    this.generatorResourcesDir = generatorResourcesDir;
+    this.allGeneratedArtifacts = allGeneratedArtifacts;
   }
 
   public String rebind(TreeLogger logger, String typeName)
       throws UnableToCompleteException {
+    return rebind(logger, typeName, null);
+  }
+
+  public String rebind(TreeLogger logger, String typeName,
+      ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
 
     String result = cache.get(typeName);
     if (result == null) {
       logger = Messages.TRACE_TOPLEVEL_REBIND.branch(logger, typeName, null);
 
       Rebinder rebinder = new Rebinder();
-      result = rebinder.rebind(logger, typeName);
+      result = rebinder.rebind(logger, typeName, artifactAcceptor);
       cache.put(typeName, result);
 
       Messages.TRACE_TOPLEVEL_REBIND_RESULT.log(logger, result, null);

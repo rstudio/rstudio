@@ -22,10 +22,16 @@ import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
+import java.util.SortedMap;
+import java.util.TreeMap;
+
 /**
  * Creator for methods of the form Map getX() .
  */
 class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
+
+  static final String GENERIC_STRING_MAP_TYPE = "java.util.Map<java.lang.String, java.lang.String>";
+
   /**
    * Constructor for localizable returnType method creator.
    * 
@@ -40,13 +46,13 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
    * 
    * @param logger TreeLogger instance for logging
    * @param method method body to create
-   * @param key value to create map from
+   * @param mapName name to create map from
    * @param resourceList AbstractResource for key lookup
    * @param locale locale to use for localized string lookup
    */
   @Override
-  public void createMethodFor(TreeLogger logger, JMethod method, String key,
-      ResourceList resourceList, String locale) {
+  public void createMethodFor(TreeLogger logger, JMethod method,
+      String mapName, ResourceList resourceList, String locale) {
     String methodName = method.getName();
     if (method.getParameters().length > 0) {
       error(
@@ -59,31 +65,53 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
     enableCache();
     // check cache for array
     String constantMapClassName = ConstantMap.class.getCanonicalName();
-    println(constantMapClassName + " args = (" + constantMapClassName + ") cache.get("
-        + wrap(methodName) + ");");
+    println(GENERIC_STRING_MAP_TYPE + " args = (" + GENERIC_STRING_MAP_TYPE
+        + ") cache.get(" + wrap(methodName) + ");");
     // if not found create Map
     println("if (args == null) {");
     indent();
-    println("args = new " + constantMapClassName + "();");
-    String value;
+    println("args = new " + constantMapClassName + "(new String[] {");
+    String keyString;
     try {
-      value = resourceList.getRequiredStringExt(key, null);
+      keyString = resourceList.getRequiredStringExt(mapName, null);
     } catch (MissingResourceException e) {
       e.setDuring("getting key list");
       throw e;
     }
-    String[] args = ConstantsStringArrayMethodCreator.split(value);
 
-    for (int i = 0; i < args.length; i++) {
+    String[] keys = ConstantsStringArrayMethodCreator.split(keyString);
+    ResourceList resources = getResources();
+    SortedMap<String, String> map = new TreeMap<String, String>();
+    for (String key : keys) {
+      if (key.length() == 0) {
+        continue;
+      }
+
       try {
-        key = args[i];
-        String keyValue = getResources().getString(key);
-        println("args.put(" + wrap(key) + ", " + wrap(keyValue) + ");");
+        String value = resources.getRequiredString(key);
+        map.put(key, value);
       } catch (MissingResourceException e) {
         e.setDuring("implementing map");
         throw e;
       }
     }
+
+    indent();
+    indent();
+    for (String key : map.keySet()) {
+      println(wrap(key) + ", ");
+    }
+    outdent();
+    println("},");
+    indent();
+    println("new String[] {");
+    for (String key : map.keySet()) {
+      String value = map.get(key);
+      println(wrap(value) + ",");
+    }
+    outdent();
+    println("});");
+    outdent();
     println("cache.put(" + wrap(methodName) + ", args);");
     outdent();
     println("};");

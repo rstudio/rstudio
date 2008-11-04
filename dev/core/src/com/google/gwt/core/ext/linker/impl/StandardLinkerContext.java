@@ -59,12 +59,10 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.Stack;
 import java.util.TreeSet;
 
 /**
@@ -114,7 +112,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
   private final SortedSet<ConfigurationProperty> configurationProperties;
   private final JJSOptions jjsOptions;
-  private final List<Class<? extends Linker>> linkerClasses;
   private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
 
   private final String moduleFunctionName;
@@ -124,17 +121,59 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   private final Map<String, StandardCompilationResult> resultsByStrongName = new HashMap<String, StandardCompilationResult>();
   private final SortedSet<SelectionProperty> selectionProperties;
 
+  private final Linker[] linkers;
+
   public StandardLinkerContext(TreeLogger logger, ModuleDef module,
-      JJSOptions jjsOptions) {
+      JJSOptions jjsOptions) throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG,
         "Constructing StandardLinkerContext", null);
 
     this.jjsOptions = jjsOptions;
     this.moduleFunctionName = module.getFunctionName();
     this.moduleName = module.getName();
-    this.linkerClasses = new ArrayList<Class<? extends Linker>>(
-        module.getActiveLinkers());
-    linkerClasses.add(module.getActivePrimaryLinker());
+
+    // Sort the linkers into the order they should actually run.
+    List<Class<? extends Linker>> sortedLinkers = new ArrayList<Class<? extends Linker>>();
+
+    // Get all the pre-linkers first.
+    for (Class<? extends Linker> linkerClass : module.getActiveLinkers()) {
+      Order order = linkerClass.getAnnotation(LinkerOrder.class).value();
+      assert (order != null);
+      if (order == Order.PRE) {
+        sortedLinkers.add(linkerClass);
+      }
+    }
+
+    // Get the primary linker.
+    sortedLinkers.add(module.getActivePrimaryLinker());
+
+    // Get all the post-linkers IN REVERSE ORDER.
+    {
+      List<Class<? extends Linker>> postLinkerClasses = new ArrayList<Class<? extends Linker>>();
+      for (Class<? extends Linker> linkerClass : module.getActiveLinkers()) {
+        Order order = linkerClass.getAnnotation(LinkerOrder.class).value();
+        assert (order != null);
+        if (order == Order.POST) {
+          postLinkerClasses.add(linkerClass);
+        }
+      }
+      Collections.reverse(postLinkerClasses);
+      sortedLinkers.addAll(postLinkerClasses);
+    }
+
+    linkers = new Linker[sortedLinkers.size()];
+    int i = 0;
+    for (Class<? extends Linker> linkerClass : sortedLinkers) {
+      try {
+        linkers[i++] = linkerClass.newInstance();
+      } catch (InstantiationException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
+        throw new UnableToCompleteException();
+      } catch (IllegalAccessException e) {
+        logger.log(TreeLogger.ERROR, "Unable to create Linker", e);
+        throw new UnableToCompleteException();
+      }
+    }
 
     for (Map.Entry<String, Class<? extends Linker>> entry : module.getLinkers().entrySet()) {
       linkerShortNames.put(entry.getValue(), entry.getKey());
@@ -271,77 +310,39 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   /**
    * Run the linker stack.
    */
-  public ArtifactSet invokeLinkerStack(TreeLogger logger)
+  public ArtifactSet invokeLink(TreeLogger logger)
       throws UnableToCompleteException {
     ArtifactSet workingArtifacts = new ArtifactSet(artifacts);
-    Stack<Linker> linkerStack = new Stack<Linker>();
 
-    EnumSet<Order> phasePre = EnumSet.of(Order.PRE, Order.PRIMARY);
-    EnumSet<Order> phasePost = EnumSet.of(Order.POST);
-
-    // Instantiate instances of the Linkers
-    for (Class<? extends Linker> clazz : linkerClasses) {
-      Linker linker;
-
-      // Create an instance of the Linker
-      try {
-        linker = clazz.newInstance();
-        linkerStack.push(linker);
-      } catch (InstantiationException e) {
-        logger.log(TreeLogger.ERROR, "Unable to create LinkerContextShim", e);
-        throw new UnableToCompleteException();
-      } catch (IllegalAccessException e) {
-        logger.log(TreeLogger.ERROR, "Unable to create LinkerContextShim", e);
-        throw new UnableToCompleteException();
-      }
-
-      // Detemine if we need to invoke the Linker in the current link phase
-      Order order = clazz.getAnnotation(LinkerOrder.class).value();
-      if (!phasePre.contains(order)) {
-        continue;
-      }
-
-      // The primary Linker is guaranteed to be last in the order
-      if (order == Order.PRIMARY) {
-        assert linkerClasses.get(linkerClasses.size() - 1).equals(clazz);
-      }
-
+    for (Linker linker : linkers) {
       TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
           "Invoking Linker " + linker.getDescription(), null);
-
       workingArtifacts.freeze();
       try {
         workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
-      } catch (Exception e) {
+      } catch (Throwable e) {
         linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
         throw new UnableToCompleteException();
       }
     }
+    return workingArtifacts;
+  }
 
-    // Pop the primary linker off of the stack
-    linkerStack.pop();
+  public ArtifactSet invokeRelink(TreeLogger logger,
+      ArtifactSet newlyGeneratedArtifacts) throws UnableToCompleteException {
+    ArtifactSet workingArtifacts = new ArtifactSet(newlyGeneratedArtifacts);
 
-    // Unwind the stack
-    while (!linkerStack.isEmpty()) {
-      Linker linker = linkerStack.pop();
-      Class<? extends Linker> linkerType = linker.getClass();
-
-      // See if the Linker should be run in the current phase
-      Order order = linkerType.getAnnotation(LinkerOrder.class).value();
-      if (phasePost.contains(order)) {
-        TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
-            "Invoking Linker " + linker.getDescription(), null);
-
-        workingArtifacts.freeze();
-        try {
-          workingArtifacts = linker.link(linkerLogger, this, workingArtifacts);
-        } catch (Exception e) {
-          linkerLogger.log(TreeLogger.ERROR, "Failed to link", e);
-          throw new UnableToCompleteException();
-        }
+    for (Linker linker : linkers) {
+      TreeLogger linkerLogger = logger.branch(TreeLogger.TRACE,
+          "Invoking relink on Linker " + linker.getDescription(), null);
+      workingArtifacts.freeze();
+      try {
+        workingArtifacts = linker.relink(linkerLogger, this, workingArtifacts);
+      } catch (Throwable e) {
+        linkerLogger.log(TreeLogger.ERROR, "Failed to relink", e);
+        throw new UnableToCompleteException();
       }
     }
-
     return workingArtifacts;
   }
 
@@ -414,11 +415,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return out.toString();
   }
 
+  /**
+   * Writes artifacts into output directories in the standard way.
+   * 
+   * @param logger logs the operation
+   * @param artifacts the set of artifacts to write
+   * @param outputPath the output path for deployable artifacts
+   * @param extraPath optional extra path for non-deployable artifacts
+   * @throws UnableToCompleteException
+   */
   public void produceOutputDirectory(TreeLogger logger, ArtifactSet artifacts,
-      File moduleOutDir, File moduleAuxDir) throws UnableToCompleteException {
+      File outputPath, File extraPath) throws UnableToCompleteException {
 
-    logger = logger.branch(TreeLogger.INFO, "Linking compilation into "
-        + moduleOutDir.getPath(), null);
+    logger = logger.branch(TreeLogger.TRACE, "Linking compilation into "
+        + outputPath.getPath(), null);
 
     for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
       TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
@@ -426,14 +436,19 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
 
       File outFile;
       if (artifact.isPrivate()) {
-        outFile = new File(getLinkerAuxDir(moduleAuxDir, artifact.getLinker()),
-            artifact.getPartialPath());
+        if (extraPath == null) {
+          continue;
+        }
+        outFile = new File(getExtraPathForLinker(extraPath,
+            artifact.getLinker()), artifact.getPartialPath());
       } else {
-        outFile = new File(moduleOutDir, artifact.getPartialPath());
+        outFile = new File(outputPath, artifact.getPartialPath());
       }
 
-      assert !outFile.exists() : "Attempted to overwrite " + outFile.getPath();
-      Util.copy(logger, artifact.getContents(artifactLogger), outFile);
+      // TODO(scottb): figure out how to do a clean.
+      // assert !outFile.exists() : "Attempted to overwrite " +
+      // outFile.getPath();
+      Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
     }
   }
 
@@ -441,15 +456,11 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    * Creates a linker-specific subdirectory in the module's auxiliary output
    * directory.
    */
-  private File getLinkerAuxDir(File moduleAuxDir,
+  private File getExtraPathForLinker(File extraPath,
       Class<? extends Linker> linkerType) {
-    // The auxiliary directory is create lazily
-    if (!moduleAuxDir.exists()) {
-      moduleAuxDir.mkdirs();
-    }
     assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
         + " unknown";
-    File toReturn = new File(moduleAuxDir, linkerShortNames.get(linkerType));
+    File toReturn = new File(extraPath, linkerShortNames.get(linkerType));
     if (!toReturn.exists()) {
       toReturn.mkdirs();
     }

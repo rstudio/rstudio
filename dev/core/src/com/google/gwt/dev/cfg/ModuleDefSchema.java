@@ -921,6 +921,7 @@ public class ModuleDefSchema extends Schema {
   }
 
   protected final String __module_1_rename_to = "";
+  protected final String __module_2_deploy_to = "";
 
   private final PropertyAttrCvt bindingPropAttrCvt = new PropertyAttrCvt(
       BindingProperty.class);
@@ -967,11 +968,21 @@ public class ModuleDefSchema extends Schema {
     registerAttributeConverter(Class.class, classAttrCvt);
   }
 
-  protected Schema __module_begin(NullableName renameTo) {
+  protected Schema __module_begin(NullableName renameTo, String deployTo)
+      throws UnableToCompleteException {
+
+    if (deployTo != null && deployTo.length() > 0) {
+      // Only absolute paths, although it is okay to have multiple slashes.
+      if (!deployTo.startsWith("/")) {
+        logger.log(TreeLogger.ERROR, "deploy-to '" + deployTo
+            + "' must begin with forward slash (e.g. '/foo')");
+        throw new UnableToCompleteException();
+      }
+    }
     return bodySchema;
   }
 
-  protected void __module_end(NullableName renameTo) {
+  protected void __module_end(NullableName renameTo, String deployTo) {
     // Maybe infer source and public.
     //
     if (!foundExplicitSourceOrSuperSource) {
@@ -986,6 +997,7 @@ public class ModuleDefSchema extends Schema {
 
     // We do this in __module_end so this value is never inherited
     moduleDef.setNameOverride(renameTo.token);
+    moduleDef.setDeployTo(deployTo);
   }
 
   /**

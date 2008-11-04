@@ -47,6 +47,7 @@ class HostedModeServletConfigProxy implements ServletConfig {
    * @return
    * @see javax.servlet.ServletConfig#getInitParameterNames()
    */
+  @SuppressWarnings("unchecked")
   public Enumeration<String> getInitParameterNames() {
     return config.getInitParameterNames();
   }

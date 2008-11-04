@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.SourceWriter;
@@ -125,7 +124,7 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
       namesToMethodCreators.put("getMap", new LookupMethodCreator(this, mapType) {
         @Override
         public String getReturnTypeName() {
-          return ConstantMap.class.getCanonicalName();
+          return ConstantsMapMethodCreator.GENERIC_STRING_MAP_TYPE;
         }
       });
 

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.resource.Resource;
 
@@ -43,13 +42,13 @@ class HostedModeServletContextProxy implements ServletContext {
    * Avoid pinning my moduleDef.
    */
   private final WeakReference<ModuleDef> moduleDefRef;
-  private final File outDir;
+  private final WorkDirs workDirs;
 
   HostedModeServletContextProxy(ServletContext context, ModuleDef moduleDef,
-      File outDir) {
+      WorkDirs workDirs) {
     this.context = context;
     this.moduleDefRef = new WeakReference<ModuleDef>(moduleDef);
-    this.outDir = outDir;
+    this.workDirs = workDirs;
   }
 
   /**
@@ -65,6 +64,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getAttributeNames()
    */
+  @SuppressWarnings("unchecked")
   public Enumeration<String> getAttributeNames() {
     return context.getAttributeNames();
   }
@@ -76,6 +76,10 @@ class HostedModeServletContextProxy implements ServletContext {
    */
   public ServletContext getContext(String arg0) {
     return context.getContext(arg0);
+  }
+
+  public String getContextPath() {
+    return context.getContextPath();
   }
 
   /**
@@ -178,9 +182,8 @@ class HostedModeServletContextProxy implements ServletContext {
       return publicResource.getURL();
     }
 
-    // Otherwise try the path but rooted in the shell's output directory
-    File shellDir = new File(outDir, GWTShell.GWT_SHELL_PATH + File.separator
-        + moduleDef.getName());
+    // Otherwise try the path in the shell's public generated directory
+    File shellDir = workDirs.getShellPublicGenDir(moduleDef);
     File requestedFile = new File(shellDir, partialPath);
     if (requestedFile.exists()) {
       return requestedFile.toURI().toURL();
@@ -191,7 +194,8 @@ class HostedModeServletContextProxy implements ServletContext {
      * directory for the file. We'll default to using the output directory of
      * the first linker defined in the <set-linker> tab.
      */
-    requestedFile = new File(new File(outDir, moduleDef.getName()), partialPath);
+    File linkDir = workDirs.getCompilerOutputDir(moduleDef);
+    requestedFile = new File(linkDir, partialPath);
     if (requestedFile.exists()) {
       try {
         return requestedFile.toURI().toURL();
@@ -230,6 +234,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @return
    * @see javax.servlet.ServletContext#getResourcePaths(java.lang.String)
    */
+  @SuppressWarnings("unchecked")
   public Set<String> getResourcePaths(String path) {
     return context.getResourcePaths(path);
   }
@@ -268,6 +273,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#getServletNames()
    */
   @Deprecated
+  @SuppressWarnings("unchecked")
   public Enumeration<String> getServletNames() {
     return context.getServletNames();
   }
@@ -278,6 +284,7 @@ class HostedModeServletContextProxy implements ServletContext {
    * @see javax.servlet.ServletContext#getServlets()
    */
   @Deprecated
+  @SuppressWarnings("unchecked")
   public Enumeration<Servlet> getServlets() {
     return context.getServlets();
   }

@@ -13,13 +13,21 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
+
+import java.io.File;
+
+import javax.servlet.Filter;
 
 /**
- * The complete set of options for the GWT compiler.
+ * Defines the service provider interface for launching servlet containers that
+ * can be used by the shell.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions {
+public interface ServletContainerLauncher {
+
+  ServletContainer start(TreeLogger topLogger, int port, File appRootDir,
+      Filter shellServletFilter) throws UnableToCompleteException;
 }

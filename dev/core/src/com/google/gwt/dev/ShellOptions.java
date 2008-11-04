@@ -15,11 +15,15 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
+import com.google.gwt.dev.jjs.JJSOptions;
+import com.google.gwt.dev.util.arg.OptionExtraDir;
+import com.google.gwt.dev.util.arg.OptionGenDir;
+import com.google.gwt.dev.util.arg.OptionLogLevel;
+import com.google.gwt.dev.util.arg.OptionOutDir;
 
 /**
  * The complete set of options for the GWT compiler.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions {
+public interface ShellOptions extends JJSOptions, OptionLogLevel, OptionOutDir,
+    OptionGenDir, OptionExtraDir {
 }

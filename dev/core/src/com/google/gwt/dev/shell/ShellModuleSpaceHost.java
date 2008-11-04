@@ -21,7 +21,6 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.jdt.RebindOracle;
 
 import java.io.File;
 
@@ -35,13 +34,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
 
   protected final TypeOracle typeOracle;
 
+  private final ArtifactAcceptor artifactAcceptor;
+
   private CompilingClassLoader classLoader;
 
   private final TreeLogger logger;
 
   private final ModuleDef module;
 
-  private RebindOracle rebindOracle;
+  private StandardRebindOracle rebindOracle;
 
   private final File shellDir;
 
@@ -52,15 +53,14 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
    * @param saveJsni
    */
   public ShellModuleSpaceHost(TreeLogger logger, TypeOracle typeOracle,
-      ModuleDef module, File genDir, File shellDir) {
+      ModuleDef module, File genDir, File shellDir,
+      ArtifactAcceptor artifactAcceptor) {
     this.logger = logger;
     this.typeOracle = typeOracle;
     this.module = module;
     this.genDir = genDir;
-
-    // Combine the user's output dir with the module name to get the
-    // module-specific output dir.
     this.shellDir = shellDir;
+    this.artifactAcceptor = artifactAcceptor;
   }
 
   public CompilingClassLoader getClassLoader() {
@@ -108,10 +108,15 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
         module.getCompilationState(), readySpace);
   }
 
-  public String rebind(TreeLogger rebindLogger, String sourceTypeName)
+  public String rebind(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException {
     checkForModuleSpace();
-    return rebindOracle.rebind(rebindLogger, sourceTypeName);
+    return rebindOracle.rebind(logger, sourceTypeName, new ArtifactAcceptor() {
+      public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
+          throws UnableToCompleteException {
+        artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+      }
+    });
   }
 
   private void checkForModuleSpace() {

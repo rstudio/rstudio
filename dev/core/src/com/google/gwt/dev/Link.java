@@ -27,11 +27,8 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
-import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
-import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
-import com.google.gwt.dev.util.arg.ArgHandlerTreeLoggerFlag;
-import com.google.gwt.util.tools.ToolBase;
+import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.OptionExtraDir;
 
 import java.io.File;
 import java.util.HashMap;
@@ -42,26 +39,50 @@ import java.util.Map;
  * to compile, and a ready-to-compile AST.
  */
 public class Link {
+  /**
+   * Options for Link.
+   */
+  public interface LinkOptions extends CompileTaskOptions, OptionExtraDir {
+  }
 
-  static class ArgProcessor extends ToolBase {
-    public ArgProcessor(CompileTaskOptions options) {
-      registerHandler(new ArgHandlerLogLevel(options));
-      registerHandler(new ArgHandlerTreeLoggerFlag(options));
-      registerHandler(new ArgHandlerOutDir(options));
-      registerHandler(new ArgHandlerModuleName(options));
-    }
-
-    /*
-     * Overridden to make public.
-     */
-    @Override
-    public boolean processArgs(String[] args) {
-      return super.processArgs(args);
+  static class ArgProcessor extends CompileArgProcessor {
+    public ArgProcessor(LinkOptions options) {
+      super(options);
+      registerHandler(new ArgHandlerExtraDir(options));
     }
 
     @Override
     protected String getName() {
       return Link.class.getName();
+    }
+  }
+
+  /**
+   * Concrete class to implement link options.
+   */
+  static class LinkOptionsImpl extends CompileTaskOptionsImpl implements
+      LinkOptions {
+
+    private File extraDir;
+
+    public LinkOptionsImpl() {
+    }
+
+    public LinkOptionsImpl(LinkOptions other) {
+      copyFrom(other);
+    }
+
+    public void copyFrom(LinkOptions other) {
+      super.copyFrom(other);
+      setExtraDir(other.getExtraDir());
+    }
+
+    public File getExtraDir() {
+      return extraDir;
+    }
+
+    public void setExtraDir(File extraDir) {
+      this.extraDir = extraDir;
     }
   }
 
@@ -80,7 +101,7 @@ public class Link {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    final CompileTaskOptions options = new CompileTaskOptionsImpl();
+    final LinkOptions options = new LinkOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -110,7 +131,7 @@ public class Link {
     }
 
     linkerContext.addOrReplaceArtifacts(precompilation.getGeneratedArtifacts());
-    return linkerContext.invokeLinkerStack(logger);
+    return linkerContext.invokeLink(logger);
   }
 
   private static void finishPermuation(TreeLogger logger, Permutation perm,
@@ -143,17 +164,17 @@ public class Link {
   /**
    * This is the output directory for private files.
    */
-  private File moduleAuxDir;
+  private File moduleExtraDir;
 
   /**
    * This is the output directory for public files.
    */
   private File moduleOutDir;
 
-  private final CompileTaskOptionsImpl options;
+  private final LinkOptionsImpl options;
 
-  public Link(CompileTaskOptions options) {
-    this.options = new CompileTaskOptionsImpl(options);
+  public Link(LinkOptions options) {
+    this.options = new LinkOptionsImpl(options);
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -197,7 +218,7 @@ public class Link {
         jsFiles);
     if (artifacts != null) {
       linkerContext.produceOutputDirectory(branch, artifacts, moduleOutDir,
-          moduleAuxDir);
+          moduleExtraDir);
       branch.log(TreeLogger.INFO, "Link succeeded");
       return true;
     }
@@ -207,9 +228,11 @@ public class Link {
 
   private void init(TreeLogger logger) throws UnableToCompleteException {
     module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
-    moduleOutDir = new File(options.getOutDir(), module.getName());
+    moduleOutDir = new File(options.getOutDir(), module.getDeployTo());
     Util.recursiveDelete(moduleOutDir, true);
-    moduleAuxDir = new File(options.getOutDir(), module.getName() + "-aux");
-    Util.recursiveDelete(moduleAuxDir, false);
+    if (options.getExtraDir() != null) {
+      moduleExtraDir = new File(options.getExtraDir(), module.getDeployTo());
+      Util.recursiveDelete(moduleExtraDir, false);
+    }
   }
 }

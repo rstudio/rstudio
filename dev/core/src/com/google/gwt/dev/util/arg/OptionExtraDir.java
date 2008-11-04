@@ -13,13 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
+import java.io.File;
 
 /**
- * The complete set of options for the GWT compiler.
+ * Option to set the output directory for extra artifacts.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions {
+public interface OptionExtraDir {
+
+  /**
+   * Returns the extra resource directory.
+   */
+  File getExtraDir();
+
+  /**
+   * Sets the extra resource directory.
+   */
+  void setExtraDir(File dir);
 }
