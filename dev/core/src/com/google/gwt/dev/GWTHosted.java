@@ -100,7 +100,6 @@ public class GWTHosted extends GWTShell {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    BootStrapPlatform.init();
     GWTHosted shellMain = new GWTHosted();
     if (shellMain.processArgs(args)) {
       shellMain.run();

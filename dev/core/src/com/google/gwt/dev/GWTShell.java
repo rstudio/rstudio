@@ -378,7 +378,6 @@ public class GWTShell extends ToolBase {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    BootStrapPlatform.init();
     GWTShell shellMain = new GWTShell();
     if (shellMain.processArgs(args)) {
       shellMain.run();
@@ -423,6 +422,10 @@ public class GWTShell extends ToolBase {
   }
 
   protected GWTShell(boolean forceServer, boolean noURLs) {
+    // Set any platform specific system properties.
+    BootStrapPlatform.init();
+    BootStrapPlatform.applyPlatformHacks();
+
     registerHandler(getArgHandlerPort());
 
     if (!forceServer) {
@@ -562,9 +565,6 @@ public class GWTShell extends ToolBase {
    */
   public void run() {
     try {
-      // Set any platform specific system properties.
-      BootStrapPlatform.applyPlatformHacks();
-
       if (!startUp()) {
         // Failed to initalize.
         return;
