@@ -211,7 +211,7 @@ public class JavaToJavaScriptCompiler {
 
       // (10.5) Split up the program into fragments
       if (options.isAggressivelyOptimize()) {
-        CodeSplitter.exec(jprogram, jsProgram, postStringInterningMap);
+        CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap);
       }
 
       // (11) Perform any post-obfuscation normalizations.

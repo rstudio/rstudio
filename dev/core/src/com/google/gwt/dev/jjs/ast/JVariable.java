@@ -43,6 +43,10 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
     }
     return null;
   }
+  
+  public JDeclarationStatement getDeclarationStatement() {
+    return declStmt;
+  }
 
   public JExpression getInitializer() {
     if (declStmt != null) {

@@ -38,6 +38,7 @@ import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -185,16 +186,34 @@ public class FragmentExtractor {
   /**
    * Add direct calls to the entry methods of the specified entry number.
    */
-  public void addCallsToEntryMethods(int entry, List<JsStatement> stats) {
-    for (JMethod entryMethod : jprogram.entryMethods.get(entry)) {
+  public List<JsStatement> createCallsToEntryMethods(int splitPoint) {
+    List<JsStatement> callStats = new ArrayList<JsStatement>(
+        jprogram.entryMethods.size());
+    for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
       JsName name = map.nameForMethod(entryMethod);
       assert name != null;
       SourceInfo sourceInfo = jsprogram.getSourceInfo().makeChild(
-          FragmentExtractor.class, "call to entry function " + entry);
+          FragmentExtractor.class, "call to entry function " + splitPoint);
       JsInvocation call = new JsInvocation(sourceInfo);
       call.setQualifier(name.makeRef(sourceInfo));
-      stats.add(call.makeStmt());
+      callStats.add(call.makeStmt());
     }
+    return callStats;
+  }
+
+  /**
+   * Create a call to
+   * {@link com.google.gwt.lang.AsyncFragmentLoader#leftoversFragmentHasLoaded()}.
+   */
+  public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
+    JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");
+    JsName loadedMethodName = map.nameForMethod(loadedMethod);
+    SourceInfo sourceInfo = jsprogram.getSourceInfo().makeChild(
+        FragmentExtractor.class, "call to leftoversFragmentHasLoaded ");
+    JsInvocation call = new JsInvocation(sourceInfo);
+    call.setQualifier(loadedMethodName.makeRef(sourceInfo));
+    List<JsStatement> newStats = Collections.<JsStatement> singletonList(call.makeStmt());
+    return newStats;
   }
 
   /**
@@ -259,6 +278,13 @@ public class FragmentExtractor {
     entryMethodNames = new HashSet<JsName>();
     for (JMethod entryMethod : jprogram.getAllEntryMethods()) {
       JsName name = map.nameForMethod(entryMethod);
+      assert name != null;
+      entryMethodNames.add(name);
+    }
+
+    JMethod leftoverFragmentLoaded = jprogram.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");
+    if (leftoverFragmentLoaded != null) {
+      JsName name = map.nameForMethod(leftoverFragmentLoaded);
       assert name != null;
       entryMethodNames.add(name);
     }

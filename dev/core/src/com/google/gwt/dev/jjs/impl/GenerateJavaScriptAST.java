@@ -1020,14 +1020,26 @@ public class GenerateJavaScriptAST {
       }
 
       /*
-       * Add calls to all split points other than the initial ones. That way, if
-       * the code splitter does not run, the resulting code will still function.
+       * Add calls to all non-initial entry points. That way, if the code
+       * splitter does not run, the resulting code will still function.
+       * Likewise, add a call to
+       * AsyncFragmentLoader.leftoversFragmentHasLoaded().
        */
       List<JsFunction> nonInitialEntries = Arrays.asList(entryFunctions).subList(
           x.getEntryCount(0), entryFunctions.length);
+      if (!nonInitialEntries.isEmpty()) {
+        JMethod loadedMethod = program.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");
+        JsName loadedMethodName = names.get(loadedMethod);
+        SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(
+            GenerateJavaScriptAST.class, "call to leftoversFragmentHasLoaded ");
+        JsInvocation call = new JsInvocation(sourceInfo);
+        call.setQualifier(loadedMethodName.makeRef(sourceInfo));
+        globalStmts.add(call.makeStmt());
+      }
       for (JsFunction func : nonInitialEntries) {
         if (func != null) {
-          SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(GenerateJavaScriptAST.class,
+          SourceInfo sourceInfo = jsProgram.getSourceInfo().makeChild(
+              GenerateJavaScriptAST.class,
               "call to entry non-initial entry function");
           JsInvocation call = new JsInvocation(sourceInfo);
           call.setQualifier(func.getName().makeRef(sourceInfo));

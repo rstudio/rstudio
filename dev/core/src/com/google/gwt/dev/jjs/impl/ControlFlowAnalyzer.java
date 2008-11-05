@@ -644,10 +644,6 @@ public class ControlFlowAnalyzer {
     rescuer.rescue(method);
   }
 
-  public void traverseFromReferenceTo(JReferenceType type) {
-    rescuer.rescue(type, true, false);
-  }
-
   /**
    * Trace all code needed by class literal constructor expressions except for
    * the string literals they include. At the time of writing, these would
@@ -658,8 +654,8 @@ public class ControlFlowAnalyzer {
       @Override
       public void endVisit(JStringLiteral stringLiteral, Context ctx) {
         ctx.replaceMe(program.getLiteralString(
-            stringLiteral.getSourceInfo().makeChild(ControlFlowAnalyzer.class, "remove string literals"),
-            ""));
+            stringLiteral.getSourceInfo().makeChild(ControlFlowAnalyzer.class,
+                "remove string literals"), ""));
       }
     }
 
@@ -676,5 +672,15 @@ public class ControlFlowAnalyzer {
     }
 
     (new ClassLitTraverser()).accept(program);
+  }
+
+  public void traverseFromLeftoversFragmentHasLoaded() {
+    if (program.entryMethods.size() > 1) {
+      traverseFrom(program.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded"));
+    }
+  }
+
+  public void traverseFromReferenceTo(JReferenceType type) {
+    rescuer.rescue(type, true, false);
   }
 }

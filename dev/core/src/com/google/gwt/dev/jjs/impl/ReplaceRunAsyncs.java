@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
+import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -43,8 +44,8 @@ public class ReplaceRunAsyncs {
         JExpression asyncCallback = x.getArgs().get(0);
 
         int entryNumber = entryCount++;
-        logger.log(TreeLogger.TRACE, "Using island loader #" + entryNumber
-            + " in method " + currentMethod);
+        logger.log(TreeLogger.INFO, "Assigning split point #" + entryNumber
+            + " in method " + fullMethodDescription(currentMethod));
 
         JClassType loader = getFragmentLoader(entryNumber);
         JMethod loadMethod = getRunAsyncMethod(loader);
@@ -71,6 +72,10 @@ public class ReplaceRunAsyncs {
     return new ReplaceRunAsyncs(logger, program).execImpl();
   }
 
+  private static String fullMethodDescription(JMethod method) {
+    return (method.getEnclosingType().getName() + "." + JProgram.getJsniSig(method));
+  }
+
   private final TreeLogger logger;
   private JProgram program;
 
@@ -83,6 +88,7 @@ public class ReplaceRunAsyncs {
   private int execImpl() {
     AsyncCreateVisitor visitor = new AsyncCreateVisitor();
     visitor.accept(program);
+    setNumEntriesInAsyncFragmentLoader(visitor.entryCount);
     return visitor.entryCount;
   }
 
@@ -122,5 +128,10 @@ public class ReplaceRunAsyncs {
       }
     }
     return null;
+  }
+
+  private void setNumEntriesInAsyncFragmentLoader(int entryCount) {
+    JField field = program.getIndexedField("AsyncFragmentLoader.numEntries");
+    field.getDeclarationStatement().initializer = program.getLiteralInt(entryCount);
   }
 }

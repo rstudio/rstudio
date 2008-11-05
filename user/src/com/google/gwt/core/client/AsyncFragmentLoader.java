@@ -15,11 +15,30 @@
  */
 package com.google.gwt.core.client;
 
+import java.util.LinkedList;
+import java.util.Queue;
+
 /**
  * <p>
  * Low-level support to download an extra fragment of code. This should not be
  * invoked directly by user code.
  * </p>
+ * 
+ * <p>
+ * The fragments are numbered as follows, assuming there are <em>m</em> split
+ * points:
+ * 
+ * <ul>
+ * <li> 0 -- the <em>base</em> fragment, which is initially downloaded
+ * <li> 1-m -- the <em>exclusively live</em> fragments, holding the code
+ * needed exclusively for each split point
+ * <li> m -- the <em>secondary base</em> fragment for entry point 1. It holds
+ * precisely that code needed if entry point 1 is the first one reached after
+ * the application downloads.
+ * <li> m+1 -- the <em>leftovers fragment</em> for entry point 1. It holds all
+ * code not in fragments 0-(m-1) nor in fragment m.
+ * <li> (m+2)..(3m) -- secondary bases and leftovers for entry points 2..m
+ * </ul>
  * 
  * <p>
  * Different linkers have different requirements about how the code is
@@ -30,23 +49,93 @@ package com.google.gwt.core.client;
  */
 public class AsyncFragmentLoader {
   /**
+   * The first entry point reached after the program started.
+   */
+  private static int base = -1;
+
+  /**
+   * Whether the secondary base fragment is currently loading.
+   */
+  private static boolean baseLoading = false;
+
+  /**
+   * Whether the leftovers fragment has loaded yet.
+   */
+  private static boolean leftoversLoaded = false;
+
+  /**
+   * Whether the leftovers fragment is currently loading.
+   */
+  private static boolean leftoversLoading = false;
+
+  /**
+   * The total number of split points in the program, counting the initial entry
+   * as a split point. This is changed to the correct value by
+   * {@link com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs}.
+   */
+  private static int numEntries = 1;
+
+  /**
+   * Split points that have been reached, but that cannot be downloaded until
+   * the leftovers fragment finishes downloading.
+   */
+  private static Queue<Integer> waitingForLeftovers = new LinkedList<Integer>();
+
+  /**
    * Inform the loader that the code for an entry point has now finished
    * loading.
    * 
    * @param entry The entry whose code fragment is now loaded.
    */
   public static void fragmentHasLoaded(int entry) {
-    // There is nothing to do with the current fragmentation strategy
+    if (base < 0) {
+      // The base fragment has loaded
+      base = entry;
+      baseLoading = false;
+
+      // Go ahead and download the appropriate leftovers fragment
+      leftoversLoading = true;
+      startLoadingFragment(numEntries + 2 * (entry - 1) + 1);
+    }
   }
 
   /**
-   * Loads the specified fragment asynchronously.
+   * Loads the specified split point.
    * 
-   * @param fragment the fragment to load
+   * @param splitPoint the fragment to load
    */
-  public static void inject(int fragment) {
-    logEventProgress("download" + fragment, "begin");
-    startLoadingFragment(fragment);
+  public static void inject(int splitPoint) {
+    if (leftoversLoaded) {
+      /*
+       * A base and a leftovers fragment have loaded. Load an exclusively live
+       * fragment.
+       */
+      startLoadingFragment(splitPoint);
+      return;
+    }
+
+    if (baseLoading || leftoversLoading) {
+      /*
+       * Wait until the leftovers fragment has loaded before loading this one.
+       */
+      waitingForLeftovers.add(splitPoint);
+      return;
+    }
+
+    // Nothing has loaded or started to load. Treat this fragment as the base.
+    baseLoading = true;
+    startLoadingFragment(numEntries + 2 * (splitPoint - 1));
+  }
+
+  /**
+   * Inform the loader that the "leftovers" fragment has loaded.
+   */
+  public static void leftoversFragmentHasLoaded() {
+    leftoversLoaded = true;
+    leftoversLoading = false;
+    while (!waitingForLeftovers.isEmpty()) {
+      inject(waitingForLeftovers.remove());
+    }
   }
 
   /**
@@ -73,13 +162,18 @@ public class AsyncFragmentLoader {
     };
   }-*/;
 
+  private static native void gwtStartLoadingFragment(int fragment) /*-{
+    __gwtStartLoadingFragment(fragment);
+  }-*/;
+
   private static native boolean isStatsAvailable() /*-{
     return !!$stats;
   }-*/;
 
-  private static native void startLoadingFragment(int fragment) /*-{
-    __gwtStartLoadingFragment(fragment);
-  }-*/;
+  private static void startLoadingFragment(int fragment) {
+    logEventProgress("download" + fragment, "begin");
+    gwtStartLoadingFragment(fragment);
+  }
 
   /**
    * Always use this as {@link isStatsAvailable} &amp;&amp;
