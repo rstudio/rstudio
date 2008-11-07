@@ -103,7 +103,7 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * handles the -noserver command line flag.
+   * Handles the -noserver command line flag.
    */
   protected class ArgHandlerNoServerFlag extends ArgHandlerFlag {
     @Override
