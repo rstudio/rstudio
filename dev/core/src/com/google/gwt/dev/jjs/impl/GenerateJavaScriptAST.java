@@ -301,12 +301,9 @@ public class GenerateJavaScriptAST {
 
       // my global name
       JsName globalName;
-      if (x.getEnclosingType() == null) {
-        globalName = topScope.declareName(name);
-      } else {
-        String mangleName = mangleNameForGlobal(x);
-        globalName = topScope.declareName(mangleName, name);
-      }
+      assert x.getEnclosingType() != null;
+      String mangleName = mangleNameForGlobal(x);
+      globalName = topScope.declareName(mangleName, name);
       names.put(x, globalName);
 
       JsFunction jsFunction;
@@ -1964,9 +1961,6 @@ public class GenerateJavaScriptAST {
     GenerateJavaScriptVisitor generator = new GenerateJavaScriptVisitor();
     generator.accept(program);
     final Map<JsName, JMethod> nameToMethodMap = new HashMap<JsName, JMethod>();
-    for (JAbstractMethodBody body : methodBodyMap.keySet()) {
-      nameToMethodMap.put(methodBodyMap.get(body).getName(), body.getMethod());
-    }
     final HashMap<JsName, JField> nameToFieldMap = new HashMap<JsName, JField>();
     final HashMap<JsName, JReferenceType> constructorNameToTypeMap = new HashMap<JsName, JReferenceType>();
     for (JReferenceType type : program.getDeclaredTypes()) {
@@ -1980,6 +1974,12 @@ public class GenerateJavaScriptAST {
           if (fieldName != null) {
             nameToFieldMap.put(fieldName, field);
           }
+        }
+      }
+      for (JMethod method : type.methods) {
+        JsName methodName = names.get(method);
+        if (methodName != null) {
+          nameToMethodMap.put(methodName, method);
         }
       }
     }

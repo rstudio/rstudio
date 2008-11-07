@@ -270,6 +270,24 @@ public class FragmentExtractor {
     return extractedStats;
   }
 
+  /**
+   * Find all Java methods that still exist in the resulting JavaScript, even
+   * after JavaScript inlining and pruning.
+   */
+  public Set<JMethod> findAllMethodsInJavaScript() {
+    Set<JMethod> methodsInJs = new HashSet<JMethod>();
+    for (int frag = 0; frag < jsprogram.getFragmentCount(); frag++) {
+      List<JsStatement> stats = jsprogram.getFragmentBlock(frag).getStatements();
+      for (JsStatement stat : stats) {
+        JMethod method = methodFor(stat);
+        if (method != null) {
+          methodsInJs.add(method);
+        }
+      }
+    }
+    return methodsInJs;
+  }
+
   public void setStatementLogger(StatementLogger logger) {
     statementLogger = logger;
   }

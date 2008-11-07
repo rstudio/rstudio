@@ -91,9 +91,8 @@ public class CodeSplitter {
             JsFunction func = (JsFunction) expr;
             if (func.getName() != null) {
               JMethod method = map.nameToMethod(func.getName());
-              if (method != null && method.getEnclosingType() != null) {
-                System.out.println(method.getEnclosingType().getName() + "."
-                    + JProgram.getJsniSig(method));
+              if (method != null) {
+                System.out.println(fullNameString(method));
               }
             }
           }
@@ -212,6 +211,11 @@ public class CodeSplitter {
     new CodeSplitter(logger, jprogram, jsprogram, map).execImpl();
   }
 
+  private static String fullNameString(JMethod method) {
+    return method.getEnclosingType().getName() + "."
+        + JProgram.getJsniSig(method);
+  }
+
   private static <T> int getOrZero(Map<T, Integer> map, T key) {
     Integer value = map.get(key);
     return (value == null) ? 0 : value;
@@ -245,6 +249,7 @@ public class CodeSplitter {
   private final TreeLogger logger;
   private final boolean logging;
   private JavaToJavaScriptMap map;
+  private final Set<JMethod> methodsInJavaScript;
   private final int numEntries;
 
   private CodeSplitter(TreeLogger logger, JProgram jprogram,
@@ -263,6 +268,8 @@ public class CodeSplitter {
     initiallyLive = new ControlFlowAnalyzer(jprogram);
     traverseEntry(initiallyLive, 0);
     initiallyLive.finishTraversal();
+
+    methodsInJavaScript = fragmentExtractor.findAllMethodsInJavaScript();
   }
 
   /**
@@ -318,6 +325,7 @@ public class CodeSplitter {
     for (int entry = 0; entry < numEntries; entry++) {
       traverseEntry(everything, entry);
     }
+    everything.traverseFromLeftoversFragmentHasLoaded();
     everything.finishTraversal();
     return everything;
   }
@@ -399,6 +407,7 @@ public class CodeSplitter {
    * dependencies to fragment 0, so they are sure to be available.
    */
   private void fixUpLoadOrderDependencies(FragmentMap fragmentMap) {
+    fixUpLoadOrderDependenciesForMethods(fragmentMap);
     fixUpLoadOrderDependenciesForTypes(fragmentMap);
     fixUpLoadOrderDependenciesForClassLiterals(fragmentMap);
   }
@@ -433,14 +442,48 @@ public class CodeSplitter {
   }
 
   /**
-   * The setup code for a class cannot be loaded before the setup code for its
-   * superclass.
+   * Fixes up the load-order dependencies from instance methods to their
+   * enclosing types.
+   */
+  private void fixUpLoadOrderDependenciesForMethods(FragmentMap fragmentMap) {
+    int numFixups = 0;
+
+    for (JReferenceType type : jprogram.getDeclaredTypes()) {
+      int typeFrag = getOrZero(fragmentMap.types, type);
+
+      if (typeFrag != 0) {
+        /*
+         * If the type is in an exclusive fragment, all its instance methods
+         * must be in the same one.
+         */
+        for (JMethod method : type.methods) {
+          if (!method.isStatic() && methodsInJavaScript.contains(method)) {
+            int methodFrag = getOrZero(fragmentMap.methods, method);
+            if (methodFrag != typeFrag) {
+              fragmentMap.types.put(type, 0);
+              numFixups++;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    logger.log(TreeLogger.DEBUG,
+        "Fixed up load-order dependencies for instance methods by moving "
+            + numFixups + " types to fragment 0, out of "
+            + jprogram.getDeclaredTypes().size());
+  }
+
+  /**
+   * Fixes up load order dependencies from types to their supertypes.
    */
   private void fixUpLoadOrderDependenciesForTypes(FragmentMap fragmentMap) {
     int numFixups = 0;
     Queue<JReferenceType> typesToCheck = new ArrayBlockingQueue<JReferenceType>(
         jprogram.getDeclaredTypes().size());
     typesToCheck.addAll(jprogram.getDeclaredTypes());
+
     while (!typesToCheck.isEmpty()) {
       JReferenceType type = typesToCheck.remove();
       if (type.extnds != null) {
@@ -453,9 +496,11 @@ public class CodeSplitter {
         }
       }
     }
-    logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving "
-        + numFixups + " types to fragment 0, out of "
-        + jprogram.getDeclaredTypes().size());
+
+    logger.log(TreeLogger.DEBUG,
+        "Fixed up load-order dependencies on supertypes by moving " + numFixups
+            + " types to fragment 0, out of "
+            + jprogram.getDeclaredTypes().size());
   }
 
   /**
