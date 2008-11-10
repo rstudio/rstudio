@@ -20,7 +20,7 @@
     </javac>
   </target>
 
-  <target name="deploy" description="Copy output to the war folder">
+  <target name="deploy" depends="gwtc" description="Copy output to the war folder">
     <mkdir dir="${outdir}/WEB-INF/lib" />
     <copy todir="${outdir}/WEB-INF/lib" file="${gwt.install}/gwt-servlet.jar" />
   </target>
@@ -55,14 +55,16 @@
   </target>
 
   <target name="shell" depends="javac" description="Run the deployed app in GWT hosted mode">
-    <java classname="com.google.gwt.dev.GWTShell" fork="yes" failonerror="true">
+    <java classname="com.google.gwt.dev.GWTHosted" fork="yes" failonerror="true">
       <jvmarg value="-Xmx256M"/>
       <jvmarg value="-Dgwt.devjar=C:\gwt\releases\1.6\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar"/>
       <arg value="-out" />
       <arg file="${outdir}" />
       <arg value="-extra" />
       <arg file="${extradir}" />
-      <arg value="http://localhost:8888/DynaTable2.html" />
+      <arg value="-startupUrl" />
+      <arg value="DynaTable2.html" />
+      <arg value="com.google.gwt.sample.dynatable.DynaTable2" />
       <classpath>
         <pathelement location="../../../samples/dynatable/src" />
         <pathelement location="${outdir}/WEB-INF/classes" />
