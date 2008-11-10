@@ -1,6 +1,10 @@
 package @clientPackage;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
@@ -37,7 +41,6 @@ public class @className implements EntryPoint {
 
     // Create the dialog box
     final DialogBox dialogBox = new DialogBox();
-    dialogBox.setText("Welcome to GWT!");
     dialogBox.setAnimationEnabled(true);
     Button closeButton = new Button("close");
     VerticalPanel dialogVPanel = new VerticalPanel();
@@ -50,14 +53,36 @@ public class @className implements EntryPoint {
         dialogBox.hide();
       }
     });
-
+    
     // Set the contents of the Widget
     dialogBox.setWidget(dialogVPanel);
+ 
+    final EchoServiceAsync echoService = GWT.create(EchoService.class);
+    ServiceDefTarget target = (ServiceDefTarget) echoService;
+
+    // Use a module-relative URLs to ensure that this client code can find
+    // its way home, even when the URL changes (as might happen when you
+    // deploy this as a webapp under an external servlet container).
+    String moduleRelativeURL = GWT.getModuleBaseURL() + "echo";
+    target.setServiceEntryPoint(moduleRelativeURL);
+    
+    final String textToServer = "Hello GWT World!";
     
     button.addClickListener(new ClickListener() {
       public void onClick(Widget sender) {
+        final String dialogBoxText = "Sending to the server: " + textToServer;
+        dialogBox.setText(dialogBoxText);
         dialogBox.center();
         dialogBox.show();
+        echoService.echo(textToServer, new AsyncCallback<String>() {
+          public void onFailure(Throwable caught) {
+            Window.alert("Rpc failure");
+          }
+
+          public void onSuccess(String result) {
+            dialogBox.setText(dialogBoxText + "\n " + result);
+          }
+        });
       }
     });
   }

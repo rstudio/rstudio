@@ -10,7 +10,8 @@
 @eclipseExtraLaunchPaths
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="@vmargs -Xmx256M"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out www @startupUrl"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out
+  war -startupUrl @startupUrl @moduleName"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="@projectName"/>
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 </launchConfiguration>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+  <servlet>
+    <servlet-name>echoServlet</servlet-name>
+    <servlet-class>@serverPackage.EchoServiceImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>echoServlet</servlet-name>
+    <url-pattern>/@deployDir/echo</url-pattern>
+  </servlet-mapping>
+
+</web-app>

@@ -1,0 +1,16 @@
+package @serverPackage;
+
+import @clientPackage.EchoService;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+
+/**
+ * The server side implementation of the Rpc service.
+ */
+public class EchoServiceImpl extends RemoteServiceServlet implements
+    EchoService {
+
+  public String echo(String input) {
+    return "Server says: " + input;
+  }
+
+}
