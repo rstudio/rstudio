@@ -230,7 +230,7 @@ public class JettyLauncher implements ServletContainerLauncher {
 
     try {
       server.start();
-      int actualPort = connector.getPort();
+      int actualPort = connector.getLocalPort();
       return new JettyServletContainer(logger, wac, actualPort, appRootDir);
     } catch (Exception e) {
       logger.log(TreeLogger.ERROR, "Unable to start embedded Jetty server", e);
