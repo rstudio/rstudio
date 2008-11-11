@@ -16,9 +16,9 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 
 import java.io.File;
+import java.net.BindException;
 
 import javax.servlet.Filter;
 
@@ -28,6 +28,18 @@ import javax.servlet.Filter;
  */
 public interface ServletContainerLauncher {
 
-  ServletContainer start(TreeLogger topLogger, int port, File appRootDir,
-      Filter shellServletFilter) throws UnableToCompleteException;
+  /**
+   * Start an embedded HTTP server.
+   * 
+   * @param logger the server logger
+   * @param port the TCP port to serve on
+   * @param appRootDir the base WAR directory
+   * @param filter a servlet filter that must be installed on the root path to
+   *          serve generated files
+   * @return the launch servlet contained
+   * @throws BindException if the requested port is already in use
+   * @throws Exception if the server fails to start for any other reason
+   */
+  ServletContainer start(TreeLogger logger, int port, File appRootDir,
+      Filter filter) throws BindException, Exception;
 }

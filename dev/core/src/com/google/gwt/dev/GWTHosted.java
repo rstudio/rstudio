@@ -31,6 +31,7 @@ import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.PrintWriter;
+import java.net.BindException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -239,14 +240,18 @@ public class GWTHosted extends GWTShell {
           moduleArray);
       server = launcher.start(serverLogger, getPort(), options.getOutDir(),
           servletFilter);
-    } catch (UnableToCompleteException e) {
+      assert (server != null);
+      return server.getPort();
+    } catch (BindException e) {
+      System.err.println("Port "
+          + getPort()
+          + " is already is use; you probably still have another session active");
+    } catch (Exception e) {
+      System.err.println("Unable to start embedded HTTP server");
+      e.printStackTrace();
+    } finally {
       PerfLogger.end();
-      return -1;
     }
-    assert (server != null);
-
-    PerfLogger.end();
-    return server.getPort();
+    return -1;
   }
-
 }
