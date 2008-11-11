@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilePerms.CompilePermsOptionsImpl;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 
 import java.io.File;
@@ -100,6 +101,7 @@ public class GWTCompiler {
     if (options.isValidateOnly()) {
       return new Precompile(options).run(logger);
     } else {
+      PerfLogger.start("compile");
       logger = logger.branch(TreeLogger.INFO, "Compiling module "
           + options.getModuleName());
       if (new Precompile(options).run(logger)) {
@@ -112,11 +114,13 @@ public class GWTCompiler {
         if (new CompilePerms(permsOptions).run(logger)) {
           if (new Link(options).run(logger)) {
             logger.log(TreeLogger.INFO, "Compilation succeeded");
+            PerfLogger.end();
             return true;
           }
         }
       }
       logger.log(TreeLogger.ERROR, "Compilation failed");
+      PerfLogger.end();
       return false;
     }
   }

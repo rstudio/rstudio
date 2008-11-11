@@ -463,7 +463,6 @@ public class Pruner {
         livenessAnalyzer.traverseFrom(method);
       }
       livenessAnalyzer.traverseFromLeftoversFragmentHasLoaded();
-      livenessAnalyzer.finishTraversal();
 
       program.typeOracle.setInstantiatedTypes(livenessAnalyzer.getInstantiatedTypes());
 

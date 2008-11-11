@@ -267,7 +267,6 @@ public class CodeSplitter {
 
     initiallyLive = new ControlFlowAnalyzer(jprogram);
     traverseEntry(initiallyLive, 0);
-    initiallyLive.finishTraversal();
 
     methodsInJavaScript = fragmentExtractor.findAllMethodsInJavaScript();
   }
@@ -310,7 +309,6 @@ public class CodeSplitter {
       // Traverse leftoversFragmentHasLoaded, because it should not
       // go into any of the exclusive fragments.
       cfa.traverseFromLeftoversFragmentHasLoaded();
-      cfa.finishTraversal();
       allButOnes.add(cfa);
     }
 
@@ -326,7 +324,6 @@ public class CodeSplitter {
       traverseEntry(everything, entry);
     }
     everything.traverseFromLeftoversFragmentHasLoaded();
-    everything.finishTraversal();
     return everything;
   }
 
@@ -368,7 +365,6 @@ public class CodeSplitter {
     for (int base = 1; base < numEntries; base++) {
       ControlFlowAnalyzer baseCfa = new ControlFlowAnalyzer(initiallyLive);
       traverseEntry(baseCfa, base);
-      baseCfa.finishTraversal();
       LivenessPredicate baseLive = new CfaLivenessPredicate(baseCfa);
 
       // secondary base

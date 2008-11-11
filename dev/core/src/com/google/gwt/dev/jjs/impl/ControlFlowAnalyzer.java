@@ -57,15 +57,15 @@ import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsVisitor;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * This class finds out what code in a program is live based on starting
- * execution at a specified location. Note that the client must call
- * {@link #finishTraversal()} after the other traversal methods have been
- * called, or the results will be incomplete.
+ * execution at a specified location.
  */
 public class ControlFlowAnalyzer {
 
@@ -182,7 +182,7 @@ public class ControlFlowAnalyzer {
       // Rescue my super type
       rescue(type.extnds, true, isInstantiated);
 
-      // Rescue my clinit (it won't ever be explicitly referenced
+      // Rescue my clinit (it won't ever be explicitly referenced)
       rescue(type.methods.get(0));
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
@@ -191,6 +191,8 @@ public class ControlFlowAnalyzer {
         JInterfaceType intfType = type.implments.get(i);
         rescue(intfType, false, isInstantiated);
       }
+
+      rescueMethodsIfInstantiable(type);
 
       return false;
     }
@@ -256,6 +258,8 @@ public class ControlFlowAnalyzer {
         accept(it);
       }
 
+      rescueMethodsIfInstantiable(type);
+
       return false;
     }
 
@@ -305,7 +309,18 @@ public class ControlFlowAnalyzer {
 
     @Override
     public boolean visit(JMethodCall call, Context ctx) {
-      rescue(call.getTarget());
+      JMethod method = call.getTarget();
+      if (method.isStatic()
+          || program.isJavaScriptObject(method.getEnclosingType())
+          || instantiatedTypes.contains(method.getEnclosingType())) {
+        rescue(method);
+      } else {
+        // It's a virtual method whose class is not instantiable
+        if (!liveFieldsAndMethods.contains(method)) {
+          methodsLiveExceptForInstantiability.add(method);
+        }
+      }
+
       return true;
     }
 
@@ -448,7 +463,10 @@ public class ControlFlowAnalyzer {
       if (method != null) {
         if (!liveFieldsAndMethods.contains(method)) {
           liveFieldsAndMethods.add(method);
+          methodsLiveExceptForInstantiability.remove(method);
+
           accept(method);
+
           if (method.isNative()) {
             /*
              * SPECIAL: returning from this method passes a value from
@@ -456,6 +474,9 @@ public class ControlFlowAnalyzer {
              */
             maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
           }
+
+          rescueOverridingMethods(method);
+
           return true;
         }
       }
@@ -528,57 +549,72 @@ public class ControlFlowAnalyzer {
         rescue(stringValueOfChar);
       }
     }
-  }
 
-  /**
-   * Traverse methods that are reachable via virtual method calls. Specifically,
-   * traverse methods whose classes are instantiable and which override a method
-   * that is live.
-   */
-  private class UpRefVisitor extends JVisitor {
-
-    private boolean didRescue = false;
-
-    public boolean didRescue() {
-      return didRescue;
-    }
-
-    @Override
-    public boolean visit(JClassType x, Context ctx) {
-      return instantiatedTypes.contains(x);
-    }
-
-    @Override
-    public boolean visit(JMethod x, Context ctx) {
-      if (liveFieldsAndMethods.contains(x)) {
-        return false;
-      }
-
-      for (JMethod override : program.typeOracle.getAllOverrides(x)) {
-        if (liveFieldsAndMethods.contains(override)) {
-          rescuer.rescue(x);
-          didRescue = true;
-          return false;
+    /**
+     * If the type is instantiable, rescue any of its virtual methods that a
+     * previously seen method call could call.
+     */
+    private void rescueMethodsIfInstantiable(JReferenceType type) {
+      if (instantiatedTypes.contains(type)) {
+        for (JMethod method : type.methods) {
+          if (!method.isStatic()) {
+            if (methodsLiveExceptForInstantiability.contains(method)) {
+              rescue(method);
+              continue;
+            }
+          }
         }
       }
-      return false;
     }
 
-    @Override
-    public boolean visit(JProgram x, Context ctx) {
-      didRescue = false;
-      return true;
+    /**
+     * Assume that <code>method</code> is live. Rescue any overriding methods
+     * that might be called if <code>method</code> is called through virtual
+     * dispatch.
+     */
+    private void rescueOverridingMethods(JMethod method) {
+      if (!method.isStatic()) {
+
+        List<JMethod> overriders = methodsThatOverrideMe.get(method);
+        if (overriders != null) {
+          for (JMethod overrider : overriders) {
+            if (liveFieldsAndMethods.contains(overrider)) {
+              // The override is already alive, do nothing.
+            } else if (instantiatedTypes.contains(overrider.getEnclosingType())) {
+              // The enclosing class is alive, make my override reachable.
+              rescue(overrider);
+            } else {
+              // The enclosing class is not yet alive, put override in limbo.
+              methodsLiveExceptForInstantiability.add(overrider);
+            }
+          }
+        }
+      }
     }
   }
 
   private Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
   private Set<JNode> liveFieldsAndMethods = new HashSet<JNode>();
   private Set<String> liveStrings = new HashSet<String>();
+
+  /**
+   * Schrodinger's methods... aka "limbo". :) These are instance methods that
+   * seem to be reachable, only their enclosing type is uninstantiable. We place
+   * these methods into purgatory until/unless the enclosing type is found to be
+   * instantiable.
+   */
+  private Set<JMethod> methodsLiveExceptForInstantiability = new HashSet<JMethod>();
+
+  /**
+   * A precomputed map of all instance methods onto a set of methods that
+   * override each key method.
+   */
+  private Map<JMethod, List<JMethod>> methodsThatOverrideMe;
+
   private final JProgram program;
   private Set<JReferenceType> referencedTypes = new HashSet<JReferenceType>();
   private final RescueVisitor rescuer = new RescueVisitor();
   private JMethod stringValueOfChar = null;
-  private final UpRefVisitor upRefer = new UpRefVisitor();
 
   public ControlFlowAnalyzer(ControlFlowAnalyzer cfa) {
     program = cfa.program;
@@ -587,21 +623,14 @@ public class ControlFlowAnalyzer {
     referencedTypes = new HashSet<JReferenceType>(cfa.referencedTypes);
     stringValueOfChar = cfa.stringValueOfChar;
     liveStrings = new HashSet<String>(cfa.liveStrings);
+    methodsLiveExceptForInstantiability = new HashSet<JMethod>(
+        cfa.methodsLiveExceptForInstantiability);
+    methodsThatOverrideMe = cfa.methodsThatOverrideMe;
   }
 
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
-  }
-
-  /**
-   * Finish any remaining traversal that is needed. This must be called after
-   * calling any of the other traversal methods in order to get accurate
-   * results. It can also be called eagerly.
-   */
-  public void finishTraversal() {
-    do {
-      upRefer.accept(program);
-    } while (upRefer.didRescue());
+    buildMethodsOverriding();
   }
 
   /**
@@ -653,9 +682,7 @@ public class ControlFlowAnalyzer {
     class ReplaceStringLiterals extends JModVisitor {
       @Override
       public void endVisit(JStringLiteral stringLiteral, Context ctx) {
-        ctx.replaceMe(program.getLiteralString(
-            stringLiteral.getSourceInfo().makeChild(ControlFlowAnalyzer.class,
-                "remove string literals"), ""));
+        ctx.replaceMe(program.getLiteralNull());
       }
     }
 
@@ -682,5 +709,21 @@ public class ControlFlowAnalyzer {
 
   public void traverseFromReferenceTo(JReferenceType type) {
     rescuer.rescue(type, true, false);
+  }
+
+  private void buildMethodsOverriding() {
+    methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
+    for (JReferenceType type : program.getDeclaredTypes()) {
+      for (JMethod method : type.methods) {
+        for (JMethod overridden : program.typeOracle.getAllOverrides(method)) {
+          List<JMethod> overs = methodsThatOverrideMe.get(overridden);
+          if (overs == null) {
+            overs = new ArrayList<JMethod>();
+            methodsThatOverrideMe.put(overridden, overs);
+          }
+          overs.add(method);
+        }
+      }
+    }
   }
 }
