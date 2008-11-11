@@ -22,6 +22,7 @@ import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 
 import java.io.File;
 
@@ -34,6 +35,7 @@ public class GWTCompiler {
     public ArgProcessor(CompilerOptions options) {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
+      registerHandler(new ArgHandlerOutDir(options));
     }
 
     @Override

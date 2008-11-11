@@ -28,6 +28,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.OptionExtraDir;
 import com.google.gwt.dev.util.arg.OptionOutDir;
 
@@ -51,6 +52,7 @@ public class Link {
     public ArgProcessor(LinkOptions options) {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
+      registerHandler(new ArgHandlerOutDir(options));
     }
 
     @Override
