@@ -29,6 +29,7 @@ import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.OptionExtraDir;
+import com.google.gwt.dev.util.arg.OptionOutDir;
 
 import java.io.File;
 import java.util.HashMap;
@@ -42,7 +43,8 @@ public class Link {
   /**
    * Options for Link.
    */
-  public interface LinkOptions extends CompileTaskOptions, OptionExtraDir {
+  public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
+      OptionOutDir {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -64,6 +66,7 @@ public class Link {
       LinkOptions {
 
     private File extraDir;
+    private File outDir;
 
     public LinkOptionsImpl() {
     }
@@ -75,14 +78,23 @@ public class Link {
     public void copyFrom(LinkOptions other) {
       super.copyFrom(other);
       setExtraDir(other.getExtraDir());
+      setOutDir(other.getOutDir());
     }
 
     public File getExtraDir() {
       return extraDir;
     }
 
+    public File getOutDir() {
+      return outDir;
+    }
+
     public void setExtraDir(File extraDir) {
       this.extraDir = extraDir;
+    }
+
+    public void setOutDir(File outDir) {
+      this.outDir = outDir;
     }
   }
 
