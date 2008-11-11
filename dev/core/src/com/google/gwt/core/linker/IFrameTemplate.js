@@ -295,7 +295,7 @@ function __MODULE_FUNC__() {
         millis:(new Date()).getTime(), 
         type: 'moduleRequested'
       });
-      iframe.contentWindow.location.replace(base + strongName + '.cache.html');
+      iframe.contentWindow.location.replace(base + initialHtml);
     }
   }
 
@@ -351,13 +351,16 @@ function __MODULE_FUNC__() {
   });
 
   var strongName;
+  var initialHtml;
   if (isHostedMode()) {
-    strongName = "hosted.html?__MODULE_FUNC__";
+    strongName = "";
+    initialHtml = "hosted.html?__MODULE_FUNC__";
   } else {
     try {
 // __PERMUTATIONS_BEGIN__
       // Permutation logic
 // __PERMUTATIONS_END__
+      initialHtml = strongName + ".cache.html";
     } catch (e) {
       // intentionally silent on property failure
       return;
