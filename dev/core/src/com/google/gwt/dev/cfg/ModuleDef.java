@@ -85,13 +85,13 @@ public class ModuleDef implements PublicOracle {
 
   private Class<? extends Linker> activePrimaryLinker;
 
-  private CompilationState compilationState;
-
   private String deployTo;
 
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
+
+  private CompilationState lazyCompilationState;
 
   private JavaSourceOracle lazyJavaSourceOracle;
 
@@ -262,8 +262,11 @@ public class ModuleDef implements PublicOracle {
     return name;
   }
 
-  public CompilationState getCompilationState() {
-    return compilationState;
+  public CompilationState getCompilationState(TreeLogger logger) {
+    if (lazyCompilationState == null) {
+      lazyCompilationState = new CompilationState(logger, lazyJavaSourceOracle);
+    }
+    return lazyCompilationState;
   }
 
   /**
@@ -333,8 +336,29 @@ public class ModuleDef implements PublicOracle {
   public synchronized TypeOracle getTypeOracle(TreeLogger logger)
       throws UnableToCompleteException {
     if (lazyTypeOracle == null) {
-      lazyTypeOracle = compilationState.getTypeOracle();
-      updateTypeOracle(logger);
+      lazyTypeOracle = getCompilationState(logger).getTypeOracle();
+
+      // Sanity check the seed types and don't even start it they're missing.
+      boolean seedTypesMissing = false;
+      if (lazyTypeOracle.findType("java.lang.Object") == null) {
+        Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
+        seedTypesMissing = true;
+      } else {
+        TreeLogger branch = logger.branch(TreeLogger.TRACE,
+            "Finding entry point classes", null);
+        String[] typeNames = getEntryPointTypeNames();
+        for (int i = 0; i < typeNames.length; i++) {
+          String typeName = typeNames[i];
+          if (lazyTypeOracle.findType(typeName) == null) {
+            Util.logMissingTypeErrorWithHints(branch, typeName);
+            seedTypesMissing = true;
+          }
+        }
+      }
+
+      if (seedTypesMissing) {
+        throw new UnableToCompleteException();
+      }
     }
     return lazyTypeOracle;
   }
@@ -371,11 +395,13 @@ public class ModuleDef implements PublicOracle {
     lazySourceOracle.refresh(logger);
 
     // Update the compilation state to reflect the resource oracle changes.
-    compilationState.refresh();
+    if (lazyCompilationState != null) {
+      lazyCompilationState.refresh(logger);
+    }
 
     // Refresh type oracle if needed.
     if (lazyTypeOracle != null) {
-      updateTypeOracle(logger);
+      getTypeOracle(logger);
     }
     PerfLogger.end();
   }
@@ -470,9 +496,6 @@ public class ModuleDef implements PublicOracle {
     }
     lazyJavaSourceOracle = new JavaSourceOracleImpl(lazySourceOracle);
 
-    // Create the compilation state.
-    compilationState = new CompilationState(lazyJavaSourceOracle);
-
     PerfLogger.end();
   }
 
@@ -497,39 +520,6 @@ public class ModuleDef implements PublicOracle {
     scanner.init();
 
     return scanner;
-  }
-
-  private void updateTypeOracle(TreeLogger logger)
-      throws UnableToCompleteException {
-    PerfLogger.start("ModuleDef.updateTypeOracle");
-    TreeLogger branch = logger.branch(TreeLogger.TRACE,
-        "Compiling Java source files in module '" + getName() + "'");
-    compilationState.compile(branch);
-    PerfLogger.end();
-
-    TypeOracle typeOracle = compilationState.getTypeOracle();
-
-    // Sanity check the seed types and don't even start it they're missing.
-    boolean seedTypesMissing = false;
-    if (typeOracle.findType("java.lang.Object") == null) {
-      Util.logMissingTypeErrorWithHints(logger, "java.lang.Object");
-      seedTypesMissing = true;
-    } else {
-      branch = logger.branch(TreeLogger.TRACE, "Finding entry point classes",
-          null);
-      String[] typeNames = getEntryPointTypeNames();
-      for (int i = 0; i < typeNames.length; i++) {
-        String typeName = typeNames[i];
-        if (typeOracle.findType(typeName) == null) {
-          Util.logMissingTypeErrorWithHints(branch, typeName);
-          seedTypesMissing = true;
-        }
-      }
-    }
-
-    if (seedTypesMissing) {
-      throw new UnableToCompleteException();
-    }
   }
 
 }

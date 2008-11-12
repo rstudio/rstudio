@@ -26,6 +26,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.PropertyPermutations;
 import com.google.gwt.dev.cfg.Rules;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
@@ -36,6 +37,7 @@ import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.shell.StandardRebindOracle;
+import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
@@ -152,8 +154,8 @@ public class Precompile {
     private RebindOracle[] rebindOracles;
 
     public DistillerRebindPermutationOracle(ModuleDef module,
-        ArtifactSet generatorArtifacts, PropertyPermutations perms,
-        File genDir, File generatorResourcesDir) {
+        CompilationState compilationState, ArtifactSet generatorArtifacts,
+        PropertyPermutations perms, File genDir, File generatorResourcesDir) {
       permutations = new Permutation[perms.size()];
       propertyOracles = new StaticPropertyOracle[perms.size()];
       rebindOracles = new RebindOracle[perms.size()];
@@ -165,9 +167,9 @@ public class Precompile {
         String[] orderedPropValues = perms.getOrderedPropertyValues(i);
         propertyOracles[i] = new StaticPropertyOracle(orderedProps,
             orderedPropValues, configProps);
-        rebindOracles[i] = new StandardRebindOracle(
-            module.getCompilationState(), propertyOracles[i], module, rules,
-            genDir, generatorResourcesDir, generatorArtifacts);
+        rebindOracles[i] = new StandardRebindOracle(compilationState,
+            propertyOracles[i], module, rules, genDir, generatorResourcesDir,
+            generatorArtifacts);
         permutations[i] = new Permutation(propertyOracles[i]);
       }
     }
@@ -252,6 +254,8 @@ public class Precompile {
       JJSOptions jjsOptions, ModuleDef module, File genDir,
       File generatorResourcesDir) {
     try {
+      CompilationState compilationState = module.getCompilationState(logger);
+
       String[] declEntryPts = module.getEntryPointTypeNames();
       if (declEntryPts.length == 0) {
         logger.log(TreeLogger.ERROR, "Module has no entry points defined", null);
@@ -260,13 +264,16 @@ public class Precompile {
 
       ArtifactSet generatedArtifacts = new ArtifactSet();
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          module, generatedArtifacts, new PropertyPermutations(
-              module.getProperties()), genDir, generatorResourcesDir);
+          module, compilationState, generatedArtifacts,
+          new PropertyPermutations(module.getProperties()), genDir,
+          generatorResourcesDir);
 
       WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-          module.getCompilationState(), rpo);
+          compilationState, rpo);
+      PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
           frontEnd, declEntryPts, jjsOptions, rpo.getPermuationCount() == 1);
+      PerfLogger.end();
 
       // Merge all identical permutations together.
       Permutation[] permutations = rpo.getPermutations();
@@ -305,10 +312,12 @@ public class Precompile {
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
       ModuleDef module, File genDir, File generatorResourcesDir) {
     try {
+      CompilationState compilationState = module.getCompilationState(logger);
+
       String[] declEntryPts = module.getEntryPointTypeNames();
       if (declEntryPts.length == 0) {
         // Pretend that every single compilation unit is an entry point.
-        Set<CompilationUnit> compilationUnits = module.getCompilationState().getCompilationUnits();
+        Set<CompilationUnit> compilationUnits = compilationState.getCompilationUnits();
         declEntryPts = new String[compilationUnits.size()];
         int i = 0;
         for (CompilationUnit unit : compilationUnits) {
@@ -318,11 +327,12 @@ public class Precompile {
 
       ArtifactSet generatorArtifacts = new ArtifactSet();
       DistillerRebindPermutationOracle rpo = new DistillerRebindPermutationOracle(
-          module, generatorArtifacts, new PropertyPermutations(
-              module.getProperties()), genDir, generatorResourcesDir);
+          module, compilationState, generatorArtifacts,
+          new PropertyPermutations(module.getProperties()), genDir,
+          generatorResourcesDir);
 
       WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-          module.getCompilationState(), rpo);
+          compilationState, rpo);
       JavaToJavaScriptCompiler.precompile(logger, frontEnd, declEntryPts,
           jjsOptions, true);
       return true;
@@ -385,6 +395,6 @@ public class Precompile {
         options.getModuleName());
 
     // TODO: All JDT checks now before even building TypeOracle?
-    module.getCompilationState().compile(logger);
+    module.getCompilationState(logger);
   }
 }

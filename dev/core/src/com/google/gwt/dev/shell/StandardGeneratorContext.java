@@ -308,14 +308,14 @@ public class StandardGeneratorContext implements GeneratorContext {
           String qualifiedTypeName = gcup.getTypeName();
           genTypeNames.add(qualifiedTypeName);
           maybeWriteSource(gcup, qualifiedTypeName);
-          compilationState.addGeneratedCompilationUnit(gcup);
 
           if (subBranch != null) {
             subBranch.log(TreeLogger.DEBUG, gcup.getDisplayLocation(), null);
           }
         }
 
-        compilationState.compile(logger);
+        compilationState.addGeneratedCompilationUnits(logger,
+            committedGeneratedCups);
       }
 
       // Make sure all generated types can be found in TypeOracle.

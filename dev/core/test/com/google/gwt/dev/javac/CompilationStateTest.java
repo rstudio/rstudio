@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.MockJavaSourceFile;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
@@ -38,23 +37,6 @@ import java.util.Map.Entry;
  */
 public class CompilationStateTest extends TestCase {
 
-  private MockJavaSourceOracle oracle = new MockJavaSourceOracle(
-      JavaSourceCodeBase.getStandardResources());
-
-  private CompilationState state = new CompilationState(oracle);
-
-  public void testAddGeneratedCompilationUnit() {
-    validateCompilationState();
-
-    // Add a unit and ensure it shows up.
-    addGeneratedUnit(JavaSourceCodeBase.FOO);
-    validateCompilationState(JavaSourceCodeBase.FOO.getTypeName());
-
-    // Ensure it disappears after a refresh.
-    state.refresh();
-    validateCompilationState();
-  }
-
   static void assertUnitsChecked(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
       assertSame(State.CHECKED, unit.getState());
@@ -63,17 +45,41 @@ public class CompilationStateTest extends TestCase {
     }
   }
 
-  public void testCompile() throws UnableToCompleteException {
-    validateUncompiled();
-    state.compile(createTreeLogger());
-    assertUnitsChecked(state.getCompilationUnits());
+  /**
+   * Tweak this if you want to see the log output.
+   */
+  private static TreeLogger createTreeLogger() {
+    boolean reallyLog = false;
+    if (reallyLog) {
+      AbstractTreeLogger logger = new PrintWriterTreeLogger();
+      logger.setMaxDetail(TreeLogger.ALL);
+      return logger;
+    } else {
+      return TreeLogger.NULL;
+    }
   }
 
-  public void testCompileError() throws UnableToCompleteException {
+  private MockJavaSourceOracle oracle = new MockJavaSourceOracle(
+      JavaSourceCodeBase.getStandardResources());
+
+  private CompilationState state = new CompilationState(createTreeLogger(),
+      oracle);
+
+  public void testAddGeneratedCompilationUnit() {
+    validateCompilationState();
+
+    // Add a unit and ensure it shows up.
+    addGeneratedUnits(JavaSourceCodeBase.FOO);
+    validateCompilationState(JavaSourceCodeBase.FOO.getTypeName());
+
+    // Ensure it disappears after a refresh.
+    state.refresh(createTreeLogger());
+    validateCompilationState();
+  }
+
+  public void testCompileError() {
     oracle.add(JavaSourceCodeBase.BAR);
-    state.refresh();
-    validateUncompiled();
-    state.compile(createTreeLogger());
+    state.refresh(createTreeLogger());
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
         JavaSourceCodeBase.BAR.getTypeName());
@@ -85,22 +91,15 @@ public class CompilationStateTest extends TestCase {
     assertUnitsChecked(goodUnits);
   }
 
-  public void testCompileWithGeneratedUnits() throws UnableToCompleteException {
-    validateUncompiled();
-    state.compile(createTreeLogger());
+  public void testCompileWithGeneratedUnits() {
     assertUnitsChecked(state.getCompilationUnits());
-    addGeneratedUnit(JavaSourceCodeBase.FOO);
-    state.compile(createTreeLogger());
+    addGeneratedUnits(JavaSourceCodeBase.FOO);
     assertUnitsChecked(state.getCompilationUnits());
   }
 
-  public void testCompileWithGeneratedUnitsError()
-      throws UnableToCompleteException {
-    validateUncompiled();
-    state.compile(createTreeLogger());
+  public void testCompileWithGeneratedUnitsError() {
     assertUnitsChecked(state.getCompilationUnits());
-    addGeneratedUnit(JavaSourceCodeBase.BAR);
-    state.compile(createTreeLogger());
+    addGeneratedUnits(JavaSourceCodeBase.BAR);
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
         JavaSourceCodeBase.BAR.getTypeName());
@@ -110,6 +109,10 @@ public class CompilationStateTest extends TestCase {
         state.getCompilationUnits());
     goodUnits.remove(badUnit);
     assertUnitsChecked(goodUnits);
+  }
+
+  public void testInitialization() {
+    assertUnitsChecked(state.getCompilationUnits());
   }
 
   public void testSourceOracleAdd() {
@@ -117,7 +120,7 @@ public class CompilationStateTest extends TestCase {
 
     int size = state.getCompilationUnits().size();
     oracle.add(JavaSourceCodeBase.FOO);
-    state.refresh();
+    state.refresh(createTreeLogger());
     assertEquals(size + 1, state.getCompilationUnits().size());
     validateCompilationState();
   }
@@ -128,7 +131,7 @@ public class CompilationStateTest extends TestCase {
 
   public void testSourceOracleEmpty() {
     oracle = new MockJavaSourceOracle();
-    state = new CompilationState(oracle);
+    state = new CompilationState(createTreeLogger(), oracle);
     validateCompilationState();
   }
 
@@ -137,7 +140,7 @@ public class CompilationStateTest extends TestCase {
 
     int size = state.getCompilationUnits().size();
     oracle.remove(JavaSourceCodeBase.OBJECT.getTypeName());
-    state.refresh();
+    state.refresh(createTreeLogger());
     assertEquals(size - 1, state.getCompilationUnits().size());
     validateCompilationState();
   }
@@ -147,7 +150,7 @@ public class CompilationStateTest extends TestCase {
 
     int size = state.getCompilationUnits().size();
     oracle.replace(new MockJavaSourceFile(JavaSourceCodeBase.OBJECT));
-    state.refresh();
+    state.refresh(createTreeLogger());
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
   }
@@ -157,18 +160,22 @@ public class CompilationStateTest extends TestCase {
 
     int size = state.getCompilationUnits().size();
     oracle.replace(JavaSourceCodeBase.OBJECT);
-    state.refresh();
+    state.refresh(createTreeLogger());
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
   }
 
-  private void addGeneratedUnit(JavaSourceFile sourceFile) {
-    state.addGeneratedCompilationUnit(new SourceFileCompilationUnit(sourceFile) {
-      @Override
-      public boolean isGenerated() {
-        return true;
-      }
-    });
+  private void addGeneratedUnits(JavaSourceFile... sourceFiles) {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    for (JavaSourceFile sourceFile : sourceFiles) {
+      units.add(new SourceFileCompilationUnit(sourceFile) {
+        @Override
+        public boolean isGenerated() {
+          return true;
+        }
+      });
+    }
+    state.addGeneratedCompilationUnits(createTreeLogger(), units);
   }
 
   private void validateCompilationState(String... generatedTypeNames) {
@@ -204,25 +211,5 @@ public class CompilationStateTest extends TestCase {
     // The mutable sets should be empty now.
     assertEquals(0, sourceMap.size());
     assertEquals(0, generatedTypes.size());
-  }
-
-  private void validateUncompiled() {
-    for (CompilationUnit unit : state.getCompilationUnits()) {
-      assertNull(unit.getJdtCud());
-    }
-  }
-
-  /**
-   * Tweak this if you want to see the log output.
-   */
-  private TreeLogger createTreeLogger() {
-    boolean reallyLog = false;
-    if (reallyLog) {
-      AbstractTreeLogger logger = new PrintWriterTreeLogger();
-      logger.setMaxDetail(TreeLogger.ALL);
-      return logger;
-    } else {
-      return TreeLogger.NULL;
-    }
   }
 }

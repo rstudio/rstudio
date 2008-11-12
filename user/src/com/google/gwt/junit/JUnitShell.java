@@ -173,7 +173,8 @@ public class JUnitShell extends GWTShell {
     if (foundType != null) {
       return null;
     }
-    Map<String, CompilationUnit> unitMap = currentModule.getCompilationState().getCompilationUnitMap();
+    Map<String, CompilationUnit> unitMap = currentModule.getCompilationState(
+        logger).getCompilationUnitMap();
     CompilationUnit unit = unitMap.get(typeName);
     String errMsg;
     if (unit == null) {

@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -59,10 +58,10 @@ public class TypeOracleMediatorTest extends TestCase {
   private static void assertEqualArraysUnordered(Object[] expected,
       Object[] actual) {
     assertEquals(expected.length, actual.length);
-    for (int i = 0; i < expected.length; i++) {
+    for (Object element : expected) {
       boolean matched = false;
-      for (int j = 0; j < actual.length; j++) {
-        if (expected[i].equals(actual[j])) {
+      for (Object element2 : actual) {
+        if (element.equals(element2)) {
           matched = true;
           break;
         }
@@ -79,8 +78,10 @@ public class TypeOracleMediatorTest extends TestCase {
   }
 
   private static void assertIsNotAssignable(JClassType from, JClassType to) {
-    assertFalse(from.isAssignableTo(to));
-    assertFalse(to.isAssignableFrom(from));
+    assertFalse(from + " should not be assignable to " + to,
+        from.isAssignableTo(to));
+    assertFalse(to + " should not be assignable to " + from,
+        to.isAssignableFrom(from));
   }
 
   private static void recordAssignability(
@@ -101,11 +102,13 @@ public class TypeOracleMediatorTest extends TestCase {
 
   protected CheckedMockCompilationUnit CU_AfterAssimilate = new CheckedMockCompilationUnit(
       "test.assim", "AfterAssimilate") {
+    @Override
     public void check(JClassType type) {
       assertEquals("test.assim.BeforeAssimilate",
           type.getSuperclass().getQualifiedSourceName());
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test.assim;\n");
@@ -117,13 +120,16 @@ public class TypeOracleMediatorTest extends TestCase {
   protected CheckedMockCompilationUnit CU_Assignable = new CheckedMockCompilationUnit(
       "test.sub", "Derived", "BaseInterface", "DerivedInterface",
       "Derived.Nested") {
+    @Override
     public void check(JClassType type) {
-      if ("Derived".equals(type.getSimpleSourceName()))
+      if ("Derived".equals(type.getSimpleSourceName())) {
         checkDerived(type);
-      else if ("Nested".equals(type.getSimpleSourceName()))
+      } else if ("Nested".equals(type.getSimpleSourceName())) {
         checkNested(type);
+      }
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test.sub;\n");
@@ -148,10 +154,12 @@ public class TypeOracleMediatorTest extends TestCase {
 
   protected CheckedMockCompilationUnit CU_BeforeAssimilate = new CheckedMockCompilationUnit(
       "test.assim", "BeforeAssimilate") {
+    @Override
     public void check(JClassType type) {
       assertEquals("test.assim.BeforeAssimilate", type.getQualifiedSourceName());
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test.assim;\n");
@@ -164,13 +172,15 @@ public class TypeOracleMediatorTest extends TestCase {
       "test", "BindToTypeScope", "BindToTypeScope.Object",
       "BindToTypeScope.DerivedObject") {
 
+    @Override
     public void check(JClassType type) throws NotFoundException {
-      if ("BindToTypeScope".equals(type.getSimpleSourceName()))
+      if ("BindToTypeScope".equals(type.getSimpleSourceName())) {
         checkBindToTypeScope(type);
-      else if ("Object".equals(type.getSimpleSourceName()))
+      } else if ("Object".equals(type.getSimpleSourceName())) {
         checkObject(type);
-      else
+      } else {
         checkDerivedObject(type);
+      }
     }
 
     public void checkBindToTypeScope(JClassType type) throws NotFoundException {
@@ -187,6 +197,7 @@ public class TypeOracleMediatorTest extends TestCase {
       assertEquals("test.BindToTypeScope.Object", type.getQualifiedSourceName());
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
@@ -218,6 +229,7 @@ public class TypeOracleMediatorTest extends TestCase {
       assertNotNull(type.isGenericType());
     }
 
+    @Override
     public String getSource() {
       StringBuilder sb = new StringBuilder();
       sb.append("package parameterized.type.build.dependency;\n");
@@ -230,6 +242,7 @@ public class TypeOracleMediatorTest extends TestCase {
 
   protected CheckedMockCompilationUnit CU_DefaultClass = new CheckedMockCompilationUnit(
       "test", "DefaultClass") {
+    @Override
     public void check(JClassType type) {
       assertEquals("DefaultClass", type.getSimpleSourceName());
       assertEquals("test.DefaultClass", type.getQualifiedSourceName());
@@ -241,6 +254,7 @@ public class TypeOracleMediatorTest extends TestCase {
       assertEquals(0, type.getFields().length);
     }
 
+    @Override
     public String getSource() {
       StringBuffer sb = new StringBuffer();
       sb.append("package test;\n");
@@ -257,6 +271,7 @@ public class TypeOracleMediatorTest extends TestCase {
       assertNotNull(type.getSuperclass().isParameterized());
     }
 
+    @Override
     public String getSource() {
       StringBuilder sb = new StringBuilder();
       sb.append("package test.refresh;\n");
@@ -272,6 +287,7 @@ public class TypeOracleMediatorTest extends TestCase {
       assertNotNull(type.getSuperclass().isParameterized());
     }
 
+    @Override
     public String getSource() {
       StringBuilder sb = new StringBuilder();
       sb.append("package parameterized.type.build.dependency;\n");
@@ -282,6 +298,7 @@ public class TypeOracleMediatorTest extends TestCase {
 
   protected CheckedMockCompilationUnit CU_FieldsAndTypes = new CheckedMockCompilationUnit(
       "test", "Fields", "SomeType") {
+    @Override
     public void check(JClassType type) throws NotFoundException {
       if ("Fields".equals(type.getSimpleSourceName())) {
         assertEquals("test.Fields", type.getQualifiedSourceName());
@@ -445,10 +462,11 @@ public class TypeOracleMediatorTest extends TestCase {
 
     public void check(JClassType type) {
       final String name = type.getSimpleSourceName();
-      if ("Enclosing".equals(name))
+      if ("Enclosing".equals(name)) {
         checkEnclosing(type);
-      else
+      } else {
         checkLocal(type);
+      }
     }
 
     public void checkEnclosing(JClassType type) {
@@ -603,8 +621,9 @@ public class TypeOracleMediatorTest extends TestCase {
 
       methods = type.getOverloads("overloaded");
       assertEquals(2, methods.length);
-      for (int i = 0; i < methods.length; i++)
-        assertEquals("overloaded", methods[i].getName());
+      for (JMethod element : methods) {
+        assertEquals("overloaded", element.getName());
+      }
 
       method = type.getMethod("overloaded", new JType[] {
           JPrimitiveType.INT, javaLangObject});
@@ -655,10 +674,11 @@ public class TypeOracleMediatorTest extends TestCase {
 
     public void check(JClassType type) {
       final String name = type.getSimpleSourceName();
-      if ("Outer".equals(name))
+      if ("Outer".equals(name)) {
         checkOuter(type);
-      else
+      } else {
         checkInner(type);
+      }
     }
 
     public void checkInner(JClassType type) {
@@ -759,8 +779,7 @@ public class TypeOracleMediatorTest extends TestCase {
   private final Set<CompilationUnit> units = new HashSet<CompilationUnit>();
 
   public void checkTypes(JClassType[] types) throws NotFoundException {
-    for (int i = 0; i < types.length; i++) {
-      JClassType type = types[i];
+    for (JClassType type : types) {
       check(type);
 
       JClassType[] nestedTypes = type.getNestedTypes();
@@ -768,8 +787,7 @@ public class TypeOracleMediatorTest extends TestCase {
     }
   }
 
-  public void testAssignable() throws UnableToCompleteException,
-      TypeOracleException {
+  public void testAssignable() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_Assignable);
     units.add(CU_OuterInner);
@@ -806,8 +824,7 @@ public class TypeOracleMediatorTest extends TestCase {
     }
   }
 
-  public void testAssimilation() throws UnableToCompleteException,
-      TypeOracleException {
+  public void testAssimilation() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_BeforeAssimilate);
     compileAndRefresh();
@@ -824,8 +841,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertSame(before, after.getSuperclass());
   }
 
-  public void testBindToTypeScope() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testBindToTypeScope() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_BindToTypeScope);
     compileAndRefresh();
@@ -833,8 +849,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals(4, types.length);
   }
 
-  public void testDefaultClass() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testDefaultClass() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_DefaultClass);
     compileAndRefresh();
@@ -842,8 +857,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals(2, types.length);
   }
 
-  public void testFieldsAndTypes() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testFieldsAndTypes() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_FieldsAndTypes);
     compileAndRefresh();
@@ -851,7 +865,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals(3, types.length);
   }
 
-  public void testLocal() throws TypeOracleException, UnableToCompleteException {
+  public void testLocal() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_LocalClass);
     compileAndRefresh();
@@ -859,8 +873,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals(3, types.length);
   }
 
-  public void testMetaData() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testMetaData() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_MetaData);
     compileAndRefresh();
@@ -868,8 +881,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals(2, types.length);
   }
 
-  public void testMethodsAndParams() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testMethodsAndParams() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_Throwable);
     units.add(CU_MethodsAndParams);
@@ -878,8 +890,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals(3, types.length);
   }
 
-  public void testOuterInner() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testOuterInner() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_OuterInner);
     compileAndRefresh();
@@ -896,7 +907,7 @@ public class TypeOracleMediatorTest extends TestCase {
    * CU_DeclaresInnerGenericType.
    */
   public void testParameterizedTypeBuildDependencies()
-      throws UnableToCompleteException, TypeOracleException {
+      throws TypeOracleException {
     units.add(CU_ReferencesParameterizedTypeBeforeItsGenericFormHasBeenProcessed);
     units.add(CU_ExtendsParameterizedType);
     units.add(CU_DeclaresInnerGenericType);
@@ -914,8 +925,7 @@ public class TypeOracleMediatorTest extends TestCase {
    * @throws NotFoundException
    * @throws IOException
    */
-  public void testRefresh() throws UnableToCompleteException,
-      TypeOracleException {
+  public void testRefresh() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_ExtendsGenericList);
     units.add(CU_GenericList);
@@ -965,8 +975,7 @@ public class TypeOracleMediatorTest extends TestCase {
    * @throws UnableToCompleteException
    * @throws IOException
    */
-  public void testRefreshWithErrors() throws UnableToCompleteException,
-      TypeOracleException {
+  public void testRefreshWithErrors() throws TypeOracleException {
     // Add Object
     StringBuffer sb = new StringBuffer();
     sb.append("package java.lang;");
@@ -1042,8 +1051,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertNull(typeOracle.findType("test.refresh.with.errors.GoodClass"));
   }
 
-  public void testSyntaxErrors() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testSyntaxErrors() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_HasSyntaxErrors);
     compileAndRefresh();
@@ -1054,8 +1062,7 @@ public class TypeOracleMediatorTest extends TestCase {
     assertEquals("java.lang.Object", types[0].getQualifiedSourceName());
   }
 
-  public void testUnresolvedSymbls() throws TypeOracleException,
-      UnableToCompleteException {
+  public void testUnresolvedSymbls() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_HasUnresolvedSymbols);
     units.add(CU_RefsInfectedCompilationUnit);
@@ -1084,8 +1091,7 @@ public class TypeOracleMediatorTest extends TestCase {
     }
   }
 
-  private void compileAndRefresh() throws UnableToCompleteException,
-      TypeOracleException {
+  private void compileAndRefresh() throws TypeOracleException {
     TreeLogger logger = createTreeLogger();
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
     JdtCompiler.compile(units);
