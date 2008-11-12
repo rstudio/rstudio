@@ -10,5 +10,6 @@ Merges:
 /releases/1.5/@r3630:3863 was merged (r3864) into this branch
 /releases/1.6/@r3739:3876 was merged (r3877) into trunk
 /releases/1.6/@r3878:3944 was merged (r3945) into trunk, skipping c3878
+/releases/1.6/@r3944:4025 was merged (r????) into trunk
 
----> The next merge into trunk will be 3944:HEAD
+---> The next merge into trunk will be 4025:HEAD
