@@ -28,7 +28,6 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
 
   private Type logLevel;
   private String moduleName;
-  private File outDir;
   private boolean useGuiLogger;
   private File workDir;
 
@@ -42,8 +41,8 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
   public void copyFrom(CompileTaskOptions other) {
     setLogLevel(other.getLogLevel());
     setModuleName(other.getModuleName());
-    setOutDir(other.getOutDir());
     setUseGuiLogger(other.isUseGuiLogger());
+    setWorkDir(other.getWorkDir());
   }
 
   public File getCompilerWorkDir() {
@@ -58,8 +57,8 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     return moduleName;
   }
 
-  public File getOutDir() {
-    return outDir;
+  public File getWorkDir() {
+    return workDir;
   }
 
   public boolean isUseGuiLogger() {
@@ -74,22 +73,11 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     this.moduleName = moduleName;
   }
 
-  public void setOutDir(File outDir) {
-    this.outDir = outDir;
-  }
-
   public void setUseGuiLogger(boolean useGuiLogger) {
     this.useGuiLogger = useGuiLogger;
   }
 
-  /**
-   * TODO: add a command line option to pass files between compile phases?
-   */
-  protected File getWorkDir() {
-    if (workDir == null) {
-      workDir = new File(System.getProperty("java.io.tmpdir"), GWT_TMP_DIR);
-      workDir.mkdirs();
-    }
-    return workDir;
+  public void setWorkDir(File workDir) {
+    this.workDir = workDir;
   }
 }

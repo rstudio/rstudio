@@ -90,7 +90,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // It has to wait until now because we need to inject javascript.
     //
     Rules rules = module.getRules();
-    rebindOracle = new StandardRebindOracle(module.getCompilationState(),
+    rebindOracle = new StandardRebindOracle(module.getCompilationState(logger),
         propOracle, module, rules, genDir, shellDir, new ArtifactSet());
 
     // Create a completely isolated class loader which owns all classes
@@ -105,7 +105,7 @@ public class ShellModuleSpaceHost implements ModuleSpaceHost {
     // class loader (the one that loaded the shell itself).
     //
     classLoader = new CompilingClassLoader(logger,
-        module.getCompilationState(), readySpace);
+        module.getCompilationState(logger), readySpace);
   }
 
   public String rebind(TreeLogger logger, String sourceTypeName)

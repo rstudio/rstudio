@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
@@ -40,34 +39,17 @@ import java.util.Set;
  */
 public class CompilationState {
 
-  /**
-   * Compute the set of all valid binary type names (for
-   * {@link BinaryTypeReferenceRestrictionsChecker}.
-   */
-  private static Set<String> getValidBinaryTypeNames(Set<CompilationUnit> units) {
-    Set<String> validBinaryTypeNames = new HashSet<String>();
+  private static void markSurvivorsChecked(Set<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
-      switch (unit.getState()) {
-        case COMPILED:
-          for (ClassFile classFile : unit.getJdtCud().compilationResult().getClassFiles()) {
-            char[] binaryName = CharOperation.concatWith(
-                classFile.getCompoundName(), '/');
-            validBinaryTypeNames.add(String.valueOf(binaryName));
-          }
-          break;
-        case CHECKED:
-          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-            validBinaryTypeNames.add(compiledClass.getBinaryName());
-          }
-          break;
+      if (unit.getState() == State.COMPILED) {
+        unit.setState(State.CHECKED);
       }
     }
-    return validBinaryTypeNames;
   }
 
   protected final Map<String, CompilationUnit> unitMap = new HashMap<String, CompilationUnit>();
-  private Set<JavaSourceFile> cachedSourceFiles = Collections.emptySet();
 
+  private Set<JavaSourceFile> cachedSourceFiles = Collections.emptySet();
   /**
    * Classes mapped by binary name.
    */
@@ -83,9 +65,31 @@ public class CompilationState {
    */
   private final Map<String, CompilationUnit> exposedUnitMap = Collections.unmodifiableMap(unitMap);
 
+  /**
+   * Unmodifiable view of all units.
+   */
   private Set<CompilationUnit> exposedUnits = Collections.emptySet();
+
+  /**
+   * Recreated on refresh, allows incremental compiles.
+   */
+  private JdtCompiler jdtCompiler;
+
+  /**
+   * Controls our type oracle.
+   */
   private final TypeOracleMediator mediator = new TypeOracleMediator();
+
+  /**
+   * Our source file inputs.
+   */
   private final JavaSourceOracle sourceOracle;
+
+  /**
+   * Tracks the set of valid binary type names for
+   * {@link BinaryTypeReferenceRestrictionsChecker}.
+   */
+  private final Set<String> validBinaryTypeNames = new HashSet<String>();
 
   /**
    * Construct a new {@link CompilationState}.
@@ -93,58 +97,23 @@ public class CompilationState {
    * @param sourceOracle an oracle used to retrieve source code and check for
    *          changes in the underlying source code base
    */
-  public CompilationState(JavaSourceOracle sourceOracle) {
+  public CompilationState(TreeLogger logger, JavaSourceOracle sourceOracle) {
     this.sourceOracle = sourceOracle;
-    refresh();
+    refresh(logger);
   }
 
-  public void addGeneratedCompilationUnit(CompilationUnit unit) {
-    String typeName = unit.getTypeName();
-    assert (!unitMap.containsKey(typeName));
-    unitMap.put(typeName, unit);
-    updateExposedUnits();
-  }
-
-  /**
-   * Compile all units and updates all internal state. Invalidate any units with
-   * compile errors.
-   */
-  public void compile(TreeLogger logger) throws UnableToCompleteException {
-    PerfLogger.start("CompilationState.compile");
-    Set<CompilationUnit> units = getCompilationUnits();
-    if (JdtCompiler.compile(units)) {
-      Set<String> validBinaryTypeNames = getValidBinaryTypeNames(units);
-
-      // Dump all units with direct errors; we cannot safely check them.
-      boolean anyErrors = CompilationUnitInvalidator.invalidateUnitsWithErrors(
-          logger, units);
-
-      // Check all units using our custom checks.
-      CompilationUnitInvalidator.validateCompilationUnits(units,
-          validBinaryTypeNames);
-
-      // More units may have errors now.
-      anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
-          units);
-
-      if (anyErrors) {
-        CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);
-      }
-
-      JsniCollector.collectJsniMethods(logger, units, new JsProgram());
+  @SuppressWarnings("unchecked")
+  public void addGeneratedCompilationUnits(TreeLogger logger,
+      Set<? extends CompilationUnit> generatedCups) {
+    for (CompilationUnit unit : generatedCups) {
+      String typeName = unit.getTypeName();
+      assert (!unitMap.containsKey(typeName));
+      unitMap.put(typeName, unit);
     }
-
-    mediator.refresh(logger, units);
-
-    // Any surviving units are now considered CHECKED.
-    for (CompilationUnit unit : units) {
-      if (unit.getState() == State.COMPILED) {
-        unit.setState(State.CHECKED);
-      }
-    }
-
     updateExposedUnits();
-    PerfLogger.end();
+    compile(logger, (Set<CompilationUnit>) generatedCups);
+    mediator.addNewUnits(logger, (Set<CompilationUnit>) generatedCups);
+    markSurvivorsChecked((Set<CompilationUnit>) generatedCups);
   }
 
   /**
@@ -193,7 +162,7 @@ public class CompilationState {
    * 
    * TODO: something more optimal with generated files?
    */
-  public void refresh() {
+  public void refresh(TreeLogger logger) {
     // Always remove all generated compilation units.
     for (Iterator<CompilationUnit> it = unitMap.values().iterator(); it.hasNext();) {
       CompilationUnit unit = it.next();
@@ -204,10 +173,49 @@ public class CompilationState {
     }
 
     refreshFromSourceOracle();
+    updateExposedUnits();
+
     // Don't log about invalidated units via refresh.
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(TreeLogger.NULL,
         getCompilationUnits());
-    updateExposedUnits();
+
+    jdtCompiler = new JdtCompiler();
+    validBinaryTypeNames.clear();
+    compile(logger, getCompilationUnits());
+    mediator.refresh(logger, getCompilationUnits());
+    markSurvivorsChecked(getCompilationUnits());
+  }
+
+  /**
+   * Compile units and update their internal state. Invalidate any units with
+   * compile errors.
+   */
+  private void compile(TreeLogger logger, Set<CompilationUnit> newUnits) {
+    PerfLogger.start("CompilationState.compile");
+    if (jdtCompiler.doCompile(newUnits)) {
+      // Dump all units with direct errors; we cannot safely check them.
+      boolean anyErrors = CompilationUnitInvalidator.invalidateUnitsWithErrors(
+          logger, newUnits);
+
+      // Check all units using our custom checks.
+      CompilationUnitInvalidator.validateCompilationUnits(newUnits,
+          validBinaryTypeNames);
+
+      // More units may have errors now.
+      anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
+          newUnits);
+
+      if (anyErrors) {
+        CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger,
+            newUnits);
+      }
+
+      recordValidBinaryTypeNames(newUnits);
+
+      JsniCollector.collectJsniMethods(logger, newUnits, new JsProgram());
+    }
+
+    PerfLogger.end();
   }
 
   private void rebuildClassMaps() {
@@ -223,6 +231,18 @@ public class CompilationState {
     }
     exposedClassFileMap = Collections.unmodifiableMap(classFileMap);
     exposedClassFileMapBySource = Collections.unmodifiableMap(classFileMapBySource);
+  }
+
+  private void recordValidBinaryTypeNames(Set<CompilationUnit> units) {
+    for (CompilationUnit unit : units) {
+      if (unit.getState() == State.COMPILED) {
+        for (ClassFile classFile : unit.getJdtCud().compilationResult().getClassFiles()) {
+          char[] binaryName = CharOperation.concatWith(
+              classFile.getCompoundName(), '/');
+          validBinaryTypeNames.add(String.valueOf(binaryName));
+        }
+      }
+    }
   }
 
   private void refreshFromSourceOracle() {

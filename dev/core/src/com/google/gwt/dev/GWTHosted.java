@@ -23,6 +23,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.GWTShellServletFilter;
 import com.google.gwt.dev.shell.ServletContainer;
+import com.google.gwt.dev.shell.ServletContainerLauncher;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -30,6 +31,7 @@ import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.PrintWriter;
+import java.net.BindException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,12 +46,6 @@ public class GWTHosted extends GWTShell {
    */
   protected class ArgHandlerModulesExtra extends ArgHandlerExtra {
 
-    private final PrintWriterTreeLogger console = new PrintWriterTreeLogger(
-        new PrintWriter(System.err));
-    {
-      console.setMaxDetail(TreeLogger.WARN);
-    }
-
     @Override
     public boolean addExtraArg(String arg) {
       return addModule(console, arg);
@@ -63,6 +59,32 @@ public class GWTHosted extends GWTShell {
     @Override
     public String[] getTagArgs() {
       return new String[] {"module"};
+    }
+  }
+  /**
+   * Handles the -server command line flag.
+   */
+  protected class ArgHandlerServer extends ArgHandlerString {
+    @Override
+    public String getPurpose() {
+      return "Prevents the embedded Tomcat server from running, even if a port is specified";
+    }
+
+    @Override
+    public String getTag() {
+      return "-server";
+    }
+
+    @Override
+    public String[] getTagArgs() {
+      return new String[] {"serverLauncherClass"};
+    }
+
+    @Override
+    public boolean setString(String arg) {
+      // Supercedes -noserver.
+      setRunTomcat(true);
+      return setServer(console, arg);
     }
   }
 
@@ -100,7 +122,6 @@ public class GWTHosted extends GWTShell {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    BootStrapPlatform.init();
     GWTHosted shellMain = new GWTHosted();
     if (shellMain.processArgs(args)) {
       shellMain.run();
@@ -108,14 +129,37 @@ public class GWTHosted extends GWTShell {
     System.exit(0);
   }
 
+  protected final PrintWriterTreeLogger console = new PrintWriterTreeLogger(
+      new PrintWriter(System.err, true));
+
+  /**
+   * The servlet launcher to use (defaults to embedded Jetty).
+   */
+  private ServletContainerLauncher launcher = new JettyLauncher();
+
+  /**
+   * The set of modules this hosted mode instance can run.
+   */
   private Set<ModuleDef> modules = new HashSet<ModuleDef>();
 
+  /**
+   * The server that was started.
+   */
   private ServletContainer server;
 
+  /**
+   * Our servlet filter, embedded into the server, which autogenerates GWT
+   * modules when the selection script is requested.
+   */
   private GWTShellServletFilter servletFilter;
+
+  {
+    console.setMaxDetail(TreeLogger.WARN);
+  }
 
   public GWTHosted() {
     super(false, true);
+    registerHandler(new ArgHandlerServer());
     registerHandler(new ArgHandlerStartupURLs());
     registerHandler(new ArgHandlerModulesExtra());
   }
@@ -127,9 +171,31 @@ public class GWTHosted extends GWTShell {
       modules.add(moduleDef);
       return true;
     } catch (UnableToCompleteException e) {
-      System.err.println("Unable to load module '" + moduleName + "'");
+      logger.log(TreeLogger.ERROR, "Unable to load module '" + moduleName + "'");
       return false;
     }
+  }
+
+  public boolean setServer(TreeLogger logger, String serverClassName) {
+    Throwable t;
+    try {
+      Class<?> clazz = Class.forName(serverClassName, true,
+          Thread.currentThread().getContextClassLoader());
+      Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
+      launcher = sclClass.newInstance();
+      return true;
+    } catch (ClassCastException e) {
+      t = e;
+    } catch (ClassNotFoundException e) {
+      t = e;
+    } catch (InstantiationException e) {
+      t = e;
+    } catch (IllegalAccessException e) {
+      t = e;
+    }
+    logger.log(TreeLogger.ERROR, "Unable to load server class '"
+        + serverClassName + "'", t);
+    return false;
   }
 
   @Override
@@ -156,8 +222,7 @@ public class GWTHosted extends GWTShell {
 
   @Override
   protected int startUpServer() {
-    PerfLogger.start("GWTShell.startup (Jetty launch)");
-    JettyLauncher launcher = new JettyLauncher();
+    PerfLogger.start("GWTHosted.startUpServer");
     try {
       TreeLogger serverLogger = getTopLogger().branch(TreeLogger.INFO,
           "Starting HTTP on port " + getPort(), null);
@@ -175,14 +240,18 @@ public class GWTHosted extends GWTShell {
           moduleArray);
       server = launcher.start(serverLogger, getPort(), options.getOutDir(),
           servletFilter);
-    } catch (UnableToCompleteException e) {
+      assert (server != null);
+      return server.getPort();
+    } catch (BindException e) {
+      System.err.println("Port "
+          + getPort()
+          + " is already is use; you probably still have another session active");
+    } catch (Exception e) {
+      System.err.println("Unable to start embedded HTTP server");
+      e.printStackTrace();
+    } finally {
       PerfLogger.end();
-      return -1;
     }
-    assert (server != null);
-
-    PerfLogger.end();
-    return server.getPort();
+    return -1;
   }
-
 }

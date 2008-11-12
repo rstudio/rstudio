@@ -19,9 +19,11 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompilePerms.CompilePermsOptionsImpl;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
+import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 
 import java.io.File;
 
@@ -34,6 +36,7 @@ public class GWTCompiler {
     public ArgProcessor(CompilerOptions options) {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
+      registerHandler(new ArgHandlerOutDir(options));
     }
 
     @Override
@@ -45,7 +48,7 @@ public class GWTCompiler {
   static class GWTCompilerOptionsImpl extends PrecompileOptionsImpl implements
       CompilerOptions {
 
-    private File extraDir;
+    private LinkOptionsImpl linkOptions = new LinkOptionsImpl();
 
     public GWTCompilerOptionsImpl() {
     }
@@ -56,15 +59,23 @@ public class GWTCompiler {
 
     public void copyFrom(CompilerOptions other) {
       super.copyFrom(other);
-      setExtraDir(other.getExtraDir());
+      linkOptions.copyFrom(other);
     }
 
     public File getExtraDir() {
-      return extraDir;
+      return linkOptions.getExtraDir();
+    }
+
+    public File getOutDir() {
+      return linkOptions.getOutDir();
     }
 
     public void setExtraDir(File extraDir) {
-      this.extraDir = extraDir;
+      linkOptions.setExtraDir(extraDir);
+    }
+
+    public void setOutDir(File outDir) {
+      linkOptions.setOutDir(outDir);
     }
   }
 

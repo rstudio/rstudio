@@ -28,7 +28,7 @@ public class JPackage implements HasAnnotations {
 
   private final Annotations annotations = new Annotations();
 
-  private final Map<String, JClassType> types = new HashMap<String, JClassType>();
+  private final Map<String, JRealClassType> types = new HashMap<String, JRealClassType>();
 
   JPackage(String name) {
     this.name = name;
@@ -81,7 +81,7 @@ public class JPackage implements HasAnnotations {
     return "package " + name;
   }
 
-  void addType(JClassType type) {
+  void addType(JRealClassType type) {
     types.put(type.getSimpleSourceName(), type);
   }
 

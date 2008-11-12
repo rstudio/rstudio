@@ -98,11 +98,12 @@ public class JdtCompiler {
 
     @Override
     public void process(CompilationUnitDeclaration cud, int i) {
-      // TODO: not always generate bytecode eagerly?
       super.process(cud, i);
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
       CompilationUnitAdapter adapter = (CompilationUnitAdapter) icu;
-      adapter.getUnit().setJdtCud(cud);
+      CompilationUnit unit = adapter.getUnit();
+      unit.setJdtCud(cud);
+      recordBinaryTypes(unit.getCompiledClasses());
     }
   }
 
@@ -228,8 +229,6 @@ public class JdtCompiler {
     return new CompilerOptions(settings);
   }
 
-  private final List<CompilationUnit> activeUnits = new ArrayList<CompilationUnit>();
-
   /**
    * Maps dotted binary names to compiled classes.
    */
@@ -244,7 +243,29 @@ public class JdtCompiler {
   /**
    * Not externally instantiable.
    */
-  private JdtCompiler() {
+  public JdtCompiler() {
+  }
+
+  public boolean doCompile(Collection<CompilationUnit> units) {
+    List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>();
+    for (CompilationUnit unit : units) {
+      String packageName = Shared.getPackageName(unit.getTypeName());
+      addPackages(packageName);
+      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
+      if (compiledClasses == null) {
+        icus.add(new CompilationUnitAdapter(unit));
+      } else {
+        recordBinaryTypes(compiledClasses);
+      }
+    }
+    if (icus.isEmpty()) {
+      return false;
+    }
+
+    PerfLogger.start("JdtCompiler.compile");
+    compiler.compile(icus.toArray(new ICompilationUnit[icus.size()]));
+    PerfLogger.end();
+    return true;
   }
 
   private void addPackages(String packageName) {
@@ -260,30 +281,11 @@ public class JdtCompiler {
     }
   }
 
-  private boolean doCompile(Collection<CompilationUnit> units) {
-    List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>();
-    for (CompilationUnit unit : units) {
-      String packageName = Shared.getPackageName(unit.getTypeName());
-      addPackages(packageName);
-      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
-      if (compiledClasses == null) {
-        icus.add(new CompilationUnitAdapter(unit));
-        activeUnits.add(unit);
-      } else {
-        for (CompiledClass compiledClass : compiledClasses) {
-          binaryTypes.put(compiledClass.getBinaryName().replace('/', '.'),
-              compiledClass);
-        }
-      }
+  private void recordBinaryTypes(Set<CompiledClass> compiledClasses) {
+    for (CompiledClass compiledClass : compiledClasses) {
+      binaryTypes.put(compiledClass.getBinaryName().replace('/', '.'),
+          compiledClass);
     }
-    if (icus.isEmpty()) {
-      return false;
-    }
-
-    PerfLogger.start("JdtCompiler.compile");
-    compiler.compile(icus.toArray(new ICompilationUnit[icus.size()]));
-    PerfLogger.end();
-    return true;
   }
 
 }

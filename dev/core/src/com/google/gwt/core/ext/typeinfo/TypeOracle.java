@@ -167,10 +167,14 @@ public class TypeOracle {
     }
   }
 
-  private Set<JClassType> allTypes = null;
+  private final Set<JRealClassType> allTypes = new HashSet<JRealClassType>();
 
   private final Map<JType, JArrayType> arrayTypes = new IdentityHashMap<JType, JArrayType>();
 
+  /**
+   * A set of invalidated types queued up to be removed on the next
+   * {@link #reset()}.
+   */
   private final Set<JRealClassType> invalidatedTypes = new HashSet<JRealClassType>();
 
   private JClassType javaLangObject;
@@ -178,6 +182,12 @@ public class TypeOracle {
   private final Map<String, JPackage> packages = new HashMap<String, JPackage>();
 
   private final Map<String, List<JParameterizedType>> parameterizedTypes = new HashMap<String, List<JParameterizedType>>();
+
+  /**
+   * A list of recently-added types that will be fully initialized on the next
+   * call to {@link #finish(TreeLogger)}.
+   */
+  private final List<JRealClassType> recentTypes = new ArrayList<JRealClassType>();
 
   private int reloadCount = 0;
 
@@ -248,6 +258,18 @@ public class TypeOracle {
   }
 
   /**
+   * Called after a block of new types are added.
+   * 
+   * TODO: make not public?
+   */
+  public void finish(TreeLogger logger) {
+    JClassType[] newTypes = recentTypes.toArray(NO_JCLASSES);
+    computeHierarchyRelationships(newTypes);
+    consumeTypeArgMetaData(logger, newTypes);
+    recentTypes.clear();
+  }
+
+  /**
    * Gets the type object that represents an array of the specified type. The
    * returned type always has a stable identity so as to guarantee that all
    * calls to this method with the same argument return the same object.
@@ -270,7 +292,10 @@ public class TypeOracle {
    * <code>java.lang.Object</code>.
    */
   public JClassType getJavaLangObject() {
-    assert javaLangObject != null;
+    if (javaLangObject == null) {
+      javaLangObject = findType("java.lang.Object");
+      assert javaLangObject != null;
+    }
     return javaLangObject;
   }
 
@@ -457,18 +482,6 @@ public class TypeOracle {
    * @return an array of types, possibly of zero length
    */
   public JClassType[] getTypes() {
-    if (allTypes == null) {
-      allTypes = new HashSet<JClassType>();
-      JPackage[] pkgs = getPackages();
-      for (int i = 0; i < pkgs.length; i++) {
-        JPackage pkg = pkgs[i];
-        JClassType[] types = pkg.getTypes();
-        for (int j = 0; j < types.length; j++) {
-          JRealClassType type = (JRealClassType) types[j];
-          buildAllTypesImpl(allTypes, type);
-        }
-      }
-    }
     return allTypes.toArray(NO_JCLASSES);
   }
 
@@ -525,35 +538,12 @@ public class TypeOracle {
   }
 
   /**
-   * Updates relationships within this type oracle. Should be called after any
-   * changes are made.
-   * 
-   * <p>
-   * Throws <code>TypeOracleException</code> thrown if fundamental baseline
-   * correctness criteria are violated, most notably the absence of
-   * "java.lang.Object"
-   * </p>
+   * Reset this type oracle for rebuild.
    * 
    * TODO: make this not public.
    */
-  public void refresh(TreeLogger logger) throws NotFoundException {
-    allTypes = null;
-    if (javaLangObject == null) {
-      javaLangObject = findType("java.lang.Object");
-      if (javaLangObject == null) {
-        throw new NotFoundException("java.lang.Object");
-      }
-    }
-    computeHierarchyRelationships();
-    consumeTypeArgMetaData(logger);
-  }
-
-  /**
-   * Removes all types that are no longer valid.
-   * 
-   * TODO: make not public?
-   */
-  public void removeInvalidatedTypes() {
+  public void reset() {
+    recentTypes.clear();
     if (!invalidatedTypes.isEmpty()) {
       invalidateTypes(invalidatedTypes);
       invalidatedTypes.clear();
@@ -620,32 +610,25 @@ public class TypeOracle {
     });
   }
 
+  void addNewType(JRealClassType newType) {
+    allTypes.add(newType);
+    recentTypes.add(newType);
+  }
+
   void invalidate(JRealClassType realClassType) {
     invalidatedTypes.add(realClassType);
   }
 
-  private void buildAllTypesImpl(Set<JClassType> allTypes, JRealClassType type) {
-    boolean didAdd = allTypes.add(type);
-    assert (didAdd);
-    JClassType[] nestedTypes = type.getNestedTypes();
-    for (int i = 0; i < nestedTypes.length; i++) {
-      JRealClassType nestedType = (JRealClassType) nestedTypes[i];
-      buildAllTypesImpl(allTypes, nestedType);
-    }
-  }
-
-  private void computeHierarchyRelationships() {
+  private void computeHierarchyRelationships(JClassType[] types) {
     // For each type, walk up its hierarchy chain and tell each supertype
     // about its subtype.
-    //
-    JClassType[] types = getTypes();
     for (int i = 0; i < types.length; i++) {
       JClassType type = types[i];
       type.notifySuperTypes();
     }
   }
 
-  private void consumeTypeArgMetaData(TreeLogger logger) {
+  private void consumeTypeArgMetaData(TreeLogger logger, JClassType[] types) {
     if (GenUtil.warnAboutMetadata()) {
       logger = logger.branch(
           TreeLogger.DEBUG,
@@ -654,10 +637,6 @@ public class TypeOracle {
               + " javadoc annotation; please use Java parameterized types instead",
           null);
     }
-    consumeTypeArgMetaData(logger, getTypes());
-  }
-
-  private void consumeTypeArgMetaData(TreeLogger logger, JClassType[] types) {
     for (int i = 0; i < types.length; i++) {
       JClassType type = types[i];
       // CTORS not supported yet
@@ -1012,12 +991,16 @@ public class TypeOracle {
   private void removeTypes(Set<JRealClassType> invalidTypes) {
     for (Iterator<JRealClassType> iter = invalidTypes.iterator(); iter.hasNext();) {
       JClassType classType = iter.next();
+
+      allTypes.remove(classType);
+
       JPackage pkg = classType.getPackage();
       if (pkg != null) {
         pkg.remove(classType);
       }
 
       classType.removeFromSupertypes();
+
       iter.remove();
     }
   }

@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<project name="@projectName" default="compile" basedir=".">
+<project name="@projectName" default="build" basedir=".">
   <description>
     @projectName build file.  This is used to package up your project as a jar,
     if you want to distribute it.  This isn't needed for normal operation.
   </description>
+  <property name="outdir" location="war" />
+  <property name="extradir" location="extra" />
 
   <!-- set classpath -->
   <path id="project.class.path">
@@ -13,36 +15,78 @@
     <!-- Additional dependencies (such as junit) go here -->
   </path>
 
-  <target name="compile" description="Compile src to bin">
-    <mkdir dir="bin"/>
-    <javac srcdir="src:test" destdir="bin" includes="**" debug="on" debuglevel="lines,vars,source" source="1.4">
+  <!-- TODO:  
+   1. revisit this once GWT supports shared dir as a first-clas citizen
+   2. For a 1.4 server, split this so that the server side code is compiled
+   with a target=1.4 build rule -->
+  <target name="javac" description="Compile project to WEB-INF/classes">
+    <mkdir dir="${outdir}/WEB-INF/classes"/>
+    <javac srcdir="src:test"
+      destdir="${outdir}/WEB-INF/classes"
+      includes="**"
+      debug="true"
+      debuglevel="lines,vars,source"
+      source="1.5"
+      target="1.5"
+      nowarn="true"
+      encoding="utf-8">
       <classpath refid="project.class.path"/>
     </javac>
   </target>
 
-  <target name="package" depends="compile" description="Package up the project as a jar">
-    <jar destfile="@projectName.jar">
-      <fileset dir="bin">
-        <include name="**/*.class"/>
-      </fileset>
-      <!-- Get everything; source, modules, html files -->
-      <fileset dir="src">
-        <include name="**"/>
-      </fileset>
-      <fileset dir="test">
-        <include name="**"/>
-      </fileset>
-    </jar>
+  <target name="deploy" depends="gwtc" description="Copy output to the war folder">
+    <mkdir dir="${outdir}/WEB-INF/lib" />
+    <copy todir="${outdir}/WEB-INF/lib" file="@gwtServletPath" />
   </target>
 
-  <target name="clean">
-    <!-- Delete the bin directory tree -->
-    <delete file="@projectName.jar"/>
-    <delete>
-      <fileset dir="bin" includes="**/*.class"/>
-    </delete>
+  <!-- can add additional arguments like -logLevel INFO or -style PRETTY -->
+  <target name="gwtc" depends="javac" description="Compile to JavaScript">
+    <java failonerror="true" fork="true"
+          classname="@compileClass">
+      <classpath>
+        <pathelement location="src"/>
+        <pathelement location="@gwtDevPath"/>
+        <pathelement location="${outdir}/WEB-INF/classes"/>
+        <pathelement path="${java.class.path}/"/>
+        <pathelement path="@gwtUserPath"/>
+      </classpath>
+      @vmargs
+      <arg value="-out"/>
+      <arg file="${outdir}"/>
+      <arg value="-extra"/>
+      <arg file="${extradir}"/>
+      <arg value="@moduleName"/>
+    </java>
   </target>
 
-  <target name="all" depends="package"/>
+  <!-- can add additional arguments like -logLevel INFO -->
+  <target name="shell" depends="javac" description="Run the deployed app in GWT hosted mode">
+    <java failonerror="true" fork="true"
+          classname="@shellClass">
+      <jvmarg value="-Xmx256M"/>
+      <classpath>
+        <pathelement location="src"/>
+        <pathelement location="@gwtDevPath"/>
+        <pathelement path="${java.class.path}/"/>
+        <pathelement path="@gwtUserPath"/>
+      </classpath>
+      @vmargs
+      <arg value="-out"/>
+      <arg file="${outdir}"/>
+      <arg value="-startupUrl"/>
+      <arg value="@startupUrl"/>
+      <arg value="@moduleName"/>
+    </java>
+  </target>
+
+  <target name="build" depends="javac, gwtc, deploy" description="Build this project" />
+
+  <target name="clean" description="Cleans this project's intermediate and
+    output files">
+    <!-- uncomment if the WEB-INF/classes dir only contains GWT output --> 
+    <!-- <delete dir="${outdir}/WEB-INF/classes" failonerror="false" /> -->
+    <delete dir="${outdir}/@deployDir" failonerror="false" />
+    <delete dir="${extradir}" failonerror="false" />
+  </target>
 
 </project>

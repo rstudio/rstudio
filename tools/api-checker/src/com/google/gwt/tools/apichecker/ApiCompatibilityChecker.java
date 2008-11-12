@@ -106,7 +106,7 @@ public class ApiCompatibilityChecker {
   public static final boolean DEBUG_DUPLICATE_REMOVAL = false;
 
   // Tweak for log output.
-  public static final TreeLogger.Type type = TreeLogger.ERROR;
+  public static final TreeLogger.Type type = TreeLogger.WARN;
 
   // remove duplicates by default
   public static Collection<ApiChange> getApiDiff(ApiContainer newApi,
@@ -208,12 +208,14 @@ public class ApiCompatibilityChecker {
     if (removeDuplicates) {
       collection = apiDiff.removeDuplicates(collection);
     }
+    Set<String> matchedWhiteList = new HashSet<String>();
 
     Collection<ApiChange> prunedCollection = new ArrayList<ApiChange>();
     for (ApiChange apiChange : collection) {
       String apiChangeAsString = apiChange.getStringRepresentationWithoutMessage();
       apiChangeAsString = apiChangeAsString.trim();
-      if (whiteList.remove(apiChangeAsString)) {
+      if (whiteList.contains(apiChangeAsString)) {
+        matchedWhiteList.add(apiChangeAsString);
         continue;
       }
       // check for Status.Compatible and Status.Compatible_with
@@ -227,6 +229,7 @@ public class ApiCompatibilityChecker {
       }
       prunedCollection.add(apiChange);
     }
+    whiteList.removeAll(matchedWhiteList);
     if (whiteList.size() > 0) {
       List<String> al = new ArrayList<String>(whiteList);
       Collections.sort(al);

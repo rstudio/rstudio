@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 
@@ -31,14 +30,14 @@ import java.util.Set;
 public class TypeOracleTestingUtils {
 
   public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      CompilationUnit... extraUnits) throws UnableToCompleteException {
+      CompilationUnit... extraUnits) {
     Set<CompilationUnit> extraUnitSet = new HashSet<CompilationUnit>();
     Collections.addAll(extraUnitSet, extraUnits);
     return buildStandardTypeOracleWith(logger, extraUnitSet);
   }
 
   public static TypeOracle buildStandardTypeOracleWith(TreeLogger logger,
-      Set<CompilationUnit> extraUnits) throws UnableToCompleteException {
+      Set<CompilationUnit> extraUnits) {
     Set<CompilationUnit> unitSet = new HashSet<CompilationUnit>();
     addStandardCups(unitSet);
     for (CompilationUnit extraUnit : extraUnits) {
@@ -48,7 +47,7 @@ public class TypeOracleTestingUtils {
   }
 
   public static TypeOracle buildTypeOracle(TreeLogger logger,
-      Set<CompilationUnit> units) throws UnableToCompleteException {
+      Set<CompilationUnit> units) {
     JdtCompiler.compile(units);
     Set<String> validBinaryTypeNames = new HashSet<String>();
     for (CompilationUnit unit : units) {

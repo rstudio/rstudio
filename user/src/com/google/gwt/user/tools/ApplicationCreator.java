@@ -21,6 +21,7 @@ import com.google.gwt.user.tools.util.ArgHandlerEclipse;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
 import com.google.gwt.user.tools.util.CreatorUtilities;
+import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -28,6 +29,7 @@ import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -144,6 +146,18 @@ public final class ApplicationCreator extends ToolBase {
     }
   }
 
+  static class FileCreator {
+    private final File dir;
+    private final String sourceName;
+    private final String className;
+
+    FileCreator(File dir, String sourceName, String className) {
+      this.dir = dir;
+      this.sourceName = sourceName;
+      this.className = className;
+    }
+  }
+
   private static final String PACKAGE_PATH;
 
   static {
@@ -172,11 +186,11 @@ public final class ApplicationCreator extends ToolBase {
    * @throws IOException
    */
   static void createApplication(String fullClassName, File outDir,
-      String eclipse, boolean overwrite, boolean ignore)
-      throws IOException {
-    createApplication(fullClassName, outDir, eclipse, overwrite, ignore, null, null);
+      String eclipse, boolean overwrite, boolean ignore) throws IOException {
+    createApplication(fullClassName, outDir, eclipse, overwrite, ignore, null,
+        null);
   }
-  
+
   /**
    * @param fullClassName Name of the fully-qualified Java class to create as an
    *          Application.
@@ -193,11 +207,35 @@ public final class ApplicationCreator extends ToolBase {
       String eclipse, boolean overwrite, boolean ignore,
       List<String> extraClassPaths, List<String> extraModules)
       throws IOException {
+    createApplication(fullClassName, outDir, eclipse, overwrite, ignore,
+        extraClassPaths, extraModules, null, null);
+  }
+
+  /**
+   * @param fullClassName Name of the fully-qualified Java class to create as an
+   *          Application.
+   * @param outDir Where to put the output files
+   * @param eclipse The name of a project to attach a .launch config to
+   * @param overwrite Overwrite an existing files if they exist.
+   * @param ignore Ignore existing files if they exist.
+   * @param extraClassPaths A list of paths to append to the class path for
+   *          launch configs.
+   * @param extraModules A list of GWT modules to add 'inherits' tags for.
+   * @param newModuleName The new module name
+   * @param deployDir The deploy directory
+   * @throws IOException
+   */
+  static void createApplication(String fullClassName, File outDir,
+      String eclipse, boolean overwrite, boolean ignore,
+      List<String> extraClassPaths, List<String> extraModules,
+      String newModuleName, File deployDir) throws IOException {
 
     // Figure out the installation directory
+
     String installPath = Utility.getInstallPath();
     String gwtUserPath = installPath + '/' + "gwt-user.jar";
     String gwtDevPath = installPath + '/' + Utility.getDevJarName();
+    String gwtServletPath = installPath + '/' + "gwt-servlet.jar";
 
     // Validate the arguments for extra class path entries and modules.
     if (!CreatorUtilities.validatePathsAndModules(gwtUserPath, extraClassPaths,
@@ -236,19 +274,26 @@ public final class ApplicationCreator extends ToolBase {
     pos = clientPackageName.lastIndexOf('.');
     File basePackageDir;
     String moduleName;
+    String serverPackageName = null;
     File javaDir = Utility.getDirectory(outDir, "src", true);
+    Utility.getDirectory(outDir, "test", true);
+    File warDir = Utility.getDirectory(outDir, "war", true);
+    File webInfDir = Utility.getDirectory(warDir, "WEB-INF", true);
     if (pos >= 0) {
       String basePackage = clientPackageName.substring(0, pos);
       moduleName = basePackage + "." + className;
+      serverPackageName = basePackage + ".server";
       basePackage = basePackage.replace('.', '/');
       basePackageDir = Utility.getDirectory(javaDir, basePackage, true);
     } else {
       moduleName = className;
       basePackageDir = javaDir;
+      serverPackageName = "server";
     }
     File clientDir = Utility.getDirectory(basePackageDir, "client", true);
     File publicDir = Utility.getDirectory(basePackageDir, "public", true);
-    String startupUrl = moduleName + "/" + className + ".html";
+    File serverDir = Utility.getDirectory(basePackageDir, "server", true);
+    String startupUrl = className + ".html";
 
     // Create a map of replacements
     //
@@ -256,103 +301,125 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@className", className);
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", clientPackageName);
+    replacements.put("@serverPackage", serverPackageName);
     replacements.put("@gwtUserPath", basePathEnv + gwtUserPath);
     replacements.put("@gwtDevPath", basePathEnv + gwtDevPath);
-    replacements.put("@shellClass", "com.google.gwt.dev.GWTShell");
+    replacements.put("@shellClass", "com.google.gwt.dev.GWTHosted");
     replacements.put("@compileClass", "com.google.gwt.dev.GWTCompiler");
     replacements.put("@startupUrl", startupUrl);
-    replacements.put("@vmargs", isMacOsX ? "-XstartOnFirstThread" : "");
+    replacements.put("@vmargs", isMacOsX
+        ? "<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
     replacements.put("@eclipseExtraLaunchPaths",
         CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
     replacements.put("@extraModuleInherits",
         createExtraModuleInherits(extraModules));
     replacements.put("@extraClassPathsColon", CreatorUtilities.appendPaths(":",
         extraClassPaths));
-    replacements.put("@extraClassPathsSemicolon", CreatorUtilities.appendPaths(";", extraClassPaths));
+    replacements.put("@extraClassPathsSemicolon", CreatorUtilities.appendPaths(
+        ";", extraClassPaths));
+    replacements.put("@newModuleName", (newModuleName != null) ? newModuleName
+        : moduleName);
+    replacements.put("@deployDir", deployDir.getName());
 
     {
-      // Create the module
-      File moduleXML = Utility.createNormalFile(basePackageDir, className
-          + ModuleDefLoader.GWT_MODULE_XML_SUFFIX, overwrite, ignore);
-      if (moduleXML != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "Module.gwt.xmlsrc");
-        Utility.writeTemplateFile(moduleXML, out, replacements);
+      // create the module xml file, skeleton html file, skeleton css file,
+      // web.xml file
+      FileCreator fileCreators[] = new FileCreator[] {
+          new FileCreator(basePackageDir, "Module.gwt.xml", className
+              + ModuleDefLoader.GWT_MODULE_XML_SUFFIX),
+          new FileCreator(warDir, "AppHtml.html", className + ".html"),
+          new FileCreator(warDir, "AppCss.css", className + ".css"),
+          new FileCreator(webInfDir, "web.xml", "web.xml"),};
+      for (FileCreator fileCreator : fileCreators) {
+        File file = Utility.createNormalFile(fileCreator.dir,
+            fileCreator.className, overwrite, ignore);
+        if (file != null) {
+          String out = Utility.getFileFromClassPath(PACKAGE_PATH
+              + fileCreator.sourceName + "src");
+          Utility.writeTemplateFile(file, out, replacements);
+        }
       }
     }
 
     {
-      // Create a skeleton html file
-      File publicHTML = Utility.createNormalFile(publicDir,
-          className + ".html", overwrite, ignore);
-      if (publicHTML != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "AppHtml.htmlsrc");
-        Utility.writeTemplateFile(publicHTML, out, replacements);
-      }
-    }
-
-    {
-      // Create a skeleton css file
-      File publicCSS = Utility.createNormalFile(publicDir, className + ".css",
-          overwrite, ignore);
-      if (publicCSS != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "AppCss.csssrc");
-        Utility.writeTemplateFile(publicCSS, out, replacements);
-      }
-    }
-
-    {
-      // Create a skeleton Application class
-      File javaClass = Utility.createNormalFile(clientDir, className + ".java",
-          overwrite, ignore);
-      if (javaClass != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "AppClassTemplate.javasrc");
-        Utility.writeTemplateFile(javaClass, out, replacements);
+      /*
+       * Create a skeleton Application: main client class, rpc stub for the
+       * client, async counterpart of the rpc stub, rpc implementation on the
+       * server.
+       */
+      FileCreator fileCreators[] = new FileCreator[] {
+          new FileCreator(clientDir, "AppClass", className),
+          new FileCreator(clientDir, "RpcClient", "EchoService"),
+          new FileCreator(clientDir, "RpcAsyncClient", "EchoServiceAsync"),
+          new FileCreator(serverDir, "RpcServer", "EchoServiceImpl"),};
+      for (FileCreator fileCreator : fileCreators) {
+        File javaClass = Utility.createNormalFile(fileCreator.dir,
+            fileCreator.className + ".java", overwrite, ignore);
+        if (javaClass != null) {
+          String out = Utility.getFileFromClassPath(PACKAGE_PATH
+              + fileCreator.sourceName + "Template.javasrc");
+          Utility.writeTemplateFile(javaClass, out, replacements);
+        }
       }
     }
 
     if (eclipse != null) {
-      // Create an eclipse launch config
       replacements.put("@projectName", eclipse);
-      File launchConfig = Utility.createNormalFile(outDir, className
-          + ".launch", overwrite, ignore);
-      if (launchConfig != null) {
-        String out = Utility.getFileFromClassPath(PACKAGE_PATH
-            + "App.launchsrc");
-        Utility.writeTemplateFile(launchConfig, out, replacements);
+      // Build the list of extra paths
+      replacements.put("@gwtServletPath", basePathEnv + gwtServletPath);
+      StringBuilder buf = new StringBuilder();
+      if (extraClassPaths != null) {
+        for (String path : extraClassPaths) {
+          buf.append("    <pathelement path=\"" + path + "\"/>");
+        }
       }
-    }
+      replacements.put("@extraAntPathElements", buf.toString());
 
-    // create startup files
-    String extension;
-    if (isWindows) {
-      extension = ".cmd";
-    } else {
-      extension = "";
-    }
+      StringBuilder classpathEntries = new StringBuilder();
+      if (extraClassPaths != null) {
+        for (String path : extraClassPaths) {
+          File f = new File(path);
 
-    File gwtshell = Utility.createNormalFile(outDir, className + "-shell"
-        + extension, overwrite, ignore);
-    if (gwtshell != null) {
-      String out = Utility.getFileFromClassPath(PACKAGE_PATH + "gwtshell"
-          + extension + "src");
-      Utility.writeTemplateFile(gwtshell, out, replacements);
-      if (extension.length() == 0) {
-        chmodExecutable(gwtshell);
+          if (!f.exists()) {
+            throw new FileNotFoundException("extraClassPath: " + path
+                + " must be present before .launch file can be created.");
+          }
+          // Handle both .jar files and paths
+          String kindString;
+          if (f.isDirectory()) {
+            kindString = "output";
+          } else if (path.endsWith(".jar")) {
+            kindString = "lib";
+          } else {
+            throw new RuntimeException("Don't know how to handle path: " + path
+                + ". It doesn't appear to be a directory or a .jar file");
+          }
+          classpathEntries.append("   <classpathentry kind=\"");
+          classpathEntries.append(kindString);
+          classpathEntries.append("\" path=\"");
+          classpathEntries.append(path);
+          classpathEntries.append("\"/>\n");
+        }
       }
-    }
+      replacements.put("@eclipseClassPathEntries", classpathEntries.toString());
 
-    File gwtcompile = Utility.createNormalFile(outDir, className + "-compile"
-        + extension, overwrite, ignore);
-    if (gwtcompile != null) {
-      String out = Utility.getFileFromClassPath(PACKAGE_PATH + "gwtcompile"
-          + extension + "src");
-      Utility.writeTemplateFile(gwtcompile, out, replacements);
-      if (extension.length() == 0) {
-        chmodExecutable(gwtcompile);
+      /*
+       * create an ant file, an eclipse .project, an eclipse .classpath, and an
+       * eclipse launch-config
+       */
+      FileCreator fileCreators[] = new FileCreator[] {
+          new FileCreator(outDir, "project.ant.xml", "build.xml"),
+          new FileCreator(outDir, ".project", ".project"),
+          new FileCreator(outDir, ".classpath", ".classpath"),
+          new FileCreator(outDir, "App.launch", className + ".launch"),};
+      for (FileCreator fileCreator : fileCreators) {
+        File file = Utility.createNormalFile(fileCreator.dir,
+            fileCreator.className, overwrite, ignore);
+        if (file != null) {
+          String out = Utility.getFileFromClassPath(PACKAGE_PATH
+              + fileCreator.sourceName + "src");
+          Utility.writeTemplateFile(file, out, replacements);
+        }
       }
     }
   }
@@ -393,13 +460,15 @@ public final class ApplicationCreator extends ToolBase {
   private ArgHandlerAddModule moduleHandler = new ArgHandlerAddModule();
   private File outDir;
   private boolean overwrite = false;
+  private String newModuleName = null;
+  private File deployDir;
 
   protected ApplicationCreator() {
 
     registerHandler(new ArgHandlerEclipse() {
       @Override
       public String getPurpose() {
-        return "Creates a debug launch config for the named eclipse project";
+        return "Creates an ant file, an eclipse project, and a launch config";
       }
 
       @Override
@@ -440,6 +509,64 @@ public final class ApplicationCreator extends ToolBase {
       }
     });
 
+    // handler to process newModuleName argument
+    registerHandler(new ArgHandlerString() {
+      @Override
+      public String[] getDefaultArgs() {
+        return null; // later reset to moduleName
+      }
+
+      @Override
+      public String getPurpose() {
+        return "Specifies the new name of the module";
+      }
+
+      @Override
+      public String getTag() {
+        return "-moduleName";
+      }
+
+      @Override
+      public String[] getTagArgs() {
+        return new String[] {"moduleName"};
+      }
+
+      @Override
+      public boolean setString(String str) {
+        newModuleName = str;
+        return true;
+      }
+
+    });
+
+    // handler to create the deployDir
+    registerHandler(new ArgHandlerDir() {
+
+      @Override
+      public String[] getDefaultArgs() {
+        return new String[] {"-deployDir", "deployDir"};
+      }
+
+      @Override
+      public String getPurpose() {
+        return "Specifies the deploy directory (defaults to deployDir)";
+      }
+
+      @Override
+      public String getTag() {
+        return "-deployDir";
+      }
+
+      @Override
+      public void setDir(File dir) {
+        if (dir.getName().length() == 0) {
+          throw new IllegalArgumentException("deployDir may not be empty");
+        }
+        deployDir = dir;
+      }
+
+    });
+
     registerHandler(new ArgHandlerAppClass());
     registerHandler(classPathHandler);
     registerHandler(moduleHandler);
@@ -449,7 +576,7 @@ public final class ApplicationCreator extends ToolBase {
     try {
       createApplication(fullClassName, outDir, eclipse, overwrite, ignore,
           classPathHandler.getExtraClassPathList(),
-          moduleHandler.getExtraModuleList());
+          moduleHandler.getExtraModuleList(), newModuleName, deployDir);
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

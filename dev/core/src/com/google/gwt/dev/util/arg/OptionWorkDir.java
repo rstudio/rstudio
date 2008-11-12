@@ -13,16 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.util.arg.OptionGuiLogger;
-import com.google.gwt.dev.util.arg.OptionLogLevel;
-import com.google.gwt.dev.util.arg.OptionModuleName;
-import com.google.gwt.dev.util.arg.OptionWorkDir;
+import java.io.File;
 
 /**
- * A common set of options for all compile tasks.
+ * Option to set the compiler working directory.
  */
-public interface CompileTaskOptions extends OptionGuiLogger, OptionModuleName,
-    OptionLogLevel, OptionWorkDir {
+public interface OptionWorkDir {
+
+  /**
+   * Returns the compiler work directory.
+   */
+  File getWorkDir();
+
+  /**
+   * Sets the compiler work directory.
+   */
+  void setWorkDir(File dir);
 }

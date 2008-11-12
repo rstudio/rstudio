@@ -87,6 +87,7 @@ public class JRealClassType extends JClassType {
       } while (enclosing != null);
       nestedName = nn;
     }
+    oracle.addNewType(this);
   }
 
   public void addAnnotations(

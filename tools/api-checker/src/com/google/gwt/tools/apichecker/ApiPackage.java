@@ -124,7 +124,7 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
       }
     }
     if (notAddedClassNames.size() > 0) {
-      logger.log(TreeLogger.SPAM, "API " + name + ", package: " + name
+      logger.log(TreeLogger.SPAM, "API " + apiContainer.getName() + ", package: " + name
           + ", not adding " + notAddedClassNames.size() + " nonApi classes: "
           + notAddedClassNames, null);
     }

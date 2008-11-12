@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
@@ -37,12 +36,10 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.Empty;
-import com.google.gwt.dev.util.PerfLogger;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -336,22 +333,28 @@ public class TypeOracleMediator {
 
   private final Map<String, JRealClassType> binaryMapper = new HashMap<String, JRealClassType>();
   private final Map<SourceTypeBinding, JRealClassType> sourceMapper = new IdentityHashMap<SourceTypeBinding, JRealClassType>();
-  private final Map<TypeVariableBinding, JTypeParameter> tvMapper = new IdentityHashMap<TypeVariableBinding, JTypeParameter>();
+
+  /**
+   * Mapping of type variable bindings; transient because compilation units are
+   * processed monolithically, and a tv binding is only valid within a single
+   * unit.
+   */
+  private final transient Map<TypeVariableBinding, JTypeParameter> tvMapper = new IdentityHashMap<TypeVariableBinding, JTypeParameter>();
+
   private final TypeOracle typeOracle = new TypeOracle();
-  private final Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
 
-  public TypeOracle getTypeOracle() {
-    return typeOracle;
-  }
+  /**
+   * Set of unresolved types to process, generated from the first phase of type
+   * oracle resolution. Transient because they all get resolved in the second
+   * phase.
+   */
+  private final transient Set<JRealClassType> unresolvedTypes = new HashSet<JRealClassType>();
 
-  public void refresh(TreeLogger logger, Set<CompilationUnit> units)
-      throws UnableToCompleteException {
-    PerfLogger.start("TypeOracleMediator.refresh");
-    typeOracle.removeInvalidatedTypes();
-    clear();
-
+  /**
+   * Adds new units to an existing TypeOracle.
+   */
+  public void addNewUnits(TreeLogger logger, Set<CompilationUnit> units) {
     // Perform a shallow pass to establish identity for new and old types.
-    PerfLogger.start("TypeOracleMediator.refresh (shallow)");
     for (CompilationUnit unit : units) {
       if (!unit.isCompiled()) {
         continue;
@@ -365,10 +368,8 @@ public class TypeOracleMediator {
         binaryMapper.put(compiledClass.getBinaryName(), type);
       }
     }
-    PerfLogger.end();
 
     // Perform a deep pass to resolve all new types in terms of our types.
-    PerfLogger.start("TypeOracleMediator.refresh (deep)");
     for (CompilationUnit unit : units) {
       if (!unit.isCompiled()) {
         continue;
@@ -377,9 +378,10 @@ public class TypeOracleMediator {
           "Processing types in compilation unit: " + unit.getDisplayLocation());
       Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
       for (CompiledClass compiledClass : compiledClasses) {
-        if (unresolvedTypes.contains(compiledClass.getRealClassType())) {
+        if (unresolvedTypes.remove(compiledClass.getRealClassType())) {
           TypeDeclaration typeDeclaration = compiledClass.getTypeDeclaration();
-          if (!resolveTypeDeclaration(cudLogger, unit.getSource(), typeDeclaration)) {
+          if (!resolveTypeDeclaration(cudLogger, unit.getSource(),
+              typeDeclaration)) {
             logger.log(TreeLogger.WARN,
                 "Unexpectedly unable to fully resolve type "
                     + compiledClass.getSourceName());
@@ -387,24 +389,25 @@ public class TypeOracleMediator {
         }
       }
     }
-    clear();
-    PerfLogger.end();
+    // Clean transient state.
+    assert unresolvedTypes.size() == 0;
+    tvMapper.clear();
 
-    try {
-      typeOracle.refresh(logger);
-    } catch (NotFoundException e) {
-      // TODO
-      e.printStackTrace();
-    }
-
-    PerfLogger.end();
+    typeOracle.finish(logger);
   }
 
-  private void clear() {
+  public TypeOracle getTypeOracle() {
+    return typeOracle;
+  }
+
+  /**
+   * Full refresh based on new units.
+   */
+  public void refresh(TreeLogger logger, Set<CompilationUnit> units) {
     binaryMapper.clear();
     sourceMapper.clear();
-    tvMapper.clear();
-    unresolvedTypes.clear();
+    typeOracle.reset();
+    addNewUnits(logger, units);
   }
 
   private Object createAnnotationInstance(TreeLogger logger,

@@ -16,9 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
@@ -30,7 +28,7 @@ import java.util.Set;
  * Test access to longs from JSNI.
  */
 public class LongFromJSNITest extends TestCase {
-  public void testCyclicReferences() throws UnableToCompleteException {
+  public void testCyclicReferences() {
     {
       StringBuffer buggy = new StringBuffer();
       buggy.append("class Buggy {\n");
@@ -76,7 +74,7 @@ public class LongFromJSNITest extends TestCase {
     }
   }
 
-  public void testFieldAccess() throws UnableToCompleteException {
+  public void testFieldAccess() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("volatile long x = -1;\n");
@@ -88,7 +86,7 @@ public class LongFromJSNITest extends TestCase {
         "Referencing field 'Buggy.x': type 'long' is not safe to access in JSNI code");
   }
 
-  public void testInnerClass() throws UnableToCompleteException {
+  public void testInnerClass() {
     StringBuffer code = new StringBuffer();
     code.append("public class Buggy {\n");
     code.append("  static class Inner {\n");
@@ -108,7 +106,7 @@ public class LongFromJSNITest extends TestCase {
    * completely unusable in JavaScript, so the current reasoning is to allow
    * them.
    */
-  public void testLongArray() throws UnableToCompleteException {
+  public void testLongArray() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  long[] m() { return new long[] { -1 }; }\n");
@@ -119,7 +117,7 @@ public class LongFromJSNITest extends TestCase {
     shouldGenerateNoError(code);
   }
 
-  public void testLongParameter() throws UnableToCompleteException {
+  public void testLongParameter() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  native void jsniMeth(long x) /*-{ return; }-*/;\n");
@@ -129,7 +127,7 @@ public class LongFromJSNITest extends TestCase {
         "Parameter 'x': type 'long' is not safe to access in JSNI code");
   }
 
-  public void testLongReturn() throws UnableToCompleteException {
+  public void testLongReturn() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  native long jsniMeth() /*-{ return 0; }-*/;\n");
@@ -139,7 +137,7 @@ public class LongFromJSNITest extends TestCase {
         "Type 'long' may not be returned from a JSNI method");
   }
 
-  public void testMethodArgument() throws UnableToCompleteException {
+  public void testMethodArgument() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  void print(long x) { }\n");
@@ -152,7 +150,7 @@ public class LongFromJSNITest extends TestCase {
         "Parameter 1 of method \'Buggy.print\': type 'long' may not be passed out of JSNI code");
   }
 
-  public void testMethodReturn() throws UnableToCompleteException {
+  public void testMethodReturn() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  long m() { return -1; }\n");
@@ -166,8 +164,7 @@ public class LongFromJSNITest extends TestCase {
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
-  public void testOverloadedMethodWithNoWarning()
-      throws UnableToCompleteException {
+  public void testOverloadedMethodWithNoWarning() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  long m(int x) { return -1; }\n");
@@ -179,8 +176,7 @@ public class LongFromJSNITest extends TestCase {
     shouldGenerateNoError(code);
   }
 
-  public void testOverloadedMethodWithWarning()
-      throws UnableToCompleteException {
+  public void testOverloadedMethodWithWarning() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
     code.append("  long m(int x) { return -1; }\n");
@@ -195,7 +191,20 @@ public class LongFromJSNITest extends TestCase {
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
-  public void testUnsafeAnnotation() throws UnableToCompleteException {
+  public void testRefInString() {
+    {
+      StringBuffer code = new StringBuffer();
+      code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
+      code.append("class Buggy {\n");
+      code.append("  void print(long x) { }\n");
+      code.append("  native void jsniMeth() /*-{ 'this.@Buggy::print(J)(0)'; }-*/;\n");
+      code.append("}\n");
+
+      shouldGenerateNoError(code);
+    }
+  }
+
+  public void testUnsafeAnnotation() {
     {
       StringBuffer code = new StringBuffer();
       code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
@@ -209,20 +218,7 @@ public class LongFromJSNITest extends TestCase {
     }
   }
 
-  public void testRefInString() throws UnableToCompleteException {
-    {
-      StringBuffer code = new StringBuffer();
-      code.append("import com.google.gwt.core.client.UnsafeNativeLong;");
-      code.append("class Buggy {\n");
-      code.append("  void print(long x) { }\n");
-      code.append("  native void jsniMeth() /*-{ 'this.@Buggy::print(J)(0)'; }-*/;\n");
-      code.append("}\n");
-
-      shouldGenerateNoError(code);
-    }
-  }
-
-  public void testViolator() throws UnableToCompleteException {
+  public void testViolator() {
     {
       StringBuffer okay = new StringBuffer();
       okay.append("class Buggy {\n");
@@ -274,8 +270,7 @@ public class LongFromJSNITest extends TestCase {
   }
 
   private TypeOracle buildOracle(CharSequence buggyCode,
-      CharSequence extraCode, UnitTestTreeLogger logger)
-      throws UnableToCompleteException {
+      CharSequence extraCode, UnitTestTreeLogger logger) {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     addLongCheckingCups(units);
     units.add(new MockCompilationUnit("Buggy", buggyCode.toString()));
@@ -287,8 +282,7 @@ public class LongFromJSNITest extends TestCase {
   }
 
   private void shouldGenerateError(CharSequence buggyCode,
-      CharSequence extraCode, int line, String message)
-      throws UnableToCompleteException {
+      CharSequence extraCode, int line, String message) {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
     b.setLowestLogLevel(TreeLogger.ERROR);
     if (message != null) {
@@ -306,17 +300,15 @@ public class LongFromJSNITest extends TestCase {
   }
 
   private void shouldGenerateError(CharSequence buggyCode, int line,
-      String message) throws UnableToCompleteException {
+      String message) {
     shouldGenerateError(buggyCode, null, line, message);
   }
 
-  private void shouldGenerateNoError(CharSequence code)
-      throws UnableToCompleteException {
+  private void shouldGenerateNoError(CharSequence code) {
     shouldGenerateNoError(code, null);
   }
 
-  private void shouldGenerateNoError(CharSequence code, CharSequence extraCode)
-      throws UnableToCompleteException {
+  private void shouldGenerateNoError(CharSequence code, CharSequence extraCode) {
     shouldGenerateError(code, extraCode, -1, null);
   }
 }

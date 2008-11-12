@@ -43,6 +43,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.dev.util.arg.ArgHandlerWorkDir;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
@@ -103,7 +104,7 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * handles the -noserver command line flag.
+   * Handles the -noserver command line flag.
    */
   protected class ArgHandlerNoServerFlag extends ArgHandlerFlag {
     @Override
@@ -378,7 +379,6 @@ public class GWTShell extends ToolBase {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    BootStrapPlatform.init();
     GWTShell shellMain = new GWTShell();
     if (shellMain.processArgs(args)) {
       shellMain.run();
@@ -423,6 +423,10 @@ public class GWTShell extends ToolBase {
   }
 
   protected GWTShell(boolean forceServer, boolean noURLs) {
+    // Set any platform specific system properties.
+    BootStrapPlatform.init();
+    BootStrapPlatform.applyPlatformHacks();
+
     registerHandler(getArgHandlerPort());
 
     if (!forceServer) {
@@ -435,12 +439,13 @@ public class GWTShell extends ToolBase {
     registerHandler(new ArgHandlerLogLevel(options));
 
     registerHandler(new ArgHandlerGenDir(options));
-    registerHandler(new ArgHandlerExtraDir(options));
+    registerHandler(new ArgHandlerWorkDir(options));
 
     if (!noURLs) {
       registerHandler(new ArgHandlerStartupURLsExtra());
     }
 
+    registerHandler(new ArgHandlerExtraDir(options));
     registerHandler(new ArgHandlerOutDir(options));
 
     registerHandler(new ArgHandlerScriptStyle(options));
@@ -562,9 +567,6 @@ public class GWTShell extends ToolBase {
    */
   public void run() {
     try {
-      // Set any platform specific system properties.
-      BootStrapPlatform.applyPlatformHacks();
-
       if (!startUp()) {
         // Failed to initalize.
         return;

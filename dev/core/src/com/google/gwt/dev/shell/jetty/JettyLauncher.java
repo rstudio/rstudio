@@ -191,7 +191,7 @@ public class JettyLauncher implements ServletContainerLauncher {
 
   @SuppressWarnings("unchecked")
   public ServletContainer start(TreeLogger logger, int port, File appRootDir,
-      Filter shellServletFilter) throws UnableToCompleteException {
+      Filter shellServletFilter) throws Exception {
     checkStartParams(logger, port, appRootDir);
 
     // The dance we do with Jetty's logging system.
@@ -210,6 +210,9 @@ public class JettyLauncher implements ServletContainerLauncher {
     SelectChannelConnector connector = new SelectChannelConnector();
     connector.setPort(port);
     connector.setHost("127.0.0.1");
+    // Don't steal ports from an existing proc.
+    connector.setReuseAddress(false);
+
     server.addConnector(connector);
 
     // Create a new web app in the war directory.
@@ -227,15 +230,10 @@ public class JettyLauncher implements ServletContainerLauncher {
 
     server.setHandler(wac);
     server.setStopAtShutdown(true);
+    server.start();
 
-    try {
-      server.start();
-      int actualPort = connector.getPort();
-      return new JettyServletContainer(logger, wac, actualPort, appRootDir);
-    } catch (Exception e) {
-      logger.log(TreeLogger.ERROR, "Unable to start embedded Jetty server", e);
-      throw new UnableToCompleteException();
-    }
+    return new JettyServletContainer(logger, wac, connector.getLocalPort(),
+        appRootDir);
   }
 
   private void checkStartParams(TreeLogger logger, int port, File appRootDir) {

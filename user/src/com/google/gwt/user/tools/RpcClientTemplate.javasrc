@@ -1,0 +1,10 @@
+package @clientPackage;
+
+import com.google.gwt.user.client.rpc.RemoteService;
+
+/**
+ * The client side stub for the Rpc service.
+ */
+public interface EchoService extends RemoteService {
+  String echo (String input);
+}

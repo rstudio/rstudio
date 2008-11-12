@@ -56,7 +56,7 @@ public class StandardGeneratorContextTest extends TestCase {
   public static class MockCompilationState extends CompilationState {
 
     public MockCompilationState() {
-      super(new JavaSourceOracle() {
+      super(TreeLogger.NULL, new JavaSourceOracle() {
         public Set<String> getClassNames() {
           return Collections.emptySet();
         }

@@ -16,14 +16,13 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
 import junit.framework.TestCase;
 
 public class JSORestrictionsTest extends TestCase {
 
-  public void testFinalClass() throws UnableToCompleteException {
+  public void testFinalClass() {
     StringBuffer code = new StringBuffer();
     code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     code.append("final public class Buggy extends JavaScriptObject {\n");
@@ -34,7 +33,7 @@ public class JSORestrictionsTest extends TestCase {
     shouldGenerateNoError(code);
   }
 
-  public void testInstanceField() throws UnableToCompleteException {
+  public void testInstanceField() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
@@ -46,7 +45,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_INSTANCE_FIELD);
   }
 
-  public void testMultiArgConstructor() throws UnableToCompleteException {
+  public void testMultiArgConstructor() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public final class Buggy extends JavaScriptObject {\n");
@@ -57,7 +56,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_CONSTRUCTOR_WITH_PARAMETERS);
   }
 
-  public void testNew() throws UnableToCompleteException {
+  public void testNew() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy {\n");
@@ -71,7 +70,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_NEW_JSO);
   }
 
-  public void testNoConstructor() throws UnableToCompleteException {
+  public void testNoConstructor() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
@@ -82,7 +81,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_NONPROTECTED_CONSTRUCTOR);
   }
 
-  public void testNoInterfaces() throws UnableToCompleteException {
+  public void testNoInterfaces() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy {\n");
@@ -99,7 +98,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.errInterfaceWithMethods("Buggy.Squeaks"));
   }
 
-  public void testNonEmptyConstructor() throws UnableToCompleteException {
+  public void testNonEmptyConstructor() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
@@ -110,7 +109,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_NONEMPTY_CONSTRUCTOR);
   }
 
-  public void testNonFinalMethod() throws UnableToCompleteException {
+  public void testNonFinalMethod() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
@@ -122,7 +121,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_INSTANCE_METHOD_NONFINAL);
   }
 
-  public void testNonProtectedConstructor() throws UnableToCompleteException {
+  public void testNonProtectedConstructor() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
@@ -133,7 +132,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_NONPROTECTED_CONSTRUCTOR);
   }
 
-  public void testNonStaticInner() throws UnableToCompleteException {
+  public void testNonStaticInner() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy {\n");
@@ -146,7 +145,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_IS_NONSTATIC_NESTED);
   }
 
-  public void testNoOverride() throws UnableToCompleteException {
+  public void testNoOverride() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     buggyCode.append("public class Buggy extends JavaScriptObject {\n");
@@ -158,7 +157,7 @@ public class JSORestrictionsTest extends TestCase {
         + JSORestrictionsChecker.ERR_OVERRIDDEN_METHOD);
   }
 
-  public void testPrivateMethod() throws UnableToCompleteException {
+  public void testPrivateMethod() {
     StringBuffer code = new StringBuffer();
     code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
     code.append("public class Buggy extends JavaScriptObject {\n");
@@ -175,7 +174,7 @@ public class JSORestrictionsTest extends TestCase {
    * Buggy.
    */
   private void shouldGenerateError(CharSequence buggyCode,
-      final String expectedError) throws UnableToCompleteException {
+      final String expectedError) {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.ERROR);
     if (expectedError != null) {
@@ -189,8 +188,7 @@ public class JSORestrictionsTest extends TestCase {
     logger.assertCorrectLogEntries();
   }
 
-  private void shouldGenerateNoError(StringBuffer buggyCode)
-      throws UnableToCompleteException {
+  private void shouldGenerateNoError(StringBuffer buggyCode) {
     shouldGenerateError(buggyCode, null);
   }
 }

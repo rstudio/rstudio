@@ -29,6 +29,7 @@
       <h1>Google Web Toolkit Release Notes</h1>
       <ul>
 		    <li><a href="#Release_Notes_Current">@GWT_VERSION@</a></li>
+		    <li><a href="#Release_Notes_1_5_3">1.5.3</a></li>
 		    <li><a href="#Release_Notes_1_5_2">1.5.2</a></li>
 		    <li><a href="#Release_Notes_1_5_1">1.5.1 (RC2)</a></li>
 		    <li><a href="#Release_Notes_1_5_0">1.5.0 (RC)</a></li>
@@ -47,6 +48,18 @@
       <hr/>
       <a name="Release_Notes_Current"></a>
       <h2>Release Notes for @GWT_VERSION@</h2>
+      <h3>Fixed Issues</h3>
+      <ul>
+        <li><code>ConstantMap</code> is really immutable now (it always should
+        have been); it also no longer generates serialization warnings when
+        attempting to serialize <code>Map&lt;String,String&gt;</code></li>
+        <li><code>TreeMap</code> and <code>TreeSet</code> are now
+        serializable</li>
+      </ul>
+      <hr/>
+
+      <a name="Release_Notes_1_5_3"></a>
+      <h2>Release Notes for 1.5.3</h2>
       <h3>Fixed Issues</h3>
       <ul>
         <li>RPC requests no longer fail on the embedded Android web browser</li>

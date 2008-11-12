@@ -1,4 +1,4 @@
-<module>
+<module rename-to='@newModuleName' deploy-to='/@deployDir'>
 
       <!-- Inherit the core Web Toolkit stuff.                        -->
       <inherits name='com.google.gwt.user.User'/>
@@ -15,8 +15,5 @@
 
       <!-- Specify the app entry point class.                         -->
       <entry-point class='@clientPackage.@className'/>
-    
-      <!-- Specify the application specific style sheet.              -->
-      <stylesheet src='@className.css' />
-	
+
 </module>
