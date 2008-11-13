@@ -711,8 +711,7 @@ public class SerializableTypeOracleBuilder {
 
     logSerializableTypes(logger, fieldSerializableTypes);
 
-    return new SerializableTypeOracleImpl(typeOracle, fieldSerializableTypes,
-        possiblyInstantiatedTypes);
+    return new SerializableTypeOracleImpl(fieldSerializableTypes, possiblyInstantiatedTypes);
   }
 
   /**

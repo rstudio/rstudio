@@ -119,6 +119,6 @@ public class StandardSerializationPolicyTest extends TestCase {
     java.util.Map map = new HashMap();
     map.put(A.class, Boolean.TRUE);
     map.put(C.class, Boolean.FALSE);
-    return new StandardSerializationPolicy(map);
+    return new StandardSerializationPolicy(map, map);
   }
 }

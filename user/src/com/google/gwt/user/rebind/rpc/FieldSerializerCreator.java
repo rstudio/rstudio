@@ -24,6 +24,8 @@ import com.google.gwt.core.ext.typeinfo.JEnumType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -49,34 +51,41 @@ public class FieldSerializerCreator {
 
   private final JField[] serializableFields;
 
-  private final SerializableTypeOracle serializationOracle;
-
   private SourceWriter sourceWriter;
+
+  private final SerializableTypeOracle typesSentFromBrowser;
+
+  private final SerializableTypeOracle typesSentToBrowser;
+
+  private final TypeOracle typeOracle;
 
   /**
    * Constructs a field serializer for the class.
-   * 
-   * @param serializationOracle
-   * @param requestedClass
    */
-  public FieldSerializerCreator(SerializableTypeOracle serializationOracle,
-      JClassType requestedClass) {
+  public FieldSerializerCreator(TypeOracle typeOracle,
+      SerializableTypeOracle typesSentFromBrowser,
+      SerializableTypeOracle typesSentToBrowser, JClassType requestedClass) {
     assert (requestedClass != null);
     assert (requestedClass.isClass() != null || requestedClass.isArray() != null);
 
-    this.serializationOracle = serializationOracle;
+    this.typeOracle = typeOracle;
+    this.typesSentFromBrowser = typesSentFromBrowser;
+    this.typesSentToBrowser = typesSentToBrowser;
     serializableClass = requestedClass;
-    serializableFields = serializationOracle.getSerializableFields(requestedClass);
+    serializableFields = SerializationUtils.getSerializableFields(typeOracle,
+        requestedClass);
   }
 
   public String realize(TreeLogger logger, GeneratorContext ctx) {
     assert (ctx != null);
-    assert (serializationOracle.isSerializable(serializableClass));
+    assert (typesSentFromBrowser.isSerializable(serializableClass) || typesSentToBrowser.isSerializable(serializableClass));
 
     logger = logger.branch(TreeLogger.DEBUG,
         "Generating a field serializer for type '"
             + serializableClass.getQualifiedSourceName() + "'", null);
-    String fieldSerializerName = serializationOracle.getFieldSerializerName(serializableClass);
+
+    String fieldSerializerName = SerializationUtils.getFieldSerializerName(
+        typeOracle, serializableClass);
 
     sourceWriter = getSourceWriter(logger, ctx);
     if (sourceWriter == null) {
@@ -111,7 +120,8 @@ public class FieldSerializerCreator {
   }
 
   private SourceWriter getSourceWriter(TreeLogger logger, GeneratorContext ctx) {
-    String qualifiedSerializerName = serializationOracle.getFieldSerializerName(serializableClass);
+    String qualifiedSerializerName = SerializationUtils.getFieldSerializerName(
+        typeOracle, serializableClass);
     int packageNameEnd = qualifiedSerializerName.lastIndexOf('.');
     String className;
     String packageName;
@@ -137,8 +147,8 @@ public class FieldSerializerCreator {
   private void maybeSuppressLongWarnings(JType fieldType) {
     if (fieldType == JPrimitiveType.LONG) {
       /**
-       * Accessing long from JSNI causes a error, but field serializers need
-       * to be able to do just that in order to bypass java accessibility
+       * Accessing long from JSNI causes a error, but field serializers need to
+       * be able to do just that in order to bypass java accessibility
        * restrictions.
        */
       sourceWriter.println("@" + UnsafeNativeLong.class.getName());
@@ -281,8 +291,10 @@ public class FieldSerializerCreator {
     sourceWriter.println();
 
     JClassType superClass = serializableClass.getSuperclass();
-    if (superClass != null && serializationOracle.isSerializable(superClass)) {
-      String fieldSerializerName = serializationOracle.getFieldSerializerName(superClass);
+    if (superClass != null
+        && (typesSentFromBrowser.isSerializable(superClass) || typesSentToBrowser.isSerializable(superClass))) {
+      String fieldSerializerName = SerializationUtils.getFieldSerializerName(
+          typeOracle, superClass);
       sourceWriter.print(fieldSerializerName);
       sourceWriter.println(".deserialize(streamReader, instance);");
     }
@@ -311,8 +323,10 @@ public class FieldSerializerCreator {
     sourceWriter.println();
 
     JClassType superClass = serializableClass.getSuperclass();
-    if (superClass != null && serializationOracle.isSerializable(superClass)) {
-      String fieldSerializerName = serializationOracle.getFieldSerializerName(superClass);
+    if (superClass != null
+        && (typesSentFromBrowser.isSerializable(superClass) || typesSentToBrowser.isSerializable(superClass))) {
+      String fieldSerializerName = SerializationUtils.getFieldSerializerName(
+          typeOracle, superClass);
       sourceWriter.print(fieldSerializerName);
       sourceWriter.println(".serialize(streamWriter, instance);");
     }
@@ -384,7 +398,7 @@ public class FieldSerializerCreator {
     sourceWriter.indent();
 
     sourceWriter.print("return instance.@");
-    sourceWriter.print(serializationOracle.getSerializedTypeName(serializableClass));
+    sourceWriter.print(TypeOracleMediator.computeBinaryClassName(serializableClass));
     sourceWriter.print("::");
     sourceWriter.print(fieldName);
     sourceWriter.println(";");
@@ -415,7 +429,7 @@ public class FieldSerializerCreator {
     sourceWriter.indent();
 
     sourceWriter.print("instance.@");
-    sourceWriter.print(serializationOracle.getSerializedTypeName(serializableClass));
+    sourceWriter.print(TypeOracleMediator.computeBinaryClassName(serializableClass));
     sourceWriter.print("::");
     sourceWriter.print(fieldName);
     sourceWriter.println(" = value;");

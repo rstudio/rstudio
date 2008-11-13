@@ -21,6 +21,8 @@ import com.google.gwt.user.client.rpc.SerializationException;
  * This is an abstract class for representing the serialization policy for a
  * given module and
  * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}.
+ * The serialize and deserialize queries are from the perspective
+ * of the server, not the web browser.
  */
 public abstract class SerializationPolicy {
   /**

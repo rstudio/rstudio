@@ -101,6 +101,10 @@ public class TypeOracleMediator {
   private static final JClassType[] NO_JCLASSES = new JClassType[0];
   private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
 
+  /**
+   * Returns the binary name of a type. This is the same name that would be
+   * returned by {@link Class#getName()} for this type.
+   */
   public static String computeBinaryClassName(JType type) {
     JPrimitiveType primitiveType = type.isPrimitive();
     if (primitiveType != null) {

@@ -36,7 +36,7 @@ public final class SerializationPolicyLoader {
    */
   public static final String SERIALIZATION_POLICY_FILE_ENCODING = "UTF-8";
 
-  private static final String FORMAT_ERROR_MESSAGE = "Expected: className, [true | false]";
+  private static final String FORMAT_ERROR_MESSAGE = "Expected: className, [true | false], [true | false], [true | false], [true | false]";
 
   /**
    * Returns the serialization policy file name from the from the serialization
@@ -99,7 +99,8 @@ public final class SerializationPolicyLoader {
       throw new NullPointerException("inputStream");
     }
 
-    Map<Class<?>, Boolean> whitelist = new HashMap<Class<?>, Boolean>();
+    Map<Class<?>, Boolean> whitelistSer = new HashMap<Class<?>, Boolean>();
+    Map<Class<?>, Boolean> whitelistDeser = new HashMap<Class<?>, Boolean>();
 
     InputStreamReader isr = new InputStreamReader(inputStream,
         SERIALIZATION_POLICY_FILE_ENCODING);
@@ -112,24 +113,52 @@ public final class SerializationPolicyLoader {
       if (line.length() > 0) {
         String[] components = line.split(",");
 
-        if (components.length != 2) {
+        if (components.length != 2 && components.length != 5) {
           throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
         }
 
-        String binaryTypeName = components[0].trim();
-        String instantiable = components[1].trim();
+        for (int i = 0; i < components.length; i++) {
+          components[i] = components[i].trim();
+          if (components[i].length() == 0) {
+            throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
+          }
+        }
+        String[] fields = new String[components.length];
 
-        if (binaryTypeName.length() == 0 || instantiable.length() == 0) {
-          throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
+        String binaryTypeName = components[0].trim();
+        boolean fieldSer;
+        boolean instantSer;
+        boolean fieldDeser;
+        boolean instantDeser;
+        if (components.length == 2) {
+          fieldSer = fieldDeser = true;
+          instantSer = instantDeser = Boolean.valueOf(components[1]);
+        } else {
+          int idx = 1;
+          // TODO: Validate the instantiable string better.
+          fieldSer = Boolean.valueOf(components[idx++]);
+          instantSer = Boolean.valueOf(components[idx++]);
+          fieldDeser = Boolean.valueOf(components[idx++]);
+          instantDeser = Boolean.valueOf(components[idx++]);
+
+          if (!fieldSer && !fieldDeser) {
+            throw new ParseException("Type " + binaryTypeName
+                + " is neither field serializable nor field deserializable",
+                lineNum);
+          }
         }
 
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
 
         try {
-          Class<?> clazz = Class.forName(binaryTypeName, false, 
+          Class<?> clazz = Class.forName(binaryTypeName, false,
               contextClassLoader);
-          // TODO: Validate the instantiable string better.
-          whitelist.put(clazz, Boolean.valueOf(instantiable));
+          if (fieldSer) {
+            whitelistSer.put(clazz, instantSer);
+          }
+          if (fieldDeser) {
+            whitelistDeser.put(clazz, instantDeser);
+          }
         } catch (ClassNotFoundException ex) {
           // Ignore the error, but add it to the list of errors if one was
           // provided.
@@ -143,7 +172,7 @@ public final class SerializationPolicyLoader {
       lineNum++;
     }
 
-    return new StandardSerializationPolicy(whitelist);
+    return new StandardSerializationPolicy(whitelistSer, whitelistDeser);
   }
 
   private SerializationPolicyLoader() {

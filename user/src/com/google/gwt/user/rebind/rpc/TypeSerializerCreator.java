@@ -25,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameterizedType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
@@ -34,7 +35,10 @@ import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This class generates a class with name 'typeSerializerClassName' that is able
@@ -43,9 +47,26 @@ import java.util.List;
  */
 public class TypeSerializerCreator {
 
+  /**
+   * Default number of types to split createMethodMap entries into. Zero means
+   * no sharding occurs. Stored as a string since it is used as a default
+   * property value.
+   * 
+   * Note that the inliner will likely reassemble the shards if it is used in
+   * web mode, but it isn't needed there anyway.
+   * 
+   * TODO: remove this (and related code) when it is no longer needed.
+   */
+  private static final String DEFAULT_CREATEMETHODMAP_SHARD_SIZE = "0";
+
   private static final String DESERIALIZE_METHOD_SIGNATURE = "public native void deserialize("
       + "SerializationStreamReader streamReader, Object instance, String typeSignature)"
       + " throws SerializationException";
+
+  /**
+   * Java system property name to override the above.
+   */
+  private static final String GWT_CREATEMETHODMAP_SHARD_SIZE = "gwt.typecreator.shard.size";
 
   private static final String INSTANTIATE_METHOD_SIGNATURE = "public native Object instantiate("
       + "SerializationStreamReader streamReader, String typeSignature)"
@@ -54,23 +75,6 @@ public class TypeSerializerCreator {
   private static final String SERIALIZE_METHOD_SIGNATURE = "public native void serialize("
       + "SerializationStreamWriter streamWriter, Object instance, String typeSignature)"
       + " throws SerializationException";
-
-  /**
-   * Default number of types to split createMethodMap entries into.  Zero means
-   * no sharding occurs.  Stored as a string since it is used as a default
-   * property value.
-   *
-   * Note that the inliner will likely reassemble the shards if it is used
-   * in web mode, but it isn't needed there anyway.
-   *
-   * TODO: remove this (and related code) when it is no longer needed.
-   */
-  private static final String DEFAULT_CREATEMETHODMAP_SHARD_SIZE = "0";
-
-  /**
-   * Java system property name to override the above.
-   */
-  private static final String GWT_CREATEMETHODMAP_SHARD_SIZE = "gwt.typecreator.shard.size";
 
   private static int shardSize = -1;
 
@@ -86,18 +90,19 @@ public class TypeSerializerCreator {
         throw new UnableToCompleteException();
       }
     } catch (NumberFormatException e) {
-      logger.log(TreeLogger.ERROR, "Property "
-          + GWT_CREATEMETHODMAP_SHARD_SIZE + " not a number: "
-          + shardSizeProperty, e);
+      logger.log(TreeLogger.ERROR, "Property " + GWT_CREATEMETHODMAP_SHARD_SIZE
+          + " not a number: " + shardSizeProperty, e);
       throw new UnableToCompleteException();
     }
   }
 
   private final GeneratorContext context;
 
-  private final JType[] serializableTypes;
+  private final SerializableTypeOracle deserializationOracle;
 
   private final SerializableTypeOracle serializationOracle;
+
+  private final JType[] serializableTypes;
 
   private final SourceWriter srcWriter;
 
@@ -106,14 +111,20 @@ public class TypeSerializerCreator {
   private final String typeSerializerClassName;
 
   public TypeSerializerCreator(TreeLogger logger,
-      SerializableTypeOracle serializationOracle, GeneratorContext context,
+      SerializableTypeOracle serializationOracle,
+      SerializableTypeOracle deserializationOracle, GeneratorContext context,
       String typeSerializerClassName) throws UnableToCompleteException {
     this.context = context;
     this.typeSerializerClassName = typeSerializerClassName;
     this.serializationOracle = serializationOracle;
+    this.deserializationOracle = deserializationOracle;
+
     this.typeOracle = context.getTypeOracle();
 
-    serializableTypes = serializationOracle.getSerializableTypes();
+    Set<JType> typesSet = new HashSet<JType>();
+    typesSet.addAll(Arrays.asList(serializationOracle.getSerializableTypes()));
+    typesSet.addAll(Arrays.asList(deserializationOracle.getSerializableTypes()));
+    serializableTypes = typesSet.toArray(new JType[0]);
 
     srcWriter = getSourceWriter(logger, context);
     if (shardSize < 0) {
@@ -164,7 +175,7 @@ public class TypeSerializerCreator {
   private void createFieldSerializer(TreeLogger logger, GeneratorContext ctx,
       JType type) {
     assert (type != null);
-    assert (serializationOracle.isSerializable(type));
+    assert (serializationOracle.isSerializable(type) || deserializationOracle.isSerializable(type));
 
     JParameterizedType parameterizedType = type.isParameterized();
     if (parameterizedType != null) {
@@ -172,7 +183,8 @@ public class TypeSerializerCreator {
       return;
     }
 
-    JClassType customFieldSerializer = serializationOracle.hasCustomFieldSerializer(type);
+    JClassType customFieldSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
     if (customFieldSerializer != null) {
       return;
     }
@@ -185,8 +197,8 @@ public class TypeSerializerCreator {
      */
     assert (type.isClass() != null || type.isArray() != null);
 
-    FieldSerializerCreator creator = new FieldSerializerCreator(
-        serializationOracle, (JClassType) type);
+    FieldSerializerCreator creator = new FieldSerializerCreator(typeOracle,
+        serializationOracle, deserializationOracle, (JClassType) type);
     creator.realize(logger, ctx);
   }
 
@@ -208,7 +220,8 @@ public class TypeSerializerCreator {
     assert (type.isArray() == null);
 
     return "create_"
-        + serializationOracle.getFieldSerializerName(type).replace('.', '_');
+        + SerializationUtils.getFieldSerializerName(typeOracle, type).replace(
+            '.', '_');
   }
 
   private String[] getPackageAndClassName(String fullClassName) {
@@ -257,8 +270,8 @@ public class TypeSerializerCreator {
    * @return
    */
   private String getTypeString(JType type) {
-    String typeString = serializationOracle.getSerializedTypeName(type) + "/"
-        + serializationOracle.getSerializationSignature(type);
+    String typeString = TypeOracleMediator.computeBinaryClassName(type) + "/"
+        + SerializationUtils.getSerializationSignature(typeOracle, type);
     return typeString;
   }
 
@@ -272,7 +285,7 @@ public class TypeSerializerCreator {
   private boolean needsCreateMethod(JType type) {
     // If this type is abstract it will not be serialized into the stream
     //
-    if (!serializationOracle.maybeInstantiated(type)) {
+    if (!deserializationOracle.maybeInstantiated(type)) {
       return false;
     }
 
@@ -280,7 +293,8 @@ public class TypeSerializerCreator {
       return false;
     }
 
-    JClassType customSerializer = serializationOracle.hasCustomFieldSerializer(type);
+    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
     if (customSerializer == null) {
       return false;
     }
@@ -310,7 +324,8 @@ public class TypeSerializerCreator {
     int n = types.length;
     for (int index = 0; index < n; ++index) {
       JType type = types[index];
-      if (serializationOracle.maybeInstantiated(type)) {
+      if (serializationOracle.maybeInstantiated(type)
+          || deserializationOracle.maybeInstantiated(type)) {
         filteredTypes.add(type);
       }
     }
@@ -326,7 +341,7 @@ public class TypeSerializerCreator {
     JType[] types = getSerializableTypes();
     for (int typeIndex = 0; typeIndex < types.length; ++typeIndex) {
       JType type = types[typeIndex];
-      assert (serializationOracle.isSerializable(type));
+      assert (serializationOracle.isSerializable(type) || deserializationOracle.isSerializable(type));
 
       if (!needsCreateMethod(type)) {
         continue;
@@ -360,7 +375,8 @@ public class TypeSerializerCreator {
       boolean needComma = false;
       for (int index = 0; index < types.length; ++index) {
         JType type = types[index];
-        if (!serializationOracle.maybeInstantiated(type)) {
+        if (!serializationOracle.maybeInstantiated(type)
+            && !deserializationOracle.maybeInstantiated(type)) {
           continue;
         }
         if (needComma) {
@@ -369,8 +385,9 @@ public class TypeSerializerCreator {
           needComma = true;
         }
 
-        srcWriter.print("\"" + serializationOracle.getSerializedTypeName(type)
-            + "\":\"" + serializationOracle.getSerializationSignature(type)
+        srcWriter.print("\"" + TypeOracleMediator.computeBinaryClassName(type)
+            + "\":\""
+            + SerializationUtils.getSerializationSignature(typeOracle, type)
             + "\"");
       }
       srcWriter.println();
@@ -533,10 +550,11 @@ public class TypeSerializerCreator {
    */
   private void writeTypeMethods(JType type) {
     srcWriter.indent();
-    String serializerName = serializationOracle.getFieldSerializerName(type);
+    String serializerName = SerializationUtils.getFieldSerializerName(
+        typeOracle, type);
 
     // First the initialization method
-    {
+    if (deserializationOracle.maybeInstantiated(type)) {
       srcWriter.print("@");
       if (needsCreateMethod(type)) {
         srcWriter.print(getTypeSerializerClassName());
@@ -548,13 +566,14 @@ public class TypeSerializerCreator {
       }
       srcWriter.print("(L"
           + SerializationStreamReader.class.getName().replace('.', '/') + ";)");
-      srcWriter.println(",");
     }
+    srcWriter.println(",");
 
-    JClassType customSerializer = serializationOracle.hasCustomFieldSerializer(type);
+    JClassType customSerializer = SerializableTypeOracleBuilder.findCustomFieldSerializer(
+        typeOracle, type);
 
     // Now the deserialization method
-    {
+    if (deserializationOracle.isSerializable(type)) {
       // Assume param type is the concrete type of the serialized type.
       JType paramType = type;
       if (customSerializer != null) {
@@ -567,11 +586,11 @@ public class TypeSerializerCreator {
       srcWriter.print("::deserialize(L"
           + SerializationStreamReader.class.getName().replace('.', '/') + ";"
           + paramType.getJNISignature() + ")");
-      srcWriter.println(",");
     }
+    srcWriter.println(",");
 
     // Now the serialization method
-    {
+    if (serializationOracle.isSerializable(type)) {
       // Assume param type is the concrete type of the serialized type.
       JType paramType = type;
       if (customSerializer != null) {

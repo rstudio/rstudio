@@ -39,18 +39,76 @@ public class SerializationPolicyLoaderTest extends TestCase {
   static class B {
   }
 
-  // missing the instantiable attribute
-  private static String POLICY_FILE_MISSING_FIELD = A.class.getName();
-
-  private static String POLICY_FILE_TRIGGERS_CLASSNOTFOUND = "C,false";
-
-  private static String VALID_POLICY_FILE_CONTENTS = A.class.getName()
+  private static final String OLD_VALID_POLICY_FILE_CONTENTS = A.class.getName()
       + ", true";
+
+  // missing the instantiable attribute
+  private static final String POLICY_FILE_MISSING_FIELD = A.class.getName();
+
+  private static final String POLICY_FILE_TRIGGERS_CLASSNOTFOUND = "C,false";
+
+  private static final String VALID_POLICY_FILE_CONTENTS = A.class.getName()
+      + ", true, true, false, false\n" + B.class.getName()
+      + ", false, false, true, false\n";
 
   public static InputStream getInputStreamFromString(String content)
       throws UnsupportedEncodingException {
     return new ByteArrayInputStream(
         content.getBytes(SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING));
+  }
+
+  /**
+   * Test that a valid policy file will allow the types in the policy to be used
+   * and reject those that are not.
+   * 
+   * @throws ClassNotFoundException
+   * @throws ParseException
+   */
+  public void testLoading() throws IOException, SerializationException,
+      ParseException, ClassNotFoundException {
+
+    InputStream is = getInputStreamFromString(VALID_POLICY_FILE_CONTENTS);
+    List<ClassNotFoundException> notFounds = new ArrayList<ClassNotFoundException>();
+    SerializationPolicy sp = SerializationPolicyLoader.loadFromStream(is,
+        notFounds);
+    assertTrue(notFounds.isEmpty());
+
+    assertTrue(sp.shouldSerializeFields(A.class));
+    sp.validateSerialize(A.class);
+    assertFalse(sp.shouldDeserializeFields(A.class));
+    assertCannotDeserialize(sp, A.class);
+
+    assertFalse(sp.shouldSerializeFields(B.class));
+    assertCannotDeserialize(sp, B.class);
+    assertTrue(sp.shouldDeserializeFields(B.class));
+    assertCannotDeserialize(sp, B.class);
+  }
+
+  /**
+   * Test that a valid policy file will allow the types in the policy to be used
+   * and reject those that are not. Uses the old policy file format, which is no
+   * longer generated as of November 2008.
+   * 
+   * @throws ClassNotFoundException
+   * @throws ParseException
+   */
+  public void testLoadingOldFileFormat() throws IOException,
+      SerializationException, ParseException, ClassNotFoundException {
+
+    InputStream is = getInputStreamFromString(OLD_VALID_POLICY_FILE_CONTENTS);
+    SerializationPolicy sp = SerializationPolicyLoader.loadFromStream(is);
+
+    assertTrue(sp.shouldDeserializeFields(A.class));
+    assertTrue(sp.shouldSerializeFields(A.class));
+
+    assertFalse(sp.shouldDeserializeFields(B.class));
+    assertFalse(sp.shouldSerializeFields(B.class));
+
+    sp.validateDeserialize(A.class);
+    sp.validateSerialize(A.class);
+
+    assertCannotDeserialize(sp, B.class);
+    assertCannotSerialize(sp, B.class);
   }
 
   public void testPolicyFileMissingField() throws IOException,
@@ -73,7 +131,7 @@ public class SerializationPolicyLoaderTest extends TestCase {
     } catch (ClassNotFoundException e) {
       // expected to get here
     }
-    
+
     // Test loading without collecting ClassNotFoundExceptions.
     is.reset();
     SerializationPolicyLoader.loadFromStream(is, null);
@@ -86,36 +144,18 @@ public class SerializationPolicyLoaderTest extends TestCase {
     assertNotNull(classNotFoundExceptions.get(0));
   }
 
-  /**
-   * Test that a valid policy file will allow the types in the policy to be used
-   * and reject those that are not.
-   * 
-   * @throws ClassNotFoundException
-   * @throws ParseException
-   */
-  public void testValidSerializationPolicy() throws IOException,
-      SerializationException, ParseException, ClassNotFoundException {
-
-    InputStream is = getInputStreamFromString(VALID_POLICY_FILE_CONTENTS);
-    SerializationPolicy sp = SerializationPolicyLoader.loadFromStream(is);
-    assertTrue(sp.shouldDeserializeFields(A.class));
-    assertTrue(sp.shouldSerializeFields(A.class));
-
-    assertFalse(sp.shouldDeserializeFields(B.class));
-    assertFalse(sp.shouldSerializeFields(B.class));
-
-    sp.validateDeserialize(A.class);
-    sp.validateSerialize(A.class);
-
+  private void assertCannotDeserialize(SerializationPolicy sp, Class<?> cls) {
     try {
-      sp.validateDeserialize(B.class);
+      sp.validateDeserialize(cls);
       fail("Expected SerializationException");
     } catch (SerializationException ex) {
       // should get here
     }
+  }
 
+  private void assertCannotSerialize(SerializationPolicy sp, Class<?> cls) {
     try {
-      sp.validateSerialize(B.class);
+      sp.validateSerialize(cls);
       fail("Expected SerializationException");
     } catch (SerializationException ex) {
       // should get here

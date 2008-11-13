@@ -24,17 +24,47 @@ import java.util.Map;
  * Standard implementation of a {@link SerializationPolicy}.
  */
 public class StandardSerializationPolicy extends SerializationPolicy {
-  private final Map<Class<?>, Boolean> whitelist;
+  /**
+   * Field serializable types are primitives and types on the specified
+   * whitelist.
+   */
+  private static boolean isFieldSerializable(Class<?> clazz,
+      Map<Class<?>, Boolean> whitelist) {
+    if (clazz.isPrimitive()) {
+      return true;
+    }
+    return whitelist.containsKey(clazz);
+  }
+
+  /**
+   * Instantiable types are primitives and types on the specified whitelist
+   * which can be instantiated.
+   */
+  private static boolean isInstantiable(Class<?> clazz,
+      Map<Class<?>, Boolean> whitelist) {
+    if (clazz.isPrimitive()) {
+      return true;
+    }
+    Boolean instantiable = whitelist.get(clazz);
+    return (instantiable != null && instantiable);
+  }
+
+  private final Map<Class<?>, Boolean> deserializationWhitelist;
+
+  private final Map<Class<?>, Boolean> serializationWhitelist;
 
   /**
    * Constructs a {@link SerializationPolicy} from a {@link Map}.
    */
-  public StandardSerializationPolicy(Map<Class<?>, Boolean> whitelist) {
-    if (whitelist == null) {
+  public StandardSerializationPolicy(
+      Map<Class<?>, Boolean> serializationWhitelist,
+      Map<Class<?>, Boolean> deserializationWhitelist) {
+    if (serializationWhitelist == null || deserializationWhitelist == null) {
       throw new NullPointerException("whitelist");
     }
 
-    this.whitelist = whitelist;
+    this.serializationWhitelist = serializationWhitelist;
+    this.deserializationWhitelist = deserializationWhitelist;
   }
 
   /*
@@ -44,7 +74,7 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    */
   @Override
   public boolean shouldDeserializeFields(Class<?> clazz) {
-    return isFieldSerializable(clazz);
+    return isFieldSerializable(clazz, deserializationWhitelist);
   }
 
   /*
@@ -54,7 +84,7 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    */
   @Override
   public boolean shouldSerializeFields(Class<?> clazz) {
-    return isFieldSerializable(clazz);
+    return isFieldSerializable(clazz, serializationWhitelist);
   }
 
   /*
@@ -64,7 +94,7 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    */
   @Override
   public void validateDeserialize(Class<?> clazz) throws SerializationException {
-    if (!isInstantiable(clazz)) {
+    if (!isInstantiable(clazz, deserializationWhitelist)) {
       throw new SerializationException(
           "Type '"
               + clazz.getName()
@@ -79,33 +109,11 @@ public class StandardSerializationPolicy extends SerializationPolicy {
    */
   @Override
   public void validateSerialize(Class<?> clazz) throws SerializationException {
-    if (!isInstantiable(clazz)) {
+    if (!isInstantiable(clazz, serializationWhitelist)) {
       throw new SerializationException(
           "Type '"
               + clazz.getName()
               + "' was not included in the set of types which can be serialized by this SerializationPolicy or its Class object could not be loaded. For security purposes, this type will not be serialized.");
     }
-  }
-
-  /**
-   * Field serializable types are primitives and types on the whitelist.
-   */
-  private boolean isFieldSerializable(Class<?> clazz) {
-    if (clazz.isPrimitive()) {
-      return true;
-    }
-    return whitelist.containsKey(clazz);
-  }
-
-  /**
-   * Instantiable types are primitives and types on the whitelist which can be
-   * instantiated.
-   */
-  private boolean isInstantiable(Class<?> clazz) {
-    if (clazz.isPrimitive()) {
-      return true;
-    }
-    Boolean instantiable = whitelist.get(clazz);
-    return (instantiable != null && instantiable);
   }
 }

@@ -884,6 +884,9 @@ public class JsParser {
 
       case TokenStream.NULL:
         return program.getNullLiteral();
+        
+      case TokenStream.UNDEFINED:
+        return program.getUndefinedLiteral();
 
       default:
         throw new JsParserException("Unknown primary: " + node.getIntDatum());

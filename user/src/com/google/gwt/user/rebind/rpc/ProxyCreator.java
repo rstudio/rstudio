@@ -30,6 +30,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.generator.NameFactory;
+import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -49,8 +50,11 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Creates a client-side proxy for a
@@ -69,8 +73,10 @@ class ProxyCreator {
    * methods.
    */
   private static void addRemoteServiceRootTypes(TreeLogger logger,
-      TypeOracle typeOracle, SerializableTypeOracleBuilder stob,
-      JClassType remoteService) throws NotFoundException {
+      TypeOracle typeOracle,
+      SerializableTypeOracleBuilder typesSentFromBrowser,
+      SerializableTypeOracleBuilder typesSentToBrowser, JClassType remoteService)
+      throws NotFoundException {
     logger = logger.branch(TreeLogger.DEBUG, "Analyzing '"
         + remoteService.getParameterizedQualifiedSourceName()
         + "' for serializable types", null);
@@ -89,7 +95,7 @@ class ProxyCreator {
         TreeLogger returnTypeLogger = methodLogger.branch(TreeLogger.DEBUG,
             "Return type: " + returnType.getParameterizedQualifiedSourceName(),
             null);
-        stob.addRootType(returnTypeLogger, returnType);
+        typesSentToBrowser.addRootType(returnTypeLogger, returnType);
       }
 
       JParameter[] params = method.getParameters();
@@ -97,7 +103,7 @@ class ProxyCreator {
         TreeLogger paramLogger = methodLogger.branch(TreeLogger.DEBUG,
             "Parameter: " + param.toString(), null);
         JType paramType = param.getType();
-        stob.addRootType(paramLogger, paramType);
+        typesSentFromBrowser.addRootType(paramLogger, paramType);
       }
 
       JType[] exs = method.getThrows();
@@ -114,7 +120,7 @@ class ProxyCreator {
                 null);
           }
 
-          stob.addRootType(throwsLogger, ex);
+          typesSentToBrowser.addRootType(throwsLogger, ex);
         }
       }
     }
@@ -136,6 +142,20 @@ class ProxyCreator {
     // IncompatibleRemoteServiceException is always serializable
     JClassType icseType = typeOracle.getType(IncompatibleRemoteServiceException.class.getName());
     stob.addRootType(logger, icseType);
+  }
+
+  /**
+   * Take the union of two type arrays, and then sort the results
+   * alphabetically.
+   */
+  private static JType[] unionOfTypeArrays(JType[] types1, JType[] types2) {
+    Set<JType> typesList = new HashSet<JType>();
+    typesList.addAll(Arrays.asList(types1));
+    typesList.addAll(Arrays.asList(types2));
+    JType[] serializableTypes = typesList.toArray(new JType[0]);
+    Arrays.sort(serializableTypes,
+        SerializableTypeOracleBuilder.JTYPE_COMPARATOR);
+    return serializableTypes;
   }
 
   private JClassType serviceIntf;
@@ -207,12 +227,16 @@ class ProxyCreator {
         serviceIntf, serviceAsync);
 
     // Determine the set of serializable types
-    SerializableTypeOracleBuilder stob = new SerializableTypeOracleBuilder(
+    SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
+        logger, context.getPropertyOracle(), typeOracle);
+    SerializableTypeOracleBuilder typesSentToBrowserBuilder = new SerializableTypeOracleBuilder(
         logger, context.getPropertyOracle(), typeOracle);
     try {
-      addRequiredRoots(logger, typeOracle, stob);
+      addRequiredRoots(logger, typeOracle, typesSentFromBrowserBuilder);
+      addRequiredRoots(logger, typeOracle, typesSentToBrowserBuilder);
 
-      addRemoteServiceRootTypes(logger, typeOracle, stob, serviceIntf);
+      addRemoteServiceRootTypes(logger, typeOracle,
+          typesSentFromBrowserBuilder, typesSentToBrowserBuilder, serviceIntf);
     } catch (NotFoundException e) {
       logger.log(TreeLogger.ERROR, "", e);
       throw new UnableToCompleteException();
@@ -223,24 +247,28 @@ class ProxyCreator {
     // output.
     OutputStream pathInfo = context.tryCreateResource(logger,
         serviceIntf.getQualifiedSourceName() + ".rpc.log");
-    stob.setLogOutputStream(pathInfo);
-    SerializableTypeOracle sto = stob.build(logger);
+    typesSentFromBrowserBuilder.setLogOutputStream(pathInfo);
+    SerializableTypeOracle typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
+    SerializableTypeOracle typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
     if (pathInfo != null) {
       context.commitResource(logger, pathInfo).setPrivate(true);
     }
 
-    TypeSerializerCreator tsc = new TypeSerializerCreator(logger, sto, context,
-        sto.getTypeSerializerQualifiedName(serviceIntf));
+    TypeSerializerCreator tsc = new TypeSerializerCreator(logger,
+        typesSentFromBrowser, typesSentToBrowser, context,
+        SerializationUtils.getTypeSerializerQualifiedName(serviceIntf));
     tsc.realize(logger);
 
     String serializationPolicyStrongName = writeSerializationPolicyFile(logger,
-        context, sto);
+        context, typesSentFromBrowser, typesSentToBrowser);
 
-    generateProxyFields(srcWriter, sto, serializationPolicyStrongName);
+    generateProxyFields(srcWriter, typesSentFromBrowser,
+        serializationPolicyStrongName);
 
     generateProxyContructor(javadocAnnotationDeprecationBranch, srcWriter);
 
-    generateProxyMethods(srcWriter, sto, syncMethToAsyncMethMap);
+    generateProxyMethods(srcWriter, typesSentFromBrowser,
+        syncMethToAsyncMethMap);
 
     srcWriter.commit(logger);
 
@@ -275,10 +303,10 @@ class ProxyCreator {
       String serializationPolicyStrongName) {
     // Initialize a field with binary name of the remote service interface
     srcWriter.println("private static final String REMOTE_SERVICE_INTERFACE_NAME = \""
-        + serializableTypeOracle.getSerializedTypeName(serviceIntf) + "\";");
+        + TypeOracleMediator.computeBinaryClassName(serviceIntf) + "\";");
     srcWriter.println("private static final String SERIALIZATION_POLICY =\""
         + serializationPolicyStrongName + "\";");
-    String typeSerializerName = serializableTypeOracle.getTypeSerializerQualifiedName(serviceIntf);
+    String typeSerializerName = SerializationUtils.getTypeSerializerQualifiedName(serviceIntf);
     srcWriter.println("private static final " + typeSerializerName
         + " SERIALIZER = new " + typeSerializerName + "();");
     srcWriter.println();
@@ -366,7 +394,7 @@ class ProxyCreator {
     for (JParameter param : syncParams) {
       w.println(streamWriterName
           + ".writeString(\""
-          + serializableTypeOracle.getSerializedTypeName(param.getType().getErasedType())
+          + TypeOracleMediator.computeBinaryClassName(param.getType().getErasedType())
           + "\");");
     }
 
@@ -530,7 +558,8 @@ class ProxyCreator {
   }
 
   private String writeSerializationPolicyFile(TreeLogger logger,
-      GeneratorContext ctx, SerializableTypeOracle sto)
+      GeneratorContext ctx, SerializableTypeOracle serializationSto,
+      SerializableTypeOracle deserializationSto)
       throws UnableToCompleteException {
     try {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -538,12 +567,21 @@ class ProxyCreator {
           SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING);
       PrintWriter pw = new PrintWriter(osw);
 
-      JType[] serializableTypes = sto.getSerializableTypes();
+      JType[] serializableTypes = unionOfTypeArrays(
+          serializationSto.getSerializableTypes(),
+          deserializationSto.getSerializableTypes());
+
       for (int i = 0; i < serializableTypes.length; ++i) {
-        JType serializableType = serializableTypes[i];
-        String binaryTypeName = sto.getSerializedTypeName(serializableType);
-        boolean maybeInstantiated = sto.maybeInstantiated(serializableType);
-        pw.println(binaryTypeName + ", " + Boolean.toString(maybeInstantiated));
+        JType type = serializableTypes[i];
+        String binaryTypeName = TypeOracleMediator.computeBinaryClassName(type);
+        pw.print(binaryTypeName);
+        pw.print(", "
+            + Boolean.toString(deserializationSto.isSerializable(type)));
+        pw.print(", "
+            + Boolean.toString(deserializationSto.maybeInstantiated(type)));
+        pw.print(", " + Boolean.toString(serializationSto.isSerializable(type)));
+        pw.println(", "
+            + Boolean.toString(serializationSto.maybeInstantiated(type)));
       }
 
       // Closes the wrapped streams.
