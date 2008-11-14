@@ -87,7 +87,7 @@ public class ApiCompatibilityChecker {
   public static final boolean DEBUG = false;
 
   // prints the API of the two containers, false by default.
-  public static final boolean DEBUG_PRINT_ALL_API = true;
+  public static final boolean DEBUG_PRINT_ALL_API = false;
 
   // these two parameters print APIs common in the two repositories. Should be
   // false by default.
@@ -106,7 +106,7 @@ public class ApiCompatibilityChecker {
   public static final boolean DEBUG_DUPLICATE_REMOVAL = false;
 
   // Tweak for log output.
-  public static final TreeLogger.Type type = TreeLogger.INFO;
+  public static final TreeLogger.Type type = TreeLogger.WARN;
 
   // remove duplicates by default
   public static Collection<ApiChange> getApiDiff(ApiContainer newApi,
