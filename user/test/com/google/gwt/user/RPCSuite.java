@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
 import com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilderTest;
 import com.google.gwt.user.rebind.rpc.TypeHierarchyUtilsTest;
+import com.google.gwt.user.server.rpc.RPCRequestTest;
 import com.google.gwt.user.server.rpc.RPCServletUtilsTest;
 import com.google.gwt.user.server.rpc.RPCTest;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoaderTest;
@@ -68,6 +69,7 @@ public class RPCSuite {
     suite.addTestSuite(StandardSerializationPolicyTest.class);
     suite.addTestSuite(SerializationPolicyLoaderTest.class);
     suite.addTestSuite(RPCServletUtilsTest.class);
+    suite.addTestSuite(RPCRequestTest.class);
     return suite;
   }
 }
