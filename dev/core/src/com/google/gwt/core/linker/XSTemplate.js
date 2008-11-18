@@ -368,7 +368,7 @@ function __MODULE_FUNC__() {
   // some apps. The final solution was simply to inject the compiled script
   // from *within* the stats script, guaranteeing order at the expense of near
   // total inscrutability :(
-  var compiledScriptTag = '"<script src=\\"' + base + strongName + '\\"></scr" + "ipt>"';
+  var compiledScriptTag = '"<script src=\\"' + base + strongName + '.cache.js\\"></scr" + "ipt>"';
   $doc.write('<script><!--\n'
     + 'window.__gwtStatsEvent && window.__gwtStatsEvent({'
     + 'moduleName:"__MODULE_NAME__", subSystem:"startup",'
