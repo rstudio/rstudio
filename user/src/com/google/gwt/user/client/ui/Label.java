@@ -17,9 +17,25 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasAllMouseHandlers;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
-import com.google.gwt.user.client.Event;
 
 /**
  * A widget that contains arbitrary text, <i>not</i> interpreted as HTML.
@@ -37,9 +53,9 @@ import com.google.gwt.user.client.Event;
  * {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
-public class Label extends Widget implements SourcesClickEvents,
-    SourcesMouseEvents, SourcesMouseWheelEvents, HasHorizontalAlignment,
-    HasText, HasWordWrap, HasDirection {
+public class Label extends Widget implements HasHorizontalAlignment, HasText,
+    HasWordWrap, HasDirection, HasClickHandlers, SourcesClickEvents,
+    SourcesMouseEvents, HasAllMouseHandlers {
 
   /**
    * Creates a Label widget that wraps an existing &lt;div&gt; or &lt;span&gt;
@@ -64,10 +80,7 @@ public class Label extends Widget implements SourcesClickEvents,
     return label;
   }
 
-  private ClickListenerCollection clickListeners;
   private HorizontalAlignmentConstant horzAlign;
-  private MouseListenerCollection mouseListeners;
-  private MouseWheelListenerCollection mouseWheelListeners;
 
   /**
    * Creates an empty label.
@@ -110,28 +123,47 @@ public class Label extends Widget implements SourcesClickEvents,
         || element.getTagName().equalsIgnoreCase("span");
   }
 
+  public HandlerRegistration addClickHandler(ClickHandler handler) {
+    return addDomHandler(handler, ClickEvent.getType());
+  }
+
+  @Deprecated
   public void addClickListener(ClickListener listener) {
-    if (clickListeners == null) {
-      clickListeners = new ClickListenerCollection();
-      sinkEvents(Event.ONCLICK);
-    }
-    clickListeners.add(listener);
+    ListenerWrapper.Click.add(this, listener);
   }
 
+  public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
+    return addDomHandler(handler, MouseDownEvent.getType());
+  }
+
+  @Deprecated
   public void addMouseListener(MouseListener listener) {
-    if (mouseListeners == null) {
-      mouseListeners = new MouseListenerCollection();
-      sinkEvents(Event.MOUSEEVENTS);
-    }
-    mouseListeners.add(listener);
+    ListenerWrapper.Mouse.add(this, listener);
   }
 
+  public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
+    return addDomHandler(handler, MouseMoveEvent.getType());
+  }
+
+  public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
+    return addDomHandler(handler, MouseOutEvent.getType());
+  }
+
+  public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
+    return addDomHandler(handler, MouseOverEvent.getType());
+  }
+
+  public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
+    return addDomHandler(handler, MouseUpEvent.getType());
+  }
+
+  public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
+    return addDomHandler(handler, MouseWheelEvent.getType());
+  }
+
+  @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
-    if (mouseWheelListeners == null) {
-      mouseWheelListeners = new MouseWheelListenerCollection();
-      sinkEvents(Event.ONMOUSEWHEEL);
-    }
-    mouseWheelListeners.add(listener);
+    ListenerWrapper.MouseWheel.add(this, listener);
   }
 
   public Direction getDirection() {
@@ -150,49 +182,19 @@ public class Label extends Widget implements SourcesClickEvents,
     return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
   }
 
-  @Override
-  public void onBrowserEvent(Event event) {
-    switch (event.getTypeInt()) {
-      case Event.ONCLICK:
-        if (clickListeners != null) {
-          clickListeners.fireClick(this);
-        }
-        break;
-
-      case Event.ONMOUSEDOWN:
-      case Event.ONMOUSEUP:
-      case Event.ONMOUSEMOVE:
-      case Event.ONMOUSEOVER:
-      case Event.ONMOUSEOUT:
-        if (mouseListeners != null) {
-          mouseListeners.fireMouseEvent(this, event);
-        }
-        break;
-
-      case Event.ONMOUSEWHEEL:
-        if (mouseWheelListeners != null) {
-          mouseWheelListeners.fireMouseWheelEvent(this, event);
-        }
-        break;
-    }
-  }
-
+  @Deprecated
   public void removeClickListener(ClickListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
-    }
+    ListenerWrapper.Click.remove(this, listener);
   }
 
+  @Deprecated
   public void removeMouseListener(MouseListener listener) {
-    if (mouseListeners != null) {
-      mouseListeners.remove(listener);
-    }
+    ListenerWrapper.Mouse.remove(this, listener);
   }
 
+  @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
-    if (mouseWheelListeners != null) {
-      mouseWheelListeners.remove(listener);
-    }
+    ListenerWrapper.MouseWheel.remove(this, listener);
   }
 
   public void setDirection(Direction direction) {

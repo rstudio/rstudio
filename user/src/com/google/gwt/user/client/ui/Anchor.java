@@ -183,6 +183,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     return getAnchorElement().getName();
   }
 
+  @Override
   public int getTabIndex() {
     return getAnchorElement().getTabIndex();
   }
@@ -205,6 +206,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     return !getElement().getStyle().getProperty("whiteSpace").equals("nowrap");
   }
 
+  @Override
   public void setAccessKey(char key) {
     getAnchorElement().setAccessKey(Character.toString(key));
   }
@@ -213,6 +215,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     BidiUtils.setDirectionOnElement(getElement(), direction);
   }
 
+  @Override
   public void setFocus(boolean focused) {
     if (focused) {
       getAnchorElement().focus();
@@ -243,6 +246,7 @@ public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     getAnchorElement().setName(name);
   }
 
+  @Override
   public void setTabIndex(int index) {
     getAnchorElement().setTabIndex(index);
   }

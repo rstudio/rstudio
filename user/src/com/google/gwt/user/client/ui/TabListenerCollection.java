@@ -23,6 +23,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TabListener}.
  */
+@Deprecated
 public class TabListenerCollection extends ArrayList<TabListener> {
 
   /**
@@ -31,6 +32,7 @@ public class TabListenerCollection extends ArrayList<TabListener> {
    * @param sender the widget sending the event
    * @param tabIndex the index of the tab being selected
    */
+  @Deprecated
   public boolean fireBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
     for (TabListener listener : this) {
       if (!listener.onBeforeTabSelected(sender, tabIndex)) {
@@ -46,6 +48,7 @@ public class TabListenerCollection extends ArrayList<TabListener> {
    * @param sender the widget sending the event
    * @param tabIndex the index of the tab being selected
    */
+  @Deprecated
   public void fireTabSelected(SourcesTabEvents sender, int tabIndex) {
     for (TabListener listener : this) {
       listener.onTabSelected(sender, tabIndex);

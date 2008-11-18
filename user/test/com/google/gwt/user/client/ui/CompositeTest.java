@@ -15,8 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -24,6 +30,7 @@ import com.google.gwt.user.client.Event;
  */
 public class CompositeTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
@@ -32,6 +39,8 @@ public class CompositeTest extends GWTTestCase {
     TextBox tb = new TextBox();
     boolean widgetFocusFired;
     boolean widgetLostFocusFired;
+    boolean widgetFocusHandlerFired;
+    boolean widgetBlurHandlerFired;
     boolean domFocusFired;
     boolean domBlurFired;
 
@@ -46,6 +55,17 @@ public class CompositeTest extends GWTTestCase {
 
         public void onFocus(Widget sender) {
           widgetFocusFired = true;
+        }
+      });
+
+      tb.addFocusHandler(new FocusHandler() {
+        public void onFocus(FocusEvent event) {
+          widgetFocusHandlerFired = true;
+        }
+      });
+      tb.addBlurHandler(new BlurHandler() {
+        public void onBlur(BlurEvent event) {
+          widgetBlurHandlerFired = true;
         }
       });
     }
@@ -68,38 +88,47 @@ public class CompositeTest extends GWTTestCase {
     }
   }
 
-  public void testBrowserEvents() {
-// TODO: re-enable this test when we figure out why the focus events aren't
-// firing on some browsers.
-//
-//    final EventTestComposite c = new EventTestComposite();
-//    RootPanel.get().add(c);
-//
-//    this.delayTestFinish(1000);
-//
-//    // Focus, then blur, the composite's text box. This has to be done in
-//    // deferred commands, because focus events usually require the event loop
-//    // to be pumped in order to fire.
-//    DeferredCommand.addCommand(new Command() {
-//      public void execute() {
-//        DeferredCommand.addCommand(new Command() {
-//          public void execute() {
-//            // Ensure all events fired as expected.
-//            assertTrue(c.domFocusFired);
-//            assertTrue(c.domBlurFired);
-//            assertTrue(c.widgetLostFocusFired);
-//
-//            // Ensure that the widget's focus event was eaten by the
-//            // composite's implementation of onBrowserEvent().
-//            assertFalse(c.widgetFocusFired);
-//            finishTest();
-//          }
-//        });
-//
-//        c.tb.setFocus(false);
-//      }
-//    });
-//
-//    c.tb.setFocus(true);
+  public void disabledTestBrowserEvents() {
+    // TODO: re-enable this test when we figure out why the focus events aren't
+    // firing on some browsers.
+    final EventTestComposite c = new EventTestComposite();
+    RootPanel.get().add(c);
+
+    this.delayTestFinish(1000);
+
+    // Focus, then blur, the composite's text box. This has to be done in
+    // deferred commands, because focus events usually require the event loop
+    // to be pumped in order to fire.
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        DeferredCommand.addCommand(new Command() {
+          public void execute() {
+            // Ensure all events fired as expected.
+            assertTrue(c.domFocusFired);
+            assertTrue(c.domBlurFired);
+            assertTrue(c.widgetLostFocusFired);
+            assertTrue(c.widgetBlurHandlerFired);
+
+            // Ensure that the widget's focus event was eaten by the
+            // composite's implementation of onBrowserEvent().
+            assertFalse(c.widgetFocusFired);
+            assertFalse(c.widgetFocusHandlerFired);
+            finishTest();
+          }
+        });
+
+        c.tb.setFocus(false);
+      }
+    });
+
+    c.tb.setFocus(true);
+  }
+
+  /**
+   * This test is here to prevent a "No tests found" warning in Junit.
+   * 
+   * TODO: Remove this when testBrowserEvents is enabled
+   */
+  public void testNothing() {
   }
 }

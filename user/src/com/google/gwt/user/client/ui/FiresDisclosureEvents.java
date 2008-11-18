@@ -25,13 +25,16 @@ public interface FiresDisclosureEvents {
    * Adds a handler interface to receive open events.
    * 
    * @param handler the handler to add
+   * @deprecated add an open or close handler to the event source instead
    */
+  @Deprecated
   void addEventHandler(DisclosureHandler handler);
   
   /**
    * Removes a previously added handler interface.
    * 
-   * @param handler the handler to remove.
+   * @param handler the handler to remove
    */
+  @Deprecated
   void removeEventHandler(DisclosureHandler handler);
 }

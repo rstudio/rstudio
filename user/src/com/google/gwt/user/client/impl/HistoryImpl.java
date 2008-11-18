@@ -17,9 +17,12 @@ package com.google.gwt.user.client.impl;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.user.client.HistoryListener;
-
-import java.util.ArrayList;
+import com.google.gwt.event.logical.shared.HasHandlers;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * Native implementation associated with
@@ -27,69 +30,39 @@ import java.util.ArrayList;
  * 
  * User classes should not use this class directly.
  */
-public abstract class HistoryImpl {
-
-  private static ArrayList<HistoryListener> historyListeners = new ArrayList<HistoryListener>();
-
-  /**
-   * Adds a listener to be informed of changes to the browser's history stack.
-   * 
-   * @param listener the listener to be added
-   */
-  public static void addHistoryListener(HistoryListener listener) {
-    historyListeners.add(listener);
-  }
-
-  /**
-   * Fires the {@link HistoryListener#onHistoryChanged(String)} event to all
-   * listeners with the given token.
-   */
-  public static void fireHistoryChangedImpl(String historyToken) {
-    // TODO: replace this copy when a more general solution to event handlers
-    // wanting to remove themselves from the listener list is implemented.
-
-    // This is necessary to avoid a CurrentModificationException in hosted
-    // mode, as the listeners may try to remove themselves from the list while
-    // it is being iterated, such as in HistoryTest.
-    HistoryListener[] listenersToInvoke = historyListeners.toArray(new HistoryListener[historyListeners.size()]);
-    for (HistoryListener listener : listenersToInvoke) {
-      listener.onHistoryChanged(historyToken);
-    }
-  }
+public abstract class HistoryImpl implements HasValueChangeHandlers<String>,
+    HasHandlers {
 
   public static native String getToken() /*-{
     return $wnd.__gwt_historyToken || "";
   }-*/;
 
-  /**
-   * Removes a history listener.
-   * 
-   * @param listener the listener to be removed
-   */
-  public static void removeHistoryListener(HistoryListener listener) {
-    historyListeners.remove(listener);
-  }
-
   protected static native void setToken(String token) /*-{
     $wnd.__gwt_historyToken = token;
   }-*/;
 
-  private static void fireHistoryChanged(String historyToken) {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireHistoryChangedAndCatch(historyToken, handler);
-    } else {
-      fireHistoryChangedImpl(historyToken);
-    }
+  private HandlerManager handlers = new HandlerManager(null);
+
+  /**
+   * Adds a {@link ValueChangeEvent} handler to be informed of changes to the
+   * browser's history stack.
+   * 
+   * @param handler the handler
+   */
+  public HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<String> handler) {
+    return handlers.addHandler(ValueChangeEvent.getType(), handler);
   }
 
-  private static void fireHistoryChangedAndCatch(String historyToken,
-      UncaughtExceptionHandler handler) {
-    try {
-      fireHistoryChangedImpl(historyToken);
-    } catch (Throwable e) {
-      handler.onUncaughtException(e);
-    }
+  /**
+   * Fires the {@link ValueChangeEvent} to all handlers with the given tokens.
+   */
+  public void fireHistoryChangedImpl(String newToken) {
+    ValueChangeEvent.fire(this, newToken);
+  }
+
+  public HandlerManager getHandlers() {
+    return handlers;
   }
 
   public abstract boolean init();
@@ -127,4 +100,22 @@ public abstract class HistoryImpl {
   protected abstract void nativeUpdate(String historyToken);
 
   protected abstract void nativeUpdateOnEvent(String historyToken);
+
+  private void fireHistoryChanged(String newToken) {
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      fireHistoryChangedAndCatch(newToken, handler);
+    } else {
+      fireHistoryChangedImpl(newToken);
+    }
+  }
+
+  private void fireHistoryChangedAndCatch(String newToken,
+      UncaughtExceptionHandler handler) {
+    try {
+      fireHistoryChangedImpl(newToken);
+    } catch (Throwable e) {
+      handler.onUncaughtException(e);
+    }
+  }
 }

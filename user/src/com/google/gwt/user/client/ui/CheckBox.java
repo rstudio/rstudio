@@ -15,6 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -39,7 +44,7 @@ import com.google.gwt.user.client.Element;
  * {@example com.google.gwt.examples.CheckBoxExample}
  * </p>
  */
-public class CheckBox extends ButtonBase implements HasName {
+public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   private Element inputElem, labelElem;
 
   /**
@@ -91,8 +96,24 @@ public class CheckBox extends ButtonBase implements HasName {
     // appears in tab sequence. FocusWidget's setElement method already
     // calls setTabIndex, which is overridden below. However, at the time
     // that this call is made, inputElem has not been created. So, we have
-    // to call setTabIndex again, once inputElem has been created. 
+    // to call setTabIndex again, once inputElem has been created.
     setTabIndex(0);
+  }
+
+  public HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<Boolean> handler) {
+    // Is this the first value change handler? If so, time to listen to clicks
+    // on the checkbox
+    if (!isEventHandled(ValueChangeEvent.getType())) {
+      this.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
+          // No need to compare old value and new value--click handler 
+          // only fires on real click, and value always toggles
+          ValueChangeEvent.fire(CheckBox.this, isChecked());
+        }
+      });
+    }
+    return addHandler(handler, ValueChangeEvent.getType());
   }
 
   @Override
@@ -112,6 +133,10 @@ public class CheckBox extends ButtonBase implements HasName {
   @Override
   public String getText() {
     return DOM.getInnerText(labelElem);
+  }
+
+  public Boolean getValue() {
+    return isChecked();
   }
 
   /**
@@ -135,7 +160,8 @@ public class CheckBox extends ButtonBase implements HasName {
   }
 
   /**
-   * Checks or unchecks this check box.
+   * Checks or unchecks this check box. Does not fire {@link ValueChangeEvent}.
+   * (If you want the event to fire, use {@link #setValue(boolean, boolean)})
    * 
    * @param checked <code>true</code> to check the check box
    */
@@ -174,10 +200,10 @@ public class CheckBox extends ButtonBase implements HasName {
 
   @Override
   public void setTabIndex(int index) {
-    // Need to guard against call to setTabIndex before inputElem is initialized.
-    // This happens because FocusWidget's (a superclass of CheckBox) setElement method
-    // calls setTabIndex before inputElem is initialized. See CheckBox's protected
-    // constructor for more information.
+    // Need to guard against call to setTabIndex before inputElem is
+    // initialized. This happens because FocusWidget's (a superclass of
+    // CheckBox) setElement method calls setTabIndex before inputElem is
+    // initialized. See CheckBox's protected constructor for more information.
     if (inputElem != null) {
       getFocusImpl().setTabIndex(inputElem, index);
     }
@@ -188,11 +214,29 @@ public class CheckBox extends ButtonBase implements HasName {
     DOM.setInnerText(labelElem, text);
   }
 
+  public void setValue(Boolean value) {
+    setValue(value, false);
+  }
+
+  public void setValue(Boolean value, boolean fireEvents) {
+    if (isChecked() == value) {
+      return;
+    }
+    setChecked(value);
+    if (fireEvents) {
+      ValueChangeEvent.fire(this, value);
+    }
+  }
+
   // Unlike other widgets the CheckBox sinks on its input element, not its
   // wrapper element.
   @Override
   public void sinkEvents(int eventBitsToAdd) {
-    DOM.sinkEvents(inputElem, eventBitsToAdd | DOM.getEventsSunk(inputElem));
+    if (isOrWasAttached()) {
+      DOM.sinkEvents(inputElem, eventBitsToAdd | DOM.getEventsSunk(inputElem));
+    } else {
+      super.sinkEvents(eventBitsToAdd);
+    }
   }
 
   /**
@@ -253,7 +297,7 @@ public class CheckBox extends ButtonBase implements HasName {
     // Clear out the old input element
     DOM.setEventListener(inputElem, null);
     DOM.setEventListener(inputElem, null);
-   
+
     DOM.removeChild(getElement(), inputElem);
     DOM.insertChild(getElement(), elem, 0);
 

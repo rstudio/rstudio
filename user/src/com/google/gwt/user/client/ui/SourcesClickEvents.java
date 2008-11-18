@@ -25,7 +25,9 @@ public interface SourcesClickEvents {
    * Adds a listener interface to receive click events.
    * 
    * @param listener the listener interface to add
+   * @deprecated use <code>addClickHandler</code> instead
    */
+  @Deprecated
   void addClickListener(ClickListener listener);
 
   /**
@@ -33,5 +35,6 @@ public interface SourcesClickEvents {
    * 
    * @param listener the listener interface to remove
    */
+  @Deprecated
   void removeClickListener(ClickListener listener);
 }

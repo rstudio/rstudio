@@ -15,8 +15,9 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -25,8 +26,6 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.ImageBundle.Resource;
 
 /**
  * A component that displays a list of contacts.
@@ -114,9 +113,9 @@ public class Contacts extends Composite {
         + "</a>");
     panel.add(link);
 
-    // Add a click listener that displays a ContactPopup when it is clicked.
-    link.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    // Add a click handler that displays a ContactPopup when it is clicked.
+    link.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         ContactPopup popup = new ContactPopup(contact);
         int left = link.getAbsoluteLeft() + 14;
         int top = link.getAbsoluteTop() + 14;

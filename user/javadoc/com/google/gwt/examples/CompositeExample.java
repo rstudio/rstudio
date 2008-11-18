@@ -16,13 +16,13 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class CompositeExample implements EntryPoint {
 
@@ -30,7 +30,7 @@ public class CompositeExample implements EntryPoint {
    * A composite of a TextBox and a CheckBox that optionally enables it.
    */
   private static class OptionalTextBox extends Composite implements
-      ClickListener {
+      ClickHandler {
 
     private TextBox textBox = new TextBox();
     private CheckBox checkBox = new CheckBox();
@@ -49,7 +49,7 @@ public class CompositeExample implements EntryPoint {
       // Set the check box's caption, and check it by default.
       checkBox.setText(caption);
       checkBox.setChecked(true);
-      checkBox.addClickListener(this);
+      checkBox.addClickHandler(this);
 
       // All composites must call initWidget() in their constructors.
       initWidget(panel);
@@ -58,8 +58,8 @@ public class CompositeExample implements EntryPoint {
       setStyleName("example-OptionalCheckBox");
     }
 
-    public void onClick(Widget sender) {
-      if (sender == checkBox) {
+    public void onClick(ClickEvent event) {
+      if (event.getSource() == checkBox) {
         // When the check box is clicked, update the text box's enabled state.
         textBox.setEnabled(checkBox.isChecked());
       }

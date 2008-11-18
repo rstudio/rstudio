@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -15,6 +15,25 @@
  */
 package com.google.gwt.user.client.ui;
 
+import static com.google.gwt.event.dom.client.KeyCodes.KEY_DOWN;
+import static com.google.gwt.event.dom.client.KeyCodes.KEY_ENTER;
+import static com.google.gwt.event.dom.client.KeyCodes.KEY_TAB;
+import static com.google.gwt.event.dom.client.KeyCodes.KEY_UP;
+
+import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -25,10 +44,8 @@ import com.google.gwt.user.client.ui.SuggestOracle.Request;
 import com.google.gwt.user.client.ui.SuggestOracle.Response;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-
 /**
  * A {@link SuggestBox} is a text box or text area which displays a
  * pre-configured set of selections that match the user's input.
@@ -57,7 +74,7 @@ import java.util.List;
  * oracle will configure the suggestions with the "Cat" and "Canary"
  * suggestions. Specifically, whenever the user types a key into the text
  * widget, the value is submitted to the <code>MultiWordSuggestOracle</code>.
- *
+ * 
  * <p>
  * Note that there is no method to retrieve the "currently selected suggestion"
  * in a SuggestBox, because there are points in time where the currently
@@ -65,70 +82,60 @@ import java.util.List;
  * text that does not match any of the SuggestBox's suggestions, then the
  * SuggestBox will not have a currently selected suggestion. It is more useful
  * to know when a suggestion has been chosen from the SuggestBox's list of
- * suggestions. A SuggestBox fires
- * {@link SuggestionEvent SuggestionEvents} whenever a suggestion is chosen, and
- * handlers for these events can be added using the 
- * {@link #addEventHandler(SuggestionHandler)} method.
+ * suggestions. A SuggestBox fires {@link SuggestionEvent SuggestionEvents}
+ * whenever a suggestion is chosen, and handlers for these events can be added
+ * using the {@link #addValueChangeHandler(ValueChangeHandler)} method.
  * </p>
- *
+ * 
  * <p>
  * <img class='gallery' src='SuggestBox.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-SuggestBox { the suggest box itself }</li>
- * <li>.gwt-SuggestBoxPopup { the suggestion popup }</li>
- * <li>.gwt-SuggestBoxPopup .item { an unselected suggestion }</li>
- * <li>.gwt-SuggestBoxPopup .item-selected { a selected suggestion }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeft { the top left cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner { the inner element of
- * the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenter { the top center cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner { the inner element of
- * the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopRight { the top right cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopRightInner { the inner element of
- * the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft { the middle left cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner { the inner element of
- * the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter { the middle center cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner { the inner element
- * of the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRight { the middle right cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner { the inner element
- * of the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeft { the bottom left cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner { the inner element of
- * the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenter { the bottom center cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner { the inner element
- * of the cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRight { the bottom right cell }</li>
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner { the inner element
- * of the cell }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> 
+ * <ul class='css'> 
+ * <li>.gwt-SuggestBox { the suggest
+ * box itself }</li> 
+ * <li>.gwt-SuggestBoxPopup { the suggestion popup }</li> 
+ * <li>.gwt-SuggestBoxPopup .item { an unselected suggestion }</li> 
+ * <li>.gwt-SuggestBoxPopup .item-selected { a selected suggestion }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeft { the top left cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenter { the top center cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopRight { the top right cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupTopRightInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft { the middle left cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter { the middle center cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRight { the middle right cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeft { the bottom left cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenter { the bottom center cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner { the inner element of the cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRight { the bottom right cell }</li> 
+ * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner { the inner element of the cell }</li> </ul>
  * 
  * @see SuggestOracle
  * @see MultiWordSuggestOracle
  * @see TextBoxBase
  */
-public final class SuggestBox extends Composite implements HasText, HasFocus,
+public class SuggestBox extends Composite implements HasText, HasFocus,
     HasAnimation, SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
-    SourcesKeyboardEvents, FiresSuggestionEvents {
+    SourcesKeyboardEvents, FiresSuggestionEvents, HasAllKeyHandlers,
+    HasValue<String>, HasSelectionHandlers<Suggestion> {
 
   /**
    * The SuggestionMenu class is used for the display and selection of
-   * suggestions in the SuggestBox widget. SuggestionMenu differs from
-   * MenuBar in that it always has a vertical orientation, and it
-   * has no submenus. It also allows for programmatic selection of items in
-   * the menu, and programmatically performing the action associated with the
-   * selected item. In the MenuBar class, items cannot be selected
-   * programatically - they can only be selected when the user places the
-   * mouse over a particlar item. Additional methods in SuggestionMenu provide
-   * information about the number of items in the menu, and the index of the
-   * currently selected item.
+   * suggestions in the SuggestBox widget. SuggestionMenu differs from MenuBar
+   * in that it always has a vertical orientation, and it has no submenus. It
+   * also allows for programmatic selection of items in the menu, and
+   * programmatically performing the action associated with the selected item.
+   * In the MenuBar class, items cannot be selected programatically - they can
+   * only be selected when the user places the mouse over a particlar item.
+   * Additional methods in SuggestionMenu provide information about the number
+   * of items in the menu, and the index of the currently selected item.
    */
   private static class SuggestionMenu extends MenuBar {
 
@@ -154,6 +161,8 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
 
     /**
      * Returns the index of the menu item that is currently selected.
+     * 
+     * @return returns the selected item
      */
     public int getSelectedItemIndex() {
       // The index of the currently selected item can only be
@@ -169,6 +178,8 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
      * Selects the item at the specified index in the menu. Selecting the item
      * does not perform the item's associated action; it only changes the style
      * of the item and updates the value of SuggestionMenu.selectedItem.
+     * 
+     * @param index index
      */
     public void selectItem(int index) {
       List<MenuItem> items = getItems();
@@ -179,15 +190,13 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Class for menu items in a SuggestionMenu. A SuggestionMenuItem differs
-   * from a MenuItem in that each item is backed by a Suggestion object.
-   * The text of each menu item is derived from the display string of a
-   * Suggestion object, and each item stores a reference to its Suggestion
-   * object.
+   * Class for menu items in a SuggestionMenu. A SuggestionMenuItem differs from
+   * a MenuItem in that each item is backed by a Suggestion object. The text of
+   * each menu item is derived from the display string of a Suggestion object,
+   * and each item stores a reference to its Suggestion object.
    */
   private static class SuggestionMenuItem extends MenuItem {
 
-    @SuppressWarnings("hiding")
     private static final String STYLENAME_DEFAULT = "item";
 
     private Suggestion suggestion;
@@ -215,17 +224,15 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   /**
    * A PopupPanel with a SuggestionMenu as its widget. The SuggestionMenu is
    * placed in a PopupPanel so that it can be displayed at various positions
-   * around the SuggestBox's text field. Moreover, the SuggestionMenu
-   * needs to appear on top of any other widgets on the page, and the PopupPanel
-   * provides this behavior.
-   *
+   * around the SuggestBox's text field. Moreover, the SuggestionMenu needs to
+   * appear on top of any other widgets on the page, and the PopupPanel provides
+   * this behavior.
+   * 
    * A non-static member class is used because the popup uses the SuggestBox's
    * SuggestionMenu as its widget, and the position of the SuggestBox's TextBox
    * is needed in order to correctly position the popup.
    */
   private class SuggestionPopup extends DecoratedPopupPanel {
-
-    @SuppressWarnings("hiding")
     private static final String STYLENAME_DEFAULT = "gwt-SuggestBoxPopup";
 
     public SuggestionPopup() {
@@ -243,127 +250,136 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
      * edge may be aligned with the right edge of the text box.
      */
     public void showAlignedPopup() {
-   
-    // Set the position of the popup right before it is shown.
-    setPopupPositionAndShow(new PositionCallback() {
-      public void setPosition(int offsetWidth, int offsetHeight) {
-        
-        // Calculate left position for the popup. The computation for
-        // the left position is bidi-sensitive.
-       
-        int textBoxOffsetWidth = box.getOffsetWidth();
-               
-        // Compute the difference between the popup's width and the
-        // textbox's width
-        int offsetWidthDiff = offsetWidth - textBoxOffsetWidth;
-        
-        int left;
-        
-        if (LocaleInfo.getCurrentLocale().isRTL()) {   // RTL case
-          
-          int textBoxAbsoluteLeft = box.getAbsoluteLeft();
-          
-          // Right-align the popup. Note that this computation is
-          // valid in the case where offsetWidthDiff is negative.
-          left = textBoxAbsoluteLeft - offsetWidthDiff;
 
-          // If the suggestion popup is not as wide as the text box, always align
-          // to the right edge of the text box. Otherwise, figure out whether to
-          // right-align or left-align the popup.
-          if (offsetWidthDiff > 0) {
-            
-            // Make sure scrolling is taken into account, since box.getAbsoluteLeft()
-            // takes scrolling into account.
-            int windowRight = Window.getClientWidth() + Window.getScrollLeft();
-            int windowLeft = Window.getScrollLeft();
+      // Set the position of the popup right before it is shown.
+      setPopupPositionAndShow(new PositionCallback() {
+        public void setPosition(int offsetWidth, int offsetHeight) {
 
-            // Compute the left value for the right edge of the textbox
-            int textBoxLeftValForRightEdge = textBoxAbsoluteLeft + textBoxOffsetWidth;
-                
-            // Distance from the right edge of the text box to the right edge of the
-            // window
-            int distanceToWindowRight = windowRight - textBoxLeftValForRightEdge;
+          // Calculate left position for the popup. The computation for
+          // the left position is bidi-sensitive.
 
-            // Distance from the right edge of the text box to the left edge of the
-            // window
-            int distanceFromWindowLeft = textBoxLeftValForRightEdge - windowLeft; 
+          int textBoxOffsetWidth = box.getOffsetWidth();
 
-            // If there is not enough space for the overflow of the popup's width to
-            // the right of the text box and there IS enough space for the overflow
-            // to the right of the text box, then left-align the popup. However, if
-            // there is not enough space on either side, stick with right-alignment.
-            if (distanceFromWindowLeft < offsetWidth &&
-                distanceToWindowRight >= offsetWidthDiff) {
-              // Align with the left edge of the text box.
-              left = textBoxAbsoluteLeft;
+          // Compute the difference between the popup's width and the
+          // textbox's width
+          int offsetWidthDiff = offsetWidth - textBoxOffsetWidth;
+
+          int left;
+
+          if (LocaleInfo.getCurrentLocale().isRTL()) { // RTL case
+
+            int textBoxAbsoluteLeft = box.getAbsoluteLeft();
+
+            // Right-align the popup. Note that this computation is
+            // valid in the case where offsetWidthDiff is negative.
+            left = textBoxAbsoluteLeft - offsetWidthDiff;
+
+            // If the suggestion popup is not as wide as the text box, always
+            // align to the right edge of the text box. Otherwise, figure out
+            // whether to right-align or left-align the popup.
+            if (offsetWidthDiff > 0) {
+
+              // Make sure scrolling is taken into account, since
+              // box.getAbsoluteLeft() takes scrolling into account.
+              int windowRight = Window.getClientWidth()
+                  + Window.getScrollLeft();
+              int windowLeft = Window.getScrollLeft();
+
+              // Compute the left value for the right edge of the textbox
+              int textBoxLeftValForRightEdge = textBoxAbsoluteLeft
+                  + textBoxOffsetWidth;
+
+              // Distance from the right edge of the text box to the right edge
+              // of the window
+              int distanceToWindowRight = windowRight
+                  - textBoxLeftValForRightEdge;
+
+              // Distance from the right edge of the text box to the left edge
+              // of the window
+              int distanceFromWindowLeft = textBoxLeftValForRightEdge
+                  - windowLeft;
+
+              // If there is not enough space for the overflow of the popup's
+              // width to the right of the text box and there IS enough space
+              // for the overflow to the right of the text box, then left-align
+              // the popup. However, if there is not enough space on either
+              // side, stick with right-alignment.
+              if (distanceFromWindowLeft < offsetWidth
+                  && distanceToWindowRight >= offsetWidthDiff) {
+                // Align with the left edge of the text box.
+                left = textBoxAbsoluteLeft;
+              }
+            }
+          } else { // LTR case
+
+            // Left-align the popup.
+            left = box.getAbsoluteLeft();
+
+            // If the suggestion popup is not as wide as the text box, always
+            // align to the left edge of the text box. Otherwise, figure out
+            // whether to left-align or right-align the popup.
+            if (offsetWidthDiff > 0) {
+              // Make sure scrolling is taken into account, since
+              // box.getAbsoluteLeft() takes scrolling into account.
+              int windowRight = Window.getClientWidth()
+                  + Window.getScrollLeft();
+              int windowLeft = Window.getScrollLeft();
+
+              // Distance from the left edge of the text box to the right edge
+              // of the window
+              int distanceToWindowRight = windowRight - left;
+
+              // Distance from the left edge of the text box to the left edge of
+              // the window
+              int distanceFromWindowLeft = left - windowLeft;
+
+              // If there is not enough space for the overflow of the popup's
+              // width to the right of hte text box, and there IS enough space
+              // for the overflow to the left of the text box, then right-align
+              // the popup. However, if there is not enough space on either
+              // side, then stick with left-alignment.
+              if (distanceToWindowRight < offsetWidth
+                  && distanceFromWindowLeft >= offsetWidthDiff) {
+                // Align with the right edge of the text box.
+                left -= offsetWidthDiff;
+              }
             }
           }
-        } else {  // LTR case
-          
-          // Left-align the popup.
-          left = box.getAbsoluteLeft();
 
-          // If the suggestion popup is not as wide as the text box, always align
-          // to the left edge of the text box. Otherwise, figure out whether to
-          // left-align or right-align the popup.
-          if (offsetWidthDiff > 0) {
-            // Make sure scrolling is taken into account, since box.getAbsoluteLeft()
-            // takes scrolling into account.
-            int windowRight = Window.getClientWidth() + Window.getScrollLeft();
-            int windowLeft = Window.getScrollLeft();
+          // Calculate top position for the popup
 
-            // Distance from the left edge of the text box to the right edge of the
-            // window
-            int distanceToWindowRight = windowRight - left;
+          int top = box.getAbsoluteTop();
 
-            // Distance from the left edge of the text box to the left edge of the
-            // window
-            int distanceFromWindowLeft = left - windowLeft;
+          // Make sure scrolling is taken into account, since
+          // box.getAbsoluteTop() takes scrolling into account.
+          int windowTop = Window.getScrollTop();
+          int windowBottom = Window.getScrollTop() + Window.getClientHeight();
 
-            // If there is not enough space for the overflow of the popup's width to 
-            // the right of hte text box, and there IS enough space for the overflow
-            // to the left of the text box, then right-align the popup. However, if
-            // there is not enough space on either side, then stick with left-alignment.
-            if (distanceToWindowRight < offsetWidth &&
-                distanceFromWindowLeft >= offsetWidthDiff) {
-              // Align with the right edge of the text box.
-              left -= offsetWidthDiff;
-            }
+          // Distance from the top edge of the window to the top edge of the
+          // text box
+          int distanceFromWindowTop = top - windowTop;
+
+          // Distance from the bottom edge of the window to the bottom edge of
+          // the text box
+          int distanceToWindowBottom = windowBottom
+              - (top + box.getOffsetHeight());
+
+          // If there is not enough space for the popup's height below the text
+          // box and there IS enough space for the popup's height above the text
+          // box, then then position the popup above the text box. However, if
+          // there is not enough space on either side, then stick with
+          // displaying the popup below the text box.
+          if (distanceToWindowBottom < offsetHeight
+              && distanceFromWindowTop >= offsetHeight) {
+            top -= offsetHeight;
+          } else {
+            // Position above the text box
+            top += box.getOffsetHeight();
           }
+
+          setPopupPosition(left, top);
         }
-
-        // Calculate top position for the popup
-
-        int top = box.getAbsoluteTop();
-
-        // Make sure scrolling is taken into account, since box.getAbsoluteTop()
-        // takes scrolling into account.
-        int windowTop = Window.getScrollTop();
-        int windowBottom = Window.getScrollTop() + Window.getClientHeight();
-
-        // Distance from the top edge of the window to the top edge of the text box
-        int distanceFromWindowTop = top - windowTop;
-
-        // Distance from the bottom edge of the window to the bottom edge of the
-        // text box
-        int distanceToWindowBottom = windowBottom - (top + box.getOffsetHeight());
-
-        // If there is not enough space for the popup's height below the text box
-        // and there IS enough space for the popup's height above the text box,
-        // then then position the popup above the text box. However, if there is
-        // not enough space on either side, then stick with displaying the popup
-        // below the text box.
-        if (distanceToWindowBottom < offsetHeight &&
-            distanceFromWindowTop >= offsetHeight) {
-          top -= offsetHeight;
-        } else {
-          // Position above the text box
-          top += box.getOffsetHeight();
-        }
-
-        setPopupPosition(left, top);
-      }
-    });
+      });
     }
   }
 
@@ -376,12 +392,6 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
   private final SuggestionMenu suggestionMenu;
   private final SuggestionPopup suggestionPopup;
   private final TextBoxBase box;
-  private ArrayList<SuggestionHandler> suggestionHandlers = null;
-  private DelegatingClickListenerCollection clickListeners;
-  private DelegatingChangeListenerCollection changeListeners;
-  private DelegatingFocusListenerCollection focusListeners;
-  private DelegatingKeyboardListenerCollection keyboardListeners;
-
   private final Callback callBack = new Callback() {
     public void onSuggestionsReady(Request request, Response response) {
       showSuggestions(response.getSuggestions());
@@ -424,69 +434,88 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     suggestionMenu = new SuggestionMenu(true);
     suggestionPopup = new SuggestionPopup();
     suggestionPopup.setAnimationType(AnimationType.ONE_WAY_CORNER);
-    
-    addKeyboardSupport();
+
+    addEventsToTextBox();
+
     setOracle(oracle);
     setStyleName(STYLENAME_DEFAULT);
   }
 
   /**
-   * Adds a listener to recieve change events on the SuggestBox's text box.
-   * The source Widget for these events will be the SuggestBox.
-   *
+   * 
+   * Adds a listener to receive change events on the SuggestBox's text box. The
+   * source Widget for these events will be the SuggestBox.
+   * 
    * @param listener the listener interface to add
+   * @deprecated use getTextBox().addChangeHandler instead
    */
-  public void addChangeListener(ChangeListener listener) {
-    if (changeListeners == null) {
-      changeListeners = new DelegatingChangeListenerCollection(this, box);
-    }
-    changeListeners.add(listener);
+  @Deprecated
+  public void addChangeListener(final ChangeListener listener) {
+    ListenerWrapper.Change legacy = new ListenerWrapper.Change(listener);
+    legacy.setSource(this);
+    box.addChangeHandler(legacy);
   }
 
   /**
-   * Adds a listener to recieve click events on the SuggestBox's text box.
-   * The source Widget for these events will be the SuggestBox.
-   *
+   * Adds a listener to receive click events on the SuggestBox's text box. The
+   * source Widget for these events will be the SuggestBox.
+   * 
    * @param listener the listener interface to add
+   * @deprecated use getTextBox().addClickHandler instead
    */
-  public void addClickListener(ClickListener listener) {
-    if (clickListeners == null) {
-      clickListeners = new DelegatingClickListenerCollection(this, box);
-    }
-    clickListeners.add(listener);
-  }
-
-  public void addEventHandler(SuggestionHandler handler) {
-    if (suggestionHandlers == null) {
-      suggestionHandlers = new ArrayList<SuggestionHandler>();
-    }
-    suggestionHandlers.add(handler);
+  @Deprecated
+  public void addClickListener(final ClickListener listener) {
+    ListenerWrapper.Click legacy = ListenerWrapper.Click.add(box, listener);
+    legacy.setSource(this);
   }
 
   /**
-   * Adds a listener to recieve focus events on the SuggestBox's text box.
-   * The source Widget for these events will be the SuggestBox.
-   *
-   * @param listener the listener interface to add
+   * Adds an event to this handler.
+   * 
+   * @deprecated use addSelectionHandler instead.
    */
-  public void addFocusListener(FocusListener listener) {
-    if (focusListeners == null) {
-      focusListeners = new DelegatingFocusListenerCollection(this, box);
-    }
-    focusListeners.add(listener);
+  public void addEventHandler(final SuggestionHandler handler) {
+    ListenerWrapper.Suggestion.add(this, handler);
   }
 
   /**
-   * Adds a listener to recieve keyboard events on the SuggestBox's text box.
-   * The source Widget for these events will be the SuggestBox.
-   *
+   * Adds a listener to receive focus events on the SuggestBox's text box. The
+   * source Widget for these events will be the SuggestBox.
+   * 
    * @param listener the listener interface to add
+   * @deprecated use getTextBox().addFocusHandler/addBlurHandler() instead
    */
+  @Deprecated
+  public void addFocusListener(final FocusListener listener) {
+    ListenerWrapper.Focus focus = ListenerWrapper.Focus.add(box, listener);
+    focus.setSource(this);
+  }
+
+  @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
-    if (keyboardListeners == null) {
-      keyboardListeners = new DelegatingKeyboardListenerCollection(this, box);
-    }
-    keyboardListeners.add(listener);
+    ListenerWrapper.Keyboard.add(this, listener);
+  }
+
+  public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
+    return addDomHandler(handler, KeyDownEvent.getType());
+  }
+
+  public HandlerRegistration addKeyPressHandler(KeyPressHandler handler) {
+    return addDomHandler(handler, KeyPressEvent.getType());
+  }
+
+  public HandlerRegistration addKeyUpHandler(KeyUpHandler handler) {
+    return addDomHandler(handler, KeyUpEvent.getType());
+  }
+
+  public HandlerRegistration addSelectionHandler(
+      SelectionHandler<Suggestion> handler) {
+    return addHandler(handler, SelectionEvent.getType());
+  }
+
+  public HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<String> handler) {
+    return addHandler(handler, ValueChangeEvent.getType());
   }
 
   /**
@@ -527,39 +556,46 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     return box.getText();
   }
 
+  /**
+   * Get the text box associated with this suggest box.
+   * 
+   * @return this suggest box's text box
+   */
+  public TextBoxBase getTextBox() {
+    return box;
+  }
+
+  public String getValue() {
+    return box.getValue();
+  }
+
   public boolean isAnimationEnabled() {
     return suggestionPopup.isAnimationEnabled();
   }
 
+  @Deprecated
   public void removeChangeListener(ChangeListener listener) {
-    if (changeListeners != null) {
-      changeListeners.remove(listener);
-    }
+    ListenerWrapper.Change.remove(box, listener);
   }
 
+  @Deprecated
   public void removeClickListener(ClickListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
-    }
+    ListenerWrapper.Click.remove(box, listener);
   }
 
+  @Deprecated
   public void removeEventHandler(SuggestionHandler handler) {
-    if (suggestionHandlers == null) {
-      return;
-    }
-    suggestionHandlers.remove(handler);
+    ListenerWrapper.Suggestion.remove(this, handler);
   }
 
+  @Deprecated
   public void removeFocusListener(FocusListener listener) {
-    if (focusListeners != null) {
-      focusListeners.remove(listener);
-    }
+    ListenerWrapper.Focus.remove(this, listener);
   }
 
+  @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
-    if (keyboardListeners != null) {
-      keyboardListeners.remove(listener);
-    }
+    ListenerWrapper.Keyboard.remove(this, listener);
   }
 
   public void setAccessKey(char key) {
@@ -586,7 +622,7 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
 
   /**
    * Sets the style name of the suggestion popup.
-   *
+   * 
    * @param style the new primary style name
    * @see UIObject#setStyleName(String)
    */
@@ -613,6 +649,14 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     box.setText(text);
   }
 
+  public void setValue(String newValue) {
+    box.setValue(newValue);
+  }
+
+  public void setValue(String value, boolean fireEvents) {
+    box.setValue(value, fireEvents);
+  }
+
   /**
    * <b>Affected Elements:</b>
    * <ul>
@@ -629,66 +673,23 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
     suggestionMenu.setMenuItemDebugIds(baseID);
   }
 
-  /**
-   * Show the given collection of suggestions.
-   * 
-   * @param suggestions suggestions to show
-   */
-  private void showSuggestions(Collection<? extends Suggestion> suggestions) {
-    if (suggestions.size() > 0) {
+  private void addEventsToTextBox() {
+    class TextBoxEvents extends HandlesAllKeyEvents implements
+        ValueChangeHandler<String> {
 
-      // Hide the popup before we manipulate the menu within it. If we do not
-      // do this, some browsers will redraw the popup as items are removed
-      // and added to the menu.
-      boolean isAnimationEnabled = suggestionPopup.isAnimationEnabled();
-      if (suggestionPopup.isAttached()) {
-        suggestionPopup.setAnimationEnabled(false);
-        suggestionPopup.hide();
-      }
-      
-      suggestionMenu.clearItems();
-
-      for (Suggestion curSuggestion : suggestions) {
-        final SuggestionMenuItem menuItem =
-            new SuggestionMenuItem(curSuggestion, oracle.isDisplayStringHTML());
-        menuItem.setCommand(new Command() {
-          public void execute() {
-            SuggestBox.this.setNewSelection(menuItem);
-          }
-        });
-
-        suggestionMenu.addItem(menuItem);
-      }
-
-      if (selectsFirstItem) {
-        // Select the first item in the suggestion menu.
-        suggestionMenu.selectItem(0);
-      }
-
-      suggestionPopup.showAlignedPopup();
-      suggestionPopup.setAnimationEnabled(isAnimationEnabled);
-    } else {
-      suggestionPopup.hide();
-    }
-  }
-
-  private void addKeyboardSupport() {
-    box.addKeyboardListener(new KeyboardListenerAdapter() {
-
-      @Override
-      public void onKeyDown(Widget sender, char keyCode, int modifiers) {
+      public void onKeyDown(KeyDownEvent event) {
         // Make sure that the menu is actually showing. These keystrokes
         // are only relevant when choosing a suggestion.
         if (suggestionPopup.isAttached()) {
-          switch (keyCode) {
-            case KeyboardListener.KEY_DOWN:
+          switch (event.getNativeKeyCode()) {
+            case KEY_DOWN:
               suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() + 1);
               break;
-            case KeyboardListener.KEY_UP:
+            case KEY_UP:
               suggestionMenu.selectItem(suggestionMenu.getSelectedItemIndex() - 1);
               break;
-            case KeyboardListener.KEY_ENTER:
-            case KeyboardListener.KEY_TAB:
+            case KEY_ENTER:
+            case KEY_TAB:
               if (suggestionMenu.getSelectedItemIndex() < 0) {
                 suggestionPopup.hide();
               } else {
@@ -697,12 +698,21 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
               break;
           }
         }
+        fireEvent(event);
       }
 
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+      public void onKeyPress(KeyPressEvent event) {
+        fireEvent(event);
+      }
+
+      public void onKeyUp(KeyUpEvent event) {
         // After every user key input, refresh the popup's suggestions.
         refreshSuggestions();
+        fireEvent(event);
+      }
+
+      public void onValueChange(ValueChangeEvent<String> event) {
+         fireEvent(event);
       }
 
       private void refreshSuggestions() {
@@ -723,24 +733,23 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
           showSuggestions(text);
         }
       }
-    });
+    }
+
+    TextBoxEvents events = new TextBoxEvents();
+    events.addKeyHandlersTo(box);
+    box.addValueChangeHandler(events);
   }
 
   private void fireSuggestionEvent(Suggestion selectedSuggestion) {
-    if (suggestionHandlers != null) {
-      SuggestionEvent event = new SuggestionEvent(this, selectedSuggestion);
-      for (SuggestionHandler handler : suggestionHandlers) {
-        handler.onSuggestionSelected(event);
-      }
-    }
+    SelectionEvent.fire(this, selectedSuggestion);
   }
 
   private void setNewSelection(SuggestionMenuItem menuItem) {
     Suggestion curSuggestion = menuItem.getSuggestion();
     currentText = curSuggestion.getReplacementString();
-    box.setText(currentText);
+    setText(currentText);
     suggestionPopup.hide();
-    fireSuggestionEvent(curSuggestion);    
+    fireSuggestionEvent(curSuggestion);
   }
 
   /**
@@ -750,6 +759,49 @@ public final class SuggestBox extends Composite implements HasText, HasFocus,
    */
   private void setOracle(SuggestOracle oracle) {
     this.oracle = oracle;
+  }
+
+  /**
+   * Show the given collection of suggestions.
+   * 
+   * @param suggestions suggestions to show
+   */
+  private void showSuggestions(Collection<? extends Suggestion> suggestions) {
+    if (suggestions.size() > 0) {
+
+      // Hide the popup before we manipulate the menu within it. If we do not
+      // do this, some browsers will redraw the popup as items are removed
+      // and added to the menu.
+      boolean isAnimationEnabled = suggestionPopup.isAnimationEnabled();
+      if (suggestionPopup.isAttached()) {
+        suggestionPopup.setAnimationEnabled(false);
+        suggestionPopup.hide();
+      }
+
+      suggestionMenu.clearItems();
+
+      for (Suggestion curSuggestion : suggestions) {
+        final SuggestionMenuItem menuItem = new SuggestionMenuItem(
+            curSuggestion, oracle.isDisplayStringHTML());
+        menuItem.setCommand(new Command() {
+          public void execute() {
+            SuggestBox.this.setNewSelection(menuItem);
+          }
+        });
+
+        suggestionMenu.addItem(menuItem);
+      }
+
+      if (selectsFirstItem) {
+        // Select the first item in the suggestion menu.
+        suggestionMenu.selectItem(0);
+      }
+
+      suggestionPopup.showAlignedPopup();
+      suggestionPopup.setAnimationEnabled(isAnimationEnabled);
+    } else {
+      suggestionPopup.hide();
+    }
   }
 
   private void showSuggestions(String query) {

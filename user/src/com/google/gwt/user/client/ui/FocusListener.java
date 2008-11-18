@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener for focus events.
  */
+@Deprecated
 public interface FocusListener extends EventListener {
 
   /**
@@ -27,6 +28,7 @@ public interface FocusListener extends EventListener {
    * 
    * @param sender the widget receiving focus.
    */
+  @Deprecated
   void onFocus(Widget sender);
 
   /**
@@ -34,5 +36,6 @@ public interface FocusListener extends EventListener {
    * 
    * @param sender the widget losing focus.
    */
+  @Deprecated
   void onLostFocus(Widget sender);
 }

@@ -16,13 +16,14 @@
 package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
@@ -38,7 +39,7 @@ import com.google.gwt.user.client.ui.Widget;
  */
 public class Issue1932 extends AbstractIssue {
   /**
-   * A set of options used to set the page margins and borders
+   * A set of options used to set the page margins and borders.
    */
   private class ControlPanel extends Composite {
     private final Grid grid = new Grid(2, 3);
@@ -54,8 +55,8 @@ public class Issue1932 extends AbstractIssue {
       marginBox.setText("10px");
       grid.setHTML(0, 0, "<b>Margin:</b>");
       grid.setWidget(0, 1, marginBox);
-      grid.setWidget(0, 2, new Button("Set", new ClickListener() {
-        public void onClick(Widget sender) {
+      grid.setWidget(0, 2, new Button("Set", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           updateMargin();
         }
       }));
@@ -64,8 +65,8 @@ public class Issue1932 extends AbstractIssue {
       borderBox.setText("5px solid #DDDDDD");
       grid.setHTML(1, 0, "<b>Border:</b>");
       grid.setWidget(1, 1, borderBox);
-      grid.setWidget(1, 2, new Button("Set", new ClickListener() {
-        public void onClick(Widget sender) {
+      grid.setWidget(1, 2, new Button("Set", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           updateBorder();
         }
       }));
@@ -131,12 +132,10 @@ public class Issue1932 extends AbstractIssue {
             int absY = event.getClientY() + Window.getScrollTop();
             RootPanel.get().add(positioner, absX, absY);
 
-            echo.setHTML(
-              "event.clientX: " + event.getClientX() + "<br>" +
-              "event.clientY: " + event.getClientY() + "<br>" +
-              "absolute left: " + positioner.getAbsoluteLeft() + "<br>" +
-              "absolute top: " + positioner.getAbsoluteTop()
-            );
+            echo.setHTML("event.clientX: " + event.getClientX() + "<br>"
+                + "event.clientY: " + event.getClientY() + "<br>"
+                + "absolute left: " + positioner.getAbsoluteLeft() + "<br>"
+                + "absolute top: " + positioner.getAbsoluteTop());
             break;
         }
         return true;

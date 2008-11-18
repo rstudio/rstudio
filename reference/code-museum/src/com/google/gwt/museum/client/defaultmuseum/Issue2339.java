@@ -26,7 +26,8 @@ import com.google.gwt.user.client.ui.Widget;
  * animation continues normally.
  */
 public class Issue2339 extends AbstractIssue {
-  private static final String[] TAB_BACKGROUNDS = {"#f88", "#88f", "#8f8", "#8ff", "#f8f"};
+  private static final String[] TAB_BACKGROUNDS = {
+      "#f88", "#88f", "#8f8", "#8ff", "#f8f"};
 
   @Override
   public Widget createIssue() {

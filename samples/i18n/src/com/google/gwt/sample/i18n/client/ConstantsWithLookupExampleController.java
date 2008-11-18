@@ -16,9 +16,9 @@
 package com.google.gwt.sample.i18n.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
 
 import java.util.MissingResourceException;
 
@@ -42,9 +42,8 @@ public class ConstantsWithLookupExampleController {
     txtResult.setText(constants.noInputResult());
     txtResult.setReadOnly(true);
 
-    txtInput.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    txtInput.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         maybeRefreshLookup(constants);
       }
     });

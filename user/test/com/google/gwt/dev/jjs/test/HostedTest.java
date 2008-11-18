@@ -14,9 +14,7 @@
  * the License.
  */
 /**********************
- *                    *
- *   DO NOT FORMAT    *
- *                    *
+ * * DO NOT FORMAT * *
  **********************/
 package com.google.gwt.dev.jjs.test;
 
@@ -369,32 +367,32 @@ public class HostedTest extends GWTTestCase {
   public void testJsniParamUnboxedPrimitives() {
     class Inner {
       native boolean nativeJsniParamUnboxedBoolean(boolean param) /*-{
-        return (param == true);        
-      }-*/;
+    return (param == true);
+  }-*/;
 
       native boolean nativeJsniParamUnboxedByte(byte param) /*-{
-        return (param == 99);
-      }-*/;
+    return (param == 99);
+  }-*/;
 
       native boolean nativeJsniParamUnboxedCharacter(char param) /*-{
-        return (param == 77);
-      }-*/;
+    return (param == 77);
+  }-*/;
 
       native boolean nativeJsniParamUnboxedDouble(double param) /*-{
-        return (param == 1234.56789);
-      }-*/;
+    return (param == 1234.56789);
+  }-*/;
 
       native boolean nativeJsniParamUnboxedFloat(float param) /*-{
-        return (param == 1234.5);
-      }-*/;
+    return (param == 1234.5);
+  }-*/;
 
       native boolean nativeJsniParamUnboxedInteger(int param) /*-{
-        return (param == 9876543);
-      }-*/;
+    return (param == 9876543);
+  }-*/;
 
       native boolean nativeJsniParamUnboxedShort(short param) /*-{
-        return (param == 1234);
-      }-*/;
+    return (param == 1234);
+  }-*/;
     }
     Inner inner = new Inner();
 
@@ -417,37 +415,37 @@ public class HostedTest extends GWTTestCase {
   public void testJsniPassthroughPrimitives() {
     class Inner {
       native boolean nativeBoolean(boolean param) /*-{
-         return param;        
-      }-*/;
+    return param;
+  }-*/;
 
       native byte nativeByte(byte param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
 
       native char nativeCharacter(char param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
 
       native double nativeDouble(double param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
 
       native float nativeFloat(float param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
 
       native int nativeInteger(int param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
 
       @UnsafeNativeLong
       native long nativeLong(long param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
 
       native short nativeShort(short param) /*-{
-        return param;
-      }-*/;
+    return param;
+  }-*/;
     }
     Inner inner = new Inner();
 
@@ -460,7 +458,7 @@ public class HostedTest extends GWTTestCase {
     assertEquals("nativeByte", inner.nativeByte((byte) 127), (byte) 127);
     assertEquals("nativeByte", inner.nativeByte((byte) -127), (byte) -127);
     assertEquals("nativeByte", inner.nativeByte(Byte.MAX_VALUE), Byte.MAX_VALUE);
-    assertEquals("nativeByte", inner.nativeByte(Byte.MIN_VALUE), Byte.MIN_VALUE);    
+    assertEquals("nativeByte", inner.nativeByte(Byte.MIN_VALUE), Byte.MIN_VALUE);
 
     assertEquals("nativeCharacter", inner.nativeCharacter((char) 0), (char) 0);
     assertEquals("nativeCharacter", inner.nativeCharacter((char) 1), (char) 1);
@@ -472,7 +470,7 @@ public class HostedTest extends GWTTestCase {
     assertEquals("nativeCharacter", inner.nativeCharacter(Character.MAX_VALUE),
         Character.MAX_VALUE);
     assertEquals("nativeCharacter", inner.nativeCharacter(Character.MIN_VALUE),
-        Character.MIN_VALUE);    
+        Character.MIN_VALUE);
 
     assertEquals("nativeDouble", inner.nativeDouble(0.0), 0.0);
     assertEquals("nativeDouble", inner.nativeDouble(1.0), 1.0);
@@ -485,7 +483,7 @@ public class HostedTest extends GWTTestCase {
         Double.MAX_VALUE);
     assertEquals("nativeDouble MIN", inner.nativeDouble(Double.MIN_VALUE),
         Double.MIN_VALUE);
-    
+
     assertEquals("nativeFloat", inner.nativeFloat((float) 0.0), (float) 0.0);
     assertEquals("nativeFloat", inner.nativeFloat((float) 1.0), (float) 1.0);
     assertEquals("nativeFloat", inner.nativeFloat((float) -1.0), (float) -1.0);
@@ -497,17 +495,17 @@ public class HostedTest extends GWTTestCase {
         Float.MAX_VALUE);
     assertEquals("nativeFloat", inner.nativeFloat(Float.MIN_VALUE),
         Float.MIN_VALUE);
-    
+
     assertEquals("nativeInteger", inner.nativeInteger(0), 0);
     assertEquals("nativeInteger", inner.nativeInteger(1), 1);
     assertEquals("nativeInteger", inner.nativeInteger(-1), -1);
     assertEquals("nativeInteger", inner.nativeInteger(2147483647), 2147483647);
     assertEquals("nativeInteger", inner.nativeInteger(-2147483647), -2147483647);
-    assertEquals("nativeInteger MAX", inner.nativeInteger(Integer.MAX_VALUE), 
+    assertEquals("nativeInteger MAX", inner.nativeInteger(Integer.MAX_VALUE),
         Integer.MAX_VALUE);
-    assertEquals("nativeInteger MIN", inner.nativeInteger(Integer.MIN_VALUE), 
+    assertEquals("nativeInteger MIN", inner.nativeInteger(Integer.MIN_VALUE),
         Integer.MIN_VALUE);
-    
+
     assertEquals("nativeLong", inner.nativeLong(0L), 0L);
     assertEquals("nativeLong", inner.nativeLong(1L), 1L);
     assertEquals("nativeLong", inner.nativeLong(-1L), -1L);
@@ -515,10 +513,8 @@ public class HostedTest extends GWTTestCase {
         9223372036854775807L);
     assertEquals("nativeLong", inner.nativeLong(-9223372036854775807L),
         -9223372036854775807L);
-    assertEquals("nativeLong", inner.nativeLong(Long.MAX_VALUE), 
-        Long.MAX_VALUE);
-    assertEquals("nativeLong", inner.nativeLong(Long.MIN_VALUE), 
-        Long.MIN_VALUE);    
+    assertEquals("nativeLong", inner.nativeLong(Long.MAX_VALUE), Long.MAX_VALUE);
+    assertEquals("nativeLong", inner.nativeLong(Long.MIN_VALUE), Long.MIN_VALUE);
 
     assertEquals("nativeShort", inner.nativeShort((short) 0), (short) 0);
     assertEquals("nativeShort", inner.nativeShort((short) 1), (short) 1);
@@ -526,10 +522,10 @@ public class HostedTest extends GWTTestCase {
     assertEquals("nativeShort", inner.nativeShort((short) 32767), (short) 32767);
     assertEquals("nativeShort", inner.nativeShort((short) -32767),
         (short) -32767);
-    assertEquals("nativeShort MAX", inner.nativeShort(Short.MAX_VALUE), 
+    assertEquals("nativeShort MAX", inner.nativeShort(Short.MAX_VALUE),
         Short.MAX_VALUE);
-    assertEquals("nativeShort MIN", inner.nativeLong(Short.MIN_VALUE), 
-        Short.MIN_VALUE);        
+    assertEquals("nativeShort MIN", inner.nativeLong(Short.MIN_VALUE),
+        Short.MIN_VALUE);
   }
 
   /**
@@ -538,32 +534,32 @@ public class HostedTest extends GWTTestCase {
   public void testJsniReturnUnboxedPrimitives() {
     class Inner {
       native boolean nativeJsniReturnUnboxedBoolean() /*-{
-        return true;        
-      }-*/;
+    return true;
+  }-*/;
 
       native byte nativeJsniReturnUnboxedByte() /*-{
-        return 99;
-      }-*/;
+    return 99;
+  }-*/;
 
       native char nativeJsniReturnUnboxedCharacter() /*-{
-        return 77;
-      }-*/;
+    return 77;
+  }-*/;
 
       native double nativeJsniReturnUnboxedDouble() /*-{
-        return 1234.56789;
-      }-*/;
+    return 1234.56789;
+  }-*/;
 
       native float nativeJsniReturnUnboxedFloat() /*-{
-        return 1234.5;
-      }-*/;
+    return 1234.5;
+  }-*/;
 
       native int nativeJsniReturnUnboxedInteger() /*-{
-        return 9876543;
-      }-*/;
+    return 9876543;
+  }-*/;
 
       native short nativeJsniReturnUnboxedShort() /*-{
-        return 1234;
-      }-*/;
+    return 1234;
+  }-*/;
     }
     Inner inner = new Inner();
 
@@ -596,49 +592,6 @@ public class HostedTest extends GWTTestCase {
     }
 
     assertEquals("FOO", callJSNIToString(new Foo()));
-  }
-
-  public void testLocalJsni() {
-
-    class Foo {
-      native String a() /*-{
-        return "blah";
-      }-*/;
-
-      native String b() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$2Foo::a()();
-      }-*/;
-
-      String c() {
-        return a();
-      }
-    }
-
-    Foo f = new Foo();
-    assertEquals(f.a(), "blah");
-    assertEquals(f.b(), "blah");
-    assertEquals(f.c(), "blah");
-
-    Foo fo = new Foo() {
-      @Override
-      native String a() /*-{
-        return "oblah";
-      }-*/;
-
-      @Override
-      native String b() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$2Foo::a()();
-      }-*/;
-
-      @Override
-      native String c() /*-{
-        return this.@com.google.gwt.dev.jjs.test.HostedTest$1::a()();
-      }-*/;
-    };
-
-    assertEquals(fo.a(), "oblah");
-    assertEquals(fo.b(), "oblah");
-    assertEquals(fo.c(), "oblah");
   }
 
   /*
@@ -725,10 +678,10 @@ public class HostedTest extends GWTTestCase {
   }-*/;
 
   /*
-   * Since we can't generate a generic instance from within JS, K and V
-   * have to actually be compatible.
+   * Since we can't generate a generic instance from within JS, K and V have to
+   * actually be compatible.
    */
-  private native <K,V> V genericGet(K key) /*-{
+  private native <K, V> V genericGet(K key) /*-{
     return key;
   }-*/;
 
@@ -755,53 +708,75 @@ public class HostedTest extends GWTTestCase {
     return this.@com.google.gwt.dev.jjs.test.HostedTest::foo(Ljava/lang/String;);
   }-*/;
 
-  private native void jsniA()/*-{}-*/;
+  private native void jsniA()/*-{
+
+  }-*/;
 
   private native void jsniB()/*-{
+
   }-*/;
 
   private native void jsniC()
   /*-{
+
   }-*/;
 
   private native void jsniD()
-  /*-{}-*/;
+  /*-{
+
+  }-*/;
 
   /**
    * comment.
    */
-  private native void jsniE()/*-{}-*/;
+  private native void jsniE()/*-{
+
+  }-*/;
 
   /** comment. */
-  private native void jsniF()/*-{}-*/;
+  private native void jsniF()/*-{
 
-  /** comment */private native void jsniG()/*-{}-*/;
+  }-*/;
+
+  /** comment */
+  private native void jsniG()/*-{
+
+  }-*/;
 
   /*
    * comment
    */
-  private native void jsniH()/*-{}-*/;
+  private native void jsniH()/*-{
 
-  /* comment */private native void jsniI()/*-{}-*/;
-
-  // comment
-  private native void jsniJ()/*-{}-*/;
-
-  private
-  native
-  void 
-  jsniK()
-  /*-{
   }-*/;
 
-  /*-{ try to mess with compiler }-*/
-  private native void jsniL()/*-{}-*/;
+  /* comment */private native void jsniI()/*-{
+
+  }-*/;
+
+  // comment
+  private native void jsniJ()/*-{
+
+  }-*/;
+
+  private native void jsniK()
+  /*-{
+
+  }-*/;
+
+  /*-{
+    try to mess with compiler
+  }-*/
+  private native void jsniL()/*-{
+
+  }-*/;
 
   // test that JS can pass a series of arguments to a varargs function
   // TODO: not sure if we want to support this
   // private native String[] varargsFromJS1() /*-{
   // return
-  // this.@com.google.gwt.dev.jjs.test.HostedTest::varargsPassthrough([Ljava/lang/String;)("foo",
+  // this.@com.google.gwt.dev.jjs.test.HostedTest::varargsPassthrough([Ljava/lang
+  // /String;)("foo",
   // "bar");
   // }-*/;
 

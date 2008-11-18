@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.showcase.client.content.popups;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
@@ -22,7 +24,6 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DecoratedPopupPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -96,11 +97,12 @@ public class CwBasicPopup extends ContentWidget {
 
     // Create a button to show the popup
     Button openButton = new Button(constants.cwBasicPopupShowButton(),
-        new ClickListener() {
-          public void onClick(Widget sender) {
+        new ClickHandler() {
+          public void onClick(ClickEvent event) {
             // Reposition the popup relative to the button
-            int left = sender.getAbsoluteLeft() + 10;
-            int top = sender.getAbsoluteTop() + 10;
+            Widget source = (Widget) event.getSource();
+            int left = source.getAbsoluteLeft() + 10;
+            int top = source.getAbsoluteTop() + 10;
             simplePopup.setPopupPosition(left, top);
 
             // Show the popup
@@ -114,8 +116,8 @@ public class CwBasicPopup extends ContentWidget {
     imagePopup.setAnimationEnabled(true);
     imagePopup.ensureDebugId("cwBasicPopup-imagePopup");
     imagePopup.setWidget(jimmyFull);
-    jimmyFull.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    jimmyFull.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         imagePopup.hide();
       }
     });
@@ -124,8 +126,8 @@ public class CwBasicPopup extends ContentWidget {
     Image jimmyThumb = Showcase.images.jimmyThumb().createImage();
     jimmyThumb.ensureDebugId("cwBasicPopup-thumb");
     jimmyThumb.addStyleName("cw-BasicPopup-thumb");
-    jimmyThumb.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    jimmyThumb.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         imagePopup.center();
       }
     });

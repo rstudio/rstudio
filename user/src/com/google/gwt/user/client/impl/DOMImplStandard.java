@@ -172,7 +172,7 @@ abstract class DOMImplStandard extends DOMImpl {
             evt.stopPropagation();
           }
         }
-      }
+      }  
     };
 
     @com.google.gwt.user.client.impl.DOMImplStandard::dispatchCapturedEvent = function(evt) {

@@ -20,6 +20,7 @@ import java.util.EventObject;
 /**
  * Event object containing information about {@link DisclosurePanel} changes.
  */
+@Deprecated
 public class DisclosureEvent extends EventObject {
   /**
    * Creates a new instance of the event object.
@@ -28,6 +29,7 @@ public class DisclosureEvent extends EventObject {
    * 
    * @see DisclosureHandler
    */
+  @Deprecated
   public DisclosureEvent(DisclosurePanel sender) {
     super(sender);
   }

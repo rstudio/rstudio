@@ -16,11 +16,11 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class CheckBoxExample implements EntryPoint {
 
@@ -29,11 +29,11 @@ public class CheckBoxExample implements EntryPoint {
     CheckBox cb = new CheckBox("Foo");
     cb.setChecked(true);
 
-    // Hook up a listener to find out when it's clicked.
-    cb.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
-        boolean checked = ((CheckBox) sender).isChecked();
-        Window.alert("It is " + (checked ? "" : "not") + "checked");
+    // Hook up a handler to find out when it's clicked.
+    cb.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        boolean checked = ((CheckBox) event.getSource()).isChecked();
+        Window.alert("It is " + (checked ? "" : "not ") + "checked");
       }
     });
 

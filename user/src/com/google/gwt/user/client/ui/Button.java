@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickHandler;
 
 /**
  * A standard push-button widget.
@@ -99,9 +100,21 @@ public class Button extends ButtonBase {
    * @param html the HTML caption
    * @param listener the click listener
    */
+  @Deprecated
   public Button(String html, ClickListener listener) {
     this(html);
     addClickListener(listener);
+  }
+
+  /**
+   * Creates a button with the given HTML caption and click listener.
+   * 
+   * @param html the HTML caption
+   * @param handler the click handler
+   */
+  public Button(String html, ClickHandler handler) {
+    this(html);
+    addClickHandler(handler);
   }
 
   /**
@@ -111,7 +124,7 @@ public class Button extends ButtonBase {
    * @param element the element to be used
    */
   protected Button(com.google.gwt.dom.client.Element element) {
-    super(element.<Element>cast());
+    super(element.<Element> cast());
     ButtonElement.as(element);
   }
 

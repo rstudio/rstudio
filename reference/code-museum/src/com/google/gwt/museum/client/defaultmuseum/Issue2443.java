@@ -15,9 +15,10 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -44,16 +45,16 @@ public class Issue2443 extends AbstractIssue {
         + "DialogBox is dragged to the right edge of the screen.  ";
     VerticalPanel vPanel = new VerticalPanel();
     vPanel.add(new Label(message));
-    vPanel.add(new Button("Close", new ClickListener() {
-      public void onClick(Widget sender) {
+    vPanel.add(new Button("Close", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         dialogBox.hide();
       }
     }));
     dialogBox.setWidget(vPanel);
 
     // Create a button to display the dialog box
-    Button showButton = new Button("Show DialogBox", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button showButton = new Button("Show DialogBox", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         dialogBox.center();
       }
     });

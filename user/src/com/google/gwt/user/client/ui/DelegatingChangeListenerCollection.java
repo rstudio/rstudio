@@ -39,6 +39,7 @@ package com.google.gwt.user.client.ui;
  *  }
  *</pre>
  */
+@Deprecated
 public class DelegatingChangeListenerCollection extends
     ChangeListenerCollection implements ChangeListener {
 

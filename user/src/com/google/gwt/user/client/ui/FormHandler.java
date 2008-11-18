@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Handler interface for form submit events.
  */
+@Deprecated
 public interface FormHandler extends EventListener {
 
   /**
@@ -34,6 +35,7 @@ public interface FormHandler extends EventListener {
    * @param event an event object containing information about the form
    *          submission
    */
+  @Deprecated
   void onSubmit(FormSubmitEvent event);
 
   /**
@@ -42,5 +44,6 @@ public interface FormHandler extends EventListener {
    * @param event an event object containing information about the form
    *          submission
    */
+  @Deprecated
   void onSubmitComplete(FormSubmitCompleteEvent event);
 }

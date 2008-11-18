@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.showcase.client.content.popups;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.sample.showcase.client.ContentWidget;
@@ -23,7 +25,6 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -35,8 +36,9 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-DialogBox", "html>body .gwt-DialogBox",
-    "* html .gwt-DialogBox", ".cw-DialogBox"})
+@ShowcaseStyle(/* styles */{
+    ".gwt-DialogBox", "html>body .gwt-DialogBox", "* html .gwt-DialogBox",
+    ".cw-DialogBox"})
 public class CwDialogBox extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -101,8 +103,8 @@ public class CwDialogBox extends ContentWidget {
 
     // Create a button to show the dialog Box
     Button openButton = new Button(constants.cwDialogBoxShowButton(),
-        new ClickListener() {
-          public void onClick(Widget sender) {
+        new ClickHandler() {
+          public void onClick(ClickEvent sender) {
             dialogBox.center();
             dialogBox.show();
           }
@@ -160,8 +162,8 @@ public class CwDialogBox extends ContentWidget {
 
     // Add a close button at the bottom of the dialog
     Button closeButton = new Button(constants.cwDialogBoxClose(),
-        new ClickListener() {
-          public void onClick(Widget sender) {
+        new ClickHandler() {
+          public void onClick(ClickEvent event) {
             dialogBox.hide();
           }
         });

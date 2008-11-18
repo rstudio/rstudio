@@ -25,7 +25,9 @@ public interface SourcesMouseWheelEvents {
    * Adds a listener interface to receive mouse events.
    *
    * @param listener the listener interface to add
+   * @deprecated use <code>addMouseWheelHandler</code>
    */
+  @Deprecated
   void addMouseWheelListener(MouseWheelListener listener);
 
   /**
@@ -33,5 +35,6 @@ public interface SourcesMouseWheelEvents {
    *
    * @param listener the listener interface to remove
    */
+  @Deprecated
   void removeMouseWheelListener(MouseWheelListener listener);
 }

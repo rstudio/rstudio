@@ -25,7 +25,9 @@ public interface SourcesKeyboardEvents {
    * Adds a listener interface to receive keyboard events.
    * 
    * @param listener the listener interface to add
+   * @deprecated use <code>addKeyPressHandler/addKeyDownKeyDownHandler/addKeyUpHandler</code> instead
    */
+  @Deprecated
   void addKeyboardListener(KeyboardListener listener);
 
   /**
@@ -33,5 +35,6 @@ public interface SourcesKeyboardEvents {
    * 
    * @param listener the listener interface to remove
    */
+  @Deprecated
   void removeKeyboardListener(KeyboardListener listener);
 }

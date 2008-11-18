@@ -19,8 +19,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * Internet Explorer 6 implementation of
- * {@link com.google.gwt.user.client.impl.HistoryImplFrame}.
+ * Internet Explorer 6 implementation HistoryImplFrame.
  */
 class HistoryImplIE6 extends HistoryImplFrame {
 
@@ -89,6 +88,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     };
   }-*/;
 
+  @Override
   protected native void navigateFrame(String token) /*-{
     var escaped = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)(token);
     var doc = this.@com.google.gwt.user.client.impl.HistoryImplFrame::historyFrame.contentWindow.document;
@@ -97,6 +97,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
     doc.close();
   }-*/;
 
+  @Override
   protected native void updateHash(String token) /*-{
     $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
   }-*/;

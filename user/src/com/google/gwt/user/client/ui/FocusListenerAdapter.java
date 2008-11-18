@@ -19,6 +19,7 @@ package com.google.gwt.user.client.ui;
  * An adapter to simplify focus event listeners that do not need all events
  * defined on the FocusListener interface.
  */
+@Deprecated
 public abstract class FocusListenerAdapter implements FocusListener {
 
   public void onFocus(Widget sender) {

@@ -20,6 +20,7 @@ package com.google.gwt.user.client;
  * 
  * @see com.google.gwt.user.client.Window#addWindowResizeListener(WindowResizeListener)
  */
+@Deprecated
 public interface WindowResizeListener extends java.util.EventListener {
 
   /**
@@ -28,5 +29,6 @@ public interface WindowResizeListener extends java.util.EventListener {
    * @param width the width of the window's client area.
    * @param height the height of the window's client area.
    */
+  @Deprecated
   void onWindowResized(int width, int height);
 }

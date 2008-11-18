@@ -10,6 +10,7 @@ public class FooTest extends GWTTestCase {
    * 
    * @see com.google.gwt.junit.client.GWTTestCase#getModuleName()
    */
+  @Override
   public String getModuleName() {
     return "com.example.foo.Foo";
   }

@@ -64,7 +64,7 @@ public class AbsolutePanel extends ComplexPanel {
    * it can be used by {@link RootPanel} or a subclass that wants to substitute
    * another element. The element is presumed to be a &lt;div&gt;.
    * 
-   * @param elem the element to be used for this panel.
+   * @param elem the element to be used for this panel
    */
   protected AbsolutePanel(Element elem) {
     setElement(elem);

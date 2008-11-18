@@ -225,6 +225,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
       splitPosition = px;
     }
 
+    @Override
     public void setSplitPositionUsingPixels(int px) {
       if (LocaleInfo.getCurrentLocale().isRTL()) {
         final Element splitElem = panel.getSplitElement();
@@ -488,7 +489,7 @@ public final class HorizontalSplitPanel extends SplitPanel {
    *             "1em")
    */
   @Override
-  public final void setSplitPosition(String pos) {
+  public void setSplitPosition(String pos) {
     lastSplitPosition = pos;
     impl.setSplitPosition(pos);
   }

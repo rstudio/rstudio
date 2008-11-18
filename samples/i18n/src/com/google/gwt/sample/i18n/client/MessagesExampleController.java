@@ -16,10 +16,10 @@
 package com.google.gwt.sample.i18n.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Demonstrates how to use {@link com.google.gwt.i18n.client.Messages}.
@@ -49,16 +49,15 @@ public class MessagesExampleController {
     String messageTemplate = ERRORS.permissionDenied("{0}", "{1}", "{2}");
     lblMessageTemplate.setText(messageTemplate);
 
-    KeyboardListenerAdapter listener = new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    KeyUpHandler handler = new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         maybeRefreshFormattedMessage();
       }
     };
-    txtArg1.addKeyboardListener(listener);
-    txtArg2.addKeyboardListener(listener);
-    txtArg3.addKeyboardListener(listener);
-    pluralCount.addKeyboardListener(listener);
+    txtArg1.addKeyUpHandler(handler);
+    txtArg2.addKeyUpHandler(handler);
+    txtArg3.addKeyUpHandler(handler);
+    pluralCount.addKeyUpHandler(handler);
 
     txtArg1.setText("amelie");
     txtArg2.setText("guest");

@@ -15,12 +15,13 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RichTextArea;
@@ -28,7 +29,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * <h1> Attaching and detaching a RichTextArea too fast crashes GWT </h1>
+ * <h1>Attaching and detaching a RichTextArea too fast crashes GWT</h1>
  * 
  * <p>
  * The RichTextArea uses a Timer or iframe.onload event (depending on the
@@ -65,8 +66,8 @@ public class Issue1897 extends AbstractIssue {
       hPanel.setSpacing(10);
 
       // Add option to attach RichTextArea
-      Button attachButton = new Button("Attach RichText", new ClickListener() {
-        public void onClick(Widget sender) {
+      Button attachButton = new Button("Attach RichText", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           if (rta.isAttached()) {
             Window.alert("RichTextArea is already attached.");
           }
@@ -76,8 +77,8 @@ public class Issue1897 extends AbstractIssue {
       hPanel.add(attachButton);
 
       // Add option to detach RichTextArea
-      Button detachButton = new Button("Detach RichText", new ClickListener() {
-        public void onClick(Widget sender) {
+      Button detachButton = new Button("Detach RichText", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           if (!rta.isAttached()) {
             Window.alert("RichTextArea is already detached.");
             return;
@@ -89,8 +90,8 @@ public class Issue1897 extends AbstractIssue {
 
       // Add option to attach and detach RichTextArea
       Button quickDetachButton = new Button("Attach/Detach RichText",
-          new ClickListener() {
-            public void onClick(Widget sender) {
+          new ClickHandler() {
+            public void onClick(ClickEvent event) {
               if (rta.isAttached()) {
                 Window.alert("RichTextArea is already attached.");
                 return;

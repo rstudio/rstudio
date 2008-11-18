@@ -15,15 +15,17 @@
  */
 package com.google.gwt.user.client.ui.impl;
 
+import com.google.gwt.event.dom.client.ErrorEvent;
+import com.google.gwt.event.dom.client.ErrorHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.ImageTest;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.LoadListener;
+import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.Timer;
-
-import java.util.ArrayList;
 
 /**
  * Tests for the ClippedImagePrototype implementation. Tests are done to ensure
@@ -34,11 +36,45 @@ import java.util.ArrayList;
  * application of the prototype to the image.
  */
 public class ClippedImagePrototypeTest extends GWTTestCase {
+  @Deprecated
+  private static class TestLoadListener implements LoadListener {
+    private int onloadEventFireCount = 0;
+    private Image image;
 
+    public TestLoadListener(Image image) {
+      this.image = image;
+    }
+
+    public void onError(Widget sender) {
+      fail("The image " + image.getUrl() + " failed to load.");
+    }
+
+    public int getOnloadEventFireCount() {
+      return onloadEventFireCount;
+    }
+
+    public void onLoad(Widget sender) {
+      onloadEventFireCount++;
+    }
+  }
+  
+  private static class TestLoadHandler implements LoadHandler {
+    private int onloadEventFireCount = 0;
+
+    public int getOnloadEventFireCount() {
+      return onloadEventFireCount;
+    }
+
+    public void onLoad(LoadEvent event) {
+      onloadEventFireCount++;
+    }
+  }
+  
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.UserTest";
   }
-
+ 
   /**
    * Tests that a clipped image can be transformed to match a given prototype.
    * Also checks to make sure that a load event is fired on when
@@ -55,15 +91,10 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
     assertEquals(8, image.getHeight());
     assertEquals("clipped", ImageTest.getCurrentImageStateName(image));
 
-    final ArrayList onloadEventFireCounter = new ArrayList();
-
-    image.addLoadListener(new LoadListener() {
-      public void onError(Widget sender) {
-        fail("The image " + ((Image) sender).getUrl() + " failed to load.");
-      }
-
+    final TestLoadListener listener = new TestLoadListener(image) {
+      @Override
       public void onLoad(Widget sender) {
-        onloadEventFireCounter.add(new Object());
+        super.onLoad(sender);
 
         if (image.getOriginLeft() == 12 && image.getOriginTop() == 13) {
           ClippedImagePrototype clippedImagePrototype = new ClippedImagePrototype(
@@ -78,14 +109,43 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
           assertEquals("clipped", ImageTest.getCurrentImageStateName(image));
         }
       }
-    });
+    };
+    image.addLoadListener(listener);
 
+    final TestLoadHandler handler = new TestLoadHandler() {
+      @Override
+      public void onLoad(LoadEvent event) {
+        super.onLoad(event);
+
+        if (image.getOriginLeft() == 12 && image.getOriginTop() == 13) {
+          ClippedImagePrototype clippedImagePrototype = new ClippedImagePrototype(
+              "counting-forwards.png", 16, 16, 16, 16);
+
+          clippedImagePrototype.applyTo(image);
+
+          assertEquals(16, image.getOriginLeft());
+          assertEquals(16, image.getOriginTop());
+          assertEquals(16, image.getWidth());
+          assertEquals(16, image.getHeight());
+          assertEquals("clipped", ImageTest.getCurrentImageStateName(image));
+        }
+      }
+    };
+    image.addLoadHandler(handler);
+    image.addErrorHandler(new ErrorHandler() {
+      public void onError(ErrorEvent event) {
+        fail("The image " + image.getUrl() + " failed to load.");
+      }
+    });
+    
     RootPanel.get().add(image);
     delayTestFinish(2000);
 
     Timer t = new Timer() {
+      @Override
       public void run() {
-        assertEquals(2, onloadEventFireCounter.size());
+        assertEquals(2, listener.getOnloadEventFireCount());
+        assertEquals(2, handler.getOnloadEventFireCount());
         finishTest();
       }
     };

@@ -35,7 +35,6 @@ public interface DisclosurePanelImages extends ImageBundle {
   AbstractImagePrototype disclosurePanelClosed();
 }
 
-
 /**
  * A bundle containing the RTL versions of the images for DisclosurePanel. Right now, we
  * only need to override the disclosurePanelClosed() method, as the image that we provide

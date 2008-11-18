@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickHandler;
+
 /**
  * A normal push button with custom styling.
  * 
@@ -61,8 +63,20 @@ public class PushButton extends CustomButton {
    * construct the default face of the button.
    * 
    * @param upImage image for the default (up) face of the button
+   * @param handler teh click handler
+   */
+  public PushButton(Image upImage, ClickHandler handler) {
+    super(upImage, handler);
+  }
+
+  /**
+   * Constructor for <code>PushButton</code>. The supplied image is used to
+   * construct the default face of the button.
+   * 
+   * @param upImage image for the default (up) face of the button
    * @param listener the click listener
    */
+  @Deprecated
   public PushButton(Image upImage, ClickListener listener) {
     super(upImage, listener);
   }
@@ -84,6 +98,7 @@ public class PushButton extends CustomButton {
    * @param downImage image for the down face of the button
    * @param listener clickListener
    */
+  @Deprecated
   public PushButton(Image upImage, Image downImage, ClickListener listener) {
     super(upImage, downImage, listener);
   }
@@ -103,8 +118,20 @@ public class PushButton extends CustomButton {
    * construct the default face of the button.
    * 
    * @param upText the text for the default (up) face of the button
+   * @param handler the click handler
+   */
+  public PushButton(String upText, ClickHandler handler) {
+    super(upText, handler);
+  }
+
+  /**
+   * Constructor for <code>PushButton</code>. The supplied text is used to
+   * construct the default face of the button.
+   * 
+   * @param upText the text for the default (up) face of the button
    * @param listener the click listener
    */
+  @Deprecated
   public PushButton(String upText, ClickListener listener) {
     super(upText, listener);
   }
@@ -124,8 +151,20 @@ public class PushButton extends CustomButton {
    * 
    * @param upText the text for the default (up) face of the button
    * @param downText the text for down face of the button
+   * @param handler the click handler
+   */
+  public PushButton(String upText, String downText, ClickHandler handler) {
+    super(upText, downText, handler);
+  }
+
+  /**
+   * Constructor for <code>PushButton</code>.
+   * 
+   * @param upText the text for the default (up) face of the button
+   * @param downText the text for down face of the button
    * @param listener the click listener
    */
+  @Deprecated
   public PushButton(String upText, String downText, ClickListener listener) {
     super(upText, downText, listener);
   }
@@ -135,7 +174,7 @@ public class PushButton extends CustomButton {
     setDown(false);
     super.onClick();
   }
-  
+
   @Override
   protected void onClickCancel() {
     setDown(false);

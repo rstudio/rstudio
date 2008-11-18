@@ -66,6 +66,7 @@ public class ArrayListAndVectorBenchmark extends Benchmark {
       this.label = label;
     }
 
+    @Override
     public String toString() {
       return " " + label;
     }
@@ -83,6 +84,7 @@ public class ArrayListAndVectorBenchmark extends Benchmark {
   Vector vector;
   int index = 0;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.examples.Benchmarks";
   }

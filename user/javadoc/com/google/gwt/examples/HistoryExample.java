@@ -16,14 +16,15 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.History;
-import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-public class HistoryExample implements EntryPoint, HistoryListener {
+public class HistoryExample implements EntryPoint, ValueChangeHandler<String> {
 
   private Label lbl = new Label();
 
@@ -49,15 +50,15 @@ public class HistoryExample implements EntryPoint, HistoryListener {
     RootPanel.get().add(panel);
 
     // Add history listener
-    History.addHistoryListener(this);
+    History.addValueChangeHandler(this);
 
     // Now that we've setup our listener, fire the initial history state.
     History.fireCurrentHistoryState();
   }
 
-  public void onHistoryChanged(String historyToken) {
+  public void onValueChange(ValueChangeEvent<String> event) {
     // This method is called whenever the application's history changes. Set
     // the label to reflect the current history token.
-    lbl.setText("The current history token is: " + historyToken);
+    lbl.setText("The current history token is: " + event.getValue());
   }
 }

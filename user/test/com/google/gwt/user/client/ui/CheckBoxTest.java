@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -27,6 +29,18 @@ public class CheckBoxTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
+  }  
+
+  @Override
+  protected void gwtSetUp() throws Exception {
+    super.gwtSetUp();
+    RootPanel.get().clear();
+  }
+
+  @Override
+  protected void gwtTearDown() throws Exception {
+    RootPanel.get().clear();
+    super.gwtTearDown();
   }
 
   /**
@@ -70,5 +84,37 @@ public class CheckBoxTest extends GWTTestCase {
     UIObjectTest.assertDebugId("myCheck", check.getElement());
     UIObjectTest.assertDebugId("myCheck-input", newInput);
     UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
+  }
+  
+  public void testValueChangeEvent() {
+    CheckBox cb = new CheckBox();
+    Handler h = new Handler();
+    cb.addValueChangeHandler(h);
+    cb.setChecked(false);
+    assertNull(h.received);
+    cb.setChecked(true);
+    assertNull(h.received);
+    
+    cb.setValue(false);
+    assertNull(h.received);
+    cb.setValue(true);
+    assertNull(h.received);
+
+    cb.setValue(true, true);
+    assertNull(h.received);
+    
+    cb.setValue(false, true);
+    assertFalse(h.received);
+
+    cb.setValue(true, true);
+    assertTrue(h.received);
+  }
+  
+  private static class Handler implements ValueChangeHandler<Boolean> {
+    Boolean received = null;
+    
+    public void onValueChange(ValueChangeEvent<Boolean> event) {
+      received = event.getValue();
+    }
   }
 }

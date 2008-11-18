@@ -25,7 +25,9 @@ public interface SourcesMouseEvents {
    * Adds a listener interface to receive mouse events.
    * 
    * @param listener the listener interface to add
+   * @deprecated use <code>addMouse(Down/Up/Over/Out/Move/Scroll)Handler</code> instead
    */
+  @Deprecated
   void addMouseListener(MouseListener listener);
 
   /**
@@ -33,5 +35,6 @@ public interface SourcesMouseEvents {
    * 
    * @param listener the listener interface to remove
    */
+  @Deprecated
   void removeMouseListener(MouseListener listener);
 }

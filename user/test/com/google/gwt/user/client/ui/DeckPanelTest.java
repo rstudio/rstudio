@@ -94,7 +94,9 @@ public class DeckPanelTest extends GWTTestCase {
       public void onLoad() {
         // Verify that the offsetWidth/Height are greater than zero
         assertTrue(this.getOffsetHeight() > 0);
-        assertTrue(this.getOffsetWidth() > 0);
+        assertTrue("Expect positive offsetWidth. "
+            + "This will fail in WebKit if run headless",
+            this.getOffsetWidth() > 0);
         setText("attached");
       }
     };

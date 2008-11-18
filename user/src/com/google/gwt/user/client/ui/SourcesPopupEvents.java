@@ -25,7 +25,9 @@ public interface SourcesPopupEvents {
    * Adds a listener interface to receive popup events.
    * 
    * @param listener the listener interface to add.
+   * @deprecated use <code>addCloseHandler<PopupPanel></code> instead
    */
+  @Deprecated
   void addPopupListener(PopupListener listener);
 
   /**
@@ -33,5 +35,6 @@ public interface SourcesPopupEvents {
    * 
    * @param listener the listener interface to remove.
    */
+  @Deprecated
   void removePopupListener(PopupListener listener);
 }

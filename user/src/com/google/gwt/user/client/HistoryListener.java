@@ -19,6 +19,7 @@ package com.google.gwt.user.client;
  * Implement this interface to receive notification of changes to the browser
  * history state. It is used with {@link com.google.gwt.user.client.History}.
  */
+@Deprecated
 public interface HistoryListener extends java.util.EventListener {
 
   /**
@@ -26,5 +27,6 @@ public interface HistoryListener extends java.util.EventListener {
    * 
    * @param historyToken the token representing the current history state
    */
+  @Deprecated
   void onHistoryChanged(String historyToken);
 }

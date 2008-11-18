@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -33,7 +37,49 @@ import java.util.NoSuchElementException;
  * <img class='gallery' src='Table.png'/>
  * </p>
  */
-public abstract class HTMLTable extends Panel implements SourcesTableEvents {
+public abstract class HTMLTable extends Panel implements SourcesTableEvents,
+    HasClickHandlers {
+  
+  /**
+   * Return value for {@link HTMLTable#getCellForEvent}.
+   */
+  public class Cell {
+    private final int rowIndex;
+    private final int cellIndex;
+    
+    /**
+     * Creates a cell.
+     * @param rowIndex the cell's row
+     * @param cellIndex the cell's index
+     */
+    protected Cell(int rowIndex, int cellIndex) {
+      this.cellIndex = cellIndex;
+      this.rowIndex = rowIndex;
+    }
+     
+    /**
+     * Gets the cell index.
+     * @return the cell index
+     */
+    public int getCellIndex() {
+      return cellIndex;
+    }
+    /**
+     * Gets the cell's element.
+     * @return the cell's element.
+     */
+    public Element getElement() {
+      return getCellFormatter().getElement(cellIndex, rowIndex);
+    }
+    
+    /**
+     * Get row index.
+     * @return the row index
+     */
+    public int getRowIndex() {
+      return rowIndex;
+    }
+  }
   /**
    * This class contains methods used to format a table's cells.
    */
@@ -123,7 +169,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * contents.
      * 
      * @param row the row of the cell whose alignment is to be set
-     * @param column the cell whose alignment is to be set
+     * @param column the column of the cell whose alignment is to be set
      * @param hAlign the cell's new horizontal alignment as specified in
      *          {@link HasHorizontalAlignment}
      * @param vAlign the cell's new vertical alignment as specified in
@@ -140,7 +186,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * Sets the height of the specified cell.
      * 
      * @param row the row of the cell whose height is to be set
-     * @param column the cell whose height is to be set
+     * @param column the column of the cell whose height is to be set
      * @param height the cell's new height, in CSS units
      * @throws IndexOutOfBoundsException
      */
@@ -154,7 +200,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * Sets the horizontal alignment of the specified cell.
      * 
      * @param row the row of the cell whose alignment is to be set
-     * @param column the cell whose alignment is to be set
+     * @param column the column of the cell whose alignment is to be set
      * @param align the cell's new horizontal alignment as specified in
      *          {@link HasHorizontalAlignment}.
      * @throws IndexOutOfBoundsException
@@ -198,7 +244,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * Sets the vertical alignment of the specified cell.
      * 
      * @param row the row of the cell whose alignment is to be set
-     * @param column the cell whose alignment is to be set
+     * @param column the column of the cell whose alignment is to be set
      * @param align the cell's new vertical alignment as specified in
      *          {@link HasVerticalAlignment}.
      * @throws IndexOutOfBoundsException
@@ -217,8 +263,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * 
      * @param row the row of the cell whose visibility is to be set
      * @param column the column of the cell whose visibility is to be set
-     * @param visible <code>true</code> to show the cell, <code>false</code>
-     *          to hide it
+     * @param visible <code>true</code> to show the cell, <code>false</code> to
+     *          hide it
      */
     public void setVisible(int row, int column, boolean visible) {
       Element e = ensureElement(row, column);
@@ -229,7 +275,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * Sets the width of the specified cell.
      * 
      * @param row the row of the cell whose width is to be set
-     * @param column the cell whose width is to be set
+     * @param column the column of the cell whose width is to be set
      * @param width the cell's new width, in CSS units
      * @throws IndexOutOfBoundsException
      */
@@ -244,7 +290,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * Sets whether the specified cell will allow word wrapping of its contents.
      * 
      * @param row the row of the cell whose word-wrap is to be set
-     * @param column the cell whose word-wrap is to be set
+     * @param column the column of the cell whose word-wrap is to be set
      * @param wrap <code>false </code> to disable word wrapping in this cell
      * @throws IndexOutOfBoundsException
      */
@@ -310,11 +356,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
 
     /**
      * Gets the TD element representing the specified cell unsafely (meaning
-     * that it doesn't ensure that the row and column are valid).
+     * that it doesn't ensure that <code>row</code> and <code>column</code>
+     * are valid).
      * 
      * @param row the row of the cell to be retrieved
      * @param column the column of the cell to be retrieved
-     * @return the column's TD element
+     * @return the cell's TD element
      */
     private Element getRawElement(int row, int column) {
       return getCellElement(bodyElem, row, column);
@@ -426,12 +473,12 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
       }
       return DOM.getChild(columnGroup, col);
     }
-    
+
     /**
-     * Prepare the colgroup tag for the first time, guarenteeing that it
-     * exists and has at least one col tag in it.  This method corrects
-     * a Mozilla issue where the col tag will affect the wrong column if
-     * a col tag doesn't exist when the element is attached to the page.
+     * Prepare the colgroup tag for the first time, guaranteeing that it exists
+     * and has at least one col tag in it. This method corrects a Mozilla issue
+     * where the col tag will affect the wrong column if a col tag doesn't exist
+     * when the element is attached to the page.
      */
     private void prepareColumnGroup() {
       if (columnGroup == null) {
@@ -560,8 +607,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
      * Sets whether this row is visible.
      * 
      * @param row the row whose visibility is to be set
-     * @param visible <code>true</code> to show the row, <code>false</code>
-     *          to hide it
+     * @param visible <code>true</code> to show the row, <code>false</code> to
+     *          hide it
      */
     public void setVisible(int row, boolean visible) {
       Element e = ensureElement(row);
@@ -582,8 +629,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     }
 
     protected native Element getRow(Element elem, int row)/*-{
-     return elem.rows[row];
-     }-*/;
+      return elem.rows[row];
+    }-*/;
 
     /**
      * Convenience methods to set an attribute on a row.
@@ -753,11 +800,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    */
   private final Element tableElem;
 
-  /**
-   * Current table listener.
-   */
-  private TableListenerCollection tableListeners;
-
   private WidgetMapper widgetMap = new WidgetMapper();
 
   /**
@@ -770,17 +812,18 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
     setElement(tableElem);
   }
 
+  public HandlerRegistration addClickHandler(ClickHandler handler) {
+    return addDomHandler(handler, ClickEvent.getType());
+  }
+
   /**
    * Adds a listener to the current table.
    * 
    * @param listener listener to add
+   * @deprecated add a click handler instead and use {@link HTMLTable#getCellForEvent(ClickEvent)} to get the cell information
    */
   public void addTableListener(TableListener listener) {
-    if (tableListeners == null) {
-      tableListeners = new TableListenerCollection();
-      sinkEvents(Event.ONCLICK);
-    }
-    tableListeners.add(listener);
+    ListenerWrapper.Table.add(this, listener);
   }
 
   /**
@@ -800,10 +843,11 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * Clears the given row and column. If it contains a Widget, it will be
-   * removed from the table. If not, its contents will simply be cleared.
+   * Clears the cell at the given row and column. If it contains a Widget, it
+   * will be removed from the table. If not, its contents will simply be
+   * cleared.
    * 
-   * @param row the widget's column
+   * @param row the widget's row
    * @param column the widget's column
    * @return true if a widget was removed
    * @throws IndexOutOfBoundsException
@@ -820,6 +864,26 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return the number of cells present in the row
    */
   public abstract int getCellCount(int row);
+
+  /**
+   * Given a click event, return the Cell that was clicked, or null if 
+   * the event did not hit this table.
+   * @param event A click event of indeterminate origin
+   * @return The appropriate cell, or null
+   */
+  public Cell getCellForEvent(ClickEvent event) {
+    Element td = getEventTargetCell(event.getNativeEvent());
+    if (td == null) {
+      return null;
+    }
+
+    Element tr = DOM.getParent(td);
+    Element body = DOM.getParent(tr);
+    int row = DOM.getChildIndex(body, tr);
+    int column = DOM.getChildIndex(tr, td);
+
+    return new Cell(row, column);
+  }
 
   /**
    * Gets the {@link CellFormatter} associated with this table. Use casting to
@@ -942,36 +1006,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   /**
-   * Method to process events generated from the browser.
-   * 
-   * @param event the generated event
-   */
-  @Override
-  public void onBrowserEvent(Event event) {
-    switch (DOM.eventGetType(event)) {
-      case Event.ONCLICK: {
-        if (tableListeners != null) {
-          // Find out which cell was actually clicked.
-          Element td = getEventTargetCell(event);
-          if (td == null) {
-            return;
-          }
-          Element tr = DOM.getParent(td);
-          Element body = DOM.getParent(tr);
-          int row = DOM.getChildIndex(body, tr);
-          int column = DOM.getChildIndex(tr, td);
-          // Fire the event.
-          tableListeners.fireCellClicked(this, row, column);
-        }
-        break;
-      }
-      default: {
-        // Do nothing
-      }
-    }
-  }
-
-  /**
    * Remove the specified widget from the table.
    * 
    * @param widget widget to remove
@@ -1001,10 +1035,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * 
    * @param listener listener to remove
    */
+  @Deprecated
   public void removeTableListener(TableListener listener) {
-    if (tableListeners != null) {
-      tableListeners.remove(listener);
-    }
+    ListenerWrapper.Table.remove(this, listener);
   }
 
   /**
@@ -1164,8 +1197,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
    * @return number of columns in the row
    */
   protected native int getDOMCellCount(Element tableBody, int row) /*-{
-   return tableBody.rows[row].cells.length;
-   }-*/;
+    return tableBody.rows[row].cells.length;
+  }-*/;
 
   /**
    * Directly ask the underlying DOM what the cell count on the given row is.
@@ -1187,8 +1220,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   }
 
   protected native int getDOMRowCount(Element elem) /*-{
-   return elem.rows.length;
-   }-*/;
+    return elem.rows.length;
+  }-*/;
 
   /**
    * Determines the TD associated with the specified event.
@@ -1303,7 +1336,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents {
   @Override
   protected void onEnsureDebugId(String baseID) {
     super.onEnsureDebugId(baseID);
-    
+
     int rowCount = getRowCount();
     for (int row = 0; row < rowCount; row++) {
       int cellCount = getCellCount(row);

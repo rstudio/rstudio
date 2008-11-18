@@ -15,9 +15,10 @@
  */
 package com.google.gwt.sample.dynatable.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -39,17 +40,20 @@ public class DayFilterWidget extends Composite {
       // Remember custom data for this widget.
       this.day = day;
 
-      // Use a shared listener to save memory.
-      addClickListener(dayCheckBoxListener);
+      // Use a shared handler to save memory.
+      addClickHandler(dayCheckBoxHandler);
 
       // Initialize based on the calendar's current value.
       setChecked(calendar.getDayIncluded(day));
     }
   }
 
-  private class DayCheckBoxListener implements ClickListener {
-    public void onClick(Widget sender) {
-      DayCheckBox dayCheckBox = ((DayCheckBox) sender);
+  private class DayCheckBoxHandler implements ClickHandler {
+    public void onClick(ClickEvent event) {
+      onClick((DayCheckBox) event.getSource());
+    }
+    
+    public void onClick(DayCheckBox dayCheckBox) {
       calendar.setDayIncluded(dayCheckBox.day, dayCheckBox.isChecked());
     }
   }
@@ -58,7 +62,7 @@ public class DayFilterWidget extends Composite {
 
   private final VerticalPanel outer = new VerticalPanel();
 
-  private final DayCheckBoxListener dayCheckBoxListener = new DayCheckBoxListener();
+  private final DayCheckBoxHandler dayCheckBoxHandler = new DayCheckBoxHandler();
 
   public DayFilterWidget(SchoolCalendarWidget calendar) {
     this.calendar = calendar;
@@ -72,14 +76,14 @@ public class DayFilterWidget extends Composite {
     outer.add(new DayCheckBox("Friday", 5));
     outer.add(new DayCheckBox("Saturday", 6));
 
-    Button buttonAll = new Button("All", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button buttonAll = new Button("All", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         setAllCheckBoxes(true);
       }
     });
 
-    Button buttonNone = new Button("None", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button buttonNone = new Button("None", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         setAllCheckBoxes(false);
       }
     });
@@ -99,7 +103,7 @@ public class DayFilterWidget extends Composite {
       Widget w = outer.getWidget(i);
       if (w instanceof DayCheckBox) {
         ((DayCheckBox) w).setChecked(checked);
-        dayCheckBoxListener.onClick(w);
+        dayCheckBoxHandler.onClick((DayCheckBox) w);
       }
     }
   }

@@ -22,6 +22,7 @@ import java.util.EventListener;
  * {@link com.google.gwt.user.client.ui.TabBar} and
  * {@link com.google.gwt.user.client.ui.TabPanel}.
  */
+@Deprecated
 public interface TabListener extends EventListener {
 
   /**
@@ -33,6 +34,7 @@ public interface TabListener extends EventListener {
    * @return <code>false</code> to disallow the selection. If any listener
    *         returns false, then the selection will be disallowed.
    */
+  @Deprecated
   boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex);
 
   /**
@@ -41,5 +43,6 @@ public interface TabListener extends EventListener {
    * @param sender the {@link TabBar} or {@link TabPanel} whose tab was selected
    * @param tabIndex the index of the tab that was selected
    */
+  @Deprecated
   void onTabSelected(SourcesTabEvents sender, int tabIndex);
 }

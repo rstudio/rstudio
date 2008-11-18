@@ -19,19 +19,23 @@ package com.google.gwt.user.client.ui;
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.ChangeListener} interface.
  */
+
 public interface SourcesChangeEvents {
 
   /**
    * Adds a listener interface to receive change events.
    * 
    * @param listener the listener interface to add
+   * @deprecated use <code>addChangeHandler</code> instead
    */
+  @Deprecated
   void addChangeListener(ChangeListener listener);
 
   /**
    * Removes a previously added listener interface.
    * 
-   * @param listener the listener interface to remove
+   * @param listener the listener interface to remove 
    */
+  @Deprecated
   void removeChangeListener(ChangeListener listener);
 }

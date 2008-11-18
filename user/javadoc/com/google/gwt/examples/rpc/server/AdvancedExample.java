@@ -36,6 +36,7 @@ public class AdvancedExample extends HttpServlet {
    * it also shows how mapping between and RPC interface and some other POJO
    * could be performed.
    */
+  @Override
   public void doPost(HttpServletRequest httpRequest,
       HttpServletResponse httpResponse) {
     String payload = readPayloadAsUtf8(httpRequest);

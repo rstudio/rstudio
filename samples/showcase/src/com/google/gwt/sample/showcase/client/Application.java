@@ -16,9 +16,13 @@
 package com.google.gwt.sample.showcase.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.WindowResizeListener;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DecoratorPanel;
@@ -33,7 +37,6 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeImages;
 import com.google.gwt.user.client.ui.TreeItem;
-import com.google.gwt.user.client.ui.TreeListener;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
@@ -44,17 +47,28 @@ import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
  * some external links at the top.
  * </p>
  * <h3>CSS Style Rules</h3>
+ * 
  * <ul class="css">
+ * 
  * <li>.Application { Applied to the entire Application }</li>
+ * 
  * <li>.Application-top { The top portion of the Application }</li>
+ * 
  * <li>.Application-title { The title widget }</li>
+ * 
  * <li>.Application-links { The main external links }</li>
+ * 
  * <li>.Application-options { The options widget }</li>
+ * 
  * <li>.Application-menu { The main menu }</li>
- * <li>.Application-content-wrapper { The scrollable element around the content }</li>
+ * 
+ * <li>.Application-content-wrapper { The scrollable element around the content
+ * }</li>
+ * 
  * </ul>
  */
-public class Application extends Composite implements WindowResizeListener {
+public class Application extends Composite implements ResizeHandler,
+    HasSelectionHandlers<TreeItem> {
   /**
    * Images used in the {@link Application}.
    */
@@ -66,18 +80,6 @@ public class Application extends Composite implements WindowResizeListener {
      */
     @Resource("noimage.png")
     AbstractImagePrototype treeLeaf();
-  }
-
-  /**
-   * A listener to handle events from the Application.
-   */
-  public interface ApplicationListener {
-    /**
-     * Fired when a menu item is selected.
-     * 
-     * @param item the item that was selected
-     */
-    void onMenuItemSelected(com.google.gwt.user.client.ui.TreeItem item);
   }
 
   /**
@@ -109,11 +111,6 @@ public class Application extends Composite implements WindowResizeListener {
    * The panel that holds the main links.
    */
   private HorizontalPanel linksPanel;
-
-  /**
-   * The {@link ApplicationListener}.
-   */
-  private ApplicationListener listener = null;
 
   /**
    * The main menu.
@@ -179,6 +176,9 @@ public class Application extends Composite implements WindowResizeListener {
     contentLayout.setWidget(1, 0, contentWrapper);
     formatter.setStyleName(1, 0, DEFAULT_STYLE_NAME + "-content-wrapper");
     setContent(null);
+
+    // Add a window resize handler
+    Window.addResizeHandler(this);
   }
 
   /**
@@ -191,6 +191,11 @@ public class Application extends Composite implements WindowResizeListener {
       linksPanel.add(new HTML("&nbsp;|&nbsp;"));
     }
     linksPanel.add(link);
+  }
+
+  public HandlerRegistration addSelectionHandler(
+      SelectionHandler<TreeItem> handler) {
+    return mainMenu.addSelectionHandler(handler);
   }
 
   /**
@@ -221,8 +226,12 @@ public class Application extends Composite implements WindowResizeListener {
     return topPanel.getWidget(0, 0);
   }
 
+  public void onResize(ResizeEvent event) {
+    onWindowResized(event.getWidth(), event.getHeight());
+  }
+
   public void onWindowResized(int width, int height) {
-    if (width == windowWidth) {
+    if (width == windowWidth || width < 1) {
       return;
     }
     windowWidth = width;
@@ -252,15 +261,6 @@ public class Application extends Composite implements WindowResizeListener {
   }
 
   /**
-   * Set the {@link ApplicationListener}.
-   * 
-   * @param listener the listener
-   */
-  public void setListener(ApplicationListener listener) {
-    this.listener = listener;
-  }
-
-  /**
    * Set the {@link Widget} to use as options, which appear to the right of the
    * title bar.
    * 
@@ -282,14 +282,12 @@ public class Application extends Composite implements WindowResizeListener {
   @Override
   protected void onLoad() {
     super.onLoad();
-    Window.addWindowResizeListener(this);
     onWindowResized(Window.getClientWidth(), Window.getClientHeight());
   }
 
   @Override
   protected void onUnload() {
     super.onUnload();
-    Window.removeWindowResizeListener(this);
     windowWidth = -1;
   }
 
@@ -312,16 +310,6 @@ public class Application extends Composite implements WindowResizeListener {
     mainMenu = new Tree(treeImages);
     mainMenu.setAnimationEnabled(true);
     mainMenu.addStyleName(DEFAULT_STYLE_NAME + "-menu");
-    mainMenu.addTreeListener(new TreeListener() {
-      public void onTreeItemSelected(TreeItem item) {
-        if (listener != null) {
-          listener.onMenuItemSelected(item);
-        }
-      }
-
-      public void onTreeItemStateChanged(TreeItem item) {
-      }
-    });
   }
 
   /**

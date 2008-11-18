@@ -16,25 +16,26 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 
-public class TimerExample implements EntryPoint, ClickListener {
+public class TimerExample implements EntryPoint, ClickHandler {
 
   public void onModuleLoad() {
     Button b = new Button("Click and wait 5 seconds");
-    b.addClickListener(this);
+    b.addClickHandler(this);
 
     RootPanel.get().add(b);
   }
 
-  public void onClick(Widget sender) {
+  public void onClick(ClickEvent event) {
     // Create a new timer that calls Window.alert().
     Timer t = new Timer() {
+      @Override
       public void run() {
         Window.alert("Nifty, eh?");
       }

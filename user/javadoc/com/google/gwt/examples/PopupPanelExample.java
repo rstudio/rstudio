@@ -16,13 +16,13 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.Window;
 
 public class PopupPanelExample implements EntryPoint {
 
@@ -42,8 +42,8 @@ public class PopupPanelExample implements EntryPoint {
 
   public void onModuleLoad() {
     Button b1 = new Button("Click me to show popup");
-    b1.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    b1.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         // Instantiate the popup and show it.
         new MyPopup().show();
       }
@@ -53,8 +53,8 @@ public class PopupPanelExample implements EntryPoint {
 
     Button b2 = new Button("Click me to show popup partway across the screen");
 
-    b2.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    b2.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         // Create the new popup.
         final MyPopup popup = new MyPopup();
         // Position the popup 1/3rd of the way down and across the screen, and

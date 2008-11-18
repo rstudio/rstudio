@@ -15,10 +15,11 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -42,15 +43,15 @@ public class Issue2390 extends AbstractIssue {
 
     // Create a modal PopupPanel
     final PopupPanel popup = new PopupPanel(false, true);
-    popup.setWidget(new Button("Hide Popup", new ClickListener() {
-      public void onClick(Widget sender) {
+    popup.setWidget(new Button("Hide Popup", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         popup.hide();
       }
     }));
 
     // Create a button to show the PopupPanel
-    Button showPopupButton = new Button("Show Popup", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button showPopupButton = new Button("Show Popup", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         popup.center();
       }
     });

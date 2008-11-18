@@ -15,6 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
@@ -45,10 +49,10 @@ import com.google.gwt.user.client.History;
  * <h3>Example</h3> {@example com.google.gwt.examples.HistoryExample}
  * </p>
  */
-public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
+public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
+    HasClickHandlers {
 
   private Element anchorElem;
-  private ClickListenerCollection clickListeners;
   private String targetHistoryToken;
 
   /**
@@ -91,11 +95,13 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
     setTargetHistoryToken(targetHistoryToken);
   }
 
+  public HandlerRegistration addClickHandler(ClickHandler handler) {
+    return addHandler(handler, ClickEvent.getType());
+  }
+
+  @Deprecated
   public void addClickListener(ClickListener listener) {
-    if (clickListeners == null) {
-      clickListeners = new ClickListenerCollection();
-    }
-    clickListeners.add(listener);
+    ListenerWrapper.Click.add(this, listener);
   }
 
   public String getHTML() {
@@ -119,18 +125,15 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents {
   @Override
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
-      if (clickListeners != null) {
-        clickListeners.fireClick(this);
-      }
+      super.onBrowserEvent(event);
       History.newItem(targetHistoryToken);
       DOM.eventPreventDefault(event);
     }
   }
 
+  @Deprecated
   public void removeClickListener(ClickListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
-    }
+    ListenerWrapper.Click.remove(this, listener);
   }
 
   public void setHTML(String html) {

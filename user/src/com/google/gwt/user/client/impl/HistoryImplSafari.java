@@ -64,6 +64,7 @@ class HistoryImplSafari extends HistoryImplStandard {
       newNativeUpdate(historyToken);
     }
   }
+  // HasXHandler(Selection.Handler
 
   private native void initImpl() /*-{
     var token = '';
@@ -75,8 +76,7 @@ class HistoryImplSafari extends HistoryImplStandard {
     }
 
     @com.google.gwt.user.client.impl.HistoryImpl::setToken(Ljava/lang/String;)(token);
-
-    @com.google.gwt.user.client.impl.HistoryImpl::fireHistoryChangedImpl(Ljava/lang/String;)($wnd.__gwt_historyToken);
+    this.@com.google.gwt.user.client.impl.HistoryImpl::fireHistoryChangedImpl(Ljava/lang/String;)($wnd.__gwt_historyToken);
   }-*/;
 
   private native void newNativeUpdate(String historyToken) /*-{

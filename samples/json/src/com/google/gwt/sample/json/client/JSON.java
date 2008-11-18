@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.json.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -28,11 +30,9 @@ import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
-import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Set;
 
@@ -73,8 +73,8 @@ public class JSON {
   /*
    * Class for handling the fetch button's click event.
    */
-  private class SearchButtonClickListener implements ClickListener {
-    public void onClick(Widget sender) {
+  private class SearchButtonHandler implements ClickHandler {
+    public void onClick(ClickEvent event) {
       jsonTree.setVisible(false);
       doFetchURL();
     }
@@ -84,8 +84,11 @@ public class JSON {
    * Default URL to use to fetch JSON objects. Note that the contents of this
    * JSON result were as a result of requesting the following URL:
    * 
-   * http://api.search.yahoo.com/ImageSearchService/V1/imageSearch?appid=YahooDemo&query=potato&results=2&output=json
    * 
+   * 
+   * 
+   * http://api.search.yahoo.com/ImageSearchService/V1/imageSearch?appid=YahooDemo
+   * &query=potato&results=2&output=json
    */
   private static final String DEFAULT_SEARCH_URL = "search-results.js";
 
@@ -206,7 +209,7 @@ public class JSON {
   private void initializeMainForm() {
     searchButton.setStyleName("JSON-SearchButton");
     searchButton.setText(SEARCH_BUTTON_DEFAULT_TEXT);
-    searchButton.addClickListener(new SearchButtonClickListener());
+    searchButton.addClickHandler(new SearchButtonHandler());
 
     // Avoids showing an "empty" cell
     jsonTree.setVisible(false);

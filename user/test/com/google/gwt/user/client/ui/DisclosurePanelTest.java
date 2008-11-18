@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Timer;
@@ -22,6 +25,7 @@ import com.google.gwt.user.client.Timer;
 /**
  * Tests core functionality of {@link DisclosurePanel}.
  */
+@SuppressWarnings("deprecation")
 public class DisclosurePanelTest extends GWTTestCase {
   private static final int OPEN = 0;
 
@@ -43,7 +47,7 @@ public class DisclosurePanelTest extends GWTTestCase {
         "none"));
 
     panel.setOpen(true);
-    
+
     // Allow the animation time to finish
     Timer t = new Timer() {
       @Override
@@ -75,9 +79,22 @@ public class DisclosurePanelTest extends GWTTestCase {
         DOM.getParent(header.getElement()));
   }
 
+  public void testEvents() {
+    final DisclosurePanel panel = createTestPanel();
+    assertEquals(1, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+    panel.addCloseHandler(new CloseHandler<DisclosurePanel>() {
+
+      public void onClose(CloseEvent<DisclosurePanel> event) {
+        // for now nothing.
+      }
+    });
+    assertEquals(2, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+  }
+
   /**
    * Test to ensure that event handler dispatch function appropriately.
    */
+  @SuppressWarnings("deprecation")
   public void testEventHandlers() {
 
     final boolean[] aDidFire = new boolean[2];
@@ -108,7 +125,11 @@ public class DisclosurePanelTest extends GWTTestCase {
 
     panel.addEventHandler(handleA);
     panel.addEventHandler(handleB);
+    // There is one to begin with.
+    assertEquals(3, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+    assertEquals(3, panel.getHandlers().getHandlerCount(OpenEvent.getType()));
 
+    
     panel.setOpen(true);
     // We expect onOpen to fire and onClose to not fire.
     assertTrue(aDidFire[OPEN] && bDidFire[OPEN] && !aDidFire[CLOSE]
@@ -124,12 +145,17 @@ public class DisclosurePanelTest extends GWTTestCase {
     aDidFire[OPEN] = bDidFire[CLOSE] = false;
 
     panel.removeEventHandler(handleB);
+    assertEquals(2, panel.getHandlers().getHandlerCount(OpenEvent.getType()));
+    assertEquals(2, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+
 
     panel.setOpen(true);
     panel.setOpen(false);
     // We expect a to have fired both events, and b to have fired none.
-    assertTrue(aDidFire[OPEN] && aDidFire[CLOSE] && !bDidFire[OPEN]
-        && !bDidFire[CLOSE]);
+    assertTrue(aDidFire[OPEN]);
+    assertTrue(aDidFire[CLOSE]);
+    assertTrue(!bDidFire[OPEN]);
+    assertTrue(!bDidFire[CLOSE]);
   }
 
   private DisclosurePanel createTestPanel() {

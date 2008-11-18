@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.showcase.client.content.widgets;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
@@ -22,7 +24,6 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -86,8 +87,8 @@ public class CwBasicButton extends ContentWidget {
 
     // Add a normal button
     Button normalButton = new Button(constants.cwBasicButtonNormal(),
-        new ClickListener() {
-          public void onClick(Widget sender) {
+        new ClickHandler() {
+          public void onClick(ClickEvent event) {
             Window.alert(constants.cwBasicButtonClickMessage());
           }
         });

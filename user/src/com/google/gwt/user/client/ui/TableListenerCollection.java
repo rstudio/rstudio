@@ -23,6 +23,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TableListener}.
  */
+@Deprecated
 public class TableListenerCollection extends ArrayList<TableListener> {
 
   /**
@@ -32,6 +33,7 @@ public class TableListenerCollection extends ArrayList<TableListener> {
    * @param row the row of the cell being clicked
    * @param cell the index of the cell being clicked
    */
+  @Deprecated
   public void fireCellClicked(SourcesTableEvents sender, int row, int cell) {
     for (TableListener listener : this) {
       listener.onCellClicked(sender, row, cell);

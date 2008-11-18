@@ -167,7 +167,7 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
 
       // Dispatch the event.
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
     };
 
@@ -187,13 +187,13 @@ public class RichTextAreaImplSafari extends RichTextAreaImplStandard {
     // there interferes with focus.
     elem.onfocus = function(evt) {
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
     };
 
     elem.onblur = function(evt) {
       if (elem.__listener) {
-        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
     };
   }-*/;

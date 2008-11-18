@@ -25,11 +25,12 @@ import java.util.ArrayList;
  * This subclass of {@link ArrayList} assumes that all objects added to it will
  * be of type {@link com.google.gwt.user.client.ui.MouseWheelListener}.
  */
+@Deprecated
 public class MouseWheelListenerCollection extends ArrayList<MouseWheelListener> {
 
   /**
    * Fires a mouse wheel event to all listeners.
-   *
+   * 
    * @param sender the widget sending the event
    * @param velocity the velocity information for the event
    */
@@ -41,7 +42,7 @@ public class MouseWheelListenerCollection extends ArrayList<MouseWheelListener> 
 
   /**
    * A helper for widgets that source mouse events.
-   *
+   * 
    * @param sender the widget sending the event
    * @param event the {@link Event} received by the widget
    */

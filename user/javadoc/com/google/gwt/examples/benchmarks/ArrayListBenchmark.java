@@ -59,6 +59,7 @@ public class ArrayListBenchmark extends Benchmark {
      * 
      * @return a not <code>null</code> description.
      */
+    @Override
     public String toString() {
       return label;
     }
@@ -77,6 +78,7 @@ public class ArrayListBenchmark extends Benchmark {
 
   int index = 0;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
