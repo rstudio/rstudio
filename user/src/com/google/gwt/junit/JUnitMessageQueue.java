@@ -88,6 +88,50 @@ public class JUnitMessageQueue {
   }
 
   /**
+   * Gets a human-readable string.
+   * @return Fetches a human-readable representation of the current test object 
+   */
+  public String getCurrentTestName() {
+    if (currentTest == null) {
+      return "(no test)";
+    }
+    return currentTest.toString();
+  }
+
+  /**
+   * Returns a human-formatted message identifying what clients have connected
+   * but have not yet reported results for this test.  It is used in a timeout
+   * condition, to identify what we're still waiting on.
+   * 
+   * @return human readable message
+   */
+  public String getWorkingClients() {
+    synchronized (clientStatusesLock) {
+      StringBuilder buf = new StringBuilder();
+      int itemCount = 0;
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        if (clientStatus.hasRequestedCurrentTest 
+            && clientStatus.currentTestResults == null) {
+          if (itemCount > 0) {
+            buf.append(", ");
+          }
+          buf.append(clientStatus.clientId);
+          ++itemCount;
+        }
+      }
+      int difference = numClients - itemCount;
+      if (difference > 0) {
+        if (itemCount > 0) {
+          buf.append('\n');
+        }
+        buf.append(difference + 
+            " other client(s) haven't responded back to JUnitShell since the start of the test.");
+      }
+      return buf.toString();
+    }
+  }
+
+  /**
    * Called by the servlet to query for for the next method to test.
    * 
    * @param timeout how long to wait for an answer
