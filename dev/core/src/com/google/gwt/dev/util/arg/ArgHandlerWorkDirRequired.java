@@ -20,30 +20,27 @@ import com.google.gwt.util.tools.ArgHandlerDir;
 import java.io.File;
 
 /**
- * Argument handler for processing the output directory flag.
+ * Argument handler for processing a required work directory.
  */
-public final class ArgHandlerWorkDir extends ArgHandlerDir {
-
-  public static final String GWT_TMP_DIR = "gwt-tmp";
+public final class ArgHandlerWorkDirRequired extends ArgHandlerDir {
 
   private final OptionWorkDir option;
 
-  public ArgHandlerWorkDir(OptionWorkDir option) {
+  public ArgHandlerWorkDirRequired(OptionWorkDir option) {
     this.option = option;
   }
 
-  public String[] getDefaultArgs() {
-    return new String[] {
-        "-workDir",
-        new File(System.getProperty("java.io.tmpdir"), GWT_TMP_DIR).getAbsolutePath()};
-  }
-
   public String getPurpose() {
-    return "The compiler work directory (must be writeable; defaults to system temp dir)";
+    return "The compiler work directory (must be writeable)";
   }
 
   public String getTag() {
     return "-workDir";
+  }
+
+  @Override
+  public boolean isRequired() {
+    return true;
   }
 
   @Override

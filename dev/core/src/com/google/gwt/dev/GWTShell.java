@@ -43,7 +43,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
-import com.google.gwt.dev.util.arg.ArgHandlerWorkDir;
+import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerFlag;
@@ -439,7 +439,7 @@ public class GWTShell extends ToolBase {
     registerHandler(new ArgHandlerLogLevel(options));
 
     registerHandler(new ArgHandlerGenDir(options));
-    registerHandler(new ArgHandlerWorkDir(options));
+    registerHandler(new ArgHandlerWorkDirOptional(options));
 
     if (!noURLs) {
       registerHandler(new ArgHandlerStartupURLsExtra());

@@ -21,10 +21,14 @@ import com.google.gwt.dev.CompilePerms.CompilePermsOptionsImpl;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
+import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
@@ -34,6 +38,10 @@ public class GWTCompiler {
   static final class ArgProcessor extends Precompile.ArgProcessor {
     public ArgProcessor(CompilerOptions options) {
       super(options);
+
+      // Override the ArgHandlerWorkDirRequired in the super class.
+      registerHandler(new ArgHandlerWorkDirOptional(options));
+
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerOutDir(options));
     }
@@ -113,21 +121,38 @@ public class GWTCompiler {
     } else {
       logger = logger.branch(TreeLogger.INFO, "Compiling module "
           + options.getModuleName());
-      if (new Precompile(options).run(logger)) {
-        /*
-         * TODO: use the in-memory result of Precompile to run CompilePerms
-         * instead of serializing through the file system.
-         */
-        CompilePermsOptionsImpl permsOptions = new CompilePermsOptionsImpl();
-        permsOptions.copyFrom(options);
-        if (new CompilePerms(permsOptions).run(logger)) {
-          if (new Link(options).run(logger)) {
-            logger.log(TreeLogger.INFO, "Compilation succeeded");
-            return true;
+
+      boolean tempWorkDir = false;
+      try {
+        if (options.getWorkDir() == null) {
+          options.setWorkDir(Utility.makeTemporaryDirectory(null, "gwtc"));
+          tempWorkDir = true;
+        }
+
+        if (new Precompile(options).run(logger)) {
+          /*
+           * TODO: use the in-memory result of Precompile to run CompilePerms
+           * instead of serializing through the file system.
+           */
+          CompilePermsOptionsImpl permsOptions = new CompilePermsOptionsImpl();
+          permsOptions.copyFrom(options);
+          if (new CompilePerms(permsOptions).run(logger)) {
+            if (new Link(options).run(logger)) {
+              logger.log(TreeLogger.INFO, "Compilation succeeded");
+              return true;
+            }
           }
         }
+
+        logger.log(TreeLogger.ERROR, "Compilation failed");
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to create compiler work directory", e);
+      } finally {
+        if (tempWorkDir) {
+          Util.recursiveDelete(options.getWorkDir(), false);
+        }
       }
-      logger.log(TreeLogger.ERROR, "Compilation failed");
       return false;
     }
   }

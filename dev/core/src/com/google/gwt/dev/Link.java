@@ -37,8 +37,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Performs the first phase of compilation, generating the set of permutations
- * to compile, and a ready-to-compile AST.
+ * Performs the last phase of compilation, merging the compilation outputs.
  */
 public class Link {
   /**
@@ -231,8 +230,22 @@ public class Link {
     ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
         jsFiles);
     if (artifacts != null) {
+      boolean preexistingExtraDir = moduleExtraDir.exists();
       linkerContext.produceOutputDirectory(branch, artifacts, moduleOutDir,
           moduleExtraDir);
+
+      /*
+       * Warn on legacy extra directory, but only if: 1) It didn't exist before.
+       * 2) We just created it.
+       */
+      if (!preexistingExtraDir && moduleExtraDir.exists()
+          && options.getExtraDir() == null) {
+        branch.log(TreeLogger.WARN, "Non-deployed artificats are in '"
+            + moduleExtraDir.getPath()
+            + "', within the deployable output directory '"
+            + options.getOutDir().getPath()
+            + "'; use -extra to relocate the auxilliary files");
+      }
       branch.log(TreeLogger.INFO, "Link succeeded");
       return true;
     }
@@ -244,9 +257,17 @@ public class Link {
     module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
     moduleOutDir = new File(options.getOutDir(), module.getDeployTo());
     Util.recursiveDelete(moduleOutDir, true);
-    if (options.getExtraDir() != null) {
+    if (options.getExtraDir() == null) {
+      /*
+       * Legacy behavior for backwards compatibility; if the extra directory is
+       * not specified, make it a sibling to the deploy directory, with -aux.
+       */
+      String deployDir = module.getDeployTo();
+      deployDir = deployDir.substring(0, deployDir.length() - 1) + "-aux";
+      moduleExtraDir = new File(options.getOutDir(), deployDir);
+    } else {
       moduleExtraDir = new File(options.getExtraDir(), module.getDeployTo());
-      Util.recursiveDelete(moduleExtraDir, false);
     }
+    Util.recursiveDelete(moduleExtraDir, true);
   }
 }

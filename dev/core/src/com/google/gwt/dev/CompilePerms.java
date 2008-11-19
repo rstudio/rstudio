@@ -29,8 +29,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * Performs the first phase of compilation, generating the set of permutations
- * to compile, and a ready-to-compile AST.
+ * Performs the second phase of compilation, converting the Precompile's AST into
+ * JavaScript outputs.
  */
 public class CompilePerms {
 
