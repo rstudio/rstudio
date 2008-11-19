@@ -34,11 +34,12 @@ import com.google.gwt.dev.util.arg.OptionOutDir;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Performs the first phase of compilation, generating the set of permutations
- * to compile, and a ready-to-compile AST.
+ * Performs the last phase of compilation, merging the compilation outputs.
  */
 public class Link {
   /**
@@ -46,6 +47,20 @@ public class Link {
    */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
       OptionOutDir {
+    
+    /**
+     * A born-deprecated method to enact "legacy" -aux support if -extra is not
+     * specified.  This method will <i>either</i> return the same as 
+     * {@link OptionExtraDir#getExtraDir()}, if -extra is specified, <i>or</i>
+     * return the legacy equivalent <i>outputDir</i>/<i>ModuleName</i>-aux.  In
+     * this second case, it will also emit a warning to direct people to -extra,
+     * and flag the fact that non-deployable bits are in what should be the 
+     * deployable output directory. 
+     *
+     * @return pathname for extra files
+     */
+    @Deprecated
+    File getLegacyExtraDir(TreeLogger logger, ModuleDef module);
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -69,6 +84,7 @@ public class Link {
 
     private File extraDir;
     private File outDir;
+    private Set<File> alreadyWarned = new HashSet<File>();
 
     public LinkOptionsImpl() {
     }
@@ -85,6 +101,26 @@ public class Link {
 
     public File getExtraDir() {
       return extraDir;
+    }
+
+    public File getLegacyExtraDir(TreeLogger logger, ModuleDef module) {
+      // safety that we need this at all...
+      if (extraDir != null) {
+        return extraDir;
+      }
+      // okay, figure the old location, by module...
+      String deployDir = module.getDeployTo();
+      File moduleExtraDir = new File(outDir, 
+          deployDir.substring(0, deployDir.length() - 1) + "-aux");
+      // and warn the user about it, but only if it'd be new news.
+      if (!alreadyWarned.contains(moduleExtraDir)) {
+        logger.log(TreeLogger.WARN, "Non-deployed artificats will be in " 
+            + moduleExtraDir.getPath()
+            + ", inside deployable output directory " + outDir.getPath()
+            + ".  Use -extra to relocate the auxilliary files.");
+        alreadyWarned.add(moduleExtraDir);
+      }
+      return moduleExtraDir;
     }
 
     public File getOutDir() {
@@ -117,6 +153,10 @@ public class Link {
      */
     final LinkOptions options = new LinkOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
+      if (options.getWorkDir() == null) {
+        System.err.println("The -workDir is required for the Link phase.");
+        System.exit(1);
+      }
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new Link(options).run(logger);
@@ -244,9 +284,12 @@ public class Link {
     module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
     moduleOutDir = new File(options.getOutDir(), module.getDeployTo());
     Util.recursiveDelete(moduleOutDir, true);
-    if (options.getExtraDir() != null) {
+    if (options.getExtraDir() == null) {
+      // legacy location
+      moduleExtraDir = options.getLegacyExtraDir(logger, module);
+    } else {
       moduleExtraDir = new File(options.getExtraDir(), module.getDeployTo());
-      Util.recursiveDelete(moduleExtraDir, false);
     }
+    Util.recursiveDelete(moduleExtraDir, false);
   }
 }

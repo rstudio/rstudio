@@ -47,8 +47,10 @@ import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
+import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedMap;
@@ -66,6 +68,7 @@ public class Precompile {
    */
   public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
       OptionGenDir, OptionValidateOnly {
+    boolean ensureWorkDir() throws IOException;
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -104,6 +107,24 @@ public class Precompile {
 
       setGenDir(other.getGenDir());
       setValidateOnly(other.isValidateOnly());
+    }
+
+    /**
+     * Checks that the workDir is set, or creates one if not using a temporary
+     * name.
+     * @returns true if intervention was required, i.e. we created a new directory
+     */
+    public boolean ensureWorkDir() throws IOException {
+      File workDir = super.getWorkDir();
+      if (workDir == null) {
+        // user didn't give us one, make one in a random location
+        workDir = Utility.makeTemporaryDirectory(null, "work-");
+        System.err.println("Created new work directory at " + workDir.getAbsolutePath()
+            + ", which will be removed on exit.  (Use -workDir DIRNAME to retain.)");
+        super.setWorkDir(workDir);
+        return true;
+      }
+      return false;
     }
 
     public File getGenDir() {
@@ -226,6 +247,10 @@ public class Precompile {
      */
     final PrecompileOptions options = new PrecompileOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
+      if (options.getWorkDir() == null) {
+        System.err.println("The -workDir is required for the Precompile phase.");
+        System.exit(1);
+      }
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new Precompile(options).run(logger);

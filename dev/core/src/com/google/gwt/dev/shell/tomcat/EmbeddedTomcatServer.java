@@ -174,8 +174,11 @@ public class EmbeddedTomcatServer {
     // Tell Tomcat its base directory so that it won't complain.
     //
     String catBase = System.getProperty("catalina.base");
-    if (catBase == null) {
-      catBase = generateDefaultCatalinaBase(logger, topWorkDir);
+    if (catBase == null || !(new File(catBase)).exists()) {
+      if (catBase == null) {
+        catBase = topWorkDir.getAbsolutePath() + "tomcat"; 
+      }
+      generateDefaultCatalinaBase(logger, new File(catBase));
       System.setProperty("catalina.base", catBase);
     }
 
@@ -328,10 +331,10 @@ public class EmbeddedTomcatServer {
    * Extracts a valid catalina base instance from the classpath. Does not
    * overwrite any existing files.
    */
-  private String generateDefaultCatalinaBase(TreeLogger logger, File workDir) {
+  private void generateDefaultCatalinaBase(TreeLogger logger, File catBase) {
     logger = logger.branch(
         TreeLogger.TRACE,
-        "Property 'catalina.base' not specified; checking for a standard catalina base image instead",
+        "Property 'catalina.base' not specified or not present; checking for a standard catalina base image instead",
         null);
 
     // Recursively copies out files and directories
@@ -346,7 +349,6 @@ public class EmbeddedTomcatServer {
       caught = e;
     }
 
-    File catBase = new File(workDir, "tomcat");
     if (resourceMap == null || resourceMap.isEmpty()) {
       logger.log(TreeLogger.WARN, "Could not find " + tomcatEtcDir, caught);
     } else {
@@ -354,8 +356,6 @@ public class EmbeddedTomcatServer {
         copyFileNoOverwrite(logger, entry.getKey(), entry.getValue(), catBase);
       }
     }
-
-    return catBase.getAbsolutePath();
   }
 
   /**

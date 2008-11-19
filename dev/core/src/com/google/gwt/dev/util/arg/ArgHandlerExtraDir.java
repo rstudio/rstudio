@@ -20,7 +20,8 @@ import com.google.gwt.util.tools.ArgHandlerDir;
 import java.io.File;
 
 /**
- * Argument handler for processing the extra directory option.
+ * Argument handler for processing the extra directory option.  If not specified,
+ * legacy behavior is to write private artifacts to ${outdir}/Module-aux.
  */
 public final class ArgHandlerExtraDir extends ArgHandlerDir {
 

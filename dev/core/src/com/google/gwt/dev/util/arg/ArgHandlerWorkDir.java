@@ -20,7 +20,10 @@ import com.google.gwt.util.tools.ArgHandlerDir;
 import java.io.File;
 
 /**
- * Argument handler for processing the output directory flag.
+ * Argument handler for processing the output directory flag.  If not specified,
+ * the GWTCompiler and Precompile classes will create one (under 
+ * ${java.io.tmpdir}/GWT_TMP_DIR) with a guaranteed-unique name; the other tasks
+ * will fail.
  */
 public final class ArgHandlerWorkDir extends ArgHandlerDir {
 
@@ -32,14 +35,8 @@ public final class ArgHandlerWorkDir extends ArgHandlerDir {
     this.option = option;
   }
 
-  public String[] getDefaultArgs() {
-    return new String[] {
-        "-workDir",
-        new File(System.getProperty("java.io.tmpdir"), GWT_TMP_DIR).getAbsolutePath()};
-  }
-
   public String getPurpose() {
-    return "The compiler work directory (must be writeable; defaults to system temp dir)";
+    return "The compiler work directory (must be writeable; defaults to random name under system temp dir)";
   }
 
   public String getTag() {
