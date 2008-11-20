@@ -42,9 +42,12 @@ import java.util.Iterator;
  * {@link com.google.gwt.user.client.ui.HasWidgets}.
  * </p>
  * 
- * <h3>CSS Style Rules</h3> <ul class='css'> <li>.gwt-TabPanel { the tab panel
- * itself }</li> <li>.gwt-TabPanelBottom { the bottom section of the tab panel
- * (the deck containing the widget) }</li> </ul>
+ * <h3>CSS Style Rules</h3> 
+ * <ul class='css'> 
+ * <li>.gwt-TabPanel { the tab panel itself }</li> 
+ * <li>.gwt-TabPanelBottom { the bottom section of the tab panel
+ * (the deck containing the widget) }</li> 
+ * </ul>
  * 
  * <p>
  * <h3>Example</h3>

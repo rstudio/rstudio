@@ -89,6 +89,10 @@ public final class DisclosurePanel extends Composite implements
         run(ANIMATION_DURATION);
       } else {
         panel.contentWrapper.setVisible(panel.isOpen);
+        if (panel.isOpen) {
+          // Special treatment on the visible case to ensure LazyPanel works 
+          panel.getContent().setVisible(true);
+        }
       }
     }
 
@@ -107,7 +111,9 @@ public final class DisclosurePanel extends Composite implements
       super.onStart();
       if (opening) {
         curPanel.contentWrapper.setVisible(true);
-      }
+        // Special treatment on the visible case to ensure LazyPanel works 
+        curPanel.getContent().setVisible(true);
+     }
     }
 
     @Override
