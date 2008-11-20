@@ -12,6 +12,7 @@ Merges:
 /releases/1.6/@r3878:3944 was merged (r3945) into trunk, skipping c3878
 /releases/1.6/@r3944:4025 was merged (r4032) into trunk
 /branches/1_6_clean_events@3936:4088 was merged (r4092) into this branch
+/releases/1.5/@r3863:4093 was merged (r????) into this branch
 
 ---> The next merge into trunk will be 4025:HEAD; however there will be great conflict between trunk:c4118 and this branch's c4120.  Highly suggested that the next merge to trunk "roll-back" c4118 in trunk before merging in 1.6.
 
