@@ -57,10 +57,42 @@ public final class UnifiedAst implements Serializable {
     }
   }
 
-  /**
-   * Estimated AST memory usage.
-   */
-  private long astMemoryUsage;
+  private static AST deserializeAst(byte[] serializedAst) {
+    try {
+      PerfLogger.start("deserialize");
+      ByteArrayInputStream bais = new ByteArrayInputStream(serializedAst);
+      ObjectInputStream is;
+      is = new ObjectInputStream(bais);
+      JProgram jprogram = (JProgram) is.readObject();
+      JsProgram jsProgram = (JsProgram) is.readObject();
+      return new AST(jprogram, jsProgram);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Should be impossible for memory based streams", e);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(
+          "Should be impossible when deserializing in process", e);
+    } finally {
+      PerfLogger.end();
+    }
+  }
+
+  private static byte[] serializeAst(AST ast) {
+    try {
+      PerfLogger.start("serialize");
+      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+      ObjectOutputStream os = new ObjectOutputStream(baos);
+      os.writeObject(ast.getJProgram());
+      os.writeObject(ast.getJsProgram());
+      os.close();
+      return baos.toByteArray();
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Should be impossible for memory based streams", e);
+    } finally {
+      PerfLogger.end();
+    }
+  }
 
   /**
    * The original AST; nulled out once consumed (by the first call to
@@ -84,31 +116,17 @@ public final class UnifiedAst implements Serializable {
   private final SortedSet<String> rebindRequests;
 
   /**
-   * The serialized form of savedAst.
+   * The serialized AST.
    */
   private byte[] serializedAst;
 
-  /**
-   * If <code>true</code>, only one permutation will be run, so we don't need
-   * to serialize our AST (unless this whole object is about to be serialized).
-   */
-  private transient boolean singlePermutation;
-
   public UnifiedAst(JJSOptions options, AST initialAst,
-      boolean singlePermutation, long astMemoryUsage, Set<String> rebindRequests) {
+      boolean singlePermutation, Set<String> rebindRequests) {
     this.options = new JJSOptionsImpl(options);
     this.initialAst = initialAst;
-    this.singlePermutation = singlePermutation;
-    this.astMemoryUsage = astMemoryUsage;
     this.rebindRequests = Collections.unmodifiableSortedSet(new TreeSet<String>(
         rebindRequests));
-  }
-
-  /**
-   * Returns a rough estimate of how much memory an AST will take up.
-   */
-  public long getAstMemoryUsage() {
-    return astMemoryUsage;
+    this.serializedAst = singlePermutation ? null : serializeAst(initialAst);
   }
 
   /**
@@ -128,39 +146,16 @@ public final class UnifiedAst implements Serializable {
   AST getFreshAst() {
     synchronized (myLockObject) {
       if (initialAst != null) {
-        if (!singlePermutation && serializedAst == null) {
-          // Must preserve a serialized copy for future calls.
-          serializeAst();
-        }
         AST result = initialAst;
         initialAst = null;
         return result;
       } else {
         if (serializedAst == null) {
-          throw new IllegalStateException("No serialized AST was cached.");
+          throw new IllegalStateException(
+              "No serialized AST was cached and AST was already consumed.");
         }
-        return deserializeAst();
+        return deserializeAst(serializedAst);
       }
-    }
-  }
-
-  private AST deserializeAst() {
-    try {
-      PerfLogger.start("deserialize");
-      ByteArrayInputStream bais = new ByteArrayInputStream(serializedAst);
-      ObjectInputStream is;
-      is = new ObjectInputStream(bais);
-      JProgram jprogram = (JProgram) is.readObject();
-      JsProgram jsProgram = (JsProgram) is.readObject();
-      return new AST(jprogram, jsProgram);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Should be impossible for memory based streams", e);
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(
-          "Should be impossible when deserializing in process", e);
-    } finally {
-      PerfLogger.end();
     }
   }
 
@@ -172,35 +167,17 @@ public final class UnifiedAst implements Serializable {
     return this;
   }
 
-  private void serializeAst() {
-    try {
-      assert (initialAst != null);
-      assert (serializedAst == null);
-      PerfLogger.start("serialize");
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      ObjectOutputStream os = new ObjectOutputStream(baos);
-      os.writeObject(initialAst.getJProgram());
-      os.writeObject(initialAst.getJsProgram());
-      os.close();
-      serializedAst = baos.toByteArray();
-
-      // Very rough heuristic.
-      astMemoryUsage = Math.max(astMemoryUsage, serializedAst.length * 4);
-    } catch (IOException e) {
-      throw new RuntimeException(
-          "Should be impossible for memory based streams", e);
-    } finally {
-      PerfLogger.end();
-    }
-  }
-
   /**
    * Force byte serialization of AST before writing.
    */
   private Object writeReplace() {
-    synchronized (myLockObject) {
-      if (serializedAst == null) {
-        serializeAst();
+    if (serializedAst == null) {
+      synchronized (myLockObject) {
+        if (initialAst == null) {
+          throw new IllegalStateException(
+              "No serialized AST was cached and AST was already consumed.");
+        }
+        serializedAst = serializeAst(initialAst);
       }
     }
     return this;

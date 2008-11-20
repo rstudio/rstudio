@@ -255,8 +255,6 @@ public class JavaToJavaScriptCompiler {
     JsProgram jsProgram = new JsProgram();
 
     try {
-      long usedMemoryBefore = singlePermutation ? 0 : getUsedMemory();
-
       /*
        * (1) Build a flattened map of TypeDeclarations => JType. The resulting
        * map contains entries for all reference types. BuildTypeMap also parses
@@ -275,10 +273,6 @@ public class JavaToJavaScriptCompiler {
       // (2) Create our own Java AST from the JDT AST.
       GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
           options.isEnableAssertions());
-
-      long usedMemoryAfter = singlePermutation ? 0 : getUsedMemory();
-      long memoryDelta = usedMemoryAfter - usedMemoryBefore;
-      long astMemoryUsage = (long) (memoryDelta * 1.5);
 
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);
@@ -329,7 +323,7 @@ public class JavaToJavaScriptCompiler {
       RecordRebinds.exec(jprogram, rebindRequests);
 
       return new UnifiedAst(options, new AST(jprogram, jsProgram),
-          singlePermutation, astMemoryUsage, rebindRequests);
+          singlePermutation, rebindRequests);
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
     } finally {
@@ -563,14 +557,6 @@ public class JavaToJavaScriptCompiler {
       }
     }
     return null;
-  }
-
-  private static long getUsedMemory() {
-    System.gc();
-    long used = Runtime.getRuntime().totalMemory()
-        - Runtime.getRuntime().freeMemory();
-    assert (used > 0);
-    return used;
   }
 
   private static UnableToCompleteException logAndTranslateException(
