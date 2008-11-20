@@ -107,6 +107,16 @@ public class Link {
     return doLink(logger, linkerContext, precompilation, jsFiles);
   }
 
+  public static void link(TreeLogger logger, ModuleDef module,
+      Precompilation precompilation, File[] jsFiles, File outDir, File extrasDir)
+      throws UnableToCompleteException {
+    StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
+        module, precompilation.getUnifiedAst().getOptions());
+    ArtifactSet artifacts = doLink(logger, linkerContext, precompilation,
+        jsFiles);
+    doProduceOutput(logger, artifacts, linkerContext, module, outDir, extrasDir);
+  }
+
   public static void main(String[] args) {
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
@@ -147,6 +157,48 @@ public class Link {
     return linkerContext.invokeLink(logger);
   }
 
+  private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
+      StandardLinkerContext linkerContext, ModuleDef module, File outDir,
+      File extraDir) throws UnableToCompleteException {
+    boolean warnOnExtra = false;
+    File moduleExtraDir;
+    if (extraDir == null) {
+      /*
+       * Legacy behavior for backwards compatibility; if the extra directory is
+       * not specified, make it a sibling to the deploy directory, with -aux.
+       */
+      String deployDir = module.getDeployTo();
+      deployDir = deployDir.substring(0, deployDir.length() - 1) + "-aux";
+      moduleExtraDir = new File(outDir, deployDir);
+
+      /*
+       * Only warn when we create a new legacy extra dir.
+       */
+      warnOnExtra = !moduleExtraDir.exists();
+    } else {
+      moduleExtraDir = new File(extraDir, module.getDeployTo());
+    }
+
+    File moduleOutDir = new File(outDir, module.getDeployTo());
+    Util.recursiveDelete(moduleOutDir, true);
+    Util.recursiveDelete(moduleExtraDir, true);
+    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir,
+        moduleExtraDir);
+
+    /*
+     * Warn on legacy extra directory, but only if: 1) It didn't exist before.
+     * 2) We just created it.
+     */
+    if (warnOnExtra && moduleExtraDir.exists()) {
+      logger.log(
+          TreeLogger.WARN,
+          "Non-public artificats were produced in '"
+              + moduleExtraDir.getAbsolutePath()
+              + "' within the public output folder; use -extra to specify an alternate location");
+    }
+    logger.log(TreeLogger.INFO, "Link succeeded");
+  }
+
   private static void finishPermuation(TreeLogger logger, Permutation perm,
       File jsFile, StandardLinkerContext linkerContext)
       throws UnableToCompleteException {
@@ -174,16 +226,6 @@ public class Link {
 
   private ModuleDef module;
 
-  /**
-   * This is the output directory for private files.
-   */
-  private File moduleExtraDir;
-
-  /**
-   * This is the output directory for public files.
-   */
-  private File moduleOutDir;
-
   private final LinkOptionsImpl options;
 
   public Link(LinkOptions options) {
@@ -191,7 +233,8 @@ public class Link {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    init(logger);
+    module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
+
     File precompilationFile = new File(options.getCompilerWorkDir(),
         Precompile.PRECOMPILATION_FILENAME);
     if (!precompilationFile.exists()) {
@@ -229,45 +272,9 @@ public class Link {
         module, precompilation.getUnifiedAst().getOptions());
     ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
         jsFiles);
-    if (artifacts != null) {
-      boolean preexistingExtraDir = moduleExtraDir.exists();
-      linkerContext.produceOutputDirectory(branch, artifacts, moduleOutDir,
-          moduleExtraDir);
 
-      /*
-       * Warn on legacy extra directory, but only if: 1) It didn't exist before.
-       * 2) We just created it.
-       */
-      if (!preexistingExtraDir && moduleExtraDir.exists()
-          && options.getExtraDir() == null) {
-        branch.log(TreeLogger.WARN, "Non-deployed artificats are in '"
-            + moduleExtraDir.getPath()
-            + "', within the deployable output directory '"
-            + options.getOutDir().getPath()
-            + "'; use -extra to relocate the auxilliary files");
-      }
-      branch.log(TreeLogger.INFO, "Link succeeded");
-      return true;
-    }
-    branch.log(TreeLogger.ERROR, "Link failed");
-    return false;
-  }
-
-  private void init(TreeLogger logger) throws UnableToCompleteException {
-    module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
-    moduleOutDir = new File(options.getOutDir(), module.getDeployTo());
-    Util.recursiveDelete(moduleOutDir, true);
-    if (options.getExtraDir() == null) {
-      /*
-       * Legacy behavior for backwards compatibility; if the extra directory is
-       * not specified, make it a sibling to the deploy directory, with -aux.
-       */
-      String deployDir = module.getDeployTo();
-      deployDir = deployDir.substring(0, deployDir.length() - 1) + "-aux";
-      moduleExtraDir = new File(options.getOutDir(), deployDir);
-    } else {
-      moduleExtraDir = new File(options.getExtraDir(), module.getDeployTo());
-    }
-    Util.recursiveDelete(moduleExtraDir, true);
+    doProduceOutput(branch, artifacts, linkerContext, module,
+        options.getOutDir(), options.getExtraDir());
+    return true;
   }
 }
