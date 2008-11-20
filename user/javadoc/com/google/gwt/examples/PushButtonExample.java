@@ -16,18 +16,18 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.PushButton;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class PushButtonExample implements EntryPoint {
 
   public void onModuleLoad() {
     // Make a new button that does something when you click it.
-    PushButton b = new PushButton("Jump", "Jump?", new ClickListener() {
-      public void onClick(Widget sender) {
+    PushButton b = new PushButton("Jump", "Jump?", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         Window.alert("Crash...");
         Window.alert("Uh Oh...");
       }

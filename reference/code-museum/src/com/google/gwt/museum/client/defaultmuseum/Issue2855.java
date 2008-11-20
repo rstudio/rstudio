@@ -15,10 +15,11 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -40,28 +41,28 @@ public class Issue2855 extends AbstractIssue {
 
     // Add buttons to call getters and setters
     Button toggleAutoHide = new Button("4. Toggle AutoHide",
-        new ClickListener() {
-          public void onClick(Widget sender) {
+        new ClickHandler() {
+          public void onClick(ClickEvent event) {
             popup.setAutoHideEnabled(!popup.isAutoHideEnabled());
           }
         });
-    Button toggleModal = new Button("3. Toggle Modal", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button toggleModal = new Button("3. Toggle Modal", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         popup.setModal(!popup.isModal());
       }
     });
-    Button isAutoHide = new Button("isAutoHide?", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button isAutoHide = new Button("isAutoHide?", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         Window.alert("AutoHide: " + popup.isAutoHideEnabled());
       }
     });
-    Button isModal = new Button("isModal?", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button isModal = new Button("isModal?", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         Window.alert("Modal: " + popup.isModal());
       }
     });
-    Button closeButton = new Button("Close", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button closeButton = new Button("Close", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         popup.hide();
       }
     });
@@ -74,13 +75,13 @@ public class Issue2855 extends AbstractIssue {
     popup.setWidget(vPanel);
 
     // Add control buttons
-    Button showPopup = new Button("1. Show Popup", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button showPopup = new Button("1. Show Popup", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         popup.center();
       }
     });
-    Button clickable = new Button("2/4. Click Me", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button clickable = new Button("2/4. Click Me", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         Window.alert("You got me!");
       }
     });

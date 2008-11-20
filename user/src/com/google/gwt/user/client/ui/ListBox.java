@@ -19,7 +19,10 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
-import com.google.gwt.user.client.Event;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * A widget that presents a list of choices to the user, either as a list box or
@@ -40,7 +43,7 @@ import com.google.gwt.user.client.Event;
  * </p>
  */
 public class ListBox extends FocusWidget implements SourcesChangeEvents,
-    HasName {
+    HasChangeHandlers, HasName {
 
   private static final int INSERT_AT_END = -1;
 
@@ -52,6 +55,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * {@link RootPanel#detachNow(Widget)}.
    * 
    * @param element the element to be wrapped
+   * @return list box
    */
   public static ListBox wrap(Element element) {
     // Assert that the element is attached.
@@ -65,8 +69,6 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
     return listBox;
   }
-
-  private ChangeListenerCollection changeListeners;
 
   /**
    * Creates an empty list box in single selection mode.
@@ -97,12 +99,13 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     SelectElement.as(element);
   }
 
+  public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+    return addDomHandler(handler, ChangeEvent.getType());
+  }
+
+  @Deprecated
   public void addChangeListener(ChangeListener listener) {
-    if (changeListeners == null) {
-      changeListeners = new ChangeListenerCollection();
-      sinkEvents(Event.ONCHANGE);
-    }
-    changeListeners.add(listener);
+    addChangeHandler(new ListenerWrapper.Change(listener));
   }
 
   /**
@@ -210,9 +213,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
 
   /**
    * Inserts an item into the list box, specifying an initial value for the
-   * item. If the index is less than zero, or greater than or equal to
-   * the length of the list, then the item will be appended to the end of
-   * the list.
+   * item. If the index is less than zero, or greater than or equal to the
+   * length of the list, then the item will be appended to the end of the list.
    * 
    * @param item the text of the item to be inserted
    * @param value the item's value, to be submitted if it is part of a
@@ -254,21 +256,9 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     return getSelectElement().isMultiple();
   }
 
-  @Override
-  public void onBrowserEvent(Event event) {
-    if (event.getTypeInt() == Event.ONCHANGE) {
-      if (changeListeners != null) {
-        changeListeners.fireChange(this);
-      }
-    } else {
-      super.onBrowserEvent(event);
-    }
-  }
-
+  @Deprecated
   public void removeChangeListener(ChangeListener listener) {
-    if (changeListeners != null) {
-      changeListeners.remove(listener);
-    }
+    ListenerWrapper.Change.remove(this, listener);
   }
 
   /**
@@ -287,7 +277,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * 
    * <p>
    * Note that setting the selection programmatically does <em>not</em> cause
-   * the {@link ChangeListener#onChange(Widget)} event to be fired.
+   * the {@link ChangeHandler#onChange(ChangeEvent)} event to be fired.
    * </p>
    * 
    * @param index the index of the item to be selected or unselected
@@ -334,13 +324,13 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
   /**
    * Sets the currently selected index.
    * 
-   * After calling this method, only the specified item in the list will
-   * remain selected.  For a ListBox with multiple selection enabled, see
+   * After calling this method, only the specified item in the list will remain
+   * selected. For a ListBox with multiple selection enabled, see
    * {@link #setItemSelected(int, boolean)} to select multiple items at a time.
    * 
    * <p>
    * Note that setting the selected index programmatically does <em>not</em>
-   * cause the {@link ChangeListener#onChange(Widget)} event to be fired.
+   * cause the {@link ChangeHandler#onChange(ChangeEvent)} event to be fired.
    * </p>
    * 
    * @param index the index of the item to be selected
@@ -359,7 +349,7 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   public void setValue(int index, String value) {
-    checkIndex(index);   
+    checkIndex(index);
     getSelectElement().getOptions().getItem(index).setValue(value);
   }
 
@@ -388,7 +378,8 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
     // Set the id of each option
     int numItems = getItemCount();
     for (int i = 0; i < numItems; i++) {
-      ensureDebugId(getSelectElement().getOptions().getItem(i), baseID, "item" + i);
+      ensureDebugId(getSelectElement().getOptions().getItem(i), baseID, "item"
+          + i);
     }
   }
 

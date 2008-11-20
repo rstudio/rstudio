@@ -15,17 +15,21 @@
  */
 package com.google.gwt.user.client.ui;
 
+import java.util.EventListener;
+
 /**
  * Event handler interface for {@link DisclosureEvent}.
  * 
  * @see DisclosurePanel
  */
-public interface DisclosureHandler {
+@Deprecated
+public interface DisclosureHandler extends EventListener {
   /**
    * Fired when the panel is closed.
    * 
    * @param event event representing this action.
    */
+  @Deprecated
   void onClose(DisclosureEvent event);
 
   /**
@@ -33,5 +37,6 @@ public interface DisclosureHandler {
    * 
    * @param event event representing this action.
    */
+  @Deprecated
   void onOpen(DisclosureEvent event);
 }

@@ -22,6 +22,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.PopupListener}.
  */
+@Deprecated
 public class PopupListenerCollection extends ArrayList<PopupListener> {
 
   /**
@@ -31,6 +32,7 @@ public class PopupListenerCollection extends ArrayList<PopupListener> {
    * @param autoClosed <code>true</code> if the popup was automatically
    *          closed; <code>false</code> if it was closed programmatically.
    */
+  @Deprecated
   public void firePopupClosed(PopupPanel sender, boolean autoClosed) {
     for (PopupListener listener : this) {
       listener.onPopupClosed(sender, autoClosed);

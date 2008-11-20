@@ -19,6 +19,7 @@ package com.google.gwt.user.client.ui;
  * An adapter to simplify keyboard event listeners that do not need all events
  * defined on the KeyboardListener interface.
  */
+@Deprecated
 public class KeyboardListenerAdapter implements KeyboardListener {
 
   public void onKeyDown(Widget sender, char keyCode, int modifiers) {

@@ -15,19 +15,17 @@
  */
 package com.google.gwt.sample.mail.client;
 
-import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.SourcesTableEvents;
-import com.google.gwt.user.client.ui.TableListener;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A composite that displays a list of emails that can be selected.
  */
-public class MailList extends Composite implements TableListener, ClickListener {
+public class MailList extends Composite implements ClickHandler {
 
   private static final int VISIBLE_EMAIL_COUNT = 10;
 
@@ -47,9 +45,9 @@ public class MailList extends Composite implements TableListener, ClickListener 
     table.setWidth("100%");
 
     // Hook up events.
-    table.addTableListener(this);
-    newerButton.addClickListener(this);
-    olderButton.addClickListener(this);
+    table.addClickHandler(this);
+    newerButton.addClickHandler(this);
+    olderButton.addClickHandler(this);
 
     // Create the 'navigation' bar at the upper-right.
     HorizontalPanel innerNavBar = new HorizontalPanel();
@@ -69,14 +67,8 @@ public class MailList extends Composite implements TableListener, ClickListener 
     update();
   }
 
-  public void onCellClicked(SourcesTableEvents sender, int row, int cell) {
-    // Select the row that was clicked (-1 to account for header row).
-    if (row > 0) {
-      selectRow(row - 1);
-    }
-  }
-
-  public void onClick(Widget sender) {
+  public void onClick(ClickEvent event) {
+    Object sender = event.getSource();
     if (sender == olderButton) {
       // Move forward a page.
       startIndex += VISIBLE_EMAIL_COUNT;
@@ -96,6 +88,12 @@ public class MailList extends Composite implements TableListener, ClickListener 
         styleRow(selectedRow, false);
         selectedRow = -1;
         update();
+      }
+    } else if (sender == table) {
+      // Select the row that was clicked (-1 to account for header row).
+      int row = table.getCellForEvent(event).getRowIndex();
+      if (row > 0) {
+        selectRow(row - 1);
       }
     }
   }

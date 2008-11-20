@@ -39,6 +39,7 @@ package com.google.gwt.user.client.ui;
  *  }
  *</pre>
  */
+@Deprecated
 public class DelegatingFocusListenerCollection extends FocusListenerCollection
     implements FocusListener {
 

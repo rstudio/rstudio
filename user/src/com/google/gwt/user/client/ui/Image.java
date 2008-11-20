@@ -19,6 +19,29 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ErrorEvent;
+import com.google.gwt.event.dom.client.ErrorHandler;
+import com.google.gwt.event.dom.client.HasAllMouseHandlers;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasErrorHandlers;
+import com.google.gwt.event.dom.client.HasLoadHandlers;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
@@ -62,8 +85,9 @@ import java.util.HashMap;
  * {@example com.google.gwt.examples.ImageExample}
  * </p>
  */
-public class Image extends Widget implements SourcesClickEvents,
-    SourcesLoadEvents, SourcesMouseEvents, SourcesMouseWheelEvents {
+public class Image extends Widget implements SourcesLoadEvents,
+    HasLoadHandlers, HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
+    HasAllMouseHandlers, SourcesMouseEvents {
 
   /**
    * Implementation of behaviors associated with the clipped state of an image.
@@ -86,6 +110,8 @@ public class Image extends Widget implements SourcesClickEvents,
       this.height = height;
       this.url = url;
       image.replaceElement(impl.createStructure(url, left, top, width, height));
+      // Todo(ecc) This is wrong, we should not be sinking these here on such a
+      // common widget.After the branch is stable, this should be fixed.
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
       fireSyntheticLoadEvent(image);
     }
@@ -180,9 +206,10 @@ public class Image extends Widget implements SourcesClickEvents,
        */
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          if (image.loadListeners != null) {
-            image.loadListeners.fireLoad(image);
-          }
+          // TODO(ecc) once event triggering is committed, this call should
+          // fire a native load event instead.
+          image.fireEvent(new LoadEvent() {
+          });
         }
       });
     }
@@ -223,12 +250,16 @@ public class Image extends Widget implements SourcesClickEvents,
   private static class UnclippedState extends State {
 
     UnclippedState(Element element) {
+      // Todo(ecc) This is wrong, we should not be sinking these here on such a
+      // common widget.After the branch is stable, this should be fixed.
       Event.sinkEvents(element, Event.ONCLICK | Event.MOUSEEVENTS
           | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
     UnclippedState(Image image) {
       image.replaceElement(Document.get().createImageElement());
+      // Todo(ecc) This is wrong, we should not be sinking these here on such a
+      // common widget.After the branch is stable, this should be fixed.
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
           | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
@@ -329,11 +360,6 @@ public class Image extends Widget implements SourcesClickEvents,
     return image;
   }
 
-  private ClickListenerCollection clickListeners;
-  private LoadListenerCollection loadListeners;
-  private MouseListenerCollection mouseListeners;
-  private MouseWheelListenerCollection mouseWheelListeners;
-
   private State state;
 
   /**
@@ -389,32 +415,60 @@ public class Image extends Widget implements SourcesClickEvents,
     setElement(element);
   }
 
+  public HandlerRegistration addClickHandler(ClickHandler handler) {
+    return addHandler(handler, ClickEvent.getType());
+  }
+
+  @Deprecated
   public void addClickListener(ClickListener listener) {
-    if (clickListeners == null) {
-      clickListeners = new ClickListenerCollection();
-    }
-    clickListeners.add(listener);
+    ListenerWrapper.Click.add(this, listener);
   }
 
+  public HandlerRegistration addErrorHandler(ErrorHandler handler) {
+    return super.addHandler(handler, ErrorEvent.getType());
+  }
+
+  public HandlerRegistration addLoadHandler(LoadHandler handler) {
+    return super.addHandler(handler, LoadEvent.getType());
+  }
+
+  @Deprecated
   public void addLoadListener(LoadListener listener) {
-    if (loadListeners == null) {
-      loadListeners = new LoadListenerCollection();
-    }
-    loadListeners.add(listener);
+    ListenerWrapper.Load.add(this, listener);
   }
 
+  public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
+    return addDomHandler(handler, MouseDownEvent.getType());
+  }
+
+  @Deprecated
   public void addMouseListener(MouseListener listener) {
-    if (mouseListeners == null) {
-      mouseListeners = new MouseListenerCollection();
-    }
-    mouseListeners.add(listener);
+    ListenerWrapper.Mouse.add(this, listener);
   }
 
+  public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
+    return addDomHandler(handler, MouseMoveEvent.getType());
+  }
+
+  public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
+    return addDomHandler(handler, MouseOutEvent.getType());
+  }
+
+  public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
+    return addDomHandler(handler, MouseOverEvent.getType());
+  }
+
+  public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
+    return addDomHandler(handler, MouseUpEvent.getType());
+  }
+
+  public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
+    return addDomHandler(handler, MouseWheelEvent.getType());
+  }
+
+  @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
-    if (mouseWheelListeners == null) {
-      mouseWheelListeners = new MouseWheelListenerCollection();
-    }
-    mouseWheelListeners.add(listener);
+    ListenerWrapper.MouseWheel.add(this, listener);
   }
 
   /**
@@ -476,67 +530,24 @@ public class Image extends Widget implements SourcesClickEvents,
     return state.getWidth(this);
   }
 
-  @Override
-  public void onBrowserEvent(Event event) {
-    switch (event.getTypeInt()) {
-      case Event.ONCLICK: {
-        if (clickListeners != null) {
-          clickListeners.fireClick(this);
-        }
-        break;
-      }
-      case Event.ONMOUSEDOWN:
-      case Event.ONMOUSEUP:
-      case Event.ONMOUSEMOVE:
-      case Event.ONMOUSEOVER:
-      case Event.ONMOUSEOUT: {
-        if (mouseListeners != null) {
-          mouseListeners.fireMouseEvent(this, event);
-        }
-        break;
-      }
-      case Event.ONMOUSEWHEEL:
-        if (mouseWheelListeners != null) {
-          mouseWheelListeners.fireMouseWheelEvent(this, event);
-        }
-        break;
-      case Event.ONLOAD: {
-        if (loadListeners != null) {
-          loadListeners.fireLoad(this);
-        }
-        break;
-      }
-      case Event.ONERROR: {
-        if (loadListeners != null) {
-          loadListeners.fireError(this);
-        }
-        break;
-      }
-    }
-  }
-
+  @Deprecated
   public void removeClickListener(ClickListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
-    }
+    ListenerWrapper.Click.remove(this, listener);
   }
 
+  @Deprecated
   public void removeLoadListener(LoadListener listener) {
-    if (loadListeners != null) {
-      loadListeners.remove(listener);
-    }
+    ListenerWrapper.Load.remove(this, listener);
   }
 
+  @Deprecated
   public void removeMouseListener(MouseListener listener) {
-    if (mouseListeners != null) {
-      mouseListeners.remove(listener);
-    }
+    ListenerWrapper.Mouse.remove(this, listener);
   }
 
+  @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
-    if (mouseWheelListeners != null) {
-      mouseWheelListeners.remove(listener);
-    }
+    ListenerWrapper.MouseWheel.remove(this, listener);
   }
 
   /**

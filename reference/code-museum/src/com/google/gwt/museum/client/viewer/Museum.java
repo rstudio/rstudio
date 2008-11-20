@@ -18,6 +18,12 @@ package com.google.gwt.museum.client.viewer;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.museum.client.common.Utility;
 import com.google.gwt.user.client.DeferredCommand;
@@ -25,8 +31,6 @@ import com.google.gwt.user.client.IncrementalCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ChangeListener;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -38,9 +42,8 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.SuggestOracle;
-import com.google.gwt.user.client.ui.SuggestionEvent;
-import com.google.gwt.user.client.ui.SuggestionHandler;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -189,14 +192,13 @@ public class Museum implements EntryPoint {
     };
 
     SuggestBox box = new SuggestBox(oracle);
-    box.addEventHandler(new SuggestionHandler() {
-      public void onSuggestionSelected(SuggestionEvent event) {
-        AbstractIssue issue = ((IssueSuggestion) event.getSelectedSuggestion()).getIssue();
+    box.addSelectionHandler(new SelectionHandler<Suggestion>() {
+      public void onSelection(SelectionEvent<Suggestion> event) {
+        AbstractIssue issue = ((IssueSuggestion) event.getSelectedItem()).getIssue();
         int index = issues.indexOf(issue);
         issueList.setSelectedIndex(index);
         refreshIssue();
       }
-
     });
     box.setAnimationEnabled(false);
     return box;
@@ -212,15 +214,15 @@ public class Museum implements EntryPoint {
     for (AbstractIssue issue : issues) {
       issueList.addItem(issue.getHeadline());
     }
-    issueList.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
+    issueList.addChangeHandler(new ChangeHandler() {
+      public void onChange(ChangeEvent event) {
         refreshIssue();
       }
     });
 
     // Create a button to refresh the current issue
-    Button refreshIssueButton = new Button("Refresh", new ClickListener() {
-      public void onClick(Widget sender) {
+    Button refreshIssueButton = new Button("Refresh", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         refreshIssue();
       }
     });
@@ -231,8 +233,8 @@ public class Museum implements EntryPoint {
     // Create a button to move to the previous issue
     Image prevButton = IMAGES.prevButton().createImage();
     prevButton.setStyleName("prevButton");
-    prevButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    prevButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         int selectedIndex = issueList.getSelectedIndex();
         if (selectedIndex > 0) {
           issueList.setSelectedIndex(selectedIndex - 1);
@@ -246,8 +248,8 @@ public class Museum implements EntryPoint {
     // Create a button to move to the next issue
     Image nextButton = IMAGES.nextButton().createImage();
     nextButton.setStyleName("nextButton");
-    nextButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    nextButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         int selectedIndex = issueList.getSelectedIndex();
         if (selectedIndex < issueList.getItemCount() - 1) {
           issueList.setSelectedIndex(selectedIndex + 1);

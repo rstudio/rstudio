@@ -17,13 +17,14 @@ package com.google.gwt.sample.showcase.client.content.lists;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -118,9 +119,9 @@ public class CwListBox extends ContentWidget {
     multiBoxPanel.add(multiBox);
     hPanel.add(multiBoxPanel);
 
-    // Add a listener to handle drop box events
-    dropBox.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
+    // Add a handler to handle drop box events
+    dropBox.addChangeHandler(new ChangeHandler() {
+      public void onChange(ChangeEvent event) {
         showCategory(multiBox, dropBox.getSelectedIndex());
         multiBox.ensureDebugId("cwListBox-multiBox");
       }

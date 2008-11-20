@@ -26,6 +26,7 @@ public class AllocBenchmark extends Benchmark {
 
   private static final int numAllocs = 1000;
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.examples.Benchmarks";
   }

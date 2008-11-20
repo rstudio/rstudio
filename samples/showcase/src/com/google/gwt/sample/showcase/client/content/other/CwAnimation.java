@@ -26,7 +26,8 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -273,8 +274,8 @@ public class CwAnimation extends ContentWidget {
 
     // Add start button
     startButton = new Button(constants.cwAnimationStart());
-    startButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    startButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         animation.run(2000);
       }
     });
@@ -282,8 +283,8 @@ public class CwAnimation extends ContentWidget {
 
     // Add cancel button
     cancelButton = new Button(constants.cwAnimationCancel());
-    cancelButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    cancelButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         animation.cancel();
       }
     });

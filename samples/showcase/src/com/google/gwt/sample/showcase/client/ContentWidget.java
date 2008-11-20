@@ -15,6 +15,8 @@
  */
 package com.google.gwt.sample.showcase.client;
 
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestCallback;
@@ -29,9 +31,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.TabBar;
-import com.google.gwt.user.client.ui.TabListener;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -59,7 +59,8 @@ import java.util.Map;
  * <li>.sc-ContentWidget-description { Applied to the description }</li>
  * </ul>
  */
-public abstract class ContentWidget extends Composite implements TabListener {
+public abstract class ContentWidget extends Composite implements
+    SelectionHandler<Integer> {
   /**
    * The constants used in this Content Widget.
    */
@@ -193,8 +194,8 @@ public abstract class ContentWidget extends Composite implements TabListener {
     if (initialized == false) {
       initialized = true;
 
-      // Add a tab listener
-      tabBar.addTabListener(this);
+      // Add a tab handler
+      tabBar.addSelectionHandler(this);
 
       // Create a container for the main example
       final VerticalPanel vPanel = new VerticalPanel();
@@ -243,10 +244,6 @@ public abstract class ContentWidget extends Composite implements TabListener {
     }
   }
 
-  public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
-    return true;
-  }
-
   /**
    * When the widget is first initialize, this method is called. If it returns a
    * Widget, the widget will be added as the first tab. Return null to disable
@@ -263,8 +260,9 @@ public abstract class ContentWidget extends Composite implements TabListener {
   public void onInitializeComplete() {
   }
 
-  public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
+  public void onSelection(SelectionEvent<Integer> event) {
     // Show the associated widget in the deck panel
+    int tabIndex = event.getSelectedItem().intValue();
     deckPanel.showWidget(tabIndex);
 
     // Load the source code

@@ -17,6 +17,8 @@ package com.google.gwt.sample.showcase.client.content.lists;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.logical.shared.OpenEvent;
+import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
@@ -30,7 +32,6 @@ import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
-import com.google.gwt.user.client.ui.TreeListener;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
@@ -202,13 +203,11 @@ public class CwTree extends ContentWidget {
       item.addItem("");
     }
 
-    // Add a listener that automatically generates some children
-    dynamicTree.addTreeListener(new TreeListener() {
-      public void onTreeItemSelected(TreeItem item) {
-      }
-
-      public void onTreeItemStateChanged(TreeItem item) {
-        if (item.getState() && item.getChildCount() == 1) {
+    // Add a handler that automatically generates some children
+    dynamicTree.addOpenHandler(new OpenHandler<TreeItem>() {
+      public void onOpen(OpenEvent<TreeItem> event) {
+        TreeItem item = event.getTarget();
+        if (item.getChildCount() == 1) {
           // Close the item immediately
           item.setState(false, false);
 

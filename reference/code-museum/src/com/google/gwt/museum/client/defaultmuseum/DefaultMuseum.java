@@ -13,18 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.museum.client.viewer.Museum;
 
 /**
- * Default bug museum. Contains a list of all GWT issues reported in the system
- * to date.
+ * Default bug museum. By default, shows all visual tests defined in GWT ui to
+ * date. Modify the code to add all bugs in as well.
  */
 public class DefaultMuseum extends Museum implements EntryPoint {
+
   public DefaultMuseum() {
+    addVisuals();
+    addBugs();
+  }
+
+  public void addBugs() {
     addIssue(new Issue1245());
     addIssue(new Issue1772());
     addIssue(new Issue1897());
@@ -42,7 +47,18 @@ public class DefaultMuseum extends Museum implements EntryPoint {
     addIssue(new Issue2443());
     addIssue(new Issue2553());
     addIssue(new Issue2855());
-    addIssue(new TreeVisuals());
-    addIssue(new TestFireEvents());
+  }
+
+  public void addVisuals() {
+    addIssue(new VisualsForDisclosurePanelEvents());
+    addIssue(new VisualsForEventsFiring());
+    addIssue(new VisualsForPopupEvents());
+    addIssue(new VisualsForTextEvents());
+    addIssue(new VisualsForSuggestBoxEvents());
+    addIssue(new VisualsForTableEvents());
+    addIssue(new VisualsForTree());
+    addIssue(new VisualsForTreeEvents());
+    addIssue(new VisualsForWindowEvents());
+    addIssue(new VisualsForDialogBox());
   }
 }

@@ -27,6 +27,7 @@ import java.util.Date;
  * during parsing phase and resolve them in a later time when all information
  * can be processed together.
  */
+@SuppressWarnings("deprecation")
 public class DateRecord extends Date {
 
   /*

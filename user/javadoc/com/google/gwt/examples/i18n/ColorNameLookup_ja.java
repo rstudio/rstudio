@@ -1,6 +1,7 @@
 package com.google.gwt.examples.i18n;
 
 public class ColorNameLookup_ja extends ColorNameLookup {
+  @Override
   public String lookupColorName(String htmlColorValue) {
     if ("#FF0000".equalsIgnoreCase(htmlColorValue))
       return "あか";

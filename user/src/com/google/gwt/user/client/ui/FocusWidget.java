@@ -16,15 +16,44 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasAllFocusHandlers;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.HasAllMouseHandlers;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 
 /**
  * Abstract base class for most widgets that can receive keyboard focus.
  */
 public abstract class FocusWidget extends Widget implements SourcesClickEvents,
-    SourcesFocusEvents, HasFocus, SourcesKeyboardEvents {
+    HasClickHandlers, HasFocus, HasAllFocusHandlers, HasAllKeyHandlers,
+    HasAllMouseHandlers, SourcesMouseEvents {
 
   private static final FocusImpl impl = FocusImpl.getFocusImplForWidget();
 
@@ -36,10 +65,6 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
   protected static FocusImpl getFocusImpl() {
     return impl;
   }
-
-  private ClickListenerCollection clickListeners;
-  private FocusListenerCollection focusListeners;
-  private KeyboardListenerCollection keyboardListeners;
 
   /**
    * Creates a new focus widget with no element. {@link #setElement(Element)}
@@ -57,30 +82,84 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     setElement(elem);
   }
 
+  public HandlerRegistration addBlurHandler(BlurHandler handler) {
+    return addDomHandler(handler, BlurEvent.getType());
+  }
+
+  public HandlerRegistration addClickHandler(ClickHandler handler) {
+    return addDomHandler(handler, ClickEvent.getType());
+  }
+
+  @Deprecated
   public void addClickListener(ClickListener listener) {
-    if (clickListeners == null) {
-      clickListeners = new ClickListenerCollection();
-      sinkEvents(Event.ONCLICK);
-    }
-    clickListeners.add(listener);
+    ListenerWrapper.Click.add(this, listener);
   }
 
+  public HandlerRegistration addFocusHandler(FocusHandler handler) {
+    return addDomHandler(handler, FocusEvent.getType());
+  }
+
+  @Deprecated
   public void addFocusListener(FocusListener listener) {
-    if (focusListeners == null) {
-      focusListeners = new FocusListenerCollection();
-      sinkEvents(Event.FOCUSEVENTS);
-    }
-    focusListeners.add(listener);
+    ListenerWrapper.Focus.add(this, listener);
   }
 
+  @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
-    if (keyboardListeners == null) {
-      keyboardListeners = new KeyboardListenerCollection();
-      sinkEvents(Event.KEYEVENTS);
-    }
-    keyboardListeners.add(listener);
+    ListenerWrapper.Keyboard.add(this, listener);
   }
 
+  public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
+    return addDomHandler(handler, KeyDownEvent.getType());
+  }
+
+  public HandlerRegistration addKeyPressHandler(KeyPressHandler handler) {
+    return addDomHandler(handler, KeyPressEvent.getType());
+  }
+
+  public HandlerRegistration addKeyUpHandler(KeyUpHandler handler) {
+    return addDomHandler(handler, KeyUpEvent.getType());
+  }
+
+  public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
+    return addDomHandler(handler, MouseDownEvent.getType());
+  }
+
+  @Deprecated
+  public void addMouseListener(MouseListener listener) {
+    ListenerWrapper.Mouse.add(this, listener);
+  }
+
+  public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
+    return addDomHandler(handler, MouseMoveEvent.getType());
+  }
+
+  public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
+    return addDomHandler(handler, MouseOutEvent.getType());
+  }
+
+  public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
+    return addDomHandler(handler, MouseOverEvent.getType());
+  }
+
+  public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
+    return addDomHandler(handler, MouseUpEvent.getType());
+  }
+
+  public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
+    return addDomHandler(handler, MouseWheelEvent.getType());
+  }
+
+  @Deprecated
+  public void addMouseWheelListener(MouseWheelListener listener) {
+    ListenerWrapper.MouseWheel.add(this, listener);
+  }
+
+  /**
+   * Gets the tab index.
+   * 
+   * @return the tab index
+   */
   public int getTabIndex() {
     return impl.getTabIndex(getElement());
   }
@@ -94,48 +173,29 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return !DOM.getElementPropertyBoolean(getElement(), "disabled");
   }
 
-  @Override
-  public void onBrowserEvent(Event event) {
-    switch (DOM.eventGetType(event)) {
-      case Event.ONCLICK:
-        if (clickListeners != null) {
-          clickListeners.fireClick(this);
-        }
-        break;
-
-      case Event.ONBLUR:
-      case Event.ONFOCUS:
-        if (focusListeners != null) {
-          focusListeners.fireFocusEvent(this, event);
-        }
-        break;
-
-      case Event.ONKEYDOWN:
-      case Event.ONKEYUP:
-      case Event.ONKEYPRESS:
-        if (keyboardListeners != null) {
-          keyboardListeners.fireKeyboardEvent(this, event);
-        }
-        break;
-    }
-  }
-
+  @Deprecated
   public void removeClickListener(ClickListener listener) {
-    if (clickListeners != null) {
-      clickListeners.remove(listener);
-    }
+    ListenerWrapper.Click.remove(this, listener);
   }
 
+  @Deprecated
   public void removeFocusListener(FocusListener listener) {
-    if (focusListeners != null) {
-      focusListeners.remove(listener);
-    }
+    ListenerWrapper.Focus.remove(this, listener);
   }
 
+  @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
-    if (keyboardListeners != null) {
-      keyboardListeners.remove(listener);
-    }
+    ListenerWrapper.Keyboard.remove(this, listener);
+  }
+
+  @Deprecated
+  public void removeMouseListener(MouseListener listener) {
+    ListenerWrapper.Mouse.remove(this, listener);
+  }
+
+  @Deprecated
+  public void removeMouseWheelListener(MouseWheelListener listener) {
+    ListenerWrapper.MouseWheel.remove(this, listener);
   }
 
   public void setAccessKey(char key) {
@@ -176,16 +236,4 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     setTabIndex(0);
   }
 
-  /**
-   * Fire all current {@link ClickListener}.
-   */
-  void fireClickListeners() {
-    /*
-     * Implementation note: PushButton needs to fire click listeners manually.
-     * Exposing this method so it can do so.
-     */
-    if (clickListeners != null) {
-      clickListeners.fireClick(this);
-    }
-  }
 }

@@ -25,7 +25,9 @@ public interface SourcesLoadEvents {
    * Adds a listener interface to receive load events.
    * 
    * @param listener the listener interface to add
+   * @deprecated use <code>addLoadHandler</code> instead
    */
+  @Deprecated
   void addLoadListener(LoadListener listener);
 
   /**
@@ -33,5 +35,6 @@ public interface SourcesLoadEvents {
    * 
    * @param listener the listener interface to remove
    */
+  @Deprecated
   void removeLoadListener(LoadListener listener);
 }

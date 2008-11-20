@@ -16,13 +16,14 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.i18n.client.BidiUtils;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.WindowCloseListener;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -216,13 +217,9 @@ public class RootPanel extends AbsolutePanel {
 
   private static void hookWindowClosing() {
     // Catch the window closing event.
-    Window.addWindowCloseListener(new WindowCloseListener() {
-      public void onWindowClosed() {
+    Window.addCloseHandler(new CloseHandler<Window>() {
+      public void onClose(CloseEvent<Window> closeEvent) {
         detachWidgets();
-      }
-
-      public String onWindowClosing() {
-        return null;
       }
     });
   }

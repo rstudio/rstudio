@@ -15,8 +15,6 @@
  */
 package com.google.gwt.util.tools;
 
-import com.google.gwt.dev.util.arg.ArgHandlerWorkDir;
-
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,6 +37,8 @@ import java.util.Map.Entry;
  * A smattering of useful file functions.
  */
 public final class Utility {
+
+  private static final String GWT_TMP_DIR = "gwt-tmp";
 
   private static String sDevJarName = null;
   private static String sInstallPath = null;
@@ -231,43 +231,38 @@ public final class Utility {
   /**
    * Creates a randomly-named temporary directory.
    * 
-   * @param baseDir base directory to contain the new directory.  May be 
-   *    {@code null}, in which case a subdirectory under the
-   *    {@code java.io.tmpdir} system property, named by 
-   *    {@link ArgHandlerWorkDir#GWT_TMP_DIR}, will be used.
-   * @param prefix the initial characters of the new directory name.  Since all the
-   *    platforms we care about allow long names, this will not be pruned as for
-   *    {@link File#createTempFile(String, String, File), but short names are still
-   *    preferable.  The directory created will have five random characters appended
-   *    to the prefix.
-   * @returns a newly-created temporary directory
+   * @param baseDir base directory to contain the new directory. May be
+   *          {@code null}, in which case a subdirectory under the
+   *          {@code java.io.tmpdir} system property, named by
+   *          {@link #GWT_TMP_DIR}, will be used.
+   * @param prefix the initial characters of the new directory name
+   * @return a newly-created temporary directory; the caller must delete this
+   *          directory (either when done or on VM exit)
    */
-  public static File makeTemporaryDirectory(File baseDir, String prefix) 
+  public static File makeTemporaryDirectory(File baseDir, String prefix)
       throws IOException {
     if (baseDir == null) {
-      baseDir = new File(System.getProperty("java.io.tmpdir"), ArgHandlerWorkDir.GWT_TMP_DIR);
+      baseDir = new File(System.getProperty("java.io.tmpdir"), GWT_TMP_DIR);
     }
-    int tries = 0;
-    while (tries < 20) {
-      tries++;
-      int rand = (int) (Math.random() * Integer.MAX_VALUE);
-      StringBuffer tag = new StringBuffer();
-      for (int i = 0; i < 5; i++) {
-        int bits = rand & 0x1f; // low 5 bits: [a-z][0-4] for 32 values
-        rand >>= 5;
-        tag.append(Character.forDigit(bits, 36)); 
+    baseDir.mkdirs();
+
+    // Try this a few times due to non-atomic delete+mkdir operations.
+    for (int tries = 0; tries < 3; ++tries) {
+      File result = File.createTempFile(prefix, null, baseDir);
+      if (!result.delete()) {
+        throw new IOException("Couldn't delete temporary file "
+            + result.getAbsolutePath() + " to replace with a directory.");
       }
-      File result = new File(baseDir, prefix + tag.toString());
-      if (!result.exists()) {
-        if (result.mkdirs()) {
-          return result;
-        }
+      if (result.mkdirs()) {
+        // Success.
+        return result;
       }
     }
-    throw new IOException("couldn't create temporary directory in 20 tries in " 
-        + baseDir.getAbsolutePath());
+    throw new IOException(
+        "Couldn't create temporary directory after 3 tries in "
+            + baseDir.getAbsolutePath());
   }
-  
+
   public static void streamOut(File file, OutputStream out, int bufferSize)
       throws IOException {
     FileInputStream fis = null;

@@ -17,6 +17,10 @@ package com.google.gwt.sample.showcase.client.content.other;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
@@ -27,8 +31,6 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ChangeListener;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -148,9 +150,9 @@ public class CwCookies extends ContentWidget {
     mainLayout.setWidget(2, 1, cookieValueBox);
     mainLayout.setWidget(2, 2, setCookieButton);
 
-    // Add a listener to set the cookie value
-    setCookieButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    // Add a handler to set the cookie value
+    setCookieButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         String name = cookieNameBox.getText();
         String value = cookieValueBox.getText();
         Date expires = new Date((new Date()).getTime() + COOKIE_TIMEOUT);
@@ -167,16 +169,16 @@ public class CwCookies extends ContentWidget {
       }
     });
 
-    // Add a listener to select an existing cookie
-    existingCookiesBox.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
+    // Add a handler to select an existing cookie
+    existingCookiesBox.addChangeHandler(new ChangeHandler() {
+      public void onChange(ChangeEvent event) {
         updateExstingCookie();
       }
     });
 
-    // Add a listener to delete an existing cookie
-    deleteCookieButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    // Add a handler to delete an existing cookie
+    deleteCookieButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         int selectedIndex = existingCookiesBox.getSelectedIndex();
         if (selectedIndex > -1
             && selectedIndex < existingCookiesBox.getItemCount()) {

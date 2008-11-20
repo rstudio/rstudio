@@ -50,7 +50,7 @@ public abstract class Composite extends Widget {
     // Delegate events to the widget.
     widget.onBrowserEvent(event);
   }
-
+ 
   /**
    * Provides subclasses access to the topmost widget that defines this
    * composite.
@@ -91,7 +91,11 @@ public abstract class Composite extends Widget {
 
   @Override
   protected void onAttach() {
-    // Call the widget's onAttach() first.
+    if (!isOrWasAttached()) {
+      widget.sinkEvents(eventsToSink);
+      eventsToSink = -1;
+    }
+
     widget.onAttach();
 
     // Clobber the widget's call to setEventListener(), causing all events to

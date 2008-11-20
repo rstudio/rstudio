@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for click events.
  */
+@Deprecated
 public interface ClickListener extends EventListener {
 
   /**
@@ -27,5 +28,6 @@ public interface ClickListener extends EventListener {
    * 
    * @param sender the widget sending the event.
    */
+  @Deprecated
   void onClick(Widget sender);
 }

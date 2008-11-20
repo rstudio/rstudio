@@ -19,9 +19,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
-import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
-import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.PerfLogger;
 
 import java.util.concurrent.BlockingQueue;
@@ -191,14 +190,6 @@ public class PermutationCompiler {
         });
       }
 
-      if (!hasEnoughMemory()) {
-        /*
-         * Not enough memory to run, but if there are multiple threads, we can
-         * try again with fewer threads.
-         */
-        tryToExitNonFinalThread(outOfMemoryRetryAction);
-      }
-
       boolean definitelyFinalThread = (threadCount.get() == 1);
       try {
         String[] result = currentTask.call();
@@ -247,26 +238,6 @@ public class PermutationCompiler {
     }
 
     /**
-     * Returns <code>true</code> if there is enough estimated memory to run
-     * another permutation, or if this is the last live worker thread and we
-     * have no choice.
-     */
-    private boolean hasEnoughMemory() {
-      if (threadCount.get() == 1) {
-        // I'm the last thread, so I have to at least try.
-        return true;
-      }
-
-      if (astMemoryUsage >= getPotentialFreeMemory()) {
-        return true;
-      }
-
-      // Best effort memory reclaim.
-      System.gc();
-      return astMemoryUsage < getPotentialFreeMemory();
-    }
-
-    /**
      * Exits this thread if and only if it's not the last running thread,
      * performing the specified action before terminating.
      * 
@@ -294,21 +265,6 @@ public class PermutationCompiler {
   private static final Result FINISHED_RESULT = new Result(null, -1) {
   };
 
-  private static long getPotentialFreeMemory() {
-    long used = Runtime.getRuntime().totalMemory()
-        - Runtime.getRuntime().freeMemory();
-    assert (used > 0);
-    long potentialFree = Runtime.getRuntime().maxMemory() - used;
-    assert (potentialFree >= 0);
-    return potentialFree;
-  }
-
-  /**
-   * Holds an estimate of how many bytes of memory a new concurrent compilation
-   * will consume.
-   */
-  protected final long astMemoryUsage;
-
   /**
    * A queue of results being sent from worker threads to the main thread.
    */
@@ -329,7 +285,6 @@ public class PermutationCompiler {
   public PermutationCompiler(TreeLogger logger, UnifiedAst unifiedAst,
       Permutation[] perms, int[] permsToRun) {
     this.logger = logger;
-    this.astMemoryUsage = unifiedAst.getAstMemoryUsage();
     for (int permToRun : permsToRun) {
       tasks.add(new PermutationTask(logger, unifiedAst, perms[permToRun],
           permToRun));
@@ -387,52 +342,10 @@ public class PermutationCompiler {
     result = Math.min(Runtime.getRuntime().availableProcessors(), result);
 
     /*
-     * Allow user-defined override as an escape valve.
+     * User-defined value caps.
      */
-    result = Math.min(result, Integer.getInteger("gwt.jjs.maxThreads", result));
+    result = Math.min(result, Integer.getInteger("gwt.jjs.maxThreads", 1));
 
-    if (result == 1) {
-      return 1;
-    }
-
-    // More than one thread would definitely be faster at this point.
-
-    if (JProgram.isTracingEnabled()) {
-      logger.log(TreeLogger.INFO,
-          "Parallel compilation disabled due to gwt.jjs.traceMethods being enabled");
-      return 1;
-    }
-
-    int desiredThreads = result;
-
-    /*
-     * Need to do some memory estimation to figure out how many concurrent
-     * threads we can safely run.
-     */
-    long potentialFreeMemory = getPotentialFreeMemory();
-    int extraMemUsageThreads = (int) (potentialFreeMemory / astMemoryUsage);
-    logger.log(TreeLogger.TRACE,
-        "Extra threads constrained by estimated memory usage: "
-            + extraMemUsageThreads + " = " + potentialFreeMemory + " / "
-            + astMemoryUsage);
-    int memUsageThreads = extraMemUsageThreads + 1;
-
-    if (memUsageThreads < desiredThreads) {
-      long currentMaxMemory = Runtime.getRuntime().maxMemory();
-      // Convert to megabytes.
-      currentMaxMemory /= 1024 * 1024;
-
-      long suggestedMaxMemory = currentMaxMemory * 2;
-
-      logger.log(TreeLogger.WARN, desiredThreads
-          + " threads could be run concurrently, but only " + memUsageThreads
-          + " threads will be run due to limited memory; "
-          + "increasing the amount of memory by using the -Xmx flag "
-          + "at startup (java -Xmx" + suggestedMaxMemory
-          + "M ...) may result in faster compiles");
-    }
-
-    result = Math.min(memUsageThreads, desiredThreads);
     return result;
   }
 

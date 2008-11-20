@@ -25,7 +25,8 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -100,8 +101,8 @@ public class CwFileUpload extends ContentWidget {
 
     // Add a button to upload the file
     Button uploadButton = new Button(constants.cwFileUploadButton());
-    uploadButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    uploadButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         String filename = fileUpload.getFilename();
         if (filename.length() == 0) {
           Window.alert(constants.cwFileUploadNoFileError());

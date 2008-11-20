@@ -34,9 +34,7 @@ import com.google.gwt.dev.util.arg.OptionOutDir;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Performs the last phase of compilation, merging the compilation outputs.
@@ -47,20 +45,6 @@ public class Link {
    */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
       OptionOutDir {
-    
-    /**
-     * A born-deprecated method to enact "legacy" -aux support if -extra is not
-     * specified.  This method will <i>either</i> return the same as 
-     * {@link OptionExtraDir#getExtraDir()}, if -extra is specified, <i>or</i>
-     * return the legacy equivalent <i>outputDir</i>/<i>ModuleName</i>-aux.  In
-     * this second case, it will also emit a warning to direct people to -extra,
-     * and flag the fact that non-deployable bits are in what should be the 
-     * deployable output directory. 
-     *
-     * @return pathname for extra files
-     */
-    @Deprecated
-    File getLegacyExtraDir(TreeLogger logger, ModuleDef module);
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -84,7 +68,6 @@ public class Link {
 
     private File extraDir;
     private File outDir;
-    private Set<File> alreadyWarned = new HashSet<File>();
 
     public LinkOptionsImpl() {
     }
@@ -101,26 +84,6 @@ public class Link {
 
     public File getExtraDir() {
       return extraDir;
-    }
-
-    public File getLegacyExtraDir(TreeLogger logger, ModuleDef module) {
-      // safety that we need this at all...
-      if (extraDir != null) {
-        return extraDir;
-      }
-      // okay, figure the old location, by module...
-      String deployDir = module.getDeployTo();
-      File moduleExtraDir = new File(outDir, 
-          deployDir.substring(0, deployDir.length() - 1) + "-aux");
-      // and warn the user about it, but only if it'd be new news.
-      if (!alreadyWarned.contains(moduleExtraDir)) {
-        logger.log(TreeLogger.WARN, "Non-deployed artificats will be in " 
-            + moduleExtraDir.getPath()
-            + ", inside deployable output directory " + outDir.getPath()
-            + ".  Use -extra to relocate the auxilliary files.");
-        alreadyWarned.add(moduleExtraDir);
-      }
-      return moduleExtraDir;
     }
 
     public File getOutDir() {
@@ -144,6 +107,16 @@ public class Link {
     return doLink(logger, linkerContext, precompilation, jsFiles);
   }
 
+  public static void link(TreeLogger logger, ModuleDef module,
+      Precompilation precompilation, File[] jsFiles, File outDir, File extrasDir)
+      throws UnableToCompleteException {
+    StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
+        module, precompilation.getUnifiedAst().getOptions());
+    ArtifactSet artifacts = doLink(logger, linkerContext, precompilation,
+        jsFiles);
+    doProduceOutput(logger, artifacts, linkerContext, module, outDir, extrasDir);
+  }
+
   public static void main(String[] args) {
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
@@ -153,10 +126,6 @@ public class Link {
      */
     final LinkOptions options = new LinkOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
-      if (options.getWorkDir() == null) {
-        System.err.println("The -workDir is required for the Link phase.");
-        System.exit(1);
-      }
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new Link(options).run(logger);
@@ -188,6 +157,48 @@ public class Link {
     return linkerContext.invokeLink(logger);
   }
 
+  private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
+      StandardLinkerContext linkerContext, ModuleDef module, File outDir,
+      File extraDir) throws UnableToCompleteException {
+    boolean warnOnExtra = false;
+    File moduleExtraDir;
+    if (extraDir == null) {
+      /*
+       * Legacy behavior for backwards compatibility; if the extra directory is
+       * not specified, make it a sibling to the deploy directory, with -aux.
+       */
+      String deployDir = module.getDeployTo();
+      deployDir = deployDir.substring(0, deployDir.length() - 1) + "-aux";
+      moduleExtraDir = new File(outDir, deployDir);
+
+      /*
+       * Only warn when we create a new legacy extra dir.
+       */
+      warnOnExtra = !moduleExtraDir.exists();
+    } else {
+      moduleExtraDir = new File(extraDir, module.getDeployTo());
+    }
+
+    File moduleOutDir = new File(outDir, module.getDeployTo());
+    Util.recursiveDelete(moduleOutDir, true);
+    Util.recursiveDelete(moduleExtraDir, true);
+    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir,
+        moduleExtraDir);
+
+    /*
+     * Warn on legacy extra directory, but only if: 1) It didn't exist before.
+     * 2) We just created it.
+     */
+    if (warnOnExtra && moduleExtraDir.exists()) {
+      logger.log(
+          TreeLogger.WARN,
+          "Non-public artificats were produced in '"
+              + moduleExtraDir.getAbsolutePath()
+              + "' within the public output folder; use -extra to specify an alternate location");
+    }
+    logger.log(TreeLogger.INFO, "Link succeeded");
+  }
+
   private static void finishPermuation(TreeLogger logger, Permutation perm,
       File jsFile, StandardLinkerContext linkerContext)
       throws UnableToCompleteException {
@@ -215,16 +226,6 @@ public class Link {
 
   private ModuleDef module;
 
-  /**
-   * This is the output directory for private files.
-   */
-  private File moduleExtraDir;
-
-  /**
-   * This is the output directory for public files.
-   */
-  private File moduleOutDir;
-
   private final LinkOptionsImpl options;
 
   public Link(LinkOptions options) {
@@ -232,7 +233,8 @@ public class Link {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    init(logger);
+    module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
+
     File precompilationFile = new File(options.getCompilerWorkDir(),
         Precompile.PRECOMPILATION_FILENAME);
     if (!precompilationFile.exists()) {
@@ -270,26 +272,9 @@ public class Link {
         module, precompilation.getUnifiedAst().getOptions());
     ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
         jsFiles);
-    if (artifacts != null) {
-      linkerContext.produceOutputDirectory(branch, artifacts, moduleOutDir,
-          moduleExtraDir);
-      branch.log(TreeLogger.INFO, "Link succeeded");
-      return true;
-    }
-    branch.log(TreeLogger.ERROR, "Link failed");
-    return false;
-  }
 
-  private void init(TreeLogger logger) throws UnableToCompleteException {
-    module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
-    moduleOutDir = new File(options.getOutDir(), module.getDeployTo());
-    Util.recursiveDelete(moduleOutDir, true);
-    if (options.getExtraDir() == null) {
-      // legacy location
-      moduleExtraDir = options.getLegacyExtraDir(logger, module);
-    } else {
-      moduleExtraDir = new File(options.getExtraDir(), module.getDeployTo());
-    }
-    Util.recursiveDelete(moduleExtraDir, false);
+    doProduceOutput(branch, artifacts, linkerContext, module,
+        options.getOutDir(), options.getExtraDir());
+    return true;
   }
 }

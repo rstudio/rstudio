@@ -26,6 +26,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.FocusListener}.
  */
+@Deprecated
 public class FocusListenerCollection extends ArrayList<FocusListener> {
 
   /**

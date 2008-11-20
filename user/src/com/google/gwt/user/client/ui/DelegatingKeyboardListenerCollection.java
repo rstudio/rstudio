@@ -40,6 +40,7 @@ package com.google.gwt.user.client.ui;
  *  }
  *</pre>
  */
+@Deprecated
 public class DelegatingKeyboardListenerCollection extends
     KeyboardListenerCollection implements KeyboardListener {
 

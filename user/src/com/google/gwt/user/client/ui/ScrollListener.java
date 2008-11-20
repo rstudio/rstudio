@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for scroll events.
  */
+@Deprecated
 public interface ScrollListener extends EventListener {
 
   /**

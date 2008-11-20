@@ -29,6 +29,7 @@ public class CanonicalExample extends RemoteServiceServlet {
    * Process the RPC request encoded into the payload string and return a string
    * that encodes either the method return or an exception thrown by it.
    */
+  @Override
   public String processCall(String payload) throws SerializationException {
     try {
       RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass());

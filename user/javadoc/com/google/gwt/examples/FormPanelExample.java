@@ -16,19 +16,18 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FileUpload;
-import com.google.gwt.user.client.ui.FormHandler;
 import com.google.gwt.user.client.ui.FormPanel;
-import com.google.gwt.user.client.ui.FormSubmitCompleteEvent;
-import com.google.gwt.user.client.ui.FormSubmitEvent;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
+import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 
 public class FormPanelExample implements EntryPoint {
 
@@ -66,24 +65,25 @@ public class FormPanelExample implements EntryPoint {
     panel.add(upload);
 
     // Add a 'submit' button.
-    panel.add(new Button("Submit", new ClickListener() {
-      public void onClick(Widget sender) {
+    panel.add(new Button("Submit", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         form.submit();
       }
     }));
 
     // Add an event handler to the form.
-    form.addFormHandler(new FormHandler() {
-      public void onSubmit(FormSubmitEvent event) {
+    form.addSubmitHandler(new FormPanel.SubmitHandler() {
+      public void onSubmit(SubmitEvent event) {
         // This event is fired just before the form is submitted. We can take
         // this opportunity to perform validation.
         if (tb.getText().length() == 0) {
           Window.alert("The text box must not be empty");
-          event.setCancelled(true);
+          event.cancel();
         }
       }
-
-      public void onSubmitComplete(FormSubmitCompleteEvent event) {
+    });
+    form.addSubmitCompleteHandler(new FormPanel.SubmitCompleteHandler() {
+      public void onSubmitComplete(SubmitCompleteEvent event) {
         // When the form submission is successfully completed, this event is
         // fired. Assuming the service returned a response of type text/html,
         // we can get the result text here (see the FormPanel documentation for

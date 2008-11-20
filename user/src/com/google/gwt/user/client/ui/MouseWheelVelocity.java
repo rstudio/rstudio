@@ -26,6 +26,8 @@ import com.google.gwt.user.client.Event;
  * @see com.google.gwt.user.client.DOM#eventGetMouseWheelVelocityY An
  *      explanation of the units used for mouse wheel velocity.
  */
+
+@Deprecated
 public class MouseWheelVelocity {
 
   /**

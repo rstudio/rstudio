@@ -16,13 +16,13 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.Widget;
 
-public class DialogBoxExample implements EntryPoint, ClickListener {
+public class DialogBoxExample implements EntryPoint, ClickHandler {
 
   private static class MyDialog extends DialogBox {
 
@@ -33,8 +33,8 @@ public class DialogBoxExample implements EntryPoint, ClickListener {
       // DialogBox is a SimplePanel, so you have to set its widget property to
       // whatever you want its contents to be.
       Button ok = new Button("OK");
-      ok.addClickListener(new ClickListener() {
-        public void onClick(Widget sender) {
+      ok.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
           MyDialog.this.hide();
         }
       });
@@ -44,12 +44,12 @@ public class DialogBoxExample implements EntryPoint, ClickListener {
 
   public void onModuleLoad() {
     Button b = new Button("Click me");
-    b.addClickListener(this);
+    b.addClickHandler(this);
 
     RootPanel.get().add(b);
   }
 
-  public void onClick(Widget sender) {
+  public void onClick(ClickEvent event) {
     // Instantiate the dialog box and show it.
     new MyDialog().show();
   }

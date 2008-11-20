@@ -25,7 +25,8 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbstractImagePrototype;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.ClickListener;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.DecoratedStackPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
@@ -211,8 +212,8 @@ public class CwStackPanel extends ContentWidget {
       contactsPanel.add(contactLink);
 
       // Open the contact info popup when the user clicks a contact
-      contactLink.addClickListener(new ClickListener() {
-        public void onClick(Widget sender) {
+      contactLink.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
           // Set the info about the contact
           contactInfo.setHTML(contactName + "<br><i>" + contactEmail + "</i>");
 

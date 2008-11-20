@@ -16,15 +16,16 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.ErrorEvent;
+import com.google.gwt.event.dom.client.ErrorHandler;
+import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.LoadListener;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 
 public class ImageExample implements EntryPoint {
 
@@ -37,14 +38,11 @@ public class ImageExample implements EntryPoint {
     // can manipulate the image object within the ClickHandlers for the buttons.
     final Image image = new Image();
 
-    // Hook up a load listener, so that we can be informed if the image fails
+    // Hook up an error handler, so that we can be informed if the image fails
     // to load.
-    image.addLoadListener(new LoadListener() {
-      public void onError(Widget sender) {
+    image.addErrorHandler(new ErrorHandler() {
+      public void onError(ErrorEvent event) {
         lbl.setText("An error occurred while loading.");
-      }
-
-      public void onLoad(Widget sender) {
       }
     });
 
@@ -52,8 +50,8 @@ public class ImageExample implements EntryPoint {
     image.setUrl("http://www.google.com/images/logo.gif");
 
     // When the user clicks this button, we want to clip the image.
-    btn.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    btn.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         image.setVisibleRect(70, 0, 47, 110);
       }
     });
@@ -61,8 +59,8 @@ public class ImageExample implements EntryPoint {
 
     // When the user clicks this button, we want to restore the image to its
     // unclipped state.
-    btn2.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    btn2.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         image.setUrl("http://www.google.com/images/logo.gif");
       }
     });

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -91,6 +93,39 @@ public abstract class TextBoxBaseTestBase extends GWTTestCase {
       area2.setVisible(false);
       RootPanel.get().add(area2);
       area.selectAll();
+    }
+  }
+  
+  public void testValueChangeEvent() {
+    TextBoxBase tb = createTextBoxBase();
+
+    // To work cross-platform, the tb must be added to the root panel.
+    RootPanel.get().add(tb);
+    Handler h = new Handler();
+    tb.addValueChangeHandler(h);
+    tb.setText("able");
+    assertNull(h.received);
+    
+    tb.setValue("able");
+    assertNull(h.received);
+    tb.setValue("baker");
+    assertNull(h.received);
+
+    tb.setValue("baker", true);
+    assertNull(h.received);
+    
+    tb.setValue("able", true);
+    assertEquals("able", h.received);
+
+    tb.setValue("baker", true);
+    assertEquals("baker", h.received);
+  }
+  
+  private static class Handler implements ValueChangeHandler<String> {
+    String received = null;
+    
+    public void onValueChange(ValueChangeEvent<String> event) {
+      received = event.getValue();
     }
   }
 }

@@ -15,9 +15,10 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.Grid;
@@ -45,8 +46,8 @@ public class Issue2321 extends AbstractIssue {
       initWidget(grid);
 
       // Add option to detach the deck panel
-      Button addWidgetButton = new Button("Add widget", new ClickListener() {
-        public void onClick(Widget sender) {
+      Button addWidgetButton = new Button("Add widget", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           addWidgetToDeckPanel();
         }
       });
@@ -54,8 +55,8 @@ public class Issue2321 extends AbstractIssue {
 
       // Add option to retrieve the dimensions of the content
       Button updateDimButton = new Button("Get Current Dimensions",
-          new ClickListener() {
-            public void onClick(Widget sender) {
+          new ClickHandler() {
+            public void onClick(ClickEvent event) {
               updateContentDimensions();
             }
           });

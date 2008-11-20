@@ -223,8 +223,7 @@ public class StackPanel extends ComplexPanel {
     if ((index >= getWidgetCount()) || (index < 0) || (index == visibleStack)) {
       return;
     }
-
-    int oldIndex = visibleStack;
+ 
     if (visibleStack >= 0) {
       setStackVisible(visibleStack, false);
     }
@@ -343,7 +342,6 @@ public class StackPanel extends ComplexPanel {
     Element trNext = DOM.getChild(body, ((index + 1) * 2));
     if (trNext != null) {
       Element tdNext = DOM.getFirstChild(trNext);
-      Element divNext = DOM.getFirstChild(tdNext);
       setStyleName(tdNext, DEFAULT_ITEM_STYLENAME + "-below-selected", visible);
     }
   }

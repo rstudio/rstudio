@@ -180,10 +180,6 @@ public class CompilePerms {
      */
     final CompilePermsOptions options = new CompilePermsOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
-      if (options.getWorkDir() == null) {
-        System.err.println("The -workDir is required for the CompilePerms phase.");
-        System.exit(1);
-      }
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new CompilePerms(options).run(logger);

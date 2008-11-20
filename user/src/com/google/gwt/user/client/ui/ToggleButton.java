@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickHandler;
+
 /**
  * A <code>ToggleButton</code> is a stylish stateful button which allows the
  * user to toggle between <code>up</code> and <code>down</code> states.
@@ -24,10 +26,9 @@ package com.google.gwt.user.client.ui;
  * <img class='gallery' src='ToggleButton.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class="css">
- * <li>.gwt-ToggleButton-up/down/up-hovering/down-hovering/up-disabled/down-disabled {.html-face}</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> <ul class="css"> <li>
+ * .gwt-ToggleButton-up/down/up-hovering/down-hovering/up-disabled/down-disabled
+ * {.html-face}</li> </ul>
  * 
  * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.ToggleButtonExample}
@@ -64,8 +65,20 @@ public class ToggleButton extends CustomButton {
    * @param upImage image for the default (up) face of the button
    * @param listener the click listener
    */
+  @Deprecated
   public ToggleButton(Image upImage, ClickListener listener) {
     super(upImage, listener);
+  }
+
+  /**
+   * Constructor for <code>ToggleButton</code>. The supplied image is used to
+   * construct the default face of the button.
+   * 
+   * @param upImage image for the default (up) face of the button
+   * @param handler the click handler
+   */
+  public ToggleButton(Image upImage, ClickHandler handler) {
+    super(upImage, handler);
   }
 
   /**
@@ -85,8 +98,20 @@ public class ToggleButton extends CustomButton {
    * @param downImage image for the down face of the button
    * @param listener clickListener
    */
+  @Deprecated
   public ToggleButton(Image upImage, Image downImage, ClickListener listener) {
     super(upImage, downImage, listener);
+  }
+
+  /**
+   * Constructor for <code>ToggleButton</code>.
+   * 
+   * @param upImage image for the default(up) face of the button
+   * @param downImage image for the down face of the button
+   * @param handler the click handler
+   */
+  public ToggleButton(Image upImage, Image downImage, ClickHandler handler) {
+    super(upImage, downImage, handler);
   }
 
   /**
@@ -106,8 +131,20 @@ public class ToggleButton extends CustomButton {
    * @param upText the text for the default (up) face of the button
    * @param listener the click listener
    */
+  @Deprecated
   public ToggleButton(String upText, ClickListener listener) {
     super(upText, listener);
+  }
+
+  /**
+   * Constructor for <code>ToggleButton</code>. The supplied text is used to
+   * construct the default face of the button.
+   * 
+   * @param upText the text for the default (up) face of the button
+   * @param handler the click handler
+   */
+  public ToggleButton(String upText, ClickHandler handler) {
+    super(upText, handler);
   }
 
   /**
@@ -125,13 +162,13 @@ public class ToggleButton extends CustomButton {
     // Changes access to public.
     return super.isDown();
   }
-  
+
   @Override
   public void setDown(boolean down) {
     // Changes access to public.
     super.setDown(down);
   }
-  
+
   @Override
   protected void onClick() {
     toggleDown();

@@ -17,6 +17,12 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.TextBoxImpl;
@@ -25,7 +31,7 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
  * Abstract base class for all text entry widgets.
  */
 public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
-    HasText, HasName {
+    HasChangeHandlers, HasText, HasName, HasValue<String> {
 
   /**
    * Text alignment constant, used in
@@ -69,7 +75,6 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
-  private ChangeListenerCollection changeListeners;
   private Event currentEvent;
 
   /**
@@ -82,12 +87,26 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     super(elem);
   }
 
+  public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+    return addDomHandler(handler, ChangeEvent.getType());
+  }
+
+  @Deprecated
   public void addChangeListener(ChangeListener listener) {
-    if (changeListeners == null) {
-      changeListeners = new ChangeListenerCollection();
-      sinkEvents(Event.ONCHANGE);
+    addChangeHandler(new ListenerWrapper.Change(listener));
+  }
+
+  public HandlerRegistration addValueChangeHandler(
+      ValueChangeHandler<String> handler) {
+    // Initialization code
+    if (!isEventHandled(ValueChangeEvent.getType())) {
+      addChangeHandler(new ChangeHandler() {
+        public void onChange(ChangeEvent event) {
+          setValue(getText());
+        }
+      });
     }
-    changeListeners.add(listener);
+    return addHandler(handler, ValueChangeEvent.getType());
   }
 
   /**
@@ -142,6 +161,10 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     return DOM.getElementProperty(getElement(), "value");
   }
 
+  public String getValue() {
+    return getText();
+  }
+
   /**
    * Determines whether or not the widget is read-only.
    * 
@@ -163,21 +186,15 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
       // handlers.
       super.onBrowserEvent(event);
       currentEvent = null;
-    } else if (type == Event.ONCHANGE) {
-      // Fire the change event.
-      if (changeListeners != null) {
-        changeListeners.fireChange(this);
-      }
     } else {
       // Handles Focus and Click events.
       super.onBrowserEvent(event);
     }
   }
 
+  @Deprecated
   public void removeChangeListener(ChangeListener listener) {
-    if (changeListeners != null) {
-      changeListeners.remove(listener);
-    }
+    ListenerWrapper.Change.remove(this, listener);
   }
 
   /**
@@ -277,6 +294,18 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
    */
   public void setTextAlignment(TextAlignConstant align) {
     DOM.setStyleAttribute(getElement(), "textAlign", align.getTextAlignString());
+  }
+
+  public void setValue(String value) {
+    setValue(value, false);
+  }
+
+  public void setValue(String value, boolean fireEvents) {
+    String oldValue = getText();
+    setText(value);
+    if (fireEvents) {
+      ValueChangeEvent.fireIfNotEqual(this, oldValue, value);
+    }
   }
 
   protected TextBoxImpl getImpl() {

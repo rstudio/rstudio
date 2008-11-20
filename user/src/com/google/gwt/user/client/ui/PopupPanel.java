@@ -18,6 +18,10 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
@@ -57,7 +61,7 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  * </ul>
  */
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
-    EventPreview, HasAnimation {
+    EventPreview, HasAnimation, HasCloseHandlers<PopupPanel> {
 
   /**
    * A callback that is used to set the position of a {@link PopupPanel} right
@@ -83,8 +87,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * <ul>
    * <li>CENTER - Expand from the center of the popup</li>
-   * <li>ONE_WAY_CORNER - Expand from the top left corner, do not animate
-   * hiding</li>
+   * <li>ONE_WAY_CORNER - Expand from the top left corner, do not animate hiding
+   * </li>
    * </ul>
    */
   static enum AnimationType {
@@ -280,8 +284,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   // The top style attribute in pixels
   private int topPosition = -1;
 
-  private PopupListenerCollection popupListeners;
-
   /**
    * Creates an empty popup panel. A child widget must be added to it before it
    * is shown.
@@ -323,11 +325,13 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     this.modal = modal;
   }
 
-  public void addPopupListener(PopupListener listener) {
-    if (popupListeners == null) {
-      popupListeners = new PopupListenerCollection();
-    }
-    popupListeners.add(listener);
+  public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
+    return addHandler(handler, CloseEvent.getType());
+  }
+
+  @Deprecated
+  public void addPopupListener(final PopupListener listener) {
+    ListenerWrapper.Popup.add(this, listener);
   }
 
   /**
@@ -413,8 +417,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * Hides the popup. This has no effect if it is not currently visible.
    * 
    * @param autoClosed the value that will be passed to
-   *          {@link PopupListener#onPopupClosed(PopupPanel, boolean)} when the
-   *          popup is closed
+   *          {@link CloseHandler#onClose(CloseEvent)} when the popup is closed
    */
   public void hide(boolean autoClosed) {
     if (!showing) {
@@ -424,11 +427,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     // Hide the popup
     resizeAnimation.setState(false);
-
-    // Fire the event listeners
-    if (popupListeners != null) {
-      popupListeners.firePopupClosed(this, autoClosed);
-    }
+    CloseEvent.fire(this, this, autoClosed);
   }
 
   public boolean isAnimationEnabled() {
@@ -480,6 +479,17 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
 
       case Event.ONMOUSEDOWN:
+        // Don't eat events if event capture is enabled, as this can interfere
+        // with dialog dragging, for example.
+        if (DOM.getCaptureElement() != null) {
+          return true;
+        }
+
+        if (!eventTargetsPopup && autoHide) {
+          hide(true);
+          return true;
+        }
+        break;
       case Event.ONMOUSEUP:
       case Event.ONMOUSEMOVE:
       case Event.ONCLICK:
@@ -518,7 +528,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * @param key the key code of the depressed key
    * @param modifiers keyboard modifiers, as specified in
-   *          {@link KeyboardListener}.
+   *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
    */
   public boolean onKeyDownPreview(char key, int modifiers) {
@@ -531,7 +541,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * @param key the unicode character pressed
    * @param modifiers keyboard modifiers, as specified in
-   *          {@link KeyboardListener}.
+   *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
    */
   public boolean onKeyPressPreview(char key, int modifiers) {
@@ -544,17 +554,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * @param key the key code of the released key
    * @param modifiers keyboard modifiers, as specified in
-   *          {@link KeyboardListener}.
+   *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
    */
   public boolean onKeyUpPreview(char key, int modifiers) {
     return true;
   }
 
+  @Deprecated
   public void removePopupListener(PopupListener listener) {
-    if (popupListeners != null) {
-      popupListeners.remove(listener);
-    }
+    ListenerWrapper.Popup.remove(this, listener);
   }
 
   public void setAnimationEnabled(boolean enable) {
@@ -660,8 +669,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   /**
    * Sets whether this object is visible.
    * 
-   * @param visible <code>true</code> to show the object, <code>false</code>
-   *          to hide it
+   * @param visible <code>true</code> to show the object, <code>false</code> to
+   *          hide it
    */
   @Override
   public void setVisible(boolean visible) {
@@ -734,7 +743,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     DOM.removeEventPreview(this);
     super.onDetach();
   }
-  
+
   /**
    * We control size by setting our child widget's size. However, if we don't
    * currently have a child, we record the size the user wanted so that when we
@@ -760,7 +769,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       }
     }
   }
-  
+
   /**
    * Sets the animation used to animate this popup. Used by gwt-incubator to
    * allow DropDownPanel to override the default popup animation. Not protected

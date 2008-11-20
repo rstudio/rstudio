@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Timer;
 
 public class AsyncJUnitExample extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     // TODO Auto-generated method stub
     return null;
@@ -31,6 +32,7 @@ public class AsyncJUnitExample extends GWTTestCase {
   public void testTimer() {
     // Setup an asynchronous event handler.
     Timer timer = new Timer() {
+      @Override
       public void run() {
         // do some validation logic
 

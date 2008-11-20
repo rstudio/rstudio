@@ -20,13 +20,15 @@ import java.util.EventListener;
 /**
  * Event listener interface for 'change' events.
  */
+@Deprecated
 public interface ChangeListener extends EventListener {
 
   /**
    * Fired when a widget changes, where 'change' is defined by the widget
    * sending the event.
    * 
-   * @param sender the widget that has changed.
+   * @param sender the widget that has changed
    */
+  @Deprecated
   void onChange(Widget sender);
 }

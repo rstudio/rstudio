@@ -41,7 +41,7 @@ import java.util.List;
  * TODO(mmendez): Can an SSW be detected without using a timer? Currently, if a
  * {@link Command} or an {@link IncrementalCommand} calls either
  * {@link Window#alert(String)} or the JavaScript <code>alert(String)</code>
- * methods directly or indirectly then the {@link #cancellationTimer} can fire,
+ * methods directly or indirectly then the  cancellation timer can fire,
  * resulting in a false SSW cancellation detection.
  */
 class CommandExecutor {
@@ -95,7 +95,6 @@ class CommandExecutor {
     /**
      * Removes the command which was previously returned by {@link #next()}.
      * 
-     * @return the command which was previously returned by {@link #next()}.
      */
     public void remove() {
       assert (last >= 0);

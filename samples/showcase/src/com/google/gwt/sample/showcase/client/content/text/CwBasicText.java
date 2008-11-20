@@ -17,16 +17,18 @@ package com.google.gwt.sample.showcase.client.content.text;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
@@ -38,7 +40,8 @@ import com.google.gwt.user.client.ui.Widget;
 /**
  * Example file.
  */
-@ShowcaseStyle({".gwt-TextBox", ".gwt-PasswordTextBox", ".gwt-TextArea"})
+@ShowcaseStyle(/* css style names */{
+    ".gwt-TextBox", ".gwt-PasswordTextBox", ".gwt-TextArea"})
 public class CwBasicText extends ContentWidget {
   /**
    * The constants used in this Content Widget.
@@ -145,10 +148,10 @@ public class CwBasicText extends ContentWidget {
 
   /**
    * Create a TextBox example that includes the text box and an optional
-   * listener that updates a Label with the currently selected text.
+   * handler that updates a Label with the currently selected text.
    * 
-   * @param textBox the text box to listen to
-   * @param addSelection add listeners to update label
+   * @param textBox the text box to handle
+   * @param addSelection add handlers to update label
    * @return the Label that will be updated
    */
   @ShowcaseSource
@@ -159,22 +162,21 @@ public class CwBasicText extends ContentWidget {
     hPanel.setSpacing(4);
     hPanel.add(textBox);
 
-    // Add listeners
+    // Add handlers
     if (addSelection) {
       // Create the new label
       final Label label = new Label(constants.cwBasicTextSelected() + ": 0, 0");
 
-      // Add a KeyboardListener
-      textBox.addKeyboardListener(new KeyboardListenerAdapter() {
-        @Override
-        public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+      // Add a KeyUpHandler
+      textBox.addKeyUpHandler(new KeyUpHandler() {
+        public void onKeyUp(KeyUpEvent event) {
           updateSelectionLabel(textBox, label);
         }
       });
 
-      // Add a ClickListener
-      textBox.addClickListener(new ClickListener() {
-        public void onClick(Widget sender) {
+      // Add a ClickHandler
+      textBox.addClickHandler(new ClickHandler() {
+        public void onClick(ClickEvent event) {
           updateSelectionLabel(textBox, label);
         }
       });

@@ -131,7 +131,8 @@ public class WindowTest extends GWTTestCase {
     Window.enableScrolling(false);
     final int oldClientHeight = Window.getClientHeight();
     final int oldClientWidth = Window.getClientWidth();
-    assertTrue(oldClientHeight > 0);
+    assertTrue("Expect positive oldClientHeight. "
+        + "This will fail in WebKit if run headless", oldClientHeight > 0);
     assertTrue(oldClientWidth > 0);
 
     // Compare to the dimensions with scroll bars

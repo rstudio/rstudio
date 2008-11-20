@@ -16,6 +16,10 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.ErrorEvent;
+import com.google.gwt.event.dom.client.ErrorHandler;
+import com.google.gwt.event.dom.client.LoadEvent;
+import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -23,7 +27,46 @@ import com.google.gwt.junit.client.GWTTestCase;
  * are tested, along with the transitions between the two modes.
  */
 public class ImageTest extends GWTTestCase {
+  private static class TestErrorHandler implements ErrorHandler {
+    private Image image;
 
+    public TestErrorHandler(Image image) {
+      this.image = image;
+    }
+
+    public void onError(ErrorEvent event) {
+      fail("The image " + image.getUrl() + " failed to load.");
+    }
+  }
+
+  @Deprecated
+  private abstract static class TestLoadListener implements LoadListener {
+    private Image image;
+    private boolean finished = false;
+
+    public TestLoadListener(Image image) {
+      this.image = image;
+    }
+
+    public void onError(Widget sender) {
+      fail("The image " + image.getUrl() + " failed to load.");
+    }
+
+    /**
+     * Mark the test as finished.
+     */
+    public void finish() {
+      finished = true;
+    }
+
+    /**
+     * @return true if the test has finished
+     */
+    public boolean isFinished() {
+      return finished;
+    }
+  }
+  
   /**
    * Helper method that allows us to 'peek' at the private <code>state</code>
    * field in the Image object, and call the <code>state.getStateName()</code>
@@ -158,21 +201,35 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-forwards.png",
         16, 16, 16, 16);
 
-    image.addLoadListener(new LoadListener() {
+    final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
-
-      public void onError(Widget sender) {
-        fail("The image " + ((Image) sender).getUrl() + " failed to load.");
-      }
 
       public void onLoad(Widget sender) {
         if (++onLoadEventCount == 1) {
           assertEquals(16, image.getWidth());
           assertEquals(16, image.getHeight());
-          finishTest();
+          finish();
+        }
+      }
+    };
+    image.addLoadListener(listener);
+
+    image.addLoadHandler(new LoadHandler() {
+      private int onLoadEventCount = 0;
+
+      public void onLoad(LoadEvent event) {
+        if (++onLoadEventCount == 1) {
+          assertEquals(16, image.getWidth());
+          assertEquals(16, image.getHeight());
+          if (listener.isFinished()) {
+            finishTest();
+          } else {
+            fail("Listener did not fire first");
+          }
         }
       }
     });
+    image.addErrorHandler(new TestErrorHandler(image));
 
     RootPanel.get().add(image);
     assertEquals(16, image.getOriginLeft());
@@ -223,12 +280,8 @@ public class ImageTest extends GWTTestCase {
     final Image image = new Image("counting-backwards.png",
         12, 12, 12, 12);
 
-    image.addLoadListener(new LoadListener() {
+    final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
-
-      public void onError(Widget sender) {
-        fail("The image " + ((Image) sender).getUrl() + " failed to load.");
-      }
 
       public void onLoad(Widget sender) {
         if (++onLoadEventCount == 2) {
@@ -237,10 +290,31 @@ public class ImageTest extends GWTTestCase {
           assertEquals(16, image.getWidth());
           assertEquals(16, image.getHeight());
           assertEquals("clipped", getCurrentImageStateName(image));
-          finishTest();
+          finish();
+        }
+      }
+    };
+    image.addLoadListener(listener);
+
+    image.addLoadHandler(new LoadHandler() {
+      private int onLoadEventCount = 0;
+
+      public void onLoad(LoadEvent event) {
+        if (++onLoadEventCount == 2) {
+          assertEquals(0, image.getOriginLeft());
+          assertEquals(16, image.getOriginTop());
+          assertEquals(16, image.getWidth());
+          assertEquals(16, image.getHeight());
+          assertEquals("clipped", getCurrentImageStateName(image));
+          if (listener.isFinished()) {
+            finishTest();
+          } else {
+            fail("Listener did not fire first");
+          }
         }
       }
     });
+    image.addErrorHandler(new TestErrorHandler(image));
 
     RootPanel.get().add(image);
     assertEquals("clipped", getCurrentImageStateName(image));
@@ -252,43 +326,34 @@ public class ImageTest extends GWTTestCase {
 
   /**
    * Tests the behavior of
-   * <code>setUrlAndVisibleRect(String, int, int, int, int)</code> method on
-   * an unclipped image, which causes a state transition to the clipped state.
+   * <code>setUrlAndVisibleRect(String, int, int, int, int)</code> method on an
+   * unclipped image, which causes a state transition to the clipped state.
    */
-  /* This test has been commented out because of issue #863
-  public void testSetUrlAndVisibleRectOnUnclippedImage() {
-    final Image image = new Image("counting-backwards.png");
-
-    image.addLoadListener(new LoadListener() {
-      private int onLoadEventCount = 0;
-
-      public void onError(Widget sender) {
-        fail("The image " + ((Image) sender).getUrl() + " failed to load.");
-      }
-
-      public void onLoad(Widget sender) {
-        if (getCurrentImageStateName(image).equals("unclipped")) {
-          image.setUrlAndVisibleRect("counting-forwards.png",
-              0, 16, 16, 16);
-        }
-
-        if (++onLoadEventCount == 2) {
-          assertEquals(0, image.getOriginLeft());
-          assertEquals(16, image.getOriginTop());
-          assertEquals(16, image.getWidth());
-          assertEquals(16, image.getHeight());
-          assertEquals("clipped", getCurrentImageStateName(image));
-          finishTest();
-        }
-      }
-    });
-
-    RootPanel.get().add(image);
-    assertEquals("unclipped", getCurrentImageStateName(image));
-
-    delayTestFinish(5000);
-  }
-  */
+  /*
+   * This test has been commented out because of issue #863 public void
+   * testSetUrlAndVisibleRectOnUnclippedImage() { final Image image = new
+   * Image("counting-backwards.png");
+   * 
+   * image.addLoadListener(new LoadListener() { private int onLoadEventCount =
+   * 0;
+   * 
+   * public void onError(Widget sender) { fail("The image " + ((Image)
+   * sender).getUrl() + " failed to load."); }
+   * 
+   * public void onLoad(Widget sender) { if
+   * (getCurrentImageStateName(image).equals("unclipped")) {
+   * image.setUrlAndVisibleRect("counting-forwards.png", 0, 16, 16, 16); }
+   * 
+   * if (++onLoadEventCount == 2) { assertEquals(0, image.getOriginLeft());
+   * assertEquals(16, image.getOriginTop()); assertEquals(16, image.getWidth());
+   * assertEquals(16, image.getHeight()); assertEquals("clipped",
+   * getCurrentImageStateName(image)); finishTest(); } } });
+   * 
+   * RootPanel.get().add(image); assertEquals("unclipped",
+   * getCurrentImageStateName(image));
+   * 
+   * delayTestFinish(5000); }
+   */
 
   /**
    * Tests the firing of onload events when calling
@@ -296,22 +361,33 @@ public class ImageTest extends GWTTestCase {
    * on a clipped image.
    */
   public void testSetVisibleRectAndLoadEventsOnClippedImage() {
-    final Image image = new Image("counting-backwards.png",
-        16, 16, 16, 16);
+    final Image image = new Image("counting-backwards.png", 16, 16, 16, 16);
 
-    image.addLoadListener(new LoadListener() {
+    final TestLoadListener listener = new TestLoadListener(image) {
       private int onLoadEventCount = 0;
-
-      public void onError(Widget sender) {
-        fail("The image " + ((Image) sender).getUrl() + " failed to load.");
-      }
 
       public void onLoad(Widget sender) {
         if (++onLoadEventCount == 4) {
-          finishTest();
+          finish();
+        }
+      }
+    };
+    image.addLoadListener(listener);
+
+    image.addLoadHandler(new LoadHandler() {
+      private int onLoadEventCount = 0;
+
+      public void onLoad(LoadEvent event) {
+        if (++onLoadEventCount == 4) {
+          if (listener.isFinished()) {
+            finishTest();
+          } else {
+            fail("Listener did not fire first");
+          }
         }
       }
     });
+    image.addErrorHandler(new TestErrorHandler(image));
 
     RootPanel.get().add(image);
     image.setVisibleRect(0, 0, 16, 16);

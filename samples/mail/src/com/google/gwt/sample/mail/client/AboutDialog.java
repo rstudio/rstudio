@@ -15,13 +15,13 @@
  */
 package com.google.gwt.sample.mail.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.KeyboardListener;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A simple example of an 'about' dialog box.
@@ -44,10 +44,10 @@ public class AboutDialog extends DialogBox {
     text.setStyleName("mail-AboutText");
     outer.add(text);
 
-    // Create the 'OK' button, along with a listener that hides the dialog
+    // Create the 'OK' button, along with a handler that hides the dialog
     // when the button is clicked.
-    outer.add(new Button("Close", new ClickListener() {
-      public void onClick(Widget sender) {
+    outer.add(new Button("Close", new ClickHandler() {
+      public void onClick(ClickEvent event) {
         hide();
       }
     }));
@@ -60,8 +60,8 @@ public class AboutDialog extends DialogBox {
     // Use the popup's key preview hooks to close the dialog when either
     // enter or escape is pressed.
     switch (key) {
-      case KeyboardListener.KEY_ENTER:
-      case KeyboardListener.KEY_ESCAPE:
+      case KeyCodes.KEY_ENTER:
+      case KeyCodes.KEY_ESCAPE:
         hide();
         break;
     }

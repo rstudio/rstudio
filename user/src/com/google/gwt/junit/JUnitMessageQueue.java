@@ -99,39 +99,6 @@ public class JUnitMessageQueue {
   }
 
   /**
-   * Returns a human-formatted message identifying what clients have connected
-   * but have not yet reported results for this test.  It is used in a timeout
-   * condition, to identify what we're still waiting on.
-   * 
-   * @return human readable message
-   */
-  public String getWorkingClients() {
-    synchronized (clientStatusesLock) {
-      StringBuilder buf = new StringBuilder();
-      int itemCount = 0;
-      for (ClientStatus clientStatus : clientStatuses.values()) {
-        if (clientStatus.hasRequestedCurrentTest 
-            && clientStatus.currentTestResults == null) {
-          if (itemCount > 0) {
-            buf.append(", ");
-          }
-          buf.append(clientStatus.clientId);
-          ++itemCount;
-        }
-      }
-      int difference = numClients - itemCount;
-      if (difference > 0) {
-        if (itemCount > 0) {
-          buf.append('\n');
-        }
-        buf.append(difference + 
-            " other client(s) haven't responded back to JUnitShell since the start of the test.");
-      }
-      return buf.toString();
-    }
-  }
-
-  /**
    * Called by the servlet to query for for the next method to test.
    * 
    * @param timeout how long to wait for an answer
@@ -175,6 +142,39 @@ public class JUnitMessageQueue {
       // Record that this client has retrieved the current test.
       clientStatus.hasRequestedCurrentTest = true;
       return currentTest;
+    }
+  }
+
+  /**
+   * Returns a human-formatted message identifying what clients have connected
+   * but have not yet reported results for this test.  It is used in a timeout
+   * condition, to identify what we're still waiting on.
+   * 
+   * @return human readable message
+   */
+  public String getWorkingClients() {
+    synchronized (clientStatusesLock) {
+      StringBuilder buf = new StringBuilder();
+      int itemCount = 0;
+      for (ClientStatus clientStatus : clientStatuses.values()) {
+        if (clientStatus.hasRequestedCurrentTest 
+            && clientStatus.currentTestResults == null) {
+          if (itemCount > 0) {
+            buf.append(", ");
+          }
+          buf.append(clientStatus.clientId);
+          ++itemCount;
+        }
+      }
+      int difference = numClients - itemCount;
+      if (difference > 0) {
+        if (itemCount > 0) {
+          buf.append('\n');
+        }
+        buf.append(difference + 
+            " other client(s) haven't responded back to JUnitShell since the start of the test.");
+      }
+      return buf.toString();
     }
   }
 

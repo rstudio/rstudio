@@ -62,7 +62,8 @@ public class AbsolutePanelTest extends GWTTestCase {
     int absY = lbl.getAbsoluteTop() - Document.get().getBodyOffsetTop();
     assertEquals(3, x);
     assertEquals(7, y);
-    assertEquals(3 + 100, absX);
+    assertEquals("absX should be 103. This will fail in WebKit if run headless", 
+        3 + 100, absX);
     assertEquals(7 + 200, absY);
   }
 }

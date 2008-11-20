@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * <h1> gwt-TreeItem refers to the wrong element in TreeItem </h1>
+ * <h1>gwt-TreeItem refers to the wrong element in TreeItem</h1>
  * 
  * <p>
  * gwt-TreeItem used to refer to the span that directly wrapped the text in a

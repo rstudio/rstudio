@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for keyboard events.
  */
+@Deprecated
 public interface KeyboardListener extends EventListener {
 
   int KEY_ALT = 18;

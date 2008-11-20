@@ -16,11 +16,13 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
+import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.TabBar;
-import com.google.gwt.user.client.ui.TabListener;
 
 public class TabBarExample implements EntryPoint {
 
@@ -32,19 +34,19 @@ public class TabBarExample implements EntryPoint {
     bar.addTab("baz");
 
     // Hook up a tab listener to do something when the user selects a tab.
-    bar.addTabListener(new TabListener() {
-      public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
+    bar.addSelectionHandler(new SelectionHandler<Integer>() {
+      public void onSelection(SelectionEvent<Integer> event) {
         // Let the user know what they just did.
-        Window.alert("You clicked tab " + tabIndex);
+        Window.alert("You clicked tab " + event.getSelectedItem());
       }
-    
-      public boolean onBeforeTabSelected(SourcesTabEvents sender,
-          int tabIndex) {
+    });
 
-        // Just for fun, let's disallow selection of 'bar'.
-        if (tabIndex == 1)
-          return false;
-        return true;
+    // Just for fun, let's disallow selection of 'bar'.
+    bar.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>() {
+      public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
+        if (event.getItem().intValue() == 1) {
+          event.cancel();
+        }
       }
     });
 

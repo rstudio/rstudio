@@ -16,33 +16,28 @@
 package com.google.gwt.examples;
 
 import com.google.gwt.core.client.EntryPoint;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class TextBoxExample implements EntryPoint {
 
   public void onModuleLoad() {
-    // Make some text boxes.  The password text box is identical to the text
+    // Make some text boxes. The password text box is identical to the text
     // box, except that the input is visually masked by the browser.
     PasswordTextBox ptb = new PasswordTextBox();
     TextBox tb = new TextBox();
 
-    // Let's disallow non-numeric entry in the normal text box.
-    tb.addKeyboardListener(new KeyboardListenerAdapter() {
-      public void onKeyPress(Widget sender, char keyCode, int modifiers) {
-        if ((!Character.isDigit(keyCode)) && (keyCode != (char) KEY_TAB)
-            && (keyCode != (char) KEY_BACKSPACE)
-            && (keyCode != (char) KEY_DELETE) && (keyCode != (char) KEY_ENTER) 
-            && (keyCode != (char) KEY_HOME) && (keyCode != (char) KEY_END)
-            && (keyCode != (char) KEY_LEFT) && (keyCode != (char) KEY_UP)
-            && (keyCode != (char) KEY_RIGHT) && (keyCode != (char) KEY_DOWN)) {
-          // TextBox.cancelKey() suppresses the current keyboard event.
-          ((TextBox)sender).cancelKey();
+    // TODO(ECC) must be tested.
+    tb.addKeyPressHandler(new KeyPressHandler() {
+
+      public void onKeyPress(KeyPressEvent event) {
+        if (!Character.isDigit(event.getCharCode())) {
+          ((TextBox) event.getSource()).cancelKey();
         }
       }
     });

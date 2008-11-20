@@ -17,16 +17,19 @@ package com.google.gwt.sample.showcase.client.content.other;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -101,20 +104,20 @@ public class CwFrame extends ContentWidget {
     optionsPanel.add(setLocationButton);
 
     // Change the location when the user clicks the button
-    setLocationButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    setLocationButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         frame.setUrl(locationBox.getText());
       }
     });
 
     // Change the location when the user presses enter
-    locationBox.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyPress(Widget sender, char keyCode, int modifiers) {
-        if (keyCode == KEY_ENTER) {
+    locationBox.addKeyDownHandler(new KeyDownHandler() {
+      public void onKeyDown(KeyDownEvent event) {
+        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
           frame.setUrl(locationBox.getText());
         }
       }
+
     });
 
     // Add everything to a panel and return it

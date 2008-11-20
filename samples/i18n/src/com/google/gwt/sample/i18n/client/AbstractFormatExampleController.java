@@ -15,13 +15,14 @@
  */
 package com.google.gwt.sample.i18n.client;
 
-import com.google.gwt.user.client.ui.ChangeListener;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.ui.HasText;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
 
 import java.util.Map;
 
@@ -63,18 +64,16 @@ public abstract class AbstractFormatExampleController {
       HasText error);
 
   private void initWidgetsForInput() {
-    txtInput.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    txtInput.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         tryToParseInput(false);
       }
     });
   }
 
   private void initWidgetsForPattern(Map<String, String> patternMap) {
-    txtCurrentPattern.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    txtCurrentPattern.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         String pattern = txtCurrentPattern.getText();
 
         // Update the active pattern.
@@ -90,10 +89,10 @@ public abstract class AbstractFormatExampleController {
       lstSamplePatterns.addItem(caption, patternKey);
     }
 
-    lstSamplePatterns.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
+    lstSamplePatterns.addChangeHandler(new ChangeHandler() {
+      public void onChange(ChangeEvent event) {
         syncPatternToList();
-      }
+             }
     });
 
     lstSamplePatterns.setSelectedIndex(0);

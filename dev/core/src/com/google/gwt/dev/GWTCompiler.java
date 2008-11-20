@@ -21,11 +21,12 @@ import com.google.gwt.dev.CompilePerms.CompilePermsOptionsImpl;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
-import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
+import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,6 +39,10 @@ public class GWTCompiler {
   static final class ArgProcessor extends Precompile.ArgProcessor {
     public ArgProcessor(CompilerOptions options) {
       super(options);
+
+      // Override the ArgHandlerWorkDirRequired in the super class.
+      registerHandler(new ArgHandlerWorkDirOptional(options));
+
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerOutDir(options));
     }
@@ -69,10 +74,6 @@ public class GWTCompiler {
       return linkOptions.getExtraDir();
     }
 
-    public File getLegacyExtraDir(TreeLogger logger, ModuleDef module) {
-      return linkOptions.getLegacyExtraDir(logger, module);
-    }
-
     public File getOutDir() {
       return linkOptions.getOutDir();
     }
@@ -93,34 +94,19 @@ public class GWTCompiler {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    boolean deleteWorkDir = false;
     final CompilerOptions options = new GWTCompilerOptionsImpl();
     if (new ArgProcessor(options).processArgs(args)) {
-      try {
-        deleteWorkDir = options.ensureWorkDir();
-        System.err.println("deleteWorkDir: " + deleteWorkDir);
-      } catch (IOException ex) {
-        System.err.println("Couldn't create new workDir: " + ex.getMessage());
-        System.err.println("Either fix the error, or supply an explicit -workDir flag.");
-        System.exit(1);
-      }
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           return new GWTCompiler(options).run(logger);
         }
       };
       if (CompileTaskRunner.runWithAppropriateLogger(options, task)) {
-        if (deleteWorkDir) {
-          Util.recursiveDelete(options.getWorkDir(), false);
-        }
         // Exit w/ success code.
         System.exit(0);
       }
     }
     // Exit w/ non-success code.
-    if (deleteWorkDir) {
-      Util.recursiveDelete(options.getWorkDir(), false);
-    }
     System.exit(1);
   }
 
@@ -137,23 +123,39 @@ public class GWTCompiler {
       PerfLogger.start("compile");
       logger = logger.branch(TreeLogger.INFO, "Compiling module "
           + options.getModuleName());
-      if (new Precompile(options).run(logger)) {
-        /*
-         * TODO: use the in-memory result of Precompile to run CompilePerms
-         * instead of serializing through the file system.
-         */
-        CompilePermsOptionsImpl permsOptions = new CompilePermsOptionsImpl();
-        permsOptions.copyFrom(options);
-        if (new CompilePerms(permsOptions).run(logger)) {
-          if (new Link(options).run(logger)) {
-            logger.log(TreeLogger.INFO, "Compilation succeeded");
-            PerfLogger.end();
-            return true;
+
+      boolean tempWorkDir = false;
+      try {
+        if (options.getWorkDir() == null) {
+          options.setWorkDir(Utility.makeTemporaryDirectory(null, "gwtc"));
+          tempWorkDir = true;
+        }
+
+        if (new Precompile(options).run(logger)) {
+          /*
+           * TODO: use the in-memory result of Precompile to run CompilePerms
+           * instead of serializing through the file system.
+           */
+          CompilePermsOptionsImpl permsOptions = new CompilePermsOptionsImpl();
+          permsOptions.copyFrom(options);
+          if (new CompilePerms(permsOptions).run(logger)) {
+            if (new Link(options).run(logger)) {
+              logger.log(TreeLogger.INFO, "Compilation succeeded");
+              return true;
+            }
           }
         }
+
+        logger.log(TreeLogger.ERROR, "Compilation failed");
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to create compiler work directory", e);
+      } finally {
+        PerfLogger.end();
+        if (tempWorkDir) {
+          Util.recursiveDelete(options.getWorkDir(), false);
+        }
       }
-      logger.log(TreeLogger.ERROR, "Compilation failed");
-      PerfLogger.end();
       return false;
     }
   }

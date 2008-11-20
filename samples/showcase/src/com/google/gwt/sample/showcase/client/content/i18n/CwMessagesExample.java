@@ -17,6 +17,11 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseConstants;
@@ -24,13 +29,10 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
-import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
@@ -162,8 +164,8 @@ public class CwMessagesExample extends ContentWidget {
 
     // Add a link to the source code of the Interface
     HTML link = new HTML(" <a href=\"javascript:void(0);\">ErrorMessages</a>");
-    link.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    link.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         selectTab(2);
       }
     });
@@ -203,16 +205,15 @@ public class CwMessagesExample extends ContentWidget {
     layout.setWidget(5, 1, formattedMessage);
     formatter.setVerticalAlignment(5, 0, HasVerticalAlignment.ALIGN_TOP);
 
-    // Add listeners to all of the argument boxes
-    KeyboardListenerAdapter keyListener = new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    // Add handlers to all of the argument boxes
+    KeyUpHandler keyUpHandler = new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         updateMessage();
       }
     };
-    arg0Box.addKeyboardListener(keyListener);
-    arg1Box.addKeyboardListener(keyListener);
-    arg2Box.addKeyboardListener(keyListener);
+    arg0Box.addKeyUpHandler(keyUpHandler);
+    arg1Box.addKeyUpHandler(keyUpHandler);
+    arg2Box.addKeyUpHandler(keyUpHandler);
 
     // Return the layout Widget
     updateMessage();
@@ -225,9 +226,10 @@ public class CwMessagesExample extends ContentWidget {
   }
 
   @Override
-  public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
-    super.onTabSelected(sender, tabIndex);
+  public void onSelection(SelectionEvent<Integer> event) {
+    super.onSelection(event);
 
+    int tabIndex = event.getSelectedItem().intValue();
     if (!javaLoaded && tabIndex == 2) {
       // Load ErrorMessages.java
       javaLoaded = true;

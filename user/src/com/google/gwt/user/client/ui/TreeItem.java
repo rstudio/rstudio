@@ -521,8 +521,8 @@ public class TreeItem extends UIObject implements HasHTML {
   /**
    * Selects or deselects this item.
    * 
-   * @param selected <code>true</code> to select the item, <code>false</code>
-   *          to deselect it
+   * @param selected <code>true</code> to select the item, <code>false</code> to
+   *          deselect it
    */
   public void setSelected(boolean selected) {
     if (this.selected == selected) {
@@ -546,7 +546,6 @@ public class TreeItem extends UIObject implements HasHTML {
    * 
    * @param open whether the item is open
    * @param fireEvents <code>true</code> to allow open/close events to be
-   *          fired
    */
   public void setState(boolean open, boolean fireEvents) {
     if (open && getChildCount() == 0) {
@@ -557,10 +556,10 @@ public class TreeItem extends UIObject implements HasHTML {
     if (this.open != open) {
       this.open = open;
       updateState(true, true);
-    }
 
-    if (fireEvents && tree != null) {
-      tree.fireStateChanged(this);
+      if (fireEvents && tree != null) {
+        tree.fireStateChanged(this, open);
+      }
     }
   }
 

@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for mouse wheel events.
  */
+@Deprecated
 public interface MouseWheelListener extends EventListener {
 
   /**
@@ -28,5 +29,6 @@ public interface MouseWheelListener extends EventListener {
    * @param sender the widget sending the event
    * @param velocity the velocity information for the wheel event
    */
+  @Deprecated
   void onMouseWheel(Widget sender, MouseWheelVelocity velocity);
 }

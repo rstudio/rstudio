@@ -103,6 +103,7 @@ public class SimpleCheckBox extends FocusWidget implements HasName {
     getInputElement().setDefaultChecked(checked);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     if (enabled) {

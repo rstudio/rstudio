@@ -15,24 +15,24 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.HasScrollHandlers;
+import com.google.gwt.event.dom.client.ScrollEvent;
+import com.google.gwt.event.dom.client.ScrollHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
 
 /**
  * A simple panel that wraps its contents in a scrollable area.
  */
-public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
-
-  private ScrollListenerCollection scrollListeners;
+public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
+    HasScrollHandlers {
 
   /**
    * Creates an empty scroll panel.
    */
   public ScrollPanel() {
     setAlwaysShowScrollBars(false);
-    sinkEvents(Event.ONSCROLL);
-
     // Prevent IE standard mode bug when a AbsolutePanel is contained.
     DOM.setStyleAttribute(getElement(), "position", "relative");
   }
@@ -47,11 +47,13 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
     setWidget(child);
   }
 
+  public HandlerRegistration addScrollHandler(ScrollHandler handler) {
+    return addDomHandler(handler, ScrollEvent.getType());
+  }
+
+  @Deprecated
   public void addScrollListener(ScrollListener listener) {
-    if (scrollListeners == null) {
-      scrollListeners = new ScrollListenerCollection();
-    }
-    scrollListeners.add(listener);
+    ListenerWrapper.Scroll.add(this, listener);
   }
 
   /**
@@ -84,20 +86,9 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
     return DOM.getElementPropertyInt(getElement(), "scrollTop");
   }
 
-  @Override
-  public void onBrowserEvent(Event event) {
-    if (DOM.eventGetType(event) == Event.ONSCROLL) {
-      if (scrollListeners != null) {
-        scrollListeners.fireScroll(this, getHorizontalScrollPosition(),
-            getScrollPosition());
-      }
-    }
-  }
-
+  @Deprecated
   public void removeScrollListener(ScrollListener listener) {
-    if (scrollListeners != null) {
-      scrollListeners.remove(listener);
-    }
+    ListenerWrapper.Scroll.remove(this, listener);
   }
 
   /**
@@ -209,5 +200,4 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents {
 
     scroll.scrollTop = realOffset - scroll.offsetHeight / 2;
   }-*/;
-
 }

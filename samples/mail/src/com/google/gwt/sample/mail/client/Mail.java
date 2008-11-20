@@ -17,10 +17,11 @@ package com.google.gwt.sample.mail.client;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.WindowResizeListener;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -30,7 +31,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
  * interface, similar to many common email readers. It has no back-end,
  * populating its components with hard-coded data.
  */
-public class Mail implements EntryPoint, WindowResizeListener {
+public class Mail implements EntryPoint, ResizeHandler {
 
   private static Mail singleton;
 
@@ -71,7 +72,7 @@ public class Mail implements EntryPoint, WindowResizeListener {
 
   /**
    * This method constructs the application user interface by instantiating
-   * controls and hooking up event listeners.
+   * controls and hooking up event handler.
    */
   public void onModuleLoad() {
     singleton = this;
@@ -101,7 +102,7 @@ public class Mail implements EntryPoint, WindowResizeListener {
     outer.setCellWidth(rightPanel, "100%");
 
     // Hook the window resize event, so that we can adjust the UI.
-    Window.addWindowResizeListener(this);
+    Window.addResizeHandler(this);
 
     // Get rid of scrollbars, and clear out the window's built-in margin,
     // because we want to take advantage of the entire client area.
@@ -122,6 +123,10 @@ public class Mail implements EntryPoint, WindowResizeListener {
     });
 
     onWindowResized(Window.getClientWidth(), Window.getClientHeight());
+  }
+
+  public void onResize(ResizeEvent event) {
+    onWindowResized(event.getWidth(), event.getHeight());
   }
 
   public void onWindowResized(int width, int height) {

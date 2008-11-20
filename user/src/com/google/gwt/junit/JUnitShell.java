@@ -563,7 +563,7 @@ public class JUnitShell extends GWTShell {
       lastModule = currentModule;
       if (testMethodTimeout == 0) {
         testMethodTimeout = currentTimeMillis + TEST_METHOD_TIMEOUT_MILLIS;
-      } else if (testMethodTimeout < currentTimeMillis){
+      } else if (testMethodTimeout < currentTimeMillis) {
         double elapsed = (currentTimeMillis - testBeginTime) / 1000.0;
         throw new TimeoutException(
             "The browser did not complete the test method " 

@@ -17,6 +17,10 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.sample.showcase.client.ContentWidget;
@@ -24,9 +28,7 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseStyle;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.Grid;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
@@ -132,8 +134,8 @@ public class CwNumberFormat extends ContentWidget {
     for (String pattern : patterns) {
       patternList.addItem(pattern);
     }
-    patternList.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
+    patternList.addChangeHandler(new ChangeHandler() {
+      public void onChange(ChangeEvent event) {
         updatePattern();
       }
     });
@@ -143,9 +145,8 @@ public class CwNumberFormat extends ContentWidget {
     // Add a field to display the pattern
     patternBox = new TextBox();
     patternBox.setWidth("17em");
-    patternBox.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    patternBox.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         updatePattern();
       }
     });
@@ -155,9 +156,8 @@ public class CwNumberFormat extends ContentWidget {
     valueBox = new TextBox();
     valueBox.setWidth("17em");
     valueBox.setText("31415926535.897932");
-    valueBox.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    valueBox.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         updateFormattedValue();
       }
     });

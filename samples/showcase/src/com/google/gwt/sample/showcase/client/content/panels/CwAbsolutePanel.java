@@ -17,6 +17,10 @@ package com.google.gwt.sample.showcase.client.content.panels;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.Showcase;
@@ -27,13 +31,11 @@ import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.AbsolutePanel;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.DecoratorPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -237,21 +239,20 @@ public class CwAbsolutePanel extends ContentWidget {
     }
 
     // Set the current item position when the user selects an item
-    listBox.addChangeListener(new ChangeListener() {
-      public void onChange(Widget sender) {
+    listBox.addChangeHandler(new ChangeHandler() {
+      public void onChange(ChangeEvent event) {
         updateSelectedItem();
       }
     });
 
     // Move the item as the user changes the value in the left and top boxes
-    KeyboardListenerAdapter repositionListener = new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    KeyUpHandler repositionHandler = new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         repositionItem();
       }
     };
-    topPosBox.addKeyboardListener(repositionListener);
-    leftPosBox.addKeyboardListener(repositionListener);
+    topPosBox.addKeyUpHandler(repositionHandler);
+    leftPosBox.addKeyUpHandler(repositionHandler);
 
     // Return the options bar
     return optionsBar;

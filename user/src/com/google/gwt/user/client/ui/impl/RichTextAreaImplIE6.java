@@ -76,7 +76,7 @@ public class RichTextAreaImplIE6 extends RichTextAreaImplStandard {
         // Weird: this code has the context of the script frame, but we need the
         // event from the edit iframe's window.
         var evt = elem.contentWindow.event;
-        elem.__listener.@com.google.gwt.user.client.ui.RichTextArea::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
+        elem.__listener.@com.google.gwt.user.client.ui.Widget::onBrowserEvent(Lcom/google/gwt/user/client/Event;)(evt);
       }
     };
 

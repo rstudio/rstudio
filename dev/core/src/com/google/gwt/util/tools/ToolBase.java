@@ -19,12 +19,10 @@ import com.google.gwt.dev.About;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 /**
  * A base class for a GWT related command-line application. To use this:
@@ -61,13 +59,10 @@ public abstract class ToolBase {
     System.setProperty("swt.library.path", installPath + '/');
   }
 
-  // Use a tree map to sort the order.
-  //
-  private final Map<String, ArgHandler> argHandlers = new TreeMap<String, ArgHandler>();
-
-  // Use a list to preserve the declared order for help printing.
-  //
-  private final List<ArgHandler> orderedArgHandlers = new ArrayList<ArgHandler>();
+  /**
+   * Use a linked hash map to preserve the declaration order.
+   */
+  private final Map<String, ArgHandler> argHandlers = new LinkedHashMap<String, ArgHandler>();
 
   protected String getDescription() {
     return null;
@@ -82,7 +77,7 @@ public abstract class ToolBase {
 
     ArgHandler nullHandler = null;
     int widest = 0;
-    for (ArgHandler handler : orderedArgHandlers) {
+    for (ArgHandler handler : argHandlers.values()) {
       if (handler.isUndocumented()) {
         continue;
       }
@@ -111,7 +106,7 @@ public abstract class ToolBase {
 
     // Print the command-line template.
     //
-    for (ArgHandler handler : orderedArgHandlers) {
+    for (ArgHandler handler : argHandlers.values()) {
       if (handler.isUndocumented()) {
         continue;
       }
@@ -154,7 +149,7 @@ public abstract class ToolBase {
 
     // Print the details.
     //
-    for (ArgHandler handler : orderedArgHandlers) {
+    for (ArgHandler handler : argHandlers.values()) {
       if (handler.isUndocumented()) {
         continue;
       }
@@ -294,7 +289,6 @@ public abstract class ToolBase {
 
   protected void registerHandler(ArgHandler handler) {
     String tag = handler.getTag();
-    orderedArgHandlers.add(handler);
     argHandlers.put(tag != null ? tag : "", handler);
   }
 }

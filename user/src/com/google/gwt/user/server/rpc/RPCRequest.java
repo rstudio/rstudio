@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -65,12 +65,50 @@ public final class RPCRequest {
 
   /**
    * Returns the {@link SerializationPolicy} used to decode this request. This
-   * is also the <code>SerializationPolicy</code> that should be used to
-   * encode responses.
+   * is also the <code>SerializationPolicy</code> that should be used to encode
+   * responses.
    * 
    * @return {@link SerializationPolicy} used to decode this request
    */
   public SerializationPolicy getSerializationPolicy() {
     return serializationPolicy;
+  }
+
+  /**
+   * For debugging use only.
+   */
+  @Override
+  public String toString() {
+    StringBuilder callSignature = new StringBuilder();
+
+    // Add the class and method names
+    callSignature.append(method.getDeclaringClass().getName());
+    callSignature.append('.');
+    callSignature.append(method.getName());
+
+    // Add the list of parameters
+    callSignature.append('(');
+    for (Object param : parameters) {
+      if (param instanceof String) {
+        // Put it within quotes and escape quotes, for readability
+        callSignature.append('"');
+        String strParam = (String) param;
+        String escapedStrParam = strParam.replaceAll("\\\"", "\\\\\"");
+        callSignature.append(escapedStrParam);
+        callSignature.append('"');
+      } else {
+        // We assume that anyone who wants to use this method will implement
+        // toString on his serializable objects.
+        callSignature.append(param.toString());
+      }
+      callSignature.append(", ");
+    }
+
+    // Remove the last ", "
+    int length = callSignature.length();
+    callSignature.delete(length - 2, length);
+    callSignature.append(')');
+
+    return callSignature.toString();
   }
 }

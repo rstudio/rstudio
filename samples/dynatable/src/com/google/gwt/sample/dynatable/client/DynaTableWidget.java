@@ -15,10 +15,11 @@
  */
 package com.google.gwt.sample.dynatable.client;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.sample.dynatable.client.DynaTableDataProvider.RowDataAcceptor;
 import com.google.gwt.user.client.rpc.InvocationException;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.DockPanel;
@@ -27,7 +28,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * A composite Widget that implements the main interface for the dynamic table,
@@ -38,7 +38,7 @@ public class DynaTableWidget extends Composite {
   /**
    * A dialog box for displaying an error.
    */
-  private static class ErrorDialog extends DialogBox implements ClickListener {
+  private static class ErrorDialog extends DialogBox implements ClickHandler {
     private HTML body = new HTML("");
 
     public ErrorDialog() {
@@ -56,7 +56,7 @@ public class DynaTableWidget extends Composite {
       return body.getHTML();
     }
 
-    public void onClick(Widget sender) {
+    public void onClick(ClickEvent event) {
       hide();
     }
 
@@ -65,7 +65,7 @@ public class DynaTableWidget extends Composite {
     }
   }
 
-  private class NavBar extends Composite implements ClickListener {
+  private class NavBar extends Composite implements ClickHandler {
 
     public final DockPanel bar = new DockPanel();
     public final Button gotoFirst = new Button("&lt;&lt;", this);
@@ -96,17 +96,18 @@ public class DynaTableWidget extends Composite {
       gotoFirst.setEnabled(false);
     }
 
-    public void onClick(Widget sender) {
-      if (sender == gotoNext) {
+    public void onClick(ClickEvent event) {
+      Object source = event.getSource();
+      if (source == gotoNext) {
         startRow += getDataRowCount();
         refresh();
-      } else if (sender == gotoPrev) {
+      } else if (source == gotoPrev) {
         startRow -= getDataRowCount();
         if (startRow < 0) {
           startRow = 0;
         }
         refresh();
-      } else if (sender == gotoFirst) {
+      } else if (source == gotoFirst) {
         startRow = 0;
         refresh();
       }

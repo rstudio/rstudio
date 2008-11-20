@@ -15,6 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.logical.shared.HasHandlers;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -24,11 +30,29 @@ import com.google.gwt.user.client.EventListener;
  * support for receiving events from the browser and being added directly to
  * {@link com.google.gwt.user.client.ui.Panel panels}.
  */
-public class Widget extends UIObject implements EventListener {
-
+public class Widget extends UIObject implements EventListener, HasHandlers {
+  /**
+   * A bit-map of the events that should be sunk when the widget is attached to
+   * the DOM. (We delay the sinking of events to improve startup performance.)
+   * When the widget is attached, this is set to -1
+   * <p>
+   * Package protected to allow Composite to see it.
+   */
+  int eventsToSink;
   private boolean attached;
+
   private Object layoutData;
   private Widget parent;
+  private HandlerManager handlerManager;
+
+  /**
+   * Returns this widget's {@link HandlerManager} used for event management.
+   * 
+   * @return the handler manager
+   */
+  public final HandlerManager getHandlers() {
+    return handlerManager;
+  }
 
   /**
    * Gets this widget's parent panel.
@@ -50,7 +74,22 @@ public class Widget extends UIObject implements EventListener {
     return attached;
   }
 
-  public void onBrowserEvent(Event event) {
+  /**
+   * Returns true if the widget has handlers of the given type. Used by some
+   * widget implementations to be lazy about initializing dom event handlers
+   * (e.g. a click handler on a checkbox) until the first relevant logical event
+   * handler is attached (e.g. in the <code>addValueChangeHandler</code>
+   * method).
+   * 
+   * @param type the event type
+   * @return true if the widget has handlers of the give type
+   */
+  public boolean isEventHandled(GwtEvent.Type<?> type) {
+    return handlerManager != null && handlerManager.isEventHandled(type);
+  }
+
+  public void onBrowserEvent(Event nativeEvent) {
+    DomEvent.fireNativeEvent(nativeEvent, handlerManager);
   }
 
   /**
@@ -70,8 +109,64 @@ public class Widget extends UIObject implements EventListener {
   }
 
   /**
+   * Overridden to defer the call to super.sinkEvents until the first time this
+   * widget is attached to the dom, as a performance enhancement. Subclasses
+   * wishing to customize sinkEvents can preserve this deferred sink behavior
+   * by putting their implementation behind a check of {@link #isOrWasAttached()}:
+   * 
+   * <pre>
+   * {@literal @}Override
+   * public void sinkEvents(int eventBitsToAdd) {
+   *   if (isOrWasAttached()) {
+   *     /{@literal *} customized sink code goes here {@literal *}/
+   *   } else {
+   *     super.sinkEvents(eventBitsToAdd);
+   *  }
+   *} </pre>
+   */
+  @Override
+  public void sinkEvents(int eventBitsToAdd) {
+    if (isOrWasAttached()) {
+      super.sinkEvents(eventBitsToAdd);
+    } else {
+      eventsToSink |= eventBitsToAdd;
+    }
+  }
+
+  /**
+   * Adds a native event handler to the widget and sinks the corresponding
+   * native event. If you do not want to sink the native event, use the generic
+   * addHandler method instead.
+   * 
+   * @param <H> the type of handler to add
+   * @param type the event key
+   * @param handler the handler
+   * @return {@link HandlerRegistration} used to remove the handler
+   */
+  protected final <H extends EventHandler> HandlerRegistration addDomHandler(
+      final H handler, DomEvent.Type<H> type) {
+    assert handler != null : "handler must not be null";
+    assert type != null : "type must not be null";
+    sinkEvents(type.getEventToSink());
+    return ensureHandlers().addHandler(type, handler);
+  }
+
+  /**
+   * Adds this handler to the widget.
+   * 
+   * @param <H> the type of handler to add
+   * @param type the event type
+   * @param handler the handler
+   * @return {@link HandlerRegistration} used to remove the handler
+   */
+  protected final <H extends EventHandler> HandlerRegistration addHandler(
+      final H handler, GwtEvent.Type<H> type) {
+    return ensureHandlers().addHandler(type, handler);
+  }
+
+  /**
    * If a widget implements HasWidgets, it must override this method and call
-   * onAttach() for each of its child widgets.
+   * {@link #onAttach()} for each of its child widgets.
    * 
    * @see Panel#onAttach()
    */
@@ -85,6 +180,27 @@ public class Widget extends UIObject implements EventListener {
    * @see Panel#onDetach()
    */
   protected void doDetachChildren() {
+  }
+
+  /**
+   * Fires an event. Usually used when passing an event from one source to
+   * another.
+   * 
+   * @param event the event
+   */
+  protected void fireEvent(GwtEvent<?> event) {
+    if (handlerManager != null) {
+      handlerManager.fireEvent(event);
+    }
+  }
+
+  /**
+   * Has this widget ever been attached?
+   * 
+   * @return true if this widget ever been attached to the DOM, false otherwise
+   */
+  protected final boolean isOrWasAttached() {
+    return eventsToSink == -1;
   }
 
   /**
@@ -107,7 +223,14 @@ public class Widget extends UIObject implements EventListener {
     }
 
     attached = true;
+
+    // Event hookup code
     DOM.setEventListener(getElement(), this);
+    int bitsToAdd = eventsToSink;
+    eventsToSink = -1;
+    if (bitsToAdd > 0) {
+      sinkEvents(bitsToAdd);
+    }
     doAttachChildren();
 
     // onLoad() gets called only *after* all of the children are attached and
@@ -161,6 +284,16 @@ public class Widget extends UIObject implements EventListener {
    * browser's document.
    */
   protected void onUnload() {
+  }
+
+  /**
+   * Ensures the existence of the handler manager.
+   * 
+   * @return the handler manager
+   * */
+  HandlerManager ensureHandlers() {
+    return handlerManager == null ? handlerManager = new HandlerManager(this)
+        : handlerManager;
   }
 
   /**

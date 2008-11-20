@@ -16,6 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.HasDirection;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
@@ -24,6 +26,23 @@ import com.google.gwt.user.client.DOM;
  * Tests for {@link Anchor}.
  */
 public class AnchorTest extends GWTTestCase {
+  private final class TestClickHandler implements ClickHandler {
+    private int clicks = 0;
+    private Object lastSender;
+
+    public void onClick(ClickEvent event) {
+      clicks++;
+      lastSender = event.getSource();
+    }
+
+    public int getClicks() {
+      return clicks;
+    }
+
+    public Object getLastSender() {
+      return lastSender;
+    }
+  }
 
   private static final String TEST_URL0 = "http://www.google.com/";
   private static final String TEST_URL1 = "http://code.google.com/";
@@ -58,6 +77,7 @@ public class AnchorTest extends GWTTestCase {
     assertEquals(42, anchor.getTabIndex());
   }
 
+  @Deprecated
   private final class TestClickListener implements ClickListener {
     private int clicks = 0;
     private Widget lastSender;
@@ -104,8 +124,7 @@ public class AnchorTest extends GWTTestCase {
     assertEquals("Foo", anchor.getText());
     assertAttributeHasValue("javascript:", anchor.getElement(), "href");
 
-    for (String attribute : new String[] {
-        "name", "id", "rel", "ref", "target"}) {
+    for (String attribute : new String[] {"name", "id", "rel", "ref", "target"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
   }
@@ -121,8 +140,7 @@ public class AnchorTest extends GWTTestCase {
     assertEquals("SPAN", DOM.getChild(anchor.getElement(), 0).getTagName());
     assertAttributeHasValue("javascript:", anchor.getElement(), "href");
 
-    for (String attribute : new String[] {
-        "name", "id", "rel", "ref", "target"}) {
+    for (String attribute : new String[] {"name", "id", "rel", "ref", "target"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
   }
@@ -136,10 +154,16 @@ public class AnchorTest extends GWTTestCase {
     TestClickListener testListener = new TestClickListener();
     anchor.addClickListener(testListener);
 
+    TestClickHandler handler = new TestClickHandler();
+    anchor.addClickHandler(handler);
+
     assertEquals(0, testListener.getClicks());
+    assertEquals(0, handler.getClicks());
     triggerEvent(anchor.getElement(), "click", false, "MouseEvents");
     assertEquals(1, testListener.getClicks());
+    assertEquals(1, handler.getClicks());
     assertEquals(anchor, testListener.getLastSender());
+    assertEquals(anchor, handler.getLastSender());
   }
 
   public void testLink() {
@@ -153,8 +177,7 @@ public class AnchorTest extends GWTTestCase {
     assertEquals("Click me!", anchor.getText());
     assertAttributeHasValue("http://nowhere.org/", anchor.getElement(), "href");
 
-    for (String attribute : new String[] {
-        "name", "id", "rel", "ref", "target"}) {
+    for (String attribute : new String[] {"name", "id", "rel", "ref", "target"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
   }
@@ -174,8 +197,7 @@ public class AnchorTest extends GWTTestCase {
     assertAttributeHasValue("http://still.nowhere.org/", anchor.getElement(),
         "href");
 
-    for (String attribute : new String[] {
-        "name", "id", "rel", "ref", "target"}) {
+    for (String attribute : new String[] {"name", "id", "rel", "ref", "target"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
   }
@@ -194,8 +216,7 @@ public class AnchorTest extends GWTTestCase {
         anchor.getElement(), "href");
     assertAttributeHasValue("popup", anchor.getElement(), "target");
 
-    for (String attribute : new String[] {
-        "name", "id", "rel", "ref"}) {
+    for (String attribute : new String[] {"name", "id", "rel", "ref"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
   }
@@ -215,8 +236,7 @@ public class AnchorTest extends GWTTestCase {
     assertAttributeHasValue("http://more.ads.com/", anchor.getElement(), "href");
     assertAttributeHasValue("_blank", anchor.getElement(), "target");
 
-    for (String attribute : new String[] {
-        "name", "id", "rel", "ref"}) {
+    for (String attribute : new String[] {"name", "id", "rel", "ref"}) {
       assertAttributeNotPresent(attribute, anchor.getElement());
     }
   }
@@ -265,7 +285,8 @@ public class AnchorTest extends GWTTestCase {
     assertEquals("Hieronymous", anchor.getElement().getAttribute("name"));
 
     anchor.setTabIndex(42);
-    assertEquals(42, Integer.parseInt(anchor.getElement().getAttribute("tabIndex")));
+    System.err.println(anchor.getElement().getPropertyInt("tabIndex"));
+    assertEquals(42, anchor.getElement().getPropertyInt("tabIndex"));
   }
 
   /**

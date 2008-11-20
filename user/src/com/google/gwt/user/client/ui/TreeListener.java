@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for tree events.
  */
+@Deprecated
 public interface TreeListener extends EventListener {
 
   /**
@@ -27,6 +28,7 @@ public interface TreeListener extends EventListener {
    * 
    * @param item the item being selected.
    */
+  @Deprecated
   void onTreeItemSelected(TreeItem item);
 
   /**
@@ -34,5 +36,6 @@ public interface TreeListener extends EventListener {
    * 
    * @param item the item whose state is changing.
    */
+  @Deprecated
   void onTreeItemStateChanged(TreeItem item);
 }

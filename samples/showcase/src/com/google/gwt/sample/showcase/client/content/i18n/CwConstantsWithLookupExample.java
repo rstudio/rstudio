@@ -17,6 +17,11 @@ package com.google.gwt.sample.showcase.client.content.i18n;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.ContentWidget;
 import com.google.gwt.sample.showcase.client.ShowcaseConstants;
@@ -24,12 +29,9 @@ import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseData;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseRaw;
 import com.google.gwt.sample.showcase.client.ShowcaseAnnotations.ShowcaseSource;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.KeyboardListenerAdapter;
-import com.google.gwt.user.client.ui.SourcesTabEvents;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.FlexTable.FlexCellFormatter;
@@ -148,8 +150,8 @@ public class CwConstantsWithLookupExample extends ContentWidget {
 
     // Add a link to the source code of the Interface
     HTML link = new HTML(" <a href=\"javascript:void(0);\">ColorConstants</a>");
-    link.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    link.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         selectTab(2);
       }
     });
@@ -174,10 +176,9 @@ public class CwConstantsWithLookupExample extends ContentWidget {
     layout.setHTML(2, 0, constants.cwConstantsWithLookupExampleResults());
     layout.setWidget(2, 1, colorResultsBox);
 
-    // Add a listener to update the color as the user types a lookup value
-    colorBox.addKeyboardListener(new KeyboardListenerAdapter() {
-      @Override
-      public void onKeyUp(Widget sender, char keyCode, int modifiers) {
+    // Add a handler to update the color as the user types a lookup value
+    colorBox.addKeyUpHandler(new KeyUpHandler() {
+      public void onKeyUp(KeyUpEvent event) {
         updateColor();
       }
     });
@@ -193,9 +194,10 @@ public class CwConstantsWithLookupExample extends ContentWidget {
   }
 
   @Override
-  public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
-    super.onTabSelected(sender, tabIndex);
+  public void onSelection(SelectionEvent<Integer> event) {
+    super.onSelection(event);
 
+    int tabIndex = event.getSelectedItem().intValue();
     if (!javaLoaded && tabIndex == 2) {
       // Load ErrorMessages.java
       javaLoaded = true;

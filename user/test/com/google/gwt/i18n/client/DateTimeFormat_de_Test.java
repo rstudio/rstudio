@@ -23,6 +23,7 @@ import java.util.Date;
  * Tests formatting functionality in {@link DateTimeFormat} for the German
  * language.
  */
+@SuppressWarnings("deprecation")
 public class DateTimeFormat_de_Test extends GWTTestCase {
 
   public String getModuleName() {
@@ -31,20 +32,19 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
 
   public void test_EEEEMMMddyy() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("Donnerstag,Juli 27, 2006", 
-        DateTimeFormat.getFormat("EEEE,MMMM dd, yyyy").format(date));
+    assertEquals("Donnerstag,Juli 27, 2006", DateTimeFormat.getFormat(
+        "EEEE,MMMM dd, yyyy").format(date));
   }
 
   public void test_EEEMMMddyy() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("Do, Jul 27, 06", 
+    assertEquals("Do, Jul 27, 06",
         DateTimeFormat.getFormat("EEE, MMM d, yy").format(date));
   }
 
   public void test_HHmmss() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("13:10:10", 
-        DateTimeFormat.getFormat("HH:mm:ss").format(date));
+    assertEquals("13:10:10", DateTimeFormat.getFormat("HH:mm:ss").format(date));
   }
 
   public void test_hhmmssa() {
@@ -85,52 +85,52 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
     Date date;
 
     date = new Date(2006 - 1900, 0, 27, 13, 10, 10);
-    assertEquals("1. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("1. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 1, 27, 13, 10, 10);
-    assertEquals("1. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("1. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 2, 27, 13, 10, 10);
-    assertEquals("1. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("1. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 3, 27, 13, 10, 10);
-    assertEquals("2. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("2. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 4, 27, 13, 10, 10);
-    assertEquals("2. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("2. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 5, 27, 13, 10, 10);
-    assertEquals("2. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("2. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("3. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("3. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 7, 27, 13, 10, 10);
-    assertEquals("3. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("3. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 8, 27, 13, 10, 10);
-    assertEquals("3. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("3. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 9, 27, 13, 10, 10);
-    assertEquals("4. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("4. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 10, 27, 13, 10, 10);
-    assertEquals("4. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("4. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
 
     date = new Date(2006 - 1900, 11, 27, 13, 10, 10);
-    assertEquals("4. Quartal 06", 
-        DateTimeFormat.getFormat("QQQQ yy").format(date));
+    assertEquals("4. Quartal 06", DateTimeFormat.getFormat("QQQQ yy").format(
+        date));
   }
 
   public void test_QQyyyy() {
@@ -201,17 +201,16 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
     date.setHours(13);
     date.setMinutes(10);
     date.setSeconds(10);
-    assertEquals("13 o'clock", 
+    assertEquals("13 o'clock",
         DateTimeFormat.getFormat("HH 'o''clock'").format(date));
-    assertEquals("13 oclock", 
-        DateTimeFormat.getFormat("HH 'oclock'").format(date));
-    assertEquals("13 '", 
-        DateTimeFormat.getFormat("HH ''").format(date));
+    assertEquals("13 oclock", DateTimeFormat.getFormat("HH 'oclock'").format(
+        date));
+    assertEquals("13 '", DateTimeFormat.getFormat("HH ''").format(date));
   }
 
   public void test_yyyyyMMMMM() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("2006.J.27 n. Chr. 01:10 nachm.", 
-        DateTimeFormat.getFormat("yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
+    assertEquals("2006.J.27 n. Chr. 01:10 nachm.", DateTimeFormat.getFormat(
+        "yyyyy.MMMMM.dd GGG hh:mm aaa").format(date));
   }
 }

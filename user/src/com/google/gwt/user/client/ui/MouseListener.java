@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for mouse events.
  */
+@Deprecated
 public interface MouseListener extends EventListener {
 
   /**

@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for popup events.
  */
+@Deprecated
 public interface PopupListener extends EventListener {
 
   /**
@@ -29,5 +30,6 @@ public interface PopupListener extends EventListener {
    * @param autoClosed <code>true</code> if the popup was automatically
    *          closed; <code>false</code> if it was closed programmatically.
    */
+  @Deprecated
   void onPopupClosed(PopupPanel sender, boolean autoClosed);
 }

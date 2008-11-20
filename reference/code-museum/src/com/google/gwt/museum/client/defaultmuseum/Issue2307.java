@@ -15,10 +15,11 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CaptionPanel;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.TextBox;
@@ -50,8 +51,8 @@ public class Issue2307 extends AbstractIssue {
       final TextBox textBox = new TextBox();
       textBox.setText("<b>CaptionPanel</b>");
       grid.setWidget(0, 1, textBox);
-      grid.setWidget(0, 0, new Button("setCaptionText", new ClickListener() {
-        public void onClick(Widget sender) {
+      grid.setWidget(0, 0, new Button("setCaptionText", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           captionPanel.setCaptionText(textBox.getText());
         }
       }));
@@ -60,8 +61,8 @@ public class Issue2307 extends AbstractIssue {
       final TextBox htmlBox = new TextBox();
       htmlBox.setText("<b>CaptionPanel</b>");
       grid.setWidget(1, 1, htmlBox);
-      grid.setWidget(1, 0, new Button("setCaptionHTML", new ClickListener() {
-        public void onClick(Widget sender) {
+      grid.setWidget(1, 0, new Button("setCaptionHTML", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           captionPanel.setCaptionHTML(htmlBox.getText());
         }
       }));
@@ -70,8 +71,8 @@ public class Issue2307 extends AbstractIssue {
       final TextBox contentBox = new TextBox();
       contentBox.setText("<b><i>I am a Button</i></b>");
       grid.setWidget(2, 1, contentBox);
-      grid.setWidget(2, 0, new Button("setContentWidget", new ClickListener() {
-        public void onClick(Widget sender) {
+      grid.setWidget(2, 0, new Button("setContentWidget", new ClickHandler() {
+        public void onClick(ClickEvent event) {
           captionPanel.setContentWidget(new Button(contentBox.getText()));
         }
       }));

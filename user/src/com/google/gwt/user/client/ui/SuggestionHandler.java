@@ -22,6 +22,7 @@ import java.util.EventListener;
  *
  * @see SuggestBox
  */
+@Deprecated
 public interface SuggestionHandler extends EventListener {
 
   /**
@@ -31,5 +32,6 @@ public interface SuggestionHandler extends EventListener {
    *
    * @param event the object containing information about this event
    */
+  @Deprecated
   void onSuggestionSelected(SuggestionEvent event);
 }

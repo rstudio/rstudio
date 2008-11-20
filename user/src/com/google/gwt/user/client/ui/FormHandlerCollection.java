@@ -23,6 +23,7 @@ import java.util.ArrayList;
  * subclass of ArrayList assumes that all items added to it will be of type
  * {@link com.google.gwt.user.client.ui.FormHandler}.
  */
+@Deprecated
 public class FormHandlerCollection extends ArrayList<FormHandler> {
 
   /**
@@ -32,6 +33,7 @@ public class FormHandlerCollection extends ArrayList<FormHandler> {
    * @param sender the object sending the event
    * @param results the results of the form submission
    */
+  @Deprecated
   public void fireOnComplete(FormPanel sender, String results) {
     FormSubmitCompleteEvent event = new FormSubmitCompleteEvent(sender, results);
     for (FormHandler handler : this) {
@@ -46,6 +48,7 @@ public class FormHandlerCollection extends ArrayList<FormHandler> {
    * @param sender the object sending the event
    * @return <code>true</code> if the event should be cancelled
    */
+  @Deprecated
   public boolean fireOnSubmit(FormPanel sender) {
     FormSubmitEvent event = new FormSubmitEvent(sender);
     for (FormHandler handler : this) {

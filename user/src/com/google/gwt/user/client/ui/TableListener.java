@@ -20,6 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for table events.
  */
+@Deprecated
 public interface TableListener extends EventListener {
 
   /**
@@ -29,5 +30,6 @@ public interface TableListener extends EventListener {
    * @param row the row of the cell being clicked
    * @param cell the index of the cell being clicked
    */
+  @Deprecated
   void onCellClicked(SourcesTableEvents sender, int row, int cell);
 }

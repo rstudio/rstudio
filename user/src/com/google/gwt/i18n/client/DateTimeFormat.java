@@ -175,12 +175,12 @@ import java.util.Date;
  * 
  * <dt>Number</dt>
  * <dd>the minimum number of digits. Shorter numbers are zero-padded to this
- * amount (e.g. if <code>"m"</code> produces <code>"6"</code>,
- * <code>"mm"</code> produces <code>"06"</code>). Year is handled
- * specially; that is, if the count of 'y' is 2, the Year will be truncated to 2
- * digits. (e.g., if <code>"yyyy"</code> produces <code>"1997"</code>,
- * <code>"yy"</code> produces <code>"97"</code>.) Unlike other fields,
- * fractional seconds are padded on the right with zero.</dd>
+ * amount (e.g. if <code>"m"</code> produces <code>"6"</code>, <code>"mm"</code>
+ * produces <code>"06"</code>). Year is handled specially; that is, if the count
+ * of 'y' is 2, the Year will be truncated to 2 digits. (e.g., if
+ * <code>"yyyy"</code> produces <code>"1997"</code>, <code>"yy"</code> produces
+ * <code>"97"</code>.) Unlike other fields, fractional seconds are padded on the
+ * right with zero.</dd>
  * 
  * <dt>Text or Number</dt>
  * <dd>3 or more, use text, otherwise use number. (e.g. <code>"M"</code>
@@ -190,27 +190,27 @@ import java.util.Date;
  * </dl>
  * 
  * <p>
- * Any characters in the pattern that are not in the ranges of ['<code>a</code>'..'<code>z</code>']
- * and ['<code>A</code>'..'<code>Z</code>'] will be treated as quoted
- * text. For instance, characters like '<code>:</code>', '<code>.</code>', '<code> </code>'
- * (space), '<code>#</code>' and '<code>@</code>' will appear in the
- * resulting time text even they are not embraced within single quotes.
+ * Any characters in the pattern that are not in the ranges of ['<code>a</code>
+ * '..'<code>z</code>'] and ['<code>A</code>'..'<code>Z</code>'] will be treated
+ * as quoted text. For instance, characters like '<code>:</code>', '
+ * <code>.</code>', '<code> </code>' (space), '<code>#</code>' and '
+ * <code>@</code>' will appear in the resulting time text even they are not
+ * embraced within single quotes.
  * </p>
  * 
  * <p>
  * [Time Zone Handling] Web browsers don't provide all the information we need
  * for proper time zone formating -- so GWT has a copy of the required data, for
  * your convenience. For simpler cases, one can also use a fallback
- * implementation that only keeps track of the current timezone offset. These two
- * approaches are called, respectively, Common TimeZones and Simple TimeZones,
- * although both are implemented with the same TimeZone class.
+ * implementation that only keeps track of the current timezone offset. These
+ * two approaches are called, respectively, Common TimeZones and Simple
+ * TimeZones, although both are implemented with the same TimeZone class.
  * 
- *  "TimeZone createTimeZone(String timezoneData)"
- * returns a Common TimeZone object, and  
- * "TimeZone createTimeZone(int timeZoneOffsetInMinutes)" returns a Simple
- * TimeZone object. The one provided by OS fall into to Simple TimeZone category.
- * For formatting purpose, following table shows the behavior of GWT 
- * DateTimeFormat.  
+ * "TimeZone createTimeZone(String timezoneData)" returns a Common TimeZone
+ * object, and "TimeZone createTimeZone(int timeZoneOffsetInMinutes)" returns a
+ * Simple TimeZone object. The one provided by OS fall into to Simple TimeZone
+ * category. For formatting purpose, following table shows the behavior of GWT
+ * DateTimeFormat.
  * </p>
  * <table>
  * <tr>
@@ -247,8 +247,8 @@ import java.util.Date;
  * 
  * <h3>Parsing Dates and Times</h3>
  * <p>
- * This implementation can parse partial date/time. Current date will be used
- * to fill in an unspecified date part. 00:00:00 will be used to fill in an
+ * This implementation can parse partial date/time. Current date will be used to
+ * fill in an unspecified date part. 00:00:00 will be used to fill in an
  * unspecified time.
  * </p>
  * 
@@ -277,13 +277,13 @@ import java.util.Date;
  * </p>
  * <p>
  * [Note on TimeZone] The time zone support for parsing is limited. Only
- * standard GMT and RFC format are supported. Time zone specification using
- * time zone id (like America/Los_Angeles), time zone names (like PST, Pacific
+ * standard GMT and RFC format are supported. Time zone specification using time
+ * zone id (like America/Los_Angeles), time zone names (like PST, Pacific
  * Standard Time) are not supported. Normally, it is too much a burden for a
- * client application to load all the time zone symbols. And in almost all
- * those cases, it is a better choice to do such parsing on server side
- * through certain RPC mechanism. This decision is based on particular use
- * cases we have studied; in principle, it could be changed in future versions.
+ * client application to load all the time zone symbols. And in almost all those
+ * cases, it is a better choice to do such parsing on server side through
+ * certain RPC mechanism. This decision is based on particular use cases we have
+ * studied; in principle, it could be changed in future versions.
  * </p>
  * 
  * <h3>Examples</h3>
@@ -326,19 +326,19 @@ import java.util.Date;
  * 
  * <h3>Additional Parsing Considerations</h3>
  * <p>
- * When parsing a date string using the abbreviated year pattern (<code>"yy"</code>),
- * the parser must interpret the abbreviated year relative to some century. It
- * does this by adjusting dates to be within 80 years before and 20 years after
- * the time the parser instance is created. For example, using a pattern of
- * <code>"MM/dd/yy"</code> and a <code>DateTimeFormat</code> object created
- * on Jan 1, 1997, the string <code>"01/11/12"</code> would be interpreted as
- * Jan 11, 2012 while the string <code>"05/04/64"</code> would be interpreted
- * as May 4, 1964. During parsing, only strings consisting of exactly two
- * digits, as defined by {@link java.lang.Character#isDigit(char)}, will be
- * parsed into the default century. If the year pattern does not have exactly
- * two 'y' characters, the year is interpreted literally, regardless of the
- * number of digits. For example, using the pattern <code>"MM/dd/yyyy"</code>,
- * "01/11/12" parses to Jan 11, 12 A.D.
+ * When parsing a date string using the abbreviated year pattern (
+ * <code>"yy"</code>), the parser must interpret the abbreviated year relative
+ * to some century. It does this by adjusting dates to be within 80 years before
+ * and 20 years after the time the parser instance is created. For example,
+ * using a pattern of <code>"MM/dd/yy"</code> and a <code>DateTimeFormat</code>
+ * object created on Jan 1, 1997, the string <code>"01/11/12"</code> would be
+ * interpreted as Jan 11, 2012 while the string <code>"05/04/64"</code> would be
+ * interpreted as May 4, 1964. During parsing, only strings consisting of
+ * exactly two digits, as defined by {@link java.lang.Character#isDigit(char)},
+ * will be parsed into the default century. If the year pattern does not have
+ * exactly two 'y' characters, the year is interpreted literally, regardless of
+ * the number of digits. For example, using the pattern
+ * <code>"MM/dd/yyyy"</code>, "01/11/12" parses to Jan 11, 12 A.D.
  * </p>
  * 
  * <p>
@@ -356,13 +356,13 @@ import java.util.Date;
  * 
  * <p>
  * In the current implementation, timezone parsing only supports
- * <code>GMT:hhmm</code>, <code>GMT:+hhmm</code>, and
- * <code>GMT:-hhmm</code>.
+ * <code>GMT:hhmm</code>, <code>GMT:+hhmm</code>, and <code>GMT:-hhmm</code>.
  * </p>
  * 
  * <h3>Example</h3> {@example com.google.gwt.examples.DateTimeFormatExample}
- *
+ * 
  */
+@SuppressWarnings("deprecation")
 public class DateTimeFormat {
   /**
    * Class PatternPart holds a "compiled" pattern part.
@@ -405,7 +405,7 @@ public class DateTimeFormat {
   private static DateTimeFormat cachedLongDateTimeFormat;
   private static DateTimeFormat cachedMediumDateTimeFormat;
   private static DateTimeFormat cachedShortDateTimeFormat;
-  
+
   private static final int NUM_MILLISECONDS_IN_DAY = 24 * 60 * 60000;
   private static final DateTimeConstants defaultDateTimeConstants = (DateTimeConstants) GWT.create(DateTimeConstants.class);
 
@@ -420,15 +420,15 @@ public class DateTimeFormat {
   private static final int MINUTES_PER_HOUR = 60;
 
   /**
-   * Returns a DateTimeFormat object using the specified pattern. If you need 
-   * to format or parse repeatedly using the same pattern, it is highly 
-   * recommended that you cache the returned <code>DateTimeFormat</code> 
-   * object and reuse it rather than calling this method repeatedly.
+   * Returns a DateTimeFormat object using the specified pattern. If you need to
+   * format or parse repeatedly using the same pattern, it is highly recommended
+   * that you cache the returned <code>DateTimeFormat</code> object and reuse it
+   * rather than calling this method repeatedly.
    * 
    * @param pattern string to specify how the date should be formatted
    * 
-   * @return a <code>DateTimeFormat</code> object that can be used for format
-   *         or parse date/time values matching the specified pattern
+   * @return a <code>DateTimeFormat</code> object that can be used for format or
+   *         parse date/time values matching the specified pattern
    * 
    * @throws IllegalArgumentException if the specified pattern could not be
    *           parsed
@@ -438,8 +438,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for full date format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for full date format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -452,7 +452,7 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for full date and time format. The 
+   * Retrieve the DateTimeFormat object for full date and time format. The
    * pattern for this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
@@ -467,8 +467,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for full time format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for full time format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -481,8 +481,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for long date format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for long date format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -495,7 +495,7 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for long date and time format. The 
+   * Retrieve the DateTimeFormat object for long date and time format. The
    * pattern for this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
@@ -510,8 +510,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for long time format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for long time format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -524,8 +524,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for medium date format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for medium date format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -538,7 +538,7 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for medium date and time format. The 
+   * Retrieve the DateTimeFormat object for medium date and time format. The
    * pattern for this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
@@ -553,8 +553,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for medium time format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for medium time format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -567,8 +567,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for short date format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for short date format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -581,7 +581,7 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for short date and time format. The 
+   * Retrieve the DateTimeFormat object for short date and time format. The
    * pattern for this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
@@ -596,8 +596,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * Retrieve the DateTimeFormat object for short time format. The pattern
-   * for this format is predefined for each locale.
+   * Retrieve the DateTimeFormat object for short time format. The pattern for
+   * this format is predefined for each locale.
    * 
    * @return A DateTimeFormat object.
    */
@@ -655,14 +655,15 @@ public class DateTimeFormat {
     TimeZone timeZone = TimeZone.createTimeZone(date.getTimezoneOffset());
     return format(date, timeZone);
   }
-  
+
   /**
    * Format a date object using specified time zone.
    * 
    * @param date the date object being formatted
    * @param timeZone a TimeZone object that holds time zone information
    * 
-   * @return string representation for this date in the format defined by this object
+   * @return string representation for this date in the format defined by this
+   *         object
    */
   public String format(Date date, TimeZone timeZone) {
     // We use the Date class to calculate each date/time field in order
@@ -676,20 +677,20 @@ public class DateTimeFormat {
     // has the same date/time fields (year, month, date, hour, minutes, etc)
     // in GMT-0800 as original date in our target time zone (GMT-0400). We
     // just need to take care of time zone display, but that's needed anyway.
- 
-    // Things get a little bit more tricky when a daylight time transition 
-    // happens. For example, if the OS timezone is America/Los_Angeles, 
+
+    // Things get a little bit more tricky when a daylight time transition
+    // happens. For example, if the OS timezone is America/Los_Angeles,
     // it is just impossible to have a Date represent 2006/4/2 02:30, because
-    // 2:00 to 3:00 on that day does not exist in  US Pacific time zone because
+    // 2:00 to 3:00 on that day does not exist in US Pacific time zone because
     // of the daylight time switch.
-    
+
     // But we can use 2 separate date objects, one to represent 2006/4/2, one
     // to represent 02:30. Of course, for the 2nd date object its date can be
     // any other day in that year, except 2006/4/2. So we end up have 3 Date
     // objects: one for resolving "Year, month, day", one for time within that
     // day, and the original date object, which is needed for figuring out
     // actual time zone offset.
-    
+
     int diff = (date.getTimezoneOffset() - timeZone.getOffset(date)) * 60000;
     Date keepDate = new Date(date.getTime() + diff);
     Date keepTime = keepDate;
@@ -701,7 +702,7 @@ public class DateTimeFormat {
       }
       keepTime = new Date(date.getTime() + diff);
     }
-    
+
     StringBuffer toAppendTo = new StringBuffer(64);
     int j, n = pattern.length();
     for (int i = 0; i < n;) {
@@ -759,7 +760,7 @@ public class DateTimeFormat {
 
     return toAppendTo.toString();
   }
-  
+
   /**
    * Retrieve the pattern used in this DateTimeFormat object.
    * 
@@ -1295,7 +1296,8 @@ public class DateTimeFormat {
   }
 
   /**
-   * This method parses the input string and fills its value into a {@link Date}.
+   * This method parses the input string and fills its value into a {@link Date}
+   * .
    * 
    * If using lenient parsing, certain invalid dates and times will be parsed.
    * For example, February 32nd would be parsed as March 4th in lenient mode,
@@ -1577,8 +1579,8 @@ public class DateTimeFormat {
    * Formats a single field according to pattern specified.
    * 
    * @param ch pattern character for this field
-   * @param count number of time pattern char repeats; this controls how a field 
-   * should be formatted
+   * @param count number of time pattern char repeats; this controls how a field
+   *          should be formatted
    * @param date the date object to be formatted
    * @param adjustedDate holds the time zone adjusted date fields
    * @param adjustedTime holds the time zone adjusted time fields

@@ -15,6 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.BeforeSelectionEvent;
+import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 import java.util.Iterator;
 
 /**
@@ -34,20 +42,21 @@ import java.util.Iterator;
  * {@link com.google.gwt.user.client.ui.HasWidgets}.
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-TabPanel { the tab panel itself }</li>
- * <li>.gwt-TabPanelBottom { the bottom section of the tab panel (the deck
- * containing the widget) }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> <ul class='css'> <li>.gwt-TabPanel { the tab panel
+ * itself }</li> <li>.gwt-TabPanelBottom { the bottom section of the tab panel
+ * (the deck containing the widget) }</li> </ul>
  * 
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TabPanelExample}
  * </p>
  */
+
+//Cannot do anything about tab panel implementing TabListener until next release.
+@SuppressWarnings("deprecation")
 public class TabPanel extends Composite implements TabListener,
-    SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel {
+    SourcesTabEvents, HasWidgets, HasAnimation, IndexedPanel,
+    HasBeforeSelectionHandlers<Integer>, HasSelectionHandlers<Integer> {
   /**
    * This extension of DeckPanel overrides the public mutator methods to prevent
    * external callers from adding to the state of the DeckPanel.
@@ -179,7 +188,6 @@ public class TabPanel extends Composite implements TabListener,
 
   private UnmodifiableTabBar tabBar = new UnmodifiableTabBar();
   private TabbedDeckPanel deck = new TabbedDeckPanel(tabBar);
-  private TabListenerCollection tabListeners;
 
   /**
    * Creates an empty tab panel.
@@ -239,11 +247,19 @@ public class TabPanel extends Composite implements TabListener,
     insert(w, tabWidget, getWidgetCount());
   }
 
+  public HandlerRegistration addBeforeSelectionHandler(
+      BeforeSelectionHandler<Integer> handler) {
+    return addHandler(handler, BeforeSelectionEvent.getType());
+  }
+
+  public HandlerRegistration addSelectionHandler(
+      SelectionHandler<Integer> handler) {
+    return addHandler(handler, SelectionEvent.getType());
+  }
+
+  @Deprecated
   public void addTabListener(TabListener listener) {
-    if (tabListeners == null) {
-      tabListeners = new TabListenerCollection();
-    }
-    tabListeners.add(listener);
+    ListenerWrapper.Tab.add(this, listener);
   }
 
   public void clear() {
@@ -335,18 +351,26 @@ public class TabPanel extends Composite implements TabListener,
     return deck.iterator();
   }
 
-  public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
-    if (tabListeners != null) {
-      return tabListeners.fireBeforeTabSelected(this, tabIndex);
+  public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
+    if (!onBeforeTabSelected(tabBar, event.getItem().intValue())) {
+      event.cancel();
     }
-    return true;
   }
 
+  @Deprecated
+  public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
+    BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this, tabIndex);
+    return event == null || !event.isCanceled();
+  }
+
+  public void onSelection(SelectionEvent<Integer> event) {
+    onTabSelected(tabBar, event.getSelectedItem().intValue());
+  }
+
+  @Deprecated
   public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
     deck.showWidget(tabIndex);
-    if (tabListeners != null) {
-      tabListeners.fireTabSelected(this, tabIndex);
-    }
+    SelectionEvent.fire(this, tabIndex);
   }
 
   public boolean remove(int index) {
@@ -364,10 +388,9 @@ public class TabPanel extends Composite implements TabListener,
     return deck.remove(widget);
   }
 
+  @Deprecated
   public void removeTabListener(TabListener listener) {
-    if (tabListeners != null) {
-      tabListeners.remove(listener);
-    }
+    ListenerWrapper.Tab.remove(this, listener);
   }
 
   /**

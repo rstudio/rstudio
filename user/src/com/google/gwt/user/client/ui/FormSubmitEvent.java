@@ -23,6 +23,7 @@ import java.util.EventObject;
 public class FormSubmitEvent extends EventObject {
 
   private boolean cancel;
+  private boolean setCancelledCalled = false;
 
   /**
    * Creates a new event with information about the source.
@@ -49,5 +50,10 @@ public class FormSubmitEvent extends EventObject {
    */
   public void setCancelled(boolean cancel) {
     this.cancel = cancel;
+    setCancelledCalled = true;
+  }
+
+  boolean isSetCancelledCalled() {
+    return setCancelledCalled;
   }
 }

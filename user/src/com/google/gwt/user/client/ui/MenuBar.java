@@ -16,12 +16,17 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 
 import java.util.ArrayList;
@@ -36,44 +41,32 @@ import java.util.List;
  * <img class='gallery' src='MenuBar.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class='css'>
+ * <h3>CSS Style Rules</h3> <ul class='css'>
  * <li>.gwt-MenuBar { the menu bar itself }</li>
- * <li>.gwt-MenuBar-horizontal { dependent style applied to horizontal menu
- * bars }</li>
+ * <li>.gwt-MenuBar-horizontal { dependent style applied to horizontal menu bars }</li>
  * <li>.gwt-MenuBar-vertical { dependent style applied to vertical menu bars }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem { menu items }</li>
  * <li>.gwt-MenuBar .gwt-MenuItem-selected { selected menu items }</li>
- * <li>.gwt-MenuBar .gwt-MenuItemSeparator { section breaks between menu items }
- * </li>
- * <li>.gwt-MenuBar .gwt-MenuItemSeparator .menuSeparatorInner { inner component of
- * section separators } </li>
+ * <li>.gwt-MenuBar .gwt-MenuItemSeparator { section breaks between menu items } </li>
+ * <li>.gwt-MenuBar .gwt-MenuItemSeparator .menuSeparatorInner { inner component of section separators }</li>
  * <li>.gwt-MenuBarPopup .menuPopupTopLeft { the top left cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupTopLeftInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupTopCenter { the top center cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopCenterInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopCenterInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupTopRight { the top right cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopRightInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupTopRightInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupMiddleLeft { the middle left cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleLeftInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleLeftInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupMiddleCenter { the middle center cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleCenterInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleCenterInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupMiddleRight { the middle right cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleRightInner { the inner element of the
- * cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomLeft { the bottom left cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomLeftInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupMiddleRightInner { the inner element of the cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomLeft { the bottom left cell }</li> 
+ * <li>.gwt-MenuBarPopup .menuPopupBottomLeftInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupBottomCenter { the bottom center cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomCenterInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomCenterInner { the inner element of the cell }</li>
  * <li>.gwt-MenuBarPopup .menuPopupBottomRight { the bottom right cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomRightInner { the inner element of the
- * cell }</li>
+ * <li>.gwt-MenuBarPopup .menuPopupBottomRightInner { the inner element of the cell }</li>
  * </ul>
  * 
  * <p>
@@ -81,9 +74,11 @@ import java.util.List;
  * {@example com.google.gwt.examples.MenuBarExample}
  * </p>
  */
-public class MenuBar extends Widget implements PopupListener, HasAnimation {
-  private static final String STYLENAME_DEFAULT = "gwt-MenuBar";
-
+// Nothing we can do about MenuBar implementing PopupListener until next
+// release.
+@SuppressWarnings("deprecation")
+public class MenuBar extends Widget implements PopupListener, HasAnimation,
+    HasCloseHandlers<PopupPanel> {
   /**
    * An {@link ImageBundle} that provides images for {@link MenuBar}.
    */
@@ -107,14 +102,16 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    */
   interface MenuBarImagesRTL extends MenuBarImages {
     /**
-     * An image indicating a {@link MenuItem} has an associated submenu for
-     * a RTL context.
+     * An image indicating a {@link MenuItem} has an associated submenu for a
+     * RTL context.
      * 
      * @return a prototype of this image
      */
     @Resource("menuBarSubMenuIcon_rtl.gif")
-    AbstractImagePrototype menuBarSubMenuIcon();    
+    AbstractImagePrototype menuBarSubMenuIcon();
   }
+
+  private static final String STYLENAME_DEFAULT = "gwt-MenuBar";
 
   /**
    * List of all {@link MenuItem}s and {@link MenuItemSeparator}s.
@@ -145,24 +142,24 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
 
   /**
    * Creates an empty menu bar.
-   *
+   * 
    * @param vertical <code>true</code> to orient the menu bar vertically
    */
   public MenuBar(boolean vertical) {
     super();
     if (LocaleInfo.getCurrentLocale().isRTL()) {
-      init(vertical, GWT.<MenuBarImagesRTL>create(MenuBarImagesRTL.class));
+      init(vertical, GWT.<MenuBarImagesRTL> create(MenuBarImagesRTL.class));
     } else {
-      init(vertical, GWT.<MenuBarImages>create(MenuBarImages.class));
+      init(vertical, GWT.<MenuBarImages> create(MenuBarImages.class));
     }
   }
 
   /**
-   * Creates an empty menu bar that uses the specified image bundle
-   * for menu images.
-   *
+   * Creates an empty menu bar that uses the specified image bundle for menu
+   * images.
+   * 
    * @param vertical <code>true</code> to orient the menu bar vertically
-   * @param images   a bundle that provides images for this menu
+   * @param images a bundle that provides images for this menu
    */
   public MenuBar(boolean vertical, MenuBarImages images) {
     init(vertical, images);
@@ -171,11 +168,15 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
   /**
    * Creates an empty horizontal menu bar that uses the specified image bundle
    * for menu images.
-   *
+   * 
    * @param images a bundle that provides images for this menu
    */
   public MenuBar(MenuBarImages images) {
     this(false, images);
+  }
+
+  public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
+    return super.addHandler(handler, CloseEvent.getType());
   }
 
   /**
@@ -306,7 +307,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
   }
 
   /**
-   * Get the index of a {@link MenuItemSerpator}.
+   * Get the index of a {@link MenuItemSeparator}.
    * 
    * @return the index of the separator, or -1 if it is not contained by this
    *         MenuBar
@@ -359,7 +360,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    *           range
    */
   public MenuItemSeparator insertSeparator(int beforeIndex) {
-    return insertSeparator(new MenuItemSeparator(), beforeIndex); 
+    return insertSeparator(new MenuItemSeparator(), beforeIndex);
   }
 
   /**
@@ -399,7 +400,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     MenuItem item = findItem(DOM.eventGetTarget(event));
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK: {
-        FocusPanel.impl.focus(getElement());  
+        FocusPanel.impl.focus(getElement());
         // Fire an item's command when the user clicks on it.
         if (item != null) {
           doItemAction(item, true);
@@ -429,7 +430,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       case Event.ONKEYDOWN: {
         int keyCode = DOM.eventGetKeyCode(event);
         switch (keyCode) {
-          case KeyboardListener.KEY_LEFT:
+          case  KeyCodes.KEY_LEFT:
             if (LocaleInfo.getCurrentLocale().isRTL()) {
               moveToNextItem();
             } else {
@@ -437,7 +438,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
             }
             eatEvent(event);
             break;
-          case KeyboardListener.KEY_RIGHT:
+          case KeyCodes.KEY_RIGHT:
             if (LocaleInfo.getCurrentLocale().isRTL()) {
               moveToPrevItem();
             } else {
@@ -445,19 +446,19 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
             }
             eatEvent(event);
             break;
-          case KeyboardListener.KEY_UP:
+          case KeyCodes.KEY_UP:
             moveUp();
             eatEvent(event);
             break;
-          case KeyboardListener.KEY_DOWN:
+          case KeyCodes.KEY_DOWN:
             moveDown();
             eatEvent(event);
             break;
-          case KeyboardListener.KEY_ESCAPE:
+          case KeyCodes.KEY_ESCAPE:
             closeAllParents();
             eatEvent(event);
             break;
-          case KeyboardListener.KEY_ENTER:
+          case KeyCodes.KEY_ENTER:
             if (!selectFirstItemIfNoneSelected()) {
               doItemAction(selectedItem, true);
               eatEvent(event);
@@ -470,6 +471,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     } // end switch (DOM.eventGetType(event))
   }
 
+  /**
+   * Closes the menu bar.
+   * 
+   * @deprecated use {@link #addCloseHandler(CloseHandler)} instead.
+   */
+  @Deprecated
   public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
     // If the menu popup was auto-closed, close all of its parents as well.
     if (autoClosed) {
@@ -479,6 +486,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     // When the menu popup closes, remember that no item is
     // currently showing a popup menu.
     onHide();
+    CloseEvent.fire(MenuBar.this, sender);
     shownChildMenu = null;
     popup = null;
   }
@@ -531,17 +539,16 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * bar. If there are no items in the menu bar, then an empty <code>List</code>
    * object will be returned.
    * 
-   * @return a list containing the <code>MenuItem</code> objects in the menu
-   *         bar
+   * @return a list containing the <code>MenuItem</code> objects in the menu bar
    */
   protected List<MenuItem> getItems() {
     return this.items;
   }
 
   /**
-   * Returns the <code>MenuItem</code> that is currently selected
-   * (highlighted) by the user. If none of the items in the menu are currently
-   * selected, then <code>null</code> will be returned.
+   * Returns the <code>MenuItem</code> that is currently selected (highlighted)
+   * by the user. If none of the items in the menu are currently selected, then
+   * <code>null</code> will be returned.
    * 
    * @return the <code>MenuItem</code> that is currently selected, or
    *         <code>null</code> if no items are currently selected
@@ -591,8 +598,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
    * associated with it, and 'fireCommand' is true, then the command will be
    * fired. Popups associated with other items will be hidden.
    * 
-   * @param item the item whose popup is to be shown. @param fireCommand <code>true</code>
-   * if the item's command should be fired, <code>false</code> otherwise.
+   * @param item the item whose popup is to be shown. @param fireCommand
+   * <code>true</code> if the item's command should be fired, <code>false</code>
+   * otherwise.
    */
   void doItemAction(final MenuItem item, boolean fireCommand) {
     // Ensure that the item is selected.
@@ -603,11 +611,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       if (fireCommand && item.getCommand() != null) {
         // Close this menu and all of its parents.
         closeAllParents();
-  
+
         // Fire the item's command.
         Command cmd = item.getCommand();
         DeferredCommand.addCommand(cmd);
-        
+
         // hide any open submenus of this item
         if (shownChildMenu != null) {
           shownChildMenu.onHide();
@@ -694,8 +702,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
         }
       }
 
-      Accessibility.setState(getElement(), Accessibility.STATE_ACTIVEDESCENDANT,
-          DOM.getElementAttribute(item.getElement(), "id"));
+      Accessibility.setState(getElement(),
+          Accessibility.STATE_ACTIVEDESCENDANT, DOM.getElementAttribute(
+              item.getElement(), "id"));
     }
 
     selectedItem = item;
@@ -804,10 +813,10 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       return DOM.getChild(body, 0);
     }
   }
-  
-  private void init(boolean vertical, MenuBarImages images) {    
+
+  private void init(boolean vertical, MenuBarImages images) {
     this.images = images;
-    
+
     Element table = DOM.createTable();
     body = DOM.createTBody();
     DOM.appendChild(table, body);
@@ -826,7 +835,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     Accessibility.setRole(getElement(), Accessibility.ROLE_MENUBAR);
 
     sinkEvents(Event.ONCLICK | Event.ONMOUSEOVER | Event.ONMOUSEOUT
-        | Event.ONFOCUS |  Event.ONKEYDOWN);
+        | Event.ONFOCUS | Event.ONKEYDOWN);
 
     setStyleName(STYLENAME_DEFAULT);
     if (vertical) {
@@ -839,9 +848,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     DOM.setStyleAttribute(getElement(), "outline", "0px");
 
     // Hide focus outline in IE 6/7
-    DOM.setElementAttribute(getElement(), "hideFocus", "true");   
+    DOM.setElementAttribute(getElement(), "hideFocus", "true");
   }
-  
+
   private void moveDown() {
     if (selectFirstItemIfNoneSelected()) {
       return;
@@ -850,7 +859,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     if (vertical) {
       selectNextItem();
     } else {
-      if (selectedItem.getSubMenu() != null 
+      if (selectedItem.getSubMenu() != null
           && !selectedItem.getSubMenu().getItems().isEmpty()
           && (shownChildMenu == null || shownChildMenu.getSelectedItem() == null)) {
         if (shownChildMenu == null) {
@@ -866,7 +875,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       }
     }
   }
-  
+
   private void moveToNextItem() {
     if (selectFirstItemIfNoneSelected()) {
       return;
@@ -875,7 +884,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     if (!vertical) {
       selectNextItem();
     } else {
-      if (selectedItem.getSubMenu() != null 
+      if (selectedItem.getSubMenu() != null
           && !selectedItem.getSubMenu().getItems().isEmpty()
           && (shownChildMenu == null || shownChildMenu.getSelectedItem() == null)) {
         if (shownChildMenu == null) {
@@ -907,7 +916,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       }
     }
   }
-  
+
   private void moveUp() {
     if (selectFirstItemIfNoneSelected()) {
       return;
@@ -942,6 +951,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     selectItem(null);
   }
 
+  @SuppressWarnings("deprecation")
   private void openPopup(final MenuItem item) {
     // Create a new popup for this item, and position it next to
     // the item (below if this is a horizontal menu bar, to the
@@ -951,7 +961,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
         setWidget(item.getSubMenu());
         item.getSubMenu().onShow();
       }
-  
+
       @Override
       public boolean onEventPreview(Event event) {
         // Hook the popup panel's event preview. We use this to keep it from
@@ -982,33 +992,36 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
       popup.addStyleName(primaryStyleName + "Popup");
     }
     popup.addPopupListener(this);
-  
+
     shownChildMenu = item.getSubMenu();
     item.getSubMenu().parentMenu = this;
-  
+
     // Show the popup, ensuring that the menubar's event preview remains on top
     // of the popup's.
     popup.setPopupPositionAndShow(new PopupPanel.PositionCallback() {
-          
+
       public void setPosition(int offsetWidth, int offsetHeight) {
-        
+
         // depending on the bidi direction position a menu on the left or right
         // of its base item
-        if (LocaleInfo.getCurrentLocale().isRTL()) {                                   
+        if (LocaleInfo.getCurrentLocale().isRTL()) {
           if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - offsetWidth + 1,
-                item.getAbsoluteTop());
+            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() - offsetWidth
+                + 1, item.getAbsoluteTop());
           } else {
-            popup.setPopupPosition(item.getAbsoluteLeft() + item.getOffsetWidth() - offsetWidth,
-                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight() - 1);
+            popup.setPopupPosition(item.getAbsoluteLeft()
+                + item.getOffsetWidth() - offsetWidth,
+                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight()
+                    - 1);
           }
         } else {
           if (vertical) {
-            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft() + MenuBar.this.getOffsetWidth() - 1,
-                item.getAbsoluteTop());
+            popup.setPopupPosition(MenuBar.this.getAbsoluteLeft()
+                + MenuBar.this.getOffsetWidth() - 1, item.getAbsoluteTop());
           } else {
-            popup.setPopupPosition(item.getAbsoluteLeft(), 
-                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight() - 1);
+            popup.setPopupPosition(item.getAbsoluteLeft(),
+                MenuBar.this.getAbsoluteTop() + MenuBar.this.getOffsetHeight()
+                    - 1);
           }
         }
       }
@@ -1035,11 +1048,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
   }
 
   /**
-   * Selects the first item in the menu if no items are currently selected. This method
-   * assumes that the menu has at least 1 item.
-   *
-   * @return true if no item was previously selected and the first item in the list was selected,
-   *         false otherwise
+   * Selects the first item in the menu if no items are currently selected. This
+   * method assumes that the menu has at least 1 item.
+   * 
+   * @return true if no item was previously selected and the first item in the
+   *         list was selected, false otherwise
    */
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
@@ -1057,7 +1070,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     }
 
     int index = items.indexOf(selectedItem);
-    // We know that selectedItem is set to an item that is contained in the items collection.
+    // We know that selectedItem is set to an item that is contained in the
+    // items collection.
     // Therefore, we know that index can never be -1.
     assert (index != -1);
 
@@ -1081,7 +1095,8 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     }
 
     int index = items.indexOf(selectedItem);
-    // We know that selectedItem is set to an item that is contained in the items collection.
+    // We know that selectedItem is set to an item that is contained in the
+    // items collection.
     // Therefore, we know that index can never be -1.
     assert (index != -1);
 
@@ -1092,7 +1107,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
     } else { // we're at the start, loop around to the end
       itemToBeSelected = items.get(items.size() - 1);
     }
-    
+
     selectItem(itemToBeSelected);
     if (shownChildMenu != null) {
       doItemAction(itemToBeSelected, false);
@@ -1101,7 +1116,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation {
 
   /**
    * Set the colspan of a {@link MenuItem} or {@link MenuItemSeparator}.
-   *
+   * 
    * @param item the {@link MenuItem} or {@link MenuItemSeparator}
    * @param colspan the colspan
    */

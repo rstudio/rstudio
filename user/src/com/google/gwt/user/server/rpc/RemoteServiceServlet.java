@@ -162,6 +162,7 @@ public class RemoteServiceServlet extends HttpServlet implements
   public String processCall(String payload) throws SerializationException {
     try {
       RPCRequest rpcRequest = RPC.decodeRequest(payload, this.getClass(), this);
+      onAfterRequestDeserialized(rpcRequest);
       return RPC.invokeAndEncodeResponse(this, rpcRequest.getMethod(),
           rpcRequest.getParameters(), rpcRequest.getSerializationPolicy());
     } catch (IncompatibleRemoteServiceException ex) {
@@ -262,15 +263,15 @@ public class RemoteServiceServlet extends HttpServlet implements
   /**
    * Override this method to control what should happen when an exception
    * escapes the {@link #processCall(String)} method. The default implementation
-   * will log the failure and send a generic failure response to the client.<p/>
-   * 
+   * will log the failure and send a generic failure response to the client.
+   * <p>
    * An "expected failure" is an exception thrown by a service method that is
    * declared in the signature of the service method. These exceptions are
    * serialized back to the client, and are not passed to this method. This
    * method is called only for exceptions or errors that are not part of the
    * service method's signature, or that result from SecurityExceptions,
-   * SerializationExceptions, or other failures within the RPC framework.<p/>
-   * 
+   * SerializationExceptions, or other failures within the RPC framework.
+   * <p>
    * Note that if the desired behavior is to both send the GENERIC_FAILURE_MSG
    * response AND to rethrow the exception, then this method should first send
    * the GENERIC_FAILURE_MSG response itself (using getThreadLocalResponse), and
@@ -286,9 +287,9 @@ public class RemoteServiceServlet extends HttpServlet implements
   }
 
   /**
-   * Gets the <code>HttpServletRequest</code> object for the current call. It
-   * is stored thread-locally so that simultaneous invocations can have
-   * different request objects.
+   * Gets the <code>HttpServletRequest</code> object for the current call. It is
+   * stored thread-locally so that simultaneous invocations can have different
+   * request objects.
    */
   protected final HttpServletRequest getThreadLocalRequest() {
     return perThreadRequest.get();
@@ -301,6 +302,14 @@ public class RemoteServiceServlet extends HttpServlet implements
    */
   protected final HttpServletResponse getThreadLocalResponse() {
     return perThreadResponse.get();
+  }
+
+  /**
+   * Override this method to examine the deserialized version of the request
+   * before the call to the servlet method is made. The default implementation
+   * does nothing and need not be called by subclasses.
+   */
+  protected void onAfterRequestDeserialized(RPCRequest rpcRequest) {
   }
 
   /**

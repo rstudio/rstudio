@@ -20,6 +20,7 @@ package com.google.gwt.user.client;
  * 
  * @see com.google.gwt.user.client.Window#addWindowCloseListener(WindowCloseListener)
  */
+@Deprecated
 public interface WindowCloseListener extends java.util.EventListener {
 
   /**
@@ -32,6 +33,7 @@ public interface WindowCloseListener extends java.util.EventListener {
    *         dialog box. If multiple listeners return messages, the first will
    *         be displayed; all others will be ignored.
    */
+  @Deprecated
   String onWindowClosing();
 
   /**
@@ -39,5 +41,6 @@ public interface WindowCloseListener extends java.util.EventListener {
    * This event cannot be cancelled, and is used mainly to clean up application
    * state and/or save state to the server.
    */
+  @Deprecated
   void onWindowClosed();
 }

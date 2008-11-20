@@ -16,8 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
+import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
 
 /**
@@ -40,7 +39,7 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  * </ul>
  */
 public class RichTextArea extends FocusWidget implements HasHTML,
-    SourcesMouseEvents {
+    SourcesMouseEvents, HasAllMouseHandlers {
 
   /**
    * This interface is used to access basic formatting options, when available.
@@ -290,7 +289,7 @@ public class RichTextArea extends FocusWidget implements HasHTML,
     public int getNumber() {
       return number;
     }
-    
+
     @Override
     public String toString() {
       return Integer.toString(number);
@@ -331,7 +330,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   }
 
   private RichTextAreaImpl impl = GWT.create(RichTextAreaImpl.class);
-  private MouseListenerCollection mouseListeners;
 
   /**
    * Creates a new, blank {@link RichTextArea} object with no stylesheet.
@@ -339,13 +337,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
   public RichTextArea() {
     setElement(impl.getElement());
     setStyleName("gwt-RichTextArea");
-  }
-
-  public void addMouseListener(MouseListener listener) {
-    if (mouseListeners == null) {
-      mouseListeners = new MouseListenerCollection();
-    }
-    mouseListeners.add(listener);
   }
 
   /**
@@ -379,31 +370,6 @@ public class RichTextArea extends FocusWidget implements HasHTML,
 
   public String getText() {
     return impl.getText();
-  }
-
-  @Override
-  public void onBrowserEvent(Event event) {
-    switch (DOM.eventGetType(event)) {
-      case Event.ONMOUSEDOWN:
-      case Event.ONMOUSEUP:
-      case Event.ONMOUSEMOVE:
-      case Event.ONMOUSEOVER:
-      case Event.ONMOUSEOUT:
-        if (mouseListeners != null) {
-          mouseListeners.fireMouseEvent(this, event);
-        }
-        break;
-
-      default:
-        // ClickEvents, KeyboardEvents, and FocusEvents
-        super.onBrowserEvent(event);
-    }
-  }
-
-  public void removeMouseListener(MouseListener listener) {
-    if (mouseListeners != null) {
-      mouseListeners.remove(listener);
-    }
   }
 
   @Override

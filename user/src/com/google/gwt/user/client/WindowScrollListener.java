@@ -20,6 +20,7 @@ package com.google.gwt.user.client;
  * 
  * @see com.google.gwt.user.client.Window#addWindowScrollListener(WindowScrollListener)
  */
+@Deprecated
 public interface WindowScrollListener extends java.util.EventListener {
 
   /**
@@ -28,5 +29,6 @@ public interface WindowScrollListener extends java.util.EventListener {
    * @param scrollLeft the left scroll position
    * @param scrollTop the top scroll position
    */
+  @Deprecated
   void onWindowScrolled(int scrollLeft, int scrollTop);
 }
