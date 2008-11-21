@@ -14,5 +14,8 @@ Merges:
 /branches/1_6_clean_events@3936:4088 was merged (r4092) into this branch
 /releases/1.5/@r3863:4093 was merged (r4134) into this branch
 /releases/1.6/@r4025:4130 was merged (r4142) into trunk, superceding trunk:c4118
+/releases/1.6/@r4130:4147 was merged (r4148) into trunk, superceding trunk:c4118
 
----> The next merge into trunk will be 4130:????
+---> The next merge into trunk will be 4147:????
+
+svn merge --accept postpone -r4147:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
