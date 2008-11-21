@@ -107,7 +107,7 @@ public class StandardCompilationResult extends CompilationResult {
             "Unexpectedly unable to read PermutationResult '"
                 + resultFile.getAbsolutePath() + "'", e);
       }
-      if (toReturn == null) {
+      if (result == null) {
         throw new RuntimeException(
             "Unexpectedly unable to read PermutationResult '"
                 + resultFile.getAbsolutePath() + "'");
