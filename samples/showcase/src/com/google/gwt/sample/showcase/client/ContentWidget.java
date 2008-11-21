@@ -28,9 +28,9 @@ import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DeckPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.LazyPanel;
 import com.google.gwt.user.client.ui.TabBar;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -59,7 +59,7 @@ import java.util.Map;
  * <li>.sc-ContentWidget-description { Applied to the description }</li>
  * </ul>
  */
-public abstract class ContentWidget extends Composite implements
+public abstract class ContentWidget extends LazyPanel implements
     SelectionHandler<Integer> {
   /**
    * The constants used in this Content Widget.
@@ -90,17 +90,12 @@ public abstract class ContentWidget extends Composite implements
   /**
    * An instance of the constants.
    */
-  private CwConstants constants;
+  private final CwConstants constants;
 
   /**
    * The deck panel with the contents.
    */
   private DeckPanel deckPanel = null;
-
-  /**
-   * A boolean indicating whether or not this widget has been initialized.
-   */
-  private boolean initialized = false;
 
   /**
    * A boolean indicating whether or not the RPC request for the source code has
@@ -131,13 +126,11 @@ public abstract class ContentWidget extends Composite implements
   public ContentWidget(CwConstants constants) {
     this.constants = constants;
     tabBar = new TabBar();
-    deckPanel = new DeckPanel();
-    initWidget(deckPanel);
-    setStyleName(DEFAULT_STYLE_NAME);
   }
 
   /**
-   * Add an item to this content widget.
+   * Add an item to this content widget. Should not be called before
+   * {@link #onInitializeComplete} has been called.
    * 
    * @param w the widget to add
    * @param tabText the text to display in the tab
@@ -187,66 +180,8 @@ public abstract class ContentWidget extends Composite implements
   }
 
   /**
-   * Initialize this widget by creating the elements that should be added to the
-   * page.
-   */
-  public final void initialize() {
-    if (initialized == false) {
-      initialized = true;
-
-      // Add a tab handler
-      tabBar.addSelectionHandler(this);
-
-      // Create a container for the main example
-      final VerticalPanel vPanel = new VerticalPanel();
-      add(vPanel, constants.contentWidgetExample());
-
-      // Add the name
-      HTML nameWidget = new HTML(getName());
-      nameWidget.setStyleName(DEFAULT_STYLE_NAME + "-name");
-      vPanel.add(nameWidget);
-
-      // Add the description
-      HTML descWidget = new HTML(getDescription());
-      descWidget.setStyleName(DEFAULT_STYLE_NAME + "-description");
-      vPanel.add(descWidget);
-
-      // Add source code tab
-      if (hasSource()) {
-        sourceWidget = new HTML();
-        add(sourceWidget, constants.contentWidgetSource());
-      } else {
-        sourceLoaded = true;
-      }
-
-      // Add style tab
-      if (hasStyle()) {
-        styleDefs = new HashMap<String, String>();
-        styleWidget = new HTML();
-        add(styleWidget, constants.contentWidgetStyle());
-      }
-
-      asyncOnInitialize(new AsyncCallback<Widget>() {
-
-        public void onFailure(Throwable caught) {
-          Window.alert("exception: " + caught);
-        }
-
-        public void onSuccess(Widget result) {
-          // Initialize the widget and add it to the page
-          Widget widget = result;
-          if (widget != null) {
-            vPanel.add(widget);
-          }
-          onInitializeComplete();
-        }
-      });
-    }
-  }
-
-  /**
-   * When the widget is first initialize, this method is called. If it returns a
-   * Widget, the widget will be added as the first tab. Return null to disable
+   * When the widget is first initialized, this method is called. If it returns
+   * a Widget, the widget will be added as the first tab. Return null to disable
    * the first tab.
    * 
    * @return the widget to add to the first tab
@@ -315,10 +250,69 @@ public abstract class ContentWidget extends Composite implements
 
   protected abstract void asyncOnInitialize(final AsyncCallback<Widget> callback);
 
+  /**
+   * Initialize this widget by creating the elements that should be added to the
+   * page.
+   */
+  protected final Widget createWidget() {
+    deckPanel = new DeckPanel();
+
+    setStyleName(DEFAULT_STYLE_NAME);
+
+    // Add a tab handler
+    tabBar.addSelectionHandler(this);
+
+    // Create a container for the main example
+    final VerticalPanel vPanel = new VerticalPanel();
+    add(vPanel, constants.contentWidgetExample());
+
+    // Add the name
+    HTML nameWidget = new HTML(getName());
+    nameWidget.setStyleName(DEFAULT_STYLE_NAME + "-name");
+    vPanel.add(nameWidget);
+
+    // Add the description
+    HTML descWidget = new HTML(getDescription());
+    descWidget.setStyleName(DEFAULT_STYLE_NAME + "-description");
+    vPanel.add(descWidget);
+
+    // Add source code tab
+    if (hasSource()) {
+      sourceWidget = new HTML();
+      add(sourceWidget, constants.contentWidgetSource());
+    } else {
+      sourceLoaded = true;
+    }
+
+    // Add style tab
+    if (hasStyle()) {
+      styleDefs = new HashMap<String, String>();
+      styleWidget = new HTML();
+      add(styleWidget, constants.contentWidgetStyle());
+    }
+
+    asyncOnInitialize(new AsyncCallback<Widget>() {
+
+      public void onFailure(Throwable caught) {
+        Window.alert("exception: " + caught);
+      }
+
+      public void onSuccess(Widget result) {
+        // Initialize the showcase widget (if any) and add it to the page
+        Widget widget = result;
+        if (widget != null) {
+          vPanel.add(widget);
+        }
+        onInitializeComplete();
+      }
+    });
+
+    return deckPanel;
+  }
+
   @Override
   protected void onLoad() {
-    // Initialize this widget if we haven't already
-    initialize();
+    ensureWidget();
 
     // Select the first tab
     if (getTabBar().getTabCount() > 0) {

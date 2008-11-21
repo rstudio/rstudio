@@ -18,10 +18,10 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
-import com.google.gwt.dev.PermutationCompiler.ResultsHandler;
-import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
+import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
@@ -29,15 +29,16 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
- * Performs the second phase of compilation, converting the Precompile's AST into
- * JavaScript outputs.
+ * Performs the second phase of compilation, converting the Precompile's AST
+ * into JavaScript outputs.
  */
 public class CompilePerms {
 
   /**
    * Options for CompilePerms.
    */
-  public interface CompilePermsOptions extends CompileTaskOptions, OptionPerms {
+  public interface CompilePermsOptions extends CompileTaskOptions,
+      OptionLocalWorkers, OptionPerms {
   }
 
   /**
@@ -121,6 +122,7 @@ public class CompilePerms {
     public ArgProcessor(CompilePermsOptions options) {
       super(options);
       registerHandler(new ArgHandlerPerms(options));
+      registerHandler(new ArgHandlerLocalWorkers(options));
     }
 
     @Override
@@ -135,6 +137,7 @@ public class CompilePerms {
   static class CompilePermsOptionsImpl extends CompileTaskOptionsImpl implements
       CompilePermsOptions {
 
+    private int localWorkers;
     private int[] permsToCompile = new int[0];
 
     public CompilePermsOptionsImpl() {
@@ -146,12 +149,20 @@ public class CompilePerms {
 
     public void copyFrom(CompilePermsOptions other) {
       super.copyFrom(other);
-
       setPermsToCompile(other.getPermsToCompile());
+      setLocalWorkers(other.getLocalWorkers());
+    }
+
+    public int getLocalWorkers() {
+      return localWorkers;
     }
 
     public int[] getPermsToCompile() {
       return permsToCompile.clone();
+    }
+
+    public void setLocalWorkers(int localWorkers) {
+      this.localWorkers = localWorkers;
     }
 
     public void setPermsToCompile(int[] permsToCompile) {
@@ -159,16 +170,38 @@ public class CompilePerms {
     }
   }
 
-  public static String[] compile(TreeLogger logger, Permutation permutation,
-      UnifiedAst unifiedAst) {
+  /**
+   * Compile a single permutation.
+   */
+  public static PermutationResult compile(TreeLogger logger,
+      Permutation permutation, UnifiedAst unifiedAst) {
     try {
-      return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
-          permutation.getRebindAnswers());
+      final String js[] = JavaToJavaScriptCompiler.compilePermutation(logger,
+          unifiedAst, permutation.getRebindAnswers());
+      return new PermutationResult() {
+        public String[] getJs() {
+          return js;
+        }
+      };
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
       return null;
     }
+  }
+
+  /**
+   * Compile multiple permutations.
+   */
+  public static boolean compile(TreeLogger logger,
+      Precompilation precompilation, Permutation[] perms, int localWorkers,
+      File[] resultFiles) throws UnableToCompleteException {
+    final TreeLogger branch = logger.branch(TreeLogger.INFO, "Compiling "
+        + perms.length + " permutations");
+    PermutationWorkerFactory.compilePermutations(logger, precompilation, perms,
+        localWorkers, resultFiles);
+    branch.log(TreeLogger.INFO, "Permutation compile succeeded");
+    return true;
   }
 
   public static void main(String[] args) {
@@ -192,6 +225,14 @@ public class CompilePerms {
     }
     // Exit w/ non-success code.
     System.exit(1);
+  }
+
+  public static File[] makeResultFiles(File compilerWorkDir, Permutation[] perms) {
+    File[] resultFiles = new File[perms.length];
+    for (int i = 0; i < perms.length; ++i) {
+      resultFiles[i] = makePermFilename(compilerWorkDir, perms[i].getId());
+    }
+    return resultFiles;
   }
 
   /**
@@ -229,17 +270,15 @@ public class CompilePerms {
           + precompilationFile.getAbsolutePath() + "'", e);
       return false;
     }
-    Permutation[] perms = precompilation.getPermutations();
-    UnifiedAst unifiedAst = precompilation.getUnifiedAst();
-    int[] permsToRun = options.getPermsToCompile();
 
+    Permutation[] perms = precompilation.getPermutations();
+    Permutation[] subPerms;
+    int[] permsToRun = options.getPermsToCompile();
     if (permsToRun.length == 0) {
-      // Compile them all.
-      permsToRun = new int[perms.length];
-      for (int i = 0; i < permsToRun.length; ++i) {
-        permsToRun[i] = i;
-      }
+      subPerms = perms;
     } else {
+      int i = 0;
+      subPerms = new Permutation[permsToRun.length];
       // Range check the supplied perms.
       for (int permToRun : permsToRun) {
         if (permToRun >= perms.length) {
@@ -248,21 +287,12 @@ public class CompilePerms {
               + (perms.length - 1) + "'");
           return false;
         }
+        subPerms[i++] = perms[permToRun];
       }
     }
 
-    final TreeLogger branch = logger.branch(TreeLogger.INFO, "Compiling "
-        + permsToRun.length + " permutations");
-    PermutationCompiler multiThread = new PermutationCompiler(branch,
-        unifiedAst, perms, permsToRun);
-    multiThread.go(new ResultsHandler() {
-      public void addResult(Permutation permutation, int permNum, String[] js)
-          throws UnableToCompleteException {
-        Util.writeStringsAsFile(branch, makePermFilename(
-            options.getCompilerWorkDir(), permNum), js);
-      }
-    });
-    branch.log(TreeLogger.INFO, "Permutation compile succeeded");
-    return true;
+    File[] resultFiles = makeResultFiles(options.getCompilerWorkDir(), perms);
+    return compile(logger, precompilation, subPerms, options.getLocalWorkers(),
+        resultFiles);
   }
 }

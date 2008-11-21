@@ -171,7 +171,7 @@ public class Precompile {
         rebindOracles[i] = new StandardRebindOracle(compilationState,
             propertyOracles[i], module, rules, genDir, generatorResourcesDir,
             generatorArtifacts);
-        permutations[i] = new Permutation(propertyOracles[i]);
+        permutations[i] = new Permutation(i, propertyOracles[i]);
       }
     }
 

@@ -26,6 +26,7 @@ import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.PublicResource;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.Property;
@@ -261,21 +262,27 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   /**
    * Gets or creates a CompilationResult for the given JavaScript program.
    */
-  public StandardCompilationResult getCompilation(TreeLogger logger, File jsFile)
-      throws UnableToCompleteException {
-    byte[][] results = Util.readFileAndSplit(jsFile);
-
-    if (results == null) {
-      logger.log(TreeLogger.ERROR, "Unable to read file '"
-          + jsFile.getAbsolutePath() + "'");
+  public StandardCompilationResult getCompilation(TreeLogger logger,
+      File resultFile) throws UnableToCompleteException {
+    PermutationResult permutationResult;
+    try {
+      permutationResult = Util.readFileAsObject(resultFile,
+          PermutationResult.class);
+    } catch (ClassNotFoundException e) {
+      logger.log(TreeLogger.ERROR, "Unable to instantiate PermutationResult", e);
       throw new UnableToCompleteException();
     }
 
-    String strongName = Util.computeStrongName(results);
+    if (permutationResult == null) {
+      logger.log(TreeLogger.ERROR, "Unable to read PermutationResult");
+      throw new UnableToCompleteException();
+    }
+
+    String strongName = Util.computeStrongName(Util.getBytes(permutationResult.getJs()));
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
-      result = new StandardCompilationResult(Util.toStrings(results), strongName,
-          jsFile);
+      result = new StandardCompilationResult(permutationResult.getJs(),
+          strongName, resultFile);
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
     }

@@ -15,12 +15,17 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
-
 /**
- * The complete set of options for the GWT compiler.
+ * Controls the number of local PermutationWorkers to be used.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions,
-    OptionLocalWorkers {
+public interface OptionLocalWorkers {
+  /**
+   * Returns the number of workers to run on this machine.
+   */
+  int getLocalWorkers();
+
+  /**
+   * Sets the number of workers to run on this machine.
+   */
+  void setLocalWorkers(int localWorkers);
 }

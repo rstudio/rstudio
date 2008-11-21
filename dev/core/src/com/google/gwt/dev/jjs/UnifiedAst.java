@@ -143,6 +143,18 @@ public final class UnifiedAst implements Serializable {
     return rebindRequests;
   }
 
+  /**
+   * Internally prepares a new AST for compilation if one is not already
+   * prepared.
+   */
+  public void prepare() {
+    synchronized (myLockObject) {
+      if (initialAst == null) {
+        initialAst = deserializeAst(serializedAst);
+      }
+    }
+  }
+
   AST getFreshAst() {
     synchronized (myLockObject) {
       if (initialAst != null) {

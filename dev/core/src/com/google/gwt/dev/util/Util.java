@@ -311,8 +311,7 @@ public final class Util {
   }
 
   /**
-   * Returns a String as a byte-array using the default encoding for the
-   * compiler.
+   * Returns a byte-array representing the default encoding for a String.
    */
   public static byte[] getBytes(String s) {
     try {
@@ -323,6 +322,10 @@ public final class Util {
     }
   }
 
+  /**
+   * Returns an array of byte-arrays representing the default encoding for an
+   * array of Strings.
+   */
   public static byte[][] getBytes(String[] s) {
     byte[][] bytes = new byte[s.length][];
     for (int i = 0; i < s.length; i++) {
@@ -578,24 +581,24 @@ public final class Util {
     logger.log(TreeLogger.INFO, "Unable to dump source to disk", caught);
   }
 
-  public static byte[][] readFileAndSplit(File file) {
-    RandomAccessFile f = null;
-    try {
-      f = new RandomAccessFile(file, "r");
-      int length = f.readInt();
-      byte[][] results = new byte[length][];
-      for (int i = 0; i < length; i++) {
-        int nextLength = f.readInt();
-        results[i] = new byte[nextLength];
-        f.read(results[i]);
-      }
-      return results;
-    } catch (IOException e) {
-      return null;
-    } finally {
-      Utility.close(f);
-    }
-  }
+  // public static byte[][] readFileAndSplit(File file) {
+  // RandomAccessFile f = null;
+  // try {
+  // f = new RandomAccessFile(file, "r");
+  // int length = f.readInt();
+  // byte[][] results = new byte[length][];
+  // for (int i = 0; i < length; i++) {
+  // int nextLength = f.readInt();
+  // results[i] = new byte[nextLength];
+  // f.read(results[i]);
+  // }
+  // return results;
+  // } catch (IOException e) {
+  // return null;
+  // } finally {
+  // Utility.close(f);
+  // }
+  // }
 
   public static byte[] readFileAsBytes(File file) {
     FileInputStream fileInputStream = null;
@@ -1155,30 +1158,31 @@ public final class Util {
     }
   }
 
-  /**
-   * Write all of the supplied bytes to the file, in a way that they can be read
-   * back by {@link #readFileAndSplit(File).
-   */
-  public static boolean writeStringsAsFile(TreeLogger branch,
-      File makePermFilename, String[] js) {
-    RandomAccessFile f = null;
-    try {
-      makePermFilename.delete();
-      makePermFilename.getParentFile().mkdirs();
-      f = new RandomAccessFile(makePermFilename, "rwd");
-      f.writeInt(js.length);
-      for (String s : js) {
-        byte[] b = getBytes(s);
-        f.writeInt(b.length);
-        f.write(b);
-      }
-      return true;
-    } catch (IOException e) {
-      return false;
-    } finally {
-      Utility.close(f);
-    }
-  }
+  // /**
+  // * Write all of the supplied bytes to the file, in a way that they can be
+  // read
+  // * back by {@link #readFileAndSplit(File).
+  // */
+  // public static boolean writeStringsAsFile(TreeLogger branch,
+  // File makePermFilename, String[] js) {
+  // RandomAccessFile f = null;
+  // try {
+  // makePermFilename.delete();
+  // makePermFilename.getParentFile().mkdirs();
+  // f = new RandomAccessFile(makePermFilename, "rwd");
+  // f.writeInt(js.length);
+  // for (String s : js) {
+  // byte[] b = getBytes(s);
+  // f.writeInt(b.length);
+  // f.write(b);
+  // }
+  // return true;
+  // } catch (IOException e) {
+  // return false;
+  // } finally {
+  // Utility.close(f);
+  // }
+  // }
 
   /**
    * Reads the specified number of bytes from the {@link InputStream}.

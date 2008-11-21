@@ -44,6 +44,7 @@ public class CompositeTest extends GWTTestCase {
     boolean domFocusFired;
     boolean domBlurFired;
 
+    @SuppressWarnings("deprecation")
     public EventTestComposite() {
       initWidget(tb);
       sinkEvents(Event.FOCUSEVENTS);

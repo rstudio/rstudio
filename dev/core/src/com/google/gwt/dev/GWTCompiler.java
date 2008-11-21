@@ -17,13 +17,15 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.CompilePerms.CompilePermsOptionsImpl;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
+import com.google.gwt.dev.cfg.ModuleDef;
+import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.util.tools.Utility;
@@ -44,6 +46,7 @@ public class GWTCompiler {
       registerHandler(new ArgHandlerWorkDirOptional(options));
 
       registerHandler(new ArgHandlerExtraDir(options));
+      registerHandler(new ArgHandlerLocalWorkers(options));
       registerHandler(new ArgHandlerOutDir(options));
     }
 
@@ -57,6 +60,7 @@ public class GWTCompiler {
       CompilerOptions {
 
     private LinkOptionsImpl linkOptions = new LinkOptionsImpl();
+    private int localWorkers;
 
     public GWTCompilerOptionsImpl() {
     }
@@ -68,10 +72,15 @@ public class GWTCompiler {
     public void copyFrom(CompilerOptions other) {
       super.copyFrom(other);
       linkOptions.copyFrom(other);
+      localWorkers = other.getLocalWorkers();
     }
 
     public File getExtraDir() {
       return linkOptions.getExtraDir();
+    }
+
+    public int getLocalWorkers() {
+      return localWorkers;
     }
 
     public File getOutDir() {
@@ -80,6 +89,10 @@ public class GWTCompiler {
 
     public void setExtraDir(File extraDir) {
       linkOptions.setExtraDir(extraDir);
+    }
+
+    public void setLocalWorkers(int localWorkers) {
+      this.localWorkers = localWorkers;
     }
 
     public void setOutDir(File outDir) {
@@ -117,10 +130,15 @@ public class GWTCompiler {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
+    ModuleDef module = ModuleDefLoader.loadFromClassPath(logger,
+        options.getModuleName());
+
     if (options.isValidateOnly()) {
-      return new Precompile(options).run(logger);
+      return Precompile.validate(logger, options, module, options.getGenDir(),
+          options.getCompilerWorkDir());
     } else {
       PerfLogger.start("compile");
+      long compileStart = System.currentTimeMillis();
       logger = logger.branch(TreeLogger.INFO, "Compiling module "
           + options.getModuleName());
 
@@ -131,22 +149,24 @@ public class GWTCompiler {
           tempWorkDir = true;
         }
 
-        if (new Precompile(options).run(logger)) {
-          /*
-           * TODO: use the in-memory result of Precompile to run CompilePerms
-           * instead of serializing through the file system.
-           */
-          CompilePermsOptionsImpl permsOptions = new CompilePermsOptionsImpl();
-          permsOptions.copyFrom(options);
-          if (new CompilePerms(permsOptions).run(logger)) {
-            if (new Link(options).run(logger)) {
-              logger.log(TreeLogger.INFO, "Compilation succeeded");
-              return true;
-            }
-          }
-        }
+        Precompilation precompilation = Precompile.precompile(logger, options,
+            module, options.getGenDir(), options.getCompilerWorkDir());
 
-        logger.log(TreeLogger.ERROR, "Compilation failed");
+        Permutation[] allPerms = precompilation.getPermutations();
+        File[] resultFiles = CompilePerms.makeResultFiles(
+            options.getCompilerWorkDir(), allPerms);
+        CompilePerms.compile(logger, precompilation, allPerms,
+            options.getLocalWorkers(), resultFiles);
+
+        Link.link(logger.branch(TreeLogger.INFO, "Linking into "
+            + options.getOutDir().getPath()), module, precompilation,
+            resultFiles, options.getOutDir(), options.getExtraDir());
+
+        long compileDone = System.currentTimeMillis();
+        long delta = compileDone - compileStart;
+        logger.log(TreeLogger.INFO, "Compilation succeeded -- "
+            + String.format("%.3f", delta / 1000d) + "s");
+        return true;
       } catch (IOException e) {
         logger.log(TreeLogger.ERROR,
             "Unable to create compiler work directory", e);

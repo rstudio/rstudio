@@ -47,6 +47,7 @@ import com.google.gwt.user.client.ui.HistoryTest;
 import com.google.gwt.user.client.ui.HorizontalPanelTest;
 import com.google.gwt.user.client.ui.HyperlinkTest;
 import com.google.gwt.user.client.ui.ImageTest;
+import com.google.gwt.user.client.ui.LazyPanelTest;
 import com.google.gwt.user.client.ui.LinearPanelTest;
 import com.google.gwt.user.client.ui.ListBoxTest;
 import com.google.gwt.user.client.ui.MenuBarTest;
@@ -78,7 +79,7 @@ import com.google.gwt.xml.client.XMLTest;
 import junit.framework.Test;
 
 /**
- * TODO: document me.
+ * Tests of the ui package.
  */
 public class UISuite {
   public static Test suite() {
@@ -120,6 +121,7 @@ public class UISuite {
     suite.addTestSuite(HyperlinkTest.class);
     suite.addTestSuite(ImageBundleGeneratorTest.class);
     suite.addTestSuite(ImageTest.class);
+    suite.addTestSuite(LazyPanelTest.class);
     suite.addTestSuite(LinearPanelTest.class);
     suite.addTestSuite(ListBoxTest.class);
     suite.addTestSuite(MenuBarTest.class);

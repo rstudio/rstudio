@@ -17,6 +17,7 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.util.Util;
 
 import java.io.File;
@@ -68,19 +69,18 @@ public class StandardCompilationResult extends CompilationResult {
    */
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
-  private final File cacheFile;
+  private final File resultFile;
   private transient SoftReference<String[]> js;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
   private final String strongName;
 
-  public StandardCompilationResult(String[] js, String strongName,
-      File cacheFile) {
+  public StandardCompilationResult(String[] js, String strongName, File resultFile) {
     super(StandardLinkerContext.class);
     this.js = new SoftReference<String[]>(js);
     this.strongName = strongName;
-    this.cacheFile = cacheFile;
+    this.resultFile = resultFile;
   }
 
   /**
@@ -102,12 +102,20 @@ public class StandardCompilationResult extends CompilationResult {
     }
 
     if (toReturn == null) {
-      byte[][] bytes = Util.readFileAndSplit(cacheFile);
-      if (bytes == null) {
-        throw new RuntimeException("Unexpectedly unable to read JS file '"
-            + cacheFile.getAbsolutePath() + "'");
+      PermutationResult result;
+      try {
+        result = Util.readFileAsObject(resultFile, PermutationResult.class);
+      } catch (ClassNotFoundException e) {
+        throw new RuntimeException(
+            "Unexpectedly unable to read PermutationResult '"
+                + resultFile.getAbsolutePath() + "'", e);
       }
-      toReturn = Util.toStrings(bytes);
+      if (result == null) {
+        throw new RuntimeException(
+            "Unexpectedly unable to read PermutationResult '"
+                + resultFile.getAbsolutePath() + "'");
+      }
+      toReturn = result.getJs();
       js = new SoftReference<String[]>(toReturn);
     }
     return toReturn;

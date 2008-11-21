@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
+import java.io.Serializable;
 
 /**
- * The complete set of options for the GWT compiler.
+ * An extensible return type for the results of compiling a single permutation.
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions,
-    OptionLocalWorkers {
+public interface PermutationResult extends Serializable {
+  /**
+   * The compiled JavaScript code.
+   */
+  String[] getJs();
 }

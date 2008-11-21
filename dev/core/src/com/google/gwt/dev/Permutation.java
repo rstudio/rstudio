@@ -28,11 +28,17 @@ import java.util.TreeMap;
  * Represents the state of a single permutation for compile.
  */
 public final class Permutation implements Serializable {
+  private final int id;
   private final List<StaticPropertyOracle> propertyOracles = new ArrayList<StaticPropertyOracle>();
   private final SortedMap<String, String> rebindAnswers = new TreeMap<String, String>();
 
-  public Permutation(StaticPropertyOracle propertyOracle) {
+  public Permutation(int id, StaticPropertyOracle propertyOracle) {
+    this.id = id;
     this.propertyOracles.add(propertyOracle);
+  }
+
+  public int getId() {
+    return id;
   }
 
   public StaticPropertyOracle[] getPropertyOracles() {
