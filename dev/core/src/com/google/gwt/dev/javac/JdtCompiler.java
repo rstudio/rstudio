@@ -127,7 +127,7 @@ public class JdtCompiler {
     }
 
     public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
-      char[] binaryNameChars = CharOperation.concatWith(compoundTypeName, '.');
+      char[] binaryNameChars = CharOperation.concatWith(compoundTypeName, '/');
       String binaryName = String.valueOf(binaryNameChars);
       CompiledClass compiledClass = binaryTypes.get(binaryName);
       if (compiledClass != null) {
@@ -137,20 +137,17 @@ public class JdtCompiler {
         return null;
       }
       try {
-        // Check for binary-only annotations.
-        Class.forName(binaryName, false, getClassLoader());
-        String resourcePath = binaryName.replace('.', '/') + ".class";
-        URL resource = getClassLoader().getResource(resourcePath);
-        InputStream openStream = resource.openStream();
-        try {
-          ClassFileReader cfr = ClassFileReader.read(openStream,
-              resource.toExternalForm(), true);
-          return new NameEnvironmentAnswer(cfr, null);
-        } finally {
-          Utility.close(openStream);
+        URL resource = getClassLoader().getResource(binaryName + ".class");
+        if (resource != null) {
+          InputStream openStream = resource.openStream();
+          try {
+            ClassFileReader cfr = ClassFileReader.read(openStream,
+                resource.toExternalForm(), true);
+            return new NameEnvironmentAnswer(cfr, null);
+          } finally {
+            Utility.close(openStream);
+          }
         }
-      } catch (NoClassDefFoundError e) {
-      } catch (ClassNotFoundException e) {
       } catch (ClassFormatException e) {
       } catch (IOException e) {
       }
@@ -158,7 +155,7 @@ public class JdtCompiler {
     }
 
     public boolean isPackage(char[][] parentPkg, char[] pkg) {
-      final char[] pathChars = CharOperation.concatWith(parentPkg, pkg, '.');
+      char[] pathChars = CharOperation.concatWith(parentPkg, pkg, '/');
       String packageName = String.valueOf(pathChars);
       return isPackage(packageName);
     }
@@ -167,20 +164,20 @@ public class JdtCompiler {
       return Thread.currentThread().getContextClassLoader();
     }
 
-    private boolean isPackage(String packageName) {
+    private boolean isPackage(String slashedPackageName) {
       // Include class loader check for binary-only annotations.
-      if (packages.contains(packageName)) {
+      if (packages.contains(slashedPackageName)) {
         return true;
       }
-      if (notPackages.contains(packageName)) {
+      if (notPackages.contains(slashedPackageName)) {
         return false;
       }
-      String resourceName = packageName.replace('.', '/') + '/';
+      String resourceName = slashedPackageName + '/';
       if (getClassLoader().getResource(resourceName) != null) {
-        addPackages(packageName);
+        addPackages(slashedPackageName);
         return true;
       } else {
-        notPackages.add(packageName);
+        notPackages.add(slashedPackageName);
         return false;
       }
     }
@@ -249,7 +246,8 @@ public class JdtCompiler {
   public boolean doCompile(Collection<CompilationUnit> units) {
     List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>();
     for (CompilationUnit unit : units) {
-      String packageName = Shared.getPackageName(unit.getTypeName());
+      String packageName = Shared.getPackageName(unit.getTypeName()).replace(
+          '.', '/');
       addPackages(packageName);
       Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
       if (compiledClasses == null) {
@@ -268,12 +266,15 @@ public class JdtCompiler {
     return true;
   }
 
-  private void addPackages(String packageName) {
-    while (true) {
-      packages.add(String.valueOf(packageName));
-      int pos = packageName.lastIndexOf('.');
+  public Set<String> getBinaryTypeNames() {
+    return binaryTypes.keySet();
+  }
+
+  private void addPackages(String slashedPackageName) {
+    while (packages.add(slashedPackageName)) {
+      int pos = slashedPackageName.lastIndexOf('/');
       if (pos > 0) {
-        packageName = packageName.substring(0, pos);
+        slashedPackageName = slashedPackageName.substring(0, pos);
       } else {
         packages.add("");
         break;
@@ -283,8 +284,7 @@ public class JdtCompiler {
 
   private void recordBinaryTypes(Set<CompiledClass> compiledClasses) {
     for (CompiledClass compiledClass : compiledClasses) {
-      binaryTypes.put(compiledClass.getBinaryName().replace('/', '.'),
-          compiledClass);
+      binaryTypes.put(compiledClass.getBinaryName(), compiledClass);
     }
   }
 
