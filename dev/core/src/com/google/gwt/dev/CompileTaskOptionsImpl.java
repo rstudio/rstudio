@@ -24,8 +24,6 @@ import java.io.File;
  */
 class CompileTaskOptionsImpl implements CompileTaskOptions {
 
-  public static final String GWT_TMP_DIR = "gwt-tmp";
-
   private Type logLevel;
   private String moduleName;
   private boolean useGuiLogger;

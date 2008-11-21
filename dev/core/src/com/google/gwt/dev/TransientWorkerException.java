@@ -15,12 +15,14 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.Link.LinkOptions;
-import com.google.gwt.dev.Precompile.PrecompileOptions;
-
 /**
- * The complete set of options for the GWT compiler.
+ * Indicates that a PermutationWorker failed to complete its assignment, but
+ * that the permutation should be retried on another worker. This would be used
+ * to report errors such as OutOfMemory when compiling in-process or unexpected
+ * death of an out-of-process worker (network break, etc).
  */
-public interface CompilerOptions extends PrecompileOptions, LinkOptions,
-    OptionLocalWorkers {
+public class TransientWorkerException extends Exception {
+  public TransientWorkerException(String msg, Throwable cause) {
+    super(msg, cause);
+  }
 }

@@ -100,20 +100,20 @@ public class Link {
   }
 
   public static ArtifactSet link(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation, File[] jsFiles)
+      Precompilation precompilation, File[] resultFiles)
       throws UnableToCompleteException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompilation.getUnifiedAst().getOptions());
-    return doLink(logger, linkerContext, precompilation, jsFiles);
+    return doLink(logger, linkerContext, precompilation, resultFiles);
   }
 
   public static void link(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation, File[] jsFiles, File outDir, File extrasDir)
-      throws UnableToCompleteException {
+      Precompilation precompilation, File[] resultFiles, File outDir,
+      File extrasDir) throws UnableToCompleteException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompilation.getUnifiedAst().getOptions());
     ArtifactSet artifacts = doLink(logger, linkerContext, precompilation,
-        jsFiles);
+        resultFiles);
     doProduceOutput(logger, artifacts, linkerContext, module, outDir, extrasDir);
   }
 
@@ -142,15 +142,15 @@ public class Link {
 
   private static ArtifactSet doLink(TreeLogger logger,
       StandardLinkerContext linkerContext, Precompilation precompilation,
-      File[] jsFiles) throws UnableToCompleteException {
+      File[] resultFiles) throws UnableToCompleteException {
     Permutation[] perms = precompilation.getPermutations();
-    if (perms.length != jsFiles.length) {
+    if (perms.length != resultFiles.length) {
       throw new IllegalArgumentException(
-          "Mismatched jsFiles.length and permutation count");
+          "Mismatched resultFiles.length and permutation count");
     }
 
     for (int i = 0; i < perms.length; ++i) {
-      finishPermuation(logger, perms[i], jsFiles[i], linkerContext);
+      finishPermuation(logger, perms[i], resultFiles[i], linkerContext);
     }
 
     linkerContext.addOrReplaceArtifacts(precompilation.getGeneratedArtifacts());
@@ -254,11 +254,11 @@ public class Link {
       return false;
     }
     Permutation[] perms = precompilation.getPermutations();
-    File[] jsFiles = new File[perms.length];
+    File[] resultFiles = new File[perms.length];
     for (int i = 0; i < perms.length; ++i) {
-      jsFiles[i] = CompilePerms.makePermFilename(options.getCompilerWorkDir(),
-          i);
-      if (!jsFiles[i].exists()) {
+      resultFiles[i] = CompilePerms.makePermFilename(
+          options.getCompilerWorkDir(), i);
+      if (!resultFiles[i].exists()) {
         logger.log(TreeLogger.ERROR, "File not found '"
             + precompilationFile.getAbsolutePath()
             + "'; please compile all permutations");
@@ -271,7 +271,7 @@ public class Link {
     StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
         module, precompilation.getUnifiedAst().getOptions());
     ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
-        jsFiles);
+        resultFiles);
 
     doProduceOutput(branch, artifacts, linkerContext, module,
         options.getOutDir(), options.getExtraDir());
