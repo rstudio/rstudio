@@ -20,6 +20,11 @@ import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 /**
  * An object that implements this interface should be a user input widget, where
  * the user and programmer can both set and get the object's value.
+ * <p>
+ * It is a requirement that a value passed to {@link setValue} be
+ * {@link Object#equals} to that returned by an immediately succeeding call to
+ * {@link getValue}, or that both be null. Note that this is not a requirement
+ * that <code>setValue(null)</code> be supported by all implementors.
  * 
  * @param <T> the type of value.
  */
@@ -33,8 +38,11 @@ public interface HasValue<T> extends HasValueChangeHandlers<T> {
   T getValue();
 
   /**
-   * Sets this object's value without firing any events. Should call setValue(T
-   * value, false).
+   * Sets this object's value without firing any events. This should be
+   * identical to calling setValue(value, false).
+   * <p>
+   * It is acceptable to fail assertions or throw (documented) unchecked
+   * exceptions in response to bad values.
    * 
    * @param value the object's new value
    */
@@ -44,6 +52,9 @@ public interface HasValue<T> extends HasValueChangeHandlers<T> {
    * Sets this object's value. Fires
    * {@link com.google.gwt.event.logical.shared.ValueChangeEvent} when
    * fireEvents is true and the new value does not equal the existing value.
+   * <p>
+   * It is acceptable to fail assertions or throw (documented) unchecked
+   * exceptions in response to bad values.
    * 
    * @param value the object's new value
    * @param fireEvents fire events if true and value is new
