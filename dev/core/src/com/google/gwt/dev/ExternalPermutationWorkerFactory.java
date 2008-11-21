@@ -342,6 +342,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
     List<PermutationWorker> toReturn = new ArrayList<PermutationWorker>(
         numWorkers);
 
+    // TODO(spoon): clean up already-launched processes if we get an exception?
     for (int i = 0; i < numWorkers; i++) {
       String cookie = launchExternalWorker(logger, sock.getLocalPort());
       cookies.add(cookie);
