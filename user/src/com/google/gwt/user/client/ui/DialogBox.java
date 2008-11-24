@@ -204,8 +204,10 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
 
   @Override
   public void hide() {
-    resizeHandlerRegistration.removeHandler();
-    resizeHandlerRegistration = null;
+    if (resizeHandlerRegistration != null) {
+      resizeHandlerRegistration.removeHandler();
+      resizeHandlerRegistration = null;
+    }
     super.hide();
   }
 
