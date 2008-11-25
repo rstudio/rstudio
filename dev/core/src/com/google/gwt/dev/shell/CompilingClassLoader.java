@@ -711,8 +711,6 @@ public final class CompilingClassLoader extends ClassLoader {
    * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
    * sets its static 'host' field to our module space.
    * 
-   * @param moduleSpace the ModuleSpace instance to store using
-   *          JavaScriptHost.setHost().
    * @see JavaScriptHost
    */
   private void updateGwtClass() {
@@ -751,8 +749,6 @@ public final class CompilingClassLoader extends ClassLoader {
    * Tricky one, this. Reaches over into this modules's JavaScriptHost class and
    * sets its static 'host' field to our module space.
    * 
-   * @param moduleSpace the ModuleSpace instance to store using
-   *          JavaScriptHost.setHost().
    * @see JavaScriptHost
    */
   private void updateJavaScriptHost() {
