@@ -51,6 +51,10 @@ public class Assert {
     assertEquals("", obj1, obj2);
   }
 
+  public static void assertEquals(short expected, short actual) {
+    assertEquals("", expected, actual);
+  }
+
   public static void assertEquals(String str, boolean obj1, boolean obj2) {
     assertEquals(str, Boolean.valueOf(obj1), Boolean.valueOf(obj2));
   }
@@ -105,6 +109,18 @@ public class Assert {
     }
 
     fail(msg + " expected=" + obj1 + " actual=" + obj2);
+  }
+
+  public static void assertEquals(String str, short obj1, short obj2) {
+    assertEquals(str, new Short(obj1), new Short(obj2));
+  }
+
+  public static void assertEquals(String obj1, String obj2) {
+    assertEquals("", obj1, obj2);
+  }
+
+  public static void assertEquals(String message, String expected, String actual) {
+    assertEquals(message, (Object) expected, (Object) actual);
   }
 
   public static void assertFalse(boolean condition) {
@@ -179,6 +195,32 @@ public class Assert {
 
   public static void fail(String message) {
     throw new AssertionFailedError(message);
+  }
+
+  public static void failNotEquals(String message, Object expected,
+      Object actual) {
+    String formatted = "";
+    if (message != null) {
+      formatted = message + " ";
+    }
+    fail(formatted + "expected :<" + expected + "> was not:<" + actual + ">");
+  }
+
+  public static void failNotSame(String message, Object expected, Object actual) {
+    String formatted = "";
+    if (message != null) {
+      formatted = message + " ";
+    }
+    fail(formatted + "expected same:<" + expected + "> was not:<" + actual
+        + ">");
+  }
+
+  public static void failSame(String message) {
+    String formatted = "";
+    if (message != null) {
+      formatted = message + " ";
+    }
+    fail(formatted + "expected not same");
   }
 
   /**
