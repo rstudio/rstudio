@@ -94,6 +94,11 @@ public class FileResource extends AbstractResource {
     }
   }
 
+  @Override
+  public boolean wasRerooted() {
+    return false;
+  }
+
   private long lastModifiedSeconds(File file) {
     return file.lastModified() / 1000;
   }

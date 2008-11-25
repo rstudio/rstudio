@@ -63,4 +63,9 @@ public final class FileCompilationUnit extends CompilationUnit {
   public boolean isGenerated() {
     return false;
   }
+
+  @Override
+  public boolean isSuperSource() {
+    return false;
+  }
 }

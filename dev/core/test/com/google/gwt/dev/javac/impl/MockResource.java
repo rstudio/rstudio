@@ -57,5 +57,10 @@ public abstract class MockResource extends Resource {
     return new ByteArrayInputStream(Util.getBytes(getContent().toString()));
   }
 
+  @Override
+  public boolean wasRerooted() {
+    return false;
+  }
+
   protected abstract CharSequence getContent();
 }

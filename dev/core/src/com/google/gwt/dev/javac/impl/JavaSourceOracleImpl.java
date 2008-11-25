@@ -85,6 +85,11 @@ public class JavaSourceOracleImpl implements JavaSourceOracle {
     }
 
     @Override
+    public boolean isSuperSource() {
+      return resource.wasRerooted();
+    }
+
+    @Override
     public String readSource() {
       if (resource != null) {
         InputStream contents = resource.openContents();

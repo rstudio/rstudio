@@ -63,6 +63,11 @@ public abstract class JavaSourceFile {
   }
 
   /**
+   * @return true if the corresponding source comes from super-source.
+   */
+  public abstract boolean isSuperSource();
+
+  /**
    * Returns the Java code contained in this source file. May return
    * <code>null</code> if this {@link JavaSourceFile} has been invalidated by
    * its containing {@link JavaSourceOracle}. This method may be expensive as
@@ -76,4 +81,5 @@ public abstract class JavaSourceFile {
   public final String toString() {
     return getLocation();
   }
+
 }

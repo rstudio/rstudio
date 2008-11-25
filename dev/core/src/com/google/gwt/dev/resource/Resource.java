@@ -64,8 +64,8 @@ public abstract class Resource {
   }
 
   /**
-   * Returns the contents of the resource. May return <code>null</code> if
-   * this {@link Resource} has been invalidated by its containing
+   * Returns the contents of the resource. May return <code>null</code> if this
+   * {@link Resource} has been invalidated by its containing
    * {@link ResourceOracle}. The caller is responsible for closing the stream.
    */
   public abstract InputStream openContents();
@@ -77,4 +77,7 @@ public abstract class Resource {
   public final String toString() {
     return getLocation();
   }
+
+  public abstract boolean wasRerooted();
+
 }

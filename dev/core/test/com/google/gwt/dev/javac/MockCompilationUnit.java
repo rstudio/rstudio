@@ -52,4 +52,9 @@ public class MockCompilationUnit extends CompilationUnit {
   public boolean isGenerated() {
     return true;
   }
+
+  @Override
+  public boolean isSuperSource() {
+    return false;
+  }
 }
