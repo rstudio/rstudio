@@ -283,12 +283,8 @@ public class Event extends JavaScriptObject {
    * Gets whether the ALT key was depressed when the given event occurred.
    * 
    * @return <code>true</code> if ALT was depressed when the event occurred
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
-   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final boolean getAltKey() throws AssertionError {
+  public final boolean getAltKey() {
     return DOM.eventGetAltKey(this);
   }
 
@@ -297,10 +293,8 @@ public class Event extends JavaScriptObject {
    * 
    * @return a bit-field, defined by {@link Event#BUTTON_LEFT},
    *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#ONMOUSEDOWN} or {@link Event#ONMOUSEUP}
    */
-  public final int getButton() throws AssertionError {
+  public final int getButton() {
     return DOM.eventGetButton(this);
   }
 
@@ -308,12 +302,8 @@ public class Event extends JavaScriptObject {
    * Gets the mouse x-position within the browser window's client area.
    * 
    * @return the mouse x-position
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
-   *           {@link Event#ONDBLCLICK}, {@link Event#ONMOUSEWHEEL}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final int getClientX() throws AssertionError {
+  public final int getClientX() {
     return DOM.eventGetClientX(this);
   }
 
@@ -321,12 +311,8 @@ public class Event extends JavaScriptObject {
    * Gets the mouse y-position within the browser window's client area.
    * 
    * @return the mouse y-position
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
-   *           {@link Event#ONDBLCLICK}, {@link Event#ONMOUSEWHEEL}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final int getClientY() throws AssertionError {
+  public final int getClientY() {
     return DOM.eventGetClientY(this);
   }
 
@@ -334,12 +320,8 @@ public class Event extends JavaScriptObject {
    * Gets whether the CTRL key was depressed when the given event occurred.
    * 
    * @return <code>true</code> if CTRL was depressed when the event occurred
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
-   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final boolean getCtrlKey() throws AssertionError {
+  public final boolean getCtrlKey() {
     return DOM.eventGetCtrlKey(this);
   }
 
@@ -358,10 +340,8 @@ public class Event extends JavaScriptObject {
    * {@link Event#ONMOUSEOVER}).
    * 
    * @return the element from which the mouse pointer was moved
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#ONMOUSEOVER} or {@link Event#ONMOUSEOUT}
    */
-  public final Element getFromElement() throws AssertionError {
+  public final Element getFromElement() {
     return DOM.eventGetFromElement(this);
   }
 
@@ -375,10 +355,9 @@ public class Event extends JavaScriptObject {
    * </p>
    * 
    * @return the Unicode character or key code.
-   * @throws AssertionError if event type is not one of {@link Event#KEYEVENTS}
    * @see com.google.gwt.user.client.ui.KeyboardListener
    */
-  public final int getKeyCode() throws AssertionError {
+  public final int getKeyCode() {
     return DOM.eventGetKeyCode(this);
   }
 
@@ -386,12 +365,8 @@ public class Event extends JavaScriptObject {
    * Gets whether the META key was depressed when the given event occurred.
    * 
    * @return <code>true</code> if META was depressed when the event occurred
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
-   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final boolean getMetaKey() throws AssertionError {
+  public final boolean getMetaKey() {
     return DOM.eventGetMetaKey(this);
   }
 
@@ -408,9 +383,8 @@ public class Event extends JavaScriptObject {
    * </p>
    * 
    * @return The velocity of the mouse wheel.
-   * @throws AssertionError if event type is not {@link Event#ONMOUSEWHEEL}
    */
-  public final int getMouseWheelVelocityY() throws AssertionError {
+  public final int getMouseWheelVelocityY() {
     return DOM.eventGetMouseWheelVelocityY(this);
   }
 
@@ -418,9 +392,8 @@ public class Event extends JavaScriptObject {
    * Gets the key-repeat state of this event.
    * 
    * @return <code>true</code> if this key event was an auto-repeat
-   * @throws AssertionError if event type is not {@link Event#ONKEYDOWN}
    */
-  public final boolean getRepeat() throws AssertionError {
+  public final boolean getRepeat() {
     return DOM.eventGetRepeat(this);
   }
 
@@ -433,7 +406,7 @@ public class Event extends JavaScriptObject {
    *           {@link Event#ONCLICK}, {@link Event#ONDBLCLICK}, or
    *           {@link Event#ONCONTEXTMENU}
    */
-  public final int getScreenX() throws AssertionError {
+  public final int getScreenX() {
     return DOM.eventGetScreenX(this);
   }
 
@@ -441,12 +414,8 @@ public class Event extends JavaScriptObject {
    * Gets the mouse y-position on the user's display.
    * 
    * @return the mouse y-position
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONMOUSEWHEEL},
-   *           {@link Event#ONCLICK}, {@link Event#ONDBLCLICK}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final int getScreenY() throws AssertionError {
+  public final int getScreenY() {
     return DOM.eventGetScreenY(this);
   }
 
@@ -454,12 +423,8 @@ public class Event extends JavaScriptObject {
    * Gets whether the shift key was depressed when the given event occurred.
    * 
    * @return <code>true</code> if shift was depressed when the event occurred
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONCLICK},
-   *           {@link Event#ONDBLCLICK}, {@link Event#KEYEVENTS}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
-  public final boolean getShiftKey() throws AssertionError {
+  public final boolean getShiftKey() {
     return DOM.eventGetShiftKey(this);
   }
 
@@ -489,10 +454,8 @@ public class Event extends JavaScriptObject {
    * {@link Event#ONMOUSEOUT}).
    * 
    * @return the element to which the mouse pointer was moved
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#ONMOUSEOVER} or {@link Event#ONMOUSEOUT}
    */
-  public final Element getToElement() throws AssertionError {
+  public final Element getToElement() {
     return DOM.eventGetToElement(this);
   }
 
