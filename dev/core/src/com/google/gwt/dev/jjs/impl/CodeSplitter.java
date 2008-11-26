@@ -36,6 +36,8 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.js.ast.JsVars;
+import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.PerfLogger;
 
 import java.util.ArrayList;
@@ -94,6 +96,20 @@ public class CodeSplitter {
               if (method != null) {
                 System.out.println(fullNameString(method));
               }
+            }
+          }
+        }
+
+        if (stat instanceof JsVars) {
+          JsVars vars = (JsVars) stat;
+          for (JsVar var : vars) {
+            JField field = map.nameToField(var.getName());
+            if (field != null) {
+              System.out.println(fullNameString(field));
+            }
+            String string = map.stringLiteralForName(var.getName());
+            if (string != null) {
+              System.out.println("STRING " + var.getName());
             }
           }
         }
@@ -211,6 +227,23 @@ public class CodeSplitter {
     new CodeSplitter(logger, jprogram, jsprogram, map).execImpl();
   }
 
+  private static Map<JField, JClassLiteral> buildFieldToClassLiteralMap(
+      JProgram jprogram) {
+    final Map<JField, JClassLiteral> map = new HashMap<JField, JClassLiteral>();
+    class BuildFieldToLiteralVisitor extends JVisitor {
+      @Override
+      public void endVisit(JClassLiteral lit, Context ctx) {
+        map.put(lit.getField(), lit);
+      }
+    }
+    (new BuildFieldToLiteralVisitor()).accept(jprogram);
+    return map;
+  }
+
+  private static String fullNameString(JField field) {
+    return field.getEnclosingType().getName() + "." + field.getName();
+  }
+
   private static String fullNameString(JMethod method) {
     return method.getEnclosingType().getName() + "."
         + JProgram.getJsniSig(method);
@@ -238,8 +271,8 @@ public class CodeSplitter {
   }
 
   private final Map<JField, JClassLiteral> fieldToLiteralOfClass;
-
   private final FragmentExtractor fragmentExtractor;
+
   /**
    * Code that is initially live when the program first downloads.
    */
@@ -262,7 +295,7 @@ public class CodeSplitter {
 
     numEntries = jprogram.entryMethods.size();
     logging = Boolean.getBoolean(PROP_LOG_FRAGMENT_MAP);
-    fieldToLiteralOfClass = FragmentExtractor.buildFieldToClassLiteralMap(jprogram);
+    fieldToLiteralOfClass = buildFieldToClassLiteralMap(jprogram);
     fragmentExtractor = new FragmentExtractor(jprogram, jsprogram, map);
 
     initiallyLive = new ControlFlowAnalyzer(jprogram);
@@ -397,22 +430,28 @@ public class CodeSplitter {
   }
 
   /**
-   * Mostly it is okay to load code before it is needed. However, there are some
-   * exceptions, where merely loading a code atom requires that some other atom
-   * has also been loaded. To address such situations, move the load-time
-   * dependencies to fragment 0, so they are sure to be available.
+   * <p>
+   * Patch up the fragment map to satisfy load-order dependencies, as described
+   * in the comment of {@link LivenessPredicate}. Load-order dependencies can
+   * be violated when an atom is mapped to 0 as a leftover, but it has some
+   * load-order dependency on an atom that was put in an exclusive fragment.
+   * </p>
+   * 
+   * <p>
+   * In general, it might be possible to split things better by considering load
+   * order dependencies when building the fragment map. However, fixing them
+   * after the fact makes CodeSplitter simpler. In practice, for programs tried
+   * so far, there are very few load order dependency fixups that actually
+   * happen, so it seems better to keep the compiler simpler.
+   * </p>
    */
   private void fixUpLoadOrderDependencies(FragmentMap fragmentMap) {
     fixUpLoadOrderDependenciesForMethods(fragmentMap);
     fixUpLoadOrderDependenciesForTypes(fragmentMap);
     fixUpLoadOrderDependenciesForClassLiterals(fragmentMap);
+    fixUpLoadOrderDependenciesForFieldsInitializedToStrings(fragmentMap);
   }
 
-  /**
-   * A class literal cannot be loaded until its associate strings are. Make sure
-   * that the strings are available for all class literals at the time they are
-   * loaded.
-   */
   private void fixUpLoadOrderDependenciesForClassLiterals(
       FragmentMap fragmentMap) {
     int numClassLitStrings = 0;
@@ -437,10 +476,31 @@ public class CodeSplitter {
         + numClassLitStrings);
   }
 
-  /**
-   * Fixes up the load-order dependencies from instance methods to their
-   * enclosing types.
-   */
+  private void fixUpLoadOrderDependenciesForFieldsInitializedToStrings(
+      FragmentMap fragmentMap) {
+    int numFixups = 0;
+    int numFieldStrings = 0;
+
+    for (JField field : fragmentMap.fields.keySet()) {
+      if (field.getInitializer() instanceof JStringLiteral) {
+        numFieldStrings++;
+
+        String string = ((JStringLiteral) field.getInitializer()).getValue();
+        int fieldFrag = getOrZero(fragmentMap.fields, field);
+        int stringFrag = getOrZero(fragmentMap.strings, string);
+        if (fieldFrag != stringFrag && stringFrag != 0) {
+          numFixups++;
+          fragmentMap.strings.put(string, 0);
+        }
+      }
+    }
+
+    logger.log(TreeLogger.DEBUG, "Fixed up load-order dependencies by moving "
+        + numFixups
+        + " strings used to initialize fields to fragment 0, out of "
+        + +numFieldStrings);
+  }
+
   private void fixUpLoadOrderDependenciesForMethods(FragmentMap fragmentMap) {
     int numFixups = 0;
 
@@ -471,9 +531,6 @@ public class CodeSplitter {
             + jprogram.getDeclaredTypes().size());
   }
 
-  /**
-   * Fixes up load order dependencies from types to their supertypes.
-   */
   private void fixUpLoadOrderDependenciesForTypes(FragmentMap fragmentMap) {
     int numFixups = 0;
     Queue<JReferenceType> typesToCheck = new ArrayBlockingQueue<JReferenceType>(

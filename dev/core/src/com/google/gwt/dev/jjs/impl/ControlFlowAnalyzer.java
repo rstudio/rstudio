@@ -204,7 +204,14 @@ public class ControlFlowAnalyzer {
        * initializer). Writes don't count, only reads.
        */
       if (x.getInitializer() != null) {
-        accept(x.getInitializer());
+
+        if (!isStaticFieldInitializedToLiteral(x.getVariableRef().getTarget())) {
+          /*
+           * Don't traverse literal initializers, because those become live when
+           * the variable is accessed, not when its declaration runs.
+           */
+          accept(x.getInitializer());
+        }
       }
 
       // If the lhs is a field ref, we have to visit its qualifier.
@@ -415,6 +422,14 @@ public class ControlFlowAnalyzer {
       return true;
     }
 
+    private boolean isStaticFieldInitializedToLiteral(JVariable var) {
+      if (var instanceof JField) {
+        JField field = (JField) var;
+        return field.isStatic() && field.getLiteralInitializer() != null;
+      }
+      return false;
+    }
+
     private boolean isVolatileField(JExpression x) {
       if (x instanceof JFieldRef) {
         JFieldRef xFieldRef = (JFieldRef) x;
@@ -506,7 +521,17 @@ public class ControlFlowAnalyzer {
 
     private void rescue(JVariable var) {
       if (var != null) {
-        liveFieldsAndMethods.add(var);
+        if (liveFieldsAndMethods.add(var)) {
+          if (isStaticFieldInitializedToLiteral(var)) {
+            /*
+             * Rescue literal initializers when the field is rescued, not when
+             * the static initializer runs. This allows fields initialized to
+             * string literals to only need the string literals when the field
+             * itself becomes live.
+             */
+            accept(((JField) var).getLiteralInitializer());
+          }
+        }
       }
     }
 

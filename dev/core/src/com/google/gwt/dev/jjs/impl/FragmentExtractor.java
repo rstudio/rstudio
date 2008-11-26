@@ -16,13 +16,10 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.SourceInfo;
-import com.google.gwt.dev.jjs.ast.Context;
-import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBinaryOperator;
 import com.google.gwt.dev.js.ast.JsEmpty;
@@ -39,10 +36,8 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -83,7 +78,28 @@ public class FragmentExtractor {
   }
 
   /**
+   * <p>
    * A predicate on whether statements and variables should be considered live.
+   * </p>
+   * 
+   * 
+   * <p>
+   * Any supplied predicate must satisfy load-order dependencies. For any atom
+   * considered live, the atoms it depends on at load time should also be live.
+   * The following load-order dependencies exist:
+   * </p>
+   * 
+   * <ul>
+   * <li>A class literal depends on the strings contained in its instantiation
+   * instruction.</li>
+   * 
+   * <li>Types depend on their supertype.</li>
+   * 
+   * <li>Instance methods depend on their enclosing type.</li>
+   * 
+   * <li>Static fields that are initialized to strings depend on the string
+   * they are initialized to.</li>
+   * </ul>
    */
   public static interface LivenessPredicate {
     boolean isLive(JField field);
@@ -143,22 +159,7 @@ public class FragmentExtractor {
     }
   }
 
-  public static Map<JField, JClassLiteral> buildFieldToClassLiteralMap(
-      JProgram jprogram) {
-    final Map<JField, JClassLiteral> map = new HashMap<JField, JClassLiteral>();
-    class BuildFieldToLiteralVisitor extends JVisitor {
-      @Override
-      public void endVisit(JClassLiteral lit, Context ctx) {
-        map.put(lit.getField(), lit);
-      }
-    }
-    (new BuildFieldToLiteralVisitor()).accept(jprogram);
-    return map;
-  }
-
   private Set<JsName> entryMethodNames;
-
-  private Map<JField, JClassLiteral> fieldToLiteralOfClass;
 
   private final JProgram jprogram;
 
@@ -179,7 +180,6 @@ public class FragmentExtractor {
     this.jsprogram = jsprogram;
     this.map = map;
 
-    fieldToLiteralOfClass = buildFieldToClassLiteralMap(jprogram);
     buildEntryMethodSet();
   }
 
@@ -242,8 +242,8 @@ public class FragmentExtractor {
 
         boolean keepIt;
 
-        if (containsInternedLiterals(stat)) {
-          stat = removeSomeInternedLiterals((JsVars) stat, livenessPredicate,
+        if (containsRemovableVars(stat)) {
+          stat = removeSomeVars((JsVars) stat, livenessPredicate,
               alreadyLoadedPredicate);
           keepIt = !(stat instanceof JsEmpty);
         } else {
@@ -310,12 +310,12 @@ public class FragmentExtractor {
 
   /**
    * Check whether this statement is a <code>JsVars</code> that contains
-   * interned literals. If it does, then
-   * {@link #removeSomeInternedLiterals(JsVars, LivenessPredicate, LivenessPredicate)}
-   * is sensible for this statement and should be used instead of
+   * individual vars that could be removed. If it does, then
+   * {@link #removeSomeVars(JsVars, LivenessPredicate, LivenessPredicate)} is
+   * sensible for this statement and should be used instead of
    * {@link #isLive(JsStatement, com.google.gwt.fragserv.FragmentExtractor.LivenessPredicate)}.
    */
-  private boolean containsInternedLiterals(JsStatement stat) {
+  private boolean containsRemovableVars(JsStatement stat) {
     if (stat instanceof JsVars) {
       for (JsVar var : (JsVars) stat) {
         String lit = map.stringLiteralForName(var.getName());
@@ -325,8 +325,7 @@ public class FragmentExtractor {
         }
 
         JField field = map.nameToField(var.getName());
-        if (field != null && fieldToLiteralOfClass.containsKey(field)) {
-          // It's an intern variable for a class literal
+        if (field != null) {
           return true;
         }
       }
@@ -387,11 +386,12 @@ public class FragmentExtractor {
 
   /**
    * Check whether a variable is needed. If the variable is an intern variable,
-   * then return whether the interned value is live. Otherwise, assume the
-   * variable is needed and return <code>true</code>.
+   * then return whether the interned value is live. If the variable corresponds
+   * to a Java field, then return whether the Java field is live. Otherwise,
+   * assume the variable is needed and return <code>true</code>.
    * 
    * Whenever this method is updated, also look at
-   * {@link #containsInternedLiterals(JsStatement)}.
+   * {@link #containsRemovableVars(JsStatement)}.
    */
   private boolean isLive(JsVar var, LivenessPredicate livenessPredicate) {
     String lit = map.stringLiteralForName(var.getName());
@@ -401,8 +401,8 @@ public class FragmentExtractor {
     }
 
     JField field = map.nameToField(var.getName());
-    if (field != null && fieldToLiteralOfClass.containsKey(field)) {
-      // It's an intern variable for a class literal
+    if (field != null) {
+      // It's a field
       return livenessPredicate.isLive(field);
     }
 
@@ -435,7 +435,7 @@ public class FragmentExtractor {
    * <code>currentLivenessPredicate</code> but not by
    * <code>alreadyLoadedPredicate</code>.
    */
-  private JsStatement removeSomeInternedLiterals(JsVars stat,
+  private JsStatement removeSomeVars(JsVars stat,
       LivenessPredicate currentLivenessPredicate,
       LivenessPredicate alreadyLoadedPredicate) {
     JsVars newVars = new JsVars(stat.getSourceInfo().makeChild(
