@@ -1046,17 +1046,14 @@ public final class Util {
    */
   public static void writeBytesToFile(TreeLogger logger, File where,
       byte[][] what) throws UnableToCompleteException {
-    RandomAccessFile f = null;
+    FileOutputStream f = null;
     Throwable caught;
     try {
       where.getParentFile().mkdirs();
-      f = new RandomAccessFile(where, "rwd");
-      long newLen = 0;
+      f = new FileOutputStream(where);
       for (int i = 0; i < what.length; i++) {
-        newLen += what[i].length;
         f.write(what[i]);
       }
-      f.setLength(newLen);
       return;
     } catch (FileNotFoundException e) {
       caught = e;
