@@ -192,7 +192,7 @@ window.onunload = function() {
 
 window.__gwt_module_id = 0;
 
-var query = window.location.search;
+var query = parent.location.search;
 $stats && $stats({moduleName:$moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});
 var idx = query.indexOf("gwt.hosted=");
 if (idx >= 0) {
@@ -203,7 +203,6 @@ if (idx >= 0) {
     $hosted = query.substring(idx + 11);
   }
 }
-idx = query.lastIndexOf("&");
-query = query.substring(idx + 1);
+query = window.location.search.substring(1);
 if (query && $wnd[query]) setTimeout($wnd[query].onScriptLoad, 1);
 --></script></body></html>

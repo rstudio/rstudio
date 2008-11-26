@@ -66,8 +66,10 @@ function __MODULE_FUNC__() {
 
   function isHostedMode() {
     try {
-      return ($wnd.external && $wnd.external.gwtOnLoad &&
-          ($wnd.location.search.indexOf('gwt.hybrid') == -1));
+      var query = $wnd.location.search;
+      return (query.indexOf('gwt.hosted=') != -1 
+          || ($wnd.external && $wnd.external.gwtOnLoad)) &&
+          (query.indexOf('gwt.hybrid') == -1);
     } catch (e) {
       // Defensive: some versions of IE7 reportedly can throw an exception
       // evaluating "external.gwtOnLoad".
@@ -353,8 +355,8 @@ function __MODULE_FUNC__() {
   var strongName;
   var initialHtml;
   if (isHostedMode()) {
+	initialHtml = "hosted.html?__MODULE_FUNC__";
     strongName = "";
-    initialHtml = "hosted.html?__MODULE_FUNC__";
   } else {
     try {
 // __PERMUTATIONS_BEGIN__
