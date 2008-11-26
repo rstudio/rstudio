@@ -30,6 +30,40 @@ public class BootStrapPlatform {
     fixContextClassLoaderOnMainThread();
   }
 
+  /**
+   * 
+   * This works around a complicated set of OS X SWT/AWT compatibilities.
+   * {@link #setSystemProperties()} will typically need to be called first to
+   * ensure that CocoaComponent compatibility mode is disabled. The constraints
+   * of using SWT and AWT together are:
+   * 
+   * <p>
+   * 1 - The SWT event dispatch needs to be running on the main application
+   * thread (only possible with -XstartOnFirstThread VM arg).
+   * </p>
+   * <p>
+   * 2 - The first call into AWT must be from the main thread after a SWT
+   * display has been initialized.
+   * </p>
+   * 
+   * This method allows the compiler to have a tree logger in a SWT window and
+   * allow generators to use AWT for image generation.
+   * 
+   * <p>
+   * NOTE: In GUI applications, {@link #setSystemProperties()} and
+   * {@link #initGui()} will both be called during the bootstrap process.
+   * Command line applications (like
+   * 
+   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and
+   *        only call {@link #setSystemProperties()} allowing AWT to be
+   *        initialized on demand.
+   *        </p>
+   */
+  public static void initGui() {
+    GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+    Toolkit.getDefaultToolkit();
+  }
+
   public static void initHostedMode() {
     /*
      * The following check must be made before attempting to initialize Safari,
@@ -52,40 +86,6 @@ public class BootStrapPlatform {
       System.err.println("  java -XstartOnFirstThread -cp gwt-dev-mac.jar com.google.gwt.dev.GWTShell");
       System.exit(-1);
     }
-  }
-
-  /**
-   * 
-   * This works around a complicated set of OS X SWT/AWT compatibilities.
-   * {@link #setSystemProperties()} will typically need to be called first to
-   * ensure that CocoaComponent compatibility mode is disabled. The constraints
-   * of using SWT and AWT together are:
-   * 
-   * <p>
-   * 1 - The SWT event dispatch needs to be running on the main application
-   * thread (only possible with -XstartOnFirstThread VM arg).
-   * </p>
-   * <p>
-   * 2 - The first call into AWT must be from the main thread after a SWT
-   * display has been initialized.
-   * </p>
-   * 
-   * This method allows the compiler to have a tree logger in a SWT window and
-   * allow generators to use AWT for image generation.
-   * 
-   * <p>
-   * NOTE: In GUI applications, {@link #setSystemProperties()} and
-   * {@link #initGui()} will both be called during the bootstrap
-   * process. Command line applications (like
-   * 
-   * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and
-   *        only call {@link #setSystemProperties()} allowing AWT to be
-   *        initialized on demand.
-   *        </p>
-   */
-  public static void initGui() {
-    GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
-    Toolkit.getDefaultToolkit();
   }
 
   /**
@@ -124,8 +124,8 @@ public class BootStrapPlatform {
    * 
    * <p>
    * NOTE: In GUI applications, {@link #setSystemProperties()} and
-   * {@link #initGui()} will both be called during the bootstrap
-   * process. Command line applications (like
+   * {@link #initGui()} will both be called during the bootstrap process.
+   * Command line applications (like
    * 
    * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and
    *        only call {@link #setSystemProperties()} allowing AWT to be

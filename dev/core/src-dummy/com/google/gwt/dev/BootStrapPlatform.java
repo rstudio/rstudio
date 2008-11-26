@@ -26,11 +26,11 @@ public class BootStrapPlatform {
     // nothing to do
   }
 
-  public static void initHostedMode() {
-    // nothing to do.
-  }
-
   public static void initGui() {
     // nothing to do
+  }
+
+  public static void initHostedMode() {
+    // nothing to do.
   }
 }

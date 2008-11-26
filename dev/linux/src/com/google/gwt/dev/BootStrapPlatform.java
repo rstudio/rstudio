@@ -26,6 +26,10 @@ public class BootStrapPlatform {
     // nothing to do
   }
 
+  public static void initGui() {
+    // nothing to do
+  }
+
   /**
    * Find a usable Mozilla installation and load it. Fail immediately, logging
    * to stderr and exiting with a failure code, if we are unable to find or load
@@ -54,9 +58,5 @@ public class BootStrapPlatform {
     }
     String mozillaPath = mozInstall.getPath();
     System.setProperty("swt.mozilla.path", mozillaPath);
-  }
-
-  public static void initGui() {
-    // nothing to do
   }
 }

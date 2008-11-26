@@ -18,8 +18,6 @@ package com.google.gwt.dev.shell.moz;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
-import com.google.gwt.dev.js.ast.JsFunction;
-import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JsValue;
@@ -28,7 +26,6 @@ import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.util.Jsni;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -68,8 +65,8 @@ public class ModuleSpaceMoz extends ModuleSpace {
         // The error has been logged; just ignore it for now.
         continue;
       }
-      createNative(jsniMethod.location(),
-          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
+      createNative(jsniMethod.location(), jsniMethod.line(), jsniMethod.name(),
+          jsniMethod.paramNames(), body);
     }
   }
 
