@@ -189,6 +189,12 @@ public abstract class CompilationUnit {
   public abstract boolean isGenerated();
 
   /**
+   *
+   * @return true if the Compilation Unit is from a super-source.
+   */
+  public abstract boolean isSuperSource();
+
+  /**
    * Overridden to finalize; always returns {@link #getDisplayLocation()}.
    */
   public final String toString() {

@@ -90,4 +90,9 @@ public class ZipFileResource extends AbstractResource {
       return null;
     }
   }
+
+  @Override
+  public boolean wasRerooted() {
+    return false;
+  }
 }

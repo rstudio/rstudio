@@ -70,7 +70,13 @@ public class MockJavaSourceFile extends JavaSourceFile {
   }
 
   @Override
+  public boolean isSuperSource() {
+    return false;
+  }
+
+  @Override
   public String readSource() {
     return source;
   }
+
 }

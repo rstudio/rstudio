@@ -123,6 +123,11 @@ public class ResourceOracleImpl implements ResourceOracle {
     public InputStream openContents() {
       return resource.openContents();
     }
+
+    @Override
+    public boolean wasRerooted() {
+      return true;
+    }
   }
 
   public static ClassPathEntry createEntryForUrl(TreeLogger logger, URL url)

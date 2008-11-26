@@ -68,6 +68,11 @@ public class ApiContainerTest extends TestCase {
     public boolean isGenerated() {
       return false;
     }
+
+    @Override
+    public boolean isSuperSource() {
+      return false;
+    }
   }
 
   @SuppressWarnings("unused")

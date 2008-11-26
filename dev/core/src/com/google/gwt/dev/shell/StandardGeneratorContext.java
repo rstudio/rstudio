@@ -127,6 +127,11 @@ public class StandardGeneratorContext implements GeneratorContext {
       return file != null;
     }
 
+    @Override
+    public boolean isSuperSource() {
+      return false;
+    }
+
     public void setFile(File file) {
       assert (file.exists() && file.canRead());
       this.file = file;

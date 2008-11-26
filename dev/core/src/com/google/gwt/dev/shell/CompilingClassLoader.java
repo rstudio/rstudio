@@ -51,8 +51,8 @@ import java.util.Stack;
 
 /**
  * An isolated {@link ClassLoader} for running all user code. All user files are
- * compiled from source code byte a {@link ByteCodeCompiler}. After
- * compilation, some byte code rewriting is performed to support
+ * compiled from source code byte a {@link ByteCodeCompiler}. After compilation,
+ * some byte code rewriting is performed to support
  * <code>JavaScriptObject</code> and its subtypes.
  * 
  * TODO: we should refactor this class to move the getClassInfoByDispId,
@@ -64,8 +64,8 @@ public final class CompilingClassLoader extends ClassLoader implements
     DispatchIdOracle {
 
   /**
-   * Oracle that can answer questions about
-   * {@link DispatchClassInfo DispatchClassInfos}.
+   * Oracle that can answer questions about {@link DispatchClassInfo
+   * DispatchClassInfos}.
    */
   private final class DispatchClassInfoOracle {
 
@@ -564,8 +564,8 @@ public final class CompilingClassLoader extends ClassLoader implements
    * was previously cached and has not been garbage collected.
    * 
    * @param javaObject the Object being wrapped
-   * @return the mapped wrapper, or <code>null</code> if the Java object
-   *         mapped or if the wrapper has been garbage collected
+   * @return the mapped wrapper, or <code>null</code> if the Java object mapped
+   *         or if the wrapper has been garbage collected
    */
   public Object getWrapperForObject(Object javaObject) {
     return weakJavaWrapperCache.get(javaObject);
@@ -705,8 +705,13 @@ public final class CompilingClassLoader extends ClassLoader implements
         lookupClassName);
     if (compiledClass != null) {
       byte[] classBytes = compiledClass.getBytes();
-      classBytes = emmaStrategy.getEmmaClassBytes(classBytes, lookupClassName,
-          compiledClass.getUnit().getLastModified());
+      if (!compiledClass.getUnit().isSuperSource()) {
+        classBytes = emmaStrategy.getEmmaClassBytes(classBytes,
+            lookupClassName, compiledClass.getUnit().getLastModified());
+      } else {
+        logger.log(TreeLogger.SPAM, "no emma instrumentation for "
+            + lookupClassName + " because it is from super-source");
+      }
       if (classRewriter != null) {
         byte[] newBytes = classRewriter.rewrite(className, classBytes);
         if (CLASS_DUMP) {

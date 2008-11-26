@@ -69,4 +69,9 @@ public final class MockAbstractResource extends AbstractResource {
   public void setStale(boolean isStale) {
     this.isStale = isStale;
   }
+
+  @Override
+  public boolean wasRerooted() {
+    return false;
+  }
 }

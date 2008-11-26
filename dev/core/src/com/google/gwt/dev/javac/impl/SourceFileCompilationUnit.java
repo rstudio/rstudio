@@ -63,6 +63,11 @@ public class SourceFileCompilationUnit extends CompilationUnit {
   }
 
   @Override
+  public boolean isSuperSource() {
+    return sourceFile.isSuperSource();
+  }
+
+  @Override
   protected void dumpSource() {
     sourceCode = null;
   }

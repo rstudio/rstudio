@@ -219,6 +219,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   }
 
   public void setValue(Boolean value, boolean fireEvents) {
+    assert null != value : "Value must not be null";
     if (isChecked() == value) {
       return;
     }
