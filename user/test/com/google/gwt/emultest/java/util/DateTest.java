@@ -15,6 +15,7 @@
  */
 package com.google.gwt.emultest.java.util;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Date;
@@ -34,6 +35,7 @@ public class DateTest extends GWTTestCase {
   /**
    * Sets module name so that javascript compiler can operate.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -484,59 +486,69 @@ public class DateTest extends GWTTestCase {
   /** Testing for public java.lang.String java.util.Date.toGMTString(). */
   public void testToGMTString() {
 
-    // /////////////////////////////
-    // Past
-    // /////////////////////////////
-    Date accum1 = create(PAST);
-    String a1 = accum1.toGMTString();
-    assertEquals("5 Jan 1880 00:00:00 GMT", a1);
+    // We can't rely on the JRE's toString, as it is an implementation detail.
+    if (GWT.isScript()) {
+      // /////////////////////////////
+      // Past
+      // /////////////////////////////
+      Date accum1 = create(PAST);
+      String a1 = accum1.toGMTString();
+      assertEquals("5 Jan 1880 00:00:00 GMT", a1);
 
-    // /////////////////////////////
-    // Future
-    // /////////////////////////////
-    Date accum2 = create(FUTURE);
-    String a2 = accum2.toGMTString();
-    assertEquals("30 Dec 2010 03:04:05 GMT", a2);
+      // /////////////////////////////
+      // Future
+      // /////////////////////////////
+      Date accum2 = create(FUTURE);
+      String a2 = accum2.toGMTString();
+      assertEquals("30 Dec 2010 03:04:05 GMT", a2);
+    }
   }
 
   /** Testing for public java.lang.String java.util.Date.toLocaleString(). */
   public void testToLocaleString() {
 
-    // /////////////////////////////
-    // Past
-    // /////////////////////////////
-    Date accum1 = create(PAST);
-    String a1 = accum1.toLocaleString();
-    assertTrue(a1.indexOf("1880") != -1);
-    // /////////////////////////////
-    // Future
-    // /////////////////////////////
-    Date accum2 = create(FUTURE);
-    String a2 = accum2.toLocaleString();
-    assertTrue(a2.indexOf("2010") != -1);
+    // We can't rely on the JRE's toString, as it is an implementation detail.
+    if (GWT.isScript()) {
+      // /////////////////////////////
+      // Past
+      // /////////////////////////////
+      Date accum1 = create(PAST);
+      String a1 = accum1.toLocaleString();
+      assertTrue(a1.indexOf("1880") != -1);
+      // /////////////////////////////
+      // Future
+      // /////////////////////////////
+      Date accum2 = create(FUTURE);
+      String a2 = accum2.toLocaleString();
+      assertTrue(a2.indexOf("2010") != -1);
+    }
   }
 
   /** Date docs specify an exact format for toString(). */
   public void testToString() {
-    // /////////////////////////////
-    // Past
-    // /////////////////////////////
-    Date d = create(PAST);
-    String s = d.toString();
 
-    assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
-    assertEquals("Parsing returned unequal dates from " + s, d, new Date(
-        Date.parse(s)));
+    // We can't rely on the JRE's toString, as it is an implementation detail.
+    if (GWT.isScript()) {
+      // /////////////////////////////
+      // Past
+      // /////////////////////////////
+      Date d = create(PAST);
+      String s = d.toString();
 
-    // /////////////////////////////
-    // Future
-    // /////////////////////////////
-    d = create(FUTURE);
-    s = d.toString();
+      assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
+      assertEquals("Parsing returned unequal dates from " + s, d, new Date(
+          Date.parse(s)));
 
-    assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
-    assertEquals("Parsing returned unequal dates from " + s, d, new Date(
-        Date.parse(s)));
+      // /////////////////////////////
+      // Future
+      // /////////////////////////////
+      d = create(FUTURE);
+      s = d.toString();
+
+      assertTrue("Bad format " + s, s.matches(TO_STRING_PATTERN));
+      assertEquals("Parsing returned unequal dates from " + s, d, new Date(
+          Date.parse(s)));
+    }
   }
 
   /** Testing for public static long java.util.Date.UTC(int,int,int,int,int,int). */
