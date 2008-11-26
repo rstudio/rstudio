@@ -15,11 +15,21 @@
  */
 package com.google.gwt.dev.shell.moz;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.JsniMethod;
+import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
+import com.google.gwt.dev.util.Jsni;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for
@@ -42,19 +52,25 @@ public class ModuleSpaceMoz extends ModuleSpace {
     SwtGeckoGlue.addRefInt(window);
   }
 
-  /*
-   * (non-Javadoc)
+  /**
+   * Define one or more JSNI methods.
    * 
-   * @see com.google.gwt.dev.shell.ShellJavaScriptHost#createNative(java.lang.String,
-   *      int, java.lang.String, java.lang.String[], java.lang.String)
+   * @param logger
+   * @param jsniMethods
    */
-  public void createNative(String file, int line, String jsniSignature,
-      String[] paramNames, String js) {
-    // Execute the function definition within the browser, which will define
-    // a new top-level function.
-    //
-    String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
-    LowLevelMoz.executeScriptWithInfo(window, newScript, file, line);
+  public void createNativeMethods(TreeLogger logger,
+      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
+      DispatchIdOracle dispatchIdOracle) {
+    for (JsniMethod jsniMethod : jsniMethods) {
+      String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
+          jsniMethod);
+      if (body == null) {
+        // The error has been logged; just ignore it for now.
+        continue;
+      }
+      createNative(jsniMethod.location(),
+          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
+    }
   }
 
   /*
@@ -66,6 +82,12 @@ public class ModuleSpaceMoz extends ModuleSpace {
   public void dispose() {
     SwtGeckoGlue.releaseInt(window);
     super.dispose();
+  }
+
+  @Override
+  protected void createStaticDispatcher(TreeLogger logger) {
+    createNative("initializeStaticDispatcher", 0, "__defineStatic",
+        new String[] {"__arg0"}, "window.__static = __arg0;");
   }
 
   /**
@@ -103,5 +125,21 @@ public class ModuleSpaceMoz extends ModuleSpace {
   @Override
   protected Object getStaticDispatcher() {
     return new GeckoDispatchAdapter(getIsolatedClassLoader());
+  }
+
+  /**
+   * Defines a new native JavaScript function.
+   * 
+   * @param name the function's name, usually a JSNI signature
+   * @param paramNames parameter names
+   * @param js the script body
+   */
+  private void createNative(String file, int line, String jsniSignature,
+      String[] paramNames, String js) {
+    // Execute the function definition within the browser, which will define
+    // a new top-level function.
+    //
+    String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
+    LowLevelMoz.executeScriptWithInfo(window, newScript, file, line);
   }
 }

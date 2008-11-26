@@ -26,6 +26,7 @@ import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.Writer;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
 import java.util.Iterator;
@@ -90,6 +91,19 @@ public final class Utility {
     try {
       if (reader != null) {
         reader.close();
+      }
+    } catch (IOException e) {
+    }
+  }
+
+  /**
+   * Helper that ignores exceptions during close, because what are you going to
+   * do?
+   */
+  public static void close(Socket socket) {
+    try {
+      if (socket != null) {
+        socket.close();
       }
     } catch (IOException e) {
     }

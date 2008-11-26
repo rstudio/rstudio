@@ -424,7 +424,7 @@ public class GWTShell extends ToolBase {
 
   protected GWTShell(boolean forceServer, boolean noURLs) {
     // Set any platform specific system properties.
-    BootStrapPlatform.init();
+    BootStrapPlatform.initHostedMode();
     BootStrapPlatform.applyPlatformHacks();
 
     registerHandler(getArgHandlerPort());
@@ -568,12 +568,12 @@ public class GWTShell extends ToolBase {
   public void run() {
     try {
       if (!startUp()) {
-        // Failed to initalize.
+        // Failed to initialize.
         return;
       }
 
-      // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
-      BootStrapPlatform.maybeInitializeAWT();
+      // Perform any platform-specific hacks to initialize the GUI.
+      BootStrapPlatform.initGui();
 
       // Tomcat's running now, so launch browsers for startup urls now.
       launchStartupUrls(getTopLogger());

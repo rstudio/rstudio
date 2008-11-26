@@ -49,7 +49,7 @@ public class CompileTaskRunner {
           "Build Output for " + options.getModuleName(), 800, 600, true);
 
       // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
-      BootStrapPlatform.maybeInitializeAWT();
+      BootStrapPlatform.initGui();
 
       final AbstractTreeLogger logger = loggerWindow.getLogger();
       logger.setMaxDetail(options.getLogLevel());

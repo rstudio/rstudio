@@ -15,11 +15,18 @@
  */
 package com.google.gwt.dev.shell.mac;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
+import com.google.gwt.dev.util.Jsni;
+
+import java.util.List;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for Safari.
@@ -48,13 +55,19 @@ public class ModuleSpaceSaf extends ModuleSpace {
     LowLevelSaf.retainJsGlobalContext(scriptGlobalContext);
   }
 
-  public void createNative(String file, int line, String jsniSignature,
-      String[] paramNames, String js) {
-    // Execute the function definition within the browser, which will define
-    // a new top-level function.
-    //
-    String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
-    LowLevelSaf.executeScriptWithInfo(globalContext, newScript, file, line);
+  public void createNativeMethods(TreeLogger logger,
+      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
+      DispatchIdOracle dispatchIdOracle) {
+    for (JsniMethod jsniMethod : jsniMethods) {
+      String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
+          jsniMethod);
+      if (body == null) {
+        // The error has been logged; just ignore it for now.
+        continue;
+      }
+      createNative(jsniMethod.location(),
+          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
+    }
   }
 
   @Override
@@ -62,6 +75,12 @@ public class ModuleSpaceSaf extends ModuleSpace {
     LowLevelSaf.gcUnprotect(LowLevelSaf.getCurrentJsContext(), globalObject);
     LowLevelSaf.releaseJsGlobalContext(globalContext);
     super.dispose();
+  }
+
+  @Override
+  protected void createStaticDispatcher(TreeLogger logger) {
+    createNative("initializeStaticDispatcher", 0, "__defineStatic",
+        new String[] {"__arg0"}, "window.__static = __arg0;");
   }
 
   /**
@@ -103,5 +122,14 @@ public class ModuleSpaceSaf extends ModuleSpace {
   @Override
   protected Object getStaticDispatcher() {
     return new WebKitDispatchAdapter(getIsolatedClassLoader());
+  }
+
+  private void createNative(String file, int line, String jsniSignature,
+      String[] paramNames, String js) {
+    // Execute the function definition within the browser, which will define
+    // a new top-level function.
+    //
+    String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
+    LowLevelSaf.executeScriptWithInfo(globalContext, newScript, file, line);
   }
 }

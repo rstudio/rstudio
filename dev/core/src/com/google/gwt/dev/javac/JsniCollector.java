@@ -85,22 +85,32 @@ public class JsniCollector {
       return func;
     }
 
+    @Override
     public int line() {
       return line;
     }
 
+    @Override
     public String location() {
       return location;
     }
 
+    @Override
     public String name() {
       return name;
     }
 
+    @Override
     public String[] paramNames() {
       return paramNames;
     }
 
+    @Override
+    public JsProgram program() {
+      return program;
+    }
+
+    @Override
     public String source() {
       return source;
     }

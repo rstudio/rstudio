@@ -24,11 +24,11 @@ public class BootStrapPlatform {
     // nothing to do
   }
   
-  public static void init() {
+  public static void initHostedMode() {
     // nothing to do
   }
 
-  public static void maybeInitializeAWT() {
+  public static void initGui() {
     // nothing to do
   }
 }

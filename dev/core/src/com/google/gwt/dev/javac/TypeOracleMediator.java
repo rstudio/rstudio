@@ -336,7 +336,13 @@ public class TypeOracleMediator {
   }
 
   private final Map<String, JRealClassType> binaryMapper = new HashMap<String, JRealClassType>();
-  private final Map<SourceTypeBinding, JRealClassType> sourceMapper = new IdentityHashMap<SourceTypeBinding, JRealClassType>();
+
+  /**
+   * Mapping of source type bindings; transient because freshly-compiled units
+   * are processed in chunks, so only references between types in the same chunk
+   * are source bindings; the rest are going to be binary type bindings.
+   */
+  private final transient Map<SourceTypeBinding, JRealClassType> sourceMapper = new IdentityHashMap<SourceTypeBinding, JRealClassType>();
 
   /**
    * Mapping of type variable bindings; transient because compilation units are
@@ -395,6 +401,7 @@ public class TypeOracleMediator {
     }
     // Clean transient state.
     assert unresolvedTypes.size() == 0;
+    sourceMapper.clear();
     tvMapper.clear();
 
     typeOracle.finish(logger);
@@ -409,7 +416,6 @@ public class TypeOracleMediator {
    */
   public void refresh(TreeLogger logger, Set<CompilationUnit> units) {
     binaryMapper.clear();
-    sourceMapper.clear();
     typeOracle.reset();
     addNewUnits(logger, units);
   }

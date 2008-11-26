@@ -11,6 +11,10 @@
   <property name="gwt.apicheck.oldroot" 
     location="../gwt-1.5"/>
 
+  <target name="buildonly" depends="dev, user, servlet, jni" description="Build without docs/samples">
+    <gwt.ant dir="distro-source" />
+  </target>
+
   <target name="dist" depends="dev, user, servlet, tools, jni, doc, samples" description="Run the distributions">
     <gwt.ant dir="distro-source" />
   </target>

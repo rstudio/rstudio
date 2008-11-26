@@ -106,6 +106,7 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    * Implements branching behavior that supports lazy logging for low-priority
    * branched loggers.
    */
+  @Override
   public final synchronized TreeLogger branch(TreeLogger.Type type, String msg,
       Throwable caught, HelpInfo helpInfo) {
 
@@ -165,10 +166,15 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     return indexWithinMyParent;
   }
 
+  public final synchronized TreeLogger.Type getMaxDetail() {
+    return logLevel;
+  }
+
   public final AbstractTreeLogger getParentLogger() {
     return parent;
   }
 
+  @Override
   public final synchronized boolean isLoggable(TreeLogger.Type type) {
     return !type.isLowerPriorityThan(logLevel);
   }
@@ -178,6 +184,7 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    * message type and this logger's settings. If the message is loggable, then
    * parent branches may be lazily created before the log can take place.
    */
+  @Override
   public final synchronized void log(TreeLogger.Type type, String msg,
       Throwable caught, HelpInfo helpInfo) {
 
@@ -210,7 +217,7 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     }
     logLevel = type;
   }
-
+  
   @Override
   public String toString() {
     return getLoggerId();
@@ -227,7 +234,6 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    *             instead.
    */
   @Deprecated
-  @SuppressWarnings("unused")
   protected final void doCommitBranch(AbstractTreeLogger childBeingCommitted,
       TreeLogger.Type type, String msg, Throwable caught) {
   }
@@ -246,7 +252,6 @@ public abstract class AbstractTreeLogger extends TreeLogger {
    *             instead.
    */
   @Deprecated
-  @SuppressWarnings("unused")
   protected final void doLog(int indexOfLogEntryWithinParentLogger,
       TreeLogger.Type type, String msg, Throwable caught) {
   }

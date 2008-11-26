@@ -15,7 +15,12 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.JsniMethod;
+
+import java.util.List;
 
 /**
  * This interface contains all of the methods that must be exposed to a hosted
@@ -30,14 +35,15 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 public interface ShellJavaScriptHost {
 
   /**
-   * Defines a new native JavaScript function.
+   * Define one or more JSNI methods.
    * 
-   * @param name the function's name, usually a JSNI signature
-   * @param paramNames parameter names
-   * @param js the script body
+   * @param logger
+   * @param compiledClass
+   * @param jsniMethods
+   * @param dispatchIdOracle
    */
-  void createNative(String file, int line, String name, String[] paramNames,
-      String js);
+  void createNativeMethods(TreeLogger logger, CompiledClass compiledClass,
+      List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle);
 
   /**
    * Call this when a JavaScript exception is caught.

@@ -22,9 +22,6 @@ import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.PerfLogger;
 
-import org.eclipse.jdt.core.compiler.CharOperation;
-import org.eclipse.jdt.internal.compiler.ClassFile;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -84,12 +81,6 @@ public class CompilationState {
    * Our source file inputs.
    */
   private final JavaSourceOracle sourceOracle;
-
-  /**
-   * Tracks the set of valid binary type names for
-   * {@link BinaryTypeReferenceRestrictionsChecker}.
-   */
-  private final Set<String> validBinaryTypeNames = new HashSet<String>();
 
   /**
    * Construct a new {@link CompilationState}.
@@ -180,7 +171,6 @@ public class CompilationState {
         getCompilationUnits());
 
     jdtCompiler = new JdtCompiler();
-    validBinaryTypeNames.clear();
     compile(logger, getCompilationUnits());
     mediator.refresh(logger, getCompilationUnits());
     markSurvivorsChecked(getCompilationUnits());
@@ -199,7 +189,7 @@ public class CompilationState {
 
       // Check all units using our custom checks.
       CompilationUnitInvalidator.validateCompilationUnits(newUnits,
-          validBinaryTypeNames);
+          jdtCompiler.getBinaryTypeNames());
 
       // More units may have errors now.
       anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,
@@ -209,8 +199,6 @@ public class CompilationState {
         CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger,
             newUnits);
       }
-
-      recordValidBinaryTypeNames(newUnits);
 
       JsniCollector.collectJsniMethods(logger, newUnits, new JsProgram());
     }
@@ -231,18 +219,6 @@ public class CompilationState {
     }
     exposedClassFileMap = Collections.unmodifiableMap(classFileMap);
     exposedClassFileMapBySource = Collections.unmodifiableMap(classFileMapBySource);
-  }
-
-  private void recordValidBinaryTypeNames(Set<CompilationUnit> units) {
-    for (CompilationUnit unit : units) {
-      if (unit.getState() == State.COMPILED) {
-        for (ClassFile classFile : unit.getJdtCud().compilationResult().getClassFiles()) {
-          char[] binaryName = CharOperation.concatWith(
-              classFile.getCompoundName(), '/');
-          validBinaryTypeNames.add(String.valueOf(binaryName));
-        }
-      }
-    }
   }
 
   private void refreshFromSourceOracle() {

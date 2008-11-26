@@ -32,7 +32,7 @@ public class BootStrapPlatform {
    * it. If successful, store the loaded path in the property swt.mozilla.path
    * so SWT's Browser object can use it.
    */
-  public static void init() {
+  public static void initHostedMode() {
     String home = System.getenv("HOME");
     if (home == null || home.length() == 0) {
       System.err.println("The HOME environment variable must be defined.");
@@ -56,7 +56,7 @@ public class BootStrapPlatform {
     System.setProperty("swt.mozilla.path", mozillaPath);
   }
 
-  public static void maybeInitializeAWT() {
+  public static void initGui() {
     // nothing to do
   }
 }

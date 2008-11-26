@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,10 @@ import java.util.zip.ZipFile;
 
 /**
  * The normal implementation of {@link ResourceOracle}.
+ * 
+ * TODO: this incorporates a quick-and-dirty fix for issue 3078 -- a proper
+ * fix that considers module inheritance order before classpath order should
+ * be implemented.
  */
 public class ResourceOracleImpl implements ResourceOracle {
 
@@ -255,7 +260,7 @@ public class ResourceOracleImpl implements ResourceOracle {
      * Allocate fresh data structures in anticipation of needing to honor the
      * "new identity for the collections if anything changes" guarantee.
      */
-    final Map<String, AbstractResource> newInternalMap = new HashMap<String, AbstractResource>();
+    final Map<String, AbstractResource> newInternalMap = new LinkedHashMap<String, AbstractResource>();
 
     /*
      * Walk across path roots (i.e. classpath entries) in priority order. This
@@ -347,6 +352,11 @@ public class ResourceOracleImpl implements ResourceOracle {
           assert (path.startsWith(pathPrefix.getPrefix()));
           if (pathPrefix.shouldReroot()) {
             String rerootedPath = pathPrefix.getRerootedPath(path);
+            if (externalMap.get(rerootedPath) instanceof ResourceWrapper) {
+              // A rerooted instance blocks any other resource at this path.
+              ++hitCount;
+              break;
+            }
             // Try to reuse the same wrapper.
             Resource exposed = exposedResourceMap.get(rerootedPath);
             if (exposed instanceof ResourceWrapper) {

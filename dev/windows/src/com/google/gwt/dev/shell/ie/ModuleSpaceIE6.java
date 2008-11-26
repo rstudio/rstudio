@@ -15,11 +15,16 @@
  */
 package com.google.gwt.dev.shell.ie;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.ModuleSpace;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.ie.IDispatchImpl.HResultException;
+import com.google.gwt.dev.util.Jsni;
 
 import org.eclipse.swt.internal.ole.win32.IDispatch;
 import org.eclipse.swt.ole.win32.OleAutomation;
@@ -27,6 +32,7 @@ import org.eclipse.swt.ole.win32.Variant;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * An implementation of {@link com.google.gwt.dev.shell.ModuleSpace} for
@@ -92,22 +98,18 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     window = new OleAutomation(scriptFrameWindow);
   }
 
-  public void createNative(String file, int line, String jsniSignature,
-      String[] paramNames, String js) {
-    // Execute the function definition within the browser, which will define
-    // a new top-level function.
-    //
-    String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
-    try {
-      // TODO: somehow insert file/line info into the script
-      Variant result = execute(newScript);
-      if (result != null) {
-        result.dispose();
+  public void createNativeMethods(TreeLogger logger,
+      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
+      DispatchIdOracle dispatchIdOracle) {
+    for (JsniMethod jsniMethod : jsniMethods) {
+      String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
+          jsniMethod);
+      if (body == null) {
+        // The error has been logged; just ignore it for now.
+        continue;
       }
-    } catch (RuntimeException e) {
-      throw new RuntimeException(file + "(" + line
-          + "): Failed to create JSNI method with signature '" + jsniSignature
-          + "'", e);
+      createNative(jsniMethod.location(),
+          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
     }
   }
 
@@ -118,6 +120,12 @@ public class ModuleSpaceIE6 extends ModuleSpace {
       window.dispose();
     }
     super.dispose();
+  }
+
+  @Override
+  protected void createStaticDispatcher(TreeLogger logger) {
+    createNative("initializeStaticDispatcher", 0, "__defineStatic",
+        new String[] {"__arg0"}, "window.__static = __arg0;");
   }
 
   /**
@@ -202,6 +210,25 @@ public class ModuleSpaceIE6 extends ModuleSpace {
     }
     throw new RuntimeException(
         "Failed to invoke JavaScriptException.getDescription()", caught);
+  }
+
+  private void createNative(String file, int line, String jsniSignature,
+      String[] paramNames, String js) {
+    // Execute the function definition within the browser, which will define
+    // a new top-level function.
+    //
+    String newScript = createNativeMethodInjector(jsniSignature, paramNames, js);
+    try {
+      // TODO: somehow insert file/line info into the script
+      Variant result = execute(newScript);
+      if (result != null) {
+        result.dispose();
+      }
+    } catch (RuntimeException e) {
+      throw new RuntimeException(file + "(" + line
+          + "): Failed to create JSNI method with signature '" + jsniSignature
+          + "'", e);
+    }
   }
 
   private Variant execute(String code) {

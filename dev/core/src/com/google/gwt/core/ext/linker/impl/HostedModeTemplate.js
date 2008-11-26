@@ -70,8 +70,10 @@ function __MODULE_FUNC__() {
 
   function isHostedMode() {
     try {
-      return ($wnd.external && $wnd.external.gwtOnLoad &&
-          ($wnd.location.search.indexOf('gwt.hybrid') == -1));
+      var query = $wnd.location.search;
+      return (query.indexOf('gwt.hosted=') != -1 
+          || ($wnd.external && $wnd.external.gwtOnLoad)) &&
+          (query.indexOf('gwt.hybrid') == -1);
     } catch (e) {
       // Defensive: some versions of IE7 reportedly can throw an exception
       // evaluating "external.gwtOnLoad".
@@ -387,7 +389,15 @@ function __MODULE_FUNC__() {
 
   var strongName;
   if (isHostedMode()) {
-    strongName = "hosted.html?__MODULE_FUNC__";
+    var query = $wnd.location.search;
+    if (query) {
+      if (query.lastIndexOf('&') != query.lenth - 1) {
+    	query += '&';
+      }
+    } else {
+      query = '?';
+    }
+    strongName = "hosted.html" + query + "__MODULE_FUNC__";
     // Hang an expando for hosted.html to be able to grab the module name early.
     __MODULE_FUNC__.moduleName = '__MODULE_NAME__'; 
   } else {

@@ -23,6 +23,7 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNode;
+import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JavaScriptHost;
 
 /**
@@ -102,7 +103,7 @@ public class Jsni {
    * injection.
    */
   public static String getJavaScriptForHostedMode(TreeLogger logger,
-      JsniMethod jsniMethod) {
+      DispatchIdOracle dispatchInfo, JsniMethod jsniMethod) {
     /*
      * Surround the original JS body statements with a try/catch so that we can
      * map JavaScript exceptions back into Java. Note that the method body

@@ -30,7 +30,7 @@ public class BootStrapPlatform {
     fixContextClassLoaderOnMainThread();
   }
 
-  public static void init() {
+  public static void initHostedMode() {
     /*
      * The following check must be made before attempting to initialize Safari,
      * or we'll fail with an less-than-helpful UnsatisfiedLinkError.
@@ -58,12 +58,12 @@ public class BootStrapPlatform {
    * 
    * This works around a complicated set of OS X SWT/AWT compatibilities.
    * {@link #setSystemProperties()} will typically need to be called first to
-   * ensure that CocoaComponent compatability mode is disabled. The constraints
+   * ensure that CocoaComponent compatibility mode is disabled. The constraints
    * of using SWT and AWT together are:
    * 
    * <p>
    * 1 - The SWT event dispatch needs to be running on the main application
-   * thread (only possible with -XstartOnFirstThread vm arg).
+   * thread (only possible with -XstartOnFirstThread VM arg).
    * </p>
    * <p>
    * 2 - The first call into AWT must be from the main thread after a SWT
@@ -75,7 +75,7 @@ public class BootStrapPlatform {
    * 
    * <p>
    * NOTE: In GUI applications, {@link #setSystemProperties()} and
-   * {@link #maybeInitializeAWT()} will both be called during the bootstrap
+   * {@link #initGui()} will both be called during the bootstrap
    * process. Command line applications (like
    * 
    * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and
@@ -83,7 +83,7 @@ public class BootStrapPlatform {
    *        initialized on demand.
    *        </p>
    */
-  public static void maybeInitializeAWT() {
+  public static void initGui() {
     GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     Toolkit.getDefaultToolkit();
   }
@@ -124,7 +124,7 @@ public class BootStrapPlatform {
    * 
    * <p>
    * NOTE: In GUI applications, {@link #setSystemProperties()} and
-   * {@link #maybeInitializeAWT()} will both be called during the bootstrap
+   * {@link #initGui()} will both be called during the bootstrap
    * process. Command line applications (like
    * 
    * @{link com.google.gwt.dev.GWTCompiler}) avoid eagerly initializing AWT and

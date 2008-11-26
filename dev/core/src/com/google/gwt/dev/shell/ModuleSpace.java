@@ -47,6 +47,11 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     sThrownJavaExceptionObject.set(t);
   }
 
+  /**
+   * Create a JavaScriptException object. This must be done reflectively, since
+   * this class will have been loaded from a ClassLoader other than the
+   * session's thread.
+   */
   protected static RuntimeException createJavaScriptException(ClassLoader cl,
       Object exception) {
     Exception caught;
@@ -77,7 +82,44 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     return threadLocalLogger.get();
   }
 
-  private final ModuleSpaceHost host;
+  /**
+   * Get the JavaScriptObject wrapped by a JavaScriptException. We have to do
+   * this reflectively, since the JavaScriptException object is from an
+   * arbitrary classloader. If the object is not a JavaScriptException, or is
+   * not from the given ClassLoader, we'll return null.
+   */
+  static Object getJavaScriptExceptionException(ClassLoader cl,
+      Object javaScriptException) {
+    if (javaScriptException.getClass().getClassLoader() != cl) {
+      return null;
+    }
+
+    Exception caught;
+    try {
+      Class<?> javaScriptExceptionClass = Class.forName(
+          "com.google.gwt.core.client.JavaScriptException", true, cl);
+      
+      if (!javaScriptExceptionClass.isInstance(javaScriptException)) {
+        // Not a JavaScriptException
+        return null;
+      }
+      Method getException = javaScriptExceptionClass.getMethod("getException");
+      return getException.invoke(javaScriptException);
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (ClassNotFoundException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e;
+    }
+    throw new RuntimeException("Error getting exception value", caught);
+  }
+
+  protected final ModuleSpaceHost host;
 
   private final Object key;
 
@@ -278,9 +320,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     // Make sure we can resolve JSNI references to static Java names.
     //
     try {
+      createStaticDispatcher(logger);
       Object staticDispatch = getStaticDispatcher();
-      createNative("initializeStaticDispatcher", 0, "__defineStatic",
-          new String[] {"__arg0"}, "window.__static = __arg0;");
       invokeNativeVoid("__defineStatic", null, new Class[] {Object.class},
           new Object[] {staticDispatch});
     } catch (Throwable e) {
@@ -411,6 +452,13 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   /**
+   * Create the __defineStatic method.
+   * 
+   * @param logger
+   */
+  protected abstract void createStaticDispatcher(TreeLogger logger);
+
+  /**
    * Invokes a native JavaScript function.
    * 
    * @param name the name of the function to invoke
@@ -456,8 +504,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
     throw thrown;
   }
 
-  protected boolean isExceptionSame(@SuppressWarnings("unused")
-  Throwable original, Object exception) {
+  protected boolean isExceptionSame(Throwable original, Object exception) {
     // For most platforms, the null exception means we threw it.
     // IE overrides this.
     return exception == null;
