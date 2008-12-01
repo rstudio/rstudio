@@ -13,18 +13,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.user.tools;
 
 /**
- * The executable class for ProjectCreator has been moved to
- * <code>com.google.gwt.junit.tools.ProjectCreator</code>. This executable
- * class issues a reminder to users of the new location.
+ * Legacy ProjectCreator that will let users know that they should run
+ * ApplicationCreator instead.
  */
 public final class ProjectCreator {
 
   public static void main(String[] args) {
-    System.err.println("This application has moved!");
-    System.err.println("Please run com.google.gwt.user.tools.ProjectCreator in gwt-user.jar");
+    System.err.println("This application no longer exists!");
+    System.err.println("It has been merged with com.google.gwt.user.tools.ApplicationCreator in gwt-user.jar");
     System.exit(1);
   }
 
