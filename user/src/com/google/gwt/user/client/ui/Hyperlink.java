@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
 
 /**
  * A widget that serves as an "internal" hyperlink. That is, it is a link to
@@ -52,6 +54,8 @@ import com.google.gwt.user.client.History;
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     HasClickHandlers {
 
+  private static HyperlinkImpl impl = GWT.create(HyperlinkImpl.class);
+  
   private Element anchorElem;
   private String targetHistoryToken;
 
@@ -126,8 +130,11 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
       super.onBrowserEvent(event);
-      History.newItem(targetHistoryToken);
-      DOM.eventPreventDefault(event);
+      
+      if (impl.handleAsClick(event)) {
+        History.newItem(getTargetHistoryToken());
+        DOM.eventPreventDefault(event);
+      }
     }
   }
 
