@@ -157,7 +157,7 @@ public class JsParser {
     SourceInfo parent = sourceInfoStack.peek();
     SourceInfo toReturn = program.createSourceInfo(node.getLineno()
         + parent.getStartLine() + 1, parent.getFileName());
-    toReturn.addAdditonalAncestors(parent);
+    toReturn.copyMissingCorrelationsFrom(parent);
     return toReturn;
   }
 

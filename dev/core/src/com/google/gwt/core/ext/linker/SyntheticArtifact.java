@@ -18,26 +18,44 @@ package com.google.gwt.core.ext.linker;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.Util;
 
-import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
  * Artifacts created by {@link AbstractLinker}.
  */
 public class SyntheticArtifact extends EmittedArtifact {
-  private final byte[] data;
+  private final File backing;
 
-  SyntheticArtifact(Class<? extends Linker> linkerType, String partialPath,
-      byte[] data) {
+  SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType,
+      String partialPath, byte[] data) throws UnableToCompleteException {
     super(linkerType, partialPath);
     assert data != null;
-    this.data = data;
+
+    try {
+      backing = File.createTempFile("synthetic", ".artifact");
+      backing.deleteOnExit();
+      Util.writeBytesToFile(TreeLogger.NULL, backing, data);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to write backing file for artifact "
+          + partialPath, e);
+      throw new UnableToCompleteException();
+    }
   }
 
   @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
-    return new ByteArrayInputStream(data);
+    try {
+      return new FileInputStream(backing);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to read backing file for artifact "
+          + getPartialPath(), e);
+      throw new UnableToCompleteException();
+    }
   }
 }

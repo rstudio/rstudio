@@ -40,7 +40,7 @@ import java.util.SortedSet;
 
 /**
  * A base class for Linkers that use an external script to boostrap the GWT
- * module. This implementation injects JavaScript snippits into a JS program
+ * module. This implementation injects JavaScript Snippets into a JS program
  * defined in an external file.
  */
 public abstract class SelectionScriptLinker extends AbstractLinker {
@@ -295,7 +295,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   /**
-   * Generate a snippit of JavaScript to inject an external stylesheet.
+   * Generate a Snippet of JavaScript to inject an external stylesheet.
    * 
    * <pre>
    * if (!__gwt_stylesLoaded['URL']) {

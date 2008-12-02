@@ -25,4 +25,7 @@
   <define-linker name="sso" class="com.google.gwt.core.linker.SingleScriptLinker" />
   
   <add-linker name="std" />
+  
+  <define-linker class="com.google.gwt.core.linker.soyc.SoycReportLinker" name="soycReport" />
+  <add-linker name="soycReport" />
 </module>

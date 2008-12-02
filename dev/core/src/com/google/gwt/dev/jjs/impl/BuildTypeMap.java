@@ -512,7 +512,7 @@ public class BuildTypeMap {
 
       // The SourceInfo will inherit Correlations from its enclosing object
       if (enclosing != null) {
-        toReturn.addAdditonalAncestors(enclosing.getSourceInfo());
+        toReturn.copyMissingCorrelationsFrom(enclosing.getSourceInfo());
       }
 
       return toReturn;
@@ -526,7 +526,7 @@ public class BuildTypeMap {
 
       // The SourceInfo will inherit Correlations from its enclosing object
       if (enclosing != null) {
-        toReturn.addAdditonalAncestors(enclosing.getSourceInfo());
+        toReturn.copyMissingCorrelationsFrom(enclosing.getSourceInfo());
       }
 
       return toReturn;
@@ -617,7 +617,6 @@ public class BuildTypeMap {
           assert (binding.superclass().isClass() || binding.superclass().isEnum());
           JClassType superClass = (JClassType) typeMap.get(superClassBinding);
           type.extnds = superClass;
-          type.getSourceInfo().addSupertypeAncestors(superClass.getSourceInfo());
         }
 
         ReferenceBinding[] superInterfaces = binding.superInterfaces();
@@ -626,8 +625,6 @@ public class BuildTypeMap {
           assert (superInterfaceBinding.isInterface());
           JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
           type.implments.add(superInterface);
-          type.getSourceInfo().addSupertypeAncestors(
-              superInterface.getSourceInfo());
         }
 
         if (type instanceof JEnumType) {

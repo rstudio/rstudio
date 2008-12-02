@@ -17,6 +17,10 @@ package com.google.gwt.dev.jjs;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
+import com.google.gwt.core.ext.soyc.Range;
+import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
@@ -48,7 +52,6 @@ import com.google.gwt.dev.jjs.impl.FixAssignmentToUnbox;
 import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.jjs.impl.GenerateJavaAST;
 import com.google.gwt.dev.jjs.impl.GenerateJavaScriptAST;
-import com.google.gwt.dev.jjs.impl.JavaAndJavaScript;
 import com.google.gwt.dev.jjs.impl.JavaScriptObjectNormalizer;
 import com.google.gwt.dev.jjs.impl.JavaToJavaScriptMap;
 import com.google.gwt.dev.jjs.impl.JsoDevirtualizer;
@@ -70,12 +73,14 @@ import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
 import com.google.gwt.dev.js.JsObfuscateNamer;
 import com.google.gwt.dev.js.JsPrettyNamer;
+import com.google.gwt.dev.js.JsReportGenerationVisitor;
 import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.js.JsStaticEval;
 import com.google.gwt.dev.js.JsStringInterner;
 import com.google.gwt.dev.js.JsSymbolResolver;
 import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
+import com.google.gwt.dev.js.JsReportGenerationVisitor.CountingTextOutput;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
@@ -97,10 +102,27 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its
- * corresponding JavaScript source.
+ * Compiles the Java <code>JProgram</code> representation into its corresponding
+ * JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
+
+  private static class PermutationResultImpl implements PermutationResult {
+    private final ArtifactSet artifacts = new ArtifactSet();
+    private final String[] js;
+
+    public PermutationResultImpl(String[] js) {
+      this.js = js;
+    }
+
+    public ArtifactSet getArtifacts() {
+      return artifacts;
+    }
+
+    public String[] getJs() {
+      return js;
+    }
+  }
 
   /**
    * Compiles a particular permutation, based on a precompiled unified AST.
@@ -114,16 +136,9 @@ public class JavaToJavaScriptCompiler {
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
-  public static String[] compilePermutation(TreeLogger logger,
+  public static PermutationResult compilePermutation(TreeLogger logger,
       UnifiedAst unifiedAst, Map<String, String> rebindAnswers)
       throws UnableToCompleteException {
-    return compilePermutationToJavaAndJavaScript(logger, unifiedAst,
-        rebindAnswers).jscode;
-  }
-
-  public static JavaAndJavaScript compilePermutationToJavaAndJavaScript(
-      TreeLogger logger, UnifiedAst unifiedAst,
-      Map<String, String> rebindAnswers) throws UnableToCompleteException {
     try {
       if (JProgram.isTracingEnabled()) {
         System.out.println("------------------------------------------------------------");
@@ -222,17 +237,34 @@ public class JavaToJavaScriptCompiler {
 
       // (12) Generate the final output text.
       String[] js = new String[jsProgram.getFragmentCount()];
-      for (int i = 0; i < js.length; i++) {
+      List<Map<Range, SourceInfo>> sourceInfoMaps = options.isSoycEnabled()
+          ? new ArrayList<Map<Range, SourceInfo>>(jsProgram.getFragmentCount())
+          : null;
 
-        DefaultTextOutput out = new DefaultTextOutput(
-            options.getOutput().shouldMinimize());
-        JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
-        v.accept(jsProgram.getFragmentBlock(i));
-        js[i] = out.toString();
+      for (int i = 0; i < js.length; i++) {
+        if (sourceInfoMaps != null) {
+          CountingTextOutput out = new CountingTextOutput(
+              options.getOutput().shouldMinimize());
+          JsReportGenerationVisitor v = new JsReportGenerationVisitor(out);
+          v.accept(jsProgram.getFragmentBlock(i));
+          js[i] = out.toString();
+          sourceInfoMaps.add(v.getSourceInfoMap());
+        } else {
+          DefaultTextOutput out = new DefaultTextOutput(
+              options.getOutput().shouldMinimize());
+          JsSourceGenerationVisitor v = new JsSourceGenerationVisitor(out);
+          v.accept(jsProgram.getFragmentBlock(i));
+          js[i] = out.toString();
+        }
       }
 
-      return new JavaAndJavaScript(jprogram, jsProgram, js,
-          postStringInterningMap);
+      PermutationResult toReturn = new PermutationResultImpl(js);
+      if (sourceInfoMaps != null) {
+        toReturn.getArtifacts().add(
+            new StandardCompilationAnalysis(logger, sourceInfoMaps));
+      }
+
+      return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
     }
@@ -283,8 +315,8 @@ public class JavaToJavaScriptCompiler {
     checkForErrors(logger, goldenCuds, false);
 
     PerfLogger.start("Build AST");
-    JProgram jprogram = new JProgram();
-    JsProgram jsProgram = new JsProgram();
+    JProgram jprogram = new JProgram(options.isSoycEnabled());
+    JsProgram jsProgram = new JsProgram(options.isSoycEnabled());
 
     try {
       /*

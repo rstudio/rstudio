@@ -38,7 +38,7 @@ public abstract class AbstractLinker extends Linker {
    */
   protected final SyntheticArtifact emitBytes(TreeLogger logger, byte[] what,
       String partialPath) throws UnableToCompleteException {
-    return new SyntheticArtifact(getClass(), partialPath, what);
+    return new SyntheticArtifact(logger, getClass(), partialPath, what);
   }
 
   /**
@@ -54,7 +54,8 @@ public abstract class AbstractLinker extends Linker {
       InputStream what, String partialPath) throws UnableToCompleteException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Util.copy(logger, what, out);
-    return new SyntheticArtifact(getClass(), partialPath, out.toByteArray());
+    return new SyntheticArtifact(logger, getClass(), partialPath,
+        out.toByteArray());
   }
 
   /**

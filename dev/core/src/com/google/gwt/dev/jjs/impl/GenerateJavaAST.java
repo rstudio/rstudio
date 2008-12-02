@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -2246,10 +2245,10 @@ public class GenerateJavaAST {
       SourceInfo toReturn = program.createSourceInfo(x.sourceStart,
           x.sourceEnd, startLine, currentFileName);
       if (currentClass != null) {
-        toReturn.addCorrelation(Correlation.by(currentClass));
+        toReturn.copyMissingCorrelationsFrom(currentClass.getSourceInfo());
       }
       if (currentMethod != null) {
-        toReturn.addCorrelation(Correlation.by(currentMethod));
+        toReturn.copyMissingCorrelationsFrom(currentMethod.getSourceInfo());
       }
       return toReturn;
     }
@@ -2421,7 +2420,6 @@ public class GenerateJavaAST {
 
           if (!method.overrides.contains(upRef)) {
             method.overrides.add(upRef);
-            method.getSourceInfo().addSupertypeAncestors(upRef.getSourceInfo());
             break;
           }
         }
@@ -2452,8 +2450,6 @@ public class GenerateJavaAST {
             JMethod upRef = (JMethod) typeMap.get(tryMethod);
             if (!method.overrides.contains(upRef)) {
               method.overrides.add(upRef);
-              method.getSourceInfo().addSupertypeAncestors(
-                  upRef.getSourceInfo());
               break;
             }
           }

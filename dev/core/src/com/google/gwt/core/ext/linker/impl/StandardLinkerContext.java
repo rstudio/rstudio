@@ -51,6 +51,7 @@ import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsScope;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
 
 import java.io.File;
@@ -263,20 +264,9 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    * Gets or creates a CompilationResult for the given JavaScript program.
    */
   public StandardCompilationResult getCompilation(TreeLogger logger,
-      File resultFile) throws UnableToCompleteException {
-    PermutationResult permutationResult;
-    try {
-      permutationResult = Util.readFileAsObject(resultFile,
-          PermutationResult.class);
-    } catch (ClassNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to instantiate PermutationResult", e);
-      throw new UnableToCompleteException();
-    }
-
-    if (permutationResult == null) {
-      logger.log(TreeLogger.ERROR, "Unable to read PermutationResult");
-      throw new UnableToCompleteException();
-    }
+      FileBackedObject<PermutationResult> resultFile)
+      throws UnableToCompleteException {
+    PermutationResult permutationResult = resultFile.newInstance(logger);
 
     String strongName = Util.computeStrongName(Util.getBytes(permutationResult.getJs()));
     StandardCompilationResult result = resultsByStrongName.get(strongName);
@@ -285,6 +275,16 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
           strongName, resultFile);
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
+
+      // Add any other Permutations
+      ArtifactSet otherArtifacts = permutationResult.getArtifacts();
+      if (otherArtifacts != null) {
+        // Fixups for StandardCompilationAnalysis objects
+        for (StandardCompilationAnalysis a : otherArtifacts.find(StandardCompilationAnalysis.class)) {
+          a.setCompilationResult(result);
+        }
+        artifacts.addAll(otherArtifacts);
+      }
     }
     return result;
   }

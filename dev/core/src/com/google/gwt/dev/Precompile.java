@@ -122,6 +122,10 @@ public class Precompile {
       return jjsOptions.isEnableAssertions();
     }
 
+    public boolean isSoycEnabled() {
+      return jjsOptions.isSoycEnabled();
+    }
+
     public boolean isValidateOnly() {
       return validateOnly;
     }
@@ -140,6 +144,10 @@ public class Precompile {
 
     public void setOutput(JsOutputOption output) {
       jjsOptions.setOutput(output);
+    }
+
+    public void setSoycEnabled(boolean enabled) {
+      jjsOptions.setSoycEnabled(enabled);
     }
 
     public void setValidateOnly(boolean validateOnly) {

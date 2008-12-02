@@ -18,10 +18,11 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
+import com.google.gwt.dev.util.arg.OptionSoycEnabled;
 
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionScriptStyle {
+    OptionEnableAssertions, OptionScriptStyle, OptionSoycEnabled {
 }

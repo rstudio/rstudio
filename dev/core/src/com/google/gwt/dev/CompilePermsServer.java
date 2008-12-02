@@ -16,8 +16,10 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -289,20 +291,27 @@ public class CompilePermsServer {
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Probable client/server mismatch or "
           + "classpath misconfiguration", e);
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR, "Internal compiler error", e);
     }
     return false;
   }
 
   static void compilePermutation(TreeLogger logger, UnifiedAst ast,
       ObjectInputStream in, ObjectOutputStream out)
-      throws ClassNotFoundException, IOException {
+      throws ClassNotFoundException, IOException, UnableToCompleteException {
+    FileBackedObject<PermutationResult> resultFile = (FileBackedObject<PermutationResult>) in.readObject();
     Permutation p = (Permutation) in.readObject();
     logger.log(TreeLogger.SPAM, "Permutation read");
 
     PermutationResult result = CompilePerms.compile(logger.branch(
         TreeLogger.DEBUG, "Compiling"), p, ast);
     logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
-    out.writeObject(result);
+
+    resultFile.set(logger, result);
+
+    // Send a placeholder null indicating no Throwable
+    out.writeObject(null);
     out.flush();
     logger.log(TreeLogger.SPAM, "Sent result");
   }

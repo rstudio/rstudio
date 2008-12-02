@@ -20,9 +20,15 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.js.ast.JsFunction;
+import com.google.gwt.dev.js.ast.JsName;
+
+import org.apache.commons.collections.map.ReferenceMap;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.Map;
 
 /**
  * Each SourceInfo may define one or more axes by which it can be correlated
@@ -43,27 +49,15 @@ public final class Correlation implements Serializable {
    */
   public enum Axis {
     /*
-     * TODO(bobv): Consider whether or not this should be a proper class
-     * hierarchy. The nice thing about an enum is that all possible types are
-     * programmatically enumerable.
-     * 
-     * Also, consider MODULE and PACKAGE values.
+     * Note to implementors: Possibly the switch statement in
+     * StandardCompilationArtifact if additional member-type enum values are
+     * added.
      */
-
-    /**
-     * Represents a physical source file.
-     */
-    FILE(true, true),
 
     /**
      * A Java class or interface type.
      */
     CLASS(true, false),
-
-    /**
-     * A Java method.
-     */
-    METHOD(true, false),
 
     /**
      * A field defined within a Java type.
@@ -73,7 +67,34 @@ public final class Correlation implements Serializable {
     /**
      * A JavaScript function derived from a class or method.
      */
-    FUNCTION(false, true);
+    FUNCTION(false, true),
+
+    /**
+     * Objects with global names may be aliased (e.g. polymorphic method
+     * dispatch).
+     */
+    JS_ALIAS(false, true),
+
+    /**
+     * The globally-unique identifier used to represent the Member in the
+     * compiled output.
+     */
+    JS_NAME(false, true),
+
+    /**
+     * Indicates a literal value in the original source.
+     */
+    LITERAL(true, true),
+
+    /**
+     * A Java method.
+     */
+    METHOD(true, false),
+
+    /**
+     * Represents a physical source file.
+     */
+    ORIGIN(true, true);
 
     private final boolean isJava;
     private final boolean isJs;
@@ -84,6 +105,49 @@ public final class Correlation implements Serializable {
     private Axis(boolean isJava, boolean isJs) {
       this.isJava = isJava;
       this.isJs = isJs;
+    }
+
+    public boolean isJava() {
+      return isJava;
+    }
+
+    public boolean isJs() {
+      return isJs;
+    }
+  }
+
+  /**
+   * Specifies the type of literal value.
+   */
+  public enum Literal {
+    VOID("void"), NULL("null"), BYTE("byte"), SHORT("short"), INT("int"), LONG(
+        "long"), FLOAT("float"), DOUBLE("double"), BOOLEAN("boolean"), CHAR(
+        "char"), STRING("string"), CLASS("class"), JS_BOOLEAN("boolean", true), JS_NUMBER(
+        "number", true), JS_NULL("null", true), JS_STRING("string", true),
+    /**
+     * undefined isn't actually a literal in JS, but we more-or-less treat it as
+     * though it were.
+     */
+    JS_UNDEFINED("undefined", true);
+
+    private final String description;
+    private final boolean isJava;
+    private final boolean isJs;
+
+    private Literal(String description) {
+      this.description = description;
+      isJava = true;
+      isJs = false;
+    }
+
+    private Literal(String description, boolean isJs) {
+      this.description = description;
+      isJava = !isJs;
+      this.isJs = isJs;
+    }
+
+    public String getDescription() {
+      return description;
     }
 
     public boolean isJava() {
@@ -111,12 +175,103 @@ public final class Correlation implements Serializable {
     }
   };
 
+  /**
+   * This cuts down on the total number of Correlation objects allocated.
+   */
+  @SuppressWarnings("unchecked")
+  private static final Map<Object, Correlation> CANONICAL_MAP = Collections.synchronizedMap(new ReferenceMap(
+      ReferenceMap.WEAK, ReferenceMap.WEAK));
+
+  /**
+   * Correlations based on Literals are all the same, so we'll just cook up a
+   * Map to make {@link #by(Literal)} fast.
+   */
+  private static final Map<Literal, Correlation> LITERAL_CORRELATIONS = new EnumMap<Literal, Correlation>(
+      Literal.class);
+
+  static {
+    for (Literal l : Literal.values()) {
+      LITERAL_CORRELATIONS.put(l, new Correlation(Axis.LITERAL,
+          l.getDescription(), l));
+    }
+  }
+
   public static Correlation by(JField field) {
-    return new Correlation(Axis.FIELD, field.getEnclosingType().getName()
-        + "::" + field.getName(), field);
+    Correlation toReturn = CANONICAL_MAP.get(field);
+    if (toReturn == null) {
+      toReturn = new Correlation(Axis.FIELD, field.getEnclosingType().getName()
+          + "::" + field.getName(), field);
+      CANONICAL_MAP.put(field, toReturn);
+    }
+    return toReturn;
   }
 
   public static Correlation by(JMethod method) {
+    Correlation toReturn = CANONICAL_MAP.get(method);
+    if (toReturn == null) {
+
+      toReturn = new Correlation(Axis.METHOD, getMethodIdent(method), method);
+      CANONICAL_MAP.put(method, toReturn);
+    }
+    return toReturn;
+  }
+
+  public static Correlation by(JReferenceType type) {
+    Correlation toReturn = CANONICAL_MAP.get(type);
+    if (toReturn == null) {
+      toReturn = new Correlation(Axis.CLASS, type.getName(), type);
+      CANONICAL_MAP.put(type, toReturn);
+    }
+    return toReturn;
+  }
+
+  public static Correlation by(JsFunction function) {
+    Correlation toReturn = CANONICAL_MAP.get(function);
+    if (toReturn == null) {
+      toReturn = new Correlation(Axis.FUNCTION, function.getName().getIdent(),
+          function);
+      CANONICAL_MAP.put(function, toReturn);
+    }
+    return toReturn;
+  }
+
+  /**
+   * Creates a JS_NAME Correlation.
+   */
+  public static Correlation by(JsName name) {
+    return by(name, false);
+  }
+
+  /**
+   * Creates either a JS_NAME or JS_ALIAS correlation, based on the value of
+   * <code>isAlias</code>.
+   */
+  public static Correlation by(JsName name, boolean isAlias) {
+    Correlation toReturn = CANONICAL_MAP.get(name);
+    if (toReturn == null) {
+      toReturn = new Correlation(isAlias ? Axis.JS_ALIAS : Axis.JS_NAME,
+          name.getIdent(), name);
+      CANONICAL_MAP.put(name, toReturn);
+    }
+    return toReturn;
+  }
+
+  public static Correlation by(Literal type) {
+    assert LITERAL_CORRELATIONS.containsKey(type);
+    return LITERAL_CORRELATIONS.get(type);
+  }
+
+  public static Correlation by(SourceOrigin origin) {
+    Correlation toReturn = CANONICAL_MAP.get(origin);
+    if (toReturn == null) {
+      toReturn = new Correlation(Axis.ORIGIN, origin.getFileName() + ":"
+          + origin.getStartLine(), origin);
+      CANONICAL_MAP.put(origin, toReturn);
+    }
+    return toReturn;
+  }
+
+  private static String getMethodIdent(JMethod method) {
     StringBuilder sb = new StringBuilder();
     sb.append(method.getEnclosingType().getName()).append("::");
     sb.append(method.getName()).append("(");
@@ -124,30 +279,13 @@ public final class Correlation implements Serializable {
       sb.append(type.getJsniSignatureName());
     }
     sb.append(")");
-
-    return new Correlation(Axis.METHOD, sb.toString(), method);
-  }
-
-  public static Correlation by(JReferenceType type) {
-    return new Correlation(Axis.CLASS, type.getName(), type);
-  }
-
-  public static Correlation by(JsFunction function) {
-    return new Correlation(Axis.FUNCTION, function.getName().getIdent(),
-        function);
-  }
-
-  /**
-   * Constructs a {@link Axis#FILE} Correlation.
-   */
-  public static Correlation by(String filename) {
-    return new Correlation(Axis.FILE, filename, filename);
+    return sb.toString();
   }
 
   /**
    * This may contain a reference to either a Java or Js AST node.
    */
-  protected final Object astReference;
+  protected final Serializable astReference;
 
   protected final Axis axis;
 
@@ -159,9 +297,13 @@ public final class Correlation implements Serializable {
    */
   protected final String ident;
 
-  private Correlation(Axis axis, String ident, Object astReference) {
-    if (ident == null) {
+  private Correlation(Axis axis, String ident, Serializable astReference) {
+    if (axis == null) {
+      throw new NullPointerException("axis");
+    } else if (ident == null) {
       throw new NullPointerException("ident");
+    } else if (astReference == null) {
+      throw new NullPointerException("astReference");
     }
 
     this.axis = axis;
@@ -178,7 +320,7 @@ public final class Correlation implements Serializable {
 
     boolean astSame = astReference == c.astReference
         || (astReference != null && astReference.equals(c.astReference));
-    return axis.equals(c.axis) && astSame;
+    return axis == c.axis && astSame;
   }
 
   public Axis getAxis() {
@@ -209,9 +351,33 @@ public final class Correlation implements Serializable {
     return ident;
   }
 
+  public Literal getLiteral() {
+    if (axis == Axis.LITERAL) {
+      return (Literal) astReference;
+    } else {
+      return null;
+    }
+  }
+
   public JMethod getMethod() {
     if (axis == Axis.METHOD) {
       return (JMethod) astReference;
+    } else {
+      return null;
+    }
+  }
+
+  public JsName getName() {
+    if (axis == Axis.JS_NAME || axis == Axis.JS_ALIAS) {
+      return (JsName) astReference;
+    } else {
+      return null;
+    }
+  }
+
+  public SourceOrigin getOrigin() {
+    if (axis == Axis.ORIGIN) {
+      return (SourceOrigin) astReference;
     } else {
       return null;
     }
@@ -231,7 +397,12 @@ public final class Correlation implements Serializable {
 
   @Override
   public int hashCode() {
-    return 37 * axis.hashCode() + astReference.hashCode() + 13;
+    /*
+     * The null checks are because this method gets called during
+     * deserialization, but without values having been set.
+     */
+    return 37 * (axis == null ? 1 : axis.hashCode())
+        + (astReference == null ? 0 : astReference.hashCode()) + 13;
   }
 
   /**

@@ -17,6 +17,7 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.FileBackedObject;
 
 /**
  * Represents a facility that can compile an individual {@link Permutation}.
@@ -28,13 +29,15 @@ interface PermutationWorker {
   /**
    * Compile a single permutation. The {@link com.google.gwt.dev.jjs.UnifiedAst}
    * will have been provided to {@link PermutationWorkerFactory#getWorkers}
-   * method.
+   * method. The compiled PermutationResult will be returned via the
+   * <code>resultFile</code> parameter.
    * 
    * @throws TransientWorkerException if the Permutation should be tried again
    *           on another worker
    * @throws UnableToCompleteException due to a fatal error
    */
-  PermutationResult compile(TreeLogger logger, Permutation permutation)
+  void compile(TreeLogger logger, Permutation permutation,
+      FileBackedObject<PermutationResult> resultFile)
       throws TransientWorkerException, UnableToCompleteException;
 
   /**

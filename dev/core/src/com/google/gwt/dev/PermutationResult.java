@@ -15,12 +15,20 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.core.ext.linker.ArtifactSet;
+
 import java.io.Serializable;
 
 /**
  * An extensible return type for the results of compiling a single permutation.
  */
 public interface PermutationResult extends Serializable {
+  /**
+   * Returns any Artifacts that may have been created as a result of compiling
+   * the permutation.
+   */
+  ArtifactSet getArtifacts();
+
   /**
    * The compiled JavaScript code.
    */

@@ -15,7 +15,10 @@
  */
 package com.google.gwt.dev.js.ast;
 
+import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.jjs.Correlation.Literal;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,22 +27,30 @@ import java.util.Map;
  * A JavaScript program.
  */
 public final class JsProgram extends JsNode<JsProgram> {
+  /**
+   * This method is used to create SourceInfos for fields in JsProgram. This
+   * method always creates a SourceInfo that has collection enabled.
+   */
+  private static SourceInfo createSourceInfoEnabled(String description) {
+    return new SourceInfoJs(-1, -1, 0, JsProgram.class.getName(), true).makeChild(
+        JsProgram.class, description);
+  }
 
   private final JsStatement debuggerStmt = new JsDebugger(
-      createSourceInfoSynthetic(JsProgram.class, "debugger statement"));
+      createSourceInfoEnabled("debugger statement"));
 
-  private final JsEmpty emptyStmt = new JsEmpty(createSourceInfoSynthetic(
-      JsProgram.class, "Empty statement"));
+  private final JsEmpty emptyStmt = new JsEmpty(
+      createSourceInfoEnabled("Empty statement"));
 
-  private boolean enableSourceInfoDescendants;
+  private final boolean enableSourceInfoDescendants;
 
   private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(
-      createSourceInfoSynthetic(JsProgram.class, "false literal"), false);
+      createSourceInfoEnabled("false literal"), false);
 
   private JsProgramFragment[] fragments;
 
   private final JsNullLiteral nullLiteral = new JsNullLiteral(
-      createSourceInfoSynthetic(JsProgram.class, "null literal"));
+      createSourceInfoEnabled("null literal"));
 
   private final Map<Double, JsNumberLiteral> numberLiteralMap = new HashMap<Double, JsNumberLiteral>();
 
@@ -49,21 +60,42 @@ public final class JsProgram extends JsNode<JsProgram> {
 
   private final Map<String, JsStringLiteral> stringLiteralMap = new HashMap<String, JsStringLiteral>();
 
+  private final SourceInfo stringPoolSourceInfo;
+
   private final JsScope topScope;
 
   private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(
-      createSourceInfoSynthetic(JsProgram.class, "true literal"), true);
+      createSourceInfoEnabled("true literal"), true);
+
+  public JsProgram() {
+    this(false);
+  }
 
   /**
    * Constructs a JavaScript program object.
+   * 
+   * @param soycEnabled Controls whether or not SourceInfo nodes created via the
+   *          JsProgram will record descendant information. Enabling this
+   *          feature will collect extra data during the compilation cycle, but
+   *          at a cost of memory and object allocations.
    */
-  public JsProgram() {
+  public JsProgram(boolean soycEnabled) {
     super(SourceInfoJs.INTRINSIC.makeChild(JsProgram.class,
         "JavaScript program"));
+    this.enableSourceInfoDescendants = soycEnabled;
+
     rootScope = new JsRootScope(this);
     topScope = new JsScope(rootScope, "Global");
     objectScope = new JsScope(rootScope, "Object");
     setFragmentCount(1);
+    falseLiteral.getSourceInfo().addCorrelation(
+        Correlation.by(Literal.JS_BOOLEAN));
+    nullLiteral.getSourceInfo().addCorrelation(Correlation.by(Literal.JS_NULL));
+    trueLiteral.getSourceInfo().addCorrelation(
+        Correlation.by(Literal.JS_BOOLEAN));
+    stringPoolSourceInfo = createSourceInfoSynthetic(JsProgram.class,
+        "String pool");
+    stringPoolSourceInfo.addCorrelation(Correlation.by(Literal.JS_STRING));
   }
 
   public SourceInfo createSourceInfo(int lineNumber, String location) {
@@ -124,13 +156,35 @@ public final class JsProgram extends JsNode<JsProgram> {
   }
 
   public JsNumberLiteral getNumberLiteral(double value) {
-    JsNumberLiteral lit = numberLiteralMap.get(value);
-    if (lit == null) {
-      lit = new JsNumberLiteral(createSourceInfoSynthetic(JsProgram.class,
-          "Number literal " + value), value);
-      numberLiteralMap.put(value, lit);
+    return getNumberLiteral(null, value);
+  }
+
+  public JsNumberLiteral getNumberLiteral(SourceInfo info, double value) {
+    /*
+     * This method only canonicalizes number literals when we don't have an
+     * incoming SourceInfo so that we can distinguish int-0 from double-0 in the
+     * analysis.
+     */
+    if (info == null) {
+      JsNumberLiteral lit = numberLiteralMap.get(value);
+      if (lit == null) {
+        info = createSourceInfoSynthetic(JsProgram.class, "Number literal "
+            + value);
+        info.addCorrelation(Correlation.by(Literal.JS_NUMBER));
+        lit = new JsNumberLiteral(info, value);
+        numberLiteralMap.put(value, lit);
+      }
+
+      return lit;
+    } else {
+      // Only add a JS_NUMBER if no literal correlation present: e.g. Java int
+      if (info.getPrimaryCorrelation(Axis.LITERAL) == null) {
+        // Don't mutate incoming SourceInfo
+        info = info.makeChild(JsProgram.class, "Number literal " + value);
+        info.addCorrelation(Correlation.by(Literal.JS_NUMBER));
+      }
+      return new JsNumberLiteral(info, value);
     }
-    return lit;
   }
 
   public JsScope getObjectScope() {
@@ -162,11 +216,11 @@ public final class JsProgram extends JsNode<JsProgram> {
   public JsStringLiteral getStringLiteral(SourceInfo sourceInfo, String value) {
     JsStringLiteral lit = stringLiteralMap.get(value);
     if (lit == null) {
-      lit = new JsStringLiteral(sourceInfo, value);
+      lit = new JsStringLiteral(stringPoolSourceInfo.makeChild(JsProgram.class,
+          "String literal: " + value), value);
       stringLiteralMap.put(value, lit);
-    } else {
-      lit.getSourceInfo().addAdditonalAncestors(sourceInfo);
     }
+    lit.getSourceInfo().merge(sourceInfo);
     return lit;
   }
 
@@ -175,18 +229,10 @@ public final class JsProgram extends JsNode<JsProgram> {
   }
 
   public JsNameRef getUndefinedLiteral() {
-    return rootScope.findExistingName("undefined").makeRef(
-        createSourceInfoSynthetic(JsProgram.class, "undefined reference"));
-  }
-
-  /**
-   * Controls whether or not SourceInfo nodes created via the JsProgram will
-   * record descendant information. Enabling this feature will collect extra
-   * data during the compilation cycle, but at a cost of memory and object
-   * allocations.
-   */
-  public void setEnableSourceInfoDescendants(boolean enable) {
-    enableSourceInfoDescendants = enable;
+    SourceInfo info = createSourceInfoSynthetic(JsProgram.class,
+        "undefined reference");
+    info.addCorrelation(Correlation.by(Literal.JS_UNDEFINED));
+    return rootScope.findExistingName("undefined").makeRef(info);
   }
 
   public void setFragmentCount(int fragments) {

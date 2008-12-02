@@ -241,6 +241,9 @@ public final class ModuleDefLoader {
       ModuleDefSchema schema = new ModuleDefSchema(logger, this, moduleURL,
           moduleDir, moduleDef);
       ReflectiveParser.parse(logger, schema, r);
+    } catch (Throwable e) {
+      logger.log(TreeLogger.ERROR, "Unexpected error while processing XML", e);
+      throw new UnableToCompleteException();
     } finally {
       Utility.close(r);
     }

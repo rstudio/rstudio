@@ -58,30 +58,32 @@ public class GenerateJavaScriptLiterals extends JVisitor {
 
   @Override
   public final void endVisit(JCharLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getValue()));
+    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public final void endVisit(JDoubleLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getValue()));
+    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public final void endVisit(JFloatLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getValue()));
+    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public final void endVisit(JIntLiteral x, Context ctx) {
-    push(program.getNumberLiteral(x.getValue()));
+    push(program.getNumberLiteral(x.getSourceInfo(), x.getValue()));
   }
 
   @Override
   public void endVisit(JLongLiteral x, Context ctx) {
     JsArrayLiteral arrayLit = new JsArrayLiteral(x.getSourceInfo());
     double[] doubleArray = LongLib.typeChange(x.getValue());
-    arrayLit.getExpressions().add(program.getNumberLiteral(doubleArray[0]));
-    arrayLit.getExpressions().add(program.getNumberLiteral(doubleArray[1]));
+    arrayLit.getExpressions().add(
+        program.getNumberLiteral(x.getSourceInfo(), doubleArray[0]));
+    arrayLit.getExpressions().add(
+        program.getNumberLiteral(x.getSourceInfo(), doubleArray[1]));
     push(arrayLit);
   }
 

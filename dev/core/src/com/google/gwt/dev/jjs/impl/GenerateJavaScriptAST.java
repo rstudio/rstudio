@@ -162,7 +162,9 @@ public class GenerateJavaScriptAST {
       String name = x.getName();
       String mangleName = mangleName(x);
       if (x.isStatic()) {
-        names.put(x, topScope.declareName(mangleName, name));
+        JsName jsName = topScope.declareName(mangleName, name);
+        x.getSourceInfo().addCorrelation(Correlation.by(jsName));
+        names.put(x, jsName);
       } else {
         JsName jsName;
         if (x == arrayLengthField) {
@@ -174,6 +176,7 @@ public class GenerateJavaScriptAST {
         } else {
           jsName = peek().declareName(mangleName, name);
         }
+        x.getSourceInfo().addCorrelation(Correlation.by(jsName));
         names.put(x, jsName);
       }
     }
@@ -239,7 +242,9 @@ public class GenerateJavaScriptAST {
       }
 
       // My seed function name
-      names.put(x, topScope.declareName(getNameString(x), x.getShortName()));
+      JsName jsName = topScope.declareName(getNameString(x), x.getShortName());
+      x.getSourceInfo().addCorrelation(Correlation.by(jsName));
+      names.put(x, jsName);
 
       // My class scope
       if (x.extnds == null) {
@@ -289,6 +294,8 @@ public class GenerateJavaScriptAST {
           } else {
             polyName = interfaceScope.declareName(mangleName, name);
           }
+          // Record this as an alias, not the primary name
+          x.getSourceInfo().addCorrelation(Correlation.by(polyName, true));
           polymorphicNames.put(x, polyName);
         }
       }
@@ -304,6 +311,7 @@ public class GenerateJavaScriptAST {
       assert x.getEnclosingType() != null;
       String mangleName = mangleNameForGlobal(x);
       globalName = topScope.declareName(mangleName, name);
+      x.getSourceInfo().addCorrelation(Correlation.by(globalName));
       names.put(x, globalName);
 
       JsFunction jsFunction;
@@ -320,6 +328,7 @@ public class GenerateJavaScriptAST {
       }
       methodBodyMap.put(x.getBody(), jsFunction);
       jsFunction.getSourceInfo().addCorrelation(Correlation.by(jsFunction));
+      jsFunction.getSourceInfo().addCorrelation(Correlation.by(globalName));
       push(jsFunction.getScope());
       return true;
     }
@@ -1442,10 +1451,6 @@ public class GenerateJavaScriptAST {
           JsNameRef superPrototypeRef = names.get(x.extnds).makeRef(sourceInfo);
           newExpr.setConstructorExpression(superPrototypeRef);
           JsNode<?> staticRef = superPrototypeRef.getName().getStaticRef();
-          if (staticRef != null) {
-            seedFunc.getSourceInfo().addSupertypeAncestors(
-                staticRef.getSourceInfo());
-          }
           rhs = newExpr;
         } else {
           rhs = new JsObjectLiteral(sourceInfo);

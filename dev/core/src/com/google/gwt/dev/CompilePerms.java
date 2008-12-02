@@ -20,11 +20,14 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -176,13 +179,8 @@ public class CompilePerms {
   public static PermutationResult compile(TreeLogger logger,
       Permutation permutation, UnifiedAst unifiedAst) {
     try {
-      final String js[] = JavaToJavaScriptCompiler.compilePermutation(logger,
-          unifiedAst, permutation.getRebindAnswers());
-      return new PermutationResult() {
-        public String[] getJs() {
-          return js;
-        }
-      };
+      return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
+          permutation.getRebindAnswers());
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
@@ -195,7 +193,8 @@ public class CompilePerms {
    */
   public static boolean compile(TreeLogger logger,
       Precompilation precompilation, Permutation[] perms, int localWorkers,
-      File[] resultFiles) throws UnableToCompleteException {
+      List<FileBackedObject<PermutationResult>> resultFiles)
+      throws UnableToCompleteException {
     final TreeLogger branch = logger.branch(TreeLogger.INFO, "Compiling "
         + perms.length + " permutations");
     PermutationWorkerFactory.compilePermutations(logger, precompilation, perms,
@@ -227,12 +226,16 @@ public class CompilePerms {
     System.exit(1);
   }
 
-  public static File[] makeResultFiles(File compilerWorkDir, Permutation[] perms) {
-    File[] resultFiles = new File[perms.length];
+  public static List<FileBackedObject<PermutationResult>> makeResultFiles(
+      File compilerWorkDir, Permutation[] perms) {
+    List<FileBackedObject<PermutationResult>> toReturn = new ArrayList<FileBackedObject<PermutationResult>>(
+        perms.length);
     for (int i = 0; i < perms.length; ++i) {
-      resultFiles[i] = makePermFilename(compilerWorkDir, perms[i].getId());
+      File f = makePermFilename(compilerWorkDir, perms[i].getId());
+      toReturn.add(new FileBackedObject<PermutationResult>(
+          PermutationResult.class, f));
     }
-    return resultFiles;
+    return toReturn;
   }
 
   /**
@@ -291,7 +294,8 @@ public class CompilePerms {
       }
     }
 
-    File[] resultFiles = makeResultFiles(options.getCompilerWorkDir(), perms);
+    List<FileBackedObject<PermutationResult>> resultFiles = makeResultFiles(
+        options.getCompilerWorkDir(), perms);
     return compile(logger, precompilation, subPerms, options.getLocalWorkers(),
         resultFiles);
   }

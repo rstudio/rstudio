@@ -18,9 +18,8 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.UnifiedAst;
-import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.FileBackedObject;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,8 +41,6 @@ public abstract class PermutationWorkerFactory {
    * each in its own thread.
    */
   private static class Manager {
-
-    private static final Work POISON_PILL = new Work(null, null, null);
 
     private static enum Result {
       SUCCESS, FAIL, WORKER_DEATH
@@ -69,8 +66,7 @@ public abstract class PermutationWorkerFactory {
             }
             TreeLogger logger = work.getLogger();
             try {
-              PermutationResult result = worker.compile(logger, work.getPerm());
-              Util.writeObjectAsFile(logger, work.getResultFile(), result);
+              worker.compile(logger, work.getPerm(), work.getResultFile());
               logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
               resultsQueue.put(Result.SUCCESS);
             } catch (TransientWorkerException e) {
@@ -97,6 +93,8 @@ public abstract class PermutationWorkerFactory {
         }
       }
     }
+
+    private static final Work POISON_PILL = new Work(null, null, null);
 
     public static void run(TreeLogger logger, List<Work> work,
         List<PermutationWorker> workers) throws UnableToCompleteException {
@@ -179,9 +177,10 @@ public abstract class PermutationWorkerFactory {
   private static class Work {
     private final TreeLogger logger;
     private final Permutation perm;
-    private final File resultFile;
+    private final FileBackedObject<PermutationResult> resultFile;
 
-    public Work(TreeLogger logger, Permutation perm, File resultFile) {
+    public Work(TreeLogger logger, Permutation perm,
+        FileBackedObject<PermutationResult> resultFile) {
       this.logger = logger;
       this.perm = perm;
       this.resultFile = resultFile;
@@ -195,7 +194,7 @@ public abstract class PermutationWorkerFactory {
       return perm;
     }
 
-    public File getResultFile() {
+    public FileBackedObject<PermutationResult> getResultFile() {
       return resultFile;
     }
   }
@@ -220,7 +219,8 @@ public abstract class PermutationWorkerFactory {
    * PermutationWorkersFactories.
    */
   public static void compilePermutations(TreeLogger logger,
-      Precompilation precompilation, int localWorkers, File[] resultFiles)
+      Precompilation precompilation, int localWorkers,
+      List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
     compilePermutations(logger, precompilation,
         precompilation.getPermutations(), localWorkers, resultFiles);
@@ -241,8 +241,9 @@ public abstract class PermutationWorkerFactory {
    */
   public static void compilePermutations(TreeLogger logger,
       Precompilation precompilation, Permutation[] permutations,
-      int localWorkers, File[] resultFiles) throws UnableToCompleteException {
-    assert permutations.length == resultFiles.length;
+      int localWorkers, List<FileBackedObject<PermutationResult>> resultFiles)
+      throws UnableToCompleteException {
+    assert permutations.length == resultFiles.size();
     assert Arrays.asList(precompilation.getPermutations()).containsAll(
         Arrays.asList(permutations));
 
@@ -252,7 +253,7 @@ public abstract class PermutationWorkerFactory {
       Permutation perm = permutations[i];
       TreeLogger permLogger = logger.branch(TreeLogger.DEBUG,
           "Worker permutation " + perm.getId() + " of " + permutations.length);
-      work.add(new Work(permLogger, perm, resultFiles[i]));
+      work.add(new Work(permLogger, perm, resultFiles.get(i)));
     }
 
     // Create the workers.

@@ -26,6 +26,7 @@ import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
@@ -33,7 +34,9 @@ import com.google.gwt.dev.util.arg.OptionExtraDir;
 import com.google.gwt.dev.util.arg.OptionOutDir;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -100,7 +103,8 @@ public class Link {
   }
 
   public static ArtifactSet link(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation, File[] resultFiles)
+      Precompilation precompilation,
+      List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompilation.getUnifiedAst().getOptions());
@@ -108,7 +112,8 @@ public class Link {
   }
 
   public static void link(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation, File[] resultFiles, File outDir,
+      Precompilation precompilation,
+      List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
       File extrasDir) throws UnableToCompleteException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
         module, precompilation.getUnifiedAst().getOptions());
@@ -142,15 +147,16 @@ public class Link {
 
   private static ArtifactSet doLink(TreeLogger logger,
       StandardLinkerContext linkerContext, Precompilation precompilation,
-      File[] resultFiles) throws UnableToCompleteException {
+      List<FileBackedObject<PermutationResult>> resultFiles)
+      throws UnableToCompleteException {
     Permutation[] perms = precompilation.getPermutations();
-    if (perms.length != resultFiles.length) {
+    if (perms.length != resultFiles.size()) {
       throw new IllegalArgumentException(
           "Mismatched resultFiles.length and permutation count");
     }
 
     for (int i = 0; i < perms.length; ++i) {
-      finishPermuation(logger, perms[i], resultFiles[i], linkerContext);
+      finishPermuation(logger, perms[i], resultFiles.get(i), linkerContext);
     }
 
     linkerContext.addOrReplaceArtifacts(precompilation.getGeneratedArtifacts());
@@ -200,10 +206,10 @@ public class Link {
   }
 
   private static void finishPermuation(TreeLogger logger, Permutation perm,
-      File jsFile, StandardLinkerContext linkerContext)
-      throws UnableToCompleteException {
+      FileBackedObject<PermutationResult> resultFile,
+      StandardLinkerContext linkerContext) throws UnableToCompleteException {
     StandardCompilationResult compilation = linkerContext.getCompilation(
-        logger, jsFile);
+        logger, resultFile);
     StaticPropertyOracle[] propOracles = perm.getPropertyOracles();
     for (StaticPropertyOracle propOracle : propOracles) {
       BindingProperty[] orderedProps = propOracle.getOrderedProps();
@@ -254,16 +260,20 @@ public class Link {
       return false;
     }
     Permutation[] perms = precompilation.getPermutations();
-    File[] resultFiles = new File[perms.length];
+
+    List<FileBackedObject<PermutationResult>> resultFiles = new ArrayList<FileBackedObject<PermutationResult>>(
+        perms.length);
     for (int i = 0; i < perms.length; ++i) {
-      resultFiles[i] = CompilePerms.makePermFilename(
+      File permFile = CompilePerms.makePermFilename(
           options.getCompilerWorkDir(), i);
-      if (!resultFiles[i].exists()) {
+      if (!permFile.exists()) {
         logger.log(TreeLogger.ERROR, "File not found '"
             + precompilationFile.getAbsolutePath()
             + "'; please compile all permutations");
         return false;
       }
+      resultFiles.add(new FileBackedObject<PermutationResult>(
+          PermutationResult.class, permFile));
     }
 
     TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "

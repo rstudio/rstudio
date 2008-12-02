@@ -15,12 +15,13 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.dev.PermutationResult;
-import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.FileBackedObject;
 
-import java.io.File;
 import java.io.Serializable;
 import java.lang.ref.SoftReference;
 import java.util.Collections;
@@ -69,14 +70,15 @@ public class StandardCompilationResult extends CompilationResult {
    */
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
-  private final File resultFile;
+  private final FileBackedObject<PermutationResult> resultFile;
   private transient SoftReference<String[]> js;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
   private final String strongName;
 
-  public StandardCompilationResult(String[] js, String strongName, File resultFile) {
+  public StandardCompilationResult(String[] js, String strongName,
+      FileBackedObject<PermutationResult> resultFile) {
     super(StandardLinkerContext.class);
     this.js = new SoftReference<String[]>(js);
     this.strongName = strongName;
@@ -104,19 +106,13 @@ public class StandardCompilationResult extends CompilationResult {
     if (toReturn == null) {
       PermutationResult result;
       try {
-        result = Util.readFileAsObject(resultFile, PermutationResult.class);
-      } catch (ClassNotFoundException e) {
+        result = resultFile.newInstance(TreeLogger.NULL);
+        toReturn = result.getJs();
+        js = new SoftReference<String[]>(toReturn);
+      } catch (UnableToCompleteException e) {
         throw new RuntimeException(
-            "Unexpectedly unable to read PermutationResult '"
-                + resultFile.getAbsolutePath() + "'", e);
+            "Unexpectedly unable to read PermutationResult");
       }
-      if (result == null) {
-        throw new RuntimeException(
-            "Unexpectedly unable to read PermutationResult '"
-                + resultFile.getAbsolutePath() + "'");
-      }
-      toReturn = result.getJs();
-      js = new SoftReference<String[]>(toReturn);
     }
     return toReturn;
   }

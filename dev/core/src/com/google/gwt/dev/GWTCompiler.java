@@ -22,16 +22,19 @@ import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
+import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
@@ -48,6 +51,7 @@ public class GWTCompiler {
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerLocalWorkers(options));
       registerHandler(new ArgHandlerOutDir(options));
+      registerHandler(new ArgHandlerSoyc(options));
     }
 
     @Override
@@ -153,7 +157,7 @@ public class GWTCompiler {
             module, options.getGenDir(), options.getCompilerWorkDir());
 
         Permutation[] allPerms = precompilation.getPermutations();
-        File[] resultFiles = CompilePerms.makeResultFiles(
+        List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
             options.getCompilerWorkDir(), allPerms);
         CompilePerms.compile(logger, precompilation, allPerms,
             options.getLocalWorkers(), resultFiles);

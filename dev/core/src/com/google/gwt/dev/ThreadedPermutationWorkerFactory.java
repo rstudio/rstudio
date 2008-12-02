@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.util.FileBackedObject;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,11 +41,13 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
       this.id = id;
     }
 
-    public PermutationResult compile(final TreeLogger logger,
-        final Permutation permutation) throws TransientWorkerException,
-        UnableToCompleteException {
+    public void compile(TreeLogger logger, Permutation permutation,
+        FileBackedObject<PermutationResult> resultFile)
+        throws TransientWorkerException, UnableToCompleteException {
       try {
-        return CompilePerms.compile(logger, permutation, ast);
+        PermutationResult result = CompilePerms.compile(logger, permutation,
+            ast);
+        resultFile.set(logger, result);
       } catch (OutOfMemoryError e) {
         logger.log(TreeLogger.ERROR,
             "OutOfMemoryError: Increase heap size or lower "

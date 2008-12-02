@@ -136,7 +136,7 @@ public final class JsNameRef extends JsExpression implements CanBooleanEval,
     if (!hasStaticRef && name != null) {
       JsNode<?> staticRef = name.getStaticRef();
       if (staticRef != null) {
-        toReturn.addAdditonalAncestors(name.getStaticRef().getSourceInfo());
+        toReturn.copyMissingCorrelationsFrom(name.getStaticRef().getSourceInfo());
         hasStaticRef = true;
       }
     }

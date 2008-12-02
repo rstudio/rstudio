@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
 
 import java.io.BufferedReader;
@@ -99,7 +100,8 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
       this.serverSocket = sock;
     }
 
-    public PermutationResult compile(TreeLogger logger, Permutation permutation)
+    public void compile(TreeLogger logger, Permutation permutation,
+        FileBackedObject<PermutationResult> resultFile)
         throws TransientWorkerException, UnableToCompleteException {
 
       // If we've just started, we need to get a connection from a subprocess
@@ -139,9 +141,16 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
 
       try {
         out.writeBoolean(true);
+        out.writeObject(resultFile);
         out.writeObject(permutation);
         out.flush();
-        return (PermutationResult) in.readObject();
+
+        Throwable t = (Throwable) in.readObject();
+        if (t != null) {
+          logger.log(TreeLogger.ERROR, "Error from external worker", t);
+          throw new UnableToCompleteException();
+        }
+
       } catch (IOException e) {
         logger.log(TreeLogger.WARN, "Lost communication with remote process", e);
         throw new TransientWorkerException(
