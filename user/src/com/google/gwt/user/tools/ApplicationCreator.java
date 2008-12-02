@@ -309,6 +309,7 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@startupUrl", startupUrl);
     replacements.put("@vmargs", isMacOsX
         ? "<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
+    replacements.put("@eclipseVmargs", isMacOsX ? "-XstartOnFirstThread" : "");
     replacements.put("@eclipseExtraLaunchPaths",
         CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
     replacements.put("@extraModuleInherits",

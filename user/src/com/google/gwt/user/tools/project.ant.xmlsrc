@@ -50,6 +50,7 @@
         <pathelement path="${java.class.path}/"/>
         <pathelement path="@gwtUserPath"/>
       </classpath>
+      <jvmarg value="-Xmx256M"/>
       @vmargs
       <arg value="-out"/>
       <arg file="${outdir}"/>
@@ -63,13 +64,13 @@
   <target name="shell" depends="javac" description="Run the deployed app in GWT hosted mode">
     <java failonerror="true" fork="true"
           classname="@shellClass">
-      <jvmarg value="-Xmx256M"/>
       <classpath>
         <pathelement location="src"/>
         <pathelement location="@gwtDevPath"/>
         <pathelement path="${java.class.path}/"/>
         <pathelement path="@gwtUserPath"/>
       </classpath>
+      <jvmarg value="-Xmx256M"/>
       @vmargs
       <arg value="-out"/>
       <arg file="${outdir}"/>
