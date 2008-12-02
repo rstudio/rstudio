@@ -307,9 +307,9 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@shellClass", "com.google.gwt.dev.GWTHosted");
     replacements.put("@compileClass", "com.google.gwt.dev.GWTCompiler");
     replacements.put("@startupUrl", startupUrl);
-    replacements.put("@vmargs", isMacOsX
+    replacements.put("@antVmargs", isMacOsX
         ? "<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
-    replacements.put("@eclipseVmargs", isMacOsX ? "-XstartOnFirstThread" : "");
+    replacements.put("@vmargs", isMacOsX ? "-XstartOnFirstThread" : "");
     replacements.put("@eclipseExtraLaunchPaths",
         CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
     replacements.put("@extraModuleInherits",

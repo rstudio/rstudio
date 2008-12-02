@@ -50,8 +50,9 @@
         <pathelement path="${java.class.path}/"/>
         <pathelement path="@gwtUserPath"/>
       </classpath>
+     <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
       <jvmarg value="-Xmx256M"/>
-      @vmargs
+      @antVmargs
       <arg value="-out"/>
       <arg file="${outdir}"/>
       <arg value="-extra"/>
@@ -71,7 +72,7 @@
         <pathelement path="@gwtUserPath"/>
       </classpath>
       <jvmarg value="-Xmx256M"/>
-      @vmargs
+      @antVmargs
       <arg value="-out"/>
       <arg file="${outdir}"/>
       <arg value="-startupUrl"/>
