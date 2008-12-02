@@ -510,7 +510,7 @@ public class MakeTopLevelHtmlForPerm {
       float maxSize = 0f;
       
       //TODO(kprobst): not currently used, but will be for dependencies
-      //int maxDepCount = 0;
+      int maxDepCount = 1;
 
       for (String className : GlobalInformation.packageToClasses.get(packageName)){
         
@@ -523,10 +523,10 @@ public class MakeTopLevelHtmlForPerm {
         }
           
         //TODO(kprobst): not currently used, but will be for dependencies
-        /*int depCount = 0;
+        int depCount = 0;
         if (GlobalInformation.classToWhatItDependsOn.containsKey(className)){
           depCount = GlobalInformation.classToWhatItDependsOn.get(className).size();
-        }*/
+        }
         
         if (curSize != 0f){
           
@@ -535,9 +535,9 @@ public class MakeTopLevelHtmlForPerm {
             maxSize = curSize;
           }
           //TODO(kprobst): not currently used, but will be for dependencies
-          /*if (depCount > maxDepCount){
+          if (depCount > maxDepCount){
             maxDepCount = depCount;
-          }*/
+          }
         }
       }
       
@@ -569,23 +569,23 @@ public class MakeTopLevelHtmlForPerm {
         String className = sortedClasses.get(size);
         
         //TODO(kprobst): switch out the commented/uncommented lines below when showing dependencies
-        //float ratio = (size / maxSize) * 45;
-        float ratio = (size / maxSize) * 85;
+        float ratio = (size / maxSize) * 45;
+        //float ratio = (size / maxSize) * 85;
          
         if (ratio < 3){
           ratio = 3;
         }
         
         //TODO(kprobst): not currently used, but will be for dependencies
-/*        // get the dependency count
+       // get the dependency count
         int depCount = 0;
         if (GlobalInformation.classToWhatItDependsOn.containsKey(className)){
           depCount = GlobalInformation.classToWhatItDependsOn.get(className).size();
         }
-        float depRatio = (depCount / maxDepCount) * 25;
-        if (depRatio < 3){
+        float depRatio = ((float)depCount / (float)maxDepCount) * 45f;
+        if (depRatio < 3.0){
           depRatio = 3;
-        }*/
+        }
   
         outFile.println("<div class=\"box\" style=\"width:" + ratio + "%; top: " + yOffset + "px; left: 60px;\">");
         outFile.println("<div id=\"lb\">");
@@ -601,7 +601,7 @@ public class MakeTopLevelHtmlForPerm {
         
         //TODO(kprobst): not currently used, but will be for dependencies
         // place holder for mock-up of dependency display  
-/*        outFile.println("<div class=\"box-right\" style=\"width:" + depRatio + "%; top: " + yOffset + "px; left: 50%\">");
+        outFile.println("<div class=\"box-right\" style=\"width:" + depRatio + "%; top: " + yOffset + "px; left: 50%\">");
         outFile.println("<div id=\"lb\">");
         outFile.println("<div id=\"rb\">");
         outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
@@ -611,22 +611,13 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("</div></div></div></div>");
         outFile.println("</div></div></div></div>");
         outFile.println("</div>");
-        
-        
-        outFile.println("<div class=\"box-right\" style=\"width:10%; top: " + yOffset + "px; left: 75%\">");
-        outFile.println("<div id=\"lb\">");
-        outFile.println("<div id=\"rb\">");
-        outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-        outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-        outFile.println("<div id=\"content\">");
-        outFile.println("</div>");
-        outFile.println("</div></div></div></div>");
-        outFile.println("</div></div></div></div>");
-        outFile.println("</div>"); */
-        
+              
         int yOffsetText = yOffset+8;
         outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:5px;\">%.1f</div>\n", size);
         outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:70px;\">"+className+"</div>");
+        //TODO(kprobst) make this a link
+        String drillDownFileName = className + "Deps.html";
+        outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:50%;\"><a href=\"" + drillDownFileName + "\" target=\"_top\">Dependencies: " + depCount + "</a></div>");
         
         yOffset = yOffset + 25;
   
@@ -723,7 +714,7 @@ public class MakeTopLevelHtmlForPerm {
         
         int yOffsetText = yOffset+8;
          outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:5px;\">%.1f</div>\n", size);
-        outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:70px;\">"+className+"</div>");
+         outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:70px;\">"+className+"</div>");
         
         yOffset = yOffset + 25;
   
@@ -737,6 +728,112 @@ public class MakeTopLevelHtmlForPerm {
   }
 
 
+  public static void makeLiteralsClassesTableHtmls(TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException{
+
+    for (String literalType : nameToLitColl.keySet()){
+      
+      String outFileName = literalType + "Lits.html";
+      final PrintWriter outFile = new PrintWriter(outFileName);
+      
+      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+      outFile.println("<html>");
+      outFile.println("<head>");
+      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+      outFile.println("<title>Literals of type \"" + literalType + "\"</title>");
+      outFile.println("</head>");
+
+      outFile.println("<style type=\"text/css\">");
+      outFile.println("body {background-color: #728FCE}");
+      outFile.println("h2 {background-color: transparent}");
+      outFile.println("p {background-color: fuchsia}");
+      outFile.println("</style>");
+      
+      outFile.println("<body>");
+      outFile.println("<center>");
+      outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
+      outFile.println("</center>");
+      outFile.println("<hr>");
+      
+      outFile.println("<center>");
+      outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+   
+      for (String literal : nameToLitColl.get(literalType).literalToLocations.keySet()){
+  
+        if (literal.trim().compareTo("") == 0){
+          literal = "[whitespace only string]";
+        }
+        
+
+        String newLiteral = "";
+        if(literal.length() > 80){
+          int i;
+          for (i = 80; i < literal.length(); i=i+80){
+            String part1 = literal.substring(i-80, i);
+            newLiteral = newLiteral + part1 + " "; 
+          }
+          if (i-80 > 0){
+            newLiteral = newLiteral + literal.substring(i-80);
+          }
+        }
+        else{
+          newLiteral = literal;
+        }
+        
+        String escliteral = escapeXml(newLiteral);
+
+        outFile.println("<tr>");
+        outFile.println("<td width=\"40%\">" + escliteral + "</td>");
+        
+
+        int ct = 0;
+        for (String location : nameToLitColl.get(literalType).literalToLocations.get(literal)){
+          
+          if (ct > 0){
+            outFile.println("<tr>");  
+            outFile.println("<td width=\"40%\"> </td>");          
+          }
+          
+          String newLocation = "";
+          if(location.length() > 80){
+            int i;
+            for (i = 80; i < location.length(); i=i+80){
+              String part1 = location.substring(i-80, i);
+              newLocation = newLocation + part1 + " "; 
+            }
+            if (i-80 > 0){
+              newLocation = newLocation + location.substring(i-80);
+            }
+          }
+          else{
+            newLocation = location;
+          }
+          
+          
+          outFile.println("<td width=\"40%\">" + newLocation + "</td>");
+
+          if (ct > 0){
+            outFile.println("</tr>");
+          }
+          ct++;
+          
+        }
+
+        
+        outFile.println("</tr>");
+        
+      }
+
+      outFile.println("</table>");
+      outFile.println("<center>");
+
+      
+      outFile.println("</div>");
+      outFile.println("</body>");
+      outFile.println("</html>");
+      outFile.close();
+     }
+  }
 
   public static void makeLiteralsClassesHtmls(TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException{
     
@@ -1031,6 +1128,178 @@ public class MakeTopLevelHtmlForPerm {
           
 
   }
+  
+  
+  
+  
+  
+
+  public static void makeStringLiteralsClassesTableHtmls(TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException{
+
+    
+    for (String literalType : nameToLitColl.get("string").stringTypeToSize.keySet()){
+ 
+      
+      String outFileName = literalType + "Strings.html";
+      final PrintWriter outFile = new PrintWriter(outFileName);
+      
+      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+      outFile.println("<html>");
+      outFile.println("<head>");
+      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+      outFile.println("<title>Literals of type \"" + literalType + "\"</title>");
+      outFile.println("</head>");
+
+      outFile.println("<style type=\"text/css\">");
+      outFile.println("body {background-color: #728FCE}");
+      outFile.println("h2 {background-color: transparent}");
+      outFile.println("p {background-color: fuchsia}");
+      outFile.println("</style>");
+      
+      outFile.println("<body>");
+      outFile.println("<center>");
+      outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
+      outFile.println("</center>");
+      outFile.println("<hr>");
+      
+      outFile.println("<center>");      
+      outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+      
+   
+      
+      for (String literal : nameToLitColl.get("string").stringLiteralToType.keySet()){
+        
+        if (nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo(literalType) == 0){
+ 
+            if (literal.trim().compareTo("") == 0){
+            literal = "[whitespace only string]";
+          }
+          
+  
+          String newLiteral = "";
+          if(literal.length() > 80){
+            int i;
+            for (i = 80; i < literal.length(); i=i+80){
+              String part1 = literal.substring(i-80, i);
+              newLiteral = newLiteral + part1 + " "; 
+            }
+            if (i-80 > 0){
+              newLiteral = newLiteral + literal.substring(i-80);
+            }
+          }
+          else{
+            newLiteral = literal;
+          }
+          
+          String escliteral = escapeXml(newLiteral);
+  
+          outFile.println("<tr>");
+          outFile.println("<td width=\"40%\">" + escliteral + "</td>");
+          
+  
+          int ct = 0;
+
+          for (String location : nameToLitColl.get("string").literalToLocations.get(literal)){
+            
+            if (ct > 0){
+              outFile.println("<tr>");  
+              outFile.println("<td width=\"40%\"> </td>");          
+            }
+            
+            String newLocation = "";
+            if(location.length() > 80){
+              int i;
+              for (i = 80; i < location.length(); i=i+80){
+                String part1 = location.substring(i-80, i);
+                newLocation = newLocation + part1 + " "; 
+              }
+              if (i-80 > 0){
+                newLocation = newLocation + location.substring(i-80);
+              }
+            }
+            else{
+              newLocation = location;
+            }
+            
+            
+            outFile.println("<td width=\"40%\">" + newLocation + "</td>");
+  
+            if (ct > 0){
+              outFile.println("</tr>");
+            }
+            ct++;
+            
+          }
+  
+          
+          outFile.println("</tr>");
+          
+        }
+  
+        outFile.println("</table>");
+        outFile.println("<center>");
+  
+        
+        outFile.println("</div>");
+        outFile.println("</body>");
+        outFile.println("</html>");
+        outFile.close();
+       }
+    }
+  }
+
+  
+
+
+  public static void makeDependenciesTableHtmls() throws IOException{
+
+    for (String className : GlobalInformation.classToWhatItDependsOn.keySet()){
+          
+      String outFileName = className + "Deps.html";
+      final PrintWriter outFile = new PrintWriter(outFileName);
+      
+      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+      outFile.println("<html>");
+      outFile.println("<head>");
+      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+      outFile.println("<title>Classes that \"" + className + "\" depends on</title>");
+      outFile.println("</head>");
+
+      outFile.println("<style type=\"text/css\">");
+      outFile.println("body {background-color: #728FCE}");
+      outFile.println("h2 {background-color: transparent}");
+      outFile.println("p {background-color: fuchsia}");
+      outFile.println("</style>");
+      
+      outFile.println("<body>");
+      outFile.println("<center>");
+      outFile.println("<h2>Classes that \"" + className + "\" depends on</h2>");
+      outFile.println("</center>");
+      outFile.println("<hr>");
+      
+      outFile.println("<center>");
+      outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+      
+      for (String depClassName : GlobalInformation.classToWhatItDependsOn.get(className)){
+        
+          outFile.println("<tr>");
+          outFile.println("<td width=\"80%\">" + depClassName + "</td>");
+          outFile.println("</tr>");
+          
+      }
+  
+      outFile.println("</table>");
+      outFile.println("<center>");
+      
+      outFile.println("</div>");
+      outFile.println("</body>");
+      outFile.println("</html>");
+      outFile.close();
+    }
+  }
+
   
   
 

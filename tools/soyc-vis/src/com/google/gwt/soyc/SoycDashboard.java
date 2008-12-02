@@ -146,6 +146,7 @@ public class SoycDashboard {
       String curClassId;
       String curPackage;
       Integer curFragment;
+      String curFunctionId = "";
       boolean specialCodeType = false;
       StringBuilder valueBuilder = new StringBuilder();
       int ct = 0;
@@ -182,11 +183,17 @@ public class SoycDashboard {
           
           parseClass(nameToCodeColl, attributes);
         }
+
+        else if (strippedName.compareTo("function") == 0){
+          if (attributes.getValue("id") != null){
+            curFunctionId = attributes.getValue("id");
+          }
+        }
         
         //TODO(kprobst): not currently used, but will be for dependencies
-/*        else if (strippedName.compareTo("on") == 0){
+        else if (strippedName.compareTo("on") == 0){
           parseDependsOn(nameToCodeColl, attributes);
-        }*/
+        }
         
         else if (strippedName.compareTo("of") == 0){
           parseOverrides(nameToCodeColl, attributes);
@@ -619,27 +626,29 @@ public class SoycDashboard {
        * parses the "depends on" portion of the XML file
        */
       //TODO(kprobst): not currently used, but will be for dependencies
-      /*private void parseDependsOn(final HashMap<String, CodeCollection> nameToCodeColl, Attributes attributes) {
-        if (attributes.getValue("idref") != null){
-          String curDepClassId = attributes.getValue("idref");
-
-          if (curDepClassId.contains(":")){
-            // strip everything after the :: (to get to class, even if it's a method)
-            curDepClassId = curDepClassId.replaceAll(":.*", "");
-          }
-          if (curDepClassId.contains("$")){
-            curDepClassId = curDepClassId.replaceAll("\\$.*", "");
-          }
-          
-          if (! GlobalInformation.classToWhatItDependsOn.containsKey(curClassId)){
-            HashSet<String> insertSet = new HashSet<String>();
-            GlobalInformation.classToWhatItDependsOn.put(curClassId, insertSet);
-          }
-          else{
-            GlobalInformation.classToWhatItDependsOn.get(curClassId).add(curDepClassId);
+      private void parseDependsOn(final HashMap<String, CodeCollection> nameToCodeColl, Attributes attributes) {
+        if (curFunctionId.compareTo("") == 0){
+          if (attributes.getValue("idref") != null){
+            String curDepClassId = attributes.getValue("idref");
+  
+            if (curDepClassId.contains(":")){
+              // strip everything after the :: (to get to class, even if it's a method)
+              curDepClassId = curDepClassId.replaceAll(":.*", "");
+            }
+ 
+            if (curDepClassId.contains(".")){
+              if (! GlobalInformation.classToWhatItDependsOn.containsKey(curClassId)){
+                HashSet<String> insertSet = new HashSet<String>();
+                insertSet.add(curDepClassId);
+                GlobalInformation.classToWhatItDependsOn.put(curClassId, insertSet);
+              }
+              else{
+                GlobalInformation.classToWhatItDependsOn.get(curClassId).add(curDepClassId);
+              }
+            }
           }
         }
-      }*/
+      }
     };
     return handler;
   }
@@ -698,13 +707,18 @@ public class SoycDashboard {
 
     try {
       MakeTopLevelHtmlForPerm.makePackageClassesHtmls();
-      MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(nameToCodeColl); 
-      MakeTopLevelHtmlForPerm.makeLiteralsClassesHtmls(nameToLitColl);
-      MakeTopLevelHtmlForPerm.makeStringLiteralsClassesHtmls(nameToLitColl);
+      MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(nameToCodeColl);
+      MakeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(nameToLitColl);
+      MakeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(nameToLitColl);
       MakeTopLevelHtmlForPerm.makeFragmentClassesHtmls();
+      MakeTopLevelHtmlForPerm.makeDependenciesTableHtmls();
 
       //make the shell last so we can display aggregate information here
       MakeTopLevelHtmlForPerm.makeHTMLShell(nameToCodeColl, nameToLitColl);
+      
+      
+
+      
 
     } catch (IOException e) {
       throw new RuntimeException("Cannot open file. ", e);

@@ -33,7 +33,7 @@ public class GlobalInformation {
   public static HashMap<String, String> classToPackage = new HashMap<String, String>();
   
   //TODO(kprobst): not currently used, but will be for dependencies
-  //public static HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
+  public static HashMap<String, HashSet<String>> classToWhatItDependsOn = new HashMap<String, HashSet<String>>();
   
   public static HashMap<String, Integer> classToSize = new HashMap<String, Integer>();
   public static HashMap<String, Float> classToPartialSize = new HashMap<String, Float>();
