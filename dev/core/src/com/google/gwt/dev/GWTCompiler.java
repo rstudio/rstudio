@@ -152,6 +152,10 @@ public class GWTCompiler {
         Precompilation precompilation = Precompile.precompile(logger, options,
             module, options.getGenDir(), options.getCompilerWorkDir());
 
+        if (precompilation == null) {
+          return false;
+        }
+
         Permutation[] allPerms = precompilation.getPermutations();
         File[] resultFiles = CompilePerms.makeResultFiles(
             options.getCompilerWorkDir(), allPerms);
