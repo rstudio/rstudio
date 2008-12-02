@@ -1,0 +1,26 @@
+/*
+ * Copyright 2008 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+This utility presents a dashboard visulization of GWT's Story of Your
+Compile.
+
+To compile:
+ant (in this directory)
+
+To run:
+1. Compile your GWT application with SOYC (flag -soyc), which results in one ore
+more .xml files (depending on your number of permutations), plus a file manifest.xml that maps permutations to .xml files.
+2. Run java -classpath build/classes -Xmx1024M com/google/gwt/soyc/SoycDashboard XmlFileName.xml

@@ -3,7 +3,7 @@
   <property name="project.tail" value="tools" />
   <import file="${gwt.root}/common.ant.xml" />
 
-        <!-- "build" is the default when subprojects are directly targetted -->
+        <!-- "build" is the default when subprojects are directly targeted -->
         <property name="target" value="build" />
       
         <target name="benchmark-viewer" depends="" description="Run benchmark-viewer">
@@ -13,8 +13,12 @@
         <target name="api-checker" depends="" description="Compile api-checker">
                 <gwt.ant dir="api-checker" />
         </target>
-        
-  <target name="-do" depends="benchmark-viewer,api-checker" description="Run all subfolders" />
+
+        <target name="soyc-vis" depends="" description="Compile SOYC dashboard">
+                <gwt.ant dir="soyc-vis" />
+        </target>
+     
+  <target name="-do" depends="benchmark-viewer,api-checker,soyc-vis" description="Run all subfolders" /> 
 
   <target name="build" description="Build each subfolder">
     <antcall target="-do">

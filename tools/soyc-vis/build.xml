@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<project name="SOYC Dashboard Visualization" default="build" basedir=".">
+
+    <target name="clean">
+        <delete dir="build"/>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="build/classes"/>
+        <javac srcdir="src" destdir="build/classes"/>
+    </target>
+
+    <target name="build" depends="clean, compile"/>
+
+
+</project>
