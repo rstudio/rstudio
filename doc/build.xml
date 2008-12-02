@@ -76,6 +76,7 @@
       <sequential>
         <echo>Building javadoc</echo>
         <java classpathref="DOC_PATH" classname="com.google.doctool.custom.GWTJavaDoclet" fork="yes" failonerror="true">
+          <jvmarg value="-Xmx256M" />
           <arg value="-quiet" />
           <arg value="-notimestamp" />
           <arg value="-source" />
