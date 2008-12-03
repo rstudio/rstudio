@@ -13,5 +13,9 @@
 
     <target name="build" depends="clean, compile"/>
 
+    <target name="test"/>
+
+    <target name="checkstyle"/>
+      
 
 </project>
