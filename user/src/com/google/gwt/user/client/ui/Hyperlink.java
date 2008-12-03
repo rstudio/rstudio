@@ -56,17 +56,14 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
 
   private static HyperlinkImpl impl = GWT.create(HyperlinkImpl.class);
   
-  private Element anchorElem;
+  private final Element anchorElem = DOM.createAnchor();
   private String targetHistoryToken;
 
   /**
    * Creates an empty hyperlink.
    */
   public Hyperlink() {
-    setElement(DOM.createDiv());
-    DOM.appendChild(getElement(), anchorElem = DOM.createAnchor());
-    sinkEvents(Event.ONCLICK);
-    setStyleName("gwt-Hyperlink");
+    this(DOM.createDiv());
   }
 
   /**
@@ -97,6 +94,18 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     this();
     setText(text);
     setTargetHistoryToken(targetHistoryToken);
+  }
+  
+  protected Hyperlink(Element elem) {
+    if (elem == null) {
+      setElement(anchorElem);
+    } else {
+      setElement(elem);
+      DOM.appendChild(getElement(), anchorElem);
+    }
+
+    sinkEvents(Event.ONCLICK);
+    setStyleName("gwt-Hyperlink");
   }
 
   public HandlerRegistration addClickHandler(ClickHandler handler) {
