@@ -26,7 +26,6 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -47,9 +46,6 @@ public class ModulePanel extends JPanel {
     public ClosedTabComponent() {
       super(new FlowLayout(FlowLayout.LEFT, 0, 0));
       setOpaque(false);
-      JLabel label = new JLabel("Disconnected");
-      add(label);
-      label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
       JButton button = new JButton(closeIcon);
       button.setBorderPainted(false);
       button.setPreferredSize(new Dimension(closeIcon.getIconWidth(),
@@ -78,11 +74,13 @@ public class ModulePanel extends JPanel {
 
   private final JTabbedPane tabs;
 
+  private JPanel topPanel;
+
   public ModulePanel(Type maxLevel, String moduleName, String userAgent,
       String remoteSocket, final JTabbedPane tabs) {
     super(new BorderLayout());
     this.tabs = tabs;
-    JPanel topPanel = new JPanel();
+    topPanel = new JPanel();
     topPanel.add(new JLabel(moduleName));
     JButton compileButton = new JButton("Compile (not yet implemented)");
     compileButton.setEnabled(false);
@@ -120,10 +118,12 @@ public class ModulePanel extends JPanel {
   }
 
   public void disconnect() {
+    topPanel.add(new ClosedTabComponent());
     synchronized (tabs) {
       int index = tabs.indexOfComponent(this);
       if (index > -1) {
-        tabs.setTabComponentAt(index, new ClosedTabComponent());
+        tabs.setTitleAt(index, "Disconnected");
+        tabs.setIconAt(index, null);
       }
     }
     loggerPanel.disconnected();
