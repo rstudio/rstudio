@@ -213,7 +213,7 @@ public abstract class JsValue {
   /**
    * Set the JS object to be null.
    * 
-   * @throws HostedModeException
+   * @throws com.google.gwt.dev.shell.HostedModeException
    */
   public abstract void setNull();
 

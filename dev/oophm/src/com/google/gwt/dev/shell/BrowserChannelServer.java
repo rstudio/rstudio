@@ -89,15 +89,15 @@ public class BrowserChannelServer extends BrowserChannel implements Runnable {
       convertToJsValue(ccl, remoteObjects, returnValue, returnJsValue);
       if (msg.isException()) {
         if (returnValue.isNull() || returnValue.isUndefined()) {
-          throw ModuleSpaceOOPHM.createJavaScriptException(ccl, null);
+          throw ModuleSpace.createJavaScriptException(ccl, null);
 
         } else if (returnValue.isString()) {
-          throw ModuleSpaceOOPHM.createJavaScriptException(ccl,
+          throw ModuleSpace.createJavaScriptException(ccl,
               returnValue.getString());
 
         } else if (returnValue.isJsObject()) {
           Object jso = JsValueGlue.createJavaScriptObject(returnJsValue, ccl);
-          throw ModuleSpaceOOPHM.createJavaScriptException(ccl, jso);
+          throw ModuleSpace.createJavaScriptException(ccl, jso);
 
         } else if (returnValue.isJavaObject()) {
           Object object = remoteObjects.get(returnValue.getJavaObject().getRefid());
@@ -106,11 +106,11 @@ public class BrowserChannelServer extends BrowserChannel implements Runnable {
             throw (Throwable) (target);
           } else {
             // JS throwing random Java Objects, which we'll wrap is JSException
-            throw ModuleSpaceOOPHM.createJavaScriptException(ccl, target);
+            throw ModuleSpace.createJavaScriptException(ccl, target);
           }
         }
         // JS throwing random primitives, which we'll wrap is JSException
-        throw ModuleSpaceOOPHM.createJavaScriptException(ccl,
+        throw ModuleSpace.createJavaScriptException(ccl,
             returnValue.getValue().toString());
       }
     } catch (IOException e) {

@@ -112,7 +112,7 @@ class MethodDispatch implements DispatchMethod {
 
     // See if we're in the process of throwing a JavaScriptObject; remove
     // it from the JavaScriptException object and throw the JS object instead
-    Object jsoException = ModuleSpaceOOPHM.getJavaScriptExceptionException(
+    Object jsoException = ModuleSpace.getJavaScriptExceptionException(
         classLoader, t);
 
     if (jsoException != null) {

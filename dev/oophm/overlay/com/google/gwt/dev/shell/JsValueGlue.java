@@ -87,8 +87,8 @@ public final class JsValueGlue {
    * @param type expected type of the returned object
    * @param msgPrefix a prefix for error/warning messages
    * @return the object reference
-   * @throws HostedModeException if the JavaScript object is not assignable to
-   *           the supplied type.
+   * @throws com.google.gwt.dev.shell.HostedModeException if the JavaScript
+   *     object is not assignable to the supplied type.
    */
   @SuppressWarnings("unchecked")
   public static <T> T get(JsValue value, CompilingClassLoader cl,

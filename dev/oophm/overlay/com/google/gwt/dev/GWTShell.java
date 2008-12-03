@@ -308,6 +308,12 @@ public class GWTShell extends ToolBase {
       }
     }
 
+    public ModuleSpaceHost createModuleSpaceHost(BrowserWidget widget,
+        String moduleName) throws UnableToCompleteException {
+      // TODO(jat): implement method createModuleSpaceHost
+      return null;
+    }
+
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
         String moduleName, String userAgent, String remoteSocket)
         throws UnableToCompleteException {
@@ -365,6 +371,12 @@ public class GWTShell extends ToolBase {
       return GWTShell.this.normalizeURL(whatTheUserTyped);
     }
 
+    public BrowserWidget openNewBrowserWindow()
+        throws UnableToCompleteException {
+      // TODO(jat): is this ok?
+      throw new UnableToCompleteException();
+    }
+
     public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
       ModulePanel tab = moduleTabs.remove(moduleSpaceHost);
       if (tab != null) {
@@ -389,18 +401,6 @@ public class GWTShell extends ToolBase {
       alreadySeenModules.add(moduleName);
       assert (moduleDef != null) : "Required module state is absent";
       return moduleDef;
-    }
-
-    public ModuleSpaceHost createModuleSpaceHost(BrowserWidget widget,
-        String moduleName) throws UnableToCompleteException {
-      // TODO(jat): implement method createModuleSpaceHost
-      return null;
-    }
-
-    public BrowserWidget openNewBrowserWindow()
-        throws UnableToCompleteException {
-      // TODO(jat): is this ok?
-      throw new UnableToCompleteException();
     }
   }
 

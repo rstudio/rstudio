@@ -87,6 +87,15 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
   }
 
   /**
+   *
+   */
+  @Override
+  protected void createStaticDispatcher(TreeLogger logger) {
+    channel.loadJsni(
+        "function __defineStatic(__arg0) { window.__static = __arg0; }");
+  }
+
+  /**
    * Invoke a JS method and return its value.
    * 
    * @param name method name to invoke
@@ -127,14 +136,5 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
   @Override
   protected DispatchObject getStaticDispatcher() {
     return new JsValueOOPHM.DispatchObjectOOPHM(getIsolatedClassLoader());
-  }
-
-  /**
-   *
-   */
-  @Override
-  protected void createStaticDispatcher(TreeLogger logger) {
-    channel.loadJsni(
-        "function __defineStatic(__arg0) { window.__static = __arg0; }");
   }
 }
