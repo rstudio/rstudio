@@ -37,16 +37,24 @@ public class StandardPublicResource extends PublicResource {
    */
   private static final class SerializedPublicResource extends PublicResource {
     private final byte[] data;
+    private final long lastModified;
 
-    protected SerializedPublicResource(String partialPath, byte[] data) {
+    protected SerializedPublicResource(String partialPath, byte[] data,
+        long lastModified) {
       super(StandardLinkerContext.class, partialPath);
       this.data = data;
+      this.lastModified = lastModified;
     }
 
     @Override
     public InputStream getContents(TreeLogger logger)
         throws UnableToCompleteException {
       return new ByteArrayInputStream(data);
+    }
+
+    @Override
+    public long getLastModified() {
+      return lastModified;
     }
   }
 
@@ -63,6 +71,11 @@ public class StandardPublicResource extends PublicResource {
     return resource.openContents();
   }
 
+  @Override
+  public long getLastModified() {
+    return resource.getLastModified();
+  }
+
   private Object writeReplace() {
     if (resource instanceof Serializable) {
       return this;
@@ -71,7 +84,8 @@ public class StandardPublicResource extends PublicResource {
     try {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       Util.copy(resource.openContents(), baos);
-      return new SerializedPublicResource(getPartialPath(), baos.toByteArray());
+      return new SerializedPublicResource(getPartialPath(), baos.toByteArray(),
+          getLastModified());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

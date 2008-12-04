@@ -446,6 +446,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       // assert !outFile.exists() : "Attempted to overwrite " +
       // outFile.getPath();
       Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
+      outFile.setLastModified(artifact.getLastModified());
     }
   }
 

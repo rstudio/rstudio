@@ -20,30 +20,36 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 /**
  * The standard implementation of {@link GeneratedResource}.
  */
 public class StandardGeneratedResource extends GeneratedResource {
-  private final URL url;
+  private final File file;
 
   public StandardGeneratedResource(Class<? extends Generator> generatorType,
-      String partialPath, URL url) {
+      String partialPath, File file) {
     super(StandardLinkerContext.class, generatorType, partialPath);
-    this.url = url;
+    this.file = file;
   }
 
   @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
     try {
-      return url.openStream();
+      return new FileInputStream(file);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to open file", e);
       throw new UnableToCompleteException();
     }
+  }
+
+  @Override
+  public long getLastModified() {
+    return file.lastModified();
   }
 }

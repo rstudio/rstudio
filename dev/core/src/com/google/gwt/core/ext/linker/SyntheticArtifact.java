@@ -27,6 +27,7 @@ import java.io.InputStream;
  */
 public class SyntheticArtifact extends EmittedArtifact {
   private final byte[] data;
+  private final long lastModified = System.currentTimeMillis();
 
   SyntheticArtifact(Class<? extends Linker> linkerType, String partialPath,
       byte[] data) {
@@ -39,5 +40,10 @@ public class SyntheticArtifact extends EmittedArtifact {
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
     return new ByteArrayInputStream(data);
+  }
+
+  @Override
+  public long getLastModified() {
+    return lastModified;
   }
 }
