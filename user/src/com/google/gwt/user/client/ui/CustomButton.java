@@ -681,6 +681,9 @@ public abstract class CustomButton extends ButtonBase {
       super.setEnabled(enabled);
       if (!enabled) {
         cleanupCaptureState();
+        Accessibility.removeState(getElement(), Accessibility.STATE_PRESSED);
+      } else {
+        setAriaPressed(getCurrentFace());
       }
     }
   }
@@ -837,6 +840,10 @@ public abstract class CustomButton extends ButtonBase {
       curFace = newFace;
       setCurrentFaceElement(newFace.getFace());
       addStyleDependentName(curFace.getName());
+
+      if (isEnabled()) {
+        setAriaPressed(newFace);
+      }
     }
   }
 
@@ -904,6 +911,12 @@ public abstract class CustomButton extends ButtonBase {
       default:
         throw new IllegalStateException(id + " is not a known face id.");
     }
+  }
+
+  private void setAriaPressed(Face newFace) {
+    boolean pressed = (newFace.getFaceID() & DOWN_ATTRIBUTE) == 1;
+    Accessibility.setState(getElement(), Accessibility.STATE_PRESSED,
+        pressed ? "true" : "false");
   }
 
   /**
