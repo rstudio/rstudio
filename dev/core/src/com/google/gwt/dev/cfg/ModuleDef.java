@@ -85,8 +85,6 @@ public class ModuleDef implements PublicOracle {
 
   private Class<? extends Linker> activePrimaryLinker;
 
-  private String deployTo;
-
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
   private final Set<File> gwtXmlFiles = new HashSet<File>();
@@ -269,17 +267,6 @@ public class ModuleDef implements PublicOracle {
     return lazyCompilationState;
   }
 
-  /**
-   * Returns the desired deployment path within the output directory. The
-   * returned value will start and end with a <code>'/'</code> character.
-   */
-  public String getDeployTo() {
-    String result = (deployTo == null) ? ('/' + getName() + '/') : deployTo;
-    assert result.startsWith("/");
-    assert result.endsWith("/");
-    return result;
-  }
-
   public synchronized String[] getEntryPointTypeNames() {
     final int n = entryPointTypeNames.size();
     return entryPointTypeNames.toArray(new String[n]);
@@ -404,26 +391,6 @@ public class ModuleDef implements PublicOracle {
       getTypeOracle(logger);
     }
     PerfLogger.end();
-  }
-
-  /**
-   * Set the deployment path for this module. Setting this value to
-   * <code>null</code> or the empty string will default to the fully-qualified
-   * module name.
-   */
-  public void setDeployTo(String deployTo) {
-    if (deployTo != null && deployTo.length() == 0) {
-      deployTo = null;
-    } else {
-      assert deployTo.startsWith("/");
-      // Ensure ends with trailing slash.
-      if (!deployTo.endsWith("/")) {
-        deployTo += '/';
-      }
-      assert deployTo.endsWith("/");
-    }
-
-    this.deployTo = deployTo;
   }
 
   /**

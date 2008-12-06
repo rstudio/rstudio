@@ -22,7 +22,7 @@ import java.io.File;
 /**
  * Argument handler for processing an optional working directory.
  */
-public final class ArgHandlerWorkDirOptional extends ArgHandlerDir {
+public class ArgHandlerWorkDirOptional extends ArgHandlerDir {
 
   private final OptionWorkDir option;
 

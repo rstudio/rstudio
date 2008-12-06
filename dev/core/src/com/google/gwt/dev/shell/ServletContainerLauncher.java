@@ -20,8 +20,6 @@ import com.google.gwt.core.ext.TreeLogger;
 import java.io.File;
 import java.net.BindException;
 
-import javax.servlet.Filter;
-
 /**
  * Defines the service provider interface for launching servlet containers that
  * can be used by the shell.
@@ -34,12 +32,10 @@ public interface ServletContainerLauncher {
    * @param logger the server logger
    * @param port the TCP port to serve on
    * @param appRootDir the base WAR directory
-   * @param filter a servlet filter that must be installed on the root path to
-   *          serve generated files
    * @return the launch servlet contained
    * @throws BindException if the requested port is already in use
    * @throws Exception if the server fails to start for any other reason
    */
-  ServletContainer start(TreeLogger logger, int port, File appRootDir,
-      Filter filter) throws BindException, Exception;
+  ServletContainer start(TreeLogger logger, int port, File appRootDir)
+      throws BindException, Exception;
 }

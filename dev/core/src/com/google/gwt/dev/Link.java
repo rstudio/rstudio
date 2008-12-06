@@ -28,9 +28,10 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
-import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
+import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.OptionExtraDir;
 import com.google.gwt.dev.util.arg.OptionOutDir;
+import com.google.gwt.dev.util.arg.OptionWarDir;
 
 import java.io.File;
 import java.util.HashMap;
@@ -43,15 +44,21 @@ public class Link {
   /**
    * Options for Link.
    */
+  public interface LegacyLinkOptions extends CompileTaskOptions, OptionOutDir {
+  }
+
+  /**
+   * Options for Link.
+   */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
-      OptionOutDir {
+      OptionWarDir {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
     public ArgProcessor(LinkOptions options) {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
-      registerHandler(new ArgHandlerOutDir(options));
+      registerHandler(new ArgHandlerWarDir(options));
     }
 
     @Override
@@ -67,7 +74,7 @@ public class Link {
       LinkOptions {
 
     private File extraDir;
-    private File outDir;
+    private File warDir;
 
     public LinkOptionsImpl() {
     }
@@ -79,24 +86,34 @@ public class Link {
     public void copyFrom(LinkOptions other) {
       super.copyFrom(other);
       setExtraDir(other.getExtraDir());
-      setOutDir(other.getOutDir());
+      setWarDir(other.getWarDir());
     }
 
     public File getExtraDir() {
       return extraDir;
     }
 
-    public File getOutDir() {
-      return outDir;
+    public File getWarDir() {
+      return warDir;
     }
 
     public void setExtraDir(File extraDir) {
       this.extraDir = extraDir;
     }
 
-    public void setOutDir(File outDir) {
-      this.outDir = outDir;
+    public void setWarDir(File warDir) {
+      this.warDir = warDir;
     }
+  }
+
+  public static void legacyLink(TreeLogger logger, ModuleDef module,
+      Precompilation precompilation, File[] resultFiles, File outDir)
+      throws UnableToCompleteException {
+    StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
+        module, precompilation.getUnifiedAst().getOptions());
+    ArtifactSet artifacts = doLink(logger, linkerContext, precompilation,
+        resultFiles);
+    doProduceLegacyOutput(logger, artifacts, linkerContext, module, outDir);
   }
 
   public static ArtifactSet link(TreeLogger logger, ModuleDef module,
@@ -157,45 +174,30 @@ public class Link {
     return linkerContext.invokeLink(logger);
   }
 
-  private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
-      StandardLinkerContext linkerContext, ModuleDef module, File outDir,
-      File extraDir) throws UnableToCompleteException {
-    boolean warnOnExtra = false;
-    File moduleExtraDir;
-    if (extraDir == null) {
-      /*
-       * Legacy behavior for backwards compatibility; if the extra directory is
-       * not specified, make it a sibling to the deploy directory, with -aux.
-       */
-      String deployDir = module.getDeployTo();
-      deployDir = deployDir.substring(0, deployDir.length() - 1) + "-aux";
-      moduleExtraDir = new File(outDir, deployDir);
-
-      /*
-       * Only warn when we create a new legacy extra dir.
-       */
-      warnOnExtra = !moduleExtraDir.exists();
-    } else {
-      moduleExtraDir = new File(extraDir, module.getDeployTo());
-    }
-
-    File moduleOutDir = new File(outDir, module.getDeployTo());
+  private static void doProduceLegacyOutput(TreeLogger logger,
+      ArtifactSet artifacts, StandardLinkerContext linkerContext,
+      ModuleDef module, File outDir) throws UnableToCompleteException {
+    File moduleOutDir = new File(outDir, module.getName());
+    File moduleExtraDir = new File(outDir, module.getName() + "-aux");
     Util.recursiveDelete(moduleOutDir, true);
     Util.recursiveDelete(moduleExtraDir, true);
     linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir,
         moduleExtraDir);
+    logger.log(TreeLogger.INFO, "Link succeeded");
+  }
 
-    /*
-     * Warn on legacy extra directory, but only if: 1) It didn't exist before.
-     * 2) We just created it.
-     */
-    if (warnOnExtra && moduleExtraDir.exists()) {
-      logger.log(
-          TreeLogger.WARN,
-          "Non-public artificats were produced in '"
-              + moduleExtraDir.getAbsolutePath()
-              + "' within the public output folder; use -extra to specify an alternate location");
+  private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
+      StandardLinkerContext linkerContext, ModuleDef module, File outDir,
+      File extraDir) throws UnableToCompleteException {
+    File moduleOutDir = new File(outDir, module.getName());
+    File moduleExtraDir = (extraDir == null) ? null : new File(extraDir,
+        module.getName());
+    Util.recursiveDelete(moduleOutDir, true);
+    if (moduleExtraDir != null) {
+      Util.recursiveDelete(moduleExtraDir, true);
     }
+    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir,
+        moduleExtraDir);
     logger.log(TreeLogger.INFO, "Link succeeded");
   }
 
@@ -224,8 +226,6 @@ public class Link {
     }
   }
 
-  private ModuleDef module;
-
   private final LinkOptionsImpl options;
 
   public Link(LinkOptions options) {
@@ -233,48 +233,50 @@ public class Link {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    module = ModuleDefLoader.loadFromClassPath(logger, options.getModuleName());
+    for (String moduleName : options.getModuleNames()) {
+      File compilerWorkDir = options.getCompilerWorkDir(moduleName);
+      ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-    File precompilationFile = new File(options.getCompilerWorkDir(),
-        Precompile.PRECOMPILATION_FILENAME);
-    if (!precompilationFile.exists()) {
-      logger.log(TreeLogger.ERROR, "File not found '"
-          + precompilationFile.getAbsolutePath()
-          + "'; please run Precompile first");
-      return false;
-    }
-
-    Precompilation precompilation;
-    try {
-      precompilation = Util.readFileAsObject(precompilationFile,
-          Precompilation.class);
-    } catch (ClassNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to deserialize '"
-          + precompilationFile.getAbsolutePath() + "'", e);
-      return false;
-    }
-    Permutation[] perms = precompilation.getPermutations();
-    File[] resultFiles = new File[perms.length];
-    for (int i = 0; i < perms.length; ++i) {
-      resultFiles[i] = CompilePerms.makePermFilename(
-          options.getCompilerWorkDir(), i);
-      if (!resultFiles[i].exists()) {
+      File precompilationFile = new File(compilerWorkDir,
+          Precompile.PRECOMPILATION_FILENAME);
+      if (!precompilationFile.exists()) {
         logger.log(TreeLogger.ERROR, "File not found '"
             + precompilationFile.getAbsolutePath()
-            + "'; please compile all permutations");
+            + "'; please run Precompile first");
         return false;
       }
+
+      Precompilation precompilation;
+      try {
+        precompilation = Util.readFileAsObject(precompilationFile,
+            Precompilation.class);
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR, "Unable to deserialize '"
+            + precompilationFile.getAbsolutePath() + "'", e);
+        return false;
+      }
+      Permutation[] perms = precompilation.getPermutations();
+      File[] resultFiles = new File[perms.length];
+      for (int i = 0; i < perms.length; ++i) {
+        resultFiles[i] = CompilePerms.makePermFilename(compilerWorkDir, i);
+        if (!resultFiles[i].exists()) {
+          logger.log(TreeLogger.ERROR, "File not found '"
+              + precompilationFile.getAbsolutePath()
+              + "'; please compile all permutations");
+          return false;
+        }
+      }
+
+      TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
+          + module.getName());
+      StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
+          module, precompilation.getUnifiedAst().getOptions());
+      ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
+          resultFiles);
+
+      doProduceOutput(branch, artifacts, linkerContext, module,
+          options.getWarDir(), options.getExtraDir());
     }
-
-    TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
-        + module.getName());
-    StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
-        module, precompilation.getUnifiedAst().getOptions());
-    ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
-        resultFiles);
-
-    doProduceOutput(branch, artifacts, linkerContext, module,
-        options.getOutDir(), options.getExtraDir());
     return true;
   }
 }

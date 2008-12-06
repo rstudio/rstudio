@@ -15,37 +15,21 @@
  */
 package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.util.tools.ArgHandlerDir;
-
-import java.io.File;
-
 /**
  * Argument handler for processing a required work directory.
  */
-public final class ArgHandlerWorkDirRequired extends ArgHandlerDir {
-
-  private final OptionWorkDir option;
+public class ArgHandlerWorkDirRequired extends ArgHandlerWorkDirOptional {
 
   public ArgHandlerWorkDirRequired(OptionWorkDir option) {
-    this.option = option;
+    super(option);
   }
 
   public String getPurpose() {
     return "The compiler work directory (must be writeable)";
   }
 
-  public String getTag() {
-    return "-workDir";
-  }
-
   @Override
   public boolean isRequired() {
     return true;
   }
-
-  @Override
-  public void setDir(File dir) {
-    option.setWorkDir(dir);
-  }
-
 }

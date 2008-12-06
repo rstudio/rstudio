@@ -17,7 +17,6 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.TreeLoggerWidget;
@@ -30,6 +29,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.events.ShellListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -46,7 +46,6 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   private class Toolbar extends HeaderBarBase {
 
     private ToolItem about;
-
     private ToolItem clearLog;
     private ToolItem collapseAll;
     private ToolItem expandAll;
@@ -60,9 +59,9 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       newWindow.addSelectionListener(new SelectionAdapter() {
         @Override
         public void widgetSelected(SelectionEvent event) {
-          String startupUrl = serverWindow.normalizeURL("/");
+          String startupUrl = browserWindowController.normalizeURL("/");
           try {
-            BrowserWidget bw = serverWindow.openNewBrowserWindow();
+            BrowserWidget bw = browserWindowController.openNewBrowserWindow();
             bw.go(startupUrl);
           } catch (UnableToCompleteException e) {
             getLogger().log(TreeLogger.ERROR,
@@ -137,6 +136,23 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     }
   }
 
+  private static Image[] icons;
+
+  /**
+   * Well-known place to get the GWT icons.
+   */
+  public static Image[] getIcons() {
+    // Make sure icon images are loaded.
+    //
+    if (icons == null) {
+      icons = new Image[] {
+          LowLevel.loadImage("icon16.png"), LowLevel.loadImage("icon24.png"),
+          LowLevel.loadImage("icon32.png"), LowLevel.loadImage("icon48.png"),
+          LowLevel.loadImage("icon128.png")};
+    }
+    return icons;
+  }
+
   private static String verify(String hash) {
     char[] in = hash.toCharArray();
     char[] ou = new char[in.length];
@@ -156,19 +172,19 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     return String.valueOf(ou);
   }
 
+  private BrowserWindowController browserWindowController;
+
   private Color colorWhite;
 
   private TreeLoggerWidget logPane;
 
-  private GWTShell serverWindow;
-
   private Toolbar toolbar;
 
-  public ShellMainWindow(GWTShell serverWindow, final Shell parent,
-      int serverPort, boolean checkForUpdates) {
+  public ShellMainWindow(BrowserWindowController browserWindowController,
+      final Shell parent, int serverPort, boolean checkForUpdates) {
     super(parent, SWT.NONE);
 
-    this.serverWindow = serverWindow;
+    this.browserWindowController = browserWindowController;
 
     colorWhite = new Color(null, 255, 255, 255);
 
@@ -256,7 +272,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   }
 
   public void shellClosed(ShellEvent e) {
-    if (serverWindow.hasBrowserWindowsOpen()) {
+    if (browserWindowController.hasBrowserWindowsOpen()) {
       boolean closeWindows = true;
       if (System.getProperty("gwt.shell.endquick") == null) {
         closeWindows = DialogBase.confirmAction((Shell) e.widget,
@@ -265,7 +281,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       }
 
       if (closeWindows) {
-        serverWindow.closeAllBrowserWindows();
+        browserWindowController.closeAllBrowserWindows();
         e.doit = true;
       } else {
         e.doit = false;

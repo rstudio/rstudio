@@ -18,6 +18,8 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger.Type;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Concrete class to implement compiler task options.
@@ -25,7 +27,7 @@ import java.io.File;
 class CompileTaskOptionsImpl implements CompileTaskOptions {
 
   private Type logLevel;
-  private String moduleName;
+  private final List<String> moduleNames = new ArrayList<String>();
   private boolean useGuiLogger;
   private File workDir;
 
@@ -36,23 +38,27 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     copyFrom(other);
   }
 
+  public void addModuleName(String moduleName) {
+    moduleNames.add(moduleName);
+  }
+
   public void copyFrom(CompileTaskOptions other) {
     setLogLevel(other.getLogLevel());
-    setModuleName(other.getModuleName());
+    setModuleNames(other.getModuleNames());
     setUseGuiLogger(other.isUseGuiLogger());
     setWorkDir(other.getWorkDir());
   }
 
-  public File getCompilerWorkDir() {
-    return new File(new File(getWorkDir(), getModuleName()), "compiler");
+  public File getCompilerWorkDir(String moduleName) {
+    return new File(new File(getWorkDir(), moduleName), "compiler");
   }
 
   public Type getLogLevel() {
     return logLevel;
   }
 
-  public String getModuleName() {
-    return moduleName;
+  public List<String> getModuleNames() {
+    return new ArrayList<String>(moduleNames);
   }
 
   public File getWorkDir() {
@@ -67,8 +73,9 @@ class CompileTaskOptionsImpl implements CompileTaskOptions {
     this.logLevel = logLevel;
   }
 
-  public void setModuleName(String moduleName) {
-    this.moduleName = moduleName;
+  public void setModuleNames(List<String> moduleNames) {
+    this.moduleNames.clear();
+    this.moduleNames.addAll(moduleNames);
   }
 
   public void setUseGuiLogger(boolean useGuiLogger) {

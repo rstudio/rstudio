@@ -30,7 +30,7 @@ public final class ArgHandlerModuleName extends ArgHandlerExtra {
 
   @Override
   public boolean addExtraArg(String arg) {
-    option.setModuleName(arg);
+    option.addModuleName(arg);
     return true;
   }
 

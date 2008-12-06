@@ -90,6 +90,189 @@ public class JUnitShell extends GWTShell {
     void processResult(TestCase testCase, JUnitResult result);
   }
 
+  class ArgProcessor extends GWTShell.ArgProcessor {
+
+    public ArgProcessor() {
+      super(true, true);
+      registerHandler(new ArgHandlerFlag() {
+
+        @Override
+        public String getPurpose() {
+          return "Causes your test to run in web (compiled) mode (defaults to hosted mode)";
+        }
+
+        @Override
+        public String getTag() {
+          return "-web";
+        }
+
+        @Override
+        public boolean setFlag() {
+          runStyle = new RunStyleLocalWeb(JUnitShell.this);
+          numClients = 1;
+          return true;
+        }
+
+      });
+
+      registerHandler(new ArgHandlerString() {
+
+        @Override
+        public String getPurpose() {
+          return "Runs web mode via RMI to a set of BrowserManagerServers; "
+              + "e.g. rmi://localhost/ie6,rmi://localhost/firefox";
+        }
+
+        @Override
+        public String getTag() {
+          return "-remoteweb";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"rmiUrl"};
+        }
+
+        @Override
+        public boolean isUndocumented() {
+          return true;
+        }
+
+        @Override
+        public boolean setString(String str) {
+          String[] urls = str.split(",");
+          runStyle = RunStyleRemoteWeb.create(JUnitShell.this, urls);
+          numClients = urls.length;
+          return runStyle != null;
+        }
+      });
+
+      registerHandler(new ArgHandlerString() {
+
+        @Override
+        public String getPurpose() {
+          return "Runs web mode via HTTP to a set of Selenium servers; "
+              + "e.g. localhost:4444/*firefox,remotehost:4444/*iexplore";
+        }
+
+        @Override
+        public String getTag() {
+          return "-selenium";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"seleniumHost"};
+        }
+
+        @Override
+        public boolean setString(String str) {
+          String[] targets = str.split(",");
+          numClients = targets.length;
+          runStyle = RunStyleSelenium.create(JUnitShell.this, targets);
+          return runStyle != null;
+        }
+      });
+
+      registerHandler(new ArgHandlerString() {
+
+        @Override
+        public String getPurpose() {
+          return "Run external browsers in web mode (pass a comma separated list of executables.)";
+        }
+
+        @Override
+        public String getTag() {
+          return "-externalbrowser";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"browserPaths"};
+        }
+
+        @Override
+        public boolean isUndocumented() {
+          return true;
+        }
+
+        @Override
+        public boolean setString(String str) {
+          String[] paths = str.split(",");
+          runStyle = new RunStyleExternalBrowser(JUnitShell.this, paths);
+          numClients = paths.length;
+          return runStyle != null;
+        }
+      });
+
+      registerHandler(new ArgHandler() {
+
+        @Override
+        public String[] getDefaultArgs() {
+          return null;
+        }
+
+        @Override
+        public String getPurpose() {
+          return "Causes the system to wait for a remote browser to connect";
+        }
+
+        @Override
+        public String getTag() {
+          return "-manual";
+        }
+
+        @Override
+        public String[] getTagArgs() {
+          return new String[] {"[numClients]"};
+        }
+
+        @Override
+        public int handle(String[] args, int tagIndex) {
+          int value = 1;
+          if (tagIndex + 1 < args.length) {
+            try {
+              // See if the next item is an integer.
+              value = Integer.parseInt(args[tagIndex + 1]);
+              if (value >= 1) {
+                setInt(value);
+                return 1;
+              }
+            } catch (NumberFormatException e) {
+              // fall-through
+            }
+          }
+          setInt(1);
+          return 0;
+        }
+
+        public void setInt(int value) {
+          runStyle = new RunStyleManual(JUnitShell.this, value);
+          numClients = value;
+        }
+
+      });
+
+      registerHandler(new ArgHandlerFlag() {
+        @Override
+        public String getPurpose() {
+          return "Causes the log window and browser windows to be displayed; useful for debugging";
+        }
+
+        @Override
+        public String getTag() {
+          return "-notHeadless";
+        }
+
+        @Override
+        public boolean setFlag() {
+          setHeadless(false);
+          return true;
+        }
+      });
+    }
+  }
+
   private static class JUnitStrategy implements Strategy {
     public String getModuleInherit() {
       return "com.google.gwt.junit.JUnit";
@@ -204,8 +387,8 @@ public class JUnitShell extends GWTShell {
       unitTestShell = new JUnitShell();
       unitTestShell.lastLaunchFailed = true;
       String[] args = unitTestShell.synthesizeArgs();
-      if (!unitTestShell.processArgs(args)) {
-
+      ArgProcessor argProcessor = unitTestShell.new ArgProcessor();
+      if (!argProcessor.processArgs(args)) {
         throw new JUnitFatalLaunchException("Error processing shell arguments");
       }
 
@@ -215,6 +398,11 @@ public class JUnitShell extends GWTShell {
       if (!unitTestShell.startUp()) {
         throw new JUnitFatalLaunchException("Shell failed to start");
       }
+      Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+        public void run() {
+          unitTestShell.shutDown();
+        }
+      }));
       unitTestShell.lastLaunchFailed = false;
     }
 
@@ -240,6 +428,16 @@ public class JUnitShell extends GWTShell {
    * If true, the last attempt to launch failed.
    */
   private boolean lastLaunchFailed;
+
+  /**
+   * We need to keep a hard reference to the last module that was launched until
+   * all client browsers have successfully transitioned to the current module.
+   * Failure to do so allows the last module to be GC'd, which transitively
+   * kills the {@link com.google.gwt.junit.server.JUnitHostImpl} servlet. If the
+   * servlet dies, the client browsers will be unable to transition.
+   */
+  @SuppressWarnings("unused")
+  private ModuleDef lastModule;
 
   /**
    * Portal to interact with the servlet.
@@ -270,200 +468,10 @@ public class JUnitShell extends GWTShell {
   private long testBeginTimeout;
 
   /**
-   * We need to keep a hard reference to the last module that was launched until
-   * all client browsers have successfully transitioned to the current module.
-   * Failure to do so allows the last module to be GC'd, which transitively
-   * kills the {@link com.google.gwt.junit.server.JUnitHostImpl} servlet. If the
-   * servlet dies, the client browsers will be unable to transition.
-   */
-  @SuppressWarnings("unused")
-  private ModuleDef lastModule;
-
-  /**
    * Enforce the singleton pattern. The call to {@link GWTShell}'s ctor forces
    * server mode and disables processing extra arguments as URLs to be shown.
    */
   private JUnitShell() {
-    super(true, true);
-
-    registerHandler(new ArgHandlerFlag() {
-
-      @Override
-      public String getPurpose() {
-        return "Causes your test to run in web (compiled) mode (defaults to hosted mode)";
-      }
-
-      @Override
-      public String getTag() {
-        return "-web";
-      }
-
-      @Override
-      public boolean setFlag() {
-        runStyle = new RunStyleLocalWeb(JUnitShell.this);
-        numClients = 1;
-        return true;
-      }
-
-    });
-
-    registerHandler(new ArgHandlerString() {
-
-      @Override
-      public String getPurpose() {
-        return "Runs web mode via RMI to a set of BrowserManagerServers; "
-            + "e.g. rmi://localhost/ie6,rmi://localhost/firefox";
-      }
-
-      @Override
-      public String getTag() {
-        return "-remoteweb";
-      }
-
-      @Override
-      public String[] getTagArgs() {
-        return new String[] {"rmiUrl"};
-      }
-
-      @Override
-      public boolean isUndocumented() {
-        return true;
-      }
-
-      @Override
-      public boolean setString(String str) {
-        String[] urls = str.split(",");
-        runStyle = RunStyleRemoteWeb.create(JUnitShell.this, urls);
-        numClients = urls.length;
-        return runStyle != null;
-      }
-    });
-
-    registerHandler(new ArgHandlerString() {
-
-      @Override
-      public String getPurpose() {
-        return "Runs web mode via HTTP to a set of Selenium servers; "
-            + "e.g. localhost:4444/*firefox,remotehost:4444/*iexplore";
-      }
-
-      @Override
-      public String getTag() {
-        return "-selenium";
-      }
-
-      @Override
-      public String[] getTagArgs() {
-        return new String[] {"seleniumHost"};
-      }
-
-      @Override
-      public boolean setString(String str) {
-        String[] targets = str.split(",");
-        numClients = targets.length;
-        runStyle = RunStyleSelenium.create(JUnitShell.this, targets);
-        return runStyle != null;
-      }
-    });
-
-    registerHandler(new ArgHandlerString() {
-
-      @Override
-      public String getPurpose() {
-        return "Run external browsers in web mode (pass a comma separated list of executables.)";
-      }
-
-      @Override
-      public String getTag() {
-        return "-externalbrowser";
-      }
-
-      @Override
-      public String[] getTagArgs() {
-        return new String[] {"browserPaths"};
-      }
-
-      @Override
-      public boolean isUndocumented() {
-        return true;
-      }
-
-      @Override
-      public boolean setString(String str) {
-        String[] paths = str.split(",");
-        runStyle = new RunStyleExternalBrowser(JUnitShell.this, paths);
-        numClients = paths.length;
-        return runStyle != null;
-      }
-    });
-
-    registerHandler(new ArgHandler() {
-
-      @Override
-      public String[] getDefaultArgs() {
-        return null;
-      }
-
-      @Override
-      public String getPurpose() {
-        return "Causes the system to wait for a remote browser to connect";
-      }
-
-      @Override
-      public String getTag() {
-        return "-manual";
-      }
-
-      @Override
-      public String[] getTagArgs() {
-        return new String[] {"[numClients]"};
-      }
-
-      @Override
-      public int handle(String[] args, int tagIndex) {
-        int value = 1;
-        if (tagIndex + 1 < args.length) {
-          try {
-            // See if the next item is an integer.
-            value = Integer.parseInt(args[tagIndex + 1]);
-            if (value >= 1) {
-              setInt(value);
-              return 1;
-            }
-          } catch (NumberFormatException e) {
-            // fall-through
-          }
-        }
-        setInt(1);
-        return 0;
-      }
-
-      public void setInt(int value) {
-        runStyle = new RunStyleManual(JUnitShell.this, value);
-        numClients = value;
-      }
-
-    });
-
-    registerHandler(new ArgHandlerFlag() {
-
-      @Override
-      public String getPurpose() {
-        return "Causes the log window and browser windows to be displayed; useful for debugging";
-      }
-
-      @Override
-      public String getTag() {
-        return "-notHeadless";
-      }
-
-      @Override
-      public boolean setFlag() {
-        setHeadless(false);
-        return true;
-      }
-    });
-
     setRunTomcat(true);
     setHeadless(true);
 

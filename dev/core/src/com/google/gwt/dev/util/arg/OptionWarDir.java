@@ -13,17 +13,22 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev;
+package com.google.gwt.dev.util.arg;
 
-import com.google.gwt.dev.jjs.JJSOptions;
-import com.google.gwt.dev.util.arg.OptionExtraDir;
-import com.google.gwt.dev.util.arg.OptionGenDir;
-import com.google.gwt.dev.util.arg.OptionLogLevel;
-import com.google.gwt.dev.util.arg.OptionOutDir;
+import java.io.File;
 
 /**
- * The complete set of options for the GWT compiler.
+ * Option to set the output directory.
  */
-public interface ShellOptions extends JJSOptions, OptionLogLevel, OptionOutDir,
-    OptionGenDir, OptionExtraDir {
+public interface OptionWarDir {
+
+  /**
+   * Returns the output directory.
+   */
+  File getWarDir();
+
+  /**
+   * Sets the output directory.
+   */
+  void setWarDir(File dir);
 }

@@ -21,17 +21,13 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.shell.ServletContainer;
 import com.google.gwt.dev.shell.ServletContainerLauncher;
 
-import org.mortbay.jetty.Handler;
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
-import org.mortbay.jetty.servlet.FilterHolder;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
 
 import java.io.File;
-
-import javax.servlet.Filter;
 
 /**
  * A launcher for an embedded Jetty server.
@@ -190,20 +186,23 @@ public class JettyLauncher implements ServletContainerLauncher {
   }
 
   @SuppressWarnings("unchecked")
-  public ServletContainer start(TreeLogger logger, int port, File appRootDir,
-      Filter shellServletFilter) throws Exception {
+  public ServletContainer start(TreeLogger logger, int port, File appRootDir)
+      throws Exception {
     checkStartParams(logger, port, appRootDir);
 
-    // The dance we do with Jetty's logging system.
-    System.setProperty("VERBOSE", "true");
-    JettyTreeLogger.setDefaultConstruction(logger, TreeLogger.INFO);
-    System.setProperty("org.mortbay.log.class", JettyTreeLogger.class.getName());
-    // Force initialization.
-    Log.isDebugEnabled();
-    if (JettyTreeLogger.isDefaultConstructionReady()) {
-      // The log system was already initialized and did not use our
-      // newly-constructed logger, set it explicitly now.
-      Log.setLog(new JettyTreeLogger());
+    // The dance we do with Jetty's logging system -- disabled, log to console.
+    if (false) {
+      System.setProperty("VERBOSE", "true");
+      JettyTreeLogger.setDefaultConstruction(logger, TreeLogger.INFO);
+      System.setProperty("org.mortbay.log.class",
+          JettyTreeLogger.class.getName());
+      // Force initialization.
+      Log.isDebugEnabled();
+      if (JettyTreeLogger.isDefaultConstructionReady()) {
+        // The log system was already initialized and did not use our
+        // newly-constructed logger, set it explicitly now.
+        Log.setLog(new JettyTreeLogger());
+      }
     }
 
     Server server = new Server();
@@ -221,12 +220,6 @@ public class JettyLauncher implements ServletContainerLauncher {
     // Prevent file locking on windows; pick up file changes.
     wac.getInitParams().put(
         "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
-
-    // Setup the shell servlet filter to generate nocache.js files (and run
-    // the hosted mode linker stack.
-    FilterHolder filterHolder = new FilterHolder();
-    filterHolder.setFilter(shellServletFilter);
-    wac.addFilter(filterHolder, "/*", Handler.ALL);
 
     server.setHandler(wac);
     server.setStopAtShutdown(true);

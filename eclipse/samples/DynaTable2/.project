@@ -24,7 +24,7 @@
 		<link>
 			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/samples/dynatable</locationURI>
+			<locationURI>GWT_ROOT/samples/dynatable2</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

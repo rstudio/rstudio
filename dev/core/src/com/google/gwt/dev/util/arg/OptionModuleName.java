@@ -15,18 +15,25 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import java.util.List;
+
 /**
  * Option to set the module name.
  */
 public interface OptionModuleName {
 
   /**
-   * Returns the name of the module.
+   * Returns the list of module names.
    */
-  String getModuleName();
+  List<String> getModuleNames();
 
   /**
    * Sets the name of the module.
    */
-  void setModuleName(String moduleName);
+  void addModuleName(String moduleName);
+
+  /**
+   * Sets the list of module names.
+   */
+  void setModuleNames(List<String> moduleNames);
 }
