@@ -135,6 +135,11 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     return DOM.getInnerText(labelElem);
   }
 
+  /**
+   * Determines whether this check box is currently checked.
+   * 
+   * @return <code>true</code> if the check box is checked
+   */
   public Boolean getValue() {
     return isChecked();
   }
@@ -163,7 +168,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * Checks or unchecks this check box. Does not fire {@link ValueChangeEvent}.
    * (If you want the event to fire, use {@link #setValue(boolean, boolean)})
    * 
-   * @param checked <code>true</code> to check the check box
+   * @param checked <code>true</code> to check the check box.
    */
   public void setChecked(boolean checked) {
     DOM.setElementPropertyBoolean(inputElem, "checked", checked);
@@ -214,12 +219,29 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     DOM.setInnerText(labelElem, text);
   }
 
+  /**
+   * Checks or unchecks the text box. 
+   * @param value true to check, false to uncheck. Must not be null.
+   * @thows IllegalArgumentException if value is null
+   */
   public void setValue(Boolean value) {
     setValue(value, false);
   }
 
+  /**
+   * Checks or unchecks the text box, firing {@link ValueChangeEvent}
+   * if appropriate.
+   *
+   * @param value true to check, false to uncheck. Must not be null.
+   * @param fireEvents If true, and value has changed, fire a
+   * {@link ValueChangeEvent}
+   * @thows IllegalArgumentException if value is null
+   */
   public void setValue(Boolean value, boolean fireEvents) {
-    assert null != value : "Value must not be null";
+    if (value == null) {
+      throw new IllegalArgumentException("value must not be null");
+    }
+
     if (isChecked() == value) {
       return;
     }
