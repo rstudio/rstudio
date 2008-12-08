@@ -28,6 +28,7 @@ import com.google.gwt.core.ext.linker.StylesheetReference;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -53,6 +54,11 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * The extension added to demand-loaded fragment files.
    */
   protected static final String FRAGMENT_EXTENSION = ".cache.js";
+
+  /**
+   * A subdirectory to hold all the generated fragments.
+   */
+  protected static final String FRAGMENT_SUBDIR = "deferredjs";
 
   /**
    * Determines whether or not the URL is relative.
@@ -111,7 +117,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       throws UnableToCompleteException {
     String[] js = result.getJavaScript();
     byte[][] bytes = new byte[js.length][];
-    bytes[0] = generatePrimaryFragment(logger, context, js[0], result.getStrongName());
+    bytes[0] = generatePrimaryFragment(logger, context, js[0],
+        result.getStrongName());
     for (int i = 1; i < js.length; i++) {
       bytes[i] = Util.getBytes(js[i]);
     }
@@ -120,8 +127,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     toReturn.add(emitBytes(logger, bytes[0], result.getStrongName()
         + getCompilationExtension(logger, context)));
     for (int i = 1; i < js.length; i++) {
-      toReturn.add(emitBytes(logger, bytes[i], result.getStrongName() + "-" + i
-          + FRAGMENT_EXTENSION));
+      toReturn.add(emitBytes(logger, bytes[i], FRAGMENT_SUBDIR + File.separator
+          + result.getStrongName() + File.separator + i + FRAGMENT_EXTENSION));
     }
 
     compilationStrongNames.put(result, result.getStrongName());
@@ -336,7 +343,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   }
 
   protected abstract String getModulePrefix(TreeLogger logger,
-      LinkerContext context, String strongName) throws UnableToCompleteException;
+      LinkerContext context, String strongName)
+      throws UnableToCompleteException;
 
   protected abstract String getModuleSuffix(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
@@ -345,7 +353,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context) throws UnableToCompleteException;
 
   private byte[] generatePrimaryFragment(TreeLogger logger,
-      LinkerContext context, String js, String strongName) throws UnableToCompleteException {
+      LinkerContext context, String js, String strongName)
+      throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
     b.append(getModulePrefix(logger, context, strongName));
     b.append(js);

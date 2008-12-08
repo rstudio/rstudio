@@ -87,7 +87,7 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.indentIn();
     out.print("  var script = document.createElement('script');");
     out.newlineOpt();
-    out.print("  script.src = '" + strongName + "-' + frag + '" + FRAGMENT_EXTENSION + "';");
+    out.print("  script.src = '" + FRAGMENT_SUBDIR + "/" + strongName + "/' + frag + '" + FRAGMENT_EXTENSION + "';");
     out.print("  document.getElementsByTagName('head').item(0).appendChild(script);");
     out.indentOut();
     out.newlineOpt();
