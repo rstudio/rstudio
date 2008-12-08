@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JPackage;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.javac.CompilationUnitInvalidator;
 import com.google.gwt.dev.javac.JdtCompiler;
 import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.javac.impl.FileCompilationUnit;
@@ -171,11 +172,11 @@ public final class ApiContainer {
    */
   public String getApiAsString() {
     StringBuffer sb = new StringBuffer();
-    sb.append("Api: " + name + "\n\n");
+    sb.append("Api: " + name + ", size = " + apiPackages.size() + "\n\n");
     List<ApiPackage> sortedApiPackages = new ArrayList<ApiPackage>(
         apiPackages.values());
     Collections.sort(sortedApiPackages);
-    for (ApiPackage apiPackage : apiPackages.values()) {
+    for (ApiPackage apiPackage : sortedApiPackages) {
       sb.append(apiPackage.getApiAsString());
     }
     return sb.toString();
@@ -204,7 +205,7 @@ public final class ApiContainer {
   String getName() {
     return name;
   }
-  
+
   boolean isApiClass(JClassType classType) {
     Boolean ret = apiClassCache.get(classType);
     if (ret != null) {
@@ -269,8 +270,8 @@ public final class ApiContainer {
         if (file.getName().endsWith("java")) {
           pkgName = extractPackageNameFromFile(file);
           if (pkgName == null) {
-            logger.log(TreeLogger.WARN, "Not adding file = "
-                + file.toString() + ", because packageName = null", null);
+            logger.log(TreeLogger.WARN, "Not adding file = " + file.toString()
+                + ", because packageName = null", null);
           } else {
             logger.log(TreeLogger.DEBUG, "adding pkgName = " + pkgName
                 + ", file = " + file.toString(), null);
@@ -332,12 +333,18 @@ public final class ApiContainer {
   private TypeOracle createTypeOracleFromSources() throws NotFoundException,
       IOException, UnableToCompleteException {
     numFilesCount = 0;
-    TypeOracleMediator mediator = new TypeOracleMediator();
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     for (File tempFile : sourceTrees) {
       addCompilationUnitsInPath(units, tempFile);
     }
     JdtCompiler.compile(units);
+    if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
+      logger.log(TreeLogger.ERROR, "Unable to build typeOracle for "
+          + getName());
+      throw new UnableToCompleteException();
+    }
+
+    TypeOracleMediator mediator = new TypeOracleMediator();
     mediator.refresh(logger, units);
     logger.log(TreeLogger.INFO, "API " + name
         + ", Finished with building typeOracle, added " + numFilesCount

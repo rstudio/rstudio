@@ -79,7 +79,7 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
 
   String getApiAsString() {
     StringBuffer sb = new StringBuffer();
-    sb.append(name + "\n");
+    sb.append(name + ", size = " + apiClasses.size() + "\n");
     ArrayList<ApiClass> apiClassesList = new ArrayList<ApiClass>(
         apiClasses.values());
     Collections.sort(apiClassesList);
