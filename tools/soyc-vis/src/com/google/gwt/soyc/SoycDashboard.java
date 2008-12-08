@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.TreeMap;
+import java.util.zip.GZIPInputStream;
 import javax.xml.parsers.*;
 
 public class SoycDashboard {
@@ -37,7 +38,7 @@ public class SoycDashboard {
   public static void main(String[] args) {
     
     if (args.length != 1){
-      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml");
+      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz]");
       System.exit(1);
     }
     
@@ -75,10 +76,12 @@ public class SoycDashboard {
     factory.setNamespaceAware(true);
     try {
       SAXParser saxParser = factory.newSAXParser();
-      InputStream in = new BufferedInputStream(new FileInputStream(inFileName));
+      InputStream in = new FileInputStream(inFileName);
+      if (inFileName.endsWith(".gz")) {
+        in = new GZIPInputStream(in);
+      }
+      in = new BufferedInputStream(in);
       saxParser.parse(in,fragmentCountHandler);
-      
-      
     } catch (ParserConfigurationException e) {
       throw new RuntimeException("Could not parse document. ", e);
     } catch (SAXException e) {
@@ -99,10 +102,12 @@ public class SoycDashboard {
     factoryMain.setNamespaceAware(true);
     try {
       SAXParser saxParser = factoryMain.newSAXParser();
-      InputStream in = new BufferedInputStream(new FileInputStream(inFileName));
+      InputStream in = new FileInputStream(inFileName);
+      if (inFileName.endsWith(".gz")) {
+        in = new GZIPInputStream(in);
+      }
+      in = new BufferedInputStream(in);
       saxParser.parse(in,handler);
-      
-      
     } catch (ParserConfigurationException e) {
       throw new RuntimeException("Could not parse document. ", e);
     } catch (SAXException e) {
