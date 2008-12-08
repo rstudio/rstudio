@@ -460,7 +460,7 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
 
     public void onOpen(OpenEvent<TreeItem> event) {
-      listener.onTreeItemSelected(event.getTarget());
+      listener.onTreeItemStateChanged(event.getTarget());
     }
 
     public void onSelection(SelectionEvent<TreeItem> event) {
