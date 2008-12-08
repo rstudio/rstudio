@@ -27,9 +27,9 @@ import java.io.Serializable;
 public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E>, Serializable {
 
   /**
-   * TreeSet is stored as a TreeMap of the requested type to a constant integer.
+   * TreeSet is stored as a TreeMap of the requested type to a constant Boolean.
    */
-  SortedMap<E, Boolean> map;
+  private SortedMap<E, Boolean> map;
 
   public TreeSet() {
     map = new TreeMap<E, Boolean>();
@@ -65,7 +65,7 @@ public class TreeSet<E> extends AbstractSet<E> implements SortedSet<E>, Serializ
 
   @Override
   public boolean add(E o) {
-    // Use "this" as a convenient non-null value to store in the map
+    // Use Boolean.FALSE as a convenient non-null value to store in the map
     return map.put(o, Boolean.FALSE) == null;
   }
 
