@@ -1,21 +1,31 @@
 <?xml version="1.0"?>
 
-<project name="SOYC Dashboard Visualization" default="build" basedir=".">
+<project name="soyc-vis" default="build" basedir=".">
 
-    <target name="clean">
-        <delete dir="build"/>
-    </target>
+  <property name="gwt.root" location="../.." />
+  <property name="project.tail" value="tools/soyc-vis" />
+  <import file="${gwt.root}/common.ant.xml" />
 
-    <target name="compile">
-        <mkdir dir="build/classes"/>
-        <javac srcdir="src" destdir="build/classes"/>
-    </target>
+  <target name="clean">
+    <delete dir="build"/>
+  </target>
 
-    <target name="build" depends="clean, compile"/>
+  <target name="compile">
+    <mkdir dir="${javac.out}"/>
+    <javac srcdir="src" destdir="${javac.out}"/>
+  </target>
 
-    <target name="test"/>
+  <target name="build" depends="compile">
+    <gwt.jar>
+      <fileset dir="${javac.out}" />
+      <manifest>
+        <attribute name="Main-Class" value="com.google.gwt.soyc.SoycDashboard" />
+      </manifest>
+    </gwt.jar>
+  </target>
 
-    <target name="checkstyle"/>
-      
+  <target name="test"/>
+
+  <target name="checkstyle"/>
 
 </project>
