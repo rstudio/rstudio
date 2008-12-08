@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * 
  * @param <I> the value about to be changed
  */
-public interface HasValueChangeHandlers<I> {
+public interface HasValueChangeHandlers<I> extends HasHandlers {
   /**
    * Adds a {@link ValueChangeEvent} handler.
    * 

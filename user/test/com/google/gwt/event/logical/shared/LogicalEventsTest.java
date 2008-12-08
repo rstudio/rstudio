@@ -67,7 +67,7 @@ public class LogicalEventsTest extends TestCase {
     simpleFire(BeforeSelectionEvent.getType(),
         new BeforeSelectionEvent<String>());
     simpleFire(SelectionEvent.getType(), new SelectionEvent<String>(null));
-    simpleFire(CloseEvent.getType(), new CloseEvent<String>(null,false));
+    simpleFire(CloseEvent.getType(), new CloseEvent<String>(null, false));
     simpleFire(OpenEvent.getType(), new OpenEvent<String>(null));
     simpleFire(ResizeEvent.getType(), new ResizeEvent(0, 0));
     simpleFire(ValueChangeEvent.getType(), new ValueChangeEvent<String>(null));

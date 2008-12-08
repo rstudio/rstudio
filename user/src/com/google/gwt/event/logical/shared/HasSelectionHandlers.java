@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * 
  * @param <I> the type being selected
  */
-public interface HasSelectionHandlers<I> {
+public interface HasSelectionHandlers<I> extends HasHandlers {
   /**
    * Adds a {@link SelectionEvent} handler.
    * 

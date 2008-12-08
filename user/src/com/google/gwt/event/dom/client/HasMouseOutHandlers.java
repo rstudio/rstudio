@@ -15,13 +15,14 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.event.logical.shared.HasHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
  * A widget that implements this interface provides registration for
  * {@link MouseOutHandler} instances.
  */
-public interface HasMouseOutHandlers {
+public interface HasMouseOutHandlers extends HasHandlers {
   /**
    * Adds a {@link MouseOutEvent} handler.
    * 

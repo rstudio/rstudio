@@ -26,12 +26,15 @@ import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CompositeTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
 import com.google.gwt.user.client.ui.DOMTest;
+import com.google.gwt.user.client.ui.DateBoxTest;
+import com.google.gwt.user.client.ui.DatePickerTest;
 import com.google.gwt.user.client.ui.DeckPanelTest;
 import com.google.gwt.user.client.ui.DecoratedPopupTest;
 import com.google.gwt.user.client.ui.DecoratedStackPanelTest;
 import com.google.gwt.user.client.ui.DecoratedTabBarTest;
 import com.google.gwt.user.client.ui.DecoratedTabPanelTest;
 import com.google.gwt.user.client.ui.DecoratorPanelTest;
+import com.google.gwt.user.client.ui.DelegatingKeyboardListenerCollectionTest;
 import com.google.gwt.user.client.ui.DialogBoxTest;
 import com.google.gwt.user.client.ui.DisclosurePanelTest;
 import com.google.gwt.user.client.ui.DockPanelTest;
@@ -73,6 +76,7 @@ import com.google.gwt.user.client.ui.WidgetIteratorsTest;
 import com.google.gwt.user.client.ui.WidgetOnLoadTest;
 import com.google.gwt.user.client.ui.WidgetSubclassingTest;
 import com.google.gwt.user.client.ui.impl.ClippedImagePrototypeTest;
+import com.google.gwt.user.datepicker.client.DateChangeEventTest;
 import com.google.gwt.user.rebind.ui.ImageBundleGeneratorTest;
 import com.google.gwt.xml.client.XMLTest;
 
@@ -83,8 +87,7 @@ import junit.framework.Test;
  */
 public class UISuite {
   public static Test suite() {
-    GWTTestSuite suite = new GWTTestSuite(
-        "Test for suite for the com.google.gwt.ui module");
+    GWTTestSuite suite = new GWTTestSuite("Test for suite for all user widgets");
 
     suite.addTestSuite(AbsolutePanelTest.class);
     suite.addTestSuite(AnchorTest.class);
@@ -95,14 +98,15 @@ public class UISuite {
     suite.addTestSuite(CompositeTest.class);
     suite.addTestSuite(CookieTest.class);
     suite.addTestSuite(CustomButtonTest.class);
+    suite.addTestSuite(DateBoxTest.class);
+    suite.addTestSuite(DatePickerTest.class);
     suite.addTestSuite(DeckPanelTest.class);
     suite.addTestSuite(DecoratedPopupTest.class);
     suite.addTestSuite(DecoratedStackPanelTest.class);
     suite.addTestSuite(DecoratedTabBarTest.class);
     suite.addTestSuite(DecoratedTabPanelTest.class);
     suite.addTestSuite(DecoratorPanelTest.class);
-    // TEMP
-    // suite.addTestSuite(DelegatingKeyboardListenerCollectionTest.class);
+    suite.addTestSuite(DelegatingKeyboardListenerCollectionTest.class);
     suite.addTestSuite(DialogBoxTest.class);
     suite.addTestSuite(DisclosurePanelTest.class);
     suite.addTestSuite(DockPanelTest.class);
@@ -149,7 +153,7 @@ public class UISuite {
     suite.addTestSuite(WindowTest.class);
     suite.addTestSuite(XMLTest.class);
     suite.addTestSuite(ClassInitTest.class);
-
+    suite.addTestSuite(DateChangeEventTest.class);
     return suite;
   }
 }

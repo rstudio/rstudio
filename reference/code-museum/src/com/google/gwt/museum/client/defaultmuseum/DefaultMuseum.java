@@ -50,6 +50,8 @@ public class DefaultMuseum extends Museum implements EntryPoint {
   }
 
   public void addVisuals() {
+    addIssue(new VisualsForDateBox());
+    addIssue(new VisualsForDatePicker());
     addIssue(new VisualsForDisclosurePanelEvents());
     addIssue(new VisualsForEventsFiring());
     addIssue(new VisualsForPopupEvents());

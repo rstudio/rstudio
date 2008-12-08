@@ -35,12 +35,10 @@ public class CloseEvent<T> extends GwtEvent<CloseHandler<T>> {
    * no such handlers exist, this method will do nothing.
    * 
    * @param <T> the target type
-   * @param <S> The event source
    * @param source the source of the handlers
    * @param target the target
    */
-  public static <T, S extends HasCloseHandlers<T> & HasHandlers> void fire(
-      S source, T target) {
+  public static <T> void fire(HasCloseHandlers<T> source, T target) {
     fire(source, target, false);
   }
 
@@ -48,13 +46,12 @@ public class CloseEvent<T> extends GwtEvent<CloseHandler<T>> {
    * Fires a close event on all registered handlers in the handler manager.
    * 
    * @param <T> the target type
-   * @param <S> The event source
    * @param source the source of the handlers
    * @param target the target
    * @param autoClosed was the target closed automatically
    */
-  public static <T, S extends HasCloseHandlers<T> & HasHandlers> void fire(
-      S source, T target, boolean autoClosed) {
+  public static <T> void fire(
+      HasCloseHandlers<T> source, T target, boolean autoClosed) {
     if (TYPE != null) {
       HandlerManager handlers = source.getHandlers();
       if (handlers != null) {

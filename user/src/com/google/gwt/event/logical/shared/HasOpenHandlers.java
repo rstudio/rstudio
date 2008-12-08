@@ -23,7 +23,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * 
  * @param <T> the type being opened
  */
-public interface HasOpenHandlers<T> {
+public interface HasOpenHandlers<T> extends HasHandlers {
   /**
    * Adds a {@link OpenEvent} handler.
    * 
