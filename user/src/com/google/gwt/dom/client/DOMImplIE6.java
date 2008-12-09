@@ -41,13 +41,15 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
-    return elem.getBoundingClientRect().left +
+    return (elem.getBoundingClientRect().left /
+      this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
       @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
   }-*/;
 
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
-    return elem.getBoundingClientRect().top +
+    return (elem.getBoundingClientRect().top /
+      this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
       @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
   }-*/;
 
@@ -111,5 +113,16 @@ class DOMImplIE6 extends DOMImpl {
   @Override
   public native void setInnerText(Element elem, String text) /*-{
     elem.innerText = text || '';
+  }-*/;
+
+  /**
+   * Get the zoom multiple based on the current IE zoom level.  A multiple of
+   * 2.0 means that the user has zoomed in to 200%.
+   * 
+   * @return the zoom multiple
+   */
+  @SuppressWarnings("unused")
+  private native double getZoomMultiple() /*-{
+    return $doc.body.parentElement.offsetWidth / $doc.body.offsetWidth;
   }-*/;
 }
