@@ -280,12 +280,7 @@ public class TreeTest extends GWTTestCase {
     parent.addItem("child");
     t.addItem(parent);
     RootPanel.get().add(t);
-
-    // This was throwing UnsupportedOperationException at one point (just
-    // before the 1.5 release), because of additions to ImagePrototype. If
-    // that were to creep back in, we'd see an exception.
-    t.setImageBase("");
-
+ 
     // Make sure the parent open/close image actually got created (there's
     // no actual public image file to back this up, but it won't matter from
     // the standpoint of this test).
