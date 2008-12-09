@@ -118,7 +118,7 @@ public class MakeTopLevelHtmlForPerm {
 
 
 
-    if (GlobalInformation.fragmentToStories.size() == 1){
+    if (GlobalInformation.fragmentToStories.size() != 1){
       outFile.println("  <div style=\"width:100%;  float:left; padding-top: 10px;\">");
       outFile.println("<b>Fragments breakdown</b>");
       outFile.println("    </div>");
@@ -1172,10 +1172,9 @@ public class MakeTopLevelHtmlForPerm {
         
         if (nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo(literalType) == 0){
  
-            if (literal.trim().compareTo("") == 0){
+          if (literal.trim().compareTo("") == 0){
             literal = "[whitespace only string]";
           }
-          
   
           String newLiteral = "";
           if(literal.length() > 80){
@@ -1229,23 +1228,18 @@ public class MakeTopLevelHtmlForPerm {
               outFile.println("</tr>");
             }
             ct++;
-            
           }
-  
-          
           outFile.println("</tr>");
-          
-        }
-  
-        outFile.println("</table>");
-        outFile.println("<center>");
-  
-        
-        outFile.println("</div>");
-        outFile.println("</body>");
-        outFile.println("</html>");
-        outFile.close();
-       }
+        }  
+      }
+
+      outFile.println("</table>");
+      outFile.println("<center>");
+      
+      outFile.println("</div>");
+      outFile.println("</body>");
+      outFile.println("</html>");
+      outFile.close();
     }
   }
 
