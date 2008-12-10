@@ -53,7 +53,7 @@ public class Compiler {
 
     @Override
     protected String getName() {
-      return GWTCompiler.class.getName();
+      return Compiler.class.getName();
     }
   }
 
