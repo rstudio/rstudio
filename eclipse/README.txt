@@ -67,6 +67,11 @@ Second, members in the same category should be sorted by visibility.
 
 Third, within a category/visibility combination, members should be sorted
 alphabetically.
+ 
+
+------------ Compiler settings ------------
+Window->Preferences->Java->Compiler
+Set the compiler compliance level to 1.5.
 
 == Checkstyle ==
 
