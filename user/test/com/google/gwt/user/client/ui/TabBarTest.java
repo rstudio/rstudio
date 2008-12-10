@@ -162,6 +162,71 @@ public class TabBarTest extends GWTTestCase {
   }
 
   /**
+   * Verify that wordWrap works when adding widgets that implement HasWordWrap.
+   */
+  public void testWordWrapWithSupport() {
+    TabBar bar = createTabBar();
+    Label tabContent0 = new Label("Tab 0", false);
+    Label tabContent1 = new Label("Tab 1", true);
+    bar.addTab(tabContent0);
+    bar.addTab(tabContent1);
+    bar.addTab("Tab 2");
+
+    // hasWordWrap()
+    {
+      assertTrue(bar.getTab(0).hasWordWrap());
+      assertTrue(bar.getTab(1).hasWordWrap());
+      assertTrue(bar.getTab(2).hasWordWrap());
+    }
+
+    // getWordWrap()
+    {
+      assertFalse(bar.getTab(0).getWordWrap());
+      assertTrue(bar.getTab(1).getWordWrap());
+      assertFalse(bar.getTab(2).getWordWrap());
+    }
+
+    // setWordWrap()
+    {
+      bar.getTab(0).setWordWrap(true);
+      bar.getTab(1).setWordWrap(true);
+      bar.getTab(2).setWordWrap(true);
+      assertTrue(bar.getTab(0).getWordWrap());
+      assertTrue(bar.getTab(1).getWordWrap());
+      assertTrue(bar.getTab(2).getWordWrap());
+      assertTrue(tabContent0.getWordWrap());
+    }
+  }
+
+  /**
+   * Verify that wordWrap works when adding widgets that do not implement
+   * HasWordWrap.
+   */
+  public void testWordWrapWithoutSupport() {
+    TabBar bar = createTabBar();
+    bar.addTab(new Button("Tab 0"));
+
+    // hasWordWrap
+    assertFalse(bar.getTab(0).hasWordWrap());
+
+    // getWordWrap();
+    try {
+      bar.getTab(0).getWordWrap();
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      assertTrue(true);
+    }
+
+    // setWordWrap();
+    try {
+      bar.getTab(0).setWordWrap(true);
+      fail("Expected UnsupportedOperationException");
+    } catch (UnsupportedOperationException e) {
+      assertTrue(true);
+    }
+  }
+
+  /**
    * Create a new, empty tab bar.
    */
   protected TabBar createTabBar() {
