@@ -271,25 +271,44 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
 
     public void onMouseDown(MouseDownEvent event) {
-      listener.onMouseDown(source(event), event.getClientX(),
-          event.getClientY());
+      Widget source = source(event);
+      Element elem = source.getElement();
+      listener.onMouseDown(source, event.getRelativeX(elem),
+          event.getRelativeY(elem));
     }
 
     public void onMouseMove(MouseMoveEvent event) {
-      listener.onMouseMove(source(event), event.getClientX(),
-          event.getClientY());
+      Widget source = source(event);
+      Element elem = source.getElement();
+      listener.onMouseMove(source, event.getRelativeX(elem),
+          event.getRelativeY(elem));
     }
 
     public void onMouseOut(MouseOutEvent event) {
-      listener.onMouseLeave(source(event));
+      // Only fire the mouseLeave event if it's actually leaving this
+      // widget.
+      Element to = event.getToElement();
+      Widget source = source(event);
+      if (to == null || !source.getElement().isOrHasChild(to)) {
+        listener.onMouseLeave(source(event));
+      }
     }
 
     public void onMouseOver(MouseOverEvent event) {
-      listener.onMouseEnter(source(event));
+      // Only fire the mouseEnter event if it's coming from outside this
+      // widget.
+      Element from = event.getFromElement();
+      Widget source = source(event);
+      if (from == null || !source.getElement().isOrHasChild(from)) {
+        listener.onMouseEnter(source(event));
+      }
     }
 
     public void onMouseUp(MouseUpEvent event) {
-      listener.onMouseUp(source(event), event.getClientX(), event.getClientY());
+      Widget source = source(event);
+      Element elem = source.getElement();
+      listener.onMouseUp(source, event.getRelativeX(elem),
+          event.getRelativeY(elem));
     }
   }
   public static class MouseWheel extends ListenerWrapper<MouseWheelListener> implements
@@ -510,6 +529,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
       EventListener listener, Type... keys) {
     HandlerManager manager = eventSource.getHandlers();
     if (manager != null) {
+      // This is a direct copy of the baseRemove from
+      // com.google.gwt.user.client.ListenerWrapper. Change in parallel.
       for (Type<H> key : keys) {
         int handlerCount = manager.getHandlerCount(key);
         // We are removing things as we traverse, have to go backward
