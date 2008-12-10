@@ -292,7 +292,7 @@ public class CompilePerms {
         }
       }
 
-      File[] resultFiles = makeResultFiles(compilerWorkDir, perms);
+      File[] resultFiles = makeResultFiles(compilerWorkDir, subPerms);
       compile(logger, precompilation, subPerms, options.getLocalWorkers(),
           resultFiles);
     }

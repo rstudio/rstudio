@@ -258,7 +258,8 @@ public class Link {
       Permutation[] perms = precompilation.getPermutations();
       File[] resultFiles = new File[perms.length];
       for (int i = 0; i < perms.length; ++i) {
-        resultFiles[i] = CompilePerms.makePermFilename(compilerWorkDir, i);
+        resultFiles[i] = CompilePerms.makePermFilename(compilerWorkDir,
+            perms[i].getId());
         if (!resultFiles[i].exists()) {
           logger.log(TreeLogger.ERROR, "File not found '"
               + precompilationFile.getAbsolutePath()
