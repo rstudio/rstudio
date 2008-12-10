@@ -69,7 +69,13 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * Note that this set might expand over time, so implement this interface at
    * your own risk.
    */
-  public interface Tab extends HasAllKeyHandlers, HasClickHandlers {
+  public interface Tab extends HasAllKeyHandlers, HasClickHandlers, HasWordWrap {
+    /**
+     * Check if the underlying widget implements {@link HasWordWrap}.
+     *  
+     * @return true if the widget implements {@link HasWordWrap}
+     */
+    boolean hasWordWrap();
   }
 
   /**
@@ -117,6 +123,18 @@ public class TabBar extends Composite implements SourcesTabEvents,
       return focusablePanel;
     }
 
+    public boolean getWordWrap() {
+      if (hasWordWrap()) {
+        return ((HasWordWrap) focusablePanel.getWidget()).getWordWrap();
+      }
+      throw new UnsupportedOperationException(
+          "Widget does not implement HasWordWrap");
+    }
+
+    public boolean hasWordWrap() {
+      return focusablePanel.getWidget() instanceof HasWordWrap;
+    }
+
     public boolean isEnabled() {
       return enabled;
     }
@@ -147,6 +165,15 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
     public void setEnabled(boolean enabled) {
       this.enabled = enabled;
+    }
+
+    public void setWordWrap(boolean wrap) {
+      if (hasWordWrap()) {
+        ((HasWordWrap) focusablePanel.getWidget()).setWordWrap(wrap);
+      } else {
+        throw new UnsupportedOperationException(
+            "Widget does not implement HasWordWrap");
+      }
     }
   }
 
@@ -347,12 +374,14 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * you need to access to the individual tabs, add a click handler to each
    * {@link Tab} element instead.
    */
+  @Deprecated
   public void onClick(Widget sender) {
   }
 
   /**
    * @deprecated add a key down handler to the individual tab wrappers instead.
    */
+  @Deprecated
   public void onKeyDown(Widget sender, char keyCode, int modifiers) {
   }
 
@@ -361,6 +390,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * if what you wanted to do was to listen to key press events on tabs, add the
    * key press handler to the individual tab wrappers instead.
    */
+  @Deprecated
   public void onKeyPress(Widget sender, char keyCode, int modifiers) {
   }
 
@@ -370,6 +400,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
    * key up handler to the individual tab wrappers instead.
    * 
    */
+  @Deprecated
   public void onKeyUp(Widget sender, char keyCode, int modifiers) {
   }
 
@@ -455,7 +486,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
 
     ClickDelegatePanel delPanel = (ClickDelegatePanel) panel.getWidget(index + 1);
     SimplePanel focusablePanel = delPanel.getFocusablePanel();
-    focusablePanel.setWidget(new HTML(html));
+    focusablePanel.setWidget(new HTML(html, false));
   }
 
   /**
@@ -473,7 +504,7 @@ public class TabBar extends Composite implements SourcesTabEvents,
     // It is not safe to check if the current widget is an instanceof Label and
     // reuse it here because HTML is an instanceof Label. Leaving an HTML would
     // throw off the results of getTabHTML(int).
-    focusablePanel.setWidget(new Label(text));
+    focusablePanel.setWidget(new Label(text, false));
   }
 
   /**
