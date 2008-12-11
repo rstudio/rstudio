@@ -287,23 +287,11 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
 
     public void onMouseOut(MouseOutEvent event) {
-      // Only fire the mouseLeave event if it's actually leaving this
-      // widget.
-      Element to = event.getToElement();
-      Widget source = source(event);
-      if (to == null || !source.getElement().isOrHasChild(to)) {
-        listener.onMouseLeave(source(event));
-      }
+      listener.onMouseLeave(source(event));
     }
 
     public void onMouseOver(MouseOverEvent event) {
-      // Only fire the mouseEnter event if it's coming from outside this
-      // widget.
-      Element from = event.getFromElement();
-      Widget source = source(event);
-      if (from == null || !source.getElement().isOrHasChild(from)) {
-        listener.onMouseEnter(source(event));
-      }
+      listener.onMouseEnter(source(event));
     }
 
     public void onMouseUp(MouseUpEvent event) {

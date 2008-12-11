@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.DomEvent;
 import com.google.gwt.event.logical.shared.HasHandlers;
 import com.google.gwt.event.shared.EventHandler;
@@ -88,8 +89,25 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     return handlerManager != null && handlerManager.isEventHandled(type);
   }
 
-  public void onBrowserEvent(Event nativeEvent) {
-    DomEvent.fireNativeEvent(nativeEvent, handlerManager);
+  public void onBrowserEvent(Event event) {
+    switch (DOM.eventGetType(event)) {
+      case Event.ONMOUSEOVER:
+        // Only fire the mouseEnter event if it's coming from outside this
+        // widget.
+        Element from = event.getFromElement();
+        if (from != null && getElement().isOrHasChild(from)) {
+          return;
+        }
+        break;
+      case Event.ONMOUSEOUT:
+        // Only fire the mouseLeave event if it's actually leaving this
+        // widget.
+        Element to = event.getToElement();
+        if (to != null && getElement().isOrHasChild(to)) {
+          return;
+        }
+    }
+    DomEvent.fireNativeEvent(event, handlerManager);
   }
 
   /**
