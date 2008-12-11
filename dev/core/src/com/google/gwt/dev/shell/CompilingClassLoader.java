@@ -618,6 +618,21 @@ public final class CompilingClassLoader extends ClassLoader implements
       throw new ClassNotFoundException(className);
     }
 
+    /*
+     * Prevent reentrant problems where classes that need to be injected have
+     * circular dependencies on one another via JSNI and inheritance. This check
+     * ensures that a class's supertype can refer to the subtype (static
+     * members, etc) via JSNI references by ensuring that the Class for the
+     * subtype will have been defined before injecting the JSNI for the
+     * supertype.
+     */
+    boolean localInjection;
+    if (!isInjectingClass) {
+      localInjection = isInjectingClass = true;
+    } else {
+      localInjection = false;
+    }
+
     Class<?> newClass = defineClass(className, classBytes, 0, classBytes.length);
     if (className.equals(JavaScriptHost.class.getName())) {
       javaScriptHostClass = newClass;
@@ -638,13 +653,8 @@ public final class CompilingClassLoader extends ClassLoader implements
       }
     }
 
-    /*
-     * Prevent reentrant problems where classes that need to be injected have
-     * circular dependencies on one another.
-     */
-    if (!isInjectingClass) {
+    if (localInjection) {
       try {
-        isInjectingClass = true;
         /*
          * Can't use an iterator here because calling injectJsniFor may cause
          * additional entries to be added.

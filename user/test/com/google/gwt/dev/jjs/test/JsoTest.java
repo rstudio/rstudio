@@ -52,6 +52,13 @@ public class JsoTest extends GWTTestCase {
     public static native String staticNative() /*-{
       return "nativeFoo";
     }-*/;
+    
+    /**
+     * Ensure that a supertype can refer to members of a subtype.
+     */
+    public static native String staticNativeToSub() /*-{
+      return @com.google.gwt.dev.jjs.test.JsoTest.FooSub::staticValueSub()();
+    }-*/;
 
     public static String staticValue() {
       return "Foo" + field;
@@ -70,6 +77,10 @@ public class JsoTest extends GWTTestCase {
   }
 
   static class FooSub extends Foo {
+    static String staticValueSub() {
+      return "FooSub";
+    }
+    
     protected FooSub() {
     }
 
@@ -608,6 +619,7 @@ public class JsoTest extends GWTTestCase {
     assertEquals(3, Foo.field--);
     assertEquals("Foo2", Foo.staticValue());
     assertEquals("nativeFoo", Foo.staticNative());
+    assertEquals("FooSub", Foo.staticNativeToSub());
 
     Bar.field = 10;
     assertEquals(11, ++Bar.field);
