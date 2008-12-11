@@ -92,7 +92,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONMOUSEOVER:
-        // Only fire the mouseEnter event if it's coming from outside this
+        // Only fire the mouse over event if it's coming from outside this
         // widget.
         Element from = event.getFromElement();
         if (from != null && getElement().isOrHasChild(from)) {
@@ -100,7 +100,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
         }
         break;
       case Event.ONMOUSEOUT:
-        // Only fire the mouseLeave event if it's actually leaving this
+        // Only fire the mouse out event if it's actually leaving this
         // widget.
         Element to = event.getToElement();
         if (to != null && getElement().isOrHasChild(to)) {
