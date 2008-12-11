@@ -19,15 +19,18 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
+import com.google.gwt.core.ext.linker.impl.HostedModeLinker;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.Util;
-import com.google.gwt.util.tools.Utility;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 
 /**
  * Implements the canonical GWT bootstrap sequence that loads the GWT module in
@@ -48,8 +51,34 @@ public class IFrameLinker extends SelectionScriptLinker {
     try {
       // Add hosted mode iframe contents
       // TODO move this into own impl package if HostedModeLinker goes away
-      String hostedHtml = Utility.getFileFromClassPath("com/google/gwt/core/ext/linker/impl/hosted.html");
-      toReturn.add(emitBytes(logger, Util.getBytes(hostedHtml), "hosted.html"));
+      URL resource = HostedModeLinker.class.getResource("hosted.html");
+      if (resource == null) {
+        logger.log(TreeLogger.ERROR,
+            "Unable to find support resource 'hosted.html'");
+        throw new UnableToCompleteException();
+      }
+
+      final URLConnection connection = resource.openConnection();
+      // TODO: extract URLArtifact class?
+      EmittedArtifact hostedHtml = new EmittedArtifact(IFrameLinker.class,
+          "hosted.html") {
+        @Override
+        public InputStream getContents(TreeLogger logger)
+            throws UnableToCompleteException {
+          try {
+            return connection.getInputStream();
+          } catch (IOException e) {
+            logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
+            throw new UnableToCompleteException();
+          }
+        }
+
+        @Override
+        public long getLastModified() {
+          return connection.getLastModified();
+        }
+      };
+      toReturn.add(hostedHtml);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to copy support resource", e);
       throw new UnableToCompleteException();

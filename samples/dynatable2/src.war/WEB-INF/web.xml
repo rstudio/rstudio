@@ -9,7 +9,7 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>calendar</servlet-name>
-		<url-pattern>/com.google.gwt.sample.dynatable2.DynaTable2/calendar</url-pattern>
+		<url-pattern>/dynatable2/calendar</url-pattern>
 	</servlet-mapping>
 
 </web-app>

@@ -189,6 +189,7 @@ public class Link {
   private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
       StandardLinkerContext linkerContext, ModuleDef module, File outDir,
       File extraDir) throws UnableToCompleteException {
+    // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(outDir, module.getName());
     File moduleExtraDir = (extraDir == null) ? null : new File(extraDir,
         module.getName());

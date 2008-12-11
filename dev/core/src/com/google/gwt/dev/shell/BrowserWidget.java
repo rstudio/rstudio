@@ -93,7 +93,18 @@ public abstract class BrowserWidget extends Composite {
       openWebModeButton = newItem("new-web-mode-window.gif", "&Compile/Browse",
           "Compiles and opens the current URL in the system browser");
       openWebModeButton.addSelectionListener(this);
-      openWebModeButton.setEnabled(false);
+      updateWebMode();
+    }
+
+    @Deprecated
+    public void updateWebMode() {
+      if (!openWebModeButton.isDisposed()) {
+        if (getHost().isLegacyMode()) {
+          openWebModeButton.setEnabled(!loadedModules.isEmpty());
+        } else {
+          openWebModeButton.setEnabled(true);
+        }
+      }
     }
 
     public void widgetDefaultSelected(SelectionEvent e) {
@@ -114,22 +125,26 @@ public abstract class BrowserWidget extends Composite {
         browser.stop();
       } else if (evt.widget == openWebModeButton) {
         // first, compile
-        Set<String> keySet = new HashSet<String>();
-        for (Map.Entry<?, ModuleSpace> entry : loadedModules.entrySet()) {
-          ModuleSpace module = entry.getValue();
-          keySet.add(module.getModuleName());
-        }
-        String[] moduleNames = Util.toStringArray(keySet);
-        if (moduleNames.length == 0) {
-          // A latent problem with a module.
-          //
-          openWebModeButton.setEnabled(false);
-          return;
-        }
         try {
           Cursor waitCursor = getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
           getShell().setCursor(waitCursor);
-          getHost().compile(moduleNames);
+          if (getHost().isLegacyMode()) {
+            Set<String> keySet = new HashSet<String>();
+            for (Map.Entry<?, ModuleSpace> entry : loadedModules.entrySet()) {
+              ModuleSpace module = entry.getValue();
+              keySet.add(module.getModuleName());
+            }
+            String[] moduleNames = Util.toStringArray(keySet);
+            if (moduleNames.length == 0) {
+              // A latent problem with a module.
+              //
+              openWebModeButton.setEnabled(false);
+              return;
+            }
+            getHost().compile(moduleNames);
+          } else {
+            getHost().compile();
+          }
         } catch (UnableToCompleteException e) {
           // Already logged by callee.
           //
@@ -154,9 +169,10 @@ public abstract class BrowserWidget extends Composite {
   }
 
   /**
-   * The version number that should be passed into gwtOnLoad.
+   * The version number that should be passed into gwtOnLoad. Must match the
+   * version in hosted.html.
    */
-  private static final String EXPECTED_GWT_ONLOAD_VERSION = "1.5";
+  private static final String EXPECTED_GWT_ONLOAD_VERSION = "1.6";
 
   public static void launchExternalBrowser(TreeLogger logger, String location) {
     // check GWT_EXTERNAL_BROWSER first, it overrides everything else
@@ -330,7 +346,7 @@ public abstract class BrowserWidget extends Composite {
 
     // Enable the compile button since we successfully loaded.
     //
-    toolbar.openWebModeButton.setEnabled(true);
+    toolbar.updateWebMode();
   }
 
   /**
@@ -356,27 +372,19 @@ public abstract class BrowserWidget extends Composite {
         loadedModules.remove(key);
       }
     }
-    if (loadedModules.isEmpty()) {
-      if (!toolbar.openWebModeButton.isDisposed()) {
-        // Disable the compile button.
-        //
-        toolbar.openWebModeButton.setEnabled(false);
-      }
-    }
+    toolbar.updateWebMode();
   }
 
   /**
-   * Report that gwtOnLoad was called with the wrong number of
+   * Report that an external method was called with the wrong number of
    * arguments.
-   * 
-   * @param numArgs number of arguments supplied
    */
-  protected void reportIncorrectGwtOnLoadInvocation(int numArgs) {
+  protected void reportIncorrectInvocation(String name, int expectedArgs,
+      int actualArgs) {
     getHost().getLogger().log(
         TreeLogger.ERROR,
-        "Not enough arguments ("
-        + numArgs
-            + ") passed to external.gwtOnLoad(), expected (3); "
+        "Not enough arguments (" + actualArgs + ") passed to external." + name
+            + "(), expected (" + expectedArgs + "); "
             + "your hosted mode bootstrap file may be out of date; "
             + "if you are using -noserver try recompiling and redeploying "
             + "your app");
@@ -398,8 +406,8 @@ public abstract class BrowserWidget extends Composite {
   /**
    * Validate that the supplied hosted.html version matches.
    * 
-   * This is to detect cases where users upgrade to a new version
-   * but forget to update the generated hosted.html file.
+   * This is to detect cases where users upgrade to a new version but forget to
+   * update the generated hosted.html file.
    * 
    * @param version version supplied by hosted.html file
    * @return true if the version is valid, false otherwise
@@ -408,8 +416,7 @@ public abstract class BrowserWidget extends Composite {
     if (!EXPECTED_GWT_ONLOAD_VERSION.equals(version)) {
       getHost().getLogger().log(
           TreeLogger.ERROR,
-          "Invalid version number \""
-              + version
+          "Invalid version number \"" + version
               + "\" passed to external.gwtOnLoad(), expected \""
               + EXPECTED_GWT_ONLOAD_VERSION
               + "\"; your hosted mode bootstrap file may be out of date; "

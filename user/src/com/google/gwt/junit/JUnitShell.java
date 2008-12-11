@@ -28,7 +28,6 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.GWTRunner;
@@ -590,9 +589,7 @@ public class JUnitShell extends GWTShell {
         ((BindingProperty) userAgent).setAllowedValues(userAgentString);
       }
     }
-    BrowserWidgetHost browserHost = getBrowserHost();
-    assert (browserHost != null);
-    browserHost.compile(module);
+    super.compile(getTopLogger(), module);
   }
 
   /**

@@ -65,14 +65,16 @@ function __MODULE_FUNC__() {
   // --------------- INTERNAL FUNCTIONS ---------------
 
   function isHostedMode() {
+    var result = false;
     try {
-      return ($wnd.external && $wnd.external.gwtOnLoad &&
+      result = ($wnd.external && $wnd.external.gwtOnLoad &&
           ($wnd.location.search.indexOf('gwt.hybrid') == -1));
     } catch (e) {
       // Defensive: some versions of IE7 reportedly can throw an exception
       // evaluating "external.gwtOnLoad".
-      return false;
     }
+    isHostedMode = function() { return result; };
+    return result;
   }
 
   // Called by onScriptLoad(), onInjectionDone(), and onload(). It causes
@@ -338,6 +340,17 @@ function __MODULE_FUNC__() {
 
   // do it early for compile/browse rebasing
   computeScriptBase();
+
+  var strongName;
+  if (isHostedMode()) {
+    if ($wnd.external.initModule && $wnd.external.initModule('__MODULE_NAME__')) {
+      // Refresh the page to update this selection script!
+      $wnd.location.reload();
+      return;
+    }
+    strongName = "hosted.html?__MODULE_FUNC__";
+  }
+
   processMetas();
 
   // --------------- WINDOW ONLOAD HOOK ---------------
@@ -350,10 +363,7 @@ function __MODULE_FUNC__() {
     type: 'selectingPermutation'
   });
 
-  var strongName;
-  if (isHostedMode()) {
-    strongName = "hosted.html?__MODULE_FUNC__";
-  } else {
+  if (!strongName) {
     try {
 // __PERMUTATIONS_BEGIN__
       // Permutation logic

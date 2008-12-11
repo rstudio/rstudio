@@ -17,7 +17,7 @@ if ($stats) {
 function gwtOnLoad(errFn, modName, modBase){
   $moduleName = modName;
   $moduleBase = modBase;
-  if (!external.gwtOnLoad(window, modName, "1.5")) {
+  if (!external.gwtOnLoad(window, modName, "1.6")) {
     if (errFn) {
       errFn(modName);
     }
@@ -29,7 +29,7 @@ window.fireOnModuleLoadStart = function(className) {
 };
 
 window.onunload = function() {
-  external.gwtOnLoad(window, null, "1.5");
+  external.gwtOnLoad(window, null, "1.6");
 };
 
 window.__gwt_module_id = 0;

@@ -33,7 +33,10 @@ import java.io.IOException;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
+ * 
+ * @deprecated use {@link Compiler} instead
  */
+@Deprecated
 public class GWTCompiler {
 
   static final class ArgProcessor extends Precompile.ArgProcessor {
@@ -91,6 +94,9 @@ public class GWTCompiler {
   }
 
   public static void main(String[] args) {
+    System.err.println("WARNING: '" + GWTCompiler.class.getName()
+        + "' is deprecated and will be removed in a future release.");
+    System.err.println("Use '" + Compiler.class.getName() + "' instead.");
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to
@@ -119,7 +125,23 @@ public class GWTCompiler {
     this.options = new GWTCompilerOptionsImpl(options);
   }
 
+  /**
+   * Compiles the set of modules specified in the options.
+   */
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
+    ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
+    int i = 0;
+    for (String moduleName : options.getModuleNames()) {
+      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+    }
+    return run(logger, modules);
+  }
+
+  /**
+   * Compiles a specific set of modules.
+   */
+  public boolean run(TreeLogger logger, ModuleDef... modules)
+      throws UnableToCompleteException {
     PerfLogger.start("compile");
     boolean tempWorkDir = false;
     try {
@@ -128,8 +150,8 @@ public class GWTCompiler {
         tempWorkDir = true;
       }
 
-      for (String moduleName : options.getModuleNames()) {
-        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+      for (ModuleDef module : modules) {
+        String moduleName = module.getName();
         File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
         if (options.isValidateOnly()) {

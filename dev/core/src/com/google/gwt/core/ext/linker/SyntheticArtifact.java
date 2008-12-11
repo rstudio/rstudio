@@ -27,13 +27,19 @@ import java.io.InputStream;
  */
 public class SyntheticArtifact extends EmittedArtifact {
   private final byte[] data;
-  private final long lastModified = System.currentTimeMillis();
+  private final long lastModified;
 
   SyntheticArtifact(Class<? extends Linker> linkerType, String partialPath,
       byte[] data) {
+    this(linkerType, partialPath, data, System.currentTimeMillis());
+  }
+
+  SyntheticArtifact(Class<? extends Linker> linkerType, String partialPath,
+      byte[] data, long lastModified) {
     super(linkerType, partialPath);
     assert data != null;
     this.data = data;
+    this.lastModified = lastModified;
   }
 
   @Override

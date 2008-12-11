@@ -18,11 +18,9 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
-import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.ServletContainer;
 import com.google.gwt.dev.shell.ServletContainerLauncher;
@@ -40,7 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.BindException;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -109,18 +107,13 @@ public class HostedMode extends HostedModeBase {
       registerHandler(new ArgHandlerStartupURLs());
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
-      registerHandler(new ArgHandlerWorkDirOptional(options) {
-        @Override
-        public String[] getDefaultArgs() {
-          return new String[] {"-workDir", "work"};
-        }
-      });
+      registerHandler(new ArgHandlerWorkDirOptional(options));
       registerHandler(new ArgHandlerModuleName(options));
     }
 
     @Override
     protected String getName() {
-      return GWTShell.class.getName();
+      return HostedMode.class.getName();
     }
   }
 
@@ -141,8 +134,9 @@ public class HostedMode extends HostedModeBase {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    HostedMode shellMain = new HostedMode();
-    if (shellMain.new ArgProcessor().processArgs(args)) {
+    HostedMode hostedMode = new HostedMode();
+    if (hostedMode.new ArgProcessor().processArgs(args)) {
+      hostedMode.run();
       // Exit w/ success code.
       System.exit(0);
     }
@@ -165,7 +159,16 @@ public class HostedMode extends HostedModeBase {
    */
   private ServletContainerLauncher launcher = new JettyLauncher();
 
-  private final Map<ModuleDef, StandardLinkerContext> linkerMap = new IdentityHashMap<ModuleDef, StandardLinkerContext>();
+  /**
+   * Maps each active linker stack by module.
+   */
+  private final Map<String, StandardLinkerContext> linkerStacks = new HashMap<String, StandardLinkerContext>();
+
+  /**
+   * The set of specified modules by name; the keys represent the renamed name
+   * of each module rather than the canonical name.
+   */
+  private Map<String, ModuleDef> modulesByName = new HashMap<String, ModuleDef>();
 
   /**
    * The server that was started.
@@ -203,11 +206,15 @@ public class HostedMode extends HostedModeBase {
     return false;
   }
 
+  @Override
+  protected void compile(TreeLogger logger) throws UnableToCompleteException {
+    CompilerOptions newOptions = new CompilerOptionsImpl(options);
+    new Compiler(newOptions).run(logger);
+  }
+
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    CompilerOptions newOptions = new CompilerOptionsImpl(options);
-    newOptions.addModuleName(moduleDef.getName());
-    new Compiler(newOptions).run(logger);
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -217,18 +224,48 @@ public class HostedMode extends HostedModeBase {
 
   @Override
   protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
-    final File moduleOutDir = new File(options.getWarDir(), module.getName());
     return new ArtifactAcceptor() {
       public void accept(TreeLogger logger, ArtifactSet newlyGeneratedArtifacts)
           throws UnableToCompleteException {
-        StandardLinkerContext linkerStack = linkerMap.get(module);
-        ArtifactSet artifacts = linkerStack.invokeRelink(logger,
-            newlyGeneratedArtifacts);
-        // TODO: extras
-        linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
-            null);
+        relink(logger, module, newlyGeneratedArtifacts);
       }
     };
+  }
+
+  @Override
+  protected boolean initModule(String moduleName) {
+    ModuleDef module = modulesByName.get(moduleName);
+    if (module == null) {
+      getTopLogger().log(
+          TreeLogger.WARN,
+          "Unknown module requested '"
+              + moduleName
+              + "'; all active GWT modules must be specified in the command line arguments");
+      return false;
+    }
+    try {
+      boolean shouldRefreshPage = false;
+      if (module.isGwtXmlFileStale()) {
+        shouldRefreshPage = true;
+        module = loadModule(getTopLogger(), module.getCanonicalName(), false);
+      }
+      link(getTopLogger(), module, true);
+      return shouldRefreshPage;
+    } catch (UnableToCompleteException e) {
+      // Already logged.
+      return false;
+    }
+  }
+
+  /*
+   * Overridden to keep our map up to date.
+   */
+  @Override
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
+      boolean refresh) throws UnableToCompleteException {
+    ModuleDef module = super.loadModule(logger, moduleName, refresh);
+    modulesByName.put(module.getName(), module);
+    return module;
   }
 
   @Override
@@ -261,40 +298,20 @@ public class HostedMode extends HostedModeBase {
     }
 
     for (String moduleName : options.getModuleNames()) {
-      TreeLogger linkLogger = getTopLogger().branch(TreeLogger.DEBUG,
-          "Prelinking module " + moduleName);
+      TreeLogger loadLogger = getTopLogger().branch(TreeLogger.DEBUG,
+          "Loading module " + moduleName);
       try {
-        ModuleDef module = ModuleDefLoader.loadFromClassPath(linkLogger,
-            moduleName);
+        ModuleDef module = loadModule(loadLogger, moduleName, false);
 
         // TODO: Validate servlet tags.
         String[] servletPaths = module.getServletPaths();
         if (servletPaths.length > 0) {
-          linkLogger.log(TreeLogger.WARN,
+          loadLogger.log(TreeLogger.WARN,
               "Ignoring legacy <servlet> tag(s) in module '" + moduleName
                   + "'; add servlet tags to your web.xml instead");
         }
 
-        File moduleOutDir = new File(options.getWarDir(), moduleName);
-        StandardLinkerContext linkerStack = new StandardLinkerContext(
-            linkLogger, module, options);
-        linkerMap.put(module, linkerStack);
-
-        // TODO: remove all public files initially, only conditionally emit.
-        ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
-        for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-          TreeLogger artifactLogger = linkLogger.branch(TreeLogger.DEBUG,
-              "Emitting resource " + artifact.getPartialPath(), null);
-
-          if (!artifact.isPrivate()) {
-            File outFile = new File(moduleOutDir, artifact.getPartialPath());
-            // if (!outFile.exists()) {
-            Util.copy(artifactLogger, artifact.getContents(artifactLogger),
-                outFile);
-            outFile.setLastModified(artifact.getLastModified());
-            // }
-          }
-        }
+        link(loadLogger, module, false);
       } catch (UnableToCompleteException e) {
         // Already logged.
         return -1;
@@ -316,5 +333,62 @@ public class HostedMode extends HostedModeBase {
       e.printStackTrace();
     }
     return -1;
+  }
+
+  /**
+   * Perform an initial hosted mode link, without overwriting newer or
+   * unmodified files in the output folder.
+   * 
+   * @param logger the logger to use
+   * @param module the module to link
+   * @param includePublicFiles if <code>true</code>, include public files in
+   *          the link, otherwise do not include them
+   * @throws UnableToCompleteException
+   */
+  private void link(TreeLogger logger, ModuleDef module,
+      boolean includePublicFiles) throws UnableToCompleteException {
+    // TODO: move the module-specific computations to a helper function.
+    File moduleOutDir = new File(options.getWarDir(), module.getName());
+    File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
+        options.getExtraDir(), module.getName());
+
+    // Create a new active linker stack for the fresh link.
+    StandardLinkerContext linkerStack = new StandardLinkerContext(logger,
+        module, options);
+    linkerStacks.put(module.getName(), linkerStack);
+
+    if (!includePublicFiles) {
+      linkerStack.getArtifacts().clear();
+    }
+
+    ArtifactSet artifacts = linkerStack.invokeLink(logger);
+    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
+        moduleExtraDir);
+  }
+
+  /**
+   * Perform hosted mode relink when new artifacts are generated, without
+   * overwriting newer or unmodified files in the output folder.
+   * 
+   * @param logger the logger to use
+   * @param module the module to link
+   * @param newlyGeneratedArtifacts the set of new artifacts
+   * @throws UnableToCompleteException
+   */
+  private void relink(TreeLogger logger, ModuleDef module,
+      ArtifactSet newlyGeneratedArtifacts) throws UnableToCompleteException {
+    // TODO: move the module-specific computations to a helper function.
+    File moduleOutDir = new File(options.getWarDir(), module.getName());
+    File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
+        options.getExtraDir(), module.getName());
+
+    // Find the existing linker stack.
+    StandardLinkerContext linkerStack = linkerStacks.get(module.getName());
+    assert linkerStack != null;
+
+    ArtifactSet artifacts = linkerStack.invokeRelink(logger,
+        newlyGeneratedArtifacts);
+    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
+        moduleExtraDir);
   }
 }

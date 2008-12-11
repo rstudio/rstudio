@@ -32,7 +32,10 @@ import java.io.File;
 
 /**
  * The main executable class for the hosted mode shell.
+ * 
+ * @deprecated use {@link HostedMode} instead
  */
+@Deprecated
 public class GWTShell extends HostedModeBase {
 
   /**
@@ -103,6 +106,9 @@ public class GWTShell extends HostedModeBase {
   }
 
   public static void main(String[] args) {
+    System.err.println("WARNING: '" + GWTShell.class.getName()
+        + "' is deprecated and will be removed in a future release.");
+    System.err.println("Use '" + HostedMode.class.getName() + "' instead.");
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to
@@ -134,16 +140,21 @@ public class GWTShell extends HostedModeBase {
     this.options.copyFrom(options);
   }
 
+  @Override
+  protected void compile(TreeLogger logger) throws UnableToCompleteException {
+    throw new UnsupportedOperationException();
+  }
+
   /**
    * Compiles a logical module def. The caller can modify the specified module
    * def programmatically in some cases (this is needed for JUnit support, for
    * example).
    */
+  @Override
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
-    newOptions.addModuleName(moduleDef.getName());
-    new GWTCompiler(newOptions).run(logger);
+    new GWTCompiler(newOptions).run(logger, moduleDef);
   }
 
   @Override
@@ -169,6 +180,17 @@ public class GWTShell extends HostedModeBase {
         }
       }
     };
+  }
+
+  @Override
+  protected boolean initModule(String moduleName) {
+    /*
+     * Not used in legacy mode due to GWTShellServlet playing this role.
+     * 
+     * TODO: something smarter here and actually make GWTShellServlet less
+     * magic?
+     */
+    return false;
   }
 
   @Override

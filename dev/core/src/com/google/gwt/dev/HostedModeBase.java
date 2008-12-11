@@ -226,18 +226,22 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   private class BrowserWidgetHostImpl implements BrowserWidgetHost {
-    public BrowserWidgetHostImpl() {
-    }
 
-    public void compile(ModuleDef moduleDef) throws UnableToCompleteException {
-      HostedModeBase.this.compile(getLogger(), moduleDef);
+    public void compile() throws UnableToCompleteException {
+      if (isLegacyMode()) {
+        throw new UnsupportedOperationException();
+      }
+      HostedModeBase.this.compile(getLogger());
     }
 
     public void compile(String[] moduleNames) throws UnableToCompleteException {
+      if (!isLegacyMode()) {
+        throw new UnsupportedOperationException();
+      }
       for (int i = 0; i < moduleNames.length; i++) {
         String moduleName = moduleNames[i];
-        ModuleDef moduleDef = loadModule(moduleName, getLogger());
-        compile(moduleDef);
+        ModuleDef moduleDef = loadModule(getLogger(), moduleName, true);
+        HostedModeBase.this.compile(getLogger(), moduleDef);
       }
     }
 
@@ -254,7 +258,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
         // Try to find an existing loaded version of the module def.
         //
-        ModuleDef moduleDef = loadModule(moduleName, logger);
+        ModuleDef moduleDef = loadModule(logger, moduleName, true);
         assert (moduleDef != null);
 
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
@@ -271,6 +275,14 @@ abstract class HostedModeBase implements BrowserWindowController {
       return getTopLogger();
     }
 
+    public boolean initModule(String moduleName) {
+      return HostedModeBase.this.initModule(moduleName);
+    }
+
+    public boolean isLegacyMode() {
+      return HostedModeBase.this instanceof GWTShell;
+    }
+
     public String normalizeURL(String whatTheUserTyped) {
       return HostedModeBase.this.normalizeURL(whatTheUserTyped);
     }
@@ -278,24 +290,6 @@ abstract class HostedModeBase implements BrowserWindowController {
     public BrowserWidget openNewBrowserWindow()
         throws UnableToCompleteException {
       return HostedModeBase.this.openNewBrowserWindow();
-    }
-
-    /**
-     * Load a module.
-     * 
-     * @param moduleName name of the module to load
-     * @param logger TreeLogger to use
-     * @return the loaded module
-     * @throws UnableToCompleteException
-     */
-    private ModuleDef loadModule(String moduleName, TreeLogger logger)
-        throws UnableToCompleteException {
-      boolean assumeFresh = !alreadySeenModules.contains(moduleName);
-      ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger,
-          moduleName, !assumeFresh);
-      alreadySeenModules.add(moduleName);
-      assert (moduleDef != null) : "Required module state is absent";
-      return moduleDef;
     }
   }
 
@@ -485,9 +479,16 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
-   * Compiles a module.
+   * Compiles a module (legacy only).
    */
+  @Deprecated
   protected abstract void compile(TreeLogger logger, ModuleDef moduleDef)
+      throws UnableToCompleteException;
+
+  /**
+   * Compiles all modules.
+   */
+  protected abstract void compile(TreeLogger logger)
       throws UnableToCompleteException;
 
   protected abstract HostedModeBaseOptions createOptions();
@@ -546,12 +547,43 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
+   * Called from a selection script as it begins to load in hosted mode. This
+   * triggers a hosted mode link, which might actually update the running
+   * selection script.
+   * 
+   * @param moduleName the module to link
+   * @return <code>true</code> if the selection script was overwritten; this
+   *         will trigger a full-page refresh by the calling (out of date)
+   *         selection script
+   */
+  protected abstract boolean initModule(String moduleName);
+
+  /**
    * By default we will open the application window.
    * 
    * @return true if we are running in headless mode
    */
   protected final boolean isHeadless() {
     return headlessMode;
+  }
+
+  /**
+   * Load a module.
+   * 
+   * @param moduleName name of the module to load
+   * @param logger TreeLogger to use
+   * @param refresh if <code>true</code>, refresh the module from disk
+   * @return the loaded module
+   * @throws UnableToCompleteException
+   */
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
+      boolean refresh) throws UnableToCompleteException {
+    refresh &= alreadySeenModules.contains(moduleName);
+    ModuleDef moduleDef = ModuleDefLoader.loadFromClassPath(logger, moduleName,
+        refresh);
+    alreadySeenModules.add(moduleName);
+    assert (moduleDef != null) : "Required module state is absent";
+    return moduleDef;
   }
 
   protected boolean notDone() {

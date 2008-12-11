@@ -40,6 +40,13 @@ public interface LinkerContext {
   String getModuleFunctionName();
 
   /**
+   * Returns the time at which the module being compiled was last modified. Can
+   * be used to set an appropriate timestamp on artifacts which depend solely on
+   * the module definition.
+   */
+  long getModuleLastModified();
+
+  /**
    * Returns the name of the module being compiled.
    */
   String getModuleName();

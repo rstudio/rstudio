@@ -351,14 +351,18 @@ public class ModuleDef implements PublicOracle {
   }
 
   public boolean isGwtXmlFileStale() {
+    return lastModified() > moduleDefCreationTime;
+  }
+
+  public long lastModified() {
+    long lastModified = moduleDefCreationTime;
     for (Iterator<File> iter = gwtXmlFiles.iterator(); iter.hasNext();) {
       File xmlFile = iter.next();
-      if ((!xmlFile.exists())
-          || (xmlFile.lastModified() > moduleDefCreationTime)) {
-        return true;
+      if (xmlFile.exists()) {
+        lastModified = Math.min(lastModified, xmlFile.lastModified());
       }
     }
-    return false;
+    return lastModified;
   }
 
   /**
