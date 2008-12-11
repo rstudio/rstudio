@@ -50,8 +50,8 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
   tracer.log("context=%08x", unsigned(cx));
   JsRootedValue::ContextManager context(cx);
   JsRootedValue::ensureRuntime(cx);
-  if (argc < 2) {
-    tracer.setFail("less than 2 args");
+  if (argc < 3) {
+    tracer.setFail("less than 3 args");
     return JS_FALSE;
   }
 
@@ -69,7 +69,7 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
   }
 
   JSString* version = 0;
-  if (argc > 2 && argv[2] != JSVAL_NULL && argv[2] != JSVAL_VOID) {
+  if (argv[2] != JSVAL_NULL && argv[2] != JSVAL_VOID) {
     version = JS_ValueToString(cx, argv[2]);
   }
 
@@ -131,6 +131,64 @@ static JSBool gwtOnLoad(JSContext *cx, JSObject *obj, uintN argc,
       NS_REINTERPRET_CAST(jint, scriptGlobal.get()), jModuleName, jVersion);
   if (savedJNIEnv->ExceptionCheck()) {
     tracer.setFail("LowLevelMoz.ExternalObject.gwtOnLoad() threw an exception");
+    return JS_FALSE;
+  }
+  *rval = BOOLEAN_TO_JSVAL((result == JNI_FALSE) ? JS_FALSE : JS_TRUE);
+  return JS_TRUE;
+}
+
+/*
+ * definition of JavaScript initModule method which maps to the Java
+ * initModule method.
+ */
+static JSBool initModule(JSContext *cx, JSObject *obj, uintN argc,
+    jsval *argv, jsval *rval)
+{
+  Tracer tracer("initModule");
+  tracer.log("context=%08x", unsigned(cx));
+  JsRootedValue::ContextManager context(cx);
+  JsRootedValue::ensureRuntime(cx);
+  if (argc < 1) {
+    tracer.setFail("less than 1 args");
+    return JS_FALSE;
+  }
+
+  JSString* moduleName = 0;
+  if (argv[0] != JSVAL_NULL && argv[0] != JSVAL_VOID) {
+    moduleName = JS_ValueToString(cx, argv[0]);
+  }
+
+  jstring jModuleName(0);
+  if (moduleName) {
+    jModuleName = savedJNIEnv->NewString(JS_GetStringChars(moduleName),
+        JS_GetStringLength(moduleName));
+    if (!jModuleName || savedJNIEnv->ExceptionCheck()) {
+      tracer.setFail("can't get module name in Java string");
+      return JS_FALSE;
+    }
+    tracer.log("module name=%s", JS_GetStringBytes(moduleName));
+  } else {
+    tracer.log("null module name");
+  }
+
+  jobject externalObject = NS_REINTERPRET_CAST(jobject, JS_GetPrivate(cx, obj));
+  jclass objClass = savedJNIEnv->GetObjectClass(externalObject);
+  if (!objClass || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("can't get LowLevelMoz.ExternalObject class");
+    return JS_FALSE;
+  }
+
+  jmethodID methodID = savedJNIEnv->GetMethodID(objClass, "initModule",
+      "(Ljava/lang/String;)Z");
+  if (!methodID || savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("can't get initModule method");
+    return JS_FALSE;
+  }
+
+  jboolean result = savedJNIEnv->CallBooleanMethod(externalObject, methodID,
+      jModuleName);
+  if (savedJNIEnv->ExceptionCheck()) {
+    tracer.setFail("LowLevelMoz.ExternalObject.initModule() threw an exception");
     return JS_FALSE;
   }
   *rval = BOOLEAN_TO_JSVAL((result == JNI_FALSE) ? JS_FALSE : JS_TRUE);
@@ -297,6 +355,11 @@ NS_IMETHODIMP ExternalWrapper::GetScriptObject(nsIScriptContext *aContext,
     if (!JS_DefineFunction(cx, newObj, "gwtOnLoad", gwtOnLoad, 3,
         JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT)) {
       tracer.setFail("can't define gwtOnLoad function on JavaScript object");
+      return NS_ERROR_UNEXPECTED;
+    }
+    if (!JS_DefineFunction(cx, newObj, "initModule", initModule, 1,
+        JSPROP_ENUMERATE | JSPROP_READONLY | JSPROP_PERMANENT)) {
+      tracer.setFail("can't define initModule function on JavaScript object");
       return NS_ERROR_UNEXPECTED;
     }
     jsWindowExternalObject = newObj;
