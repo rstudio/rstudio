@@ -138,10 +138,12 @@ public class JettyLauncher implements ServletContainerLauncher {
     private final File appRootDir;
     private final TreeLogger logger;
     private final WebAppContext wac;
+    private final Server server;
 
-    public JettyServletContainer(TreeLogger logger, WebAppContext wac,
-        int actualPort, File appRootDir) {
+    public JettyServletContainer(TreeLogger logger, Server server,
+        WebAppContext wac, int actualPort, File appRootDir) {
       this.logger = logger;
+      this.server = server;
       this.wac = wac;
       this.actualPort = actualPort;
       this.appRootDir = appRootDir;
@@ -176,7 +178,8 @@ public class JettyLauncher implements ServletContainerLauncher {
       TreeLogger branch = logger.branch(TreeLogger.INFO,
           "Stopping Jetty server");
       try {
-        wac.stop();
+        server.stop();
+        server.setStopAtShutdown(false);
       } catch (Exception e) {
         branch.log(TreeLogger.ERROR, "Unable to stop embedded Jetty server", e);
         throw new UnableToCompleteException();
@@ -205,28 +208,31 @@ public class JettyLauncher implements ServletContainerLauncher {
       }
     }
 
-    Server server = new Server();
     SelectChannelConnector connector = new SelectChannelConnector();
     connector.setPort(port);
-    connector.setHost("127.0.0.1");
-    // Don't steal ports from an existing proc.
+
+    // Don't share ports with an existing process.
     connector.setReuseAddress(false);
 
+    // Linux keeps the port blocked after shutdown if we don't disable this.
+    connector.setSoLingerTime(0);
+
+    Server server = new Server();
     server.addConnector(connector);
 
     // Create a new web app in the war directory.
     WebAppContext wac = new WebAppContext(appRootDir.getAbsolutePath(), "/");
 
-    // Prevent file locking on windows; pick up file changes.
+    // Prevent file locking on Windows; pick up file changes.
     wac.getInitParams().put(
         "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
 
     server.setHandler(wac);
-    server.setStopAtShutdown(true);
     server.start();
+    server.setStopAtShutdown(true);
 
-    return new JettyServletContainer(logger, wac, connector.getLocalPort(),
-        appRootDir);
+    return new JettyServletContainer(logger, server, wac,
+        connector.getLocalPort(), appRootDir);
   }
 
   private void checkStartParams(TreeLogger logger, int port, File appRootDir) {
