@@ -397,11 +397,7 @@ public class JUnitShell extends GWTShell {
       if (!unitTestShell.startUp()) {
         throw new JUnitFatalLaunchException("Shell failed to start");
       }
-      Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-        public void run() {
-          unitTestShell.shutDown();
-        }
-      }));
+      // TODO: install a shutdown hook? Not necessary with GWTShell.
       unitTestShell.lastLaunchFailed = false;
     }
 
