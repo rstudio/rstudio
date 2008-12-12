@@ -42,6 +42,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * {@example com.google.gwt.examples.ListBoxExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class ListBox extends FocusWidget implements SourcesChangeEvents,
     HasChangeHandlers, HasName {
 

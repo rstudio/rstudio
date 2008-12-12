@@ -51,6 +51,7 @@ import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
  * <h3>Example</h3> {@example com.google.gwt.examples.HistoryExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     HasClickHandlers {
 

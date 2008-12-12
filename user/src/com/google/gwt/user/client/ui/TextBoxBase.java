@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
 /**
  * Abstract base class for all text entry widgets.
  */
+@SuppressWarnings("deprecation")
 public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     HasChangeHandlers, HasText, HasName, HasValue<String> {
 

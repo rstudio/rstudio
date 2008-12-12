@@ -25,6 +25,7 @@ import com.google.gwt.user.client.Element;
 /**
  * A simple panel that wraps its contents in a scrollable area.
  */
+@SuppressWarnings("deprecation")
 public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     HasScrollHandlers {
 

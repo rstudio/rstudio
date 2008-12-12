@@ -60,6 +60,7 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  * <li>.gwt-PopupPanel .popupContent { the wrapper around the content }</li>
  * </ul>
  */
+@SuppressWarnings("deprecation")
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     EventPreview, HasAnimation, HasCloseHandlers<PopupPanel> {
 

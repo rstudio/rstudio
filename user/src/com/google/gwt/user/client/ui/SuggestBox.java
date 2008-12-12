@@ -121,6 +121,7 @@ import java.util.List;
  * @see MultiWordSuggestOracle
  * @see TextBoxBase
  */
+@SuppressWarnings("deprecation")
 public class SuggestBox extends Composite implements HasText, HasFocus,
     HasAnimation, SourcesClickEvents, SourcesFocusEvents, SourcesChangeEvents,
     SourcesKeyboardEvents, FiresSuggestionEvents, HasAllKeyHandlers,

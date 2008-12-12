@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface can receive keyboard focus.
  */
+@SuppressWarnings("deprecation")
 public interface HasFocus extends SourcesFocusEvents, SourcesKeyboardEvents {
 
   /**

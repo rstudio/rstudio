@@ -15,12 +15,18 @@
  */
 package com.google.gwt.user.client.ui;
 
+
 /**
- * A widget that implements this interface fires the events defined by
- * the {@link DisclosureHandler} interface.
+ * A widget that implements this interface fires the events defined by the
+ * {@link DisclosureHandler} interface.
+ * 
+ * @deprecated use {@link com.google.gwt.event.logical.shared.HasOpenHandlers}
+ *             and {@link com.google.gwt.event.logical.shared.HasCloseHandlers}
+ *             instead
  */
+@Deprecated
 public interface FiresDisclosureEvents {
-  
+
   /**
    * Adds a handler interface to receive open events.
    * 
@@ -29,7 +35,7 @@ public interface FiresDisclosureEvents {
    */
   @Deprecated
   void addEventHandler(DisclosureHandler handler);
-  
+
   /**
    * Removes a previously added handler interface.
    * 
