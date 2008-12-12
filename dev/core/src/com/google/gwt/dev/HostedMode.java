@@ -42,7 +42,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The main executable class for the hosted mode shell.
+ * The main executable class for the hosted mode shell. NOTE: the public API for
+ * this class is to be determined. Consider this class as having <b>no</b>
+ * public API other than {@link #main(String[])}.
  */
 public class HostedMode extends HostedModeBase {
 
@@ -184,26 +186,10 @@ public class HostedMode extends HostedModeBase {
     console.setMaxDetail(TreeLogger.WARN);
   }
 
-  public boolean setServer(TreeLogger logger, String serverClassName) {
-    Throwable t;
-    try {
-      Class<?> clazz = Class.forName(serverClassName, true,
-          Thread.currentThread().getContextClassLoader());
-      Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
-      launcher = sclClass.newInstance();
-      return true;
-    } catch (ClassCastException e) {
-      t = e;
-    } catch (ClassNotFoundException e) {
-      t = e;
-    } catch (InstantiationException e) {
-      t = e;
-    } catch (IllegalAccessException e) {
-      t = e;
-    }
-    logger.log(TreeLogger.ERROR, "Unable to load server class '"
-        + serverClassName + "'", t);
-    return false;
+  /**
+   * The public API of this class is yet to be determined.
+   */
+  private HostedMode() {
   }
 
   @Override
@@ -340,6 +326,28 @@ public class HostedMode extends HostedModeBase {
     ModuleDef module = super.loadModule(logger, moduleName, refresh);
     modulesByName.put(module.getName(), module);
     return module;
+  }
+
+  protected boolean setServer(TreeLogger logger, String serverClassName) {
+    Throwable t;
+    try {
+      Class<?> clazz = Class.forName(serverClassName, true,
+          Thread.currentThread().getContextClassLoader());
+      Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
+      launcher = sclClass.newInstance();
+      return true;
+    } catch (ClassCastException e) {
+      t = e;
+    } catch (ClassNotFoundException e) {
+      t = e;
+    } catch (InstantiationException e) {
+      t = e;
+    } catch (IllegalAccessException e) {
+      t = e;
+    }
+    logger.log(TreeLogger.ERROR, "Unable to load server class '"
+        + serverClassName + "'", t);
+    return false;
   }
 
   /**
