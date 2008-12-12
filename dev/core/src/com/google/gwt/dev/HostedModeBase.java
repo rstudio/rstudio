@@ -194,7 +194,12 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(getArgHandlerPort());
       registerHandler(new ArgHandlerWhitelist());
       registerHandler(new ArgHandlerBlacklist());
-      registerHandler(new ArgHandlerLogLevel(options));
+      registerHandler(new ArgHandlerLogLevel(options) {
+        @Override
+        protected Type getDefaultLogLevel() {
+          return doGetDefaultLogLevel();
+        }
+      });
       registerHandler(new ArgHandlerGenDir(options));
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
