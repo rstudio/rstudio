@@ -56,7 +56,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -190,7 +189,7 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
-  abstract class ArgProcessor extends ArgProcessorBase {
+  abstract class ArgProcessor extends ToolBase {
     public ArgProcessor() {
       registerHandler(getArgHandlerPort());
       registerHandler(new ArgHandlerWhitelist());
@@ -206,6 +205,20 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
     }
+
+    /*
+     * Overridden to make public.
+     */
+    @Override
+    public final boolean processArgs(String[] args) {
+      return super.processArgs(args);
+    }
+
+    /*
+     * Overridden to make abstract.
+     */
+    @Override
+    protected abstract String getName();
   }
 
   interface HostedModeBaseOptions extends JJSOptions, OptionLogLevel,
@@ -285,6 +298,14 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
+  static {
+    // Force ToolBase to clinit, which causes SWT stuff to happen.
+    new ToolBase() {
+    };
+    // Correct menu on Mac OS X
+    Display.setAppName("GWT");
+  }
+
   protected final HostedModeBaseOptions options;
 
   /**
@@ -299,7 +320,11 @@ abstract class HostedModeBase implements BrowserWindowController {
 
   private final List<Shell> browserShells = new ArrayList<Shell>();
 
-  private Display display;
+  /**
+   * Use the default display; constructing a new one would make instantiating
+   * multiple GWTShells fail with a mysterious exception.
+   */
+  private final Display display = Display.getDefault();
 
   private boolean headlessMode = false;
 
@@ -334,10 +359,6 @@ abstract class HostedModeBase implements BrowserWindowController {
     return port;
   }
 
-  public final List<String> getStartupURLs() {
-    return Collections.unmodifiableList(startupUrls);
-  }
-
   public TreeLogger getTopLogger() {
     return mainWnd.getLogger();
   }
@@ -348,10 +369,6 @@ abstract class HostedModeBase implements BrowserWindowController {
     } else {
       return true;
     }
-  }
-
-  public boolean isRunTomcat() {
-    return runTomcat;
   }
 
   /**
@@ -521,19 +538,6 @@ abstract class HostedModeBase implements BrowserWindowController {
   protected abstract void doShutDownServer();
 
   protected boolean doStartup() {
-    // Force ToolBase to clinit, which causes SWT stuff to happen.
-    new ToolBase() {
-    };
-
-    /**
-     * Use the default display; constructing a new one would make instantiating
-     * multiple GWTShells fail with a mysterious exception.
-     */
-    display = Display.getDefault();
-
-    // Correct menu on Mac OS X
-    Display.setAppName("GWT");
-
     loadRequiredNativeLibs();
 
     // Create the main app window.
