@@ -19,10 +19,14 @@ Merges:
 /releases/1.6/@c4269, c4298, and c4299 were merged (r4314) into trunk; note this is a cherrypick
 /trunk revision c4266 was merged (r4321) into this branch
 
----> The next merge into trunk will be 4198:4268, 4269:4297, 4299:4320, and 4321:????
+---> The next merge into trunk will be 4198:4268, 4269:4297, 4299:4320, and 4321:????.  HOWEVER, pay attention to c4263.
 
 svn merge --accept postpone -r4198:4268 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
 svn merge --accept postpone -r4269:4297 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
 svn merge --accept postpone -r4299:4320 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
 svn merge --accept postpone -r4321:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
 
+The cherrypick merge of c4298 also acquired (erroneously) a test in CheckBoxTest.java from c4263, testing
+behavior of CheckBox.setValue(null).  The tested code from CheckBox.java was (correctly) not merged, but the
+test was (erroneously) submitted at trunk r4314 and reverted at trunk r4330.  The test *should* reappear
+when c4263 is merged... but have a look to be sure.
