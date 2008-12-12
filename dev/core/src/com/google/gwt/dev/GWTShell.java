@@ -194,13 +194,14 @@ public class GWTShell extends HostedModeBase {
   }
 
   @Override
-  protected void shutDownServer() {
+  protected void doShutDownServer() {
     // Stop the HTTP server.
     //
     EmbeddedTomcatServer.stop();
   }
 
-  protected int startUpServer() {
+  @Override
+  protected int doStartUpServer() {
     // TODO(bruce): make tomcat work in terms of the modular launcher
     String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), getPort(),
         options);

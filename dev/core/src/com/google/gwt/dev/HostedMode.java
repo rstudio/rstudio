@@ -269,7 +269,7 @@ public class HostedMode extends HostedModeBase {
   }
 
   @Override
-  protected void shutDownServer() {
+  protected void doShutDownServer() {
     if (server != null) {
       try {
         server.stop();
@@ -285,7 +285,10 @@ public class HostedMode extends HostedModeBase {
   }
 
   @Override
-  protected int startUpServer() {
+  protected boolean doStartup() {
+    if (!super.doStartup()) {
+      return false;
+    }
     tempWorkDir = options.getWorkDir() == null;
     if (tempWorkDir) {
       try {
@@ -293,7 +296,7 @@ public class HostedMode extends HostedModeBase {
       } catch (IOException e) {
         System.err.println("Unable to create hosted mode work directory");
         e.printStackTrace();
-        return -1;
+        return false;
       }
     }
 
@@ -314,10 +317,14 @@ public class HostedMode extends HostedModeBase {
         link(loadLogger, module, false);
       } catch (UnableToCompleteException e) {
         // Already logged.
-        return -1;
+        return false;
       }
     }
+    return true;
+  }
 
+  @Override
+  protected int doStartUpServer() {
     try {
       TreeLogger serverLogger = getTopLogger().branch(TreeLogger.INFO,
           "Starting HTTP on port " + getPort(), null);

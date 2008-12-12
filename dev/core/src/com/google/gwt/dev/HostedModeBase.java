@@ -530,6 +530,18 @@ abstract class HostedModeBase implements BrowserWindowController {
     return true;
   }
 
+  protected boolean doStartup() {
+    loadRequiredNativeLibs();
+
+    // Create the main app window.
+    openAppWindow();
+
+    // Initialize the logger.
+    //
+    initializeLogger();
+    return true;
+  }
+
   /**
    * Derived classes can override to set a default port.
    */
@@ -622,10 +634,8 @@ abstract class HostedModeBase implements BrowserWindowController {
     if (!runTomcat) {
       return;
     }
-    shutDownServer();
+    doShutDownServer();
   }
-
-  protected abstract void shutDownServer();
 
   protected void sleep() {
     display.sleep();
@@ -638,17 +648,12 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     started = true;
 
-    loadRequiredNativeLibs();
-
-    // Create the main app window.
-    openAppWindow();
-
-    // Initialize the logger.
-    //
-    initializeLogger();
+    if (!doStartup()) {
+      return false;
+    }
 
     if (runTomcat) {
-      int resultPort = startUpServer();
+      int resultPort = doStartUpServer();
       if (resultPort < 0) {
         return false;
       }
@@ -658,7 +663,9 @@ abstract class HostedModeBase implements BrowserWindowController {
     return true;
   }
 
-  protected abstract int startUpServer();
+  protected abstract void doShutDownServer();
+
+  protected abstract int doStartUpServer();
 
   private Shell createTrackedBrowserShell() {
     final Shell shell = new Shell(display);
