@@ -19,5 +19,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.Compiler"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-style PRETTY&#13;&#10;-logLevel INFO&#13;&#10;com.google.gwt.sample.dynatable2.DynaTable2"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="DynaTable2"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#13;&#10;-Xmx256M&#13;&#10;-Dgwt.devjar=C:\gwt\releases\1.6\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-ea&#13;&#10;-Xmx256M&#13;&#10;-Dgwt.devjar=${gwt_devjar}"/>
 </launchConfiguration>
