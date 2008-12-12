@@ -42,7 +42,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -355,14 +354,13 @@ public class ModuleDef implements PublicOracle {
   }
 
   public long lastModified() {
-    long lastModified = moduleDefCreationTime;
-    for (Iterator<File> iter = gwtXmlFiles.iterator(); iter.hasNext();) {
-      File xmlFile = iter.next();
+    long lastModified = 0;
+    for (File xmlFile : gwtXmlFiles) {
       if (xmlFile.exists()) {
-        lastModified = Math.min(lastModified, xmlFile.lastModified());
+        lastModified = Math.max(lastModified, xmlFile.lastModified());
       }
     }
-    return lastModified;
+    return lastModified > 0 ? lastModified : moduleDefCreationTime;
   }
 
   /**
