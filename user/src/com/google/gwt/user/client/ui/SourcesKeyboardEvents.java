@@ -18,8 +18,10 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.KeyboardListener} interface.
- * @deprecated use {@link com.google.gwt.com.google.gwt.event.dom.client.HasAllKeyHandlers}
- * instead
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.com.google.gwt.event.dom.client.HasAllKeyHandlers}
+ *             instead
  */
 @Deprecated
 public interface SourcesKeyboardEvents {
