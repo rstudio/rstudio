@@ -233,42 +233,6 @@ public class HostedMode extends HostedModeBase {
   }
 
   @Override
-  protected boolean initModule(String moduleName) {
-    ModuleDef module = modulesByName.get(moduleName);
-    if (module == null) {
-      getTopLogger().log(
-          TreeLogger.WARN,
-          "Unknown module requested '"
-              + moduleName
-              + "'; all active GWT modules must be specified in the command line arguments");
-      return false;
-    }
-    try {
-      boolean shouldRefreshPage = false;
-      if (module.isGwtXmlFileStale()) {
-        shouldRefreshPage = true;
-        module = loadModule(getTopLogger(), module.getCanonicalName(), false);
-      }
-      link(getTopLogger(), module, true);
-      return shouldRefreshPage;
-    } catch (UnableToCompleteException e) {
-      // Already logged.
-      return false;
-    }
-  }
-
-  /*
-   * Overridden to keep our map up to date.
-   */
-  @Override
-  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
-      boolean refresh) throws UnableToCompleteException {
-    ModuleDef module = super.loadModule(logger, moduleName, refresh);
-    modulesByName.put(module.getName(), module);
-    return module;
-  }
-
-  @Override
   protected void doShutDownServer() {
     if (server != null) {
       try {
@@ -340,6 +304,42 @@ public class HostedMode extends HostedModeBase {
       e.printStackTrace();
     }
     return -1;
+  }
+
+  @Override
+  protected boolean initModule(String moduleName) {
+    ModuleDef module = modulesByName.get(moduleName);
+    if (module == null) {
+      getTopLogger().log(
+          TreeLogger.WARN,
+          "Unknown module requested '"
+              + moduleName
+              + "'; all active GWT modules must be specified in the command line arguments");
+      return false;
+    }
+    try {
+      boolean shouldRefreshPage = false;
+      if (module.isGwtXmlFileStale()) {
+        shouldRefreshPage = true;
+        module = loadModule(getTopLogger(), module.getCanonicalName(), false);
+      }
+      link(getTopLogger(), module, true);
+      return shouldRefreshPage;
+    } catch (UnableToCompleteException e) {
+      // Already logged.
+      return false;
+    }
+  }
+
+  /*
+   * Overridden to keep our map up to date.
+   */
+  @Override
+  protected ModuleDef loadModule(TreeLogger logger, String moduleName,
+      boolean refresh) throws UnableToCompleteException {
+    ModuleDef module = super.loadModule(logger, moduleName, refresh);
+    modulesByName.put(module.getName(), module);
+    return module;
   }
 
   /**

@@ -183,17 +183,6 @@ public class GWTShell extends HostedModeBase {
   }
 
   @Override
-  protected boolean initModule(String moduleName) {
-    /*
-     * Not used in legacy mode due to GWTShellServlet playing this role.
-     * 
-     * TODO: something smarter here and actually make GWTShellServlet less
-     * magic?
-     */
-    return false;
-  }
-
-  @Override
   protected void doShutDownServer() {
     // Stop the HTTP server.
     //
@@ -213,5 +202,16 @@ public class GWTShell extends HostedModeBase {
       return -1;
     }
     return EmbeddedTomcatServer.getPort();
+  }
+
+  @Override
+  protected boolean initModule(String moduleName) {
+    /*
+     * Not used in legacy mode due to GWTShellServlet playing this role.
+     * 
+     * TODO: something smarter here and actually make GWTShellServlet less
+     * magic?
+     */
+    return false;
   }
 }

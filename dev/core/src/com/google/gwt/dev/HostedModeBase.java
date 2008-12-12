@@ -479,16 +479,16 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
+   * Compiles all modules.
+   */
+  protected abstract void compile(TreeLogger logger)
+      throws UnableToCompleteException;
+
+  /**
    * Compiles a module (legacy only).
    */
   @Deprecated
   protected abstract void compile(TreeLogger logger, ModuleDef moduleDef)
-      throws UnableToCompleteException;
-
-  /**
-   * Compiles all modules.
-   */
-  protected abstract void compile(TreeLogger logger)
       throws UnableToCompleteException;
 
   protected abstract HostedModeBaseOptions createOptions();
@@ -530,6 +530,8 @@ abstract class HostedModeBase implements BrowserWindowController {
     return true;
   }
 
+  protected abstract void doShutDownServer();
+
   protected boolean doStartup() {
     loadRequiredNativeLibs();
 
@@ -541,6 +543,8 @@ abstract class HostedModeBase implements BrowserWindowController {
     initializeLogger();
     return true;
   }
+
+  protected abstract int doStartUpServer();
 
   /**
    * Derived classes can override to set a default port.
@@ -662,10 +666,6 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     return true;
   }
-
-  protected abstract void doShutDownServer();
-
-  protected abstract int doStartUpServer();
 
   private Shell createTrackedBrowserShell() {
     final Shell shell = new Shell(display);
