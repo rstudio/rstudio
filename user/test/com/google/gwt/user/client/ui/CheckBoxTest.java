@@ -15,8 +15,10 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -29,7 +31,7 @@ public class CheckBoxTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
-  }  
+  }
 
   @Override
   protected void gwtSetUp() throws Exception {
@@ -85,7 +87,7 @@ public class CheckBoxTest extends GWTTestCase {
     UIObjectTest.assertDebugId("myCheck-input", newInput);
     UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
   }
-  
+
   public void testValueChangeEvent() {
     CheckBox cb = new CheckBox();
     Handler h = new Handler();
@@ -94,7 +96,7 @@ public class CheckBoxTest extends GWTTestCase {
     assertNull(h.received);
     cb.setChecked(true);
     assertNull(h.received);
-    
+
     cb.setValue(false);
     assertNull(h.received);
     cb.setValue(true);
@@ -102,17 +104,61 @@ public class CheckBoxTest extends GWTTestCase {
 
     cb.setValue(true, true);
     assertNull(h.received);
-    
+
     cb.setValue(false, true);
     assertFalse(h.received);
 
     cb.setValue(true, true);
     assertTrue(h.received);
+
+    try {
+      cb.setValue(null);
+      fail("Should throw IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      /* pass */
+    }
   }
-  
+
+  static class ListenerTester implements ClickListener {
+    static int fired = 0;
+    static HandlerManager manager;
+
+    public static void fire() {
+      fired = 0;
+      manager.fireEvent(new ClickEvent() {
+      });
+    }
+ 
+    public void onClick(Widget sender) {
+      ++fired;
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testListenerRemoval() {
+    CheckBox b = new CheckBox();
+ 
+    ClickListener r1 = new ListenerTester();
+    ClickListener r2 = new ListenerTester();
+    ListenerTester.manager = b.ensureHandlers();
+    b.addClickListener(r1);
+    b.addClickListener(r2);
+
+    ListenerTester.fire();
+    assertEquals(ListenerTester.fired, 2);
+
+    b.removeClickListener(r1);
+    ListenerTester.fire();
+    assertEquals(ListenerTester.fired, 1);
+
+    b.removeClickListener(r2);
+    ListenerTester.fire();
+    assertEquals(ListenerTester.fired, 0);
+  }
+
   private static class Handler implements ValueChangeHandler<Boolean> {
     Boolean received = null;
-    
+
     public void onValueChange(ValueChangeEvent<Boolean> event) {
       received = event.getValue();
     }

@@ -131,24 +131,29 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
+
   // This is an internal helper method with the current formulation, we have
   // lost the info needed to make it safe by this point.
   @SuppressWarnings("unchecked")
-  protected static void baseRemove(HandlerManager manager,
+  // This is a direct copy of the baseRemove from
+  // com.google.gwt.user.client.ui.ListenerWrapper. Change in parallel.
+  static <H extends EventHandler> void baseRemove(HandlerManager manager,
       EventListener listener, Type... keys) {
     if (manager != null) {
-      for (Type key : keys) {
+      for (Type<H> key : keys) {
         int handlerCount = manager.getHandlerCount(key);
-        for (int i = 0; i < handlerCount; i++) {
-          EventHandler handler = manager.getHandler(key, i);
-          if (handler instanceof ListenerWrapper && ((ListenerWrapper) handler).listener.equals(listener)) {
+        // We are removing things as we traverse, have to go backward
+        for (int i = handlerCount - 1; i >= 0; i--) {
+          H handler = manager.getHandler(key, i);
+          if (handler instanceof ListenerWrapper
+              && ((ListenerWrapper) handler).listener.equals(listener)) {
             manager.removeHandler(key, handler);
           }
         }
       }
     }
   }
-
+  
   /**
    * Listener being wrapped.
    */

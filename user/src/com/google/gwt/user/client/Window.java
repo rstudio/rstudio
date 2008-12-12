@@ -392,12 +392,13 @@ public class Window {
     }
   }
 
+  // Package protected for testing.
+  static WindowHandlers handlers;
   private static boolean closeHandlersInitialized;
   private static boolean scrollHandlersInitialized;
   private static boolean resizeHandlersInitialized;
   private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
-  private static WindowHandlers handlers;
 
   /**
    * Adds a {@link CloseEvent} handler.
