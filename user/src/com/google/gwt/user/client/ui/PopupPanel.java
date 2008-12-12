@@ -356,10 +356,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     setPopupPosition(Window.getScrollLeft() + left, Window.getScrollTop() + top);
 
     if (!initiallyShowing) {
-      hide();
-      setVisible(true);
       setAnimationEnabled(initiallyAnimated);
-      show();
+      // Run the animation.  The popup is already visible, so we can skip the
+      // call to setState.
+      if (initiallyAnimated) {
+        impl.setClip(getElement(), "rect(0px, 0px, 0px, 0px)");
+        setVisible(true);
+        resizeAnimation.run(ANIMATION_DURATION);
+      } else {
+        setVisible(true);
+      }
     }
   }
 
