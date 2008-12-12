@@ -50,6 +50,7 @@ import java.util.Iterator;
  * selector:<br/> .gwt-DisclosurePanel-open .header { ... }
  * </p>
  */
+@SuppressWarnings("deprecation")
 public final class DisclosurePanel extends Composite implements
     FiresDisclosureEvents, HasWidgets, HasAnimation,
     HasOpenHandlers<DisclosurePanel>, HasCloseHandlers<DisclosurePanel> {

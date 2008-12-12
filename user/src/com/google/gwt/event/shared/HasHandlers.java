@@ -16,17 +16,17 @@
 
 package com.google.gwt.event.shared;
 
+
 /**
- * 
- * Characteristic interface indicating that the given widget fires events via a
- * {@link HandlerManager}.
- * 
+ * An object that implements this interface has a collection of handlers stored
+ * in a {@link HandlerManager}.
  */
-public interface HasHandlerManager {
+
+public interface HasHandlers {
   /**
-   * Gets this widget's handler manager.
+   * Gets this object's handlers. May return null if there are no handlers.
    * 
-   * @return the manager
+   * @return the handlers
    */
-  HandlerManager getHandlerManager();
+  HandlerManager getHandlers();
 }

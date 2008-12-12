@@ -82,6 +82,7 @@ import java.util.Map;
  * {@example com.google.gwt.examples.TreeExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     HasFocus, HasAnimation, HasAllKeyHandlers, HasAllFocusHandlers,
     HasSelectionHandlers<TreeItem>, HasOpenHandlers<TreeItem>,

@@ -16,18 +16,14 @@
 
 package com.google.gwt.event.logical.shared;
 
-import com.google.gwt.event.shared.HandlerManager;
-
 /**
- * An object that implements this interface has a collection of handlers stored
- * in a {@link HandlerManager}.
+ * This is a placeholder to avoid breaking projects depending on GWT trunk,
+ * HasHandlers has moved to com.google.gwt.event.shared.HasHandlers. This
+ * interface will be removed before the first GWT 1.6 milestone.
+ * 
+ * @deprecated use com.google.gwt.event.shared.HasHandlers instead.
  */
+@Deprecated
+public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers {
 
-public interface HasHandlers {
-  /**
-   * Gets this object's handlers. May return null if there are no handlers.
-   * 
-   * @return the handlers
-   */
-  HandlerManager getHandlers();
 }
