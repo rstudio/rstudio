@@ -27,6 +27,7 @@ import com.google.gwt.dev.shell.ServletContainerLauncher;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
@@ -68,10 +69,28 @@ public class HostedMode extends HostedModeBase {
     }
 
     @Override
-    public boolean setString(String arg) {
+    public boolean setString(String sclClassName) {
       // Supercedes -noserver.
       setRunTomcat(true);
-      return setServer(console, arg);
+      Throwable t;
+      try {
+        Class<?> clazz = Class.forName(sclClassName, true,
+            Thread.currentThread().getContextClassLoader());
+        Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
+        setServerContainerLauncher(sclClass.newInstance());
+        return true;
+      } catch (ClassCastException e) {
+        t = e;
+      } catch (ClassNotFoundException e) {
+        t = e;
+      } catch (InstantiationException e) {
+        t = e;
+      } catch (IllegalAccessException e) {
+        t = e;
+      }
+      System.err.println("Unable to load server class '" + sclClassName + "'");
+      t.printStackTrace();
+      return false;
     }
   }
 
@@ -110,6 +129,7 @@ public class HostedMode extends HostedModeBase {
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
+      registerHandler(new ArgHandlerLocalWorkers(options));
       registerHandler(new ArgHandlerModuleName(options));
     }
 
@@ -187,9 +207,9 @@ public class HostedMode extends HostedModeBase {
   }
 
   /**
-   * The public API of this class is yet to be determined.
+   * Default constructor for testing; no public API yet.
    */
-  private HostedMode() {
+  HostedMode() {
   }
 
   @Override
@@ -292,6 +312,10 @@ public class HostedMode extends HostedModeBase {
     return -1;
   }
 
+  protected ServletContainerLauncher getServerContainerLauncher() {
+    return launcher;
+  }
+
   @Override
   protected boolean initModule(String moduleName) {
     ModuleDef module = modulesByName.get(moduleName);
@@ -328,26 +352,8 @@ public class HostedMode extends HostedModeBase {
     return module;
   }
 
-  protected boolean setServer(TreeLogger logger, String serverClassName) {
-    Throwable t;
-    try {
-      Class<?> clazz = Class.forName(serverClassName, true,
-          Thread.currentThread().getContextClassLoader());
-      Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
-      launcher = sclClass.newInstance();
-      return true;
-    } catch (ClassCastException e) {
-      t = e;
-    } catch (ClassNotFoundException e) {
-      t = e;
-    } catch (InstantiationException e) {
-      t = e;
-    } catch (IllegalAccessException e) {
-      t = e;
-    }
-    logger.log(TreeLogger.ERROR, "Unable to load server class '"
-        + serverClassName + "'", t);
-    return false;
+  protected void setServerContainerLauncher(ServletContainerLauncher launcher) {
+    this.launcher = launcher;
   }
 
   /**

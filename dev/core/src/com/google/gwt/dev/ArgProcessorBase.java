@@ -15,16 +15,23 @@
  */
 package com.google.gwt.dev;
 
-import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
-import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
-import com.google.gwt.dev.util.arg.ArgHandlerTreeLoggerFlag;
-import com.google.gwt.dev.util.arg.ArgHandlerWorkDirRequired;
+import com.google.gwt.util.tools.ToolBase;
 
-abstract class CompileArgProcessor extends ArgProcessorBase {
-  public CompileArgProcessor(CompileTaskOptions options) {
-    registerHandler(new ArgHandlerLogLevel(options));
-    registerHandler(new ArgHandlerTreeLoggerFlag(options));
-    registerHandler(new ArgHandlerWorkDirRequired(options));
-    registerHandler(new ArgHandlerModuleName(options));
+/**
+ * Base class for new-style argument processors.
+ */
+abstract class ArgProcessorBase extends ToolBase {
+  /*
+   * Overridden to make public.
+   */
+  @Override
+  public final boolean processArgs(String[] args) {
+    return super.processArgs(args);
   }
+
+  /*
+   * Made abstract to force override.
+   */
+  @Override
+  protected abstract String getName();
 }
