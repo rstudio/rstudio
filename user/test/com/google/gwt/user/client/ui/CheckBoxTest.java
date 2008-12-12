@@ -111,12 +111,6 @@ public class CheckBoxTest extends GWTTestCase {
     cb.setValue(true, true);
     assertTrue(h.received);
 
-    try {
-      cb.setValue(null);
-      fail("Should throw IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      /* pass */
-    }
   }
 
   static class ListenerTester implements ClickListener {
