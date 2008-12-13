@@ -64,11 +64,6 @@ public class I18NSync extends ToolBase {
     }
 
     @Override
-    public String[] getDefaultArgs() {
-      return null;
-    }
-
-    @Override
     public String getPurpose() {
       return "Identifies the Constants/Messages class to be created.  For example com.google.sample.i18n.client.Colors";
     }
@@ -86,12 +81,6 @@ public class I18NSync extends ToolBase {
   }
 
   private class outDirHandler extends ArgHandlerString {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return null;
-    }
-
     @Override
     public String getPurpose() {
       return "Java source directory, defaults to the resource's class path.";

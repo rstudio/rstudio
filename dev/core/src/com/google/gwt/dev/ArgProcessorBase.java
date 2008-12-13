@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,35 +13,25 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.util.tools;
+package com.google.gwt.dev;
 
-import com.google.gwt.dev.util.Empty;
+import com.google.gwt.util.tools.ToolBase;
 
 /**
- * Argument handler for flags that have no parameters.
+ * Base class for new-style argument processors.
  */
-public abstract class ArgHandlerFlag extends ArgHandler {
-
-  public abstract String getPurpose();
-
-  public abstract String getTag();
-
-  public String[] getTagArgs() {
-    return Empty.STRINGS;
+abstract class ArgProcessorBase extends ToolBase {
+  /*
+   * Overridden to make public.
+   */
+  @Override
+  public final boolean processArgs(String[] args) {
+    return super.processArgs(args);
   }
 
-  public int handle(String[] args, int startIndex) {
-    if (setFlag()) {
-      return 0;
-    } else {
-      return -1;
-    }
-  }
-
-  public boolean isRequired() {
-    return false;
-  }
-
-  public abstract boolean setFlag();
-
+  /*
+   * Made abstract to force override.
+   */
+  @Override
+  protected abstract String getName();
 }

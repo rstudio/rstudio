@@ -30,5 +30,5 @@ public interface OptionOutDir {
   /**
    * Sets the output directory.
    */
-  void setOutDir(File dir);
+  void setOutDir(File outDir);
 }

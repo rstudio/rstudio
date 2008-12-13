@@ -31,7 +31,7 @@ public final class ArgHandlerOutDir extends ArgHandlerDir {
   }
 
   public String[] getDefaultArgs() {
-    return new String[] {"-out", System.getProperty("user.dir")};
+    return new String[] {getTag(), System.getProperty("user.dir")};
   }
 
   public String getPurpose() {

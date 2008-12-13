@@ -20,7 +20,9 @@ package com.google.gwt.util.tools;
  */
 public abstract class ArgHandler {
 
-  public abstract String[] getDefaultArgs();
+  public String[] getDefaultArgs() {
+    return null;
+  }
 
   public abstract String getPurpose();
 

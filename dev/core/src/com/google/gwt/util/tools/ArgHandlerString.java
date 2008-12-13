@@ -20,10 +20,6 @@ package com.google.gwt.util.tools;
  */
 public abstract class ArgHandlerString extends ArgHandler {
 
-  public String[] getDefaultArgs() {
-    return null;
-  }
-
   public int handle(String[] args, int startIndex) {
     if (startIndex + 1 < args.length) {
       if (!setString(args[startIndex + 1])) {

@@ -69,12 +69,6 @@ abstract class HostedModeBase implements BrowserWindowController {
    * Handles the -blacklist command line argument.
    */
   protected class ArgHandlerBlacklist extends ArgHandlerString {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return new String[] {"-blacklist", ""};
-    }
-
     @Override
     public String getPurpose() {
       return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
@@ -124,7 +118,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     @Override
     public String[] getDefaultArgs() {
-      return new String[] {"-port", "8888"};
+      return new String[] {getTag(), "8888"};
     }
 
     @Override
@@ -162,12 +156,6 @@ abstract class HostedModeBase implements BrowserWindowController {
    * Handles the -whitelist command line flag.
    */
   protected class ArgHandlerWhitelist extends ArgHandlerString {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return new String[] {"-whitelist", ""};
-    }
-
     @Override
     public String getPurpose() {
       return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
@@ -189,7 +177,7 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
-  abstract class ArgProcessor extends ToolBase {
+  abstract class ArgProcessor extends ArgProcessorBase {
     public ArgProcessor() {
       registerHandler(getArgHandlerPort());
       registerHandler(new ArgHandlerWhitelist());
@@ -205,20 +193,6 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
     }
-
-    /*
-     * Overridden to make public.
-     */
-    @Override
-    public final boolean processArgs(String[] args) {
-      return super.processArgs(args);
-    }
-
-    /*
-     * Overridden to make abstract.
-     */
-    @Override
-    protected abstract String getName();
   }
 
   interface HostedModeBaseOptions extends JJSOptions, OptionLogLevel,
@@ -284,6 +258,7 @@ abstract class HostedModeBase implements BrowserWindowController {
       return HostedModeBase.this.initModule(moduleName);
     }
 
+    @SuppressWarnings("deprecation")
     public boolean isLegacyMode() {
       return HostedModeBase.this instanceof GWTShell;
     }
@@ -375,21 +350,18 @@ abstract class HostedModeBase implements BrowserWindowController {
    * Launch the arguments as Urls in separate windows.
    */
   public final void launchStartupUrls(final TreeLogger logger) {
-    if (startupUrls != null) {
-      // Launch a browser window for each startup url.
-      //
-      String startupURL = "";
-      try {
-        for (String prenormalized : startupUrls) {
-          startupURL = normalizeURL(prenormalized);
-          logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
-          BrowserWidget bw = openNewBrowserWindow();
-          bw.go(startupURL);
-        }
-      } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to open new window for startup URL: " + startupURL, null);
+    // Launch a browser window for each startup url.
+    String startupURL = "";
+    try {
+      for (String prenormalized : startupUrls) {
+        startupURL = normalizeURL(prenormalized);
+        logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
+        BrowserWidget bw = openNewBrowserWindow();
+        bw.go(startupURL);
       }
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR,
+          "Unable to open new window for startup URL: " + startupURL, null);
     }
   }
 
