@@ -45,56 +45,30 @@ public class SoycDashboard {
     String inFileName = args[0];
     
     // to store literals data
-    final TreeMap<String, LiteralsCollection> nameToLitColl = new TreeMap<String, LiteralsCollection>();
-    nameToLitColl.put("long",new LiteralsCollection("long"));
-    nameToLitColl.put("null",new LiteralsCollection("null"));
-    nameToLitColl.put("class",new LiteralsCollection("class"));
-    nameToLitColl.put("int",new LiteralsCollection("int"));
-    nameToLitColl.put("string",new LiteralsCollection("string"));
-    nameToLitColl.put("number",new LiteralsCollection("number"));
-    nameToLitColl.put("boolean",new LiteralsCollection("boolean"));
-    nameToLitColl.put("double",new LiteralsCollection("double"));
-    nameToLitColl.put("char",new LiteralsCollection("char"));
-    nameToLitColl.put("undefined",new LiteralsCollection("undefined"));
-    nameToLitColl.put("float",new LiteralsCollection("float"));
+    GlobalInformation.nameToLitColl.put("long",new LiteralsCollection("long"));
+    GlobalInformation.nameToLitColl.put("null",new LiteralsCollection("null"));
+    GlobalInformation.nameToLitColl.put("class",new LiteralsCollection("class"));
+    GlobalInformation.nameToLitColl.put("int",new LiteralsCollection("int"));
+    GlobalInformation.nameToLitColl.put("string",new LiteralsCollection("string"));
+    GlobalInformation.nameToLitColl.put("number",new LiteralsCollection("number"));
+    GlobalInformation.nameToLitColl.put("boolean",new LiteralsCollection("boolean"));
+    GlobalInformation.nameToLitColl.put("double",new LiteralsCollection("double"));
+    GlobalInformation.nameToLitColl.put("char",new LiteralsCollection("char"));
+    GlobalInformation.nameToLitColl.put("undefined",new LiteralsCollection("undefined"));
+    GlobalInformation.nameToLitColl.put("float",new LiteralsCollection("float"));
     
     // to store code data
-    final HashMap<String, CodeCollection> nameToCodeColl = new HashMap<String, CodeCollection>();
-    nameToCodeColl.put("allOther", new CodeCollection("allOther"));
-    nameToCodeColl.put("widget", new CodeCollection("widget"));
-    nameToCodeColl.put("rpcUser", new CodeCollection("rpcUser"));
-    nameToCodeColl.put("rpcGen", new CodeCollection("rpcGen"));
-    nameToCodeColl.put("rpcGwt", new CodeCollection("rpcGwt"));
-    nameToCodeColl.put("gwtLang", new CodeCollection("long"));
-    nameToCodeColl.put("jre", new CodeCollection("jre"));
+    GlobalInformation.nameToCodeColl.put("allOther", new CodeCollection("allOther"));
+    GlobalInformation.nameToCodeColl.put("widget", new CodeCollection("widget"));
+    GlobalInformation.nameToCodeColl.put("rpcUser", new CodeCollection("rpcUser"));
+    GlobalInformation.nameToCodeColl.put("rpcGen", new CodeCollection("rpcGen"));
+    GlobalInformation.nameToCodeColl.put("rpcGwt", new CodeCollection("rpcGwt"));
+    GlobalInformation.nameToCodeColl.put("gwtLang", new CodeCollection("long"));
+    GlobalInformation.nameToCodeColl.put("jre", new CodeCollection("jre"));
     
-    // get the number of split points (so we know what code to ignore)
-    DefaultHandler fragmentCountHandler = scanXMLDocument();
-    
-    // start parsing
-    SAXParserFactory factory = SAXParserFactory.newInstance();
-    factory.setNamespaceAware(true);
-    try {
-      SAXParser saxParser = factory.newSAXParser();
-      InputStream in = new FileInputStream(inFileName);
-      if (inFileName.endsWith(".gz")) {
-        in = new GZIPInputStream(in);
-      }
-      in = new BufferedInputStream(in);
-      saxParser.parse(in,fragmentCountHandler);
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException("Could not parse document. ", e);
-    } catch (SAXException e) {
-      throw new RuntimeException("Could not create SAX parser. ", e);
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException("Could not open file. ", e);
-    } catch (IOException e) {
-      throw new RuntimeException("Could not open file. ", e);
-    }
-    GlobalInformation.numSplitPoints = (int)((float)(GlobalInformation.numFragments - 1) / 3f);
     
     // make the parser handler
-    DefaultHandler handler = parseXMLDocument(nameToLitColl, nameToCodeColl);
+    DefaultHandler handler = parseXMLDocument(GlobalInformation.nameToLitColl, GlobalInformation.nameToCodeColl);
     
     
     // start parsing
@@ -119,17 +93,17 @@ public class SoycDashboard {
     }
 
     // add to "All Other Code" if none of the special categories apply
-    updateAllOtherCodeType(nameToCodeColl);
+    updateAllOtherCodeType(GlobalInformation.nameToCodeColl);
     
     // now we need to aggregate numbers
     GlobalInformation.computePackageSizes();
     GlobalInformation.computePartialPackageSizes();
     
     // clean up the RPC categories
-    foldInRPCHeuristic(nameToCodeColl);
+    foldInRPCHeuristic(GlobalInformation.nameToCodeColl);
     
     // generate all the html files
-    makeHTMLFiles(nameToLitColl, nameToCodeColl); 
+    makeHTMLFiles(GlobalInformation.nameToLitColl, GlobalInformation.nameToCodeColl); 
     
     System.out.println("Finished creating reports. To see the dashboard, open SoycDashboard-index.html in your browser.");
   }
@@ -155,6 +129,7 @@ public class SoycDashboard {
       boolean specialCodeType = false;
       StringBuilder valueBuilder = new StringBuilder();
       int ct = 0;
+      boolean fragmentInLoadOrder = false;
       
       /**
        * This method deals with the beginning of the XML element.
@@ -171,7 +146,11 @@ public class SoycDashboard {
         
         valueBuilder.delete(0,valueBuilder.length());
         
-        if ((strippedName.compareTo("package") == 0)&&(attributes.getValue("id") != null)){
+        if (strippedName.compareTo("splitpoint") == 0){
+          System.out.println("about to process splitpoint");
+         parseSplitPoint(attributes); 
+        }        
+        else if ((strippedName.compareTo("package") == 0)&&(attributes.getValue("id") != null)){
           curPackage = attributes.getValue("id");
           
           if (curPackage.compareTo("") == 0){
@@ -221,12 +200,18 @@ public class SoycDashboard {
             // ignore all code that is not in the first load order
             
             curFragment = Integer.parseInt(attributes.getValue("fragment"));
-            if(!((curFragment == 0)||(curFragment == (GlobalInformation.numSplitPoints+1))||(curFragment == (GlobalInformation.numSplitPoints+2))||
-                  ((curFragment >= 2) && (curFragment <= GlobalInformation.numSplitPoints)))){
-              curFragment = -1;
+            if((curFragment == 0)||
+                (curFragment == (GlobalInformation.numSplitPoints+1))||
+                (curFragment == (GlobalInformation.numSplitPoints+2))||
+                ((curFragment >= 2) && (curFragment <= GlobalInformation.numSplitPoints))){
+              fragmentInLoadOrder = true;
+            }
+            else{
+              fragmentInLoadOrder = false;
             }
           }
           else{
+           
             curFragment = -2;
           }
         }
@@ -258,30 +243,16 @@ public class SoycDashboard {
         
         int numBytes = value.getBytes().length;
           
-        if ((curStoryRef != null)&&(curFragment != -1)){
+        if (curStoryRef != null){
           
-          if ((!GlobalInformation.storiesToLitType.containsKey(curStoryRef))&&(! GlobalInformation.storiesToCorrClasses.containsKey(curStoryRef))){
-             GlobalInformation.nonAttributedStories.add(curStoryRef);
-             GlobalInformation.nonAttributedBytes += numBytes;
-          }
-          
-          GlobalInformation.cumSizeAllCode += numBytes;
-          
-          if (curFragment == 0){
-            GlobalInformation.cumSizeInitialFragment += numBytes;
-          }
-          
-          // go through all the classes for this story
+          //add this size to the current fragment
           if (GlobalInformation.storiesToCorrClasses.containsKey(curStoryRef)){
             
-
             if ((GlobalInformation.storiesToLitType.containsKey(curStoryRef))&&(GlobalInformation.storiesToCorrClasses.get(curStoryRef).size() > 0)){
              GlobalInformation.numBytesDoubleCounted += numBytes;
             }
             
             float partialSize = (float)numBytes / (float)GlobalInformation.storiesToCorrClasses.get(curStoryRef).size();                               
-            
-            //add this size to the current fragment
             if (!GlobalInformation.fragmentToPartialSize.containsKey(curFragment)){
               GlobalInformation.fragmentToPartialSize.put(curFragment, partialSize);
             }
@@ -289,45 +260,55 @@ public class SoycDashboard {
               float newSize = GlobalInformation.fragmentToPartialSize.get(curFragment) + partialSize;
               GlobalInformation.fragmentToPartialSize.put(curFragment, newSize);
             }
+                    
+            // now do different things depending on whether this fragment is in the load order or not
+            if (fragmentInLoadOrder == false){
+              GlobalInformation.allOtherFragmentsPartialSize += numBytes;
+            }
+            else{
+              GlobalInformation.cumSizeAllCode += numBytes;
+              
+              if ((!GlobalInformation.storiesToLitType.containsKey(curStoryRef))&&
+                  (!GlobalInformation.storiesToCorrClasses.containsKey(curStoryRef))){
+                 GlobalInformation.nonAttributedStories.add(curStoryRef);
+                 GlobalInformation.nonAttributedBytes += numBytes;
+              }
             
-            for (String className : GlobalInformation.storiesToCorrClasses.get(curStoryRef)){
-              // get the corresponding package
-              if (GlobalInformation.classToPackage.containsKey(className)){
-                String packageName = GlobalInformation.classToPackage.get(className);
-                
-                if (!GlobalInformation.packageToClasses.containsKey(packageName)){
-                  TreeSet<String> insertSet = new TreeSet<String>();
-                  insertSet.add(className);
-                  GlobalInformation.packageToClasses.put(packageName, insertSet);
-                }
-                else{
-                  GlobalInformation.packageToClasses.get(packageName).add(className);
-                }
-                
-                if (GlobalInformation.classToSize.containsKey(className)){
-                  int newSize = GlobalInformation.classToSize.get(className) + numBytes;
-                  GlobalInformation.classToSize.put(className, newSize);
-                }
-                else{
-                  GlobalInformation.classToSize.put(className, numBytes);  
-                }
-                
-                if (GlobalInformation.classToPartialSize.containsKey(className)){
-                  float newSize = GlobalInformation.classToPartialSize.get(className) + partialSize;
-                  GlobalInformation.classToPartialSize.put(className, newSize);
-                }
-                else{
-                  GlobalInformation.classToPartialSize.put(className, partialSize);  
+            
+              // go through all the classes for this story
+              for (String className : GlobalInformation.storiesToCorrClasses.get(curStoryRef)){
+                // get the corresponding package
+                if (GlobalInformation.classToPackage.containsKey(className)){
+                  String packageName = GlobalInformation.classToPackage.get(className);
+                  
+                  if (!GlobalInformation.packageToClasses.containsKey(packageName)){
+                    TreeSet<String> insertSet = new TreeSet<String>();
+                    insertSet.add(className);
+                    GlobalInformation.packageToClasses.put(packageName, insertSet);
+                  }
+                  else{
+                    GlobalInformation.packageToClasses.get(packageName).add(className);
+                  }
+                  
+                  if (GlobalInformation.classToSize.containsKey(className)){
+                    int newSize = GlobalInformation.classToSize.get(className) + numBytes;
+                    GlobalInformation.classToSize.put(className, newSize);
+                  }
+                  else{
+                    GlobalInformation.classToSize.put(className, numBytes);  
+                  }
+                  
+                  if (GlobalInformation.classToPartialSize.containsKey(className)){
+                    float newSize = GlobalInformation.classToPartialSize.get(className) + partialSize;
+                    GlobalInformation.classToPartialSize.put(className, newSize);
+                  }
+                  else{
+                    GlobalInformation.classToPartialSize.put(className, partialSize);  
+                  }
                 }
               }
             }
           }
-            
-
-/*          else{
-            System.err.println("----- NO CORR CLASSES FOUND FOR STORY " + curStoryRef + " ---------");
-          }*/
-                   
           updateLitTypes(nameToLitColl, value, numBytes);    
         }
       }
@@ -343,13 +324,10 @@ public class SoycDashboard {
         int iNumCounted = 0;
         
         for (String relLitType : curRelevantLitTypes){
-          
           iNumCounted++;
           
           //then give string literals special treatment
           if (relLitType.compareTo("string") == 0){
-          
-           
             
             // note that this will double-count (i.e., it will count a string twice if it's in the output twice), as it should.
             nameToLitColl.get("string").cumStringSize += numBytes;
@@ -417,15 +395,11 @@ public class SoycDashboard {
                 HashSet<String> insertSet = new HashSet<String>();
                 insertSet.add(mostAppropriateLocation);
                 nameToLitColl.get(relLitType).literalToLocations.put(value,insertSet);
-                
               }
             } 
           }
 
-          
-          
           else{
-
             // note that this will double-count (i.e., it will count a literal twice if it's in the output twice), as it should.
             nameToLitColl.get(relLitType).cumSize += numBytes;
             
@@ -442,9 +416,6 @@ public class SoycDashboard {
             }
           }          
         }
-        
-        //System.out.println("value: |" + value + "| in story |" + curStoryRef + "| was counted " + iNumCounted + " times.");
-        
       }
       
       /* 
@@ -519,6 +490,30 @@ public class SoycDashboard {
       }
 
       /*
+       * parses the split points
+       */
+      private void parseSplitPoint(Attributes attributes){
+        System.out.println("processing split point");
+        if (attributes.getValue("id") != null){
+          String curSplitPoint = attributes.getValue("id");
+          System.out.println("\tcurSplitPoint is: " + curSplitPoint);
+          if (attributes.getValue("location") != null){
+            String curSplitPointLocation = attributes.getValue("location");
+            
+            curSplitPointLocation = curSplitPointLocation.replaceAll("\\(L.*","");
+            
+            System.out.println("\tcurSplitPointLocation is: " + curSplitPointLocation);
+            GlobalInformation.splitPointToLocation.put(Integer.parseInt(curSplitPoint), curSplitPointLocation);
+            GlobalInformation.numSplitPoints++;
+            
+            System.out.println("adding split point and location: " + curSplitPoint + "-->" + curSplitPointLocation);
+            System.out.println("\t(Number of split points is now: " + GlobalInformation.numSplitPoints + ")");
+            
+          }
+        }
+      }
+      
+      /*
        * parses the "story" portion of the XML file
        */
       private void parseStory(Attributes attributes) {
@@ -542,14 +537,26 @@ public class SoycDashboard {
           Attributes attributes) {
         
         if (attributes.getValue("idref") != null){
+          
+          String corrClassOrMethod = attributes.getValue("idref");
+          
           String corrClass = attributes.getValue("idref");
-        
-
+ 
           if (corrClass.contains(":")){
             corrClass = corrClass.replaceAll(":.*", "");
           }
-
+          
           if (GlobalInformation.classToPackage.containsKey(corrClass)){ //if we know about this class
+            
+            if (! GlobalInformation.storiesToCorrClassesAndMethods.containsKey(curStoryId)){
+              HashSet<String> insertSet = new HashSet<String>();
+              insertSet.add(corrClassOrMethod);
+              GlobalInformation.storiesToCorrClassesAndMethods.put(curStoryId, insertSet);
+            }
+            else{
+              GlobalInformation.storiesToCorrClassesAndMethods.get(curStoryId).add(corrClassOrMethod);
+            }
+            
   
             if (! GlobalInformation.storiesToCorrClasses.containsKey(curStoryId)){
               HashSet<String> insertSet = new HashSet<String>();
@@ -579,11 +586,9 @@ public class SoycDashboard {
           String overriddenClass = attributes.getValue("idref");
           
 
+          //TODO(kprobst): fix this -- we either generalize to classes, or the numbers are messed up...
           if (overriddenClass.contains(":")){
             overriddenClass = overriddenClass.replaceAll(":.*", "");
-          }
-          if (overriddenClass.contains("$")){
-            overriddenClass = overriddenClass.replaceAll("\\$.*", "");
           }
           
           if (overriddenClass.compareTo("com.google.gwt.user.client.ui.UIObject") == 0){
@@ -630,7 +635,6 @@ public class SoycDashboard {
       /*
        * parses the "depends on" portion of the XML file
        */
-      //TODO(kprobst): not currently used, but will be for dependencies
       private void parseDependsOn(final HashMap<String, CodeCollection> nameToCodeColl, Attributes attributes) {
         if (curFunctionId.compareTo("") == 0){
           if (attributes.getValue("idref") != null){
@@ -658,79 +662,6 @@ public class SoycDashboard {
     return handler;
   }
   
-  
-  
-
-  private static DefaultHandler scanXMLDocument() {
-    
-    DefaultHandler handler = new DefaultHandler() {
-      
-
-      /**
-       * This method deals with the beginning of the XML element.
-       * It analyzes the XML node and adds its information to the relevant literal or code collection for later analysis.
-       * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
-       */
-      @Override
-      public void startElement(String nsUri, String strippedName, String tagName, Attributes attributes) {
-      
-        if (strippedName.compareTo("js") == 0){
-          if (attributes.getValue("fragment") != null){
-            GlobalInformation.numFragments++;
-          }
-        }
-      }
-    };
-    
-    return handler;
-  }
-  
-
-  /*
-   * assigns code to "all other code" if none of the special categories apply
-   */
-  private static void updateAllOtherCodeType(final HashMap<String, CodeCollection> nameToCodeColl){
-    //all classes not in any of the other categories
-    for (String className : GlobalInformation.classToPackage.keySet()){
-      if ( (!nameToCodeColl.get("widget").classes.contains(className))&&
-          (!nameToCodeColl.get("rpcUser").classes.contains(className))&&
-          (!nameToCodeColl.get("rpcGwt").classes.contains(className))&&
-          (!nameToCodeColl.get("rpcGen").classes.contains(className))&&
-          (!nameToCodeColl.get("jre").classes.contains(className))&&
-          (!nameToCodeColl.get("gwtLang").classes.contains(className))){
-        nameToCodeColl.get("allOther").classes.add(className);
-      }
-    }
-  }
-
-  /*
-   * generates all the HTML files
-   */
-  private static void makeHTMLFiles(
-      final TreeMap<String, LiteralsCollection> nameToLitColl,
-      final HashMap<String, CodeCollection> nameToCodeColl) {
-
-    try {
-      MakeTopLevelHtmlForPerm.makePackageClassesHtmls();
-      MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(nameToCodeColl);
-      MakeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(nameToLitColl);
-      MakeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(nameToLitColl);
-      MakeTopLevelHtmlForPerm.makeFragmentClassesHtmls();
-      MakeTopLevelHtmlForPerm.makeDependenciesTableHtmls();
-
-      //make the shell last so we can display aggregate information here
-      MakeTopLevelHtmlForPerm.makeHTMLShell(nameToCodeColl, nameToLitColl);
-      
-      
-
-      
-
-    } catch (IOException e) {
-      throw new RuntimeException("Cannot open file. ", e);
-    }
-  }
-
-  
   /*
    * cleans up the RPC code categories
    */
@@ -741,7 +672,7 @@ public class SoycDashboard {
      * application really is not using RPC
      */
     
-
+  
     if (nameToCodeColl.get("rpcGen").classes.size() == 0){
       
       for (String className : nameToCodeColl.get("rpcUser").classes){
@@ -760,14 +691,61 @@ public class SoycDashboard {
           (! nameToCodeColl.get("gwtLang").classes.contains(className))){
           nameToCodeColl.get("allOther").classes.add(className);          
         } 
-
+  
       }
       nameToCodeColl.get("rpcGwt").classes.clear();
     }
             
-
-  }
   
+  }
+
+
+  /*
+   * generates all the HTML files
+   */
+  private static void makeHTMLFiles(
+      final TreeMap<String, LiteralsCollection> nameToLitColl,
+      final HashMap<String, CodeCollection> nameToCodeColl) {
+
+    try {
+      MakeTopLevelHtmlForPerm.makePackageClassesHtmls();
+      MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(nameToCodeColl);
+      MakeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(nameToLitColl);
+      MakeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(nameToLitColl);
+      // MakeTopLevelHtmlForPerm.makeFragmentClassesHtmls();
+      MakeTopLevelHtmlForPerm.makeSplitPointClassesHtmls();
+      MakeTopLevelHtmlForPerm.makeDependenciesTableHtmls();
+
+      //make the shell last so we can display aggregate information here
+      MakeTopLevelHtmlForPerm.makeHTMLShell(nameToCodeColl, nameToLitColl);
+      
+      
+
+      
+
+    } catch (IOException e) {
+      throw new RuntimeException("Cannot open file. ", e);
+    }
+  }
+
+  
+  /*
+   * assigns code to "all other code" if none of the special categories apply
+   */
+  private static void updateAllOtherCodeType(final HashMap<String, CodeCollection> nameToCodeColl){
+    //all classes not in any of the other categories
+    for (String className : GlobalInformation.classToPackage.keySet()){
+      if ( (!nameToCodeColl.get("widget").classes.contains(className))&&
+          (!nameToCodeColl.get("rpcUser").classes.contains(className))&&
+          (!nameToCodeColl.get("rpcGwt").classes.contains(className))&&
+          (!nameToCodeColl.get("rpcGen").classes.contains(className))&&
+          (!nameToCodeColl.get("jre").classes.contains(className))&&
+          (!nameToCodeColl.get("gwtLang").classes.contains(className))){
+        nameToCodeColl.get("allOther").classes.add(className);
+      }
+    }
+  }
+
 
   /*
    * unescape the JS snippets - in the XML file they are XML encoded for correct display, but this 

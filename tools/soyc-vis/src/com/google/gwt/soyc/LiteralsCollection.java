@@ -22,18 +22,21 @@ import java.util.HashSet;
 import java.util.TreeMap;
 
 public class LiteralsCollection {
+  public int cumSize = 0;
+  public int cumStringSize = 0;
   public String literalType = "";
   public Map<String, HashSet<String>> literalToLocations = new TreeMap<String, HashSet<String>>();
   public Map<String, HashSet<String> > storyToLocations = new HashMap<String, HashSet<String>>();
   public TreeMap<String, String> stringLiteralToType = new TreeMap<String, String>();
   public Map<String, Integer> stringTypeToSize = new HashMap<String, Integer>();
   public Map<String, Integer> stringTypeToCount = new HashMap<String, Integer>();
-  public int cumSize = 0;
-  public int cumStringSize = 0;
   
+  /**
+   * constructor
+   */
   public LiteralsCollection(String type){
     literalType = type;
-  }  
+  }
 
   /**
    * Utility method

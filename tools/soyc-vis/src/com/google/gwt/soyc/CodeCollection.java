@@ -25,10 +25,11 @@ public class CodeCollection {
   public TreeSet<String> stories = new TreeSet<String>();
   public float cumPartialSize = 0f;
   public int cumSize = 0;
+  
+  
   public CodeCollection(String type){
     codeType = type;
   }
-  
   
   public int getCumSize(){
     cumSize = 0;

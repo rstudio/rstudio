@@ -13,6 +13,12 @@
   <target name="compile">
     <mkdir dir="${javac.out}"/>
     <javac srcdir="src" destdir="${javac.out}"/>
+    <mkdir dir="${javac.out}/images"/>
+    <copy todir="${javac.out}/images">
+      <fileset dir="images"/>
+    </copy>
+    <copy file="classLevel.css" tofile="${javac.out}/classLevel.css"/>
+    <copy file="roundedCorners.css" tofile="${javac.out}/roundedCorners.css"/>
   </target>
 
   <target name="build" depends="compile">
