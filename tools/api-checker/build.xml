@@ -54,6 +54,7 @@
     <mkdir dir="${junit.out}/reports" />
   
     <junit dir="${junit.out}" fork="yes" printsummary="yes" haltonfailure="true">
+      <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
       <classpath>
         <pathelement location="test" />
         <pathelement location="${gwt.build.out}/dev/core/bin"/>

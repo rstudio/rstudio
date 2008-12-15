@@ -18,12 +18,14 @@ package com.google.gwt.tools.apichecker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
+import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
-import com.google.gwt.tools.apichecker.ApiContainerTest.StaticCompilationUnit;
+import com.google.gwt.tools.apichecker.ApiCompatibilityChecker.StaticCompilationUnit;
 
 import junit.framework.TestCase;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -59,7 +61,7 @@ public class ApiCompatibilityTest extends TestCase {
             getSourceForRuntimeException()),};
   }
 
-  private static char[] getSourceForApiClass() {
+  private static String getSourceForApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("public class ApiClass extends NonApiClass {\n");
@@ -67,10 +69,10 @@ public class ApiCompatibilityTest extends TestCase {
     sb.append("\tpublic void checkParametersAndReturnTypes(java.lang.Object x) throws java.lang.Throwable { };\n");
     sb.append("\tpublic final void checkParametersAndReturnTypesFinalVersion(java.lang.Object x) throws java.lang.Throwable { };\n");
     sb.append("};\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForNonApiClass() {
+  private static String getSourceForNonApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("class NonApiClass extends java.lang.Object {\n");
@@ -81,10 +83,10 @@ public class ApiCompatibilityTest extends TestCase {
     sb.append("\tprotected ApiClassInNonApiClass() { }\n");
     sb.append("\t}\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForObject() {
+  private static String getSourceForObject() {
     StringBuffer sb = new StringBuffer();
     sb.append("package java.lang;\n");
     sb.append("public class Object {\n");
@@ -97,10 +99,10 @@ public class ApiCompatibilityTest extends TestCase {
     sb.append("\tprivate int internalField = 0;\n");
     sb.append("\tprotected static int protectedField=2;\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForOneMoreApiClass() {
+  private static String getSourceForOneMoreApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("public class OneMoreApiClass extends java.lang.Object {\n");
@@ -108,32 +110,32 @@ public class ApiCompatibilityTest extends TestCase {
     sb.append("\tprotected final void checkOverloadedMethodAccounted(test.apicontainer.ApiClass b) throws java.lang.Throwable { }\n");
     sb.append("\tpublic void testUncheckedExceptions() throws RuntimeException { }\n");
     sb.append("};\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForRuntimeException() {
+  private static String getSourceForRuntimeException() {
     StringBuffer sb = new StringBuffer();
     sb.append("package java.lang;\n");
     sb.append("public class RuntimeException extends Throwable {\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForTestClass() {
+  private static String getSourceForTestClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.nonapipackage;\n");
     sb.append("class TestClass extends java.lang.Object {\n");
     sb.append("\tpublic void method() { }\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForThrowable() {
+  private static String getSourceForThrowable() {
     StringBuffer sb = new StringBuffer();
     sb.append("package java.lang;\n");
     sb.append("public class Throwable extends Object {\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
   ApiContainer api1 = null;
@@ -145,15 +147,14 @@ public class ApiCompatibilityTest extends TestCase {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(TreeLogger.ERROR);
 
-    api1 = new ApiContainer("Api1", logger,
-        ApiContainerTest.getNewTypeOracleFromCompilationUnits(
-            ApiContainerTest.getScuArray(), logger));
-    apiSameAs1 = new ApiContainer("Api2", logger,
-        ApiContainerTest.getNewTypeOracleFromCompilationUnits(
-            ApiContainerTest.getScuArray(), logger));
-    api2 = new ApiContainer("Api2", logger,
-        ApiContainerTest.getNewTypeOracleFromCompilationUnits(getScuArray(),
-            logger));
+    api1 = new ApiContainer("Api1", new HashSet<CompilationUnit>(
+        Arrays.asList(ApiContainerTest.getScuArray())), new HashSet<String>(),
+        logger);
+    apiSameAs1 = new ApiContainer("ApiSameAs1", new HashSet<CompilationUnit>(
+        Arrays.asList(ApiContainerTest.getScuArray())), new HashSet<String>(),
+        logger);
+    api2 = new ApiContainer("Api2", new HashSet<CompilationUnit>(
+        Arrays.asList(getScuArray())), new HashSet<String>(), logger);
   }
 
   // setup is called before every test*. To avoid the overhead of setUp() each
