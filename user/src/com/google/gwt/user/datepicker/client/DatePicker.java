@@ -240,13 +240,14 @@ public class DatePicker extends Composite implements
       return d.getYear() + "/" + d.getMonth() + "/" + d.getDate();
     }
   }
+
   private final DateStyler styler = new DateStyler();
+
   private final MonthSelector monthSelector;
   private final CalendarView view;
   private final CalendarModel model;
   private Date value;
   private Date highlighted;
-
   private StandardCss css = StandardCss.DEFAULT;
 
   /**
@@ -281,11 +282,11 @@ public class DatePicker extends Composite implements
     setCurrentMonth(new Date());
     addStyleToDates(css().dayIsToday(), new Date());
   }
-  
+
   public HandlerRegistration addHighlightHandler(HighlightHandler<Date> handler) {
     return addHandler(handler, HighlightEvent.getType());
   }
-  
+
   public HandlerRegistration addShowRangeHandler(ShowRangeHandler<Date> handler) {
     return addHandler(handler, ShowRangeEvent.getType());
   }
@@ -307,7 +308,7 @@ public class DatePicker extends Composite implements
   }
 
   /**
-   * Add a style name to the given dates. 
+   * Add a style name to the given dates.
    */
   public void addStyleToDates(String styleName, Date date) {
     styler.setStyleName(date, styleName, true);
@@ -317,7 +318,7 @@ public class DatePicker extends Composite implements
   }
 
   /**
-   * Add a style name to the given dates. 
+   * Add a style name to the given dates.
    */
   public void addStyleToDates(String styleName, Date date, Date... moreDates) {
     addStyleToDates(styleName, date);
@@ -336,7 +337,7 @@ public class DatePicker extends Composite implements
   }
 
   /**
-   * Adds the given style name to the specified dates, which must be visible. 
+   * Adds the given style name to the specified dates, which must be visible.
    * This is only set until the next time the DatePicker is refreshed.
    */
   public void addTransientStyleToDates(String styleName, Date date) {
@@ -345,7 +346,7 @@ public class DatePicker extends Composite implements
   }
 
   /**
-   * Adds the given style name to the specified dates, which must be visible. 
+   * Adds the given style name to the specified dates, which must be visible.
    * This is only set until the next time the DatePicker is refreshed.
    */
   public final void addTransientStyleToDates(String styleName, Date date,
@@ -357,7 +358,7 @@ public class DatePicker extends Composite implements
   }
 
   /**
-   * Adds the given style name to the specified dates, which must be visible. 
+   * Adds the given style name to the specified dates, which must be visible.
    * This is only set until the next time the DatePicker is refreshed.
    */
   public final void addTransientStyleToDates(String styleName,
@@ -379,6 +380,7 @@ public class DatePicker extends Composite implements
    * A datepicker <b> may </b> show days not in the current month. It
    * <b>must</b> show all days in the current month.
    * </p>
+   * 
    * @return the current month
    * 
    */
@@ -416,8 +418,8 @@ public class DatePicker extends Composite implements
   }
 
   /**
-   * Gets the style associated with a date (does not include styles
-   * set via {@link #addTransientStyleToDates}).
+   * Gets the style associated with a date (does not include styles set via
+   * {@link #addTransientStyleToDates}).
    * 
    * @param date the date
    * @return the styles associated with this date
@@ -459,6 +461,11 @@ public class DatePicker extends Composite implements
     return (date != null && (first.equals(date) || last.equals(date) || (first.before(date) && last.after(date))));
   }
 
+  @Override
+  public void onLoad() {
+    ShowRangeEvent.fire(this, getFirstDate(), getLastDate());
+  }
+
   /**
    * Removes the styleName from the given dates (even if it is transient).
    */
@@ -472,7 +479,8 @@ public class DatePicker extends Composite implements
   /**
    * Removes the styleName from the given dates (even if it is transient).
    */
-  public void removeStyleFromDates(String styleName, Date date, Date... moreDates) {
+  public void removeStyleFromDates(String styleName, Date date,
+      Date... moreDates) {
     removeStyleFromDates(styleName, date);
     for (Date d : moreDates) {
       removeStyleFromDates(styleName, d);
@@ -526,8 +534,8 @@ public class DatePicker extends Composite implements
    * Sets a visible date to be enabled or disabled. This is only set until the
    * next time the DatePicker is refreshed.
    */
-  public final void setTransientEnabledOnDates(boolean enabled,
-      Date date, Date... moreDates) {
+  public final void setTransientEnabledOnDates(boolean enabled, Date date,
+      Date... moreDates) {
     setTransientEnabledOnDates(enabled, date);
     for (Date d : moreDates) {
       setTransientEnabledOnDates(enabled, d);
@@ -609,9 +617,12 @@ public class DatePicker extends Composite implements
   protected final void refreshAll() {
     highlighted = null;
     getModel().refresh();
+
     getView().refresh();
     getMonthSelector().refresh();
-    ShowRangeEvent.fire(this, getFirstDate(), getLastDate());
+    if (isAttached()) {
+      ShowRangeEvent.fire(this, getFirstDate(), getLastDate());
+    }
   }
 
   /**

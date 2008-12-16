@@ -20,7 +20,8 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HasHandlers;
 
 /**
- * Represents a show range event.
+ * Represents a show range event. This logical event should be used when a
+ * widget displays a range of values to the user.  This event should not be fired until a widget is displaying t
  * 
  * @param <V> the type of range
  */
