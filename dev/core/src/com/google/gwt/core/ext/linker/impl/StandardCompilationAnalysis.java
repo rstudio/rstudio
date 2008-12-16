@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.Stack;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -115,17 +116,25 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   private transient Map<Correlation, Member> membersByCorrelation = new IdentityHashMap<Correlation, Member>();
 
   /**
+   * Map from split point numbers to the method where they were set
+   */
+  private Map<Integer, String> splitPointMap = new TreeMap<Integer, String>();
+  
+  /**
    * Constructed by PermutationCompiler.
    */
   public StandardCompilationAnalysis(TreeLogger logger,
-      List<Map<Range, SourceInfo>> sourceInfoMaps)
+      List<Map<Range, SourceInfo>> sourceInfoMaps,
+      Map<Integer, String> splitPointMap)
       throws UnableToCompleteException {
     super(StandardLinkerContext.class);
     logger = logger.branch(TreeLogger.INFO,
         "Creating CompilationAnalysis (this may take some time)");
 
     data = new Data();
-
+    
+    this.splitPointMap = splitPointMap;
+    
     /*
      * Don't retain beyond the constructor to avoid lingering references to AST
      * nodes.
@@ -197,6 +206,11 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
     };
   }
 
+  @Override
+  public Map<Integer, String> getSplitPointMap(){
+    return splitPointMap;
+  }
+  
   @Override
   public SortedSet<Story> getStories() {
     return data.stories;

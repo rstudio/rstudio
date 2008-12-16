@@ -65,7 +65,6 @@ import java.util.zip.GZIPOutputStream;
 @LinkerOrder(Order.PRE)
 public class SoycReportLinker extends AbstractLinker {
 
-  int curNumIndents = 0;
 
   public String escapeXml(String unescaped) {
     String escaped = unescaped.replaceAll("\\&", "&amp;");
@@ -161,32 +160,29 @@ public class SoycReportLinker extends AbstractLinker {
     if (methodAliases.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
 
       curLine = "<aliases>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
     }
 
     for (String methodAlias : methodAliases) {
       curLine = "<alias jsName=\"" + methodAlias + "\"/>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
     if (methodAliases.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
-
+      
       curLine = "</aliases>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
     }
   }
 
@@ -205,7 +201,7 @@ public class SoycReportLinker extends AbstractLinker {
     for (String className : sortedClasses.keySet()) {
       ClassMember classMember = sortedClasses.get(className);
       curLine = "<class id=\"" + className + "\" ";
-      htmlOut.printRawOpt(curLine);
+      htmlOut.printRaw(curLine);
 
       String jsName = classMember.getJsName();
       String name = className.substring(className.lastIndexOf('.') + 1);
@@ -221,8 +217,8 @@ public class SoycReportLinker extends AbstractLinker {
       emitFields(htmlOut, classMember);
 
       curLine = "</class>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
   }
 
@@ -232,31 +228,30 @@ public class SoycReportLinker extends AbstractLinker {
     if (dependencies.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
 
       curLine = "<depends>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
     }
     for (Member dependency : dependencies) {
       curLine = "<on idref=\"" + dependency.getSourceName() + "\"/>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
     if (dependencies.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
 
       curLine = "</depends>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
     }
   }
 
@@ -266,7 +261,7 @@ public class SoycReportLinker extends AbstractLinker {
     if (fields.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
     }
     for (FieldMember field : fields) {
       curLine = "<field id=\"" + field.getSourceName() + "\" jsName=\""
@@ -275,13 +270,13 @@ public class SoycReportLinker extends AbstractLinker {
       if (curJsName == null) {
         curLine = "<field id=\"" + field.getSourceName() + "\"/>";
       }
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
     if (fields.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
     }
   }
 
@@ -291,7 +286,7 @@ public class SoycReportLinker extends AbstractLinker {
     Set<FunctionMember> functions = report.getFunctions();
     for (FunctionMember function : functions) {
       curLine = "<function ";
-      htmlOut.printRawOpt(curLine);
+      htmlOut.printRaw(curLine);
 
       String sourceName = function.getSourceName();
       String jsName = function.getJsName();
@@ -301,45 +296,44 @@ public class SoycReportLinker extends AbstractLinker {
         if (jsName == null) {
           curLine = "id=\"" + sourceName + "\"/>";
         }
-        htmlOut.printRawOpt(curLine);
+        htmlOut.printRaw(curLine);
         htmlOut.newline();
       } else {
         curLine = "id=\"" + sourceName + "\" jsName=\"" + jsName + "\">";
         if (jsName == null) {
           curLine = "id=\"" + sourceName + "\">";
         }
-        htmlOut.printRawOpt(curLine);
+        htmlOut.printRaw(curLine);
         htmlOut.newline();
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
 
         curLine = "<depends>";
-        htmlOut.printRawOpt(curLine);
+        htmlOut.printRaw(curLine);
         htmlOut.newline();
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
+        
       }
       for (Member dependency : dependencies) {
         curLine = "<on idref=\"" + dependency.getSourceName() + "\"/>";
-        htmlOut.printRawOpt(curLine);
+        htmlOut.printRaw(curLine);
         htmlOut.newline();
       }
       if (dependencies.size() > 0) {
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
+        
         curLine = "</depends>";
-        htmlOut.printRawOpt(curLine);
+        htmlOut.printRaw(curLine);
         htmlOut.newline();
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
+        
 
         curLine = "</function>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
     }
   }
@@ -351,12 +345,11 @@ public class SoycReportLinker extends AbstractLinker {
     int fragment = 0;
     for (String contents : report.getCompilationResult().getJavaScript()) {
       curLine = "<js fragment=\"" + fragment + "\">";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
-
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
 
       for (Snippet snippet : report.getSnippets(fragment)) {
         Range range = snippet.getRange();
@@ -373,17 +366,17 @@ public class SoycReportLinker extends AbstractLinker {
           curLine = "<storyref idref=\"story" + Integer.toString(storyId)
               + "\">" + jsCode + "</storyref>";
         }
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
 
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
 
       curLine = "</js>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       fragment++;
     }
   }
@@ -406,69 +399,69 @@ public class SoycReportLinker extends AbstractLinker {
     HtmlTextOutput htmlOut = new HtmlTextOutput(pw, false);
 
     String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-    htmlOut.printRawOpt(curLine);
+    htmlOut.printRaw(curLine);
     htmlOut.newline();
     curLine = "<soyc-manifest>";
-    htmlOut.printRawOpt(curLine);
+    htmlOut.printRaw(curLine);
     htmlOut.newline();
     htmlOut.indentIn();
     htmlOut.indentIn();
-    curNumIndents++;
+    
 
     for (Map.Entry<CompilationResult, String> entry : partialPathsByResult.entrySet()) {
       curLine = "<report href=\"" + entry.getValue() + "\">";
-      htmlOut.printRawOpt(curLine);
+      htmlOut.printRaw(curLine);
       htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
 
       for (Map<SelectionProperty, String> map : entry.getKey().getPropertyMap()) {
 
         if (map.size() > 0) {
           curLine = "<permutation>";
-          htmlOut.printRawOpt(curLine);
+          htmlOut.printRaw(curLine);
           htmlOut.newline();
           htmlOut.indentIn();
           htmlOut.indentIn();
-          curNumIndents++;
+          
 
         } else {
           curLine = "<permutation/>";
-          htmlOut.printRawOpt(curLine);
+          htmlOut.printRaw(curLine);
           htmlOut.newline();
         }
         for (Map.Entry<SelectionProperty, String> propertyEntry : map.entrySet()) {
           curLine = "<property name=\"" + propertyEntry.getKey().getName()
               + "\" value=\"" + propertyEntry.getValue() + "\"/>";
-          htmlOut.printRawOpt(curLine);
+          htmlOut.printRaw(curLine);
           htmlOut.newline();
         }
         if (map.size() > 0) {
           htmlOut.indentOut();
           htmlOut.indentOut();
-          curNumIndents--;
+          
 
           curLine = "</permutation>";
-          htmlOut.printRawOpt(curLine);
+          htmlOut.printRaw(curLine);
           htmlOut.newline();
         }
       }
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
 
       curLine = "</report>";
-      htmlOut.printRawOpt(curLine);
+      htmlOut.printRaw(curLine);
       htmlOut.newline();
     }
 
     htmlOut.indentOut();
     htmlOut.indentOut();
-    curNumIndents--;
+    
 
     curLine = "</soyc-manifest>";
-    htmlOut.printRawOpt(curLine);
+    htmlOut.printRaw(curLine);
     htmlOut.newline();
 
     pw.close();
@@ -480,16 +473,13 @@ public class SoycReportLinker extends AbstractLinker {
   }
 
   private void emitMembers(CompilationAnalysis report, HtmlTextOutput htmlOut) {
-    String curLine;
-
-    curLine = "<members>";
-
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    
+    String curLine = "<members>";
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
     htmlOut.indentIn();
     htmlOut.indentIn();
-    curNumIndents++;
-
+    
     SortedMap<String, Set<ClassMember>> packageToClasses = new TreeMap<String, Set<ClassMember>>();
 
     emitPackages(report, htmlOut, packageToClasses);
@@ -497,11 +487,9 @@ public class SoycReportLinker extends AbstractLinker {
 
     htmlOut.indentOut();
     htmlOut.indentOut();
-    curNumIndents--;
-
     curLine = "</members>";
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
   }
 
   private void emitMethodDependencies(HtmlTextOutput htmlOut,
@@ -510,65 +498,58 @@ public class SoycReportLinker extends AbstractLinker {
     if (methodDependencies.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
-
+      
       curLine = "<depends>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
 
       for (Member methodDependency : methodDependencies) {
         curLine = "<on idref=\"" + methodDependency.getSourceName() + "\"/>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
 
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
 
       curLine = "</depends>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
     }
   }
 
-  private void emitMethodOverrides(HtmlTextOutput htmlOut,
-      Set<MethodMember> methodOverrides) {
+  private void emitMethodOverrides(HtmlTextOutput htmlOut, Set<MethodMember> methodOverrides) {
     String curLine;
     if (methodOverrides.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
-
+  
       curLine = "<override>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
     }
     for (MethodMember overrideMethodMember : methodOverrides) {
       curLine = "<of idref=\"" + overrideMethodMember.getSourceName() + "\"/>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
     if (methodOverrides.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
-
+  
       curLine = "</override>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
     }
   }
 
@@ -578,11 +559,11 @@ public class SoycReportLinker extends AbstractLinker {
     if (methods.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
     }
     for (MethodMember method : methods) {
       curLine = "<method ";
-      htmlOut.printRawOpt(curLine);
+      htmlOut.printRaw(curLine);
 
       String jsAtt = " jsName=\"" + method.getJsName() + "\"";
       String curJsName = method.getJsName();
@@ -598,12 +579,12 @@ public class SoycReportLinker extends AbstractLinker {
       if ((methodOverrides.size() > 0) || (methodDependencies.size() > 0)
           || (methodAliases.size() > 0)) {
         curLine = "id=\"" + method.getSourceName() + "\"" + jsAtt + ">";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       } else {
         curLine = "id=\"" + method.getSourceName() + "\"" + jsAtt + "/>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
 
       emitAliases(htmlOut, methodAliases);
@@ -613,50 +594,50 @@ public class SoycReportLinker extends AbstractLinker {
       if ((methodOverrides.size() > 0) || (methodDependencies.size() > 0)
           || (methodAliases.size() > 0)) {
         curLine = "</method>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
     }
 
     if (methods.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
     }
   }
 
   private void emitOverrides(HtmlTextOutput htmlOut, String curLine,
       ClassMember classMember) {
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
     Set<ClassMember> overrides = classMember.getOverrides();
     if (overrides.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
       curLine = "<override>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
     }
     for (ClassMember overrideClassMember : overrides) {
       curLine = "<of idref=\"" + overrideClassMember.getSourceName() + "\"/>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
     if (overrides.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
 
       curLine = "</override>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
     }
   }
 
@@ -678,24 +659,23 @@ public class SoycReportLinker extends AbstractLinker {
     for (String packageName : packageToClasses.keySet()) {
 
       curLine = "<package id=\"" + packageName + "\">";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
 
       if (packageToClasses.get(packageName).size() > 0) {
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
+        
       }
       emitClasses(htmlOut, packageToClasses, packageName);
       if (packageToClasses.get(packageName).size() > 0) {
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
       }
 
       curLine = "</package>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
   }
 
@@ -715,15 +695,35 @@ public class SoycReportLinker extends AbstractLinker {
     PrintWriter pw = new PrintWriter(out);
     HtmlTextOutput htmlOut = new HtmlTextOutput(pw, false);
 
+    
     String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
     curLine = "<soyc>";
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
     htmlOut.indentIn();
     htmlOut.indentIn();
-    curNumIndents++;
+    
+    
+    Map<Integer, String> splitPointMap = new TreeMap<Integer, String>(report.getSplitPointMap());    
+    if (splitPointMap.size() > 0){
+      curLine = "<splitpoints>";
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
+      htmlOut.indentIn();
+      htmlOut.indentIn();
+      for (Integer splitPointCount : splitPointMap.keySet()){
+        curLine = "<splitpoint id=\"" + splitPointCount + "\" location=\"" + splitPointMap.get(splitPointCount) + "\"/>";
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
+      } 
+      htmlOut.indentOut();
+      htmlOut.indentOut();
+      curLine = "</splitpoints>";
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
+    }
 
     emitMembers(report, htmlOut);
     Map<Story, Integer> storyIds = emitStories(report, htmlOut);
@@ -731,11 +731,9 @@ public class SoycReportLinker extends AbstractLinker {
 
     htmlOut.indentOut();
     htmlOut.indentOut();
-    curNumIndents--;
-
     curLine = "</soyc>";
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
 
     pw.close();
     Utility.close(out);
@@ -752,13 +750,13 @@ public class SoycReportLinker extends AbstractLinker {
     Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
     Set<Story> stories = report.getStories();
     curLine = "<stories>";
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
 
     if (stories.size() > 0) {
       htmlOut.indentIn();
       htmlOut.indentIn();
-      curNumIndents++;
+      
     }
     for (Story story : stories) {
 
@@ -770,88 +768,85 @@ public class SoycReportLinker extends AbstractLinker {
         curLine = curLine + " literal=\"" + story.getLiteralTypeName() + "\"";
       }
       curLine = curLine + ">";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
 
       Set<Origin> origins = story.getSourceOrigin();
       if (origins.size() > 0) {
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
+        
 
         curLine = "<origins>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
+        
       }
       for (Origin origin : origins) {
         curLine = "<origin lineNumber=\""
             + Integer.toString(origin.getLineNumber()) + "\" location=\""
             + origin.getLocation() + "\"/>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
       if (origins.size() > 0) {
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
+        
 
         curLine = "</origins>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
 
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
       }
 
       Set<Member> correlations = story.getMembers();
       if (correlations.size() > 0) {
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
 
         curLine = "<correlations>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
 
         htmlOut.indentIn();
         htmlOut.indentIn();
-        curNumIndents++;
+        
       }
       for (Member correlation : correlations) {
         curLine = "<by idref=\"" + correlation.getSourceName() + "\"/>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
       }
       if (correlations.size() > 0) {
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
+        
 
         curLine = "</correlations>";
-        htmlOut.printRawOpt(curLine);
-        htmlOut.newlineOpt();
+        htmlOut.printRaw(curLine);
+        htmlOut.newline();
 
         htmlOut.indentOut();
         htmlOut.indentOut();
-        curNumIndents--;
       }
 
       curLine = "</story>";
-      htmlOut.printRawOpt(curLine);
-      htmlOut.newlineOpt();
+      htmlOut.printRaw(curLine);
+      htmlOut.newline();
     }
     if (stories.size() > 0) {
       htmlOut.indentOut();
       htmlOut.indentOut();
-      curNumIndents--;
+      
     }
     curLine = "</stories>";
-    htmlOut.printRawOpt(curLine);
-    htmlOut.newlineOpt();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
 
     return storyIds;
   }

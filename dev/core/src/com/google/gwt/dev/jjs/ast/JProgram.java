@@ -37,6 +37,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -164,10 +165,10 @@ public class JProgram extends JNode {
   public final List<JClassType> codeGenTypes = new ArrayList<JClassType>();
 
   /**
-   * There is a list containing the main entry methods as well as the entry methods for
-   * each split point.  The main entry methods are at entry 0 of this list.  Split
-   * points are numbered sequentially from 1, and the entry methods for split point
-   * <em>i</em> are at entry <em>i</em> of this list.
+   * There is a list containing the main entry methods as well as the entry
+   * methods for each split point. The main entry methods are at entry 0 of this
+   * list. Split points are numbered sequentially from 1, and the entry methods
+   * for split point <em>i</em> are at entry <em>i</em> of this list.
    */
   public final List<List<JMethod>> entryMethods = new ArrayList<List<JMethod>>();
 
@@ -235,6 +236,8 @@ public class JProgram extends JNode {
   private boolean optimizationsStarted = false;
 
   private Map<JReferenceType, Integer> queryIds;
+
+  private Map<Integer, String> splitPointMap = new TreeMap<Integer, String>();
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -769,6 +772,10 @@ public class JProgram extends JNode {
     return integer.intValue();
   }
 
+  public Map<Integer, String> getSplitPointMap() {
+    return splitPointMap;
+  }
+
   public JMethod getStaticImpl(JMethod method) {
     return instanceToStaticMap.get(method);
   }
@@ -914,10 +921,14 @@ public class JProgram extends JNode {
     this.queryIds = queryIds;
   }
 
+  public void setSplitPointMap(Map<Integer, String> splitPointMap) {
+    this.splitPointMap = splitPointMap;
+  }
+
   /**
-   * If <code>method</code> is a static impl method, returns the instance
-   * method that <code>method</code> is the implementation of. Otherwise,
-   * returns <code>null</code>.
+   * If <code>method</code> is a static impl method, returns the instance method
+   * that <code>method</code> is the implementation of. Otherwise, returns
+   * <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
     return staticToInstanceMap.get(method);

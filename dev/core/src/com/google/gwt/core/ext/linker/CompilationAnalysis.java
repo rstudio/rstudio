@@ -21,6 +21,7 @@ import com.google.gwt.core.ext.soyc.FunctionMember;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.Story;
 
+import java.util.Map;
 import java.util.SortedSet;
 
 /**
@@ -74,6 +75,11 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
    * Ranges, plus the overhead of constructing an ordered Map.
    */
   public abstract Iterable<Snippet> getSnippets(int fragmentNumber);
+
+  /**
+   * Returns splitPointMap.
+   */
+  public abstract Map<Integer, String> getSplitPointMap();
 
   /**
    * Returns all Stories.

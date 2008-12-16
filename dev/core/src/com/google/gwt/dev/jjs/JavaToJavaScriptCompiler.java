@@ -261,7 +261,8 @@ public class JavaToJavaScriptCompiler {
       PermutationResult toReturn = new PermutationResultImpl(js);
       if (sourceInfoMaps != null) {
         toReturn.getArtifacts().add(
-            new StandardCompilationAnalysis(logger, sourceInfoMaps));
+            new StandardCompilationAnalysis(logger, sourceInfoMaps,
+                jprogram.getSplitPointMap()));
       }
 
       return toReturn;

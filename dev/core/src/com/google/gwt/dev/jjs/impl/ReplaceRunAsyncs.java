@@ -26,6 +26,10 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Replaces calls to
  * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)}"
@@ -34,6 +38,8 @@ import com.google.gwt.dev.jjs.ast.JType;
 public class ReplaceRunAsyncs {
   private class AsyncCreateVisitor extends JModVisitor {
     private JMethod currentMethod;
+    private Map<Integer, String> splitPointMap = new TreeMap<Integer, String>();
+    private Map<String, Integer> methodCount = new HashMap<String, Integer>();
     private int entryCount = 1;
 
     @Override
@@ -46,7 +52,17 @@ public class ReplaceRunAsyncs {
         int entryNumber = entryCount++;
         logger.log(TreeLogger.INFO, "Assigning split point #" + entryNumber
             + " in method " + fullMethodDescription(currentMethod));
-
+        
+        String methodDescription = fullMethodDescription(currentMethod);
+        if (methodCount.containsKey(methodDescription)){
+          methodCount.put(methodDescription, methodCount.get(methodDescription)+1);
+          methodDescription += "#" + Integer.toString(methodCount.get(methodDescription));
+        }
+        else{
+          methodCount.put(methodDescription, 1);
+        }
+        splitPointMap.put(entryNumber, methodDescription);
+  
         JClassType loader = getFragmentLoader(entryNumber);
         JMethod loadMethod = getRunAsyncMethod(loader);
         assert loadMethod != null;
@@ -89,6 +105,9 @@ public class ReplaceRunAsyncs {
     AsyncCreateVisitor visitor = new AsyncCreateVisitor();
     visitor.accept(program);
     setNumEntriesInAsyncFragmentLoader(visitor.entryCount);
+    program.setSplitPointMap(visitor.splitPointMap);
+    
+    
     return visitor.entryCount;
   }
 
