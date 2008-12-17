@@ -303,7 +303,11 @@ public final class ReflectiveParser {
       Throwable caught = null;
       try {
         this.reader = reader;
-        SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        factory.setFeature(
+            "http://apache.org/xml/features/nonvalidating/load-external-dtd",
+            false);
+        SAXParser parser = factory.newSAXParser();
         InputSource inputSource = new InputSource(this.reader);
         XMLReader xmlReader = parser.getXMLReader();
         xmlReader.setContentHandler(this);
