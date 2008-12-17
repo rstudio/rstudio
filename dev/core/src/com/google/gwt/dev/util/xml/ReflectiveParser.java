@@ -51,9 +51,9 @@ public final class ReflectiveParser {
 
     private Reader reader;
 
-    private Stack schemaLevels = new Stack();
+    private Stack<Schema> schemaLevels = new Stack<Schema>();
 
-    private Stack argStack = new Stack();
+    private Stack<Object[]> argStack = new Stack<Object[]>();
 
     private Schema defaultSchema;
 
@@ -82,7 +82,7 @@ public final class ReflectiveParser {
       }
       // Find the precomputed handler class info.
       //
-      Class slc = schemaLevel.getClass();
+      Class<? extends Schema> slc = schemaLevel.getClass();
       HandlerClassInfo classInfo = HandlerClassInfo.getClassInfo(slc);
       assert (classInfo != null); // would've thrown if unregistered
       HandlerMethod method = classInfo.getTextMethod();
@@ -118,7 +118,7 @@ public final class ReflectiveParser {
 
       // Find the precomputed handler class info.
       //
-      Class slc = schemaLevel.getClass();
+      Class<? extends Schema> slc = schemaLevel.getClass();
       HandlerClassInfo classInfo = HandlerClassInfo.getClassInfo(slc);
       assert (classInfo != null); // would've thrown if unregistered
       HandlerMethod method = classInfo.getEndMethod(elem);
@@ -174,7 +174,7 @@ public final class ReflectiveParser {
 
       // Find the precomputed handler class info.
       //
-      Class slc = schemaLevel.getClass();
+      Class<? extends Schema> slc = schemaLevel.getClass();
       HandlerClassInfo classInfo = HandlerClassInfo.getClassInfo(slc);
       HandlerMethod method = classInfo.getStartMethod(elemName);
 
@@ -268,15 +268,15 @@ public final class ReflectiveParser {
     }
 
     private Object[] getCurrentArgs() {
-      return (Object[]) argStack.peek();
+      return argStack.peek();
     }
 
     private Schema getNextToTopSchemaLevel() {
-      return (Schema) schemaLevels.get(schemaLevels.size() - 2);
+      return schemaLevels.get(schemaLevels.size() - 2);
     }
 
     private Schema getTopSchemaLevel() {
-      return (Schema) schemaLevels.peek();
+      return schemaLevels.peek();
     }
 
     private void parse(TreeLogger logger, Schema topSchema, Reader reader)
@@ -351,7 +351,7 @@ public final class ReflectiveParser {
         //
         Schema maybeParent = null;
         for (int i = schemaLevels.size() - 1; i >= 0; --i) {
-          maybeParent = (Schema) schemaLevels.get(i);
+          maybeParent = schemaLevels.get(i);
           if (maybeParent != null) {
             break;
           }
@@ -384,16 +384,16 @@ public final class ReflectiveParser {
   /**
    * Can safely register the same class recursively.
    */
-  public static void registerSchemaLevel(Class schemaLevelClass) {
+  public static void registerSchemaLevel(Class<? extends Schema> schemaLevelClass) {
     HandlerClassInfo.registerClass(schemaLevelClass);
 
     // Try to register nested classes.
     //
-    Class[] nested = schemaLevelClass.getDeclaredClasses();
+    Class<?>[] nested = schemaLevelClass.getDeclaredClasses();
     for (int i = 0, n = nested.length; i < n; ++i) {
-      Class nestedClass = nested[i];
+      Class<?> nestedClass = nested[i];
       if (Schema.class.isAssignableFrom(nestedClass)) {
-        registerSchemaLevel(nestedClass);
+        registerSchemaLevel(nestedClass.asSubclass(Schema.class));
       }
     }
   }
