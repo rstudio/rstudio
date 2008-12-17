@@ -37,6 +37,7 @@ import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
@@ -451,6 +452,7 @@ public class GWTShell extends ToolBase {
     registerHandler(new ArgHandlerScriptStyle(options));
     registerHandler(new ArgHandlerEnableAssertions(options));
     registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
+    registerHandler(new ArgHandlerDisableRunAsync(options));
   }
 
   public void addStartupURL(String url) {

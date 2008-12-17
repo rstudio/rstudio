@@ -41,6 +41,7 @@ import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
@@ -76,6 +77,7 @@ public class Precompile {
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerValidateOnlyFlag(options));
+      registerHandler(new ArgHandlerDisableRunAsync(options));
     }
 
     @Override
@@ -122,6 +124,10 @@ public class Precompile {
       return jjsOptions.isEnableAssertions();
     }
 
+    public boolean isRunAsyncEnabled() {
+      return jjsOptions.isRunAsyncEnabled();
+    }
+
     public boolean isSoycEnabled() {
       return jjsOptions.isSoycEnabled();
     }
@@ -144,6 +150,10 @@ public class Precompile {
 
     public void setOutput(JsOutputOption output) {
       jjsOptions.setOutput(output);
+    }
+
+    public void setRunAsyncEnabled(boolean enabled) {
+      jjsOptions.setRunAsyncEnabled(enabled);
     }
 
     public void setSoycEnabled(boolean enabled) {

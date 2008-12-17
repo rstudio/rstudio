@@ -225,7 +225,7 @@ public class JavaToJavaScriptCompiler {
           stringLiteralMap);
 
       // (10.5) Split up the program into fragments
-      if (options.isAggressivelyOptimize()) {
+      if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
         CodeSplitter.exec(logger, jprogram, jsProgram, postStringInterningMap);
       }
 
@@ -367,7 +367,7 @@ public class JavaToJavaScriptCompiler {
       ReplaceRebinds.exec(logger, jprogram, rpo);
 
       // Fix up GWT.runAsync()
-      if (options.isAggressivelyOptimize()) {
+      if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
         ReplaceRunAsyncs.exec(logger, jprogram);
       }
 

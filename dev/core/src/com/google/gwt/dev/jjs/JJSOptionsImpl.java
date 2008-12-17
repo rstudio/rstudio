@@ -25,6 +25,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private boolean aggressivelyOptimize = true;
   private boolean enableAssertions;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
+  private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
 
   public JJSOptionsImpl() {
@@ -38,6 +39,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setAggressivelyOptimize(other.isAggressivelyOptimize());
     setEnableAssertions(other.isEnableAssertions());
     setOutput(other.getOutput());
+    setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
   }
 
@@ -51,6 +53,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isEnableAssertions() {
     return enableAssertions;
+  }
+
+  public boolean isRunAsyncEnabled() {
+    return runAsyncEnabled;
   }
 
   public boolean isSoycEnabled() {
@@ -67,6 +73,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setOutput(JsOutputOption output) {
     this.output = output;
+  }
+
+  public void setRunAsyncEnabled(boolean enabled) {
+    runAsyncEnabled = enabled;
   }
 
   public void setSoycEnabled(boolean enabled) {
