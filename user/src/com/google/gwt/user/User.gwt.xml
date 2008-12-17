@@ -21,6 +21,7 @@
    <inherits name="com.google.gwt.core.Core"/>
    <inherits name="com.google.gwt.event.Event"/>
    <inherits name="com.google.gwt.animation.Animation"/>
+   <inherits name="com.google.gwt.user.AsyncProxy"/>
    <inherits name="com.google.gwt.user.RemoteService"/>
    <inherits name="com.google.gwt.user.DocumentRoot" />
    <inherits name="com.google.gwt.user.DOM"/>

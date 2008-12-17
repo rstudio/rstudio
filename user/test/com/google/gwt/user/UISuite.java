@@ -16,6 +16,7 @@
 package com.google.gwt.user;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
+import com.google.gwt.user.client.AsyncProxyTest;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
 import com.google.gwt.user.client.WindowTest;
@@ -88,6 +89,7 @@ public class UISuite {
 
     suite.addTestSuite(AbsolutePanelTest.class);
     suite.addTestSuite(AnchorTest.class);
+    suite.addTestSuite(AsyncProxyTest.class);
     suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
