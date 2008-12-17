@@ -27,6 +27,7 @@ import com.google.gwt.dev.shell.ServletContainerLauncher;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
+import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
@@ -51,7 +52,22 @@ public class HostedMode extends HostedModeBase {
   /**
    * Handles the -server command line flag.
    */
-  protected class ArgHandlerServer extends ArgHandlerString {
+  protected static class ArgHandlerServer extends ArgHandlerString {
+    private HostedModeOptions options;
+
+    public ArgHandlerServer(HostedModeOptions options) {
+      this.options = options;
+    }
+
+    @Override
+    public String[] getDefaultArgs() {
+      if (options.isNoServer()) {
+        return null;
+      } else {
+        return new String[] {getTag(), JettyLauncher.class.getName()};
+      }
+    }
+
     @Override
     public String getPurpose() {
       return "Prevents the embedded Tomcat server from running, even if a port is specified";
@@ -64,21 +80,44 @@ public class HostedMode extends HostedModeBase {
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"serverLauncherClass"};
+      return new String[] {"servletContainerLauncher"};
     }
 
     @Override
-    public boolean setString(String arg) {
+    public boolean setString(String sclClassName) {
       // Supercedes -noserver.
-      setRunTomcat(true);
-      return setServer(console, arg);
+      options.setNoServer(false);
+      Throwable t;
+      try {
+        Class<?> clazz = Class.forName(sclClassName, true,
+            Thread.currentThread().getContextClassLoader());
+        Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
+        options.setServletContainerLauncher(sclClass.newInstance());
+        return true;
+      } catch (ClassCastException e) {
+        t = e;
+      } catch (ClassNotFoundException e) {
+        t = e;
+      } catch (InstantiationException e) {
+        t = e;
+      } catch (IllegalAccessException e) {
+        t = e;
+      }
+      System.err.println("Unable to load server class '" + sclClassName + "'");
+      t.printStackTrace();
+      return false;
     }
   }
 
   /**
    * Handles a startup url that can be passed on the command line.
    */
-  protected class ArgHandlerStartupURLs extends ArgHandlerString {
+  protected static class ArgHandlerStartupURLs extends ArgHandlerString {
+    private final OptionStartupURLs options;
+
+    public ArgHandlerStartupURLs(OptionStartupURLs options) {
+      this.options = options;
+    }
 
     @Override
     public String getPurpose() {
@@ -97,19 +136,20 @@ public class HostedMode extends HostedModeBase {
 
     @Override
     public boolean setString(String arg) {
-      addStartupURL(arg);
+      options.addStartupURL(arg);
       return true;
     }
   }
 
-  class ArgProcessor extends HostedModeBase.ArgProcessor {
-    public ArgProcessor() {
-      registerHandler(new ArgHandlerServer());
-      registerHandler(new ArgHandlerNoServerFlag());
-      registerHandler(new ArgHandlerStartupURLs());
+  static class ArgProcessor extends HostedModeBase.ArgProcessor {
+    public ArgProcessor(HostedModeOptions options) {
+      super(options, false);
+      registerHandler(new ArgHandlerServer(options));
+      registerHandler(new ArgHandlerStartupURLs(options));
       registerHandler(new ArgHandlerWarDir(options));
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
+      registerHandler(new ArgHandlerLocalWorkers(options));
       registerHandler(new ArgHandlerModuleName(options));
     }
 
@@ -119,13 +159,60 @@ public class HostedMode extends HostedModeBase {
     }
   }
 
+  interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
+    ServletContainerLauncher getServletContainerLauncher();
+
+    void setServletContainerLauncher(ServletContainerLauncher scl);
+  }
+
   /**
-   * Concrete class to implement all compiler options.
+   * Concrete class to implement all hosted mode options.
    */
-  static class HostedModeOptionsImpl extends CompilerOptionsImpl implements
-      HostedModeBaseOptions {
+  static class HostedModeOptionsImpl extends HostedModeBaseOptionsImpl
+      implements HostedModeOptions {
+    private File extraDir;
+    private int localWorkers;
+    private ServletContainerLauncher scl;
+    private File warDir;
+
+    public File getExtraDir() {
+      return extraDir;
+    }
+
+    public int getLocalWorkers() {
+      return localWorkers;
+    }
+
+    public ServletContainerLauncher getServletContainerLauncher() {
+      return scl;
+    }
+
     public File getShellBaseWorkDir(ModuleDef moduleDef) {
       return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
+    }
+
+    public File getShellPublicGenDir(ModuleDef moduleDef) {
+      return new File(getShellBaseWorkDir(moduleDef), "public");
+    }
+
+    public File getWarDir() {
+      return warDir;
+    }
+
+    public void setExtraDir(File extraDir) {
+      this.extraDir = extraDir;
+    }
+
+    public void setLocalWorkers(int localWorkers) {
+      this.localWorkers = localWorkers;
+    }
+
+    public void setServletContainerLauncher(ServletContainerLauncher scl) {
+      this.scl = scl;
+    }
+
+    public void setWarDir(File warDir) {
+      this.warDir = warDir;
     }
   }
 
@@ -137,7 +224,7 @@ public class HostedMode extends HostedModeBase {
      * still implementation-dependent.
      */
     HostedMode hostedMode = new HostedMode();
-    if (hostedMode.new ArgProcessor().processArgs(args)) {
+    if (new ArgProcessor(hostedMode.options).processArgs(args)) {
       hostedMode.run();
       // Exit w/ success code.
       System.exit(0);
@@ -155,11 +242,6 @@ public class HostedMode extends HostedModeBase {
    */
   @SuppressWarnings("hiding")
   protected final HostedModeOptionsImpl options = (HostedModeOptionsImpl) super.options;
-
-  /**
-   * The servlet launcher to use (defaults to embedded Jetty).
-   */
-  private ServletContainerLauncher launcher = new JettyLauncher();
 
   /**
    * Maps each active linker stack by module.
@@ -187,9 +269,9 @@ public class HostedMode extends HostedModeBase {
   }
 
   /**
-   * The public API of this class is yet to be determined.
+   * Default constructor for testing; no public API yet.
    */
-  private HostedMode() {
+  HostedMode() {
   }
 
   @Override
@@ -278,7 +360,8 @@ public class HostedMode extends HostedModeBase {
     try {
       TreeLogger serverLogger = getTopLogger().branch(TreeLogger.INFO,
           "Starting HTTP on port " + getPort(), null);
-      server = launcher.start(serverLogger, getPort(), options.getWarDir());
+      server = options.getServletContainerLauncher().start(serverLogger,
+          getPort(), options.getWarDir());
       assert (server != null);
       return server.getPort();
     } catch (BindException e) {
@@ -290,6 +373,14 @@ public class HostedMode extends HostedModeBase {
       e.printStackTrace();
     }
     return -1;
+  }
+
+  @Override
+  protected String getHost() {
+    if (server != null) {
+      return server.getHost();
+    }
+    return super.getHost();
   }
 
   @Override
@@ -326,28 +417,6 @@ public class HostedMode extends HostedModeBase {
     ModuleDef module = super.loadModule(logger, moduleName, refresh);
     modulesByName.put(module.getName(), module);
     return module;
-  }
-
-  protected boolean setServer(TreeLogger logger, String serverClassName) {
-    Throwable t;
-    try {
-      Class<?> clazz = Class.forName(serverClassName, true,
-          Thread.currentThread().getContextClassLoader());
-      Class<? extends ServletContainerLauncher> sclClass = clazz.asSubclass(ServletContainerLauncher.class);
-      launcher = sclClass.newInstance();
-      return true;
-    } catch (ClassCastException e) {
-      t = e;
-    } catch (ClassNotFoundException e) {
-      t = e;
-    } catch (InstantiationException e) {
-      t = e;
-    } catch (IllegalAccessException e) {
-      t = e;
-    }
-    logger.log(TreeLogger.ERROR, "Unable to load server class '"
-        + serverClassName + "'", t);
-    return false;
   }
 
   /**

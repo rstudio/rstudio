@@ -28,6 +28,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
 import com.google.gwt.junit.client.impl.GWTRunner;
@@ -76,6 +77,7 @@ import java.util.regex.Pattern;
  * {@link JUnitMessageQueue}, thus closing the loop.
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class JUnitShell extends GWTShell {
 
   /**
@@ -92,9 +94,25 @@ public class JUnitShell extends GWTShell {
   class ArgProcessor extends GWTShell.ArgProcessor {
 
     public ArgProcessor() {
-      super(true, true);
-      registerHandler(new ArgHandlerFlag() {
+      super(options, true, true);
 
+      // Override port to set auto by default.
+      registerHandler(new ArgHandlerPort(options) {
+        @Override
+        public String[] getDefaultArgs() {
+          return new String[] {"-port", "auto"};
+        }
+      });
+
+      // Override log level to set WARN by default..
+      registerHandler(new ArgHandlerLogLevel(options) {
+        @Override
+        protected Type getDefaultLogLevel() {
+          return TreeLogger.WARN;
+        }
+      });
+
+      registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
           return "Causes your test to run in web (compiled) mode (defaults to hosted mode)";
@@ -111,11 +129,9 @@ public class JUnitShell extends GWTShell {
           numClients = 1;
           return true;
         }
-
       });
 
       registerHandler(new ArgHandlerString() {
-
         @Override
         public String getPurpose() {
           return "Runs web mode via RMI to a set of BrowserManagerServers; "
@@ -147,7 +163,6 @@ public class JUnitShell extends GWTShell {
       });
 
       registerHandler(new ArgHandlerString() {
-
         @Override
         public String getPurpose() {
           return "Runs web mode via HTTP to a set of Selenium servers; "
@@ -174,7 +189,6 @@ public class JUnitShell extends GWTShell {
       });
 
       registerHandler(new ArgHandlerString() {
-
         @Override
         public String getPurpose() {
           return "Run external browsers in web mode (pass a comma separated list of executables.)";
@@ -205,7 +219,6 @@ public class JUnitShell extends GWTShell {
       });
 
       registerHandler(new ArgHandler() {
-
         @Override
         public String[] getDefaultArgs() {
           return null;
@@ -249,7 +262,6 @@ public class JUnitShell extends GWTShell {
           runStyle = new RunStyleManual(JUnitShell.this, value);
           numClients = value;
         }
-
       });
 
       registerHandler(new ArgHandlerFlag() {
@@ -485,27 +497,12 @@ public class JUnitShell extends GWTShell {
     }
   }
 
-  @Override
-  protected Type doGetDefaultLogLevel() {
-    return Type.WARN;
-  }
-
   /**
    * Never check for updates in JUnit mode.
    */
   @Override
   protected boolean doShouldCheckForUpdates() {
     return false;
-  }
-
-  @Override
-  protected ArgHandlerPort getArgHandlerPort() {
-    return new ArgHandlerPort() {
-      @Override
-      public String[] getDefaultArgs() {
-        return new String[] {"-port", "auto"};
-      }
-    };
   }
 
   @Override

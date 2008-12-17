@@ -42,11 +42,17 @@ public class GWTShell extends HostedModeBase {
    * Handles the list of startup urls that can be passed at the end of the
    * command line.
    */
-  protected class ArgHandlerStartupURLsExtra extends ArgHandlerExtra {
+  protected static class ArgHandlerStartupURLsExtra extends ArgHandlerExtra {
+
+    private final OptionStartupURLs options;
+
+    public ArgHandlerStartupURLsExtra(OptionStartupURLs options) {
+      this.options = options;
+    }
 
     @Override
     public boolean addExtraArg(String arg) {
-      addStartupURL(arg);
+      options.addStartupURL(arg);
       return true;
     }
 
@@ -64,14 +70,12 @@ public class GWTShell extends HostedModeBase {
   /**
    * The GWTShell argument processor.
    */
-  protected class ArgProcessor extends HostedModeBase.ArgProcessor {
-    public ArgProcessor(boolean forceServer, boolean noURLs) {
-      if (!forceServer) {
-        registerHandler(new ArgHandlerNoServerFlag());
-      }
-
+  protected static class ArgProcessor extends HostedModeBase.ArgProcessor {
+    public ArgProcessor(ShellOptionsImpl options, boolean forceServer,
+        boolean noURLs) {
+      super(options, forceServer);
       if (!noURLs) {
-        registerHandler(new ArgHandlerStartupURLsExtra());
+        registerHandler(new ArgHandlerStartupURLsExtra(options));
       }
       registerHandler(new ArgHandlerOutDir(options));
     }
@@ -83,16 +87,23 @@ public class GWTShell extends HostedModeBase {
   }
 
   /**
-   * Concrete class to implement all compiler options.
+   * Concrete class to implement all shell options.
    */
-  static class ShellOptionsImpl extends GWTCompilerOptionsImpl implements
-      HostedModeBaseOptions, WorkDirs {
+  static class ShellOptionsImpl extends HostedModeBaseOptionsImpl implements
+      HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions {
+    private int localWorkers;
+    private File outDir;
+
     public File getCompilerOutputDir(ModuleDef moduleDef) {
       return new File(getOutDir(), moduleDef.getName());
     }
 
-    public File getShellBaseWorkDir(ModuleDef moduleDef) {
-      return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
+    public int getLocalWorkers() {
+      return localWorkers;
+    }
+
+    public File getOutDir() {
+      return outDir;
     }
 
     public File getShellPublicGenDir(ModuleDef moduleDef) {
@@ -102,6 +113,14 @@ public class GWTShell extends HostedModeBase {
     @Override
     public File getWorkDir() {
       return new File(getOutDir(), ".gwt-tmp");
+    }
+
+    public void setLocalWorkers(int localWorkers) {
+      this.localWorkers = localWorkers;
+    }
+
+    public void setOutDir(File outDir) {
+      this.outDir = outDir;
     }
   }
 
@@ -115,9 +134,10 @@ public class GWTShell extends HostedModeBase {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    GWTShell shellMain = new GWTShell();
-    if (shellMain.new ArgProcessor(false, false).processArgs(args)) {
-      shellMain.run();
+    GWTShell gwtShell = new GWTShell();
+    ArgProcessor argProcessor = new ArgProcessor(gwtShell.options, false, false);
+    if (argProcessor.processArgs(args)) {
+      gwtShell.run();
       // Exit w/ success code.
       System.exit(0);
     }

@@ -17,8 +17,8 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.jjs.JJSOptions;
@@ -56,6 +56,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -68,7 +69,7 @@ abstract class HostedModeBase implements BrowserWindowController {
   /**
    * Handles the -blacklist command line argument.
    */
-  protected class ArgHandlerBlacklist extends ArgHandlerString {
+  protected static class ArgHandlerBlacklist extends ArgHandlerString {
     @Override
     public String getPurpose() {
       return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
@@ -93,7 +94,13 @@ abstract class HostedModeBase implements BrowserWindowController {
   /**
    * Handles the -noserver command line flag.
    */
-  protected class ArgHandlerNoServerFlag extends ArgHandlerFlag {
+  protected static class ArgHandlerNoServerFlag extends ArgHandlerFlag {
+    private final OptionNoServer options;
+
+    public ArgHandlerNoServerFlag(OptionNoServer options) {
+      this.options = options;
+    }
+
     @Override
     public String getPurpose() {
       return "Prevents the embedded Tomcat server from running, even if a port is specified";
@@ -106,7 +113,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     @Override
     public boolean setFlag() {
-      runTomcat = false;
+      options.setNoServer(true);
       return true;
     }
   }
@@ -114,7 +121,13 @@ abstract class HostedModeBase implements BrowserWindowController {
   /**
    * Handles the -port command line flag.
    */
-  protected class ArgHandlerPort extends ArgHandlerString {
+  protected static class ArgHandlerPort extends ArgHandlerString {
+
+    private final OptionPort options;
+
+    public ArgHandlerPort(OptionPort options) {
+      this.options = options;
+    }
 
     @Override
     public String[] getDefaultArgs() {
@@ -139,10 +152,10 @@ abstract class HostedModeBase implements BrowserWindowController {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        port = 0;
+        options.setPort(0);
       } else {
         try {
-          port = Integer.parseInt(value);
+          options.setPort(Integer.parseInt(value));
         } catch (NumberFormatException e) {
           System.err.println("A port must be an integer or \"auto\"");
           return false;
@@ -155,7 +168,7 @@ abstract class HostedModeBase implements BrowserWindowController {
   /**
    * Handles the -whitelist command line flag.
    */
-  protected class ArgHandlerWhitelist extends ArgHandlerString {
+  protected static class ArgHandlerWhitelist extends ArgHandlerString {
     @Override
     public String getPurpose() {
       return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
@@ -177,31 +190,97 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
-  abstract class ArgProcessor extends ArgProcessorBase {
-    public ArgProcessor() {
-      registerHandler(getArgHandlerPort());
-      registerHandler(new ArgHandlerWhitelist());
-      registerHandler(new ArgHandlerBlacklist());
-      registerHandler(new ArgHandlerLogLevel(options) {
-        @Override
-        protected Type getDefaultLogLevel() {
-          return doGetDefaultLogLevel();
-        }
-      });
-      registerHandler(new ArgHandlerGenDir(options));
-      registerHandler(new ArgHandlerScriptStyle(options));
-      registerHandler(new ArgHandlerEnableAssertions(options));
-      registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
-    }
-  }
-
-  interface HostedModeBaseOptions extends JJSOptions, OptionLogLevel,
-      OptionGenDir {
+  protected interface HostedModeBaseOptions extends JJSOptions, OptionLogLevel,
+      OptionGenDir, OptionNoServer, OptionPort, OptionStartupURLs {
 
     /**
      * The base shell work directory.
      */
     File getShellBaseWorkDir(ModuleDef moduleDef);
+  }
+
+  /**
+   * Concrete class to implement all hosted mode base options.
+   */
+  protected static class HostedModeBaseOptionsImpl extends
+      PrecompileOptionsImpl implements HostedModeBaseOptions {
+
+    private boolean isNoServer;
+    private int port;
+    private final List<String> startupURLs = new ArrayList<String>();
+
+    public void addStartupURL(String url) {
+      startupURLs.add(url);
+    }
+
+    public int getPort() {
+      return port;
+    }
+
+    public File getShellBaseWorkDir(ModuleDef moduleDef) {
+      return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
+    }
+
+    public List<String> getStartupURLs() {
+      return Collections.unmodifiableList(startupURLs);
+    }
+
+    public boolean isNoServer() {
+      return isNoServer;
+    }
+
+    public void setNoServer(boolean isNoServer) {
+      this.isNoServer = isNoServer;
+    }
+
+    public void setPort(int port) {
+      this.port = port;
+    }
+  }
+
+  /**
+   * Controls whether to run a server or not.
+   * 
+   */
+  protected interface OptionNoServer {
+    boolean isNoServer();
+
+    void setNoServer(boolean isNoServer);
+  }
+
+  /**
+   * Controls what port to use.
+   * 
+   */
+  protected interface OptionPort {
+    int getPort();
+
+    void setPort(int port);
+  }
+
+  /**
+   * Controls the startup URLs.
+   */
+  protected interface OptionStartupURLs {
+    void addStartupURL(String url);
+
+    List<String> getStartupURLs();
+  }
+
+  abstract static class ArgProcessor extends ArgProcessorBase {
+    public ArgProcessor(HostedModeBaseOptions options, boolean forceServer) {
+      if (!forceServer) {
+        registerHandler(new ArgHandlerNoServerFlag(options));
+      }
+      registerHandler(new ArgHandlerPort(options));
+      registerHandler(new ArgHandlerWhitelist());
+      registerHandler(new ArgHandlerBlacklist());
+      registerHandler(new ArgHandlerLogLevel(options));
+      registerHandler(new ArgHandlerGenDir(options));
+      registerHandler(new ArgHandlerScriptStyle(options));
+      registerHandler(new ArgHandlerEnableAssertions(options));
+      registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
+    }
   }
 
   private class BrowserWidgetHostImpl implements BrowserWidgetHost {
@@ -258,7 +337,7 @@ abstract class HostedModeBase implements BrowserWindowController {
       return HostedModeBase.this.initModule(moduleName);
     }
 
-    @SuppressWarnings("deprecation")
+    @Deprecated
     public boolean isLegacyMode() {
       return HostedModeBase.this instanceof GWTShell;
     }
@@ -305,13 +384,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
   private ShellMainWindow mainWnd;
 
-  private int port;
-
-  private boolean runTomcat = true;
-
   private boolean started;
-
-  private final List<String> startupUrls = new ArrayList<String>();
 
   public HostedModeBase() {
     // Set any platform specific system properties.
@@ -321,7 +394,7 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   public final void addStartupURL(String url) {
-    startupUrls.add(url);
+    options.addStartupURL(url);
   }
 
   public final void closeAllBrowserWindows() {
@@ -331,7 +404,7 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   public final int getPort() {
-    return port;
+    return options.getPort();
   }
 
   public TreeLogger getTopLogger() {
@@ -353,7 +426,7 @@ abstract class HostedModeBase implements BrowserWindowController {
     // Launch a browser window for each startup url.
     String startupURL = "";
     try {
-      for (String prenormalized : startupUrls) {
+      for (String prenormalized : options.getStartupURLs()) {
         startupURL = normalizeURL(prenormalized);
         logger.log(TreeLogger.TRACE, "Starting URL: " + startupURL, null);
         BrowserWidget bw = openNewBrowserWindow();
@@ -448,11 +521,11 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   public final void setPort(int port) {
-    this.port = port;
+    options.setPort(port);
   }
 
   public final void setRunTomcat(boolean run) {
-    runTomcat = run;
+    options.setNoServer(!run);
   }
 
   /**
@@ -493,14 +566,6 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
-   * Can be override to change the default log level in subclasses. JUnit does
-   * this for example.
-   */
-  protected Type doGetDefaultLogLevel() {
-    return Type.INFO;
-  }
-
-  /**
    * Derived classes can override to prevent automatic update checking.
    */
   protected boolean doShouldCheckForUpdates() {
@@ -522,13 +587,6 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   protected abstract int doStartUpServer();
-
-  /**
-   * Derived classes can override to set a default port.
-   */
-  protected ArgHandlerPort getArgHandlerPort() {
-    return new ArgHandlerPort();
-  }
 
   protected final BrowserWidgetHost getBrowserHost() {
     return browserHost;
@@ -612,7 +670,7 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   protected final void shutDown() {
-    if (!runTomcat) {
+    if (options.isNoServer()) {
       return;
     }
     doShutDownServer();
@@ -633,12 +691,12 @@ abstract class HostedModeBase implements BrowserWindowController {
       return false;
     }
 
-    if (runTomcat) {
+    if (!options.isNoServer()) {
       int resultPort = doStartUpServer();
       if (resultPort < 0) {
         return false;
       }
-      port = resultPort;
+      options.setPort(resultPort);
     }
 
     return true;
@@ -690,8 +748,8 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     boolean checkForUpdates = doShouldCheckForUpdates();
 
-    mainWnd = new ShellMainWindow(this, shell, runTomcat ? getPort() : 0,
-        checkForUpdates);
+    mainWnd = new ShellMainWindow(this, shell, options.isNoServer() ? 0
+        : getPort(), checkForUpdates);
 
     shell.setSize(700, 600);
     if (!isHeadless()) {
