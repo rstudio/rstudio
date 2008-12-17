@@ -376,14 +376,6 @@ public class HostedMode extends HostedModeBase {
   }
 
   @Override
-  protected String getHost() {
-    if (server != null) {
-      return server.getHost();
-    }
-    return super.getHost();
-  }
-
-  @Override
   protected boolean initModule(String moduleName) {
     ModuleDef module = modulesByName.get(moduleName);
     if (module == null) {
