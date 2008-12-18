@@ -67,48 +67,13 @@ public class IFrameLinker extends SelectionScriptLinker {
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName) {
-    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
-    out.print("<html>");
-    out.newlineOpt();
+    return getModulePrefix(context, strongName, true);
+  }
 
-    // Setup the well-known variables.
-    out.print("<head><script>");
-    out.newlineOpt();
-    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
-    out.newlineOpt();
-    out.print("var $wnd = parent;");
-    out.newlineOpt();
-    out.print("var $doc = $wnd.document;");
-    out.newlineOpt();
-    out.print("var $moduleName, $moduleBase;");
-    out.newlineOpt();
-    out.print("function __gwtStartLoadingFragment(frag) {");
-    out.newlineOpt();
-    out.indentIn();
-    out.print("  var script = document.createElement('script');");
-    out.newlineOpt();
-    out.print("  script.src = '" + FRAGMENT_SUBDIR + "/" + strongName + "/' + frag + '" + FRAGMENT_EXTENSION + "';");
-    out.print("  document.getElementsByTagName('head').item(0).appendChild(script);");
-    out.indentOut();
-    out.newlineOpt();
-    out.print("};");
-    out.newlineOpt();
-    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
-    out.newlineOpt();
-    out.print("$stats && $stats({moduleName:'" + context.getModuleName()
-        + "',subSystem:'startup',evtGroup:'moduleStartup'"
-        + ",millis:(new Date()).getTime(),type:'moduleEvalStart'});");
-    out.newlineOpt();
-    out.print("</script></head>");
-    out.newlineOpt();
-    out.print("<body>");
-    out.newlineOpt();
-
-    // Begin a script block inside the body. It's commented out so that the
-    // browser won't mistake strings containing "<script>" for actual script.
-    out.print("<script><!--");
-    out.newline();
-    return out.toString();
+  @Override
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName, int numFragments) {
+    return getModulePrefix(context, strongName, numFragments > 1);
   }
 
   @Override
@@ -134,6 +99,59 @@ public class IFrameLinker extends SelectionScriptLinker {
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) {
     return "com/google/gwt/core/linker/IFrameTemplate.js";
+  }
+
+  /**
+   * This is the real implementation of <code>getModulePrefix</code> for this
+   * linker.  The other versions forward to this one.
+   */
+  private String getModulePrefix(LinkerContext context, String strongName,
+      boolean supportRunAsync) {
+    DefaultTextOutput out = new DefaultTextOutput(context.isOutputCompact());
+    out.print("<html>");
+    out.newlineOpt();
+
+    // Setup the well-known variables.
+    out.print("<head><script>");
+    out.newlineOpt();
+    out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
+    out.newlineOpt();
+    out.print("var $wnd = parent;");
+    out.newlineOpt();
+    out.print("var $doc = $wnd.document;");
+    out.newlineOpt();
+    out.print("var $moduleName, $moduleBase;");
+    out.newlineOpt();
+    if (supportRunAsync) {
+      out.print("function __gwtStartLoadingFragment(frag) {");
+      out.newlineOpt();
+      out.indentIn();
+      out.print("  var script = document.createElement('script');");
+      out.newlineOpt();
+      out.print("  script.src = '" + FRAGMENT_SUBDIR + "/" + strongName
+          + "/' + frag + '" + FRAGMENT_EXTENSION + "';");
+      out.print("  document.getElementsByTagName('head').item(0).appendChild(script);");
+      out.indentOut();
+      out.newlineOpt();
+      out.print("};");
+      out.newlineOpt();
+    }
+    out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
+    out.newlineOpt();
+    out.print("$stats && $stats({moduleName:'" + context.getModuleName()
+        + "',subSystem:'startup',evtGroup:'moduleStartup'"
+        + ",millis:(new Date()).getTime(),type:'moduleEvalStart'});");
+    out.newlineOpt();
+    out.print("</script></head>");
+    out.newlineOpt();
+    out.print("<body>");
+    out.newlineOpt();
+
+    // Begin a script block inside the body. It's commented out so that the
+    // browser won't mistake strings containing "<script>" for actual script.
+    out.print("<script><!--");
+    out.newline();
+    return out.toString();
   }
 
 }

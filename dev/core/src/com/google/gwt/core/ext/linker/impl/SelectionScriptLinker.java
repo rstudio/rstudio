@@ -118,7 +118,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     String[] js = result.getJavaScript();
     byte[][] bytes = new byte[js.length][];
     bytes[0] = generatePrimaryFragment(logger, context, js[0],
-        result.getStrongName());
+        result.getStrongName(), js.length);
     for (int i = 1; i < js.length; i++) {
       bytes[i] = Util.getBytes(js[i]);
     }
@@ -342,9 +342,27 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     return compilationStrongNames.get(result);
   }
 
+  /**
+   * Compute the beginning of a JavaScript file that will hold the main module
+   * implementation.
+   */
   protected abstract String getModulePrefix(TreeLogger logger,
       LinkerContext context, String strongName)
       throws UnableToCompleteException;
+
+  /**
+   * Compute the beginning of a JavaScript file that will hold the main module
+   * implementation. By default, calls
+   * {@link #getModulePrefix(TreeLogger, LinkerContext, String)}.
+   * 
+   * @param strongName strong name of the module being emitted
+   * @param numFragments the number of fragments for this module, including
+   *        the main fragment (fragment 0)
+   */
+  protected String getModulePrefix(TreeLogger logger, LinkerContext context,
+      String strongName, int numFragments) throws UnableToCompleteException {
+    return getModulePrefix(logger, context, strongName);
+  }
 
   protected abstract String getModuleSuffix(TreeLogger logger,
       LinkerContext context) throws UnableToCompleteException;
@@ -353,10 +371,10 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context) throws UnableToCompleteException;
 
   private byte[] generatePrimaryFragment(TreeLogger logger,
-      LinkerContext context, String js, String strongName)
+      LinkerContext context, String js, String strongName, int numFragments)
       throws UnableToCompleteException {
     StringBuffer b = new StringBuffer();
-    b.append(getModulePrefix(logger, context, strongName));
+    b.append(getModulePrefix(logger, context, strongName, numFragments));
     b.append(js);
     b.append(getModuleSuffix(logger, context));
     return Util.getBytes(b.toString());
