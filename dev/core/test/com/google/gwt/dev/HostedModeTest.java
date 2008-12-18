@@ -1,11 +1,11 @@
 package com.google.gwt.dev;
 
+import com.google.gwt.core.ext.ServletContainer;
+import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.HostedMode.HostedModeOptionsImpl;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
-import com.google.gwt.dev.shell.ServletContainer;
-import com.google.gwt.dev.shell.ServletContainerLauncher;
 
 import java.io.File;
 import java.net.BindException;
@@ -15,7 +15,7 @@ import java.net.BindException;
  */
 public class HostedModeTest extends ArgProcessorTestBase {
 
-  public static class MySCL implements ServletContainerLauncher {
+  public static class MySCL extends ServletContainerLauncher {
     public ServletContainer start(TreeLogger logger, int port, File appRootDir)
         throws BindException, Exception {
       throw new UnsupportedOperationException();

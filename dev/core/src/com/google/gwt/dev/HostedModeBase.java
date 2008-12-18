@@ -445,19 +445,19 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
 
     // Assume it's a trailing url path.
-    //
     if (unknownUrlText.length() > 0 && unknownUrlText.charAt(0) == '/') {
       unknownUrlText = unknownUrlText.substring(1);
     }
 
-    int prt = getPort();
-    if (prt != 80 && prt != 0) {
+    int port = getPort();
+    String host = getHost();
+    if (port != 80) {
       // CHECKSTYLE_OFF: Not really an assembled error message, so no space
       // after ':'.
-      return "http://localhost:" + prt + "/" + unknownUrlText;
+      return "http://" + host + ":" + port + "/" + unknownUrlText;
       // CHECKSTYLE_ON
     } else {
-      return "http://localhost/" + unknownUrlText;
+      return "http://" + host + "/" + unknownUrlText;
     }
   }
 
@@ -590,6 +590,10 @@ abstract class HostedModeBase implements BrowserWindowController {
 
   protected final BrowserWidgetHost getBrowserHost() {
     return browserHost;
+  }
+
+  protected String getHost() {
+    return "localhost";
   }
 
   protected void initializeLogger() {

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev;
 
+import com.google.gwt.core.ext.ServletContainer;
+import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
@@ -22,8 +24,6 @@ import com.google.gwt.core.ext.linker.impl.StandardLinkerContext;
 import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
-import com.google.gwt.dev.shell.ServletContainer;
-import com.google.gwt.dev.shell.ServletContainerLauncher;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -373,6 +373,14 @@ public class HostedMode extends HostedModeBase {
       e.printStackTrace();
     }
     return -1;
+  }
+
+  @Override
+  protected String getHost() {
+    if (server != null) {
+      return server.getHost();
+    }
+    return super.getHost();
   }
 
   @Override

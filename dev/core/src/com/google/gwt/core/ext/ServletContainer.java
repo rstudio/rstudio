@@ -13,23 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.shell;
-
-import com.google.gwt.core.ext.UnableToCompleteException;
+package com.google.gwt.core.ext;
 
 /**
  * An instance of a servlet container that can be used by the shell. It is
- * assumed that this servlet container serves a web app from the root directory
- * specified by a call to
- * {@link ServletContainerLauncher#setAppRootDir(java.io.File)}.
+ * assumed that this servlet container serves a web app from the directory
+ * specified when this servlet container was created.
  */
-public interface ServletContainer {
+public abstract class ServletContainer {
 
   /**
-   * Provides the port on which the server is actually running, which can be
-   * useful when automatic port selection was requested.
+   * Returns the host on which the servlet container is running. Defaults to
+   * "localhost". Used to construct a URL to reach the servlet container.
    */
-  int getPort();
+  public String getHost() {
+    return "localhost";
+  }
+
+  /**
+   * Returns the port on which the server is running.Used to construct a URL to
+   * reach the servlet container.
+   */
+  public abstract int getPort();
 
   /**
    * Causes the web app to pick up changes made within the app root dir while
@@ -42,12 +47,12 @@ public interface ServletContainer {
    * 
    * @throws UnableToCompleteException
    */
-  void refresh() throws UnableToCompleteException;
+  public abstract void refresh() throws UnableToCompleteException;
 
   /**
    * Stops the running servlet container. It cannot be restarted after this.
    * 
    * @throws UnableToCompleteException
    */
-  void stop() throws UnableToCompleteException;
+  public abstract void stop() throws UnableToCompleteException;
 }

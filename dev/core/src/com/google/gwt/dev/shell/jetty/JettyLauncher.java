@@ -15,11 +15,11 @@
  */
 package com.google.gwt.dev.shell.jetty;
 
+import com.google.gwt.core.ext.ServletContainer;
+import com.google.gwt.core.ext.ServletContainerLauncher;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
-import com.google.gwt.dev.shell.ServletContainer;
-import com.google.gwt.dev.shell.ServletContainerLauncher;
 
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
@@ -32,7 +32,7 @@ import java.io.File;
 /**
  * A launcher for an embedded Jetty server.
  */
-public class JettyLauncher implements ServletContainerLauncher {
+public class JettyLauncher extends ServletContainerLauncher {
 
   /**
    * An adapter for the Jetty logging system to GWT's TreeLogger. This
@@ -132,7 +132,7 @@ public class JettyLauncher implements ServletContainerLauncher {
     }
   }
 
-  private static class JettyServletContainer implements ServletContainer {
+  private static class JettyServletContainer extends ServletContainer {
 
     private final int actualPort;
     private final File appRootDir;

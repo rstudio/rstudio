@@ -13,29 +13,28 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.shell;
-
-import com.google.gwt.core.ext.TreeLogger;
+package com.google.gwt.core.ext;
 
 import java.io.File;
 import java.net.BindException;
 
 /**
  * Defines the service provider interface for launching servlet containers that
- * can be used by the shell.
+ * can be used by the GWT hosted mode.
  */
-public interface ServletContainerLauncher {
+public abstract class ServletContainerLauncher {
 
   /**
-   * Start an embedded HTTP server.
+   * Start an embedded HTTP servlet container.
    * 
    * @param logger the server logger
-   * @param port the TCP port to serve on
+   * @param port the TCP port to serve on; if 0 is requested, a port should be
+   *          automatically selected
    * @param appRootDir the base WAR directory
-   * @return the launch servlet contained
+   * @return the launched servlet container
    * @throws BindException if the requested port is already in use
    * @throws Exception if the server fails to start for any other reason
    */
-  ServletContainer start(TreeLogger logger, int port, File appRootDir)
-      throws BindException, Exception;
+  public abstract ServletContainer start(TreeLogger logger, int port,
+      File appRootDir) throws BindException, Exception;
 }
