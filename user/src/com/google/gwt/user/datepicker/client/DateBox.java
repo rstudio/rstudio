@@ -61,7 +61,10 @@ public class DateBox extends Composite implements HasValue<Date> {
   /**
    * Implemented by a delegate to report errors parsing date values from the
    * user's input.
+   * 
+   * @deprecated, is going to be replaced with a format interface shortly.
    */
+  @Deprecated
   public interface InvalidDateReporter {
     /**
      * Called when a valid date has been parsed, or the datebox has been
