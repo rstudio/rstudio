@@ -254,6 +254,13 @@ public class CodeSplitter {
     return (value == null) ? 0 : value;
   }
 
+  private static <T> Set<T> union(Set<? extends T> set1, Set<? extends T> set2) {
+    Set<T> union = new HashSet<T>();
+    union.addAll(set1);
+    union.addAll(set2);
+    return union;
+  }
+
   private static <T> void updateMap(int entry, Map<T, Integer> map,
       Set<?> liveWithoutEntry, Iterable<T> all) {
     for (T each : all) {
@@ -577,11 +584,13 @@ public class CodeSplitter {
         allMethods.add((JMethod) node);
       }
     }
+    allFields.addAll(everything.getFieldsWritten());
 
     for (int entry = 1; entry < numEntries; entry++) {
       ControlFlowAnalyzer allButOne = allButOnes.get(entry - 1);
-      updateMap(entry, fragmentMap.fields, allButOne.getLiveFieldsAndMethods(),
-          allFields);
+      Set<JNode> allLiveNodes = union(allButOne.getLiveFieldsAndMethods(),
+          allButOne.getFieldsWritten());
+      updateMap(entry, fragmentMap.fields, allLiveNodes, allFields);
       updateMap(entry, fragmentMap.methods,
           allButOne.getLiveFieldsAndMethods(), allMethods);
       updateMap(entry, fragmentMap.strings, allButOne.getLiveStrings(),

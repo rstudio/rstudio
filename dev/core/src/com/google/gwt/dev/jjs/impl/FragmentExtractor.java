@@ -57,7 +57,8 @@ public class FragmentExtractor {
     }
 
     public boolean isLive(JField field) {
-      return cfa.getLiveFieldsAndMethods().contains(field);
+      return cfa.getLiveFieldsAndMethods().contains(field)
+          || cfa.getFieldsWritten().contains(field);
     }
 
     public boolean isLive(JMethod method) {

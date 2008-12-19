@@ -107,6 +107,10 @@ public class ControlFlowAnalyzer {
 
     @Override
     public boolean visit(JBinaryOperation x, Context ctx) {
+      if (x.isAssignment() && x.getLhs() instanceof JFieldRef) {
+        fieldsWritten.add(((JFieldRef) x.getLhs()).getField());
+      }
+
       // special string concat handling
       if ((x.getOp() == JBinaryOperator.ADD || x.getOp() == JBinaryOperator.ASG_ADD)
           && x.getType() == program.getTypeJavaLangString()) {
@@ -211,6 +215,10 @@ public class ControlFlowAnalyzer {
            * the variable is accessed, not when its declaration runs.
            */
           accept(x.getInitializer());
+
+          if (x.getVariableRef().getTarget() instanceof JField) {
+            fieldsWritten.add((JField) x.getVariableRef().getTarget());
+          }
         }
       }
 
@@ -618,6 +626,7 @@ public class ControlFlowAnalyzer {
     }
   }
 
+  private Set<JField> fieldsWritten = new HashSet<JField>();
   private Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
   private Set<JNode> liveFieldsAndMethods = new HashSet<JNode>();
   private Set<String> liveStrings = new HashSet<String>();
@@ -643,6 +652,7 @@ public class ControlFlowAnalyzer {
 
   public ControlFlowAnalyzer(ControlFlowAnalyzer cfa) {
     program = cfa.program;
+    fieldsWritten = new HashSet<JField>(cfa.fieldsWritten);
     instantiatedTypes = new HashSet<JReferenceType>(cfa.instantiatedTypes);
     liveFieldsAndMethods = new HashSet<JNode>(cfa.liveFieldsAndMethods);
     referencedTypes = new HashSet<JReferenceType>(cfa.referencedTypes);
@@ -656,6 +666,13 @@ public class ControlFlowAnalyzer {
   public ControlFlowAnalyzer(JProgram program) {
     this.program = program;
     buildMethodsOverriding();
+  }
+
+  /**
+   * Return the set of all fields that are written.
+   */
+  public Set<JField> getFieldsWritten() {
+    return fieldsWritten;
   }
 
   /**
