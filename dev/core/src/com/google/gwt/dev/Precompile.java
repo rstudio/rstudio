@@ -290,8 +290,8 @@ public class Precompile {
           merged.put(rebindResultsString, permutation);
         }
       }
-      permutations = merged.values().toArray(new Permutation[merged.size()]);
-      return new Precompilation(unifiedAst, permutations, generatedArtifacts);
+      return new Precompilation(unifiedAst, merged.values(),
+          generatedArtifacts);
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
