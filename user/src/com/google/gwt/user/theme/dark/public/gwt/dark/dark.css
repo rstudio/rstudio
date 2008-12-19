@@ -551,7 +551,6 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
 }
 
 .gwt-RadioButton {
-  padding: 4px 4px 3px 3px;
 }
 .gwt-RadioButton-disabled {
   color: #888;
@@ -987,6 +986,14 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
 .gwt-Tree .gwt-TreeItem-selected {
   color: #0cf;
   background: #1c1c1c;
+}
+.gwt-TreeItem .gwt-RadioButton input,
+.gwt-TreeItem .gwt-CheckBox input {
+  margin-left: 0px;
+}
+* html .gwt-TreeItem .gwt-RadioButton input,
+* html .gwt-TreeItem .gwt-CheckBox input {
+  margin-left: -4px;
 }
 
 .gwt-DateBox input {
