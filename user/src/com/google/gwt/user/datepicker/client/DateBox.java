@@ -25,6 +25,8 @@ import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -43,13 +45,16 @@ import java.util.Date;
  * 
  * <h3>CSS Style Rules</h3>
  * 
- * <ul class="css">
- * 
- * <li>.gwt-DateBox { }</li>
- * 
- * <li>.dateBoxPopup { Applied to the popup around the DatePicker }</li>
- * 
- * </ul>
+ * <dl>
+ * <dt>.gwt-DateBox</dt>
+ * <dd>default style name</dd>
+ * <dt>.dateBoxPopup</dt>
+ * <dd>Applied to the popup around the DatePicker</dd>
+ * <dt>.dateBoxFormatError</dt>
+ * <dd>Default style for when the date box has bad input. Applied by
+ * {@link DateBox.DefaultFormat} when the text does not represent a date that
+ * can be parsed</dd>
+ * </dl>
  * 
  * <p>
  * <h3>Example</h3>
@@ -57,34 +62,128 @@ import java.util.Date;
  * </p>
  */
 public class DateBox extends Composite implements HasValue<Date> {
+  /**
+   * Default {@link DateBox.Format} class. The date is first parsed using the
+   * {@link DateTimeFormat} supplied by the user, or
+   * {@link DateTimeFormat#getMediumDateFormat()} by default.
+   * <p>
+   * If that fails, we then try to parse again using the default browser date
+   * parsing.
+   * </p>
+   * If that fails, the <code>dateBoxFormatError</code> css style is
+   * applied to the {@link DateBox}. The style will be removed when either a
+   * successful {@link #parse(DateBox,String, boolean)} is called or
+   * {@link #format(DateBox,Date)} is called.
+   * <p>
+   * Use a different {@link DateBox.Format} instance to change that behavior.
+   * </p>
+   */
+  public static class DefaultFormat implements Format {
+
+    private final DateTimeFormat dateTimeFormat;
+
+    /**
+     * Creates a new default format instance.
+     */
+    public DefaultFormat() {
+      dateTimeFormat = DateTimeFormat.getMediumDateTimeFormat();
+    }
+
+    /**
+     * Creates a new default format instance.
+     * 
+     * @param dateTimeFormat the {@link DateTimeFormat} to use with this
+     *          {@link Format}.
+     */
+    public DefaultFormat(DateTimeFormat dateTimeFormat) {
+      this.dateTimeFormat = dateTimeFormat;
+    }
+
+    public String format(DateBox box, Date date) {
+      if (date == null) {
+        return "";
+      } else {
+        return dateTimeFormat.format(date);
+      }
+    }
+
+    /**
+     * Gets the date time format.
+     * 
+     * @return the date time format
+     */
+    public DateTimeFormat getDateTimeFormat() {
+      return dateTimeFormat;
+    }
+
+    @SuppressWarnings("deprecation")
+    public Date parse(DateBox dateBox, String dateText, boolean reportError) {
+      Date date = null;
+      try {
+        if (dateText.length() > 0) {
+          date = dateTimeFormat.parse(dateText);
+        }
+      } catch (IllegalArgumentException exception) {
+        try {
+          date = new Date(dateText);
+        } catch (IllegalArgumentException e) {
+          if (reportError) {
+            dateBox.addStyleName(DATE_BOX_FORMAT_ERROR);
+          }
+          return null;
+        }
+      }
+      return date;
+    }
+
+    public void reset(DateBox dateBox, boolean abandon) {
+      dateBox.removeStyleName(DATE_BOX_FORMAT_ERROR);
+    }
+  }
 
   /**
-   * Implemented by a delegate to report errors parsing date values from the
-   * user's input.
-   * 
-   * @deprecated, is going to be replaced with a format interface shortly.
+   * Implemented by a delegate to handle the parsing and formating of date
+   * values. The default {@link Format} uses a new {@link DefaultFormat}
+   * instance.
    */
-  @Deprecated
-  public interface InvalidDateReporter {
-    /**
-     * Called when a valid date has been parsed, or the datebox has been
-     * cleared.
-     */
-    void clearError();
+  public interface Format {
 
     /**
-     * Given an unparseable string, explain the situation to the user.
+     * Formats the provided date. Note, a null date is a possible input.
      * 
-     * @param input what the user typed
+     * @param dateBox the date box you are formatting
+     * @param date the date to format
+     * @return the formatted date as a string
      */
-    void reportError(String input);
+    String format(DateBox dateBox, Date date);
+
+    /**
+     * Parses the provided string as a date.
+     * 
+     * @param dateBox the date box
+     * @param text the string representing a date
+     * @param reportError should the formatter indicate a parse error to the
+     *          user?
+     * @return the date created, or null if there was a parse error
+     */
+    Date parse(DateBox dateBox, String text, boolean reportError);
+
+    /**
+     * If the format did any modifications to the date box's styling, reset them
+     * now.
+     * 
+     * @param abandon true when the current format is being replaced by another
+     * @param dateBox the date box
+     */
+    void reset(DateBox dateBox, boolean abandon);
   }
 
   private class DateBoxHandler implements ValueChangeHandler<Date>,
-      FocusHandler, BlurHandler, ClickHandler, KeyDownHandler {
+      FocusHandler, BlurHandler, ClickHandler, KeyDownHandler,
+      CloseHandler<PopupPanel> {
 
     public void onBlur(BlurEvent event) {
-      if (!popup.isVisible()) {
+      if (isDatePickerVisible() == false) {
         updateDateFromTextBox();
       }
     }
@@ -93,8 +192,16 @@ public class DateBox extends Composite implements HasValue<Date> {
       showDatePicker();
     }
 
-    public void onFocus(FocusEvent event) {
+    public void onClose(CloseEvent<PopupPanel> event) {
+      // If we are not closing because we have picked a new value, make sure the
+      // current value is updated.
       if (allowDPShow) {
+        updateDateFromTextBox();
+      }
+    }
+
+    public void onFocus(FocusEvent event) {
+      if (allowDPShow && isDatePickerVisible() == false) {
         showDatePicker();
       }
     }
@@ -103,9 +210,10 @@ public class DateBox extends Composite implements HasValue<Date> {
       switch (event.getNativeKeyCode()) {
         case KeyCodes.KEY_ENTER:
         case KeyCodes.KEY_TAB:
+          updateDateFromTextBox();
+          // Deliberate fall through
         case KeyCodes.KEY_ESCAPE:
         case KeyCodes.KEY_UP:
-          updateDateFromTextBox();
           hideDatePicker();
           break;
         case KeyCodes.KEY_DOWN:
@@ -123,49 +231,46 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   /**
+   * Default style name added when the date box has a format error.
+   */
+  private static final String DATE_BOX_FORMAT_ERROR = "dateBoxFormatError";
+
+  /**
    * Default style name.
    */
   public static final String DEFAULT_STYLENAME = "gwt-DateBox";
-
-  public static final InvalidDateReporter DEFAULT_INVALID_DATE_REPORTER = new InvalidDateReporter() {
-    public void clearError() {
-    }
-
-    public void reportError(String input) {
-    }
-  };
-  private static final DateTimeFormat DEFAULT_FORMATTER = DateTimeFormat.getMediumDateFormat();
-
+  private static final DefaultFormat DEFAULT_FORMAT = new DefaultFormat();
   private final PopupPanel popup;
   private final TextBox box = new TextBox();
   private final DatePicker picker;
-
-  private final InvalidDateReporter invalidDateReporter;
-  private DateTimeFormat dateFormatter = DEFAULT_FORMATTER;
-
+  private Format format;
   private boolean allowDPShow = true;
 
   /**
-   * Create a new date box with a new {@link DatePicker} and the
-   * {@link #DEFAULT_INVALID_DATE_REPORTER}, which does nothing.
+   * Create a date box with a new {@link DatePicker}.
    */
   public DateBox() {
-    this(new DatePicker(), DEFAULT_INVALID_DATE_REPORTER);
+    this(new DatePicker(), null, DEFAULT_FORMAT);
   }
 
   /**
    * Create a new date box.
    * 
+   * @param date the default date.
    * @param picker the picker to drop down from the date box
+   * @param format to use to parse and format dates
    */
-  public DateBox(DatePicker picker, InvalidDateReporter invalidDateReporter) {
+  public DateBox(DatePicker picker, Date date, Format format) {
     this.picker = picker;
-    this.invalidDateReporter = invalidDateReporter;
     this.popup = new PopupPanel();
+    assert format != null : "You may not construct a date box with a null format";
+    this.format = format;
+
     popup.setAutoHideEnabled(true);
     popup.setAutoHidePartner(box.getElement());
     popup.setWidget(picker);
     popup.setStyleName("dateBoxPopup");
+
     initWidget(box);
     setStyleName(DEFAULT_STYLENAME);
 
@@ -175,6 +280,8 @@ public class DateBox extends Composite implements HasValue<Date> {
     box.addBlurHandler(handler);
     box.addClickHandler(handler);
     box.addKeyDownHandler(handler);
+    popup.addCloseHandler(handler);
+    setValue(date);
   }
 
   public HandlerRegistration addValueChangeHandler(
@@ -202,6 +309,16 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   /**
+   * Gets the format instance used to control formatting and parsing of this
+   * {@link DateBox}.
+   * 
+   * @return the format
+   */
+  public Format getFormat() {
+    return this.format;
+  }
+
+  /**
    * Gets the date box's position in the tab index.
    * 
    * @return the date box's tab index
@@ -221,10 +338,9 @@ public class DateBox extends Composite implements HasValue<Date> {
 
   /**
    * Get the date displayed, or null if the text box is empty, or cannot be
-   * interpretted. The {@link InvalidDateReporter} may fire as a side effect of
-   * this call.
+   * interpreted.
    * 
-   * @return the Date
+   * @return the current date value
    */
   public Date getValue() {
     return parseDate(true);
@@ -255,22 +371,6 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   /**
-   * Sets the date format to the given format. If date box is not empty,
-   * contents of date box will be replaced with current date in new format. If
-   * the date cannot be parsed, the current value will be preserved and the
-   * InvalidDateReporter notified as usual.
-   * 
-   * @param format format.
-   */
-  public void setDateFormat(DateTimeFormat format) {
-    if (format != dateFormatter) {
-      Date date = getValue();
-      dateFormatter = format;
-      setValue(date);
-    }
-  }
-
-  /**
    * Sets whether the date box is enabled.
    * 
    * @param enabled is the box enabled
@@ -287,6 +387,29 @@ public class DateBox extends Composite implements HasValue<Date> {
    */
   public void setFocus(boolean focused) {
     box.setFocus(focused);
+  }
+
+  /**
+   * Sets the format used to control formatting and parsing of dates in this
+   * {@link DateBox}. If this {@link DateBox} is not empty, the contents of date
+   * box will be replaced with current contents in the new format.
+   * 
+   * @param format the new date format
+   */
+  public void setFormat(Format format) {
+    assert format != null : "A Date box may not have a null format";
+    if (this.format != format) {
+      Date date = getValue();
+
+      // This call lets the formatter do whatever other clean up is required to
+      // switch formatters.
+      //
+      this.format.reset(this, true);
+
+      // Now update the format and show the current date using the new format.
+      this.format = format;
+      setValue(date);
+    }
   }
 
   /**
@@ -309,18 +432,13 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   public void setValue(Date date, boolean fireEvents) {
-    Date oldDate = getValue();
-
-    if (date == null) {
-      picker.setValue(null);
-      box.setText("");
-    } else {
-      picker.setValue(date, false);
+    Date oldDate = parseDate(false);
+    if (date != null) {
       picker.setCurrentMonth(date);
-      setDate(date);
     }
+    picker.setValue(date, false);
+    setDate(date);
 
-    invalidDateReporter.clearError();
     if (fireEvents) {
       DateChangeEvent.fireIfNotEqualDates(this, oldDate, date);
     }
@@ -339,18 +457,11 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   private Date parseDate(boolean reportError) {
-    Date d = null;
-    String text = box.getText().trim();
-    if (!text.equals("")) {
-      try {
-        d = dateFormatter.parse(text);
-      } catch (IllegalArgumentException exception) {
-        if (reportError) {
-          invalidDateReporter.reportError(text);
-        }
-      }
+    if (reportError) {
+      getFormat().reset(this, false);
     }
-    return d;
+    String text = box.getText().trim();
+    return getFormat().parse(this, text, reportError);
   }
 
   private void preventDatePickerPopup() {
@@ -367,7 +478,8 @@ public class DateBox extends Composite implements HasValue<Date> {
    * events.
    */
   private void setDate(Date value) {
-    box.setText(dateFormatter.format(value));
+    format.reset(this, false);
+    box.setText(getFormat().format(this, value));
   }
 
   private void updateDateFromTextBox() {

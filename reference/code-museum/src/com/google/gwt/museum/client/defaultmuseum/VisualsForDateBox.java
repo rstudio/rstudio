@@ -18,6 +18,8 @@ package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
@@ -26,11 +28,12 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.datepicker.client.DateBox;
 import com.google.gwt.user.datepicker.client.DatePicker;
-import com.google.gwt.user.datepicker.client.DateBox.InvalidDateReporter;
+import com.google.gwt.user.datepicker.client.DateBox.DefaultFormat;
 
 import java.util.Date;
 
@@ -38,6 +41,36 @@ import java.util.Date;
  * Visuals for date box.
  */
 public class VisualsForDateBox extends AbstractIssue {
+  class FormatWithNewYearsEve extends DefaultFormat {
+    public FormatWithNewYearsEve() {
+    }
+
+    public FormatWithNewYearsEve(DateTimeFormat format) {
+      super(format);
+    }
+
+    @Override
+    public String format(DateBox box, Date d) {
+      if (d == null) {
+        return "Please Change me";
+      } else {
+        return super.format(box, d);
+      }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public Date parse(DateBox box, String input, boolean reportError) {
+      if (input.equalsIgnoreCase("new year's eve")) {
+        Date d = new Date();
+        d.setDate(31);
+        d.setMonth(12);
+        return d;
+      } else {
+        return super.parse(box, input, reportError);
+      }
+    }
+  }
 
   @Override
   public Widget createIssue() {
@@ -45,31 +78,17 @@ public class VisualsForDateBox extends AbstractIssue {
     v.add(new HTML("<div style='height:25px'></div>"));
     v.add(dateRange());
     v.add(new HTML("<div style='height:25px'></div>"));
-    final Label startErrors = makeErrorLabel();
-
-    Widget errorReportingDateBox = dateRange(new DateBox.InvalidDateReporter() {
-      public void clearError() {
-        startErrors.setText("");
-      }
-      public void reportError(String input) {
-        startErrors.setText("\"" + input + "\" is not a date");
-      }
-    });
-
-    v.add(errorReportingDateBox);
-    v.add(startErrors);
-
     return v;
   }
 
   @Override
   public String getInstructions() {
-    return "Click on first date box, see that date picker is displayed, "
-        + "use arrow keys to navigate to second date box, select a date. "
-        + "The second set includes an error display (one, shared by both "
-        + "fields). See that it notices  when you type garbage, and that "
-        + "its error message is cleared when you empty the field or provide "
-        + "a valid date.";
+    return "Instructions <ul><li>Click on first date box, see that date picker is displayed</li> "
+        + "<li>use arrow keys to navigate to second date box, select a date.</li> "
+        + "<li>type in a bad date then click back to the first date box. Your bad date should now be in red</li>"
+        + "<li>get back to the second box, now type in a valid date and tab away, its text should now be black again. </li>"
+        + "<li>Try typing 'New Year's Eve' in on the start datebox)</li>"
+        + "<li> Hit 'Show values' and confirm that you see the correct values</li></ul>";
   }
 
   @Override
@@ -83,16 +102,14 @@ public class VisualsForDateBox extends AbstractIssue {
   }
 
   private Widget dateRange() {
-    return dateRange(null);
-  }
-
-  private Widget dateRange(InvalidDateReporter invalidDateReporter) {
     VerticalPanel v = new VerticalPanel();
     HorizontalPanel p = new HorizontalPanel();
     v.add(p);
-    final DateBox start = newDateBox(invalidDateReporter);
+    final DateBox start = new DateBox(new DatePicker(), null,
+        new FormatWithNewYearsEve());
+
     start.setWidth("13em");
-    final DateBox end = newDateBox(invalidDateReporter);
+    final DateBox end = new DateBox();
     end.setWidth("13em");
 
     end.getDatePicker().addValueChangeHandler(new ValueChangeHandler<Date>() {
@@ -101,8 +118,27 @@ public class VisualsForDateBox extends AbstractIssue {
       }
     });
 
-    start.setValue(new Date());
+    final TextBox startText = start.getTextBox();
+    startText.addKeyDownHandler(new KeyDownHandler() {
+      public void onKeyDown(KeyDownEvent e) {
+        if (e.isRightArrow()
+            && start.getCursorPos() == startText.getText().length()) {
+          start.hideDatePicker();
+          end.setFocus(true);
+        }
+      }
+    });
 
+    end.getTextBox().addKeyDownHandler(new KeyDownHandler() {
+      public void onKeyDown(KeyDownEvent e) {
+        if ((e.isLeftArrow()) && end.getCursorPos() == 0) {
+          end.hideDatePicker();
+          start.setFocus(true);
+        }
+      }
+    });
+
+    end.setValue(new Date());
     p.add(start);
     Label l = new Label(" - ");
     l.setStyleName("filler");
@@ -114,15 +150,13 @@ public class VisualsForDateBox extends AbstractIssue {
     v.add(h2);
     h2.add(new Button("Short format", new ClickHandler() {
       public void onClick(ClickEvent event) {
-        start.setDateFormat(DateTimeFormat.getShortDateFormat());
-        end.setDateFormat(DateTimeFormat.getShortDateFormat());
+        updateFormat(start, end, DateTimeFormat.getShortDateFormat());
       }
     }));
     h2.add(new Button("Long format", new ClickHandler() {
 
       public void onClick(ClickEvent event) {
-        start.setDateFormat(DateTimeFormat.getLongDateFormat());
-        end.setDateFormat(DateTimeFormat.getLongDateFormat());
+        updateFormat(start, end, DateTimeFormat.getMediumDateFormat());
       }
     }));
 
@@ -132,32 +166,22 @@ public class VisualsForDateBox extends AbstractIssue {
         end.setValue(null);
       }
     }));
-    
-    h2.add(new Button("Get Value", new ClickHandler() {
+
+    h2.add(new Button("Show Values", new ClickHandler() {
       public void onClick(ClickEvent event) {
         DateTimeFormat f = DateTimeFormat.getShortDateFormat();
         Date d1 = start.getValue();
         Date d2 = end.getValue();
-        value.setText("Start: \"" 
-            + (d1 == null ? "null" : f.format(d1))
-            + "\" End: \"" 
-            + (d2 == null ? "null" : f.format(d2)) 
-            + "\"");
+        value.setText("Start: \"" + (d1 == null ? "null" : f.format(d1))
+            + "\" End: \"" + (d2 == null ? "null" : f.format(d2)) + "\"");
       }
     }));
     return v;
   }
 
-  private Label makeErrorLabel() {
-    final Label startErrors = new Label();
-    startErrors.getElement().getStyle().setProperty("color", "red");
-    return startErrors;
-  }
-
-  private DateBox newDateBox(InvalidDateReporter invalidDateReporter) {
-    DateBox dateBox =
-        invalidDateReporter == null ? new DateBox() : new DateBox(
-            new DatePicker(), invalidDateReporter);
-    return dateBox;
+  private void updateFormat(DateBox start, DateBox end, DateTimeFormat format) {
+    // You can replace the format itself.
+    start.setFormat(new FormatWithNewYearsEve(format));
+    end.setFormat(new DefaultFormat(format));
   }
 }
