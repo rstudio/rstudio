@@ -92,6 +92,10 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
       return null;
     }
 
+    public char[][][] getMissingTypeNames() {
+      return null;
+    }
+
     public int getModifiers() {
       return 0;
     }
@@ -169,7 +173,8 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
 
     TypeDeclaration typeDeclaration = new TypeDeclaration(compilationResult);
     typeDeclaration.scope = new ClassScope(cud.scope, null);
-    typeDeclaration.staticInitializerScope = new MethodScope(typeDeclaration.scope, null, false);
+    typeDeclaration.staticInitializerScope = new MethodScope(
+        typeDeclaration.scope, null, false);
     cud.types = new TypeDeclaration[] {typeDeclaration};
 
     BinaryTypeBinding binaryTypeBinding = new BinaryTypeBinding(null,
@@ -205,8 +210,10 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
     assertEquals(expectedExpressions.length, binaryTypeReferenceSites.size());
     for (int i = 0; i < binaryTypeReferenceSites.size(); ++i) {
       BinaryTypeReferenceSite binaryTypeReferenceSite = binaryTypeReferenceSites.get(i);
-      assertSame(binaryTypeBinding, binaryTypeReferenceSite.getBinaryTypeBinding());
-      assertSame(expectedExpressions[i], binaryTypeReferenceSite.getExpression());
+      assertSame(binaryTypeBinding,
+          binaryTypeReferenceSite.getBinaryTypeBinding());
+      assertSame(expectedExpressions[i],
+          binaryTypeReferenceSite.getExpression());
     }
   }
 
