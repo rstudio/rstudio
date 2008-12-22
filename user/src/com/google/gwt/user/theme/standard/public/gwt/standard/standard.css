@@ -1093,10 +1093,9 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
 .gwt-DateBox input {
   width: 8em;
 }
-.dateBoxFormatError{
-  background:#ffcccc;
+.dateBoxFormatError {
+  background: #ffcccc;
 }
-
 .dateBoxPopup {
 }
 
