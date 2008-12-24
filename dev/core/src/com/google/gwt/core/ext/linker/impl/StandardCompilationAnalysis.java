@@ -116,7 +116,7 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   private transient Map<Correlation, Member> membersByCorrelation = new IdentityHashMap<Correlation, Member>();
 
   /**
-   * Map from split point numbers to the method where they were set
+   * Map from split point numbers to the method where they were set.
    */
   private Map<Integer, String> splitPointMap = new TreeMap<Integer, String>();
   
@@ -200,14 +200,13 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
 
     return new Iterable<Snippet>() {
       public Iterator<Snippet> iterator() {
-        assert stories != null;
         return new SnippetIterator(stories);
       }
     };
   }
 
   @Override
-  public Map<Integer, String> getSplitPointMap(){
+  public Map<Integer, String> getSplitPointMap() {
     return splitPointMap;
   }
   

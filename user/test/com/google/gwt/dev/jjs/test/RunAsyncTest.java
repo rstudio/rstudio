@@ -18,7 +18,6 @@ package com.google.gwt.dev.jjs.test;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.Window;
 
 /**
  * Tests runAsync in various ways.

@@ -52,17 +52,18 @@ public class ReplaceRunAsyncs {
         int entryNumber = entryCount++;
         logger.log(TreeLogger.INFO, "Assigning split point #" + entryNumber
             + " in method " + fullMethodDescription(currentMethod));
-        
+
         String methodDescription = fullMethodDescription(currentMethod);
-        if (methodCount.containsKey(methodDescription)){
-          methodCount.put(methodDescription, methodCount.get(methodDescription)+1);
-          methodDescription += "#" + Integer.toString(methodCount.get(methodDescription));
-        }
-        else{
+        if (methodCount.containsKey(methodDescription)) {
+          methodCount.put(methodDescription,
+              methodCount.get(methodDescription) + 1);
+          methodDescription += "#"
+              + Integer.toString(methodCount.get(methodDescription));
+        } else {
           methodCount.put(methodDescription, 1);
         }
         splitPointMap.put(entryNumber, methodDescription);
-  
+
         JClassType loader = getFragmentLoader(entryNumber);
         JMethod loadMethod = getRunAsyncMethod(loader);
         assert loadMethod != null;
@@ -106,8 +107,7 @@ public class ReplaceRunAsyncs {
     visitor.accept(program);
     setNumEntriesInAsyncFragmentLoader(visitor.entryCount);
     program.setSplitPointMap(visitor.splitPointMap);
-    
-    
+
     return visitor.entryCount;
   }
 
