@@ -30,9 +30,15 @@ import java.io.InputStream;
  */
 public class SyntheticArtifact extends EmittedArtifact {
   private final File backing;
+  private final long lastModified;
 
   SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType,
       String partialPath, byte[] data) throws UnableToCompleteException {
+    this(logger, linkerType, partialPath, data, System.currentTimeMillis());
+  }
+
+  SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType, String partialPath,
+      byte[] data, long lastModified) throws UnableToCompleteException {
     super(linkerType, partialPath);
     assert data != null;
 
@@ -45,6 +51,7 @@ public class SyntheticArtifact extends EmittedArtifact {
           + partialPath, e);
       throw new UnableToCompleteException();
     }
+    this.lastModified = lastModified;
   }
 
   @Override
@@ -57,5 +64,10 @@ public class SyntheticArtifact extends EmittedArtifact {
           + getPartialPath(), e);
       throw new UnableToCompleteException();
     }
+  }
+
+  @Override
+  public long getLastModified() {
+    return lastModified;
   }
 }

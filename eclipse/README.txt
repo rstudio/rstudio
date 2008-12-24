@@ -67,6 +67,11 @@ Second, members in the same category should be sorted by visibility.
 
 Third, within a category/visibility combination, members should be sorted
 alphabetically.
+ 
+
+------------ Compiler settings ------------
+Window->Preferences->Java->Compiler
+Set the compiler compliance level to 1.5.
 
 == Checkstyle ==
 
@@ -159,11 +164,11 @@ Set the location to "settings/code-style/gwt-checkstyle-tests.xml".
 
 == Launching 'Hello' ==
 
-While the 'projectCreator' and 'applicationCreator' scripts are useful for
-setting up projects and launch configurations that target a GWT installation,
-they are not intended for GWT developers working against the source code.  You
-will want to run not against .jar files, but against the class files built by
-Eclipse.  The following instructions help you do just that.
+While the 'applicationCreator' script is useful for setting up projects and
+launch configurations that target a GWT installation, it is not intended for
+GWT developers working against the source code.  You will want to run not
+against .jar files, but against the class files built by Eclipse.  The
+following instructions help you do just that.
 
 1) Import the 'Hello' project if you haven't already.
 
@@ -211,10 +216,9 @@ This section captures the process used to create the original 'Hello.launch'
 
 1) Create or Import a new project
 
-  Using the 'projectCreator' and 'applicationCreator' scripts is
-  an easy way to do this, but you cannot use the created launch
-  scripts to develop the GWT core source because they are
-  configured to run with .jar files from a GWT installation.
+  Using the 'applicationCreator' script is an easy way to do this, but you
+  cannot use the created launch scripts to develop the GWT core source because
+  they are configured to run with .jar files from a GWT installation.
 
 2) Add a project reference to the gwt-user project:
 

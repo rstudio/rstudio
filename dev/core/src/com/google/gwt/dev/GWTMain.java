@@ -18,8 +18,8 @@ package com.google.gwt.dev;
 import com.google.gwt.dev.util.Util;
 
 /**
- * Executable class provides help to users who run the jar by indicating
- * the enclosed classes that are executable.
+ * Executable class provides help to users who run the jar by indicating the
+ * enclosed classes that are executable.
  */
 public class GWTMain {
 
@@ -31,10 +31,10 @@ public class GWTMain {
       System.err.println(About.GWT_VERSION);
     }
     System.err.println("Available main classes:");
-    System.err.println(addSpaces(GWTShell.class.getName(),
-      "runs the development shell"));
-    System.err.println(addSpaces(GWTCompiler.class.getName(),
-      "compiles a GWT module"));
+    System.err.println(addSpaces(HostedMode.class.getName(),
+        "runs the development shell"));
+    System.err.println(addSpaces(Compiler.class.getName(),
+        "compiles a GWT module"));
   }
 
   private static String addSpaces(String first, String second) {

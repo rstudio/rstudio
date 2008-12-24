@@ -85,6 +85,7 @@ import java.util.HashMap;
  * {@example com.google.gwt.examples.ImageExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Image extends Widget implements SourcesLoadEvents,
     HasLoadHandlers, HasErrorHandlers, SourcesClickEvents, HasClickHandlers,
     HasAllMouseHandlers, SourcesMouseEvents {

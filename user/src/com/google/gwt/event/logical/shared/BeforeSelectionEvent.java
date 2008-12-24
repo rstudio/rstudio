@@ -36,14 +36,13 @@ public class BeforeSelectionEvent<I> extends
    * manager. If no such handlers exist, this method will do nothing.
    * 
    * @param <I> the item type
-   * @param <S> The event source type
    * @param source the source of the handlers
    * @param item the item
    * @return the event so that the caller can check if it was canceled, or null
-   * if no handlers of this event type have been registered
+   *         if no handlers of this event type have been registered
    */
-  public static <I, S extends HasBeforeSelectionHandlers<I> & HasHandlers> BeforeSelectionEvent<I> fire(
-      S source, I item) {
+  public static <I> BeforeSelectionEvent<I> fire(
+      HasBeforeSelectionHandlers<I> source, I item) {
     // If no handlers exist, then type can be null.
     if (TYPE != null) {
       HandlerManager handlers = source.getHandlers();
@@ -80,7 +79,7 @@ public class BeforeSelectionEvent<I> extends
   }
 
   /**
-   * Cancel the before selection event.  
+   * Cancel the before selection event.
    * 
    * Classes overriding this method should still call super.cancel().
    */

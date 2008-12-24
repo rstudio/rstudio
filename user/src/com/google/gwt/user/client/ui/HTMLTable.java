@@ -37,6 +37,7 @@ import java.util.NoSuchElementException;
  * <img class='gallery' src='Table.png'/>
  * </p>
  */
+@SuppressWarnings("deprecation")
 public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     HasClickHandlers {
   

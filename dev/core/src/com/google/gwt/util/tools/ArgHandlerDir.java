@@ -22,10 +22,6 @@ import java.io.File;
  */
 public abstract class ArgHandlerDir extends ArgHandler {
 
-  public String[] getDefaultArgs() {
-    return null;
-  }
-
   public abstract String getPurpose();
 
   public abstract String getTag();

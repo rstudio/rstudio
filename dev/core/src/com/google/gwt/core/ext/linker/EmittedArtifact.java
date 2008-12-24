@@ -53,6 +53,20 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
       throws UnableToCompleteException;
 
   /**
+   * Returns the time, measured in milliseconds from the epoch, at which the
+   * Artifact was last modified. This will be used to set the last-modified
+   * timestamp on the files written to disk.
+   * <p>
+   * The default implementation always returns the current time. Subclasses
+   * should override this method to provide a type-appropriate value.
+   * 
+   * @return the time at which the Artifact was last modified
+   */
+  public long getLastModified() {
+    return System.currentTimeMillis();
+  }
+
+  /**
    * Returns the partial path within the output directory of the
    * EmittedArtifact.
    */

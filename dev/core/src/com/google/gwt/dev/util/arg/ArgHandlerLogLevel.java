@@ -21,7 +21,7 @@ import com.google.gwt.util.tools.ArgHandler;
 /**
  * Argument handler for processing the log level flag.
  */
-public final class ArgHandlerLogLevel extends ArgHandler {
+public class ArgHandlerLogLevel extends ArgHandler {
 
   private static final String OPTIONS_STRING = computeOptionsString();
 

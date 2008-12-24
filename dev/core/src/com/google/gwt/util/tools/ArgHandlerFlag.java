@@ -22,10 +22,6 @@ import com.google.gwt.dev.util.Empty;
  */
 public abstract class ArgHandlerFlag extends ArgHandler {
 
-  public String[] getDefaultArgs() {
-    return null;
-  }
-
   public abstract String getPurpose();
 
   public abstract String getTag();

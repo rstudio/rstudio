@@ -75,6 +75,8 @@ public class LowLevelMoz {
    * Safari.
    */
   interface ExternalObject {
+    boolean initModule(String moduleName);
+
     boolean gwtOnLoad(int scriptGlobalObject, String moduleName, String version);
   }
 

@@ -77,12 +77,6 @@ class BrowserManagerServerLauncher extends ToolBase {
    * line.
    */
   private class ArgHandlerRegistration extends ArgHandler {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return null;
-    }
-
     @Override
     public String getPurpose() {
       return "Specify two arguments: a registration id used for the "

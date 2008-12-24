@@ -30,5 +30,5 @@ public interface OptionExtraDir {
   /**
    * Sets the extra resource directory.
    */
-  void setExtraDir(File dir);
+  void setExtraDir(File extraDir);
 }

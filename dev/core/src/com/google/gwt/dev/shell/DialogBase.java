@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dev.shell;
 
-import com.google.gwt.dev.GWTShell;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -136,7 +134,7 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
     Shell parent = getParent();
     shell = new Shell(parent, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL
         | SWT.RESIZE);
-    shell.setImages(GWTShell.getIcons());
+    shell.setImages(ShellMainWindow.getIcons());
     shell.setText(getText());
     shell.setLayout(new FillLayout());
 

@@ -39,8 +39,7 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
    * @param source the source of the handlers
    * @param selectedItem the selected item
    */
-  public static <I, S extends HasSelectionHandlers<I> & HasHandlers> void fire(
-      S source, I selectedItem) {
+  public static <I> void fire(HasSelectionHandlers<I> source, I selectedItem) {
     if (TYPE != null) {
       HandlerManager handlers = source.getHandlers();
       if (handlers != null) {

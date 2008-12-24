@@ -18,7 +18,12 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface fires the events defined by the
  * {@link SuggestionHandler} interface.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.event.logical.shared.HasSelectionHandlers}
+ *             instead.
  */
+@Deprecated
 public interface FiresSuggestionEvents {
 
   /**

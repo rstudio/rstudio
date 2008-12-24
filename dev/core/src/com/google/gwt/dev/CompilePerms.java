@@ -191,7 +191,7 @@ public class CompilePerms {
   /**
    * Compile multiple permutations.
    */
-  public static boolean compile(TreeLogger logger,
+  public static void compile(TreeLogger logger,
       Precompilation precompilation, Permutation[] perms, int localWorkers,
       List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
@@ -200,7 +200,6 @@ public class CompilePerms {
     PermutationWorkerFactory.compilePermutations(logger, precompilation, perms,
         localWorkers, resultFiles);
     branch.log(TreeLogger.INFO, "Permutation compile succeeded");
-    return true;
   }
 
   public static void main(String[] args) {
@@ -253,50 +252,54 @@ public class CompilePerms {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    File precompilationFile = new File(options.getCompilerWorkDir(),
-        Precompile.PRECOMPILATION_FILENAME);
-    if (!precompilationFile.exists()) {
-      logger.log(TreeLogger.ERROR, "File not found '"
-          + precompilationFile.getAbsolutePath()
-          + "'; please run Precompile first");
-      return false;
-    }
-    Precompilation precompilation;
-    try {
-      /*
-       * TODO: don't bother deserializing the generated artifacts.
-       */
-      precompilation = Util.readFileAsObject(precompilationFile,
-          Precompilation.class);
-    } catch (ClassNotFoundException e) {
-      logger.log(TreeLogger.ERROR, "Unable to deserialize '"
-          + precompilationFile.getAbsolutePath() + "'", e);
-      return false;
-    }
-
-    Permutation[] perms = precompilation.getPermutations();
-    Permutation[] subPerms;
-    int[] permsToRun = options.getPermsToCompile();
-    if (permsToRun.length == 0) {
-      subPerms = perms;
-    } else {
-      int i = 0;
-      subPerms = new Permutation[permsToRun.length];
-      // Range check the supplied perms.
-      for (int permToRun : permsToRun) {
-        if (permToRun >= perms.length) {
-          logger.log(TreeLogger.ERROR, "The specified perm number '"
-              + permToRun + "' is too big; the maximum value is "
-              + (perms.length - 1) + "'");
-          return false;
-        }
-        subPerms[i++] = perms[permToRun];
+    for (String moduleName : options.getModuleNames()) {
+      File compilerWorkDir = options.getCompilerWorkDir(moduleName);
+      File precompilationFile = new File(compilerWorkDir,
+          Precompile.PRECOMPILATION_FILENAME);
+      if (!precompilationFile.exists()) {
+        logger.log(TreeLogger.ERROR, "File not found '"
+            + precompilationFile.getAbsolutePath()
+            + "'; please run Precompile first");
+        return false;
       }
-    }
+      Precompilation precompilation;
+      try {
+        /*
+         * TODO: don't bother deserializing the generated artifacts.
+         */
+        precompilation = Util.readFileAsObject(precompilationFile,
+            Precompilation.class);
+      } catch (ClassNotFoundException e) {
+        logger.log(TreeLogger.ERROR, "Unable to deserialize '"
+            + precompilationFile.getAbsolutePath() + "'", e);
+        return false;
+      }
 
-    List<FileBackedObject<PermutationResult>> resultFiles = makeResultFiles(
-        options.getCompilerWorkDir(), perms);
-    return compile(logger, precompilation, subPerms, options.getLocalWorkers(),
-        resultFiles);
+      Permutation[] perms = precompilation.getPermutations();
+      Permutation[] subPerms;
+      int[] permsToRun = options.getPermsToCompile();
+      if (permsToRun.length == 0) {
+        subPerms = perms;
+      } else {
+        int i = 0;
+        subPerms = new Permutation[permsToRun.length];
+        // Range check the supplied perms.
+        for (int permToRun : permsToRun) {
+          if (permToRun >= perms.length) {
+            logger.log(TreeLogger.ERROR, "The specified perm number '"
+                + permToRun + "' is too big; the maximum value is "
+                + (perms.length - 1) + "'");
+            return false;
+          }
+          subPerms[i++] = perms[permToRun];
+        }
+      }
+
+      List<FileBackedObject<PermutationResult>> resultFiles = makeResultFiles(
+          compilerWorkDir, subPerms);
+      compile(logger, precompilation, subPerms, options.getLocalWorkers(),
+          resultFiles);
+    }
+    return true;
   }
 }

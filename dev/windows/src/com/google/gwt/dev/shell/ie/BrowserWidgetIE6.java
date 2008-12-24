@@ -86,6 +86,17 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       }
     }
 
+    /**
+     * Causes a link to occur for the specified module.
+     * 
+     * @param moduleName the module name to link
+     * @return <code>true</code> if this module is stale and should be
+     *         reloaded
+     */
+    public boolean initModule(String moduleName) {
+      return getHost().initModule(moduleName);
+    }
+
     @Override
     protected void getIDsOfNames(String[] names, int[] ids)
         throws HResultException {
@@ -97,6 +108,9 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       String name = names[0].toLowerCase();
       if (name.equals("gwtonload")) {
         ids[0] = 1;
+        return;
+      } else if (name.equals("initmodule")) {
+        ids[0] = 2;
         return;
       }
 
@@ -126,15 +140,15 @@ public class BrowserWidgetIE6 extends BrowserWidget {
       } else if (dispId == 1) {
         if ((flags & COM.DISPATCH_METHOD) != 0) {
           try {
-            if (params.length < 2) {
-              reportIncorrectGwtOnLoadInvocation(params.length);
+            if (params.length < 3) {
+              reportIncorrectInvocation("gwtOnLoad", 3, params.length);
               throw new HResultException(COM.E_INVALIDARG);
             }
             IDispatch frameWnd = (params[0].getType() == COM.VT_DISPATCH)
                 ? params[0].getDispatch() : null;
             String moduleName = (params[1].getType() == COM.VT_BSTR)
                 ? params[1].getString() : null;
-            String version = (params.length > 2 && params[2].getType() == COM.VT_BSTR)
+            String version = (params[2].getType() == COM.VT_BSTR)
                 ? params[2].getString() : null;
             boolean success = gwtOnLoad(frameWnd, moduleName, version);
 
@@ -148,6 +162,38 @@ public class BrowserWidgetIE6 extends BrowserWidget {
           try {
             Method gwtOnLoadMethod = getClass().getMethod("gwtOnLoad",
                 new Class[] {IDispatch.class, String.class, String.class});
+            MethodAdaptor methodAdaptor = new MethodAdaptor(gwtOnLoadMethod);
+            IDispatchImpl funcObj = new MethodDispatch(null, methodAdaptor);
+            IDispatch disp = new IDispatch(funcObj.getAddress());
+            disp.AddRef();
+            return new Variant(disp);
+          } catch (Exception e) {
+            // just return VT_EMPTY
+            return new Variant();
+          }
+        }
+        throw new HResultException(COM.E_NOTSUPPORTED);
+      } else if (dispId == 2) {
+        if ((flags & COM.DISPATCH_METHOD) != 0) {
+          try {
+            if (params.length < 1) {
+              reportIncorrectInvocation("initModule", 1, params.length);
+              throw new HResultException(COM.E_INVALIDARG);
+            }
+            String moduleName = (params[0].getType() == COM.VT_BSTR)
+                ? params[0].getString() : null;
+            boolean reload = initModule(moduleName);
+
+            // boolean return type
+            return new Variant(reload);
+          } catch (SWTException e) {
+            throw new HResultException(COM.E_INVALIDARG);
+          }
+        } else if ((flags & COM.DISPATCH_PROPERTYGET) != 0) {
+          // property get on the method itself
+          try {
+            Method gwtOnLoadMethod = getClass().getMethod("initModule",
+                new Class[] {String.class});
             MethodAdaptor methodAdaptor = new MethodAdaptor(gwtOnLoadMethod);
             IDispatchImpl funcObj = new MethodDispatch(null, methodAdaptor);
             IDispatch disp = new IDispatch(funcObj.getAddress());

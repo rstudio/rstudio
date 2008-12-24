@@ -129,7 +129,6 @@ public class DisclosurePanelTest extends GWTTestCase {
     assertEquals(3, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
     assertEquals(3, panel.getHandlers().getHandlerCount(OpenEvent.getType()));
 
-    
     panel.setOpen(true);
     // We expect onOpen to fire and onClose to not fire.
     assertTrue(aDidFire[OPEN] && bDidFire[OPEN] && !aDidFire[CLOSE]
@@ -148,7 +147,6 @@ public class DisclosurePanelTest extends GWTTestCase {
     assertEquals(2, panel.getHandlers().getHandlerCount(OpenEvent.getType()));
     assertEquals(2, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
 
-
     panel.setOpen(true);
     panel.setOpen(false);
     // We expect a to have fired both events, and b to have fired none.
@@ -156,6 +154,19 @@ public class DisclosurePanelTest extends GWTTestCase {
     assertTrue(aDidFire[CLOSE]);
     assertTrue(!bDidFire[OPEN]);
     assertTrue(!bDidFire[CLOSE]);
+  }
+
+  /**
+   * Tests that the content is set to null if the content widget's
+   * {@link Widget#removeFromParent()} method is called.
+   */
+  public void testRemoveFromParent() {
+    DisclosurePanel panel = createTestPanel();
+    Label content = new Label();
+    panel.setContent(content);
+    assertEquals(content, panel.getContent());
+    content.removeFromParent();
+    assertNull(panel.getContent());
   }
 
   private DisclosurePanel createTestPanel() {

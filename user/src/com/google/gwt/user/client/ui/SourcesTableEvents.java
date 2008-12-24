@@ -18,7 +18,12 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.TableListener} interface.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasClickHandlers}
+ *             instead. Event sources should implement methods similar to
+ *             {@link HTMLTable#getCellForEvent(com.google.gwt.event.dom.client.ClickEvent)}
  */
+@Deprecated
 public interface SourcesTableEvents {
 
   /**

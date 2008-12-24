@@ -38,6 +38,7 @@ import com.google.gwt.user.client.ui.impl.RichTextAreaImpl;
  * <li>.gwt-RichTextArea { }</li>
  * </ul>
  */
+@SuppressWarnings("deprecation")
 public class RichTextArea extends FocusWidget implements HasHTML,
     SourcesMouseEvents, HasAllMouseHandlers {
 

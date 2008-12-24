@@ -21,12 +21,6 @@ import com.google.gwt.util.tools.ArgHandlerString;
  * Creates an arg handler for eclipse launch config options.
  */
 public abstract class ArgHandlerEclipse extends ArgHandlerString {
-
-  @Override
-  public String[] getDefaultArgs() {
-    return null;
-  }
-
   @Override
   public String getTag() {
     return "-eclipse";
@@ -36,5 +30,4 @@ public abstract class ArgHandlerEclipse extends ArgHandlerString {
   public String[] getTagArgs() {
     return new String[] {"projectName"};
   }
-
 }

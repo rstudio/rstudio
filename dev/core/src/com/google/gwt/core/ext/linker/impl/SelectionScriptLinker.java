@@ -140,10 +140,23 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
       LinkerContext context, ArtifactSet artifacts)
       throws UnableToCompleteException {
     String selectionScript = generateSelectionScript(logger, context, artifacts);
-    byte[] selectionScriptBytes = Util.getBytes(context.optimizeJavaScript(
-        logger, selectionScript));
-    return emitBytes(logger, selectionScriptBytes, context.getModuleName()
-        + ".nocache.js");
+    selectionScript = context.optimizeJavaScript(logger, selectionScript);
+
+    /*
+     * Last modified is important to keep hosted mode refreses from clobbering
+     * web mode compiles. We set the timestamp on the hosted mode selection
+     * script to the same mod time as the module (to allow updates). For web
+     * mode, we just set it to now.
+     */
+    long lastModified;
+    if (artifacts.find(CompilationResult.class).size() == 0) {
+      lastModified = context.getModuleLastModified();
+    } else {
+      lastModified = System.currentTimeMillis();
+    }
+
+    return emitString(logger, selectionScript, context.getModuleName()
+        + ".nocache.js", lastModified);
   }
 
   protected String generatePropertyProvider(SelectionProperty prop) {
@@ -246,9 +259,12 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
     if (startPos != -1) {
       StringBuffer text = new StringBuffer();
       if (compilations.size() == 0) {
-        // We'll see this when running in Hosted Mode. The way the selection
-        // templates are structured is such that this line won't be executed
-        text.append("strongName = null;");
+        // Hosted mode link.
+        text.append("alert(\"GWT module '"
+            + context.getModuleName()
+            + "' needs to be (re)compiled, "
+            + "please run a compile or use the Compile/Browse button in hosted mode\");");
+        text.append("return;");
 
       } else if (compilations.size() == 1) {
         // Just one distinct compilation; no need to evaluate properties

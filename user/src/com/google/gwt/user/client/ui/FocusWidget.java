@@ -51,6 +51,7 @@ import com.google.gwt.user.client.ui.impl.FocusImpl;
 /**
  * Abstract base class for most widgets that can receive keyboard focus.
  */
+@SuppressWarnings("deprecation")
 public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     HasClickHandlers, HasFocus, HasAllFocusHandlers, HasAllKeyHandlers,
     HasAllMouseHandlers, SourcesMouseEvents {

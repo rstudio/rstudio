@@ -18,14 +18,22 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.TreeListener} interface.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers}
+ *             , {@link com.google.gwt.event.logical.shared.HasOpenHandlers},
+ *             {@link com.google.gwt.event.logical.shared.HasClickHandlers}
+ *             instead
  */
+@Deprecated
 public interface SourcesTreeEvents {
 
   /**
    * Adds a listener interface to receive tree events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use addSelectionHandler,addOpenHandler, and addCloseHandler instead
+   * @deprecated use addSelectionHandler,addOpenHandler, and addCloseHandler
+   *             instead
    */
   @Deprecated
   void addTreeListener(TreeListener listener);

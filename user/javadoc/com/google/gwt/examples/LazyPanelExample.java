@@ -26,10 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class LazyPanelExample implements EntryPoint {
 
-  /**
-   * A friendly little LazyPanel.
-   */
-  static class HelloLazy extends LazyPanel {
+  private static class HelloLazyPanel extends LazyPanel {
     @Override
     protected Widget createWidget() {
       return new Label("Well hello there!");
@@ -37,7 +34,10 @@ public class LazyPanelExample implements EntryPoint {
   }
 
   public void onModuleLoad() {
-    final Widget lazy = new HelloLazy(); 
+    final Widget lazy = new HelloLazyPanel();
+    
+    // Not strictly necessary, but keeps the empty outer div
+    // from effecting layout before it is of any use
     lazy.setVisible(false);
 
     PushButton b = new PushButton("Click me");    

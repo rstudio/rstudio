@@ -82,6 +82,7 @@ import java.util.Map;
  * {@example com.google.gwt.examples.TreeExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     HasFocus, HasAnimation, HasAllKeyHandlers, HasAllFocusHandlers,
     HasSelectionHandlers<TreeItem>, HasOpenHandlers<TreeItem>,
@@ -638,22 +639,6 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * Sets the base URL under which this tree will find its default images. These
-   * images must be named "tree_white.gif", "tree_open.gif", and
-   * "tree_closed.gif".
-   * 
-   * @param baseUrl
-   * @deprecated Use {@link #Tree(TreeImages)} as it provides a more efficent
-   *             and manageable way to supply a set of images to be used within
-   *             a tree.
-   */
-  @Deprecated
-  public void setImageBase(String baseUrl) {
-    images = new ImagesFromImageBase(baseUrl);
-    root.updateStateRecursive();
-  }
-
-  /**
    * Selects a specified item.
    * 
    * @param item the item to be selected, or <code>null</code> to deselect all
@@ -822,6 +807,8 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   void showLeafImage(TreeItem treeItem) {
     if (useLeafImages || treeItem.isFullNode()) {
       showImage(treeItem, images.treeLeaf());
+    } else if (LocaleInfo.getCurrentLocale().isRTL()) {
+      DOM.setStyleAttribute(treeItem.getElement(), "paddingRight", indentValue);
     } else {
       DOM.setStyleAttribute(treeItem.getElement(), "paddingLeft", indentValue);
     }

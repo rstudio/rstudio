@@ -29,9 +29,21 @@ public class PopupTest extends GWTTestCase {
    * Expose otherwise private or protected methods.
    */
   private class TestablePopupPanel extends PopupPanel {
+    private int onLoadCount;
+
     @Override
     public Element getContainerElement() {
       return super.getContainerElement();
+    }
+
+    public void assertOnLoadCount(int expected) {
+      assertEquals(expected, onLoadCount);
+    }
+
+    @Override
+    public void onLoad() {
+      super.onLoad();
+      onLoadCount++;
     }
   }
 
@@ -93,6 +105,45 @@ public class PopupTest extends GWTTestCase {
     primaryPopup.setAnimationEnabled(true);
 
     testDependantPopupPanel(primaryPopup);
+  }
+
+  /**
+   * Test that the onLoad method is only called once when showing the popup.
+   */
+  public void testOnLoad() {
+    TestablePopupPanel popup = new TestablePopupPanel();
+
+    // show() without animation
+    {
+      popup.setAnimationEnabled(false);
+      popup.show();
+      popup.assertOnLoadCount(1);
+      popup.hide();
+    }
+
+    // show() with animation
+    {
+      popup.setAnimationEnabled(true);
+      popup.show();
+      popup.assertOnLoadCount(2);
+      popup.hide();
+    }
+
+    // center() without animation
+    {
+      popup.setAnimationEnabled(false);
+      popup.center();
+      popup.assertOnLoadCount(3);
+      popup.hide();
+    }
+
+    // center() with animation
+    {
+      popup.setAnimationEnabled(true);
+      popup.center();
+      popup.assertOnLoadCount(4);
+      popup.hide();
+    }
   }
 
   public void testPopup() {

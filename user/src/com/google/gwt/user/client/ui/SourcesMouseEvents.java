@@ -18,14 +18,19 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.MouseListener} interface.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasAllMouseHandlerss}
+ *             instead
  */
+@Deprecated
 public interface SourcesMouseEvents {
 
   /**
    * Adds a listener interface to receive mouse events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use <code>addMouse(Down/Up/Over/Out/Move/Scroll)Handler</code> instead
+   * @deprecated use <code>addMouse(Down/Up/Over/Out/Move/Scroll)Handler</code>
+   *             instead
    */
   @Deprecated
   void addMouseListener(MouseListener listener);

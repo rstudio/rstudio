@@ -42,7 +42,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -84,8 +83,6 @@ public class ModuleDef implements PublicOracle {
   private final Set<Class<? extends Linker>> activeLinkers = new LinkedHashSet<Class<? extends Linker>>();
 
   private Class<? extends Linker> activePrimaryLinker;
-
-  private String deployTo;
 
   private final List<String> entryPointTypeNames = new ArrayList<String>();
 
@@ -269,17 +266,6 @@ public class ModuleDef implements PublicOracle {
     return lazyCompilationState;
   }
 
-  /**
-   * Returns the desired deployment path within the output directory. The
-   * returned value will start and end with a <code>'/'</code> character.
-   */
-  public String getDeployTo() {
-    String result = (deployTo == null) ? ('/' + getName() + '/') : deployTo;
-    assert result.startsWith("/");
-    assert result.endsWith("/");
-    return result;
-  }
-
   public synchronized String[] getEntryPointTypeNames() {
     final int n = entryPointTypeNames.size();
     return entryPointTypeNames.toArray(new String[n]);
@@ -364,14 +350,17 @@ public class ModuleDef implements PublicOracle {
   }
 
   public boolean isGwtXmlFileStale() {
-    for (Iterator<File> iter = gwtXmlFiles.iterator(); iter.hasNext();) {
-      File xmlFile = iter.next();
-      if ((!xmlFile.exists())
-          || (xmlFile.lastModified() > moduleDefCreationTime)) {
-        return true;
+    return lastModified() > moduleDefCreationTime;
+  }
+
+  public long lastModified() {
+    long lastModified = 0;
+    for (File xmlFile : gwtXmlFiles) {
+      if (xmlFile.exists()) {
+        lastModified = Math.max(lastModified, xmlFile.lastModified());
       }
     }
-    return false;
+    return lastModified > 0 ? lastModified : moduleDefCreationTime;
   }
 
   /**
@@ -404,26 +393,6 @@ public class ModuleDef implements PublicOracle {
       getTypeOracle(logger);
     }
     PerfLogger.end();
-  }
-
-  /**
-   * Set the deployment path for this module. Setting this value to
-   * <code>null</code> or the empty string will default to the fully-qualified
-   * module name.
-   */
-  public void setDeployTo(String deployTo) {
-    if (deployTo != null && deployTo.length() == 0) {
-      deployTo = null;
-    } else {
-      assert deployTo.startsWith("/");
-      // Ensure ends with trailing slash.
-      if (!deployTo.endsWith("/")) {
-        deployTo += '/';
-      }
-      assert deployTo.endsWith("/");
-    }
-
-    this.deployTo = deployTo;
   }
 
   /**

@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.jjs.UnifiedAst;
 
 import java.io.Serializable;
+import java.util.Collection;
 
 /**
  * The result of compilation phase 1, includes a unified AST and metadata
@@ -35,17 +36,24 @@ public class Precompilation implements Serializable {
   private final UnifiedAst unifiedAst;
 
   /**
-   * Constructs a new precompilation.
+   * Constructs a new precompilation.  We create new Permutations with
+   * a new id so that the ids are consecutive and correspond to the index
+   * in the array.
    * 
    * @param unifiedAst the unified AST used by
    *          {@link com.google.gwt.dev.jjs.JavaToJavaScriptCompiler}
    * @param permutations the set of permutations that can be run
    * @param generatedArtifacts the set of artifacts created by generators
    */
-  public Precompilation(UnifiedAst unifiedAst, Permutation[] permutations,
-      ArtifactSet generatedArtifacts) {
+  public Precompilation(UnifiedAst unifiedAst,
+      Collection<Permutation> permutations, ArtifactSet generatedArtifacts) {
     this.unifiedAst = unifiedAst;
-    this.permutations = permutations;
+    this.permutations = new Permutation[permutations.size()];
+    int i = 0;
+    for (Permutation permutation : permutations) {
+      this.permutations[i] = new Permutation(i, permutation);
+      ++i;
+    }
     this.generatedArtifacts = generatedArtifacts;
   }
 

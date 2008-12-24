@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
 
 /**
  * A widget that serves as an "internal" hyperlink. That is, it is a link to
@@ -49,20 +51,20 @@ import com.google.gwt.user.client.History;
  * <h3>Example</h3> {@example com.google.gwt.examples.HistoryExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     HasClickHandlers {
 
-  private Element anchorElem;
+  private static HyperlinkImpl impl = GWT.create(HyperlinkImpl.class);
+  
+  private final Element anchorElem = DOM.createAnchor();
   private String targetHistoryToken;
 
   /**
    * Creates an empty hyperlink.
    */
   public Hyperlink() {
-    setElement(DOM.createDiv());
-    DOM.appendChild(getElement(), anchorElem = DOM.createAnchor());
-    sinkEvents(Event.ONCLICK);
-    setStyleName("gwt-Hyperlink");
+    this(DOM.createDiv());
   }
 
   /**
@@ -93,6 +95,18 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     this();
     setText(text);
     setTargetHistoryToken(targetHistoryToken);
+  }
+  
+  protected Hyperlink(Element elem) {
+    if (elem == null) {
+      setElement(anchorElem);
+    } else {
+      setElement(elem);
+      DOM.appendChild(getElement(), anchorElem);
+    }
+
+    sinkEvents(Event.ONCLICK);
+    setStyleName("gwt-Hyperlink");
   }
 
   public HandlerRegistration addClickHandler(ClickHandler handler) {
@@ -126,8 +140,11 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
   public void onBrowserEvent(Event event) {
     if (DOM.eventGetType(event) == Event.ONCLICK) {
       super.onBrowserEvent(event);
-      History.newItem(targetHistoryToken);
-      DOM.eventPreventDefault(event);
+      
+      if (impl.handleAsClick(event)) {
+        History.newItem(getTargetHistoryToken());
+        DOM.eventPreventDefault(event);
+      }
     }
   }
 

@@ -18,14 +18,21 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.KeyboardListener} interface.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.com.google.gwt.event.dom.client.HasAllKeyHandlers}
+ *             instead
  */
+@Deprecated
 public interface SourcesKeyboardEvents {
 
   /**
    * Adds a listener interface to receive keyboard events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use <code>addKeyPressHandler/addKeyDownKeyDownHandler/addKeyUpHandler</code> instead
+   * @deprecated use
+   *             <code>addKeyPressHandler/addKeyDownKeyDownHandler/addKeyUpHandler</code>
+   *             instead
    */
   @Deprecated
   void addKeyboardListener(KeyboardListener listener);

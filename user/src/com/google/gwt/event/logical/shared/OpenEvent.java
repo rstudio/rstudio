@@ -35,12 +35,10 @@ public class OpenEvent<T> extends GwtEvent<OpenHandler<T>> {
    * such handlers exist, this method will do nothing.
    * 
    * @param <T> the target type
-   * @param <S> The event source
    * @param source the source of the handlers
    * @param target the target
    */
-  public static <T, S extends HasOpenHandlers<T> & HasHandlers> void fire(
-      S source, T target) {
+  public static <T> void fire(HasOpenHandlers<T> source, T target) {
     if (TYPE != null) {
       HandlerManager handlers = source.getHandlers();
       if (handlers != null) {

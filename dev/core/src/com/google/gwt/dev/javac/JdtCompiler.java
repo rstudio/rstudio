@@ -103,7 +103,9 @@ public class JdtCompiler {
       CompilationUnitAdapter adapter = (CompilationUnitAdapter) icu;
       CompilationUnit unit = adapter.getUnit();
       unit.setJdtCud(cud);
-      recordBinaryTypes(unit.getCompiledClasses());
+      if (!cud.compilationResult().hasErrors()) {
+        recordBinaryTypes(unit.getCompiledClasses());
+      }
     }
   }
 

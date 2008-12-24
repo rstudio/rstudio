@@ -22,10 +22,6 @@ public abstract class ArgHandlerExtra extends ArgHandler {
 
   public abstract boolean addExtraArg(String arg);
 
-  public String[] getDefaultArgs() {
-    return null;
-  }
-
   public final String getTag() {
     return null;
   }

@@ -352,12 +352,14 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private static final String CLASS_DUMP_PATH = "rewritten-classes";
 
+  private static boolean emmaIsAvailable = false;
+
+  private static EmmaStrategy emmaStrategy;
+
   /**
    * Caches the byte code for {@link JavaScriptHost}.
    */
   private static byte[] javaScriptHostBytes;
-
-  private static EmmaStrategy emmaStrategy;
 
   static {
     for (Class<?> c : BRIDGE_CLASSES) {
@@ -366,8 +368,10 @@ public final class CompilingClassLoader extends ClassLoader implements
     /*
      * Specific support for bridging to Emma since the user classloader is
      * generally completely isolated.
+     * 
+     * We are looking for a specific emma class "com.vladium.emma.rt.RT". If
+     * that changes in the future, this code would need to be updated as well.
      */
-    boolean emmaIsAvailable = false;
     try {
       Class<?> emmaBridge = Class.forName(EmmaStrategy.EMMA_RT_CLASSNAME,
           false, Thread.currentThread().getContextClassLoader());
@@ -713,27 +717,52 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     CompiledClass compiledClass = compilationState.getClassFileMap().get(
         lookupClassName);
+
+    byte classBytes[] = null;
     if (compiledClass != null) {
-      byte[] classBytes = compiledClass.getBytes();
+
+      injectJsniFor(compiledClass);
+      classBytes = compiledClass.getBytes();
       if (!compiledClass.getUnit().isSuperSource()) {
+        /*
+         * It is okay if Emma throws away the old classBytes since the actual
+         * jsni injection happens in the rewriter. The injectJsniFor method
+         * above simply defines the native methods in the browser.
+         */
         classBytes = emmaStrategy.getEmmaClassBytes(classBytes,
             lookupClassName, compiledClass.getUnit().getLastModified());
       } else {
         logger.log(TreeLogger.SPAM, "no emma instrumentation for "
             + lookupClassName + " because it is from super-source");
       }
-      if (classRewriter != null) {
-        byte[] newBytes = classRewriter.rewrite(className, classBytes);
-        if (CLASS_DUMP) {
-          if (!Arrays.equals(classBytes, newBytes)) {
-            classDump(className, newBytes);
-          }
-        }
-        classBytes = newBytes;
+    } else if (emmaIsAvailable) {
+      /*
+       * TypeOracle does not know about this class. Most probably, this class
+       * was referenced in one of the classes loaded from disk. Check if we can
+       * find it on disk. Typically this is a synthetic class added by the
+       * compiler. If the synthetic class contains native methods, it will fail
+       * later.
+       */
+      if (isSynthetic(className)) {
+        /*
+         * modification time = 0 ensures that whatever is on the disk is always
+         * loaded.
+         */
+        logger.log(TreeLogger.SPAM, "EmmaStrategy: loading " + lookupClassName
+            + " from disk even though TypeOracle does not know about it");
+        classBytes = emmaStrategy.getEmmaClassBytes(null, lookupClassName, 0);
       }
-      return classBytes;
     }
-    return null;
+    if (classBytes != null && classRewriter != null) {
+      byte[] newBytes = classRewriter.rewrite(className, classBytes);
+      if (CLASS_DUMP) {
+        if (!Arrays.equals(classBytes, newBytes)) {
+          classDump(className, newBytes);
+        }
+      }
+      classBytes = newBytes;
+    }
+    return classBytes;
   }
 
   private String getBinaryName(JClassType type) {
@@ -761,6 +790,30 @@ public final class CompilingClassLoader extends ClassLoader implements
     }
 
     return false;
+  }
+
+  /**
+   * For safety, we only allow synthetic classes to be loaded this way. Accepts
+   * any classes whose names match .+$\d+
+   * <p>
+   * If new compilers have different conventions for synthetic classes, this
+   * code needs to be updated.
+   * </p>
+   * 
+   * @param className class to be loaded from disk.
+   * @return true iff class should be loaded from disk
+   */
+  private boolean isSynthetic(String className) {
+    int index = className.lastIndexOf("$");
+    if (index <= 0 || index == className.length() - 1) {
+      return false;
+    }
+    for (int i = index + 1; i < className.length(); i++) {
+      if (!Character.isDigit(className.charAt(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**

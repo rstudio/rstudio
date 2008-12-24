@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
@@ -43,6 +44,30 @@ public class NamedFrame extends Frame {
     }
   }
 
+  /**
+   * Creates an HTML IFRAME element with a src and name.
+   * 
+   * @param src the src of the frame
+   * @param name the name of the frame, which must contain at least one
+   *          non-whitespace character and must not contain reserved HTML markup
+   *          characters such as '<code>&lt;</code>', '<code>&gt;</code>',
+   *          or '<code>&amp;</code>'
+   * @return the newly-created element
+   * @throws IllegalArgumentException if the supplied name is not allowed 
+   */
+  private static IFrameElement createIFrame(String src, String name) {
+    if (name == null || !isValidName(name.trim())) {
+      throw new IllegalArgumentException(
+          "expecting one or more non-whitespace chars with no '<', '>', or '&'");
+    }
+
+    // Use innerHTML to implicitly create the <iframe>. This is necessary
+    // because most browsers will not respect a dynamically-set iframe name.
+    Element div = DOM.createDiv();
+    div.setInnerHTML("<iframe src=\"" + src + "\" name='" + name + "'>");
+    return div.getFirstChild().cast();
+  }
+
   private static native void initStatics() /*-{
     @com.google.gwt.user.client.ui.NamedFrame::PATTERN_NAME = /^[^<>&\'\"]+$/;
   }-*/;
@@ -67,18 +92,9 @@ public class NamedFrame extends Frame {
    * @throws IllegalArgumentException if the supplied name is not allowed 
    */
   public NamedFrame(String name) {
-    if (name == null || !isValidName(name.trim())) {
-      throw new IllegalArgumentException(
-          "expecting one or more non-whitespace chars with no '<', '>', or '&'");
-    }
-
-    // Use innerHTML to implicitly create the <iframe>. This is necessary
-    // because most browsers will not respect a dynamically-set iframe name.
-    Element div = DOM.createDiv();
-    DOM.setInnerHTML(div, "<iframe name='" + name + "'>");
-
-    Element iframe = DOM.getFirstChild(div);
-    replaceElement(iframe);
+    // Setting a src prevents mixed-content warnings.
+    // http://weblogs.asp.net/bleroy/archive/2005/08/09/how-to-put-a-div-over-a-select-in-ie.aspx
+    super(createIFrame("javascript:''", name));
     setStyleName(DEFAULT_STYLENAME);
   }
 

@@ -221,13 +221,13 @@ public class NumberFormat_fr_Test extends GWTTestCase {
     String str;
 
     str = NumberFormat.getCurrencyFormat().format(1234.579);
-    assertEquals("1\u00A0234,58 \u20AC", str);
+    assertEquals("1\u00A0234,58\u00A0\u20AC", str);
     str = NumberFormat.getDecimalFormat().format(1234.579);
     assertEquals("1\u00A0234,579", str);
     str = NumberFormat.getPercentFormat().format(1234.579);
     assertEquals("123\u00A0458\u00A0%", str);
     str = NumberFormat.getScientificFormat().format(1234.579);
-    assertEquals("1,235E3", str);
+    assertEquals("1E3", str);
   }
 
   public void testZeros() {

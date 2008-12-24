@@ -42,6 +42,21 @@ public abstract class AbstractLinker extends Linker {
   }
 
   /**
+   * A helper method to create an artifact from an array of bytes.
+   * 
+   * @param logger a TreeLogger
+   * @param what the data to emit
+   * @param partialPath the partial path of the resource
+   * @return an artifact that contains the given data
+   * @param lastModified the last modified time of the new artifact
+   * @throws UnableToCompleteException
+   */
+  protected final SyntheticArtifact emitBytes(TreeLogger logger, byte[] what,
+      String partialPath, long lastModified) throws UnableToCompleteException {
+    return new SyntheticArtifact(logger, getClass(), partialPath, what, lastModified);
+  }
+
+  /**
    * A helper method to create an artifact to emit the contents of an
    * InputStream.
    * 
@@ -54,8 +69,25 @@ public abstract class AbstractLinker extends Linker {
       InputStream what, String partialPath) throws UnableToCompleteException {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     Util.copy(logger, what, out);
-    return new SyntheticArtifact(logger, getClass(), partialPath,
-        out.toByteArray());
+    return emitBytes(logger, out.toByteArray(), partialPath);
+  }
+
+  /**
+   * A helper method to create an artifact to emit the contents of an
+   * InputStream.
+   * 
+   * @param logger a TreeLogger
+   * @param what the source InputStream
+   * @param partialPath the partial path of the emitted resource
+   * @param lastModified the last modified time of the new artifact
+   * @return an artifact that contains the contents of the InputStream
+   */
+  protected final SyntheticArtifact emitInputStream(TreeLogger logger,
+      InputStream what, String partialPath, long lastModified)
+      throws UnableToCompleteException {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    Util.copy(logger, what, out);
+    return emitBytes(logger, out.toByteArray(), partialPath, lastModified);
   }
 
   /**
@@ -69,6 +101,20 @@ public abstract class AbstractLinker extends Linker {
   protected final SyntheticArtifact emitString(TreeLogger logger, String what,
       String partialPath) throws UnableToCompleteException {
     return emitBytes(logger, Util.getBytes(what), partialPath);
+  }
+
+  /**
+   * A helper method to create an artifact to emit a String.
+   * 
+   * @param logger a TreeLogger
+   * @param what the contents of the Artifact to emit
+   * @param partialPath the partial path of the emitted resource
+   * @param lastModified the last modified time of the new artifact
+   * @return an artifact that contains the contents of the given String
+   */
+  protected final SyntheticArtifact emitString(TreeLogger logger, String what,
+      String partialPath, long lastModified) throws UnableToCompleteException {
+    return emitBytes(logger, Util.getBytes(what), partialPath, lastModified);
   }
 
   /**
@@ -88,5 +134,25 @@ public abstract class AbstractLinker extends Linker {
       throws UnableToCompleteException {
     String strongName = prefix + Util.computeStrongName(what) + suffix;
     return emitBytes(logger, what, strongName);
+  }
+
+  /**
+   * A helper method to create an artifact from an array of bytes with a strong
+   * name.
+   * 
+   * @param logger a TreeLogger
+   * @param what the data to emit
+   * @param prefix a non-null string to prepend to the hash to determine the
+   *          Artifact's partial path
+   * @param suffix a non-null string to append to the hash to determine the
+   *          Artifact's partial path
+   * @param lastModified the last modified time of the new artifact
+   * @return an artifact that contains the given data
+   */
+  protected final SyntheticArtifact emitWithStrongName(TreeLogger logger,
+      byte[] what, String prefix, String suffix, long lastModified)
+      throws UnableToCompleteException {
+    String strongName = prefix + Util.computeStrongName(what) + suffix;
+    return emitBytes(logger, what, strongName, lastModified);
   }
 }

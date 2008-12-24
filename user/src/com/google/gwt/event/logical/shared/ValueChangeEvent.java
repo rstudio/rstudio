@@ -35,12 +35,10 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * manager.If no such handlers exist, this method will do nothing.
    * 
    * @param <I> the old value type
-   * @param <S> The event source
    * @param source the source of the handlers
    * @param value the value
    */
-  public static <I, S extends HasValueChangeHandlers<I> & HasHandlers> void fire(
-      S source, I value) {
+  public static <I> void fire(HasValueChangeHandlers<I> source, I value) {
     if (TYPE != null) {
       HandlerManager handlers = source.getHandlers();
       if (handlers != null && handlers.isEventHandled(TYPE)) {
@@ -61,13 +59,11 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * @param oldValue the oldValue, may be null
    * @param newValue the newValue, may be null
    */
-  public static <I, S extends HasValueChangeHandlers<I> & HasHandlers> void fireIfNotEqual(
-      S source, I oldValue, I newValue) {
-    if (TYPE != null) {
-      if (oldValue != newValue
-          && (oldValue == null || !oldValue.equals(newValue))) {
-        fire(source, newValue);
-      }
+  public static <I> void fireIfNotEqual(HasValueChangeHandlers<I> source,
+      I oldValue, I newValue) {
+    if (shouldFire(source, oldValue, newValue)) {
+      ValueChangeEvent<I> event = new ValueChangeEvent<I>(newValue);
+      source.getHandlers().fireEvent(event);
     }
   }
 
@@ -83,10 +79,27 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
     return TYPE;
   }
 
+  /**
+   * Convenience method to allow subtypes to know when they should fire a value
+   * change event in a null-safe manner.
+   * 
+   * @param <I> value type
+   * @param source the source
+   * @param oldValue the old value
+   * @param newValue the new value
+   * @return whether the event should be fired
+   */
+  protected static <I> boolean shouldFire(HasValueChangeHandlers<I> source,
+      I oldValue, I newValue) {
+    return TYPE != null && source.getHandlers() != null && oldValue != newValue
+        && (oldValue == null || !oldValue.equals(newValue));
+  }
+
   private final I value;
 
   /**
    * Creates a value change event.
+   * 
    * @param value the value
    */
   protected ValueChangeEvent(I value) {

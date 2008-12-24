@@ -30,7 +30,7 @@ public final class ArgHandlerScriptStyle extends ArgHandler {
   }
 
   public String[] getDefaultArgs() {
-    return new String[] {"-style", "obfuscate"};
+    return new String[] {getTag(), "obfuscate"};
   }
 
   public String getPurpose() {

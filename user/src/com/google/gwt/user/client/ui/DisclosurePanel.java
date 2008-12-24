@@ -50,6 +50,7 @@ import java.util.Iterator;
  * selector:<br/> .gwt-DisclosurePanel-open .header { ... }
  * </p>
  */
+@SuppressWarnings("deprecation")
 public final class DisclosurePanel extends Composite implements
     FiresDisclosureEvents, HasWidgets, HasAnimation,
     HasOpenHandlers<DisclosurePanel>, HasCloseHandlers<DisclosurePanel> {
@@ -261,8 +262,7 @@ public final class DisclosurePanel extends Composite implements
 
   /**
    * top level widget. The first child will be a reference to {@link #header}.
-   * The second child will either not exist or be a non-null to reference to
-   * {@link #content}.
+   * The second child will be a reference to {@link #contentWrapper}.
    */
   private final VerticalPanel mainPanel = new VerticalPanel();
 
@@ -275,11 +275,6 @@ public final class DisclosurePanel extends Composite implements
    * holds the header widget.
    */
   private final ClickableHeader header = new ClickableHeader();
-
-  /**
-   * the content widget, this can be null.
-   */
-  private Widget content;
 
   private boolean isAnimationEnabled = false;
 
@@ -391,7 +386,7 @@ public final class DisclosurePanel extends Composite implements
    * @return the panel's current content widget
    */
   public Widget getContent() {
-    return content;
+    return contentWrapper.getWidget();
   }
 
   /**
@@ -462,7 +457,7 @@ public final class DisclosurePanel extends Composite implements
    * @param content the widget to be used as the content panel
    */
   public void setContent(Widget content) {
-    final Widget currentContent = this.content;
+    final Widget currentContent = getContent();
 
     // Remove existing content widget.
     if (currentContent != null) {
@@ -471,7 +466,6 @@ public final class DisclosurePanel extends Composite implements
     }
 
     // Add new content widget if != null.
-    this.content = content;
     if (content != null) {
       contentWrapper.setWidget(content);
       content.addStyleName(STYLENAME_CONTENT);
@@ -544,7 +538,7 @@ public final class DisclosurePanel extends Composite implements
       addStyleDependentName(STYLENAME_SUFFIX_CLOSED);
     }
 
-    if (content != null) {
+    if (getContent() != null) {
       if (contentAnimation == null) {
         contentAnimation = new ContentAnimation();
       }

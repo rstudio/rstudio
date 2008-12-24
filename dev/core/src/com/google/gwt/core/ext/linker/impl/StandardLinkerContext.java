@@ -117,6 +117,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   private final Map<Class<? extends Linker>, String> linkerShortNames = new HashMap<Class<? extends Linker>, String>();
 
   private final String moduleFunctionName;
+  private final long moduleLastModified;
   private final String moduleName;
 
   private final Map<String, StandardSelectionProperty> propertiesByName = new HashMap<String, StandardSelectionProperty>();
@@ -133,6 +134,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     this.jjsOptions = jjsOptions;
     this.moduleFunctionName = module.getFunctionName();
     this.moduleName = module.getName();
+    this.moduleLastModified = module.lastModified();
 
     // Sort the linkers into the order they should actually run.
     List<Class<? extends Linker>> sortedLinkers = new ArrayList<Class<? extends Linker>>();
@@ -302,6 +304,10 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     return moduleFunctionName;
   }
 
+  public long getModuleLastModified() {
+    return moduleLastModified;
+  }
+
   public String getModuleName() {
     return moduleName;
   }
@@ -452,10 +458,11 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         outFile = new File(outputPath, artifact.getPartialPath());
       }
 
-      // TODO(scottb): figure out how to do a clean.
-      // assert !outFile.exists() : "Attempted to overwrite " +
-      // outFile.getPath();
-      Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
+      if (!outFile.exists()
+          || (outFile.lastModified() <= artifact.getLastModified())) {
+        Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
+        outFile.setLastModified(artifact.getLastModified());
+      }
     }
   }
 

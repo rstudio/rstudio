@@ -16,12 +16,13 @@
 package com.google.gwt.event.dom.client;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * A widget that implements this interface provides registration for
  * {@link LoseCaptureHandler} instances.
  */
-public interface HasLoseCaptureHandlers {
+public interface HasLoseCaptureHandlers extends HasHandlers {
   /**
    * Adds a {@link LoseCaptureEvent} handler.
    * 

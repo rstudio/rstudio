@@ -15,12 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.event.logical.shared.HasHandlers;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -88,8 +89,25 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     return handlerManager != null && handlerManager.isEventHandled(type);
   }
 
-  public void onBrowserEvent(Event nativeEvent) {
-    DomEvent.fireNativeEvent(nativeEvent, handlerManager);
+  public void onBrowserEvent(Event event) {
+    switch (DOM.eventGetType(event)) {
+      case Event.ONMOUSEOVER:
+        // Only fire the mouse over event if it's coming from outside this
+        // widget.
+        Element from = event.getFromElement();
+        if (from != null && getElement().isOrHasChild(from)) {
+          return;
+        }
+        break;
+      case Event.ONMOUSEOUT:
+        // Only fire the mouse out event if it's actually leaving this
+        // widget.
+        Element to = event.getToElement();
+        if (to != null && getElement().isOrHasChild(to)) {
+          return;
+        }
+    }
+    DomEvent.fireNativeEvent(event, handlerManager);
   }
 
   /**

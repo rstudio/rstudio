@@ -551,7 +551,6 @@ html>body .gwt-DecoratedPopupPanel .popupBottomRight {
 }
 
 .gwt-RadioButton {
-  padding: 4px 3px 3px 4px;
 }
 .gwt-RadioButton-disabled {
   color: #888;
@@ -983,8 +982,107 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
   white-space: nowrap;
   cursor: hand;
   cursor: pointer;
+  zoom: 1;
 }
 .gwt-Tree .gwt-TreeItem-selected {
   color: #0cf;
   background: #1c1c1c;
+}
+.gwt-TreeItem .gwt-RadioButton input,
+.gwt-TreeItem .gwt-CheckBox input {
+  margin-right: 0px;
+}
+* html .gwt-TreeItem .gwt-RadioButton input,
+* html .gwt-TreeItem .gwt-CheckBox input {
+  margin-right: -4px;
+}
+
+.gwt-DateBox input {
+  width: 8em;
+}
+.dateBoxFormatError {
+  background: #a8eeff;
+  color: red;
+}
+.dateBoxPopup {
+}
+
+.gwt-DatePicker {
+  border: 1px solid #00CCFF;
+  cursor: default;
+}
+.gwt-DatePicker td,
+.datePickerMonthSelector td:focus {
+  outline: none
+}
+.datePickerDays {
+  width: 100%;
+  background: #4d4d4d;
+}
+.datePickerDay,
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  font-size: 75%;
+  text-align: center;
+  padding: 4px;
+  outline: none;
+  color: #dddddd;
+}
+.datePickerWeekdayLabel,
+.datePickerWeekendLabel {
+  background: #222222;
+  padding: 0px 4px 2px;
+  cursor: default;
+}
+.datePickerDay {
+  padding: 4px;
+  cursor: hand;
+  cursor: pointer;
+}
+.datePickerDayIsToday {
+  border: 1px solid #00CCFF;
+  padding: 3px;
+}
+.datePickerDayIsWeekend {
+  background: #333333;
+}
+.datePickerDayIsFiller {
+  color: #959595;
+}
+.datePickerDayIsValue {
+  background: #1C1C1C;
+  color: #00CCFF;
+}
+.datePickerDayIsDisabled {
+  color: #AAAAAA;
+  font-style: italic;
+}
+.datePickerDayIsHighlighted {
+  background: #00CCFF;
+  color: #1C1C1C;
+}
+.datePickerDayIsValueAndHighlighted {
+  background: #1C1C77;
+  color: #00CCFF;
+}
+.datePickerMonthSelector {
+  background: #222222;
+  width: 100%;
+}
+td.datePickerMonth {
+  text-align: center;
+  vertical-align: center;
+  white-space: nowrap;
+  font-size: 70%;
+  font-weight: bold;
+  color: #dddddd;
+}
+.datePickerPreviousButton,
+.datePickerNextButton {
+  font-size: 120%;
+  line-height: 1em;
+  cursor: hand;
+  cursor: pointer;
+  padding: 0px 4px;
+  color: #dddddd;
 }

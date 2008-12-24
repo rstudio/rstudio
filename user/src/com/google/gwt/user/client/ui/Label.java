@@ -53,6 +53,7 @@ import com.google.gwt.i18n.client.HasDirection;
  * {@example com.google.gwt.examples.HTMLExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class Label extends Widget implements HasHorizontalAlignment, HasText,
     HasWordWrap, HasDirection, HasClickHandlers, SourcesClickEvents,
     SourcesMouseEvents, HasAllMouseHandlers {

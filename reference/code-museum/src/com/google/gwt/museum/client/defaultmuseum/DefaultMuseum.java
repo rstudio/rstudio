@@ -37,6 +37,7 @@ public class DefaultMuseum extends Museum implements EntryPoint {
     addIssue(new Issue2261());
     addIssue(new Issue2290());
     addIssue(new Issue2307());
+    addIssue(new Issue2318());
     addIssue(new Issue2321());
     addIssue(new Issue2331());
     addIssue(new Issue2338());
@@ -47,9 +48,12 @@ public class DefaultMuseum extends Museum implements EntryPoint {
     addIssue(new Issue2443());
     addIssue(new Issue2553());
     addIssue(new Issue2855());
+    addIssue(new Issue3172());
   }
 
   public void addVisuals() {
+    addIssue(new VisualsForDateBox());
+    addIssue(new VisualsForDatePicker());
     addIssue(new VisualsForDisclosurePanelEvents());
     addIssue(new VisualsForEventsFiring());
     addIssue(new VisualsForPopupEvents());

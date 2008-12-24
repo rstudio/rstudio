@@ -32,6 +32,18 @@ public final class Permutation implements Serializable {
   private final List<StaticPropertyOracle> propertyOracles = new ArrayList<StaticPropertyOracle>();
   private final SortedMap<String, String> rebindAnswers = new TreeMap<String, String>();
 
+  /**
+   * Clones an existing permutation, but with a new id.
+   *  
+   * @param id new permutation id
+   * @param other Permutation to copy
+   */
+  public Permutation(int id, Permutation other) {
+    this.id = id;
+    this.propertyOracles.addAll(other.propertyOracles);
+    this.rebindAnswers.putAll(other.rebindAnswers);
+  }
+
   public Permutation(int id, StaticPropertyOracle propertyOracle) {
     this.id = id;
     this.propertyOracles.add(propertyOracle);

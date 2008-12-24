@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
 /**
  * Abstract base class for all text entry widgets.
  */
+@SuppressWarnings("deprecation")
 public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     HasChangeHandlers, HasText, HasName, HasValue<String> {
 
@@ -301,7 +302,6 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   }
 
   public void setValue(String value, boolean fireEvents) {
-    assert null != value : "Value must not be null";
     String oldValue = getText();
     setText(value);
     if (fireEvents) {

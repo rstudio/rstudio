@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -253,26 +252,20 @@ public class StandardGeneratorContext implements GeneratorContext {
       pendingResource.commit(logger);
 
       // Add the GeneratedResource to the ArtifactSet
-      GeneratedResource toReturn;
-      try {
-        toReturn = new StandardGeneratedResource(currentGenerator,
-            pendingResource.getPartialPath(), pendingResource.getFile().toURL());
-        commitArtifact(logger, toReturn);
+      GeneratedResource toReturn = new StandardGeneratedResource(
+          currentGenerator, pendingResource.getPartialPath(),
+          pendingResource.getFile());
+      commitArtifact(logger, toReturn);
 
-        /*
-         * The resource is now no longer pending, so remove it from the map. If
-         * the commit above throws an exception, it's okay to leave the entry in
-         * the map because it will be reported later as not having been
-         * committed, which is accurate.
-         */
-        pendingResourcesByOutputStream.remove(os);
+      /*
+       * The resource is now no longer pending, so remove it from the map. If
+       * the commit above throws an exception, it's okay to leave the entry in
+       * the map because it will be reported later as not having been committed,
+       * which is accurate.
+       */
+      pendingResourcesByOutputStream.remove(os);
 
-        return toReturn;
-      } catch (MalformedURLException e) {
-        // This is very unlikely, since the file already exists
-        logger.log(TreeLogger.ERROR, "Unable to commit artifact", e);
-        throw new UnableToCompleteException();
-      }
+      return toReturn;
     } else {
       logger.log(TreeLogger.WARN,
           "Generator attempted to commit an unknown OutputStream", null);

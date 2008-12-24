@@ -28,29 +28,18 @@ import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.BrowserListener;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
-import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.OophmSessionHandler;
 import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.shell.WorkDirs;
 import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
-import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
-import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
-import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
-import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
-import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
-import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
-import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerExtra;
-import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
-import com.google.gwt.util.tools.ToolBase;
 
 import java.awt.Cursor;
 import java.io.File;
@@ -71,100 +60,7 @@ import javax.swing.JTabbedPane;
 /**
  * The main executable class for the hosted mode shell.
  */
-public class GWTShell extends ToolBase {
-
-  /**
-   * Handles the -blacklist command line argument.
-   */
-  protected class ArgHandlerBlacklist extends ArgHandlerString {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return new String[] {"-blacklist", ""};
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Prevents the user browsing URLs that match the specified regexes (comma or space separated)";
-    }
-
-    @Override
-    public String getTag() {
-      return "-blacklist";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"blacklist-string"};
-    }
-
-    @Override
-    public boolean setString(String blacklistStr) {
-      return BrowserWidgetHostChecker.blacklistRegexes(blacklistStr);
-    }
-  }
-
-  /**
-   * handles the -noserver command line flag.
-   */
-  protected class ArgHandlerNoServerFlag extends ArgHandlerFlag {
-    @Override
-    public String getPurpose() {
-      return "Prevents the embedded Tomcat server from running, even if a port is specified";
-    }
-
-    @Override
-    public String getTag() {
-      return "-noserver";
-    }
-
-    @Override
-    public boolean setFlag() {
-      runTomcat = false;
-      return true;
-    }
-  }
-
-  /**
-   * Handles the -port command line flag.
-   */
-  protected class ArgHandlerPort extends ArgHandlerString {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return new String[] {"-port", "8888"};
-    }
-
-    @Override
-    public String getPurpose() {
-      return "Runs an embedded Tomcat instance on the specified port (defaults to 8888)";
-    }
-
-    @Override
-    public String getTag() {
-      return "-port";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"port-number | \"auto\""};
-    }
-
-    @Override
-    public boolean setString(String value) {
-      if (value.equals("auto")) {
-        port = 0;
-      } else {
-        try {
-          port = Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-          System.err.println("A port must be an integer or \"auto\"");
-          return false;
-        }
-      }
-      return true;
-    }
-  }
+public class GWTShell extends HostedModeBase {
 
   /**
    * Handles the -portHosted command line flag.
@@ -209,13 +105,20 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * Handles the list of startup urls that can be passed on the command line.
+   * Handles the list of startup urls that can be passed at the end of the
+   * command line.
    */
-  protected class ArgHandlerStartupURLs extends ArgHandlerExtra {
+  protected static class ArgHandlerStartupURLsExtra extends ArgHandlerExtra {
+
+    private final OptionStartupURLs options;
+
+    public ArgHandlerStartupURLsExtra(OptionStartupURLs options) {
+      this.options = options;
+    }
 
     @Override
     public boolean addExtraArg(String arg) {
-      addStartupURL(arg);
+      options.addStartupURL(arg);
       return true;
     }
 
@@ -231,62 +134,59 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * Handles the -whitelist command line flag.
+   * The GWTShell argument processor.
    */
-  protected class ArgHandlerWhitelist extends ArgHandlerString {
-
-    @Override
-    public String[] getDefaultArgs() {
-      return new String[] {"-whitelist", ""};
+  protected static class ArgProcessor extends HostedModeBase.ArgProcessor {
+    public ArgProcessor(ShellOptionsImpl options, boolean forceServer,
+        boolean noURLs) {
+      super(options, forceServer);
+      if (!noURLs) {
+        registerHandler(new ArgHandlerStartupURLsExtra(options));
+      }
+      registerHandler(new ArgHandlerOutDir(options));
     }
 
     @Override
-    public String getPurpose() {
-      return "Allows the user to browse URLs that match the specified regexes (comma or space separated)";
-    }
-
-    @Override
-    public String getTag() {
-      return "-whitelist";
-    }
-
-    @Override
-    public String[] getTagArgs() {
-      return new String[] {"whitelist-string"};
-    }
-
-    @Override
-    public boolean setString(String whitelistStr) {
-      return BrowserWidgetHostChecker.whitelistRegexes(whitelistStr);
+    protected String getName() {
+      return GWTShell.class.getName();
     }
   }
 
   /**
-   * Concrete class to implement all compiler options.
+   * Concrete class to implement all shell options.
    */
-  static class ShellOptionsImpl extends GWTCompilerOptionsImpl implements
-      ShellOptions, WorkDirs {
+  static class ShellOptionsImpl extends HostedModeBaseOptionsImpl implements
+      HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions {
+    private int localWorkers;
+    private File outDir;
+
     public File getCompilerOutputDir(ModuleDef moduleDef) {
-      return new File(getOutDir(), moduleDef.getDeployTo());
+      return new File(getOutDir(), moduleDef.getName());
+    }
+
+    public int getLocalWorkers() {
+      return localWorkers;
+    }
+
+    public File getOutDir() {
+      return outDir;
     }
 
     public File getShellPublicGenDir(ModuleDef moduleDef) {
       return new File(getShellBaseWorkDir(moduleDef), "public");
     }
 
-    /**
-     * The base shell work directory.
-     */
-    protected File getShellBaseWorkDir(ModuleDef moduleDef) {
-      return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
+    @Override
+    public File getWorkDir() {
+      return new File(getOutDir(), ".gwt-tmp");
     }
 
-    /**
-     * Where generated files go by default until we are sure they are public;
-     * then they are copied into {@link #getShellPublicGenDir(ModuleDef)}.
-     */
-    protected File getShellPrivateGenDir(ModuleDef moduleDef) {
-      return new File(getShellBaseWorkDir(moduleDef), "gen");
+    public void setLocalWorkers(int localWorkers) {
+      this.localWorkers = localWorkers;
+    }
+
+    public void setOutDir(File outDir) {
+      this.outDir = outDir;
     }
   }
 
@@ -344,12 +244,9 @@ public class GWTShell extends ToolBase {
         // Create a sandbox for the module.
         // TODO(jat): consider multiple instances of the same module open at
         // once
-        File shellDir = new File(outDir, GWT_SHELL_PATH + File.separator
-            + moduleName);
-
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
         ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef, genDir, shellDir);
+            typeOracle, moduleDef);
 
         if (tab != null) {
           moduleTabs.put(host, tab);
@@ -445,10 +342,15 @@ public class GWTShell extends ToolBase {
      * shutdown AWT related threads, since the contract for their termination is
      * still implementation-dependent.
      */
-    GWTShell shellMain = new GWTShell();
-    if (shellMain.processArgs(args)) {
-      shellMain.run();
+    GWTShell gwtShell = new GWTShell();
+    ArgProcessor argProcessor = new ArgProcessor(gwtShell.options, false, false);
+    if (argProcessor.processArgs(args)) {
+      gwtShell.run();
+      // Exit w/ success code.
+      System.exit(0);
     }
+    // Exit w/ non-success code.
+    System.exit(-1);
   }
 
   /**
@@ -470,7 +372,12 @@ public class GWTShell extends ToolBase {
 
   protected File outDir;
 
-  protected final ShellOptionsImpl options = new ShellOptionsImpl();
+  /**
+   * Hiding super field because it's actually the same object, just with a
+   * stronger type.
+   */
+  @SuppressWarnings("hiding")
+  protected final ShellOptionsImpl options = (ShellOptionsImpl) super.options;
 
   /**
    * Cheat on the first load's refresh by assuming the module loaded by
@@ -490,13 +397,9 @@ public class GWTShell extends ToolBase {
 
   private ShellMainWindow mainWnd;
 
-  private int port;
-
   private int portHosted;
 
   private boolean runTomcat = true;
-
-  private boolean started;
 
   private final List<String> startupUrls = new ArrayList<String>();
 
@@ -505,47 +408,6 @@ public class GWTShell extends ToolBase {
   private AbstractTreeLogger topLogger;
 
   private WebServerPanel webServerLog;
-
-  public GWTShell() {
-    this(false, false);
-  }
-
-  protected GWTShell(boolean forceServer, boolean noURLs) {
-    // Set any platform specific system properties.
-    BootStrapPlatform.initHostedMode();
-    BootStrapPlatform.applyPlatformHacks();
-
-    registerHandler(getArgHandlerPort());
-
-    registerHandler(getArgHandlerPortHosted());
-
-    if (!forceServer) {
-      registerHandler(new ArgHandlerNoServerFlag());
-    }
-
-    registerHandler(new ArgHandlerWhitelist());
-    registerHandler(new ArgHandlerBlacklist());
-
-    registerHandler(new ArgHandlerLogLevel(options));
-
-    registerHandler(new ArgHandlerGenDir(options));
-    registerHandler(new ArgHandlerWorkDirOptional(options));
-
-    if (!noURLs) {
-      registerHandler(new ArgHandlerStartupURLs());
-    }
-
-    registerHandler(new ArgHandlerExtraDir(options));
-    registerHandler(new ArgHandlerOutDir(options));
-
-    registerHandler(new ArgHandlerScriptStyle(options));
-    registerHandler(new ArgHandlerEnableAssertions(options));
-    registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
-  }
-
-  public void addStartupURL(String url) {
-    startupUrls.add(url);
-  }
 
   public File getGenDir() {
     return genDir;
@@ -557,10 +419,6 @@ public class GWTShell extends ToolBase {
 
   public File getOutDir() {
     return outDir;
-  }
-
-  public int getPort() {
-    return port;
   }
 
   public TreeLogger getTopLogger() {
@@ -614,51 +472,6 @@ public class GWTShell extends ToolBase {
     }
   }
 
-  public String normalizeURL(String unknownUrlText) {
-    if (unknownUrlText.indexOf(":") != -1) {
-      // Assume it's a full url.
-      return unknownUrlText;
-    }
-
-    // Assume it's a trailing url path.
-    //
-    if (unknownUrlText.length() > 0 && unknownUrlText.charAt(0) == '/') {
-      unknownUrlText = unknownUrlText.substring(1);
-    }
-
-    int prt = getPort();
-    if (prt != 80 && prt != 0) {
-      // CHECKSTYLE_OFF: Not really an assembled error message, so no space
-      // after ':'.
-      return "http://localhost:" + prt + "/" + unknownUrlText;
-      // CHECKSTYLE_ON
-    } else {
-      return "http://localhost/" + unknownUrlText;
-    }
-  }
-
-  /**
-   * Sets up all the major aspects of running the shell graphically, including
-   * creating the main window and optionally starting the embedded Tomcat
-   * server.
-   */
-  public void run() {
-    try {
-      if (!startUp()) {
-        // Failed to initialize.
-        return;
-      }
-
-      // Perform any platform-specific hacks to initialize the GUI.
-      BootStrapPlatform.initGui();
-
-      // Tomcat's running now, so launch browsers for startup urls now.
-      launchStartupUrls(getTopLogger());
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
   public void setCompilerOptions(CompilerOptions options) {
     this.options.copyFrom(options);
   }
@@ -675,12 +488,9 @@ public class GWTShell extends ToolBase {
     this.outDir = outDir;
   }
 
-  public void setPort(int port) {
-    this.port = port;
-  }
-
-  public void setRunTomcat(boolean run) {
-    runTomcat = run;
+  @Override
+  protected void compile(TreeLogger logger) throws UnableToCompleteException {
+    throw new UnsupportedOperationException();
   }
 
   /**
@@ -688,11 +498,17 @@ public class GWTShell extends ToolBase {
    * def programmatically in some cases (this is needed for JUnit support, for
    * example).
    */
+  @SuppressWarnings("deprecation")
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
-    CompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
-    newOptions.setModuleName(moduleDef.getName());
+    LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
+    newOptions.addModuleName(moduleDef.getName());
     new GWTCompiler(newOptions).run(logger);
+  }
+
+  @Override
+  protected HostedModeBaseOptions createOptions() {
+    return new ShellOptionsImpl();
   }
 
   protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
@@ -716,27 +532,6 @@ public class GWTShell extends ToolBase {
   }
 
   /**
-   * Creates an instance of ShellModuleSpaceHost (or a derived class) using the
-   * specified constituent parts. This method is made to be overridden for
-   * subclasses that need to change the behavior of ShellModuleSpaceHost.
-   * 
-   * @param logger TreeLogger to use
-   * @param typeOracle
-   * @param moduleDef
-   * @param genDir
-   * @return ShellModuleSpaceHost instance
-   */
-  protected ShellModuleSpaceHost doCreateShellModuleSpaceHost(
-      TreeLogger logger, TypeOracle typeOracle, ModuleDef moduleDef,
-      File genDir, File shellDir) {
-    // Clear out the shell temp directory.
-    Util.recursiveDelete(options.getShellBaseWorkDir(moduleDef), true);
-    return new ShellModuleSpaceHost(logger, typeOracle, moduleDef,
-        options.getGenDir(), options.getShellPrivateGenDir(moduleDef),
-        doCreateArtifactAcceptor(moduleDef));
-  }
-
-  /**
    * Can be override to change the default log level in subclasses. JUnit does
    * this for example.
    */
@@ -751,11 +546,26 @@ public class GWTShell extends ToolBase {
     return true;
   }
 
-  /**
-   * Derived classes can override to set a default port.
-   */
-  protected ArgHandlerPort getArgHandlerPort() {
-    return new ArgHandlerPort();
+  @Override
+  protected void doShutDownServer() {
+    // Stop the HTTP server.
+    //
+    EmbeddedTomcatServer.stop();
+  }
+
+  @Override
+  protected int doStartUpServer() {
+    // TODO(bruce): make tomcat work in terms of the modular launcher
+    String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), getPort(),
+        options);
+
+    // TODO(bruce): test that we can remove this old approach in favor of
+    // a better, logger-based error reporting
+    if (whyFailed != null) {
+      System.err.println(whyFailed);
+      return -1;
+    }
+    return EmbeddedTomcatServer.getPort();
   }
 
   /**
@@ -763,10 +573,6 @@ public class GWTShell extends ToolBase {
    */
   protected ArgHandlerPortHosted getArgHandlerPortHosted() {
     return new ArgHandlerPortHosted();
-  }
-
-  protected BrowserWidgetHost getBrowserHost() {
-    return browserHost;
   }
 
   protected void initializeLogger() {
@@ -778,73 +584,39 @@ public class GWTShell extends ToolBase {
     topLogger.setMaxDetail(options.getLogLevel());
   }
 
-  /**
-   * By default we will open the application window.
-   * 
-   * @return true if we are running in headless mode
-   */
-  protected boolean isHeadless() {
-    return headlessMode;
+  @Override
+  protected boolean initModule(String moduleName) {
+    /*
+     * Not used in legacy mode due to GWTShellServlet playing this role.
+     * 
+     * TODO: something smarter here and actually make GWTShellServlet less
+     * magic?
+     */
+    return false;
   }
 
-  protected void setHeadless(boolean headlessMode) {
-    this.headlessMode = headlessMode;
+  protected void openAppWindow() {
+    ImageIcon gwtIcon = loadImageIcon("icon24.png");
+    frame = new JFrame("GWT Hosted Mode");
+    tabs = new JTabbedPane();
+    boolean checkForUpdates = doShouldCheckForUpdates();
+    mainWnd = new ShellMainWindow(this, checkForUpdates, options.getLogLevel());
+    tabs.addTab("Hosted Mode", gwtIcon, mainWnd, "GWT Hosted-mode");
+    if (runTomcat) {
+      ImageIcon tomcatIcon = loadImageIcon("tomcat24.png");
+      webServerLog = new WebServerPanel(getPort(), options.getLogLevel());
+      tabs.addTab("Tomcat", tomcatIcon, webServerLog);
+    }
+    frame.getContentPane().add(tabs);
+    frame.setSize(950, 700);
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setIconImage(loadImageIcon("icon16.png").getImage());
+    frame.setVisible(true);
   }
 
-  /**
-   * 
-   */
-  protected void shutDown() {
-    if (!runTomcat) {
-      return;
-    }
-
-    // Stop the HTTP server.
-    //
-    EmbeddedTomcatServer.stop();
-  }
-
-  protected boolean startUp() {
-    if (started) {
-      throw new IllegalStateException("Startup code has already been run");
-    }
-
-    started = true;
-
-    // Create the main app window.
-    // When it is up and running, it will start the Tomcat server if desired.
-    if (!headlessMode) {
-      openAppWindow();
-    }
-
-    // Initialize the logger.
-    initializeLogger();
-
+  protected void startUpHook() {
     // Accept connections from OOPHM clients
     startOophmListener();
-
-    if (runTomcat) {
-      // Start the HTTP server.
-      // Use a new thread so that logging that occurs during startup is
-      // displayed immediately.
-      //
-      final int serverPort = getPort();
-
-      PerfLogger.start("GWTShell.startup (Tomcat launch)");
-      String whyFailed = EmbeddedTomcatServer.start(headlessMode
-          ? getTopLogger() : webServerLog.getLogger(), serverPort, options);
-      PerfLogger.end();
-
-      if (whyFailed != null) {
-        System.err.println(whyFailed);
-        return false;
-      }
-
-      // Record what port Tomcat is actually running on.
-      port = EmbeddedTomcatServer.getPort();
-    }
-
-    return true;
   }
 
   @SuppressWarnings("unused")
@@ -887,25 +659,6 @@ public class GWTShell extends ToolBase {
     // String locationText = location.getText();
     //
     // launchExternalBrowser(logger, locationText);
-  }
-
-  private void openAppWindow() {
-    ImageIcon gwtIcon = loadImageIcon("icon24.png");
-    frame = new JFrame("GWT Hosted Mode");
-    tabs = new JTabbedPane();
-    boolean checkForUpdates = doShouldCheckForUpdates();
-    mainWnd = new ShellMainWindow(this, checkForUpdates, options.getLogLevel());
-    tabs.addTab("Hosted Mode", gwtIcon, mainWnd, "GWT Hosted-mode");
-    if (runTomcat) {
-      ImageIcon tomcatIcon = loadImageIcon("tomcat24.png");
-      webServerLog = new WebServerPanel(getPort(), options.getLogLevel());
-      tabs.addTab("Tomcat", tomcatIcon, webServerLog);
-    }
-    frame.getContentPane().add(tabs);
-    frame.setSize(950, 700);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setIconImage(loadImageIcon("icon16.png").getImage());
-    frame.setVisible(true);
   }
 
   private void startOophmListener() {

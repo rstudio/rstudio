@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Utility methods shared by ApplicationCreator and ProjectCreator.
+ * Utility methods used by ApplicationCreator.
  * 
  */
 public class CreatorUtilities {

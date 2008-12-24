@@ -18,13 +18,10 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 
 /**
- * An object that implements this interface should be a user input widget, where
- * the user and programmer can both set and get the object's value.
- * <p>
- * It is a requirement that a value passed to {@link setValue} be
- * {@link Object#equals} to that returned by an immediately succeeding call to
- * {@link getValue}, or that both be null. Note that this is not a requirement
- * that <code>setValue(null)</code> be supported by all implementors.
+ * An object that implements this interface should be a user input
+ * widget, where the user and programmer can both set and get the
+ * object's value. It is intended to provide a unified interface to
+ * widgets with "atomic" values, like Strings and Dates.
  * 
  * @param <T> the type of value.
  */
@@ -43,6 +40,10 @@ public interface HasValue<T> extends HasValueChangeHandlers<T> {
    * <p>
    * It is acceptable to fail assertions or throw (documented) unchecked
    * exceptions in response to bad values.
+   * <p>
+   * By convention, GWT widgets that can be cleared accept null for
+   * <code>value</code>, but it is acceptable for widgets that cannot
+   * be cleared to throw an exception for null values.
    * 
    * @param value the object's new value
    */

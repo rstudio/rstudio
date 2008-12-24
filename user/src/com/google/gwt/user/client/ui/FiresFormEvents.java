@@ -18,15 +18,19 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface fires the events defined by the
  * {@link com.google.gwt.user.client.ui.FormHandler} interface.
+ * 
+ * @deprecated Only {@link FormPanel} was expected to use this interface.
+ *             Instead, it now uses {@link FormPanel.SubmitCompleteEvent} and
+ *             {@link SubmitEvent}.
  */
-
+@Deprecated
 public interface FiresFormEvents {
 
   /**
    * Adds a handler interface to receive click events.
    * 
    * @deprecated use {@link FormPanel#addSubmitCompleteHandler} and
-   * {@link FormPanel#addSubmitHandler} instead
+   *             {@link FormPanel#addSubmitHandler} instead
    * @param handler the handler interface to add
    */
   @Deprecated

@@ -24,7 +24,6 @@ import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerString;
-import com.google.gwt.util.tools.ToolBase;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -164,20 +163,12 @@ public class CompilePermsServer {
     }
   }
 
-  static class ArgProcessor extends ToolBase {
+  static class ArgProcessor extends ArgProcessorBase {
     public ArgProcessor(CompileServerOptions options) {
       registerHandler(new ArgHandlerLogLevel(options));
       registerHandler(new ArgHandlerCompileHost(options));
       registerHandler(new ArgHandlerCompilePort(options));
       registerHandler(new ArgHandlerCookie(options));
-    }
-
-    /*
-     * Overridden to make public.
-     */
-    @Override
-    public final boolean processArgs(String[] args) {
-      return super.processArgs(args);
     }
 
     @Override

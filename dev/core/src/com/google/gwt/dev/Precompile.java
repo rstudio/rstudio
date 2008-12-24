@@ -311,8 +311,8 @@ public class Precompile {
           merged.put(rebindResultsString, permutation);
         }
       }
-      permutations = merged.values().toArray(new Permutation[merged.size()]);
-      return new Precompilation(unifiedAst, permutations, generatedArtifacts);
+      return new Precompilation(unifiedAst, merged.values(),
+          generatedArtifacts);
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.
@@ -374,50 +374,44 @@ public class Precompile {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
-    if (options.isValidateOnly()) {
-      init(logger);
-      TreeLogger branch = logger.branch(TreeLogger.INFO,
-          "Validating compilation " + module.getName());
-      if (validate(branch, options, module, options.getGenDir(),
-          options.getCompilerWorkDir())) {
+    for (String moduleName : options.getModuleNames()) {
+      File compilerWorkDir = options.getCompilerWorkDir(moduleName);
+      Util.recursiveDelete(compilerWorkDir, true);
+      compilerWorkDir.mkdirs();
+
+      this.module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+
+      // TODO: All JDT checks now before even building TypeOracle?
+      module.getCompilationState(logger);
+
+      if (options.isValidateOnly()) {
+        TreeLogger branch = logger.branch(TreeLogger.INFO,
+            "Validating compilation " + module.getName());
+        if (!validate(branch, options, module, options.getGenDir(),
+            compilerWorkDir)) {
+          branch.log(TreeLogger.ERROR, "Validation failed");
+          return false;
+        }
         branch.log(TreeLogger.INFO, "Validation succeeded");
-        return true;
       } else {
-        branch.log(TreeLogger.ERROR, "Validation failed");
-        return false;
-      }
-    } else {
-      init(logger);
-      TreeLogger branch = logger.branch(TreeLogger.INFO, "Precompiling module "
-          + module.getName());
-      Precompilation precompilation = precompile(branch, options, module,
-          options.getGenDir(), options.getCompilerWorkDir());
-      if (precompilation != null) {
-        Util.writeObjectAsFile(branch, new File(options.getCompilerWorkDir(),
+        TreeLogger branch = logger.branch(TreeLogger.INFO,
+            "Precompiling module " + module.getName());
+        Precompilation precompilation = precompile(branch, options, module,
+            options.getGenDir(), compilerWorkDir);
+        if (precompilation == null) {
+          branch.log(TreeLogger.ERROR, "Precompilation failed");
+          return false;
+        }
+        Util.writeObjectAsFile(branch, new File(compilerWorkDir,
             PRECOMPILATION_FILENAME), precompilation);
-        Util.writeStringAsFile(branch, new File(options.getCompilerWorkDir(),
+        Util.writeStringAsFile(branch, new File(compilerWorkDir,
             PERM_COUNT_FILENAME),
             String.valueOf(precompilation.getPermutations().length));
         branch.log(TreeLogger.INFO,
             "Precompilation succeeded, number of permutations: "
                 + precompilation.getPermutations().length);
-        return true;
       }
-      branch.log(TreeLogger.ERROR, "Precompilation failed");
-      return false;
     }
-  }
-
-  private void init(TreeLogger logger) throws UnableToCompleteException {
-    // Clean out the work dir and/or create it.
-    File compilerWorkDir = options.getCompilerWorkDir();
-    Util.recursiveDelete(compilerWorkDir, true);
-    compilerWorkDir.mkdirs();
-
-    this.module = ModuleDefLoader.loadFromClassPath(logger,
-        options.getModuleName());
-
-    // TODO: All JDT checks now before even building TypeOracle?
-    module.getCompilationState(logger);
+    return true;
   }
 }

@@ -49,6 +49,7 @@ import com.google.gwt.sample.showcase.client.content.text.CwRichText;
 import com.google.gwt.sample.showcase.client.content.widgets.CwBasicButton;
 import com.google.gwt.sample.showcase.client.content.widgets.CwCheckBox;
 import com.google.gwt.sample.showcase.client.content.widgets.CwCustomButton;
+import com.google.gwt.sample.showcase.client.content.widgets.CwDatePicker;
 import com.google.gwt.sample.showcase.client.content.widgets.CwFileUpload;
 import com.google.gwt.sample.showcase.client.content.widgets.CwHyperlink;
 import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
@@ -73,7 +74,7 @@ public interface ShowcaseConstants extends Constants,
     CwDateTimeFormat.CwConstants, CwMessagesExample.CwConstants,
     CwConstantsExample.CwConstants, CwConstantsWithLookupExample.CwConstants,
     CwDictionaryExample.CwConstants, CwDecoratorPanel.CwConstants,
-    CwAnimation.CwConstants {
+    CwAnimation.CwConstants, CwDatePicker.CwConstants {
 
   /**
    * The path to source code for examples, raw files, and style definitions.

@@ -20,8 +20,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Indicates that a method definition is intended to override a declaration
- * from a superclass. <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Override.html">[Sun docs]</a>
+ * A program element annotated &#64;Deprecated is one that programmers are
+ * discouraged from using, typically because it is dangerous, or because a
+ * better alternative exists. <a
+ * href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Deprecated.html">[Sun
+ * docs]</a>
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

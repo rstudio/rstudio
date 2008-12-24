@@ -16,12 +16,13 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * A widget that implements this interface is a public source of
  * {@link ResizeEvent} events.
  */
-public interface HasResizeHandlers {
+public interface HasResizeHandlers extends HasHandlers {
   /**
    * Adds a {@link ResizeEvent} handler.
    * 

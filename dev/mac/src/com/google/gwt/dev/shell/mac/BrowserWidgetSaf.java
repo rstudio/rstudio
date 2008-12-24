@@ -39,6 +39,9 @@ public class BrowserWidgetSaf extends BrowserWidget {
       if ("gwtonload".equalsIgnoreCase(name)) {
         return LowLevelSaf.wrapDispatchMethod(jsContext, "gwtOnload",
             new GwtOnLoad());
+      } else if ("initmodule".equalsIgnoreCase(name)) {
+        return LowLevelSaf.wrapDispatchMethod(jsContext, "initModule",
+            new InitModule());
       }
       // Native code eats the same ref it gave us.
       return LowLevelSaf.getJsUndefined(jsContext);
@@ -88,6 +91,17 @@ public class BrowserWidgetSaf extends BrowserWidget {
       }
     }
 
+    /**
+     * Causes a link to occur for the specified module.
+     * 
+     * @param moduleName the module name to link
+     * @return <code>true</code> if this module is stale and should be
+     *         reloaded
+     */
+    public boolean initModule(String moduleName) {
+      return getHost().initModule(moduleName);
+    }
+
     public void setField(int jsContext, String name, int value) {
       try {
         // TODO (knorton): This should produce an error. The SetProperty
@@ -127,8 +141,8 @@ public class BrowserWidgetSaf extends BrowserWidget {
           return jsFalse;
         }
 
-        if (jsargs.length < 2) {
-          reportIncorrectGwtOnLoadInvocation(jsargs.length);
+        if (jsargs.length < 3) {
+          reportIncorrectInvocation("gwtOnLoad", 3, jsargs.length);
           return jsFalse;
         }
 
@@ -141,19 +155,53 @@ public class BrowserWidgetSaf extends BrowserWidget {
         }
         String moduleName = LowLevelSaf.toString(jsContext, jsargs[1]);
 
-        /*
-         * gwtOnLoad may or may not be called with a third argument indicating
-         * which version of GWT the JavaScript bootstrap sequence assumes that
-         * its talking to.
-         */
-        String version = null;
-        if (jsargs.length == 3 && !LowLevelSaf.isJsNull(jsContext, jsargs[2])
-            && LowLevelSaf.isJsString(jsContext, jsargs[2])) {
-          version = LowLevelSaf.toString(jsContext, jsargs[2]);
+        if (!LowLevelSaf.isJsString(jsContext, jsargs[2])) {
+          return jsFalse;
         }
+        String version = LowLevelSaf.toString(jsContext, jsargs[2]);
 
         boolean result = ((ExternalObject) thisObj).gwtOnLoad(jsargs[0],
             moduleName, version);
+        // Native code eats the same ref it gave us.
+        return LowLevelSaf.toJsBoolean(jsContext, result);
+      } catch (Throwable e) {
+        return jsFalse;
+      } finally {
+        for (int jsarg : jsargs) {
+          LowLevelSaf.gcUnprotect(jsContext, jsarg);
+        }
+        LowLevelSaf.gcUnprotect(jsContext, jsthis);
+        LowLevelSaf.popJsContext(jsContext);
+      }
+    }
+  }
+
+  private final class InitModule implements DispatchMethod {
+
+    public int invoke(int jsContext, int jsthis, int[] jsargs, int[] exception) {
+      int jsFalse = LowLevelSaf.toJsBoolean(jsContext, false);
+      LowLevelSaf.pushJsContext(jsContext);
+      try {
+        if (!LowLevelSaf.isDispatchObject(jsContext, jsthis)) {
+          return jsFalse;
+        }
+
+        Object thisObj = LowLevelSaf.unwrapDispatchObject(jsContext, jsthis);
+        if (!(thisObj instanceof ExternalObject)) {
+          return jsFalse;
+        }
+
+        if (jsargs.length < 1) {
+          reportIncorrectInvocation("initModule", 1, jsargs.length);
+          return jsFalse;
+        }
+
+        if (!LowLevelSaf.isJsString(jsContext, jsargs[0])) {
+          return jsFalse;
+        }
+        String moduleName = LowLevelSaf.toString(jsContext, jsargs[0]);
+
+        boolean result = ((ExternalObject) thisObj).initModule(moduleName);
         // Native code eats the same ref it gave us.
         return LowLevelSaf.toJsBoolean(jsContext, result);
       } catch (Throwable e) {

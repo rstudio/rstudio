@@ -91,7 +91,8 @@ import java.util.EventListener;
 @Deprecated
 abstract class ListenerWrapper<T> implements EventHandler {
 
-  public static class Change extends ListenerWrapper<ChangeListener> implements ChangeHandler {
+  public static class Change extends ListenerWrapper<ChangeListener> implements
+      ChangeHandler {
     @Deprecated
     public static void add(HasChangeHandlers source, ChangeListener listener) {
       source.addChangeHandler(new Change(listener));
@@ -110,7 +111,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class Click extends ListenerWrapper<ClickListener> implements ClickHandler {
+  public static class Click extends ListenerWrapper<ClickListener> implements
+      ClickHandler {
     @Deprecated
     public static Click add(HasClickHandlers source, ClickListener listener) {
       Click rtn = new Click(listener);
@@ -131,8 +133,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class Disclosure extends ListenerWrapper<DisclosureHandler> implements
-      CloseHandler<DisclosurePanel>, OpenHandler<DisclosurePanel> {
+  public static class Disclosure extends ListenerWrapper<DisclosureHandler>
+      implements CloseHandler<DisclosurePanel>, OpenHandler<DisclosurePanel> {
 
     public static void add(DisclosurePanel source, DisclosureHandler listener) {
       Disclosure handlers = new Disclosure(listener);
@@ -161,8 +163,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
   /*
    * Handler wrapper for {@link FocusListener}.
    */
-  public static class Focus extends ListenerWrapper<FocusListener> implements FocusHandler,
-      BlurHandler {
+  public static class Focus extends ListenerWrapper<FocusListener> implements
+      FocusHandler, BlurHandler {
 
     public static <EventSourceType extends Widget & HasAllFocusHandlers> Focus add(
         EventSourceType source, FocusListener listener) {
@@ -221,8 +223,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class Load extends ListenerWrapper<LoadListener> implements LoadHandler,
-      ErrorHandler {
+  public static class Load extends ListenerWrapper<LoadListener> implements
+      LoadHandler, ErrorHandler {
 
     public static void add(HasLoadHandlers source, LoadListener listener) {
       source.addLoadHandler(new Load(listener));
@@ -285,23 +287,11 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
 
     public void onMouseOut(MouseOutEvent event) {
-      // Only fire the mouseLeave event if it's actually leaving this
-      // widget.
-      Element to = event.getToElement();
-      Widget source = source(event);
-      if (to == null || !source.getElement().isOrHasChild(to)) {
-        listener.onMouseLeave(source(event));
-      }
+      listener.onMouseLeave(source(event));
     }
 
     public void onMouseOver(MouseOverEvent event) {
-      // Only fire the mouseEnter event if it's coming from outside this
-      // widget.
-      Element from = event.getFromElement();
-      Widget source = source(event);
-      if (from == null || !source.getElement().isOrHasChild(from)) {
-        listener.onMouseEnter(source(event));
-      }
+      listener.onMouseEnter(source(event));
     }
 
     public void onMouseUp(MouseUpEvent event) {
@@ -311,9 +301,10 @@ abstract class ListenerWrapper<T> implements EventHandler {
           event.getRelativeY(elem));
     }
   }
-  public static class MouseWheel extends ListenerWrapper<MouseWheelListener> implements
-      MouseWheelHandler {
-    public static void add(HasMouseWheelHandlers source, MouseWheelListener listener) {
+  public static class MouseWheel extends ListenerWrapper<MouseWheelListener>
+      implements MouseWheelHandler {
+    public static void add(HasMouseWheelHandlers source,
+        MouseWheelListener listener) {
       source.addMouseWheelHandler(new MouseWheel(listener));
     }
 
@@ -334,7 +325,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
   public static class Popup extends ListenerWrapper<PopupListener> implements
       CloseHandler<PopupPanel> {
 
-    public static void add(HasCloseHandlers<PopupPanel> source, PopupListener listener) {
+    public static void add(HasCloseHandlers<PopupPanel> source,
+        PopupListener listener) {
       source.addCloseHandler(new Popup(listener));
     }
 
@@ -352,7 +344,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class Scroll extends ListenerWrapper<ScrollListener> implements ScrollHandler {
+  public static class Scroll extends ListenerWrapper<ScrollListener> implements
+      ScrollHandler {
 
     public static void add(HasScrollHandlers source, ScrollListener listener) {
       source.addScrollHandler(new Scroll(listener));
@@ -375,8 +368,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class Suggestion extends ListenerWrapper<SuggestionHandler> implements
-      SelectionHandler<SuggestOracle.Suggestion> {
+  public static class Suggestion extends ListenerWrapper<SuggestionHandler>
+      implements SelectionHandler<SuggestOracle.Suggestion> {
     @Deprecated
     public static void add(SuggestBox source, SuggestionHandler listener) {
       source.addSelectionHandler(new Suggestion(listener));
@@ -487,8 +480,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  static class Keyboard extends ListenerWrapper<KeyboardListener> implements KeyDownHandler,
-      KeyUpHandler, KeyPressHandler {
+  static class Keyboard extends ListenerWrapper<KeyboardListener> implements
+      KeyDownHandler, KeyUpHandler, KeyPressHandler {
 
     public static <EventSourceType extends Widget & HasAllKeyHandlers> void add(
         EventSourceType source, KeyboardListener listener) {
@@ -505,19 +498,24 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
 
     public void onKeyDown(KeyDownEvent event) {
-      listener.onKeyDown(source(event), (char) event.getNativeKeyCode(),
+      listener.onKeyDown(
+          source(event),
+          (char) event.getNativeKeyCode(),
           KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
     }
 
     public void onKeyPress(KeyPressEvent event) {
-      listener.onKeyPress(source(event), 
-          (char) event.getNativeEvent().getKeyCode(), 
+      listener.onKeyPress(
+          source(event),
+          (char) event.getNativeEvent().getKeyCode(),
           KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
     }
 
     public void onKeyUp(KeyUpEvent event) {
       source(event);
-      listener.onKeyUp(source(event), (char) event.getNativeKeyCode(), 
+      listener.onKeyUp(
+          source(event),
+          (char) event.getNativeKeyCode(),
           KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
     }
   }
@@ -536,7 +534,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
         // We are removing things as we traverse, have to go backward
         for (int i = handlerCount - 1; i >= 0; i--) {
           H handler = manager.getHandler(key, i);
-          if (handler instanceof ListenerWrapper && ((ListenerWrapper) handler).listener.equals(listener)) {
+          if (handler instanceof ListenerWrapper
+              && ((ListenerWrapper) handler).listener.equals(listener)) {
             manager.removeHandler(key, handler);
           }
         }

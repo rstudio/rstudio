@@ -23,7 +23,7 @@
     <!-- If you add any GWT meta tags, they must   -->
     <!-- be added before this line.                -->
     <!--                                           -->
-    <script type="text/javascript" language="javascript" src="@deployDir/@newModuleName.nocache.js"></script>
+    <script type="text/javascript" language="javascript" src="@newModuleName/@newModuleName.nocache.js"></script>
   </head>
 
   <!--                                           -->

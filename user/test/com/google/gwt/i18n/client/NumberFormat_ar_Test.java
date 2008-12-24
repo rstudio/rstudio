@@ -39,11 +39,11 @@ public class NumberFormat_ar_Test extends GWTTestCase {
   
   public void testExponent() {
     NumberFormat fmt = NumberFormat.getScientificFormat();
-    assertEquals("\u0663\u066B\u0661\u0664\u0627\u0633\u0660",
+    assertEquals("\u0663\u0627\u0633\u0660",
         fmt.format(3.14));
-    assertEquals("\u0663\u066B\u0661\u0664\u0627\u0633\u0662",
+    assertEquals("\u0663\u0627\u0633\u0662",
         fmt.format(314.0));
-    assertEquals("-\u0663\u066B\u0661\u0664\u0627\u0633\u0662",
+    assertEquals("-\u0663\u0627\u0633\u0662",
         fmt.format(-314.0));
   }
   

@@ -16,6 +16,7 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * A widget that implements this interface is a public source of
@@ -23,7 +24,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * 
  * @param <T> the type being closed
  */
-public interface HasCloseHandlers<T> {
+public interface HasCloseHandlers<T> extends HasHandlers {
   /**
    * Adds a {@link CloseEvent} handler.
    * 

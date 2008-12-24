@@ -59,6 +59,7 @@ import com.google.gwt.user.client.ui.impl.FormPanelImplHost;
  * {@example com.google.gwt.examples.FormPanelExample}
  * </p>
  */
+@SuppressWarnings("deprecation")
 public class FormPanel extends SimplePanel implements FiresFormEvents,
     FormPanelImplHost {
   /**

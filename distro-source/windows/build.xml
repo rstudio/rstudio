@@ -14,6 +14,7 @@
       <zipfileset file="${gwt.build.lib}/gwt-servlet.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/gwt-benchmark-viewer.jar" prefix="${project.distname}" />
       <zipfileset file="${gwt.build.lib}/gwt-soyc-vis.jar" prefix="${project.distname}" />
+      <zipfileset file="${gwt.build.lib}/gwt-api-checker.jar" prefix="${project.distname}" />
 
       <!-- jni libs-->
       <zipfileset dir="${gwt.build.jni}/${dist.platform}" prefix="${project.distname}" />

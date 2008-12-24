@@ -70,6 +70,17 @@ public class BrowserWidgetMoz extends BrowserWidget {
     }
 
     /**
+     * Causes a link to occur for the specified module.
+     * 
+     * @param moduleName the module name to link
+     * @return <code>true</code> if this module is stale and should be
+     *         reloaded
+     */
+    public boolean initModule(String moduleName) {
+      return getHost().initModule(moduleName);
+    }
+
+    /**
      * Unload one or more modules.
      * 
      * @param scriptObject window to unload, 0 if all

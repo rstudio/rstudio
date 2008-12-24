@@ -21,7 +21,6 @@ import com.google.gwt.user.tools.util.ArgHandlerEclipse;
 import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
 import com.google.gwt.user.tools.util.CreatorUtilities;
-import com.google.gwt.util.tools.ArgHandlerDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerString;
@@ -208,7 +207,7 @@ public final class ApplicationCreator extends ToolBase {
       List<String> extraClassPaths, List<String> extraModules)
       throws IOException {
     createApplication(fullClassName, outDir, eclipse, overwrite, ignore,
-        extraClassPaths, extraModules, null, null);
+        extraClassPaths, extraModules, null);
   }
 
   /**
@@ -222,13 +221,12 @@ public final class ApplicationCreator extends ToolBase {
    *          launch configs.
    * @param extraModules A list of GWT modules to add 'inherits' tags for.
    * @param newModuleName The new module name
-   * @param deployDir The deploy directory
    * @throws IOException
    */
   static void createApplication(String fullClassName, File outDir,
       String eclipse, boolean overwrite, boolean ignore,
       List<String> extraClassPaths, List<String> extraModules,
-      String newModuleName, File deployDir) throws IOException {
+      String newModuleName) throws IOException {
 
     // Figure out the installation directory
 
@@ -291,7 +289,6 @@ public final class ApplicationCreator extends ToolBase {
       serverPackageName = "server";
     }
     File clientDir = Utility.getDirectory(basePackageDir, "client", true);
-    File publicDir = Utility.getDirectory(basePackageDir, "public", true);
     File serverDir = Utility.getDirectory(basePackageDir, "server", true);
     String startupUrl = className + ".html";
 
@@ -307,8 +304,9 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@shellClass", "com.google.gwt.dev.GWTHosted");
     replacements.put("@compileClass", "com.google.gwt.dev.GWTCompiler");
     replacements.put("@startupUrl", startupUrl);
-    replacements.put("@vmargs", isMacOsX
+    replacements.put("@antVmargs", isMacOsX
         ? "<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
+    replacements.put("@vmargs", isMacOsX ? "-XstartOnFirstThread" : "");
     replacements.put("@eclipseExtraLaunchPaths",
         CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
     replacements.put("@extraModuleInherits",
@@ -319,7 +317,6 @@ public final class ApplicationCreator extends ToolBase {
         ";", extraClassPaths));
     replacements.put("@newModuleName", (newModuleName != null) ? newModuleName
         : moduleName);
-    replacements.put("@deployDir", deployDir.getName());
 
     {
       // create the module xml file, skeleton html file, skeleton css file,
@@ -424,21 +421,6 @@ public final class ApplicationCreator extends ToolBase {
     }
   }
 
-  /**
-   * Try to make the given file executable. Implementation tries to exec chmod,
-   * which may fail if the platform doesn't support it. Prints a warning to
-   * stderr if the call fails.
-   * 
-   * @param file the file to make executable
-   */
-  private static void chmodExecutable(File file) {
-    try {
-      Runtime.getRuntime().exec("chmod u+x " + file.getAbsolutePath());
-    } catch (Throwable e) {
-      System.err.println(("Warning: cannot exec chmod to set permission on generated file."));
-    }
-  }
-
   private static String createExtraModuleInherits(List<String> modules) {
     if (modules == null) {
       return "";
@@ -461,7 +443,6 @@ public final class ApplicationCreator extends ToolBase {
   private File outDir;
   private boolean overwrite = false;
   private String newModuleName = null;
-  private File deployDir;
 
   protected ApplicationCreator() {
 
@@ -536,35 +517,6 @@ public final class ApplicationCreator extends ToolBase {
         newModuleName = str;
         return true;
       }
-
-    });
-
-    // handler to create the deployDir
-    registerHandler(new ArgHandlerDir() {
-
-      @Override
-      public String[] getDefaultArgs() {
-        return new String[] {"-deployDir", "deployDir"};
-      }
-
-      @Override
-      public String getPurpose() {
-        return "Specifies the deploy directory (defaults to deployDir)";
-      }
-
-      @Override
-      public String getTag() {
-        return "-deployDir";
-      }
-
-      @Override
-      public void setDir(File dir) {
-        if (dir.getName().length() == 0) {
-          throw new IllegalArgumentException("deployDir may not be empty");
-        }
-        deployDir = dir;
-      }
-
     });
 
     registerHandler(new ArgHandlerAppClass());
@@ -576,7 +528,7 @@ public final class ApplicationCreator extends ToolBase {
     try {
       createApplication(fullClassName, outDir, eclipse, overwrite, ignore,
           classPathHandler.getExtraClassPathList(),
-          moduleHandler.getExtraModuleList(), newModuleName, deployDir);
+          moduleHandler.getExtraModuleList(), newModuleName);
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

@@ -17,12 +17,10 @@ package com.google.gwt.tools.apichecker;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.JdtCompiler;
-import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.tools.apichecker.ApiCompatibilityChecker.StaticCompilationUnit;
 
 import junit.framework.TestCase;
 
@@ -31,51 +29,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Test ApiContainer.
+ * Test {@link ApiContainer}.
  */
 public class ApiContainerTest extends TestCase {
-  static class StaticCompilationUnit extends CompilationUnit {
 
-    private final char[] source;
-    private final String typeName;
-
-    public StaticCompilationUnit(String typeName, char[] source) {
-      this.typeName = typeName;
-      this.source = source;
-    }
-
-    @Override
-    public String getDisplayLocation() {
-      return "/mock/" + typeName;
-    }
-
-    @Override
-    public long getLastModified() {
-      return 0;
-    }
-
-    @Override
-    public String getSource() {
-      return String.valueOf(source);
-    }
-
-    @Override
-    public String getTypeName() {
-      return typeName;
-    }
-
-    @Override
-    public boolean isGenerated() {
-      return false;
-    }
-
-    @Override
-    public boolean isSuperSource() {
-      return false;
-    }
-  }
-
-  @SuppressWarnings("unused")
   class TestA {
     public TestA(String args) {
     }
@@ -104,19 +61,6 @@ public class ApiContainerTest extends TestCase {
     }
   }
 
-  // TODO (amitmanjhi): Try using UnitTestTreeLogger to capture log messages
-  public static TypeOracle getNewTypeOracleFromCompilationUnits(
-      StaticCompilationUnit tempScuArray[], AbstractTreeLogger logger)
-      throws UnableToCompleteException {
-
-    TypeOracleMediator mediator = new TypeOracleMediator();
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>(
-        Arrays.asList(tempScuArray));
-    JdtCompiler.compile(units);
-    mediator.refresh(logger, units);
-    return mediator.getTypeOracle();
-  }
-
   public static StaticCompilationUnit[] getScuArray() {
     return new StaticCompilationUnit[] {
         new StaticCompilationUnit("test.apicontainer.ApiClass",
@@ -136,7 +80,7 @@ public class ApiContainerTest extends TestCase {
         new ApiAbstractMethod[0])[0]).getMethod();
   }
 
-  private static char[] getSourceForApiClass() {
+  private static String getSourceForApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("public class ApiClass extends NonApiClass {\n");
@@ -144,10 +88,10 @@ public class ApiContainerTest extends TestCase {
     sb.append("\tpublic java.lang.Object checkParametersAndReturnTypes(ApiClass a) { return this; };\n");
     sb.append("\tpublic final java.lang.Object checkParametersAndReturnTypesFinalVersion(ApiClass a) { return this; };\n");
     sb.append("};\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForNewObject() {
+  private static String getSourceForNewObject() {
     StringBuffer sb = new StringBuffer();
     sb.append("package java.lang;\n");
     sb.append("public class Object {\n");
@@ -156,10 +100,10 @@ public class ApiContainerTest extends TestCase {
     sb.append("}\n");
     sb.append("class Temp {\n");
     sb.append("}");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForNonApiClass() {
+  private static String getSourceForNonApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("class NonApiClass extends java.lang.Object {\n");
@@ -172,10 +116,10 @@ public class ApiContainerTest extends TestCase {
     sb.append("\tprivate AnotherApiClassInNonApiClass() { }\n");
     sb.append("\t}\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForObject() {
+  private static String getSourceForObject() {
     StringBuffer sb = new StringBuffer();
     sb.append("package java.lang;\n");
     sb.append("public class Object {\n");
@@ -189,33 +133,33 @@ public class ApiContainerTest extends TestCase {
     sb.append("\tprivate int internalField = 0;\n");
     sb.append("\tprotected int protectedField=2;\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForOneMoreApiClass() {
+  private static String getSourceForOneMoreApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("public class OneMoreApiClass extends java.lang.Object {\n");
     sb.append("\tprotected final void checkOverloadedMethodAccounted(test.apicontainer.OneMoreApiClass b) { }\n");
     sb.append("\tpublic void testUncheckedExceptions () { }\n");
     sb.append("};\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForTest() {
+  private static String getSourceForTest() {
     StringBuffer sb = new StringBuffer();
     sb.append("package java.newpackage;\n");
     sb.append("public class Test { }\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
-  private static char[] getSourceForTestClass() {
+  private static String getSourceForTestClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.nonapipackage;\n");
     sb.append("class TestClass extends java.lang.Object {\n");
     sb.append("\tpublic void method() { }\n");
     sb.append("}\n");
-    return sb.toString().toCharArray();
+    return sb.toString();
   }
 
   ApiContainer apiCheck = null;
@@ -230,13 +174,15 @@ public class ApiContainerTest extends TestCase {
   public void setUp() throws UnableToCompleteException {
     AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(com.google.gwt.core.ext.TreeLogger.ERROR);
-    apiCheckLoop = new ApiContainer("ApiClassTest", logger,
-        getNewTypeOracleFromCompilationUnits(
-            new StaticCompilationUnit[] {new StaticCompilationUnit(
-                "java.lang.Object", getSourceForNewObject()),}, logger));
-
-    apiCheck = new ApiContainer("ApiContainerTest", logger,
-        getNewTypeOracleFromCompilationUnits(getScuArray(), logger));
+    apiCheckLoop = new ApiContainer(
+        "ApiClassTest",
+        new HashSet<CompilationUnit>(
+            Arrays.asList(new StaticCompilationUnit[] {new StaticCompilationUnit(
+                "java.lang.Object", getSourceForNewObject()),})),
+        new HashSet<String>(), logger);
+    apiCheck = new ApiContainer("ApiContainerTest",
+        new HashSet<CompilationUnit>(Arrays.asList(getScuArray())),
+        new HashSet<String>(), logger);
   }
 
   public void testEverything() {

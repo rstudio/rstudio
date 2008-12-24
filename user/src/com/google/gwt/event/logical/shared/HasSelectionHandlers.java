@@ -16,6 +16,7 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * A widget that implements this interface is a public source of
@@ -23,7 +24,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * 
  * @param <I> the type being selected
  */
-public interface HasSelectionHandlers<I> {
+public interface HasSelectionHandlers<I> extends HasHandlers {
   /**
    * Adds a {@link SelectionEvent} handler.
    * 

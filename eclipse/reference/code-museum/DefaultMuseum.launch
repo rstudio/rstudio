@@ -20,5 +20,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.google.gwt.dev.GWTShell"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out www com.google.gwt.museum.DefaultMuseum/DefaultMuseum.html"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="code-museum"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dgwt.devjar=&quot;/usr/local/google/jlabanca/gwt_all/gwt15/releases/1.5/build/staging/gwt-linux-0.0.0/gwt-user.jar&quot;"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dgwt.devjar=${gwt_devjar}&quot;"/>
 </launchConfiguration>

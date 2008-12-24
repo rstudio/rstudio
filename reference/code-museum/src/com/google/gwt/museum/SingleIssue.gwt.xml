@@ -2,11 +2,16 @@
     
     <!-- Inherit the core Web Toolkit stuff.                  -->
     <inherits name='com.google.gwt.user.User'/>
+    <inherits name='com.google.gwt.museum.Museum'/>
     <inherits name="com.google.gwt.user.theme.standard.StandardResources"/>
+    <inherits name="com.google.gwt.user.theme.chrome.ChromeResources"/>
+    <inherits name="com.google.gwt.user.theme.dark.DarkResources"/>
     
     <!-- Specify the app entry point class.                   -->
-    <entry-point class='com.google.gwt.museum.client.defaultmuseum.Issue2703'/>
+    <entry-point class='com.google.gwt.museum.client.defaultmuseum.VisualsForDateBox'/>
     <source path="client/common"/>
-    <source path="client/defaultmuseum" includes="Issue2703.java"/>
+    <source path="client/defaultmuseum"/>
     <source path="client/viewer"/>
+    
+    <extend-property name="locale" values="ar"/>
 </module>

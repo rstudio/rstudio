@@ -62,6 +62,7 @@ import com.google.gwt.sample.showcase.client.content.text.CwRichText;
 import com.google.gwt.sample.showcase.client.content.widgets.CwBasicButton;
 import com.google.gwt.sample.showcase.client.content.widgets.CwCheckBox;
 import com.google.gwt.sample.showcase.client.content.widgets.CwCustomButton;
+import com.google.gwt.sample.showcase.client.content.widgets.CwDatePicker;
 import com.google.gwt.sample.showcase.client.content.widgets.CwFileUpload;
 import com.google.gwt.sample.showcase.client.content.widgets.CwHyperlink;
 import com.google.gwt.sample.showcase.client.content.widgets.CwRadioButton;
@@ -319,6 +320,8 @@ public class Showcase implements EntryPoint {
     setupMainMenuOption(catWidgets, new CwCustomButton(constants),
         images.catWidgets());
     setupMainMenuOption(catWidgets, new CwFileUpload(constants),
+        images.catWidgets());
+    setupMainMenuOption(catWidgets, new CwDatePicker(constants),
         images.catWidgets());
     setupMainMenuOption(catWidgets, new CwHyperlink(constants),
         images.catWidgets());

@@ -189,10 +189,11 @@ public class LongFromJSNIChecker {
 
       if (binding instanceof ProblemReferenceBinding) {
         ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
-        if (prb.problemId() == ProblemReasons.NotVisible) {
+        if (prb.problemId() == ProblemReasons.NotVisible
+            && prb.closestMatch() instanceof ReferenceBinding) {
           // It's just a visibility problem, so try drilling
           // down manually
-          ReferenceBinding drilling = prb.closestMatch();
+          ReferenceBinding drilling = (ReferenceBinding) prb.closestMatch();
           for (int i = prb.compoundName.length; i < compoundName.length; i++) {
             drilling = drilling.getMemberType(compoundName[i]);
           }

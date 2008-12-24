@@ -36,6 +36,17 @@ public abstract class KeyEvent<H extends EventHandler> extends DomEvent<H> {
   }
 
   /**
+   * Does this event have any modifier keys down? Specifically. is the control,
+   * meta, shift, or alt key currently pressed?
+   * 
+   * @return whether this event have any modifier key down
+   */
+  public boolean isAnyModifierKeyDown() {
+    return isControlKeyDown() || isShiftKeyDown() || isMetaKeyDown()
+        || isAltKeyDown();
+  }
+
+  /**
    * Gets the key-repeat state of this event.
    * 
    * @return <code>true</code> if this key event was an auto-repeat

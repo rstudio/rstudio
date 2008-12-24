@@ -59,6 +59,7 @@ public final class Accessibility {
   public static final String STATE_EXPANDED = "aria-expanded";
   public static final String STATE_LEVEL = "aria-level";
   public static final String STATE_HASPOPUP = "aria-haspopup";
+  public static final String STATE_PRESSED = "aria-pressed";
   
   private static final String ATTR_NAME_ROLE = "role";
 

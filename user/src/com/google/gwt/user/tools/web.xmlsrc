@@ -8,7 +8,7 @@
   
   <servlet-mapping>
     <servlet-name>echoServlet</servlet-name>
-    <url-pattern>/@deployDir/echo</url-pattern>
+    <url-pattern>/@newModuleName/echo</url-pattern>
   </servlet-mapping>
 
 </web-app>
