@@ -651,6 +651,27 @@ abstract class HostedModeBase implements BrowserWindowController {
     return false;
   }
 
+  protected void openAppWindow() {
+    final Shell shell = new Shell(display);
+
+    FillLayout fillLayout = new FillLayout();
+    fillLayout.marginWidth = 0;
+    fillLayout.marginHeight = 0;
+    shell.setLayout(fillLayout);
+
+    shell.setImages(ShellMainWindow.getIcons());
+
+    boolean checkForUpdates = doShouldCheckForUpdates();
+
+    mainWnd = new ShellMainWindow(this, shell, options.isNoServer() ? 0
+        : getPort(), checkForUpdates);
+
+    shell.setSize(700, 600);
+    if (!isHeadless()) {
+      shell.open();
+    }
+  }
+
   protected final void pumpEventLoop() {
     TreeLogger logger = getTopLogger();
 
@@ -746,27 +767,6 @@ abstract class HostedModeBase implements BrowserWindowController {
       sb.append("\n\tPlease specify the JVM startup argument ");
       sb.append("\"-Djava.library.path\"");
       throw new RuntimeException(sb.toString(), e);
-    }
-  }
-
-  protected void openAppWindow() {
-    final Shell shell = new Shell(display);
-
-    FillLayout fillLayout = new FillLayout();
-    fillLayout.marginWidth = 0;
-    fillLayout.marginHeight = 0;
-    shell.setLayout(fillLayout);
-
-    shell.setImages(ShellMainWindow.getIcons());
-
-    boolean checkForUpdates = doShouldCheckForUpdates();
-
-    mainWnd = new ShellMainWindow(this, shell, options.isNoServer() ? 0
-        : getPort(), checkForUpdates);
-
-    shell.setSize(700, 600);
-    if (!isHeadless()) {
-      shell.open();
     }
   }
 }
