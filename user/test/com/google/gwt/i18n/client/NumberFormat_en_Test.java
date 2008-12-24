@@ -294,7 +294,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     str = NumberFormat.getPercentFormat().format(1234.579);
     assertEquals("123,458%", str);
     str = NumberFormat.getScientificFormat().format(1234.579);
-    assertEquals("1.235E3", str);
+    assertEquals("1E3", str);
   }
 
   public void testZeros() {
