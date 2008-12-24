@@ -267,6 +267,17 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("-1,014.34 X", str);
   }
 
+  public void testPercent() {
+    String str;
+
+    str = NumberFormat.getFormat("###.###%").format(0.4857);
+    assertEquals("48.57%", str);
+    str = NumberFormat.getFormat("###.### %").format(0.4857);
+    assertEquals("48.57 %", str);
+    str = NumberFormat.getFormat("0.00%").format(0.485);
+    assertEquals("48.50%", str);
+  }
+
   public void testPerMill() {
     String str;
 
