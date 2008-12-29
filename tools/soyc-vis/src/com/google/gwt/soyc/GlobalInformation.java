@@ -53,6 +53,7 @@ public class GlobalInformation {
   public static HashMap<String, HashSet<String>> storiesToCorrClassesAndMethods = new HashMap<String, HashSet<String>>();
   
   public static HashMap<String, String> storiesToLitType = new HashMap<String, String>();
+  
   public static void computePackageSizes(){
     cumSizeFromPackages = 0;
     packageToSize.clear();

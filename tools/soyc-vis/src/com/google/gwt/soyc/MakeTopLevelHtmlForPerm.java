@@ -23,11 +23,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarInputStream;
 
 public class MakeTopLevelHtmlForPerm {
   
@@ -416,20 +421,55 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
   
-  public static void copyFileOrDirectory(File srcPath, File dstPath) throws IOException{
+
+  public static void copyFileOrDirectoryFromJar(String jarFileName, String inputFileName, File dstPath, boolean isDirectory) throws IOException{
+
+    JarFile jarFile = new JarFile(jarFileName);
+    if (isDirectory){
+      dstPath.mkdir();
+      
+      JarInputStream jarFileIS = new JarInputStream(new FileInputStream(jarFileName));
+      JarEntry jarEntry = jarFileIS.getNextJarEntry();
+      while(jarEntry != null){
+        if (! inputFileName.endsWith("/")){
+          inputFileName += "/";
+        }
+        if ((jarEntry.getName().compareTo(inputFileName) != 0)&&(jarEntry.getName().startsWith(inputFileName))){
+          File newDstPath = new File(jarEntry.getName());          
+          copyFileOrDirectoryFromJar(jarFileName, jarEntry.getName(), newDstPath, false);
+        } 
+        jarEntry = jarFileIS.getNextJarEntry();
+      }
+      jarFileIS.close();
+    }
+
+    else{
+      InputStream in = jarFile.getInputStream(jarFile.getEntry(inputFileName));
+      OutputStream out = new FileOutputStream(dstPath); 
+      
+      int c;
+      while ((c = in.read()) != -1){
+        out.write(c);          
+      }
+      in.close();
+      out.close();
+      jarFile.close();
+    }
+  }
+  
+  public static void copyFileOrDirectory(File srcPath, File dstPath, String classPath, String inputFileName, boolean isDirectory) throws IOException{
     if (srcPath.isDirectory()){
       if (!dstPath.exists()){
         dstPath.mkdir();
      }
      String files[] = srcPath.list();
      for(int i = 0; i < files.length; i++){
-        copyFileOrDirectory(new File(srcPath, files[i]), new File(dstPath, files[i]));
+        copyFileOrDirectory(new File(srcPath, files[i]), new File(dstPath, files[i]), classPath, inputFileName, isDirectory);
       }
     }
    else{
       if(!srcPath.exists()){
-        System.out.println("File or directory does not exist.");
-       System.exit(0);
+        copyFileOrDirectoryFromJar(classPath, inputFileName, dstPath, isDirectory);
       }    
       else{
         InputStream in = new FileInputStream(srcPath);
@@ -631,11 +671,11 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("width:100%;");
       outFile.println("background-color:#eee;");
       outFile.println("border:1px solid  #666666;");
-      outFile.println("border-spacing:5px;/*cellspacing:poor IE support for  this*/");
+      outFile.println("border-spacing:5px;");
       outFile.println("border-collapse:separate;");
       outFile.println("}");
       outFile.println(".celldiv {");
-      outFile.println("float:left;/*fix for  buggy browsers*/");
+      outFile.println("float:left;");
       outFile.println("display:  table-cell;");
       outFile.println("width:49.5%;");
       outFile.println("font-size: 14px;");
@@ -679,22 +719,26 @@ public class MakeTopLevelHtmlForPerm {
   public static void makeHTMLShell(HashMap<String, CodeCollection> nameToCodeColl, TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException{
     //this will contain the place holder iframes where the actual information is going to go.
     
+    System.out.println("making html shell");
     // copy from the bin directory to the current directory
     String classPath = System.getProperty("java.class.path");
     if (!classPath.endsWith("/")){
       classPath += "/";
     }
-    File inputFile = new File(classPath + "roundedCorners.css");
+    String inputFileName = "roundedCorners.css";
+    File inputFile = new File(classPath + inputFileName);
     File outputFile = new File("roundedCorners.css");
-    copyFileOrDirectory(inputFile, outputFile);
-  
-    File inputFile2 = new File(classPath + "classLevel.css");
+    copyFileOrDirectory(inputFile, outputFile, classPath, inputFileName, false);
+
+    inputFileName = "classLevel.css";
+    File inputFile2 = new File(classPath + inputFileName);
     File outputFile2 = new File("classLevel.css");
-    copyFileOrDirectory(inputFile2, outputFile2);
+    copyFileOrDirectory(inputFile2, outputFile2, classPath, inputFileName, false);
   
+    inputFileName = "images";
     File inputDir = new File(classPath + "images");
     File outputDir = new File("images");
-    copyFileOrDirectory(inputDir, outputDir);
+    copyFileOrDirectory(inputDir, outputDir, classPath, inputFileName, true);
     
     
     String fileName = "SoycDashboard-index.html";
@@ -723,6 +767,9 @@ public class MakeTopLevelHtmlForPerm {
     else{
       outFile.println("<b>Full code size: <span style=\"color:maroon\">" + GlobalInformation.cumSizeAllCode + "</span></b>");
     }
+    
+    outFile.println("<hr>");
+    
     outFile.println("</center>");
     outFile.println("  <div style=\"width:50%;  float:left; padding-top: 10px;\">");
     outFile.println("<b>Package breakdown</b>");
@@ -1086,8 +1133,8 @@ public class MakeTopLevelHtmlForPerm {
         String className = sortedClasses.get(size);
         
         //TODO(kprobst): switch out the commented/uncommented lines below when showing dependencies
-        float ratio = (size / maxSize) * 45;
-        //float ratio = (size / maxSize) * 85;
+        // float ratio = (size / maxSize) * 45;
+        float ratio = (size / maxSize) * 85;
          
         if (ratio < 3){
           ratio = 3;
@@ -1117,8 +1164,7 @@ public class MakeTopLevelHtmlForPerm {
         
         
         //TODO(kprobst): not currently used, but will be for dependencies
-        // place holder for mock-up of dependency display  
-        outFile.println("<div class=\"box-right\" style=\"width:" + depRatio + "%; top: " + yOffset + "px; left: 50%\">");
+/*        outFile.println("<div class=\"box-right\" style=\"width:" + depRatio + "%; top: " + yOffset + "px; left: 50%\">");
         outFile.println("<div id=\"lb\">");
         outFile.println("<div id=\"rb\">");
         outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
@@ -1127,15 +1173,16 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("</div>");
         outFile.println("</div></div></div></div>");
         outFile.println("</div></div></div></div>");
-        outFile.println("</div>");
+        outFile.println("</div>");*/
               
         int yOffsetText = yOffset+8;
         outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:5px;\">%.1f</div>\n", size);
         outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:70px;\">"+className+"</div>");
-        //TODO(kprobst) make this a link
+        
+/*        //TODO(kprobst) make this a link
         String drillDownFileName = className + "Deps.html";
         outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText + "px; left:50%;\"><a href=\"" + drillDownFileName + "\" target=\"_top\">Dependencies: " + depCount + "</a></div>");
-        
+*/        
         yOffset = yOffset + 25;
   
       }
@@ -1204,11 +1251,11 @@ public class MakeTopLevelHtmlForPerm {
         outFile.println("width:100%;");
         outFile.println("background-color:#eee;");
         outFile.println("border:1px solid  #666666;");
-        outFile.println("border-spacing:5px;/*cellspacing:poor IE support for  this*/");
+        outFile.println("border-spacing:5px;");
         outFile.println("border-collapse:separate;");
         outFile.println("}");
         outFile.println(".celldiv {");
-        outFile.println("float:left;/*fix for  buggy browsers*/");
+        outFile.println("float:left;");
         outFile.println("display:  table-cell;");
         outFile.println("width:49.5%;");
         outFile.println("font-size: 14px;");
@@ -1238,7 +1285,21 @@ public class MakeTopLevelHtmlForPerm {
           }
         }
         for (String classOrMethod : sortedClassesAndMethods){
-          outFile.println("<div  class=\"rowdiv\">" + classOrMethod + "</div>");
+
+          //if it's a method
+          if ((classOrMethod.contains("("))&&(classOrMethod.contains(")"))){
+            //get the package
+            String packageName = classOrMethod;
+            packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
+            
+            String noParamMethod = classOrMethod;
+            noParamMethod = noParamMethod.replaceAll("\\(.*", "");
+            
+            outFile.println("<div  class=\"rowdiv\"><a href=\"methodDependencies-" + packageName + ".html#"+ noParamMethod + "\">" + classOrMethod + "</a></div>");
+          }
+          else{
+            outFile.println("<div  class=\"rowdiv\">" + classOrMethod + "</div>");            
+          }
         }
         
         outFile.println("</div>");
@@ -1298,7 +1359,21 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<div  class=\"tablediv\">");  
     
     for (String classOrMethod : sortedClassesAndMethodsAllOtherFragments){
-      outFile.println("<div  class=\"rowdiv\">" + classOrMethod + "</div>");
+
+      //if it's a method
+      if ((classOrMethod.contains("("))&&(classOrMethod.contains(")"))){
+        //get the package
+        String packageName = classOrMethod;
+        packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
+        
+        String noParamMethod = classOrMethod;
+        noParamMethod = noParamMethod.replaceAll("\\(.*", "");
+        
+        outFile.println("<div  class=\"rowdiv\"><a href=\"methodDependencies-" + packageName + ".html#"+ noParamMethod + "\">" + classOrMethod + "</a></div>");
+      }
+      else{
+        outFile.println("<div  class=\"rowdiv\">" + classOrMethod + "</div>");
+      }
     }
     
     outFile.println("</div>");
@@ -1529,6 +1604,78 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</body>");
       outFile.println("</html>");
       outFile.close();
+    }
+  }
+
+
+  
+  public static void makeDependenciesHtml(Map<String, ArrayList<String>> dependencies) throws IOException{
+
+    String origOutFileName = "methodDependencies-";
+    PrintWriter outFile = null;
+    String curPackageName = "";
+    
+    for (String method : dependencies.keySet()){
+      // this key set is already in alphabetical order
+      // get the package of this method, i.e., everything up to .[A-Z]
+      
+      String packageName = method;
+      packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
+      
+
+        if ((curPackageName.compareTo("") == 0) || (curPackageName.compareTo(packageName) != 0)){
+
+          curPackageName = packageName;
+          if (outFile != null){
+            //finish up the current file
+            outFile.println("</table>");
+            outFile.println("<center>");
+            
+            outFile.println("</div>");
+            outFile.println("</body>");
+            outFile.println("</html>");
+            outFile.close();
+          }
+          
+          String outFileName = origOutFileName + curPackageName + ".html";
+          outFile = new PrintWriter(outFileName); 
+          
+          outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+          outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+          outFile.println("<html>");
+          outFile.println("<head>");
+          outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+          outFile.println("<title>Method Dependencies</title>");
+          outFile.println("</head>");
+      
+          outFile.println("<style type=\"text/css\">");
+          outFile.println("body {background-color: #728FCE}");
+          outFile.println("h2 {background-color: transparent}");
+          outFile.println("p {background-color: fuchsia}");
+          outFile.println("</style>");
+          
+          outFile.println("<body>");
+          outFile.println("<center>");
+          outFile.println("<h2>Method Dependencies</h2>");
+          outFile.println("</center>");
+          outFile.println("<hr>");
+          
+          outFile.println("<center>");      
+          outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+          
+        }
+        outFile.println("<tr>");
+        outFile.println("<td width=\"80%\"><a name=\"" + method + "\">" + method + "</a></td>");
+        outFile.println("</tr>");
+        
+        for (int i = 0; i < dependencies.get(method).size(); i++){
+          String depMethod = dependencies.get(method).get(i);
+          
+          outFile.println("<tr>");
+          outFile.println("<td width=\"20%\"></td>");
+          outFile.println("<td width=\"60%\">" + depMethod + "</td>");
+          outFile.println("</tr>");
+        }
     }
   }
 }

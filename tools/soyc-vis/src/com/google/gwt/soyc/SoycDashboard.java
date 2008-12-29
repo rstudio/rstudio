@@ -21,8 +21,10 @@ import org.xml.sax.helpers.*;
 import org.xml.sax.SAXException;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.TreeMap;
 import java.util.zip.GZIPInputStream;
@@ -37,13 +39,53 @@ public class SoycDashboard {
    */
   public static void main(String[] args) {
     
-    if (args.length != 1){
-      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz]");
+    if (args.length != 2){
+      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz] soyc-dependencies0.xml[.gz]");
       System.exit(1);
     }
     
     String inFileName = args[0];
+    String depInFileName = args[1];
     
+    /**
+     * handle dependencies
+     */
+
+    Map<String, ArrayList<String>> dependencies = new TreeMap<String, ArrayList<String>>();
+    DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
+    
+    // start parsing
+    SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
+    depFactoryMain.setNamespaceAware(true);
+    try {
+      SAXParser saxParser = depFactoryMain.newSAXParser();
+      InputStream in = new FileInputStream(depInFileName);
+      if (depInFileName.endsWith(".gz")) {
+        in = new GZIPInputStream(in);
+      }
+      in = new BufferedInputStream(in);
+      saxParser.parse(in,depHandler);
+    } catch (ParserConfigurationException e) {
+      throw new RuntimeException("Could not parse document. ", e);
+    } catch (SAXException e) {
+      throw new RuntimeException("Could not create SAX parser. ", e);
+    } catch (FileNotFoundException e) {
+      throw new RuntimeException("Could not open file. ", e);
+    } catch (IOException e) {
+      throw new RuntimeException("Could not open file. ", e);
+    }
+    
+    try{
+      MakeTopLevelHtmlForPerm.makeDependenciesHtml(dependencies);
+    } catch (IOException e) {
+      throw new RuntimeException("Cannot open file. ", e);
+    }
+
+    
+    /**
+     * handle everything else
+     */
+
     // to store literals data
     GlobalInformation.nameToLitColl.put("long",new LiteralsCollection("long"));
     GlobalInformation.nameToLitColl.put("null",new LiteralsCollection("null"));
@@ -69,7 +111,7 @@ public class SoycDashboard {
     
     // make the parser handler
     DefaultHandler handler = parseXMLDocument(GlobalInformation.nameToLitColl, GlobalInformation.nameToCodeColl);
-    
+
     
     // start parsing
     SAXParserFactory factoryMain = SAXParserFactory.newInstance();
@@ -140,7 +182,7 @@ public class SoycDashboard {
       public void startElement(String nsUri, String strippedName, String tagName, Attributes attributes) {
         
         if ((ct % 10000) == 0){
-          System.out.println(".");
+          System.out.println(ct);
         }
         ct++;
         
@@ -149,7 +191,7 @@ public class SoycDashboard {
         if (strippedName.compareTo("splitpoint") == 0){
           System.out.println("about to process splitpoint");
          parseSplitPoint(attributes); 
-        }        
+        }
         else if ((strippedName.compareTo("package") == 0)&&(attributes.getValue("id") != null)){
           curPackage = attributes.getValue("id");
           
@@ -522,6 +564,13 @@ public class SoycDashboard {
           if (attributes.getValue("literal") != null){
             curStoryLiteralType = attributes.getValue("literal");
             GlobalInformation.storiesToLitType.put(curStoryId, curStoryLiteralType);
+            
+
+            if (!nameToLitColl.get(curStoryLiteralType).storyToLocations.containsKey(curStoryId)){
+              HashSet<String> insertSet = new HashSet<String>();
+              nameToLitColl.get(curStoryLiteralType).storyToLocations.put(curStoryId, insertSet);
+            }
+            
           }
           else{
             curStoryLiteralType = "";
@@ -662,6 +711,55 @@ public class SoycDashboard {
     return handler;
   }
   
+
+  
+  
+  
+
+
+  private static DefaultHandler parseXMLDocumentDependencies(final Map<String, ArrayList<String>> dependencies) { 
+    
+    DefaultHandler handler = new DefaultHandler() {
+
+      StringBuilder valueBuilder = new StringBuilder();
+      // may want to create a class for this later
+      String curMethod;
+        
+      /**
+       * This method deals with the beginning of the XML element.
+       * It analyzes the XML node and adds its information to the relevant literal or code collection for later analysis.
+       * @see org.xml.sax.helpers.DefaultHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
+       */
+      @Override
+      public void startElement(String nsUri, String strippedName, String tagName, Attributes attributes) {
+      
+        valueBuilder.delete(0,valueBuilder.length());
+        
+        
+        if ((strippedName.compareTo("method") == 0)&&(attributes.getValue("name") != null)){
+          curMethod = attributes.getValue("name");
+        }
+        else if ((strippedName.compareTo("called") == 0)&&(attributes.getValue("by") != null)){
+          String curDepMethod = attributes.getValue("by");
+          if (!dependencies.containsKey(curMethod)){
+            ArrayList<String> insertArray = new ArrayList<String>();
+            insertArray.add(curDepMethod);
+            dependencies.put(curMethod, insertArray);
+          }
+          else{
+            dependencies.get(curMethod).add(curDepMethod);
+          }
+        }
+      }
+
+    };
+    return handler;
+  }
+  
+
+  
+  
+  
   /*
    * cleans up the RPC code categories
    */
@@ -719,10 +817,6 @@ public class SoycDashboard {
       //make the shell last so we can display aggregate information here
       MakeTopLevelHtmlForPerm.makeHTMLShell(nameToCodeColl, nameToLitColl);
       
-      
-
-      
-
     } catch (IOException e) {
       throw new RuntimeException("Cannot open file. ", e);
     }
