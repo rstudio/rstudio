@@ -1286,8 +1286,9 @@ public class MakeTopLevelHtmlForPerm {
         }
         for (String classOrMethod : sortedClassesAndMethods){
 
+          
           //if it's a method
-          if ((classOrMethod.contains("("))&&(classOrMethod.contains(")"))){
+          if ((GlobalInformation.displayDependencies == true)&&(classOrMethod.contains("("))&&(classOrMethod.contains(")"))){
             //get the package
             String packageName = classOrMethod;
             packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
@@ -1361,7 +1362,7 @@ public class MakeTopLevelHtmlForPerm {
     for (String classOrMethod : sortedClassesAndMethodsAllOtherFragments){
 
       //if it's a method
-      if ((classOrMethod.contains("("))&&(classOrMethod.contains(")"))){
+      if ((GlobalInformation.displayDependencies == true)&&(classOrMethod.contains("("))&&(classOrMethod.contains(")"))){
         //get the package
         String packageName = classOrMethod;
         packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");

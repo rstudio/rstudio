@@ -24,6 +24,8 @@ import java.util.TreeSet;
 
 public class GlobalInformation {
   
+  public static Boolean displayDependencies = false;
+  
   public static int allOtherFragmentsPartialSize = 0;
   public static HashMap<String, String> classToPackage = new HashMap<String, String>();
   public static HashMap<String, Float> classToPartialSize = new HashMap<String, Float>();

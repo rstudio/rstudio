@@ -39,48 +39,61 @@ public class SoycDashboard {
    */
   public static void main(String[] args) {
     
-    if (args.length != 2){
-      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz] soyc-dependencies0.xml[.gz]");
+    String inFileName = "";
+    String depInFileName = "";
+    if ((args.length != 1) && (args.length != 2)){
+
+      if (args.length == 1){
+        GlobalInformation.displayDependencies = false;
+      }
+      else{
+        GlobalInformation.displayDependencies = true;
+        depInFileName = args[1];
+      }
+      
+      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz] soyc-dependencies0.xml[.gz] OR java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz]");
       System.exit(1);
     }
     
-    String inFileName = args[0];
-    String depInFileName = args[1];
+    inFileName = args[0];
     
-    /**
-     * handle dependencies
-     */
-
-    Map<String, ArrayList<String>> dependencies = new TreeMap<String, ArrayList<String>>();
-    DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
     
-    // start parsing
-    SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
-    depFactoryMain.setNamespaceAware(true);
-    try {
-      SAXParser saxParser = depFactoryMain.newSAXParser();
-      InputStream in = new FileInputStream(depInFileName);
-      if (depInFileName.endsWith(".gz")) {
-        in = new GZIPInputStream(in);
+    
+    if (GlobalInformation.displayDependencies == true){
+      /**
+       * handle dependencies
+       */
+  
+      Map<String, ArrayList<String>> dependencies = new TreeMap<String, ArrayList<String>>();
+      DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
+      
+      // start parsing
+      SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
+      depFactoryMain.setNamespaceAware(true);
+      try {
+        SAXParser saxParser = depFactoryMain.newSAXParser();
+        InputStream in = new FileInputStream(depInFileName);
+        if (depInFileName.endsWith(".gz")) {
+          in = new GZIPInputStream(in);
+        }
+        in = new BufferedInputStream(in);
+        saxParser.parse(in,depHandler);
+      } catch (ParserConfigurationException e) {
+        throw new RuntimeException("Could not parse document. ", e);
+      } catch (SAXException e) {
+        throw new RuntimeException("Could not create SAX parser. ", e);
+      } catch (FileNotFoundException e) {
+        throw new RuntimeException("Could not open file. ", e);
+      } catch (IOException e) {
+        throw new RuntimeException("Could not open file. ", e);
       }
-      in = new BufferedInputStream(in);
-      saxParser.parse(in,depHandler);
-    } catch (ParserConfigurationException e) {
-      throw new RuntimeException("Could not parse document. ", e);
-    } catch (SAXException e) {
-      throw new RuntimeException("Could not create SAX parser. ", e);
-    } catch (FileNotFoundException e) {
-      throw new RuntimeException("Could not open file. ", e);
-    } catch (IOException e) {
-      throw new RuntimeException("Could not open file. ", e);
+      
+      try{
+        MakeTopLevelHtmlForPerm.makeDependenciesHtml(dependencies);
+      } catch (IOException e) {
+        throw new RuntimeException("Cannot open file. ", e);
+      }
     }
-    
-    try{
-      MakeTopLevelHtmlForPerm.makeDependenciesHtml(dependencies);
-    } catch (IOException e) {
-      throw new RuntimeException("Cannot open file. ", e);
-    }
-
     
     /**
      * handle everything else
