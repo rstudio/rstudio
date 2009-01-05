@@ -720,8 +720,6 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     byte classBytes[] = null;
     if (compiledClass != null) {
-
-      injectJsniFor(compiledClass);
       classBytes = compiledClass.getBytes();
       if (!compiledClass.getUnit().isSuperSource()) {
         /*
