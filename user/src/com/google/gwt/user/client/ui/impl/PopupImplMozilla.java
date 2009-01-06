@@ -99,6 +99,11 @@ public class PopupImplMozilla extends PopupImpl {
   }
 
   @Override
+  public Element getStyleElement(Element outerElem) {
+    return isMac ? outerElem : super.getStyleElement(outerElem);
+  }
+
+  @Override
   public void setClip(Element popup, String rect) {
     super.setClip(popup, rect);
     DOM.setStyleAttribute(popup, "display", "none");

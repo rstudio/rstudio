@@ -769,7 +769,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   @Override
   protected Element getContainerElement() {
-    return impl.getContainerElement(DOM.getFirstChild(super.getContainerElement()));
+    return impl.getContainerElement(getPopupImplElement());
+  }
+
+  @Override
+  protected Element getStyleElement() {
+    return impl.getStyleElement(getPopupImplElement());
   }
 
   /**
@@ -844,6 +849,18 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private boolean eventInPartner(Event event) {
     return autoHidePartner != null
       && autoHidePartner.isOrHasChild(event.getTarget());
+  }
+
+  /**
+   * Get the element that {@link PopupImpl} uses.  PopupImpl creates an element
+   * that goes inside of the outer element, so all methods in PopupImpl are
+   * relative to the first child of the outer element, not the outer element
+   * itself.
+   * 
+   * @return the Element that {@link PopupImpl} creates and expects
+   */
+  private Element getPopupImplElement() {
+    return DOM.getFirstChild(super.getContainerElement());
   }
 
   /**
