@@ -316,6 +316,7 @@ abstract class SplitPanel extends Panel {
         break;
       }
     }
+    super.onBrowserEvent(event);
   }
 
   @Override

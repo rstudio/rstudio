@@ -171,6 +171,7 @@ public class StackPanel extends ComplexPanel {
         showStack(index);
       }
     }
+    super.onBrowserEvent(event);
   }
 
   @Override

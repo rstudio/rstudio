@@ -395,8 +395,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   @Override
   public void onBrowserEvent(Event event) {
-    super.onBrowserEvent(event);
-
     MenuItem item = findItem(DOM.eventGetTarget(event));
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK: {
@@ -469,6 +467,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } // end case Event.ONKEYDOWN
     } // end switch (DOM.eventGetType(event))
+    super.onBrowserEvent(event);
   }
 
   /**
