@@ -22,6 +22,7 @@ import com.google.gwt.dev.generator.GenUtil;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -167,7 +168,11 @@ public class TypeOracle {
     }
   }
 
-  private final Set<JRealClassType> allTypes = new HashSet<JRealClassType>();
+  /**
+   * A map of fully-qualify source names (ie, use "." rather than "$" for nested
+   * classes) to JRealClassTypes.
+   */
+  private final Map<String, JRealClassType> allTypes = new HashMap<String, JRealClassType>();
 
   private final Map<JType, JArrayType> arrayTypes = new IdentityHashMap<JType, JArrayType>();
 
@@ -210,33 +215,16 @@ public class TypeOracle {
   }
 
   /**
-   * Finds a class or interface given its fully-qualified name. For nested
+   * Finds a class or interface given its fully-qualified name.
+   *
+   * @param name fully-qualified class/interface name -  for nested
    * classes, use its source name rather than its binary name (that is, use a
-   * "." rather than a "$").
+   * "." rather than a "$")
    * 
    * @return <code>null</code> if the type is not found
    */
   public JClassType findType(String name) {
-    // Try the dotted pieces, right to left.
-    //
-    int i = name.length() - 1;
-    while (i >= 0) {
-      int dot = name.lastIndexOf('.', i);
-      String pkgName = "";
-      String typeName = name;
-      if (dot != -1) {
-        pkgName = name.substring(0, dot);
-        typeName = name.substring(dot + 1);
-        i = dot - 1;
-      } else {
-        i = -1;
-      }
-      JClassType result = findType(pkgName, typeName);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
+    return allTypes.get(name);
   }
 
   /**
@@ -482,7 +470,8 @@ public class TypeOracle {
    * @return an array of types, possibly of zero length
    */
   public JClassType[] getTypes() {
-    return allTypes.toArray(NO_JCLASSES);
+    Collection<JRealClassType> values = allTypes.values();
+    return values.toArray(new JClassType[values.size()]);
   }
 
   public JWildcardType getWildcardType(JWildcardType.BoundType boundType,
@@ -611,7 +600,8 @@ public class TypeOracle {
   }
 
   void addNewType(JRealClassType newType) {
-    allTypes.add(newType);
+    String fqcn = newType.getQualifiedSourceName();
+    allTypes.put(fqcn, newType);
     recentTypes.add(newType);
   }
 
@@ -990,9 +980,9 @@ public class TypeOracle {
    */
   private void removeTypes(Set<JRealClassType> invalidTypes) {
     for (Iterator<JRealClassType> iter = invalidTypes.iterator(); iter.hasNext();) {
-      JClassType classType = iter.next();
-
-      allTypes.remove(classType);
+      JRealClassType classType = iter.next();
+      String fqcn = classType.getQualifiedSourceName();
+      allTypes.remove(fqcn);
 
       JPackage pkg = classType.getPackage();
       if (pkg != null) {

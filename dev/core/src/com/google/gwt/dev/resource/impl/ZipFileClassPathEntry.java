@@ -52,6 +52,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
 
   private Set<ZipFileResource> allZipFileResources;
   private Set<AbstractResource> cachedAnswers;
+  private String cachedLocation;
   private PathPrefixSet lastPrefixSet;
   private final ZipFile zipFile;
 
@@ -80,7 +81,10 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
 
   @Override
   public String getLocation() {
-    return new File(zipFile.getName()).toURI().toString();
+    if (cachedLocation == null) {
+      cachedLocation = new File(zipFile.getName()).toURI().toString();
+    }
+    return cachedLocation;
   }
 
   public ZipFile getZipFile() {
