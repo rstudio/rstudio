@@ -21,6 +21,9 @@ import java.util.ArrayList;
  * A helper class for implementers of the SourcesClickEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ClickListener}.
+ * 
+ * @deprecated use <code>addDomHandler(myHandler, ClickEvent.getType())</code>
+ *             to manage handlers for your widget instead
  */
 @Deprecated
 public class ClickListenerCollection extends ArrayList<ClickListener> {

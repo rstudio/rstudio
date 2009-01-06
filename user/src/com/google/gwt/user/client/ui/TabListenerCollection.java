@@ -22,6 +22,9 @@ import java.util.ArrayList;
  * {@link com.google.gwt.user.client.ui.SourcesTabEvents} interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TabListener}.
+ * 
+ * @deprecated {@link TabPanel} and {@link TabBar} should now completely manage
+ *             their own handlers
  */
 @Deprecated
 public class TabListenerCollection extends ArrayList<TabListener> {

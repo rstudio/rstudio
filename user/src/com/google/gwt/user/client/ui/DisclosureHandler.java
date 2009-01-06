@@ -14,12 +14,14 @@
  * the License.
  */
 package com.google.gwt.user.client.ui;
-
+ 
 import java.util.EventListener;
 
 /**
  * Event handler interface for {@link DisclosureEvent}.
  * 
+ * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler}
+ *             and/or {@link com.google.gwt.event.logical.shared.OpenHandler} instead
  * @see DisclosurePanel
  */
 @Deprecated

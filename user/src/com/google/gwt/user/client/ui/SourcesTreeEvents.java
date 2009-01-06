@@ -22,7 +22,7 @@ package com.google.gwt.user.client.ui;
  * @deprecated use
  *             {@link com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers}
  *             , {@link com.google.gwt.event.logical.shared.HasOpenHandlers},
- *             {@link com.google.gwt.event.logical.shared.HasClickHandlers}
+ *             {@link com.google.gwt.event.dom.client.HasClickHandlers}
  *             instead
  */
 @Deprecated

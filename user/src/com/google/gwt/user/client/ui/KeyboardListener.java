@@ -19,6 +19,9 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for keyboard events.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.KeyDownHandler}, {@link com.google.gwt.event.dom.client.KeyUpHandler} and/or {@link com.google.gwt.event.dom.client.KeyPressHandler}
+ *             instead
  */
 @Deprecated
 public interface KeyboardListener extends EventListener {

@@ -19,6 +19,8 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for 'change' events.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.ChangeHandler} instead
  */
 @Deprecated
 public interface ChangeListener extends EventListener {

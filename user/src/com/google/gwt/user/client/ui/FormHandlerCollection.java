@@ -22,6 +22,8 @@ import java.util.ArrayList;
  * {@link com.google.gwt.user.client.ui.FormHandler FormHandlers}. This
  * subclass of ArrayList assumes that all items added to it will be of type
  * {@link com.google.gwt.user.client.ui.FormHandler}.
+ * 
+ * @deprecated {@link FormPanel} now handles all handler management internally
  */
 @Deprecated
 public class FormHandlerCollection extends ArrayList<FormHandler> {

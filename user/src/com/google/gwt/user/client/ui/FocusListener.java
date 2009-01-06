@@ -19,6 +19,9 @@ import java.util.EventListener;
 
 /**
  * Event listener for focus events.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.FocusHandler} and/or
+ *             {@link com.google.gwt.event.dom.client.BlurHandler} instead
  */
 @Deprecated
 public interface FocusListener extends EventListener {

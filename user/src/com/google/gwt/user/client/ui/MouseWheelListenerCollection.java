@@ -24,6 +24,10 @@ import java.util.ArrayList;
  * A helper class for implementers of the SourcesMouseWheelEvents interface.
  * This subclass of {@link ArrayList} assumes that all objects added to it will
  * be of type {@link com.google.gwt.user.client.ui.MouseWheelListener}.
+ * 
+ * @deprecated use
+ *             <code>addDomHandler(myHandler, MouseWheelEvent.getType())</code>
+ *             to manage handlers within your widget
  */
 @Deprecated
 public class MouseWheelListenerCollection extends ArrayList<MouseWheelListener> {

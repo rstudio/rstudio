@@ -21,6 +21,9 @@ import java.util.ArrayList;
  * A helper class for implementers of the SourcesChangeEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ChangeListener}.
+ * 
+ * @deprecated use <code>addDomHandler(myHandler, ChangeEvent.getType())</code>
+ *             instead to manage handlers for your widget
  */
 @Deprecated
 public class ChangeListenerCollection extends ArrayList<ChangeListener> {

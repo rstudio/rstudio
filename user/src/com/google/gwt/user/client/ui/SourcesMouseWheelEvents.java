@@ -19,9 +19,10 @@ package com.google.gwt.user.client.ui;
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.MouseWheelListener} interface.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.HasMouseDownHandlers}
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasMouseWheelHandlers}
  *             instead
  */
+@Deprecated
 public interface SourcesMouseWheelEvents {
 
   /**
