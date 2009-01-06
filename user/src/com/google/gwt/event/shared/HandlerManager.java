@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -378,7 +378,7 @@ public class HandlerManager {
     }
     if (oldSource == null) {
       // This was my event, so I should kill it now that I'm done.
-      event.onRelease();
+      event.kill();
     } else {
       // Restoring the source for the next handler to use.
       event.setSource(oldSource);

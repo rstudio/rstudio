@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,8 +21,9 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Grid;
@@ -116,29 +117,29 @@ public class Issue1932 extends AbstractIssue {
     sandbox.getElement().getStyle().setProperty("cursor", "crosshair");
 
     // Keep the crosshair under the cursor
-    DOM.addEventPreview(new EventPreview() {
-      public boolean onEventPreview(Event event) {
+    Event.addNativePreviewHandler(new NativePreviewHandler() {
+      public void onPreviewNativeEvent(NativePreviewEvent event) {
         // Ignore events outside of the sandbox
-        Element target = DOM.eventGetTarget(event);
+        Event nativeEvent = event.getNativeEvent();
+        Element target = nativeEvent.getTarget();
         if (!sandbox.getElement().isOrHasChild(target)
             && !positioner.getElement().isOrHasChild(target)) {
           positioner.removeFromParent();
-          return true;
+          return;
         }
 
-        switch (DOM.eventGetType(event)) {
+        switch (nativeEvent.getTypeInt()) {
           case Event.ONMOUSEMOVE:
-            int absX = event.getClientX() + Window.getScrollLeft();
-            int absY = event.getClientY() + Window.getScrollTop();
+            int absX = nativeEvent.getClientX() + Window.getScrollLeft();
+            int absY = nativeEvent.getClientY() + Window.getScrollTop();
             RootPanel.get().add(positioner, absX, absY);
 
-            echo.setHTML("event.clientX: " + event.getClientX() + "<br>"
-                + "event.clientY: " + event.getClientY() + "<br>"
+            echo.setHTML("event.clientX: " + nativeEvent.getClientX() + "<br>"
+                + "event.clientY: " + nativeEvent.getClientY() + "<br>"
                 + "absolute left: " + positioner.getAbsoluteLeft() + "<br>"
                 + "absolute top: " + positioner.getAbsoluteTop());
             break;
         }
-        return true;
       }
     });
 

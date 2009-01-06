@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,6 +39,7 @@ public class DOM {
   private static Element sCaptureElem;
 
   // <BrowserEventPreview>
+  @SuppressWarnings("deprecation")
   private static ArrayList<EventPreview> sEventPreviewStack;
 
   /**
@@ -49,7 +50,10 @@ public class DOM {
    * handlers only receive explicitly sunk events.
    * 
    * @param preview the event preview to be added to the stack.
+   * @deprecated replaced by
+   *             {@link Event#addNativePreviewHandler(Event.NativePreviewHandler)}
    */
+  @Deprecated
   public static void addEventPreview(EventPreview preview) {
     impl.maybeInitializeEventSystem();
 
@@ -90,6 +94,7 @@ public class DOM {
    * @return <code>true</code> if they are in fact the same element
    * @deprecated Use identity comparison.
    */
+  @Deprecated
   public static boolean compare(Element elem1, Element elem2) {
     return elem1 == elem2;
   }
@@ -376,8 +381,7 @@ public class DOM {
   }
 
   /**
-   * Generates a unique DOM id. The id is of the form "gwt-id-<unique
-   * integer>".
+   * Generates a unique DOM id. The id is of the form "gwt-id-<unique integer>".
    * 
    * @return a unique DOM id
    */
@@ -934,8 +938,8 @@ public class DOM {
    *          <code>&lt;option&gt;</code>; cannot be <code>null</code>
    * @param index the index at which to insert the child
    */
-  public static void insertListItem(Element selectElem, String item, String value,
-      int index) {
+  public static void insertListItem(Element selectElem, String item,
+      String value, int index) {
     SelectElement select = selectElem.<SelectElement> cast();
     OptionElement option = Document.get().createOptionElement();
     option.setText(item);
@@ -999,7 +1003,11 @@ public class DOM {
    * capture events, though any preview underneath it will begin to do so.
    * 
    * @param preview the event preview to be removed from the stack
+   * @deprecated use {@link com.google.gwt.event.shared.HandlerRegistration}
+   *             returned from
+   *             {@link Event#addNativePreviewHandler(Event.NativePreviewHandler)}
    */
+  @Deprecated
   public static void removeEventPreview(EventPreview preview) {
     // Remove the event preview from the stack. If it was on top,
     // any preview underneath it will automatically begin to
@@ -1265,17 +1273,22 @@ public class DOM {
    * @param evt a handle to the event being previewed
    * @return <code>false</code> to cancel the event
    */
+  @SuppressWarnings("deprecation")
   static boolean previewEvent(Event evt) {
+    // Fire a NativePreviewEvent to NativePreviewHandlers
+    boolean ret = Event.fireNativePreviewEvent(evt);
+
     // If event previews are present, redirect events to the topmost of them.
-    boolean ret = true;
     if (sEventPreviewStack != null && sEventPreviewStack.size() > 0) {
       EventPreview preview = sEventPreviewStack.get(sEventPreviewStack.size() - 1);
-      if (!(ret = preview.onEventPreview(evt))) {
-        // If the preview cancels the event, stop it from bubbling and
-        // performing its default action.
-        eventCancelBubble(evt, true);
-        eventPreventDefault(evt);
-      }
+      ret = preview.onEventPreview(evt) && ret;
+    }
+
+    // If the preview cancels the event, stop it from bubbling and performing
+    // its default action. Check for a null evt to allow unit tests to run.
+    if (!ret && evt != null) {
+      eventCancelBubble(evt, true);
+      eventPreventDefault(evt);
     }
 
     return ret;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,10 @@ package com.google.gwt.user.client;
  * A listener interface for previewing browser events.
  * 
  * @see com.google.gwt.user.client.DOM#addEventPreview(EventPreview)
+ * @deprecated replaced by
+ *             {@link com.google.gwt.user.client.Event.NativePreviewHandler}
  */
+@Deprecated
 public interface EventPreview {
 
   /**
@@ -29,6 +32,9 @@ public interface EventPreview {
    * @param event the browser event
    * @return <code>false</code> to cancel the event
    * @see DOM#addEventPreview(EventPreview)
+   * @deprecated replaced by
+   *             {@link com.google.gwt.user.client.Event.NativePreviewHandler#onPreviewNativeEvent(com.google.gwt.user.client.Event.NativePreviewEvent)}
    */
+  @Deprecated
   boolean onEventPreview(Event event);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -137,18 +137,19 @@ public abstract class GwtEvent<H extends EventHandler> {
   }
 
   /**
-   * Revives the event. Used when recycling event instances.
+   * Kill the event.  After the event has been killed, users cannot really on
+   * its values or functions being available.
    */
-  protected void revive() {
-    dead = false;
+  protected void kill() {
+    dead = true;
     source = null;
   }
 
   /**
-   * Called after the event manager has finished processing the event.
+   * Revives the event. Used when recycling event instances.
    */
-  void onRelease() {
-    dead = true;
+  protected void revive() {
+    dead = false;
     source = null;
   }
 
