@@ -267,7 +267,7 @@ public class DateBox extends Composite implements HasValue<Date> {
     this.format = format;
 
     popup.setAutoHideEnabled(true);
-    popup.setAutoHidePartner(box.getElement());
+    popup.addAutoHidePartner(box.getElement());
     popup.setWidget(picker);
     popup.setStyleName("dateBoxPopup");
 

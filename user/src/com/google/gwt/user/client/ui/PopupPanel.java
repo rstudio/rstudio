@@ -34,6 +34,9 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
  * client area (and any previously-created popups).
@@ -280,7 +283,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   private boolean isAnimationEnabled = false;
 
-  private Element autoHidePartner;
+  private List<Element> autoHidePartners;
 
   /**
    * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
@@ -332,6 +335,20 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   public PopupPanel(boolean autoHide, boolean modal) {
     this(autoHide);
     this.modal = modal;
+  }
+
+  /**
+   * Mouse events that occur within an autoHide partner will not hide a panel
+   * set to autoHide.
+   * 
+   * @param partner the auto hide partner to add
+   */
+  public void addAutoHidePartner(Element partner) {
+    assert partner != null : "partner cannot be null";
+    if (autoHidePartners == null) {
+      autoHidePartners = new ArrayList<Element>();
+    }
+    autoHidePartners.add(partner);
   }
 
   public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
@@ -536,6 +553,18 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return true;
   }
 
+  /**
+   * Remove an autoHide partner.
+   * 
+   * @param partner the auto hide partner to remove
+   */
+  public void removeAutoHidePartner(Element partner) {
+    assert partner != null : "partner cannot be null";
+    if (autoHidePartners != null) {
+      autoHidePartners.remove(partner);
+    }
+  }
+
   @Deprecated
   public void removePopupListener(PopupListener listener) {
     ListenerWrapper.Popup.remove(this, listener);
@@ -553,16 +582,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public void setAutoHideEnabled(boolean autoHide) {
     this.autoHide = autoHide;
-  }
-
-  /**
-   * If the auto hide partner is non null, its mouse events will not hide a
-   * panel set to autohide.
-   * 
-   * @param element new auto hide partner
-   */
-  public void setAutoHidePartner(Element element) {
-    this.autoHidePartner = element;
   }
 
   /**
@@ -834,14 +853,23 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }-*/;
 
   /**
-   * Does the event target the partner element?
+   * Does the event target one of the partner elements?
    * 
    * @param event the native event
-   * @return true if the event targets the partner
+   * @return true if the event targets a partner
    */
   private boolean eventTargetsPartner(Event event) {
-    return autoHidePartner != null
-        && autoHidePartner.isOrHasChild(event.getTarget());
+    if (autoHidePartners == null) {
+      return false;
+    }
+
+    Element target = event.getTarget();
+    for (Element elem : autoHidePartners) {
+      if (elem.isOrHasChild(target)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -855,7 +883,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Get the element that {@link PopupImpl} uses.  PopupImpl creates an element
+   * Get the element that {@link PopupImpl} uses. PopupImpl creates an element
    * that goes inside of the outer element, so all methods in PopupImpl are
    * relative to the first child of the outer element, not the outer element
    * itself.
@@ -867,7 +895,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Positions the popup, called after the offset width and height of the popup are known.
+   * Positions the popup, called after the offset width and height of the popup
+   * are known.
    * 
    * @param relativeObject the ui object to position relative to
    * @param offsetWidth the drop down's offset width

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
@@ -80,6 +82,18 @@ public class PopupTest extends GWTTestCase {
     assertTrue(popup.isPreviewingAllNativeEvents());
     popup.setPreviewingAllNativeEvents(false);
     assertFalse(popup.isPreviewingAllNativeEvents());
+  }
+
+  public void testAutoHidePartner() {
+    final PopupPanel popup = new PopupPanel();
+
+    // Add a partner
+    DivElement partner0 = Document.get().createDivElement();
+    popup.addAutoHidePartner(partner0);
+    popup.addAutoHidePartner(Document.get().createDivElement());
+
+    // Remove a partner
+    popup.removeAutoHidePartner(partner0);
   }
 
   /**
