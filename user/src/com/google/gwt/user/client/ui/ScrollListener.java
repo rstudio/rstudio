@@ -20,8 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for scroll events.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.ScrollHandler}
- *             instead
+ * @deprecated use {@link com.google.gwt.event.dom.client.ScrollHandler} instead
  */
 @Deprecated
 public interface ScrollListener extends EventListener {

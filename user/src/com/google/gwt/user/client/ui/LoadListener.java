@@ -20,9 +20,8 @@ import java.util.EventListener;
 /**
  * Event listener interface for 'load' events.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.LoadHandler}
- *             and/or {@link com.google.gwt.event.dom.client.ErrorHandler}
- *             instead
+ * @deprecated use {@link com.google.gwt.event.dom.client.LoadHandler} and/or
+ *             {@link com.google.gwt.event.dom.client.ErrorHandler} instead
  */
 @Deprecated
 public interface LoadListener extends EventListener {

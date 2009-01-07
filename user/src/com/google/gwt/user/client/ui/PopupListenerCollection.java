@@ -21,8 +21,9 @@ import java.util.ArrayList;
  * A helper class for implementers of the SourcesPopupEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.PopupListener}.
- * @deprecated use <code>addHandler(myHandler,  CloseEvent.getType())</code>
- *             to manage handlers within your widget instead
+ * 
+ * @deprecated use <code>addHandler(myHandler,  CloseEvent.getType())</code> to
+ *             manage handlers within your widget instead
  */
 @Deprecated
 public class PopupListenerCollection extends ArrayList<PopupListener> {
@@ -31,8 +32,8 @@ public class PopupListenerCollection extends ArrayList<PopupListener> {
    * Fires a popup closed event to all listeners.
    * 
    * @param sender the widget sending the event.
-   * @param autoClosed <code>true</code> if the popup was automatically
-   *          closed; <code>false</code> if it was closed programmatically.
+   * @param autoClosed <code>true</code> if the popup was automatically closed;
+   *          <code>false</code> if it was closed programmatically.
    */
   @Deprecated
   public void firePopupClosed(PopupPanel sender, boolean autoClosed) {

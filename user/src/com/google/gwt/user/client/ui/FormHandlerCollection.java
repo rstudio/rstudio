@@ -19,8 +19,8 @@ import java.util.ArrayList;
 
 /**
  * Helper class for widgets that accept
- * {@link com.google.gwt.user.client.ui.FormHandler FormHandlers}. This
- * subclass of ArrayList assumes that all items added to it will be of type
+ * {@link com.google.gwt.user.client.ui.FormHandler FormHandlers}. This subclass
+ * of ArrayList assumes that all items added to it will be of type
  * {@link com.google.gwt.user.client.ui.FormHandler}.
  * 
  * @deprecated {@link FormPanel} now handles all handler management internally

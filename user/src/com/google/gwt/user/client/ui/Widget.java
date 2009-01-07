@@ -129,8 +129,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   /**
    * Overridden to defer the call to super.sinkEvents until the first time this
    * widget is attached to the dom, as a performance enhancement. Subclasses
-   * wishing to customize sinkEvents can preserve this deferred sink behavior
-   * by putting their implementation behind a check of {@link #isOrWasAttached()}:
+   * wishing to customize sinkEvents can preserve this deferred sink behavior by
+   * putting their implementation behind a check of {@link #isOrWasAttached()}:
    * 
    * <pre>
    * {@literal @}Override

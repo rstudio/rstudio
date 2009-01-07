@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,17 +19,17 @@ import java.util.EventListener;
 
 /**
  * Event handler interface for {@link SuggestionEvent}.
- *
+ * 
  * @see SuggestBox
  */
 @Deprecated
 public interface SuggestionHandler extends EventListener {
 
   /**
-   * Fired when a suggestion is selected. Users can select a suggestion from
-   * the SuggestBox by clicking on one of the suggestions, or by pressing
-   * the ENTER key to select the suggestion that is currently highlighted.
-   *
+   * Fired when a suggestion is selected. Users can select a suggestion from the
+   * SuggestBox by clicking on one of the suggestions, or by pressing the ENTER
+   * key to select the suggestion that is currently highlighted.
+   * 
    * @param event the object containing information about this event
    */
   @Deprecated

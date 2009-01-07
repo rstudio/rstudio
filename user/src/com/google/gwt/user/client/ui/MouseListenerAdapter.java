@@ -19,8 +19,7 @@ package com.google.gwt.user.client.ui;
  * An adapter to simplify mouse event listeners that do not need all events
  * defined on the MouseListener interface.
  * 
- * @deprecated use
- *             {@link com.google.gwt.event.dom.client.MouseDownHandler},
+ * @deprecated use {@link com.google.gwt.event.dom.client.MouseDownHandler},
  *             {@link com.google.gwt.event.dom.client.MouseUpHandler},
  *             {@link com.google.gwt.event.dom.client.MouseOverHandler},
  *             {@link com.google.gwt.event.dom.client.MouseMoveHandler}, and/or

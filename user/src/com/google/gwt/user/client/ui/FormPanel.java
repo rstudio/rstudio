@@ -88,6 +88,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Create a submit complete event
+     * 
      * @param resultsHtml the results from submitting the form
      */
     protected SubmitCompleteEvent(String resultsHtml) {

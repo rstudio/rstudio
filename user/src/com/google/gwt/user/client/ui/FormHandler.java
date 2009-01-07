@@ -19,7 +19,9 @@ import java.util.EventListener;
 
 /**
  * Handler interface for form submit events.
- * @deprecated use {@link FormPanel.SubmitCompleteHandler} and/or {@link FormPanel.SubmitHandler} instead
+ * 
+ * @deprecated use {@link FormPanel.SubmitCompleteHandler} and/or
+ *             {@link FormPanel.SubmitHandler} instead
  */
 @Deprecated
 public interface FormHandler extends EventListener {
@@ -29,8 +31,8 @@ public interface FormHandler extends EventListener {
    * 
    * <p>
    * The FormPanel must <em>not</em> be detached (i.e. removed from its parent
-   * or otherwise disconnected from a {@link RootPanel}) until the submission
-   * is complete. Otherwise, notification of submission will fail.
+   * or otherwise disconnected from a {@link RootPanel}) until the submission is
+   * complete. Otherwise, notification of submission will fail.
    * </p>
    * 
    * @param event an event object containing information about the form
