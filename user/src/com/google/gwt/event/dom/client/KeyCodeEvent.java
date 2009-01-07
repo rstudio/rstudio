@@ -51,7 +51,7 @@ public abstract class KeyCodeEvent<H extends EventHandler> extends KeyEvent<H> {
   public int getNativeKeyCode() {
     return getNativeEvent().getKeyCode();
   }
- 
+
   /**
    * Is this a key down arrow?
    * 
