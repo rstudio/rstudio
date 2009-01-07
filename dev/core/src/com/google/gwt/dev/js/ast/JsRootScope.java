@@ -95,8 +95,8 @@ public final class JsRootScope extends JsScope {
         "onunload",
 
         // Common browser-defined identifiers not defined in ECMAScript
-        "window", "event", "external", "navigator", "screen", "Debug",
-        "Enumerator", "Global", "Image", "ActiveXObject", "VBArray",
+        "window", "dispatchEvent", "event", "external", "navigator", "screen",
+        "Debug", "Enumerator", "Global", "Image", "ActiveXObject", "VBArray",
         "Components",
 
         // Functions commonly defined on Object
