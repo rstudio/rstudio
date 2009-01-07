@@ -47,13 +47,13 @@ public class ScrollEvent extends DomEvent<ScrollHandler> {
   }
 
   @Override
-  protected void dispatch(ScrollHandler handler) {
-    handler.onScroll(this);
+  public final Type<ScrollHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<ScrollHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(ScrollHandler handler) {
+    handler.onScroll(this);
   }
 
 }

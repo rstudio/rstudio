@@ -144,6 +144,11 @@ public class Event extends JavaScriptObject {
       isConsumed = true;
     }
 
+    @Override
+    public Type<NativePreviewHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     public Event getNativeEvent() {
       return nativeEvent;
     }
@@ -173,11 +178,6 @@ public class Event extends JavaScriptObject {
     @Override
     protected void dispatch(NativePreviewHandler handler) {
       handler.onPreviewNativeEvent(this);
-    }
-
-    @Override
-    protected Type<NativePreviewHandler> getAssociatedType() {
-      return TYPE;
     }
 
     @Override

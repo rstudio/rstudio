@@ -131,6 +131,9 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
 
   private Event nativeEvent;
 
+  @Override
+  public abstract DomEvent.Type<H> getAssociatedType();
+
   public final Event getNativeEvent() {
     assertLive();
     return nativeEvent;
@@ -161,7 +164,4 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
     assertLive();
     nativeEvent.cancelBubble(true);
   }
-
-  @Override
-  protected abstract DomEvent.Type<H> getAssociatedType();
 }

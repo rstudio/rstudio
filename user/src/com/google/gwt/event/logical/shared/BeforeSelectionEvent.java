@@ -87,6 +87,14 @@ public class BeforeSelectionEvent<I> extends
     canceled = true;
   }
 
+  // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
+  // field itself does not, so we have to do an unsafe cast here.
+  @SuppressWarnings("unchecked")
+  @Override
+  public Type<BeforeSelectionHandler<I>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the item.
    * 
@@ -108,14 +116,6 @@ public class BeforeSelectionEvent<I> extends
   @Override
   protected void dispatch(BeforeSelectionHandler<I> handler) {
     handler.onBeforeSelection(this);
-  }
-
-  // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
-  // field itself does not, so we have to do an unsafe cast here.
-  @SuppressWarnings("unchecked")
-  @Override
-  protected Type<BeforeSelectionHandler<I>> getAssociatedType() {
-    return (Type) TYPE;
   }
 
   /**

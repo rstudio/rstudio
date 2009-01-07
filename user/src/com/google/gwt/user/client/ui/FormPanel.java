@@ -95,6 +95,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       this.resultHtml = resultsHtml;
     }
 
+    @Override
+    public Type<SubmitCompleteHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Gets the result text of the form submission.
      * 
@@ -110,11 +115,6 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     @Override
     protected void dispatch(SubmitCompleteHandler handler) {
       handler.onSubmitComplete(this);
-    }
-
-    @Override
-    protected Type<SubmitCompleteHandler> getAssociatedType() {
-      return TYPE;
     }
   }
 
@@ -161,6 +161,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       this.canceled = true;
     }
 
+    @Override
+    public Type<FormPanel.SubmitHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Gets whether this form submit will be canceled.
      * 
@@ -173,11 +178,6 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     @Override
     protected void dispatch(FormPanel.SubmitHandler handler) {
       handler.onSubmit(this);
-    }
-
-    @Override
-    protected Type<FormPanel.SubmitHandler> getAssociatedType() {
-      return TYPE;
     }
 
     /**

@@ -63,6 +63,11 @@ public class Window {
      */
     private String message = null;
 
+    @Override
+    public Type<ClosingHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Get the message that will be presented to the user in a confirmation
      * dialog that asks the user whether or not she wishes to navigate away from
@@ -89,11 +94,6 @@ public class Window {
     @Override
     protected void dispatch(ClosingHandler handler) {
       handler.onWindowClosing(this);
-    }
-
-    @Override
-    protected Type<ClosingHandler> getAssociatedType() {
-      return TYPE;
     }
   }
 
@@ -331,6 +331,11 @@ public class Window {
       this.scrollTop = scrollTop;
     }
 
+    @Override
+    public Type<ScrollHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Gets the window's scroll left.
      * 
@@ -352,11 +357,6 @@ public class Window {
     @Override
     protected void dispatch(ScrollHandler handler) {
       handler.onWindowScroll(this);
-    }
-
-    @Override
-    protected Type<ScrollHandler> getAssociatedType() {
-      return TYPE;
     }
   }
 

@@ -47,13 +47,13 @@ public class BlurEvent extends DomEvent<BlurHandler> {
   }
 
   @Override
-  protected void dispatch(BlurHandler handler) {
-    handler.onBlur(this);
+  public final Type<BlurHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<BlurHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(BlurHandler handler) {
+    handler.onBlur(this);
   }
 
 }

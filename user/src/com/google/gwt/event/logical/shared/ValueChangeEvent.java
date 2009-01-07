@@ -106,6 +106,14 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
     this.value = value;
   }
 
+  // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
+  // field itself does not, so we have to do an unsafe cast here.
+  @SuppressWarnings("unchecked")
+  @Override
+  public Type<ValueChangeHandler<I>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the value.
    * 
@@ -118,13 +126,5 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
   @Override
   protected void dispatch(ValueChangeHandler<I> handler) {
     handler.onValueChange(this);
-  }
-
-  // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
-  // field itself does not, so we have to do an unsafe cast here.
-  @SuppressWarnings("unchecked")
-  @Override
-  protected Type<ValueChangeHandler<I>> getAssociatedType() {
-    return (Type) TYPE;
   }
 }

@@ -47,13 +47,13 @@ public class KeyDownEvent extends KeyCodeEvent<KeyDownHandler> {
   }
 
   @Override
-  protected void dispatch(KeyDownHandler handler) {
-    handler.onKeyDown(this);
+  public final Type<KeyDownHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<KeyDownHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(KeyDownHandler handler) {
+    handler.onKeyDown(this);
   }
 
 }

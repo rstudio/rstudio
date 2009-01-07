@@ -47,13 +47,13 @@ public class ContextMenuEvent extends DomEvent<ContextMenuHandler> {
   }
 
   @Override
-  protected void dispatch(ContextMenuHandler handler) {
-    handler.onContextMenu(this);
+  public final Type<ContextMenuHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<ContextMenuHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(ContextMenuHandler handler) {
+    handler.onContextMenu(this);
   }
 
 }

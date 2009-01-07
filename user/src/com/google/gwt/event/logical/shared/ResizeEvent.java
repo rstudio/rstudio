@@ -75,6 +75,11 @@ public class ResizeEvent extends GwtEvent<ResizeHandler> {
     this.height = height;
   }
 
+  @Override
+  public Type<ResizeHandler> getAssociatedType() {
+    return TYPE;
+  }
+
   /**
    * Returns the new height.
    * 
@@ -102,10 +107,5 @@ public class ResizeEvent extends GwtEvent<ResizeHandler> {
   @Override
   protected void dispatch(ResizeHandler handler) {
     handler.onResize(this);
-  }
-
-  @Override
-  protected Type<ResizeHandler> getAssociatedType() {
-    return TYPE;
   }
 }

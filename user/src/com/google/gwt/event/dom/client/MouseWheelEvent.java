@@ -47,13 +47,13 @@ public class MouseWheelEvent extends MouseEvent<MouseWheelHandler> {
   }
 
   @Override
-  protected void dispatch(MouseWheelHandler handler) {
-    handler.onMouseWheel(this);
+  public final Type<MouseWheelHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<MouseWheelHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(MouseWheelHandler handler) {
+    handler.onMouseWheel(this);
   }
 
 }

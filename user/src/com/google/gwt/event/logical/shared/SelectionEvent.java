@@ -72,6 +72,14 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
     this.selectedItem = selectedItem;
   }
 
+  // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
+  // field itself does not, so we have to do an unsafe cast here.
+  @SuppressWarnings("unchecked")
+  @Override
+  public Type<SelectionHandler<I>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the selected item.
    * 
@@ -84,13 +92,5 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
   @Override
   protected void dispatch(SelectionHandler<I> handler) {
     handler.onSelection(this);
-  }
-
-  // The instance knows its BeforeSelectionHandler is of type I, but the TYPE
-  // field itself does not, so we have to do an unsafe cast here.
-  @SuppressWarnings("unchecked")
-  @Override
-  protected Type<SelectionHandler<I>> getAssociatedType() {
-    return (Type) TYPE;
   }
 }

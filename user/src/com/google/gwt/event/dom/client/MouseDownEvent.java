@@ -47,13 +47,13 @@ public class MouseDownEvent extends MouseEvent<MouseDownHandler> {
   }
 
   @Override
-  protected void dispatch(MouseDownHandler handler) {
-    handler.onMouseDown(this);
+  public final Type<MouseDownHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<MouseDownHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(MouseDownHandler handler) {
+    handler.onMouseDown(this);
   }
 
 }

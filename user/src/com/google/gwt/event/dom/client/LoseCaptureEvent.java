@@ -47,13 +47,13 @@ public class LoseCaptureEvent extends DomEvent<LoseCaptureHandler> {
   }
 
   @Override
-  protected void dispatch(LoseCaptureHandler handler) {
-    handler.onLoseCapture(this);
+  public final Type<LoseCaptureHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<LoseCaptureHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(LoseCaptureHandler handler) {
+    handler.onLoseCapture(this);
   }
 
 }

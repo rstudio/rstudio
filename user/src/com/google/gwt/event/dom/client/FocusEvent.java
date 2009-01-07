@@ -47,13 +47,13 @@ public class FocusEvent extends DomEvent<FocusHandler> {
   }
 
   @Override
-  protected void dispatch(FocusHandler handler) {
-    handler.onFocus(this);
+  public final Type<FocusHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<FocusHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(FocusHandler handler) {
+    handler.onFocus(this);
   }
 
 }
