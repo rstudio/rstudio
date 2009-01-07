@@ -22,6 +22,7 @@ Merges:
 /releases/1.6/@r4269:4297 was merged (r4367,r4368) into trunk
 /releases/1.6/@r4299:4320 was merged (r4367,r4368) into trunk
 /releases/1.6/@r4321:4366 was merged (r4367,r4368) into trunk
+/releases/1.6/@r4366:4385 was merged (r4386) into trunk
 
 The next merge into trunk will be:
-svn merge -r4366:? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge -r4385:? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
