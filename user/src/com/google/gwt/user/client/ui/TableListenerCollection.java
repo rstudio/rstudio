@@ -22,6 +22,10 @@ import java.util.ArrayList;
  * {@link com.google.gwt.user.client.ui.SourcesTableEvents} interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.TableListener}.
+ * 
+ * @deprecated use
+ *             {@link HTMLTable#getCellForEvent(com.google.gwt.event.dom.client.ClickEvent)}
+ *             or similar code
  */
 @Deprecated
 public class TableListenerCollection extends ArrayList<TableListener> {

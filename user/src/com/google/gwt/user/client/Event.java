@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,13 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.HasNativeEvent;
+import com.google.gwt.event.shared.EventHandler;
+import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerRegistration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * <p>
@@ -42,6 +49,166 @@ import com.google.gwt.dom.client.Element;
  * </p>
  */
 public class Event extends JavaScriptObject {
+  /**
+   * Represents a preview of a native {@link Event}.
+   */
+  public static class NativePreviewEvent extends GwtEvent<NativePreviewHandler>
+      implements HasNativeEvent {
+
+    /**
+     * Handler type.
+     */
+    private static Type<NativePreviewHandler> TYPE;
+
+    /**
+     * The singleton instance of {@link NativePreviewEvent}.
+     */
+    private static NativePreviewEvent singleton;
+
+    /**
+     * Gets the type associated with this event.
+     * 
+     * @return returns the handler type
+     */
+    public static Type<NativePreviewHandler> getType() {
+      if (TYPE == null) {
+        TYPE = new Type<NativePreviewHandler>();
+      }
+      return TYPE;
+    }
+
+    /**
+     * Fire a {@link NativePreviewEvent} for the native event.
+     * 
+     * @param handlers the list of {@link NativePreviewHandler}
+     * @param nativeEvent the native event
+     * @return true to fire the event normally, false to cancel the event
+     */
+    static boolean fire(List<NativePreviewHandler> handlers, Event nativeEvent) {
+      if (TYPE != null && handlers != null) {
+        // Revive the event
+        if (singleton == null) {
+          singleton = new NativePreviewEvent();
+        } else {
+          singleton.revive();
+        }
+        singleton.setNativeEvent(nativeEvent);
+
+        // Fire the event to all handlers
+        int numHandlers = handlers.size();
+        for (int i = numHandlers - 1; i >= 0; i--) {
+          handlers.get(i).onPreviewNativeEvent(singleton);
+        }
+
+        // Kill the event and return
+        singleton.kill();
+        return !(singleton.isCanceled() && !singleton.isConsumed());
+      }
+      return true;
+    }
+
+    /**
+     * A boolean indicating that the native event should be canceled.
+     */
+    private boolean isCanceled = false;
+
+    /**
+     * A boolean indicating whether or not canceling the native event should be
+     * prevented. This supercedes {@link #isCanceled}.
+     */
+    private boolean isConsumed = false;
+
+    /**
+     * The event being previewed.
+     */
+    private Event nativeEvent;
+
+    /**
+     * Cancel the native event and prevent it from firing. Note that the event
+     * can still fire if another handler calls {@link #consume()}.
+     * 
+     * Classes overriding this method should still call super.cancel().
+     */
+    public void cancel() {
+      isCanceled = true;
+    }
+
+    /**
+     * Consume the native event and prevent it from being canceled, even if it
+     * has already been canceled by another handler.
+     * {@link NativePreviewHandler} that fire first have priority over later
+     * handlers, so all handlers should check if the event has already been
+     * canceled before calling this method.
+     */
+    public void consume() {
+      isConsumed = true;
+    }
+
+    public Event getNativeEvent() {
+      return nativeEvent;
+    }
+
+    /**
+     * Has the event already been canceled? Note that {@link #isConsumed()} will
+     * still return true if the native event has also been consumed.
+     * 
+     * @return true if the event has been canceled
+     * @see #cancel()
+     */
+    public boolean isCanceled() {
+      return isCanceled;
+    }
+
+    /**
+     * Has the native event been consumed? Note that {@link #isCanceled()} will
+     * still return true if the native event has also been canceled.
+     * 
+     * @return true if the event has been consumed
+     * @see #consume()
+     */
+    public boolean isConsumed() {
+      return isConsumed;
+    }
+
+    @Override
+    protected void dispatch(NativePreviewHandler handler) {
+      handler.onPreviewNativeEvent(this);
+    }
+
+    @Override
+    protected Type<NativePreviewHandler> getAssociatedType() {
+      return TYPE;
+    }
+
+    @Override
+    protected void revive() {
+      super.revive();
+      isCanceled = false;
+      isConsumed = false;
+      nativeEvent = null;
+    }
+
+    /**
+     * Set the native event.
+     * 
+     * @param nativeEvent the native {@link Event} being previewed.
+     */
+    private void setNativeEvent(Event nativeEvent) {
+      this.nativeEvent = nativeEvent;
+    }
+  }
+
+  /**
+   * Handler interface for {@link NativePreviewEvent} events.
+   */
+  public static interface NativePreviewHandler extends EventHandler {
+    /**
+     * Called when {@link NativePreviewEvent} is fired.
+     * 
+     * @param event the {@link NativePreviewEvent} that was fired
+     */
+    void onPreviewNativeEvent(NativePreviewEvent event);
+  }
 
   /**
    * The left mouse button (used in {@link DOM#eventGetButton(Event)}).
@@ -184,6 +351,14 @@ public class Event extends JavaScriptObject {
   public static final int UNDEFINED = 0;
 
   /**
+   * The list of {@link NativePreviewHandler}.  We use a list instead of a
+   * handler manager for efficiency and because we want to fire the handlers in
+   * reverse order.  When the last handler is removed, handlers is reset to
+   * null.
+   */
+  private static ArrayList<NativePreviewHandler> handlers;
+
+  /**
    * Adds an event preview to the preview stack. As long as this preview remains
    * on the top of the stack, it will receive all events before they are fired
    * to their listeners. Note that the event preview will receive <u>all </u>
@@ -191,9 +366,51 @@ public class Event extends JavaScriptObject {
    * handlers only receive explicitly sunk events.
    * 
    * @param preview the event preview to be added to the stack.
+   * @deprecated replaced by
+   *             {@link #addNativePreviewHandler(NativePreviewHandler)}
    */
+  @Deprecated
   public static void addEventPreview(EventPreview preview) {
     DOM.addEventPreview(preview);
+  }
+
+  /**
+   * <p>
+   * Adds a {@link NativePreviewHandler} that will receive all events before
+   * they are fired to their handlers. Note that the handler will receive
+   * <u>all</u> native events, including those received due to bubbling, whereas
+   * normal event handlers only receive explicitly sunk events.
+   * </p>
+   * 
+   * <p>
+   * Unlike other event handlers, {@link NativePreviewHandler} are fired in the
+   * reverse order that they are added, such that the last
+   * {@link NativePreviewEvent} that was added is the first to be fired.
+   * </p>
+   * 
+   * @param handler the {@link NativePreviewHandler}
+   * @return {@link HandlerRegistration} used to remove this handler
+   */
+  public static HandlerRegistration addNativePreviewHandler(
+      final NativePreviewHandler handler) {
+    assert handler != null : "Cannot add a null handler";
+    // Initialize the type
+    NativePreviewEvent.getType();
+    if (handlers == null) {
+      handlers = new ArrayList<NativePreviewHandler>();
+    }
+    handlers.add(handler);    
+    return new HandlerRegistration() {
+      public void removeHandler() {
+        if (handlers != null) {
+          handlers.remove(handler);
+          if (handlers.size() == 0) {
+            // Set handlers to null so we can optimize fireNativePreviewEvent
+            handlers = null;
+          }
+        }
+      }
+    };
   }
 
   /**
@@ -234,7 +451,10 @@ public class Event extends JavaScriptObject {
    * capture events, though any preview underneath it will begin to do so.
    * 
    * @param preview the event preview to be removed from the stack
+   * @deprecated use {@link HandlerRegistration} returned from
+   *             {@link Event#addNativePreviewHandler(NativePreviewHandler)}
    */
+  @Deprecated
   public static void removeEventPreview(EventPreview preview) {
     DOM.removeEventPreview(preview);
   }
@@ -260,6 +480,16 @@ public class Event extends JavaScriptObject {
    */
   public static void sinkEvents(Element elem, int eventBits) {
     DOM.sinkEvents((com.google.gwt.user.client.Element) elem, eventBits);
+  }
+
+  /**
+   * Fire a {@link NativePreviewEvent} for the native event.
+   * 
+   * @param nativeEvent the native event
+   * @return true to fire the event normally, false to cancel the event
+   */
+  static boolean fireNativePreviewEvent(Event nativeEvent) {
+    return NativePreviewEvent.fire(handlers, nativeEvent);
   }
 
   /**
@@ -355,7 +585,7 @@ public class Event extends JavaScriptObject {
    * </p>
    * 
    * @return the Unicode character or key code.
-   * @see com.google.gwt.user.client.ui.KeyboardListener
+   * @see com.google.gwt.event.dom.client.KeyCodes
    */
   public final int getKeyCode() {
     return DOM.eventGetKeyCode(this);

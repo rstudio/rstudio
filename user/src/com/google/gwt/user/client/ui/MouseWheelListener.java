@@ -19,6 +19,10 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for mouse wheel events.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.event.dom.client.MouseWheelHandler} instead
+ *             
  */
 @Deprecated
 public interface MouseWheelListener extends EventListener {

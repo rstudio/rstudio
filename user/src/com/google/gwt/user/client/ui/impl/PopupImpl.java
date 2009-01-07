@@ -31,6 +31,10 @@ public class PopupImpl {
     return popup;
   }
 
+  public Element getStyleElement(Element popup) {
+    return DOM.getParent(popup);
+  }
+
   public void onHide(Element popup) {
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -240,6 +240,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       super(true, false, "suggestPopup");
       setWidget(suggestionMenu);
       setStyleName(STYLENAME_DEFAULT);
+      setPreviewingAllNativeEvents(true);
     }
 
     /**
@@ -475,6 +476,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * 
    * @deprecated use addSelectionHandler instead.
    */
+  @Deprecated
   public void addEventHandler(final SuggestionHandler handler) {
     ListenerWrapper.Suggestion.add(this, handler);
   }

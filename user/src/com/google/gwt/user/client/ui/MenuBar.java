@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,6 +27,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.PopupPanel.AnimationType;
 
 import java.util.ArrayList;
@@ -395,8 +396,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   @Override
   public void onBrowserEvent(Event event) {
-    super.onBrowserEvent(event);
-
     MenuItem item = findItem(DOM.eventGetTarget(event));
     switch (DOM.eventGetType(event)) {
       case Event.ONCLICK: {
@@ -469,6 +468,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         break;
       } // end case Event.ONKEYDOWN
     } // end switch (DOM.eventGetType(event))
+    super.onBrowserEvent(event);
   }
 
   /**
@@ -959,29 +959,34 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     popup = new DecoratedPopupPanel(true, false, "menuPopup") {
       {
         setWidget(item.getSubMenu());
+        setPreviewingAllNativeEvents(true);
         item.getSubMenu().onShow();
       }
 
       @Override
-      public boolean onEventPreview(Event event) {
+      protected void onPreviewNativeEvent(NativePreviewEvent event) {
         // Hook the popup panel's event preview. We use this to keep it from
         // auto-hiding when the parent menu is clicked.
-        switch (DOM.eventGetType(event)) {
-          case Event.ONMOUSEDOWN:
-            // If the event target is part of the parent menu, suppress the
-            // event altogether.
-            Element target = DOM.eventGetTarget(event);
-            Element parentMenuElement = item.getParentMenu().getElement();
-            if (DOM.isOrHasChild(parentMenuElement, target)) {
-              return false;
-            }
-            boolean cancel = super.onEventPreview(event);
-            if (cancel) {
-              selectItem(null);
-            }
-            return cancel;
+        if (!event.isCanceled()) {
+          Event nativeEvent = event.getNativeEvent();
+          switch (nativeEvent.getTypeInt()) {
+            case Event.ONMOUSEDOWN:
+              // If the event target is part of the parent menu, suppress the
+              // event altogether.
+              com.google.gwt.dom.client.Element target = nativeEvent.getTarget();
+              Element parentMenuElement = item.getParentMenu().getElement();
+              if (parentMenuElement.isOrHasChild(target)) {
+                event.cancel();
+                return;
+              }
+              super.onPreviewNativeEvent(event);
+              if (event.isCanceled()) {
+                selectItem(null);
+              }
+              return;
+          }
         }
-        return super.onEventPreview(event);
+        super.onPreviewNativeEvent(event);
       }
     };
     popup.setAnimationType(AnimationType.ONE_WAY_CORNER);

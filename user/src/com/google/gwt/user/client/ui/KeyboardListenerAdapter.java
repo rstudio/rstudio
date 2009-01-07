@@ -18,6 +18,10 @@ package com.google.gwt.user.client.ui;
 /**
  * An adapter to simplify keyboard event listeners that do not need all events
  * defined on the KeyboardListener interface.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.KeyDownHandler},
+ *             {@link com.google.gwt.event.dom.client.KeyUpHandler} and/or
+ *             {@link com.google.gwt.event.dom.client.KeyPressHandler} instead
  */
 @Deprecated
 public class KeyboardListenerAdapter implements KeyboardListener {

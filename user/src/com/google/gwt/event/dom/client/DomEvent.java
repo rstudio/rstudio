@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,8 @@ import com.google.gwt.user.client.Event;
  * @param <H> handler type
  * 
  */
-public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H> {
+public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
+    implements HasNativeEvent {
   /**
    * Type class used by dom event subclasses. Type is specialized for dom in
    * order to carry information about the native event.
@@ -61,10 +62,10 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H> {
      * 
      * 
      * @param eventToSink the integer value used by sink events to set up event
-     * handling for this dom type
+     *          handling for this dom type
      * @param eventName the raw native event name
      * @param flyweight the instance that will be used as a flyweight to wrap a
-     * native event
+     *          native event
      */
     protected Type(int eventToSink, String eventName, DomEvent<H> flyweight) {
       this.flyweight = flyweight;
@@ -100,7 +101,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H> {
   }
 
   private static PrivateMap<Type<?>> registered;
- 
+
   /**
    * Fires the given native event on the specified handlers.
    * 
@@ -122,7 +123,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H> {
       }
     }
   }
- 
+
   // This method can go away once we have eager clinits.
   static void init() {
     registered = new PrivateMap<Type<?>>();
@@ -130,11 +131,6 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H> {
 
   private Event nativeEvent;
 
-  /**
-   * Gets the underlying native event for this {@link DomEvent}.
-   * 
-   * @return gets the native event
-   */
   public final Event getNativeEvent() {
     assertLive();
     return nativeEvent;

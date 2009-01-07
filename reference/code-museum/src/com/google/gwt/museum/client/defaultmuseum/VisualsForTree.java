@@ -18,7 +18,9 @@ package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -41,6 +43,9 @@ public class VisualsForTree extends AbstractIssue {
     TreeItem d = new TreeItem(new RadioButton("myradio",
         "I should line up nicely"));
     TreeItem e = new TreeItem(new CheckBox("I should line up nicely"));
+    SimplePanel panel = new SimplePanel();
+    panel.setWidget(new Label("There should not be any space above me"));
+    TreeItem f = new TreeItem(panel);
 
     t.setSelectedItem(b);
     t.addItem(a);
@@ -48,6 +53,7 @@ public class VisualsForTree extends AbstractIssue {
     t.addItem(c);
     t.addItem(d);
     t.addItem(e);
+    t.addItem(f);
     b.addItem(ba);
     b.addItem(bb);
     bb.addItem(bba);

@@ -21,6 +21,9 @@ import java.util.ArrayList;
  * A helper class for implementers of the SourcesScrollEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ScrollListener}.
+ * 
+ * @deprecated use <code>addDomHandler(myHandler, ScrollEvent.getType())</code>
+ *             to manage handlers within your widget instead
  */
 @Deprecated
 public class ScrollListenerCollection extends ArrayList<ScrollListener> {

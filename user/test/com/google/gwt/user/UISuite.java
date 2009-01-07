@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,6 +19,7 @@ import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.user.client.AsyncProxyTest;
 import com.google.gwt.user.client.CommandExecutorTest;
 import com.google.gwt.user.client.CookieTest;
+import com.google.gwt.user.client.EventTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
@@ -114,6 +115,7 @@ public class UISuite {
     suite.addTestSuite(DockPanelTest.class);
     suite.addTestSuite(DOMTest.class);
     suite.addTestSuite(ElementWrappingTest.class);
+    suite.addTestSuite(EventTest.class);
     suite.addTestSuite(FastStringMapTest.class);
     suite.addTestSuite(FlexTableTest.class);
     suite.addTestSuite(FlowPanelTest.class);

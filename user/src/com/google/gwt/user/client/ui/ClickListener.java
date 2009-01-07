@@ -19,6 +19,7 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for click events.
+ * @deprecated use {@link com.google.gwt.event.dom.client.ClickHandler} instead
  */
 @Deprecated
 public interface ClickListener extends EventListener {

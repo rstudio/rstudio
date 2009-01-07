@@ -1073,7 +1073,7 @@ html>body .gwt-DecoratedTabBar .gwt-TabBarItem-selected .tabTopRight {
 }
 
 .gwt-Tree .gwt-TreeItem {
-  padding: 1px;
+  padding: 1px 0px;
   margin: 0px;
   white-space: nowrap;
   cursor: hand;

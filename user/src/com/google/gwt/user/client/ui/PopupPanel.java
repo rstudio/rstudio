@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
@@ -26,10 +27,11 @@ import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
-import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventPreview;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
 
 /**
@@ -55,10 +57,12 @@ import com.google.gwt.user.client.ui.impl.PopupImpl;
  * {@example com.google.gwt.examples.PopupPanelExample}
  * </p>
  * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-PopupPanel { the outside of the popup }</li>
- * <li>.gwt-PopupPanel .popupContent { the wrapper around the content }</li>
- * </ul>
+ * <dl>
+ * <dt>.gwt-PopupPanel</dt>
+ * <dd>the outside of the popup</dd>
+ * <dt>.gwt-PopupPanel .popupContent</dt>
+ * <dd>the wrapper around the content</dd>
+ * </dl>
  */
 @SuppressWarnings("deprecation")
 public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
@@ -265,7 +269,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   private AnimationType animType = AnimationType.CENTER;
 
-  private boolean autoHide, modal, showing;
+  private HandlerRegistration nativePreviewHandlerRegistration;
+
+  private boolean autoHide, previewAllNativeEvents, modal, showing;
 
   // Used to track requested size across changing child widgets
   private String desiredHeight;
@@ -273,7 +279,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   private String desiredWidth;
 
   private boolean isAnimationEnabled = false;
-  
+
   private Element autoHidePartner;
 
   /**
@@ -357,7 +363,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
     if (!initiallyShowing) {
       setAnimationEnabled(initiallyAnimated);
-      // Run the animation.  The popup is already visible, so we can skip the
+      // Run the animation. The popup is already visible, so we can skip the
       // call to setState.
       if (initiallyAnimated) {
         impl.setClip(getElement(), "rect(0px, 0px, 0px, 0px)");
@@ -433,6 +439,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       return;
     }
     showing = false;
+    if (nativePreviewHandlerRegistration != null) {
+      nativePreviewHandlerRegistration.removeHandler();
+      nativePreviewHandlerRegistration = null;
+    }
 
     // Hide the popup
     resizeAnimation.setState(false);
@@ -463,74 +473,22 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return modal;
   }
 
-  @SuppressWarnings("deprecation")
+  /**
+   * Returns <code>true</code> if the popup should preview all native events,
+   * even if the event has already been consumed by another popup.
+   * 
+   * @return true if previewAllNativeEvents is enabled, false if disabled
+   */
+  public boolean isPreviewingAllNativeEvents() {
+    return previewAllNativeEvents;
+  }
+
+  /**
+   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   */
+  @Deprecated
   public boolean onEventPreview(Event event) {
-    Element target = DOM.eventGetTarget(event);
-
-    boolean eventTargetsPopup = (target != null)
-        && DOM.isOrHasChild(getElement(), target);
-
-    int type = DOM.eventGetType(event);
-    switch (type) {
-      case Event.ONKEYDOWN: {
-        boolean allow = onKeyDownPreview((char) DOM.eventGetKeyCode(event),
-            KeyboardListenerCollection.getKeyboardModifiers(event));
-        return allow && (eventTargetsPopup || !modal);
-      }
-      case Event.ONKEYUP: {
-        boolean allow = onKeyUpPreview((char) DOM.eventGetKeyCode(event),
-            KeyboardListenerCollection.getKeyboardModifiers(event));
-        return allow && (eventTargetsPopup || !modal);
-      }
-      case Event.ONKEYPRESS: {
-        boolean allow = onKeyPressPreview((char) DOM.eventGetKeyCode(event),
-            KeyboardListenerCollection.getKeyboardModifiers(event));
-        return allow && (eventTargetsPopup || !modal);
-      }
-
-      case Event.ONMOUSEDOWN:
-        // Don't eat events if event capture is enabled, as this can interfere
-        // with dialog dragging, for example.
-        if (DOM.getCaptureElement() != null) {
-          return true;
-        }
-
-        if (!eventTargetsPopup && shouldAutoHide(event)) {
-          hide(true);
-          return true;
-        }
-        break;
-      case Event.ONMOUSEUP:
-      case Event.ONMOUSEMOVE:
-      case Event.ONCLICK:
-      case Event.ONDBLCLICK: {
-        // Don't eat events if event capture is enabled, as this can interfere
-        // with dialog dragging, for example.
-        if (DOM.getCaptureElement() != null) {
-          return true;
-        }
-
-        // If it's an outside click and auto-hide is enabled:
-        // hide the popup and _don't_ eat the event. ONMOUSEDOWN is used to
-        // prevent problems with showing a popup in response to a mousedown.
-        if (!eventTargetsPopup && shouldAutoHide(event)
-            && (type == Event.ONMOUSEDOWN)) {
-          hide(true);
-          return true;
-        }
-
-        break;
-      }
-
-      case Event.ONFOCUS: {
-        if (modal && !eventTargetsPopup && (target != null)) {
-          blur(target);
-          return false;
-        }
-      }
-    }
-
-    return !modal || eventTargetsPopup;
+    return true;
   }
 
   /**
@@ -541,7 +499,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
+   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
    */
+  @Deprecated
   public boolean onKeyDownPreview(char key, int modifiers) {
     return true;
   }
@@ -554,7 +514,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
+   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
    */
+  @Deprecated
   public boolean onKeyPressPreview(char key, int modifiers) {
     return true;
   }
@@ -567,7 +529,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
+   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
    */
+  @Deprecated
   public boolean onKeyUpPreview(char key, int modifiers) {
     return true;
   }
@@ -592,8 +556,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * If the auto hide partner is non null, its mouse events will 
-   * not hide a panel set to autohide.
+   * If the auto hide partner is non null, its mouse events will not hide a
+   * panel set to autohide.
+   * 
    * @param element new auto hide partner
    */
   public void setAutoHidePartner(Element element) {
@@ -633,7 +598,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   public void setModal(boolean modal) {
     this.modal = modal;
   }
-  
+
   /**
    * Sets the popup's position relative to the browser's client area. The
    * popup's position may be set before calling {@link #show()}.
@@ -655,8 +620,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // called before show() is called (so a popup can be positioned without it
     // 'jumping' on the screen).
     Element elem = getElement();
-    DOM.setStyleAttribute(elem, "left", left + "px");
-    DOM.setStyleAttribute(elem, "top", top + "px");
+    elem.getStyle().setPropertyPx("left", left);
+    elem.getStyle().setPropertyPx("top", top);
   }
 
   /**
@@ -676,13 +641,31 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     setVisible(true);
   }
 
+  /**
+   * <p>
+   * When enabled, the popup will preview all native events, even if another
+   * popup was opened after this one.
+   * </p>
+   * <p>
+   * If autoHide is enabled, enabling this feature will cause the popup to
+   * autoHide even if another non-modal popup was shown after it. If this
+   * feature is disabled, the popup will only autoHide if it was the last popup
+   * opened.
+   * </p>
+   * 
+   * @param previewAllNativeEvents true to enable, false to disable
+   */
+  public void setPreviewingAllNativeEvents(boolean previewAllNativeEvents) {
+    this.previewAllNativeEvents = previewAllNativeEvents;
+  }
+
   @Override
   public void setTitle(String title) {
     Element containerElement = getContainerElement();
     if (title == null || title.length() == 0) {
-      DOM.removeElementAttribute(containerElement, "title");
+      containerElement.removeAttribute("title");
     } else {
-      DOM.setElementAttribute(containerElement, "title", title);
+      containerElement.setAttribute("title", title);
     }
   }
 
@@ -744,7 +727,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       return;
     }
     showing = true;
-    DOM.addEventPreview(this);
+    nativePreviewHandlerRegistration = Event.addNativePreviewHandler(new NativePreviewHandler() {
+      public void onPreviewNativeEvent(NativePreviewEvent event) {
+        previewNativeEvent(event);
+      }
+    });
     resizeAnimation.setState(true);
   }
 
@@ -768,19 +755,24 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   @Override
-  protected Element getContainerElement() {
-    return impl.getContainerElement(DOM.getFirstChild(super.getContainerElement()));
+  protected com.google.gwt.user.client.Element getContainerElement() {
+    return impl.getContainerElement(getPopupImplElement());
+  }
+
+  @Override
+  protected com.google.gwt.user.client.Element getStyleElement() {
+    return impl.getStyleElement(getPopupImplElement());
   }
 
   /**
-   * This method is called when a widget is detached from the browser's
-   * document. To receive notification before the PopupPanel is removed from the
-   * document, override the {@link Widget#onUnload()} method instead.
+   * @see NativePreviewHandler#onPreviewNativeEvent(NativePreviewEvent)
    */
-  @Override
-  protected void onDetach() {
-    DOM.removeEventPreview(this);
-    super.onDetach();
+  @SuppressWarnings("deprecation")
+  protected void onPreviewNativeEvent(NativePreviewEvent event) {
+    // Cancel the event based on the deprecated onEventPreview() method
+    if (!event.isCanceled() && !onEventPreview(event.getNativeEvent())) {
+      event.cancel();
+    }
   }
 
   /**
@@ -841,9 +833,37 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
   }-*/;
 
-  private boolean eventInPartner(Event event) {
+  /**
+   * Does the event target the partner element?
+   * 
+   * @param event the native event
+   * @return true if the event targets the partner
+   */
+  private boolean eventTargetsPartner(Event event) {
     return autoHidePartner != null
-      && autoHidePartner.isOrHasChild(event.getTarget());
+        && autoHidePartner.isOrHasChild(event.getTarget());
+  }
+
+  /**
+   * Does the event target this popup?
+   * 
+   * @param event the native event
+   * @return true if the event targets the popup
+   */
+  private boolean eventTargetsPopup(Event event) {
+    return getElement().isOrHasChild(event.getTarget());
+  }
+
+  /**
+   * Get the element that {@link PopupImpl} uses.  PopupImpl creates an element
+   * that goes inside of the outer element, so all methods in PopupImpl are
+   * relative to the first child of the outer element, not the outer element
+   * itself.
+   * 
+   * @return the Element that {@link PopupImpl} creates and expects
+   */
+  private com.google.gwt.user.client.Element getPopupImplElement() {
+    return DOM.getFirstChild(super.getContainerElement());
   }
 
   /**
@@ -974,10 +994,103 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
     setPopupPosition(left, top);
   }
-  
-  private boolean shouldAutoHide(Event event) {
-    boolean shouldAutoHide = autoHide && !eventInPartner(event);
-    return shouldAutoHide;
-  }
 
+  /**
+   * Preview the {@link NativePreviewEvent}.
+   * 
+   * @param event the {@link NativePreviewEvent}
+   */
+  private void previewNativeEvent(NativePreviewEvent event) {
+    // If the event has been canceled or consumed, ignore it
+    if (event.isCanceled() || (!previewAllNativeEvents && event.isConsumed())) {
+      // We need to ensure that we cancel the event even if its been consumed so
+      // that popups lower on the stack do not auto hide
+      if (modal) {
+        event.cancel();
+      }
+      return;
+    }
+
+    // Fire the event hook and return if the event is canceled
+    onPreviewNativeEvent(event);
+    if (event.isCanceled()) {
+      return;
+    }
+
+    // If the event targets the popup or the partner, consume it
+    Event nativeEvent = event.getNativeEvent();
+    boolean eventTargetsPopupOrPartner = eventTargetsPopup(nativeEvent)
+        || eventTargetsPartner(nativeEvent);
+    if (eventTargetsPopupOrPartner) {
+      event.consume();
+    }
+
+    // Cancel the event if it doesn't target the modal popup. Note that the
+    // event can be both canceled and consumed.
+    if (modal) {
+      event.cancel();
+    }
+
+    // Switch on the event type
+    int type = nativeEvent.getTypeInt();
+    switch (type) {
+      case Event.ONKEYDOWN: {
+        if (!onKeyDownPreview((char) nativeEvent.getKeyCode(),
+            KeyboardListenerCollection.getKeyboardModifiers(nativeEvent))) {
+          event.cancel();
+        }
+        return;
+      }
+      case Event.ONKEYUP: {
+        if (!onKeyUpPreview((char) nativeEvent.getKeyCode(),
+            KeyboardListenerCollection.getKeyboardModifiers(nativeEvent))) {
+          event.cancel();
+        }
+        return;
+      }
+      case Event.ONKEYPRESS: {
+        if (!onKeyPressPreview((char) nativeEvent.getKeyCode(),
+            KeyboardListenerCollection.getKeyboardModifiers(nativeEvent))) {
+          event.cancel();
+        }
+        return;
+      }
+
+      case Event.ONMOUSEDOWN:
+        // Don't eat events if event capture is enabled, as this can
+        // interfere with dialog dragging, for example.
+        if (DOM.getCaptureElement() != null) {
+          event.consume();
+          return;
+        }
+
+        if (!eventTargetsPopupOrPartner && autoHide) {
+          hide(true);
+          return;
+        }
+        break;
+      case Event.ONMOUSEUP:
+      case Event.ONMOUSEMOVE:
+      case Event.ONCLICK:
+      case Event.ONDBLCLICK: {
+        // Don't eat events if event capture is enabled, as this can
+        // interfere with dialog dragging, for example.
+        if (DOM.getCaptureElement() != null) {
+          event.consume();
+          return;
+        }
+        break;
+      }
+
+      case Event.ONFOCUS: {
+        Element target = nativeEvent.getTarget();
+        if (modal && !eventTargetsPopupOrPartner && (target != null)) {
+          blur(target);
+          event.cancel();
+          return;
+        }
+        break;
+      }
+    }
+  }
 }

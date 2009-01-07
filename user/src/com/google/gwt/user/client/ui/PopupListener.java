@@ -19,6 +19,9 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for popup events.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.event.logical.shared.CloseHandler} instead
  */
 @Deprecated
 public interface PopupListener extends EventListener {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,25 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.ui;
 
-import java.util.EventListener;
+package com.google.gwt.event.dom.client;
+
+import com.google.gwt.user.client.Event;
 
 /**
- * Event listener interface for scroll events.
- * 
- * @deprecated use {@link com.google.gwt.event.dom.client.ScrollHandler}
- *             instead
+ * An object that implements this interface has a native event associated with
+ * it.
  */
-@Deprecated
-public interface ScrollListener extends EventListener {
-
+public interface HasNativeEvent {
   /**
-   * Fired when the sender is scrolled.
+   * Gets the underlying native event.
    * 
-   * @param widget the widget being scrolled.
-   * @param scrollLeft the left scroll position.
-   * @param scrollTop the top scroll position.
+   * @return the native event
    */
-  void onScroll(Widget widget, int scrollLeft, int scrollTop);
+  Event getNativeEvent();
 }

@@ -27,14 +27,22 @@ public abstract class JClassType extends JType implements HasAnnotations,
     HasMetaData {
 
   /**
+   * Cached set of supertypes for this type (including itself).  If null,
+   * the set has not been calculated yet.
+   */
+  private Set<JClassType> flattenedSupertypes;
+  
+  /**
    * Returns all of the superclasses and superinterfaces for a given type
    * including the type itself.
    */
   protected static Set<JClassType> getFlattenedSuperTypeHierarchy(
       JClassType type) {
-    Set<JClassType> typesSeen = new HashSet<JClassType>();
-    getFlattenedSuperTypeHierarchyRecursive(type, typesSeen);
-    return typesSeen;
+    if (type.flattenedSupertypes == null) {
+      type.flattenedSupertypes = new HashSet<JClassType>();
+      getFlattenedSuperTypeHierarchyRecursive(type, type.flattenedSupertypes);
+    }
+    return type.flattenedSupertypes;
   }
 
   /**
@@ -309,13 +317,13 @@ public abstract class JClassType extends JType implements HasAnnotations,
     // Superclass
     JClassType superclass = type.getSuperclass();
     if (superclass != null) {
-      getFlattenedSuperTypeHierarchyRecursive(superclass, typesSeen);
+      typesSeen.addAll(getFlattenedSuperTypeHierarchy(superclass));
     }
 
     // Check the interfaces
     JClassType[] intfs = type.getImplementedInterfaces();
     for (JClassType intf : intfs) {
-      getFlattenedSuperTypeHierarchyRecursive(intf, typesSeen);
+      typesSeen.addAll(getFlattenedSuperTypeHierarchy(intf));
     }
   }
 

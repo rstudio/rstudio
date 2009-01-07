@@ -138,13 +138,10 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
 
   @Override
   public void onBrowserEvent(Event event) {
-    if (DOM.eventGetType(event) == Event.ONCLICK) {
-      super.onBrowserEvent(event);
-      
-      if (impl.handleAsClick(event)) {
-        History.newItem(getTargetHistoryToken());
-        DOM.eventPreventDefault(event);
-      }
+    super.onBrowserEvent(event);
+    if (DOM.eventGetType(event) == Event.ONCLICK && impl.handleAsClick(event)) {
+      History.newItem(getTargetHistoryToken());
+      DOM.eventPreventDefault(event);
     }
   }
 

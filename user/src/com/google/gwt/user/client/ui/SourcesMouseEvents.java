@@ -19,7 +19,7 @@ package com.google.gwt.user.client.ui;
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.MouseListener} interface.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.HasAllMouseHandlerss}
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasAllMouseHandlers}
  *             instead
  */
 @Deprecated

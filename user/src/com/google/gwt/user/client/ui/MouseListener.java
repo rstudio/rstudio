@@ -19,6 +19,13 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for mouse events.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.event.dom.client.MouseDownHandler},
+ *             {@link com.google.gwt.event.dom.client.MouseUpHandler},
+ *             {@link com.google.gwt.event.dom.client.MouseOverHandler},
+ *             {@link com.google.gwt.event.dom.client.MouseMoveHandler}, and/or
+ *             {@link com.google.gwt.event.dom.client.MouseOutHandler} instead
  */
 @Deprecated
 public interface MouseListener extends EventListener {

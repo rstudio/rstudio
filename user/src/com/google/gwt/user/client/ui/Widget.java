@@ -183,19 +183,23 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   }
 
   /**
-   * If a widget implements HasWidgets, it must override this method and call
-   * {@link #onAttach()} for each of its child widgets.
+   * If a widget contains one or more child widgets that are not in the logical
+   * widget hierarchy (the child is physically connected only on the DOM level),
+   * it must override this method and call {@link #onAttach()} for each of its
+   * child widgets.
    * 
-   * @see Panel#onAttach()
+   * @see #onAttach()
    */
   protected void doAttachChildren() {
   }
 
   /**
-   * If a widget implements HasWidgets, it must override this method and call
-   * onDetach() for each of its child widgets.
+   * If a widget contains one or more child widgets that are not in the logical
+   * widget hierarchy (the child is physically connected only on the DOM level),
+   * it must override this method and call {@link #onDetach()} for each of its
+   * child widgets.
    * 
-   * @see Panel#onDetach()
+   * @see #onDetach()
    */
   protected void doDetachChildren() {
   }

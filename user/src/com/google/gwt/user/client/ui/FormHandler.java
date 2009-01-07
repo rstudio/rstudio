@@ -19,6 +19,7 @@ import java.util.EventListener;
 
 /**
  * Handler interface for form submit events.
+ * @deprecated use {@link FormPanel.SubmitCompleteHandler} and/or {@link FormPanel.SubmitHandler} instead
  */
 @Deprecated
 public interface FormHandler extends EventListener {

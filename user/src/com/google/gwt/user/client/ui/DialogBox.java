@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 
 /**
  * A form of popup that has a caption area at the top and can be dragged by the
@@ -229,18 +230,6 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     super.onBrowserEvent(event);
   }
 
-  @Override
-  public boolean onEventPreview(Event event) {
-    // We need to preventDefault() on mouseDown events (outside of the
-    // DialogBox content) to keep text from being selected when it
-    // is dragged.
-    if (DOM.eventGetType(event) == Event.ONMOUSEDOWN && isCaptionEvent(event)) {
-      DOM.eventPreventDefault(event);
-    }
-
-    return super.onEventPreview(event);
-  }
-
   /**
    * @deprecated Use {@link #beginDragging} instead and {@link #getCaption}
    * instead
@@ -399,6 +388,20 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     super.onEnsureDebugId(baseID);
     caption.ensureDebugId(baseID + "-caption");
     ensureDebugId(getCellElement(1, 1), baseID, "content");
+  }
+
+  @Override
+  protected void onPreviewNativeEvent(NativePreviewEvent event) {
+    // We need to preventDefault() on mouseDown events (outside of the
+    // DialogBox content) to keep text from being selected when it
+    // is dragged.
+    Event nativeEvent = event.getNativeEvent();
+    if (!event.isCanceled() && nativeEvent.getTypeInt() == Event.ONMOUSEDOWN
+        && isCaptionEvent(nativeEvent)) {
+      nativeEvent.preventDefault();
+    }
+
+    super.onPreviewNativeEvent(event);
   }
 
   private boolean isCaptionEvent(Event event) {

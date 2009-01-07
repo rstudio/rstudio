@@ -24,6 +24,10 @@ import java.util.ArrayList;
  * A helper class for implementers of the SourcesKeyboardEvents interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.KeyboardListener}.
+ * 
+ * @deprecated use
+ *             <code>addDomHandler(myHandler, Key(Down/Up/Press)Event.getType())</code>
+ *             to manage handlers within your widget
  */
 @Deprecated
 public class KeyboardListenerCollection extends ArrayList<KeyboardListener> {

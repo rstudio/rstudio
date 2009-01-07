@@ -24,7 +24,11 @@ import java.util.ArrayList;
  * A helper class for implementers of the
  * {@link com.google.gwt.user.client.ui.SourcesFocusEvents} interface. This
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
- * type {@link com.google.gwt.user.client.ui.FocusListener}.
+ * type {@link com.google.gwt.user.client.ui.FocusListener}
+ * 
+ * @deprecated use <code>addDomHandler(myHandler, FocusEvent.getType())</code>
+ *             and <code>addDomHandler(myHandler, BlurEvent.getType())</code>
+ *             to manage your widget's handlers instead
  */
 @Deprecated
 public class FocusListenerCollection extends ArrayList<FocusListener> {
