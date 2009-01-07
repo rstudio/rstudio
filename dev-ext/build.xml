@@ -1,0 +1,24 @@
+<project name="dev-ext" default="build" basedir=".">
+  <property name="gwt.root" location=".." />
+  <property name="project.tail" value="dev-ext" />
+  <import file="${gwt.root}/common.ant.xml" />
+
+  <property.ensure name="gwt.dev.src" location="${gwt.root}/dev/core/src" />
+  <property.ensure name="gwt.dev.bin" location="${gwt.build.out}/dev/core/bin" />
+
+  <target name="build" description="Packages this project into a jar">
+    <mkdir dir="${gwt.build.lib}" />
+    <gwt.jar>
+      <fileset dir="${gwt.dev.src}">
+        <include name="com/google/gwt/core/ext/*.java" />
+      </fileset>
+      <fileset dir="${gwt.dev.bin}">
+        <include name="com/google/gwt/core/ext/*.class" />
+      </fileset>
+    </gwt.jar>
+  </target>
+
+  <target name="clean" description="Cleans this project's intermediate and output files">
+    <delete file="${project.lib}" />
+  </target>
+</project>
