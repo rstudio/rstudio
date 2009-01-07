@@ -543,7 +543,8 @@ class ProxyCreator {
         JType serializableType = serializableTypes[i];
         String binaryTypeName = sto.getSerializedTypeName(serializableType);
         boolean maybeInstantiated = sto.maybeInstantiated(serializableType);
-        pw.println(binaryTypeName + ", " + Boolean.toString(maybeInstantiated));
+        pw.print(binaryTypeName + ", " + Boolean.toString(maybeInstantiated)
+            + '\n');
       }
 
       // Closes the wrapped streams.
