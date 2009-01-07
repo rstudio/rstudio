@@ -27,12 +27,6 @@ public abstract class JClassType extends JType implements HasAnnotations,
     HasMetaData {
 
   /**
-   * Cached set of supertypes for this type (including itself).  If null,
-   * the set has not been calculated yet.
-   */
-  private Set<JClassType> flattenedSupertypes;
-  
-  /**
    * Returns all of the superclasses and superinterfaces for a given type
    * including the type itself.
    */
@@ -326,6 +320,12 @@ public abstract class JClassType extends JType implements HasAnnotations,
       typesSeen.addAll(getFlattenedSuperTypeHierarchy(intf));
     }
   }
+
+  /**
+   * Cached set of supertypes for this type (including itself).  If null,
+   * the set has not been calculated yet.
+   */
+  private Set<JClassType> flattenedSupertypes;
 
   public abstract void addImplementedInterface(JClassType intf);
 
