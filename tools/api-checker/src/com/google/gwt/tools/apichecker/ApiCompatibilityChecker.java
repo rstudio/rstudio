@@ -784,8 +784,8 @@ public class ApiCompatibilityChecker extends ToolBase {
     try {
       return new JarFile(str);
     } catch (IOException ex) {
-      System.err.println("exception in getting jar from name "
-          + ex.getMessage());
+      System.err.println("exception in getting jar from fileName: " + str
+          + ", message: " + ex.getMessage());
       return null;
     }
   }
@@ -858,7 +858,7 @@ public class ApiCompatibilityChecker extends ToolBase {
         "com/google/gwt/dev/jjs/intrinsic/com/google/gwt/lang",
         "com/google/gwt/lang",}));
     cu = new JarFileCompilationUnits(new JarFile[] {gwtDevJar},
-        gwtIncludedPaths, null, logger);
+        gwtIncludedPaths, new HashSet<String>(), logger);
     units.addAll(cu.getCompilationUnits());
     return units;
   }
