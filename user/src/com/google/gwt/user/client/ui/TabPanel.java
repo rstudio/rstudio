@@ -354,20 +354,10 @@ public class TabPanel extends Composite implements TabListener,
     return deck.iterator();
   }
 
-  public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
-    if (!onBeforeTabSelected(tabBar, event.getItem().intValue())) {
-      event.cancel();
-    }
-  }
-
   @Deprecated
   public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
     BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this, tabIndex);
     return event == null || !event.isCanceled();
-  }
-
-  public void onSelection(SelectionEvent<Integer> event) {
-    onTabSelected(tabBar, event.getSelectedItem().intValue());
   }
 
   @Deprecated

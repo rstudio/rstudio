@@ -33,6 +33,9 @@ public interface TabListener extends EventListener {
    * @param tabIndex the index of the tab about to be selected
    * @return <code>false</code> to disallow the selection. If any listener
    *         returns false, then the selection will be disallowed.
+   * @deprecated use
+   *             {@link TabPanel#addBeforeSelectionHandler(com.google.gwt.event.logical.shared.BeforeSelectionHandler)}
+   *             instead
    */
   @Deprecated
   boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex);
@@ -42,6 +45,9 @@ public interface TabListener extends EventListener {
    * 
    * @param sender the {@link TabBar} or {@link TabPanel} whose tab was selected
    * @param tabIndex the index of the tab that was selected
+   * @deprecated use
+   *             {@link TabPanel#addSelectionHandler(com.google.gwt.event.logical.shared.SelectionHandler)}
+   *             instead
    */
   @Deprecated
   void onTabSelected(SourcesTabEvents sender, int tabIndex);
