@@ -25,8 +25,10 @@ import com.google.gwt.user.client.Event;
  * 
  * @see com.google.gwt.user.client.DOM#eventGetMouseWheelVelocityY An
  *      explanation of the units used for mouse wheel velocity.
+ * @deprecated use
+ *             {@link com.google.gwt.event.dom.client.MouseWheelEvent#getDeltaY()}
+ *             instead
  */
-
 @Deprecated
 public class MouseWheelVelocity {
 
@@ -59,7 +61,11 @@ public class MouseWheelVelocity {
    *         if the mouse wheel is moving north (toward the top of the screen)
    *         or negative if the mouse wheel is moving south (toward the bottom
    *         of the screen)
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseWheelEvent#getDeltaY()}
+   *             instead
    */
+  @Deprecated
   public int getDeltaY() {
     return vY;
   }
@@ -75,7 +81,11 @@ public class MouseWheelVelocity {
    * 
    * @return <code>true</code> if the velocity includes a component directed
    *         toword the top of the screen
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseWheelEvent#isNorth()}
+   *             instead
    */
+  @Deprecated
   public boolean isNorth() {
     return getDeltaY() < 0;
   }
@@ -86,7 +96,11 @@ public class MouseWheelVelocity {
    * 
    * @return <code>true</code> if the velocity includes a component directed
    *         toword the bottom of the screen
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseWheelEvent#isSouth()}
+   *             instead
    */
+  @Deprecated
   public boolean isSouth() {
     return getDeltaY() > 0;
   }
