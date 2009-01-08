@@ -72,11 +72,14 @@ import java.util.Map;
  * <img class='gallery' src='Tree.png'/>
  * </p>
  * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-Tree { the tree itself }</li>
- * <li>.gwt-Tree .gwt-TreeItem { a tree item }</li>
- * <li>.gwt-Tree .gwt-TreeItem-selected { a selected tree item }</li>
- * </ul>
+ * <dl>
+ * <dt>.gwt-Tree</dt>
+ * <dd>the tree itself</dd>
+ * <dt>.gwt-Tree .gwt-TreeItem</dt>
+ * <dd>a tree item</dd>
+ * <dt>.gwt-Tree .gwt-TreeItem-selected</dt>
+ * <dd>a selected tree item</dd>
+ * </dl>
  * <p>
  * <h3>Example</h3>
  * {@example com.google.gwt.examples.TreeExample}
@@ -353,7 +356,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
-    return addHandler(handler,MouseDownEvent.getType());
+    return addHandler(handler, MouseDownEvent.getType());
   }
 
   @Deprecated
@@ -362,23 +365,23 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
-    return addDomHandler(handler,MouseMoveEvent.getType());
+    return addDomHandler(handler, MouseMoveEvent.getType());
   }
 
   public HandlerRegistration addMouseOutHandler(MouseOutHandler handler) {
-    return addDomHandler(handler,MouseOutEvent.getType());
+    return addDomHandler(handler, MouseOutEvent.getType());
   }
 
   public HandlerRegistration addMouseOverHandler(MouseOverHandler handler) {
-    return addDomHandler(handler,MouseOverEvent.getType());
+    return addDomHandler(handler, MouseOverEvent.getType());
   }
 
   public HandlerRegistration addMouseUpHandler(MouseUpHandler handler) {
-    return addDomHandler(handler,MouseUpEvent.getType());
+    return addDomHandler(handler, MouseUpEvent.getType());
   }
 
   public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
-    return addDomHandler(handler,MouseWheelEvent.getType());
+    return addDomHandler(handler, MouseWheelEvent.getType());
   }
 
   public final HandlerRegistration addOpenHandler(OpenHandler<TreeItem> handler) {
@@ -1039,7 +1042,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Move the tree focus to the specified selected item.
    */
   private void moveFocus() {
-    HasFocus focusableWidget = curSelection.getFocusableWidget();
+    Focusable focusableWidget = curSelection.getFocusable();
     if (focusableWidget != null) {
       focusableWidget.setFocus(true);
       DOM.scrollIntoView(((Widget) focusableWidget).getElement());
