@@ -26,27 +26,150 @@ import java.util.EventListener;
  */
 @Deprecated
 public interface KeyboardListener extends EventListener {
-
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_ALT}
+   *             instead
+   */
+  @Deprecated
   int KEY_ALT = 18;
+
+  /**
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyCodes#KEY_BACKSPACE}
+   *             instead
+   */
+  @Deprecated
   int KEY_BACKSPACE = 8;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_CTRL}
+   *             instead
+   */
+  @Deprecated
   int KEY_CTRL = 17;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_DELETE}
+   *             instead
+   */
+  @Deprecated
   int KEY_DELETE = 46;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_DOWN}
+   *             instead
+   */
+  @Deprecated
   int KEY_DOWN = 40;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_END}
+   *             instead
+   */
+  @Deprecated
   int KEY_END = 35;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_ENTER}
+   *             instead
+   */
+  @Deprecated
   int KEY_ENTER = 13;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_ESCAPE}
+   *             instead
+   */
+  @Deprecated
   int KEY_ESCAPE = 27;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_HOME}
+   *             instead
+   */
+  @Deprecated
   int KEY_HOME = 36;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_LEFT}
+   *             instead
+   */
+  @Deprecated
   int KEY_LEFT = 37;
+
+  /**
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyCodes#KEY_PAGEDOWN}
+   *             instead
+   */
+  @Deprecated
   int KEY_PAGEDOWN = 34;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_PAGEUP}
+   *             instead
+   */
+  @Deprecated
   int KEY_PAGEUP = 33;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_RIGHT}
+   *             instead
+   */
+  @Deprecated
   int KEY_RIGHT = 39;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_SHIFT}
+   *             instead
+   */
+  @Deprecated
   int KEY_SHIFT = 16;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_TAB}
+   *             instead
+   */
+  @Deprecated
   int KEY_TAB = 9;
+
+  /**
+   * @deprecated use {@link com.google.gwt.event.dom.client.KeyCodes#KEY_UP}
+   *             instead
+   */
+  @Deprecated
   int KEY_UP = 38;
 
+  /**
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyCodeEvent#isAltKeyDown()}
+   *             instead
+   */
+  @Deprecated
   int MODIFIER_ALT = 4;
+
+  /**
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyCodeEvent#isControlKeyDown()}
+   *             instead
+   */
+  @Deprecated
   int MODIFIER_CTRL = 2;
+
+  /**
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyCodeEvent#isMetaKeyDown()}
+   *             instead
+   */
+  @Deprecated
   int MODIFIER_META = 8;
+
+  /**
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyCodeEvent#isShiftKeyDown()}
+   *             instead
+   */
+  @Deprecated
   int MODIFIER_SHIFT = 1;
 
   /**
