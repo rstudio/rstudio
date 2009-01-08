@@ -21,6 +21,12 @@ import java.util.EventListener;
  * Event listener interface for tab events, used primarily by
  * {@link com.google.gwt.user.client.ui.TabBar} and
  * {@link com.google.gwt.user.client.ui.TabPanel}.
+ * 
+ * @deprecated use
+ *             {@link TabPanel#addBeforeSelectionHandler(com.google.gwt.event.logical.shared.BeforeSelectionHandler)}
+ *             and/or
+ *             {@link TabPanel#addSelectionHandler(com.google.gwt.event.logical.shared.SelectionHandler)}
+ *             instead
  */
 @Deprecated
 public interface TabListener extends EventListener {

@@ -38,6 +38,8 @@ package com.google.gwt.user.client.ui;
  *    focusListeners.add(listener);
  *  }
  *</pre>
+ * 
+ * @deprecated use <code>Widget#delegateEvent</code> instead
  */
 @Deprecated
 public class DelegatingFocusListenerCollection extends FocusListenerCollection

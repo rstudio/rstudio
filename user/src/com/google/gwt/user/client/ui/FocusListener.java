@@ -30,6 +30,9 @@ public interface FocusListener extends EventListener {
    * Fired when a widget receives keyboard focus.
    * 
    * @param sender the widget receiving focus.
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.FocusHandler#onFocus(com.google.gwt.event.dom.client.FocusEvent)}
+   *             instead
    */
   @Deprecated
   void onFocus(Widget sender);
@@ -38,6 +41,9 @@ public interface FocusListener extends EventListener {
    * Fired when a widget loses keyboard focus.
    * 
    * @param sender the widget losing focus.
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.BlurHandler#onBlur(com.google.gwt.event.dom.client.BlurEvent)}
+   *             instead
    */
   @Deprecated
   void onLostFocus(Widget sender);

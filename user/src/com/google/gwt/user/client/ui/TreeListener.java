@@ -19,6 +19,10 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for tree events.
+ * 
+ * @deprecated use {@link com.google.gwt.event.logical.shared.SelectionHandler},
+ *             {@link com.google.gwt.event.logical.shared.OpenHandler}, and/or
+ *             {@link com.google.gwt.event.logical.shared.CloseHandler} instead
  */
 @Deprecated
 public interface TreeListener extends EventListener {
@@ -27,6 +31,9 @@ public interface TreeListener extends EventListener {
    * Fired when a tree item is selected.
    * 
    * @param item the item being selected.
+   * @deprecated use
+   *             {@link com.google.gwt.event.logical.shared.SelectionHandler#onSelection(com.google.gwt.event.logical.shared.SelectionEvent)}
+   *             instead
    */
   @Deprecated
   void onTreeItemSelected(TreeItem item);
@@ -35,6 +42,10 @@ public interface TreeListener extends EventListener {
    * Fired when a tree item is opened or closed.
    * 
    * @param item the item whose state is changing.
+   * @deprecated use
+   *             {@link com.google.gwt.event.logical.shared.OpenHandler#onOpen(com.google.gwt.event.logical.shared.OpenEvent)}
+   *             and/or
+   *             {@link com.google.gwt.event.logical.shared.CloseHandler#onClose(com.google.gwt.event.logical.shared.CloseEvent)}
    */
   @Deprecated
   void onTreeItemStateChanged(TreeItem item);

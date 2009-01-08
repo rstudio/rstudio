@@ -19,6 +19,10 @@ import java.util.EventListener;
 
 /**
  * Event listener interface for table events.
+ * 
+ * @deprecated use {@link com.google.gwt.event.dom.client.ClickHandler} and
+ *             {@link HTMLTable#getCellForEvent(com.google.gwt.event.dom.client.ClickEvent)}
+ *             instead
  */
 @Deprecated
 public interface TableListener extends EventListener {
@@ -29,6 +33,10 @@ public interface TableListener extends EventListener {
    * @param sender the widget sending the event
    * @param row the row of the cell being clicked
    * @param cell the index of the cell being clicked
+   * 
+   * @deprecated use {@link com.google.gwt.event.dom.client.ClickHandler} and
+   *             {@link HTMLTable#getCellForEvent(com.google.gwt.event.dom.client.ClickEvent)}
+   *             instead
    */
   @Deprecated
   void onCellClicked(SourcesTableEvents sender, int row, int cell);

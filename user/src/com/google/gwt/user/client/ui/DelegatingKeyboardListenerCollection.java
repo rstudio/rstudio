@@ -39,6 +39,8 @@ package com.google.gwt.user.client.ui;
  *    keyboardListeners.add(listener);
  *  }
  *</pre>
+ * 
+ * @deprecated use <code>Widget#delegateEvent</code> instead
  */
 @Deprecated
 public class DelegatingKeyboardListenerCollection extends

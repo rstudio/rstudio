@@ -19,6 +19,10 @@ import java.util.EventObject;
 
 /**
  * Event object containing information about {@link DisclosurePanel} changes.
+ * 
+ * @deprecated use
+ *             {@link com.google.gwt.event.logical.shared.CloseEvent} and
+ *             {@link  com.google.gwt.event.logical.shared.OpenEvent} instead
  */
 @Deprecated
 public class DisclosureEvent extends EventObject {

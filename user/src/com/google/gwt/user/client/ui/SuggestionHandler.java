@@ -21,6 +21,9 @@ import java.util.EventListener;
  * Event handler interface for {@link SuggestionEvent}.
  * 
  * @see SuggestBox
+ * 
+ * @deprecated use {@link com.google.gwt.event.logical.shared.SelectionHandler}
+ *             instead
  */
 @Deprecated
 public interface SuggestionHandler extends EventListener {
@@ -30,8 +33,11 @@ public interface SuggestionHandler extends EventListener {
    * SuggestBox by clicking on one of the suggestions, or by pressing the ENTER
    * key to select the suggestion that is currently highlighted.
    * 
-   * @param event the object containing information about this event
+   * @param event the object containing information about this event deprecated
+   *          use
+   *          {@link com.google.gwt.event.logical.shared.SelectionHandler#onSelection(com.google.gwt.event.logical.shared.SelectionEvent)}
+   *          instead
    */
-  @Deprecated
+
   void onSuggestionSelected(SuggestionEvent event);
 }

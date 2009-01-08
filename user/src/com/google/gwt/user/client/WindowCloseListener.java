@@ -19,6 +19,9 @@ package com.google.gwt.user.client;
  * Implement this interface to receive closing events from the browser window.
  * 
  * @see com.google.gwt.user.client.Window#addWindowCloseListener(WindowCloseListener)
+ * @deprecated use {@link Window.ClosingHandler} and
+ *             {@link com.google.gwt.event.logical.shared.CloseHandler} instead
+ * 
  */
 @Deprecated
 public interface WindowCloseListener extends java.util.EventListener {

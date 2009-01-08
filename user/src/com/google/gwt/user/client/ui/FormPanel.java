@@ -183,6 +183,8 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     /**
      * This method is used for legacy support and should be removed when
      * {@link FormHandler} is removed.
+     * 
+     * @deprecated use {@link FormPanel.SubmitEvent#cancel()} instead
      */
     @Deprecated
     void setCanceled(boolean canceled) {

@@ -182,8 +182,14 @@ public interface KeyboardListener extends EventListener {
    *          value is a combination of the bits defined by
    *          {@link KeyboardListener#MODIFIER_SHIFT},
    *          {@link KeyboardListener#MODIFIER_CTRL}, and
-   *          {@link KeyboardListener#MODIFIER_ALT}.
+   *          {@link KeyboardListener#MODIFIER_ALT}
+   * 
+   * 
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyDownHandler#onKeyDown(com.google.gwt.event.dom.client.KeyDownEvent)}
+   *             instead
    */
+  @Deprecated
   void onKeyDown(Widget sender, char keyCode, int modifiers);
 
   /**
@@ -205,8 +211,12 @@ public interface KeyboardListener extends EventListener {
    *          value is a combination of the bits defined by
    *          {@link KeyboardListener#MODIFIER_SHIFT},
    *          {@link KeyboardListener#MODIFIER_CTRL}, and
-   *          {@link KeyboardListener#MODIFIER_ALT}.
+   *          {@link KeyboardListener#MODIFIER_ALT}
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyPressHandler#onKeyPress(com.google.gwt.event.dom.client.KeyPressEvent)}
+   *             instead
    */
+  @Deprecated
   void onKeyPress(Widget sender, char keyCode, int modifiers);
 
   /**
@@ -219,7 +229,11 @@ public interface KeyboardListener extends EventListener {
    *          value is a combination of the bits defined by
    *          {@link KeyboardListener#MODIFIER_SHIFT},
    *          {@link KeyboardListener#MODIFIER_CTRL}, and
-   *          {@link KeyboardListener#MODIFIER_ALT}.
+   *          {@link KeyboardListener#MODIFIER_ALT}
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.KeyUpHandler#onKeyUp(com.google.gwt.event.dom.client.KeyUpEvent)}
+   *             instead
    */
+  @Deprecated
   void onKeyUp(Widget sender, char keyCode, int modifiers);
 }

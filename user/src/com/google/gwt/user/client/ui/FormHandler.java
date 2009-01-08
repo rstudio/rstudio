@@ -37,6 +37,7 @@ public interface FormHandler extends EventListener {
    * 
    * @param event an event object containing information about the form
    *          submission
+   * @deprecated use {@link FormPanel.SubmitHandler} instead
    */
   @Deprecated
   void onSubmit(FormSubmitEvent event);
@@ -46,6 +47,7 @@ public interface FormHandler extends EventListener {
    * 
    * @param event an event object containing information about the form
    *          submission
+   * @deprecated use {@link FormPanel.SubmitCompleteHandler} instead
    */
   @Deprecated
   void onSubmitComplete(FormSubmitCompleteEvent event);

@@ -38,6 +38,8 @@ package com.google.gwt.user.client.ui;
  *    clickListeners.add(listener);
  *  }
  *</pre>
+ * 
+ * @deprecated use <code>Widget#delegateEvent</code> instead
  */
 @Deprecated
 public class DelegatingClickListenerCollection extends ClickListenerCollection

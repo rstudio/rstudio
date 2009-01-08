@@ -31,6 +31,8 @@ public interface DisclosureHandler extends EventListener {
    * Fired when the panel is closed.
    * 
    * @param event event representing this action.
+   * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler}
+   *             instead
    */
   @Deprecated
   void onClose(DisclosureEvent event);
@@ -39,6 +41,7 @@ public interface DisclosureHandler extends EventListener {
    * Fired when the panel is opened.
    * 
    * @param event event representing this action.
+   * @deprecated use {@link com.google.gwt.event.logical.shared.OpenHandler} instead
    */
   @Deprecated
   void onOpen(DisclosureEvent event);

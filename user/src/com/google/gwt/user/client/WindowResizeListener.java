@@ -19,6 +19,8 @@ package com.google.gwt.user.client;
  * Implement this interface to receive resize events from the browser window.
  * 
  * @see com.google.gwt.user.client.Window#addWindowResizeListener(WindowResizeListener)
+ * @deprecated use {@link com.google.gwt.event.logical.shared.ResizeHandler}
+ *             instead
  */
 @Deprecated
 public interface WindowResizeListener extends java.util.EventListener {
