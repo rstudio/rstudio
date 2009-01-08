@@ -150,7 +150,12 @@ public class HostedMode extends HostedModeBase {
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
       registerHandler(new ArgHandlerLocalWorkers(options));
-      registerHandler(new ArgHandlerModuleName(options));
+      registerHandler(new ArgHandlerModuleName(options) {
+        @Override
+        public String getPurpose() {
+          return super.getPurpose() + " to host";
+        }
+      });
     }
 
     @Override
