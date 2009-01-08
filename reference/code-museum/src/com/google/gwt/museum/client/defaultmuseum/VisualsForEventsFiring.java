@@ -96,7 +96,6 @@ public class VisualsForEventsFiring extends AbstractIssue {
       super(content);
     }
 
-    @Override
     public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
       return addDomHandler(handler, MouseWheelEvent.getType());
     }
@@ -416,7 +415,6 @@ public class VisualsForEventsFiring extends AbstractIssue {
       }
     });
     scrollable.addMouseWheelHandler(new MouseWheelHandler() {
-      @Override
       public void onMouseWheel(MouseWheelEvent event) {
         event.getClientX();
         event.getClientY();
