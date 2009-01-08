@@ -70,9 +70,15 @@ public abstract class PermutationWorkerFactory {
             TreeLogger logger = work.getLogger();
             try {
               PermutationResult result = worker.compile(logger, work.getPerm());
-              Util.writeObjectAsFile(logger, work.getResultFile(), result);
-              logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
-              resultsQueue.put(Result.SUCCESS);
+              if (result == null) {
+                logger.log(TreeLogger.ERROR, "Compilation failed");
+                return;
+              } else {
+                Util.writeObjectAsFile(logger, work.getResultFile(), result);
+                logger.log(TreeLogger.DEBUG,
+                    "Successfully compiled permutation");
+                resultsQueue.put(Result.SUCCESS);
+              }
             } catch (TransientWorkerException e) {
               logger.log(TreeLogger.DEBUG,
                   "Worker died, will retry Permutation", e);
@@ -82,7 +88,6 @@ public abstract class PermutationWorkerFactory {
             } catch (UnableToCompleteException e) {
               logger.log(TreeLogger.ERROR,
                   "Unrecoverable exception, shutting down", e);
-              threadDeathResult = Result.FAIL;
               return;
             }
           }
