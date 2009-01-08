@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,6 +29,7 @@ import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasContextMenuHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.dom.client.HasMouseWheelHandlers;
@@ -98,6 +99,13 @@ public class VisualsForEventsFiring extends AbstractIssue {
 
     public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
       return addDomHandler(handler, MouseWheelEvent.getType());
+    }
+  }
+
+  private static class CustomTextBox extends TextBox implements
+      HasChangeHandlers {
+    public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+      return addDomHandler(handler, ChangeEvent.getType());
     }
   }
 
@@ -225,7 +233,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
 
   private void prepKeyboardEvents() {
     // Setup a text box to trigger the events
-    TextBox textBox = new TextBox();
+    CustomTextBox textBox = new CustomTextBox();
 
     // Setup the tests
     textBox.setText("Type a letter");

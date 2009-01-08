@@ -439,14 +439,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Hides the popup. This has no effect if it is not currently visible.
+   * Hides the popup and detaches it from the page. This has no effect if it is
+   * not currently showing.
    */
   public void hide() {
     hide(false);
   }
 
   /**
-   * Hides the popup. This has no effect if it is not currently visible.
+   * Hides the popup and detaches it from the page. This has no effect if it is
+   * not currently showing.
    * 
    * @param autoClosed the value that will be passed to
    *          {@link CloseHandler#onClose(CloseEvent)} when the popup is closed
@@ -498,6 +500,31 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public boolean isPreviewingAllNativeEvents() {
     return previewAllNativeEvents;
+  }
+
+  /**
+   * Determines whether or not this popup is showing.
+   * 
+   * @return <code>true</code> if the popup is showing
+   * @see #show()
+   * @see #hide()
+   */
+  public boolean isShowing() {
+    return showing;
+  }
+
+  /**
+   * Determines whether or not this popup is visible. Note that this just checks
+   * the <code>visibility</code> style attribute, which is set in the
+   * {@link #setVisible(boolean)} method. If you want to know if the popup is
+   * attached to the page, use {@link #isShowing()} instead.
+   * 
+   * @return <code>true</code> if the object is visible
+   * @see #setVisible(boolean)
+   */
+  @Override
+  public boolean isVisible() {
+    return !"hidden".equals(getElement().getStyle().getProperty("visibility"));
   }
 
   /**
@@ -689,10 +716,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Sets whether this object is visible.
+   * Sets whether this object is visible. This method just sets the
+   * <code>visibility</code> style attribute. You need to call {@link #show()}
+   * to actually attached/detach the {@link PopupPanel} to the page.
    * 
    * @param visible <code>true</code> to show the object, <code>false</code> to
    *          hide it
+   * @see #show()
+   * @see #hide()
    */
   @Override
   public void setVisible(boolean visible) {
@@ -739,7 +770,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Shows the popup. It must have a child widget before this method is called.
+   * Shows the popup and attach it to the page. It must have a child widget
+   * before this method is called.
    */
   public void show() {
     if (showing) {

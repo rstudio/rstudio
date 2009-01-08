@@ -23,7 +23,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 
 /**
- * TODO: document me.
+ * Tests for {@link PopupPanel}.
  */
 public class PopupTest extends GWTTestCase {
 
@@ -82,6 +82,20 @@ public class PopupTest extends GWTTestCase {
     assertTrue(popup.isPreviewingAllNativeEvents());
     popup.setPreviewingAllNativeEvents(false);
     assertFalse(popup.isPreviewingAllNativeEvents());
+
+    // setVisible
+    assertTrue(popup.isVisible());
+    popup.setVisible(false);
+    assertFalse(popup.isVisible());
+    popup.setVisible(true);
+    assertTrue(popup.isVisible());
+
+    // isShowing
+    assertFalse(popup.isShowing());
+    popup.show();
+    assertTrue(popup.isShowing());
+    popup.hide();
+    assertFalse(popup.isShowing());
   }
 
   public void testAutoHidePartner() {

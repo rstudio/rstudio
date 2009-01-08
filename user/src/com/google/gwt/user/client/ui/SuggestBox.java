@@ -20,6 +20,7 @@ import static com.google.gwt.event.dom.client.KeyCodes.KEY_ENTER;
 import static com.google.gwt.event.dom.client.KeyCodes.KEY_TAB;
 import static com.google.gwt.event.dom.client.KeyCodes.KEY_UP;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -46,6 +47,7 @@ import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
 import java.util.Collection;
 import java.util.List;
+
 /**
  * A {@link SuggestBox} is a text box or text area which displays a
  * pre-configured set of selections that match the user's input.
@@ -91,31 +93,53 @@ import java.util.List;
  * <img class='gallery' src='SuggestBox.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3> 
- * <ul class='css'> 
- * <li>.gwt-SuggestBox { the suggest
- * box itself }</li> 
- * <li>.gwt-SuggestBoxPopup { the suggestion popup }</li> 
- * <li>.gwt-SuggestBoxPopup .item { an unselected suggestion }</li> 
- * <li>.gwt-SuggestBoxPopup .item-selected { a selected suggestion }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeft { the top left cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenter { the top center cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopRight { the top right cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupTopRightInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft { the middle left cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter { the middle center cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRight { the middle right cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeft { the bottom left cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenter { the bottom center cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner { the inner element of the cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRight { the bottom right cell }</li> 
- * <li>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner { the inner element of the cell }</li> </ul>
+ * <h3>CSS Style Rules</h3>
+ * <dl>
+ * <dt>.gwt-SuggestBox</dt>
+ * <dd>the suggest box itself</dd>
+ * <dt>.gwt-SuggestBoxPopup</dt>
+ * <dd>the suggestion popup</dd>
+ * <dt>.gwt-SuggestBoxPopup .item</dt>
+ * <dd>an unselected suggestion</dd>
+ * <dt>.gwt-SuggestBoxPopup .item-selected</dt>
+ * <dd>a selected suggestion</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupTopLeft</dt>
+ * <dd>the top left cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupTopLeftInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupTopCenter</dt>
+ * <dd>the top center cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupTopCenterInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupTopRight</dt>
+ * <dd>the top right cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupTopRightInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleLeft</dt>
+ * <dd>the middle left cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleLeftInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleCenter</dt>
+ * <dd>the middle center cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleCenterInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleRight</dt>
+ * <dd>the middle right cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupMiddleRightInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomLeft</dt>
+ * <dd>the bottom left cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomLeftInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomCenter</dt>
+ * <dd>the bottom center cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomCenterInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomRight</dt>
+ * <dd>the bottom right cell</dd>
+ * <dt>.gwt-SuggestBoxPopup .suggestPopupBottomRightInner</dt>
+ * <dd>the inner element of the cell</dd>
+ * </dl>
  * 
  * @see SuggestOracle
  * @see MultiWordSuggestOracle
@@ -455,7 +479,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   public void addChangeListener(final ChangeListener listener) {
     ListenerWrapper.Change legacy = new ListenerWrapper.Change(listener);
     legacy.setSource(this);
-    box.addChangeHandler(legacy);
+    box.addDomHandler(legacy, ChangeEvent.getType());
   }
 
   /**
@@ -533,9 +557,9 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Returns whether or not the first suggestion will be automatically
-   * selected. This behavior is off by default.
-   *
+   * Returns whether or not the first suggestion will be automatically selected.
+   * This behavior is off by default.
+   * 
    * @return true if the first suggestion will be automatically selected
    */
   public boolean getSelectsFirstItem() {
@@ -574,6 +598,13 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
   public boolean isAnimationEnabled() {
     return suggestionPopup.isAnimationEnabled();
+  }
+
+  /**
+   * @return true if the list of suggestions is currently showing, false if not
+   */
+  public boolean isSuggestionListShowing() {
+    return suggestionPopup.isShowing();
   }
 
   @Deprecated
@@ -636,7 +667,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   /**
    * Turns on or off the behavior that automatically selects the first suggested
    * item. It defaults to off.
-   *
+   * 
    * @param selectsFirstItem Whether or not to automatically select the first
    *          suggested
    */
@@ -674,6 +705,10 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     super.onEnsureDebugId(baseID);
     suggestionPopup.ensureDebugId(baseID + "-popup");
     suggestionMenu.setMenuItemDebugIds(baseID);
+  }
+
+  void showSuggestions(String query) {
+    oracle.requestSuggestions(new Request(query, limit), callBack);
   }
 
   private void addEventsToTextBox() {
@@ -715,7 +750,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
       }
 
       public void onValueChange(ValueChangeEvent<String> event) {
-         fireEvent(event);
+        fireEvent(event);
       }
 
       private void refreshSuggestions() {
@@ -805,9 +840,5 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     } else {
       suggestionPopup.hide();
     }
-  }
-
-  private void showSuggestions(String query) {
-    oracle.requestSuggestions(new Request(query, limit), callBack);
   }
 }
