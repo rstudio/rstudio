@@ -626,7 +626,10 @@ public class DOM {
    * 
    * @param evt the event whose key code is to be set
    * @param key the new key code
+   * @deprecated this method only works in IE and should not have been added to
+   *             the API
    */
+  @Deprecated
   public static void eventSetKeyCode(Event evt, char key) {
     impl.eventSetKeyCode(evt, key);
   }

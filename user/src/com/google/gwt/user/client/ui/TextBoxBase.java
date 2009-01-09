@@ -226,7 +226,10 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
    * listeners to easily filter keyboard input.
    * 
    * @param key the new key value
+   * @deprecated this method only works in IE and should not have been added to
+   *             the API
    */
+  @Deprecated
   public void setKey(char key) {
     if (currentEvent != null) {
       DOM.eventSetKeyCode(currentEvent, key);
