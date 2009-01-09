@@ -31,13 +31,11 @@ import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.Map;
@@ -238,9 +236,6 @@ public class HostedMode extends HostedModeBase {
     System.exit(-1);
   }
 
-  protected final PrintWriterTreeLogger console = new PrintWriterTreeLogger(
-      new PrintWriter(System.err, true));
-
   /**
    * Hiding super field because it's actually the same object, just with a
    * stronger type.
@@ -268,10 +263,6 @@ public class HostedMode extends HostedModeBase {
    * Tracks whether we created a temp workdir that we need to destroy.
    */
   private boolean tempWorkDir = false;
-
-  {
-    console.setMaxDetail(TreeLogger.WARN);
-  }
 
   /**
    * Default constructor for testing; no public API yet.
