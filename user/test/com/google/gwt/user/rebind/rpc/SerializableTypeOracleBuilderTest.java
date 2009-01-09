@@ -105,6 +105,14 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   private static final int EXPOSURE_NONE = TypeParameterExposureComputer.EXPOSURE_NONE;
 
+  private static void addGwtTransient(Set<CompilationUnit> units) {
+    StringBuffer code = new StringBuffer();
+    code.append("package com.google.gwt.user.client.rpc;\n");
+    code.append("public @interface GwtTransient { }\n");
+    units.add(createMockCompilationUnit(
+        "com.google.gwt.user.client.rpc.GwtTransient", code));
+  }
+
   private static void addICRSE(Set<CompilationUnit> units) {
     StringBuffer code = new StringBuffer();
     code.append("package com.google.gwt.user.client.rpc;\n");
@@ -167,6 +175,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   private static void addStandardClasses(Set<CompilationUnit> units) {
+    addGwtTransient(units);
     addJavaIoSerializable(units);
     addJavaLangObject(units);
     addJavaLangString(units);
@@ -2019,6 +2028,59 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     assertInstantiable(so, a);
     assertSerializableTypes(so, a);
+  }
+
+  /**
+   * Tests that STOB skips transient fields.
+   */
+  public void testTransient() throws UnableToCompleteException,
+      NotFoundException {
+    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
+    addStandardClasses(units);
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import com.google.gwt.user.client.rpc.GwtTransient;\n");
+      code.append("import java.io.Serializable;\n");
+      code.append("public class A implements Serializable {\n");
+      code.append("  transient ServerOnly1 serverOnly1;\n");
+      code.append("  @GwtTransient ServerOnly2 serverOnly2;\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("A", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("class ServerOnly1 implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("ServerOnly1", code));
+    }
+
+    {
+      StringBuilder code = new StringBuilder();
+      code.append("import java.io.Serializable;\n");
+      code.append("class ServerOnly2 implements Serializable {\n");
+      code.append("}\n");
+      units.add(createMockCompilationUnit("ServerOnly2", code));
+    }
+
+    TreeLogger logger = createLogger();
+    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
+
+    JClassType a = to.getType("A");
+    JClassType serverOnly1 = to.getType("ServerOnly1");
+    JClassType serverOnly2 = to.getType("ServerOnly2");
+
+    SerializableTypeOracleBuilder sob = createSerializableTypeOracleBuilder(
+        logger, to);
+    sob.addRootType(logger, a);
+    SerializableTypeOracle so = sob.build(logger);
+
+    assertSerializableTypes(so, a);
+    assertInstantiable(so, a);
+    assertNotFieldSerializable(so, serverOnly1);
+    assertNotFieldSerializable(so, serverOnly2);
   }
 
   /**

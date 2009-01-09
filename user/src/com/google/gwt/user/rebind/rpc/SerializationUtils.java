@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.rebind.rpc;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -114,13 +115,10 @@ class SerializationUtils {
     JField[] declFields = classType.getFields();
     assert (declFields != null);
     for (JField field : declFields) {
-      // TODO(mmendez): this is shared with the serializable type oracle
-      // builder, join with that
-      if (field.isStatic() || field.isTransient() || field.isFinal()) {
-        continue;
+      if (SerializableTypeOracleBuilder.shouldConsiderForSerialization(
+          TreeLogger.NULL, true, field)) {
+        fields.add(field);
       }
-
-      fields.add(field);
     }
 
     Collections.sort(fields, FIELD_COMPARATOR);

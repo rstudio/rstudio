@@ -31,6 +31,7 @@ import com.google.gwt.core.ext.typeinfo.JWildcardType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
+import com.google.gwt.user.client.rpc.GwtTransient;
 import com.google.gwt.user.client.rpc.IsSerializable;
 import com.google.gwt.user.rebind.rpc.TypeParameterExposureComputer.TypeParameterFlowInfo;
 import com.google.gwt.user.rebind.rpc.TypePaths.TypePath;
@@ -87,14 +88,14 @@ public class SerializableTypeOracleBuilder {
   private class TypeInfoComputed {
 
     /**
-     * <code>true</code> if the type is assignable to {@link IsSerializable}
-     * or {@link java.io.Serializable Serializable}.
+     * <code>true</code> if the type is assignable to {@link IsSerializable} or
+     * {@link java.io.Serializable Serializable}.
      */
     private final boolean autoSerializable;
 
     /**
-     * <code>true</code> if the this type directly implements one of the
-     * marker interfaces.
+     * <code>true</code> if the this type directly implements one of the marker
+     * interfaces.
      */
     private final boolean directlyImplementsMarker;
 
@@ -384,8 +385,8 @@ public class SerializableTypeOracleBuilder {
 
   /**
    * Return <code>true</code> if a class's fields should be considered for
-   * serialization. If it returns <code>false</code> then none of the fields
-   * of this class should be serialized.
+   * serialization. If it returns <code>false</code> then none of the fields of
+   * this class should be serialized.
    */
   static boolean shouldConsiderFieldsForSerialization(TreeLogger logger,
       JClassType type, boolean isSpeculative, TypeFilter filter) {
@@ -450,12 +451,16 @@ public class SerializableTypeOracleBuilder {
   }
 
   /**
-   * Returns <code>true</code> if the field qualifies for serialization
-   * without considering its type.
+   * Returns <code>true</code> if the field qualifies for serialization without
+   * considering its type.
    */
   static boolean shouldConsiderForSerialization(TreeLogger logger,
       boolean suppressNonStaticFinalFieldWarnings, JField field) {
     if (field.isStatic() || field.isTransient()) {
+      return false;
+    }
+
+    if (field.isAnnotationPresent(GwtTransient.class)) {
       return false;
     }
 
@@ -711,7 +716,8 @@ public class SerializableTypeOracleBuilder {
 
     logSerializableTypes(logger, fieldSerializableTypes);
 
-    return new SerializableTypeOracleImpl(fieldSerializableTypes, possiblyInstantiatedTypes);
+    return new SerializableTypeOracleImpl(fieldSerializableTypes,
+        possiblyInstantiatedTypes);
   }
 
   /**
@@ -748,8 +754,8 @@ public class SerializableTypeOracleBuilder {
 
   /**
    * Same as
-   * {@link #checkTypeInstantiable(TreeLogger, JType, boolean, com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder.TypePath)},
-   * except that returns the set of instantiable subtypes.
+   * {@link #checkTypeInstantiable(TreeLogger, JType, boolean, com.google.gwt.user.rebind.rpc.SerializableTypeOracleBuilder.TypePath)}
+   * , except that returns the set of instantiable subtypes.
    */
   boolean checkTypeInstantiable(TreeLogger logger, JType type,
       boolean isSpeculative, TypePath path, Set<JClassType> instSubtypes) {
@@ -1064,9 +1070,8 @@ public class SerializableTypeOracleBuilder {
 
       /*
        * If my super type did not check out, then I am not instantiable and we
-       * should error out... UNLESS I am *directly* serializable myself, in
-       * which case it's ok for me to be the root of a new instantiable
-       * hierarchy.
+       * should error out... UNLESS I amdirectly serializable myself, in which
+       * case it's ok for me to be the root of a new instantiable hierarchy.
        */
       if (!superTypeOk && !isDirectlySerializable(classOrInterface)) {
         return false;
