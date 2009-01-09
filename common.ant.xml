@@ -39,6 +39,7 @@
   <property name="gwt.build.dist" location="${gwt.build}/dist" />
   <property name="project.build" location="${gwt.build.out}/${project.tail}" />
   <property name="project.lib" location="${gwt.build.lib}/gwt-${ant.project.name}.jar" />
+  <property name="project.lib.raw" location="${gwt.build.lib}/gwt-${ant.project.name}-raw.jar" />
   <property name="project.jni" location="${gwt.build}/${project.tail}" />
   <property name="javac.out" location="${project.build}/bin" />
   <property name="javac.junit.out" location="${project.build}/bin-test" />
