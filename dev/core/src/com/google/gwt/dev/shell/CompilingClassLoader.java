@@ -591,13 +591,6 @@ public final class CompilingClassLoader extends ClassLoader {
           new NullPointerException());
     }
 
-    // Don't mess with anything in the standard Java packages.
-    //
-    if (isInStandardJavaPackage(className)) {
-      // make my superclass load it
-      throw new ClassNotFoundException(className);
-    }
-
     // Check for a bridge class that spans hosted and user space.
     if (BRIDGE_CLASS_NAMES.containsKey(className)) {
       return BRIDGE_CLASS_NAMES.get(className);
@@ -716,22 +709,6 @@ public final class CompilingClassLoader extends ClassLoader {
       shellJavaScriptHost.createNative(jsniMethod.location(),
           jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
     }
-  }
-
-  /**
-   * NOTE: This logic is also used in SerializableTypeOracleBuilder; don't
-   * change this one without changing the other.
-   */
-  private boolean isInStandardJavaPackage(String className) {
-    if (className.startsWith("java.")) {
-      return true;
-    }
-
-    if (className.startsWith("javax.")) {
-      return true;
-    }
-
-    return false;
   }
 
   /**
