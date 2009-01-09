@@ -18,15 +18,6 @@ if (navigator.userAgent.toLowerCase().indexOf("gecko") != -1) {
     return __eval(s);
   }
 }
-
-</script></head>
-<body>
-<embed id="pluginEmbed" type="application/x-gwt-hosted-mode" width="10" height="10">
-</embed>
-<object id="pluginObject" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E">
-</object>
-<font face='arial' size='-1'>This html file is for hosted mode support.</font>
-<script><!--
 var $hosted = "localhost:9997";
 
 // wrapper to call JS methods, which we need both to be able to supply a
@@ -191,6 +182,17 @@ window.onunload = function() {
 };
 
 window.__gwt_module_id = 0;
+</script></head>
+<body>
+<font face='arial' size='-1'>This html file is for hosted mode support.</font>
+<script><!--
+
+if (!findPluginXPCOM()) {
+  document.write('<embed id="pluginEmbed" type="application/x-gwt-hosted-mode" width="10" height="10">');
+  document.write('</embed>');
+  document.write('<object id="pluginObject" CLASSID="CLSID:1D6156B6-002B-49E7-B5CA-C138FB843B4E">');
+  document.write('</object>');
+}
 
 var query = parent.location.search;
 $stats && $stats({moduleName:$moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalEnd'});

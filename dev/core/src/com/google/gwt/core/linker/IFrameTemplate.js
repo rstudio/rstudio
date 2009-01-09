@@ -346,7 +346,7 @@ function __MODULE_FUNC__() {
   var strongName;
   var initialHtml;
   if (isHostedMode()) {
-    if ($wnd.external.initModule && $wnd.external.initModule('__MODULE_NAME__')) {
+    if ($wnd.external && $wnd.external.initModule && $wnd.external.initModule('__MODULE_NAME__')) {
       // Refresh the page to update this selection script!
       $wnd.location.reload();
       return;

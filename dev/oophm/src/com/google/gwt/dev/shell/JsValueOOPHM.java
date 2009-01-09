@@ -20,6 +20,7 @@ import com.google.gwt.dev.shell.BrowserChannel.JsObjectRef;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
  * Represents a JavaScript value in OOPHM.
@@ -109,7 +110,7 @@ public class JsValueOOPHM extends JsValue {
 
   public static final String JSE_CLASS = "com.google.gwt.core.client.JavaScriptException";
 
-  private static final IdentityHashMap<Object, DispatchObject> dispatchObjectCache = new IdentityHashMap<Object, DispatchObject>();
+  private static final ThreadLocal<Map<Object, DispatchObject>> dispatchObjectCache = new ThreadLocal<Map<Object, DispatchObject>>();
 
   private static final UndefinedValue undefValue = new UndefinedValue();
 
@@ -358,10 +359,15 @@ public class JsValueOOPHM extends JsValue {
     if (val instanceof DispatchObject) {
       value = val;
     } else {
-      DispatchObject dispObj = dispatchObjectCache.get(val);
+      Map<Object, DispatchObject> cache = dispatchObjectCache.get();
+      if (cache == null) {
+        cache = new IdentityHashMap<Object, DispatchObject>();
+        dispatchObjectCache.set(cache);
+      }
+      DispatchObject dispObj = cache.get(val);
       if (dispObj == null) {
         dispObj = new DispatchObjectOOPHM(cl, val);
-        dispatchObjectCache.put(val, dispObj);
+        cache.put(val, dispObj);
       }
       value = dispObj;
     }
