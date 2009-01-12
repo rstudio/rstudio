@@ -1,10 +1,12 @@
 package @clientPackage;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 /**
  * The client side stub for the Rpc service.
  */
+@RemoteServiceRelativePath("echo")
 public interface EchoService extends RemoteService {
-  String echo (String input);
+  String echo(String input);
 }

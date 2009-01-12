@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.tools;
 
+import com.google.gwt.dev.Compiler;
+import com.google.gwt.dev.HostedMode;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.user.tools.util.ArgHandlerAddToClassPath;
 import com.google.gwt.user.tools.util.ArgHandlerEclipse;
@@ -274,7 +276,6 @@ public final class ApplicationCreator extends ToolBase {
     String moduleName;
     String serverPackageName = null;
     File javaDir = Utility.getDirectory(outDir, "src", true);
-    Utility.getDirectory(outDir, "test", true);
     File warDir = Utility.getDirectory(outDir, "war", true);
     File webInfDir = Utility.getDirectory(warDir, "WEB-INF", true);
     if (pos >= 0) {
@@ -301,12 +302,12 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@serverPackage", serverPackageName);
     replacements.put("@gwtUserPath", basePathEnv + gwtUserPath);
     replacements.put("@gwtDevPath", basePathEnv + gwtDevPath);
-    replacements.put("@shellClass", "com.google.gwt.dev.GWTHosted");
-    replacements.put("@compileClass", "com.google.gwt.dev.GWTCompiler");
+    replacements.put("@shellClass", HostedMode.class.getName());
+    replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", startupUrl);
     replacements.put("@antVmargs", isMacOsX
-        ? "<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
-    replacements.put("@vmargs", isMacOsX ? "-XstartOnFirstThread" : "");
+        ? "\n<jvmarg value=\"-XstartOnFirstThread\"/>" : "");
+    replacements.put("@vmargs", isMacOsX ? "&#10;-XstartOnFirstThread" : "");
     replacements.put("@eclipseExtraLaunchPaths",
         CreatorUtilities.createEclipseExtraLaunchPaths(extraClassPaths));
     replacements.put("@extraModuleInherits",
