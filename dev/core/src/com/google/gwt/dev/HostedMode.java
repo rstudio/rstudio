@@ -342,7 +342,7 @@ public class HostedMode extends HostedModeBase {
                   + "'; add servlet tags to your web.xml instead");
         }
 
-        link(loadLogger, module, false);
+        link(loadLogger, module);
       } catch (UnableToCompleteException e) {
         // Already logged.
         return false;
@@ -396,7 +396,7 @@ public class HostedMode extends HostedModeBase {
         shouldRefreshPage = true;
         module = loadModule(getTopLogger(), module.getCanonicalName(), false);
       }
-      link(getTopLogger(), module, true);
+      link(getTopLogger(), module);
       return shouldRefreshPage;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -425,8 +425,8 @@ public class HostedMode extends HostedModeBase {
    *          the link, otherwise do not include them
    * @throws UnableToCompleteException
    */
-  private void link(TreeLogger logger, ModuleDef module,
-      boolean includePublicFiles) throws UnableToCompleteException {
+  private void link(TreeLogger logger, ModuleDef module)
+      throws UnableToCompleteException {
     // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(options.getWarDir(), module.getName());
     File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
@@ -436,10 +436,6 @@ public class HostedMode extends HostedModeBase {
     StandardLinkerContext linkerStack = new StandardLinkerContext(logger,
         module, options);
     linkerStacks.put(module.getName(), linkerStack);
-
-    if (!includePublicFiles) {
-      linkerStack.getArtifacts().clear();
-    }
 
     ArtifactSet artifacts = linkerStack.invokeLink(logger);
     linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
