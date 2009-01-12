@@ -29,33 +29,6 @@ import java.util.Collection;
 public abstract class SuggestOracle {
 
   /**
-   * Constructor for {@link com.google.gwt.user.client.ui.SuggestOracle}.
-   */
-  public SuggestOracle() {
-  }
-
-  /**
-   * Should {@link Suggestion} display strings be treated as HTML? If true, this
-   * all suggestions' display strings will be interpreted as HTML, otherwise as
-   * text.
-   * 
-   * @return by default, returns false
-   */
-  public boolean isDisplayStringHTML() {
-    return false;
-  }
-
-  /**
-   * Generate a {@link Response} based on a specific {@link Request}. After the
-   * {@link Response} is created, it is passed into
-   * {@link Callback#onSuggestionsReady(com.google.gwt.user.client.ui.SuggestOracle.Request, com.google.gwt.user.client.ui.SuggestOracle.Response)}.
-   * 
-   * @param request the request
-   * @param callback the callback to use for the response
-   */
-  public abstract void requestSuggestions(Request request, Callback callback);
-
-  /**
    * Callback for {@link com.google.gwt.user.client.ui.SuggestOracle}. Every
    * {@link Request} should be associated with a callback that should be called
    * after a {@link  Response} is generated.
@@ -257,4 +230,31 @@ public abstract class SuggestOracle {
      */
     String getReplacementString();
   }
+
+  /**
+   * Constructor for {@link com.google.gwt.user.client.ui.SuggestOracle}.
+   */
+  public SuggestOracle() {
+  }
+
+  /**
+   * Should {@link Suggestion} display strings be treated as HTML? If true, this
+   * all suggestions' display strings will be interpreted as HTML, otherwise as
+   * text.
+   * 
+   * @return by default, returns false
+   */
+  public boolean isDisplayStringHTML() {
+    return false;
+  }
+
+  /**
+   * Generate a {@link Response} based on a specific {@link Request}. After the
+   * {@link Response} is created, it is passed into
+   * {@link Callback#onSuggestionsReady(com.google.gwt.user.client.ui.SuggestOracle.Request, com.google.gwt.user.client.ui.SuggestOracle.Response)}.
+   * 
+   * @param request the request
+   * @param callback the callback to use for the response
+   */
+  public abstract void requestSuggestions(Request request, Callback callback);
 }
