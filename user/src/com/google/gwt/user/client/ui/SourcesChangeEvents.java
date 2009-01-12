@@ -19,8 +19,13 @@ package com.google.gwt.user.client.ui;
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.ChangeListener} interface.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.HasChangeHandlers}
- *             instead
+ * @deprecated we have now separated dom and logical change events. Use
+ *             {@link com.google.gwt.event.dom.client.HasChangeHandlers} if the
+ *             change listener was triggered by a dom change event or
+ *             {@link com.google.gwt.event.logical.shared.HasValueChangeHandlers}
+ *             if it was based on a logical event
+ * 
+ * 
  */
 @Deprecated
 public interface SourcesChangeEvents {
@@ -29,7 +34,8 @@ public interface SourcesChangeEvents {
    * Adds a listener interface to receive change events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use <code>addChangeHandler</code> instead
+   * @deprecated use <code>addChangeHandler</code> or
+   *             <code>addValueChangeHandler</code> instead
    */
   @Deprecated
   void addChangeListener(ChangeListener listener);
