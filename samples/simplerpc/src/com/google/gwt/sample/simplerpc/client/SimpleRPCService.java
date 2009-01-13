@@ -16,6 +16,7 @@
 package com.google.gwt.sample.simplerpc.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import java.util.Map;
 /**
  * The sample service.
  */
+@RemoteServiceRelativePath("simpleRPC")
 public interface SimpleRPCService extends RemoteService {
   /**
    * Returns a string from the server associated with the given index.
@@ -36,9 +38,6 @@ public interface SimpleRPCService extends RemoteService {
   /**
    * Given a list of indexes, returns a map of indexes --> string values.
    * 
-   * @gwt.typeArgs indexes <java.lang.Integer>
-   * @gwt.typeArgs <java.lang.String> 
-   *
    * @param indexes indexes to be mapped
    * @return map of indexes --> string values
    */

@@ -12,10 +12,8 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module rename-to="simplerpc">
 	<inherits name='com.google.gwt.user.User'/>
 	<entry-point class='com.google.gwt.sample.simplerpc.client.SimpleRPC'/>
 	<servlet path='/simpleRPC' class='com.google.gwt.sample.simplerpc.server.SimpleRPCServiceImpl'/>
 </module>
-
-

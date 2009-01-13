@@ -51,9 +51,9 @@ public class Shortcuts extends Composite {
    */
   public Shortcuts(Images images) {
     // Create the groups within the stack panel.
-    add(images, new Mailboxes(images), images.mailgroup(), "Mail");
-    add(images, new Tasks(), images.tasksgroup(), "Tasks");
-    add(images, new Contacts(images), images.contactsgroup(), "Contacts");
+    add(new Mailboxes(images), images.mailgroup(), "Mail");
+    add(new Tasks(), images.tasksgroup(), "Tasks");
+    add(new Contacts(images), images.contactsgroup(), "Contacts");
 
     initWidget(stackPanel);
   }
@@ -64,8 +64,8 @@ public class Shortcuts extends Composite {
     stackPanel.showStack(0);
   }
 
-  private void add(Images images, Widget widget,
-      AbstractImagePrototype imageProto, String caption) {
+  private void add(Widget widget, AbstractImagePrototype imageProto,
+      String caption) {
     widget.addStyleName("mail-StackContent");
     stackPanel.add(widget, createHeaderHTML(imageProto, caption), true);
   }

@@ -13,24 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.sample.simplerpc.client;
-
-import com.google.gwt.user.client.rpc.SerializableException;
 
 /**
  * Simple RPC exception.
  */
-public class SimpleRPCException extends SerializableException {
+public class SimpleRPCException extends Exception {
 
-  /** 
-   * Constructor for <code>SimpleRPCException</code>. Needed to support serialization.
+  /**
+   * Constructor for <code>SimpleRPCException</code>. Needed to support
+   * serialization.
    */
   public SimpleRPCException() {
   }
 
   /**
    * Constructor for <code>SimpleRPCException</code>.
+   * 
    * @param message message for the <code>SimplePRCException</code>
    */
   public SimpleRPCException(String message) {

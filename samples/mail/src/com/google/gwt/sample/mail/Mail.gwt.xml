@@ -12,8 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module rename-to="mail">
 	<inherits name='com.google.gwt.user.User'/>
 	<entry-point class='com.google.gwt.sample.mail.client.Mail'/>
-	<stylesheet src='Mail.css'/>
 </module>
