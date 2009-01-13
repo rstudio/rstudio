@@ -63,7 +63,7 @@
     </outofdate>
   </target>
 
-  <macrodef name="applicationCreator">
+  <macrodef name="webAppCreator">
     <attribute name="platform" />
     <attribute name="extension" default="" />
     <sequential>
@@ -74,15 +74,13 @@
         </targetfiles>
         <sequential>
           <mkdir dir="${samples.scripts}/@{platform}/${sample.upper}" />
-          <java classname="com.google.gwt.user.tools.ApplicationCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
+          <java classname="com.google.gwt.user.tools.WebAppCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
             <!-- Relative path is important! Paths will be relative in final distro -->
             <sysproperty key="gwt.devjar" value="../../gwt-dev-@{platform}.jar" />
             <arg value="-overwrite" />
-            <arg value="-eclipse" />
-            <arg value="${sample.upper}" />
             <arg value="-out" />
             <arg file="${samples.scripts}/@{platform}/${sample.upper}" />
-            <arg value="com.google.gwt.sample.${sample.lower}.client.${sample.upper}" />
+            <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
           </java>
         </sequential>
       </outofdate>
@@ -90,9 +88,9 @@
   </macrodef>
 
   <target name="scripts" description="Create launch scripts">
-    <applicationCreator platform="linux" />
-    <applicationCreator platform="windows" extension=".cmd" />
-    <applicationCreator platform="mac" />
+    <webAppCreator platform="linux" />
+    <webAppCreator platform="windows" extension=".cmd" />
+    <webAppCreator platform="mac" />
   </target>
 
   <target name="build" depends="source, compile, gwtc, scripts" description="Build and package this project" />
