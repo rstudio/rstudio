@@ -51,9 +51,7 @@
       </antcall>
     </gwt.timer>
     <length property="gwt.sample.length">
-      <fileset dir="${gwt.build.out}/samples">
-        <include name="**/www/com*/**"/>
-      </fileset>
+      <fileset dir="${gwt.build.out}/samples" includes="*/war/*/*.cache.html,*/war/*/*.cache.js"/>
     </length>
     <echo message="compiled size of all samples is ${gwt.sample.length} bytes."/>
   </target>
