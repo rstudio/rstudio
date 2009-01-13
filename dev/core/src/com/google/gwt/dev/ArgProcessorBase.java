@@ -20,7 +20,7 @@ import com.google.gwt.util.tools.ToolBase;
 /**
  * Base class for new-style argument processors.
  */
-abstract class ArgProcessorBase extends ToolBase {
+public abstract class ArgProcessorBase extends ToolBase {
   /*
    * Overridden to make public.
    */

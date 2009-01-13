@@ -18,7 +18,7 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 
 /**
- * Argument handler for module name, which has no option profix.
+ * Argument handler for one or more module names at the end of the command line.
  */
 public class ArgHandlerModuleName extends ArgHandlerExtra {
 

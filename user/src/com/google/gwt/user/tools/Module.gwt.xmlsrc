@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>@gwtModuleDtd
-<module rename-to='@newModuleName'>
+<module rename-to='@renameTo'>
   <!-- Inherit the core Web Toolkit stuff.                        -->
   <inherits name='com.google.gwt.user.User'/>
 
@@ -10,8 +10,8 @@
   <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
   <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
-  <!-- Other module inherits                                      -->@extraModuleInherits
+  <!-- Other module inherits                                      -->
 
   <!-- Specify the app entry point class.                         -->
-  <entry-point class='@clientPackage.@className'/>
+  <entry-point class='@clientPackage.@moduleShortName'/>
 </module>

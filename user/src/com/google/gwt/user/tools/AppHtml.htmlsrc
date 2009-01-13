@@ -12,18 +12,18 @@
     <!--                                                               -->
     <!-- Consider inlining CSS to reduce the number of requested files -->
     <!--                                                               -->
-    <link type="text/css" rel="stylesheet" href="@className.css">
+    <link type="text/css" rel="stylesheet" href="@moduleShortName.css">
     <!--                                           -->
     <!-- Any title is fine                         -->
     <!--                                           -->
-    <title>@className</title>
+    <title>@moduleShortName</title>
     
     <!--                                           -->
     <!-- This script loads your compiled module.   -->
     <!-- If you add any GWT meta tags, they must   -->
     <!-- be added before this line.                -->
     <!--                                           -->
-    <script type="text/javascript" language="javascript" src="@newModuleName/@newModuleName.nocache.js"></script>
+    <script type="text/javascript" language="javascript" src="@renameTo/@renameTo.nocache.js"></script>
   </head>
 
   <!--                                           -->

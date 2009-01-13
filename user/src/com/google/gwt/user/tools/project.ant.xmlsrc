@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<project name="@projectName" default="build" basedir=".">
+<project name="@moduleShortName" default="build" basedir=".">
 
   <path id="project.class.path">
     <pathelement location="war/WEB-INF/classes"/>
     <pathelement path="@gwtUserPath"/>
-@extraAntPathElements
     <!-- Add any additional non-server libs (such as JUnit) -->
     <fileset dir="war/WEB-INF/lib">
       <include name="**/*.jar"/>
@@ -60,7 +59,7 @@
 
   <target name="clean" description="Cleans this project">
     <delete dir="war/WEB-INF/classes" failonerror="false" />
-    <delete dir="war/@newModuleName" failonerror="false" />
+    <delete dir="war/@renameTo" failonerror="false" />
   </target>
 
 </project>

@@ -76,7 +76,7 @@ public class CreatorUtilities {
       }
 
       String lcPath = path.toLowerCase();
-      
+
       if (f.isDirectory()) {
         // For a directory, we assume it contains compiled class files
         buf.append("<listEntry value=\"&lt;?xml version=&quot;1.0&quot; ");
@@ -100,6 +100,14 @@ public class CreatorUtilities {
       }
     }
     return buf.toString();
+  }
+
+  /**
+   * Returns <code>true</code> if <code>moduleName</code> is a valid module
+   * name.
+   */
+  public static boolean isValidModuleName(String moduleName) {
+    return moduleName.matches("[\\w]+(\\.[\\w]+)+");
   }
 
   /**
