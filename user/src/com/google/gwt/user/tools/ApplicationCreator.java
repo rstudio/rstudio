@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.tools;
 
+import com.google.gwt.dev.About;
 import com.google.gwt.dev.Compiler;
 import com.google.gwt.dev.HostedMode;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
@@ -237,40 +238,31 @@ public final class ApplicationCreator extends ToolBase {
     String gwtDevPath = installPath + '/' + Utility.getDevJarName();
     String gwtServletPath = installPath + '/' + "gwt-servlet.jar";
 
+    // Public builds generate a DTD reference.
+    String gwtModuleDtd = "";
+    if (!About.GWT_VERSION_NUM.endsWith(".999")
+        && !About.GWT_VERSION_NUM.startsWith("0.0")) {
+      gwtModuleDtd = "\n<!DOCTYPE module PUBLIC \"-//Google Inc.//DTD Google Web Toolkit "
+          + About.GWT_VERSION_NUM
+          + "//EN\" \"http://google-web-toolkit.googlecode.com/svn/tags/"
+          + About.GWT_VERSION_NUM + "/distro-source/core/src/gwt-module.dtd\">";
+    }
+
     // Validate the arguments for extra class path entries and modules.
     if (!CreatorUtilities.validatePathsAndModules(gwtUserPath, extraClassPaths,
         extraModules)) {
       return;
     }
     // Figure out what platform we're on
-    // 
-    boolean isWindows = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1).indexOf(
-        "windows") >= 0;
     boolean isMacOsX = gwtDevPath.substring(gwtDevPath.lastIndexOf('/') + 1).indexOf(
         "mac") >= 0;
 
-    // If the path from here to the install directory is relative, we need to
-    // set specific "base" directory tags; this is for sample generation during
-    // the build.
-    String basePathEnv;
-    if (!new File(installPath).isAbsolute()) {
-      if (isWindows) {
-        basePathEnv = "%~dp0\\";
-      } else {
-        basePathEnv = "$APPDIR/";
-      }
-    } else {
-      basePathEnv = "";
-    }
-
     // Check out the class and package names.
-    //
     int pos = fullClassName.lastIndexOf('.');
     String clientPackageName = fullClassName.substring(0, pos);
     String className = fullClassName.substring(pos + 1);
 
     // Compute module name and directories
-    //
     pos = clientPackageName.lastIndexOf('.');
     File basePackageDir;
     String moduleName;
@@ -300,8 +292,10 @@ public final class ApplicationCreator extends ToolBase {
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", clientPackageName);
     replacements.put("@serverPackage", serverPackageName);
-    replacements.put("@gwtUserPath", basePathEnv + gwtUserPath);
-    replacements.put("@gwtDevPath", basePathEnv + gwtDevPath);
+    replacements.put("@gwtUserPath", gwtUserPath);
+    replacements.put("@gwtDevPath", gwtDevPath);
+    replacements.put("@gwtVersion", About.GWT_VERSION_NUM);
+    replacements.put("@gwtModuleDtd", gwtModuleDtd);
     replacements.put("@shellClass", HostedMode.class.getName());
     replacements.put("@compileClass", Compiler.class.getName());
     replacements.put("@startupUrl", startupUrl);
@@ -364,7 +358,7 @@ public final class ApplicationCreator extends ToolBase {
     if (eclipse != null) {
       replacements.put("@projectName", eclipse);
       // Build the list of extra paths
-      replacements.put("@gwtServletPath", basePathEnv + gwtServletPath);
+      replacements.put("@gwtServletPath", gwtServletPath);
       StringBuilder buf = new StringBuilder();
       if (extraClassPaths != null) {
         for (String path : extraClassPaths) {
@@ -392,11 +386,11 @@ public final class ApplicationCreator extends ToolBase {
             throw new RuntimeException("Don't know how to handle path: " + path
                 + ". It doesn't appear to be a directory or a .jar file");
           }
-          classpathEntries.append("   <classpathentry kind=\"");
+          classpathEntries.append("\n   <classpathentry kind=\"");
           classpathEntries.append(kindString);
           classpathEntries.append("\" path=\"");
           classpathEntries.append(path);
-          classpathEntries.append("\"/>\n");
+          classpathEntries.append("\"/>");
         }
       }
       replacements.put("@eclipseClassPathEntries", classpathEntries.toString());
@@ -429,9 +423,9 @@ public final class ApplicationCreator extends ToolBase {
     // Create an <inherits> tag in the gwt.xml file for each extra module
     StringBuilder buf = new StringBuilder();
     for (String module : modules) {
-      buf.append("      <inherits name=\"");
+      buf.append("\n  <inherits name=\"");
       buf.append(module);
-      buf.append("\" />\n");
+      buf.append("\" />");
     }
     return buf.toString();
   }

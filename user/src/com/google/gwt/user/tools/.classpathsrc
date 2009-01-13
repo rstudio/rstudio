@@ -4,6 +4,5 @@
    <classpathentry kind="lib" path="@gwtUserPath"/>
    <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
    <classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
-   <classpathentry kind="output" path="war/WEB-INF/classes"/>
-@eclipseClassPathEntries
+   <classpathentry kind="output" path="war/WEB-INF/classes"/>@eclipseClassPathEntries
 </classpath>
