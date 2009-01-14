@@ -17,6 +17,7 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.user.client.rpc.IsSerializable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -26,12 +27,12 @@ import java.util.Collection;
  * 
  * @see SuggestBox
  */
-public abstract class SuggestOracle {
-
+public abstract class SuggestOracle { 
+  private Response emptyResponse = new Response(new ArrayList<Suggestion>());
   /**
    * Callback for {@link com.google.gwt.user.client.ui.SuggestOracle}. Every
    * {@link Request} should be associated with a callback that should be called
-   * after a {@link  Response} is generated.
+   * after a {@link Response} is generated.
    */
   public interface Callback {
     /**
@@ -246,6 +247,24 @@ public abstract class SuggestOracle {
    */
   public boolean isDisplayStringHTML() {
     return false;
+  }
+
+  /**
+   * Generate a {@link Response} based on a default request. The request query
+   * must be null as it represents the results the oracle should return based on
+   * no query string.
+   * <p>
+   * After the {@link Response} is created, it is passed into
+   * {@link Callback#onSuggestionsReady(com.google.gwt.user.client.ui.SuggestOracle.Request, com.google.gwt.user.client.ui.SuggestOracle.Response)}
+   * .
+   * </p>
+   * 
+   * @param request the request
+   * @param callback the callback to use for the response
+   */
+  public void requestDefaultSuggestions(Request request, Callback callback) {
+    assert (request.query == null);
+    callback.onSuggestionsReady(request, emptyResponse);
   }
 
   /**

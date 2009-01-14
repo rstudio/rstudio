@@ -17,6 +17,8 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.Arrays;
+
 /**
  * Tests for {@link SuggestBoxTest}.
  */
@@ -47,6 +49,65 @@ public class SuggestBoxTest extends GWTTestCase {
     assertFalse(box.isSuggestionListShowing());
     box.showSuggestions("test");
     assertTrue(box.isSuggestionListShowing());
+  }
+
+  public void testShowAndHide() {
+    SuggestBox box = createSuggestBox();
+    assertFalse(box.isSuggestionListShowing());
+    // should do nothing, box is not attached.
+    box.showSuggestionList();
+    assertFalse(box.isSuggestionListShowing());
+
+    // Adds the suggest box to the root panel.
+    RootPanel.get().add(box);
+    assertFalse(box.isSuggestionListShowing());
+
+    // Hides the list of suggestions, should be a no-op.
+    box.hideSuggestionList();
+
+    // Should try to show, but still fail, as there are no default suggestions.
+    box.showSuggestionList();
+    assertFalse(box.isSuggestionListShowing());
+
+    // Now, finally, should be true
+    box.setText("t");
+    box.showSuggestionList();
+    assertTrue(box.isSuggestionListShowing());
+
+    // Hides it for real this time.
+    box.hideSuggestionList();
+    assertFalse(box.isSuggestionListShowing());
+  }
+
+  public void testDefaults() {
+    MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
+    oracle.setDefaultSuggestionsFromText(Arrays.asList("A", "B"));
+    SuggestBox box = new SuggestBox(oracle);
+    RootPanel.get().add(box);
+    box.showSuggestionList();
+    assertTrue(box.isSuggestionListShowing());
+    assertEquals(2, box.getSuggestionCount());
+    assertEquals("A", box.getSuggestion(0).getReplacementString());
+    assertEquals("B", box.getSuggestion(1).getReplacementString());
+  }
+
+  public void testShowFirst() {
+    SuggestBox box = createSuggestBox();
+    assertTrue(box.getSelectsFirstItem());
+    SuggestBox box2 = createSuggestBox();
+    assertTrue(box2.getSelectsFirstItem());
+    box.setSelectsFirstItem(false);
+    assertFalse(box.getSelectsFirstItem());
+    box.setText("t");
+    box.showSuggestionList();
+    // Todo(ecc) once event triggering is enabled, submit a return key to the
+    // text box and ensure that we see the correct behavior.
+  }
+
+  @Override
+  public void gwtTearDown() throws Exception {
+    super.gwtTearDown();
+    RootPanel.get().clear();
   }
 
   protected SuggestBox createSuggestBox() {
