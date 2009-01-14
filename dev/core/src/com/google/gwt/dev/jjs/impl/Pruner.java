@@ -68,6 +68,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 /**
  * Remove globally unreferenced classes, interfaces, methods, parameters, and
@@ -90,19 +91,28 @@ import java.util.Set;
 public class Pruner {
 
   /**
-   * Remove assignments to pruned fields, locals and params. Also nullify the
-   * return type of methods declared to return a globally uninstantiable type.
+   * Remove assignments to pruned fields, locals and params. Nullify the return
+   * type of methods declared to return a globally uninstantiable type. Replace
+   * references to pruned variables and methods by references to the null field
+   * and null method, and drop assignments to pruned variables.
    */
   private class CleanupRefsVisitor extends JModVisitor {
+
+    private Stack<JExpression> lValues = new Stack<JExpression>();
+    {
+      // Initialize a sentinel value to avoid having to check for empty stack.
+      lValues.push(null);
+    }
 
     @Override
     public void endVisit(JBinaryOperation x, Context ctx) {
       // The LHS of assignments may have been pruned.
       if (x.getOp() == JBinaryOperator.ASG) {
+        lValues.pop();
         JExpression lhs = x.getLhs();
         if (lhs instanceof JVariableRef) {
           JVariableRef variableRef = (JVariableRef) lhs;
-          if (!referencedNonTypes.contains(variableRef.getTarget())) {
+          if (isVariablePruned(variableRef.getTarget())) {
             // TODO: better null tracking; we might be missing some NPEs here.
             JExpression replacement = makeReplacementForAssignment(
                 x.getSourceInfo(), variableRef, x.getRhs());
@@ -114,11 +124,31 @@ public class Pruner {
 
     @Override
     public void endVisit(JDeclarationStatement x, Context ctx) {
+      lValues.pop();
       // The variable may have been pruned.
-      if (!referencedNonTypes.contains(x.getVariableRef().getTarget())) {
+      if (isVariablePruned(x.getVariableRef().getTarget())) {
         JExpression replacement = makeReplacementForAssignment(
             x.getSourceInfo(), x.getVariableRef(), x.getInitializer());
         ctx.replaceMe(replacement.makeStatement());
+      }
+    }
+
+    @Override
+    public void endVisit(JFieldRef x, Context ctx) {
+      // Handle l-values at a higher level.
+      if (lValues.peek() == x) {
+        return;
+      }
+
+      if (isPruned(x.getField())) {
+        /*
+         * We assert that field must be non-static if it's an rvalue, otherwise
+         * it would have been rescued.
+         */
+        assert !x.getField().isStatic();
+        // The field is gone; replace x by a null field reference.
+        JFieldRef fieldRef = transformToNullFieldRef(x, program);
+        ctx.replaceMe(fieldRef);
       }
     }
 
@@ -135,6 +165,16 @@ public class Pruner {
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
+
+      // Is the method pruned entirely?
+      if (isPruned(method)) {
+        /*
+         * We assert that method must be non-static, otherwise it would have
+         * been rescued.
+         */
+        ctx.replaceMe(transformToNullMethodCall(x, program));
+        return;
+      }
 
       // Did we prune the parameters of the method we're calling?
       if (methodToOriginalParamsMap.containsKey(method)) {
@@ -187,7 +227,7 @@ public class Pruner {
 
     @Override
     public void endVisit(JsniFieldRef x, Context ctx) {
-      if (isUninstantiable(x.getField())) {
+      if (isPruned(x.getField())) {
         String ident = x.getIdent();
         JField nullField = program.getNullField();
         program.jsniMap.put(ident, nullField);
@@ -201,7 +241,7 @@ public class Pruner {
     @Override
     public void endVisit(JsniMethodRef x, Context ctx) {
       // Redirect JSNI refs to uninstantiable types to the null method.
-      if (isUninstantiable(x.getTarget())) {
+      if (isPruned(x.getTarget())) {
         String ident = x.getIdent();
         JMethod nullMethod = program.getNullMethod();
         program.jsniMap.put(ident, nullMethod);
@@ -211,11 +251,34 @@ public class Pruner {
       }
     }
 
-    private <T extends HasEnclosingType & CanBeStatic> boolean isUninstantiable(
-        T node) {
+    @Override
+    public boolean visit(JBinaryOperation x, Context ctx) {
+      if (x.getOp() == JBinaryOperator.ASG) {
+        lValues.push(x.getLhs());
+      }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JDeclarationStatement x, Context ctx) {
+      lValues.push(x.getVariableRef());
+      return true;
+    }
+
+    private <T extends HasEnclosingType & CanBeStatic> boolean isPruned(T node) {
+      if (!referencedNonTypes.contains(node)) {
+        return true;
+      }
       JReferenceType enclosingType = node.getEnclosingType();
       return !node.isStatic() && enclosingType != null
           && !program.typeOracle.isInstantiatedType(enclosingType);
+    }
+
+    private boolean isVariablePruned(JVariable variable) {
+      if (variable instanceof JField) {
+        return isPruned((JField) variable);
+      }
+      return !referencedNonTypes.contains(variable);
     }
 
     private JExpression makeReplacementForAssignment(SourceInfo info,
@@ -232,7 +295,7 @@ public class Pruner {
         }
       }
 
-      // If there is an initializer, evaluate it second.
+      // If there is an rhs, evaluate it second.
       if (rhs != null) {
         multi.exprs.add(rhs);
       }
@@ -946,6 +1009,59 @@ public class Pruner {
 
   public static boolean exec(JProgram program, boolean noSpecialTypes) {
     return new Pruner(program, noSpecialTypes).execImpl();
+  }
+
+  /**
+   * Transform a reference to a pruned instance field into a reference to the
+   * null field, which will be used to replace <code>x</code>.
+   */
+  public static JFieldRef transformToNullFieldRef(JFieldRef x, JProgram program) {
+    JExpression instance = x.getInstance();
+    assert instance != null;
+    if (!instance.hasSideEffects()) {
+      instance = program.getLiteralNull();
+    }
+
+    JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(), instance,
+        program.getNullField(), x.getEnclosingType(), primitiveTypeOrNullType(
+            program, x.getType()));
+    return fieldRef;
+  }
+
+  /**
+   * Transform a call to a pruned instance method (or static impl) into a call
+   * to the null method, which will be used to replace <code>x</code>.
+   */
+  public static JMethodCall transformToNullMethodCall(JMethodCall x,
+      JProgram program) {
+    JExpression instance = x.getInstance();
+    List<JExpression> args = x.getArgs();
+    if (program.isStaticImpl(x.getTarget())) {
+      instance = args.get(0);
+      args = args.subList(1, args.size());
+    } else {
+      assert !x.getTarget().isStatic();
+    }
+    assert (instance != null);
+    if (!instance.hasSideEffects()) {
+      instance = program.getLiteralNull();
+    }
+
+    JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(), instance,
+        program.getNullMethod(), primitiveTypeOrNullType(program, x.getType()));
+    // Retain the original arguments, they will be evaluated for side effects.
+    newCall.getArgs().addAll(args);
+    return newCall;
+  }
+
+  /**
+   * Return the smallest type that is is a subtype of the argument.
+   */
+  static JType primitiveTypeOrNullType(JProgram program, JType type) {
+    if (type instanceof JPrimitiveType) {
+      return type;
+    }
+    return program.getTypeNull();
   }
 
   private final Map<JMethod, ArrayList<JParameter>> methodToOriginalParamsMap = new HashMap<JMethod, ArrayList<JParameter>>();
