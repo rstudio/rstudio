@@ -38,29 +38,29 @@ import java.util.Set;
  * <p>
  * <table width = "100%" border = "1">
  * <tr>
- * <td><b> All Suggestions </b> </td>
- * <td><b>Query string</b> </td>
+ * <td><b> All Suggestions </b></td>
+ * <td><b>Query string</b></td>
  * <td><b>Matching Suggestions</b></td>
  * </tr>
  * <tr>
- * <td> John Smith, Joe Brown, Jane Doe, Jane Smith, Bob Jones</td>
- * <td> Jo</td>
- * <td> John Smith, Joe Brown, Bob Jones</td>
+ * <td>John Smith, Joe Brown, Jane Doe, Jane Smith, Bob Jones</td>
+ * <td>Jo</td>
+ * <td>John Smith, Joe Brown, Bob Jones</td>
  * </tr>
  * <tr>
- * <td> John Smith, Joe Brown, Jane Doe, Jane Smith, Bob Jones</td>
- * <td> Smith</td>
- * <td> John Smith, Jane Smith</td>
+ * <td>John Smith, Joe Brown, Jane Doe, Jane Smith, Bob Jones</td>
+ * <td>Smith</td>
+ * <td>John Smith, Jane Smith</td>
  * </tr>
  * <tr>
- * <td> Georgia, New York, California</td>
- * <td> g</td>
- * <td> Georgia</td>
+ * <td>Georgia, New York, California</td>
+ * <td>g</td>
+ * <td>Georgia</td>
  * </tr>
  * </table>
  * </p>
  */
-public final class MultiWordSuggestOracle extends SuggestOracle {
+public class MultiWordSuggestOracle extends SuggestOracle {
 
   /**
    * Suggestion class for {@link MultiWordSuggestOracle}.
@@ -127,9 +127,11 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    */
   private char[] whitespaceChars;
 
+  private Response defaultResponse;
+
   /**
-   * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space
-   * as the whitespace character.
+   * Constructor for <code>MultiWordSuggestOracle</code>. This uses a space as
+   * the whitespace character.
    * 
    * @see #MultiWordSuggestOracle(String)
    */
@@ -138,8 +140,8 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
   }
 
   /**
-   * Constructor for <code>MultiWordSuggestOracle</code> which takes in a set
-   * of whitespace chars that filter its input.
+   * Constructor for <code>MultiWordSuggestOracle</code> which takes in a set of
+   * whitespace chars that filter its input.
    * <p>
    * Example: If <code>".,"</code> is passed in as whitespace, then the string
    * "foo.bar" would match the queries "foo", "bar", "foo.bar", "foo...bar", and
@@ -186,7 +188,7 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
    * 
    * @param collection the collection
    */
-  public void addAll(Collection<String> collection) {
+  public final void addAll(Collection<String> collection) {
     for (String suggestion : collection) {
       add(suggestion);
     }
@@ -207,11 +209,59 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
   }
 
   @Override
+  public void requestDefaultSuggestions(Request request, Callback callback) {
+    if (defaultResponse != null) {
+      callback.onSuggestionsReady(request, defaultResponse);
+    } else {
+      super.requestDefaultSuggestions(request, callback);
+    }
+  }
+
+  @Override
   public void requestSuggestions(Request request, Callback callback) {
     final List<MultiWordSuggestion> suggestions = computeItemsFor(
         request.getQuery(), request.getLimit());
     Response response = new Response(suggestions);
     callback.onSuggestionsReady(request, response);
+  }
+
+  /**
+   * Sets the default suggestion collection.
+   * 
+   * @param suggestionList the default list of suggestions
+   */
+  public void setDefaultSuggestions(Collection<Suggestion> suggestionList) {
+    this.defaultResponse = new Response(suggestionList);
+  }
+
+  /**
+   * A convenience method to set default suggestions using plain text strings.
+   * 
+   * Note to use this method each default suggestion must be plain text.
+   * 
+   * @param suggestionList the default list of suggestions
+   */
+  public final void setDefaultSuggestionsFromText(
+      Collection<String> suggestionList) {
+    Collection<Suggestion> accum = new ArrayList<Suggestion>();
+    for (String candidate : suggestionList) {
+      accum.add(createSuggestion(candidate, candidate));
+    }
+    setDefaultSuggestions(accum);
+  }
+
+  /**
+   * Creates the suggestion based on the given replacement and display strings.
+   * 
+   * @param replacementString the string to enter into the SuggestBox's text box
+   *          if the suggestion is chosen
+   * @param displayString the display string
+   * 
+   * @return the suggestion created
+   */
+  protected MultiWordSuggestion createSuggestion(String replacementString,
+      String displayString) {
+    return new MultiWordSuggestion(replacementString, displayString);
   }
 
   String escapeText(String escapeMe) {
@@ -284,8 +334,8 @@ public final class MultiWordSuggestOracle extends SuggestOracle {
       // Finish creating the formatted string.
       String end = escapeText(formattedSuggestion.substring(cursor));
       accum.append(end);
-      MultiWordSuggestion suggestion = new MultiWordSuggestion(
-          formattedSuggestion, accum.toString());
+      MultiWordSuggestion suggestion = createSuggestion(formattedSuggestion,
+          accum.toString());
       suggestions.add(suggestion);
     }
     return suggestions;
