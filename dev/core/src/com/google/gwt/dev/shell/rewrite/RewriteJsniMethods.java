@@ -25,6 +25,7 @@ import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.JavaScriptHost;
 
 import java.lang.reflect.Modifier;
+import java.util.Map;
 
 /**
  * Turns native method declarations into normal Java functions which perform the
@@ -224,9 +225,8 @@ public class RewriteJsniMethods extends ClassAdapter {
 
     /**
      * Does all of the work necessary to do the dispatch to the appropriate
-     * variant of
-     * {@link JavaScriptHost#invokeNativeVoid JavaScriptHost.invokeNative*}.
-     * And example output:
+     * variant of {@link JavaScriptHost#invokeNativeVoid
+     * JavaScriptHost.invokeNative*}. And example output:
      * 
      * <pre>
      * return JavaScriptHost.invokeNativeInt(
@@ -238,8 +238,8 @@ public class RewriteJsniMethods extends ClassAdapter {
       super.visitCode();
 
       /*
-       * If you modify the generated code, you must recompute the stack size
-       * in visitEnd(). 
+       * If you modify the generated code, you must recompute the stack size in
+       * visitEnd().
        */
 
       // First argument - JSNI signature
@@ -322,9 +322,12 @@ public class RewriteJsniMethods extends ClassAdapter {
    * The name of the class we're operating on.
    */
   private String classDesc;
+  private Map<String, String> anonymousClassMap;
 
-  public RewriteJsniMethods(ClassVisitor v) {
+  public RewriteJsniMethods(ClassVisitor v,
+      Map<String, String> anonymousClassMap) {
     super(v);
+    this.anonymousClassMap = anonymousClassMap;
   }
 
   @Override
@@ -356,8 +359,8 @@ public class RewriteJsniMethods extends ClassAdapter {
    * 
    * @param name the name of the method; for example {@code "echo"}
    * @param descriptor the descriptor for the method; for example {@code "(I)I"}
-   * @return the JSNI signature for the method; for example,
-   *         {@code "@com.google.gwt.sample.hello.client.Hello::echo(I)"}
+   * @return the JSNI signature for the method; for example, {@code
+   *         "@com.google.gwt.sample.hello.client.Hello::echo(I)"}
    */
   private String getJsniSignature(String name, String descriptor) {
     int argsIndexBegin = descriptor.indexOf('(');
@@ -367,6 +370,11 @@ public class RewriteJsniMethods extends ClassAdapter {
         + descriptor;
     String argsDescriptor = descriptor.substring(argsIndexBegin,
         argsIndexEnd + 1);
-    return "@" + classDesc.replace('/', '.') + "::" + name + argsDescriptor;
+    String classDescriptor = classDesc.replace('/', '.');
+    String newDescriptor = anonymousClassMap.get(classDesc);
+    if (newDescriptor != null) {
+      classDescriptor = newDescriptor.replace('/', '.');
+    }
+    return "@" + classDescriptor + "::" + name + argsDescriptor;
   }
 }

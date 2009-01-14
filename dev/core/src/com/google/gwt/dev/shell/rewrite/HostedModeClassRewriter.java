@@ -33,15 +33,15 @@ import java.util.Set;
  * <ol>
  * <li>Rewrites all native methods into non-native thunks to call JSNI via
  * {@link com.google.gwt.dev.shell.JavaScriptHost}.</li>
- * <li>Rewrites all JSO types into an interface type (which retains the
- * original name) and an implementation type (which has a $ appended).</li>
- * <li>All JSO interface types are empty and mirror the original type
- * hierarchy.</li>
- * <li>All JSO impl types contain the guts of the original type, except that
- * all instance methods are reimplemented as statics.</li>
- * <li>Calls sites to JSO types rewritten to dispatch to impl types. Any
- * virtual calls are also made static. Static field references to JSO types
- * reference static fields in the the impl class.</li>
+ * <li>Rewrites all JSO types into an interface type (which retains the original
+ * name) and an implementation type (which has a $ appended).</li>
+ * <li>All JSO interface types are empty and mirror the original type hierarchy.
+ * </li>
+ * <li>All JSO impl types contain the guts of the original type, except that all
+ * instance methods are reimplemented as statics.</li>
+ * <li>Calls sites to JSO types rewritten to dispatch to impl types. Any virtual
+ * calls are also made static. Static field references to JSO types reference
+ * static fields in the the impl class.</li>
  * <li>JavaScriptObject$ implements all the interface types and is the only
  * instantiable type.</li>
  * </ol>
@@ -167,8 +167,11 @@ public class HostedModeClassRewriter {
    * 
    * @param className the name of the class
    * @param classBytes the bytes of the class
+   * @param anonymousClassMap a map between the anonymous class names of java
+   *          compiler used to compile code and jdt. Emma-specific.
    */
-  public byte[] rewrite(String className, byte[] classBytes) {
+  public byte[] rewrite(String className, byte[] classBytes,
+      Map<String, String> anonymousClassMap) {
     String desc = toDescriptor(className);
     assert (!jsoIntfDescs.contains(desc));
 
@@ -185,7 +188,7 @@ public class HostedModeClassRewriter {
       v = new WriteJsoImpl(v, jsoIntfDescs, mapper);
     }
 
-    v = new RewriteJsniMethods(v);
+    v = new RewriteJsniMethods(v, anonymousClassMap);
 
     if (Double.parseDouble(System.getProperty("java.class.version")) < Opcodes.V1_6) {
       v = new ForceClassVersion15(v);
