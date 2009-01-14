@@ -488,9 +488,12 @@ public class Pruner {
         boolean doSkip = false;
         JExpression lhs = x.getLhs();
         if (lhs.hasSideEffects() || isVolatileField(lhs)) {
-          // If the lhs has side effects, skipping it would lose the side effect.
-          // If the lhs is volatile, also keep it.  This behavior provides a useful
-          // idiom for test cases to prevent code from being pruned.
+          /*
+           * If the lhs has side effects, skipping it would lose the side
+           * effect. If the lhs is volatile, also keep it. This behavior
+           * provides a useful idiom for test cases to prevent code from being
+           * pruned.
+           */
         } else if (lhs instanceof JLocalRef) {
           // locals are ok to skip
           doSkip = true;
@@ -522,6 +525,15 @@ public class Pruner {
       if (program.isJavaScriptObject(targetType)) {
         rescue((JReferenceType) targetType, true, true);
       }
+      return true;
+    }
+
+    @Override
+    public boolean visit(JClassLiteral x, Context ctx) {
+      // Works just like JFieldRef to a static field.
+      JField field = x.getField();
+      rescue(field.getEnclosingType(), true, false);
+      rescue(field);
       return true;
     }
 
@@ -578,15 +590,6 @@ public class Pruner {
         }
       }
       return false;
-    }
-
-    @Override
-    public boolean visit(JClassLiteral x, Context ctx) {
-      // Works just like JFieldRef to a static field.
-      JField field = x.getField();
-      rescue(field.getEnclosingType(), true, false);
-      rescue(field);
-      return true;
     }
 
     @Override
@@ -914,6 +917,11 @@ public class Pruner {
     }
 
     @Override
+    public boolean visit(JClassType x, Context ctx) {
+      return rescuer.instantiatedTypes.contains(x);
+    }
+
+    @Override
     public boolean visit(JMethod x, Context ctx) {
       if (referencedNonTypes.contains(x)) {
         return false;
@@ -927,11 +935,6 @@ public class Pruner {
         }
       }
       return false;
-    }
-
-    @Override
-    public boolean visit(JClassType x, Context ctx) {
-      return rescuer.instantiatedTypes.contains(x);
     }
 
     @Override
