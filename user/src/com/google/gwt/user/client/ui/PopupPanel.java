@@ -100,7 +100,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * </ul>
    */
   static enum AnimationType {
-    CENTER, ONE_WAY_CORNER
+    CENTER, ONE_WAY_CORNER, ROLL_DOWN
   }
 
   /**
@@ -144,7 +144,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
       // Determine if we need to animate
       boolean animate = curPanel.isAnimationEnabled;
-      if (curPanel.animType == AnimationType.ONE_WAY_CORNER && !showing) {
+      if (curPanel.animType != AnimationType.CENTER && !showing) {
         animate = false;
       }
 
@@ -210,17 +210,25 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       int bottom = 0;
       int height = (int) (progress * offsetHeight);
       int width = (int) (progress * offsetWidth);
-      if (curPanel.animType == AnimationType.CENTER) {
-        top = (offsetHeight - height) >> 1;
-        left = (offsetWidth - width) >> 1;
-      } else if (curPanel.animType == AnimationType.ONE_WAY_CORNER) {
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          left = offsetWidth - width;
-        }
+      switch (curPanel.animType) {
+        case ROLL_DOWN:
+          right = offsetWidth;
+          bottom = height;
+          break;
+        case CENTER:
+          top = (offsetHeight - height) >> 1;
+          left = (offsetWidth - width) >> 1;
+          right = left + width;
+          bottom = top + height;
+          break;
+        case ONE_WAY_CORNER:
+          if (LocaleInfo.getCurrentLocale().isRTL()) {
+            left = offsetWidth - width;
+          }
+          right = left + width;
+          bottom = top + height;
+          break;
       }
-      right = left + width;
-      bottom = top + height;
-
       // Set the rect clipping
       impl.setClip(curPanel.getElement(), getRectString(top, right, bottom,
           left));
