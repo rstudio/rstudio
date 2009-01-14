@@ -18,6 +18,7 @@ package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.museum.client.common.EventReporter;
 import com.google.gwt.user.client.ui.Button;
@@ -48,7 +49,7 @@ public class VisualsForTextEvents extends AbstractIssue {
       }
     }));
     b.addKeyboardListener(handler);
-    handler.addKeyHandlersTo(b);
+    HandlesAllKeyEvents.addHandlers(b, handler);
     b.addChangeListener(handler);
     b.addFocusHandler(handler);
     b.addBlurHandler(handler);
@@ -61,7 +62,8 @@ public class VisualsForTextEvents extends AbstractIssue {
     p.add(rich);
     handler = new EventReporter<String, Object>(p);
     rich.addKeyboardListener(handler);
-    handler.addKeyHandlersTo(rich);
+    HandlesAllKeyEvents.addHandlers(rich,handler);
+
     rich.addBlurHandler(handler);
     rich.addFocusHandler(handler);
     rich.addClickHandler(handler);

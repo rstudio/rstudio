@@ -18,6 +18,7 @@ package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.museum.client.common.EventReporter;
 import com.google.gwt.user.client.ui.Button;
@@ -49,8 +50,7 @@ public class VisualsForCheckBoxAndRadioButtonEvents extends AbstractIssue {
       }
     }));
     b.addKeyboardListener(handler);
-    handler.addKeyHandlersTo(b);
-
+    HandlesAllKeyEvents.addHandlers(b, handler);
     b.addFocusHandler(handler);
     b.addBlurHandler(handler);
     b.addFocusListener(handler);
@@ -65,7 +65,8 @@ public class VisualsForCheckBoxAndRadioButtonEvents extends AbstractIssue {
     p.add(radio);
     handler = new EventReporter<Boolean, Object>(p);
     radio.addKeyboardListener(handler);
-    handler.addKeyHandlersTo(radio);
+
+    HandlesAllKeyEvents.addHandlers(radio, handler);
     radio.addBlurHandler(handler);
     radio.addFocusHandler(handler);
     radio.addClickHandler(handler);

@@ -18,8 +18,11 @@ package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Focusable;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.SimpleCheckBox;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Tree;
 import com.google.gwt.user.client.ui.TreeItem;
@@ -30,8 +33,38 @@ import com.google.gwt.user.client.ui.Widget;
  * A simple tree used to quickly exercise tree behavior.
  */
 public class VisualsForTree extends AbstractIssue {
+
+  static class DelegatingFocusPanel extends HorizontalPanel implements
+      Focusable {
+
+    public int getTabIndex() {
+      return getFocusable().getTabIndex();
+    }
+
+    public void setAccessKey(char key) {
+      getFocusable().setAccessKey(key);
+    }
+
+    public void setFocus(boolean focused) {
+      getFocusable().setFocus(focused);
+    }
+
+    public void setTabIndex(int index) {
+      getFocusable().setTabIndex(index);
+    }
+
+    private Focusable getFocusable() {
+      for (Widget widget : this.getChildren()) {
+        if (widget instanceof Focusable) {
+          return (Focusable) widget;
+        }
+      }
+      throw new IllegalArgumentException("No focusable children to focus on");
+    }
+  }
+
   public static Tree createTree() {
-    Tree t = new Tree();
+    Tree tree = new Tree();
     TreeItem a = new TreeItem("a");
     TreeItem b = new TreeItem(
         "b, though this is a very, very long text field in order to trigger text wrapping bugs, if there are any such bugs currently in the tree.");
@@ -47,18 +80,38 @@ public class VisualsForTree extends AbstractIssue {
     panel.setWidget(new Label("There should not be any space above me"));
     TreeItem f = new TreeItem(panel);
 
-    t.setSelectedItem(b);
-    t.addItem(a);
-    t.addItem(b);
-    t.addItem(c);
-    t.addItem(d);
-    t.addItem(e);
-    t.addItem(f);
+    tree.setSelectedItem(b);
+    tree.addItem(a);
+    tree.addItem(b);
+    tree.addItem(c);
+    tree.addItem(d);
+    tree.addItem(e);
+    tree.addItem(f);
     b.addItem(ba);
     b.addItem(bb);
     bb.addItem(bba);
     b.addItem(bc);
-    return t;
+
+    // Focus checks
+    DelegatingFocusPanel focus = new DelegatingFocusPanel();
+    focus.add(new Label("first check box should have focus "));
+    focus.add(new SimpleCheckBox());
+    focus.add(new SimpleCheckBox());
+
+    final DelegatingFocusPanel focus2 = new DelegatingFocusPanel();
+    focus2.add(new Label("second check box should have focus "));
+    focus2.add(new SimpleCheckBox());
+    focus2.add(new SimpleCheckBox());
+
+    TreeItem customFocus = new TreeItem(focus2) {
+      @Override
+      public Focusable getFocusable() {
+        return (Focusable) focus2.getWidget(2);
+      }
+    };
+    tree.addItem(focus);
+    tree.addItem(customFocus);
+    return tree;
   }
 
   @Override
