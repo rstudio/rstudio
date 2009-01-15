@@ -106,6 +106,9 @@ public class RadioButton extends CheckBox {
    */
   @Override
   public void setName(String name) {
+    // Just changing the radio button name tends to break groupiness, 
+    // so we have to replace it. Note that replaceInputElement is careful
+    // not to propagate name when it propagates everything else
     super.replaceInputElement(DOM.createInputRadio(name));
   }
 }
