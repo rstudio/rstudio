@@ -17,6 +17,16 @@ package com.google.gwt.dev.javac;
 
 import java.util.Comparator;
 
+/**
+ * Comparator to sort the compiler-generated classNames so that they can be
+ * correlated. Examples of sorting orders by the comparator:
+ * 
+ * <pre>
+ * <ul>
+ * <li> Foo$1 < Foo$2 < Foo$3 < ... < Foo$10
+ * <li> Foo$1 < Foo$2 < Foo$1$1 < Foo$1$2 < Foo$2$1 < Foo$2$2 < Foo$2$Baz
+ * </pre>
+ */
 class GeneratedClassnameComparator implements Comparator<String> {
 
   public int compare(String arg0, String arg1) {

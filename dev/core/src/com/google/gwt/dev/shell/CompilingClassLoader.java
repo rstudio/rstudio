@@ -383,6 +383,7 @@ public final class CompilingClassLoader extends ClassLoader {
     }
     emmaStrategy = EmmaStrategy.get(emmaAvailable);
   }
+
   /**
    * Checks if the class names is generated. Accepts any classes whose names
    * match .+$\d+($.*)? (handling named classes within anonymous classes).
@@ -716,7 +717,7 @@ public final class CompilingClassLoader extends ClassLoader {
        * find it on disk. Typically this is a synthetic class added by the
        * compiler.
        */
-      if (shouldLoadClassFromDisk(className)) {
+      if (typeHasCompilationUnit(className) && isClassnameGenerated(className)) {
         /*
          * modification time = 0 ensures that whatever is on the disk is always
          * loaded.
@@ -755,9 +756,8 @@ public final class CompilingClassLoader extends ClassLoader {
   }
 
   /**
-   * Returns the compilationUnit corresponding to the className.
-   * <p>
-   * Not considering classnames where a $ sign appears.
+   * Returns the compilationUnit corresponding to the className. For nested
+   * classes, the unit corresponding to the top level type is returned.
    */
   private CompilationUnit getUnitForClassName(String className) {
     String mainTypeName = className;
@@ -786,12 +786,8 @@ public final class CompilingClassLoader extends ClassLoader {
     }
   }
 
-  private boolean isBaseClassInGwt(String className) {
+  private boolean typeHasCompilationUnit(String className) {
     return getUnitForClassName(className) != null;
-  }
-
-  private boolean shouldLoadClassFromDisk(String className) {
-    return isBaseClassInGwt(className) && isClassnameGenerated(className);
   }
 
   /**
