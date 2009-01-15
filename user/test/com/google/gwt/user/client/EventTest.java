@@ -132,17 +132,20 @@ public class EventTest extends GWTTestCase {
 
   /**
    * Test that {@link Event#fireNativePreviewEvent(Event)} fires handlers in
-   * reverse order. Also verify that the legacy EventPreview fires last.
+   * reverse order, and that the legacy EventPreview fires only if it is at the
+   * top of the stack.
    */
   @SuppressWarnings("deprecation")
   public void testFireNativePreviewEventReverseOrder() {
-    final TestEventPreview preview = new TestEventPreview(false);
+    final TestEventPreview preview0 = new TestEventPreview(false);
+    final TestEventPreview preview1 = new TestEventPreview(false);
     final TestNativePreviewHandler handler0 = new TestNativePreviewHandler(
         false, false) {
       @Override
       public void onPreviewNativeEvent(NativePreviewEvent event) {
         super.onPreviewNativeEvent(event);
-        preview.assertIsFired(false);
+        preview0.assertIsFired(false);
+        preview1.assertIsFired(true);
       }
     };
     final TestNativePreviewHandler handler1 = new TestNativePreviewHandler(
@@ -151,7 +154,8 @@ public class EventTest extends GWTTestCase {
       public void onPreviewNativeEvent(NativePreviewEvent event) {
         super.onPreviewNativeEvent(event);
         handler0.assertIsFired(false);
-        preview.assertIsFired(false);
+        preview0.assertIsFired(false);
+        preview1.assertIsFired(true);
       }
     };
     final TestNativePreviewHandler handler2 = new TestNativePreviewHandler(
@@ -161,7 +165,8 @@ public class EventTest extends GWTTestCase {
         super.onPreviewNativeEvent(event);
         handler0.assertIsFired(false);
         handler1.assertIsFired(false);
-        preview.assertIsFired(false);
+        preview0.assertIsFired(false);
+        preview1.assertIsFired(true);
       }
     };
     final TestNativePreviewHandler handler3 = new TestNativePreviewHandler(
@@ -172,25 +177,29 @@ public class EventTest extends GWTTestCase {
         handler0.assertIsFired(false);
         handler1.assertIsFired(false);
         handler2.assertIsFired(false);
-        preview.assertIsFired(false);
+        preview0.assertIsFired(false);
+        preview1.assertIsFired(true);
       }
     };
+    DOM.addEventPreview(preview0);
     HandlerRegistration reg0 = Event.addNativePreviewHandler(handler0);
     HandlerRegistration reg1 = Event.addNativePreviewHandler(handler1);
     HandlerRegistration reg2 = Event.addNativePreviewHandler(handler2);
     HandlerRegistration reg3 = Event.addNativePreviewHandler(handler3);
-    DOM.addEventPreview(preview);
+    DOM.addEventPreview(preview1);
     assertTrue(DOM.previewEvent(null));
     handler0.assertIsFired(true);
     handler1.assertIsFired(true);
     handler2.assertIsFired(true);
     handler3.assertIsFired(true);
-    preview.assertIsFired(true);
+    preview0.assertIsFired(false);
+    preview1.assertIsFired(true);
     reg0.removeHandler();
     reg1.removeHandler();
     reg2.removeHandler();
     reg3.removeHandler();
-    DOM.removeEventPreview(preview);
+    DOM.removeEventPreview(preview0);
+    DOM.removeEventPreview(preview1);
   }
 
   /**

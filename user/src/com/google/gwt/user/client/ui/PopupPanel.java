@@ -829,7 +829,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   @SuppressWarnings("deprecation")
   protected void onPreviewNativeEvent(NativePreviewEvent event) {
     // Cancel the event based on the deprecated onEventPreview() method
-    if (!event.isCanceled() && !onEventPreview(event.getNativeEvent())) {
+    if (event.isFirstHandler() && !onEventPreview(event.getNativeEvent())) {
       event.cancel();
     }
   }
