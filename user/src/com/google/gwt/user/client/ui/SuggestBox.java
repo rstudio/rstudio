@@ -388,16 +388,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   /**
-   * Returns whether or not the first suggestion will be automatically selected.
-   * This behavior is off by default.
-   * 
-   * @return true if the first suggestion will be automatically selected
-   */
-  public boolean getSelectsFirstItem() {
-    return selectsFirstItem;
-  }
-
-  /**
    * Gets the suggest box's {@link com.google.gwt.user.client.ui.SuggestOracle}.
    * 
    * @return the {@link SuggestOracle}
@@ -436,6 +426,16 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
   public boolean isAnimationEnabled() {
     return suggestionPopup.isAnimationEnabled();
+  }
+
+  /**
+   * Returns whether or not the first suggestion will be automatically selected.
+   * This behavior is on by default.
+   * 
+   * @return true if the first suggestion will be automatically selected
+   */
+  public boolean isAutoSelectEnabled() {
+    return selectsFirstItem;
   }
 
   /**
@@ -478,6 +478,17 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     suggestionPopup.setAnimationEnabled(enable);
   }
 
+  /**
+   * Turns on or off the behavior that automatically selects the first suggested
+   * item. This behavior is on by default.
+   * 
+   * @param selectsFirstItem Whether or not to automatically select the first
+   *          suggestion
+   */
+  public void setAutoSelectEnabled(boolean selectsFirstItem) {
+    this.selectsFirstItem = selectsFirstItem;
+  }
+
   public void setFocus(boolean focused) {
     box.setFocus(focused);
   }
@@ -500,17 +511,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   public void setPopupStyleName(String style) {
     suggestionPopup.setStyleName(style);
-  }
-
-  /**
-   * Turns on or off the behavior that automatically selects the first suggested
-   * item. It defaults to off.
-   * 
-   * @param selectsFirstItem Whether or not to automatically select the first
-   *          suggested
-   */
-  public void setSelectsFirstItem(boolean selectsFirstItem) {
-    this.selectsFirstItem = selectsFirstItem;
   }
 
   public void setTabIndex(int index) {

@@ -40,10 +40,10 @@ public class SuggestBoxTest extends GWTTestCase {
     assertEquals(5, box.getLimit());
 
     // setSelectsFirstItem
-    box.setSelectsFirstItem(true);
-    assertTrue(box.getSelectsFirstItem());
-    box.setSelectsFirstItem(false);
-    assertFalse(box.getSelectsFirstItem());
+    box.setAutoSelectEnabled(true);
+    assertTrue(box.isAutoSelectEnabled());
+    box.setAutoSelectEnabled(false);
+    assertFalse(box.isAutoSelectEnabled());
 
     // isSuggestionListShowing
     assertFalse(box.isSuggestionListShowing());
@@ -93,11 +93,11 @@ public class SuggestBoxTest extends GWTTestCase {
 
   public void testShowFirst() {
     SuggestBox box = createSuggestBox();
-    assertTrue(box.getSelectsFirstItem());
+    assertTrue(box.isAutoSelectEnabled());
     SuggestBox box2 = createSuggestBox();
-    assertTrue(box2.getSelectsFirstItem());
-    box.setSelectsFirstItem(false);
-    assertFalse(box.getSelectsFirstItem());
+    assertTrue(box2.isAutoSelectEnabled());
+    box.setAutoSelectEnabled(false);
+    assertFalse(box.isAutoSelectEnabled());
     box.setText("t");
     box.showSuggestionList();
     // Todo(ecc) once event triggering is enabled, submit a return key to the
