@@ -39,7 +39,7 @@ abstract class CellGridImpl<V> extends Grid {
   /**
    * Cell type.
    */
-  abstract class Cell extends UIObject {
+  public abstract class Cell extends UIObject {
     private boolean enabled = true;
     private V value;
     private int index;
