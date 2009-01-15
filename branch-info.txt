@@ -1,6 +1,6 @@
 branch-info.txt for GWT 1.6 release:
 Tracks interactions between this branch and other branches. 
-See: http://code.google.com/p/google-web-toolkit/wiki/ManagingMerges
+See: http://code.google.com/p/google-web-toolkit/wiki/ManagingMerge
 
 Copies:
 /releases/1.6/ was created (r3732) as a straight copy from /trunk/@r3683
@@ -25,4 +25,10 @@ Merges:
 /releases/1.6/@r4366:4385 was merged (r4386) into trunk
 
 The next merge into trunk will be:
-svn merge -r4385:? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge -r4385:4459 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge -r4459:4460 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .  (will have failed parts)
+svn merge -r4460:? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+
+
+Patches that will not merge cleanly:
+4460 (get help from spoon or scottb)
