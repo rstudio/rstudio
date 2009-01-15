@@ -27,8 +27,6 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 
-import java.util.EventListener;
-
 /**
  * Legacy listener support for <code>com.google.gwt.user.client</code>. Gathers
  * the bulk of the legacy glue code in one place, for easy deletion when
@@ -66,19 +64,7 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
 
     public static void remove(EventPreview listener) {
-      if (Event.handlers == null) {
-        return;
-      }
-      int handlerCount = Event.handlers.size();
-      // We only want to remove the first instance, as the legacy listener does
-      for (int i = 0; i < handlerCount; i++) {
-        Event.NativePreviewHandler handler = Event.handlers.get(i);
-        if (handler instanceof NativePreview
-            && ((NativePreview) handler).listener.equals(listener)) {
-          Event.handlers.remove(handler);
-          return;
-        }
-      }
+      baseRemove(Event.handlers, listener, NativePreviewEvent.getType());
     }
 
     private NativePreview(EventPreview listener) {
@@ -175,7 +161,7 @@ abstract class ListenerWrapper<T> implements EventHandler {
   // This is a direct copy of the baseRemove from
   // com.google.gwt.user.client.ui.ListenerWrapper. Change in parallel.
   static <H extends EventHandler> void baseRemove(HandlerManager manager,
-      EventListener listener, Type... keys) {
+      Object listener, Type... keys) {
     if (manager != null) {
       for (Type<H> key : keys) {
         int handlerCount = manager.getHandlerCount(key);

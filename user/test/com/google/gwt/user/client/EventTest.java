@@ -94,6 +94,36 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
+   * Test that concurrent removal of a {@link NativePreviewHandler} does not
+   * trigger an exception. The handler should not actually be removed until the
+   * end of the event loop.
+   */
+  public void testConcurrentRemovalOfNativePreviewHandler() {
+    // Add handler0
+    final TestNativePreviewHandler handler0 = new TestNativePreviewHandler(
+        false, false);
+    final HandlerRegistration reg0 = Event.addNativePreviewHandler(handler0);
+
+    // Add handler 1
+    final TestNativePreviewHandler handler1 = new TestNativePreviewHandler(
+        false, false) {
+      @Override
+      public void onPreviewNativeEvent(NativePreviewEvent event) {
+        super.onPreviewNativeEvent(event);
+        handler0.assertIsFired(false);
+        reg0.removeHandler();
+      }
+    };
+    HandlerRegistration reg1 = Event.addNativePreviewHandler(handler1);
+    assertTrue(Event.fireNativePreviewEvent(null));
+
+    // Verify both handlers fired even though one was removed
+    handler0.assertIsFired(true);
+    handler1.assertIsFired(true);
+    reg1.removeHandler();
+  }
+
+  /**
    * Test that {@link Event#fireNativePreviewEvent(Event)} returns the correct
    * value if the native event is canceled.
    */
@@ -146,6 +176,7 @@ public class EventTest extends GWTTestCase {
         super.onPreviewNativeEvent(event);
         preview0.assertIsFired(false);
         preview1.assertIsFired(true);
+        assertFalse(event.isFirstHandler());
       }
     };
     final TestNativePreviewHandler handler1 = new TestNativePreviewHandler(
@@ -156,6 +187,7 @@ public class EventTest extends GWTTestCase {
         handler0.assertIsFired(false);
         preview0.assertIsFired(false);
         preview1.assertIsFired(true);
+        assertFalse(event.isFirstHandler());
       }
     };
     final TestNativePreviewHandler handler2 = new TestNativePreviewHandler(
@@ -167,6 +199,7 @@ public class EventTest extends GWTTestCase {
         handler1.assertIsFired(false);
         preview0.assertIsFired(false);
         preview1.assertIsFired(true);
+        assertFalse(event.isFirstHandler());
       }
     };
     final TestNativePreviewHandler handler3 = new TestNativePreviewHandler(
@@ -179,6 +212,7 @@ public class EventTest extends GWTTestCase {
         handler2.assertIsFired(false);
         preview0.assertIsFired(false);
         preview1.assertIsFired(true);
+        assertFalse(event.isFirstHandler());
       }
     };
     DOM.addEventPreview(preview0);
@@ -408,6 +442,7 @@ public class EventTest extends GWTTestCase {
       public void onPreviewNativeEvent(NativePreviewEvent event) {
         assertFalse(event.isCanceled());
         assertFalse(event.isConsumed());
+        assertTrue(event.isFirstHandler());
         super.onPreviewNativeEvent(event);
       }
     };

@@ -87,7 +87,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     private String resultHtml;
 
     /**
-     * Create a submit complete event
+     * Create a submit complete event.
      * 
      * @param resultsHtml the results from submitting the form
      */
@@ -96,7 +96,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     }
 
     @Override
-    public Type<SubmitCompleteHandler> getAssociatedType() {
+    public final Type<SubmitCompleteHandler> getAssociatedType() {
       return TYPE;
     }
 
@@ -162,7 +162,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     }
 
     @Override
-    public Type<FormPanel.SubmitHandler> getAssociatedType() {
+    public final Type<FormPanel.SubmitHandler> getAssociatedType() {
       return TYPE;
     }
 

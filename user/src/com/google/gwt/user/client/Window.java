@@ -64,7 +64,7 @@ public class Window {
     private String message = null;
 
     @Override
-    public Type<ClosingHandler> getAssociatedType() {
+    public final Type<ClosingHandler> getAssociatedType() {
       return TYPE;
     }
 
@@ -332,7 +332,7 @@ public class Window {
     }
 
     @Override
-    public Type<ScrollHandler> getAssociatedType() {
+    public final Type<ScrollHandler> getAssociatedType() {
       return TYPE;
     }
 

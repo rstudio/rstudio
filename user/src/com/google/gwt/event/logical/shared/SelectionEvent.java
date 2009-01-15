@@ -76,7 +76,7 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
   // field itself does not, so we have to do an unsafe cast here.
   @SuppressWarnings("unchecked")
   @Override
-  public Type<SelectionHandler<I>> getAssociatedType() {
+  public final Type<SelectionHandler<I>> getAssociatedType() {
     return (Type) TYPE;
   }
 

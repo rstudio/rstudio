@@ -44,12 +44,20 @@ public class HandlerManager {
       l.add(handler);
     }
 
-    private <H extends EventHandler> void fireEvent(GwtEvent<H> event) {
+    private <H extends EventHandler> void fireEvent(GwtEvent<H> event,
+        boolean isReverseOrder) {
       Type<H> type = event.getAssociatedType();
       int count = getHandlerCount(type);
-      for (int i = 0; i < count; i++) {
-        H handler = this.<H> getHandler(type, i);
-        event.dispatch(handler);
+      if (isReverseOrder) {
+        for (int i = count - 1; i >= 0; i--) {
+          H handler = this.<H> getHandler(type, i);
+          event.dispatch(handler);
+        }
+      } else {
+        for (int i = 0; i < count; i++) {
+          H handler = this.<H> getHandler(type, i);
+          event.dispatch(handler);
+        }
       }
     }
 
@@ -79,6 +87,7 @@ public class HandlerManager {
   }
 
   private int firingDepth = 0;
+  private boolean isReverseOrder;
 
   // map storing the actual handlers
   private HandlerRegistry registry;
@@ -90,13 +99,26 @@ public class HandlerManager {
   private List<Command> deferredDeltas;
 
   /**
-   * Creates a handler manager with the given source.
+   * Creates a handler manager with the given source. Handlers will be fired in
+   * the order that they are added.
    * 
    * @param source the event source
    */
   public HandlerManager(Object source) {
+    this(source, false);
+  }
+
+  /**
+   * Creates a handler manager with the given source, specifying the order in
+   * which handlers are fired.
+   * 
+   * @param source the event source
+   * @param fireInReverseOrder true to fire handlers in reverse order
+   */
+  public HandlerManager(Object source, boolean fireInReverseOrder) {
     registry = new HandlerRegistry();
     this.source = source;
+    this.isReverseOrder = fireInReverseOrder;
   }
 
   /**
@@ -140,7 +162,7 @@ public class HandlerManager {
     try {
       firingDepth++;
 
-      registry.fireEvent(event);
+      registry.fireEvent(event, isReverseOrder);
 
     } finally {
       firingDepth--;

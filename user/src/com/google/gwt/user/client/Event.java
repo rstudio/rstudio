@@ -20,10 +20,8 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasNativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <p>
@@ -67,29 +65,18 @@ public class Event extends JavaScriptObject {
     /**
      * Fire a {@link NativePreviewEvent} for the native event.
      * 
-     * @param handlers the list of {@link NativePreviewHandler}
+     * @param handlers the {@link HandlerManager}
      * @param nativeEvent the native event
      * @return true to fire the event normally, false to cancel the event
      */
-    static boolean fire(List<NativePreviewHandler> handlers, Event nativeEvent) {
+    private static boolean fire(HandlerManager handlers, Event nativeEvent) {
       if (TYPE != null && handlers != null) {
         // Revive the event
-        if (singleton == null) {
-          singleton = new NativePreviewEvent();
-        } else {
-          singleton.revive();
-        }
+        singleton.revive();
         singleton.setNativeEvent(nativeEvent);
 
-        // Fire the event to all handlers
-        int numHandlers = handlers.size();
-        for (int i = numHandlers - 1; i >= 0; i--) {
-          handlers.get(i).onPreviewNativeEvent(singleton);
-          singleton.isFirstHandler = false;
-        }
-
-        // Kill the event and return
-        singleton.kill();
+        // Fire the event
+        handlers.fireEvent(singleton);
         return !(singleton.isCanceled() && !singleton.isConsumed());
       }
       return true;
@@ -139,7 +126,7 @@ public class Event extends JavaScriptObject {
     }
 
     @Override
-    public Type<NativePreviewHandler> getAssociatedType() {
+    public final Type<NativePreviewHandler> getAssociatedType() {
       return TYPE;
     }
 
@@ -181,6 +168,7 @@ public class Event extends JavaScriptObject {
     @Override
     protected void dispatch(NativePreviewHandler handler) {
       handler.onPreviewNativeEvent(this);
+      singleton.isFirstHandler = false;
     }
 
     @Override
@@ -360,7 +348,7 @@ public class Event extends JavaScriptObject {
    * handler manager for efficiency and because we want to fire the handlers in
    * reverse order. When the last handler is removed, handlers is reset to null.
    */
-  static ArrayList<NativePreviewHandler> handlers;
+  static HandlerManager handlers;
 
   /**
    * Adds an event preview to the preview stack. As long as this preview remains
@@ -403,20 +391,10 @@ public class Event extends JavaScriptObject {
     // Initialize the type
     NativePreviewEvent.getType();
     if (handlers == null) {
-      handlers = new ArrayList<NativePreviewHandler>();
+      handlers = new HandlerManager(null, true);
+      NativePreviewEvent.singleton = new NativePreviewEvent();
     }
-    handlers.add(handler);
-    return new HandlerRegistration() {
-      public void removeHandler() {
-        if (handlers != null) {
-          handlers.remove(handler);
-          if (handlers.size() == 0) {
-            // Set handlers to null so we can optimize fireNativePreviewEvent
-            handlers = null;
-          }
-        }
-      }
-    };
+    return handlers.addHandler(NativePreviewEvent.TYPE, handler);
   }
 
   /**
