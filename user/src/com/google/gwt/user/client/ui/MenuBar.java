@@ -42,33 +42,59 @@ import java.util.List;
  * <img class='gallery' src='MenuBar.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3> <ul class='css'>
- * <li>.gwt-MenuBar { the menu bar itself }</li>
- * <li>.gwt-MenuBar-horizontal { dependent style applied to horizontal menu bars }</li>
- * <li>.gwt-MenuBar-vertical { dependent style applied to vertical menu bars }</li>
- * <li>.gwt-MenuBar .gwt-MenuItem { menu items }</li>
- * <li>.gwt-MenuBar .gwt-MenuItem-selected { selected menu items }</li>
- * <li>.gwt-MenuBar .gwt-MenuItemSeparator { section breaks between menu items } </li>
- * <li>.gwt-MenuBar .gwt-MenuItemSeparator .menuSeparatorInner { inner component of section separators }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopLeft { the top left cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopLeftInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopCenter { the top center cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopCenterInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopRight { the top right cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupTopRightInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleLeft { the middle left cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleLeftInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleCenter { the middle center cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleCenterInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleRight { the middle right cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupMiddleRightInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomLeft { the bottom left cell }</li> 
- * <li>.gwt-MenuBarPopup .menuPopupBottomLeftInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomCenter { the bottom center cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomCenterInner { the inner element of the cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomRight { the bottom right cell }</li>
- * <li>.gwt-MenuBarPopup .menuPopupBottomRightInner { the inner element of the cell }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3>
+ * <dl>
+ * <dd>.gwt-MenuBar</dd>
+ * <dt>the menu bar itself</dt>
+ * <dd>.gwt-MenuBar-horizontal</dd>
+ * <dt>dependent style applied to horizontal menu bars</dt>
+ * <dd>.gwt-MenuBar-vertical</dd>
+ * <dt>dependent style applied to vertical menu bars</dt>
+ * <dd>.gwt-MenuBar .gwt-MenuItem</dd>
+ * <dt>menu items</dt>
+ * <dd>.gwt-MenuBar .gwt-MenuItem-selected</dd>
+ * <dt>selected menu items</dt>
+ * <dd>.gwt-MenuBar .gwt-MenuItemSeparator</dd>
+ * <dt>section breaks between menu items</dt>
+ * <dd>.gwt-MenuBar .gwt-MenuItemSeparator .menuSeparatorInner</dd>
+ * <dt>inner component of section separators</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupTopLeft</dd>
+ * <dt>the top left cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupTopLeftInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupTopCenter</dd>
+ * <dt>the top center cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupTopCenterInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupTopRight</dd>
+ * <dt>the top right cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupTopRightInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupMiddleLeft</dd>
+ * <dt>the middle left cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupMiddleLeftInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupMiddleCenter</dd>
+ * <dt>the middle center cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupMiddleCenterInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupMiddleRight</dd>
+ * <dt>the middle right cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupMiddleRightInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupBottomLeft</dd>
+ * <dt>the bottom left cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupBottomLeftInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupBottomCenter</dd>
+ * <dt>the bottom center cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupBottomCenterInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupBottomRight</dd>
+ * <dt>the bottom right cell</dt>
+ * <dd>.gwt-MenuBarPopup .menuPopupBottomRightInner</dd>
+ * <dt>the inner element of the cell</dt>
+ * </dl>
  * 
  * <p>
  * <h3>Example</h3>
@@ -429,7 +455,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       case Event.ONKEYDOWN: {
         int keyCode = DOM.eventGetKeyCode(event);
         switch (keyCode) {
-          case  KeyCodes.KEY_LEFT:
+          case KeyCodes.KEY_LEFT:
             if (LocaleInfo.getCurrentLocale().isRTL()) {
               moveToNextItem();
             } else {
@@ -489,6 +515,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     CloseEvent.fire(MenuBar.this, sender);
     shownChildMenu = null;
     popup = null;
+    if (parentMenu != null && parentMenu.popup != null) {
+      parentMenu.popup.setPreviewingAllNativeEvents(true);
+    }
   }
 
   /**
@@ -953,6 +982,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
 
   @SuppressWarnings("deprecation")
   private void openPopup(final MenuItem item) {
+    // Only the last popup to be opened should preview all event
+    if (parentMenu != null && parentMenu.popup != null) {
+      parentMenu.popup.setPreviewingAllNativeEvents(false);
+    }
+
     // Create a new popup for this item, and position it next to
     // the item (below if this is a horizontal menu bar, to the
     // right if it's a vertical bar).
