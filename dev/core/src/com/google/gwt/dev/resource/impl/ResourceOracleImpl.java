@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -246,7 +247,6 @@ public class ResourceOracleImpl implements ResourceOracle {
    * Rescans the associated paths to recompute the available resources.
    * 
    * @param logger status and error details are written here
-   * @throws UnableToCompleteException
    */
   public void refresh(TreeLogger logger) {
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
@@ -254,9 +254,10 @@ public class ResourceOracleImpl implements ResourceOracle {
 
     /*
      * Allocate fresh data structures in anticipation of needing to honor the
-     * "new identity for the collections if anything changes" guarantee.
+     * "new identity for the collections if anything changes" guarantee. Use a
+     * LinkedHashMap because we do not want the order to change.
      */
-    final Map<String, AbstractResource> newInternalMap = new HashMap<String, AbstractResource>();
+    final Map<String, AbstractResource> newInternalMap = new LinkedHashMap<String, AbstractResource>();
 
     /*
      * Walk across path roots (i.e. classpath entries) in priority order. This
@@ -348,6 +349,12 @@ public class ResourceOracleImpl implements ResourceOracle {
           assert (path.startsWith(pathPrefix.getPrefix()));
           if (pathPrefix.shouldReroot()) {
             String rerootedPath = pathPrefix.getRerootedPath(path);
+            if (externalMap.get(rerootedPath) instanceof ResourceWrapper) {
+              // A rerooted resource blocks any other resource at this path.
+              ++hitCount;
+              break;
+            }
+
             // Try to reuse the same wrapper.
             Resource exposed = exposedResourceMap.get(rerootedPath);
             if (exposed instanceof ResourceWrapper) {
