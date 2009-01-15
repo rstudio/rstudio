@@ -36,7 +36,7 @@ import java.io.File;
  * @deprecated use {@link HostedMode} instead
  */
 @Deprecated
-public class GWTShell extends HostedModeBase {
+public class GWTShell extends SwtHostedModeBase {
 
   /**
    * Handles the list of startup urls that can be passed at the end of the
@@ -184,6 +184,7 @@ public class GWTShell extends HostedModeBase {
     return new ShellOptionsImpl();
   }
 
+  @Override
   protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
     return new ArtifactAcceptor() {
       public void accept(TreeLogger logger, ArtifactSet artifacts)

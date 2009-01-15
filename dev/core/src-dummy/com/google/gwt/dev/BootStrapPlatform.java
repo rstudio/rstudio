@@ -16,9 +16,8 @@
 package com.google.gwt.dev;
 
 /**
- * This is a dummy version of the class.  It only exists so that dev/core can
- * be compiled indepedently.  This class is replaced by a platform-specific
- * version.
+ * This is a dummy version of the class. It only exists so that dev/core can be
+ * compiled indepedently. This class is replaced by a platform-specific version.
  */
 public class BootStrapPlatform {
 
@@ -26,11 +25,11 @@ public class BootStrapPlatform {
     // nothing to do
   }
 
-  public static void init() {
-    // nothing to do.
+  public static void initGui() {
+    // nothing to do
   }
 
-  public static void maybeInitializeAWT() {
-    // nothing to do
+  public static void initHostedMode() {
+    // nothing to do.
   }
 }

@@ -23,12 +23,12 @@ public class BootStrapPlatform {
   public static void applyPlatformHacks() {
     // nothing to do
   }
-  
-  public static void init() {
+
+  public static void initGui() {
     // nothing to do
   }
 
-  public static void maybeInitializeAWT() {
+  public static void initHostedMode() {
     // nothing to do
   }
 }

@@ -26,13 +26,17 @@ public class BootStrapPlatform {
     // nothing to do
   }
 
+  public static void initGui() {
+    // nothing to do
+  }
+
   /**
    * Find a usable Mozilla installation and load it. Fail immediately, logging
    * to stderr and exiting with a failure code, if we are unable to find or load
    * it. If successful, store the loaded path in the property swt.mozilla.path
    * so SWT's Browser object can use it.
    */
-  public static void init() {
+  public static void initHostedMode() {
     String home = System.getenv("HOME");
     if (home == null || home.length() == 0) {
       System.err.println("The HOME environment variable must be defined.");
@@ -54,9 +58,5 @@ public class BootStrapPlatform {
     }
     String mozillaPath = mozInstall.getPath();
     System.setProperty("swt.mozilla.path", mozillaPath);
-  }
-
-  public static void maybeInitializeAWT() {
-    // nothing to do
   }
 }
