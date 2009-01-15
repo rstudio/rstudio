@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.impl.ElementMapperImpl;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment.HorizontalAlignmentConstant;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
@@ -40,16 +41,17 @@ import java.util.NoSuchElementException;
 @SuppressWarnings("deprecation")
 public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     HasClickHandlers {
-  
+
   /**
    * Return value for {@link HTMLTable#getCellForEvent}.
    */
   public class Cell {
     private final int rowIndex;
     private final int cellIndex;
-    
+
     /**
      * Creates a cell.
+     * 
      * @param rowIndex the cell's row
      * @param cellIndex the cell's index
      */
@@ -57,24 +59,28 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       this.cellIndex = cellIndex;
       this.rowIndex = rowIndex;
     }
-     
+
     /**
      * Gets the cell index.
+     * 
      * @return the cell index
      */
     public int getCellIndex() {
       return cellIndex;
     }
+
     /**
      * Gets the cell's element.
+     * 
      * @return the cell's element.
      */
     public Element getElement() {
       return getCellFormatter().getElement(cellIndex, rowIndex);
     }
-    
+
     /**
      * Get row index.
+     * 
      * @return the row index
      */
     public int getRowIndex() {
@@ -357,8 +363,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
 
     /**
      * Gets the TD element representing the specified cell unsafely (meaning
-     * that it doesn't ensure that <code>row</code> and <code>column</code>
-     * are valid).
+     * that it doesn't ensure that <code>row</code> and <code>column</code> are
+     * valid).
      * 
      * @param row the row of the cell to be retrieved
      * @param column the column of the cell to be retrieved
@@ -648,135 +654,6 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   }
 
   /**
-   * Creates a mapping from elements to their associated widgets.
-   */
-  private static class WidgetMapper {
-
-    private static class FreeNode {
-      int index;
-      FreeNode next;
-
-      public FreeNode(int index, FreeNode next) {
-        this.index = index;
-        this.next = next;
-      }
-    }
-
-    private static native void clearWidgetIndex(Element elem) /*-{
-      elem["__widgetID"] = null;
-    }-*/;
-
-    private static native int getWidgetIndex(Element elem) /*-{
-      var index = elem["__widgetID"];
-      return (index == null) ? -1 : index;
-    }-*/;
-
-    private static native void setWidgetIndex(Element elem, int index) /*-{
-      elem["__widgetID"] = index;
-    }-*/;
-
-    private FreeNode freeList = null;
-
-    private final ArrayList<Widget> widgetList = new ArrayList<Widget>();
-
-    /**
-     * Returns the widget associated with the given element.
-     * 
-     * @param elem widget's element
-     * @return the widget
-     */
-    public Widget getWidget(Element elem) {
-      int index = getWidgetIndex(elem);
-      if (index < 0) {
-        return null;
-      }
-      return widgetList.get(index);
-    }
-
-    /**
-     * Adds the Widget.
-     * 
-     * @param widget widget to add
-     */
-    public void putWidget(Widget widget) {
-      int index;
-      if (freeList == null) {
-        index = widgetList.size();
-        widgetList.add(widget);
-      } else {
-        index = freeList.index;
-        widgetList.set(index, widget);
-        freeList = freeList.next;
-      }
-      setWidgetIndex(widget.getElement(), index);
-    }
-
-    /**
-     * Remove the widget associated with the given element.
-     * 
-     * @param elem the widget's element
-     */
-    public void removeWidgetByElement(Element elem) {
-      int index = getWidgetIndex(elem);
-      removeImpl(elem, index);
-    }
-
-    /**
-     * Creates an iterator of widgets.
-     * 
-     * @return the iterator
-     */
-    public Iterator<Widget> widgetIterator() {
-      // TODO: look at using the WidgetIterators class!
-      return new Iterator<Widget>() {
-        int lastIndex = -1;
-        int nextIndex = -1;
-        {
-          findNext();
-        }
-
-        public boolean hasNext() {
-          return nextIndex < widgetList.size();
-        }
-
-        public Widget next() {
-          if (!hasNext()) {
-            throw new NoSuchElementException();
-          }
-          Widget result = widgetList.get(nextIndex);
-          lastIndex = nextIndex;
-          findNext();
-          return result;
-        }
-
-        public void remove() {
-          if (lastIndex < 0) {
-            throw new IllegalStateException();
-          }
-          Widget w = widgetList.get(lastIndex);
-          assert (w.getParent() instanceof HTMLTable);
-          w.removeFromParent();
-          lastIndex = -1;
-        }
-
-        private void findNext() {
-          while (++nextIndex < widgetList.size()) {
-            if (widgetList.get(nextIndex) != null) {
-              return;
-            }
-          }
-        }
-      };
-    }
-
-    private void removeImpl(Element elem, int index) {
-      clearWidgetIndex(elem);
-      widgetList.set(index, null);
-      freeList = new FreeNode(index, freeList);
-    }
-  }
-
-  /**
    * Table's body.
    */
   private final Element bodyElem;
@@ -801,7 +678,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   private final Element tableElem;
 
-  private WidgetMapper widgetMap = new WidgetMapper();
+  private ElementMapperImpl<Widget> widgetMap = new ElementMapperImpl<Widget>();
 
   /**
    * Create a new empty HTML Table.
@@ -821,7 +698,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * Adds a listener to the current table.
    * 
    * @param listener listener to add
-   * @deprecated add a click handler instead and use {@link HTMLTable#getCellForEvent(ClickEvent)} to get the cell information
+   * @deprecated add a click handler instead and use
+   *             {@link HTMLTable#getCellForEvent(ClickEvent)} to get the cell
+   *             information
    */
   @Deprecated
   public void addTableListener(TableListener listener) {
@@ -868,8 +747,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
   public abstract int getCellCount(int row);
 
   /**
-   * Given a click event, return the Cell that was clicked, or null if 
-   * the event did not hit this table.
+   * Given a click event, return the Cell that was clicked, or null if the event
+   * did not hit this table.
+   * 
    * @param event A click event of indeterminate origin
    * @return The appropriate cell, or null
    */
@@ -1004,7 +884,46 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return the iterator
    */
   public Iterator<Widget> iterator() {
-    return widgetMap.widgetIterator();
+    return new Iterator<Widget>() {
+      final ArrayList<Widget> widgetList = widgetMap.getObjectList();
+      int lastIndex = -1;
+      int nextIndex = -1;
+      {
+        findNext();
+      }
+
+      public boolean hasNext() {
+        return nextIndex < widgetList.size();
+      }
+
+      public Widget next() {
+        if (!hasNext()) {
+          throw new NoSuchElementException();
+        }
+        Widget result = widgetList.get(nextIndex);
+        lastIndex = nextIndex;
+        findNext();
+        return result;
+      }
+
+      public void remove() {
+        if (lastIndex < 0) {
+          throw new IllegalStateException();
+        }
+        Widget w = widgetList.get(lastIndex);
+        assert (w.getParent() instanceof HTMLTable);
+        w.removeFromParent();
+        lastIndex = -1;
+      }
+
+      private void findNext() {
+        while (++nextIndex < widgetList.size()) {
+          if (widgetList.get(nextIndex) != null) {
+            return;
+          }
+        }
+      }
+    };
   }
 
   /**
@@ -1028,7 +947,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     DOM.removeChild(DOM.getParent(elem), elem);
 
     // Logical detach.
-    widgetMap.removeWidgetByElement(elem);
+    widgetMap.removeByElement(elem);
     return true;
   }
 
@@ -1129,7 +1048,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
       Element td = cleanCell(row, column, true);
 
       // Logical attach.
-      widgetMap.putWidget(widget);
+      widgetMap.put(widget);
 
       // Physical attach.
       DOM.appendChild(td, widget.getElement());
@@ -1312,7 +1231,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     Element maybeChild = DOM.getFirstChild(td);
     Widget widget = null;
     if (maybeChild != null) {
-      widget = widgetMap.getWidget(maybeChild);
+      widget = widgetMap.get(maybeChild);
     }
     if (widget != null) {
       // If there is a widget, remove it.
@@ -1462,7 +1381,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
     if (child == null) {
       return null;
     } else {
-      return widgetMap.getWidget(child);
+      return widgetMap.get(child);
     }
   }
 }
