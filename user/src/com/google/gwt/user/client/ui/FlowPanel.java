@@ -44,6 +44,12 @@ public class FlowPanel extends ComplexPanel {
     add(w, getElement());
   }
 
+  @Override
+  public void clear() {
+    super.doLogicalClear();
+    this.getElement().setInnerHTML("");
+  }
+
   /**
    * Inserts a widget before the specified index.
    * 

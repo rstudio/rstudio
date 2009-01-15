@@ -111,8 +111,8 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
   }
 
   /**
-   * Checks that <code>index</code> is in the range [0, getWidgetCount()),
-   * which is the valid range on accessible indexes.
+   * Checks that <code>index</code> is in the range [0, getWidgetCount()), which
+   * is the valid range on accessible indexes.
    * 
    * @param index the index being accessed
    */
@@ -123,8 +123,8 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
   }
 
   /**
-   * Checks that <code>index</code> is in the range [0, getWidgetCount()],
-   * which is the valid range for indexes on an insertion.
+   * Checks that <code>index</code> is in the range [0, getWidgetCount()], which
+   * is the valid range for indexes on an insertion.
    * 
    * @param index the index where insertion will occur
    */
@@ -196,5 +196,13 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
 
     // Adopt.
     adopt(child);
+  }
+
+  void doLogicalClear() {
+    int size = children.size();
+    for (int i = 0; i < size; i++) {
+      orphan(children.get(i));
+    }
+    children = new WidgetCollection(this);
   }
 }
