@@ -76,6 +76,7 @@ import com.google.gwt.dev.jjs.ast.JSwitchStatement;
 import com.google.gwt.dev.jjs.ast.JThrowStatement;
 import com.google.gwt.dev.jjs.ast.JTryStatement;
 import com.google.gwt.dev.jjs.ast.JType;
+import com.google.gwt.dev.jjs.ast.JTypeOracle;
 import com.google.gwt.dev.jjs.ast.JUnaryOperator;
 import com.google.gwt.dev.jjs.ast.JVariable;
 import com.google.gwt.dev.jjs.ast.JVariableRef;
@@ -182,14 +183,19 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -219,6 +225,54 @@ public class GenerateJavaAST {
    * them to our AST.
    */
   private static class JavaASTGenerationVisitor {
+
+    /**
+     * Find all interface methods declared to be implemented by a specified
+     * class.
+     */
+    private static Collection<MethodBinding> findInterfaceMethods(
+        ReferenceBinding clazzBinding) {
+      List<MethodBinding> methods = new ArrayList<MethodBinding>();
+      Set<ReferenceBinding> seen = new HashSet<ReferenceBinding>();
+      findInterfaceMethodsRecursive(clazzBinding, methods, seen);
+      return methods;
+    }
+
+    private static void findInterfaceMethodsRecursive(
+        ReferenceBinding clazzBinding, List<MethodBinding> methods,
+        Set<ReferenceBinding> seen) {
+      if (!seen.add(clazzBinding)) {
+        return;
+      }
+
+      if (clazzBinding.isInterface()) {
+        methods.addAll(Arrays.asList(clazzBinding.methods()));
+      }
+
+      ReferenceBinding superclass = clazzBinding.superclass();
+      if (superclass != null) {
+        findInterfaceMethodsRecursive(superclass, methods, seen);
+      }
+
+      ReferenceBinding[] interfaces = clazzBinding.superInterfaces();
+      if (interfaces != null) {
+        for (ReferenceBinding supinterf : interfaces) {
+          findInterfaceMethodsRecursive(supinterf, methods, seen);
+        }
+      }
+    }
+
+    private static boolean inheritsMethodWithIdenticalSignature(
+        JClassType clazz, JMethod method) {
+      for (JClassType sup = clazz.extnds; sup != null; sup = sup.extnds) {
+        for (JMethod m : sup.methods) {
+          if (JTypeOracle.methodsDoMatch(m, method)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
 
     private static InternalCompilerException translateException(JNode node,
         Throwable e) {
@@ -269,6 +323,87 @@ public class GenerateJavaAST {
       this.program = program;
       this.enableAsserts = enableAsserts;
       autoboxUtils = new AutoboxUtils(program);
+    }
+
+    /**
+     * <p>
+     * Add a bridge method to <code>clazzBinding</code> for any method it
+     * inherits that implements an interface method but that has a different
+     * erased signature from the interface method.
+     * </p>
+     * 
+     * <p>
+     * This method assumes that method overrides are already recorded for the
+     * class and all its inherited classes and interfaces.
+     * </p>
+     * 
+     * <p>
+     * The need for these bridges was pointed out in issue 3064. The goal is
+     * that virtual method calls through an interface type are translated to
+     * JavaScript that will function correctly. If the interface signature
+     * matches the signature of the implementing method, then nothing special
+     * needs to be done. If they are different, due to the use of generics, then
+     * GenerateJavaScriptAST is careful to do the right thing. There is a
+     * remaining case, though, that GenerateJavaScriptAST is not in a good
+     * position to fix: a method could be inherited from a superclass, used to
+     * implement an interface method that has a different type signature, and
+     * does not have the interface method in its list of overrides. In that
+     * case, a bridge method should be added that overrides the interface method
+     * and then calls the implementation method.
+     * </p>
+     */
+    public void addBridgeMethods(ReferenceBinding clazzBinding,
+        JProgram program, Set<ReferenceBinding> typesWithBridges) {
+      if (clazzBinding.isInterface() || clazzBinding.isAbstract()) {
+        // Only add bridges in concrete classes, to simplify matters.
+        return;
+      }
+
+      if (!typesWithBridges.add(clazzBinding)) {
+        // Nothing to do -- this class already has bridges added.
+        return;
+      }
+
+      /*
+       * Add to the superclass first, so that bridge methods end up as high in
+       * the hierarchy as possible.
+       */
+      if (clazzBinding.superclass() != null) {
+        addBridgeMethods(clazzBinding.superclass(), program, typesWithBridges);
+      }
+
+      JClassType clazz = (JClassType) typeMap.get(clazzBinding);
+
+      for (MethodBinding imethBinding : findInterfaceMethods(clazzBinding)) {
+        JMethod interfmeth = (JMethod) typeMap.get(imethBinding);
+        JMethod implmeth = (JMethod) typeMap.get(findMethodImplementing(
+            imethBinding, clazzBinding));
+
+        assert (!implmeth.isStatic());
+
+        if (!implmeth.overrides.contains(interfmeth)) {
+          if (JTypeOracle.methodsDoMatch(interfmeth, implmeth)) {
+            /*
+             * Two cases are caught here. First, a bridge method might already
+             * be included in a superclass. In that case, there's nothing to do.
+             * Second, the bridge method might have the exact signature as the
+             * bridged-to method. In that case, leave out the bridge method. It
+             * makes things harder on the optimizers, but it avoids adding a
+             * bridge method that must later be removed. Further, such a bridge
+             * method would need to be different from the current ones in order
+             * to avoid an infinite recursion.
+             */
+            continue;
+          }
+
+          if (inheritsMethodWithIdenticalSignature(clazz, interfmeth)) {
+            // An equivalent bridge has already been added in a superclass
+            continue;
+          }
+
+          createBridgeMethod(program, clazz, interfmeth, implmeth);
+        }
+      }
     }
 
     public void processEnumType(JEnumType type) {
@@ -1950,6 +2085,67 @@ public class GenerateJavaAST {
       }
     }
 
+    /**
+     * Create a bridge method. It calls a same-named method with the same
+     * arguments, but with a different type signature.
+     * 
+     * @param program The program being modified
+     * @param clazz The class to put the bridge method in
+     * @param interfmeth The interface method to bridge from
+     * @param implmeth The implementation method to bridge to
+     */
+    private void createBridgeMethod(JProgram program, JClassType clazz,
+        JMethod interfmeth, JMethod implmeth) {
+      SourceInfo info = program.createSourceInfoSynthetic(
+          GenerateJavaAST.class, "bridge method");
+
+      // create the method itself
+      JMethod bridgeMethod = program.createMethod(info,
+          interfmeth.getName().toCharArray(), clazz, interfmeth.getType(),
+          false, false, true, false, false);
+      for (JParameter param : interfmeth.params) {
+        program.createParameter(program.createSourceInfoSynthetic(
+            GenerateJavaAST.class, "part of a bridge method"),
+            param.getName().toCharArray(), param.getType(), true, false,
+            bridgeMethod);
+      }
+      bridgeMethod.freezeParamTypes();
+
+      // create a call
+      JMethodCall call = new JMethodCall(program,
+          program.createSourceInfoSynthetic(GenerateJavaAST.class,
+              "call to inherited method"), program.getExprThisRef(
+              program.createSourceInfoSynthetic(GenerateJavaAST.class,
+                  "part of a bridge method"), clazz), implmeth);
+
+      for (int i = 0; i < bridgeMethod.params.size(); i++) {
+        JParameter param = bridgeMethod.params.get(i);
+        JParameterRef paramRef = new JParameterRef(program,
+            program.createSourceInfoSynthetic(GenerateJavaAST.class,
+                "part of a bridge method"), param);
+        call.getArgs().add(
+            maybeCast(implmeth.params.get(i).getType(), paramRef));
+      }
+
+      // wrap it in a return if necessary
+      JStatement callOrReturn;
+      if (bridgeMethod.getType() == program.getTypeVoid()) {
+        callOrReturn = call.makeStatement();
+      } else {
+        callOrReturn = new JReturnStatement(program,
+            program.createSourceInfoSynthetic(GenerateJavaAST.class,
+                "part of a bridge method"), call);
+      }
+
+      // create a body that is just that call
+      JMethodBody body = (JMethodBody) bridgeMethod.getBody();
+      body.getStatements().add(callOrReturn);
+
+      // make the bridge override the interface method
+      bridgeMethod.overrides.add(interfmeth);
+      bridgeMethod.overrides.addAll(interfmeth.overrides);
+    }
+
     private JDeclarationStatement createDeclaration(SourceInfo info,
         JLocal local, JExpression value) {
       return new JDeclarationStatement(program, info, new JLocalRef(program,
@@ -2128,6 +2324,27 @@ public class GenerateJavaAST {
     }
 
     /**
+     * Search the class hierarchy starting at <code>clazz</code> looking for a
+     * method implementing <code>imeth</code>. Look only in classes, not
+     * interfaces.
+     */
+    private MethodBinding findMethodImplementing(MethodBinding interfmeth,
+        ReferenceBinding clazz) {
+      for (MethodBinding tryMethod : clazz.getMethods(interfmeth.selector)) {
+        if (methodParameterErasuresAreEqual(interfmeth, tryMethod)) {
+          return tryMethod;
+        }
+      }
+
+      if (clazz.superclass() == null) {
+        throw new InternalCompilerException("Could not find implementation of "
+            + interfmeth + " for class " + clazz);
+      }
+
+      return findMethodImplementing(interfmeth, clazz.superclass());
+    }
+
+    /**
      * Get a new label of a particular name, or create a new one if it doesn't
      * exist already.
      */
@@ -2262,6 +2479,32 @@ public class GenerateJavaAST {
       } else {
         return expression;
       }
+    }
+
+    /**
+     * Check whether two methods have matching parameter types. Assumes the
+     * selectors match.
+     */
+    private boolean methodParameterErasuresAreEqual(MethodBinding meth1,
+        MethodBinding meth2) {
+      /*
+       * Don't use MethodBinding.areParameterErasuresEqual because that method
+       * assumes equal types are ==, but that's not necessarily true in this
+       * context.
+       */
+      if (meth1.parameters.length != meth2.parameters.length) {
+        return false;
+      }
+
+      for (int i = 0; i < meth1.parameters.length; i++) {
+        TypeBinding type1 = meth1.parameters[i].erasure();
+        TypeBinding type2 = meth2.parameters[i].erasure();
+        if (typeMap.get(type1) != typeMap.get(type2)) {
+          return false;
+        }
+      }
+
+      return true;
     }
 
     /**
@@ -2795,6 +3038,12 @@ public class GenerateJavaAST {
     }
     Collections.sort(jprogram.getDeclaredTypes(), new HasNameSort());
 
+    // add any necessary bridge methods
+    Set<ReferenceBinding> typesWithBridges = new HashSet<ReferenceBinding>();
+    for (TypeDeclaration decl : types) {
+      v.addBridgeMethods(decl.binding, jprogram, typesWithBridges);
+    }
+
     // Process JSNI.
     Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
     new JsniRefGenerationVisitor(jprogram, jsProgram, jsniMethodMap).accept(jprogram);
@@ -2818,6 +3067,32 @@ public class GenerateJavaAST {
   public static SourceInfo translateInfo(JsSourceInfo info) {
     // TODO implement this
     return null;
+  }
+
+  private static void addSuperclassesAndInterfaces(JReferenceType clazz,
+      Set<JReferenceType> supers) {
+    if (clazz == null) {
+      return;
+    }
+    if (supers.contains(clazz)) {
+      return;
+    }
+    supers.add(clazz);
+    addSuperclassesAndInterfaces(clazz.extnds, supers);
+    for (JReferenceType intf : clazz.implments) {
+      addSuperclassesAndInterfaces(intf, supers);
+    }
+  }
+
+  /**
+   * Returns a collection of all inherited classes and interfaces, plus the
+   * class itself.
+   */
+  private static Collection<JReferenceType> allSuperClassesAndInterfaces(
+      JClassType clazz) {
+    Set<JReferenceType> supers = new LinkedHashSet<JReferenceType>();
+    addSuperclassesAndInterfaces(clazz, supers);
+    return supers;
   }
 
   /**

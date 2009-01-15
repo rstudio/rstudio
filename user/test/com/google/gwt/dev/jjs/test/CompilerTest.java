@@ -235,6 +235,38 @@ public class CompilerTest extends GWTTestCase {
     assertEquals(49, bytes[0]);
   }
 
+  /**
+   * Issue 3064: when the implementation of an interface comes from a
+   * superclass, it can be necessary to add a bridge method that overrides the
+   * interface method and calls the inherited method.
+   */
+  public void testBridgeMethods() {
+    abstract class AbstractFoo {
+      public int compareTo(AbstractFoo o) {
+        return 0;
+      }
+    }
+
+    class MyFoo extends AbstractFoo implements Comparable<AbstractFoo> {
+    }
+
+    /*
+     * This subclass adds an extra curve ball: only one bridge method should be
+     * created, in class MyFoo. MyFooSub should not get its own but instead use
+     * the inherited one. Otherwise, two final methods with identical signatures
+     * would override each other.
+     */
+    class MyFooSub extends MyFoo {
+    }
+
+    Comparable<AbstractFoo> comparable1 = new MyFooSub();
+    assertEquals(0, comparable1.compareTo(new MyFoo()));
+
+  
+    Comparable<AbstractFoo> comparable2 = new MyFoo();
+    assertEquals(0, comparable2.compareTo(new MyFooSub()));
+}
+
   public void testCastOptimizer() {
     Granny g = new Granny();
     Apple a = g;

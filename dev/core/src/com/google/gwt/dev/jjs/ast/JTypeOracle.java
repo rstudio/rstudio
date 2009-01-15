@@ -138,41 +138,12 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
-   * Determine whether a type is instantiated, given an assumed list of
-   * instantiated types.
-   * 
-   * @param type any type
-   * @param instantiatedTypes a set of types assumed to be instantiated. If
-   *          <code>null</code>, then there are no assumptions about which
-   *          types are instantiated.
-   * @return whether the type is instantiated
-   */
-  private static boolean isInstantiatedType(JReferenceType type,
-      Set<JReferenceType> instantiatedTypes) {
-    if (instantiatedTypes == null) {
-      return true;
-    }
-
-    if (type instanceof JNullType) {
-      return true;
-    }
-
-    if (type instanceof JArrayType) {
-      JArrayType arrayType = (JArrayType) type;
-      if (arrayType.getLeafType() instanceof JNullType) {
-        return true;
-      }
-    }
-    return instantiatedTypes.contains(type);
-  }
-
-  /**
    * Compare two methods based on name and original argument types
    * {@link JMethod#getOriginalParamTypes()}. Note that nothing special is done
    * here regarding methods with type parameters in their argument lists. The
    * caller must be careful that this level of matching is sufficient.
    */
-  private static boolean methodsDoMatch(JMethod method1, JMethod method2) {
+  public static boolean methodsDoMatch(JMethod method1, JMethod method2) {
     // static methods cannot match each other
     if (method1.isStatic() || method2.isStatic()) {
       return false;
@@ -197,6 +168,35 @@ public class JTypeOracle implements Serializable {
       }
     }
     return true;
+  }
+
+  /**
+   * Determine whether a type is instantiated, given an assumed list of
+   * instantiated types.
+   * 
+   * @param type any type
+   * @param instantiatedTypes a set of types assumed to be instantiated. If
+   *          <code>null</code>, then there are no assumptions about which types
+   *          are instantiated.
+   * @return whether the type is instantiated
+   */
+  private static boolean isInstantiatedType(JReferenceType type,
+      Set<JReferenceType> instantiatedTypes) {
+    if (instantiatedTypes == null) {
+      return true;
+    }
+
+    if (type instanceof JNullType) {
+      return true;
+    }
+
+    if (type instanceof JArrayType) {
+      JArrayType arrayType = (JArrayType) type;
+      if (arrayType.getLeafType() instanceof JNullType) {
+        return true;
+      }
+    }
+    return instantiatedTypes.contains(type);
   }
 
   private final Map<JInterfaceType, Set<JClassType>> couldBeImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
@@ -347,15 +347,15 @@ public class JTypeOracle implements Serializable {
 
   /**
    * Returns <code>true</code> if a static field access of <code>toType</code>
-   * from within <code>fromType</code> should generate a clinit call. This
-   * will be true in cases where <code>toType</code> has a live clinit method
-   * which we cannot statically know has already run. We can statically know the
+   * from within <code>fromType</code> should generate a clinit call. This will
+   * be true in cases where <code>toType</code> has a live clinit method which
+   * we cannot statically know has already run. We can statically know the
    * clinit method has already run when:
    * <ol>
    * <li><code>fromType == toType</code></li>
-   * <li><code>toType</code> is a superclass of <code>fromType</code>
-   * (because <code>toType</code>'s clinit would have already run
-   * <code>fromType</code>'s clinit; see JLS 12.4)</li>
+   * <li><code>toType</code> is a superclass of <code>fromType</code> (because
+   * <code>toType</code>'s clinit would have already run <code>fromType</code>'s
+   * clinit; see JLS 12.4)</li>
    * </ol>
    */
   public boolean checkClinit(JReferenceType fromType, JReferenceType toType) {
@@ -656,8 +656,7 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  private void getAllRealOverrides(JMethod method,
-      Set<JMethod> results) {
+  private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
     for (JMethod possibleOverride : method.overrides) {
       results.add(possibleOverride);
     }
