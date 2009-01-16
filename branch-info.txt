@@ -23,11 +23,8 @@ Merges:
 /releases/1.6/@r4299:4320 was merged (r4367,r4368) into trunk, skipping c4298, c4299 (already merged, c4314)
 /releases/1.6/@r4321:4366 was merged (r4367,r4368) into trunk, skipping c4321 (was a backmerge from trunk)
 /releases/1.6/@r4366:4385 was merged (r4386) into trunk
+/releases/1.6/@r4385:4459 was merged (r4488) into trunk
+/releases/1.6/@r4359:4490 was merged (r4491) into trunk
 
 The next merge into trunk will be:
-svn merge -r4385:4459 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
-svn merge -c4460 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .  (will have failed parts)
-svn merge -r4460:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
-
-Patches that will not merge cleanly:
-4460 (get help from spoon or scottb)
+svn merge --accept=postpone -r4490:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
