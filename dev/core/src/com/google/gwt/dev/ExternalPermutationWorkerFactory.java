@@ -141,7 +141,13 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
         out.writeBoolean(true);
         out.writeObject(permutation);
         out.flush();
-        return (PermutationResult) in.readObject();
+        Object result = in.readObject();
+        if (result instanceof Throwable) {
+          Throwable t = (Throwable) result;
+          logger.log(TreeLogger.ERROR, "Error from external worker", t);
+          throw new UnableToCompleteException();
+        }
+        return (PermutationResult) result;
       } catch (IOException e) {
         logger.log(TreeLogger.WARN, "Lost communication with remote process", e);
         throw new TransientWorkerException(

@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
@@ -290,10 +291,22 @@ public class CompilePermsServer {
     Permutation p = (Permutation) in.readObject();
     logger.log(TreeLogger.SPAM, "Permutation read");
 
-    PermutationResult result = CompilePerms.compile(logger.branch(
-        TreeLogger.DEBUG, "Compiling"), p, ast);
-    logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
-    out.writeObject(result);
+    Throwable caught = null;
+    try {
+      PermutationResult result = CompilePerms.compile(logger.branch(
+          TreeLogger.DEBUG, "Compiling"), p, ast);
+      out.writeObject(result);
+      out.flush();
+      logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
+      return;
+    } catch (UnableToCompleteException e) {
+      caught = e;
+    } catch (Throwable e) {
+      logger.log(TreeLogger.ERROR, "Compile failed", e);
+      caught = e;
+    }
+
+    out.writeObject(caught);
     out.flush();
     logger.log(TreeLogger.SPAM, "Sent result");
   }
