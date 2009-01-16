@@ -138,7 +138,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * @return
    */
   public String getFormValue() {
-    return inputElem.getAttribute("value");
+    return inputElem.getValue();
   }
 
   @Override
