@@ -255,7 +255,6 @@ public class ResourceOracleImpl implements ResourceOracle {
    * Rescans the associated paths to recompute the available resources.
    * 
    * @param logger status and error details are written here
-   * @throws UnableToCompleteException
    */
   public void refresh(TreeLogger logger) {
     TreeLogger refreshBranch = Messages.REFRESHING_RESOURCES.branch(logger,
@@ -263,7 +262,8 @@ public class ResourceOracleImpl implements ResourceOracle {
 
     /*
      * Allocate fresh data structures in anticipation of needing to honor the
-     * "new identity for the collections if anything changes" guarantee.
+     * "new identity for the collections if anything changes" guarantee. Use a
+     * LinkedHashMap because we do not want the order to change.
      */
     final Map<String, AbstractResource> newInternalMap = new LinkedHashMap<String, AbstractResource>();
 

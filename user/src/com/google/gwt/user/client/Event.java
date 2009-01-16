@@ -20,19 +20,17 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HasNativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * <p>
  * An opaque handle to a native DOM Event. An <code>Event</code> cannot be
  * created directly. Instead, use the <code>Event</code> type when returning a
  * native DOM event from JSNI methods. An <code>Event</code> passed back into
- * JSNI becomes the original DOM event the <code>Event</code> was created
- * from, and can be accessed in JavaScript code as expected. This is typically
- * done by calling methods in the {@link com.google.gwt.user.client.DOM} class.
+ * JSNI becomes the original DOM event the <code>Event</code> was created from,
+ * and can be accessed in JavaScript code as expected. This is typically done by
+ * calling methods in the {@link com.google.gwt.user.client.DOM} class.
  * </p>
  */
 public class Event extends JavaScriptObject {
@@ -67,28 +65,18 @@ public class Event extends JavaScriptObject {
     /**
      * Fire a {@link NativePreviewEvent} for the native event.
      * 
-     * @param handlers the list of {@link NativePreviewHandler}
+     * @param handlers the {@link HandlerManager}
      * @param nativeEvent the native event
      * @return true to fire the event normally, false to cancel the event
      */
-    static boolean fire(List<NativePreviewHandler> handlers, Event nativeEvent) {
+    private static boolean fire(HandlerManager handlers, Event nativeEvent) {
       if (TYPE != null && handlers != null) {
         // Revive the event
-        if (singleton == null) {
-          singleton = new NativePreviewEvent();
-        } else {
-          singleton.revive();
-        }
+        singleton.revive();
         singleton.setNativeEvent(nativeEvent);
 
-        // Fire the event to all handlers
-        int numHandlers = handlers.size();
-        for (int i = numHandlers - 1; i >= 0; i--) {
-          handlers.get(i).onPreviewNativeEvent(singleton);
-        }
-
-        // Kill the event and return
-        singleton.kill();
+        // Fire the event
+        handlers.fireEvent(singleton);
         return !(singleton.isCanceled() && !singleton.isConsumed());
       }
       return true;
@@ -104,6 +92,12 @@ public class Event extends JavaScriptObject {
      * prevented. This supercedes {@link #isCanceled}.
      */
     private boolean isConsumed = false;
+
+    /**
+     * A boolean indicating that the current handler is at the top of the event
+     * preview stack.
+     */
+    private boolean isFirstHandler = false;
 
     /**
      * The event being previewed.
@@ -132,7 +126,7 @@ public class Event extends JavaScriptObject {
     }
 
     @Override
-    public Type<NativePreviewHandler> getAssociatedType() {
+    public final Type<NativePreviewHandler> getAssociatedType() {
       return TYPE;
     }
 
@@ -162,9 +156,19 @@ public class Event extends JavaScriptObject {
       return isConsumed;
     }
 
+    /**
+     * Is the current handler the first to preview this event?
+     * 
+     * @return true if the current handler is the first to preview the event
+     */
+    public boolean isFirstHandler() {
+      return isFirstHandler;
+    }
+
     @Override
     protected void dispatch(NativePreviewHandler handler) {
       handler.onPreviewNativeEvent(this);
+      singleton.isFirstHandler = false;
     }
 
     @Override
@@ -172,6 +176,7 @@ public class Event extends JavaScriptObject {
       super.revive();
       isCanceled = false;
       isConsumed = false;
+      isFirstHandler = true;
       nativeEvent = null;
     }
 
@@ -304,7 +309,8 @@ public class Event extends JavaScriptObject {
   public static final int ONSCROLL = 0x04000;
 
   /**
-   * Fired when the user requests an element's context menu (usually by right-clicking).
+   * Fired when the user requests an element's context menu (usually by
+   * right-clicking).
    * 
    * Note that not all browsers will fire this event (notably Opera, as of 9.5).
    */
@@ -328,7 +334,7 @@ public class Event extends JavaScriptObject {
       | ONMOUSEOVER | ONMOUSEOUT;
 
   /**
-   * Value returned by accessors when the actual integer value is undefined.  In
+   * Value returned by accessors when the actual integer value is undefined. In
    * hosted mode, most accessors assert that the requested attribute is reliable
    * across all supported browsers.
    * 
@@ -338,12 +344,11 @@ public class Event extends JavaScriptObject {
   public static final int UNDEFINED = 0;
 
   /**
-   * The list of {@link NativePreviewHandler}.  We use a list instead of a
+   * The list of {@link NativePreviewHandler}. We use a list instead of a
    * handler manager for efficiency and because we want to fire the handlers in
-   * reverse order.  When the last handler is removed, handlers is reset to
-   * null.
+   * reverse order. When the last handler is removed, handlers is reset to null.
    */
-  private static ArrayList<NativePreviewHandler> handlers;
+  static HandlerManager handlers;
 
   /**
    * Adds an event preview to the preview stack. As long as this preview remains
@@ -381,23 +386,15 @@ public class Event extends JavaScriptObject {
   public static HandlerRegistration addNativePreviewHandler(
       final NativePreviewHandler handler) {
     assert handler != null : "Cannot add a null handler";
+    DOM.maybeInitializeEventSystem();
+
     // Initialize the type
     NativePreviewEvent.getType();
     if (handlers == null) {
-      handlers = new ArrayList<NativePreviewHandler>();
+      handlers = new HandlerManager(null, true);
+      NativePreviewEvent.singleton = new NativePreviewEvent();
     }
-    handlers.add(handler);    
-    return new HandlerRegistration() {
-      public void removeHandler() {
-        if (handlers != null) {
-          handlers.remove(handler);
-          if (handlers.size() == 0) {
-            // Set handlers to null so we can optimize fireNativePreviewEvent
-            handlers = null;
-          }
-        }
-      }
-    };
+    return handlers.addHandler(NativePreviewEvent.TYPE, handler);
   }
 
   /**
@@ -430,7 +427,7 @@ public class Event extends JavaScriptObject {
    * @see #setCapture(Element)
    */
   public static void releaseCapture(Element elem) {
-    DOM.releaseCapture(elem.<com.google.gwt.user.client.Element>cast());
+    DOM.releaseCapture(elem.<com.google.gwt.user.client.Element> cast());
   }
 
   /**
@@ -453,7 +450,7 @@ public class Event extends JavaScriptObject {
    * @param elem the element on which to set mouse capture
    */
   public static void setCapture(Element elem) {
-    DOM.setCapture(elem.<com.google.gwt.user.client.Element>cast());
+    DOM.setCapture(elem.<com.google.gwt.user.client.Element> cast());
   }
 
   /**

@@ -36,7 +36,7 @@ import java.io.File;
  * @deprecated use {@link HostedMode} instead
  */
 @Deprecated
-public class GWTShell extends HostedModeBase {
+public class GWTShell extends SwtHostedModeBase {
 
   /**
    * Handles the list of startup urls that can be passed at the end of the

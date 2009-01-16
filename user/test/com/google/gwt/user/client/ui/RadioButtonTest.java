@@ -45,9 +45,10 @@ public class RadioButtonTest extends GWTTestCase {
   }
 
   /**
-   * Test the name and grouping methods.
+   * Test the name and grouping methods via deprecated calls.
    */
-  public void testGrouping() {
+  @SuppressWarnings("deprecation")
+  public void testGroupingDeprecated() {
     // Create some radio buttons
     RadioButton r1 = new RadioButton("group1", "Radio 1");
     RadioButton r2 = new RadioButton("group1", "Radio 2");
@@ -75,5 +76,38 @@ public class RadioButtonTest extends GWTTestCase {
     assertTrue(r1.isChecked());
     assertFalse(r2.isChecked());
     assertTrue(r3.isChecked());
+  }
+  
+  /**
+   * Test the name and grouping methods.
+   */
+  public void testGrouping() {
+    // Create some radio buttons
+    RadioButton r1 = new RadioButton("group1", "Radio 1");
+    RadioButton r2 = new RadioButton("group1", "Radio 2");
+    RadioButton r3 = new RadioButton("group2", "Radio 3");
+    RootPanel.get().add(r1);
+    RootPanel.get().add(r2);
+    RootPanel.get().add(r3);
+
+    // Check one button in each group
+    r2.setValue(true);
+    r3.setValue(true);
+
+    // Move a button over
+    r2.setName("group2");
+
+    // Check that the correct buttons are checked
+    assertTrue(r2.getValue());
+    assertFalse(r3.getValue());
+
+    r1.setValue(true);
+    assertTrue(r1.getValue());
+    assertTrue(r2.getValue());
+
+    r3.setValue(true);
+    assertTrue(r1.getValue());
+    assertFalse(r2.getValue());
+    assertTrue(r3.getValue());
   }
 }

@@ -29,6 +29,7 @@ import javax.swing.JPanel;
 
 /**
  */
+@SuppressWarnings("deprecation")
 public class ShellMainWindow extends JPanel {
 
   private SwingLoggerPanel logWindow;

@@ -54,7 +54,6 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    * safe handling of null.
    * 
    * @param <I> the old value type
-   * @param <S> The event source
    * @param source the source of the handlers
    * @param oldValue the oldValue, may be null
    * @param newValue the newValue, may be null
@@ -110,7 +109,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
   // field itself does not, so we have to do an unsafe cast here.
   @SuppressWarnings("unchecked")
   @Override
-  public Type<ValueChangeHandler<I>> getAssociatedType() {
+  public final Type<ValueChangeHandler<I>> getAssociatedType() {
     return (Type) TYPE;
   }
 

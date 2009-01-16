@@ -76,7 +76,7 @@ public class ResizeEvent extends GwtEvent<ResizeHandler> {
   }
 
   @Override
-  public Type<ResizeHandler> getAssociatedType() {
+  public final Type<ResizeHandler> getAssociatedType() {
     return TYPE;
   }
 

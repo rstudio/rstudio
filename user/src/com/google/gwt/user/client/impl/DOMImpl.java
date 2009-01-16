@@ -157,9 +157,6 @@ public abstract class DOMImpl {
 
   public abstract void insertChild(Element parent, Element child, int index);
 
-  /**
-   * Initialize the event system if it has not already been initialized.
-   */
   public void maybeInitializeEventSystem() {
     if (!eventSystemIsInitialized) {
       initEventSystem();

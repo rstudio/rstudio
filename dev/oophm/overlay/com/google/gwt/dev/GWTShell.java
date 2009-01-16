@@ -42,30 +42,39 @@ import com.google.gwt.util.tools.ArgHandlerExtra;
 import com.google.gwt.util.tools.ArgHandlerString;
 
 import java.awt.Cursor;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
+import javax.swing.WindowConstants;
 
 /**
  * The main executable class for the hosted mode shell.
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public class GWTShell extends HostedModeBase {
 
   /**
    * Handles the -portHosted command line flag.
    */
-  protected class ArgHandlerPortHosted extends ArgHandlerString {
+  protected static class ArgHandlerPortHosted extends ArgHandlerString {
+
+    private final OptionPortHosted options;
+
+    public ArgHandlerPortHosted(OptionPortHosted options) {
+      this.options = options;
+    }
 
     @Override
     public String[] getDefaultArgs() {
@@ -90,13 +99,12 @@ public class GWTShell extends HostedModeBase {
     @Override
     public boolean setString(String value) {
       if (value.equals("auto")) {
-        portHosted = 0;
+        options.setPortHosted(0);
       } else {
         try {
-          portHosted = Integer.parseInt(value);
+          options.setPortHosted(Integer.parseInt(value));
         } catch (NumberFormatException e) {
-          String msg = "A port must be an integer or \"auto\"";
-          getTopLogger().log(TreeLogger.ERROR, msg, null);
+          System.err.println("A port must be an integer or \"auto\"");
           return false;
         }
       }
@@ -144,6 +152,7 @@ public class GWTShell extends HostedModeBase {
         registerHandler(new ArgHandlerStartupURLsExtra(options));
       }
       registerHandler(new ArgHandlerOutDir(options));
+      registerHandler(new ArgHandlerPortHosted(options));
     }
 
     @Override
@@ -152,13 +161,20 @@ public class GWTShell extends HostedModeBase {
     }
   }
 
+  interface OptionPortHosted {
+    int getPortHosted();
+
+    void setPortHosted(int portHosted);
+  }
+
   /**
    * Concrete class to implement all shell options.
    */
   static class ShellOptionsImpl extends HostedModeBaseOptionsImpl implements
-      HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions {
+      HostedModeBaseOptions, WorkDirs, LegacyCompilerOptions, OptionPortHosted {
     private int localWorkers;
     private File outDir;
+    private int portHosted;
 
     public File getCompilerOutputDir(ModuleDef moduleDef) {
       return new File(getOutDir(), moduleDef.getName());
@@ -170,6 +186,10 @@ public class GWTShell extends HostedModeBase {
 
     public File getOutDir() {
       return outDir;
+    }
+
+    public int getPortHosted() {
+      return portHosted;
     }
 
     public File getShellPublicGenDir(ModuleDef moduleDef) {
@@ -188,9 +208,14 @@ public class GWTShell extends HostedModeBase {
     public void setOutDir(File outDir) {
       this.outDir = outDir;
     }
+
+    public void setPortHosted(int port) {
+      portHosted = port;
+    }
   }
 
   private class BrowserWidgetHostImpl implements BrowserWidgetHost {
+    private TreeLogger logger;
     private Map<ModuleSpaceHost, ModulePanel> moduleTabs = new IdentityHashMap<ModuleSpaceHost, ModulePanel>();
 
     public BrowserWidgetHostImpl() {
@@ -217,14 +242,14 @@ public class GWTShell extends HostedModeBase {
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger mainLogger,
         String moduleName, String userAgent, String remoteSocket)
         throws UnableToCompleteException {
+      logger = mainLogger;
       TreeLogger.Type maxLevel = TreeLogger.INFO;
       if (mainLogger instanceof AbstractTreeLogger) {
         maxLevel = ((AbstractTreeLogger) mainLogger).getMaxDetail();
       }
 
-      TreeLogger logger;
       ModulePanel tab;
-      if (!headlessMode) {
+      if (!isHeadless()) {
         tab = new ModulePanel(maxLevel, moduleName, userAgent, remoteSocket,
             tabs);
         logger = tab.getLogger();
@@ -233,7 +258,6 @@ public class GWTShell extends HostedModeBase {
         frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
       } else {
         tab = null;
-        logger = mainLogger;
       }
 
       try {
@@ -252,16 +276,18 @@ public class GWTShell extends HostedModeBase {
           moduleTabs.put(host, tab);
         }
         return host;
-
+      } catch (RuntimeException e) {
+        logger.log(TreeLogger.ERROR, "Exception initializing module", e);
+        throw e;
       } finally {
-        if (!headlessMode) {
+        if (!isHeadless()) {
           frame.setCursor(Cursor.getDefaultCursor());
         }
       }
     }
 
     public TreeLogger getLogger() {
-      return getTopLogger();
+      return logger;
     }
 
     public String normalizeURL(String whatTheUserTyped) {
@@ -370,14 +396,14 @@ public class GWTShell extends HostedModeBase {
 
   protected BrowserListener listener;
 
-  protected File outDir;
-
   /**
    * Hiding super field because it's actually the same object, just with a
    * stronger type.
    */
   @SuppressWarnings("hiding")
   protected final ShellOptionsImpl options = (ShellOptionsImpl) super.options;
+
+  protected File outDir;
 
   /**
    * Cheat on the first load's refresh by assuming the module loaded by
@@ -391,17 +417,9 @@ public class GWTShell extends HostedModeBase {
 
   private JFrame frame;
 
-  private File genDir;
-
-  private boolean headlessMode = false;
+  private volatile boolean mainWindowClosed;
 
   private ShellMainWindow mainWnd;
-
-  private int portHosted;
-
-  private boolean runTomcat = true;
-
-  private final List<String> startupUrls = new ArrayList<String>();
 
   private JTabbedPane tabs;
 
@@ -409,39 +427,36 @@ public class GWTShell extends HostedModeBase {
 
   private WebServerPanel webServerLog;
 
-  public File getGenDir() {
-    return genDir;
+  @Override
+  public void closeAllBrowserWindows() {
   }
 
-  public Type getLogLevel() {
-    return options.getLogLevel();
-  }
-
-  public File getOutDir() {
-    return outDir;
-  }
-
+  @Override
   public TreeLogger getTopLogger() {
     return topLogger;
+  }
+
+  @Override
+  public boolean hasBrowserWindowsOpen() {
+    return false;
   }
 
   /**
    * Launch the arguments as Urls in separate windows.
    */
+  @Override
   public void launchStartupUrls(final TreeLogger logger) {
-    if (startupUrls != null) {
-      // Launch a browser window for each startup url.
-      String startupURL = "";
-      try {
-        for (String prenormalized : startupUrls) {
-          startupURL = normalizeURL(prenormalized);
-          logger.log(TreeLogger.INFO, "Starting URL: " + startupURL, null);
-          launchURL(startupURL);
-        }
-      } catch (UnableToCompleteException e) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to open new window for startup URL: " + startupURL, null);
+    ensureOophmListener();
+    String startupURL = "";
+    try {
+      for (String prenormalized : options.getStartupURLs()) {
+        startupURL = normalizeURL(prenormalized);
+        logger.log(TreeLogger.INFO, "Starting URL: " + startupURL, null);
+        launchURL(startupURL);
       }
+    } catch (UnableToCompleteException e) {
+      logger.log(TreeLogger.ERROR,
+          "Unable to open new window for startup URL: " + startupURL, null);
     }
   }
 
@@ -472,20 +487,8 @@ public class GWTShell extends HostedModeBase {
     }
   }
 
-  public void setCompilerOptions(CompilerOptions options) {
-    this.options.copyFrom(options);
-  }
-
-  public void setGenDir(File genDir) {
-    this.genDir = genDir;
-  }
-
-  public void setLogLevel(Type level) {
-    options.setLogLevel(level);
-  }
-
-  public void setOutDir(File outDir) {
-    this.outDir = outDir;
+  public BrowserWidget openNewBrowserWindow() throws UnableToCompleteException {
+    throw new UnableToCompleteException();
   }
 
   @Override
@@ -498,12 +501,13 @@ public class GWTShell extends HostedModeBase {
    * def programmatically in some cases (this is needed for JUnit support, for
    * example).
    */
-  @SuppressWarnings("deprecation")
+  @Override
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
-    newOptions.addModuleName(moduleDef.getName());
-    new GWTCompiler(newOptions).run(logger);
+    if (!new GWTCompiler(newOptions).run(logger, moduleDef)) {
+      // TODO(jat): error dialog?
+    }
   }
 
   @Override
@@ -511,6 +515,7 @@ public class GWTShell extends HostedModeBase {
     return new ShellOptionsImpl();
   }
 
+  @Override
   protected ArtifactAcceptor doCreateArtifactAcceptor(final ModuleDef module) {
     return new ArtifactAcceptor() {
       public void accept(TreeLogger logger, ArtifactSet artifacts)
@@ -542,6 +547,7 @@ public class GWTShell extends HostedModeBase {
   /**
    * Derived classes can override to prevent automatic update checking.
    */
+  @Override
   protected boolean doShouldCheckForUpdates() {
     return true;
   }
@@ -554,10 +560,20 @@ public class GWTShell extends HostedModeBase {
   }
 
   @Override
+  protected boolean doStartup() {
+    if (super.doStartup()) {
+      // Accept connections from OOPHM clients
+      ensureOophmListener();
+      return true;
+    }
+    return false;
+  }
+
+  @Override
   protected int doStartUpServer() {
     // TODO(bruce): make tomcat work in terms of the modular launcher
-    String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), getPort(),
-        options);
+    String whyFailed = EmbeddedTomcatServer.start(isHeadless() ? getTopLogger()
+        : webServerLog.getLogger(), getPort(), options);
 
     // TODO(bruce): test that we can remove this old approach in favor of
     // a better, logger-based error reporting
@@ -568,13 +584,7 @@ public class GWTShell extends HostedModeBase {
     return EmbeddedTomcatServer.getPort();
   }
 
-  /**
-   * Derived classes can override to set a default port.
-   */
-  protected ArgHandlerPortHosted getArgHandlerPortHosted() {
-    return new ArgHandlerPortHosted();
-  }
-
+  @Override
   protected void initializeLogger() {
     if (mainWnd != null) {
       topLogger = mainWnd.getLogger();
@@ -595,6 +605,17 @@ public class GWTShell extends HostedModeBase {
     return false;
   }
 
+  @Override
+  protected void loadRequiredNativeLibs() {
+    // no native libraries are needed with OOPHM
+  }
+
+  @Override
+  protected synchronized boolean notDone() {
+    return !mainWindowClosed;
+  }
+
+  @Override
   protected void openAppWindow() {
     ImageIcon gwtIcon = loadImageIcon("icon24.png");
     frame = new JFrame("GWT Hosted Mode");
@@ -602,68 +623,38 @@ public class GWTShell extends HostedModeBase {
     boolean checkForUpdates = doShouldCheckForUpdates();
     mainWnd = new ShellMainWindow(this, checkForUpdates, options.getLogLevel());
     tabs.addTab("Hosted Mode", gwtIcon, mainWnd, "GWT Hosted-mode");
-    if (runTomcat) {
+    if (!options.isNoServer()) {
       ImageIcon tomcatIcon = loadImageIcon("tomcat24.png");
       webServerLog = new WebServerPanel(getPort(), options.getLogLevel());
       tabs.addTab("Tomcat", tomcatIcon, webServerLog);
     }
     frame.getContentPane().add(tabs);
     frame.setSize(950, 700);
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    frame.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        setMainWindowClosed();
+      }
+    });
     frame.setIconImage(loadImageIcon("icon16.png").getImage());
     frame.setVisible(true);
   }
 
-  protected void startUpHook() {
-    // Accept connections from OOPHM clients
-    startOophmListener();
+  @Override
+  protected void processEvents() throws Exception {
+    Thread.sleep(10);
   }
 
-  @SuppressWarnings("unused")
-  // TODO(jat): implement and hook into UI, this is just copied from trunk
-  private void compile() {
-    // // first, compile
-    // Set<String> keySet = new HashSet<String>();
-    // for (Map.Entry<?, ModuleSpace> entry : loadedModules.entrySet()) {
-    // ModuleSpace module = entry.getValue();
-    // keySet.add(module.getModuleName());
-    // }
-    // String[] moduleNames = Util.toStringArray(keySet);
-    // if (moduleNames.length == 0) {
-    // // A latent problem with a module.
-    // //
-    // openWebModeButton.setEnabled(false);
-    // return;
-    // }
-    // try {
-    // Cursor waitCursor = getDisplay().getSystemCursor(SWT.CURSOR_WAIT);
-    // getShell().setCursor(waitCursor);
-    // getHost().compile(moduleNames);
-    // } catch (UnableToCompleteException e) {
-    // // Already logged by callee.
-    // //
-    // MessageBox msgBox = new MessageBox(getShell(), SWT.OK
-    // | SWT.ICON_ERROR);
-    // msgBox.setText("Compilation Failed");
-    // msgBox.setMessage("Compilation failed. Please see the log in the
-    // development shell for details.");
-    // msgBox.open();
-    // return;
-    // } finally {
-    // // Restore the cursor.
-    // //
-    // Cursor normalCursor = getDisplay().getSystemCursor(SWT.CURSOR_ARROW);
-    // getShell().setCursor(normalCursor);
-    // }
-    //
-    // String locationText = location.getText();
-    //
-    // launchExternalBrowser(logger, locationText);
+  private void ensureOophmListener() {
+    if (listener == null) {
+      listener = new BrowserListener(getTopLogger(), options.getPortHosted(),
+          new OophmSessionHandler(browserHost));
+      listener.start();
+    }
   }
 
-  private void startOophmListener() {
-    listener = new BrowserListener(getTopLogger(), portHosted,
-        new OophmSessionHandler(browserHost));
-    listener.start();
+  private synchronized void setMainWindowClosed() {
+    mainWindowClosed = true;
   }
 }

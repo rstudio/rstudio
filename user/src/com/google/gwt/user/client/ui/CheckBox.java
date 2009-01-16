@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -22,6 +25,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 
 /**
  * A standard check box widget.
@@ -47,7 +52,8 @@ import com.google.gwt.user.client.Element;
  * </p>
  */
 public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
-  private Element inputElem, labelElem;
+  private InputElement inputElem;
+  private LabelElement labelElem;
   private boolean valueChangeHandlerInitialized;
 
   /**
@@ -85,15 +91,15 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
 
   protected CheckBox(Element elem) {
     super(DOM.createSpan());
-    inputElem = elem;
-    labelElem = DOM.createLabel();
+    inputElem = InputElement.as(elem);
+    labelElem = Document.get().createLabelElement();
 
-    DOM.appendChild(getElement(), inputElem);
-    DOM.appendChild(getElement(), labelElem);
+    getElement().appendChild(inputElem);
+    getElement().appendChild(labelElem);
 
     String uid = DOM.createUniqueId();
-    DOM.setElementProperty(inputElem, "id", uid);
-    DOM.setElementProperty(labelElem, "htmlFor", uid);
+    inputElem.setPropertyString("id", uid);
+    labelElem.setHtmlFor(uid);
 
     // Accessibility: setting tab index to be 0 by default, ensuring element
     // appears in tab sequence. FocusWidget's setElement method already
@@ -113,59 +119,85 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
         public void onClick(ClickEvent event) {
           // No need to compare old value and new value--click handler
           // only fires on real click, and value always toggles
-          ValueChangeEvent.fire(CheckBox.this, isChecked());
+          ValueChangeEvent.fire(CheckBox.this, getValue());
         }
       });
     }
     return addHandler(handler, ValueChangeEvent.getType());
   }
 
+  /**
+   * Returns the value property of the input element that backs this widget.
+   * This is the value that will be associated with the CheckBox name and
+   * submitted to the server if a {@link FormPanel} that holds it is submitted
+   * and the box is checked.
+   * <p>
+   * Don't confuse this with {@link #getValue}, which returns true or false if
+   * the widget is checked.
+   * 
+   * @return
+   */
+  public String getFormValue() {
+    return inputElem.getValue();
+  }
+
   @Override
   public String getHTML() {
-    return DOM.getInnerHTML(labelElem);
+    return labelElem.getInnerHTML();
   }
 
   public String getName() {
-    return DOM.getElementProperty(inputElem, "name");
+    return inputElem.getName();
   }
 
   @Override
   public int getTabIndex() {
-    return getFocusImpl().getTabIndex(inputElem);
+    return inputElem.getTabIndex();
   }
 
   @Override
   public String getText() {
-    return DOM.getInnerText(labelElem);
+    return labelElem.getInnerText();
   }
 
   /**
-   * Determines whether this check box is currently checked.
+   * Determines whether this check box is currently checked. 
+   * <p>
+   * Note that this <em>is not</em> return the value property of the checkbox
+   * input element wrapped by this widget. For access to that property, see
+   * {@link #getFormValue()}
    * 
-   * @return <code>true</code> if the check box is checked
+   * @return <code>true</code> if the check box is checked, false otherwise.
+   * Will not return null
    */
   public Boolean getValue() {
-    return isChecked();
+    if (isAttached()) {
+      return inputElem.isChecked();
+    } else {
+      return inputElem.isDefaultChecked();
+    }
   }
 
   /**
    * Determines whether this check box is currently checked.
    * 
    * @return <code>true</code> if the check box is checked
+   * @deprecated use {@link #getValue} instead
    */
+  @Deprecated
   public boolean isChecked() {
-    String propName = isAttached() ? "checked" : "defaultChecked";
-    return DOM.getElementPropertyBoolean(inputElem, propName);
+    // Funny comparison b/c getValue could in theory return null
+    return getValue() == true; 
   }
 
   @Override
   public boolean isEnabled() {
-    return !DOM.getElementPropertyBoolean(inputElem, "disabled");
+    return !inputElem.isDisabled();
   }
 
   @Override
   public void setAccessKey(char key) {
-    DOM.setElementProperty(inputElem, "accessKey", "" + key);
+    inputElem.setAccessKey("" + key);
   }
 
   /**
@@ -173,15 +205,16 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * (If you want the event to fire, use {@link #setValue(Boolean, boolean)})
    * 
    * @param checked <code>true</code> to check the check box.
+   * @deprecated Use {@link #setValue(Boolean)} instead
    */
+  @Deprecated
   public void setChecked(boolean checked) {
-    DOM.setElementPropertyBoolean(inputElem, "checked", checked);
-    DOM.setElementPropertyBoolean(inputElem, "defaultChecked", checked);
+    setValue(checked);
   }
 
   @Override
   public void setEnabled(boolean enabled) {
-    DOM.setElementPropertyBoolean(inputElem, "disabled", !enabled);
+    inputElem.setDisabled(!enabled);
     if (enabled) {
       removeStyleDependentName("disabled");
     } else {
@@ -192,19 +225,34 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   @Override
   public void setFocus(boolean focused) {
     if (focused) {
-      getFocusImpl().focus(inputElem);
+      inputElem.focus();
     } else {
-      getFocusImpl().blur(inputElem);
+      inputElem.blur();
     }
+  }
+
+  /**
+   * Set the value property on the input element that backs this widget. This is
+   * the value that will be associated with the CheckBox's name and submitted to
+   * the server if a {@link FormPanel} that holds it is submitted and the box is
+   * checked.
+   * <p>
+   * Don't confuse this with {@link #setValue}, which actually checks and
+   * unchecks the box.
+   * 
+   * @param value
+   */
+  public void setFormValue(String value) {
+    inputElem.setAttribute("value", value);
   }
 
   @Override
   public void setHTML(String html) {
-    DOM.setInnerHTML(labelElem, html);
+    labelElem.setInnerHTML(html);
   }
 
   public void setName(String name) {
-    DOM.setElementProperty(inputElem, "name", name);
+    inputElem.setName(name);
   }
 
   @Override
@@ -214,17 +262,21 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     // CheckBox) setElement method calls setTabIndex before inputElem is
     // initialized. See CheckBox's protected constructor for more information.
     if (inputElem != null) {
-      getFocusImpl().setTabIndex(inputElem, index);
+      inputElem.setTabIndex(index);
     }
   }
 
   @Override
   public void setText(String text) {
-    DOM.setInnerText(labelElem, text);
+    labelElem.setInnerText(text);
   }
 
   /**
    * Checks or unchecks the text box.
+   * <p>
+   * Note that this <em>does not</em> set the value property of the checkbox
+   * input element wrapped by this widget. For access to that property, see
+   * {@link #setFormValue(String)}
    * 
    * @param value true to check, false to uncheck. Must not be null.
    * @thows IllegalArgumentException if value is null
@@ -236,7 +288,11 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   /**
    * Checks or unchecks the text box, firing {@link ValueChangeEvent} if
    * appropriate.
-   * 
+   * <p>
+   * Note that this <em>does not</em> set the value property of the checkbox
+   * input element wrapped by this widget. For access to that property, see
+   * {@link #setFormValue(String)}
+   *
    * @param value true to check, false to uncheck. Must not be null.
    * @param fireEvents If true, and value has changed, fire a
    *          {@link ValueChangeEvent}
@@ -247,10 +303,11 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
       throw new IllegalArgumentException("value must not be null");
     }
 
-    if (isChecked() == value) {
+    if (value.equals(getValue())) {
       return;
     }
-    setChecked(value);
+    inputElem.setChecked(value);
+    inputElem.setDefaultChecked(value);
     if (fireEvents) {
       ValueChangeEvent.fire(this, value);
     }
@@ -261,7 +318,8 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   @Override
   public void sinkEvents(int eventBitsToAdd) {
     if (isOrWasAttached()) {
-      DOM.sinkEvents(inputElem, eventBitsToAdd | DOM.getEventsSunk(inputElem));
+      Event.sinkEvents(inputElem, 
+          eventBitsToAdd | Event.getEventsSunk(inputElem));
     } else {
       super.sinkEvents(eventBitsToAdd);
     }
@@ -280,7 +338,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     super.onEnsureDebugId(baseID);
     ensureDebugId(labelElem, baseID, "label");
     ensureDebugId(inputElem, baseID, "input");
-    DOM.setElementProperty(labelElem, "htmlFor", inputElem.getId());
+    labelElem.setHtmlFor(inputElem.getId());
   }
 
   /**
@@ -290,9 +348,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    */
   @Override
   protected void onLoad() {
-    // Sets the event listener on the inputElem, as in this case that's the
-    // element we want so input on.
-    DOM.setEventListener(inputElem, this);
+    setEventListener(inputElem, this);
   }
 
   /**
@@ -304,49 +360,64 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   protected void onUnload() {
     // Clear out the inputElem's event listener (breaking the circular
     // reference between it and the widget).
-    DOM.setEventListener(inputElem, null);
-    setChecked(isChecked());
+    setEventListener(asOld(inputElem), null);
+    setValue(getValue());
   }
 
   /**
-   * Replace the current input element with a new one.
+   * Replace the current input element with a new one. Preserves
+   * all state except for the name property, for nasty reasons
+   * related to radio button grouping. (See implementation of 
+   * {@link RadioButton#setName}.)
    * 
    * @param elem the new input element
    */
   protected void replaceInputElement(Element elem) {
+    InputElement newInputElem = InputElement.as(elem);
     // Collect information we need to set
     int tabIndex = getTabIndex();
-    boolean checked = isChecked();
+    boolean checked = getValue();
     boolean enabled = isEnabled();
-    String uid = DOM.getElementProperty(inputElem, "id");
-    String accessKey = DOM.getElementProperty(inputElem, "accessKey");
-    int sunkEvents = DOM.getEventsSunk(inputElem);
+    String formValue = getFormValue();
+    String uid = inputElem.getId();
+    String accessKey = inputElem.getAccessKey();
+    int sunkEvents = Event.getEventsSunk(inputElem);   
 
     // Clear out the old input element
-    DOM.setEventListener(inputElem, null);
-    DOM.setEventListener(inputElem, null);
+    setEventListener(asOld(inputElem), null);
 
-    DOM.removeChild(getElement(), inputElem);
-    DOM.insertChild(getElement(), elem, 0);
+    getElement().removeChild(inputElem);
+    getElement().insertBefore(newInputElem, null);
 
     // Sink events on the new element
-    DOM.sinkEvents(elem, DOM.getEventsSunk(inputElem));
-    DOM.sinkEvents(inputElem, 0);
-    inputElem = elem;
+    Event.sinkEvents(elem, Event.getEventsSunk(inputElem));
+    Event.sinkEvents(inputElem, 0);
+    inputElem = newInputElem;
 
     // Setup the new element
-    DOM.sinkEvents(inputElem, sunkEvents);
-    DOM.setElementProperty(inputElem, "id", uid);
+    Event.sinkEvents(inputElem, sunkEvents);
+    inputElem.setId(uid);
     if (!accessKey.equals("")) {
-      DOM.setElementProperty(inputElem, "accessKey", accessKey);
+      inputElem.setAccessKey(accessKey);
     }
     setTabIndex(tabIndex);
-    setChecked(checked);
+    setValue(checked);
     setEnabled(enabled);
+    setFormValue(formValue);
 
     // Set the event listener
     if (isAttached()) {
-      DOM.setEventListener(inputElem, this);
+      setEventListener(asOld(inputElem), this);
     }
+  }
+
+  private Element asOld(com.google.gwt.dom.client.Element elem) {
+    Element oldSchool = elem.cast();
+    return oldSchool;
+  }
+
+  private void setEventListener(com.google.gwt.dom.client.Element e,
+      EventListener listener) {
+    DOM.setEventListener(asOld(e), listener);
   }
 }

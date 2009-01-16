@@ -48,7 +48,7 @@ public abstract class CompilationUnit {
 
   static class AnonymousClassVisitor extends EmptyVisitor {
     /*
-     * array of classNames of inner clases that aren't synthetic.
+     * array of classNames of inner clases that aren't synthetic classes.
      */
     List<String> classNames = new ArrayList<String>();
 

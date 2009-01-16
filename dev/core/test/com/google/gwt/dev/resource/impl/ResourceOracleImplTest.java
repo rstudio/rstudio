@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,9 +60,9 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
   }
 
   private static class ResourceOracleSnapshot {
-    private final Set<Resource> resources;
-    private final Map<String, Resource> resourceMap;
     private final Set<String> pathNames;
+    private final Map<String, Resource> resourceMap;
+    private final Set<Resource> resources;
 
     public ResourceOracleSnapshot(ResourceOracleImpl oracle) {
       resources = oracle.getResources();
@@ -127,6 +128,34 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     }
   }
 
+  /**
+   * Test that ResourceOracleImpl preserves the order in which the same logical
+   * resource is occurs in multiple ClassPathEntries.
+   * 
+   * @throws URISyntaxException
+   * @throws IOException
+   */
+  public void testClassPathOrderIsHonored() throws IOException,
+      URISyntaxException {
+    TreeLogger logger = createTestTreeLogger();
+    ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
+    ClassPathEntry cpe2jar = getClassPathEntry2AsJar();
+
+    ClassPathEntry[] cp12 = new ClassPathEntry[] {cpe1jar, cpe2jar};
+    ClassPathEntry[] cp21 = new ClassPathEntry[] {cpe2jar, cpe1jar};
+    String resKeyNormal = "org/example/bar/client/BarClient2.txt";
+    String resKeyReroot = "/BarClient2.txt";
+    PathPrefix pathPrefixNormal = new PathPrefix("org/example/bar/client",
+        null, false);
+    PathPrefix pathPrefixReroot = new PathPrefix("org/example/bar/client",
+        null, true);
+
+    testClassPathOrderIsHonored(logger, resKeyNormal, cp12, pathPrefixNormal);
+    testClassPathOrderIsHonored(logger, resKeyReroot, cp12, pathPrefixReroot);
+    testClassPathOrderIsHonored(logger, resKeyNormal, cp21, pathPrefixNormal);
+    testClassPathOrderIsHonored(logger, resKeyReroot, cp21, pathPrefixReroot);
+  }
+
   public void testNoClassPathEntries() {
     TreeLogger logger = createTestTreeLogger();
     ResourceOracleImpl oracle = createResourceOracle(new MOCK_CPE0());
@@ -139,7 +168,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
    * 
    * @throws URISyntaxException
    * @throws IOException
-   * @throws UnableToCompleteException
    */
   public void testReadingResource() throws IOException, URISyntaxException {
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
@@ -229,9 +257,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
   /**
    * Creates an array of class path entries, setting up each one with a
    * well-known set of client prefixes.
-   * 
-   * @param entries
-   * @return
    */
   private ResourceOracleImpl createResourceOracle(ClassPathEntry... entries) {
     PathPrefixSet pps = new PathPrefixSet();
@@ -255,14 +280,22 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     return new ResourceOracleSnapshot(oracle);
   }
 
+  private void testClassPathOrderIsHonored(TreeLogger logger,
+      String resourceKey, ClassPathEntry[] classPath, PathPrefix pathPrefix) {
+    PathPrefixSet pps = new PathPrefixSet();
+    pps.add(pathPrefix);
+    ResourceOracleImpl oracle = new ResourceOracleImpl(Arrays.asList(classPath));
+    oracle.setPathPrefixes(pps);
+    ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
+    s.assertPathIncluded(resourceKey, classPath[0]);
+  }
+
   private void testReadingResource(ClassPathEntry cpe1, ClassPathEntry cpe2)
       throws IOException {
     TreeLogger logger = createTestTreeLogger();
 
     ResourceOracleImpl oracle = createResourceOracle(cpe1, cpe2);
-
-    oracle.refresh(logger);
-    ResourceOracleSnapshot s = new ResourceOracleSnapshot(oracle);
+    ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
     s.assertCollectionsConsistent(9);
     s.assertPathIncluded("com/google/gwt/user/client/Command.java", cpe1);
     s.assertPathIncluded("com/google/gwt/i18n/client/Messages.java", cpe2);
@@ -440,8 +473,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       /*
        * Baseline assumptions about the set of resources present by default.
        */
-      oracle.refresh(logger);
-      ResourceOracleSnapshot s = new ResourceOracleSnapshot(oracle);
+      ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
       s.assertPathIncluded("com/google/gwt/user/client/Command.java", cpe1);
       s.assertPathIncluded("com/google/gwt/user/client/Timer.java", cpe1);
     }
@@ -454,8 +486,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       /*
        * Ensure that the dups have the effect we expect.
        */
-      oracle.refresh(logger);
-      ResourceOracleSnapshot s = new ResourceOracleSnapshot(oracle);
+      ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
       s.assertPathIncluded("com/google/gwt/user/client/Command.java", cpe0);
       s.assertPathIncluded("com/google/gwt/user/client/Timer.java", cpe1);
     }

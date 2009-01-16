@@ -132,12 +132,14 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
   }
 
   protected void assertPathIncluded(Set<AbstractResource> resources, String path) {
-    assertNotNull(findResourceWithPath(resources, path));
+    assertNotNull("path = " + path + " should have been found in resources = "
+        + resources, findResourceWithPath(resources, path));
   }
 
   protected void assertPathNotIncluded(Set<AbstractResource> resources,
       String path) {
-    assertNull(findResourceWithPath(resources, path));
+    assertNull("path = " + path + " should not have been found in resources = "
+        + resources, findResourceWithPath(resources, path));
   }
 
   protected File findJarDirectory(String name) throws URISyntaxException {

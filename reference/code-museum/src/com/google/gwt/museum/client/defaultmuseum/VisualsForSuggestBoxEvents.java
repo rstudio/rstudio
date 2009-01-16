@@ -84,10 +84,10 @@ public class VisualsForSuggestBoxEvents extends AbstractIssue {
     final CheckBox selectsFirst = new CheckBox("Selects first suggestion");
     selectsFirst.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
       public void onValueChange(ValueChangeEvent<Boolean> event) {
-        b.setSelectsFirstItem(event.getValue());
+        b.setAutoSelectEnabled(event.getValue());
       }
     });
-    selectsFirst.setChecked(b.getSelectsFirstItem());
+    selectsFirst.setChecked(b.isAutoSelectEnabled());
     p.add(selectsFirst);
     final EventReporter<String, SuggestBox> handler = new EventReporter<String, SuggestBox>(
         report);

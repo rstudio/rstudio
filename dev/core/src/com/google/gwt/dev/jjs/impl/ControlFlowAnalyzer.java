@@ -170,6 +170,9 @@ public class ControlFlowAnalyzer {
        * would pull in the clinit of that class, which has initializers for all
        * the class literals, which in turn have all of the strings of all of the
        * class names.
+       * 
+       * TODO: Model ClassLiteral access a different way to avoid special magic.
+       * See Pruner.transformToNullFieldRef()/transformToNullMethodCall().
        */
       JField field = x.getField();
       rescue(field);

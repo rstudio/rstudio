@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,49 +30,70 @@ import com.google.gwt.user.client.Element;
  */
 public class CheckBoxTest extends GWTTestCase {
 
+  @SuppressWarnings("deprecation")
+  static class ListenerTester implements ClickListener {
+    static int fired = 0;
+    static HandlerManager manager;
+
+    public static void fire() {
+      fired = 0;
+      manager.fireEvent(new ClickEvent() {
+      });
+    }
+
+    public void onClick(Widget sender) {
+      ++fired;
+    }
+  }
+
+  private static class Handler implements ValueChangeHandler<Boolean> {
+    Boolean received = null;
+
+    public void onValueChange(ValueChangeEvent<Boolean> event) {
+      received = event.getValue();
+    }
+  }
+
+  private CheckBox cb;
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
   }
 
-  @Override
-  protected void gwtSetUp() throws Exception {
-    super.gwtSetUp();
-    RootPanel.get().clear();
-  }
-
-  @Override
-  protected void gwtTearDown() throws Exception {
-    RootPanel.get().clear();
-    super.gwtTearDown();
-  }
-
   /**
    * Test accessors.
    */
+  @SuppressWarnings("deprecation")
   public void testAccessors() {
-    final CheckBox cb = new CheckBox();
-    RootPanel.get().add(cb);
-
-    // Label accessors
     cb.setHTML("test HTML");
     assertEquals(cb.getHTML(), "test HTML");
     cb.setText("test Text");
     assertEquals(cb.getText(), "test Text");
 
-    // Input accessors
     cb.setChecked(true);
     assertTrue(cb.isChecked());
     cb.setChecked(false);
     assertFalse(cb.isChecked());
+
+    cb.setValue(true);
+    assertTrue(cb.getValue());
+    cb.setValue(false);
+    assertFalse(cb.getValue());
+
     cb.setEnabled(false);
     assertFalse(cb.isEnabled());
     cb.setEnabled(true);
     assertTrue(cb.isEnabled());
+
     cb.setTabIndex(2);
     assertEquals(cb.getTabIndex(), 2);
+
     cb.setName("my name");
     assertEquals(cb.getName(), "my name");
+
+    cb.setFormValue("valuable");
+    assertEquals("valuable", cb.getFormValue());
   }
 
   public void testDebugId() {
@@ -88,8 +111,79 @@ public class CheckBoxTest extends GWTTestCase {
     UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
   }
 
+  public void testConstructorInputElement() {
+    InputElement elm = DOM.createInputCheck().cast();
+    CheckBox box = new CheckBox(elm.<Element> cast());
+    assertFalse(box.getValue());
+    elm.setDefaultChecked(true);
+    assertTrue(box.getValue());
+  }
+
+  public void testReplaceInputElement() {
+    cb.setValue(true);
+    cb.setTabIndex(1234);
+    cb.setEnabled(false);
+    cb.setAccessKey('k');
+    cb.setFormValue("valuable");
+
+    InputElement elm = Document.get().createCheckInputElement();
+    assertFalse(elm.isChecked());
+
+    Element asOldElement = elm.cast();
+    cb.replaceInputElement(asOldElement);
+
+    // The values should be preserved
+    assertTrue(cb.getValue());
+    assertEquals(1234, cb.getTabIndex());
+    assertFalse(cb.isEnabled());
+    assertEquals("k", elm.getAccessKey());
+    assertEquals("valuable", cb.getFormValue());
+
+    assertTrue(elm.isChecked());
+    cb.setValue(false);
+    assertFalse(elm.isChecked());
+
+    elm.setChecked(true);
+    assertTrue(cb.getValue());
+
+    // TODO: When event creation is in, test that click on the new element works
+  }
+
+  public void testFormValue() {
+    InputElement elm = Document.get().createCheckInputElement();
+    Element asOldElement = elm.cast();
+    cb.replaceInputElement(asOldElement);
+
+    // assertEquals("", elm.getValue());
+    cb.setFormValue("valuable");
+    assertEquals("valuable", elm.getValue());
+
+    elm.setValue("invaluable");
+    assertEquals("invaluable", cb.getFormValue());
+  }
+
+  @SuppressWarnings("deprecation")
+  public void testListenerRemoval() {
+    ClickListener r1 = new ListenerTester();
+    ClickListener r2 = new ListenerTester();
+    ListenerTester.manager = cb.ensureHandlers();
+    cb.addClickListener(r1);
+    cb.addClickListener(r2);
+
+    ListenerTester.fire();
+    assertEquals(ListenerTester.fired, 2);
+
+    cb.removeClickListener(r1);
+    ListenerTester.fire();
+    assertEquals(ListenerTester.fired, 1);
+
+    cb.removeClickListener(r2);
+    ListenerTester.fire();
+    assertEquals(ListenerTester.fired, 0);
+  }
+
+  @SuppressWarnings("deprecation")
   public void testValueChangeEvent() {
-    CheckBox cb = new CheckBox();
     Handler h = new Handler();
     cb.addValueChangeHandler(h);
     cb.setChecked(false);
@@ -119,48 +213,17 @@ public class CheckBoxTest extends GWTTestCase {
     }
   }
 
-  static class ListenerTester implements ClickListener {
-    static int fired = 0;
-    static HandlerManager manager;
-
-    public static void fire() {
-      fired = 0;
-      manager.fireEvent(new ClickEvent() {
-      });
-    }
- 
-    public void onClick(Widget sender) {
-      ++fired;
-    }
+  @Override
+  protected void gwtSetUp() throws Exception {
+    super.gwtSetUp();
+    RootPanel.get().clear();
+    cb = new CheckBox();
+    RootPanel.get().add(cb);
   }
 
-  @SuppressWarnings("deprecation")
-  public void testListenerRemoval() {
-    CheckBox b = new CheckBox();
- 
-    ClickListener r1 = new ListenerTester();
-    ClickListener r2 = new ListenerTester();
-    ListenerTester.manager = b.ensureHandlers();
-    b.addClickListener(r1);
-    b.addClickListener(r2);
-
-    ListenerTester.fire();
-    assertEquals(ListenerTester.fired, 2);
-
-    b.removeClickListener(r1);
-    ListenerTester.fire();
-    assertEquals(ListenerTester.fired, 1);
-
-    b.removeClickListener(r2);
-    ListenerTester.fire();
-    assertEquals(ListenerTester.fired, 0);
-  }
-
-  private static class Handler implements ValueChangeHandler<Boolean> {
-    Boolean received = null;
-
-    public void onValueChange(ValueChangeEvent<Boolean> event) {
-      received = event.getValue();
-    }
+  @Override
+  protected void gwtTearDown() throws Exception {
+    RootPanel.get().clear();
+    super.gwtTearDown();
   }
 }

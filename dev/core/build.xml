@@ -45,6 +45,7 @@
       <zipfileset src="${gwt.tools.lib}/tomcat/naming-factory-1.0.jar" />
       <zipfileset src="${gwt.tools.lib}/tomcat/naming-java-1.0.jar" />
       <zipfileset src="${gwt.tools.lib}/tomcat/naming-resources-1.0.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
       <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
       <zipfileset src="${gwt.tools.lib}/tomcat/servlets-common-1.0.jar" />
       <zipfileset src="${gwt.tools.lib}/tomcat/servlets-default-1.0.jar" />

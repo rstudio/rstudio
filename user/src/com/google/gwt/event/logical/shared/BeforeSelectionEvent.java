@@ -91,7 +91,7 @@ public class BeforeSelectionEvent<I> extends
   // field itself does not, so we have to do an unsafe cast here.
   @SuppressWarnings("unchecked")
   @Override
-  public Type<BeforeSelectionHandler<I>> getAssociatedType() {
+  public final Type<BeforeSelectionHandler<I>> getAssociatedType() {
     return (Type) TYPE;
   }
 

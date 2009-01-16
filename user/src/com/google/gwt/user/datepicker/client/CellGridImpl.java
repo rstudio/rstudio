@@ -21,6 +21,7 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.impl.ElementMapperImpl;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.UIObject;
 
@@ -39,7 +40,7 @@ abstract class CellGridImpl<V> extends Grid {
   /**
    * Cell type.
    */
-  abstract class Cell extends UIObject {
+  public abstract class Cell extends UIObject {
     private boolean enabled = true;
     private V value;
     private int index;
@@ -136,7 +137,7 @@ abstract class CellGridImpl<V> extends Grid {
   private Cell highlightedCell;
 
   private Cell selectedCell;
-  private ElementMapper<Cell> elementToCell = new ElementMapper<Cell>();
+  private ElementMapperImpl<Cell> elementToCell = new ElementMapperImpl<Cell>();
   private ArrayList<Cell> cellList = new ArrayList<Cell>();
 
   protected CellGridImpl() {

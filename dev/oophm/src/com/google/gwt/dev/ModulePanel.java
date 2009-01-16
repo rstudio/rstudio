@@ -113,8 +113,10 @@ public class ModulePanel extends JPanel {
       tabs.addTab(shortModuleName, browserIcon, this, moduleName + " from "
           + remoteSocket + " on " + userAgent);
     }
-    logger.log(TreeLogger.INFO, "Request for module " + moduleName
-        + " by user agent '" + userAgent + "' from " + remoteSocket);
+    TreeLogger branch = logger.branch(TreeLogger.INFO, "Request for module "
+        + moduleName);
+    branch.log(TreeLogger.INFO, "User agent: " + userAgent);
+    branch.log(TreeLogger.INFO, "Remote host: " + remoteSocket);
   }
 
   public void disconnect() {

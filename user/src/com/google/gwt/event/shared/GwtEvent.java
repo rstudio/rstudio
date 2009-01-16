@@ -35,13 +35,14 @@ public abstract class GwtEvent<H extends EventHandler> {
    * @param <H> handler type
    */
   public static class Type<H> {
+    private static int nextHashCode;
     private final int index;
 
     /**
      * Constructor.
      */
     public Type() {
-      index = HandlerManager.createTypeHashCode();
+      index = ++nextHashCode;
     }
 
     // We override hash code to make it as efficient as possible.

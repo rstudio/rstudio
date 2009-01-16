@@ -38,7 +38,6 @@ import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JNullType;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
-import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
@@ -110,14 +109,13 @@ public class TypeTightener {
               x.getField(), x.getEnclosingType());
           ctx.replaceMe(fieldRef);
         }
-      } else if (!isStatic && instance.getType() == typeNull) {
+      } else if (!isStatic && instance.getType() == typeNull
+          && x.getField() != program.getNullField()) {
+        // Change any dereference of null to use the null field
         if (!instance.hasSideEffects()) {
           instance = program.getLiteralNull();
         }
-        JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(),
-            instance, program.getNullField(), null,
-            primitiveTypeOrNullType(x.getType()));
-        ctx.replaceMe(fieldRef);
+        ctx.replaceMe(Pruner.transformToNullFieldRef(x, program));
       }
     }
 
@@ -137,37 +135,13 @@ public class TypeTightener {
           ctx.replaceMe(newCall);
         }
       } else if (!isStatic && instance.getType() == typeNull) {
-        // bind null instance calls to the null method
-        if (!instance.hasSideEffects()) {
-          instance = program.getLiteralNull();
-        }
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-            instance, program.getNullMethod(),
-            primitiveTypeOrNullType(x.getType()));
-        ctx.replaceMe(newCall);
+        ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       } else if (isStaticImpl && method.params.size() > 0
           && method.params.get(0).isThis() && x.getArgs().size() > 0
           && x.getArgs().get(0).getType() == typeNull) {
         // bind null instance calls to the null method for static impls
-        instance = x.getArgs().get(0);
-        if (!instance.hasSideEffects()) {
-          instance = program.getLiteralNull();
-        }
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-            instance, program.getNullMethod(),
-            primitiveTypeOrNullType(x.getType()));
-        ctx.replaceMe(newCall);
+        ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
       }
-    }
-
-    /**
-     * Return the smallest type that is is a subtype of the argument.
-     */
-    private JType primitiveTypeOrNullType(JType type) {
-      if (type instanceof JPrimitiveType) {
-        return type;
-      }
-      return program.getTypeNull();
     }
   }
 

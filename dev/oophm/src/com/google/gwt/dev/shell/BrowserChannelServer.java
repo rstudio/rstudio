@@ -144,7 +144,7 @@ public class BrowserChannelServer extends BrowserChannel implements Runnable {
       moduleName = message.getModuleName();
       userAgent = message.getUserAgent();
       Thread.currentThread().setName(
-          "Hosting " + moduleName + " for" + userAgent);
+          "Hosting " + moduleName + " for " + userAgent);
       logger = handler.loadModule(logger, this, moduleName, userAgent);
       try {
         // send LoadModule response

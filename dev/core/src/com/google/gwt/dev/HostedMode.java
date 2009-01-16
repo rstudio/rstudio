@@ -45,7 +45,7 @@ import java.util.Map;
  * this class is to be determined. Consider this class as having <b>no</b>
  * public API other than {@link #main(String[])}.
  */
-public class HostedMode extends HostedModeBase {
+public class HostedMode extends SwtHostedModeBase {
 
   /**
    * Handles the -server command line flag.
@@ -421,8 +421,8 @@ public class HostedMode extends HostedModeBase {
    * 
    * @param logger the logger to use
    * @param module the module to link
-   * @param includePublicFiles if <code>true</code>, include public files in
-   *          the link, otherwise do not include them
+   * @param includePublicFiles if <code>true</code>, include public files in the
+   *          link, otherwise do not include them
    * @throws UnableToCompleteException
    */
   private void link(TreeLogger logger, ModuleDef module)

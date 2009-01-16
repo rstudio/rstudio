@@ -25,21 +25,19 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
-
-import java.util.EventListener;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
 
 /**
- * Legacy listener support hierarchy for <code>com.google.gwt.user.client</code>.
- * Gathers the bulk of the legacy glue code in one place, for easy deletion when
- * Listener methods are deleted. 
+ * Legacy listener support for <code>com.google.gwt.user.client</code>. Gathers
+ * the bulk of the legacy glue code in one place, for easy deletion when
+ * Listener methods are deleted.
  * 
- * @see com.google.gwt.user.ListenerWrapper
  * @param <T> listener type
  */
 @Deprecated
 abstract class ListenerWrapper<T> implements EventHandler {
-  public static class HistoryChange extends ListenerWrapper<HistoryListener> implements
-      ValueChangeHandler<String> {
+  public static class HistoryChange extends ListenerWrapper<HistoryListener>
+      implements ValueChangeHandler<String> {
     @Deprecated
     public static void add(HistoryListener listener) {
       History.addValueChangeHandler(new HistoryChange(listener));
@@ -58,8 +56,34 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class WindowClose extends ListenerWrapper<WindowCloseListener> implements
-      Window.ClosingHandler, CloseHandler<Window> {
+  public static class NativePreview extends ListenerWrapper<EventPreview>
+      implements Event.NativePreviewHandler {
+    @Deprecated
+    public static void add(EventPreview listener) {
+      Event.addNativePreviewHandler(new NativePreview(listener));
+    }
+
+    public static void remove(EventPreview listener) {
+      baseRemove(Event.handlers, listener, NativePreviewEvent.getType());
+    }
+
+    private NativePreview(EventPreview listener) {
+      super(listener);
+    }
+
+    public void onPreviewNativeEvent(NativePreviewEvent event) {
+      // The legacy EventHandler should only fire if it is on the top of the
+      // stack (ie. the last one added).
+      if (event.isFirstHandler()) {
+        if (!listener.onEventPreview(event.getNativeEvent())) {
+          event.cancel();
+        }
+      }
+    }
+  }
+
+  public static class WindowClose extends ListenerWrapper<WindowCloseListener>
+      implements Window.ClosingHandler, CloseHandler<Window> {
     @Deprecated
     public static void add(WindowCloseListener listener) {
       WindowClose handler = new WindowClose(listener);
@@ -89,8 +113,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class WindowResize extends ListenerWrapper<WindowResizeListener> implements
-      ResizeHandler {
+  public static class WindowResize extends
+      ListenerWrapper<WindowResizeListener> implements ResizeHandler {
     @Deprecated
     public static void add(WindowResizeListener listener) {
       Window.addResizeHandler(new WindowResize(listener));
@@ -110,8 +134,8 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-  public static class WindowScroll extends ListenerWrapper<WindowScrollListener> implements
-      Window.ScrollHandler {
+  public static class WindowScroll extends
+      ListenerWrapper<WindowScrollListener> implements Window.ScrollHandler {
     @Deprecated
     public static void add(WindowScrollListener listener) {
       Window.addWindowScrollHandler(new WindowScroll(listener));
@@ -131,14 +155,13 @@ abstract class ListenerWrapper<T> implements EventHandler {
     }
   }
 
-
   // This is an internal helper method with the current formulation, we have
   // lost the info needed to make it safe by this point.
   @SuppressWarnings("unchecked")
   // This is a direct copy of the baseRemove from
   // com.google.gwt.user.client.ui.ListenerWrapper. Change in parallel.
   static <H extends EventHandler> void baseRemove(HandlerManager manager,
-      EventListener listener, Type... keys) {
+      Object listener, Type... keys) {
     if (manager != null) {
       for (Type<H> key : keys) {
         int handlerCount = manager.getHandlerCount(key);
@@ -153,7 +176,7 @@ abstract class ListenerWrapper<T> implements EventHandler {
       }
     }
   }
-  
+
   /**
    * Listener being wrapped.
    */

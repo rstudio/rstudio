@@ -91,18 +91,6 @@ public class ApiContainerTest extends TestCase {
     return sb.toString();
   }
 
-  private static String getSourceForNewObject() {
-    StringBuffer sb = new StringBuffer();
-    sb.append("package java.lang;\n");
-    sb.append("public class Object {\n");
-    sb.append("\tpublic static class Foo extends Object{\n");
-    sb.append("\t}\n");
-    sb.append("}\n");
-    sb.append("class Temp {\n");
-    sb.append("}");
-    return sb.toString();
-  }
-
   private static String getSourceForNonApiClass() {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
@@ -163,7 +151,7 @@ public class ApiContainerTest extends TestCase {
   }
 
   ApiContainer apiCheck = null;
-  ApiContainer apiCheckLoop = null;
+  AbstractTreeLogger logger = new PrintWriterTreeLogger();
 
   /**
    * Class hierarchy. public java.lang.Object -- test.apicontainer.NonApiClass
@@ -172,24 +160,43 @@ public class ApiContainerTest extends TestCase {
    */
   @Override
   public void setUp() throws UnableToCompleteException {
-    AbstractTreeLogger logger = new PrintWriterTreeLogger();
     logger.setMaxDetail(com.google.gwt.core.ext.TreeLogger.ERROR);
-    apiCheckLoop = new ApiContainer(
-        "ApiClassTest",
-        new HashSet<CompilationUnit>(
-            Arrays.asList(new StaticCompilationUnit[] {new StaticCompilationUnit(
-                "java.lang.Object", getSourceForNewObject()),})),
-        new HashSet<String>(), logger);
+
     apiCheck = new ApiContainer("ApiContainerTest",
         new HashSet<CompilationUnit>(Arrays.asList(getScuArray())),
         new HashSet<String>(), logger);
+  }
+
+  /*
+   * Test if ApiContainer correctly creates an ApiContainer (for example, avoids
+   * an infinite loop) when a nested class extends an outer class.
+   */
+  public void testApiContainerLoop() throws UnableToCompleteException {
+    StringBuffer sb = new StringBuffer();
+    sb.append("package java.lang;\n");
+    sb.append("public class Object {\n");
+    sb.append("\tpublic static class Foo extends Object{\n");
+    sb.append("\t}\n");
+    sb.append("}\n");
+    sb.append("class Temp {\n");
+    sb.append("}");
+
+    ApiContainer apiCheckLoop = new ApiContainer(
+        "ApiClassTest",
+        new HashSet<CompilationUnit>(
+            Arrays.asList(new StaticCompilationUnit[] {new StaticCompilationUnit(
+                "java.lang.Object", sb.toString())})), new HashSet<String>(),
+        logger);
+    ApiPackage javaLangPackage = apiCheckLoop.getApiPackage("java.lang");
+    assertNotNull(javaLangPackage);
+    assertNotNull(javaLangPackage.getApiClass("java.lang.Object"));
+    assertEquals(2, javaLangPackage.getApiClassNames().size());
   }
 
   public void testEverything() {
     checkApiClass();
     checkApiMembers();
     checkApiPackages();
-    checkInfiniteLoopInApiClass();
   }
 
   /**
@@ -270,12 +277,5 @@ public class ApiContainerTest extends TestCase {
     assertNotNull(apiCheck.getApiPackage("java.lang"));
     assertNotNull(apiCheck.getApiPackage("test.apicontainer"));
     assertEquals(3, apiCheck.getApiPackageNames().size());
-  }
-
-  void checkInfiniteLoopInApiClass() {
-    ApiPackage tempPackage = apiCheckLoop.getApiPackage("java.lang");
-    assertNotNull(tempPackage);
-    assertNotNull(tempPackage.getApiClass("java.lang.Object"));
-    assertEquals(2, tempPackage.getApiClassNames().size());
   }
 }

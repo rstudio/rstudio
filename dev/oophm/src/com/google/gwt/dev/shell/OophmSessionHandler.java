@@ -172,7 +172,7 @@ public class OophmSessionHandler extends SessionHandler {
       // that can go wrong trying to load a module, including Error-derived
       // things like NoClassDefFoundError.
       // 
-      logger.log(TreeLogger.ERROR, "Failure to load module '" + moduleName
+      logger.log(TreeLogger.ERROR, "Failed to load module '" + moduleName
           + "' from user agent '" + userAgent + "' at "
           + channel.getRemoteEndpoint(), e);
     }

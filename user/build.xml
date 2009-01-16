@@ -25,7 +25,7 @@
     <mkdir dir="${javac.out}" />
     <gwt.javac>
       <classpath>
-        <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
+        <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/jfreechart/jfreechart-1.0.3.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
@@ -52,7 +52,7 @@
       <classpath>
         <pathelement location="${javac.out}" />
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
-        <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
+        <pathelement location="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
         <pathelement location="${gwt.tools.lib}/selenium/selenium-java-client-driver.jar" />
         <pathelement location="${gwt.dev.jar}" />
@@ -66,7 +66,7 @@
       <fileset dir="src" excludes="**/package.html" />
       <fileset dir="super" excludes="**/package.html" />
       <fileset dir="${javac.out}" />
-      <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.4.jar" />
+      <zipfileset src="${gwt.tools.lib}/tomcat/servlet-api-2.5.jar" />
     </gwt.jar>
   </target>
 

@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
 
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>@startupUrl</welcome-file>
+  </welcome-file-list>
+  
+  <!-- Servlets -->
   <servlet>
     <servlet-name>echoServlet</servlet-name>
     <servlet-class>@serverPackage.EchoServiceImpl</servlet-class>

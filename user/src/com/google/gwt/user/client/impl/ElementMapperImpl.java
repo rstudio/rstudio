@@ -14,25 +14,26 @@
  * the License.
  */
 
-package com.google.gwt.user.datepicker.client;
+package com.google.gwt.user.client.impl;
 
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.UIObject;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Creates a mapping from elements to their associated ui objects.
  * 
  * @param <T> the type that the element is mapped to
  */
-class ElementMapper<T extends UIObject> {
+public class ElementMapperImpl<T extends UIObject> {
 
   private static class FreeNode {
     int index;
-    ElementMapper.FreeNode next;
+    ElementMapperImpl.FreeNode next;
 
-    public FreeNode(int index, ElementMapper.FreeNode next) {
+    public FreeNode(int index, ElementMapperImpl.FreeNode next) {
       this.index = index;
       this.next = next;
     }
@@ -51,7 +52,7 @@ class ElementMapper<T extends UIObject> {
     elem["__uiObjectID"] = index;
   }-*/;
 
-  private ElementMapper.FreeNode freeList = null;
+  private ElementMapperImpl.FreeNode freeList = null;
 
   private final ArrayList<T> uiObjectList = new ArrayList<T>();
 
@@ -67,6 +68,19 @@ class ElementMapper<T extends UIObject> {
       return null;
     }
     return uiObjectList.get(index);
+  }
+
+  public ArrayList<T> getObjectList() {
+    return uiObjectList;
+  }
+
+  /**
+   * Creates an iterator from the ui objects stored within
+   * 
+   * @return an iterator of the ui objects indexed by this element mapper.
+   */
+  public Iterator<T> iterator() {
+    return uiObjectList.iterator();
   }
 
   /**

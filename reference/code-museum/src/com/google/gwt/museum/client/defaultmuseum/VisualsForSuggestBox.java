@@ -119,7 +119,7 @@ public class VisualsForSuggestBox extends AbstractIssue {
 
   private SuggestBox suggestBoxWithDefault() {
     final SuggestBox b = new SuggestBox(girlsNamesWithDefault);
-    b.setSelectsFirstItem(false);
+    b.setAutoSelectEnabled(false);
     b.getTextBox().addMouseDownHandler(new MouseDownHandler() {
 
       public void onMouseDown(MouseDownEvent event) {

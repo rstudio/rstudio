@@ -17,6 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.junit.client.GWTTestCase;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Tests the FlowPanel widget.
  */
@@ -28,5 +31,31 @@ public class FlowPanelTest extends GWTTestCase {
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new FlowPanel());
+  }
+
+  public void testClear() {
+    int size = 10;
+    FlowPanel target;
+    List<Widget> children = new ArrayList<Widget>();
+
+    target = new FlowPanel();
+
+    for (int i = 0; i < size; i++) {
+      Widget w = new Label("widget-" + i);
+      target.add(w);
+      children.add(w);
+    }
+
+    RootPanel.get().add(target);
+    for (Widget child : target) {
+      assertNotNull(child.getElement().getPropertyString("__listener"));
+    }
+    assertEquals(10, target.getWidgetCount());
+    target.clear();
+    assertEquals(0, target.getWidgetCount());
+
+    for (Widget child : target) {
+      assertNull(child.getElement().getPropertyString("__listener") == null);
+    }
   }
 }

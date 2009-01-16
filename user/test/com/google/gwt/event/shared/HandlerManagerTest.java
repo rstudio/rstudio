@@ -223,7 +223,6 @@ public class HandlerManagerTest extends HandlerTestBase {
     assertFired(one, mouse1);
   }
 
-  @SuppressWarnings("deprecation")
   public void testMultiFiring() {
 
     HandlerManager manager = new HandlerManager("source1");
@@ -260,5 +259,39 @@ public class HandlerManagerTest extends HandlerTestBase {
     manager.fireEvent(new MouseDownEvent() {
     });
     assertFired(mouse1, adaptor1, mouse3);
+  }
+
+  public void testReverseOrder() {
+    // Add some handlers to a manager
+    final HandlerManager manager = new HandlerManager("source1", true);
+    final MouseDownHandler handler0 = new MouseDownHandler() {
+      public void onMouseDown(MouseDownEvent event) {
+        add(this);
+      }
+    };
+    final MouseDownHandler handler1 = new MouseDownHandler() {
+      public void onMouseDown(MouseDownEvent event) {
+        assertNotFired(handler0);
+        add(this);
+      }
+    };
+    final MouseDownHandler handler2 = new MouseDownHandler() {
+      public void onMouseDown(MouseDownEvent event) {
+        assertNotFired(handler0, handler1);
+        add(this);
+      }
+    };
+    HandlerRegistration reg0 = manager.addHandler(MouseDownEvent.getType(),
+        handler0);
+    HandlerRegistration reg1 = manager.addHandler(MouseDownEvent.getType(),
+        handler1);
+    HandlerRegistration reg2 = manager.addHandler(MouseDownEvent.getType(),
+        handler2);
+
+    // Fire the event
+    reset();
+    manager.fireEvent(new MouseDownEvent() {
+    });
+    assertFired(handler0, handler1, handler2);
   }
 }

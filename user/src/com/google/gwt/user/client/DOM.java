@@ -23,8 +23,6 @@ import com.google.gwt.dom.client.OptionElement;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.user.client.impl.DOMImpl;
 
-import java.util.ArrayList;
-
 /**
  * This class provides a set of static methods that allow you to manipulate the
  * browser's Document Object Model (DOM). It contains methods for manipulating
@@ -32,15 +30,10 @@ import java.util.ArrayList;
  * {@link com.google.gwt.user.client.Event events}.
  */
 public class DOM {
-
   // The current event being fired
   private static Event currentEvent = null;
   private static final DOMImpl impl = GWT.create(DOMImpl.class);
   private static Element sCaptureElem;
-
-  // <BrowserEventPreview>
-  @SuppressWarnings("deprecation")
-  private static ArrayList<EventPreview> sEventPreviewStack;
 
   /**
    * Adds an event preview to the preview stack. As long as this preview remains
@@ -55,14 +48,7 @@ public class DOM {
    */
   @Deprecated
   public static void addEventPreview(EventPreview preview) {
-    impl.maybeInitializeEventSystem();
-
-    // Add the event preview to the stack. It will automatically
-    // begin receiving events.
-    if (sEventPreviewStack == null) {
-      sEventPreviewStack = new ArrayList<EventPreview>();
-    }
-    sEventPreviewStack.add(preview);
+    ListenerWrapper.NativePreview.add(preview);
   }
 
   /**
@@ -532,7 +518,7 @@ public class DOM {
   }
 
   /**
-   * Gets the key-repeat state of this event.  Only IE supports this attribute.
+   * Gets the key-repeat state of this event. Only IE supports this attribute.
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if this key event was an auto-repeat
@@ -909,8 +895,8 @@ public class DOM {
    * 
    * @param parent the parent element
    * @param child the child element to add to <code>parent</code>
-   * @param before an existing child element of <code>parent</code> before
-   *          which <code>child</code> will be inserted
+   * @param before an existing child element of <code>parent</code> before which
+   *          <code>child</code> will be inserted
    */
   public static void insertBefore(Element parent, Element child, Element before) {
     parent.insertBefore(child, before);
@@ -930,10 +916,10 @@ public class DOM {
   }
 
   /**
-   * Creates an <code>&lt;option&gt;</code> element and inserts it as a child
-   * of the specified <code>&lt;select&gt;</code> element. If the index is
-   * less than zero, or greater than or equal to the length of the list, then
-   * the option element will be appended to the end of the list.
+   * Creates an <code>&lt;option&gt;</code> element and inserts it as a child of
+   * the specified <code>&lt;select&gt;</code> element. If the index is less
+   * than zero, or greater than or equal to the length of the list, then the
+   * option element will be appended to the end of the list.
    * 
    * @param selectElem the <code>&lt;select&gt;</code> element
    * @param item the text of the new item; cannot be <code>null</code>
@@ -1012,12 +998,7 @@ public class DOM {
    */
   @Deprecated
   public static void removeEventPreview(EventPreview preview) {
-    // Remove the event preview from the stack. If it was on top,
-    // any preview underneath it will automatically begin to
-    // receive events.
-    if (sEventPreviewStack != null) {
-      sEventPreviewStack.remove(preview);
-    }
+    ListenerWrapper.NativePreview.remove(preview);
   }
 
   /**
@@ -1270,6 +1251,13 @@ public class DOM {
   }
 
   /**
+   * Initialize the event system if it has not already been initialized.
+   */
+  static void maybeInitializeEventSystem() {
+    impl.maybeInitializeEventSystem();
+  }
+
+  /**
    * This method is called directly by native code when event preview is being
    * used.
    * 
@@ -1280,12 +1268,6 @@ public class DOM {
   static boolean previewEvent(Event evt) {
     // Fire a NativePreviewEvent to NativePreviewHandlers
     boolean ret = Event.fireNativePreviewEvent(evt);
-
-    // If event previews are present, redirect events to the topmost of them.
-    if (sEventPreviewStack != null && sEventPreviewStack.size() > 0) {
-      EventPreview preview = sEventPreviewStack.get(sEventPreviewStack.size() - 1);
-      ret = preview.onEventPreview(evt) && ret;
-    }
 
     // If the preview cancels the event, stop it from bubbling and performing
     // its default action. Check for a null evt to allow unit tests to run.
