@@ -46,6 +46,10 @@ abstract class LogFilterServletContext implements ServletContext {
     return realContext.getContext(uripath);
   }
 
+  public String getContextPath() {
+    return realContext.getContextPath();
+  }
+
   public String getInitParameter(String name) {
     return realContext.getInitParameter(name);
   }

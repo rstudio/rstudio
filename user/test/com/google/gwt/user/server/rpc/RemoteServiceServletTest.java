@@ -104,6 +104,10 @@ public class RemoteServiceServletTest extends TestCase {
       throw new UnsupportedOperationException();
     }
 
+    public String getContextPath() {
+      throw new UnsupportedOperationException();
+    }
+
     public String getInitParameter(String arg0) {
       throw new UnsupportedOperationException();
     }
