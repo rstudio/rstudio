@@ -15,13 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 
 /**
- * TODO: document me.
+ * Tests for {@link PopupPanel}.
  */
 public class PopupTest extends GWTTestCase {
 
@@ -80,6 +82,32 @@ public class PopupTest extends GWTTestCase {
     assertTrue(popup.isPreviewingAllNativeEvents());
     popup.setPreviewingAllNativeEvents(false);
     assertFalse(popup.isPreviewingAllNativeEvents());
+
+    // setVisible
+    assertTrue(popup.isVisible());
+    popup.setVisible(false);
+    assertFalse(popup.isVisible());
+    popup.setVisible(true);
+    assertTrue(popup.isVisible());
+
+    // isShowing
+    assertFalse(popup.isShowing());
+    popup.show();
+    assertTrue(popup.isShowing());
+    popup.hide();
+    assertFalse(popup.isShowing());
+  }
+
+  public void testAutoHidePartner() {
+    final PopupPanel popup = new PopupPanel();
+
+    // Add a partner
+    DivElement partner0 = Document.get().createDivElement();
+    popup.addAutoHidePartner(partner0);
+    popup.addAutoHidePartner(Document.get().createDivElement());
+
+    // Remove a partner
+    popup.removeAutoHidePartner(partner0);
   }
 
   /**

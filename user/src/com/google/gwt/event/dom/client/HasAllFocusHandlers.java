@@ -20,9 +20,10 @@ package com.google.gwt.event.dom.client;
  * This is a convenience interface that includes all focus handlers defined by
  * the core GWT system.
  * 
- * <p> WARNING, PLEASE READ: As this interface is intended for developers who
- * wish to handle all focus events in GWT, in the unlikely event that a new
- * focus event is added, this interface will change.
+ * <p>
+ * WARNING, PLEASE READ: As this interface is intended for developers who wish
+ * to handle all focus events in GWT, in the unlikely event that a new focus
+ * event is added, this interface will change.
  * </p>
  */
 public interface HasAllFocusHandlers extends HasFocusHandlers, HasBlurHandlers {

@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.HasHandlers;
 
 /**
  * Represents a show range event. This logical event should be used when a
- * widget displays a range of values to the user.  This event should not be fired until a widget is displaying t
+ * widget displays a range of values to the user.
  * 
  * @param <V> the type of range
  */
@@ -79,6 +79,14 @@ public class ShowRangeEvent<V> extends GwtEvent<ShowRangeHandler<V>> {
     this.end = end;
   }
 
+  // Because of type erasure, our static type is
+  // wild carded, yet the "real" type should use our I param.
+  @SuppressWarnings("unchecked")
+  @Override
+  public final Type<ShowRangeHandler<V>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the end of the range.
    * 
@@ -100,13 +108,5 @@ public class ShowRangeEvent<V> extends GwtEvent<ShowRangeHandler<V>> {
   @Override
   protected void dispatch(ShowRangeHandler<V> handler) {
     handler.onShowRange(this);
-  }
-
-  // Because of type erasure, our static type is
-  // wild carded, yet the "real" type should use our I param.
-  @SuppressWarnings("unchecked")
-  @Override
-  protected final Type<ShowRangeHandler<V>> getAssociatedType() {
-    return (Type) TYPE;
   }
 }

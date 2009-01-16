@@ -340,10 +340,6 @@ public class SerializableTypeOracleBuilder {
   /**
    * Returns <code>true</code> if this type is part of the standard java
    * packages.
-   * 
-   * NOTE: This code is copied from
-   * {@link com.google.gwt.dev.shell.CompilingClassLoader CompilingClassLoader};
-   * don't change one without changing the other.
    */
   static boolean isInStandardJavaPackage(String className) {
     if (className.startsWith("java.")) {

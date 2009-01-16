@@ -38,8 +38,8 @@ public class FormSubmitCompleteEvent extends EventObject {
   /**
    * Gets the result text of the form submission.
    * 
-   * @return the result html, or <code>null</code> if there was an error
-   *         reading it
+   * @return the result html, or <code>null</code> if there was an error reading
+   *         it
    * @tip The result html can be <code>null</code> as a result of submitting a
    *      form to a different domain.
    */

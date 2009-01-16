@@ -66,12 +66,10 @@ public class MouseListenerCollection extends ArrayList<MouseListener> {
    */
   public void fireMouseEvent(Widget sender, Event event) {
     final Element senderElem = sender.getElement();
-    int x = DOM.eventGetClientX(event)
-        - DOM.getAbsoluteLeft(senderElem)
+    int x = DOM.eventGetClientX(event) - DOM.getAbsoluteLeft(senderElem)
         + DOM.getElementPropertyInt(senderElem, "scrollLeft")
         + Window.getScrollLeft();
-    int y = DOM.eventGetClientY(event)
-        - DOM.getAbsoluteTop(senderElem)
+    int y = DOM.eventGetClientY(event) - DOM.getAbsoluteTop(senderElem)
         + DOM.getElementPropertyInt(senderElem, "scrollTop")
         + Window.getScrollTop();
 

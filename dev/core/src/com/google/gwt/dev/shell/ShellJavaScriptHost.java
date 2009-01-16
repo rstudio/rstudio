@@ -17,7 +17,6 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
 
 import java.util.List;
@@ -42,8 +41,8 @@ public interface ShellJavaScriptHost {
    * @param jsniMethods
    * @param dispatchIdOracle
    */
-  void createNativeMethods(TreeLogger logger, CompiledClass compiledClass,
-      List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle);
+  void createNativeMethods(TreeLogger logger, List<JsniMethod> jsniMethods,
+      DispatchIdOracle dispatchIdOracle);
 
   /**
    * Call this when a JavaScript exception is caught.

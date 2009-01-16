@@ -47,13 +47,13 @@ public class ChangeEvent extends DomEvent<ChangeHandler> {
   }
 
   @Override
-  protected void dispatch(ChangeHandler handler) {
-    handler.onChange(this);
+  public final Type<ChangeHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<ChangeHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(ChangeHandler handler) {
+    handler.onChange(this);
   }
 
 }

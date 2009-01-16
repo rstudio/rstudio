@@ -25,6 +25,11 @@ abstract class CompileArgProcessor extends ArgProcessorBase {
     registerHandler(new ArgHandlerLogLevel(options));
     registerHandler(new ArgHandlerTreeLoggerFlag(options));
     registerHandler(new ArgHandlerWorkDirRequired(options));
-    registerHandler(new ArgHandlerModuleName(options));
+    registerHandler(new ArgHandlerModuleName(options) {
+      @Override
+      public String getPurpose() {
+        return super.getPurpose() + " to compile";
+      }
+    });
   }
 }

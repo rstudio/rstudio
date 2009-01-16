@@ -39,13 +39,10 @@
         <include name="samples" />
         <include name="samples/*" />
         <include name="samples/*/src/**" />
-        <include name="samples/*/bin/**" />
-        <include name="samples/*/www/**" />
-        <exclude name="samples/*/www/.*/**" />
+        <include name="samples/*/war/**" />
       </zipfileset>
       <zipfileset dir="${gwt.build.out}/samples-scripts/${dist.platform}" prefix="${project.distname}/samples">
-        <include name="*/*-compile.cmd" />
-        <include name="*/*-shell.cmd" />
+        <include name="*/*" />
       </zipfileset>
     </zip>
 

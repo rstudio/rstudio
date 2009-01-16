@@ -823,6 +823,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param listener listener to add
    * @deprecated add a click handler instead and use {@link HTMLTable#getCellForEvent(ClickEvent)} to get the cell information
    */
+  @Deprecated
   public void addTableListener(TableListener listener) {
     ListenerWrapper.Table.add(this, listener);
   }

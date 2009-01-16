@@ -1,18 +1,17 @@
-<module rename-to='@newModuleName'>
+<?xml version="1.0" encoding="UTF-8"?>@gwtModuleDtd
+<module rename-to='@renameTo'>
+  <!-- Inherit the core Web Toolkit stuff.                        -->
+  <inherits name='com.google.gwt.user.User'/>
 
-      <!-- Inherit the core Web Toolkit stuff.                        -->
-      <inherits name='com.google.gwt.user.User'/>
-	
-      <!-- Inherit the default GWT style sheet.  You can change       -->
-      <!-- the theme of your GWT application by uncommenting          -->
-      <!-- any one of the following lines.                            -->
-      <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-      <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
-      <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
+  <!-- Inherit the default GWT style sheet.  You can change       -->
+  <!-- the theme of your GWT application by uncommenting          -->
+  <!-- any one of the following lines.                            -->
+  <inherits name='com.google.gwt.user.theme.standard.Standard'/>
+  <!-- <inherits name='com.google.gwt.user.theme.chrome.Chrome'/> -->
+  <!-- <inherits name='com.google.gwt.user.theme.dark.Dark'/>     -->
 
-      <!-- Other module inherits                                      -->
-@extraModuleInherits
+  <!-- Other module inherits                                      -->
 
-      <!-- Specify the app entry point class.                         -->
-      <entry-point class='@clientPackage.@className'/>
+  <!-- Specify the app entry point class.                         -->
+  <entry-point class='@clientPackage.@moduleShortName'/>
 </module>

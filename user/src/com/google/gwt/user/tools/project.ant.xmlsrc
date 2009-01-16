@@ -1,85 +1,65 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<project name="@projectName" default="build" basedir=".">
-  <description>
-    @projectName build file.  This is used to package up your project as a jar,
-    if you want to distribute it.  This isn't needed for normal operation.
-  </description>
-  <property name="outdir" location="war" />
+<project name="@moduleShortName" default="build" basedir=".">
 
-  <!-- set classpath -->
   <path id="project.class.path">
-    <pathelement path="${java.class.path}/"/>
-    <pathelement path="@gwtUserPath"/>
-@extraAntPathElements
-    <!-- Additional dependencies (such as junit) go here -->
+    <pathelement location="war/WEB-INF/classes"/>
+    <pathelement location="@gwtUserPath"/>
+    <!-- Add any additional non-server libs (such as JUnit) -->
+    <fileset dir="war/WEB-INF/lib">
+      <include name="**/*.jar"/>
+    </fileset>
   </path>
 
-  <!-- TODO:  
-   1. revisit this once GWT supports shared dir as a first-clas citizen
-   2. For a 1.4 server, split this so that the server side code is compiled
-   with a target=1.4 build rule -->
-  <target name="javac" description="Compile project to WEB-INF/classes">
+  <target name="libs" description="Copy libs to WEB-INF/lib">
+    <mkdir dir="war/WEB-INF/lib" />
+    <copy todir="war/WEB-INF/lib" file="@gwtServletPath" />
+    <!-- Add any additional server libs that need to be copied -->
+  </target>
+
+  <target name="javac" depends="libs" description="Compile java source">
     <mkdir dir="war/WEB-INF/classes"/>
-    <javac srcdir="src:test"
-      destdir="war/WEB-INF/classes"
-      includes="**"
-      debug="true"
-      debuglevel="lines,vars,source"
-      source="1.5"
-      target="1.5"
-      nowarn="true"
-      encoding="utf-8">
+    <javac srcdir="src" includes="**" encoding="utf-8"
+        destdir="war/WEB-INF/classes"
+        source="1.5" target="1.5" nowarn="true"
+        debug="true" debuglevel="lines,vars,source">
       <classpath refid="project.class.path"/>
     </javac>
   </target>
 
-  <target name="deploy" depends="gwtc" description="Copy output to the war folder">
-    <mkdir dir="war/WEB-INF/lib" />
-    <copy todir="war/WEB-INF/lib" file="@gwtServletPath" />
-  </target>
-
   <!-- can add additional arguments like -logLevel INFO or -style PRETTY -->
-  <target name="gwtc" depends="javac" description="Compile to JavaScript">
-    <java failonerror="true" fork="true"
-          classname="@compileClass">
+  <target name="gwtc" depends="javac" description="GWT compile to JavaScript">
+    <java failonerror="true" fork="true" classname="@compileClass">
       <classpath>
         <pathelement location="src"/>
-        <pathelement location="war/WEB-INF/classes"/>
-        <pathelement path="${project.class.path}/"/>
+        <path refid="project.class.path"/>
         <pathelement location="@gwtDevPath"/>
       </classpath>
-     <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-      <jvmarg value="-Xmx256M"/>
-      @antVmargs
+      <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
+      <jvmarg value="-Xmx256M"/>@antVmargs
       <arg value="@moduleName"/>
     </java>
   </target>
 
-  <!-- can add additional arguments like -logLevel INFO -->
-  <target name="shell" depends="javac" description="Run the deployed app in GWT hosted mode">
-    <java failonerror="true" fork="true"
-          classname="@shellClass">
+  <target name="hosted" depends="javac" description="Run hosted mode">
+    <java failonerror="true" fork="true" classname="@shellClass">
       <classpath>
         <pathelement location="src"/>
+        <path refid="project.class.path"/>
         <pathelement location="@gwtDevPath"/>
-        <pathelement path="${java.class.path}/"/>
-        <pathelement path="@gwtUserPath"/>
       </classpath>
-      <jvmarg value="-Xmx256M"/>
-      @antVmargs
+      <jvmarg value="-Xmx256M"/>@antVmargs
       <arg value="-startupUrl"/>
       <arg value="@startupUrl"/>
       <arg value="@moduleName"/>
+      <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
     </java>
   </target>
 
-  <target name="build" depends="javac, gwtc, deploy" description="Build this project" />
+  <target name="build" depends="gwtc" description="Build this project" />
 
-  <target name="clean" description="Cleans this project's intermediate and
-    output files">
-    <!-- uncomment if the WEB-INF/classes dir only contains GWT output --> 
-    <!-- <delete dir="war/WEB-INF/classes" failonerror="false" /> -->
-    <delete dir="war/@newModuleName" failonerror="false" />
+  <target name="clean" description="Cleans this project">
+    <delete dir="war/WEB-INF/classes" failonerror="false" />
+    <delete dir="war/@renameTo" failonerror="false" />
   </target>
 
 </project>

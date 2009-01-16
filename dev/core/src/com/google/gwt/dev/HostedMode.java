@@ -31,13 +31,11 @@ import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerModuleName;
 import com.google.gwt.dev.util.arg.ArgHandlerWarDir;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
-import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.Map;
@@ -150,7 +148,12 @@ public class HostedMode extends HostedModeBase {
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWorkDirOptional(options));
       registerHandler(new ArgHandlerLocalWorkers(options));
-      registerHandler(new ArgHandlerModuleName(options));
+      registerHandler(new ArgHandlerModuleName(options) {
+        @Override
+        public String getPurpose() {
+          return super.getPurpose() + " to host";
+        }
+      });
     }
 
     @Override
@@ -233,9 +236,6 @@ public class HostedMode extends HostedModeBase {
     System.exit(-1);
   }
 
-  protected final PrintWriterTreeLogger console = new PrintWriterTreeLogger(
-      new PrintWriter(System.err, true));
-
   /**
    * Hiding super field because it's actually the same object, just with a
    * stronger type.
@@ -263,10 +263,6 @@ public class HostedMode extends HostedModeBase {
    * Tracks whether we created a temp workdir that we need to destroy.
    */
   private boolean tempWorkDir = false;
-
-  {
-    console.setMaxDetail(TreeLogger.WARN);
-  }
 
   /**
    * Default constructor for testing; no public API yet.
@@ -346,7 +342,7 @@ public class HostedMode extends HostedModeBase {
                   + "'; add servlet tags to your web.xml instead");
         }
 
-        link(loadLogger, module, false);
+        link(loadLogger, module);
       } catch (UnableToCompleteException e) {
         // Already logged.
         return false;
@@ -400,7 +396,7 @@ public class HostedMode extends HostedModeBase {
         shouldRefreshPage = true;
         module = loadModule(getTopLogger(), module.getCanonicalName(), false);
       }
-      link(getTopLogger(), module, true);
+      link(getTopLogger(), module);
       return shouldRefreshPage;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -429,8 +425,8 @@ public class HostedMode extends HostedModeBase {
    *          the link, otherwise do not include them
    * @throws UnableToCompleteException
    */
-  private void link(TreeLogger logger, ModuleDef module,
-      boolean includePublicFiles) throws UnableToCompleteException {
+  private void link(TreeLogger logger, ModuleDef module)
+      throws UnableToCompleteException {
     // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(options.getWarDir(), module.getName());
     File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
@@ -440,10 +436,6 @@ public class HostedMode extends HostedModeBase {
     StandardLinkerContext linkerStack = new StandardLinkerContext(logger,
         module, options);
     linkerStacks.put(module.getName(), linkerStack);
-
-    if (!includePublicFiles) {
-      linkerStack.getArtifacts().clear();
-    }
 
     ArtifactSet artifacts = linkerStack.invokeLink(logger);
     linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,

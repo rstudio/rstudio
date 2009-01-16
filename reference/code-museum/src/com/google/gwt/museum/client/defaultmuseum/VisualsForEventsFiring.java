@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,8 +29,10 @@ import com.google.gwt.event.dom.client.ErrorEvent;
 import com.google.gwt.event.dom.client.ErrorHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasContextMenuHandlers;
 import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
+import com.google.gwt.event.dom.client.HasMouseWheelHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -49,6 +51,8 @@ import com.google.gwt.event.dom.client.MouseOverEvent;
 import com.google.gwt.event.dom.client.MouseOverHandler;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.dom.client.ScrollEvent;
 import com.google.gwt.event.dom.client.ScrollHandler;
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -87,9 +91,28 @@ public class VisualsForEventsFiring extends AbstractIssue {
     }
   }
 
+  private static class CustomScrollPanel extends ScrollPanel implements
+      HasMouseWheelHandlers {
+    public CustomScrollPanel(Widget content) {
+      super(content);
+    }
+
+    public HandlerRegistration addMouseWheelHandler(MouseWheelHandler handler) {
+      return addDomHandler(handler, MouseWheelEvent.getType());
+    }
+  }
+
+  private static class CustomTextBox extends TextBox implements
+      HasChangeHandlers {
+    public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+      return addDomHandler(handler, ChangeEvent.getType());
+    }
+  }
+
   private static final int WINDOW_EVENT_SCROLL = -1;
   private static final int WINDOW_EVENT_RESIZE = -2;
   private static final int WINDOW_EVENT_CLOSING = -3;
+  private static final int VELOCITY_EVENT = -4;
 
   /**
    * The main grid used for layout.
@@ -143,8 +166,9 @@ public class VisualsForEventsFiring extends AbstractIssue {
    * 
    * @param eventType the type of event defined in {@link Event}
    * @param eventName the name of the event
+   * @return the index of the test
    */
-  private void addDependentTest(int eventType, String eventName) {
+  private int addDependentTest(int eventType, String eventName) {
     // Find the last test
     int numRows = layout.getRowCount();
     eventMap.put(new Integer(eventType), new Integer(numRows));
@@ -158,6 +182,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
     }
     layout.setText(numRows, 0, eventName);
     layout.setText(numRows, 1, "?");
+    return numRows;
   }
 
   /**
@@ -166,8 +191,9 @@ public class VisualsForEventsFiring extends AbstractIssue {
    * @param eventType the type of event defined in {@link Event}
    * @param eventName the name of the event
    * @param trigger the widget that triggers the events
+   * @return the index of the test
    */
-  private void addTest(int eventType, String eventName, Widget trigger) {
+  private int addTest(int eventType, String eventName, Widget trigger) {
     int numRows = layout.getRowCount();
     eventMap.put(new Integer(eventType), new Integer(numRows));
     layout.setWidget(numRows, 0, trigger);
@@ -179,6 +205,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
         HasVerticalAlignment.ALIGN_MIDDLE);
     formatter.setHorizontalAlignment(numRows, 0,
         HasHorizontalAlignment.ALIGN_CENTER);
+    return numRows;
   }
 
   /**
@@ -206,7 +233,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
 
   private void prepKeyboardEvents() {
     // Setup a text box to trigger the events
-    TextBox textBox = new TextBox();
+    CustomTextBox textBox = new CustomTextBox();
 
     // Setup the tests
     textBox.setText("Type a letter");
@@ -377,25 +404,8 @@ public class VisualsForEventsFiring extends AbstractIssue {
         + "if supported)";
     HTML scrollableContents = new HTML(scrollableMessage);
     scrollableContents.setPixelSize(400, 400);
-    scrollableContents.getElement().getStyle().setProperty("textAlign",
-        "left");
-    ScrollPanel scrollable = new ScrollPanel(scrollableContents) {
-      @Override
-      public void onBrowserEvent(Event event) {
-        super.onBrowserEvent(event);
-
-        // Verify that values associated with events are defined
-        if (event.getTypeInt() == Event.ONMOUSEWHEEL) {
-          event.getClientX();
-          event.getClientY();
-          event.getScreenX();
-          event.getScreenY();
-          event.getMouseWheelVelocityY();
-          passTest(event);
-        }
-      }
-    };
-    scrollable.sinkEvents(Event.ONMOUSEWHEEL);
+    scrollableContents.getElement().getStyle().setProperty("textAlign", "left");
+    CustomScrollPanel scrollable = new CustomScrollPanel(scrollableContents);
 
     // Setup the tests
     scrollable.setAlwaysShowScrollBars(true);
@@ -403,9 +413,23 @@ public class VisualsForEventsFiring extends AbstractIssue {
     addTest(Event.ONSCROLL, "scroll", scrollable);
     addDependentTest(Event.ONMOUSEWHEEL, "mousewheel");
 
+    // Display the mouse wheel velocity
+    final int velocityIndex = addDependentTest(VELOCITY_EVENT, "velocityY");
+
     // Add event handlers
     scrollable.addScrollHandler(new ScrollHandler() {
       public void onScroll(ScrollEvent event) {
+        passTest(event.getNativeEvent());
+      }
+    });
+    scrollable.addMouseWheelHandler(new MouseWheelHandler() {
+      public void onMouseWheel(MouseWheelEvent event) {
+        event.getClientX();
+        event.getClientY();
+        event.getScreenX();
+        event.getScreenY();
+        int velocityY = event.getDeltaY();
+        layout.setText(velocityIndex, 1, velocityY + "");
         passTest(event.getNativeEvent());
       }
     });

@@ -34,6 +34,9 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.impl.PopupImpl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A panel that can "pop up" over other widgets. It overlays the browser's
  * client area (and any previously-created popups).
@@ -97,7 +100,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * </ul>
    */
   static enum AnimationType {
-    CENTER, ONE_WAY_CORNER
+    CENTER, ONE_WAY_CORNER, ROLL_DOWN
   }
 
   /**
@@ -141,7 +144,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
       // Determine if we need to animate
       boolean animate = curPanel.isAnimationEnabled;
-      if (curPanel.animType == AnimationType.ONE_WAY_CORNER && !showing) {
+      if (curPanel.animType != AnimationType.CENTER && !showing) {
         animate = false;
       }
 
@@ -207,17 +210,25 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       int bottom = 0;
       int height = (int) (progress * offsetHeight);
       int width = (int) (progress * offsetWidth);
-      if (curPanel.animType == AnimationType.CENTER) {
-        top = (offsetHeight - height) >> 1;
-        left = (offsetWidth - width) >> 1;
-      } else if (curPanel.animType == AnimationType.ONE_WAY_CORNER) {
-        if (LocaleInfo.getCurrentLocale().isRTL()) {
-          left = offsetWidth - width;
-        }
+      switch (curPanel.animType) {
+        case ROLL_DOWN:
+          right = offsetWidth;
+          bottom = height;
+          break;
+        case CENTER:
+          top = (offsetHeight - height) >> 1;
+          left = (offsetWidth - width) >> 1;
+          right = left + width;
+          bottom = top + height;
+          break;
+        case ONE_WAY_CORNER:
+          if (LocaleInfo.getCurrentLocale().isRTL()) {
+            left = offsetWidth - width;
+          }
+          right = left + width;
+          bottom = top + height;
+          break;
       }
-      right = left + width;
-      bottom = top + height;
-
       // Set the rect clipping
       impl.setClip(curPanel.getElement(), getRectString(top, right, bottom,
           left));
@@ -280,7 +291,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   private boolean isAnimationEnabled = false;
 
-  private Element autoHidePartner;
+  private List<Element> autoHidePartners;
 
   /**
    * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
@@ -332,6 +343,20 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   public PopupPanel(boolean autoHide, boolean modal) {
     this(autoHide);
     this.modal = modal;
+  }
+
+  /**
+   * Mouse events that occur within an autoHide partner will not hide a panel
+   * set to autoHide.
+   * 
+   * @param partner the auto hide partner to add
+   */
+  public void addAutoHidePartner(Element partner) {
+    assert partner != null : "partner cannot be null";
+    if (autoHidePartners == null) {
+      autoHidePartners = new ArrayList<Element>();
+    }
+    autoHidePartners.add(partner);
   }
 
   public HandlerRegistration addCloseHandler(CloseHandler<PopupPanel> handler) {
@@ -422,14 +447,16 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Hides the popup. This has no effect if it is not currently visible.
+   * Hides the popup and detaches it from the page. This has no effect if it is
+   * not currently showing.
    */
   public void hide() {
     hide(false);
   }
 
   /**
-   * Hides the popup. This has no effect if it is not currently visible.
+   * Hides the popup and detaches it from the page. This has no effect if it is
+   * not currently showing.
    * 
    * @param autoClosed the value that will be passed to
    *          {@link CloseHandler#onClose(CloseEvent)} when the popup is closed
@@ -481,6 +508,31 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public boolean isPreviewingAllNativeEvents() {
     return previewAllNativeEvents;
+  }
+
+  /**
+   * Determines whether or not this popup is showing.
+   * 
+   * @return <code>true</code> if the popup is showing
+   * @see #show()
+   * @see #hide()
+   */
+  public boolean isShowing() {
+    return showing;
+  }
+
+  /**
+   * Determines whether or not this popup is visible. Note that this just checks
+   * the <code>visibility</code> style attribute, which is set in the
+   * {@link #setVisible(boolean)} method. If you want to know if the popup is
+   * attached to the page, use {@link #isShowing()} instead.
+   * 
+   * @return <code>true</code> if the object is visible
+   * @see #setVisible(boolean)
+   */
+  @Override
+  public boolean isVisible() {
+    return !"hidden".equals(getElement().getStyle().getProperty("visibility"));
   }
 
   /**
@@ -536,6 +588,18 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return true;
   }
 
+  /**
+   * Remove an autoHide partner.
+   * 
+   * @param partner the auto hide partner to remove
+   */
+  public void removeAutoHidePartner(Element partner) {
+    assert partner != null : "partner cannot be null";
+    if (autoHidePartners != null) {
+      autoHidePartners.remove(partner);
+    }
+  }
+
   @Deprecated
   public void removePopupListener(PopupListener listener) {
     ListenerWrapper.Popup.remove(this, listener);
@@ -553,16 +617,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   public void setAutoHideEnabled(boolean autoHide) {
     this.autoHide = autoHide;
-  }
-
-  /**
-   * If the auto hide partner is non null, its mouse events will not hide a
-   * panel set to autohide.
-   * 
-   * @param element new auto hide partner
-   */
-  public void setAutoHidePartner(Element element) {
-    this.autoHidePartner = element;
   }
 
   /**
@@ -670,10 +724,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Sets whether this object is visible.
+   * Sets whether this object is visible. This method just sets the
+   * <code>visibility</code> style attribute. You need to call {@link #show()}
+   * to actually attached/detach the {@link PopupPanel} to the page.
    * 
    * @param visible <code>true</code> to show the object, <code>false</code> to
    *          hide it
+   * @see #show()
+   * @see #hide()
    */
   @Override
   public void setVisible(boolean visible) {
@@ -720,7 +778,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Shows the popup. It must have a child widget before this method is called.
+   * Shows the popup and attach it to the page. It must have a child widget
+   * before this method is called.
    */
   public void show() {
     if (showing) {
@@ -834,14 +893,23 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }-*/;
 
   /**
-   * Does the event target the partner element?
+   * Does the event target one of the partner elements?
    * 
    * @param event the native event
-   * @return true if the event targets the partner
+   * @return true if the event targets a partner
    */
   private boolean eventTargetsPartner(Event event) {
-    return autoHidePartner != null
-        && autoHidePartner.isOrHasChild(event.getTarget());
+    if (autoHidePartners == null) {
+      return false;
+    }
+
+    Element target = event.getTarget();
+    for (Element elem : autoHidePartners) {
+      if (elem.isOrHasChild(target)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -855,7 +923,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Get the element that {@link PopupImpl} uses.  PopupImpl creates an element
+   * Get the element that {@link PopupImpl} uses. PopupImpl creates an element
    * that goes inside of the outer element, so all methods in PopupImpl are
    * relative to the first child of the outer element, not the outer element
    * itself.
@@ -867,7 +935,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Positions the popup, called after the offset width and height of the popup are known.
+   * Positions the popup, called after the offset width and height of the popup
+   * are known.
    * 
    * @param relativeObject the ui object to position relative to
    * @param offsetWidth the drop down's offset width

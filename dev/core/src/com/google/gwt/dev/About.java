@@ -42,11 +42,14 @@ public class About {
     }
 
     GWT_SVNREV = props.getProperty("gwt.svnrev");
-    if (GWT_SVNREV == null) {
+    // Check for null or sentinel value (break up to avoid text replace)
+    if (GWT_SVNREV == null || GWT_SVNREV.equals("@GWT_" + "SVNREV@")) {
       GWT_SVNREV = "unknown";
     }
+
     GWT_VERSION_NUM = props.getProperty("gwt.version");
-    if (GWT_VERSION_NUM == null) {
+    // Check for null or sentinel value (break up to avoid text replace)
+    if (GWT_VERSION_NUM == null || GWT_VERSION_NUM.equals("@GWT_" + "VERSION@")) {
       GWT_VERSION_NUM = "0.0.0";
     }
     GWT_VERSION = GWT_NAME + " " + GWT_VERSION_NUM;

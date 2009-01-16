@@ -73,6 +73,14 @@ public class HighlightEvent<V> extends GwtEvent<HighlightHandler<V>> {
     this.highlighted = highlighted;
   }
 
+  // Because of type erasure, our static type is
+  // wild carded, yet the "real" type should use our I param.
+  @SuppressWarnings("unchecked")
+  @Override
+  public final Type<HighlightHandler<V>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the value highlighted.
    * 
@@ -85,13 +93,5 @@ public class HighlightEvent<V> extends GwtEvent<HighlightHandler<V>> {
   @Override
   protected void dispatch(HighlightHandler<V> handler) {
     handler.onHighlight(this);
-  }
-
-  // Because of type erasure, our static type is
-  // wild carded, yet the "real" type should use our I param.
-  @SuppressWarnings("unchecked")
-  @Override
-  protected final Type<HighlightHandler<V>> getAssociatedType() {
-    return (Type) TYPE;
   }
 }

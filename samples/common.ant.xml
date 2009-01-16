@@ -3,8 +3,8 @@
   <property name="project.tail" value="samples/${sample.root}" />
   <import file="${gwt.root}/common.ant.xml" />
 
-  <property name="sample.package" value="${sample.root}" />
-  <property name="sample.main" value="${sample.module}" />
+  <property name="sample.lower" value="${sample.root}" />
+  <property name="sample.upper" value="${sample.module}" />
 
   <property.ensure name="gwt.user.jar" location="${gwt.build.lib}/gwt-user.jar" />
   <!-- Platform shouldn't matter here, just picking one -->
@@ -13,18 +13,22 @@
   <!-- Mirror directory for scripts; makes building distro easier -->
   <property name="samples.scripts" value="${gwt.build.out}/samples-scripts" />
   <!-- Use the uppercase name rather than the lowercase name -->
-  <property name="sample.build" value="${gwt.build.out}/samples/${sample.main}" />
+  <property name="sample.build" value="${gwt.build.out}/samples/${sample.upper}" />
 
   <target name="source" description="Copy source to the output folder">
     <mkdir dir="${sample.build}/src" />
     <copy todir="${sample.build}/src">
       <fileset dir="src" />
     </copy>
+    <mkdir dir="${sample.build}/war" />
+    <copy todir="${sample.build}/war">
+      <fileset dir="war" excludes="WEB-INF/classes/**"/>
+    </copy>
   </target>
 
   <target name="compile" description="Compile all java files">
-    <mkdir dir="${sample.build}/bin" />
-    <gwt.javac destdir="${sample.build}/bin">
+    <mkdir dir="${sample.build}/war/WEB-INF/classes" />
+    <gwt.javac destdir="${sample.build}/war/WEB-INF/classes">
       <classpath>
         <pathelement location="${gwt.user.jar}" />
         <pathelement location="${gwt.dev.jar}" />
@@ -36,48 +40,47 @@
     <outofdate>
       <sourcefiles>
         <fileset dir="src" />
-        <fileset dir="${sample.build}/bin" />
+        <fileset dir="${sample.build}/war/WEB-INF/classes" />
         <fileset file="${gwt.user.jar}" />
         <fileset file="${gwt.dev.jar}" />
       </sourcefiles>
-      <targetfiles path="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}/com.google.gwt.sample.${sample.package}.${sample.module}.nocache.js" />
+      <targetfiles path="${sample.build}/war/${sample.lower}/${sample.lower}.nocache.js" />
       <sequential>
-        <mkdir dir="${sample.build}/www" />
-        <gwt.timer name="${sample.main}">
-          <java dir="${sample.build}" classname="com.google.gwt.dev.GWTCompiler" classpath="src:${sample.build}/bin:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
+        <mkdir dir="${sample.build}/war" />
+        <gwt.timer name="${sample.upper}">
+          <java dir="${sample.build}" classname="com.google.gwt.dev.Compiler" classpath="src:${sample.build}/war/WEB-INF/classes:${gwt.user.jar}:${gwt.dev.jar}" fork="yes" failonerror="true">
             <jvmarg value="-Xmx256M"/>
-            <arg value="-out" />
-            <arg file="${sample.build}/www" />
-            <arg value="com.google.gwt.sample.${sample.package}.${sample.module}" />
+            <arg value="-war" />
+            <arg file="${sample.build}/war" />
+            <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
           </java>
         </gwt.timer>
         <length property="sample.size">
-          <fileset dir="${sample.build}/www/com.google.gwt.sample.${sample.package}.${sample.module}"/>
+          <fileset dir="${sample.build}/war/${sample.lower}" includes="*.cache.html,*.cache.js"/>
         </length>
-        <echo message="output size for ${sample.main} is ${sample.size} bytes"/>
+        <echo message="output size for ${sample.upper} is ${sample.size} bytes"/>
       </sequential>
     </outofdate>
   </target>
 
-  <macrodef name="applicationCreator">
+  <macrodef name="webAppCreator">
     <attribute name="platform" />
     <attribute name="extension" default="" />
     <sequential>
       <outofdate>
         <sourcefiles />
         <targetfiles>
-          <pathelement location="${samples.scripts}/@{platform}/${sample.main}/${sample.main}-compile@{extension}" />
-          <pathelement location="${samples.scripts}/@{platform}/${sample.main}/${sample.main}-shell@{extension}" />
+          <pathelement location="${samples.scripts}/@{platform}/${sample.upper}/build.xml" />
         </targetfiles>
         <sequential>
-          <mkdir dir="${samples.scripts}/@{platform}/${sample.main}" />
-          <java classname="com.google.gwt.user.tools.ApplicationCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
+          <mkdir dir="${samples.scripts}/@{platform}/${sample.upper}" />
+          <java classname="com.google.gwt.user.tools.WebAppCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
             <!-- Relative path is important! Paths will be relative in final distro -->
             <sysproperty key="gwt.devjar" value="../../gwt-dev-@{platform}.jar" />
-            <arg value="-ignore" />
+            <arg value="-overwrite" />
             <arg value="-out" />
-            <arg file="${samples.scripts}/@{platform}/${sample.main}" />
-            <arg value="com.google.gwt.sample.${sample.package}.client.${sample.main}" />
+            <arg file="${samples.scripts}/@{platform}/${sample.upper}" />
+            <arg value="com.google.gwt.sample.${sample.lower}.${sample.upper}" />
           </java>
         </sequential>
       </outofdate>
@@ -85,9 +88,9 @@
   </macrodef>
 
   <target name="scripts" description="Create launch scripts">
-    <applicationCreator platform="linux" />
-    <applicationCreator platform="windows" extension=".cmd" />
-    <applicationCreator platform="mac" />
+    <webAppCreator platform="linux" />
+    <webAppCreator platform="windows" extension=".cmd" />
+    <webAppCreator platform="mac" />
   </target>
 
   <target name="build" depends="source, compile, gwtc, scripts" description="Build and package this project" />
@@ -102,7 +105,7 @@
     <delete dir="${sample.build}" />
     <delete includeemptydirs="true">
       <fileset dir="${samples.scripts}">
-        <include name="*/${sample.main}/**" />
+        <include name="*/${sample.upper}/**" />
       </fileset>
     </delete>
   </target>

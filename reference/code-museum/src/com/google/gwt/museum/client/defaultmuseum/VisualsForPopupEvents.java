@@ -24,12 +24,14 @@ import com.google.gwt.museum.client.common.AbstractIssue;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * A simple tree used to quickly exercise tree behavior.
+ * Visual tests for {@link PopupPanel}.
  */
 public class VisualsForPopupEvents extends AbstractIssue {
   static int xPos = 0;
@@ -37,10 +39,26 @@ public class VisualsForPopupEvents extends AbstractIssue {
   @Override
   public Widget createIssue() {
     VerticalPanel panel = new VerticalPanel();
+    panel.setSpacing(3);
+    {
+      PopupPanel popup = createButton(true, false, panel);
+      Label partner0 = new Label("AutoHide Partner 0");
+      Label partner1 = new Label("AutoHide Partner 1");
+      popup.addAutoHidePartner(partner0.getElement());
+      popup.addAutoHidePartner(partner1.getElement());
+
+      HorizontalPanel hPanel = new HorizontalPanel();
+      hPanel.setBorderWidth(1);
+      hPanel.setSpacing(3);
+      hPanel.add(partner0);
+      hPanel.add(partner1);
+      panel.add(new Label(
+          "Clicking on partners should not autoHide this popup:"));
+      panel.add(hPanel);
+    }
     createButton(true, true, panel);
-    createButton(true, false, panel);
-    createButton(false, true, panel);
     createButton(false, false, panel);
+    createButton(false, true, panel);
     return panel;
   }
 
@@ -59,7 +77,8 @@ public class VisualsForPopupEvents extends AbstractIssue {
     return false;
   }
 
-  private void createButton(boolean autoHide, boolean modal, VerticalPanel panel) {
+  private PopupPanel createButton(boolean autoHide, boolean modal,
+      VerticalPanel panel) {
     final String text = " popup " + (modal ? " modal " : " non-modal ")
         + (autoHide ? "auto hide" : " persistent");
     panel.add(new HTML("<h2>" + text + "</h2>"));
@@ -85,5 +104,7 @@ public class VisualsForPopupEvents extends AbstractIssue {
             + event.isAutoClosed());
       }
     });
+
+    return p;
   }
 }

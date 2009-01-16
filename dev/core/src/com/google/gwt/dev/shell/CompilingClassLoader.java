@@ -23,7 +23,9 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
+import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.util.JsniRef;
@@ -45,14 +47,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Pattern;
 
 /**
  * An isolated {@link ClassLoader} for running all user code. All user files are
- * compiled from source code byte a {@link ByteCodeCompiler}. After compilation,
- * some byte code rewriting is performed to support
+ * compiled from source code byte a {@link ByteCodeCompiler}. After
+ * compilation, some byte code rewriting is performed to support
  * <code>JavaScriptObject</code> and its subtypes.
  * 
  * TODO: we should refactor this class to move the getClassInfoByDispId,
@@ -352,9 +356,11 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private static final String CLASS_DUMP_PATH = "rewritten-classes";
 
-  private static boolean emmaIsAvailable = false;
+  private static boolean emmaAvailable = false;
 
   private static EmmaStrategy emmaStrategy;
+
+  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d+(\\$.*)?");
 
   /**
    * Caches the byte code for {@link JavaScriptHost}.
@@ -376,10 +382,28 @@ public final class CompilingClassLoader extends ClassLoader implements
       Class<?> emmaBridge = Class.forName(EmmaStrategy.EMMA_RT_CLASSNAME,
           false, Thread.currentThread().getContextClassLoader());
       BRIDGE_CLASS_NAMES.put(EmmaStrategy.EMMA_RT_CLASSNAME, emmaBridge);
-      emmaIsAvailable = true;
+      emmaAvailable = true;
     } catch (ClassNotFoundException ignored) {
     }
-    emmaStrategy = EmmaStrategy.get(emmaIsAvailable);
+    emmaStrategy = EmmaStrategy.get(emmaAvailable);
+  }
+
+  /**
+   * Checks if the class names is generated. Accepts any classes whose names
+   * match .+$\d+($.*)? (handling named classes within anonymous classes).
+   * Checks if the class or any of its enclosing classes are anonymous or
+   * synthetic.
+   * <p>
+   * If new compilers have different conventions for anonymous and synthetic
+   * classes, this code needs to be updated.
+   * </p>
+   * 
+   * @param className name of the class to be checked.
+   * @return true iff class or any of its enclosing classes are anonymous or
+   *         synthetic.
+   */
+  public static boolean isClassnameGenerated(String className) {
+    return GENERATED_CLASSNAME_PATTERN.matcher(className).matches();
   }
 
   private static void classDump(String name, byte[] bytes) {
@@ -456,6 +480,11 @@ public final class CompilingClassLoader extends ClassLoader implements
     }
   }
 
+  /**
+   * The set of units whose JSNI has already been injected.
+   */
+  private Set<CompilationUnit> alreadyInjected = new HashSet<CompilationUnit>();
+
   private final HostedModeClassRewriter classRewriter;
 
   private CompilationState compilationState;
@@ -464,9 +493,19 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private Class<?> gwtClass, javaScriptHostClass;
 
+  /**
+   * Used by {@link #findClass(String)} to prevent reentrant JSNI injection.
+   */
+  private boolean isInjectingClass = false;
+
   private final TreeLogger logger;
 
   private ShellJavaScriptHost shellJavaScriptHost;
+
+  /**
+   * Used by {@link #findClass(String)} to prevent reentrant JSNI injection.
+   */
+  private Stack<CompilationUnit> toInject = new Stack<CompilationUnit>();
 
   private final TypeOracle typeOracle;
 
@@ -477,16 +516,6 @@ public final class CompilingClassLoader extends ClassLoader implements
   @SuppressWarnings("unchecked")
   private final Map<Integer, Object> weakJsoCache = new ReferenceMap(
       AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK);
-
-  /**
-   * Used by {@link #findClass(String)} to prevent reentrant JSNI injection.
-   */
-  private boolean isInjectingClass = false;
-
-  /**
-   * Used by {@link #findClass(String)} to prevent reentrant JSNI injection.
-   */
-  private Stack<CompiledClass> toInject = new Stack<CompiledClass>();
 
   public CompilingClassLoader(TreeLogger logger,
       CompilationState compilationState, ShellJavaScriptHost javaScriptHost)
@@ -568,8 +597,8 @@ public final class CompilingClassLoader extends ClassLoader implements
    * was previously cached and has not been garbage collected.
    * 
    * @param javaObject the Object being wrapped
-   * @return the mapped wrapper, or <code>null</code> if the Java object mapped
-   *         or if the wrapper has been garbage collected
+   * @return the mapped wrapper, or <code>null</code> if the Java object
+   *         mapped or if the wrapper has been garbage collected
    */
   public Object getWrapperForObject(Object javaObject) {
     return weakJavaWrapperCache.get(javaObject);
@@ -602,13 +631,6 @@ public final class CompilingClassLoader extends ClassLoader implements
     if (className == null) {
       throw new ClassNotFoundException("null class name",
           new NullPointerException());
-    }
-
-    // Don't mess with anything in the standard Java packages.
-    //
-    if (isInStandardJavaPackage(className)) {
-      // make my superclass load it
-      throw new ClassNotFoundException(className);
     }
 
     // Check for a bridge class that spans hosted and user space.
@@ -650,10 +672,9 @@ public final class CompilingClassLoader extends ClassLoader implements
      * class is loaded.
      */
     if (!classRewriter.isJsoIntf(className)) {
-      CompiledClass compiledClass = compilationState.getClassFileMap().get(
-          canonicalizeClassName(className));
-      if (compiledClass != null) {
-        toInject.push(compiledClass);
+      CompilationUnit unit = getUnitForClassName(className);
+      if (unit != null) {
+        toInject.push(unit);
       }
     }
 
@@ -664,7 +685,11 @@ public final class CompilingClassLoader extends ClassLoader implements
          * additional entries to be added.
          */
         while (toInject.size() > 0) {
-          injectJsniFor(toInject.remove(0));
+          CompilationUnit unit = toInject.remove(0);
+          if (!alreadyInjected.contains(unit)) {
+            injectJsniMethods(unit);
+            alreadyInjected.add(unit);
+          }
         }
       } finally {
         isInjectingClass = false;
@@ -718,41 +743,71 @@ public final class CompilingClassLoader extends ClassLoader implements
     CompiledClass compiledClass = compilationState.getClassFileMap().get(
         lookupClassName);
 
+    CompilationUnit unit = (compiledClass == null)
+        ? getUnitForClassName(className) : compiledClass.getUnit();
+    if (emmaAvailable) {
+      /*
+       * build the map for anonymous classes. Do so only if unit has anonymous
+       * classes, jsni methods, is not super-source and the map has not been
+       * built before.
+       */
+      List<JsniMethod> jsniMethods = (unit == null) ? null
+          : unit.getJsniMethods();
+      if (unit != null && !unit.isSuperSource() && unit.hasAnonymousClasses()
+          && jsniMethods != null && jsniMethods.size() > 0
+          && !unit.createdClassMapping()) {
+        String mainLookupClassName = unit.getTypeName().replace('.', '/');
+        byte mainClassBytes[] = emmaStrategy.getEmmaClassBytes(null,
+            mainLookupClassName, 0);
+        if (mainClassBytes != null) {
+          if (!unit.constructAnonymousClassMappings(mainClassBytes)) {
+            logger.log(TreeLogger.ERROR,
+                "Our heuristic for mapping anonymous classes between compilers "
+                    + "failed. Unsafe to continue because the wrong jsni code "
+                    + "could end up running. className = " + className);
+            return null;
+          }
+        } else {
+          logger.log(TreeLogger.ERROR, "main class bytes is null for unit = "
+              + unit + ", mainLookupClassName = " + mainLookupClassName);
+        }
+      }
+    }
+
     byte classBytes[] = null;
     if (compiledClass != null) {
       classBytes = compiledClass.getBytes();
       if (!compiledClass.getUnit().isSuperSource()) {
-        /*
-         * It is okay if Emma throws away the old classBytes since the actual
-         * jsni injection happens in the rewriter. The injectJsniFor method
-         * above simply defines the native methods in the browser.
-         */
         classBytes = emmaStrategy.getEmmaClassBytes(classBytes,
             lookupClassName, compiledClass.getUnit().getLastModified());
       } else {
         logger.log(TreeLogger.SPAM, "no emma instrumentation for "
             + lookupClassName + " because it is from super-source");
       }
-    } else if (emmaIsAvailable) {
+    } else if (emmaAvailable) {
       /*
        * TypeOracle does not know about this class. Most probably, this class
        * was referenced in one of the classes loaded from disk. Check if we can
        * find it on disk. Typically this is a synthetic class added by the
-       * compiler. If the synthetic class contains native methods, it will fail
-       * later.
+       * compiler.
        */
-      if (isSynthetic(className)) {
+      if (shouldLoadClassFromDisk(className)) {
         /*
          * modification time = 0 ensures that whatever is on the disk is always
          * loaded.
          */
-        logger.log(TreeLogger.SPAM, "EmmaStrategy: loading " + lookupClassName
+        logger.log(TreeLogger.DEBUG, "EmmaStrategy: loading " + lookupClassName
             + " from disk even though TypeOracle does not know about it");
         classBytes = emmaStrategy.getEmmaClassBytes(null, lookupClassName, 0);
       }
     }
     if (classBytes != null && classRewriter != null) {
-      byte[] newBytes = classRewriter.rewrite(className, classBytes);
+      Map<String, String> anonymousClassMap = Collections.emptyMap();
+      if (unit != null) {
+        anonymousClassMap = unit.getAnonymousClassMap();
+      }
+      byte[] newBytes = classRewriter.rewrite(className, classBytes,
+          anonymousClassMap);
       if (CLASS_DUMP) {
         if (!Arrays.equals(classBytes, newBytes)) {
           classDump(className, newBytes);
@@ -769,49 +824,36 @@ public final class CompilingClassLoader extends ClassLoader implements
     return name;
   }
 
-  private void injectJsniFor(CompiledClass compiledClass) {
-    shellJavaScriptHost.createNativeMethods(logger, compiledClass,
-        compiledClass.getJsniMethods(), this);
-  }
-
   /**
-   * NOTE: This logic is also used in SerializableTypeOracleBuilder; don't
-   * change this one without changing the other.
-   */
-  private boolean isInStandardJavaPackage(String className) {
-    if (className.startsWith("java.")) {
-      return true;
-    }
-
-    if (className.startsWith("javax.")) {
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * For safety, we only allow synthetic classes to be loaded this way. Accepts
-   * any classes whose names match .+$\d+
+   * Returns the compilationUnit corresponding to the className.
    * <p>
-   * If new compilers have different conventions for synthetic classes, this
-   * code needs to be updated.
-   * </p>
-   * 
-   * @param className class to be loaded from disk.
-   * @return true iff class should be loaded from disk
+   * Not considering classnames where a $ sign appears.
    */
-  private boolean isSynthetic(String className) {
-    int index = className.lastIndexOf("$");
-    if (index <= 0 || index == className.length() - 1) {
-      return false;
+  private CompilationUnit getUnitForClassName(String className) {
+    String mainTypeName = className;
+    int index = mainTypeName.length();
+    CompilationUnit unit = null;
+    while (unit == null && index != -1) {
+      mainTypeName = mainTypeName.substring(0, index);
+      unit = compilationState.getCompilationUnitMap().get(mainTypeName);
+      index = mainTypeName.lastIndexOf('$');
     }
-    for (int i = index + 1; i < className.length(); i++) {
-      if (!Character.isDigit(className.charAt(i))) {
-        return false;
-      }
+    return unit;
+  }
+
+  private void injectJsniMethods(CompilationUnit unit) {
+    if (unit == null || unit.getJsniMethods() == null) {
+      return;
     }
-    return true;
+    shellJavaScriptHost.createNativeMethods(logger, unit.getJsniMethods(), this);
+  }
+
+  private boolean isBaseClassInGwt(String className) {
+    return getUnitForClassName(className) != null;
+  }
+
+  private boolean shouldLoadClassFromDisk(String className) {
+    return isBaseClassInGwt(className) && isClassnameGenerated(className);
   }
 
   /**

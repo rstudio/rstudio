@@ -47,13 +47,13 @@ public class MouseUpEvent extends MouseEvent<MouseUpHandler> {
   }
 
   @Override
-  protected void dispatch(MouseUpHandler handler) {
-    handler.onMouseUp(this);
+  public final Type<MouseUpHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<MouseUpHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(MouseUpHandler handler) {
+    handler.onMouseUp(this);
   }
 
 }

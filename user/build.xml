@@ -10,6 +10,8 @@
   <fileset id="default.hosted.tests" dir="${javac.junit.out}" 
        includes="${gwt.junit.testcase.includes}" />
 
+  <fileset id="default.emma.tests" dir="${javac.junit.out}" 
+       includes="**/EmmaClassLoadingTest.class" />
   <!--
     Default web mode test cases
   -->
@@ -98,6 +100,12 @@
     <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" >
       <extraclasspaths>
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+      </extraclasspaths>
+    </gwt.junit>
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="default.emma.tests" >
+      <extraclasspaths>
+        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
       </extraclasspaths>
     </gwt.junit>
   </target>

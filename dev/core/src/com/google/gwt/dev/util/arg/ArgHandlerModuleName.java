@@ -18,9 +18,9 @@ package com.google.gwt.dev.util.arg;
 import com.google.gwt.util.tools.ArgHandlerExtra;
 
 /**
- * Argument handler for module name, which has no option profix.
+ * Argument handler for one or more module names at the end of the command line.
  */
-public final class ArgHandlerModuleName extends ArgHandlerExtra {
+public class ArgHandlerModuleName extends ArgHandlerExtra {
 
   private final OptionModuleName option;
 
@@ -36,12 +36,12 @@ public final class ArgHandlerModuleName extends ArgHandlerExtra {
 
   @Override
   public String getPurpose() {
-    return "Specifies the name of the module to compile";
+    return "Specifies the name(s) of the module(s)";
   }
 
   @Override
   public String[] getTagArgs() {
-    return new String[] {"module"};
+    return new String[] {"module[s]"};
   }
 
   @Override

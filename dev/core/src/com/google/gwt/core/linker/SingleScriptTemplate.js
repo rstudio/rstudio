@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2008 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-window.__MODULE_FUNC__ = function() {
+function __MODULE_FUNC__() {
   // ---------------- INTERNAL GLOBALS ----------------
   
   // Cache symbols locally for good obfuscation
@@ -77,17 +77,23 @@ window.__MODULE_FUNC__ = function() {
   }
 
   // Determine our own script's URL via magic :)
+  // This function produces one side-effect, it sets base to the module's
+  // base url.
   //
   function computeScriptBase() {
-    // see if gwt.js left a marker for us
-    var thisScript, markerScript;
+    var thisScript
+    ,markerId = "__gwt_marker___MODULE_NAME__"
+    ,markerScript;
 
-    // try writing a marker
-    $doc.write('<script id="__gwt_marker___MODULE_NAME__"></script>');
-    markerScript = $doc.getElementById("__gwt_marker___MODULE_NAME__");
-    if (markerScript) {
-      // this script should be the previous element
-      thisScript = markerScript.previousSibling;
+    $doc.write('<script id="' + markerId + '"></script>');
+    markerScript = $doc.getElementById(markerId);
+
+    // Our script element is assumed to be the closest previous script element
+    // to the marker, so start at the marker and walk backwards until we find
+    // a script.
+    thisScript = markerScript && markerScript.previousSibling;
+    while (thisScript && thisScript.tagName != 'SCRIPT') {
+      thisScript = thisScript.previousSibling;
     }
 
     // Gets the part of a url up to and including the 'path' portion.
@@ -217,6 +223,12 @@ window.__MODULE_FUNC__ = function() {
 
   // --------------- STRAIGHT-LINE CODE ---------------
 
+  if (isHostedMode()) {
+    alert("Single-script hosted mode not yet implemented. See issue " +
+      "http://code.google.com/p/google-web-toolkit/issues/detail?id=2079");
+    return;
+  }
+
   // do it early for compile/browse rebasing
   computeScriptBase();
   processMetas();
@@ -243,7 +255,9 @@ window.__MODULE_FUNC__ = function() {
 
   // For everyone that supports DOMContentLoaded.
   if ($doc.addEventListener) {
-    $doc.addEventListener("DOMContentLoaded", onBodyDone, false);
+    $doc.addEventListener("DOMContentLoaded", function() {
+      onBodyDone();
+    }, false);
   }
 
   // Fallback. If onBodyDone() gets fired twice, it's not a big deal.

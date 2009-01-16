@@ -64,5 +64,6 @@ public class DefaultMuseum extends Museum implements EntryPoint {
     addIssue(new VisualsForTreeEvents());
     addIssue(new VisualsForWindowEvents());
     addIssue(new VisualsForDialogBox());
+    addIssue(new VisualsForSuggestBox());
   }
 }

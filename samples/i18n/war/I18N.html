@@ -1,0 +1,297 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--                                                                        -->
+<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<html>
+<head> 
+   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+<script type="text/javascript" language="javascript">
+  // Used by the dictionary example. 
+  // If you modify this object, the example will reflect your changes.
+  var userInfo = {
+    name: "Amelie Crutcher",
+    timeZone: "EST",
+    userID: "123",
+    lastLogOn: "2/2/2006"
+  };
+</script>
+
+<!-- The following commented-out <meta> element is an alternate way to specify the locale to use -->
+<!-- if the locale is not present in the URL query string.-->
+<!-- <meta name='gwt:property' content='locale=fr'>-->
+<meta name="gwt:property" content="locale=en">
+
+<link rel="stylesheet" type="text/css" href="I18N.css">
+
+<title>Internationalization Sample</title>
+
+<script type="text/javascript" language="javascript"
+  src="i18n/i18n.nocache.js"></script>
+
+</head>
+
+<body>
+
+<div class="i18n-sample">
+
+  <div class="intro-background">
+    <div class="intro-content">
+    
+      <h1>
+        &#206;&#241;&#355;&#233;&#114;&#241;&#229;&#355;&#238;&#246;&#241;&#229;&#316;&#238;&#382;&#229;&#355;&#238;&#246;&#241;
+        Sample
+      </h1>
+      
+      <p>
+        This sample shows the use of Google Web Toolkit's internationalization classes. 
+        In a truly internationalized application, all strings (including
+        this one) and styles (including the CSS used to style this page), would also be internationalized. 
+        Although English is the default language for this sample, it is also localized for French. 
+        Append <a href="I18N.html?locale=fr">locale=fr</a> to the query string to view the French version.
+      </p>
+    
+    </div>
+  </div>
+
+  <div class="examples">
+  
+    <div class="numberFormat example">
+      <h2>NumberFormat</h2>
+      <p>
+        Class <code>NumberFormat</code> supports locale-sensitive formatting and parsing of numbers using a flexible pattern-based syntax. 
+        In addition to custom patterns, several standard patterns are also available for convenience. 
+        See the GWT class reference for details of the pattern syntax.
+      </p>
+      <table>
+        <tr>
+          <th class="col1" id="numberFormatPatternCaption"></th>
+          <td class="col2" id="numberFormatPatternList"></td>
+          <td class="col3">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <th class="col1" >&nbsp;</th>
+          <td class="col2" id="numberFormatPatternText"></td>
+          <td class="col3" id="numberFormatPatternError">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <th class="col1" id="numberFormatInputCaption"></th>
+          <td class="col2" id="numberFormatInputText"></td>
+          <td class="col3" id="numberFormatInputError">&nbsp;</td>
+        </tr>
+
+        <tr>
+          <th class="col1" id="numberFormatOutputCaption"></th>
+          <td class="col2" id="numberFormatOutputText"></td>
+          <td class="col3">&nbsp;</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="dateTimeFormat example">
+      <h2>DateTimeFormat</h2>
+      <p>
+        Class <code>DateTimeFormat</code> supports locale-sensitive formatting and parsing of date and time values, like <code>NumberFormat</code>, using a flexible pattern-based syntax. 
+        Both custom patterns and standard patterns are supported.
+        See the GWT class reference for details of the pattern syntax.
+      </p>
+      <table>
+        <tr>
+          <th class="col1" id="dateTimeFormatPatternCaption"></th>
+          <td class="col2" id="dateTimeFormatPatternList"></td>
+          <td class="col3">&nbsp;</td>
+        </tr>
+      
+        <tr>
+          <th class="col1">&nbsp;</th>
+          <td class="col2" id="dateTimeFormatPatternText"></td>
+          <td class="col3" id="dateTimeFormatPatternError">&nbsp;</td>
+        </tr>
+      
+        <tr>
+          <th class="col1" id="dateTimeFormatInputCaption"></th>
+          <td class="col2" id="dateTimeFormatInputText"></td>
+          <td class="col3" id="dateTimeFormatInputError">&nbsp;</td>
+        </tr>
+      
+        <tr>
+          <th class="col1" id="dateTimeFormatOutputCaption"></th>
+          <td class="col2" id="dateTimeFormatOutputText"></td>
+          <td class="col3">&nbsp;</td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="messages example">
+      <h2>Messages</h2>
+      <p>
+        Interface <code>Messages</code> provides a way to create strongly-typed parameterized messages that are checked for correctness during compilation.
+        This example interacts with the sample interface <code>ErrorMessages</code>, defined as follows:
+      </p>
+      <pre class="code">
+public interface ErrorMessages extends Messages {
+  String permissionDenied(
+              String username, 
+              String securityClearance, 
+              String inaccessibleResource);
+}
+      </pre>
+      <table>
+        <tr>
+          <th class="col1" id="messagesTemplateCaption"></th>
+          <td class="col2" id="messagesTemplateText"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="messagesArg1Caption"></th>
+          <td class="col2" id="messagesArg1Text"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="messagesArg2Caption"></th>
+          <td class="col2" id="messagesArg2Text"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="messagesArg3Caption"></th>
+          <td class="col2" id="messagesArg3Text"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="messagesFormattedOutputCaption"></th>
+          <td class="col2" id="messagesFormattedOutputText"></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="plurals example">
+      <h3>Plural Forms</h3>
+      <p>
+        The <code>Messages</code> interface also provides support for plural forms, choosing the
+        correct form based on the count.  In the example below, note that the English plural forms
+        are included in the source file via annotations.
+      </p>
+      <pre class="code">
+@DefaultLocale("en_US")
+public interface MyMessages extends Messages {
+  @DefaultMessage("You have {0} trees.")
+  @PluralText({"one", "You have one tree."})
+  String treeCount(@PluralCount int count);
+}
+      </pre>
+      <table>
+        <tr>
+          <th class="col1" id="pluralsArg1Caption"></th>
+          <td class="col2" id="pluralsArg1Text"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="pluralsFormattedOutputCaption"></th>
+          <td class="col2" id="pluralsFormattedOutputText"></td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="constants example">
+      <h2>Constants</h2>
+      <p>
+        Interface <code>Constants</code> makes it possible to localize strings, numbers, and maps of strings onto strings.
+        This example isn't terribly exciting, but it does demonstrate how to localize constants.
+        The labels and colors choices below are provided by the localized implementation of the sample interface <code>ConstantsExampleConstants</code>, defined as follows:
+      </p>
+      <pre class="code">
+public interface ConstantsExampleConstants extends Constants {
+  Map colorMap();
+  String favoriteColor();
+  String firstName();
+  String lastName();
+}
+      </pre>
+      <table>
+        <tr>
+          <th class="col1" id="constantsFirstNameCaption"></th>
+          <td class="col2" id="constantsFirstNameText"></td>
+        </tr>
+
+        <tr>
+          <th class="col1" id="constantsLastNameCaption"></th>
+          <td class="col2" id="constantsLastNameText"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="constantsFavoriteColorCaption"></th>
+          <td class="col2" id="constantsFavoriteColorList"></td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="constantsWithLookup example">
+      <h2>ConstantsWithLookup</h2>
+      <p>
+        Interface <code>ConstantsWithLookup</code> makes it possible to dynamically look up localized values using method names as string keys.
+        This example interacts with the sample interface <code>Colors</code>, defined as follows:
+      </p>
+      <pre class="code">
+public interface ColorConstants extends ConstantsWithLookup {
+  String black();
+  String blue();
+  String green();
+  String grey();
+  String lightGrey();
+  String red();
+  String white();
+  String yellow();
+}
+      </pre>
+      <table>
+        <tr>
+          <th class="col1" id="constantsWithLookupInputCaption"></th>
+          <td class="col2" id="constantsWithLookupInputText"></td>
+        </tr>
+        
+        <tr>
+          <th class="col1" id="constantsWithLookupResultsCaption"></th>
+          <td class="col2" id="constantsWithLookupResultsText"></td>
+        </tr>
+      </table>
+    </div>
+    
+    <div class="dictionary example">
+      <h2>Dictionary</h2>
+      <p>
+        Using the <code>Dictionary</code> class, you can lookup localized values within JavaScript objects defined in the host HTML page rather than compiling them into your GWT code.
+        This is useful if your translations change frequently, because your HTML server can emit updated translations into the host page HTML as often as needed.
+        It can also a useful way to integrate a GWT module with existing localized web applications. 
+        Note that a dictionary's values depend only on the host page HTML and are not influenced by the GWT <code>locale</code> client property. 
+        For this example, the JavaScript variable declaration appears in the source for this HTML page. It looks like this:
+      </p>
+      <pre class="code">
+var userInfo = {
+  name: "Amelie Crutcher",
+  timeZone: "EST",
+  userID: "123",
+  lastLogOn: "2/2/2006"
+};
+      </pre>
+      <div id="dictionaryExample"></div>
+    </div>
+  
+  </div> <!-- examples -->
+
+</div> <!--  i18n-samples -->
+
+</body>
+</html>

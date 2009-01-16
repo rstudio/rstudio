@@ -63,6 +63,11 @@ public class Window {
      */
     private String message = null;
 
+    @Override
+    public Type<ClosingHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Get the message that will be presented to the user in a confirmation
      * dialog that asks the user whether or not she wishes to navigate away from
@@ -89,11 +94,6 @@ public class Window {
     @Override
     protected void dispatch(ClosingHandler handler) {
       handler.onWindowClosing(this);
-    }
-
-    @Override
-    protected Type<ClosingHandler> getAssociatedType() {
-      return TYPE;
     }
   }
 
@@ -331,6 +331,11 @@ public class Window {
       this.scrollTop = scrollTop;
     }
 
+    @Override
+    public Type<ScrollHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Gets the window's scroll left.
      * 
@@ -352,11 +357,6 @@ public class Window {
     @Override
     protected void dispatch(ScrollHandler handler) {
       handler.onWindowScroll(this);
-    }
-
-    @Override
-    protected Type<ScrollHandler> getAssociatedType() {
-      return TYPE;
     }
   }
 
@@ -399,7 +399,6 @@ public class Window {
   private static boolean resizeHandlersInitialized;
   private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
-
   /**
    * Adds a {@link CloseEvent} handler.
    * 
@@ -426,6 +425,8 @@ public class Window {
   /**
    * Adds a listener to receive window closing events.
    * 
+   * @deprecated use {@link Window#addWindowClosingHandler(ClosingHandler)} and
+   *             {@link Window#addCloseHandler(CloseHandler)} instead
    * @param listener the listener to be informed when the window is closing
    */
   @Deprecated
@@ -449,6 +450,7 @@ public class Window {
    * Adds a listener to receive window resize events.
    * 
    * @param listener the listener to be informed when the window is resized
+   * @deprecated use {@link Window#addResizeHandler(ResizeHandler)} instead
    */
   @Deprecated
   public static void addWindowResizeListener(WindowResizeListener listener) {
@@ -472,6 +474,7 @@ public class Window {
    * Adds a listener to receive window scroll events.
    * 
    * @param listener the listener to be informed when the window is scrolled
+   * @deprecated use {@link Window#addWindowScrollHandler(ScrollHandler)} instead
    */
   @Deprecated
   public static void addWindowScrollListener(WindowScrollListener listener) {

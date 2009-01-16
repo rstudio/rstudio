@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+	<servlet>
+		<servlet-name>calendar</servlet-name>
+		<servlet-class>
+			com.google.gwt.sample.dynatable.server.SchoolCalendarServiceImpl
+		</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>calendar</servlet-name>
+		<url-pattern>/dynatable/calendar</url-pattern>
+	</servlet-mapping>
+
+</web-app>

@@ -32,7 +32,6 @@ public class TreeListenerCollection extends ArrayList<TreeListener> {
    * 
    * @param item the tree item being selected.
    */
-  @Deprecated
   public void fireItemSelected(TreeItem item) {
     for (TreeListener listener : this) {
       listener.onTreeItemSelected(item);
@@ -44,7 +43,6 @@ public class TreeListenerCollection extends ArrayList<TreeListener> {
    * 
    * @param item the tree item whose state has changed.
    */
-  @Deprecated
   public void fireItemStateChanged(TreeItem item) {
     for (TreeListener listener : this) {
       listener.onTreeItemStateChanged(item);

@@ -27,8 +27,8 @@ import java.util.ArrayList;
  * type {@link com.google.gwt.user.client.ui.FocusListener}
  * 
  * @deprecated use <code>addDomHandler(myHandler, FocusEvent.getType())</code>
- *             and <code>addDomHandler(myHandler, BlurEvent.getType())</code>
- *             to manage your widget's handlers instead
+ *             and <code>addDomHandler(myHandler, BlurEvent.getType())</code> to
+ *             manage your widget's handlers instead
  */
 @Deprecated
 public class FocusListenerCollection extends ArrayList<FocusListener> {

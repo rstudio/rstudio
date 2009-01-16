@@ -21,11 +21,10 @@ package com.google.gwt.user.client.ui;
  * instantiated until {@link #setVisible}(true) or {@link #ensureWidget} is
  * called.
  * <p>
- * <h3>Example</h3>
- * {@example com.google.gwt.examples.LazyPanelExample}
+ * <h3>Example</h3> {@example com.google.gwt.examples.LazyPanelExample}
  */
 public abstract class LazyPanel extends SimplePanel {
-  
+
   public LazyPanel() {
   }
 
@@ -51,13 +50,13 @@ public abstract class LazyPanel extends SimplePanel {
   }
 
   @Override
-  /**
-   * Sets whether this object is visible. If <code>visible</code> is 
+  /*
+   * Sets whether this object is visible. If <code>visible</code> is
    * <code>true</code>, creates the sole child widget if necessary by calling
    * {@link #ensureWidget}.
    * 
-   * @param visible <code>true</code> to show the object, <code>false</code>
-   * to hide it
+   * @param visible <code>true</code> to show the object, <code>false</code> to
+   * hide it
    */
   public void setVisible(boolean visible) {
     if (visible) {

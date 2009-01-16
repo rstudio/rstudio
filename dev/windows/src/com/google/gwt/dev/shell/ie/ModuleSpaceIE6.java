@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell.ie;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.DispatchIdOracle;
@@ -99,8 +98,7 @@ public class ModuleSpaceIE6 extends ModuleSpace {
   }
 
   public void createNativeMethods(TreeLogger logger,
-      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
-      DispatchIdOracle dispatchIdOracle) {
+      List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle) {
     for (JsniMethod jsniMethod : jsniMethods) {
       String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
           jsniMethod);
@@ -108,8 +106,8 @@ public class ModuleSpaceIE6 extends ModuleSpace {
         // The error has been logged; just ignore it for now.
         continue;
       }
-      createNative(jsniMethod.location(),
-          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
+      createNative(jsniMethod.location(), jsniMethod.line(), jsniMethod.name(),
+          jsniMethod.paramNames(), body);
     }
   }
 

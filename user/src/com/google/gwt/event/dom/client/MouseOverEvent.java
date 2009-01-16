@@ -47,6 +47,11 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
   protected MouseOverEvent() {
   }
 
+  @Override
+  public final Type<MouseOverHandler> getAssociatedType() {
+    return TYPE;
+  }
+
   /**
    * Gets the element from which the mouse pointer was moved.
    * 
@@ -70,11 +75,6 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
   @Override
   protected void dispatch(MouseOverHandler handler) {
     handler.onMouseOver(this);
-  }
-
-  @Override
-  protected final Type<MouseOverHandler> getAssociatedType() {
-    return TYPE;
   }
 
 }

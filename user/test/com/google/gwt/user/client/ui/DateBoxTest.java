@@ -22,13 +22,23 @@ import com.google.gwt.user.datepicker.client.DateBox;
  * Tests DateBox.
  */
 public class DateBoxTest extends GWTTestCase {
+  @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
   }
-  
+
+  public void testAccessors() {
+    DateBox db = new DateBox();
+    assertFalse(db.isDatePickerShowing());
+    db.showDatePicker();
+    assertTrue(db.isDatePickerShowing());
+    db.hideDatePicker();
+    assertFalse(db.isDatePickerShowing());
+  }
+
   public void testValueChangeEvent() {
     DateBox db = new DateBox();
     RootPanel.get().add(db);
-    new DateValueChangeTester(db).run();    
+    new DateValueChangeTester(db).run();
   }
 }

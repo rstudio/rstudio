@@ -35,7 +35,6 @@ public class TabListenerCollection extends ArrayList<TabListener> {
    * @param sender the widget sending the event
    * @param tabIndex the index of the tab being selected
    */
-  @Deprecated
   public boolean fireBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
     for (TabListener listener : this) {
       if (!listener.onBeforeTabSelected(sender, tabIndex)) {
@@ -51,7 +50,6 @@ public class TabListenerCollection extends ArrayList<TabListener> {
    * @param sender the widget sending the event
    * @param tabIndex the index of the tab being selected
    */
-  @Deprecated
   public void fireTabSelected(SourcesTabEvents sender, int tabIndex) {
     for (TabListener listener : this) {
       listener.onTabSelected(sender, tabIndex);

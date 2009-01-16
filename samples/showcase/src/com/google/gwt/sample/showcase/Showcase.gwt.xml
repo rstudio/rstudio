@@ -1,4 +1,4 @@
-<module>
+<module rename-to="showcase">
   <!-- Inherit the core Web Toolkit stuff. -->
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name='com.google.gwt.user.User'/>

@@ -77,6 +77,7 @@ public class History {
    * Adds a listener to be informed of changes to the browser's history stack.
    * 
    * @param listener the listener to be added
+   * @deprecated use {@link History#addValueChangeHandler(ValueChangeHandler)} instead
    */
   @Deprecated
   public static void addHistoryListener(HistoryListener listener) {
@@ -88,6 +89,7 @@ public class History {
    * to be informed of changes to the browser's history stack.
    * 
    * @param handler the handler
+   * @return the registration used to remove this value change handler
    */
   public static HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<String> handler) {

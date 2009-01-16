@@ -47,13 +47,13 @@ public class LoadEvent extends DomEvent<LoadHandler> {
   }
 
   @Override
-  protected void dispatch(LoadHandler handler) {
-    handler.onLoad(this);
+  public final Type<LoadHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<LoadHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(LoadHandler handler) {
+    handler.onLoad(this);
   }
 
 }

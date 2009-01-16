@@ -27,7 +27,7 @@ package com.google.gwt.user.client.ui;
  * source of the event. To use a {@link DelegatingKeyboardListenerCollection},
  * simply use the {@link DelegatingKeyboardListenerCollection} instead of a
  * {@link KeyboardListenerCollection}. For example, in {@link SuggestBox}, the
- * following code is used to listen to keyboard events on the {@link SuggestBox}'s
+ * following code is used to listen to keyboard events on the {@link SuggestBox}
  * underlying widget.
  * </p>
  * 
@@ -39,13 +39,15 @@ package com.google.gwt.user.client.ui;
  *    keyboardListeners.add(listener);
  *  }
  *</pre>
+ * 
+ * @deprecated use <code>Widget#delegateEvent</code> instead
  */
 @Deprecated
 public class DelegatingKeyboardListenerCollection extends
     KeyboardListenerCollection implements KeyboardListener {
 
   private final Widget owner;
-  
+
   /**
    * Constructor for {@link DelegatingKeyboardListenerCollection}.
    * 

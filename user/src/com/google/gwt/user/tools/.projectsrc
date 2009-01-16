@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <projectDescription>
-   <name>@projectName</name>
-   <comment>@projectName project</comment>
+   <name>@moduleShortName</name>
+   <comment>@moduleShortName project</comment>
    <projects/>
    <buildSpec>
        <buildCommand>

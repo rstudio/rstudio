@@ -47,13 +47,13 @@ public class ClickEvent extends DomEvent<ClickHandler> {
   }
 
   @Override
-  protected void dispatch(ClickHandler handler) {
-    handler.onClick(this);
+  public final Type<ClickHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<ClickHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(ClickHandler handler) {
+    handler.onClick(this);
   }
 
 }

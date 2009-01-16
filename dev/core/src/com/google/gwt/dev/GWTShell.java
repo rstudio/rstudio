@@ -174,7 +174,9 @@ public class GWTShell extends HostedModeBase {
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
-    new GWTCompiler(newOptions).run(logger, moduleDef);
+    if (!new GWTCompiler(newOptions).run(logger, moduleDef)) {
+      throw new UnableToCompleteException();
+    }
   }
 
   @Override

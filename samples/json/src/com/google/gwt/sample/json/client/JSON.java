@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.json.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.http.client.Request;
@@ -50,7 +51,6 @@ public class JSON {
   /**
    * Class for handling the response text associated with a request for a JSON
    * object.
-   * 
    */
   private class JSONResponseTextHandler implements RequestCallback {
     public void onError(Request request, Throwable exception) {
@@ -84,13 +84,11 @@ public class JSON {
    * Default URL to use to fetch JSON objects. Note that the contents of this
    * JSON result were as a result of requesting the following URL:
    * 
-   * 
-   * 
-   * 
    * http://api.search.yahoo.com/ImageSearchService/V1/imageSearch?appid=YahooDemo
    * &query=potato&results=2&output=json
    */
-  private static final String DEFAULT_SEARCH_URL = "search-results.js";
+  private static final String DEFAULT_SEARCH_URL = GWT.getModuleBaseURL()
+      + "search-results.js";
 
   /*
    * Text displayed on the fetch button when we are in a default state.
@@ -102,13 +100,13 @@ public class JSON {
    */
   private static final String SEARCH_BUTTON_WAITING_TEXT = "Waiting for JSON Response...";
 
+  private Tree jsonTree = new Tree();
+
   /*
    * RequestBuilder used to issue HTTP GET requests.
    */
   private final RequestBuilder requestBuilder = new RequestBuilder(
       RequestBuilder.GET, DEFAULT_SEARCH_URL);
-
-  private Tree jsonTree = new Tree();
 
   private Button searchButton = new Button();
 

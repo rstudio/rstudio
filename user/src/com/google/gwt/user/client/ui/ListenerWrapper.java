@@ -33,6 +33,7 @@ import com.google.gwt.event.dom.client.HasAllFocusHandlers;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.HasErrorHandlers;
 import com.google.gwt.event.dom.client.HasLoadHandlers;
 import com.google.gwt.event.dom.client.HasMouseDownHandlers;
 import com.google.gwt.event.dom.client.HasMouseMoveHandlers;
@@ -226,8 +227,10 @@ abstract class ListenerWrapper<T> implements EventHandler {
   public static class Load extends ListenerWrapper<LoadListener> implements
       LoadHandler, ErrorHandler {
 
-    public static void add(HasLoadHandlers source, LoadListener listener) {
-      source.addLoadHandler(new Load(listener));
+    public static <S extends HasLoadHandlers & HasErrorHandlers>void add(S source, LoadListener listener) {
+      Load l = new Load(listener);
+      source.addLoadHandler(l);
+      source.addErrorHandler(l);
     }
 
     public static void remove(Widget eventSource, LoadListener listener) {

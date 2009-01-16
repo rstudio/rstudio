@@ -38,6 +38,8 @@ package com.google.gwt.user.client.ui;
  *    changeListeners.add(listener);
  *  }
  *</pre>
+ * 
+ * @deprecated use <code>Widget#delegateEvent</code> instead
  */
 @Deprecated
 public class DelegatingChangeListenerCollection extends

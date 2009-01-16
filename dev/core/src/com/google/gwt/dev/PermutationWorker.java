@@ -34,7 +34,7 @@ interface PermutationWorker {
    * 
    * @throws TransientWorkerException if the Permutation should be tried again
    *           on another worker
-   * @throws UnableToCompleteException due to a fatal error
+   * @throws UnableToCompleteException if the compile fails for any reason
    */
   void compile(TreeLogger logger, Permutation permutation,
       FileBackedObject<PermutationResult> resultFile)

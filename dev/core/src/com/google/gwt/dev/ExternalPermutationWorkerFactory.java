@@ -150,7 +150,6 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
           logger.log(TreeLogger.ERROR, "Error from external worker", t);
           throw new UnableToCompleteException();
         }
-
       } catch (IOException e) {
         logger.log(TreeLogger.WARN, "Lost communication with remote process", e);
         throw new TransientWorkerException(

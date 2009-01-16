@@ -26,7 +26,6 @@ import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.SelectionScriptLinker;
 import com.google.gwt.dev.About;
 import com.google.gwt.dev.util.DefaultTextOutput;
-import com.google.gwt.dev.util.Util;
 
 import java.util.Collection;
 import java.util.Set;
@@ -73,16 +72,13 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
     DefaultTextOutput out = new DefaultTextOutput(true);
 
-    // Emit the selection script in a function closure.
-    out.print("(function () {");
-    out.newlineOpt();
+    // Emit the selection script.
     String bootstrap = generateSelectionScript(logger, context, artifacts);
     bootstrap = context.optimizeJavaScript(logger, bootstrap);
     out.print(bootstrap);
-    out.print("})();");
     out.newlineOpt();
 
-    // Emit the module's JS in another closure
+    // Emit the module's JS a closure.
     out.print("(function () {");
     out.newlineOpt();
     out.print("var $gwt_version = \"" + About.GWT_VERSION_NUM + "\";");
@@ -116,22 +112,15 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     }
     out.print(js[0]);
 
-    // Add a callback to the selection script
+    // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
-    out.print("if (" + context.getModuleFunctionName() + ") {");
-    out.newlineOpt();
-    out.print("  var __gwt_initHandlers = " + context.getModuleFunctionName()
-        + ".__gwt_initHandlers;");
-    out.print("  " + context.getModuleFunctionName()
-        + ".onScriptLoad(gwtOnLoad);");
-    out.newlineOpt();
-    out.print("}");
+    out.print("if (" + context.getModuleFunctionName() + ") "
+        + context.getModuleFunctionName() + ".onScriptLoad();");
     out.newlineOpt();
     out.print("})();");
     out.newlineOpt();
 
-    byte[] selectionScriptBytes = Util.getBytes(out.toString());
-    return emitBytes(logger, selectionScriptBytes, context.getModuleName()
+    return emitString(logger, out.toString(), context.getModuleName()
         + ".nocache.js");
   }
 

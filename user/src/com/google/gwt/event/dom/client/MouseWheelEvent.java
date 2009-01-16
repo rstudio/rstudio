@@ -47,13 +47,47 @@ public class MouseWheelEvent extends MouseEvent<MouseWheelHandler> {
   }
 
   @Override
-  protected void dispatch(MouseWheelHandler handler) {
-    handler.onMouseWheel(this);
-  }
-
-  @Override
-  protected final Type<MouseWheelHandler> getAssociatedType() {
+  public final Type<MouseWheelHandler> getAssociatedType() {
     return TYPE;
   }
 
+  /**
+   * Get the change in the mouse wheel position along the Y-axis; positive if
+   * the mouse wheel is moving north (toward the top of the screen) or negative
+   * if the mouse wheel is moving south (toward the bottom of the screen).
+   * 
+   * Note that delta values are not normalized across browsers or OSes.
+   * 
+   * @return the delta of the mouse wheel along the y axis
+   */
+  public int getDeltaY() {
+    return getNativeEvent().getMouseWheelVelocityY();
+  }
+
+  /**
+   * Convenience method that returns <code>true</code> if {@link #getDeltaY()}
+   * is a negative value (ie, the velocity is directed toward the top of the
+   * screen).
+   * 
+   * @return true if the velocity is directed toward the top of the screen
+   */
+  public boolean isNorth() {
+    return getDeltaY() < 0;
+  }
+
+  /**
+   * Convenience method that returns <code>true</code> if {@link #getDeltaY()}
+   * is a positive value (ie, the velocity is directed toward the bottom of the
+   * screen).
+   * 
+   * @return true if the velocity is directed toward the bottom of the screen
+   */
+  public boolean isSouth() {
+    return getDeltaY() > 0;
+  }
+
+  @Override
+  protected void dispatch(MouseWheelHandler handler) {
+    handler.onMouseWheel(this);
+  }
 }

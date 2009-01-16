@@ -501,16 +501,13 @@ abstract class HostedModeBase implements BrowserWindowController {
    */
   public final void run() {
     try {
-      if (!startUp()) {
-        // Failed to initalize.
-        return;
+      if (startUp()) {
+        // Eager AWT init for OS X to ensure safe coexistence with SWT.
+        BootStrapPlatform.initGui();
+
+        // Tomcat's running now, so launch browsers for startup urls now.
+        launchStartupUrls(getTopLogger());
       }
-
-      // Eager AWT initialization for OS X to ensure safe coexistence with SWT.
-      BootStrapPlatform.initGui();
-
-      // Tomcat's running now, so launch browsers for startup urls now.
-      launchStartupUrls(getTopLogger());
 
       pumpEventLoop();
     } catch (Exception e) {

@@ -46,6 +46,11 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
   protected KeyPressEvent() {
   }
 
+  @Override
+  public final Type<KeyPressHandler> getAssociatedType() {
+    return TYPE;
+  }
+
   /**
    * Gets the char code for this event.
    * 
@@ -65,13 +70,8 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
     handler.onKeyPress(this);
   }
 
-  @Override
-  protected final Type<KeyPressHandler> getAssociatedType() {
-    return TYPE;
-  }
-
   private native char getCharCode(Event e)/*-{
-      return e.charCode || e.keyCode;
-    }-*/;
+        return e.charCode || e.keyCode;
+      }-*/;
 
 }

@@ -729,6 +729,18 @@ public final class Util {
     return null;
   }
 
+  /**
+   * @return null if the file could not be read
+   */
+  public static String readURLAsString(URL url) {
+    byte[] bytes = readURLAsBytes(url);
+    if (bytes != null) {
+      return toString(bytes, DEFAULT_ENCODING);
+    }
+
+    return null;
+  }
+
   public static byte[] readURLConnectionAsBytes(URLConnection connection) {
     // ENH: add a weak cache that has an additional check against the file date
     InputStream input = null;

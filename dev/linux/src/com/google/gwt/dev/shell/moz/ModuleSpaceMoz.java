@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell.moz;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.DispatchIdOracle;
@@ -56,8 +55,7 @@ public class ModuleSpaceMoz extends ModuleSpace {
    * @param jsniMethods
    */
   public void createNativeMethods(TreeLogger logger,
-      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
-      DispatchIdOracle dispatchIdOracle) {
+      List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle) {
     for (JsniMethod jsniMethod : jsniMethods) {
       String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
           jsniMethod);

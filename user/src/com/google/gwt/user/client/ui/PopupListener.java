@@ -20,8 +20,8 @@ import java.util.EventListener;
 /**
  * Event listener interface for popup events.
  * 
- * @deprecated use
- *             {@link com.google.gwt.event.logical.shared.CloseHandler} instead
+ * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler}
+ *             instead
  */
 @Deprecated
 public interface PopupListener extends EventListener {
@@ -30,8 +30,8 @@ public interface PopupListener extends EventListener {
    * Fired when the popup is closed.
    * 
    * @param sender popup being closed.
-   * @param autoClosed <code>true</code> if the popup was automatically
-   *          closed; <code>false</code> if it was closed programmatically.
+   * @param autoClosed <code>true</code> if the popup was automatically closed;
+   *          <code>false</code> if it was closed programmatically.
    */
   @Deprecated
   void onPopupClosed(PopupPanel sender, boolean autoClosed);

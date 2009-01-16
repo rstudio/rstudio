@@ -74,13 +74,33 @@ public final class JsRootScope extends JsScope {
         // B.2 Additional Properties (non-normative)
         "escape", "unescape",
 
+        // Window props (http://www.w3schools.com/HTMLDOM/dom_obj_window.asp)
+        "closed", "defaultStatus", "document", "frames", "history", "length",
+        "location", "name", "opener", "outerHeight", "outerWidth",
+        "pageXOffset", "pageYOffset", "parent", "personalbar", "scrollbars",
+        "self", "status", "statusbar", "toolbar", "top",
+
+        // Window methods (http://www.w3schools.com/HTMLDOM/dom_obj_window.asp)
+        "alert", "blur", "clearInterval", "clearTimeout", "close", "confirm",
+        "createPopup", "focus", "moveBy", "moveTo", "open", "print", "prompt",
+        "resizeBy", "resizeTo", "scrollBy", "scrollTo", "setInterval",
+        "setTimeout",
+
+        // IE event methods
+        // (http://msdn.microsoft.com/en-us/library/ms535873(VS.85).aspx#)
+        "onafterprint", "onbeforedeactivate", "onbeforeprint",
+        "onbeforeunload", "onblur", "oncontrolselect", "ondeactivate",
+        "onerror", "onfocus", "onhashchange  ", "onhelp", "onload", "onresize",
+        "onresizeend", "onscroll",
+        "onunload",
+
         // Common browser-defined identifiers not defined in ECMAScript
-        "window", "document", "event", "location", "history", "external",
+        "window", "dispatchEvent", "event", "external", "navigator", "screen",
         "Debug", "Enumerator", "Global", "Image", "ActiveXObject", "VBArray",
         "Components",
 
         // Functions commonly defined on Object
-        "toString", "getClass",
+        "toString", "getClass", "constructor", "prototype",
 
         // GWT-defined identifiers
         "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version",

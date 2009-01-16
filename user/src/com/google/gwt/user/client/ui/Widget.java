@@ -41,7 +41,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    */
   int eventsToSink;
   private boolean attached;
-
   private Object layoutData;
   private Widget parent;
   private HandlerManager handlerManager;
@@ -129,8 +128,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   /**
    * Overridden to defer the call to super.sinkEvents until the first time this
    * widget is attached to the dom, as a performance enhancement. Subclasses
-   * wishing to customize sinkEvents can preserve this deferred sink behavior
-   * by putting their implementation behind a check of {@link #isOrWasAttached()}:
+   * wishing to customize sinkEvents can preserve this deferred sink behavior by
+   * putting their implementation behind a check of <code>isOrWasAttached()</code>:
    * 
    * <pre>
    * {@literal @}Override
@@ -180,6 +179,17 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   protected final <H extends EventHandler> HandlerRegistration addHandler(
       final H handler, GwtEvent.Type<H> type) {
     return ensureHandlers().addHandler(type, handler);
+  }
+
+  /**
+   * Fires an event on a child widget. Used to delegate the handling of an event
+   * from one widget to another.
+   * 
+   * @param event the event
+   * @param target fire the event on the given target
+   */
+  protected void delegateEvent(Widget target, GwtEvent<?> event) {
+    target.fireEvent(event);
   }
 
   /**

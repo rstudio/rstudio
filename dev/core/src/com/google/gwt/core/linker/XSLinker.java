@@ -96,14 +96,8 @@ public class XSLinker extends SelectionScriptLinker {
 
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
-    out.print("if (" + context.getModuleFunctionName() + ") {");
-    out.newlineOpt();
-    out.print("  var __gwt_initHandlers = " + context.getModuleFunctionName()
-        + ".__gwt_initHandlers;");
-    out.print("  " + context.getModuleFunctionName()
-        + ".onScriptLoad(gwtOnLoad);");
-    out.newlineOpt();
-    out.print("}");
+    out.print("if (" + context.getModuleFunctionName() + ") "
+        + context.getModuleFunctionName() + ".onScriptLoad();");
     out.newlineOpt();
     out.print("})();");
     out.newlineOpt();

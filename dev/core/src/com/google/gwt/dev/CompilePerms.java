@@ -175,24 +175,21 @@ public class CompilePerms {
 
   /**
    * Compile a single permutation.
+   * 
+   * @throws UnableToCompleteException if the permutation compile fails
    */
   public static PermutationResult compile(TreeLogger logger,
-      Permutation permutation, UnifiedAst unifiedAst) {
-    try {
-      return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
-          permutation.getRebindAnswers());
-    } catch (UnableToCompleteException e) {
-      // We intentionally don't pass in the exception here since the real
-      // cause has been logged.
-      return null;
-    }
+      Permutation permutation, UnifiedAst unifiedAst)
+      throws UnableToCompleteException {
+    return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
+        permutation.getRebindAnswers());
   }
 
   /**
    * Compile multiple permutations.
    */
-  public static void compile(TreeLogger logger,
-      Precompilation precompilation, Permutation[] perms, int localWorkers,
+  public static void compile(TreeLogger logger, Precompilation precompilation,
+      Permutation[] perms, int localWorkers,
       List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
     final TreeLogger branch = logger.branch(TreeLogger.INFO, "Compiling "

@@ -20,8 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener interface for mouse events.
  * 
- * @deprecated use
- *             {@link com.google.gwt.event.dom.client.MouseDownHandler},
+ * @deprecated use {@link com.google.gwt.event.dom.client.MouseDownHandler},
  *             {@link com.google.gwt.event.dom.client.MouseUpHandler},
  *             {@link com.google.gwt.event.dom.client.MouseOverHandler},
  *             {@link com.google.gwt.event.dom.client.MouseMoveHandler}, and/or
@@ -36,21 +35,33 @@ public interface MouseListener extends EventListener {
    * @param sender the widget sending the event
    * @param x the x coordinate of the mouse
    * @param y the y coordinate of the mouse
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseDownHandler#onMouseDown(com.google.gwt.event.dom.client.MouseDownEvent)}
+   *             instead
    */
+  @Deprecated
   void onMouseDown(Widget sender, int x, int y);
 
   /**
    * Fired when the mouse enters a widget's area.
    * 
    * @param sender the widget sending the event
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseOverHandler#onMouseOver(com.google.gwt.event.dom.client.MouseOverEvent)}
+   *             instead
    */
+  @Deprecated
   void onMouseEnter(Widget sender);
 
   /**
    * Fired when the mouse leaves a widget's area.
    * 
    * @param sender the widget sending the event
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseOutHandler#onMouseOut(com.google.gwt.event.dom.client.MouseOutEvent)}
+   *             instead
    */
+  @Deprecated
   void onMouseLeave(Widget sender);
 
   /**
@@ -59,7 +70,11 @@ public interface MouseListener extends EventListener {
    * @param sender the widget sending the event
    * @param x the x coordinate of the mouse
    * @param y the y coordinate of the mouse
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseMoveHandler#onMouseMove(com.google.gwt.event.dom.client.MouseMoveEvent)}
+   *             instead
    */
+  @Deprecated
   void onMouseMove(Widget sender, int x, int y);
 
   /**
@@ -68,6 +83,10 @@ public interface MouseListener extends EventListener {
    * @param sender the widget sending the event
    * @param x the x coordinate of the mouse
    * @param y the y coordinate of the mouse
+   * @deprecated use
+   *             {@link com.google.gwt.event.dom.client.MouseUpHandler#onMouseUp(com.google.gwt.event.dom.client.MouseUpEvent)}
+   *             instead
    */
+  @Deprecated
   void onMouseUp(Widget sender, int x, int y);
 }

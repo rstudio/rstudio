@@ -16,7 +16,6 @@
 
 package com.google.gwt.museum.client.common;
 
-import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -26,15 +25,17 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -42,13 +43,11 @@ import com.google.gwt.user.client.ui.FocusListener;
 import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.KeyboardListener;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MouseListener;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SuggestionEvent;
 import com.google.gwt.user.client.ui.SuggestionHandler;
 import com.google.gwt.user.client.ui.UIObject;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
 
@@ -59,11 +58,12 @@ import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
  * @param <T> target type
  */
 @SuppressWarnings("deprecation")
-public class EventReporter<V, T> extends HandlesAllKeyEvents implements
+public class EventReporter<V, T> extends SimpleLogger implements
     ChangeListener, FocusListener, ValueChangeHandler<V>,
     SelectionHandler<Suggestion>, SuggestionHandler, KeyboardListener,
     ChangeHandler, BlurHandler, FocusHandler, ClickHandler, ClickListener,
-    CloseHandler<T>, MouseListener {
+    CloseHandler<T>, MouseListener, KeyDownHandler, KeyUpHandler,
+    KeyPressHandler {
 
   /**
    * Add/remove handlers via check box.
@@ -96,10 +96,8 @@ public class EventReporter<V, T> extends HandlesAllKeyEvents implements
     public abstract void removeHandler();
   }
 
-  private VerticalPanel panel = new VerticalPanel();
-
   public EventReporter(Panel parent) {
-    parent.add(this.panel);
+    parent.add(this);
   }
 
   public String getInfo(Object sender) {
@@ -211,17 +209,4 @@ public class EventReporter<V, T> extends HandlesAllKeyEvents implements
   public void onValueChange(ValueChangeEvent<V> event) {
     report(event);
   }
-
-  // will be replaced by logging
-  public void report(String s) {
-    panel.insert(new Label(s), 0);
-    if (panel.getWidgetCount() == 10) {
-      panel.remove(9);
-    }
-  }
-
-  private void report(GwtEvent<?> event) {
-    report(getInfo(event.getSource()) + " fired " + event.toDebugString());
-  }
-
 }

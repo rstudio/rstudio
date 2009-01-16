@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,10 +34,12 @@ import com.google.gwt.user.client.Element;
  * </p>
  * 
  * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-CheckBox { }</li>
- * <li>.gwt-CheckBox-disabled { Applied when Checkbox is disabled }</li>
- * </ul>
+ * <dl>
+ * <dt>.gwt-CheckBox</dt>
+ * <dd>the outer element</dd>
+ * <dt>.gwt-CheckBox-disabled</dt>
+ * <dd>applied when Checkbox is disabled</dd>
+ * </dl>
  * 
  * <p>
  * <h3>Example</h3>
@@ -46,6 +48,7 @@ import com.google.gwt.user.client.Element;
  */
 public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   private Element inputElem, labelElem;
+  private boolean valueChangeHandlerInitialized;
 
   /**
    * Creates a check box with no label.
@@ -104,10 +107,11 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
       ValueChangeHandler<Boolean> handler) {
     // Is this the first value change handler? If so, time to listen to clicks
     // on the checkbox
-    if (!isEventHandled(ValueChangeEvent.getType())) {
+    if (!valueChangeHandlerInitialized) {
+      valueChangeHandlerInitialized = true;
       this.addClickHandler(new ClickHandler() {
         public void onClick(ClickEvent event) {
-          // No need to compare old value and new value--click handler 
+          // No need to compare old value and new value--click handler
           // only fires on real click, and value always toggles
           ValueChangeEvent.fire(CheckBox.this, isChecked());
         }
@@ -166,7 +170,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
 
   /**
    * Checks or unchecks this check box. Does not fire {@link ValueChangeEvent}.
-   * (If you want the event to fire, use {@link #setValue(boolean, boolean)})
+   * (If you want the event to fire, use {@link #setValue(Boolean, boolean)})
    * 
    * @param checked <code>true</code> to check the check box.
    */
@@ -220,7 +224,8 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   }
 
   /**
-   * Checks or unchecks the text box. 
+   * Checks or unchecks the text box.
+   * 
    * @param value true to check, false to uncheck. Must not be null.
    * @thows IllegalArgumentException if value is null
    */
@@ -229,12 +234,12 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
   }
 
   /**
-   * Checks or unchecks the text box, firing {@link ValueChangeEvent}
-   * if appropriate.
-   *
+   * Checks or unchecks the text box, firing {@link ValueChangeEvent} if
+   * appropriate.
+   * 
    * @param value true to check, false to uncheck. Must not be null.
    * @param fireEvents If true, and value has changed, fire a
-   * {@link ValueChangeEvent}
+   *          {@link ValueChangeEvent}
    * @thows IllegalArgumentException if value is null
    */
   public void setValue(Boolean value, boolean fireEvents) {

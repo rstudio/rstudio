@@ -225,10 +225,7 @@ public final class Utility {
         throw new FileNotFoundException(partialPath);
       }
       ByteArrayOutputStream os = new ByteArrayOutputStream();
-      int ch;
-      while ((ch = in.read()) != -1) {
-        os.write(ch);
-      }
+      streamOut(in, os, 1024);
       return new String(os.toByteArray(), "UTF-8");
     } finally {
       close(in);

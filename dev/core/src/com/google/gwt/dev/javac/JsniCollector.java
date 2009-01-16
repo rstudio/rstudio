@@ -65,7 +65,7 @@ public class JsniCollector {
     private final String[] paramNames;
     private final String source;
     private final JsProgram program;
-
+    
     private JsniMethodImpl(String name, String source, String[] paramNames,
         int line, String location, JsProgram program) {
       this.name = name;
@@ -143,10 +143,13 @@ public class JsniCollector {
       if (unit.getState() == State.COMPILED) {
         String loc = unit.getDisplayLocation();
         String source = unit.getSource();
+        assert unit.getJsniMethods() == null;
+        List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
         for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-          assert compiledClass.getJsniMethods() == null;
-          collectJsniMethods(logger, loc, source, compiledClass, program);
+          jsniMethods.addAll(collectJsniMethods(logger, loc, source,
+              compiledClass, program));
         }
+        unit.setJsniMethods(jsniMethods);
       }
     }
   }
@@ -154,8 +157,8 @@ public class JsniCollector {
   /**
    * TODO: log real errors, replacing GenerateJavaScriptAST?
    */
-  private static void collectJsniMethods(TreeLogger logger, String loc,
-      String source, CompiledClass compiledClass, JsProgram program) {
+  private static List<JsniMethod> collectJsniMethods(TreeLogger logger,
+      String loc, String source, CompiledClass compiledClass, JsProgram program) {
     TypeDeclaration typeDecl = compiledClass.getTypeDeclaration();
     int[] lineEnds = typeDecl.compilationResult.getLineSeparatorPositions();
     List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
@@ -184,7 +187,7 @@ public class JsniCollector {
             startLine, loc, program));
       }
     }
-    compiledClass.setJsniMethods(jsniMethods);
+    return jsniMethods;
   }
 
   private static Interval findJsniSource(String source,

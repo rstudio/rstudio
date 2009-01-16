@@ -51,13 +51,10 @@
         <include name="samples" />
         <include name="samples/*" />
         <include name="samples/*/src/**" />
-        <include name="samples/*/bin/**" />
-        <include name="samples/*/www/**" />
-        <exclude name="samples/*/www/.*/**" />
+        <include name="samples/*/war/**" />
       </tarfileset>
       <tarfileset dir="${gwt.build.out}/samples-scripts/${dist.platform}" mode="755" prefix="${project.distname}/samples">
-        <include name="*/*-compile" />
-        <include name="*/*-shell" />
+        <include name="*/*" />
       </tarfileset>
     </gwt.tgz.cat>
 

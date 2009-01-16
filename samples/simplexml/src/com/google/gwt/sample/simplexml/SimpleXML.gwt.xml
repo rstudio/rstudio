@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module rename-to="simplexml">
 	<inherits name="com.google.gwt.user.User"/>
 	<inherits name ="com.google.gwt.http.HTTP"/>
 	<inherits name ="com.google.gwt.xml.XML"/>

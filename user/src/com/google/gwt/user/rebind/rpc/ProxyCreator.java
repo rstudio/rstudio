@@ -580,8 +580,8 @@ class ProxyCreator {
         pw.print(", "
             + Boolean.toString(deserializationSto.maybeInstantiated(type)));
         pw.print(", " + Boolean.toString(serializationSto.isSerializable(type)));
-        pw.println(", "
-            + Boolean.toString(serializationSto.maybeInstantiated(type)));
+        pw.print(", "
+            + Boolean.toString(serializationSto.maybeInstantiated(type)) + '\n');
       }
 
       // Closes the wrapped streams.

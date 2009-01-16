@@ -71,6 +71,12 @@ public class OpenEvent<T> extends GwtEvent<OpenHandler<T>> {
     this.target = target;
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public final Type<OpenHandler<T>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the target.
    * 
@@ -80,17 +86,11 @@ public class OpenEvent<T> extends GwtEvent<OpenHandler<T>> {
     return target;
   }
 
-  @Override
-  protected void dispatch(OpenHandler<T> handler) {
-    handler.onOpen(this);
-  }
-
   // Because of type erasure, our static type is
   // wild carded, yet the "real" type should use our I param.
 
-  @SuppressWarnings("unchecked")
   @Override
-  protected final Type<OpenHandler<T>> getAssociatedType() {
-    return (Type) TYPE;
+  protected void dispatch(OpenHandler<T> handler) {
+    handler.onOpen(this);
   }
 }

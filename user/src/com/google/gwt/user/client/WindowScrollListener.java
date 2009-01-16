@@ -19,6 +19,9 @@ package com.google.gwt.user.client;
  * Implement this interface to receive scroll events from the browser window.
  * 
  * @see com.google.gwt.user.client.Window#addWindowScrollListener(WindowScrollListener)
+ * @deprecated use
+ *             {@link Window#addWindowScrollHandler(com.google.gwt.user.client.Window.ScrollHandler)}
+ *             instead instead
  */
 @Deprecated
 public interface WindowScrollListener extends java.util.EventListener {

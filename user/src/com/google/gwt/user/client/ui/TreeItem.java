@@ -619,11 +619,35 @@ public class TreeItem extends UIObject implements HasHTML {
   }
 
   /**
+   * Returns a suggested {@link Focusable} instance to use when this tree item
+   * is selected. The tree maintains focus if this method returns null. By
+   * default, if the tree item contains a focusable widget, that widget is
+   * returned.
+   * 
+   * Note, the {@link Tree} will ignore this value if the user clicked on an
+   * input element such as a button or text area when selecting this item.
+   * 
+   * @return the focusable item
+   */
+  protected Focusable getFocusable() {
+    Focusable focus = getFocusableWidget();
+    if (focus == null) {
+      Widget w = getWidget();
+      if (w instanceof Focusable) {
+        focus = (Focusable) w;
+      }
+    }
+    return focus;
+  }
+
+  /**
    * Returns the widget, if any, that should be focused on if this TreeItem is
    * selected.
    * 
+   * @deprecated use {@link #getFocusable()} instead
    * @return widget to be focused.
    */
+  @Deprecated
   protected HasFocus getFocusableWidget() {
     Widget w = getWidget();
     if (w instanceof HasFocus) {

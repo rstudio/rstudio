@@ -67,6 +67,7 @@ import com.google.gwt.user.client.ui.SimpleCheckBoxTest;
 import com.google.gwt.user.client.ui.SimpleRadioButtonTest;
 import com.google.gwt.user.client.ui.SplitPanelTest;
 import com.google.gwt.user.client.ui.StackPanelTest;
+import com.google.gwt.user.client.ui.SuggestBoxTest;
 import com.google.gwt.user.client.ui.TabBarTest;
 import com.google.gwt.user.client.ui.TabPanelTest;
 import com.google.gwt.user.client.ui.TextAreaTest;
@@ -144,6 +145,7 @@ public class UISuite {
     suite.addTestSuite(SimpleRadioButtonTest.class);
     suite.addTestSuite(SplitPanelTest.class);
     suite.addTestSuite(StackPanelTest.class);
+    suite.addTestSuite(SuggestBoxTest.class);
     suite.addTestSuite(TabBarTest.class);
     suite.addTestSuite(TabPanelTest.class);
     suite.addTestSuite(TextAreaTest.class);

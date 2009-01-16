@@ -47,13 +47,13 @@ public class KeyUpEvent extends KeyCodeEvent<KeyUpHandler> {
   }
 
   @Override
-  protected void dispatch(KeyUpHandler handler) {
-    handler.onKeyUp(this);
+  public final Type<KeyUpHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<KeyUpHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(KeyUpHandler handler) {
+    handler.onKeyUp(this);
   }
 
 }

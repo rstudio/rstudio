@@ -282,27 +282,32 @@ public class CompilePermsServer {
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Probable client/server mismatch or "
           + "classpath misconfiguration", e);
-    } catch (UnableToCompleteException e) {
-      logger.log(TreeLogger.ERROR, "Internal compiler error", e);
     }
     return false;
   }
 
   static void compilePermutation(TreeLogger logger, UnifiedAst ast,
       ObjectInputStream in, ObjectOutputStream out)
-      throws ClassNotFoundException, IOException, UnableToCompleteException {
+      throws ClassNotFoundException, IOException {
     FileBackedObject<PermutationResult> resultFile = (FileBackedObject<PermutationResult>) in.readObject();
     Permutation p = (Permutation) in.readObject();
     logger.log(TreeLogger.SPAM, "Permutation read");
 
-    PermutationResult result = CompilePerms.compile(logger.branch(
-        TreeLogger.DEBUG, "Compiling"), p, ast);
-    logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
+    Throwable caught = null;
+    try {
+      PermutationResult result = CompilePerms.compile(logger.branch(
+          TreeLogger.DEBUG, "Compiling"), p, ast);
+      resultFile.set(logger, result);
+      logger.log(TreeLogger.DEBUG, "Successfully compiled permutation");
+    } catch (UnableToCompleteException e) {
+      caught = e;
+    } catch (Throwable e) {
+      logger.log(TreeLogger.ERROR, "Compile failed", e);
+      caught = e;
+    }
 
-    resultFile.set(logger, result);
-
-    // Send a placeholder null indicating no Throwable
-    out.writeObject(null);
+    // Might send a placeholder null indicating no Throwable.
+    out.writeObject(caught);
     out.flush();
     logger.log(TreeLogger.SPAM, "Sent result");
   }

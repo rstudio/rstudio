@@ -23,7 +23,10 @@ import java.util.ArrayList;
  * type {@link com.google.gwt.user.client.ui.ChangeListener}.
  * 
  * @deprecated use <code>addDomHandler(myHandler, ChangeEvent.getType())</code>
- *             instead to manage handlers for your widget
+ *             for dom based change events and use
+ *             <code>addHandler(myHandler, ValueChangeEvent.getType())</code>
+ *             for logical change events instead to manage handlers for your
+ *             widget
  */
 @Deprecated
 public class ChangeListenerCollection extends ArrayList<ChangeListener> {

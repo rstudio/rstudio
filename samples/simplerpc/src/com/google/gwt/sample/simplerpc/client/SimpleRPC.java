@@ -19,7 +19,6 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Panel;
@@ -142,21 +141,6 @@ public class SimpleRPC implements EntryPoint {
    * the asynchronous interface automatically.
    */
   private SimpleRPCServiceAsync createSimpleRPCServiceAsync() {
-    SimpleRPCServiceAsync simpleRPCService = GWT.create(SimpleRPCService.class);
-    setServiceURL(simpleRPCService);
-    return simpleRPCService;
-  }
-
-  /**
-   * Sets the URL where our service implementation is running.
-   * <p>
-   * Note that due to the same origin security policy enforced by the browser
-   * implementations the target URL must reside on the same domain, port and
-   * protocol from which the host page was served.
-   */
-  private void setServiceURL(SimpleRPCServiceAsync simpleRPCService) {
-    ServiceDefTarget endpoint = (ServiceDefTarget) simpleRPCService;
-    String moduleRelativeURL = GWT.getModuleBaseURL() + "simpleRPC";
-    endpoint.setServiceEntryPoint(moduleRelativeURL);
+    return GWT.<SimpleRPCServiceAsync> create(SimpleRPCService.class);
   }
 }

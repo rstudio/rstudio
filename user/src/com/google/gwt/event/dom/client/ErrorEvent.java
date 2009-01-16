@@ -47,13 +47,13 @@ public class ErrorEvent extends DomEvent<ErrorHandler> {
   }
 
   @Override
-  protected void dispatch(ErrorHandler handler) {
-    handler.onError(this);
+  public final Type<ErrorHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<ErrorHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(ErrorHandler handler) {
+    handler.onError(this);
   }
 
 }

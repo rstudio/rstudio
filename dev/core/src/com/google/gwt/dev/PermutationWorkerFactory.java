@@ -78,7 +78,6 @@ public abstract class PermutationWorkerFactory {
             } catch (UnableToCompleteException e) {
               logger.log(TreeLogger.ERROR,
                   "Unrecoverable exception, shutting down", e);
-              threadDeathResult = Result.FAIL;
               return;
             }
           }

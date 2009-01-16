@@ -3,5 +3,6 @@
     <!-- Inherit the core Web Toolkit stuff.                  -->
     <inherits name='com.google.gwt.museum.Museum'/>
     <source path="client/defaultmuseum"/>
-    <entry-point class="com.google.gwt.museum.client.defaultmuseum.DefaultMuseum"/>
-</module>
+      <!-- Specify the app entry point class.                   -->
+    <entry-point class='com.google.gwt.museum.client.defaultmuseum.Issue3190'/>
+ </module>

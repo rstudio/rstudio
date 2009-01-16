@@ -49,11 +49,11 @@ public abstract class Composite extends Widget {
   public void onBrowserEvent(Event event) {
     // Fire any handler added to the composite itself.
     super.onBrowserEvent(event);
-    
+
     // Delegate events to the widget.
     widget.onBrowserEvent(event);
   }
- 
+
   /**
    * Provides subclasses access to the topmost widget that defines this
    * composite.

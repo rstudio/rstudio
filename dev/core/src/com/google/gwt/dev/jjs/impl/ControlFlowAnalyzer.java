@@ -121,11 +121,12 @@ public class ControlFlowAnalyzer {
         boolean doSkip = false;
         JExpression lhs = x.getLhs();
         if (lhs.hasSideEffects() || isVolatileField(lhs)) {
-          // If the lhs has side effects, skipping it would lose the side
-          // effect.
-          // If the lhs is volatile, also keep it. This behavior provides a
-          // useful
-          // idiom for test cases to prevent code from being pruned.
+          /*
+           * If the lhs has side effects, skipping it would lose the side
+           * effect. If the lhs is volatile, also keep it. This behavior
+           * provides a useful idiom for test cases to prevent code from being
+           * pruned.
+           */
         } else if (lhs instanceof JLocalRef) {
           // locals are ok to skip
           doSkip = true;

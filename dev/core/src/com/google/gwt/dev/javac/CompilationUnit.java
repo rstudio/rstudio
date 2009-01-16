@@ -15,7 +15,11 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.asm.ClassReader;
+import com.google.gwt.dev.asm.Opcodes;
+import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
+import com.google.gwt.dev.shell.CompilingClassLoader;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
@@ -26,9 +30,12 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -38,6 +45,25 @@ import java.util.Set;
  * module and may be invalidated at certain times and recomputed.
  */
 public abstract class CompilationUnit {
+
+  static class AnonymousClassVisitor extends EmptyVisitor {
+    /*
+     * array of classNames of inner clases that aren't synthetic.
+     */
+    List<String> classNames = new ArrayList<String>();
+
+    public List<String> getInnerClassNames() {
+      return classNames;
+    }
+
+    @Override
+    public void visitInnerClass(String name, String outerName,
+        String innerName, int access) {
+      if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
+        classNames.add(name);
+      }
+    }
+  }
 
   /**
    * Tracks the state of a compilation unit through the compile and recompile
@@ -128,11 +154,44 @@ public abstract class CompilationUnit {
     return result;
   }
 
+  /**
+   * Map from the className in javac to the className in jdt. String represents
+   * the part of className after the compilation unit name. Emma-specific.
+   */
+  private Map<String, String> anonymousClassMap = null;
   private CompilationUnitDeclaration cud;
   private CategorizedProblem[] errors;
   private Set<CompiledClass> exposedCompiledClasses;
   private Set<String> fileNameRefs;
+  private List<JsniMethod> jsniMethods = null;
   private State state = State.FRESH;
+
+  /*
+   * Check if the unit has one or more anonymous classes. 'javac' below refers
+   * to the compiler that was used to compile the java files on disk. Returns
+   * true if our heuristic for constructing the anonymous class mappings worked.
+   */
+  public boolean constructAnonymousClassMappings(byte classBytes[]) {
+    // map from the name in javac to the name in jdt
+    anonymousClassMap = new HashMap<String, String>();
+    List<String> javacClasses = getJavacClassNames(classBytes);
+    List<String> jdtClasses = getJdtClassNames();
+    if (javacClasses.size() == jdtClasses.size()) {
+      int size = javacClasses.size();
+      for (int i = 0; i < size; i++) {
+        if (!javacClasses.get(i).equals(jdtClasses.get(i))) {
+          anonymousClassMap.put(javacClasses.get(i), jdtClasses.get(i));
+        }
+      }
+      return true;
+    }
+    anonymousClassMap = Collections.emptyMap();
+    return false;
+  }
+
+  public boolean createdClassMapping() {
+    return anonymousClassMap != null;
+  }
 
   /**
    * Overridden to finalize; always returns object identity.
@@ -142,11 +201,32 @@ public abstract class CompilationUnit {
     return super.equals(obj);
   }
 
+  public Map<String, String> getAnonymousClassMap() {
+    /*
+     * Return an empty map so that class-rewriter does not need to check for
+     * null. A null value indicates that anonymousClassMap was never created
+     * which is the case for many units. An example is a class containing jsni
+     * units but no inner classes.
+     */
+    if (anonymousClassMap == null) {
+      return Collections.emptyMap();
+    }
+    return anonymousClassMap;
+  }
+
   /**
    * Returns the user-relevant location of the source file. No programmatic
    * assumptions should be made about the return value.
    */
   public abstract String getDisplayLocation();
+
+  public boolean getJsniInjected() {
+    return jsniMethods != null;
+  }
+
+  public List<JsniMethod> getJsniMethods() {
+    return jsniMethods;
+  }
 
   /**
    * Returns the last modified time of the compilation unit.
@@ -162,6 +242,15 @@ public abstract class CompilationUnit {
    * Returns the fully-qualified name of the top level public type.
    */
   public abstract String getTypeName();
+
+  public boolean hasAnonymousClasses() {
+    for (CompiledClass cc : getCompiledClasses()) {
+      if (isAnonymousClass(cc)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   /**
    * Overridden to finalize; always returns identity hash code.
@@ -189,7 +278,7 @@ public abstract class CompilationUnit {
   public abstract boolean isGenerated();
 
   /**
-   *
+   * 
    * @return true if the Compilation Unit is from a super-source.
    */
   public abstract boolean isSuperSource();
@@ -257,6 +346,10 @@ public abstract class CompilationUnit {
     state = State.COMPILED;
   }
 
+  void setJsniMethods(List<JsniMethod> jsniMethods) {
+    this.jsniMethods = Collections.unmodifiableList(jsniMethods);
+  }
+
   /**
    * Changes the compilation unit's internal state.
    */
@@ -290,12 +383,39 @@ public abstract class CompilationUnit {
     }
   }
 
+  private List<String> getJavacClassNames(byte classBytes[]) {
+    AnonymousClassVisitor cv = new AnonymousClassVisitor();
+    new ClassReader(classBytes).accept(cv, 0);
+    List<String> classNames = cv.getInnerClassNames();
+    List<String> namesToRemove = new ArrayList<String>();
+    for (String className : classNames) {
+      if (!CompilingClassLoader.isClassnameGenerated(className)) {
+        namesToRemove.add(className);
+      }
+    }
+    classNames.removeAll(namesToRemove);
+    Collections.sort(classNames, new GeneratedClassnameComparator());
+    return classNames;
+  }
+
+  private List<String> getJdtClassNames() {
+    List<String> classNames = new ArrayList<String>();
+    for (CompiledClass cc : getCompiledClasses()) {
+      if (isAnonymousClass(cc)) {
+        classNames.add(cc.getBinaryName());
+      }
+    }
+    Collections.sort(classNames, new GeneratedClassnameComparator());
+    return classNames;
+  }
+
   /**
    * Removes all accumulated state associated with compilation.
    */
   private void invalidate() {
     cud = null;
     fileNameRefs = null;
+    jsniMethods = null;
     if (exposedCompiledClasses != null) {
       for (CompiledClass compiledClass : exposedCompiledClasses) {
         compiledClass.invalidate();
@@ -303,4 +423,12 @@ public abstract class CompilationUnit {
       exposedCompiledClasses = null;
     }
   }
+
+  private boolean isAnonymousClass(CompiledClass cc) {
+    if (!cc.getRealClassType().isLocalType()) {
+      return false;
+    }
+    return CompilingClassLoader.isClassnameGenerated(cc.getBinaryName());
+  }
+
 }

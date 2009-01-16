@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+	<servlet>
+		<servlet-name>simpleRPC</servlet-name>
+		<servlet-class>
+			com.google.gwt.sample.simplerpc.server.SimpleRPCServiceImpl
+		</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>simpleRPC</servlet-name>
+		<url-pattern>/simplerpc/simpleRPC</url-pattern>
+	</servlet-mapping>
+
+</web-app>

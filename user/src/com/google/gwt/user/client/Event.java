@@ -34,19 +34,6 @@ import java.util.List;
  * from, and can be accessed in JavaScript code as expected. This is typically
  * done by calling methods in the {@link com.google.gwt.user.client.DOM} class.
  * </p>
- * 
- * <h3>Event Attributes</h3>
- * <p>
- * In hosted mode, most accessors (eg. Event{@link #getKeyCode()} and
- * {@link Event#getButton()}) assert that the requested attribute is reliable
- * across all supported browsers.  This means that attempting to retrieve an
- * attribute for an {@link Event} that does not support that attribute will
- * throw an {@link AssertionError}.  For example, an {@link Event} of type
- * {@link Event#ONCLICK} will throw an {@link AssertionError} if you attempt
- * to get the mouse button that was clicked using {@link Event#getButton()}
- * because the mouse button attribute is not defined for {@link Event#ONCLICK}
- * on Internet Explorer. 
- * </p>
  */
 public class Event extends JavaScriptObject {
   /**
@@ -144,6 +131,11 @@ public class Event extends JavaScriptObject {
       isConsumed = true;
     }
 
+    @Override
+    public Type<NativePreviewHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     public Event getNativeEvent() {
       return nativeEvent;
     }
@@ -173,11 +165,6 @@ public class Event extends JavaScriptObject {
     @Override
     protected void dispatch(NativePreviewHandler handler) {
       handler.onPreviewNativeEvent(this);
-    }
-
-    @Override
-    protected Type<NativePreviewHandler> getAssociatedType() {
-      return TYPE;
     }
 
     @Override
@@ -631,10 +618,6 @@ public class Event extends JavaScriptObject {
    * Gets the mouse x-position on the user's display.
    * 
    * @return the mouse x-position
-   * @throws AssertionError if event type is not one of
-   *           {@link Event#MOUSEEVENTS}, {@link Event#ONMOUSEWHEEL},
-   *           {@link Event#ONCLICK}, {@link Event#ONDBLCLICK}, or
-   *           {@link Event#ONCONTEXTMENU}
    */
   public final int getScreenX() {
     return DOM.eventGetScreenX(this);

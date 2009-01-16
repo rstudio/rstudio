@@ -27,9 +27,6 @@ import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
 import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
-import java.util.Collections;
-import java.util.List;
-
 /**
  * Encapsulates the state of a single compiled class file.
  */
@@ -61,7 +58,6 @@ public final class CompiledClass {
   protected final CompilationUnit unit;
 
   // The state below is transient.
-  private List<JsniMethod> jsniMethods;
   private NameEnvironmentAnswer nameEnvironmentAnswer;
   private JRealClassType realClassType;
   // Can be killed after parent is CHECKED.
@@ -104,10 +100,6 @@ public final class CompiledClass {
 
   public CompiledClass getEnclosingClass() {
     return enclosingClass;
-  }
-
-  public List<JsniMethod> getJsniMethods() {
-    return jsniMethods;
   }
 
   /**
@@ -163,15 +155,10 @@ public final class CompiledClass {
   void invalidate() {
     nameEnvironmentAnswer = null;
     typeDeclaration = null;
-    jsniMethods = null;
     if (realClassType != null) {
       realClassType.invalidate();
       realClassType = null;
     }
-  }
-
-  void setJsniMethods(List<JsniMethod> jsniMethods) {
-    this.jsniMethods = Collections.unmodifiableList(jsniMethods);
   }
 
   void setRealClassType(JRealClassType realClassType) {

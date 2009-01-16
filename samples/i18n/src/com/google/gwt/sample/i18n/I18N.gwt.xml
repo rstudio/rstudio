@@ -12,7 +12,7 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
-<module>
+<module rename-to="i18n">
 	<inherits name="com.google.gwt.user.User" />
     <inherits name="com.google.gwt.i18n.I18N"/>
 	<entry-point class="com.google.gwt.sample.i18n.client.I18N" />

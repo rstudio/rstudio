@@ -50,8 +50,8 @@ public class CloseEvent<T> extends GwtEvent<CloseHandler<T>> {
    * @param target the target
    * @param autoClosed was the target closed automatically
    */
-  public static <T> void fire(
-      HasCloseHandlers<T> source, T target, boolean autoClosed) {
+  public static <T> void fire(HasCloseHandlers<T> source, T target,
+      boolean autoClosed) {
     if (TYPE != null) {
       HandlerManager handlers = source.getHandlers();
       if (handlers != null) {
@@ -85,6 +85,14 @@ public class CloseEvent<T> extends GwtEvent<CloseHandler<T>> {
     this.target = target;
   }
 
+  // The instance knows its of type T, but the TYPE
+  // field itself does not, so we have to do an unsafe cast here.
+  @SuppressWarnings("unchecked")
+  @Override
+  public final Type<CloseHandler<T>> getAssociatedType() {
+    return (Type) TYPE;
+  }
+
   /**
    * Gets the target.
    * 
@@ -106,13 +114,5 @@ public class CloseEvent<T> extends GwtEvent<CloseHandler<T>> {
   @Override
   protected void dispatch(CloseHandler<T> handler) {
     handler.onClose(this);
-  }
-
-  // The instance knows its of type T, but the TYPE
-  // field itself does not, so we have to do an unsafe cast here.
-  @SuppressWarnings("unchecked")
-  @Override
-  protected final Type<CloseHandler<T>> getAssociatedType() {
-    return (Type) TYPE;
   }
 }

@@ -88,10 +88,16 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
     /**
      * Create a submit complete event
+     * 
      * @param resultsHtml the results from submitting the form
      */
     protected SubmitCompleteEvent(String resultsHtml) {
       this.resultHtml = resultsHtml;
+    }
+
+    @Override
+    public Type<SubmitCompleteHandler> getAssociatedType() {
+      return TYPE;
     }
 
     /**
@@ -109,11 +115,6 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     @Override
     protected void dispatch(SubmitCompleteHandler handler) {
       handler.onSubmitComplete(this);
-    }
-
-    @Override
-    protected Type<SubmitCompleteHandler> getAssociatedType() {
-      return TYPE;
     }
   }
 
@@ -160,6 +161,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       this.canceled = true;
     }
 
+    @Override
+    public Type<FormPanel.SubmitHandler> getAssociatedType() {
+      return TYPE;
+    }
+
     /**
      * Gets whether this form submit will be canceled.
      * 
@@ -174,14 +180,11 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
       handler.onSubmit(this);
     }
 
-    @Override
-    protected Type<FormPanel.SubmitHandler> getAssociatedType() {
-      return TYPE;
-    }
-
     /**
      * This method is used for legacy support and should be removed when
      * {@link FormHandler} is removed.
+     * 
+     * @deprecated use {@link FormPanel.SubmitEvent#cancel()} instead
      */
     @Deprecated
     void setCanceled(boolean canceled) {

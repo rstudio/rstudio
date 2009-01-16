@@ -421,4 +421,34 @@ public class ImageTest extends GWTTestCase {
     assertEquals(16, image.getHeight());
     assertEquals("clipped", getCurrentImageStateName(image));
   }
+  
+
+  private int firedLoad;
+  private int firedError;
+  @SuppressWarnings("deprecation")
+  public void testLoadListenerWiring() {
+    Image im = new Image();
+
+    im.addLoadListener(new LoadListener() {
+
+      public void onError(Widget sender) {
+        ++firedError;
+      }
+
+      public void onLoad(Widget sender) {
+        ++firedLoad;
+      }
+    });
+    im.fireEvent(new LoadEvent() {
+      // Replaced by Joel's event firing when possible.
+    });
+    assertEquals(1, firedLoad);
+    assertEquals(0, firedError);
+    im.fireEvent(new ErrorEvent() {
+      // Replaced by Joel's event firing when possible.
+    });
+    assertEquals(1, firedLoad);
+    assertEquals(1, firedError);
+  }
+
 }

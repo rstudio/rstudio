@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.JsValue.DispatchObject;
 import com.google.gwt.dev.util.Jsni;
@@ -39,13 +38,11 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
   }
 
   public void createNativeMethods(TreeLogger logger,
-      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
-      DispatchIdOracle dispatchIdOracle) {
+      List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle) {
     if (jsniMethods.isEmpty()) {
       return;
     }
     StringBuilder jsni = new StringBuilder();
-    String sourceName = compiledClass.getSourceName();
     for (JsniMethod jsniMethod : jsniMethods) {
       String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
           jsniMethod);
@@ -67,11 +64,10 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
       jsni.append(body);
       jsni.append(";\n\n");
     }
-    logger.log(TreeLogger.DEBUG, "Defining JSNI for " + sourceName);
     channel.loadJsni(jsni.toString());
   }
 
-//  @Override
+  // @Override
   protected void cleanupJsValues() {
     Set<Integer> refIdsForCleanup = channel.getRefIdsForCleanup();
     if (refIdsForCleanup.isEmpty()) {
@@ -87,12 +83,11 @@ public class ModuleSpaceOOPHM extends ModuleSpace {
   }
 
   /**
-   *
+   * 
    */
   @Override
   protected void createStaticDispatcher(TreeLogger logger) {
-    channel.loadJsni(
-        "function __defineStatic(__arg0) { window.__static = __arg0; }");
+    channel.loadJsni("function __defineStatic(__arg0) { window.__static = __arg0; }");
   }
 
   /**

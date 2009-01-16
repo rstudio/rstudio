@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell.mac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.DispatchIdOracle;
@@ -56,8 +55,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
   }
 
   public void createNativeMethods(TreeLogger logger,
-      CompiledClass compiledClass, List<JsniMethod> jsniMethods,
-      DispatchIdOracle dispatchIdOracle) {
+      List<JsniMethod> jsniMethods, DispatchIdOracle dispatchIdOracle) {
     for (JsniMethod jsniMethod : jsniMethods) {
       String body = Jsni.getJavaScriptForHostedMode(logger, dispatchIdOracle,
           jsniMethod);
@@ -65,8 +63,8 @@ public class ModuleSpaceSaf extends ModuleSpace {
         // The error has been logged; just ignore it for now.
         continue;
       }
-      createNative(jsniMethod.location(),
-          jsniMethod.line(), jsniMethod.name(), jsniMethod.paramNames(), body);
+      createNative(jsniMethod.location(), jsniMethod.line(), jsniMethod.name(),
+          jsniMethod.paramNames(), body);
     }
   }
 
@@ -105,7 +103,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
     int argc = args.length;
     int[] argv = new int[argc];
     // GC protect passed arguments on the Java stack for call duration.
-    JsValueSaf[] jsValueArgs = new JsValueSaf[argc]; 
+    JsValueSaf[] jsValueArgs = new JsValueSaf[argc];
     for (int i = 0; i < argc; ++i) {
       JsValueSaf jsValue = jsValueArgs[i] = new JsValueSaf();
       JsValueGlue.set(jsValue, isolatedClassLoader, types[i], args[i]);

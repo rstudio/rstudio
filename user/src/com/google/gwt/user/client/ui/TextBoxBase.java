@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -32,7 +31,7 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
  */
 @SuppressWarnings("deprecation")
 public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
-    HasChangeHandlers, HasText, HasName, HasValue<String> {
+    HasText, HasName, HasValue<String> {
 
   /**
    * Text alignment constant, used in
@@ -77,6 +76,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   private static TextBoxImpl impl = GWT.create(TextBoxImpl.class);
 
   private Event currentEvent;
+  private boolean valueChangeHandlerInitialized;
 
   /**
    * Creates a text box that wraps the given browser element handle. This is
@@ -88,24 +88,21 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     super(elem);
   }
 
-  public HandlerRegistration addChangeHandler(ChangeHandler handler) {
-    return addDomHandler(handler, ChangeEvent.getType());
-  }
-
   @Deprecated
   public void addChangeListener(ChangeListener listener) {
-    addChangeHandler(new ListenerWrapper.Change(listener));
+    addDomHandler(new ListenerWrapper.Change(listener), ChangeEvent.getType());
   }
 
   public HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<String> handler) {
     // Initialization code
-    if (!isEventHandled(ValueChangeEvent.getType())) {
-      addChangeHandler(new ChangeHandler() {
+    if (!valueChangeHandlerInitialized) {
+      valueChangeHandlerInitialized = true;
+      addDomHandler(new ChangeHandler() {
         public void onChange(ChangeEvent event) {
-          setValue(getText());
+          ValueChangeEvent.fire(TextBoxBase.this, getText());
         }
-      });
+      }, ChangeEvent.getType());
     }
     return addHandler(handler, ValueChangeEvent.getType());
   }
@@ -229,7 +226,10 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
    * listeners to easily filter keyboard input.
    * 
    * @param key the new key value
+   * @deprecated this method only works in IE and should not have been added to
+   *             the API
    */
+  @Deprecated
   public void setKey(char key) {
     if (currentEvent != null) {
       DOM.eventSetKeyCode(currentEvent, key);

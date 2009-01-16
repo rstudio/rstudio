@@ -17,14 +17,13 @@ package com.google.gwt.user.tools;
 
 /**
  * Legacy ProjectCreator that will let users know that they should run
- * ApplicationCreator instead.
+ * {@link WebAppCreator} instead.
  */
 public final class ProjectCreator {
 
   public static void main(String[] args) {
     System.err.println("This application no longer exists!");
-    System.err.println("It has been merged with com.google.gwt.user.tools.ApplicationCreator in gwt-user.jar");
+    System.err.println("Please see " + WebAppCreator.class.getName());
     System.exit(1);
   }
-
 }

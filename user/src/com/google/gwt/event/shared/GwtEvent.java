@@ -25,7 +25,6 @@ package com.google.gwt.event.shared;
  * 
  */
 public abstract class GwtEvent<H extends EventHandler> {
-
   /**
    * Type class used to register events with the {@link HandlerManager}.
    * <p>
@@ -68,6 +67,14 @@ public abstract class GwtEvent<H extends EventHandler> {
   }
 
   /**
+   * Returns the type used to register this event. Used by handler manager to
+   * dispatch events to the correct handlers.
+   * 
+   * @return the type
+   */
+  public abstract Type<H> getAssociatedType();
+
+  /**
    * Returns the source that last fired this event.
    * 
    * @return object representing the source of this event
@@ -93,9 +100,8 @@ public abstract class GwtEvent<H extends EventHandler> {
 
   /**
    * The toString() for abstract event is overridden to avoid accidently
-   * including class literals in the the compiled output. Use
-   * {@link GwtEvent} #toDebugString to get more information about the
-   * event.
+   * including class literals in the the compiled output. Use {@link GwtEvent}
+   * #toDebugString to get more information about the event.
    */
   @Override
   public String toString() {
@@ -120,14 +126,6 @@ public abstract class GwtEvent<H extends EventHandler> {
   protected abstract void dispatch(H handler);
 
   /**
-   * Returns the type used to register this event. Used by handler manager to
-   * dispatch events to the correct handlers.
-   * 
-   * @return the type
-   */
-  protected abstract Type<H> getAssociatedType();
-
-  /**
    * Is the event current live?
    * 
    * @return whether the event is live
@@ -137,8 +135,8 @@ public abstract class GwtEvent<H extends EventHandler> {
   }
 
   /**
-   * Kill the event.  After the event has been killed, users cannot really on
-   * its values or functions being available.
+   * Kill the event. After the event has been killed, users cannot really on its
+   * values or functions being available.
    */
   protected void kill() {
     dead = true;

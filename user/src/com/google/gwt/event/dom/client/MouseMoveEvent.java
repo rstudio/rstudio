@@ -47,13 +47,13 @@ public class MouseMoveEvent extends MouseEvent<MouseMoveHandler> {
   }
 
   @Override
-  protected void dispatch(MouseMoveHandler handler) {
-    handler.onMouseMove(this);
+  public final Type<MouseMoveHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<MouseMoveHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(MouseMoveHandler handler) {
+    handler.onMouseMove(this);
   }
 
 }

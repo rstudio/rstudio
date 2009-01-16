@@ -27,7 +27,7 @@ public abstract class HandlesAllFocusEvents implements FocusHandler,
    * source.
    * 
    * @param <H> receiver type, must implement both {@link FocusHandler} and
-   * {@link BlurHandler} handlers
+   *          {@link BlurHandler} handlers
    * @param eventSource the event source
    * @param reciever the receiver implementing both focus and blur handlers
    */

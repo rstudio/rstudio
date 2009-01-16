@@ -47,13 +47,13 @@ public class DoubleClickEvent extends DomEvent<DoubleClickHandler> {
   }
 
   @Override
-  protected void dispatch(DoubleClickHandler handler) {
-    handler.onDoubleClick(this);
+  public final Type<DoubleClickHandler> getAssociatedType() {
+    return TYPE;
   }
 
   @Override
-  protected final Type<DoubleClickHandler> getAssociatedType() {
-    return TYPE;
+  protected void dispatch(DoubleClickHandler handler) {
+    handler.onDoubleClick(this);
   }
 
 }

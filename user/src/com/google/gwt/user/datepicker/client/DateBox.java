@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -70,9 +70,9 @@ public class DateBox extends Composite implements HasValue<Date> {
    * If that fails, we then try to parse again using the default browser date
    * parsing.
    * </p>
-   * If that fails, the <code>dateBoxFormatError</code> css style is
-   * applied to the {@link DateBox}. The style will be removed when either a
-   * successful {@link #parse(DateBox,String, boolean)} is called or
+   * If that fails, the <code>dateBoxFormatError</code> css style is applied to
+   * the {@link DateBox}. The style will be removed when either a successful
+   * {@link #parse(DateBox,String, boolean)} is called or
    * {@link #format(DateBox,Date)} is called.
    * <p>
    * Use a different {@link DateBox.Format} instance to change that behavior.
@@ -183,7 +183,7 @@ public class DateBox extends Composite implements HasValue<Date> {
       CloseHandler<PopupPanel> {
 
     public void onBlur(BlurEvent event) {
-      if (isDatePickerVisible() == false) {
+      if (isDatePickerShowing() == false) {
         updateDateFromTextBox();
       }
     }
@@ -201,7 +201,7 @@ public class DateBox extends Composite implements HasValue<Date> {
     }
 
     public void onFocus(FocusEvent event) {
-      if (allowDPShow && isDatePickerVisible() == false) {
+      if (allowDPShow && isDatePickerShowing() == false) {
         showDatePicker();
       }
     }
@@ -267,7 +267,7 @@ public class DateBox extends Composite implements HasValue<Date> {
     this.format = format;
 
     popup.setAutoHideEnabled(true);
-    popup.setAutoHidePartner(box.getElement());
+    popup.addAutoHidePartner(box.getElement());
     popup.setWidget(picker);
     popup.setStyleName("dateBoxPopup");
 
@@ -354,10 +354,10 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   /**
-   * @return true if date picker is currently visible, false if not
+   * @return true if date picker is currently showing, false if not
    */
-  public boolean isDatePickerVisible() {
-    return popup.isVisible();
+  public boolean isDatePickerShowing() {
+    return popup.isShowing();
   }
 
   /**

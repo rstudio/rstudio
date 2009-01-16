@@ -2,21 +2,25 @@ package @clientPackage;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class @className implements EntryPoint {
+public class @moduleShortName implements EntryPoint {
+
+  /**
+   * Create a remote service proxy to talk to the server-side Echo service.
+   */
+  private final EchoServiceAsync echoService = GWT.create(EchoService.class);
 
   /**
    * This is the entry point method.
@@ -24,12 +28,12 @@ public class @className implements EntryPoint {
   public void onModuleLoad() {
     Image img = new Image("http://code.google.com/webtoolkit/logo-185x175.png");
     Button button = new Button("Click me");
-    
+
     // We can add style names
     button.addStyleName("pc-template-btn");
     // or we can set an id on a specific element for styling
     img.getElement().setId("pc-template-img");
-    
+
     VerticalPanel vPanel = new VerticalPanel();
     vPanel.setWidth("100%");
     vPanel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
@@ -48,28 +52,18 @@ public class @className implements EntryPoint {
     dialogVPanel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
     dialogVPanel.add(closeButton);
 
-    closeButton.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    closeButton.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
         dialogBox.hide();
       }
     });
-    
+
     // Set the contents of the Widget
     dialogBox.setWidget(dialogVPanel);
- 
-    final EchoServiceAsync echoService = GWT.create(EchoService.class);
-    ServiceDefTarget target = (ServiceDefTarget) echoService;
 
-    // Use a module-relative URLs to ensure that this client code can find
-    // its way home, even when the URL changes (as might happen when you
-    // deploy this as a webapp under an external servlet container).
-    String moduleRelativeURL = GWT.getModuleBaseURL() + "echo";
-    target.setServiceEntryPoint(moduleRelativeURL);
-    
-    final String textToServer = "Hello GWT World!";
-    
-    button.addClickListener(new ClickListener() {
-      public void onClick(Widget sender) {
+    button.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        final String textToServer = "Hello GWT World!";
         final String dialogBoxText = "Sending to the server: " + textToServer;
         dialogBox.setText(dialogBoxText);
         dialogBox.center();

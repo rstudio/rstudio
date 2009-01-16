@@ -261,5 +261,6 @@ public class CompilationState {
     exposedUnits = Collections.unmodifiableSet(new HashSet<CompilationUnit>(
         unitMap.values()));
     exposedClassFileMap = null;
+    exposedClassFileMapBySource = null;
   }
 }
