@@ -303,7 +303,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Deprecated
   public void addFocusListener(FocusListener listener) {
-    ListenerWrapper.Focus.add(this, listener);
+    ListenerWrapper.WrappedFocusListener.add(this, listener);
   }
 
   /**
@@ -340,7 +340,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
-    ListenerWrapper.Keyboard.add(this, listener);
+    ListenerWrapper.WrappedKeyboardListener.add(this, listener);
   }
 
   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
@@ -361,7 +361,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Deprecated
   public void addMouseListener(MouseListener listener) {
-    ListenerWrapper.Mouse.add(this, listener);
+    ListenerWrapper.WrappedMouseListener.add(this, listener);
   }
 
   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
@@ -395,7 +395,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Deprecated
   public void addTreeListener(TreeListener listener) {
-    ListenerWrapper.Tree.add(this, listener);
+    ListenerWrapper.WrappedTreeListener.add(this, listener);
   }
 
   /**
@@ -589,7 +589,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
-    ListenerWrapper.Focus.remove(this, listener);
+    ListenerWrapper.WrappedFocusListener.remove(this, listener);
   }
 
   /**
@@ -612,17 +612,17 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
 
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
-    ListenerWrapper.Keyboard.remove(this, listener);
+    ListenerWrapper.WrappedKeyboardListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
-    ListenerWrapper.Mouse.remove(this, listener);
+    ListenerWrapper.WrappedMouseListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeTreeListener(TreeListener listener) {
-    ListenerWrapper.Tree.remove(this, listener);
+    ListenerWrapper.WrappedTreeListener.remove(this, listener);
   }
 
   public void setAccessKey(char key) {

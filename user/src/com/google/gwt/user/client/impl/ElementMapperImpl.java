@@ -70,12 +70,17 @@ public class ElementMapperImpl<T extends UIObject> {
     return uiObjectList.get(index);
   }
 
+  /**
+   * Gets the list of ui objects contained in this element mapper.
+   * 
+   * @return the list of ui objects
+   */
   public ArrayList<T> getObjectList() {
     return uiObjectList;
   }
 
   /**
-   * Creates an iterator from the ui objects stored within
+   * Creates an iterator from the ui objects stored within.
    * 
    * @return an iterator of the ui objects indexed by this element mapper.
    */

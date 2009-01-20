@@ -48,7 +48,7 @@ public class DOM {
    */
   @Deprecated
   public static void addEventPreview(EventPreview preview) {
-    ListenerWrapper.NativePreview.add(preview);
+    BaseListenerWrapper.NativePreview.add(preview);
   }
 
   /**
@@ -998,7 +998,7 @@ public class DOM {
    */
   @Deprecated
   public static void removeEventPreview(EventPreview preview) {
-    ListenerWrapper.NativePreview.remove(preview);
+    BaseListenerWrapper.NativePreview.remove(preview);
   }
 
   /**

@@ -422,7 +422,7 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   @Deprecated
   public void addClickListener(ClickListener listener) {
-    ListenerWrapper.Click.add(this, listener);
+    ListenerWrapper.WrappedClickListener.add(this, listener);
   }
 
   public HandlerRegistration addErrorHandler(ErrorHandler handler) {
@@ -435,7 +435,7 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   @Deprecated
   public void addLoadListener(LoadListener listener) {
-    ListenerWrapper.Load.add(this, listener);
+    ListenerWrapper.WrappedLoadListener.add(this, listener);
   }
 
   public HandlerRegistration addMouseDownHandler(MouseDownHandler handler) {
@@ -444,7 +444,7 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   @Deprecated
   public void addMouseListener(MouseListener listener) {
-    ListenerWrapper.Mouse.add(this, listener);
+    ListenerWrapper.WrappedMouseListener.add(this, listener);
   }
 
   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
@@ -469,7 +469,7 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
-    ListenerWrapper.MouseWheel.add(this, listener);
+    ListenerWrapper.WrappedMouseWheelListener.add(this, listener);
   }
 
   /**
@@ -533,22 +533,22 @@ public class Image extends Widget implements SourcesLoadEvents,
 
   @Deprecated
   public void removeClickListener(ClickListener listener) {
-    ListenerWrapper.Click.remove(this, listener);
+    ListenerWrapper.WrappedClickListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeLoadListener(LoadListener listener) {
-    ListenerWrapper.Load.remove(this, listener);
+    ListenerWrapper.WrappedLoadListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
-    ListenerWrapper.Mouse.remove(this, listener);
+    ListenerWrapper.WrappedMouseListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
-    ListenerWrapper.MouseWheel.remove(this, listener);
+    ListenerWrapper.WrappedMouseWheelListener.remove(this, listener);
   }
 
   /**

@@ -262,7 +262,7 @@ public class TabPanel extends Composite implements TabListener,
 
   @Deprecated
   public void addTabListener(TabListener listener) {
-    ListenerWrapper.Tab.add(this, listener);
+    ListenerWrapper.WrappedTabListener.add(this, listener);
   }
 
   public void clear() {
@@ -383,7 +383,7 @@ public class TabPanel extends Composite implements TabListener,
 
   @Deprecated
   public void removeTabListener(TabListener listener) {
-    ListenerWrapper.Tab.remove(this, listener);
+    ListenerWrapper.WrappedTabListener.remove(this, listener);
   }
 
   /**

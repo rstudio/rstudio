@@ -68,7 +68,7 @@ public class TreeItem extends UIObject implements HasHTML {
       if (GWT.isClient()) {
         // Create the base table element that will be cloned.
         BASE_INTERNAL_ELEM = DOM.createTable();
-        Element contentElem = DOM.createSpan();
+        Element contentElem = DOM.createDiv();
         Element tbody = DOM.createTBody(), tr = DOM.createTR();
         Element tdImg = DOM.createTD(), tdContent = DOM.createTD();
         DOM.appendChild(BASE_INTERNAL_ELEM, tbody);
@@ -101,19 +101,6 @@ public class TreeItem extends UIObject implements HasHTML {
     void convertToFullNode(TreeItem item) {
       super.convertToFullNode(item);
       DOM.setStyleAttribute(item.getElement(), "marginBottom", "0px");
-    }
-
-    @Override
-    void initializeClonableElements() {
-      super.initializeClonableElements();
-      if (GWT.isClient()) {
-        // We can't use a 3px padding all around because IE will wrap the
-        // childSpan to the next line, so we need to add a 3px margin on the top
-        // and bottom instead. However, margins overlap, so we need a 6px bottom
-        // margin.
-        DOM.setStyleAttribute(BASE_BARE_ELEM, "margin", "3px 0px 6px 0px");
-        DOM.setStyleAttribute(BASE_BARE_ELEM, "padding", "0px 3px");
-      }
     }
   }
 

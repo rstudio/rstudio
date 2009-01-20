@@ -431,7 +431,7 @@ public class Window {
    */
   @Deprecated
   public static void addWindowCloseListener(WindowCloseListener listener) {
-    ListenerWrapper.WindowClose.add(listener);
+    BaseListenerWrapper.WrapWindowClose.add(listener);
   }
 
   /**
@@ -454,7 +454,7 @@ public class Window {
    */
   @Deprecated
   public static void addWindowResizeListener(WindowResizeListener listener) {
-    ListenerWrapper.WindowResize.add(listener);
+    BaseListenerWrapper.WrapWindowResize.add(listener);
   }
 
   /**
@@ -478,7 +478,7 @@ public class Window {
    */
   @Deprecated
   public static void addWindowScrollListener(WindowScrollListener listener) {
-    ListenerWrapper.WindowScroll.add(listener);
+    BaseListenerWrapper.WrapWindowScroll.add(listener);
   }
 
   /**
@@ -601,7 +601,7 @@ public class Window {
    */
   @Deprecated
   public static void removeWindowCloseListener(WindowCloseListener listener) {
-    ListenerWrapper.WindowClose.remove(handlers, listener);
+    BaseListenerWrapper.WrapWindowClose.remove(handlers, listener);
   }
 
   /**
@@ -611,7 +611,7 @@ public class Window {
    */
   @Deprecated
   public static void removeWindowResizeListener(WindowResizeListener listener) {
-    ListenerWrapper.WindowResize.remove(handlers, listener);
+    BaseListenerWrapper.WrapWindowResize.remove(handlers, listener);
   }
 
   /**
@@ -621,7 +621,7 @@ public class Window {
    */
   @Deprecated
   public static void removeWindowScrollListener(WindowScrollListener listener) {
-    ListenerWrapper.WindowScroll.remove(handlers, listener);
+    BaseListenerWrapper.WrapWindowScroll.remove(handlers, listener);
   }
 
   /**

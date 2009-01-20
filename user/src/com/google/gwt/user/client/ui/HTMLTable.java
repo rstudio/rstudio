@@ -704,7 +704,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   @Deprecated
   public void addTableListener(TableListener listener) {
-    ListenerWrapper.Table.add(this, listener);
+    ListenerWrapper.WrappedTableListener.add(this, listener);
   }
 
   /**
@@ -958,7 +958,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   @Deprecated
   public void removeTableListener(TableListener listener) {
-    ListenerWrapper.Table.remove(this, listener);
+    ListenerWrapper.WrappedTableListener.remove(this, listener);
   }
 
   /**

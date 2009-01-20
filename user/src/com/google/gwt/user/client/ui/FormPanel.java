@@ -404,7 +404,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   @Deprecated
   public void addFormHandler(FormHandler handler) {
-    ListenerWrapper.Form.add(this, handler);
+    ListenerWrapper.WrappedOldFormHandler.add(this, handler);
   }
 
   /**
@@ -494,7 +494,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
 
   @Deprecated
   public void removeFormHandler(FormHandler handler) {
-    ListenerWrapper.Form.remove(this, handler);
+    ListenerWrapper.WrappedOldFormHandler.remove(this, handler);
   }
 
   /**
