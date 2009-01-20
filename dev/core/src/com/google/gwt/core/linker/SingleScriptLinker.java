@@ -93,7 +93,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     // Generate the call to tell the bootstrap code that we're ready to go.
     out.newlineOpt();
     out.print("if (" + context.getModuleFunctionName() + ") "
-        + context.getModuleFunctionName() + ".onScriptLoad();");
+        + context.getModuleFunctionName() + ".onScriptLoad(gwtOnLoad);");
     out.newlineOpt();
     out.print("})();");
     out.newlineOpt();
