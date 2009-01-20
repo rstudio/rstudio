@@ -25,6 +25,7 @@ Merges:
 /releases/1.6/@r4366:4385 was merged (r4386) into trunk
 /releases/1.6/@r4385:4459 was merged (r4488) into trunk
 /releases/1.6/@r4359:4490 was merged (r4491) into trunk
+/releases/1.6/@c4498 was merged (r4499) into trunk
 
 The next merge into trunk will be:
-svn merge --accept=postpone -r4490:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge --accept=postpone -r4490:4498,4499:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
