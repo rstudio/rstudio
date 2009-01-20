@@ -253,7 +253,7 @@ public final class Utility {
   public static File makeTemporaryDirectory(File baseDir, String prefix)
       throws IOException {
     if (baseDir == null) {
-      baseDir = new File(System.getProperty("java.io.tmpdir"), GWT_TMP_DIR);
+      baseDir = new File(System.getProperty("java.io.tmpdir"));
     }
     baseDir.mkdirs();
 
