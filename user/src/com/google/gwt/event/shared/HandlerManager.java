@@ -15,13 +15,13 @@
  */
 package com.google.gwt.event.shared;
 
+import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.user.client.Command;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.user.client.Command;
 
 /**
  * Manager responsible for adding handlers to event sources and firing those
