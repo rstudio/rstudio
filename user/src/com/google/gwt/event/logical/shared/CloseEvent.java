@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * Represents a close event.
@@ -53,11 +52,8 @@ public class CloseEvent<T> extends GwtEvent<CloseHandler<T>> {
   public static <T> void fire(HasCloseHandlers<T> source, T target,
       boolean autoClosed) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        CloseEvent<T> event = new CloseEvent<T>(target, autoClosed);
-        handlers.fireEvent(event);
-      }
+      CloseEvent<T> event = new CloseEvent<T>(target, autoClosed);
+      source.fireEvent(event);
     }
   }
 

@@ -18,8 +18,10 @@ package com.google.gwt.user.datepicker.client;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.ui.DateValueChangeTester;
 import com.google.gwt.user.client.ui.HasValue;
 
@@ -41,12 +43,20 @@ public class DateChangeEventTest extends TestCase {
       return handlers.addHandler(ValueChangeEvent.getType(), handler);
     }
 
+    public void fireEvent(GwtEvent<?> event) {
+      handlers.fireEvent(event);
+    }
+
     public HandlerManager getHandlers() {
       return handlers;
     }
 
     public Date getValue() {
       return value;
+    }
+
+    public boolean isEventHandled(Type<?> type) {
+      return handlers.isEventHandled(type);
     }
 
     public void setValue(Date value) {
@@ -65,5 +75,4 @@ public class DateChangeEventTest extends TestCase {
   public void testValueChangeViaHasValue() {
     new DateValueChangeTester(new MockWidget()).run();
   }
-
 }

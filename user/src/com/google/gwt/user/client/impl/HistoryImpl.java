@@ -20,9 +20,11 @@ import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.event.shared.GwtEvent.Type;
 
 /**
  * Native implementation associated with
@@ -54,6 +56,10 @@ public abstract class HistoryImpl implements HasValueChangeHandlers<String>,
     return handlers.addHandler(ValueChangeEvent.getType(), handler);
   }
 
+  public void fireEvent(GwtEvent<?> event) {
+    handlers.fireEvent(event);
+  }
+
   /**
    * Fires the {@link ValueChangeEvent} to all handlers with the given tokens.
    */
@@ -66,6 +72,10 @@ public abstract class HistoryImpl implements HasValueChangeHandlers<String>,
   }
 
   public abstract boolean init();
+
+  public boolean isEventHandled(Type<?> type) {
+    return handlers.isEventHandled(type);
+  }
 
   public final void newItem(String historyToken, boolean issueEvent) {
     historyToken = (historyToken == null) ? "" : historyToken;

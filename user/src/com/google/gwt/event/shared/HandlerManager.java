@@ -15,14 +15,13 @@
  */
 package com.google.gwt.event.shared;
 
-import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.RootPanel;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.user.client.Command;
 
 /**
  * Manager responsible for adding handlers to event sources and firing those
@@ -139,6 +138,7 @@ public class HandlerManager {
     } else {
       doAdd(type, handler);
     }
+
     return new DefaultHandlerRegistration(this, type, handler);
   }
 
@@ -151,7 +151,6 @@ public class HandlerManager {
    * 
    * @param event the event
    */
-
   public void fireEvent(GwtEvent<?> event) {
     // If it not live we should revive it.
     if (!event.isLive()) {
@@ -244,8 +243,7 @@ public class HandlerManager {
    * @return a map of all handlers in this handler manager
    */
   Map<GwtEvent.Type<?>, ArrayList<?>> createHandlerInfo() {
-    HandlerManager manager = RootPanel.get().getHandlers();
-    return manager.registry.map;
+    return registry.map;
   }
 
   private void defer(Command command) {

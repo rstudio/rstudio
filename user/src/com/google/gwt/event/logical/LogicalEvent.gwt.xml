@@ -1,0 +1,5 @@
+<module>
+	<inherits name="com.google.gwt.event.EventBase" />
+
+	<source path="shared" />
+</module>

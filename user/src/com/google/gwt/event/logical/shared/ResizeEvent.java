@@ -17,7 +17,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HasHandlers;
 
 /**
@@ -41,11 +40,8 @@ public class ResizeEvent extends GwtEvent<ResizeHandler> {
   public static <S extends HasResizeHandlers & HasHandlers> void fire(S source,
       int width, int height) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        ResizeEvent event = new ResizeEvent(width, height);
-        handlers.fireEvent(event);
-      }
+      ResizeEvent event = new ResizeEvent(width, height);
+      source.fireEvent(event);
     }
   }
 

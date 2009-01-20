@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * Represents a before selection event.
@@ -45,13 +44,10 @@ public class BeforeSelectionEvent<I> extends
       HasBeforeSelectionHandlers<I> source, I item) {
     // If no handlers exist, then type can be null.
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        BeforeSelectionEvent<I> event = new BeforeSelectionEvent<I>();
-        event.setItem(item);
-        handlers.fireEvent(event);
-        return event;
-      }
+      BeforeSelectionEvent<I> event = new BeforeSelectionEvent<I>();
+      event.setItem(item);
+      source.fireEvent(event);
+      return event;
     }
     return null;
   }

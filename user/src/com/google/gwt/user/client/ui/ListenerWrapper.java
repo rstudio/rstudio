@@ -528,7 +528,7 @@ abstract class ListenerWrapper<T> implements EventHandler {
   @SuppressWarnings("unchecked")
   static <H extends EventHandler> void baseRemove(Widget eventSource,
       EventListener listener, Type... keys) {
-    HandlerManager manager = eventSource.getHandlers();
+    HandlerManager manager = eventSource.getHandlerManager();
     if (manager != null) {
       // This is a direct copy of the baseRemove from
       // com.google.gwt.user.client.ListenerWrapper. Change in parallel.

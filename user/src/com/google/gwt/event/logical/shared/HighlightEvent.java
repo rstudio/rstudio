@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HasHandlers;
 
 /**
@@ -42,11 +41,8 @@ public class HighlightEvent<V> extends GwtEvent<HighlightHandler<V>> {
   public static <V, S extends HasHighlightHandlers<V> & HasHandlers> void fire(
       S source, V highlighted) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        HighlightEvent<V> event = new HighlightEvent<V>(highlighted);
-        handlers.fireEvent(event);
-      }
+      HighlightEvent<V> event = new HighlightEvent<V>(highlighted);
+      source.fireEvent(event);
     }
   }
 
