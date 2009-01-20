@@ -140,7 +140,8 @@ public class Compiler {
       }
 
       for (String moduleName : options.getModuleNames()) {
-        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+        ModuleDef module = ModuleDefLoader.loadFromClassPath(logger,
+            moduleName, true);
         File compilerWorkDir = options.getCompilerWorkDir(moduleName);
 
         if (options.isValidateOnly()) {
