@@ -206,7 +206,7 @@ public class CommandExecutorTest extends GWTTestCase {
 
     UncaughtExceptionHandler ueh1 = new UncaughtExceptionHandler() {
       public void onUncaughtException(Throwable e) {
-        if (!(e instanceof CommandCanceledException)) {
+        if (!(e instanceof CommandCanceledException || e instanceof IncrementalCommandCanceledException)) {
           originalUEH.onUncaughtException(e);
           return;
         }
