@@ -18,8 +18,9 @@ package com.google.gwt.junit.client;
 import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_SETUP;
 import static com.google.gwt.junit.client.GWTTestCaseTest.SetUpTearDownState.IS_TORNDOWN;
 
-import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.google.gwt.user.client.Timer;
@@ -44,74 +45,63 @@ public class TestManualAsync extends GWTTestCaseTest {
   // R => return;
 
   public void test_dtf_sf() {
-    System.out.println("test_dtf_sf");
     delayTestFinish();
     synchronousFailure("test_dtf_sf");
   }
 
   public void test_dtf_sf_f() {
-    System.out.println("test_dtf_sf_f");
     delayTestFinish();
     synchronousFailure("test_dtf_sf_f");
     failNow("test_dtf_sf_f");
   }
 
   public void test_dtf_sf_ft() {
-    System.out.println("test_dtf_sf_ft");
     delayTestFinish();
     synchronousFailure("test_dtf_sf_ft");
     finishTest();
   }
 
   public void test_dtf_sf_r_f() {
-    System.out.println("test_dtf_sf_r_f");
     delayTestFinish();
     synchronousFailure("test_dtf_sf_r_f");
     failLater("test_dtf_sf_r_f");
   }
 
   public void test_dtf_sf_r_ft() {
-    System.out.println("test_dtf_sf_r_ft");
     delayTestFinish();
     synchronousFailure("test_dtf_sf_r_ft");
-    finishTestLater("test_dtf_sf_r_ft");
+    finishTestLater();
   }
 
   public void test_sf() {
-    System.out.println("test_sf");
     synchronousFailure("test_sf");
   }
 
   public void test_sf_dtf_f() {
-    System.out.println("test_sf_dtf_f");
     synchronousFailure("test_sf_dtf_f");
     delayTestFinish();
     failNow("test_sf_dtf_f");
   }
 
   public void test_sf_dtf_ft() {
-    System.out.println("test_sf_dtf_ft");
     synchronousFailure("test_sf_dtf_ft");
     delayTestFinish();
     finishTest();
   }
 
   public void test_sf_dtf_r_f() {
-    System.out.println("test_sf_dtf_r_f()");
     synchronousFailure("test_sf_dtf_r_f");
     delayTestFinish();
     failLater("test_sf_dtf_r_f");
   }
 
   public void test_sf_dtf_r_ft() {
-    System.out.println("test_sf_dtf_r_ft()");
     synchronousFailure("test_sf_dtf_r_ft");
     delayTestFinish(5 * 60 * 1000);
-    finishTestLater("test_sf_dtf_r_ft");
+    finishTestLater();
   }
 
   public void test_sf_f() {
-    System.out.println("test_sf_f()");
     synchronousFailure("test_sf_f");
     failNow("test_sf_f");
   }
@@ -317,7 +307,6 @@ public class TestManualAsync extends GWTTestCaseTest {
     new Timer() {
       @Override
       public void run() {
-        System.out.println("failLater(): " + failMsg);
         failNow(failMsg);
       }
     }.schedule(100);
@@ -329,12 +318,10 @@ public class TestManualAsync extends GWTTestCaseTest {
   }
 
   // Finish the test asynchronously after a small amount of time.
-  private void finishTestLater(final String debugMsg) {
-    System.out.println("finishTestLater(): " + debugMsg);
+  private void finishTestLater() {
     new Timer() {
       @Override
       public void run() {
-        System.out.println("finishTestLater() done: " + debugMsg);
         finishTest();
       }
     }.schedule(1);
@@ -344,17 +331,17 @@ public class TestManualAsync extends GWTTestCaseTest {
   // (The exception thrown from fail() will get caught by the GWT
   // UncaughtExceptionHandler).
   private void synchronousFailure(final String failMsg) {
-    DivElement elem = Document.get().createDivElement();
-    Document.get().getBody().appendChild(elem);
-    Event.sinkEvents(elem, Event.ONSCROLL);
+    ButtonElement btn = Document.get().createButtonElement();
+    Document.get().getBody().appendChild(btn);
+    Event.sinkEvents(btn, Event.ONCLICK);
 
     EventListener listener = new EventListener() {
       public void onBrowserEvent(Event event) {
-        System.out.println("failNow(): " + failMsg);
         failNow(failMsg);
       }
     };
-    Event.setEventListener(elem, listener);
-    Event.triggerScrollEvent(elem);
+
+    DOM.setEventListener(btn.<com.google.gwt.user.client.Element>cast(), listener);
+    btn.click();
   }
 }
