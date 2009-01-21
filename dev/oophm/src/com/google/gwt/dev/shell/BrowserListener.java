@@ -98,6 +98,8 @@ public class BrowserListener {
   }
 
   public void start() {
-    listenThread.start();
+    if (listenThread != null) {
+      listenThread.start();
+    }
   }
 }
