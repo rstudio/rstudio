@@ -215,7 +215,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
    * @param event the event that was triggered
    */
   private void passTest(NativeEvent event) {
-    passTest(Event.as(event).getTypeInt()));
+    passTest(Event.as(event).getTypeInt());
   }
 
   /**
