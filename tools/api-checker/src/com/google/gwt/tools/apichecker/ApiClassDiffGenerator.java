@@ -190,21 +190,57 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     return collection;
   }
 
-  private boolean isIncompatibileDueToMethodOverloading(
+  /**
+   * Attempts to find out if a methodName(null) call previously succeeded, and
+   * would fail with the new Api. Currently, this method is simple.
+   * TODO(amitmanjhi): generalize this method.
+   * 
+   * @param methodsInNew Candidate methods in the new Api
+   * @param methodsInExisting Candidate methods in the existing Api.
+   * @return the possible incompatibilities due to method overloading.
+   */
+  private Map<ApiAbstractMethod, ApiChange> getOverloadedMethodIncompatibility(
       Set<ApiAbstractMethod> methodsInNew,
       Set<ApiAbstractMethod> methodsInExisting) {
     if (!ApiCompatibilityChecker.API_SOURCE_COMPATIBILITY
         || methodsInExisting.size() != 1 || methodsInNew.size() <= 1) {
-      return false;
+      return Collections.emptyMap();
     }
-    String signature = methodsInExisting.toArray(new ApiAbstractMethod[0])[0].getCoarseSignature();
-    int numMatchingSignature = 0;
+    ApiAbstractMethod existingMethod = methodsInExisting.toArray(new ApiAbstractMethod[0])[0];
+    String signature = existingMethod.getCoarseSignature();
+    List<ApiAbstractMethod> matchingMethods = new ArrayList<ApiAbstractMethod>();
     for (ApiAbstractMethod current : methodsInNew) {
       if (current.getCoarseSignature().equals(signature)) {
-        ++numMatchingSignature;
+        matchingMethods.add(current);
       }
     }
-    return numMatchingSignature > 1;
+    if (isPairwiseCompatible(matchingMethods)) {
+      return Collections.emptyMap();
+    }
+    Map<ApiAbstractMethod, ApiChange> incompatibilities = new HashMap<ApiAbstractMethod, ApiChange>();
+    incompatibilities.put(existingMethod, new ApiChange(existingMethod,
+        ApiChange.Status.OVERLOADED_METHOD_CALL,
+        "Many methods in the new API with similar signatures. Methods = "
+            + methodsInNew + " This might break API source compatibility"));
+    return incompatibilities;
+  }
+
+  /**
+   * @return true if each pair of methods within the list is compatibile.
+   */
+  private boolean isPairwiseCompatible(List<ApiAbstractMethod> methods) {
+    int length = methods.size();
+    for (int i = 0; i < length - 1; i++) {
+      for (int j = i + 1; j < length; j++) {
+        ApiAbstractMethod firstMethod = methods.get(i);
+        ApiAbstractMethod secondMethod = methods.get(j);
+        if (!firstMethod.isCompatible(secondMethod)
+            && !secondMethod.isCompatible(firstMethod)) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   /**
@@ -230,12 +266,11 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
           elementName, methodType);
       onlyInNew.addAll(methodsInNew);
       onlyInExisting.addAll(methodsInExisting);
-      if (isIncompatibileDueToMethodOverloading(methodsInNew, methodsInExisting)) {
-        ApiAbstractMethod methodInExisting = methodsInExisting.toArray(new ApiAbstractMethod[0])[0];
-        addProperty(intersectingElements, methodInExisting, new ApiChange(
-            methodInExisting, ApiChange.Status.OVERLOADED_METHOD_CALL,
-            "Many methods in the new API with similar signatures. Methods = "
-                + methodsInNew + " This might break API source compatibility"));
+      Map<ApiAbstractMethod, ApiChange> incompatibilityMap = getOverloadedMethodIncompatibility(
+          methodsInNew, methodsInExisting);
+      for (ApiAbstractMethod existingMethod : incompatibilityMap.keySet()) {
+        addProperty(intersectingElements, existingMethod,
+            incompatibilityMap.get(existingMethod));
       }
 
       /*

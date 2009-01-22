@@ -175,7 +175,8 @@ final class ApiMethod extends ApiAbstractMethod {
           + getApiSignature());
     }
     List<ApiChange.Status> statuses = new ArrayList<ApiChange.Status>();
-    if (!oldjmethod.isFinal() && newjmethod.isFinal()) {
+    if (!oldjmethod.isFinal() && !apiClass.getClassObject().isFinal()
+        && newjmethod.isFinal()) {
       statuses.add(ApiChange.Status.FINAL_ADDED);
     }
     if (!oldjmethod.isAbstract() && newjmethod.isAbstract()) {

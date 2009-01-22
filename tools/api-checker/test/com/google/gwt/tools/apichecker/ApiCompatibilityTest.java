@@ -38,6 +38,10 @@ import java.util.HashSet;
  * to both ApiClass, apiMethods.
  * 
  * test white-list support.
+ * 
+ * TODO(amitmanjhi): (1) Re-factor this code as much as possible into smaller
+ * separate components similar to the ApiCompatibilityUnit class. (2) Use
+ * MockApiElement instead of String comparisons.
  */
 public class ApiCompatibilityTest extends TestCase {
 
@@ -76,8 +80,8 @@ public class ApiCompatibilityTest extends TestCase {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("class NonApiClass extends java.lang.Object {\n");
-    sb.append("\tpublic void methodInNonApiClass(java.lang.Object o) { };\n");
-    sb.append("\tpublic void methodInNonApiClass(test.apicontainer.NonApiClass t) { };\n");
+    sb.append("\tpublic void methodInNonApiClass(ApiClassInNonApiClass o) { };\n");
+    sb.append("\tpublic void methodInNonApiClass(NonApiClass t) { };\n");
     sb.append("\tpublic int fieldInNonApiClass = 3;\n");
     sb.append("\tprotected abstract class ApiClassInNonApiClass {\n");
     sb.append("\tprotected ApiClassInNonApiClass() { }\n");
@@ -246,7 +250,7 @@ public class ApiCompatibilityTest extends TestCase {
     assertEquals(2, countPresence(finalMethodSignature, strWithoutDuplicates));
 
     // test method_overloading
-    finalMethodSignature = "methodInNonApiClass(Ljava/lang/Object;)";
+    finalMethodSignature = "methodInNonApiClass(Ltest/apicontainer/NonApiClass;)";
     assertEquals(1, countPresence(finalMethodSignature + delimiter
         + ApiChange.Status.OVERLOADED_METHOD_CALL, strWithoutDuplicates));
 
@@ -263,9 +267,6 @@ public class ApiCompatibilityTest extends TestCase {
       assertEquals(0, countPresence(methodSignature + delimiter + status,
           strWithoutDuplicates));
     }
-
-    assertEquals(1, countPresence(methodSignature + delimiter
-        + ApiChange.Status.OVERLOADED_METHOD_CALL, strWithoutDuplicates));
 
     // the method should be satisfied by the method in the super-class
     methodSignature = "test.apicontainer.OneMoreApiClass::checkOverloadedMethodAccounted(Ltest/apicontainer/OneMoreApiClass;)";
