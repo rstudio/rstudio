@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.webapp.WebAppClassLoader;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
@@ -132,13 +133,40 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
   }
 
+  /**
+   * Ensures that only Jetty and other server classes can be loaded into the web
+   * app classloader. This forces the user to put any necessary dependencies
+   * into WEB-INF/lib.
+   */
+  private static final class FilteringParentClassLoader extends ClassLoader {
+    private WebAppClassLoader child = null;
+    private final ClassLoader delegateTo = Thread.currentThread().getContextClassLoader();
+
+    private FilteringParentClassLoader() {
+      super(null);
+    }
+
+    public void setChild(WebAppClassLoader child) {
+      this.child = child;
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+      if (child != null
+          && (child.isServerPath(name) || child.isSystemPath(name))) {
+        return delegateTo.loadClass(name);
+      }
+      throw new ClassNotFoundException();
+    }
+  }
+
   private static class JettyServletContainer extends ServletContainer {
 
     private final int actualPort;
     private final File appRootDir;
     private final TreeLogger logger;
-    private final WebAppContext wac;
     private final Server server;
+    private final WebAppContext wac;
 
     public JettyServletContainer(TreeLogger logger, Server server,
         WebAppContext wac, int actualPort, File appRootDir) {
@@ -222,6 +250,10 @@ public class JettyLauncher extends ServletContainerLauncher {
 
     // Create a new web app in the war directory.
     WebAppContext wac = new WebAppContext(appRootDir.getAbsolutePath(), "/");
+    FilteringParentClassLoader parentClassLoader = new FilteringParentClassLoader();
+    WebAppClassLoader wacl = new WebAppClassLoader(parentClassLoader, wac);
+    parentClassLoader.setChild(wacl);
+    wac.setClassLoader(wacl);
 
     // Prevent file locking on Windows; pick up file changes.
     wac.getInitParams().put(
