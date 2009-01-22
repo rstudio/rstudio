@@ -59,7 +59,7 @@ public class ApiCompatibilityUnitTest extends TestCase {
     }
   }
 
-  private static class FinalKeywordRefactoring extends ApiCompatibilityUnitTest {
+  private static class FinalKeywordRefactoring {
     private static String getFirstApiSourceForObject() {
       StringBuffer sb = new StringBuffer();
       sb.append("package java.lang;\n");
@@ -88,9 +88,9 @@ public class ApiCompatibilityUnitTest extends TestCase {
 
       // firstApi is the reference Api
       Collection<ApiChange> apiChanges = getApiChanges(firstApi, secondApi);
-      assertEquals(
-          Arrays.asList(new ApiChange[] {new ApiChange(new MockApiElement(
-              "java.lang.Object::foo"), ApiChange.Status.FINAL_ADDED),}), apiChanges);
+      assertEquals(Arrays.asList(new ApiChange[] {new ApiChange(
+          new MockApiElement("java.lang.Object::foo"),
+          ApiChange.Status.FINAL_ADDED),}), apiChanges);
 
       // secondApi is the reference Api
       apiChanges = getApiChanges(secondApi, firstApi);
@@ -109,7 +109,7 @@ public class ApiCompatibilityUnitTest extends TestCase {
    * However, if foo(Object ..) is added, it should be okay since JLS matches
    * from the most specific to the least specific.
    */
-  private static class MethodOverloadingTest extends ApiCompatibilityUnitTest {
+  private static class OverloadedMethodRefactoring {
     private static String getFirstApiSourceForObject() {
       StringBuffer sb = new StringBuffer();
       sb.append("package java.lang;\n");
@@ -170,7 +170,7 @@ public class ApiCompatibilityUnitTest extends TestCase {
    * to a super class.
    * 
    */
-  private static class SuperClassRefactoring extends ApiCompatibilityUnitTest {
+  private static class SuperClassRefactoring {
     private static String getFirstApiSourceForObject() {
       StringBuffer sb = new StringBuffer();
       sb.append("package java.lang;\n");
@@ -289,7 +289,7 @@ public class ApiCompatibilityUnitTest extends TestCase {
 
   public void testMethodOverloading() throws NotFoundException,
       UnableToCompleteException {
-    new MethodOverloadingTest().testBothWays();
+    new OverloadedMethodRefactoring().testBothWays();
   }
 
   public void testSuperClassRefactoring() throws NotFoundException,
