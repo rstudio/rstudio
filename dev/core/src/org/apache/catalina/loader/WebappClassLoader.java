@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+// Modified by Google.
 
 package org.apache.catalina.loader;
 
@@ -731,10 +731,10 @@ public class WebappClassLoader
         if (getJarPath() != null) {
 
             try {
-                NamingEnumeration enum = resources.listBindings(getJarPath());
+                NamingEnumeration enum_ = resources.listBindings(getJarPath());
                 int i = 0;
-                while (enum.hasMoreElements() && (i < length)) {
-                    NameClassPair ncPair = (NameClassPair) enum.nextElement();
+                while (enum_.hasMoreElements() && (i < length)) {
+                    NameClassPair ncPair = (NameClassPair) enum_.nextElement();
                     String name = ncPair.getName();
                     // Ignore non JARs present in the lib folder
                     if (!name.endsWith(".jar"))
@@ -747,10 +747,10 @@ public class WebappClassLoader
                     }
                     i++;
                 }
-                if (enum.hasMoreElements()) {
-                    while (enum.hasMoreElements()) {
+                if (enum_.hasMoreElements()) {
+                    while (enum_.hasMoreElements()) {
                         NameClassPair ncPair = 
-                            (NameClassPair) enum.nextElement();
+                            (NameClassPair) enum_.nextElement();
                         String name = ncPair.getName();
                         // Additional non-JAR files are allowed
                         if (name.endsWith(".jar")) {
@@ -1251,13 +1251,16 @@ public class WebappClassLoader
 
         // (0.2) Try loading the class with the system class loader, to prevent
         //       the webapp from overriding J2SE classes
+        // GOOGLE: use the bootstrap loader, not the system loader; it breaks
+        //       embedding.
         try {
-            clazz = system.loadClass(name);
-            if (clazz != null) {
-                if (resolve)
-                    resolveClass(clazz);
-                return (clazz);
-            }
+            // clazz = system.loadClass(name);
+             clazz = Class.forName(name, false, null);
+             if (clazz != null) {
+                 if (resolve)
+                     resolveClass(clazz);
+                 return (clazz);
+             }
         } catch (ClassNotFoundException e) {
             // Ignore
         }
@@ -2162,4 +2165,3 @@ public class WebappClassLoader
     }
 
 }
-

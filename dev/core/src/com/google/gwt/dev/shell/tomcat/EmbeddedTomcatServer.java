@@ -203,6 +203,7 @@ public class EmbeddedTomcatServer {
     catEngine = catEmbedded.createEngine();
     catEngine.setName("gwt");
     catEngine.setDefaultHost("localhost");
+    catEngine.setParentClassLoader(this.getClass().getClassLoader());
 
     // It answers localhost requests.
     //
@@ -363,7 +364,7 @@ public class EmbeddedTomcatServer {
    */
   private Map<String, Resource> getResourcesFor(TreeLogger logger,
       String tomcatEtcDir) throws URISyntaxException, IOException {
-    ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+    ClassLoader contextClassLoader = this.getClass().getClassLoader();
     URL url = contextClassLoader.getResource(tomcatEtcDir);
     if (url == null) {
       return null;
