@@ -32,6 +32,7 @@ import com.google.gwt.user.client.EventListener;
  * {@link com.google.gwt.user.client.ui.Panel panels}.
  */
 public class Widget extends UIObject implements EventListener, HasHandlers {
+
   /**
    * A bit-map of the events that should be sunk when the widget is attached to
    * the DOM. (We delay the sinking of events to improve startup performance.)
@@ -45,13 +46,10 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   private Widget parent;
   private HandlerManager handlerManager;
 
-  /**
-   * Returns this widget's {@link HandlerManager} used for event management.
-   * 
-   * @return the handler manager
-   */
-  public final HandlerManager getHandlers() {
-    return handlerManager;
+  public void fireEvent(GwtEvent<?> event) {
+    if (handlerManager != null) {
+      handlerManager.fireEvent(event);
+    }
   }
 
   /**
@@ -74,20 +72,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     return attached;
   }
 
-  /**
-   * Returns true if the widget has handlers of the given type. Used by some
-   * widget implementations to be lazy about initializing dom event handlers
-   * (e.g. a click handler on a checkbox) until the first relevant logical event
-   * handler is attached (e.g. in the <code>addValueChangeHandler</code>
-   * method).
-   * 
-   * @param type the event type
-   * @return true if the widget has handlers of the give type
-   */
-  public boolean isEventHandled(GwtEvent.Type<?> type) {
-    return handlerManager != null && handlerManager.isEventHandled(type);
-  }
-
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONMOUSEOVER:
@@ -106,7 +90,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
           return;
         }
     }
-    DomEvent.fireNativeEvent(event, handlerManager);
+    DomEvent.fireNativeEvent(event, this);
   }
 
   /**
@@ -215,18 +199,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   }
 
   /**
-   * Fires an event. Usually used when passing an event from one source to
-   * another.
-   * 
-   * @param event the event
-   */
-  protected void fireEvent(GwtEvent<?> event) {
-    if (handlerManager != null) {
-      handlerManager.fireEvent(event);
-    }
-  }
-
-  /**
    * Has this widget ever been attached?
    * 
    * @return true if this widget ever been attached to the DOM, false otherwise
@@ -326,6 +298,10 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
   HandlerManager ensureHandlers() {
     return handlerManager == null ? handlerManager = new HandlerManager(this)
         : handlerManager;
+  }
+
+  HandlerManager getHandlerManager() {
+    return handlerManager;
   }
 
   /**

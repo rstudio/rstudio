@@ -106,6 +106,23 @@ Repeat step 2, except:
 Set the Name to "GWT Checks for Tests" (important)
 Set the location to "settings/code-style/gwt-checkstyle-tests.xml".
 
+------------ GWT dev-jar path ------------
+To run applications against the Eclipse projects for GWT rather than an
+extracted jar file, you need to tell GWT where to find its native libraries
+since they won't be in the jar file.  Using this approach requires building
+GWT from the command line with ant once to get the files in the proper
+location, but it doesn't need to be redone unless you change any of the native
+libraries.
+
+Window->Preferences->Run/Debug->String Substitution->New...
+Set the Name to "gwt_devjar".
+Set the Value to the approprate path for your install -- for example:
+  <path-to-trunk>\trunk\build\staging\gwt-windows-0.0.0\gwt-dev-windows.jar
+  <path-to-trunk>/trunk/build/staging/gwt-linux-0.0.0/gwt-dev-linux.jar
+  <path-to-trunk>/trunk/build/staging/gwt-mac-0.0.0/gwt-dev-mac.jar
+Description can be left blank.
+
+
 == Importing the GWT core projects ==
 
 1) Import the 'gwt-dev-<platform>' and 'gwt-user' projects
@@ -189,17 +206,9 @@ following instructions help you do just that.
   You could also just edit Hello.launch and search/replace "windows" with
     "linux" or "mac".
 
-3) Modify the the gwt.devjar VM argument
+3) Repeat step 2 for the 'Hello compile' project.
 
-  Run->Open Run Dialog...->Java Application->Hello
-  Select the 'Arguments' tab
-  Modify the 'gwt.devjar' setting in the VM arguments window
- 
-  -Dgwt.devjar=<path to trunk>\trunk\build\staging\gwt-<platform>-0.0.0\gwt-dev-<platform>.jar
-
-4) Repeat steps 2 and 3 for the 'Hello compile' project.
-
-5) Now you should be able to run the 'Hello' project from the
+4) Now you should be able to run the 'Hello' project from the
   Run dialog!
 
 
@@ -252,12 +261,12 @@ Arguments Tab:
 
   In the 'VM arguments' text area, add the following:
 
-  -Dgwt.devjar="<path to trunk>/build/staging/gwt-<platform>-0.0.0/gwt-dev-<platform>.jar"
+  -Dgwt.devjar=${gwt_devjar}
 
   This is a very obscure way of telling GWT where to find the C++ libraries
-  located in that directory. The name of the .jar file is not important,
-  but the path is. If you do not have this set, you'll see the
-   following exception at startup:
+  located in that directory, and the gwt_devjar variable should be set as
+  described above.  If you do not have this set, or if you have not build GWT
+  at least once using ant, you will see an exception like this at startup:
 
    Exception in thread "main" java.lang.ExceptionInInitializerError
    Caused by: java.lang.RuntimeException: Installation problem detected,

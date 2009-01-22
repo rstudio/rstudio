@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * Represents a open event.
@@ -40,11 +39,8 @@ public class OpenEvent<T> extends GwtEvent<OpenHandler<T>> {
    */
   public static <T> void fire(HasOpenHandlers<T> source, T target) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        OpenEvent<T> event = new OpenEvent<T>(target);
-        handlers.fireEvent(event);
-      }
+      OpenEvent<T> event = new OpenEvent<T>(target);
+      source.fireEvent(event);
     }
   }
 

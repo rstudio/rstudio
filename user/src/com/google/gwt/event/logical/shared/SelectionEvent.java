@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * Represents a selection event.
@@ -41,11 +40,8 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
    */
   public static <I> void fire(HasSelectionHandlers<I> source, I selectedItem) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        SelectionEvent<I> event = new SelectionEvent<I>(selectedItem);
-        handlers.fireEvent(event);
-      }
+      SelectionEvent<I> event = new SelectionEvent<I>(selectedItem);
+      source.fireEvent(event);
     }
   }
 

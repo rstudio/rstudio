@@ -41,7 +41,7 @@ class DateChangeEvent extends ValueChangeEvent<Date> {
   public static <S extends HasValueChangeHandlers<Date> & HasHandlers> void fireIfNotEqualDates(
       S source, Date oldValue, Date newValue) {
     if (ValueChangeEvent.shouldFire(source, oldValue, newValue)) {
-      source.getHandlers().fireEvent(new DateChangeEvent(newValue));
+      source.fireEvent(new DateChangeEvent(newValue));
     }
   }
 

@@ -69,15 +69,17 @@ import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.OpenEvent;
 import com.google.gwt.event.logical.shared.OpenHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
+import com.google.gwt.user.client.BaseListenerWrapper;
 
 import java.util.EventListener;
 
@@ -86,59 +88,506 @@ import java.util.EventListener;
  * <code>com.google.gwt.user.client.ui</code>. Gathers the bulk of the legacy
  * glue code in one place, for easy deletion when Listener methods are deleted.
  * 
- * @see com.google.gwt.user.client.L
+ * 
  * @param <T> listener type
+ * @deprecated will be removed in GWT 2.0 with the handler listeners themselves
  */
 @Deprecated
-abstract class ListenerWrapper<T> implements EventHandler {
+public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
-  public static class Change extends ListenerWrapper<ChangeListener> implements
-      ChangeHandler {
+  /**
+   * Wrapper for a {@link LoadListener}.
+   */
+  public static class WrappedLoadListener extends ListenerWrapper<LoadListener> implements
+      LoadHandler, ErrorHandler {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param <S> the source of the events
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
     @Deprecated
-    public static void add(HasChangeHandlers source, ChangeListener listener) {
-      source.addChangeHandler(new Change(listener));
+    public static <S extends HasLoadHandlers & HasErrorHandlers> WrappedLoadListener add(
+        S source, LoadListener listener) {
+      WrappedLoadListener l = new WrappedLoadListener(listener);
+      source.addLoadHandler(l);
+      source.addErrorHandler(l);
+      return l;
     }
 
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, LoadListener listener) {
+      baseRemove(eventSource, listener, LoadEvent.getType(),
+          ErrorEvent.getType());
+    }
+
+    private WrappedLoadListener(LoadListener listener) {
+      super(listener);
+    }
+
+    public void onError(ErrorEvent event) {
+      getListener().onError(getSource(event));
+    }
+
+    public void onLoad(LoadEvent event) {
+      getListener().onLoad(getSource(event));
+    }
+  }
+  /**
+   * Wrapper for a {@link ChangeListener}.
+   * 
+   * @deprecated will be removed in GWT 2.0 along with the listeners being
+   *             wrapped
+   */
+  @Deprecated
+  public static class WrappedChangeListener extends
+      ListenerWrapper<ChangeListener> implements ChangeHandler {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static WrappedChangeListener add(HasChangeHandlers source,
+        ChangeListener listener) {
+      WrappedChangeListener rtn = new WrappedChangeListener(listener);
+      source.addChangeHandler(rtn);
+      return rtn;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
     public static void remove(Widget eventSource, ChangeListener listener) {
       baseRemove(eventSource, listener, ChangeEvent.getType());
     }
 
-    protected Change(ChangeListener listener) {
+    WrappedChangeListener(ChangeListener listener) {
       super(listener);
     }
 
     public void onChange(ChangeEvent event) {
-      listener.onChange(source(event));
+      getListener().onChange(getSource(event));
     }
   }
 
-  public static class Click extends ListenerWrapper<ClickListener> implements
-      ClickHandler {
+  /**
+   * Wrapper for a {@link ClickListener}.
+   * 
+   * @deprecated will be removed in GWT 2.0 along with the listeners being
+   *             wrapped
+   */
+  @Deprecated
+  public static class WrappedClickListener extends
+      ListenerWrapper<ClickListener> implements ClickHandler {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
     @Deprecated
-    public static Click add(HasClickHandlers source, ClickListener listener) {
-      Click rtn = new Click(listener);
+    public static WrappedClickListener add(HasClickHandlers source,
+        ClickListener listener) {
+      WrappedClickListener rtn = new WrappedClickListener(listener);
       source.addClickHandler(rtn);
       return rtn;
     }
 
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
     public static void remove(Widget eventSource, ClickListener listener) {
       baseRemove(eventSource, listener, ClickEvent.getType());
     }
 
-    private Click(ClickListener listener) {
+    private WrappedClickListener(ClickListener listener) {
       super(listener);
     }
 
     public void onClick(ClickEvent event) {
-      listener.onClick(source(event));
+      getListener().onClick(getSource(event));
+    }
+  }
+  /**
+   * Wrapper for a {@link FocusListener}.
+   */
+  public static class WrappedFocusListener extends
+      ListenerWrapper<FocusListener> implements FocusHandler, BlurHandler {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param eventSource the event source
+     * @param listener the listener
+     * 
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static WrappedFocusListener add(HasAllFocusHandlers eventSource,
+        FocusListener listener) {
+      WrappedFocusListener rtn = new WrappedFocusListener(listener);
+      HandlesAllFocusEvents.handle(eventSource, rtn);
+      return rtn;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, FocusListener listener) {
+      baseRemove(eventSource, listener, LoadEvent.getType(),
+          ErrorEvent.getType());
+    }
+
+    private WrappedFocusListener(FocusListener listener) {
+      super(listener);
+    }
+
+    public void onBlur(BlurEvent event) {
+      getListener().onLostFocus(getSource(event));
+    }
+
+    public void onFocus(FocusEvent event) {
+      getListener().onFocus(getSource(event));
     }
   }
 
-  public static class Disclosure extends ListenerWrapper<DisclosureHandler>
-      implements CloseHandler<DisclosurePanel>, OpenHandler<DisclosurePanel> {
+  /**
+   * Wrapper for a {@link KeyboardListener}.
+   */
+  public static class WrappedKeyboardListener extends
+      ListenerWrapper<KeyboardListener> implements KeyDownHandler,
+      KeyUpHandler, KeyPressHandler {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static WrappedKeyboardListener add(HasAllKeyHandlers source,
+        KeyboardListener listener) {
+      WrappedKeyboardListener b = new WrappedKeyboardListener(listener);
+      HandlesAllKeyEvents.addHandlers(source, b);
+      return b;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, KeyboardListener listener) {
+      ListenerWrapper.baseRemove(eventSource, listener, KeyDownEvent.getType(),
+          KeyUpEvent.getType(), KeyPressEvent.getType());
+    }
+
+    private WrappedKeyboardListener(KeyboardListener listener) {
+      super(listener);
+    }
+
+    public void onKeyDown(KeyDownEvent event) {
+      getListener().onKeyDown(
+          getSource(event),
+          (char) event.getNativeKeyCode(),
+          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
+    }
+
+    public void onKeyPress(KeyPressEvent event) {
+      getListener().onKeyPress(
+          getSource(event),
+          (char) event.getNativeEvent().getKeyCode(),
+          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
+    }
+
+    public void onKeyUp(KeyUpEvent event) {
+      getSource(event);
+      getListener().onKeyUp(
+          getSource(event),
+          (char) event.getNativeKeyCode(),
+          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
+    }
+  }
+
+  /**
+   * Wrapper for a {@link ChangeListener} being converted to a logical
+   * {@link ValueChangeHandler}.
+   * 
+   * @param <V> the type of the value changed
+   * 
+   * @deprecated will be removed in GWT 2.0 along with the listeners being
+   *             wrapped
+   */
+  @Deprecated
+  public static class WrappedLogicalChangeListener<V> extends
+      ListenerWrapper<ChangeListener> implements ValueChangeHandler<V> {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param <V> the type of value changed
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static <V> WrappedLogicalChangeListener<V> add(
+        HasValueChangeHandlers<V> source, ChangeListener listener) {
+      WrappedLogicalChangeListener<V> rtn = new WrappedLogicalChangeListener<V>(
+          listener);
+      source.addValueChangeHandler(rtn);
+      return rtn;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, ChangeListener listener) {
+      baseRemove(eventSource, listener, ValueChangeEvent.getType());
+    }
+
+    private WrappedLogicalChangeListener(ChangeListener listener) {
+      super(listener);
+    }
+
+    public void onValueChange(ValueChangeEvent<V> event) {
+      getListener().onChange(getSource(event));
+    }
+  }
+  /**
+   * Wrapper for a {@link MouseListener}.
+   */
+  public static class WrappedMouseListener extends
+      ListenerWrapper<MouseListener> implements MouseDownHandler,
+      MouseUpHandler, MouseOutHandler, MouseOverHandler, MouseMoveHandler {
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * @param <E> source of the handlers
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static <E extends HasMouseDownHandlers & HasMouseUpHandlers & HasMouseOutHandlers & HasMouseOverHandlers & HasMouseMoveHandlers> WrappedMouseListener add(
+        E source, MouseListener listener) {
+      WrappedMouseListener handlers = new WrappedMouseListener(listener);
+      source.addMouseDownHandler(handlers);
+      source.addMouseUpHandler(handlers);
+      source.addMouseOutHandler(handlers);
+      source.addMouseOverHandler(handlers);
+      source.addMouseMoveHandler(handlers);
+      return handlers;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, MouseListener listener) {
+      baseRemove(eventSource, listener, MouseDownEvent.getType(),
+          MouseUpEvent.getType(), MouseOverEvent.getType(),
+          MouseOutEvent.getType());
+    }
+
+    private WrappedMouseListener(MouseListener listener) {
+      super(listener);
+    }
+
+    public void onMouseDown(MouseDownEvent event) {
+      Widget source = getSource(event);
+      Element elem = source.getElement();
+      getListener().onMouseDown(source, event.getRelativeX(elem),
+          event.getRelativeY(elem));
+    }
+
+    public void onMouseMove(MouseMoveEvent event) {
+      Widget source = getSource(event);
+      Element elem = source.getElement();
+      getListener().onMouseMove(source, event.getRelativeX(elem),
+          event.getRelativeY(elem));
+    }
+
+    public void onMouseOut(MouseOutEvent event) {
+      getListener().onMouseLeave(getSource(event));
+    }
+
+    public void onMouseOver(MouseOverEvent event) {
+      getListener().onMouseEnter(getSource(event));
+    }
+
+    public void onMouseUp(MouseUpEvent event) {
+      Widget source = getSource(event);
+      Element elem = source.getElement();
+      getListener().onMouseUp(source, event.getRelativeX(elem),
+          event.getRelativeY(elem));
+    }
+  }
+  /**
+   * Wrapper for a {@link MouseWheelListener}.
+   */
+  public static class WrappedMouseWheelListener extends
+      ListenerWrapper<MouseWheelListener> implements MouseWheelHandler {
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static WrappedMouseWheelListener add(HasMouseWheelHandlers source,
+        MouseWheelListener listener) {
+      WrappedMouseWheelListener wrap = new WrappedMouseWheelListener(listener);
+      source.addMouseWheelHandler(new WrappedMouseWheelListener(listener));
+      return wrap;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, MouseWheelListener listener) {
+      baseRemove(eventSource, listener, MouseWheelEvent.getType());
+    }
+
+    private WrappedMouseWheelListener(MouseWheelListener listener) {
+      super(listener);
+    }
+
+    public void onMouseWheel(MouseWheelEvent event) {
+      getListener().onMouseWheel(getSource(event),
+          new MouseWheelVelocity(event.getNativeEvent()));
+    }
+  }
+  /**
+   * Wrapper for a {@link ScrollListener}.
+   */
+  public static class WrappedScrollListener extends
+      ListenerWrapper<ScrollListener> implements ScrollHandler {
+
+    /**
+     * Adds the wrapped listener.
+     * 
+     * @param source the event source
+     * @param listener the listener
+     * @return the wrapped listener
+     * 
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static WrappedScrollListener add(HasScrollHandlers source,
+        ScrollListener listener) {
+      WrappedScrollListener s = new WrappedScrollListener(listener);
+      source.addScrollHandler(s);
+      return s;
+    }
+
+    /**
+     * Removes the wrapped listener.
+     * 
+     * @param eventSource the event source from which to remove the wrapped
+     *          listener
+     * @param listener the listener to remove
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
+    @Deprecated
+    public static void remove(Widget eventSource, ScrollListener listener) {
+      baseRemove(eventSource, listener, ScrollEvent.getType(),
+          ErrorEvent.getType());
+    }
+
+    private WrappedScrollListener(ScrollListener listener) {
+      super(listener);
+    }
+
+    public void onScroll(ScrollEvent event) {
+      Widget source = getSource(event);
+      Element elem = source.getElement();
+      getListener().onScroll(getSource(event), elem.getScrollLeft(),
+          elem.getScrollTop());
+    }
+  }
+  static class WrappedOldDisclosureHandler extends
+      ListenerWrapper<DisclosureHandler> implements
+      CloseHandler<DisclosurePanel>, OpenHandler<DisclosurePanel> {
 
     public static void add(DisclosurePanel source, DisclosureHandler listener) {
-      Disclosure handlers = new Disclosure(listener);
+      WrappedOldDisclosureHandler handlers = new WrappedOldDisclosureHandler(
+          listener);
       source.addOpenHandler(handlers);
       source.addCloseHandler(handlers);
     }
@@ -148,55 +597,26 @@ abstract class ListenerWrapper<T> implements EventHandler {
           OpenEvent.getType());
     }
 
-    private Disclosure(DisclosureHandler listener) {
+    private WrappedOldDisclosureHandler(DisclosureHandler listener) {
       super(listener);
     }
 
     public void onClose(CloseEvent<DisclosurePanel> event) {
-      listener.onClose(new DisclosureEvent((DisclosurePanel) event.getSource()));
+      getListener().onClose(
+          new DisclosureEvent((DisclosurePanel) event.getSource()));
     }
 
     public void onOpen(OpenEvent<DisclosurePanel> event) {
-      listener.onOpen(new DisclosureEvent((DisclosurePanel) event.getSource()));
+      getListener().onOpen(
+          new DisclosureEvent((DisclosurePanel) event.getSource()));
     }
   }
 
-  /*
-   * Handler wrapper for {@link FocusListener}.
-   */
-  public static class Focus extends ListenerWrapper<FocusListener> implements
-      FocusHandler, BlurHandler {
-
-    public static <EventSourceType extends Widget & HasAllFocusHandlers> Focus add(
-        EventSourceType source, FocusListener listener) {
-      Focus rtn = new Focus(listener);
-      HandlesAllFocusEvents.handle(source, rtn);
-      return rtn;
-    }
-
-    public static void remove(Widget eventSource, FocusListener listener) {
-      baseRemove(eventSource, listener, LoadEvent.getType(),
-          ErrorEvent.getType());
-    }
-
-    private Focus(FocusListener listener) {
-      super(listener);
-    }
-
-    public void onBlur(BlurEvent event) {
-      listener.onLostFocus(source(event));
-    }
-
-    public void onFocus(FocusEvent event) {
-      listener.onFocus(source(event));
-    }
-  }
-
-  public static class Form extends ListenerWrapper<FormHandler> implements
-      FormPanel.SubmitHandler, FormPanel.SubmitCompleteHandler {
+  static class WrappedOldFormHandler extends ListenerWrapper<FormHandler>
+      implements FormPanel.SubmitHandler, FormPanel.SubmitCompleteHandler {
 
     public static void add(FormPanel source, FormHandler listener) {
-      Form handlers = new Form(listener);
+      WrappedOldFormHandler handlers = new WrappedOldFormHandler(listener);
       source.addSubmitHandler(handlers);
       source.addSubmitCompleteHandler(handlers);
     }
@@ -206,203 +626,104 @@ abstract class ListenerWrapper<T> implements EventHandler {
           FormPanel.SubmitCompleteEvent.getType());
     }
 
-    private Form(FormHandler listener) {
+    private WrappedOldFormHandler(FormHandler listener) {
       super(listener);
     }
 
     public void onSubmit(FormPanel.SubmitEvent event) {
       FormSubmitEvent fse = new FormSubmitEvent((FormPanel) event.getSource());
-      listener.onSubmit(fse);
+      getListener().onSubmit(fse);
       if (fse.isSetCancelledCalled()) {
         event.setCanceled(fse.isCancelled());
       }
     }
 
     public void onSubmitComplete(FormPanel.SubmitCompleteEvent event) {
-      listener.onSubmitComplete(new FormSubmitCompleteEvent(
-          (FormPanel) event.getSource(), event.getResults()));
+      getListener().onSubmitComplete(
+          new FormSubmitCompleteEvent((FormPanel) event.getSource(),
+              event.getResults()));
     }
   }
 
-  public static class Load extends ListenerWrapper<LoadListener> implements
-      LoadHandler, ErrorHandler {
-
-    public static <S extends HasLoadHandlers & HasErrorHandlers>void add(S source, LoadListener listener) {
-      Load l = new Load(listener);
-      source.addLoadHandler(l);
-      source.addErrorHandler(l);
-    }
-
-    public static void remove(Widget eventSource, LoadListener listener) {
-      baseRemove(eventSource, listener, LoadEvent.getType(),
-          ErrorEvent.getType());
-    }
-
-    private Load(LoadListener listener) {
-      super(listener);
-    }
-
-    public void onError(ErrorEvent event) {
-      listener.onError(source(event));
-    }
-
-    public void onLoad(LoadEvent event) {
-      listener.onLoad(source(event));
-    }
-  }
-
-  public static class Mouse extends ListenerWrapper<MouseListener> implements
-      MouseDownHandler, MouseUpHandler, MouseOutHandler, MouseOverHandler,
-      MouseMoveHandler {
-
-    public static <EventSourceType extends Widget & HasMouseDownHandlers & HasMouseUpHandlers & HasMouseOutHandlers & HasMouseOverHandlers & HasMouseMoveHandlers> void add(
-        EventSourceType source, MouseListener listener) {
-      Mouse handlers = new Mouse(listener);
-      source.addMouseDownHandler(handlers);
-      source.addMouseUpHandler(handlers);
-      source.addMouseOutHandler(handlers);
-      source.addMouseOverHandler(handlers);
-      source.addMouseMoveHandler(handlers);
-    }
-
-    public static void remove(Widget eventSource, MouseListener listener) {
-      baseRemove(eventSource, listener, MouseDownEvent.getType(),
-          MouseUpEvent.getType(), MouseOverEvent.getType(),
-          MouseOutEvent.getType());
-    }
-
-    private Mouse(MouseListener listener) {
-      super(listener);
-    }
-
-    public void onMouseDown(MouseDownEvent event) {
-      Widget source = source(event);
-      Element elem = source.getElement();
-      listener.onMouseDown(source, event.getRelativeX(elem),
-          event.getRelativeY(elem));
-    }
-
-    public void onMouseMove(MouseMoveEvent event) {
-      Widget source = source(event);
-      Element elem = source.getElement();
-      listener.onMouseMove(source, event.getRelativeX(elem),
-          event.getRelativeY(elem));
-    }
-
-    public void onMouseOut(MouseOutEvent event) {
-      listener.onMouseLeave(source(event));
-    }
-
-    public void onMouseOver(MouseOverEvent event) {
-      listener.onMouseEnter(source(event));
-    }
-
-    public void onMouseUp(MouseUpEvent event) {
-      Widget source = source(event);
-      Element elem = source.getElement();
-      listener.onMouseUp(source, event.getRelativeX(elem),
-          event.getRelativeY(elem));
-    }
-  }
-  public static class MouseWheel extends ListenerWrapper<MouseWheelListener>
-      implements MouseWheelHandler {
-    public static void add(HasMouseWheelHandlers source,
-        MouseWheelListener listener) {
-      source.addMouseWheelHandler(new MouseWheel(listener));
-    }
-
-    public static void remove(Widget eventSource, MouseWheelListener listener) {
-      baseRemove(eventSource, listener, MouseWheelEvent.getType());
-    }
-
-    private MouseWheel(MouseWheelListener listener) {
-      super(listener);
-    }
-
-    public void onMouseWheel(MouseWheelEvent event) {
-      listener.onMouseWheel(source(event), new MouseWheelVelocity(
-          event.getNativeEvent()));
-    }
-  }
-
-  public static class Popup extends ListenerWrapper<PopupListener> implements
-      CloseHandler<PopupPanel> {
-
-    public static void add(HasCloseHandlers<PopupPanel> source,
-        PopupListener listener) {
-      source.addCloseHandler(new Popup(listener));
-    }
-
-    public static void remove(Widget eventSource, PopupListener listener) {
-      baseRemove(eventSource, listener, CloseEvent.getType());
-    }
-
-    private Popup(PopupListener listener) {
-      super(listener);
-    }
-
-    public void onClose(CloseEvent<PopupPanel> event) {
-      listener.onPopupClosed((PopupPanel) event.getSource(),
-          event.isAutoClosed());
-    }
-  }
-
-  public static class Scroll extends ListenerWrapper<ScrollListener> implements
-      ScrollHandler {
-
-    public static void add(HasScrollHandlers source, ScrollListener listener) {
-      source.addScrollHandler(new Scroll(listener));
-    }
-
-    public static void remove(Widget eventSource, ScrollListener listener) {
-      baseRemove(eventSource, listener, ScrollEvent.getType(),
-          ErrorEvent.getType());
-    }
-
-    private Scroll(ScrollListener listener) {
-      super(listener);
-    }
-
-    public void onScroll(ScrollEvent event) {
-      Widget source = source(event);
-      Element elem = source.getElement();
-      listener.onScroll(source(event), elem.getScrollLeft(),
-          elem.getScrollTop());
-    }
-  }
-
-  public static class Suggestion extends ListenerWrapper<SuggestionHandler>
-      implements SelectionHandler<SuggestOracle.Suggestion> {
+  static class WrappedOldSuggestionHandler extends
+      ListenerWrapper<SuggestionHandler> implements
+      SelectionHandler<SuggestOracle.Suggestion> {
     @Deprecated
     public static void add(SuggestBox source, SuggestionHandler listener) {
-      source.addSelectionHandler(new Suggestion(listener));
+      source.addSelectionHandler(new WrappedOldSuggestionHandler(listener));
     }
 
     public static void remove(Widget eventSource, SuggestionHandler listener) {
       baseRemove(eventSource, listener, SelectionEvent.getType());
     }
 
-    private Suggestion(SuggestionHandler listener) {
+    private WrappedOldSuggestionHandler(SuggestionHandler listener) {
       super(listener);
     }
 
     public void onSelection(SelectionEvent<SuggestOracle.Suggestion> event) {
-      listener.onSuggestionSelected(new SuggestionEvent(
-          (SuggestBox) event.getSource(), event.getSelectedItem()));
+      getListener().onSuggestionSelected(
+          new SuggestionEvent((SuggestBox) event.getSource(),
+              event.getSelectedItem()));
     }
   }
 
-  public static class Tab extends ListenerWrapper<TabListener> implements
-      SelectionHandler<Integer>, BeforeSelectionHandler<Integer> {
+  static class WrappedPopupListener extends ListenerWrapper<PopupListener>
+      implements CloseHandler<PopupPanel> {
+
+    public static void add(HasCloseHandlers<PopupPanel> source,
+        PopupListener listener) {
+      source.addCloseHandler(new WrappedPopupListener(listener));
+    }
+
+    public static void remove(Widget eventSource, PopupListener listener) {
+      baseRemove(eventSource, listener, CloseEvent.getType());
+    }
+
+    private WrappedPopupListener(PopupListener listener) {
+      super(listener);
+    }
+
+    public void onClose(CloseEvent<PopupPanel> event) {
+      getListener().onPopupClosed((PopupPanel) event.getSource(),
+          event.isAutoClosed());
+    }
+  }
+
+  static class WrappedTableListener extends ListenerWrapper<TableListener>
+      implements ClickHandler {
+    @Deprecated
+    public static void add(HasClickHandlers source, TableListener listener) {
+      source.addClickHandler(new WrappedTableListener(listener));
+    }
+
+    public static void remove(Widget eventSource, TableListener listener) {
+      baseRemove(eventSource, listener, ClickEvent.getType());
+    }
+
+    private WrappedTableListener(TableListener listener) {
+      super(listener);
+    }
+
+    public void onClick(ClickEvent event) {
+      HTMLTable table = (HTMLTable) event.getSource();
+      HTMLTable.Cell cell = table.getCellForEvent(event);
+      getListener().onCellClicked(table, cell.getRowIndex(),
+          cell.getCellIndex());
+    }
+  }
+
+  static class WrappedTabListener extends ListenerWrapper<TabListener>
+      implements SelectionHandler<Integer>, BeforeSelectionHandler<Integer> {
     @Deprecated
     public static void add(TabBar source, TabListener listener) {
-      Tab t = new Tab(listener);
+      WrappedTabListener t = new WrappedTabListener(listener);
       source.addBeforeSelectionHandler(t);
       source.addSelectionHandler(t);
     }
 
     public static void add(TabPanel source, TabListener listener) {
-      Tab t = new Tab(listener);
+      WrappedTabListener t = new WrappedTabListener(listener);
       source.addBeforeSelectionHandler(t);
       source.addSelectionHandler(t);
     }
@@ -412,51 +733,30 @@ abstract class ListenerWrapper<T> implements EventHandler {
           BeforeSelectionEvent.getType());
     }
 
-    private Tab(TabListener listener) {
+    private WrappedTabListener(TabListener listener) {
       super(listener);
     }
 
     public void onBeforeSelection(BeforeSelectionEvent<Integer> event) {
-      if (!listener.onBeforeTabSelected((SourcesTabEvents) event.getSource(),
-          event.getItem().intValue())) {
+      if (!getListener().onBeforeTabSelected(
+          (SourcesTabEvents) event.getSource(), event.getItem().intValue())) {
         event.cancel();
       }
     }
 
     public void onSelection(SelectionEvent<Integer> event) {
-      listener.onTabSelected((SourcesTabEvents) event.getSource(),
+      getListener().onTabSelected((SourcesTabEvents) event.getSource(),
           event.getSelectedItem().intValue());
     }
   }
 
-  public static class Table extends ListenerWrapper<TableListener> implements
-      ClickHandler {
-    @Deprecated
-    public static void add(HasClickHandlers source, TableListener listener) {
-      source.addClickHandler(new Table(listener));
-    }
-
-    public static void remove(Widget eventSource, TableListener listener) {
-      baseRemove(eventSource, listener, ClickEvent.getType());
-    }
-
-    private Table(TableListener listener) {
-      super(listener);
-    }
-
-    public void onClick(ClickEvent event) {
-      HTMLTable table = (HTMLTable) event.getSource();
-      HTMLTable.Cell cell = table.getCellForEvent(event);
-      listener.onCellClicked(table, cell.getRowIndex(), cell.getCellIndex());
-    }
-  }
-
-  public static class Tree extends ListenerWrapper<TreeListener> implements
-      SelectionHandler<TreeItem>, CloseHandler<TreeItem>, OpenHandler<TreeItem> {
+  static class WrappedTreeListener extends ListenerWrapper<TreeListener>
+      implements SelectionHandler<TreeItem>, CloseHandler<TreeItem>,
+      OpenHandler<TreeItem> {
     @Deprecated
     public static void add(com.google.gwt.user.client.ui.Tree tree,
         TreeListener listener) {
-      Tree t = new Tree(listener);
+      WrappedTreeListener t = new WrappedTreeListener(listener);
       tree.addSelectionHandler(t);
       tree.addCloseHandler(t);
       tree.addOpenHandler(t);
@@ -466,106 +766,44 @@ abstract class ListenerWrapper<T> implements EventHandler {
       baseRemove(eventSource, listener, ValueChangeEvent.getType());
     }
 
-    private Tree(TreeListener listener) {
+    private WrappedTreeListener(TreeListener listener) {
       super(listener);
     }
 
     public void onClose(CloseEvent<TreeItem> event) {
-      listener.onTreeItemStateChanged(event.getTarget());
+      getListener().onTreeItemStateChanged(event.getTarget());
     }
 
     public void onOpen(OpenEvent<TreeItem> event) {
-      listener.onTreeItemStateChanged(event.getTarget());
+      getListener().onTreeItemStateChanged(event.getTarget());
     }
 
     public void onSelection(SelectionEvent<TreeItem> event) {
-      listener.onTreeItemSelected(event.getSelectedItem());
-    }
-  }
-
-  static class Keyboard extends ListenerWrapper<KeyboardListener> implements
-      KeyDownHandler, KeyUpHandler, KeyPressHandler {
-
-    public static <EventSourceType extends Widget & HasAllKeyHandlers> void add(
-        EventSourceType source, KeyboardListener listener) {
-      HandlesAllKeyEvents.addHandlers(source, new Keyboard(listener));
-    }
-
-    public static void remove(Widget eventSource, KeyboardListener listener) {
-      ListenerWrapper.baseRemove(eventSource, listener, KeyDownEvent.getType(),
-          KeyUpEvent.getType(), KeyPressEvent.getType());
-    }
-
-    private Keyboard(KeyboardListener listener) {
-      super(listener);
-    }
-
-    public void onKeyDown(KeyDownEvent event) {
-      listener.onKeyDown(
-          source(event),
-          (char) event.getNativeKeyCode(),
-          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
-    }
-
-    public void onKeyPress(KeyPressEvent event) {
-      listener.onKeyPress(
-          source(event),
-          (char) event.getNativeEvent().getKeyCode(),
-          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
-    }
-
-    public void onKeyUp(KeyUpEvent event) {
-      source(event);
-      listener.onKeyUp(
-          source(event),
-          (char) event.getNativeKeyCode(),
-          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
-    }
-  }
-
-  // This is an internal helper method with the current formulation, we have
-  // lost the info needed to make it safe by this point.
-  @SuppressWarnings("unchecked")
-  static <H extends EventHandler> void baseRemove(Widget eventSource,
-      EventListener listener, Type... keys) {
-    HandlerManager manager = eventSource.getHandlers();
-    if (manager != null) {
-      // This is a direct copy of the baseRemove from
-      // com.google.gwt.user.client.ListenerWrapper. Change in parallel.
-      for (Type<H> key : keys) {
-        int handlerCount = manager.getHandlerCount(key);
-        // We are removing things as we traverse, have to go backward
-        for (int i = handlerCount - 1; i >= 0; i--) {
-          H handler = manager.getHandler(key, i);
-          if (handler instanceof ListenerWrapper
-              && ((ListenerWrapper) handler).listener.equals(listener)) {
-            manager.removeHandler(key, handler);
-          }
-        }
-      }
+      getListener().onTreeItemSelected(event.getSelectedItem());
     }
   }
 
   /**
-   * Listener being wrapped.
+   * Convenience method to remove wrapped handlers from a widget.
+   * 
+   * @param <H> event handler type
+   * @param eventSource the event source
+   * @param listener the listener to remove
+   * @param types the event types to remove it from
    */
-  protected final T listener;
-
-  private Widget source;
-
-  protected ListenerWrapper(T listener) {
-    this.listener = listener;
-  }
-
-  public void setSource(Widget source) {
-    this.source = source;
-  }
-
-  Widget source(GwtEvent<?> event) {
-    if (source == null) {
-      return (Widget) event.getSource();
-    } else {
-      return source;
+  // This is an internal helper method with the current formulation, we have
+  // lost the info needed to make it safe by this point.
+  @SuppressWarnings("unchecked")
+  protected static <H extends EventHandler> void baseRemove(Widget eventSource,
+      EventListener listener, Type... types) {
+    HandlerManager manager = eventSource.getHandlerManager();
+    if (manager != null) {
+      baseRemove(manager, listener, types);
     }
   }
+
+  protected ListenerWrapper(T listener) {
+    super(listener);
+  }
+
 }

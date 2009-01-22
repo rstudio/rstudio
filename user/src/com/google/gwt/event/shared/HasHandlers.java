@@ -13,20 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.event.shared;
 
 
 /**
- * An object that implements this interface has a collection of handlers stored
- * in a {@link HandlerManager}.
+ * An object that implements this interface has a collection of event handlers
+ * associated with it.
  */
-
 public interface HasHandlers {
   /**
-   * Gets this object's handlers. May return null if there are no handlers.
+   * Fires the given event to all the appropriate handlers.
    * 
-   * @return the handlers
+   * @param event the event to be fired
    */
-  HandlerManager getHandlers();
+  void fireEvent(GwtEvent<?> event);
 }

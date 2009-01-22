@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -308,9 +307,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   @Deprecated
   public void addChangeListener(final ChangeListener listener) {
-    ListenerWrapper.Change legacy = new ListenerWrapper.Change(listener);
-    legacy.setSource(this);
-    box.addDomHandler(legacy, ChangeEvent.getType());
+    ListenerWrapper.WrappedLogicalChangeListener.add(box, listener).setSource(this);
   }
 
   /**
@@ -322,7 +319,8 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   @Deprecated
   public void addClickListener(final ClickListener listener) {
-    ListenerWrapper.Click legacy = ListenerWrapper.Click.add(box, listener);
+    ListenerWrapper.WrappedClickListener legacy = ListenerWrapper.WrappedClickListener.add(box,
+        listener);
     legacy.setSource(this);
   }
 
@@ -333,7 +331,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   @Deprecated
   public void addEventHandler(final SuggestionHandler handler) {
-    ListenerWrapper.Suggestion.add(this, handler);
+    ListenerWrapper.WrappedOldSuggestionHandler.add(this, handler);
   }
 
   /**
@@ -345,13 +343,14 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    */
   @Deprecated
   public void addFocusListener(final FocusListener listener) {
-    ListenerWrapper.Focus focus = ListenerWrapper.Focus.add(box, listener);
+    ListenerWrapper.WrappedFocusListener focus = ListenerWrapper.WrappedFocusListener.add(box,
+        listener);
     focus.setSource(this);
   }
 
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
-    ListenerWrapper.Keyboard.add(this, listener);
+    ListenerWrapper.WrappedKeyboardListener.add(this, listener);
   }
 
   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
@@ -447,27 +446,27 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
 
   @Deprecated
   public void removeChangeListener(ChangeListener listener) {
-    ListenerWrapper.Change.remove(box, listener);
+    ListenerWrapper.WrappedChangeListener.remove(box, listener);
   }
 
   @Deprecated
   public void removeClickListener(ClickListener listener) {
-    ListenerWrapper.Click.remove(box, listener);
+    ListenerWrapper.WrappedClickListener.remove(box, listener);
   }
 
   @Deprecated
   public void removeEventHandler(SuggestionHandler handler) {
-    ListenerWrapper.Suggestion.remove(this, handler);
+    ListenerWrapper.WrappedOldSuggestionHandler.remove(this, handler);
   }
 
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
-    ListenerWrapper.Focus.remove(this, listener);
+    ListenerWrapper.WrappedFocusListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
-    ListenerWrapper.Keyboard.remove(this, listener);
+    ListenerWrapper.WrappedKeyboardListener.remove(this, listener);
   }
 
   public void setAccessKey(char key) {

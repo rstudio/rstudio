@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 
 /**
  * Represents a value change event.
@@ -40,11 +39,8 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    */
   public static <I> void fire(HasValueChangeHandlers<I> source, I value) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null && handlers.isEventHandled(TYPE)) {
-        ValueChangeEvent<I> event = new ValueChangeEvent<I>(value);
-        handlers.fireEvent(event);
-      }
+      ValueChangeEvent<I> event = new ValueChangeEvent<I>(value);
+      source.fireEvent(event);
     }
   }
 
@@ -62,7 +58,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
       I oldValue, I newValue) {
     if (shouldFire(source, oldValue, newValue)) {
       ValueChangeEvent<I> event = new ValueChangeEvent<I>(newValue);
-      source.getHandlers().fireEvent(event);
+      source.fireEvent(event);
     }
   }
 
@@ -90,7 +86,7 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
    */
   protected static <I> boolean shouldFire(HasValueChangeHandlers<I> source,
       I oldValue, I newValue) {
-    return TYPE != null && source.getHandlers() != null && oldValue != newValue
+    return TYPE != null && oldValue != newValue
         && (oldValue == null || !oldValue.equals(newValue));
   }
 

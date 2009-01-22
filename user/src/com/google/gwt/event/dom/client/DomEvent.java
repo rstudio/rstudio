@@ -17,7 +17,7 @@ package com.google.gwt.event.dom.client;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Event;
 
 /**
@@ -31,6 +31,7 @@ import com.google.gwt.user.client.Event;
  */
 public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
     implements HasNativeEvent {
+
   /**
    * Type class used by dom event subclasses. Type is specialized for dom in
    * order to carry information about the native event.
@@ -53,7 +54,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
 
     /**
      * This constructor allows dom event types to be triggered by the
-     * {@link DomEvent#fireNativeEvent(Event, HandlerManager)} method. It should
+     * {@link DomEvent#fireNativeEvent(Event, HasHandlers)} method. It should
      * only be used by implementors supporting new dom events.
      * <p>
      * Any such dom event type must act as a flyweight around a native event
@@ -109,7 +110,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
    * @param handlers the event manager containing the handlers to fire (may be
    *          null)
    */
-  public static void fireNativeEvent(Event nativeEvent, HandlerManager handlers) {
+  public static void fireNativeEvent(Event nativeEvent, HasHandlers handlers) {
     assert nativeEvent != null : "nativeEvent must not be null";
     if (registered != null && handlers != null) {
       final DomEvent.Type<?> typeKey = registered.unsafeGet(nativeEvent.getType());

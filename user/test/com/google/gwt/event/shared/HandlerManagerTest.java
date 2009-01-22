@@ -32,7 +32,6 @@ public class HandlerManagerTest extends HandlerTestBase {
     addHandlers(manager);
   }
 
-  @SuppressWarnings("deprecation")
   private void addHandlers(HandlerManager manager) {
     manager.addHandler(MouseDownEvent.getType(), mouse1);
     manager.addHandler(MouseDownEvent.getType(), mouse2);
@@ -281,12 +280,9 @@ public class HandlerManagerTest extends HandlerTestBase {
         add(this);
       }
     };
-    HandlerRegistration reg0 = manager.addHandler(MouseDownEvent.getType(),
-        handler0);
-    HandlerRegistration reg1 = manager.addHandler(MouseDownEvent.getType(),
-        handler1);
-    HandlerRegistration reg2 = manager.addHandler(MouseDownEvent.getType(),
-        handler2);
+    manager.addHandler(MouseDownEvent.getType(), handler0);
+    manager.addHandler(MouseDownEvent.getType(), handler1);
+    manager.addHandler(MouseDownEvent.getType(), handler2);
 
     // Fire the event
     reset();

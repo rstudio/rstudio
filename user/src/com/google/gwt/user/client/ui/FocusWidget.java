@@ -93,7 +93,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   @Deprecated
   public void addClickListener(ClickListener listener) {
-    ListenerWrapper.Click.add(this, listener);
+    ListenerWrapper.WrappedClickListener.add(this, listener);
   }
 
   public HandlerRegistration addFocusHandler(FocusHandler handler) {
@@ -102,12 +102,12 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   @Deprecated
   public void addFocusListener(FocusListener listener) {
-    ListenerWrapper.Focus.add(this, listener);
+    ListenerWrapper.WrappedFocusListener.add(this, listener);
   }
 
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
-    ListenerWrapper.Keyboard.add(this, listener);
+    ListenerWrapper.WrappedKeyboardListener.add(this, listener);
   }
 
   public HandlerRegistration addKeyDownHandler(KeyDownHandler handler) {
@@ -128,7 +128,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   @Deprecated
   public void addMouseListener(MouseListener listener) {
-    ListenerWrapper.Mouse.add(this, listener);
+    ListenerWrapper.WrappedMouseListener.add(this, listener);
   }
 
   public HandlerRegistration addMouseMoveHandler(MouseMoveHandler handler) {
@@ -153,7 +153,7 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
-    ListenerWrapper.MouseWheel.add(this, listener);
+    ListenerWrapper.WrappedMouseWheelListener.add(this, listener);
   }
 
   /**
@@ -176,27 +176,27 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
 
   @Deprecated
   public void removeClickListener(ClickListener listener) {
-    ListenerWrapper.Click.remove(this, listener);
+    ListenerWrapper.WrappedClickListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
-    ListenerWrapper.Focus.remove(this, listener);
+    ListenerWrapper.WrappedFocusListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
-    ListenerWrapper.Keyboard.remove(this, listener);
+    ListenerWrapper.WrappedKeyboardListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
-    ListenerWrapper.Mouse.remove(this, listener);
+    ListenerWrapper.WrappedMouseListener.remove(this, listener);
   }
 
   @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
-    ListenerWrapper.MouseWheel.remove(this, listener);
+    ListenerWrapper.WrappedMouseWheelListener.remove(this, listener);
   }
 
   public void setAccessKey(char key) {

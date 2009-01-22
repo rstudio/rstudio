@@ -81,14 +81,14 @@ public class DisclosurePanelTest extends GWTTestCase {
 
   public void testEvents() {
     final DisclosurePanel panel = createTestPanel();
-    assertEquals(1, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+    assertEquals(1, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
     panel.addCloseHandler(new CloseHandler<DisclosurePanel>() {
 
       public void onClose(CloseEvent<DisclosurePanel> event) {
         // for now nothing.
       }
     });
-    assertEquals(2, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+    assertEquals(2, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
   }
 
   /**
@@ -126,8 +126,8 @@ public class DisclosurePanelTest extends GWTTestCase {
     panel.addEventHandler(handleA);
     panel.addEventHandler(handleB);
     // There is one to begin with.
-    assertEquals(3, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
-    assertEquals(3, panel.getHandlers().getHandlerCount(OpenEvent.getType()));
+    assertEquals(3, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
+    assertEquals(3, panel.getHandlerManager().getHandlerCount(OpenEvent.getType()));
 
     panel.setOpen(true);
     // We expect onOpen to fire and onClose to not fire.
@@ -144,8 +144,8 @@ public class DisclosurePanelTest extends GWTTestCase {
     aDidFire[OPEN] = bDidFire[CLOSE] = false;
 
     panel.removeEventHandler(handleB);
-    assertEquals(2, panel.getHandlers().getHandlerCount(OpenEvent.getType()));
-    assertEquals(2, panel.getHandlers().getHandlerCount(CloseEvent.getType()));
+    assertEquals(2, panel.getHandlerManager().getHandlerCount(OpenEvent.getType()));
+    assertEquals(2, panel.getHandlerManager().getHandlerCount(CloseEvent.getType()));
 
     panel.setOpen(true);
     panel.setOpen(false);

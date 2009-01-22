@@ -20,6 +20,7 @@ import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.event.logical.shared.HasValueChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
@@ -52,6 +53,10 @@ public abstract class HistoryImpl implements HasValueChangeHandlers<String>,
   public HandlerRegistration addValueChangeHandler(
       ValueChangeHandler<String> handler) {
     return handlers.addHandler(ValueChangeEvent.getType(), handler);
+  }
+
+  public void fireEvent(GwtEvent<?> event) {
+    handlers.fireEvent(event);
   }
 
   /**

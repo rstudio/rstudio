@@ -90,7 +90,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   @Deprecated
   public void addChangeListener(ChangeListener listener) {
-    addDomHandler(new ListenerWrapper.Change(listener), ChangeEvent.getType());
+    addDomHandler(new ListenerWrapper.WrappedChangeListener(listener), ChangeEvent.getType());
   }
 
   public HandlerRegistration addValueChangeHandler(
@@ -192,7 +192,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
 
   @Deprecated
   public void removeChangeListener(ChangeListener listener) {
-    ListenerWrapper.Change.remove(this, listener);
+    ListenerWrapper.WrappedChangeListener.remove(this, listener);
   }
 
   /**

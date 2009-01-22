@@ -17,7 +17,6 @@ package com.google.gwt.event.shared;
 
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.RootPanel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -139,6 +138,7 @@ public class HandlerManager {
     } else {
       doAdd(type, handler);
     }
+
     return new DefaultHandlerRegistration(this, type, handler);
   }
 
@@ -151,7 +151,6 @@ public class HandlerManager {
    * 
    * @param event the event
    */
-
   public void fireEvent(GwtEvent<?> event) {
     // If it not live we should revive it.
     if (!event.isLive()) {
@@ -205,16 +204,6 @@ public class HandlerManager {
   }
 
   /**
-   * Are there handlers in this manager listening to the given event type?
-   * 
-   * @param type the event type
-   * @return are handlers listening on the given event type
-   */
-  public boolean isEventHandled(Type<?> type) {
-    return getHandlerCount(type) > 0;
-  }
-
-  /**
    * Removes the given handler from the specified event type. Normally,
    * applications should call {@link HandlerRegistration#removeHandler()}
    * instead.
@@ -244,8 +233,7 @@ public class HandlerManager {
    * @return a map of all handlers in this handler manager
    */
   Map<GwtEvent.Type<?>, ArrayList<?>> createHandlerInfo() {
-    HandlerManager manager = RootPanel.get().getHandlers();
-    return manager.registry.map;
+    return registry.map;
   }
 
   private void defer(Command command) {

@@ -136,7 +136,7 @@ public class GWTCompiler {
     ModuleDef[] modules = new ModuleDef[options.getModuleNames().size()];
     int i = 0;
     for (String moduleName : options.getModuleNames()) {
-      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName);
+      modules[i++] = ModuleDefLoader.loadFromClassPath(logger, moduleName, true);
     }
     return run(logger, modules);
   }

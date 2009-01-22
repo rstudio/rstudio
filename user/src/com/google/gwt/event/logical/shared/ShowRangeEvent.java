@@ -16,7 +16,6 @@
 package com.google.gwt.event.logical.shared;
 
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HasHandlers;
 
 /**
@@ -44,11 +43,8 @@ public class ShowRangeEvent<V> extends GwtEvent<ShowRangeHandler<V>> {
   public static <V, S extends HasShowRangeHandlers<V> & HasHandlers> void fire(
       S source, V start, V end) {
     if (TYPE != null) {
-      HandlerManager handlers = source.getHandlers();
-      if (handlers != null) {
-        ShowRangeEvent<V> event = new ShowRangeEvent<V>(start, end);
-        handlers.fireEvent(event);
-      }
+      ShowRangeEvent<V> event = new ShowRangeEvent<V>(start, end);
+      source.fireEvent(event);
     }
   }
 

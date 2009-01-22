@@ -1,6 +1,5 @@
 <module>
-    <!-- This module could be broken down into much finer detail -->
-    <source path="shared"/> 
-    <source path="logical/shared"/>
-    <source path="dom/client"/> 
+	<inherits name="com.google.gwt.event.EventBase" />
+	<inherits name="com.google.gwt.event.dom.DomEvent" />
+	<inherits name="com.google.gwt.event.logical.LogicalEvent" />
 </module>
