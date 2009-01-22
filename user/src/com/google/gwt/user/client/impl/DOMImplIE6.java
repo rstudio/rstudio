@@ -44,30 +44,12 @@ class DOMImplIE6 extends DOMImpl {
     return evt.fromElement;
   }-*/;
 
-  @Override
-  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return Math.round(-evt.wheelDelta / 40) || 0;
-  }-*/;
+  
 
-  @Override
-  public native Element eventGetTarget(Event evt) /*-{
-    return evt.srcElement;
-  }-*/;
-
+  
   @Override
   public native Element eventGetToElement(Event evt) /*-{
     return evt.toElement;
-  }-*/;
-
-  @Override
-  public native void eventPreventDefault(Event evt) /*-{
-    evt.returnValue = false;
-  }-*/;
-
-  @Override
-  public native String eventToString(Event evt) /*-{
-    if (evt.toString) return evt.toString();
-      return "[object Event]";
   }-*/;
 
   @Override

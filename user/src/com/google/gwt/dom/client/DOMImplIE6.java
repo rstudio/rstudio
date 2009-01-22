@@ -37,6 +37,32 @@ class DOMImplIE6 extends DOMImpl {
   public native SelectElement createSelectElement(boolean multiple) /*-{
     var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
     return $doc.createElement(html);
+  }-*/; 
+
+  @Override
+  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
+    return Math.round(-evt.wheelDelta / 40) || 0;
+  }-*/;
+
+  @Override
+  public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
+    return evt.type == "mouseout"? evt.toElement:evt.fromElement;
+  }-*/;
+
+  @Override
+  public native Element eventGetTarget(NativeEvent evt) /*-{
+    return evt.srcElement;
+  }-*/;
+
+  @Override
+  public native void eventPreventDefault(NativeEvent evt) /*-{
+    evt.returnValue = false;
+  }-*/;
+
+  @Override
+  public native String eventToString(NativeEvent evt) /*-{
+    if (evt.toString) return evt.toString();
+      return "[event" + evt.type + "]";
   }-*/;
 
   @Override
@@ -128,8 +154,8 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   /**
-   * Get the zoom multiple based on the current IE zoom level.  A multiple of
-   * 2.0 means that the user has zoomed in to 200%.
+   * Get the zoom multiple based on the current IE zoom level. A multiple of 2.0
+   * means that the user has zoomed in to 200%.
    * 
    * @return the zoom multiple
    */
@@ -137,4 +163,5 @@ class DOMImplIE6 extends DOMImpl {
   private native double getZoomMultiple() /*-{
     return $doc.body.parentElement.offsetWidth / $doc.body.offsetWidth;
   }-*/;
+
 }

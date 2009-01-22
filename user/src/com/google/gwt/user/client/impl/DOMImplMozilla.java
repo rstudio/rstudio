@@ -16,17 +16,11 @@
 package com.google.gwt.user.client.impl;
 
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
 
 /**
  * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
-
-  @Override
-  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail || 0;
-  }-*/;
 
   @Override
   public void sinkEvents(Element elem, int bits) {

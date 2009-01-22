@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native load event.
  */
@@ -26,8 +24,8 @@ public class LoadEvent extends DomEvent<LoadHandler> {
    * Event type for load events. Represents the meta-data associated with this
    * event.
    */
-  private static final Type<LoadHandler> TYPE = new Type<LoadHandler>(
-      Event.ONLOAD, "load", new LoadEvent());
+  private static final Type<LoadHandler> TYPE = new Type<LoadHandler>("load",
+      new LoadEvent());
 
   /**
    * Gets the event type associated with load events.
@@ -40,7 +38,7 @@ public class LoadEvent extends DomEvent<LoadHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire load events.
    */
   protected LoadEvent() {

@@ -20,7 +20,7 @@ package com.google.gwt.user.client.ui;
  * {@link com.google.gwt.user.client.ui.KeyboardListener} interface.
  * 
  * @deprecated use
- *             {@link com.google.gwt.com.google.gwt.event.dom.client.HasAllKeyHandlers}
+ *             {@link com.google.gwt.event.dom.client.HasAllKeyHandlers}
  *             instead
  */
 @Deprecated

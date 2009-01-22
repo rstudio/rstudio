@@ -39,19 +39,6 @@ abstract class DOMImplStandard extends DOMImpl {
   private static JavaScriptObject dispatchEvent;
 
   @Override
-  public native int eventGetButton(Event evt) /*-{
-    // Standard browsers and IE disagree on what the button codes for buttons
-    // should be.  Translating to match IE standard.
-    var button = evt.which;
-    if(button == 2) {
-      return 4;
-    } else if (button == 3) {
-      return 2;
-    }
-    return button || 0;
-  }-*/;
-
-  @Override
   public native Element eventGetFromElement(Event evt) /*-{
     if (evt.type == "mouseover")
       return evt.relatedTarget;
@@ -59,12 +46,7 @@ abstract class DOMImplStandard extends DOMImpl {
       return evt.target;
     return null;  
   }-*/;
-
-  @Override
-  public native Element eventGetTarget(Event evt) /*-{
-    return evt.target;
-  }-*/;
-
+ 
   @Override
   public native Element eventGetToElement(Event evt) /*-{
     if (evt.type == "mouseover")
@@ -73,17 +55,7 @@ abstract class DOMImplStandard extends DOMImpl {
       return evt.relatedTarget;
     return null;
   }-*/;
-
-  @Override
-  public native void eventPreventDefault(Event evt) /*-{
-    evt.preventDefault();
-  }-*/;
-
-  @Override
-  public native String eventToString(Event evt) /*-{
-    return evt.toString();
-  }-*/;
-
+  
   @Override
   public native Element getChild(Element elem, int index) /*-{
     var count = 0, child = elem.firstChild;

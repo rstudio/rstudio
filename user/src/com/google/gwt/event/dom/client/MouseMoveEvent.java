@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native mouse move event.
  */
@@ -27,7 +25,7 @@ public class MouseMoveEvent extends MouseEvent<MouseMoveHandler> {
    * this event.
    */
   private static final Type<MouseMoveHandler> TYPE = new Type<MouseMoveHandler>(
-      Event.ONMOUSEMOVE, "mousemove", new MouseMoveEvent());
+      "mousemove", new MouseMoveEvent());
 
   /**
    * Gets the event type associated with mouse move events.
@@ -40,7 +38,7 @@ public class MouseMoveEvent extends MouseEvent<MouseMoveHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire mouse move events.
    */
   protected MouseMoveEvent() {

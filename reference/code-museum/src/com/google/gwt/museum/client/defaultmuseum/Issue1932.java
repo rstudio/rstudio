@@ -16,6 +16,7 @@
 package com.google.gwt.museum.client.defaultmuseum;
 
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.museum.client.common.AbstractIssue;
@@ -120,15 +121,15 @@ public class Issue1932 extends AbstractIssue {
     Event.addNativePreviewHandler(new NativePreviewHandler() {
       public void onPreviewNativeEvent(NativePreviewEvent event) {
         // Ignore events outside of the sandbox
-        Event nativeEvent = event.getNativeEvent();
+        NativeEvent nativeEvent = event.getNativeEvent();
         Element target = nativeEvent.getTarget();
         if (!sandbox.getElement().isOrHasChild(target)
             && !positioner.getElement().isOrHasChild(target)) {
           positioner.removeFromParent();
           return;
         }
-
-        switch (nativeEvent.getTypeInt()) {
+                
+        switch (Event.as(nativeEvent).getTypeInt()) {
           case Event.ONMOUSEMOVE:
             int absX = nativeEvent.getClientX() + Window.getScrollLeft();
             int absY = nativeEvent.getClientY() + Window.getScrollTop();

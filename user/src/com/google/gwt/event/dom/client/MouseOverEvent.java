@@ -16,7 +16,6 @@
 package com.google.gwt.event.dom.client;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Event;
 
 /**
  * Represents a native mouse over event.
@@ -28,7 +27,7 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
    * this event.
    */
   private static final Type<MouseOverHandler> TYPE = new Type<MouseOverHandler>(
-      Event.ONMOUSEOVER, "mouseover", new MouseOverEvent());
+      "mouseover", new MouseOverEvent());
 
   /**
    * Gets the event type associated with mouse over events.
@@ -41,7 +40,7 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire mouse over events.
    */
   protected MouseOverEvent() {
@@ -58,8 +57,7 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
    * @return the element from which the mouse pointer was moved
    */
   public Element getFromElement() {
-    // Use a deferred binding instead of DOMImpl's inefficient switch statement
-    return getNativeEvent().getFromElement();
+    return getNativeEvent().getRelatedTarget();
   }
 
   /**
@@ -68,8 +66,7 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
    * @return the element to which the mouse pointer was moved
    */
   public Element getToElement() {
-    // Use a deferred binding instead of DOMImpl's inefficient switch statement
-    return getNativeEvent().getToElement();
+    return getNativeEvent().getTarget();
   }
 
   @Override

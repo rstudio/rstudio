@@ -15,7 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
+import com.google.gwt.dom.client.NativeEvent; 
 
 /**
  * Represents a native key press event.
@@ -27,7 +27,7 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
    * this event.
    */
   private static final Type<KeyPressHandler> TYPE = new Type<KeyPressHandler>(
-      Event.ONKEYPRESS, "keypress", new KeyPressEvent());
+      "keypress", new KeyPressEvent());
 
   /**
    * Gets the event type associated with key press events.
@@ -40,7 +40,7 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire key press events.
    */
   protected KeyPressEvent() {
@@ -70,8 +70,8 @@ public class KeyPressEvent extends KeyEvent<KeyPressHandler> {
     handler.onKeyPress(this);
   }
 
-  private native char getCharCode(Event e)/*-{
-        return e.charCode || e.keyCode;
-      }-*/;
+  private native char getCharCode(NativeEvent e)/*-{
+    return e.charCode || e.keyCode;
+  }-*/;
 
 }

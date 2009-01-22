@@ -32,7 +32,7 @@ import com.google.gwt.user.client.impl.DOMImpl;
 public class DOM {
   // The current event being fired
   private static Event currentEvent = null;
-  private static final DOMImpl impl = GWT.create(DOMImpl.class);
+  static final DOMImpl impl = GWT.create(DOMImpl.class);
   private static Element sCaptureElem;
 
   /**
@@ -393,7 +393,7 @@ public class DOM {
    * @return <code>true</code> if ALT was depressed when the event occurred
    */
   public static boolean eventGetAltKey(Event evt) {
-    return impl.eventGetAltKey(evt);
+    return evt.getAltKey();
   }
 
   /**
@@ -404,7 +404,7 @@ public class DOM {
    *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
    */
   public static int eventGetButton(Event evt) {
-    return impl.eventGetButton(evt);
+    return evt.getButton();
   }
 
   /**
@@ -414,7 +414,7 @@ public class DOM {
    * @return the mouse x-position
    */
   public static int eventGetClientX(Event evt) {
-    return impl.eventGetClientX(evt);
+    return evt.getClientX();
   }
 
   /**
@@ -424,7 +424,7 @@ public class DOM {
    * @return the mouse y-position
    */
   public static int eventGetClientY(Event evt) {
-    return impl.eventGetClientY(evt);
+    return evt.getClientY();
   }
 
   /**
@@ -434,7 +434,7 @@ public class DOM {
    * @return <code>true</code> if CTRL was depressed when the event occurred
    */
   public static boolean eventGetCtrlKey(Event evt) {
-    return impl.eventGetCtrlKey(evt);
+    return evt.getCtrlKey();
   }
 
   /**
@@ -467,6 +467,7 @@ public class DOM {
    * @param evt the event to be tested
    * @return the element from which the mouse pointer was moved
    */
+
   public static Element eventGetFromElement(Event evt) {
     return impl.eventGetFromElement(evt);
   }
@@ -485,7 +486,7 @@ public class DOM {
    * @see com.google.gwt.user.client.ui.KeyboardListener
    */
   public static int eventGetKeyCode(Event evt) {
-    return impl.eventGetKeyCode(evt);
+    return evt.getKeyCode();
   }
 
   /**
@@ -495,7 +496,7 @@ public class DOM {
    * @return <code>true</code> if META was depressed when the event occurred
    */
   public static boolean eventGetMetaKey(Event evt) {
-    return impl.eventGetMetaKey(evt);
+    return evt.getMetaKey();
   }
 
   /**
@@ -514,7 +515,7 @@ public class DOM {
    * @return The velocity of the mouse wheel.
    */
   public static int eventGetMouseWheelVelocityY(Event evt) {
-    return impl.eventGetMouseWheelVelocityY(evt);
+    return evt.getMouseWheelVelocityY();
   }
 
   /**
@@ -522,7 +523,9 @@ public class DOM {
    * 
    * @param evt the event to be tested
    * @return <code>true</code> if this key event was an auto-repeat
+   * @deprecated not supported in any browser but IE
    */
+  @Deprecated
   public static boolean eventGetRepeat(Event evt) {
     return impl.eventGetRepeat(evt);
   }
@@ -534,7 +537,7 @@ public class DOM {
    * @return the mouse x-position
    */
   public static int eventGetScreenX(Event evt) {
-    return impl.eventGetScreenX(evt);
+    return evt.getScreenX();
   }
 
   /**
@@ -544,7 +547,7 @@ public class DOM {
    * @return the mouse y-position
    */
   public static int eventGetScreenY(Event evt) {
-    return impl.eventGetScreenY(evt);
+    return evt.getScreenY();
   }
 
   /**
@@ -554,7 +557,7 @@ public class DOM {
    * @return <code>true</code> if shift was depressed when the event occurred
    */
   public static boolean eventGetShiftKey(Event evt) {
-    return impl.eventGetShiftKey(evt);
+    return evt.getShiftKey();
   }
 
   /**
@@ -564,7 +567,7 @@ public class DOM {
    * @return the target element
    */
   public static Element eventGetTarget(Event evt) {
-    return impl.eventGetTarget(evt);
+    return (Element) evt.getTarget();
   }
 
   /**
@@ -574,6 +577,7 @@ public class DOM {
    * @param evt the event to be tested
    * @return the element to which the mouse pointer was moved
    */
+
   public static Element eventGetToElement(Event evt) {
     return impl.eventGetToElement(evt);
   }
@@ -595,7 +599,7 @@ public class DOM {
    * @return the event's type name
    */
   public static String eventGetTypeString(Event evt) {
-    return impl.eventGetType(evt);
+    return evt.getType();
   }
 
   /**
@@ -604,7 +608,7 @@ public class DOM {
    * @param evt the event whose default action is to be prevented
    */
   public static void eventPreventDefault(Event evt) {
-    impl.eventPreventDefault(evt);
+    evt.preventDefault();
   }
 
   /**
@@ -628,7 +632,7 @@ public class DOM {
    * @return a string form of the event
    */
   public static String eventToString(Event evt) {
-    return impl.eventToString(evt);
+    return evt.getString();
   }
 
   /**
@@ -1264,7 +1268,6 @@ public class DOM {
    * @param evt a handle to the event being previewed
    * @return <code>false</code> to cancel the event
    */
-  @SuppressWarnings("deprecation")
   static boolean previewEvent(Event evt) {
     // Fire a NativePreviewEvent to NativePreviewHandlers
     boolean ret = Event.fireNativePreviewEvent(evt);

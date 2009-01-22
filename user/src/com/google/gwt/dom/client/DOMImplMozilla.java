@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- *
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -19,6 +19,11 @@ package com.google.gwt.dom.client;
  * Mozilla implementation of StandardBrowser.
  */
 class DOMImplMozilla extends DOMImplStandard {
+
+  @Override
+  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
+    return evt.detail || 0;
+  }-*/;
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
@@ -67,13 +72,13 @@ class DOMImplMozilla extends DOMImplStandard {
     var style = $wnd.getComputedStyle($doc.documentElement, '');
     return parseInt(style.marginLeft) + parseInt(style.borderLeftWidth);
   }-*/;
-  
+
   @Override
   public native int getBodyOffsetTop() /*-{
     var style = $wnd.getComputedStyle($doc.documentElement, '');
     return parseInt(style.marginTop) + parseInt(style.borderTopWidth);
   }-*/;
-  
+
   @Override
   public native String getInnerText(Element elem) /*-{
     return elem.textContent;
@@ -83,9 +88,9 @@ class DOMImplMozilla extends DOMImplStandard {
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     // For more information about compareDocumentPosition, see:
     // http://www.quirksmode.org/blog/archives/2006/01/contains_for_mo.html
-    return (parent === child) || !!(parent.compareDocumentPosition(child) & 16);  
+    return (parent === child) || !!(parent.compareDocumentPosition(child) & 16);
   }-*/;
-  
+
   @Override
   public native void setInnerText(Element elem, String text) /*-{
     elem.textContent = text || '';

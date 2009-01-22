@@ -77,22 +77,18 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
       case Event.ONMOUSEOVER:
         // Only fire the mouse over event if it's coming from outside this
         // widget.
-        Element from = event.getFromElement();
-        if (from != null && getElement().isOrHasChild(from)) {
+      case Event.ONMOUSEOUT:
+        // Only fire the mouse out event if it's leaving this
+        // widget.
+        Element related = event.getRelatedTarget();
+        if (related != null && getElement().isOrHasChild(related)) {
           return;
         }
         break;
-      case Event.ONMOUSEOUT:
-        // Only fire the mouse out event if it's actually leaving this
-        // widget.
-        Element to = event.getToElement();
-        if (to != null && getElement().isOrHasChild(to)) {
-          return;
-        }
     }
     DomEvent.fireNativeEvent(event, this);
   }
-
+ 
   /**
    * Removes this widget from its parent widget. If it has no parent, this
    * method does nothing.
@@ -113,7 +109,8 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * Overridden to defer the call to super.sinkEvents until the first time this
    * widget is attached to the dom, as a performance enhancement. Subclasses
    * wishing to customize sinkEvents can preserve this deferred sink behavior by
-   * putting their implementation behind a check of <code>isOrWasAttached()</code>:
+   * putting their implementation behind a check of
+   * <code>isOrWasAttached()</code>:
    * 
    * <pre>
    * {@literal @}Override
@@ -148,7 +145,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
       final H handler, DomEvent.Type<H> type) {
     assert handler != null : "handler must not be null";
     assert type != null : "type must not be null";
-    sinkEvents(type.getEventToSink());
+    sinkEvents(Event.getTypeInt(type.getName()));
     return ensureHandlers().addHandler(type, handler);
   }
 

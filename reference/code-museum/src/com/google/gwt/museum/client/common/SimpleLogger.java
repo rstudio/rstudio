@@ -25,13 +25,10 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
- * Helper class to create visual tests.
- * 
- * @param <V> value type
- * @param <T> target type
+ * Simple logging class.
  */
 @SuppressWarnings("deprecation")
-public class SimpleLogger<V, T> extends Composite {
+public class SimpleLogger extends Composite {
 
   private VerticalPanel panel = new VerticalPanel();
 

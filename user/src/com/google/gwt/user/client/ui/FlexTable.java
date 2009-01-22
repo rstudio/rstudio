@@ -98,7 +98,7 @@ public class FlexTable extends HTMLTable {
       var cell = $doc.createElement("td");
       rowElem.appendChild(cell);  
     }
- }-*/;
+  }-*/;
 
   public FlexTable() {
     super();
@@ -172,9 +172,6 @@ public class FlexTable extends HTMLTable {
     return super.insertRow(beforeRow);
   }
 
-  /**
-   * @see com.google.gwt.user.client.ui.HTMLTable#removeCell(int, int)
-   */
   @Override
   public void removeCell(int row, int col) {
     super.removeCell(row, col);

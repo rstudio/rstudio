@@ -34,7 +34,6 @@ public class SelectionEvent<I> extends GwtEvent<SelectionHandler<I>> {
    * manager.If no such handlers exist, this method will do nothing.
    * 
    * @param <I> the selected item type
-   * @param <S> The event source
    * @param source the source of the handlers
    * @param selectedItem the selected item
    */

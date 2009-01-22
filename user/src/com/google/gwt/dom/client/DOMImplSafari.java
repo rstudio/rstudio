@@ -14,6 +14,7 @@
  * the License.
  */
 package com.google.gwt.dom.client;
+ 
 
 /**
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
@@ -28,6 +29,43 @@ class DOMImplSafari extends DOMImplStandard {
     elem.setInnerText(source);
     return elem;
   }
+
+  @Override
+  public native int eventGetClientX(NativeEvent evt) /*-{
+    // In Safari2: clientX is wrong and pageX is returned instead.
+    // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
+    if ($wnd.devicePixelRatio) {
+      return evt.clientX || 0;
+    } else {
+      // Subtract the margin and border of the HTML element in Safari 2 
+      // TODO: Remove this code when we drop Safari 2 support
+      var style = document.defaultView.getComputedStyle($doc.getElementsByTagName('html')[0], '');
+      return evt.pageX - $doc.body.scrollLeft
+          - parseInt(style.getPropertyValue('margin-left'))
+          - parseInt(style.getPropertyValue('border-left-width')) || 0;
+    }
+  }-*/;
+
+  @Override
+  public native int eventGetClientY(NativeEvent evt) /*-{
+    // In Safari2: clientY is wrong and pageY is returned instead.
+    // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
+    if ($wnd.devicePixelRatio) {
+      return evt.clientY || 0;
+    } else {
+      // Subtract the margin and border of the HTML element in Safari 2 
+      // TODO: Remove this code when we drop Safari 2 support
+      var style = document.defaultView.getComputedStyle($doc.getElementsByTagName('html')[0], '');
+      return evt.pageY - $doc.body.scrollTop
+          - parseInt(style.getPropertyValue('margin-top'))
+          - parseInt(style.getPropertyValue('border-top-width')) || 0;
+    }
+  }-*/;
+
+  @Override
+  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
+    return Math.round(-evt.wheelDelta / 40) || 0;
+  }-*/;
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
@@ -68,7 +106,7 @@ class DOMImplSafari extends DOMImplStandard {
     }
     return left;
   }-*/;
-
+  
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
     // Unattached elements and elements (or their ancestors) with style

@@ -754,7 +754,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @return The appropriate cell, or null
    */
   public Cell getCellForEvent(ClickEvent event) {
-    Element td = getEventTargetCell(event.getNativeEvent());
+    Element td = getEventTargetCell(Event.as(event.getNativeEvent()));
     if (td == null) {
       return null;
     }
