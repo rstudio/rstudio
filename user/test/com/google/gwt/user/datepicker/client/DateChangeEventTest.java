@@ -21,7 +21,6 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.ui.DateValueChangeTester;
 import com.google.gwt.user.client.ui.HasValue;
 
@@ -53,10 +52,6 @@ public class DateChangeEventTest extends TestCase {
 
     public Date getValue() {
       return value;
-    }
-
-    public boolean isEventHandled(Type<?> type) {
-      return handlers.isEventHandled(type);
     }
 
     public void setValue(Date value) {

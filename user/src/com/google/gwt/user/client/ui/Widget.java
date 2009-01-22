@@ -72,10 +72,6 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     return attached;
   }
 
-  public boolean isEventHandled(GwtEvent.Type<?> type) {
-    return handlerManager != null && handlerManager.isEventHandled(type);
-  }
-
   public void onBrowserEvent(Event event) {
     switch (DOM.eventGetType(event)) {
       case Event.ONMOUSEOVER:

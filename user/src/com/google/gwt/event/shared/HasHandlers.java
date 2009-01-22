@@ -15,23 +15,12 @@
  */
 package com.google.gwt.event.shared;
 
-import com.google.gwt.event.shared.GwtEvent.Type;
 
 /**
  * An object that implements this interface has a collection of event handlers
  * associated with it.
  */
 public interface HasHandlers {
-
-  /**
-   * Determines whether the there are any handlers of the given type. This may
-   * be used to avoid creating events for which there are no handlers.
-   * 
-   * @param type the type of event to be queried
-   * @return <code>true</code> if there are any handlers for this event type
-   */
-  boolean isEventHandled(Type<?> type);
-
   /**
    * Fires the given event to all the appropriate handlers.
    * 

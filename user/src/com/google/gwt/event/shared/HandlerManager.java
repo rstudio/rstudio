@@ -204,16 +204,6 @@ public class HandlerManager {
   }
 
   /**
-   * Are there handlers in this manager listening to the given event type?
-   * 
-   * @param type the event type
-   * @return are handlers listening on the given event type
-   */
-  public boolean isEventHandled(Type<?> type) {
-    return getHandlerCount(type) > 0;
-  }
-
-  /**
    * Removes the given handler from the specified event type. Normally,
    * applications should call {@link HandlerRegistration#removeHandler()}
    * instead.

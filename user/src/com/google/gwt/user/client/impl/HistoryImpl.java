@@ -24,7 +24,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.event.shared.GwtEvent.Type;
 
 /**
  * Native implementation associated with
@@ -72,10 +71,6 @@ public abstract class HistoryImpl implements HasValueChangeHandlers<String>,
   }
 
   public abstract boolean init();
-
-  public boolean isEventHandled(Type<?> type) {
-    return handlers.isEventHandled(type);
-  }
 
   public final void newItem(String historyToken, boolean issueEvent) {
     historyToken = (historyToken == null) ? "" : historyToken;
