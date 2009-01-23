@@ -264,10 +264,14 @@ public class PathPrefixSet {
 
   /**
    * Returns true if the first pathPrefix is inserted into the PathPrefixSet
-   * after the second pathPrefix.
+   * after the second pathPrefix.  Also, rereooting PathPrefixes take priority
+   * over non-rerooting ones (ie, super-source).
    */
   public boolean secondPrefixOverridesFirst(PathPrefix prefix1,
       PathPrefix prefix2) {
+    if (prefix1.shouldReroot() != prefix2.shouldReroot()) {
+      return prefix2.shouldReroot();
+    }
     int rank1 = prefixes.get(prefix1);
     assert rank1 > 0;
     int rank2 = prefixes.get(prefix2);

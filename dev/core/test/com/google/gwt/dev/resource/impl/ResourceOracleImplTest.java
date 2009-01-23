@@ -303,6 +303,35 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
         new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
   }
 
+  /*
+   * Ensure refresh is stable when multiple classpaths + multiple path prefixes
+   * all include the same resource.
+   */
+  public void testSuperSourceSupercedesSource() {
+    TreeLogger logger = createTestTreeLogger();
+
+    MockClassPathEntry cpe1 = new MockClassPathEntry("/cpe1/");
+    cpe1.addResource("java/lang/Object.java");
+
+    MockClassPathEntry cpe2 = new MockClassPathEntry("/cpe2/");
+    cpe2.addResource("translatable/java/lang/Object.java");
+
+    PathPrefix pp1 = new PathPrefix("java/lang/", null, false);
+    PathPrefix pp2 = new PathPrefix("translatable/", null, true);
+
+    // Ensure the translatable overrides the basic despite swapping CPE order.
+    testResourceInCPE(logger, "java/lang/Object.java", cpe2,
+        new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
+    testResourceInCPE(logger, "java/lang/Object.java", cpe2,
+        new ClassPathEntry[] {cpe2, cpe1}, pp1, pp2);
+
+    // Ensure the translatable overrides the basic despite swapping PPS order.
+    testResourceInCPE(logger, "java/lang/Object.java", cpe2,
+        new ClassPathEntry[] {cpe1, cpe2}, pp2, pp1);
+    testResourceInCPE(logger, "java/lang/Object.java", cpe2,
+        new ClassPathEntry[] {cpe2, cpe1}, pp2, pp1);
+  }
+
   /**
    * Creates an array of class path entries, setting up each one with a
    * well-known set of client prefixes.
