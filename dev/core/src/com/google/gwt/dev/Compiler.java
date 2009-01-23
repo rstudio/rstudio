@@ -86,6 +86,11 @@ public class Compiler {
       return localWorkers;
     }
 
+    @Deprecated
+    public File getOutDir() {
+      return linkOptions.getOutDir();
+    }
+
     public File getWarDir() {
       return linkOptions.getWarDir();
     }
@@ -98,6 +103,11 @@ public class Compiler {
       this.localWorkers = localWorkers;
     }
 
+    @Deprecated
+    public void setOutDir(File outDir) {
+      linkOptions.setOutDir(outDir);
+    }
+    
     public void setWarDir(File outDir) {
       linkOptions.setWarDir(outDir);
     }

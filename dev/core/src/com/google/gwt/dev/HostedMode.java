@@ -175,6 +175,7 @@ public class HostedMode extends SwtHostedModeBase {
       implements HostedModeOptions {
     private File extraDir;
     private int localWorkers;
+    private File outDir;
     private ServletContainerLauncher scl;
     private File warDir;
 
@@ -184,6 +185,11 @@ public class HostedMode extends SwtHostedModeBase {
 
     public int getLocalWorkers() {
       return localWorkers;
+    }
+
+    @Deprecated
+    public File getOutDir() {
+      return outDir;
     }
 
     public ServletContainerLauncher getServletContainerLauncher() {
@@ -208,6 +214,11 @@ public class HostedMode extends SwtHostedModeBase {
 
     public void setLocalWorkers(int localWorkers) {
       this.localWorkers = localWorkers;
+    }
+
+    @Deprecated
+    public void setOutDir(File outDir) {
+      this.outDir = outDir;     
     }
 
     public void setServletContainerLauncher(ServletContainerLauncher scl) {

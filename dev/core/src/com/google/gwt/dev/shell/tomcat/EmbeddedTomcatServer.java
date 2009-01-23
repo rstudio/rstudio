@@ -175,7 +175,15 @@ public class EmbeddedTomcatServer {
     //
     String catBase = System.getProperty("catalina.base");
     if (catBase == null) {
-      catBase = generateDefaultCatalinaBase(logger, topWorkDir);
+      // we (briefly) supported catalina.base.create, so let's not cut support
+      // until the deprecated sunset
+      catBase = System.getProperty("catalina.base.create");
+      if (catBase != null) {
+        logger.log(TreeLogger.WARN, "catalina.base.create is deprecated.  " +
+            "Use catalina.base, and it will be created if necessary.");
+      } else {
+        catBase = generateDefaultCatalinaBase(logger, topWorkDir);
+      }
       System.setProperty("catalina.base", catBase);
     }
 

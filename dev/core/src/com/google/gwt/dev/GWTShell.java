@@ -136,6 +136,13 @@ public class GWTShell extends SwtHostedModeBase {
      */
     GWTShell gwtShell = new GWTShell();
     ArgProcessor argProcessor = new ArgProcessor(gwtShell.options, false, false);
+
+    // deprecated old property way to set outputs
+    if (System.getProperty("com.google.gwt.shell.outdir") != null) {
+      gwtShell.options.setOutDir(new File(System.getProperty("com.google.gwt.shell.outdir")));
+      gwtShell.options.setWorkDir(new File(System.getProperty("com.google.gwt.shell.outdir")));
+    }
+
     if (argProcessor.processArgs(args)) {
       gwtShell.run();
       // Exit w/ success code.

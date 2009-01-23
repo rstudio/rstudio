@@ -54,7 +54,7 @@ public class Link {
    * Options for Link.
    */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
-      OptionWarDir {
+      OptionWarDir, OptionOutDir /*deprecated*/ {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -62,6 +62,7 @@ public class Link {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));
       registerHandler(new ArgHandlerWarDir(options));
+      registerHandler(new ArgHandlerOutDirDeprecated(options));
     }
 
     @Override
@@ -78,6 +79,7 @@ public class Link {
 
     private File extraDir;
     private File warDir;
+    private File outDir;
 
     public LinkOptionsImpl() {
     }
@@ -90,6 +92,7 @@ public class Link {
       super.copyFrom(other);
       setExtraDir(other.getExtraDir());
       setWarDir(other.getWarDir());
+      setOutDir(other.getOutDir());
     }
 
     public File getExtraDir() {
@@ -106,6 +109,16 @@ public class Link {
 
     public void setWarDir(File warDir) {
       this.warDir = warDir;
+    }
+
+    @Deprecated
+    public File getOutDir() {
+      return outDir;
+    }
+
+    @Deprecated
+    public void setOutDir(File outDir) {
+      this.outDir = outDir;
     }
   }
 
@@ -148,6 +161,7 @@ public class Link {
      * still implementation-dependent.
      */
     final LinkOptions options = new LinkOptionsImpl();
+    
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -286,8 +300,13 @@ public class Link {
       ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
           resultFiles);
 
-      doProduceOutput(branch, artifacts, linkerContext, module,
-          options.getWarDir(), options.getExtraDir());
+      if (options.getOutDir() == null) {
+        doProduceOutput(branch, artifacts, linkerContext, module,
+            options.getWarDir(), options.getExtraDir());
+      } else {
+        doProduceLegacyOutput(branch, artifacts, linkerContext, module,
+            options.getOutDir());
+      }
     }
     return true;
   }
