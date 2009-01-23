@@ -929,7 +929,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     DOM.setIntStyleAttribute(focusable, "zIndex", -1);
     DOM.appendChild(getElement(), focusable);
 
-    sinkEvents(Event.MOUSEEVENTS | Event.ONCLICK | Event.KEYEVENTS);
+    sinkEvents(Event.ONMOUSEDOWN | Event.ONCLICK | Event.KEYEVENTS);
     DOM.sinkEvents(focusable, Event.FOCUSEVENTS);
 
     // The 'root' item is invisible and serves only as a container
@@ -1154,9 +1154,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     }
     curSelection = item;
 
-    if (moveFocus && curSelection != null) {
-      moveFocus();
-
+    if (curSelection != null) {
+      if (moveFocus) {
+        moveFocus();
+      }
       // Select the item and fire the selection event.
       curSelection.setSelected(true);
       if (fireEvents) {
