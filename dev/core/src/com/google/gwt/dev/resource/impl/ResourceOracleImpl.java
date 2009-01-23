@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -267,19 +268,34 @@ public class ResourceOracleImpl implements ResourceOracle {
      * precedence.
      */
     int changeCount = 0;
+    /**
+     * A map from AbstractResources (across all the ClassPathEntry) to their
+     * corresponding PathPrefixes. When old resources are used, an entry is
+     * added to this map from the old resource to the PathPrefix that matches
+     * the resource that the old resource supersedes.
+     */
+    Map<AbstractResource, PathPrefix> globalResourceToPrefixMap = new IdentityHashMap<AbstractResource, PathPrefix>();
     for (ClassPathEntry pathRoot : classPath) {
       TreeLogger branchForClassPathEntry = Messages.EXAMINING_PATH_ROOT.branch(
           refreshBranch, pathRoot.getLocation(), null);
 
       int prevChangeCount = changeCount;
-
-      Set<AbstractResource> newResources = pathRoot.findApplicableResources(
+      Map<AbstractResource, PathPrefix> resourceToPrefixMap = pathRoot.findApplicableResources(
           branchForClassPathEntry, pathPrefixSet);
-      for (AbstractResource newResource : newResources) {
+      globalResourceToPrefixMap.putAll(resourceToPrefixMap);
+      for (AbstractResource newResource : resourceToPrefixMap.keySet()) {
         String resourcePath = newResource.getPath();
 
-        // Make sure we don't already have a resource by this name.
-        if (newInternalMap.containsKey(resourcePath)) {
+        /*
+         * Check if we have a resource by this name in the newInternalMap and if
+         * the matching pathPrefix overrides the pathPrefix for the previous
+         * resource
+         */
+        AbstractResource existingNewResource = newInternalMap.get(resourcePath);
+        if (existingNewResource != null
+            && !pathPrefixSet.secondPrefixOverridesFirst(
+                globalResourceToPrefixMap.get(existingNewResource),
+                resourceToPrefixMap.get(newResource))) {
           Messages.IGNORING_SHADOWED_RESOURCE.log(branchForClassPathEntry,
               resourcePath, null);
           continue;
@@ -290,12 +306,18 @@ public class ResourceOracleImpl implements ResourceOracle {
             newResource)) {
           newInternalMap.put(resourcePath, newResource);
           ++changeCount;
-        } else if (oldResource != null) {
-          // Nothing changed, so carry the identity of the old one forward.
+        } else {
+          assert oldResource != null;
+          /*
+           * Nothing changed, so carry the identity of the old one forward. Add
+           * the path-prefix to the global prefix map so that future resources
+           * can be compared.
+           */
           newInternalMap.put(resourcePath, oldResource);
+          globalResourceToPrefixMap.put(oldResource,
+              resourceToPrefixMap.get(newResource));
         }
       }
-
       if (changeCount == prevChangeCount) {
         Messages.NO_RESOURCES_CHANGED.log(branchForClassPathEntry, null);
       }
@@ -316,7 +338,8 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
 
     internalMap = newInternalMap;
-    Map<String, Resource> externalMap = rerootResourcePaths(newInternalMap);
+    Map<String, Resource> externalMap = rerootResourcePaths(newInternalMap,
+        globalResourceToPrefixMap);
 
     // Create a constant-time set for resources.
     Set<Resource> newResources = new HashSet<Resource>(externalMap.values());
@@ -333,50 +356,53 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   private Map<String, Resource> rerootResourcePaths(
-      Map<String, AbstractResource> newInternalMap) {
-    Map<String, Resource> externalMap;
+      Map<String, AbstractResource> newInternalMap,
+      Map<AbstractResource, PathPrefix> resourceToPrefixMap) {
+
     // Create an external map with rebased path names.
-    externalMap = new HashMap<String, Resource>();
+    Map<String, Resource> externalMap = new HashMap<String, Resource>();
     for (AbstractResource resource : newInternalMap.values()) {
       String path = resource.getPath();
+      assert resourceToPrefixMap.get(resource) != null;
       if (externalMap.get(path) instanceof ResourceWrapper) {
-        // A rerooted resource blocks any other resource at this path.
-        continue;
-      }
-      int hitCount = 0;
-      for (PathPrefix pathPrefix : pathPrefixSet.values()) {
-        if (pathPrefix.allows(path)) {
-          assert (path.startsWith(pathPrefix.getPrefix()));
-          if (pathPrefix.shouldReroot()) {
-            String rerootedPath = pathPrefix.getRerootedPath(path);
-            if (externalMap.get(rerootedPath) instanceof ResourceWrapper) {
-              // A rerooted resource blocks any other resource at this path.
-              ++hitCount;
-              break;
-            }
-
-            // Try to reuse the same wrapper.
-            Resource exposed = exposedResourceMap.get(rerootedPath);
-            if (exposed instanceof ResourceWrapper) {
-              ResourceWrapper exposedWrapper = (ResourceWrapper) exposed;
-              if (exposedWrapper.resource == resource) {
-                externalMap.put(rerootedPath, exposedWrapper);
-                ++hitCount;
-                break;
-              }
-            }
-            // Just create a new wrapper.
-            AbstractResource wrapper = new ResourceWrapper(rerootedPath,
-                resource);
-            externalMap.put(rerootedPath, wrapper);
-            ++hitCount;
-          } else {
-            externalMap.put(path, resource);
-            ++hitCount;
-          }
+        // A rerooted resource can block any other resource at this path.
+        ResourceWrapper existingWrapper = (ResourceWrapper) externalMap.get(path);
+        if (!pathPrefixSet.secondPrefixOverridesFirst(
+            resourceToPrefixMap.get(existingWrapper.resource),
+            resourceToPrefixMap.get(resource))) {
+          continue;
         }
       }
-      assert (hitCount > 0);
+
+      PathPrefix pathPrefix = resourceToPrefixMap.get(resource);
+      assert pathPrefix != null;
+      if (pathPrefix.shouldReroot()) {
+        String rerootedPath = pathPrefix.getRerootedPath(path);
+        if (externalMap.get(rerootedPath) instanceof ResourceWrapper) {
+          ResourceWrapper existingWrapper = (ResourceWrapper) externalMap.get(rerootedPath);
+          if (!pathPrefixSet.secondPrefixOverridesFirst(
+              resourceToPrefixMap.get(existingWrapper.resource),
+              resourceToPrefixMap.get(resource))) {
+            // A rerooted resource blocks any other resource at this path.
+            continue;
+          }
+        }
+
+        // Try to reuse the same wrapper.
+        Resource exposed = exposedResourceMap.get(rerootedPath);
+        if (exposed instanceof ResourceWrapper) {
+          ResourceWrapper exposedWrapper = (ResourceWrapper) exposed;
+          if (exposedWrapper.resource == resource) {
+            externalMap.put(rerootedPath, exposedWrapper);
+            continue;
+          }
+        }
+        // Just create a new wrapper.
+        AbstractResource wrapper = new ResourceWrapper(rerootedPath, resource);
+        externalMap.put(rerootedPath, wrapper);
+      } else {
+        externalMap.put(path, resource);
+      }
     }
     return externalMap;
   }

@@ -21,6 +21,8 @@ import com.google.gwt.dev.util.msg.Message1String;
 import java.io.File;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -51,9 +53,10 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   }
 
   private Set<ZipFileResource> allZipFileResources;
-  private Set<AbstractResource> cachedAnswers;
+  private Map<AbstractResource, PathPrefix> cachedAnswers;
   private String cachedLocation;
   private PathPrefixSet lastPrefixSet;
+  private int lastPrefixSetSize;
   private final ZipFile zipFile;
 
   public ZipFileClassPathEntry(ZipFile zipFile) {
@@ -64,18 +67,19 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
    * Indexes the zip file on-demand, and only once over the life of the process.
    */
   @Override
-  public Set<AbstractResource> findApplicableResources(TreeLogger logger,
-      PathPrefixSet pathPrefixSet) {
+  public Map<AbstractResource, PathPrefix> findApplicableResources(
+      TreeLogger logger, PathPrefixSet pathPrefixSet) {
     // Never re-index.
     if (allZipFileResources == null) {
       allZipFileResources = buildIndex(logger);
     }
 
     if (cachedAnswers == null || lastPrefixSet != pathPrefixSet
-        || lastPrefixSet.getModCount() != pathPrefixSet.getModCount()) {
+        || lastPrefixSetSize != pathPrefixSet.getSize()) {
       cachedAnswers = computeApplicableResources(logger, pathPrefixSet);
+      lastPrefixSet = pathPrefixSet;
+      lastPrefixSetSize = pathPrefixSet.getSize();
     }
-
     return cachedAnswers;
   }
 
@@ -113,17 +117,18 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
     return results;
   }
 
-  private Set<AbstractResource> computeApplicableResources(TreeLogger logger,
-      PathPrefixSet pathPrefixSet) {
+  private Map<AbstractResource, PathPrefix> computeApplicableResources(
+      TreeLogger logger, PathPrefixSet pathPrefixSet) {
     logger = Messages.FINDING_INCLUDED_RESOURCES.branch(logger,
         zipFile.getName(), null);
 
-    Set<AbstractResource> results = new HashSet<AbstractResource>();
+    Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
     for (ZipFileResource r : allZipFileResources) {
       String path = r.getPath();
-      if (pathPrefixSet.includesResource(path)) {
+      PathPrefix prefix = null;
+      if ((prefix = pathPrefixSet.includesResource(path)) != null) {
         Messages.INCLUDING_RESOURCE.log(logger, path, null);
-        results.add(r);
+        results.put(r, prefix);
       } else {
         Messages.EXCLUDING_RESOURCE.log(logger, path, null);
       }

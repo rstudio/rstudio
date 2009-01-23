@@ -15,23 +15,33 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
  * Combines the information conveyed about a set of path prefixes to quickly
  * answer questions regarding an entire set of path prefixes.
+ * 
  */
 public class PathPrefixSet {
+  /*
+   * (1) TODO(amitmanjhi): Support multiple PathPrefixes with different filters
+   * but the same "path". This could arise when client code inherits some
+   * library code and defines the same path prefix with a more specific resource
+   * filter.
+   * 
+   * (2) TODO(amitmanjhi): Improve the api of the PathPrefixSet so that with one
+   * trie-traversal, it could be found out which resources rooted at a directory
+   * are allowed? 
+   */
 
   private static class TrieNode {
-    // TODO(bruce): test to see if Map would be faster; I'm on the fence
-    private final List<TrieNode> children = new ArrayList<TrieNode>();
+    // TODO(amitmanjhi): Consider the memory-speed tradeoff here
+    private final Map<String, TrieNode> children = new HashMap<String, TrieNode>();
     private final String part;
+
     private PathPrefix prefix;
 
     public TrieNode(String part) {
@@ -39,19 +49,14 @@ public class PathPrefixSet {
     }
 
     public TrieNode addChild(String part) {
-      assert (findChild(part) == null);
       TrieNode newChild = new TrieNode(part);
-      children.add(newChild);
+      TrieNode oldChild = children.put(part, newChild);
+      assert (oldChild == null);
       return newChild;
     }
 
     public TrieNode findChild(String part) {
-      for (TrieNode child : children) {
-        if (child.part.equals(part)) {
-          return child;
-        }
-      }
-      return null;
+      return children.get(part);
     }
 
     public PathPrefix getPathPrefix() {
@@ -80,14 +85,21 @@ public class PathPrefixSet {
       sb.append(indent);
       sb.append(' ');
       sb.append(part);
-      for (TrieNode child : children) {
+      for (TrieNode child : children.values()) {
         child.toString(sb, indent + "  ");
       }
     }
   }
 
-  private int modCount;
-  private final Map<String, PathPrefix> prefixes = new HashMap<String, PathPrefix>();
+  /**
+   * The sequence number in which the PathPrefix was added.
+   */
+  private int size = 0;
+
+  /**
+   * Map of pathPrefix => the sequence number when the pathPrefix was added.
+   */
+  private final Map<PathPrefix, Integer> prefixes = new HashMap<PathPrefix, Integer>();
   private final TrieNode rootTrieNode = new TrieNode("/");
 
   /**
@@ -98,9 +110,9 @@ public class PathPrefixSet {
    *         wins)
    */
   public boolean add(PathPrefix prefix) {
-    ++modCount;
+    ++size;
+    prefixes.put(prefix, size);
     String pathPrefix = prefix.getPrefix();
-    prefixes.put(pathPrefix, prefix);
 
     /*
      * An empty prefix means we have no prefix requirement, but we do attached
@@ -132,8 +144,8 @@ public class PathPrefixSet {
     return didAdd;
   }
 
-  public int getModCount() {
-    return modCount;
+  public int getSize() {
+    return size;
   }
 
   /**
@@ -141,19 +153,17 @@ public class PathPrefixSet {
    * included. The primary purpose of this method is to allow
    * {@link ClassPathEntry} subclasses to avoid descending into directory
    * hierarchies that could not possibly contain resources that would be
-   * included by {@link #includesResource(String).
+   * included by {@link #includesResource(String)}
    * 
-   * @param dirPath must be a valid abstract directory name or the empty string
-   * @return
+   * @param dirPath must be a valid abstract directory name (must not be an
+   *          empty string)
+   * @return true if some PathPrefix allows the directory
    */
   public boolean includesDirectory(String dirPath) {
     assertValidAbstractDirectoryPathName(dirPath);
 
     /*
-     * There are five cases:
-     * 
-     * (0) dirPath is the empty string, which is (a) trivially included unless
-     * (b) no prefix paths have been specified at all.
+     * There are four cases:
      * 
      * (1) The empty string was specified as a prefix, which causes everything
      * to be included.
@@ -171,22 +181,12 @@ public class PathPrefixSet {
      * includes it).
      */
 
-    // if ("".equals(dirPath)) {
-    // if (rootTrieNode.hasChildren() || rootTrieNode.getPathPrefix() != null) {
-    // // Case (0)(a): trivially true.
-    // return true;
-    // } else {
-    // // Case (0)(b): no directories are included.
-    // return false;
-    // }
-    // }
     if (rootTrieNode.getPathPrefix() != null) {
       // Case (1).
       return true;
     }
 
     TrieNode parentNode = rootTrieNode;
-
     String[] parts = dirPath.split("/");
     for (String part : parts) {
       assert (!"".equals(part));
@@ -215,10 +215,12 @@ public class PathPrefixSet {
    * prefix set and the corresponding filters.
    * 
    * @param resourceAbstractPathName
-   * @return <code>true</code> if the resource matches some specified prefix
-   *         and any associated filters don't exclude it
+   * @return matching <code>PathPrefix</code> if the resource matches some
+   *         specified prefix and any associated filters don't exclude it.
+   *         Otherwise, returns null. So it returns null if either no prefixes
+   *         match or the most specific prefix excludes the resource.
    */
-  public boolean includesResource(String resourceAbstractPathName) {
+  public PathPrefix includesResource(String resourceAbstractPathName) {
     /*
      * Algorithm: dive down the package hierarchy looking for the most specific
      * package that applies to this resource. The filter of the most specific
@@ -232,12 +234,8 @@ public class PathPrefixSet {
     TrieNode currentNode = rootTrieNode;
     PathPrefix mostSpecificPrefix = rootTrieNode.getPathPrefix();
 
-    // TODO(bruce): consider not using split for speed
-    String[] parts = resourceAbstractPathName.split("/");
-
     // Walk all but the last path part, which is assumed to be a file name.
-    for (int i = 0, n = parts.length - 1; i < n; ++i) {
-      String part = parts[i];
+    for (String part : resourceAbstractPathName.split("/")) {
       assert (!"".equals(part));
       TrieNode childNode = currentNode.findChild(part);
       if (childNode != null) {
@@ -253,17 +251,35 @@ public class PathPrefixSet {
       }
     }
 
-    if (mostSpecificPrefix == null) {
-      // Didn't match any specified prefix.
-      return false;
+    if (mostSpecificPrefix == null
+        || !mostSpecificPrefix.allows(resourceAbstractPathName)) {
+      /*
+       * Didn't match any specified prefix or the filter of the most specific
+       * prefix disallows the resource
+       */
+      return null;
     }
 
-    // Test the filter of the most specific prefix we found.
-    return mostSpecificPrefix.allows(resourceAbstractPathName);
+    return mostSpecificPrefix;
+  }
+
+  /**
+   * Returns true if the first pathPrefix is inserted into the PathPrefixSet
+   * after the second pathPrefix.
+   * 
+   */
+
+  public boolean secondPrefixOverridesFirst(PathPrefix prefix1,
+      PathPrefix prefix2) {
+    int rank1 = prefixes.get(prefix1);
+    assert rank1 > 0;
+    int rank2 = prefixes.get(prefix2);
+    assert rank2 > 0;
+    return rank2 > rank1;
   }
 
   public Collection<PathPrefix> values() {
-    return Collections.unmodifiableCollection(prefixes.values());
+    return Collections.unmodifiableCollection(prefixes.keySet());
   }
 
   private void assertValidAbstractDirectoryPathName(String name) {

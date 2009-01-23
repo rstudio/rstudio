@@ -19,8 +19,8 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.util.msg.Message1String;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 /**
  * TODO(bruce): write me.
@@ -48,9 +48,9 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
   }
 
   @Override
-  public Set<AbstractResource> findApplicableResources(TreeLogger logger,
-      PathPrefixSet pathPrefixSet) {
-    Set<AbstractResource> results = new HashSet<AbstractResource>();
+  public Map<AbstractResource, PathPrefix> findApplicableResources(
+      TreeLogger logger, PathPrefixSet pathPrefixSet) {
+    Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
     descendToFindResources(logger, pathPrefixSet, results, dir, "");
     return results;
   }
@@ -62,14 +62,15 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
 
   /**
    * @param logger logs progress
-   * @param resources the accumulating set of resources found
+   * @param resources the accumulating set of resources (each with the
+   *          corresponding pathPrefix) found
    * @param dir the file or directory to consider
    * @param dirPath the abstract path name associated with 'parent', which
    *          explicitly does not include the classpath entry in its path
    */
   private void descendToFindResources(TreeLogger logger,
-      PathPrefixSet pathPrefixSet, Set<AbstractResource> resources, File dir,
-      String dirPath) {
+      PathPrefixSet pathPrefixSet, Map<AbstractResource, PathPrefix> resources,
+      File dir, String dirPath) {
     assert (dir.isDirectory());
 
     // Assert: this directory is included in the path prefix set.
@@ -89,10 +90,11 @@ public class DirectoryClassPathEntry extends ClassPathEntry {
               null);
         }
       } else {
-        if (pathPrefixSet.includesResource(childPath)) {
+        PathPrefix prefix = null;
+        if ((prefix = pathPrefixSet.includesResource(childPath)) != null) {
           Messages.INCLUDING_FILE.log(logger, childPath, null);
           FileResource r = new FileResource(this, childPath, child);
-          resources.add(r);
+          resources.put(r, prefix);
         } else {
           Messages.EXCLUDING_FILE.log(logger, childPath, null);
         }
