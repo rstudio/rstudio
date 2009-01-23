@@ -184,37 +184,18 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
 
     String keyReroot = "/BarClient1.txt";
 
-    PathPrefix pathPrefix1Reroot = new PathPrefix("org/example/bar/client",
-        null, true);
-    PathPrefix pathPrefix2Reroot = new PathPrefix("org/example/foo/client",
-        null, true);
+    PathPrefix pp1 = new PathPrefix("org/example/bar/client", null, true);
+    PathPrefix pp2 = new PathPrefix("org/example/foo/client", null, true);
 
-    PathPrefixSet pps12Reroot = new PathPrefixSet();
-    pps12Reroot.add(pathPrefix1Reroot);
-    pps12Reroot.add(pathPrefix2Reroot);
+    // Resource in cpe2 wins because pp2 comes later.
+    testResourceInCPE(logger, keyReroot, cpe2jar, cp12, pp1, pp2);
+    // Order of specifying classpath is reversed, it still matches cpe2.
+    testResourceInCPE(logger, keyReroot, cpe2jar, cp21, pp1, pp2);
 
-    PathPrefixSet pps21Reroot = new PathPrefixSet();
-    pps21Reroot.add(pathPrefix2Reroot);
-    pps21Reroot.add(pathPrefix1Reroot);
-
-    /*
-     * the keyReroot resource in cpe2 wins because pathPrefix2Reroot comes
-     * later.
-     */
-    testResourceInCPE(logger, keyReroot, cpe2jar, cp12, pathPrefix1Reroot,
-        pathPrefix2Reroot);
-    // order of specifying classpath is reversed, it still matches cpe2
-    testResourceInCPE(logger, keyReroot, cpe2jar, cp21, pathPrefix1Reroot,
-        pathPrefix2Reroot);
-    /*
-     * the keyReroot resource in cpe2 wins because pathPrefix2Reroot comes
-     * later.
-     */
-    testResourceInCPE(logger, keyReroot, cpe1jar, cp12, pathPrefix2Reroot,
-        pathPrefix1Reroot);
-    // order of specifying classpath is reversed, it still matches cpe1
-    testResourceInCPE(logger, keyReroot, cpe1jar, cp21, pathPrefix2Reroot,
-        pathPrefix1Reroot);
+    // Resource in cpe1 wins because pp1 comes later.
+    testResourceInCPE(logger, keyReroot, cpe1jar, cp12, pp2, pp1);
+    // Order of specifying classpath is reversed, it still matches cpe1.
+    testResourceInCPE(logger, keyReroot, cpe1jar, cp21, pp2, pp1);
   }
 
   /**
@@ -309,6 +290,20 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
   }
 
   /**
+   * Ensure refresh is stable when multiple classpaths + multiple path prefixes
+   * all include the same resource.
+   */
+  public void testStableRefreshOnBlot() {
+    TreeLogger logger = createTestTreeLogger();
+    ClassPathEntry cpe1 = getClassPathEntry1AsMock();
+    ClassPathEntry cpe2 = getClassPathEntry2AsMock();
+    PathPrefix pp1 = new PathPrefix("org/example/bar/client", null, false);
+    PathPrefix pp2 = new PathPrefix("org/example/bar", null, false);
+    testResourceInCPE(logger, "org/example/bar/client/BarClient2.txt", cpe1,
+        new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
+  }
+
+  /**
    * Creates an array of class path entries, setting up each one with a
    * well-known set of client prefixes.
    */
@@ -336,19 +331,6 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ResourceOracleSnapshot snapshot2 = new ResourceOracleSnapshot(oracle);
     snapshot1.assertSameCollections(snapshot2);
     return snapshot1;
-  }
-
-  private void testResourceInCPE(TreeLogger logger, String resourceKey,
-      ClassPathEntry expectedCPE, ClassPathEntry[] classPath,
-      PathPrefix... pathPrefixes) {
-    ResourceOracleImpl oracle = new ResourceOracleImpl(Arrays.asList(classPath));
-    PathPrefixSet pps = new PathPrefixSet();
-    for (PathPrefix pathPrefix : pathPrefixes) {
-      pps.add(pathPrefix);
-    }
-    oracle.setPathPrefixes(pps);
-    ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
-    s.assertPathIncluded(resourceKey, expectedCPE);
   }
 
   private void testReadingResource(ClassPathEntry cpe1, ClassPathEntry cpe2)
@@ -521,6 +503,19 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       after.assertPathIncluded("com/google/gwt/user/client/Window.java");
       after.assertPathNotIncluded("com/google/gwt/i18n/client/Constants.java");
     }
+  }
+
+  private void testResourceInCPE(TreeLogger logger, String resourceKey,
+      ClassPathEntry expectedCPE, ClassPathEntry[] classPath,
+      PathPrefix... pathPrefixes) {
+    ResourceOracleImpl oracle = new ResourceOracleImpl(Arrays.asList(classPath));
+    PathPrefixSet pps = new PathPrefixSet();
+    for (PathPrefix pathPrefix : pathPrefixes) {
+      pps.add(pathPrefix);
+    }
+    oracle.setPathPrefixes(pps);
+    ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
+    s.assertPathIncluded(resourceKey, expectedCPE);
   }
 
   private void testResourceModification(ClassPathEntry cpe1, ClassPathEntry cpe2) {
