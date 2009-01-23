@@ -23,7 +23,6 @@ import java.util.Map;
 /**
  * Combines the information conveyed about a set of path prefixes to quickly
  * answer questions regarding an entire set of path prefixes.
- * 
  */
 public class PathPrefixSet {
   /*
@@ -34,7 +33,7 @@ public class PathPrefixSet {
    * 
    * (2) TODO(amitmanjhi): Improve the api of the PathPrefixSet so that with one
    * trie-traversal, it could be found out which resources rooted at a directory
-   * are allowed? 
+   * are allowed?
    */
 
   private static class TrieNode {
@@ -266,9 +265,7 @@ public class PathPrefixSet {
   /**
    * Returns true if the first pathPrefix is inserted into the PathPrefixSet
    * after the second pathPrefix.
-   * 
    */
-
   public boolean secondPrefixOverridesFirst(PathPrefix prefix1,
       PathPrefix prefix2) {
     int rank1 = prefixes.get(prefix1);

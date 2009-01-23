@@ -150,10 +150,10 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     PathPrefix pathPrefixReroot = new PathPrefix("org/example/bar/client",
         null, true);
 
-    testClassPathOrderIsHonored(logger, resKeyNormal, cp12, pathPrefixNormal);
-    testClassPathOrderIsHonored(logger, resKeyReroot, cp12, pathPrefixReroot);
-    testClassPathOrderIsHonored(logger, resKeyNormal, cp21, pathPrefixNormal);
-    testClassPathOrderIsHonored(logger, resKeyReroot, cp21, pathPrefixReroot);
+    testResourceInCPE(logger, resKeyNormal, cpe1jar, cp12, pathPrefixNormal);
+    testResourceInCPE(logger, resKeyReroot, cpe1jar, cp12, pathPrefixReroot);
+    testResourceInCPE(logger, resKeyNormal, cpe2jar, cp21, pathPrefixNormal);
+    testResourceInCPE(logger, resKeyReroot, cpe2jar, cp21, pathPrefixReroot);
   }
 
   public void testNoClassPathEntries() {
@@ -182,9 +182,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     ClassPathEntry[] cp12 = new ClassPathEntry[] {cpe1jar, cpe2jar};
     ClassPathEntry[] cp21 = new ClassPathEntry[] {cpe2jar, cpe1jar};
 
-    String barKeyNormal = "org/example/bar/client/BarClient1.txt";
     String keyReroot = "/BarClient1.txt";
-    String fooKeyNormal = "org/example/foo/client/BarClient1.txt";
 
     PathPrefix pathPrefix1Reroot = new PathPrefix("org/example/bar/client",
         null, true);
@@ -203,20 +201,20 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
      * the keyReroot resource in cpe2 wins because pathPrefix2Reroot comes
      * later.
      */
-    testPathPrefixOrderPreferredOverClasspath(logger, keyReroot, cp12,
-        pps12Reroot, 1);
+    testResourceInCPE(logger, keyReroot, cpe2jar, cp12, pathPrefix1Reroot,
+        pathPrefix2Reroot);
     // order of specifying classpath is reversed, it still matches cpe2
-    testPathPrefixOrderPreferredOverClasspath(logger, keyReroot, cp21,
-        pps12Reroot, 0);
+    testResourceInCPE(logger, keyReroot, cpe2jar, cp21, pathPrefix1Reroot,
+        pathPrefix2Reroot);
     /*
      * the keyReroot resource in cpe2 wins because pathPrefix2Reroot comes
      * later.
      */
-    testPathPrefixOrderPreferredOverClasspath(logger, keyReroot, cp12,
-        pps21Reroot, 0);
+    testResourceInCPE(logger, keyReroot, cpe1jar, cp12, pathPrefix2Reroot,
+        pathPrefix1Reroot);
     // order of specifying classpath is reversed, it still matches cpe1
-    testPathPrefixOrderPreferredOverClasspath(logger, keyReroot, cp21,
-        pps21Reroot, 1);
+    testResourceInCPE(logger, keyReroot, cpe1jar, cp21, pathPrefix2Reroot,
+        pathPrefix1Reroot);
   }
 
   /**
@@ -329,7 +327,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     oracle.setPathPrefixes(pps);
     return oracle;
   }
-  
+
   private ResourceOracleSnapshot refreshAndSnapshot(TreeLogger logger,
       ResourceOracleImpl oracle) {
     oracle.refresh(logger);
@@ -340,23 +338,17 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     return snapshot1;
   }
 
-  private void testClassPathOrderIsHonored(TreeLogger logger,
-      String resourceKey, ClassPathEntry[] classPath, PathPrefix pathPrefix) {
+  private void testResourceInCPE(TreeLogger logger, String resourceKey,
+      ClassPathEntry expectedCPE, ClassPathEntry[] classPath,
+      PathPrefix... pathPrefixes) {
+    ResourceOracleImpl oracle = new ResourceOracleImpl(Arrays.asList(classPath));
     PathPrefixSet pps = new PathPrefixSet();
-    pps.add(pathPrefix);
-    ResourceOracleImpl oracle = new ResourceOracleImpl(Arrays.asList(classPath));
+    for (PathPrefix pathPrefix : pathPrefixes) {
+      pps.add(pathPrefix);
+    }
     oracle.setPathPrefixes(pps);
     ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
-    s.assertPathIncluded(resourceKey, classPath[0]);
-  }
-
-  private void testPathPrefixOrderPreferredOverClasspath(TreeLogger logger,
-      String resourceKey, ClassPathEntry[] classPath, PathPrefixSet pps,
-      int index) {
-    ResourceOracleImpl oracle = new ResourceOracleImpl(Arrays.asList(classPath));
-    oracle.setPathPrefixes(pps);
-    ResourceOracleSnapshot s = refreshAndSnapshot(logger, oracle);
-    s.assertPathIncluded(resourceKey, classPath[index]);
+    s.assertPathIncluded(resourceKey, expectedCPE);
   }
 
   private void testReadingResource(ClassPathEntry cpe1, ClassPathEntry cpe2)
