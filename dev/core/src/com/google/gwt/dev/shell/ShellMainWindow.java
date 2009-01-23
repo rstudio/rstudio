@@ -181,7 +181,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   private Toolbar toolbar;
 
   public ShellMainWindow(BrowserWindowController browserWindowController,
-      final Shell parent, int serverPort, boolean checkForUpdates) {
+      final Shell parent, int serverPort) {
     super(parent, SWT.NONE);
 
     this.browserWindowController = browserWindowController;
@@ -226,41 +226,6 @@ public class ShellMainWindow extends Composite implements DisposeListener,
       data.horizontalAlignment = GridData.FILL;
       data.verticalAlignment = GridData.FILL;
       logPane.setLayoutData(data);
-    }
-
-    // check for updates
-    if (checkForUpdates) {
-      try {
-        final CheckForUpdates updateChecker = PlatformSpecific.createUpdateChecker();
-        if (updateChecker != null) {
-          final CheckForUpdates.UpdateAvailableCallback callback = new CheckForUpdates.UpdateAvailableCallback() {
-            public void onUpdateAvailable(final String html) {
-              // Do this on the main thread.
-              //
-              parent.getDisplay().asyncExec(new Runnable() {
-                public void run() {
-                  new BrowserDialog(parent, getLogger(), html).open(true);
-                }
-
-              });
-            }
-          };
-
-          // Run the update checker on a background thread.
-          //
-          Thread checkerThread = new Thread() {
-            @Override
-            public void run() {
-              updateChecker.check(callback);
-            }
-          };
-
-          checkerThread.setDaemon(true);
-          checkerThread.start();
-        }
-      } catch (Throwable e) {
-        // Always silently ignore any errors.
-      }
     }
   }
 

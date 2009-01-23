@@ -221,10 +221,8 @@ abstract class SwtHostedModeBase extends HostedModeBase {
 
     shell.setImages(ShellMainWindow.getIcons());
 
-    boolean checkForUpdates = doShouldCheckForUpdates();
-
     mainWnd = new ShellMainWindow(this, shell, options.isNoServer() ? 0
-        : getPort(), checkForUpdates);
+        : getPort());
 
     shell.setSize(700, 600);
     if (!isHeadless()) {

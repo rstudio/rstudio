@@ -36,14 +36,19 @@ import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
+import com.google.gwt.dev.shell.CheckForUpdates;
+import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.StandardRebindOracle;
+import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
+import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
 
@@ -53,6 +58,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.concurrent.FutureTask;
 
 /**
  * Performs the first phase of compilation, generating the set of permutations
@@ -64,7 +70,7 @@ public class Precompile {
    * The set of options for the precompiler.
    */
   public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
-      OptionGenDir, OptionValidateOnly {
+      OptionGenDir, OptionValidateOnly, OptionDisableUpdateCheck {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -75,6 +81,7 @@ public class Precompile {
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerValidateOnlyFlag(options));
+      registerHandler(new ArgHandlerDisableUpdateCheck(options));
     }
 
     @Override
@@ -85,6 +92,7 @@ public class Precompile {
 
   static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
       PrecompileOptions {
+    private boolean disableUpdateCheck;
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
     private boolean validateOnly;
@@ -101,6 +109,7 @@ public class Precompile {
 
       jjsOptions.copyFrom(other);
 
+      setDisableUpdateCheck(other.isUpdateCheckDisabled());
       setGenDir(other.getGenDir());
       setValidateOnly(other.isValidateOnly());
     }
@@ -121,12 +130,20 @@ public class Precompile {
       return jjsOptions.isEnableAssertions();
     }
 
+    public boolean isUpdateCheckDisabled() {
+      return disableUpdateCheck;
+    }
+
     public boolean isValidateOnly() {
       return validateOnly;
     }
 
     public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
       jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
+    }
+
+    public void setDisableUpdateCheck(boolean disabled) {
+      disableUpdateCheck = disabled;
     }
 
     public void setEnableAssertions(boolean enableAssertions) {
@@ -227,7 +244,16 @@ public class Precompile {
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
-          return new Precompile(options).run(logger);
+          FutureTask<UpdateResult> updater = null;
+          if (!options.isUpdateCheckDisabled()) {
+            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(logger,
+                CheckForUpdates.ONE_DAY);
+          }
+          boolean success = new Precompile(options).run(logger);
+          if (success) {
+            PlatformSpecific.logUpdateAvailable(logger, updater);
+          }
+          return success;
         }
       };
       if (CompileTaskRunner.runWithAppropriateLogger(options, task)) {
@@ -290,8 +316,7 @@ public class Precompile {
           merged.put(rebindResultsString, permutation);
         }
       }
-      return new Precompilation(unifiedAst, merged.values(),
-          generatedArtifacts);
+      return new Precompilation(unifiedAst, merged.values(), generatedArtifacts);
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.

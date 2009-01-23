@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.ie;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.CheckForUpdates;
 
 /**
@@ -22,13 +23,15 @@ import com.google.gwt.dev.shell.CheckForUpdates;
  */
 public class CheckForUpdatesIE6 extends CheckForUpdates {
 
-  public CheckForUpdatesIE6() {
+  public CheckForUpdatesIE6(TreeLogger logger, String entryPoint) {
+    super(logger, entryPoint);
     LowLevelIE6.init();
   }
 
   @Override
-  protected byte[] doHttpGet(String userAgent, String url) {
-    byte[] response = LowLevelIE6.httpGet(userAgent, url);
+  protected byte[] doHttpGet(TreeLogger branch, String userAgent, String url) {
+    byte[] response = LowLevelIE6.httpGet(branch, userAgent, url,
+        System.getProperty(PROPERTY_DEBUG_HTTP_GET) != null);
     return response;
   }
 
