@@ -91,15 +91,15 @@ public class PathPrefixSet {
   }
 
   /**
-   * The sequence number in which the PathPrefix was added.
-   */
-  private int size = 0;
-
-  /**
    * Map of pathPrefix => the sequence number when the pathPrefix was added.
    */
   private final Map<PathPrefix, Integer> prefixes = new HashMap<PathPrefix, Integer>();
+
   private final TrieNode rootTrieNode = new TrieNode("/");
+  /**
+   * The sequence number in which the PathPrefix was added.
+   */
+  private int size = 0;
 
   /**
    * @param prefix the prefix to add
@@ -264,7 +264,7 @@ public class PathPrefixSet {
 
   /**
    * Returns true if the first pathPrefix is inserted into the PathPrefixSet
-   * after the second pathPrefix.  Also, rereooting PathPrefixes take priority
+   * after the second pathPrefix. Also, rereooting PathPrefixes take priority
    * over non-rerooting ones (ie, super-source).
    */
   public boolean secondPrefixOverridesFirst(PathPrefix prefix1,
@@ -277,6 +277,11 @@ public class PathPrefixSet {
     int rank2 = prefixes.get(prefix2);
     assert rank2 > 0;
     return rank2 > rank1;
+  }
+
+  @Override
+  public String toString() {
+    return rootTrieNode.toString();
   }
 
   public Collection<PathPrefix> values() {

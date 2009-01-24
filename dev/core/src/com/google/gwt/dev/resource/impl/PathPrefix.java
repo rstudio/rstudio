@@ -135,6 +135,11 @@ public final class PathPrefix {
     return shouldReroot;
   }
 
+  @Override
+  public String toString() {
+    return prefix + (shouldReroot ? "**" : "*") + (filter == null ? "" : "?");
+  }
+
   private void assertValidPrefix(String prefix) {
     assert (prefix != null);
     assert ("".equals(prefix) || (!prefix.startsWith("/") && prefix.endsWith("/"))) : "malformed prefix";

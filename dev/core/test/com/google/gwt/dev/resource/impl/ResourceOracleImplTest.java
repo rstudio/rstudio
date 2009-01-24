@@ -303,7 +303,7 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
         new ClassPathEntry[] {cpe1, cpe2}, pp1, pp2);
   }
 
-  /*
+  /**
    * Ensure refresh is stable when multiple classpaths + multiple path prefixes
    * all include the same resource.
    */
