@@ -70,9 +70,9 @@ class DOMImplIE6 extends DOMImpl {
     // getBoundingClientRect() throws a JS exception if the elem is not attached
     // to the document, so we wrap it in a try/catch block
     try {
-      return (elem.getBoundingClientRect().left /
+      return Math.floor((elem.getBoundingClientRect().left /
         this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft);
     } catch (e) {
       return 0;
     }
@@ -83,18 +83,20 @@ class DOMImplIE6 extends DOMImpl {
     // getBoundingClientRect() throws a JS exception if the elem is not attached
     // to the document, so we wrap it in a try/catch block
     try {
-      return (elem.getBoundingClientRect().top /
+      return Math.floor((elem.getBoundingClientRect().top /
         this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop);
     } catch (e) {
       return 0;
     }
   }-*/;
 
+  @Override
   public native int getBodyOffsetLeft() /*-{
     return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
   }-*/;
 
+  @Override
   public native int getBodyOffsetTop() /*-{
     return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
   }-*/;
