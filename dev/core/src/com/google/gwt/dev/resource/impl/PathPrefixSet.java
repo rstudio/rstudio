@@ -15,9 +15,11 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -91,15 +93,11 @@ public class PathPrefixSet {
   }
 
   /**
-   * Map of pathPrefix => the sequence number when the pathPrefix was added.
+   * List of all path prefixes in priority order.
    */
-  private final Map<PathPrefix, Integer> prefixes = new HashMap<PathPrefix, Integer>();
+  private final List<PathPrefix> prefixes = new ArrayList<PathPrefix>();
 
   private final TrieNode rootTrieNode = new TrieNode("/");
-  /**
-   * The sequence number in which the PathPrefix was added.
-   */
-  private int size = 0;
 
   /**
    * @param prefix the prefix to add
@@ -109,13 +107,14 @@ public class PathPrefixSet {
    *         wins)
    */
   public boolean add(PathPrefix prefix) {
-    ++size;
-    prefixes.put(prefix, size);
+    prefix.setPriority(prefixes.size());
+    prefixes.add(prefix);
+
     String pathPrefix = prefix.getPrefix();
 
     /*
-     * An empty prefix means we have no prefix requirement, but we do attached
-     * the prefix to the root so that we can apply the filter.
+     * An empty prefix means we have no prefix requirement, but we do attach the
+     * prefix to the root so that we can apply the filter.
      */
     if ("".equals(pathPrefix)) {
       rootTrieNode.setPathPrefix(prefix);
@@ -144,7 +143,7 @@ public class PathPrefixSet {
   }
 
   public int getSize() {
-    return size;
+    return prefixes.size();
   }
 
   /**
@@ -262,30 +261,13 @@ public class PathPrefixSet {
     return mostSpecificPrefix;
   }
 
-  /**
-   * Returns true if the first pathPrefix is inserted into the PathPrefixSet
-   * after the second pathPrefix. Also, rereooting PathPrefixes take priority
-   * over non-rerooting ones (ie, super-source).
-   */
-  public boolean secondPrefixOverridesFirst(PathPrefix prefix1,
-      PathPrefix prefix2) {
-    if (prefix1.shouldReroot() != prefix2.shouldReroot()) {
-      return prefix2.shouldReroot();
-    }
-    int rank1 = prefixes.get(prefix1);
-    assert rank1 > 0;
-    int rank2 = prefixes.get(prefix2);
-    assert rank2 > 0;
-    return rank2 > rank1;
-  }
-
   @Override
   public String toString() {
     return rootTrieNode.toString();
   }
 
   public Collection<PathPrefix> values() {
-    return Collections.unmodifiableCollection(prefixes.keySet());
+    return Collections.unmodifiableCollection(prefixes);
   }
 
   private void assertValidAbstractDirectoryPathName(String name) {
