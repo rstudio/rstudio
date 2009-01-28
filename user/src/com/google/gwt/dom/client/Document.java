@@ -807,6 +807,9 @@ public class Document extends Node {
   /**
    * Creates a 'contextmenu' event.
    * 
+   * Note: Contextmenu events will not dispatch properly on Firefox 2 and
+   * earlier.
+   * 
    * @return the event object
    */
   public final NativeEvent createContextMenuEvent() {
@@ -1076,6 +1079,9 @@ public class Document extends Node {
   /**
    * Creates a 'mouseout' event.
    * 
+   * Note: The 'relatedTarget' parameter will be ignored on Firefox 2 and
+   * earlier.
+   * 
    * @param detail the event's detail property
    * @param screenX the event's screen-relative x-position
    * @param screenY the event's screen-relative y-position
@@ -1100,6 +1106,9 @@ public class Document extends Node {
 
   /**
    * Creates a 'mouseover' event.
+   * 
+   * Note: The 'relatedTarget' parameter will be ignored on Firefox 2 and
+   * earlier.
    * 
    * @param detail the event's detail property
    * @param screenX the event's screen-relative x-position
@@ -1148,6 +1157,9 @@ public class Document extends Node {
 
   /**
    * Creates a 'scroll' event.
+   * 
+   * Note: Contextmenu events will not dispatch properly on Firefox 2 and
+   * earlier.
    * 
    * @return the event object
    */

@@ -14,12 +14,12 @@
  * the License.
  */
 package com.google.gwt.dom.client;
- 
 
 /**
  * Safari implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 class DOMImplSafari extends DOMImplStandard {
+
   /**
    * Safari 2 does not support {@link ScriptElement#setText(String)}.
    */
@@ -29,6 +29,23 @@ class DOMImplSafari extends DOMImplStandard {
     elem.setInnerText(source);
     return elem;
   }
+
+  @Override
+  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) /*-{
+    // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
+    var evt = doc.createEvent('HTMLEvents');
+    evt.initEvent(type, canBubble, cancelable);
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    evt.keyCode = keyCode;
+    evt.charCode = charCode;
+
+    return evt;
+  }-*/;
 
   @Override
   public native int eventGetClientX(NativeEvent evt) /*-{

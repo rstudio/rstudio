@@ -44,14 +44,9 @@ abstract class DOMImplStandard extends DOMImpl {
       boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
       boolean metaKey, int keyCode, int charCode) /*-{
     // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
-    var evt = doc.createEvent('HTMLEvents');
-    evt.initEvent(type, canBubble, cancelable);
-    evt.ctrlKey = ctrlKey;
-    evt.altKey = altKey;
-    evt.shiftKey = shiftKey;
-    evt.metaKey = metaKey;
-    evt.keyCode = keyCode;
-    evt.charCode = charCode;
+    var evt = doc.createEvent('KeyEvents');
+    evt.initKeyEvent(type, canBubble, cancelable, null, ctrlKey, altKey,
+      shiftKey, metaKey, keyCode, charCode);
 
     return evt;
   }-*/;
