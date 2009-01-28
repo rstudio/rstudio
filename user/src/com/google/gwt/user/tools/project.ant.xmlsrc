@@ -53,7 +53,7 @@
       <arg value="@moduleName"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
     </java>
-  </target>
+  </target>@antEclipseRule
 
   <target name="build" depends="gwtc" description="Build this project" />
 
