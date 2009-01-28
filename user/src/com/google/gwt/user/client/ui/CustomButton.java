@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -618,9 +620,6 @@ public abstract class CustomButton extends ButtonBase {
           }
         }
         break;
-      case Event.ONCLICK:
-        // we handle clicks ourselves
-        return;
       case Event.ONBLUR:
         if (isFocusing) {
           isFocusing = false;
@@ -748,7 +747,11 @@ public abstract class CustomButton extends ButtonBase {
    * widget display.
    */
   protected void onClick() {
-    fireClickListeners(null);
+    // Mouse coordinates are not always available (e.g., when the click is
+    // caused by a keyboard event).
+    NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false,
+        false, false, false);
+    getElement().dispatchEvent(evt);
   }
 
   /**

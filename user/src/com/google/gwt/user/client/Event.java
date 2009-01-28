@@ -503,6 +503,17 @@ public class Event extends NativeEvent {
   }
 
   /**
+   * Sets the {@link EventListener} to receive events for the given element.
+   * Only one such listener may exist for a single element.
+   * 
+   * @param elem the element whose listener is to be set
+   * @param listener the listener to receive {@link Event events}
+   */
+  public static void setEventListener(Element elem, EventListener listener) {
+    DOM.setEventListener((com.google.gwt.user.client.Element) elem, listener);
+  }
+
+  /**
    * Sets the current set of events sunk by a given element. These events will
    * be fired to the nearest {@link EventListener} specified on any of the
    * element's parents.

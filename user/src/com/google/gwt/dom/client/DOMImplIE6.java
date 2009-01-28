@@ -22,8 +22,65 @@ package com.google.gwt.dom.client;
 class DOMImplIE6 extends DOMImpl {
 
   @Override
+  public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createHtmlEvent()).
+    var evt = doc.createEventObject();
+    evt.type = type;
+    return evt;
+  }-*/;
+
+  @Override
   public native InputElement createInputRadioElement(String name) /*-{
     return $doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
+  }-*/; 
+
+  @Override
+  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createKeyEvent()).
+    var evt = doc.createEventObject();
+    evt.type = type;
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    evt.keyCode = keyCode;
+    evt.charCode = charCode;
+
+    return evt;
+  }-*/;
+
+  @Override
+  public native NativeEvent createMouseEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, int detail, int screenX, int screenY, int clientX,
+      int clientY, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int button, Element relatedTarget) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createMouseEvent()).
+    var evt = doc.createEventObject();
+    evt.type = type;
+    evt.detail = detail;
+    evt.screenX = screenX;
+    evt.screenY = screenY;
+    evt.clientX = clientX;
+    evt.clientY = clientY;
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    evt.button = button;
+
+    // It would make sense to set evt.[fromElement | toElement] here, because
+    // that's what IE uses. However, setting these properties has no effect for
+    // some reason. So instead we set releatedTarget, and explicitly check for
+    // its existence in eventGetFromElement() and eventGetToElement().
+    evt.relatedTarget = relatedTarget;
+
+    return evt;
   }-*/;
 
   /**
@@ -37,7 +94,11 @@ class DOMImplIE6 extends DOMImpl {
   public native SelectElement createSelectElement(boolean multiple) /*-{
     var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
     return $doc.createElement(html);
-  }-*/; 
+  }-*/;
+
+  public native void dispatchEvent(Element target, NativeEvent evt) /*-{
+    target.fireEvent("on" + evt.type, evt);
+  }-*/;
 
   @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
@@ -46,7 +107,10 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
-    return evt.type == "mouseout"? evt.toElement:evt.fromElement;
+  	// Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
+  	// explicitly sets relatedTarget when synthesizing mouse events).
+    return evt.relatedTarget ||
+           (evt.type == "mouseout" ? evt.toElement:evt.fromElement);
   }-*/;
 
   @Override
@@ -165,5 +229,4 @@ class DOMImplIE6 extends DOMImpl {
   private native double getZoomMultiple() /*-{
     return $doc.body.parentElement.offsetWidth / $doc.body.offsetWidth;
   }-*/;
-
 }

@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -113,7 +114,8 @@ public class Image extends Widget implements SourcesLoadEvents,
       image.replaceElement(impl.createStructure(url, left, top, width, height));
       // Todo(ecc) This is wrong, we should not be sinking these here on such a
       // common widget.After the branch is stable, this should be fixed.
-      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
+      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL
+          | Event.ONLOAD);
       fireSyntheticLoadEvent(image);
     }
 
@@ -207,10 +209,8 @@ public class Image extends Widget implements SourcesLoadEvents,
        */
       DeferredCommand.addCommand(new Command() {
         public void execute() {
-          // TODO(ecc) once event triggering is committed, this call should
-          // fire a native load event instead.
-          image.fireEvent(new LoadEvent() {
-          });
+          NativeEvent evt = Document.get().createLoadEvent();
+          image.getElement().dispatchEvent(evt);
         }
       });
     }

@@ -23,9 +23,10 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class NativeEvent extends JavaScriptObject {
 
   /**
-   * The left mouse button. 
+   * The left mouse button.
    */
   public static final int BUTTON_LEFT = 1;
+
   /**
    * The middle mouse button.
    */
@@ -134,6 +135,7 @@ public class NativeEvent extends JavaScriptObject {
 
   /**
    * Gets the related target for this event.
+   * 
    * @return the related target
    */
   public final Element getRelatedTarget() {
@@ -210,5 +212,4 @@ public class NativeEvent extends JavaScriptObject {
   public final void stopPropagation() {
     DOMImpl.impl.eventStopPropagation(this);
   }
-
 }

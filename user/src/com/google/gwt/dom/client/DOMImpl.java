@@ -50,7 +50,7 @@ abstract class DOMImpl {
   public native boolean eventGetAltKey(NativeEvent evt) /*-{
     return !!evt.altKey;
   }-*/;
-  
+
   public native int eventGetButton(NativeEvent evt) /*-{
     return evt.button || 0;
   }-*/;
@@ -275,4 +275,18 @@ abstract class DOMImpl {
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
   }-*/;
+
+  public abstract NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable);
+
+  public abstract NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode);
+
+  public abstract NativeEvent createMouseEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, int detail, int screenX,
+      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button, Element relatedTarget);
+
+  public abstract void dispatchEvent(Element target, NativeEvent evt);
 }

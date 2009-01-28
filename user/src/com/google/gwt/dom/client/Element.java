@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.GWT;
+
 /**
  * All HTML element interfaces derive from this class.
  */
@@ -30,6 +32,22 @@ public class Element extends Node {
   }
 
   protected Element() {
+  }
+
+  /**
+   * Dispatched the given event with this element as its target. The event will
+   * go through all phases of the browser's normal event dispatch mechanism.
+   * 
+   * Note: Because the browser's normal dispatch mechanism is used, exceptions
+   * thrown from within handlers triggered by this method cannot be caught by
+   * wrapping this method in a try/catch block. Such exceptions will be caught
+   * by the {@link GWT#setUncaughtExceptionHandler() uncaught exception handler}
+   * as usual.
+   * 
+   * @param evt the event to be dispatched
+   */
+  public final void dispatchEvent(NativeEvent evt) {
+    DOMImpl.impl.dispatchEvent(this, evt);
   }
 
   /**
