@@ -272,8 +272,7 @@ public final class WebAppCreator {
           + "  <target name=\"eclipse.generate\" depends=\"libs\" description=\"Generate eclipse project\">\n"
           + "    <java failonerror=\"true\" fork=\"true\" classname=\""
           + this.getClass().getName() + "\">\n" + "      <classpath>\n"
-          + "        <pathelement location=\"" + gwtUserPath + "\"/>\n"
-          + "        <pathelement location=\"" + gwtDevPath + "\"/>\n"
+          + "        <path refid=\"project.class.path\"/>\n"
           + "      </classpath>\n" + "      <arg value=\"-XonlyEclipse\"/>\n"
           + "      <arg value=\"-ignore\"/>\n" + "      <arg value=\""
           + moduleName + "\"/>\n" + "    </java>\n" + "  </target>";
