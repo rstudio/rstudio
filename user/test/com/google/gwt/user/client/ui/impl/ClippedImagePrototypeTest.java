@@ -82,7 +82,6 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
    * is called.
    */
   public void testApplyToClippedImage() {
-
     final Image image = new Image("counting-backwards.png", 12, 13, 8, 8);
 
     assertEquals(12, image.getOriginLeft());
@@ -90,27 +89,6 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
     assertEquals(8, image.getWidth());
     assertEquals(8, image.getHeight());
     assertEquals("clipped", ImageTest.getCurrentImageStateName(image));
-
-    final TestLoadListener listener = new TestLoadListener(image) {
-      @Override
-      public void onLoad(Widget sender) {
-        super.onLoad(sender);
-
-        if (image.getOriginLeft() == 12 && image.getOriginTop() == 13) {
-          ClippedImagePrototype clippedImagePrototype = new ClippedImagePrototype(
-              "counting-forwards.png", 16, 16, 16, 16);
-
-          clippedImagePrototype.applyTo(image);
-
-          assertEquals(16, image.getOriginLeft());
-          assertEquals(16, image.getOriginTop());
-          assertEquals(16, image.getWidth());
-          assertEquals(16, image.getHeight());
-          assertEquals("clipped", ImageTest.getCurrentImageStateName(image));
-        }
-      }
-    };
-    image.addLoadListener(listener);
 
     final TestLoadHandler handler = new TestLoadHandler() {
       @Override
@@ -137,14 +115,13 @@ public class ClippedImagePrototypeTest extends GWTTestCase {
         fail("The image " + image.getUrl() + " failed to load.");
       }
     });
-    
+
     RootPanel.get().add(image);
     delayTestFinish(2000);
 
     Timer t = new Timer() {
       @Override
       public void run() {
-        assertEquals(2, listener.getOnloadEventFireCount());
         assertEquals(2, handler.getOnloadEventFireCount());
         finishTest();
       }

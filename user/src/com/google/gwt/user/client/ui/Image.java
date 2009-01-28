@@ -116,7 +116,6 @@ public class Image extends Widget implements SourcesLoadEvents,
       // common widget.After the branch is stable, this should be fixed.
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL
           | Event.ONLOAD);
-      fireSyntheticLoadEvent(image);
     }
 
     @Override
