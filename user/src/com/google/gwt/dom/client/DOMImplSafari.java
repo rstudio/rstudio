@@ -20,16 +20,6 @@ package com.google.gwt.dom.client;
  */
 class DOMImplSafari extends DOMImplStandard {
 
-  /**
-   * Safari 2 does not support {@link ScriptElement#setText(String)}.
-   */
-  @Override
-  public ScriptElement createScriptElement(String source) {
-    ScriptElement elem = (ScriptElement) createElement("script");
-    elem.setInnerText(source);
-    return elem;
-  }
-
   @Override
   public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
       boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
@@ -46,6 +36,16 @@ class DOMImplSafari extends DOMImplStandard {
 
     return evt;
   }-*/;
+
+  /**
+   * Safari 2 does not support {@link ScriptElement#setText(String)}.
+   */
+  @Override
+  public ScriptElement createScriptElement(String source) {
+    ScriptElement elem = (ScriptElement) createElement("script");
+    elem.setInnerText(source);
+    return elem;
+  }
 
   @Override
   public native int eventGetClientX(NativeEvent evt) /*-{

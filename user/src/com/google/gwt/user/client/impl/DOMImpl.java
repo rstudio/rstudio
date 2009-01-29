@@ -48,7 +48,6 @@ public abstract class DOMImpl {
   public native void eventCancelBubble(Event evt, boolean cancel) /*-{
     evt.cancelBubble = cancel;
   }-*/;
-
   
   public native Element eventGetCurrentTarget(Event evt) /*-{
     return evt.currentTarget;

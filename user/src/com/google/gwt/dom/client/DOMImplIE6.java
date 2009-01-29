@@ -107,8 +107,8 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
-  	// Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
-  	// explicitly sets relatedTarget when synthesizing mouse events).
+    // Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
+    // explicitly sets relatedTarget when synthesizing mouse events).
     return evt.relatedTarget ||
            (evt.type == "mouseout" ? evt.toElement:evt.fromElement);
   }-*/;

@@ -25,6 +25,9 @@ abstract class DOMImpl {
     return $doc.createElement(tag);
   }-*/;
 
+  public abstract NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable);
+
   public native InputElement createInputElement(String type) /*-{
     var e = $doc.createElement("INPUT");
     e.type = type;
@@ -32,6 +35,15 @@ abstract class DOMImpl {
   }-*/;
 
   public abstract InputElement createInputRadioElement(String name);
+
+  public abstract NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode);
+
+  public abstract NativeEvent createMouseEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, int detail, int screenX,
+      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button, Element relatedTarget);
 
   public ScriptElement createScriptElement(String source) {
     ScriptElement elem = (ScriptElement) createElement("script");
@@ -46,6 +58,8 @@ abstract class DOMImpl {
     }
     return select;
   }
+
+  public abstract void dispatchEvent(Element target, NativeEvent evt);
 
   public native boolean eventGetAltKey(NativeEvent evt) /*-{
     return !!evt.altKey;
@@ -275,18 +289,4 @@ abstract class DOMImpl {
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
   }-*/;
-
-  public abstract NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
-      boolean cancelable);
-
-  public abstract NativeEvent createKeyEvent(Document doc, String type,
-      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
-      boolean shiftKey, boolean metaKey, int keyCode, int charCode);
-
-  public abstract NativeEvent createMouseEvent(Document doc, String type,
-      boolean canBubble, boolean cancelable, int detail, int screenX,
-      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
-      boolean shiftKey, boolean metaKey, int button, Element relatedTarget);
-
-  public abstract void dispatchEvent(Element target, NativeEvent evt);
 }
