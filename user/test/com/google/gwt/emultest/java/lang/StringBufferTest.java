@@ -27,6 +27,7 @@ public class StringBufferTest extends GWTTestCase {
    * @return the module name.
    * @see com.google.gwt.junit.client.GWTTestCase#getModuleName()
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.emultest.EmulSuite";
   }
@@ -350,6 +351,7 @@ public class StringBufferTest extends GWTTestCase {
 
     bld = new StringBuilder();
     bld.append(new Object() {
+      @Override
       public String toString() {
         return "obj";
       }
@@ -423,12 +425,12 @@ public class StringBufferTest extends GWTTestCase {
     assertEquals("01cd234", bld.toString());
 
     bld = new StringBuilder("01234");
-    bld.insert(2, 1.0);
-    assertEquals("011.0234", bld.toString());
+    bld.insert(2, 1.5);
+    assertEquals("011.5234", bld.toString());
 
     bld = new StringBuilder("01234");
-    bld.insert(2, 1.0F);
-    assertEquals("011.0234", bld.toString());
+    bld.insert(2, 1.5F);
+    assertEquals("011.5234", bld.toString());
 
     bld = new StringBuilder("01234");
     bld.insert(2, 99);
@@ -440,6 +442,7 @@ public class StringBufferTest extends GWTTestCase {
 
     bld = new StringBuilder("01234");
     bld.insert(2, new Object() {
+      @Override
       public String toString() {
         return "obj";
       }

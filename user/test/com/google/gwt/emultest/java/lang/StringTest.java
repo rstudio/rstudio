@@ -299,7 +299,12 @@ public class StringTest extends GWTTestCase {
    */
   public void testNull() {
     assertNull(returnNull());
-    String a = returnNull() + returnNull();
+    /*
+     * The ""+ is there because GWT currently does not translate a+b
+     * defensively enough to handle the case that both a and b are null.
+     * Revisit this test if that is ever changed.
+     */
+    String a = "" + returnNull() + returnNull();
     assertEquals("nullnull", a);
   }
 

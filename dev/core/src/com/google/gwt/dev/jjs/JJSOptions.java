@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionDraftCompile;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
 import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
@@ -25,6 +26,6 @@ import com.google.gwt.dev.util.arg.OptionSoycEnabled;
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionEnableAssertions, OptionRunAsyncEnabled, OptionScriptStyle,
-    OptionSoycEnabled {
+    OptionDraftCompile, OptionEnableAssertions, OptionRunAsyncEnabled,
+    OptionScriptStyle, OptionSoycEnabled {
 }

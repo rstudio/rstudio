@@ -31,6 +31,7 @@ import com.google.gwt.dev.shell.ModuleSpaceHost;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
@@ -319,6 +320,7 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
+      registerHandler(new ArgHandlerDraftCompile(options));
     }
   }
 

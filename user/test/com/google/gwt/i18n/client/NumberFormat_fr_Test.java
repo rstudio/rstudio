@@ -26,6 +26,7 @@ public class NumberFormat_fr_Test extends GWTTestCase {
   /**
    * Must refer to a valid module that inherits from com.google.gwt.junit.JUnit.
    */
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_fr";
   }
@@ -147,7 +148,7 @@ public class NumberFormat_fr_Test extends GWTTestCase {
     str = NumberFormat.getFormat("##0.###E0").format(12345);
     assertEquals("12,345E3", str);
 
-    str = NumberFormat.getFormat("##0.####E0").format(789.12345e-9);
+    str = NumberFormat.getFormat("##0.####E0").format(789.12346e-9);
     assertEquals("789,1235E-9", str);
     str = NumberFormat.getFormat("##0.####E0").format(780.e-9);
     assertEquals("780E-9", str);

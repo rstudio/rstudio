@@ -68,6 +68,7 @@ import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
+import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
 import com.google.gwt.dev.js.JsIEBlockSizeVisitor;
 import com.google.gwt.dev.js.JsInliner;
 import com.google.gwt.dev.js.JsNormalizer;
@@ -182,6 +183,8 @@ public class JavaToJavaScriptCompiler {
       JsNormalizer.exec(jsProgram);
       // Resolve all unresolved JsNameRefs.
       JsSymbolResolver.exec(jsProgram);
+      // Move all function definitions to a top-level scope, to reduce weirdness
+      EvalFunctionsAtTopScope.exec(jsProgram);
 
       // (9) Optimize the JS AST.
       if (options.isAggressivelyOptimize()) {
@@ -418,8 +421,8 @@ public class JavaToJavaScriptCompiler {
 
       // Recompute clinits each time, they can become empty.
       jprogram.typeOracle.recomputeClinits();
-
       didChange = false;
+
       // Remove unreferenced types, fields, methods, [params, locals]
       didChange = Pruner.exec(jprogram, true) || didChange;
       // finalize locals, params, fields, methods, classes
@@ -447,7 +450,16 @@ public class JavaToJavaScriptCompiler {
       }
       // prove that any types that have been culled from the main tree are
       // unreferenced due to type tightening?
-    } while (didChange);
+    } while (didChange && !options.isDraftCompile());
+
+    if (options.isDraftCompile()) {
+      /*
+       * Ensure that references to dead clinits are removed. Otherwise, the
+       * application won't run reliably.
+       */
+      jprogram.typeOracle.recomputeClinits();
+      DeadCodeElimination.exec(jprogram);
+    }
   }
 
   private static JavaToJavaScriptMap addStringLiteralMap(

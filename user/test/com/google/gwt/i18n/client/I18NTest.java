@@ -540,13 +540,13 @@ public class I18NTest extends GWTTestCase {
 
   public void testTypedMessages() {
     TestTypedMessages typed = (TestTypedMessages) GWT.create(TestTypedMessages.class);
-    String expected = "int(0) float(1.2), long(0), boolean(true), Object([], char(a), byte(127), short(-32768);";
-    assertEquals(expected, typed.testAllTypes(0, (float) 1.2, 0, true,
+    String expected = "int(0) float(1.5), long(0), boolean(true), Object([], char(a), byte(127), short(-32768);";
+    assertEquals(expected, typed.testAllTypes(0, (float) 1.5, 0, true,
         new ArrayList<String>(), 'a', Byte.MAX_VALUE, Short.MIN_VALUE));
     String lotsOfInts = typed.testLotsOfInts(1, 2, 3, 4);
     assertEquals("1, 2,3,4 ", lotsOfInts);
-    String oneFloat = typed.simpleMessageTest((float) 2.3);
-    assertEquals("2.3", oneFloat);
+    String oneFloat = typed.simpleMessageTest((float) 2.25);
+    assertEquals("2.25", oneFloat);
     String singleQuotes = typed.testSingleQuotes("arg");
     assertEquals("'A', 'arg', ','", singleQuotes);
     String testSomeObjectTypes = typed.testSomeObjectTypes(new I18NTest(),

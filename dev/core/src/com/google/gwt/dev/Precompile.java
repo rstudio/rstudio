@@ -42,6 +42,7 @@ import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
+import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
@@ -78,6 +79,7 @@ public class Precompile {
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerValidateOnlyFlag(options));
       registerHandler(new ArgHandlerDisableRunAsync(options));
+      registerHandler(new ArgHandlerDraftCompile(options));
     }
 
     @Override
@@ -88,6 +90,7 @@ public class Precompile {
 
   static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
       PrecompileOptions {
+
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
     private boolean validateOnly;
@@ -120,6 +123,10 @@ public class Precompile {
       return jjsOptions.isAggressivelyOptimize();
     }
 
+    public boolean isDraftCompile() {
+      return jjsOptions.isDraftCompile();
+    }
+
     public boolean isEnableAssertions() {
       return jjsOptions.isEnableAssertions();
     }
@@ -138,6 +145,10 @@ public class Precompile {
 
     public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
       jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
+    }
+
+    public void setDraftCompile(boolean draft) {
+      jjsOptions.setDraftCompile(draft);
     }
 
     public void setEnableAssertions(boolean enableAssertions) {
@@ -311,8 +322,7 @@ public class Precompile {
           merged.put(rebindResultsString, permutation);
         }
       }
-      return new Precompilation(unifiedAst, merged.values(),
-          generatedArtifacts);
+      return new Precompilation(unifiedAst, merged.values(), generatedArtifacts);
     } catch (UnableToCompleteException e) {
       // We intentionally don't pass in the exception here since the real
       // cause has been logged.

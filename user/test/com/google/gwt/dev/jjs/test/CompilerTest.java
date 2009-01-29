@@ -859,8 +859,8 @@ public class CompilerTest extends GWTTestCase {
     assertEquals("1bar", 1 + barShouldInline());
     assertEquals("fbar", 'f' + barShouldInline());
     assertEquals("truebar", true + barShouldInline());
-    assertEquals("3.3bar", 3.3 + barShouldInline());
-    assertEquals("3.3bar", 3.3f + barShouldInline());
+    assertEquals("3.5bar", 3.5 + barShouldInline());
+    assertEquals("3.5bar", 3.5f + barShouldInline());
     assertEquals("27bar", 27L + barShouldInline());
     assertEquals("nullbar", null + barShouldInline());
   }

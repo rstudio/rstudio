@@ -23,6 +23,7 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
+  private boolean draftCompile = false;
   private boolean enableAssertions;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean runAsyncEnabled = true;
@@ -37,6 +38,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void copyFrom(JJSOptions other) {
     setAggressivelyOptimize(other.isAggressivelyOptimize());
+    setDraftCompile(other.isDraftCompile());
     setEnableAssertions(other.isEnableAssertions());
     setOutput(other.getOutput());
     setRunAsyncEnabled(other.isRunAsyncEnabled());
@@ -49,6 +51,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isAggressivelyOptimize() {
     return aggressivelyOptimize;
+  }
+
+  public boolean isDraftCompile() {
+    return draftCompile;
   }
 
   public boolean isEnableAssertions() {
@@ -65,6 +71,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     this.aggressivelyOptimize = aggressivelyOptimize;
+  }
+
+  public void setDraftCompile(boolean draft) {
+    this.draftCompile = draft;
   }
 
   public void setEnableAssertions(boolean enableAssertions) {

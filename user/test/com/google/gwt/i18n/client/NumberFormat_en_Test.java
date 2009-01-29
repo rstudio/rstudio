@@ -173,7 +173,7 @@ public class NumberFormat_en_Test extends GWTTestCase {
     str = NumberFormat.getFormat("##0.###E0").format(12345);
     assertEquals("12.345E3", str);
 
-    str = NumberFormat.getFormat("##0.####E0").format(789.12345e-9);
+    str = NumberFormat.getFormat("##0.####E0").format(789.12346e-9);
     assertEquals("789.1235E-9", str);
     str = NumberFormat.getFormat("##0.####E0").format(780.e-9);
     assertEquals("780E-9", str);

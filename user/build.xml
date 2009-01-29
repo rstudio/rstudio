@@ -118,6 +118,14 @@
     </gwt.junit>
   </target>
 
+  <target name="test.web.draft" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
+    <gwt.junit test.args="${test.args} -draftCompile -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode-draft" test.cases="default.web.tests" >
+      <extraclasspaths>
+        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+      </extraclasspaths>
+    </gwt.junit>
+  </target>
+
   <target name="test" depends="compile, compile.tests" description="Run hosted-mode, web-mode, remoteweb, and selenium tests for this project.">
     <property.ensure name="distro.built" location="${gwt.dev.staging.jar}" message="GWT must be built before performing any tests.  This can be fixed by running ant in the ${gwt.root} directory." />
 
@@ -133,6 +141,7 @@
       <antcall target="remoteweb-test"/>
       <antcall target="test.hosted"/>
       <antcall target="test.web"/>
+      <antcall target="test.web.draft"/>
     </parallel>
     </limit>
   </target>
