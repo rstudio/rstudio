@@ -96,6 +96,8 @@ public final class RPCRequest {
         String escapedStrParam = strParam.replaceAll("\\\"", "\\\\\"");
         callSignature.append(escapedStrParam);
         callSignature.append('"');
+      } else if (param == null) {
+        callSignature.append("null");
       } else {
         // We assume that anyone who wants to use this method will implement
         // toString on his serializable objects.
