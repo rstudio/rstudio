@@ -141,5 +141,7 @@
     <delete dir="${project.build}" />
     <delete file="${project.lib}" />
   </target>
-
+  <target name="presubmit" depends="test, checkstyle" description="runs the gwt api checker, user checkstyle, and user tests">
+   <gwt.ant dir=".." target="apicheck-nobuild"/>
+  </target>
 </project>
