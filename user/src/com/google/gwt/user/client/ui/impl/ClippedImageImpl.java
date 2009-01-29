@@ -18,6 +18,10 @@ package com.google.gwt.user.client.ui.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.ui.Image;
 
 /**
  * Uses a combination of a clear image and a background image to clip all except
@@ -53,5 +57,27 @@ public class ClippedImageImpl {
         "clear.cache.gif' style='" + style + "' border='0'>";
 
     return clippedImgHtml;
+  }
+
+  public void fireSyntheticLoadEvent(final Image image) {
+    /*
+     * We need to synthesize a load event, because the native events that are
+     * fired would correspond to the loading of clear.cache.gif, which is
+     * incorrect. A native event would not even fire in Internet Explorer,
+     * because the root element is a wrapper element around the <img> element.
+     * Since we are synthesizing a load event, we do not need to sink the
+     * onload event.
+     * 
+     * We use a deferred command here to simulate the native version of the
+     * load event as closely as possible. In the native event case, it is
+     * unlikely that a second load event would occur while you are in the load
+     * event handler.
+     */
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        NativeEvent evt = Document.get().createLoadEvent();
+        image.getElement().dispatchEvent(evt);
+      }
+    });
   }
 }

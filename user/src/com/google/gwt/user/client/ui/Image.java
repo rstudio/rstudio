@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.ImageElement;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.ErrorEvent;
@@ -43,8 +42,6 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -161,7 +158,7 @@ public class Image extends Widget implements SourcesLoadEvents,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        fireSyntheticLoadEvent(image);
+        impl.fireSyntheticLoadEvent(image);
       }
     }
 
@@ -182,7 +179,7 @@ public class Image extends Widget implements SourcesLoadEvents,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        fireSyntheticLoadEvent(image);
+        impl.fireSyntheticLoadEvent(image);
       }
     }
 
@@ -190,28 +187,6 @@ public class Image extends Widget implements SourcesLoadEvents,
     @Override
     protected String getStateName() {
       return "clipped";
-    }
-
-    private void fireSyntheticLoadEvent(final Image image) {
-      /*
-       * We need to synthesize a load event, because the native events that are
-       * fired would correspond to the loading of clear.cache.gif, which is
-       * incorrect. A native event would not even fire in Internet Explorer,
-       * because the root element is a wrapper element around the <img> element.
-       * Since we are synthesizing a load event, we do not need to sink the
-       * onload event.
-       * 
-       * We use a deferred command here to simulate the native version of the
-       * load event as closely as possible. In the native event case, it is
-       * unlikely that a second load event would occur while you are in the load
-       * event handler.
-       */
-      DeferredCommand.addCommand(new Command() {
-        public void execute() {
-          NativeEvent evt = Document.get().createLoadEvent();
-          image.getElement().dispatchEvent(evt);
-        }
-      });
     }
   }
 

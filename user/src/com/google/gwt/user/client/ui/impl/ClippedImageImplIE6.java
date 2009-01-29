@@ -16,7 +16,13 @@
 package com.google.gwt.user.client.ui.impl;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.DeferredCommand;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.Image;
 
 /**
  * Implements the clipped image as a IMG inside a custom tag because we can't
@@ -62,6 +68,31 @@ public class ClippedImageImplIE6 extends ClippedImageImpl {
     int imgHeight = top + height;
     img.setPropertyInt("width", imgWidth);
     img.setPropertyInt("height", imgHeight);
+  }
+
+  @Override
+  public Element createStructure(String url, int left, int top, int width,
+      int height) {
+    // We need to explicitly sink ONLOAD on the child image element, because it
+    // can't be fired on the clipper.
+    Element clipper = super.createStructure(url, left, top, width, height);
+    Element img = clipper.getFirstChildElement();
+    Event.sinkEvents(img, Event.ONLOAD);
+    return clipper;
+  }
+
+  public void fireSyntheticLoadEvent(final Image image) {
+    // This is the same as the superclass' implementation, except that it
+    // explicitly checks for the 'clipper' element, and dispatches the event
+    // on the img (you can't dispatch events on the clipper).
+    DeferredCommand.addCommand(new Command() {
+      public void execute() {
+        NativeEvent evt = Document.get().createLoadEvent();
+        Element clipper = image.getElement();
+        Element img = clipper.getFirstChildElement();
+        img.dispatchEvent(evt);
+      }
+    });
   }
 
   @Override
