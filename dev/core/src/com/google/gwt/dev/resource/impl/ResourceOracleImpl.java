@@ -42,9 +42,9 @@ import java.util.zip.ZipFile;
 /**
  * The normal implementation of {@link ResourceOracle}.
  * 
- * TODO: this incorporates a quick-and-dirty fix for issue 3078 -- a proper
- * fix that considers module inheritance order before classpath order should
- * be implemented.
+ * TODO: this incorporates a quick-and-dirty fix for issue 3078 -- a proper fix
+ * that considers module inheritance order before classpath order should be
+ * implemented.
  */
 public class ResourceOracleImpl implements ResourceOracle {
 
@@ -130,6 +130,8 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
   }
 
+  private static final Map<ClassLoader, List<ClassPathEntry>> classPathCache = new HashMap<ClassLoader, List<ClassPathEntry>>();
+
   public static ClassPathEntry createEntryForUrl(TreeLogger logger, URL url)
       throws URISyntaxException, IOException {
     if (url.getProtocol().equals("file")) {
@@ -164,11 +166,16 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   private static void addAllClassPathEntries(TreeLogger logger,
       ClassLoader classLoader, List<ClassPathEntry> classPath) {
+    Set<URL> seenEntries = new HashSet<URL>();
     for (; classLoader != null; classLoader = classLoader.getParent()) {
       if (classLoader instanceof URLClassLoader) {
         URLClassLoader urlClassLoader = (URLClassLoader) classLoader;
         URL[] urls = urlClassLoader.getURLs();
         for (URL url : urls) {
+          if (seenEntries.contains(url)) {
+            continue;
+          }
+          seenEntries.add(url);
           Throwable caught;
           try {
             ClassPathEntry entry = createEntryForUrl(logger, url);
@@ -177,7 +184,8 @@ public class ResourceOracleImpl implements ResourceOracle {
             }
             continue;
           } catch (AccessControlException e) {
-            logger.log(TreeLogger.DEBUG, "Skipping URL due to access restrictions: " + url);
+            logger.log(TreeLogger.DEBUG,
+                "Skipping URL due to access restrictions: " + url);
             continue;
           } catch (URISyntaxException e) {
             caught = e;
@@ -191,10 +199,14 @@ public class ResourceOracleImpl implements ResourceOracle {
     }
   }
 
-  private static List<ClassPathEntry> getAllClassPathEntries(TreeLogger logger,
-      ClassLoader classLoader) {
-    ArrayList<ClassPathEntry> classPath = new ArrayList<ClassPathEntry>();
-    addAllClassPathEntries(logger, classLoader, classPath);
+  private static synchronized List<ClassPathEntry> getAllClassPathEntries(
+      TreeLogger logger, ClassLoader classLoader) {
+    List<ClassPathEntry> classPath = classPathCache.get(classLoader);
+    if (classPath == null) {
+      classPath = new ArrayList<ClassPathEntry>();
+      addAllClassPathEntries(logger, classLoader, classPath);
+      classPathCache.put(classLoader, classPath);
+    }
     return classPath;
   }
 
@@ -338,6 +350,11 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   public void setPathPrefixes(PathPrefixSet pathPrefixSet) {
     this.pathPrefixSet = pathPrefixSet;
+  }
+
+  // @VisibleForTesting
+  List<ClassPathEntry> getClassPath() {
+    return classPath;
   }
 
   private Map<String, Resource> rerootResourcePaths(

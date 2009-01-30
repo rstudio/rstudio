@@ -23,7 +23,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -183,6 +186,32 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
     testReadingResource(cpe1dir, cpe2dir);
   }
 
+  /**
+   * Verify that duplicate entries are removed from the classpath, and that
+   * multiple ResourceOracleImpls created from the same classloader return the
+   * same list of ClassPathEntries.
+   * 
+   * @throws MalformedURLException
+   */
+  public void testRemoveDuplicates() throws MalformedURLException {
+    TreeLogger logger = createTestTreeLogger();
+    URL cpe1 = findJarUrl("com/google/gwt/dev/resource/impl/testdata/cpe1.jar");
+    URL cpe2 = findJarUrl("com/google/gwt/dev/resource/impl/testdata/cpe2.jar");
+    URLClassLoader classLoader = new URLClassLoader(new URL[] {
+        cpe1, cpe2, cpe2, cpe1, cpe2,}, null);
+    ResourceOracleImpl oracle = new ResourceOracleImpl(logger, classLoader);
+    List<ClassPathEntry> classPath = oracle.getClassPath();
+    assertEquals(2, classPath.size());
+    assertJarEntry(classPath.get(0), "cpe1.jar");
+    assertJarEntry(classPath.get(1), "cpe2.jar");
+    oracle = new ResourceOracleImpl(logger, classLoader);
+    List<ClassPathEntry> classPath2 = oracle.getClassPath();
+    assertEquals(2, classPath2.size());
+    for (int i = 0; i < 2; ++i) {
+      assertSame(classPath.get(i), classPath2.get(i));
+    }
+  }
+
   public void testResourceAddition() throws IOException, URISyntaxException {
     ClassPathEntry cpe1mock = getClassPathEntry1AsMock();
     ClassPathEntry cpe1jar = getClassPathEntry1AsJar();
@@ -252,6 +281,18 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
      * TODO(bruce): figure out a good way to test real resource modifications of
      * jar files and directories
      */
+  }
+
+  /**
+   * @param classPathEntry
+   * @param string
+   */
+  private void assertJarEntry(ClassPathEntry classPathEntry, String expected) {
+    assertTrue("Should be instance of ZipFileClassPathEntry",
+        classPathEntry instanceof ZipFileClassPathEntry);
+    ZipFileClassPathEntry zipCPE = (ZipFileClassPathEntry) classPathEntry;
+    String jar = zipCPE.getLocation();
+    assertTrue("URL should contain " + expected, jar.contains(expected));
   }
 
   /**

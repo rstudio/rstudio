@@ -152,8 +152,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
   }
 
   protected File findJarFile(String name) throws URISyntaxException {
-    ClassLoader classLoader = getClass().getClassLoader();
-    URL url = classLoader.getResource(name);
+    URL url = findJarUrl(name);
     assertNotNull(
         "Expecting on the classpath: "
             + name
@@ -162,6 +161,15 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
     File file = new File(url.toURI());
     assertTrue("Cannot read as file: " + url.toExternalForm(), file.canRead());
     return file;
+  }
+
+  /**
+   * @param name
+   * @return
+   */
+  protected URL findJarUrl(String name) {
+    ClassLoader classLoader = getClass().getClassLoader();
+    return classLoader.getResource(name);
   }
 
   protected Resource findResourceWithPath(Set<AbstractResource> resources,
