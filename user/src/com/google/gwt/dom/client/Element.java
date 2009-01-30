@@ -15,8 +15,6 @@
  */
 package com.google.gwt.dom.client;
 
-import com.google.gwt.core.client.GWT;
-
 /**
  * All HTML element interfaces derive from this class.
  */
