@@ -209,6 +209,29 @@ public class CreateEventTest extends GWTTestCase {
   }
 
   /**
+   * Tests NativeEvent.stopPropagation()
+   */
+  public void testStopPropagation() {
+    NonBubbleAssertingEventListener listener = new NonBubbleAssertingEventListener(
+        "click") {
+      @Override
+      public void onBrowserEvent(Event event) {
+        super.onBrowserEvent(event);
+        if (event.getCurrentTarget() == child) {
+          event.stopPropagation();
+        }
+      }
+    };
+    Event.setEventListener(parent, listener);
+    Event.setEventListener(child, listener);
+
+    child.dispatchEvent(Document.get().createClickEvent(MOUSE_DETAIL, SCREEN_X,
+        SCREEN_Y, CLIENT_X, CLIENT_Y, true, true, true, true));
+
+    assertTrue("Expected child to receive event", listener.childReceived);
+  }
+
+  /**
    * Tests createBlurEvent().
    */
   public void testTriggerBlurEvent() {

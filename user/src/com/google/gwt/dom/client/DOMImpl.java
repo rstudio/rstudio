@@ -121,7 +121,7 @@ abstract class DOMImpl {
   }-*/;
 
   public native void eventStopPropagation(NativeEvent evt) /*-{
-    evt.cancelBubble = cancel;
+    evt.stopPropagation();
   }-*/;
 
   public abstract String eventToString(NativeEvent evt);

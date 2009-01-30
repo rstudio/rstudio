@@ -124,6 +124,11 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
+  public native void eventStopPropagation(NativeEvent evt) /*-{
+    evt.cancelBubble = true;
+  }-*/;
+
+  @Override
   public native String eventToString(NativeEvent evt) /*-{
     if (evt.toString) return evt.toString();
       return "[event" + evt.type + "]";
