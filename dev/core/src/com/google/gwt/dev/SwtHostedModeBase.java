@@ -178,6 +178,8 @@ abstract class SwtHostedModeBase extends HostedModeBase {
     return browserHost;
   }
 
+  protected abstract String getTitleText();
+
   @Override
   protected void initializeLogger() {
     final AbstractTreeLogger logger = mainWnd.getLogger();
@@ -221,8 +223,8 @@ abstract class SwtHostedModeBase extends HostedModeBase {
 
     shell.setImages(ShellMainWindow.getIcons());
 
-    mainWnd = new ShellMainWindow(this, shell, options.isNoServer() ? 0
-        : getPort());
+    mainWnd = new ShellMainWindow(this, shell, getTitleText(),
+        options.isNoServer() ? 0 : getPort());
 
     shell.setSize(700, 600);
     if (!isHeadless()) {

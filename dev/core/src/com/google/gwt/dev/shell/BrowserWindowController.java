@@ -15,17 +15,29 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
 /**
  * Interface to the browser window controller.
  */
 public interface BrowserWindowController {
+  /**
+   * Whether to display server control(s).
+   */
+  enum WebServerRestart {
+    DISABLED, ENABLED, NONE
+  }
+
   void closeAllBrowserWindows();
 
   boolean hasBrowserWindowsOpen();
 
+  WebServerRestart hasWebServer();
+
   String normalizeURL(String string);
 
   BrowserWidget openNewBrowserWindow() throws UnableToCompleteException;
+
+  void restartServer(TreeLogger logger) throws UnableToCompleteException;
 }

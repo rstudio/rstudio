@@ -133,33 +133,6 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
   }
 
-  /**
-   * Ensures that only Jetty and other server classes can be loaded into the web
-   * app classloader. This forces the user to put any necessary dependencies
-   * into WEB-INF/lib.
-   */
-  private static final class FilteringParentClassLoader extends ClassLoader {
-    private WebAppClassLoader child = null;
-    private final ClassLoader delegateTo = Thread.currentThread().getContextClassLoader();
-
-    private FilteringParentClassLoader() {
-      super(null);
-    }
-
-    public void setChild(WebAppClassLoader child) {
-      this.child = child;
-    }
-
-    @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
-      if (child != null
-          && (child.isServerPath(name) || child.isSystemPath(name))) {
-        return delegateTo.loadClass(name);
-      }
-      throw new ClassNotFoundException();
-    }
-  }
-
   private static class JettyServletContainer extends ServletContainer {
 
     private final int actualPort;
@@ -216,7 +189,61 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * A {@link WebAppContext} tailored to GWT hosted mode. Features hot-reload
+   * with a new {@link WebAppClassLoader} to pick up disk changes. The default
+   * Jetty {@code WebAppContext} will create new instances of servlets, but it
+   * will not create a brand new {@link ClassLoader}. By creating a new
+   * {@code ClassLoader} each time, we re-read updated classes from disk.
+   * 
+   * Also provides special class filtering to isolate the web app from the GWT
+   * hosting environment.
+   */
+  private final class WebAppContextWithReload extends WebAppContext {
+    /**
+     * Ensures that only Jetty and other server classes can be loaded into the
+     * {@link WebAppClassLoader}. This forces the user to put any necessary
+     * dependencies into WEB-INF/lib.
+     */
+    private final ClassLoader parentClassLoader = new ClassLoader(null) {
+      private final ClassLoader delegateTo = Thread.currentThread().getContextClassLoader();
+
+      @Override
+      protected Class<?> findClass(String name) throws ClassNotFoundException {
+        if (webAppClassLoader != null
+            && (webAppClassLoader.isServerPath(name) || webAppClassLoader.isSystemPath(name))) {
+          return delegateTo.loadClass(name);
+        }
+        throw new ClassNotFoundException();
+      }
+
+    };
+
+    private WebAppClassLoader webAppClassLoader;
+
+    @SuppressWarnings("unchecked")
+    private WebAppContextWithReload(String webApp, String contextPath) {
+      super(webApp, contextPath);
+      // Prevent file locking on Windows; pick up file changes.
+      getInitParams().put(
+          "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+      webAppClassLoader = new WebAppClassLoader(parentClassLoader, this);
+      setClassLoader(webAppClassLoader);
+      super.doStart();
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+      super.doStop();
+      webAppClassLoader = null;
+      setClassLoader(null);
+    }
+  }
+
   public ServletContainer start(TreeLogger logger, int port, File appRootDir)
       throws Exception {
     checkStartParams(logger, port, appRootDir);
@@ -249,15 +276,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     server.addConnector(connector);
 
     // Create a new web app in the war directory.
-    WebAppContext wac = new WebAppContext(appRootDir.getAbsolutePath(), "/");
-    FilteringParentClassLoader parentClassLoader = new FilteringParentClassLoader();
-    WebAppClassLoader wacl = new WebAppClassLoader(parentClassLoader, wac);
-    parentClassLoader.setChild(wacl);
-    wac.setClassLoader(wacl);
-
-    // Prevent file locking on Windows; pick up file changes.
-    wac.getInitParams().put(
-        "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+    WebAppContext wac = new WebAppContextWithReload(
+        appRootDir.getAbsolutePath(), "/");
 
     server.setHandler(wac);
     server.start();

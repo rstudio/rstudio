@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.shell.BrowserWindowController.WebServerRestart;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.TreeLoggerWidget;
@@ -50,6 +51,7 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     private ToolItem collapseAll;
     private ToolItem expandAll;
     private ToolItem newWindow;
+    private ToolItem restartServer;
 
     public Toolbar(Composite parent) {
       super(parent);
@@ -69,8 +71,26 @@ public class ShellMainWindow extends Composite implements DisposeListener,
           }
         }
       });
-
       newSeparator();
+
+      if (browserWindowController.hasWebServer() != WebServerRestart.NONE) {
+        restartServer = newItem("reload-server.gif", "&Restart Server",
+            "Restart the embedded web server to pick up code changes");
+        restartServer.addSelectionListener(new SelectionAdapter() {
+          @Override
+          public void widgetSelected(SelectionEvent event) {
+            try {
+              browserWindowController.restartServer(getLogger());
+            } catch (UnableToCompleteException e) {
+              getLogger().log(TreeLogger.ERROR, "Unable to restart server", e);
+            }
+          }
+        });
+        newSeparator();
+        if (browserWindowController.hasWebServer() == WebServerRestart.DISABLED) {
+          restartServer.setEnabled(false);
+        }
+      }
 
       collapseAll = newItem("collapse.gif", "&Collapse All",
           "Collapses all log entries");
@@ -181,9 +201,8 @@ public class ShellMainWindow extends Composite implements DisposeListener,
   private Toolbar toolbar;
 
   public ShellMainWindow(BrowserWindowController browserWindowController,
-      final Shell parent, int serverPort) {
+      Shell parent, String titleText, int serverPort) {
     super(parent, SWT.NONE);
-
     this.browserWindowController = browserWindowController;
 
     colorWhite = new Color(null, 255, 255, 255);
@@ -193,10 +212,9 @@ public class ShellMainWindow extends Composite implements DisposeListener,
 
     setLayout(new FillLayout());
     if (serverPort > 0) {
-      parent.setText("Google Web Toolkit Development Shell / Port "
-          + serverPort);
+      parent.setText(titleText + " / Port " + serverPort);
     } else {
-      parent.setText("Google Web Toolkit Development Shell");
+      parent.setText(titleText);
     }
 
     GridLayout gridLayout = new GridLayout(1, true);
@@ -207,7 +225,6 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     setLayout(gridLayout);
 
     // Create the toolbar.
-    //
     {
       toolbar = new Toolbar(this);
       GridData data = new GridData();
@@ -217,7 +234,6 @@ public class ShellMainWindow extends Composite implements DisposeListener,
     }
 
     // Create the log pane.
-    //
     {
       logPane = new TreeLoggerWidget(this);
       GridData data = new GridData();
