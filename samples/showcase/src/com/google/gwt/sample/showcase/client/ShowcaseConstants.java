@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.showcase.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsExample;
 import com.google.gwt.sample.showcase.client.content.i18n.CwConstantsWithLookupExample;
@@ -79,7 +80,7 @@ public interface ShowcaseConstants extends Constants,
   /**
    * The path to source code for examples, raw files, and style definitions.
    */
-  String DST_SOURCE = "gwtShowcaseSource/";
+  String DST_SOURCE = GWT.getModuleBaseURL() + "gwtShowcaseSource/";
 
   /**
    * The destination folder for parsed source code from Showcase examples.
