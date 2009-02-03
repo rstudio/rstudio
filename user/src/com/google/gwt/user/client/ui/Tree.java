@@ -516,8 +516,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
           // The click event should have given focus to this element already.
           // Avoid moving focus back up to the tree (so that focusable widgets
           // attached to TreeItems can receive keyboard events).
-        } else if (curSelection != null
-            && curSelection.getContentElem().isOrHasChild(e)) {
+        } else if (curSelection != null) {
           setFocus(true);
         }
         break;
