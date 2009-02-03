@@ -22,8 +22,8 @@ import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Creator for methods of the form Map getX() .
@@ -81,7 +81,8 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
 
     String[] keys = ConstantsStringArrayMethodCreator.split(keyString);
     ResourceList resources = getResources();
-    SortedMap<String, String> map = new TreeMap<String, String>();
+    // Use a LinkedHashMap to preserve declaration order (but remove dups).
+    Map<String, String> map = new LinkedHashMap<String, String>();
     for (String key : keys) {
       if (key.length() == 0) {
         continue;

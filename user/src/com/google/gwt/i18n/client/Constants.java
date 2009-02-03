@@ -64,7 +64,7 @@ import java.lang.annotation.Target;
  * 
  * {@example com.google.gwt.examples.i18n.NumberFormatConstantsAnnot}
  * </p>
- *
+ * 
  * <p>
  * It is also possible to change the property name bound to a constant accessor
  * using the {@code @Key} annotation. For example,
@@ -152,7 +152,8 @@ import java.lang.annotation.Target;
  * the constant accessor <code>someMap()</code> would return a
  * <code>Map</code> that maps <code>"a"</code> onto <code>"X"</code>,
  * <code>"b"</code> onto <code>"Y"</code>, and <code>"c"</code> onto
- * <code>"Z"</code>.
+ * <code>"Z"</code>. Iterating through this <code>Map</code> will return
+ * the keys or entries in declaration order.
  * </p>
  * 
  * <p>The benefit of using annotations, aside from not having to switch to

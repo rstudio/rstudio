@@ -20,10 +20,9 @@ import com.google.gwt.core.client.JavaScriptObject;
 import java.util.AbstractMap;
 import java.util.AbstractSet;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -33,10 +32,62 @@ import java.util.Set;
  */
 public class ConstantMap extends AbstractMap<String, String> {
 
-  /**
-   * A cache of a synthesized entry set.
-   */
-  private Set<Map.Entry<String, String>> entries;
+  private static final class EntryImpl implements Entry<String, String> {
+    private final String key;
+    private final String value;
+
+    private EntryImpl(String key, String value) {
+      assert (key != null);
+      assert (value != null);
+      this.key = key;
+      this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o instanceof Map.Entry) {
+        Map.Entry<?, ?> other = (Map.Entry<?, ?>) o;
+        // Key and value known to be non-null.
+        if (key.equals(other.getKey()) && value.equals(other.getValue())) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    public String getKey() {
+      return key;
+    }
+
+    public String getValue() {
+      return value;
+    }
+
+    /**
+     * Calculate the hash code using Sun's specified algorithm.
+     */
+    @Override
+    public int hashCode() {
+      int keyHash = 0;
+      int valueHash = 0;
+      if (getKey() != null) {
+        keyHash = getKey().hashCode();
+      }
+      if (getValue() != null) {
+        valueHash = getValue().hashCode();
+      }
+      return keyHash ^ valueHash;
+    }
+
+    public String setValue(String value) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String toString() {
+      return key + "=" + value;
+    }
+  }
 
   /**
    * The original set of keys.
@@ -56,6 +107,8 @@ public class ConstantMap extends AbstractMap<String, String> {
     init();
 
     for (int i = 0; i < keys.length; ++i) {
+      assert keys[i] != null;
+      assert values[i] != null;
       putImpl(keys[i], values[i]);
     }
   }
@@ -67,14 +120,48 @@ public class ConstantMap extends AbstractMap<String, String> {
 
   @Override
   public Set<Map.Entry<String, String>> entrySet() {
-    if (entries == null) {
-      Map<String, String> copy = new HashMap<String, String>();
-      for (String key : keys) {
-        copy.put(key, get(key));
+    return new AbstractSet<Entry<String, String>>() {
+      @Override
+      public boolean contains(Object o) {
+        if (!(o instanceof Entry)) {
+          return false;
+        }
+        Entry<?, ?> other = (Entry<?, ?>) o;
+        String value = get(other.getKey());
+        if (value != null && value.equals(other.getValue())) {
+          return true;
+        }
+        return false;
       }
-      entries = Collections.unmodifiableMap(copy).entrySet();
-    }
-    return entries;
+
+      @Override
+      public Iterator<Map.Entry<String, String>> iterator() {
+        return new Iterator<Entry<String, String>>() {
+          private int next = 0;
+
+          public boolean hasNext() {
+            return next < ConstantMap.this.size();
+          }
+
+          public Entry<String, String> next() {
+            if (!hasNext()) {
+              throw new NoSuchElementException();
+            }
+            String key = keys[next++];
+            return new EntryImpl(key, get(key));
+          }
+
+          public void remove() {
+            throw new UnsupportedOperationException();
+          }
+        };
+      }
+
+      @Override
+      public int size() {
+        return ConstantMap.this.size();
+      }
+    };
   }
 
   @Override
