@@ -44,7 +44,7 @@ public class DayFilterWidget extends Composite {
       addClickHandler(dayCheckBoxHandler);
 
       // Initialize based on the calendar's current value.
-      setChecked(calendar.getDayIncluded(day));
+      setValue(calendar.getDayIncluded(day));
     }
   }
 
@@ -52,9 +52,9 @@ public class DayFilterWidget extends Composite {
     public void onClick(ClickEvent event) {
       onClick((DayCheckBox) event.getSource());
     }
-    
+
     public void onClick(DayCheckBox dayCheckBox) {
-      calendar.setDayIncluded(dayCheckBox.day, dayCheckBox.isChecked());
+      calendar.setDayIncluded(dayCheckBox.day, dayCheckBox.getValue());
     }
   }
 
@@ -102,7 +102,7 @@ public class DayFilterWidget extends Composite {
     for (int i = 0, n = outer.getWidgetCount(); i < n; ++i) {
       Widget w = outer.getWidget(i);
       if (w instanceof DayCheckBox) {
-        ((DayCheckBox) w).setChecked(checked);
+        ((DayCheckBox) w).setValue(checked);
         dayCheckBoxHandler.onClick((DayCheckBox) w);
       }
     }
