@@ -119,6 +119,20 @@ public class CheckBoxTest extends GWTTestCase {
     UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
   }
 
+  /**
+   * Tests that detaching and attaching a CheckBox widget retains the checked
+   * state of the element. This is known to be tricky on IE.
+   */
+  public void testDetachment() {
+    InputElement elm = DOM.createInputCheck().cast();
+    CheckBox box = new CheckBox(elm.<Element> cast());
+    RootPanel.get().add(box);
+    elm.setChecked(true);
+    RootPanel.get().remove(box);
+    RootPanel.get().add(box);
+    assertTrue(elm.isChecked());
+  }
+
   public void testFormValue() {
     InputElement elm = Document.get().createCheckInputElement();
     Element asOldElement = elm.cast();
