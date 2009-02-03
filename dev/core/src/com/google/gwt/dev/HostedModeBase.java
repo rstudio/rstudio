@@ -41,9 +41,6 @@ import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
-import com.google.gwt.util.tools.ToolBase;
-
-import org.eclipse.swt.widgets.Display;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -322,14 +319,6 @@ abstract class HostedModeBase implements BrowserWindowController {
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
     }
-  }
-
-  static {
-    // Force ToolBase to clinit, which causes SWT stuff to happen.
-    new ToolBase() {
-    };
-    // Correct menu on Mac OS X
-    Display.setAppName("GWT");
   }
 
   protected final HostedModeBaseOptions options;
