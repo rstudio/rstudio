@@ -55,14 +55,14 @@ public class JSONTest extends GWTTestCase {
   private static void assertJSONObjectEquals(JSONObject expected,
       JSONObject actual) {
     Set<String> actKeys = actual.keySet();
-    for (String key : expected.keySet()) {
-      actKeys.remove(key);
+    Set<String> expKeys = expected.keySet();
+    assertEquals(expKeys.size(), actKeys.size());
+    for (String key : expKeys) {
       assertTrue(actual.containsKey(key));
       JSONValue expValue = expected.get(key);
       JSONValue actValue = actual.get(key);
       assertJSONValueEquals(expValue, actValue);
     }
-    assertEquals(0, actKeys.size());
   }
 
   private static void assertJSONValueEquals(JSONValue expected, JSONValue actual) {

@@ -110,7 +110,8 @@ public class JSONObject extends JSONValue {
   }
 
   /**
-   * Returns the set of properties defined on this JSONObject.
+   * Returns the set of properties defined on this JSONObject. The returned set
+   * is immutable.
    */
   public Set<String> keySet() {
     final String[] keys = computeKeys();
