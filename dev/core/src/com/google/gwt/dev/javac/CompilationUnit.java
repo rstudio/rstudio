@@ -15,11 +15,13 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
@@ -30,6 +32,9 @@ import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,25 +51,129 @@ import java.util.Set;
  */
 public abstract class CompilationUnit {
 
-  static class AnonymousClassVisitor extends EmptyVisitor {
-    /*
-     * array of classNames of inner clases that aren't synthetic classes.
-     */
-    List<String> classNames = new ArrayList<String>();
+  /**
+   * Encapsulates the functionality to find all nested classes of this class
+   * that have compiler-generated names. All class bytes are loaded from the
+   * disk and then analyzed using ASM.
+   */
+  static class GeneratedClassnameFinder {
+    private static class AnonymousClassVisitor extends EmptyVisitor {
+      /*
+       * array of classNames of inner clases that aren't synthetic classes.
+       */
+      List<String> classNames = new ArrayList<String>();
 
-    public List<String> getInnerClassNames() {
-      return classNames;
-    }
+      public List<String> getInnerClassNames() {
+        return classNames;
+      }
 
-    @Override
-    public void visitInnerClass(String name, String outerName,
-        String innerName, int access) {
-      if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
-        classNames.add(name);
+      @Override
+      public void visitInnerClass(String name, String outerName,
+          String innerName, int access) {
+        if ((access & Opcodes.ACC_SYNTHETIC) == 0) {
+          classNames.add(name);
+        }
       }
     }
-  }
 
+    private final List<String> classesToScan;
+    private final TreeLogger logger;
+    private final String mainClass;
+    private String mainUrlBase = null;
+
+    GeneratedClassnameFinder(TreeLogger logger, String mainClass) {
+      assert mainClass != null;
+      this.mainClass = mainClass;
+      classesToScan = new ArrayList<String>();
+      classesToScan.add(mainClass);
+      this.logger = logger;
+    }
+
+    List<String> getClassNames() {
+      // using a list because presumably there will not be many generated
+      // classes
+      List<String> allGeneratedClasses = new ArrayList<String>();
+      for (int i = 0; i < classesToScan.size(); i++) {
+        String lookupName = classesToScan.get(i);
+        byte classBytes[] = getClassBytes(lookupName);
+        if (classBytes == null) {
+          /*
+           * Weird case: javac might generate a name and reference the class in
+           * the bytecode but decide later that the class is unnecessary. In the
+           * bytecode, a null is passed for the class.
+           */
+          continue;
+        }
+
+        /*
+         * Add the class to the list only if it can be loaded to get around the
+         * javac weirdness issue where javac refers a class but does not
+         * generate it.
+         */
+        if (CompilingClassLoader.isClassnameGenerated(lookupName)
+            && !allGeneratedClasses.contains(lookupName)) {
+          allGeneratedClasses.add(lookupName);
+        }
+        AnonymousClassVisitor cv = new AnonymousClassVisitor();
+        new ClassReader(classBytes).accept(cv, 0);
+        List<String> innerClasses = cv.getInnerClassNames();
+        for (String innerClass : innerClasses) {
+          // The innerClass has to be an inner class of the lookupName
+          if (!innerClass.startsWith(mainClass + "$")) {
+            continue;
+          }
+          /*
+           * TODO (amitmanjhi): consider making this a Set if necessary for
+           * performance
+           */
+          // add the class to classes
+          if (!classesToScan.contains(innerClass)) {
+            classesToScan.add(innerClass);
+          }
+        }
+      }
+      Collections.sort(allGeneratedClasses, new GeneratedClassnameComparator());
+      return allGeneratedClasses;
+    }
+
+    /*
+     * Load classBytes from disk. Check if the classBytes are loaded from the
+     * same location as the location of the mainClass.
+     */
+    private byte[] getClassBytes(String slashedName) {
+      URL url = Thread.currentThread().getContextClassLoader().getResource(
+          slashedName + ".class");
+      if (url == null) {
+        logger.log(TreeLogger.DEBUG, "Unable to find " + slashedName
+            + " on the classPath");
+        return null;
+      }
+      String urlStr = url.toExternalForm();
+      if (slashedName.equals(mainClass)) {
+        // initialize the mainUrlBase for later use.
+        mainUrlBase = urlStr.substring(0, urlStr.lastIndexOf('/'));
+      } else {
+        assert mainUrlBase != null;
+        if (!mainUrlBase.equals(urlStr.substring(0, urlStr.lastIndexOf('/')))) {
+          logger.log(TreeLogger.DEBUG, "Found " + slashedName + " at " + urlStr
+              + " The base location is different from  that of " + mainUrlBase
+              + " Not loading");
+          return null;
+        }
+      }
+
+      // url != null, we found it on the class path.
+      try {
+        URLConnection conn = url.openConnection();
+        return Util.readURLConnectionAsBytes(conn);
+      } catch (IOException ignored) {
+        logger.log(TreeLogger.DEBUG, "Unable to load " + urlStr
+            + ", in trying to load " + slashedName);
+        // Fall through.
+      }
+      return null;
+    }
+  }
   /**
    * Tracks the state of a compilation unit through the compile and recompile
    * process.
@@ -167,26 +276,31 @@ public abstract class CompilationUnit {
   private State state = State.FRESH;
 
   /*
-   * Check if the unit has one or more anonymous classes. 'javac' below refers
-   * to the compiler that was used to compile the java files on disk. Returns
-   * true if our heuristic for constructing the anonymous class mappings worked.
+   * Check if the unit has one or more classes with generated names. 'javac'
+   * below refers to the compiler that was used to compile the java files on
+   * disk. Returns true if our heuristic for constructing the anonymous class
+   * mappings worked.
    */
-  public boolean constructAnonymousClassMappings(byte classBytes[]) {
+  public boolean constructAnonymousClassMappings(TreeLogger logger) {
     // map from the name in javac to the name in jdt
     anonymousClassMap = new HashMap<String, String>();
-    List<String> javacClasses = getJavacClassNames(classBytes);
-    List<String> jdtClasses = getJdtClassNames();
-    if (javacClasses.size() == jdtClasses.size()) {
+    for (String topLevelClass : getTopLevelClasses()) {
+      // Generate a mapping for each top-level class separately
+      List<String> javacClasses = new GeneratedClassnameFinder(logger,
+          topLevelClass).getClassNames();
+      List<String> jdtClasses = getJdtClassNames(topLevelClass);
+      if (javacClasses.size() != jdtClasses.size()) {
+        anonymousClassMap = Collections.emptyMap();
+        return false;
+      }
       int size = javacClasses.size();
       for (int i = 0; i < size; i++) {
         if (!javacClasses.get(i).equals(jdtClasses.get(i))) {
           anonymousClassMap.put(javacClasses.get(i), jdtClasses.get(i));
         }
       }
-      return true;
     }
-    anonymousClassMap = Collections.emptyMap();
-    return false;
+    return true;
   }
 
   public boolean createdClassMapping() {
@@ -383,30 +497,26 @@ public abstract class CompilationUnit {
     }
   }
 
-  private List<String> getJavacClassNames(byte classBytes[]) {
-    AnonymousClassVisitor cv = new AnonymousClassVisitor();
-    new ClassReader(classBytes).accept(cv, 0);
-    List<String> classNames = cv.getInnerClassNames();
-    List<String> namesToRemove = new ArrayList<String>();
-    for (String className : classNames) {
-      if (!CompilingClassLoader.isClassnameGenerated(className)) {
-        namesToRemove.add(className);
-      }
-    }
-    classNames.removeAll(namesToRemove);
-    Collections.sort(classNames, new GeneratedClassnameComparator());
-    return classNames;
-  }
-
-  private List<String> getJdtClassNames() {
+  private List<String> getJdtClassNames(String topLevelClass) {
     List<String> classNames = new ArrayList<String>();
     for (CompiledClass cc : getCompiledClasses()) {
-      if (isAnonymousClass(cc)) {
+      if (isAnonymousClass(cc)
+          && cc.getBinaryName().startsWith(topLevelClass + "$")) {
         classNames.add(cc.getBinaryName());
       }
     }
     Collections.sort(classNames, new GeneratedClassnameComparator());
     return classNames;
+  }
+
+  private List<String> getTopLevelClasses() {
+    List<String> topLevelClasses = new ArrayList<String>();
+    for (CompiledClass cc : getCompiledClasses()) {
+      if (cc.getEnclosingClass() == null) {
+        topLevelClasses.add(cc.binaryName);
+      }
+    }
+    return topLevelClasses;
   }
 
   /**

@@ -16,6 +16,9 @@
 package com.google.gwt.dev.shell.rewrite.client;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
+
+import junit.framework.TestCase;
 
 /**
  * Test-case to check if the jsni blocks are mapped correctly between the
@@ -31,7 +34,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class EmmaClassLoadingTest extends GWTTestCase {
 
-  enum EnumTest {
+  enum EnumClass {
     A, B, C,
   }
 
@@ -40,7 +43,7 @@ public class EmmaClassLoadingTest extends GWTTestCase {
   }
 
   private static String messages[] = {
-      "a foo", "b foo", "enum A", "d foo", "e foo"};
+      "1a foo", "1b foo", "1enum A", "1d foo", "1e foo"};
 
   private static int logCount = 0;
 
@@ -56,14 +59,14 @@ public class EmmaClassLoadingTest extends GWTTestCase {
   public void test1() {
     TestInterface a = new TestInterface() {
       public void foo() {
-        log("a foo");
+        log("1a foo");
       }
     };
     a.foo();
 
     TestInterface b = new TestInterface() {
       public native void foo() /*-{
-        @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("b foo");
+        @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("1b foo");
       }-*/;
     };
     b.foo();
@@ -75,10 +78,10 @@ public class EmmaClassLoadingTest extends GWTTestCase {
         }-*/;
       };
     }
-    EnumTest et = EnumTest.A;
+    EnumClass et = EnumClass.A;
     switch (et) {
       case A:
-        log("enum A");
+        log("1enum A");
         break;
       case B:
         log("ANY_FOO_2");
@@ -90,7 +93,7 @@ public class EmmaClassLoadingTest extends GWTTestCase {
 
     TestInterface d = new TestInterface() {
       public native void foo() /*-{
-        @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("d foo");
+        @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("1d foo");
       }-*/;
     };
     d.foo();
@@ -103,8 +106,193 @@ public class EmmaClassLoadingTest extends GWTTestCase {
      */
     TestInterface e = new TestInterface() {
       public native void foo() /*-{
-        @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("e foo");
+        @com.google.gwt.dev.shell.rewrite.client.EmmaClassLoadingTest::log(Ljava/lang/String;)("1e foo");
       }-*/;
     };
-  } 
+  }
+
+  public void test2() {
+    SecondTopLevelClass second = new SecondTopLevelClass();
+    SecondTopLevelClass.InnerClass.test();
+  }
+
+  public void test3() {
+    ThirdTopLevelClass third = new ThirdTopLevelClass();
+    third.test();
+  }
+
+  public void test4() {
+    FourthTopLevelClass fourth = new FourthTopLevelClass();
+    fourth.test();
+  }
+
+}
+
+/**
+ * Check that the algorithm correctly maps named inner classes. In this example,
+ * jdt generates $1Foo and $2Foo whereas javac generates $2Foo and $3Foo.
+ * 
+ */
+class FourthTopLevelClass extends TestCase {
+  private static String messages[] = {"4a foo"};
+
+  private static int logCount = 0;
+
+  private static void log(String msg) {
+    assertEquals(messages[logCount++], msg);
+  }
+
+  void test() {
+    test1();
+    test2();
+  };
+
+  private void test1() {
+    if (false) {
+      class Foo {
+        public native void foo() /*-{
+          @com.google.gwt.dev.shell.rewrite.client.FourthTopLevelClass::log(Ljava/lang/String;)("ANY_FOO");
+        }-*/;
+      }
+      new Foo().foo();
+    }
+  }
+
+  private void test2() {
+    class Foo {
+      public native void foo() /*-{
+        @com.google.gwt.dev.shell.rewrite.client.FourthTopLevelClass::log(Ljava/lang/String;)("4a foo");
+      }-*/;
+    }
+    new Foo().foo();
+  }
+
+  /*
+   * Added a test3() method so that when the test fails, it fails quickly.
+   * Instead of timing out, the AssertEquals fails
+   */
+  private void test3() {
+    class Foo {
+      public native void foo() /*-{
+        @com.google.gwt.dev.shell.rewrite.client.FourthTopLevelClass::log(Ljava/lang/String;)("4b foo");
+      }-*/;
+    }
+    new Foo().foo();
+  }
+}
+
+/**
+ * Check if GWT is able to correctly compile cases when there are multiple
+ * top-level classes and when there is a need to traverse inner classes. This
+ * class's test method simply mirrors the test methods of EmmaClassLoadingTest.
+ * 
+ */
+class SecondTopLevelClass extends TestCase {
+
+  static class InnerClass {
+    /**
+     * Test that mapping is constructed for something which is not in the main
+     * unit as well.
+     */
+    static void test() {
+      EmmaClassLoadingTest.TestInterface a = new EmmaClassLoadingTest.TestInterface() {
+        public void foo() {
+          log("2a foo");
+        }
+      };
+      a.foo();
+
+      EmmaClassLoadingTest.TestInterface b = new EmmaClassLoadingTest.TestInterface() {
+        public native void foo() /*-{
+          @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2b foo");
+        }-*/;
+      };
+      b.foo();
+
+      if (false) {
+        EmmaClassLoadingTest.TestInterface c = new EmmaClassLoadingTest.TestInterface() {
+          public native void foo() /*-{
+            @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("ANY_FOO_1");
+          }-*/;
+        };
+      }
+      EmmaClassLoadingTest.EnumClass et = EmmaClassLoadingTest.EnumClass.A;
+      switch (et) {
+        case A:
+          log("2enum A");
+          break;
+        case B:
+          log("ANY_FOO_2");
+          break;
+        case C:
+          log("ANY_FOO_3");
+          break;
+      }
+
+      EmmaClassLoadingTest.TestInterface d = new EmmaClassLoadingTest.TestInterface() {
+        public native void foo() /*-{
+          @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2d foo");
+        }-*/;
+      };
+      d.foo();
+
+      /*
+       * jdt generates $1 (a), $2 (b), $3 (d), $4 (e). javac generates $1 (a),
+       * $2 (b), $3 (c), $4 (d), $5 (e), $6 (synthetic). Added e so that the
+       * test fails quickly. Otherwise, it had to wait for a time-out (in
+       * looking through jdt generated code for non-existent jsni methods of $4)
+       * to fail.
+       */
+      EmmaClassLoadingTest.TestInterface e = new EmmaClassLoadingTest.TestInterface() {
+        public native void foo() /*-{
+          @com.google.gwt.dev.shell.rewrite.client.SecondTopLevelClass::log(Ljava/lang/String;)("2e foo");
+        }-*/;
+      };
+    }
+  }
+
+  private static String messages[] = {
+      "2a foo", "2b foo", "2enum A", "2d foo", "2e foo"};
+
+  private static int logCount = 0;
+
+  private static void log(String msg) {
+    assertEquals(messages[logCount++], msg);
+  }
+}
+
+/**
+ * Check that the mapping algorithm is not confused by the presence of other
+ * inner classes.
+ */
+class ThirdTopLevelClass extends TestCase {
+
+  private static String messages[] = {"3a foo"};
+
+  private static int logCount = 0;
+
+  private static void log(String msg) {
+    assertEquals(messages[logCount++], msg);
+  }
+
+  void test() {
+    Timer t1 = new Timer() {
+      @Override
+      public void run() {
+      }
+    };
+
+    EmmaClassLoadingTest.TestInterface a = new EmmaClassLoadingTest.TestInterface() {
+      public native void foo() /*-{
+        @com.google.gwt.dev.shell.rewrite.client.ThirdTopLevelClass::log(Ljava/lang/String;)("3a foo");
+      }-*/;
+    };
+    a.foo();
+
+    Timer t2 = new Timer() {
+      @Override
+      public void run() {
+      }
+    };
+  }
 }

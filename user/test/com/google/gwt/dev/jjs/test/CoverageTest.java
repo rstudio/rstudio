@@ -95,6 +95,12 @@ public class CoverageTest extends CoverageBase {
 
       new InnerSub().new InnerSubSub().fda();
       new SecondMain().new FunkyInner();
+      /*
+       * The statement below causes a javac bug in openJdk and sun's java 6. It
+       * produces incorrect bytecode that fails with a java.lang.VerifyError --
+       * see Google's internal issue 1628473. This is likely to be an hindrance
+       * if and when GWT attempts to read bytecode directly.
+       */
       new NamedLocal().new NamedLocalSub().foo();
     }
 
