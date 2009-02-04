@@ -700,7 +700,7 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * @param listener listener to add
    * @deprecated add a click handler instead and use
    *             {@link HTMLTable#getCellForEvent(ClickEvent)} to get the cell
-   *             information
+   *             information (remember to check for a null return value)
    */
   @Deprecated
   public void addTableListener(TableListener listener) {
@@ -748,7 +748,8 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
 
   /**
    * Given a click event, return the Cell that was clicked, or null if the event
-   * did not hit this table.
+   * did not hit this table.  The cell can also be null if the click event does
+   * not occur on a specific cell.
    * 
    * @param event A click event of indeterminate origin
    * @return The appropriate cell, or null

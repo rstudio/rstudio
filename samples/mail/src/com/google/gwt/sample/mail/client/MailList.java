@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 /**
  * A composite that displays a list of emails that can be selected.
@@ -91,9 +92,12 @@ public class MailList extends Composite implements ClickHandler {
       }
     } else if (sender == table) {
       // Select the row that was clicked (-1 to account for header row).
-      int row = table.getCellForEvent(event).getRowIndex();
-      if (row > 0) {
-        selectRow(row - 1);
+      Cell cell = table.getCellForEvent(event);
+      if (cell != null) {
+        int row = cell.getRowIndex();
+        if (row > 0) {
+          selectRow(row - 1);
+        }
       }
     }
   }
