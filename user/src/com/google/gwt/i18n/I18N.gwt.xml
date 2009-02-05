@@ -45,6 +45,11 @@
       }
 
       if (locale == null) {
+        // Look for an override computed by other means in the selection script
+        locale = $wnd['__gwt_Locale'];
+      }
+      
+      if (locale == null) {
         return "default";
       }
 
