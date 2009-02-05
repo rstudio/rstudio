@@ -17,7 +17,8 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
-import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
 
 import java.util.ArrayList;
 
@@ -64,9 +65,9 @@ public abstract class Timer {
 
   private static void hookWindowClosing() {
     // Catch the window closing event.
-    Window.addWindowClosingHandler(new Window.ClosingHandler() {
+    Window.addCloseHandler(new CloseHandler<Window>() {
 
-      public void onWindowClosing(ClosingEvent event) {
+      public void onClose(CloseEvent<Window> event) {
         while (timers.size() > 0) {
           timers.get(0).cancel();
         }
