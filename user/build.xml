@@ -14,7 +14,7 @@
        includes="**/EmmaClassLoadingTest.class" />
   
   <fileset id="default.hosted.emma.tests" dir="${javac.junit.out}" 
-      excludes="**/*jjs.test.CoverageTest.class" includes="**/*Test.class" />
+      excludes="**/CoverageTest.class" includes="**/*Test.class" />
   <!-- everything succeeds except CoverageTest.java. It fails due to a javac bug in sun/OpenJDK's Java. See the file contents for details -->
   
   <!--
