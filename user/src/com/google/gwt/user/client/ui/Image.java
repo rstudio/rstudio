@@ -64,10 +64,7 @@ import java.util.HashMap;
  * will be lost.
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class="css">
- * <li>.gwt-Image { }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> <ul class="css"> <li>.gwt-Image { }</li> </ul>
  * 
  * Tranformations between clipped and unclipped state will result in a loss of
  * any style names that were set/added; the only style names that are preserved
@@ -225,16 +222,20 @@ public class Image extends Widget implements SourcesLoadEvents,
   private static class UnclippedState extends State {
 
     UnclippedState(Element element) {
-      // Todo(ecc) This is wrong, we should not be sinking these here on such a
-      // common widget.After the branch is stable, this should be fixed.
+      // This case is relatively unusual, in that we swapped a clipped image
+      // out, so does not need to be efficient.
       Event.sinkEvents(element, Event.ONCLICK | Event.MOUSEEVENTS
           | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
     UnclippedState(Image image) {
       image.replaceElement(Document.get().createImageElement());
-      // Todo(ecc) This is wrong, we should not be sinking these here on such a
-      // common widget.After the branch is stable, this should be fixed.
+      // We are working around an IE race condition that can make the image
+      // incorrectly cache itself if the load event is assigned at the same time
+      // as the image is added to the dom.
+      Event.sinkEvents(image.getElement(), Event.ONLOAD);
+
+      // Todo(ecc) this could be more efficient overall.
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
           | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
