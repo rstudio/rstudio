@@ -441,6 +441,10 @@ public class GWTShell extends HostedModeBase {
     return false;
   }
 
+  public WebServerRestart hasWebServer() {
+    return WebServerRestart.NONE;
+  }
+
   /**
    * Launch the arguments as Urls in separate windows.
    */
@@ -489,6 +493,10 @@ public class GWTShell extends HostedModeBase {
 
   public BrowserWidget openNewBrowserWindow() throws UnableToCompleteException {
     throw new UnableToCompleteException();
+  }
+
+  public void restartServer(TreeLogger logger) throws UnableToCompleteException {
+    // Unimplemented.
   }
 
   @Override
@@ -612,8 +620,7 @@ public class GWTShell extends HostedModeBase {
     ImageIcon gwtIcon = loadImageIcon("icon24.png");
     frame = new JFrame("GWT Hosted Mode");
     tabs = new JTabbedPane();
-    boolean checkForUpdates = doShouldCheckForUpdates();
-    mainWnd = new ShellMainWindow(this, checkForUpdates, options.getLogLevel());
+    mainWnd = new ShellMainWindow(this, options.getLogLevel());
     tabs.addTab("Hosted Mode", gwtIcon, mainWnd, "GWT Hosted-mode");
     if (!options.isNoServer()) {
       ImageIcon tomcatIcon = loadImageIcon("tomcat24.png");

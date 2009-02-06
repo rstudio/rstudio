@@ -34,9 +34,7 @@ public class ShellMainWindow extends JPanel {
 
   private SwingLoggerPanel logWindow;
 
-  public ShellMainWindow(GWTShell shell, boolean checkForUpdates,
-      TreeLogger.Type maxLevel) {
-    // TODO(jat): implement update check
+  public ShellMainWindow(GWTShell shell, TreeLogger.Type maxLevel) {
     super(new BorderLayout());
     JPanel panel = new JPanel(new GridLayout(2, 1));
     JPanel optionPanel = new JPanel();
