@@ -112,6 +112,9 @@ public class GWTShell extends SwtHostedModeBase {
 
     @Override
     public File getWorkDir() {
+      if (System.getProperty("com.google.gwt.shell.outdir") != null) {
+        return new File(System.getProperty("com.google.gwt.shell.outdir"));
+      }
       return new File(getOutDir(), ".gwt-tmp");
     }
 

@@ -181,9 +181,9 @@ public class EmbeddedTomcatServer {
       if (catBase != null) {
         logger.log(TreeLogger.WARN, "catalina.base.create is deprecated.  " +
             "Use catalina.base, and it will be created if necessary.");
-      } else {
-        catBase = generateDefaultCatalinaBase(logger, topWorkDir);
+        topWorkDir = new File(catBase);
       }
+      catBase = generateDefaultCatalinaBase(logger, topWorkDir);
       System.setProperty("catalina.base", catBase);
     }
 
