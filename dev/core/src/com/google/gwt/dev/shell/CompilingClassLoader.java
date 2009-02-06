@@ -390,10 +390,10 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   /**
    * Checks if the class names is generated. Accepts any classes whose names
-   * match .+$\d.* (handling named classes within anonymous classes and
-   * multiple named classes of the same name in a class, but in different
-   * methods). Checks if the class or any of its enclosing classes are anonymous
-   * or synthetic.
+   * match .+$\d.* (handling named classes within anonymous classes and multiple
+   * named classes of the same name in a class, but in different methods).
+   * Checks if the class or any of its enclosing classes are anonymous or
+   * synthetic.
    * <p>
    * If new compilers have different conventions for anonymous and synthetic
    * classes, this code needs to be updated.
@@ -754,9 +754,9 @@ public final class CompilingClassLoader extends ClassLoader implements
        */
       List<JsniMethod> jsniMethods = (unit == null) ? null
           : unit.getJsniMethods();
-      if (unit != null && !unit.isSuperSource() && unit.hasAnonymousClasses()
-          && jsniMethods != null && jsniMethods.size() > 0
-          && !unit.createdClassMapping()) {
+      if (unit != null && !unit.isSuperSource() && !unit.isGenerated()
+          && unit.hasAnonymousClasses() && jsniMethods != null
+          && jsniMethods.size() > 0 && !unit.createdClassMapping()) {
         if (!unit.constructAnonymousClassMappings(logger)) {
           logger.log(TreeLogger.ERROR,
               "Our heuristic for mapping anonymous classes between compilers "

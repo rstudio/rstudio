@@ -2,6 +2,7 @@
   <property name="gwt.root" location=".." />
   <property name="project.tail" value="user" />
   <property name="test.args" value="" />
+  <property name="gwt.junit.emmatestcase.includes" value="**/*Suite.class,com/google/gwt/dev/jjs/test/*Test.class"/>
   <import file="${gwt.root}/common.ant.xml" />
 
   <!--
@@ -14,7 +15,7 @@
        includes="**/EmmaClassLoadingTest.class" />
   
   <fileset id="default.hosted.emma.tests" dir="${javac.junit.out}" 
-      excludes="**/CoverageTest.class" includes="**/*Test.class" />
+      excludes="**/CoverageTest.class,**/CompilerSuite.class" includes="${gwt.junit.emmatestcase.includes}" />
   <!-- everything succeeds except CoverageTest.java. It fails due to a javac bug in sun/OpenJDK's Java. See the file contents for details -->
   
   <!--
