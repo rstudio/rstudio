@@ -33,6 +33,7 @@ public final class PathPrefix {
 
   private final ResourceFilter filter;
   private final String prefix;
+  private int priority = -1;
   private final boolean shouldReroot;
 
   /**
@@ -133,6 +134,20 @@ public final class PathPrefix {
 
   public boolean shouldReroot() {
     return shouldReroot;
+  }
+
+  @Override
+  public String toString() {
+    return prefix + (shouldReroot ? "**" : "*") + (filter == null ? "" : "?");
+  }
+
+  int getPriority() {
+    return priority;
+  }
+
+  void setPriority(int priority) {
+    assert (this.priority == -1);
+    this.priority = priority;
   }
 
   private void assertValidPrefix(String prefix) {

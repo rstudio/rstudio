@@ -16,7 +16,6 @@
 package com.google.gwt.event.shared;
 
 import com.google.gwt.event.shared.GwtEvent.Type;
-import com.google.gwt.user.client.Command;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +27,14 @@ import java.util.Map;
  * handlers on passed in events.
  */
 public class HandlerManager {
+
+  /**
+   * Interface for queued add/remove operations.
+   */
+  private interface AddOrRemoveCommand {
+    public void execute();
+  }
+
   /**
    * Inner class used to actually contain the handlers.
    */
@@ -77,9 +84,16 @@ public class HandlerManager {
       return l == null ? 0 : l.size();
     }
 
+    private boolean isEventHandled(GwtEvent.Type<?> eventKey) {
+      return map.containsKey(eventKey);
+    }
+
     private <H> void removeHandler(GwtEvent.Type<H> eventKey, H handler) {
       ArrayList<H> l = get(eventKey);
       boolean result = l.remove(handler);
+      if (l.size() == 0) {
+        map.remove(eventKey);
+      }
       assert result : "Tried to remove unknown handler: " + handler + " from "
           + eventKey;
     }
@@ -95,7 +109,7 @@ public class HandlerManager {
   private final Object source;
 
   // Add and remove operations received during dispatch.
-  private List<Command> deferredDeltas;
+  private List<AddOrRemoveCommand> deferredDeltas;
 
   /**
    * Creates a handler manager with the given source. Handlers will be fired in
@@ -204,6 +218,16 @@ public class HandlerManager {
   }
 
   /**
+   * Does this handler manager handle the given event type?
+   * 
+   * @param e the event type
+   * @return whether the given event type is handled
+   */
+  public boolean isEventHandled(Type<?> e) {
+    return registry.isEventHandled(e);
+  }
+
+  /**
    * Removes the given handler from the specified event type. Normally,
    * applications should call {@link HandlerRegistration#removeHandler()}
    * instead.
@@ -236,9 +260,9 @@ public class HandlerManager {
     return registry.map;
   }
 
-  private void defer(Command command) {
+  private void defer(AddOrRemoveCommand command) {
     if (deferredDeltas == null) {
-      deferredDeltas = new ArrayList<Command>();
+      deferredDeltas = new ArrayList<AddOrRemoveCommand>();
     }
     deferredDeltas.add(command);
   }
@@ -255,7 +279,7 @@ public class HandlerManager {
 
   private <H extends EventHandler> void enqueueAdd(final GwtEvent.Type<H> type,
       final H handler) {
-    defer(new Command() {
+    defer(new AddOrRemoveCommand() {
       public void execute() {
         doAdd(type, handler);
       }
@@ -264,7 +288,7 @@ public class HandlerManager {
 
   private <H extends EventHandler> void enqueueRemove(
       final GwtEvent.Type<H> type, final H handler) {
-    defer(new Command() {
+    defer(new AddOrRemoveCommand() {
       public void execute() {
         doRemove(type, handler);
       }
@@ -274,7 +298,7 @@ public class HandlerManager {
   private void handleQueuedAddsAndRemoves() {
     if (deferredDeltas != null) {
       try {
-        for (Command c : deferredDeltas) {
+        for (AddOrRemoveCommand c : deferredDeltas) {
           c.execute();
         }
       } finally {

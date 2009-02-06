@@ -11,8 +11,8 @@ public class GeneratedClassnameTest extends TestCase {
   public void testGeneratedClassnames() {
     String namesToAccept[] = {
         "Test$1", "Test$10", "Test$Foo$1", "Test$1$Foo", "Test$10$Foo",
-        "$$345", "Test$1$Foo$"};
-    String namesToReject[] = {"Test1", "$345", "Test$2Foo", "Test$Foo$1Bar"};
+        "$$345", "Test$1$Foo$", "Test$1Foo", "Test$2Foo", "Test$Foo$1Bar"};
+    String namesToReject[] = {"Test1", "TestFoo", "Test$Foo$Bar", "$345"};
 
     for (String name : namesToAccept) {
       assertTrue("className = " + name + " should have been accepted",

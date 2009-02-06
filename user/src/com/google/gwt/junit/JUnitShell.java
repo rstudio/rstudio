@@ -28,6 +28,7 @@ import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 import com.google.gwt.dev.javac.CompilationUnit;
+import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.util.arg.ArgHandlerLogLevel;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.junit.client.TimeoutException;
@@ -514,11 +515,11 @@ public class JUnitShell extends GWTShell {
   }
 
   /**
-   * Never check for updates in JUnit mode.
+   * Check for updates once a minute.
    */
   @Override
-  protected boolean doShouldCheckForUpdates() {
-    return false;
+  protected long checkForUpdatesInterval() {
+    return CheckForUpdates.ONE_MINUTE;
   }
 
   @Override

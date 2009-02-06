@@ -96,6 +96,14 @@ public class CheckBoxTest extends GWTTestCase {
     assertEquals("valuable", cb.getFormValue());
   }
 
+  public void testConstructorInputElement() {
+    InputElement elm = DOM.createInputCheck().cast();
+    CheckBox box = new CheckBox(elm.<Element> cast());
+    assertFalse(box.getValue());
+    elm.setDefaultChecked(true);
+    assertTrue(box.getValue());
+  }
+
   public void testDebugId() {
     CheckBox check = new CheckBox("myLabel");
 
@@ -111,42 +119,18 @@ public class CheckBoxTest extends GWTTestCase {
     UIObjectTest.assertDebugIdContents("myCheck-label", "myLabel");
   }
 
-  public void testConstructorInputElement() {
+  /**
+   * Tests that detaching and attaching a CheckBox widget retains the checked
+   * state of the element. This is known to be tricky on IE.
+   */
+  public void testDetachment() {
     InputElement elm = DOM.createInputCheck().cast();
     CheckBox box = new CheckBox(elm.<Element> cast());
-    assertFalse(box.getValue());
-    elm.setDefaultChecked(true);
-    assertTrue(box.getValue());
-  }
-
-  public void testReplaceInputElement() {
-    cb.setValue(true);
-    cb.setTabIndex(1234);
-    cb.setEnabled(false);
-    cb.setAccessKey('k');
-    cb.setFormValue("valuable");
-
-    InputElement elm = Document.get().createCheckInputElement();
-    assertFalse(elm.isChecked());
-
-    Element asOldElement = elm.cast();
-    cb.replaceInputElement(asOldElement);
-
-    // The values should be preserved
-    assertTrue(cb.getValue());
-    assertEquals(1234, cb.getTabIndex());
-    assertFalse(cb.isEnabled());
-    assertEquals("k", elm.getAccessKey());
-    assertEquals("valuable", cb.getFormValue());
-
-    assertTrue(elm.isChecked());
-    cb.setValue(false);
-    assertFalse(elm.isChecked());
-
+    RootPanel.get().add(box);
     elm.setChecked(true);
-    assertTrue(cb.getValue());
-
-    // TODO: When event creation is in, test that click on the new element works
+    RootPanel.get().remove(box);
+    RootPanel.get().add(box);
+    assertTrue(elm.isChecked());
   }
 
   public void testFormValue() {
@@ -180,6 +164,36 @@ public class CheckBoxTest extends GWTTestCase {
     cb.removeClickListener(r2);
     ListenerTester.fire();
     assertEquals(ListenerTester.fired, 0);
+  }
+
+  public void testReplaceInputElement() {
+    cb.setValue(true);
+    cb.setTabIndex(1234);
+    cb.setEnabled(false);
+    cb.setAccessKey('k');
+    cb.setFormValue("valuable");
+
+    InputElement elm = Document.get().createCheckInputElement();
+    assertFalse(elm.isChecked());
+
+    Element asOldElement = elm.cast();
+    cb.replaceInputElement(asOldElement);
+
+    // The values should be preserved
+    assertTrue(cb.getValue());
+    assertEquals(1234, cb.getTabIndex());
+    assertFalse(cb.isEnabled());
+    assertEquals("k", elm.getAccessKey());
+    assertEquals("valuable", cb.getFormValue());
+
+    assertTrue(elm.isChecked());
+    cb.setValue(false);
+    assertFalse(elm.isChecked());
+
+    elm.setChecked(true);
+    assertTrue(cb.getValue());
+
+    // TODO: When event creation is in, test that click on the new element works
   }
 
   @SuppressWarnings("deprecation")

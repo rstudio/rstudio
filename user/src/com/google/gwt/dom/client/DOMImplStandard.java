@@ -23,6 +23,15 @@ package com.google.gwt.dom.client;
 abstract class DOMImplStandard extends DOMImpl {
 
   @Override
+  public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable) /*-{
+    var evt = doc.createEvent('HTMLEvents');
+    evt.initEvent(type, canBubble, cancelable);
+
+    return evt;
+  }-*/;
+
+  @Override
   public native InputElement createInputRadioElement(String name) /*-{
     var elem = $doc.createElement("INPUT");
     elem.type = 'radio';
@@ -31,7 +40,81 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   @Override
+  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) /*-{
+    // The spec calls for KeyEvents/initKeyEvent(), but that doesn't exist on WebKit.
+    var evt = doc.createEvent('KeyEvents');
+    evt.initKeyEvent(type, canBubble, cancelable, null, ctrlKey, altKey,
+      shiftKey, metaKey, keyCode, charCode);
+
+    return evt;
+  }-*/;
+
+  @Override
+  public native NativeEvent createMouseEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, int detail, int screenX, int screenY, int clientX,
+      int clientY, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int button, Element relatedTarget) /*-{
+    // Because Event.getButton() returns bitfield values [1, 4, 2] for [left,
+    // middle, right], we need to translate them to the standard [0, 1, 2]
+    // button constants.
+    if (button == 1) {
+      button = 0;
+    } else if (button == 4) {
+      button = 1;
+    } else {
+      button = 2;
+    }
+
+    var evt = doc.createEvent('MouseEvents');
+    evt.initMouseEvent(type, canBubble, cancelable, null, detail, screenX,
+      screenY, clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
+      relatedTarget);
+
+    return evt;
+  }-*/;
+ 
+  public native void dispatchEvent(Element target, NativeEvent evt) /*-{
+    target.dispatchEvent(evt);
+  }-*/;
+
+  @Override
+  public native int eventGetButton(NativeEvent evt) /*-{
+    // All modern browsers return 0, 1, and 2 for left, middle, and right,
+    // respectively. Because eventGetButton() is expected to return the IE
+    // bitfield norms of 1, 4, and 2, we translate them here.
+    var button = evt.button;
+    if (button == 1) {
+      return 4;
+    } else if (button == 2) {
+      return 2;
+    }
+    return 1;
+  }-*/;
+
+  @Override
+  public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
+    return evt.relatedTarget;
+  }-*/;
+
+  @Override
+  public native Element eventGetTarget(NativeEvent evt) /*-{
+    return evt.target;
+  }-*/;
+
+  @Override
+  public native void eventPreventDefault(NativeEvent evt) /*-{
+    evt.preventDefault();
+  }-*/;
+
+  @Override
+  public native String eventToString(NativeEvent evt) /*-{
+    return evt.toString();
+  }-*/;
+
+  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
-    return parent.contains(child);  
+    return parent.contains(child);
   }-*/;
 }

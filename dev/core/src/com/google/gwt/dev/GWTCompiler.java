@@ -22,6 +22,9 @@ import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.shell.CheckForUpdates;
+import com.google.gwt.dev.shell.PlatformSpecific;
+import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
@@ -33,6 +36,7 @@ import com.google.gwt.util.tools.Utility;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.FutureTask;
 
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
@@ -111,7 +115,16 @@ public class GWTCompiler {
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
-          return new GWTCompiler(options).run(logger);
+          FutureTask<UpdateResult> updater = null;
+          if (!options.isUpdateCheckDisabled()) {
+            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(logger,
+                CheckForUpdates.ONE_DAY);
+          }
+          boolean success = new GWTCompiler(options).run(logger);
+          if (success) {
+            PlatformSpecific.logUpdateAvailable(logger, updater);
+          }
+          return success;
         }
       };
       if (CompileTaskRunner.runWithAppropriateLogger(options, task)) {

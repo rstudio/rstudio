@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.ButtonElement;
 import com.google.gwt.event.dom.client.ClickHandler;
 
 /**
@@ -69,10 +70,6 @@ public class Button extends ButtonBase {
       } catch (e) { 
       }
     }
-  }-*/;
-
-  static native void click(Element button) /*-{
-    button.click();
   }-*/;
 
   /**
@@ -133,6 +130,11 @@ public class Button extends ButtonBase {
    * Programmatic equivalent of the user clicking the button.
    */
   public void click() {
-    click(getElement());
+    getButtonElement().click();
+  }
+
+  private ButtonElement getButtonElement() {
+    return getElement().cast();
   }
 }
+

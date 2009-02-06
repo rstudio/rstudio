@@ -15,12 +15,6 @@
  */
 package com.google.gwt.dev.resource.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.dev.util.msg.Message0;
-import com.google.gwt.dev.util.msg.Message1String;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,8 +30,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
+
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.util.msg.Message0;
+import com.google.gwt.dev.util.msg.Message1String;
 
 /**
  * The normal implementation of {@link ResourceOracle}.
@@ -75,17 +76,14 @@ public class ResourceOracleImpl implements ResourceOracle {
   }
 
   /**
-   * Used by rebasing {@link ResourceOracle ResourceOracles} to map from a full
-   * classpath-based abstract path to an abstract path within a logical package.
-   * 
-   * @see ResourceOracleImpl#shouldRebasePaths()
+   * Wrapper object around a resource to change its path when it is rerooted.
    */
-  private static class ResourceWrapper extends AbstractResource {
+  private static class RerootedResource extends AbstractResource {
     private final String path;
     private final AbstractResource resource;
 
-    public ResourceWrapper(String path, AbstractResource resource) {
-      this.path = path;
+    public RerootedResource(AbstractResource resource, PathPrefix pathPrefix) {
+      this.path = pathPrefix.getRerootedPath(resource.getPath());
       this.resource = resource;
     }
 
@@ -127,6 +125,31 @@ public class ResourceOracleImpl implements ResourceOracle {
     @Override
     public boolean wasRerooted() {
       return true;
+    }
+  }
+
+  private static class ResourceData implements Comparable<ResourceData> {
+    public final PathPrefix pathPrefix;
+    public final AbstractResource resource;
+
+    public ResourceData(AbstractResource resource, PathPrefix pathPrefix) {
+      this.resource = pathPrefix.shouldReroot() ? new RerootedResource(
+          resource, pathPrefix) : resource;
+      this.pathPrefix = pathPrefix;
+    }
+
+    public int compareTo(ResourceData other) {
+      // Rerooted takes precedence over not rerooted.
+      if (this.resource.wasRerooted() != other.resource.wasRerooted()) {
+        return this.resource.wasRerooted() ? 1 : -1;
+      }
+      // Compare priorities of the path prefixes, high number == high priority.
+      return this.pathPrefix.getPriority() - other.pathPrefix.getPriority();
+    }
+
+    @Override
+    public String toString() {
+      return "{" + resource + "," + pathPrefix + "}";
     }
   }
 
@@ -218,7 +241,7 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   private Set<Resource> exposedResources = Collections.emptySet();
 
-  private Map<String, AbstractResource> internalMap = Collections.emptyMap();
+  private Map<String, ResourceData> internalMap = Collections.emptyMap();
 
   private PathPrefixSet pathPrefixSet = new PathPrefixSet();
 
@@ -277,7 +300,7 @@ public class ResourceOracleImpl implements ResourceOracle {
      * "new identity for the collections if anything changes" guarantee. Use a
      * LinkedHashMap because we do not want the order to change.
      */
-    final Map<String, AbstractResource> newInternalMap = new LinkedHashMap<String, AbstractResource>();
+    Map<String, ResourceData> newInternalMap = new LinkedHashMap<String, ResourceData>();
 
     /*
      * Walk across path roots (i.e. classpath entries) in priority order. This
@@ -285,65 +308,71 @@ public class ResourceOracleImpl implements ResourceOracle {
      * a resource that has already been added to the new map under construction
      * to create the effect that resources founder earlier on the classpath take
      * precedence.
+     * 
+     * Exceptions: super has priority over non-super; and if there are two super
+     * resources with the same path, the one with the higher-priority path
+     * prefix wins.
      */
-    int changeCount = 0;
     for (ClassPathEntry pathRoot : classPath) {
       TreeLogger branchForClassPathEntry = Messages.EXAMINING_PATH_ROOT.branch(
           refreshBranch, pathRoot.getLocation(), null);
 
-      int prevChangeCount = changeCount;
-
-      Set<AbstractResource> newResources = pathRoot.findApplicableResources(
+      Map<AbstractResource, PathPrefix> resourceToPrefixMap = pathRoot.findApplicableResources(
           branchForClassPathEntry, pathPrefixSet);
-      for (AbstractResource newResource : newResources) {
-        String resourcePath = newResource.getPath();
-
-        // Make sure we don't already have a resource by this name.
-        if (newInternalMap.containsKey(resourcePath)) {
+      for (Entry<AbstractResource, PathPrefix> entry : resourceToPrefixMap.entrySet()) {
+        ResourceData newCpeData = new ResourceData(entry.getKey(),
+            entry.getValue());
+        String resourcePath = newCpeData.resource.getPath();
+        ResourceData oldCpeData = newInternalMap.get(resourcePath);
+        // Old wins unless the new resource has higher priority.
+        if (oldCpeData == null || oldCpeData.compareTo(newCpeData) < 0) {
+          newInternalMap.put(resourcePath, newCpeData);
+        } else {
           Messages.IGNORING_SHADOWED_RESOURCE.log(branchForClassPathEntry,
               resourcePath, null);
-          continue;
         }
-
-        AbstractResource oldResource = internalMap.get(resourcePath);
-        if (shouldUseNewResource(branchForClassPathEntry, oldResource,
-            newResource)) {
-          newInternalMap.put(resourcePath, newResource);
-          ++changeCount;
-        } else if (oldResource != null) {
-          // Nothing changed, so carry the identity of the old one forward.
-          newInternalMap.put(resourcePath, oldResource);
-        }
-      }
-
-      if (changeCount == prevChangeCount) {
-        Messages.NO_RESOURCES_CHANGED.log(branchForClassPathEntry, null);
       }
     }
 
-    if (changeCount == 0) {
-      /*
-       * Nothing was added or modified, but we still have to be sure we didn't
-       * lose any resources.
-       */
-      if (newInternalMap.size() == internalMap.size()) {
-        /*
-         * Exit without changing the current exposed collections to maintain the
-         * identity requirements described in the spec for ResourceOracle.
-         */
-        return;
+    /*
+     * Update the newInternalMap to preserve identity for any resources that
+     * have not changed; also record whether or not there are ANY changes.
+     * 
+     * There's definitely a change if the sizes don't match; even if the sizes
+     * do match, every new resource must match an old resource for there to be
+     * no changes.
+     */
+    boolean didChange = internalMap.size() != newInternalMap.size();
+    for (String resourcePath : newInternalMap.keySet()) {
+      ResourceData newData = newInternalMap.get(resourcePath);
+      ResourceData oldData = internalMap.get(resourcePath);
+      if (shouldUseNewResource(logger, oldData, newData)) {
+        didChange = true;
+      } else {
+        if (oldData.resource != newData.resource) {
+          newInternalMap.put(resourcePath, oldData);
+        }
       }
+    }
+
+    if (!didChange) {
+      // Nothing to do, keep the same identities.
+      return;
     }
 
     internalMap = newInternalMap;
-    Map<String, Resource> externalMap = rerootResourcePaths(newInternalMap);
 
-    // Create a constant-time set for resources.
-    Set<Resource> newResources = new HashSet<Resource>(externalMap.values());
-    assert (newResources.size() == externalMap.size());
+    Map<String, Resource> externalMap = new HashMap<String, Resource>();
+    Set<Resource> externalSet = new HashSet<Resource>();
+    for (Entry<String, ResourceData> entry : internalMap.entrySet()) {
+      String path = entry.getKey();
+      ResourceData data = entry.getValue();
+      externalMap.put(path, data.resource);
+      externalSet.add(data.resource);
+    }
 
-    // Update the gettable fields with the new (unmodifiable) data structures.
-    exposedResources = Collections.unmodifiableSet(newResources);
+    // Update exposed collections with new (unmodifiable) data structures.
+    exposedResources = Collections.unmodifiableSet(externalSet);
     exposedResourceMap = Collections.unmodifiableMap(externalMap);
     exposedPathNames = Collections.unmodifiableSet(externalMap.keySet());
   }
@@ -357,59 +386,13 @@ public class ResourceOracleImpl implements ResourceOracle {
     return classPath;
   }
 
-  private Map<String, Resource> rerootResourcePaths(
-      Map<String, AbstractResource> newInternalMap) {
-    Map<String, Resource> externalMap;
-    // Create an external map with rebased path names.
-    externalMap = new HashMap<String, Resource>();
-    for (AbstractResource resource : newInternalMap.values()) {
-      String path = resource.getPath();
-      if (externalMap.get(path) instanceof ResourceWrapper) {
-        // A rerooted resource blocks any other resource at this path.
-        continue;
-      }
-      int hitCount = 0;
-      for (PathPrefix pathPrefix : pathPrefixSet.values()) {
-        if (pathPrefix.allows(path)) {
-          assert (path.startsWith(pathPrefix.getPrefix()));
-          if (pathPrefix.shouldReroot()) {
-            String rerootedPath = pathPrefix.getRerootedPath(path);
-            if (externalMap.get(rerootedPath) instanceof ResourceWrapper) {
-              // A rerooted instance blocks any other resource at this path.
-              ++hitCount;
-              break;
-            }
-            // Try to reuse the same wrapper.
-            Resource exposed = exposedResourceMap.get(rerootedPath);
-            if (exposed instanceof ResourceWrapper) {
-              ResourceWrapper exposedWrapper = (ResourceWrapper) exposed;
-              if (exposedWrapper.resource == resource) {
-                externalMap.put(rerootedPath, exposedWrapper);
-                ++hitCount;
-                break;
-              }
-            }
-            // Just create a new wrapper.
-            AbstractResource wrapper = new ResourceWrapper(rerootedPath,
-                resource);
-            externalMap.put(rerootedPath, wrapper);
-            ++hitCount;
-          } else {
-            externalMap.put(path, resource);
-            ++hitCount;
-          }
-        }
-      }
-      assert (hitCount > 0);
-    }
-    return externalMap;
-  }
-
-  private boolean shouldUseNewResource(TreeLogger logger,
-      AbstractResource oldResource, AbstractResource newResource) {
+  private boolean shouldUseNewResource(TreeLogger logger, ResourceData oldData,
+      ResourceData newData) {
+    AbstractResource newResource = newData.resource;
     String resourcePath = newResource.getPath();
-    if (oldResource != null) {
+    if (oldData != null) {
       // Test 1: Is the resource found in a different location than before?
+      AbstractResource oldResource = oldData.resource;
       if (oldResource.getClassPathEntry() == newResource.getClassPathEntry()) {
         // Test 2: Has the resource changed since we last found it?
         if (!oldResource.isStale()) {

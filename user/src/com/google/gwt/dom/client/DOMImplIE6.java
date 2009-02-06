@@ -22,8 +22,65 @@ package com.google.gwt.dom.client;
 class DOMImplIE6 extends DOMImpl {
 
   @Override
+  public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createHtmlEvent()).
+    var evt = doc.createEventObject();
+    evt.type = type;
+    return evt;
+  }-*/;
+
+  @Override
   public native InputElement createInputRadioElement(String name) /*-{
     return $doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
+  }-*/; 
+
+  @Override
+  public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createKeyEvent()).
+    var evt = doc.createEventObject();
+    evt.type = type;
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    evt.keyCode = keyCode;
+    evt.charCode = charCode;
+
+    return evt;
+  }-*/;
+
+  @Override
+  public native NativeEvent createMouseEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable, int detail, int screenX, int screenY, int clientX,
+      int clientY, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int button, Element relatedTarget) /*-{
+    // NOTE: IE doesn't support changing bubbling and canceling behavior (this
+    // is documented publicly in Document.createMouseEvent()).
+    var evt = doc.createEventObject();
+    evt.type = type;
+    evt.detail = detail;
+    evt.screenX = screenX;
+    evt.screenY = screenY;
+    evt.clientX = clientX;
+    evt.clientY = clientY;
+    evt.ctrlKey = ctrlKey;
+    evt.altKey = altKey;
+    evt.shiftKey = shiftKey;
+    evt.metaKey = metaKey;
+    evt.button = button;
+
+    // It would make sense to set evt.[fromElement | toElement] here, because
+    // that's what IE uses. However, setting these properties has no effect for
+    // some reason. So instead we set releatedTarget, and explicitly check for
+    // its existence in eventGetFromElement() and eventGetToElement().
+    evt.relatedTarget = relatedTarget;
+
+    return evt;
   }-*/;
 
   /**
@@ -39,14 +96,52 @@ class DOMImplIE6 extends DOMImpl {
     return $doc.createElement(html);
   }-*/;
 
+  public native void dispatchEvent(Element target, NativeEvent evt) /*-{
+    target.fireEvent("on" + evt.type, evt);
+  }-*/;
+
+  @Override
+  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
+    return Math.round(-evt.wheelDelta / 40) || 0;
+  }-*/;
+
+  @Override
+  public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
+    // Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
+    // explicitly sets relatedTarget when synthesizing mouse events).
+    return evt.relatedTarget ||
+           (evt.type == "mouseout" ? evt.toElement:evt.fromElement);
+  }-*/;
+
+  @Override
+  public native Element eventGetTarget(NativeEvent evt) /*-{
+    return evt.srcElement;
+  }-*/;
+
+  @Override
+  public native void eventPreventDefault(NativeEvent evt) /*-{
+    evt.returnValue = false;
+  }-*/;
+
+  @Override
+  public native void eventStopPropagation(NativeEvent evt) /*-{
+    evt.cancelBubble = true;
+  }-*/;
+
+  @Override
+  public native String eventToString(NativeEvent evt) /*-{
+    if (evt.toString) return evt.toString();
+      return "[event" + evt.type + "]";
+  }-*/;
+
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     // getBoundingClientRect() throws a JS exception if the elem is not attached
     // to the document, so we wrap it in a try/catch block
     try {
-      return (elem.getBoundingClientRect().left /
+      return Math.floor((elem.getBoundingClientRect().left /
         this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft);
     } catch (e) {
       return 0;
     }
@@ -57,18 +152,20 @@ class DOMImplIE6 extends DOMImpl {
     // getBoundingClientRect() throws a JS exception if the elem is not attached
     // to the document, so we wrap it in a try/catch block
     try {
-      return (elem.getBoundingClientRect().top /
+      return Math.floor((elem.getBoundingClientRect().top /
         this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
+        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop);
     } catch (e) {
       return 0;
     }
   }-*/;
 
+  @Override
   public native int getBodyOffsetLeft() /*-{
     return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
   }-*/;
 
+  @Override
   public native int getBodyOffsetTop() /*-{
     return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
   }-*/;
@@ -128,8 +225,8 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   /**
-   * Get the zoom multiple based on the current IE zoom level.  A multiple of
-   * 2.0 means that the user has zoomed in to 200%.
+   * Get the zoom multiple based on the current IE zoom level. A multiple of 2.0
+   * means that the user has zoomed in to 200%.
    * 
    * @return the zoom multiple
    */

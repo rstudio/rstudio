@@ -76,9 +76,11 @@ public class VisualsForTree extends AbstractIssue {
     TreeItem d = new TreeItem(new RadioButton("myradio",
         "I should line up nicely"));
     TreeItem e = new TreeItem(new CheckBox("I should line up nicely"));
+    TreeItem f = new TreeItem(new CheckBox("I should also line up nicely"));
+    f.addItem(new CheckBox("me to"));
     SimplePanel panel = new SimplePanel();
     panel.setWidget(new Label("There should not be any space above me"));
-    TreeItem f = new TreeItem(panel);
+    TreeItem g = new TreeItem(panel);
 
     tree.setSelectedItem(b);
     tree.addItem(a);
@@ -87,6 +89,7 @@ public class VisualsForTree extends AbstractIssue {
     tree.addItem(d);
     tree.addItem(e);
     tree.addItem(f);
+    tree.addItem(g);
     b.addItem(ba);
     b.addItem(bb);
     bb.addItem(bba);

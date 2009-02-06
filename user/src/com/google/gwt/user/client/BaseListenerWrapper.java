@@ -63,7 +63,7 @@ public abstract class BaseListenerWrapper<T> implements EventHandler {
       // The legacy EventHandler should only fire if it is on the top of the
       // stack (ie. the last one added).
       if (event.isFirstHandler()) {
-        if (!listener.onEventPreview(event.getNativeEvent())) {
+        if (!listener.onEventPreview(Event.as(event.getNativeEvent()))) {
           event.cancel();
         }
       }

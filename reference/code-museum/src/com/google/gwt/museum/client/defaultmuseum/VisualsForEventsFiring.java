@@ -15,6 +15,7 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -134,7 +135,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
 
     prepMouseEvents();
     prepKeyboardEvents();
-    prepSrollAndMouseWheelEvents();
+    prepScrollAndMouseWheelEvents();
     prepLoadEvents();
     prepWindowEvents();
 
@@ -213,8 +214,8 @@ public class VisualsForEventsFiring extends AbstractIssue {
    * 
    * @param event the event that was triggered
    */
-  private void passTest(Event event) {
-    passTest(event.getTypeInt());
+  private void passTest(NativeEvent event) {
+    passTest(Event.as(event).getTypeInt());
   }
 
   /**
@@ -247,7 +248,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
     // Add event handlers
     textBox.addKeyDownHandler(new KeyDownHandler() {
       public void onKeyDown(KeyDownEvent event) {
-        event.isAutoRepeat();
+
         event.isAltKeyDown();
         event.isControlKeyDown();
         event.isShiftKeyDown();
@@ -332,7 +333,7 @@ public class VisualsForEventsFiring extends AbstractIssue {
 
   private void prepMouseEvents() {
     // Create a button to trigger events
-    Button button = new Button("Click me") {
+    final Button button = new Button("Click me, move over me") {
       @Override
       public void onBrowserEvent(Event event) {
         super.onBrowserEvent(event);
@@ -386,19 +387,28 @@ public class VisualsForEventsFiring extends AbstractIssue {
       public void onMouseOut(MouseOutEvent event) {
         assert event.getFromElement() != null;
         assert event.getToElement() != null;
-        passTest(event.getNativeEvent());
+        if (button.getElement().equals(event.getFromElement())
+            && button.getElement().getParentElement().equals(
+                event.getToElement())) {
+          passTest(event.getNativeEvent());
+        }
       }
     });
     button.addMouseOverHandler(new MouseOverHandler() {
       public void onMouseOver(MouseOverEvent event) {
         assert event.getFromElement() != null;
         assert event.getToElement() != null;
-        passTest(event.getNativeEvent());
+
+        if (button.getElement().equals(event.getToElement())
+            && button.getElement().getParentElement().equals(
+                event.getFromElement())) {
+          passTest(event.getNativeEvent());
+        }
       }
     });
   }
 
-  private void prepSrollAndMouseWheelEvents() {
+  private void prepScrollAndMouseWheelEvents() {
     // Create a widget to trigger events
     String scrollableMessage = "Scroll to the bottom<br>(using mouse wheel<br>"
         + "if supported)";

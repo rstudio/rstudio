@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.About;
 
 import org.w3c.dom.Document;
@@ -27,8 +28,11 @@ import org.xml.sax.SAXParseException;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -43,18 +47,121 @@ import javax.xml.parsers.ParserConfigurationException;
  * Orchestrates a best-effort attempt to find out if a new version of GWT is
  * available.
  */
-public abstract class CheckForUpdates {
+public class CheckForUpdates {
 
   /**
-   * Abstract the action to take when an update is available.
+   * Represents a GWT version.
    */
-  public static interface UpdateAvailableCallback {
-    void onUpdateAvailable(String html);
+  public static class GwtVersion implements Comparable<GwtVersion> {
+
+    private final int[] version = new int[3];
+
+    /**
+     * Create a version that avoids any nagging -- "0.0.999".
+     */
+    public GwtVersion() {
+      version[2] = 999;
+    }
+
+    /**
+     * Parse a version number as a string. An empty or null string are
+     * explicitly allowed and are equivalent to "0.0.0".
+     * 
+     * @param versionString
+     * @throws NumberFormatException
+     */
+    public GwtVersion(String versionString) throws NumberFormatException {
+      if (versionString == null) {
+        return;
+      }
+      int part = 0;
+      int v = 0;
+      int len = versionString.length();
+      for (int i = 0; i < len; ++i) {
+        char ch = versionString.charAt(i);
+        if (ch == '.') {
+          if (part >= version.length) {
+            throw new NumberFormatException();
+          }
+          version[part++] = v;
+          v = 0;
+        } else if (Character.isDigit(ch)) {
+          int digit = Character.digit(ch, 10);
+          if (digit < 0) {
+            throw new NumberFormatException();
+          }
+          v = v * 10 + digit;
+        }
+      }
+      version[part++] = v;
+    }
+
+    public int compareTo(GwtVersion o) {
+      for (int i = 0; i <= 2; ++i) {
+        if (version[i] != o.version[i]) {
+          return version[i] - o.version[i];
+        }
+      }
+      return 0;
+    }
+
+    public int getPart(int part) {
+      // TODO: something besides IORE here?
+      return version[part];
+    }
+
+    public boolean isNoNagVersion() {
+      return version[2] == 999;
+    }
+
+    public boolean isUnspecified() {
+      return version[0] == 0 && version[1] == 0 && version[2] == 0;
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder buf = new StringBuilder();
+      buf.append(version[0]).append('.').append(version[1]).append('.');
+      buf.append(version[2]);
+      return buf.toString();
+    }
   }
 
-  protected static final String LAST_SERVER_VERSION = "lastServerVersion";
-  private static final boolean DEBUG_VERSION_CHECK;
+  /**
+   * Returns the result of an update check.
+   */
+  public interface UpdateResult {
+    /**
+     * @return the new version of GWT available.
+     */
+    GwtVersion getNewVersion();
+
+    /**
+     * @return the URL for details about the new version.
+     */
+    URL getURL();
+  }
+
+  public static final long ONE_DAY = 24 * 60 * 60 * 1000;
+  public static final long ONE_MINUTE = 60 * 1000;
+
+  // System properties used by CheckForUpdates
+  protected static final String PROPERTY_DEBUG_HTTP_GET = "gwt.debugLowLevelHttpGet";
+  protected static final String PROPERTY_FORCE_NONNATIVE = "gwt.forceVersionCheckNonNative";
+  protected static final String PROPERTY_PREFS_NAME = "gwt.prefsPathName";
+  protected static final String PROPERTY_QUERY_URL = "gwt.forceVersionCheckURL";
+
+  // Log levels -- in general we want the logging of the update process
+  // to not be visible to normal users.
+  private static final TreeLogger.Type CHECK_ERROR = TreeLogger.DEBUG;
+  private static final TreeLogger.Type CHECK_INFO = TreeLogger.SPAM;
+  private static final TreeLogger.Type CHECK_SPAM = TreeLogger.SPAM;
+  private static final TreeLogger.Type CHECK_WARN = TreeLogger.SPAM;
+
+  // Preferences keys
   private static final String FIRST_LAUNCH = "firstLaunch";
+  private static final String HIGHEST_RUN_VERSION = "highestRunVersion";
+  private static final String LAST_PING = "lastPing";
   private static final String NEXT_PING = "nextPing";
 
   // Uncomment one of constants below to try different variations of failure to
@@ -75,74 +182,6 @@ public abstract class CheckForUpdates {
   // The real URL that should be used.
   private static final String QUERY_URL = "http://tools.google.com/webtoolkit/currentversion.xml";
 
-  private static final int VERSION_PARTS = 3;
-  private static final String VERSION_REGEXP = "\\d+\\.\\d+\\.\\d+";
-
-  static {
-    // Do this in a static initializer so we can ignore all exceptions.
-    //
-    boolean debugVersionCheck = false;
-    try {
-      if (System.getProperty("gwt.debugVersionCheck") != null) {
-        debugVersionCheck = true;
-      }
-    } catch (Throwable e) {
-      // Always silently ignore any errors.
-      //
-    } finally {
-      DEBUG_VERSION_CHECK = debugVersionCheck;
-    }
-  }
-
-  /**
-   * Determines whether the server version is definitively newer than the client
-   * version. If any errors occur in the comparison, this method returns false
-   * to avoid unwanted erroneous notifications.
-   * 
-   * @param clientVersion The current client version
-   * @param serverVersion The current server version
-   * @return true if the server is definitely newer, otherwise false
-   */
-  protected static boolean isServerVersionNewer(String clientVersion,
-      String serverVersion) {
-    if (clientVersion == null || serverVersion == null) {
-      return false;
-    }
-
-    // must match expected format
-    if (!clientVersion.matches(VERSION_REGEXP)
-        || !serverVersion.matches(VERSION_REGEXP)) {
-      return false;
-    }
-
-    // extract the relevant parts
-    String[] clientParts = clientVersion.split("\\.");
-    String[] serverParts = serverVersion.split("\\.");
-    if (clientParts.length != VERSION_PARTS
-        || serverParts.length != VERSION_PARTS) {
-      return false;
-    }
-
-    // examine piece by piece from most significant to least significant
-    for (int i = 0; i < VERSION_PARTS; ++i) {
-      try {
-        int clientPart = Integer.parseInt(clientParts[i]);
-        int serverPart = Integer.parseInt(serverParts[i]);
-        if (serverPart < clientPart) {
-          return false;
-        }
-
-        if (serverPart > clientPart) {
-          return true;
-        }
-      } catch (NumberFormatException e) {
-        return false;
-      }
-    }
-
-    return false;
-  }
-
   private static String getTextOfLastElementHavingTag(Document doc,
       String tagName) {
     NodeList nodeList = doc.getElementsByTagName(tagName);
@@ -161,197 +200,97 @@ public abstract class CheckForUpdates {
     return null;
   }
 
-  private static void parseResponse(Preferences prefs, byte[] response,
-      UpdateAvailableCallback callback) throws IOException,
-      ParserConfigurationException, SAXException {
+  private String entryPoint;
+  private TreeLogger logger;
+  private GwtVersion myVersion;
 
-    if (DEBUG_VERSION_CHECK) {
-      System.out.println("Parsing response (length " + response.length + ")");
-    }
+  /**
+   * Create an update checker which will poll a server URL and log a message
+   * about an update if available.
+   * 
+   * @param logger TreeLogger to use
+   */
+  public CheckForUpdates(TreeLogger logger) {
+    this(logger, null);
+  }
 
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder = factory.newDocumentBuilder();
-    ByteArrayInputStream bais = new ByteArrayInputStream(response);
-
-    // Parse the XML.
-    //
-    builder.setErrorHandler(new ErrorHandler() {
-
-      public void error(SAXParseException exception) throws SAXException {
-        // fail quietly
-      }
-
-      public void fatalError(SAXParseException exception) throws SAXException {
-        // fail quietly
-      }
-
-      public void warning(SAXParseException exception) throws SAXException {
-        // fail quietly
-      }
-    });
-    Document doc = builder.parse(bais);
-
-    // The latest version number.
-    //
-    String version = getTextOfLastElementHavingTag(doc, "latest-version");
-    if (version == null) {
-      // Not valid; quietly fail.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Failed to find <latest-version>");
-      }
-      return;
-    } else {
-      version = version.trim();
-    }
-
-    String[] versionParts = version.split("\\.");
-    if (versionParts.length != 3) {
-      // Not valid; quietly fail.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Bad version format: " + version);
-      }
-      return;
-    }
+  /**
+   * Create an update checker which will poll a server URL and log a message
+   * about an update if available.
+   * 
+   * @param logger TreeLogger to use
+   * @param entryPoint the name of the main entry point used for this execution
+   */
+  public CheckForUpdates(TreeLogger logger, String entryPoint) {
+    this.logger = logger;
+    this.entryPoint = entryPoint;
     try {
-      Integer.parseInt(versionParts[0]);
-      Integer.parseInt(versionParts[1]);
-      Integer.parseInt(versionParts[2]);
+      myVersion = new GwtVersion(About.GWT_VERSION_NUM);
     } catch (NumberFormatException e) {
-      // Not valid; quietly fail.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Bad version number: " + version);
-      }
-      return;
+      // if our build version number is bogus, use one that avoids nagging
+      myVersion = new GwtVersion();
     }
-
-    // Ping delay for server-controlled throttling.
-    //
-    String pingDelaySecsStr = getTextOfLastElementHavingTag(doc,
-        "min-wait-seconds");
-    int pingDelaySecs = 0;
-    if (pingDelaySecsStr == null) {
-      // Not valid; quietly fail.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Missing <min-wait-seconds>");
-      }
-      return;
-    } else {
-      try {
-        pingDelaySecs = Integer.parseInt(pingDelaySecsStr.trim());
-      } catch (NumberFormatException e) {
-        // Not a valid number; quietly fail.
-        //
-        if (DEBUG_VERSION_CHECK) {
-          System.out.println("Bad min-wait-seconds number: " + pingDelaySecsStr);
-        }
-        return;
-      }
-    }
-
-    // Read the HTML.
-    //
-    String html = getTextOfLastElementHavingTag(doc, "notification");
-
-    if (html == null) {
-      // Not valid; quietly fail.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Missing <notification>");
-      }
-      return;
-    }
-
-    // Okay -- this is a valid response.
-    //
-    processResponse(prefs, version, pingDelaySecs, html, callback);
   }
 
-  private static void processResponse(Preferences prefs, String version,
-      int pingDelaySecs, String html, UpdateAvailableCallback callback) {
-
-    // Record a ping; don't ping again until the delay is up.
-    //
-    long nextPingTime = System.currentTimeMillis() + pingDelaySecs * 1000;
-    prefs.put(NEXT_PING, String.valueOf(nextPingTime));
-
-    if (DEBUG_VERSION_CHECK) {
-      System.out.println("Ping delay is " + pingDelaySecs + "; next ping at "
-          + new Date(nextPingTime));
-    }
-
-    /*
-     * Stash the version we got last time for comparison below, and record for
-     * next time the version we just got.
-     */
-    String lastServerVersion = prefs.get(LAST_SERVER_VERSION, null);
-    prefs.put(LAST_SERVER_VERSION, version);
-
-    // Are we up to date already?
-    //
-    if (!isServerVersionNewer(About.GWT_VERSION_NUM, version)) {
-
-      // Yes, we are.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Server version is not newer");
-      }
-      return;
-    }
-
-    // Have we already prompted for this particular server version?
-    //
-    if (version.equals(lastServerVersion)) {
-
-      // We've already nagged the user once. Don't do it again.
-      //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("A notification has already been shown for "
-            + version);
-      }
-      return;
-    }
-
-    if (DEBUG_VERSION_CHECK) {
-      System.out.println("Server version has changed to " + version
-          + "; notification will be shown");
-    }
-
-    // Commence nagging.
-    //
-    callback.onUpdateAvailable(html);
+  /**
+   * Check for updates and log to the logger if they are available.
+   * 
+   * @return an UpdateResult or null if there is no new update
+   */
+  public UpdateResult check() {
+    return check(0);
   }
 
-  public void check(final UpdateAvailableCallback callback) {
-
+  /**
+   * Check for updates and log to the logger if they are available.
+   * 
+   * @return an UpdateResult or null if there is no new update
+   */
+  public UpdateResult check(long minCheckMillis) {
+    TreeLogger branch = logger.branch(CHECK_INFO, "Checking for updates");
     try {
-      String forceCheckURL = System.getProperty("gwt.forceVersionCheckURL");
+      String prefsName = System.getProperty(PROPERTY_PREFS_NAME);
+      Preferences prefs;
+      if (prefsName != null) {
+        prefs = Preferences.userRoot().node(prefsName);
+      } else {
+        prefs = Preferences.userNodeForPackage(CheckForUpdates.class);
+      }
 
-      if (forceCheckURL != null && DEBUG_VERSION_CHECK) {
-        System.out.println("Explicit version check URL: " + forceCheckURL);
+      String queryURL = QUERY_URL;
+      String forceCheckURL = System.getProperty(PROPERTY_QUERY_URL);
+
+      if (forceCheckURL != null) {
+        branch.log(CHECK_INFO, "Explicit version check URL: " + forceCheckURL);
+        queryURL = forceCheckURL;
       }
 
       // Get our unique user id (based on absolute timestamp).
       //
       long currentTimeMillis = System.currentTimeMillis();
-      Preferences prefs = Preferences.userNodeForPackage(CheckForUpdates.class);
-
-      // Get our unique user id (based on absolute timestamp).
-      //
       String firstLaunch = prefs.get(FIRST_LAUNCH, null);
       if (firstLaunch == null) {
         firstLaunch = Long.toHexString(currentTimeMillis);
         prefs.put(FIRST_LAUNCH, firstLaunch);
-
-        if (DEBUG_VERSION_CHECK) {
-          System.out.println("Setting first launch to " + firstLaunch);
-        }
+        branch.log(CHECK_SPAM, "Setting first launch to " + firstLaunch);
       } else {
-        if (DEBUG_VERSION_CHECK) {
-          System.out.println("First launch was " + firstLaunch);
+        branch.log(CHECK_SPAM, "First launch was " + firstLaunch);
+      }
+
+      // See if enough time has passed.
+      //
+      String lastPing = prefs.get(LAST_PING, "0");
+      if (lastPing != null) {
+        try {
+          long lastPingTime = Long.parseLong(lastPing);
+          if (currentTimeMillis < lastPingTime + minCheckMillis) {
+            // it's not time yet
+            branch.log(CHECK_INFO, "Last ping was " + new Date(lastPingTime)
+                + ", min wait is " + minCheckMillis + "ms");
+            return null;
+          }
+        } catch (NumberFormatException e) {
+          branch.log(CHECK_WARN, "Error parsing last ping time", e);
         }
       }
 
@@ -363,73 +302,86 @@ public abstract class CheckForUpdates {
           long nextPingTime = Long.parseLong(nextPing);
           if (currentTimeMillis < nextPingTime) {
             // it's not time yet
-            if (DEBUG_VERSION_CHECK) {
-              System.out.println("Next ping is not until "
-                  + new Date(nextPingTime));
-            }
-            return;
+            branch.log(CHECK_INFO, "Next ping is not until "
+                + new Date(nextPingTime));
+            return null;
           }
         } catch (NumberFormatException e) {
-          // ignore
+          branch.log(CHECK_WARN, "Error parsing next ping time", e);
         }
       }
 
       // See if new version is available.
       //
-      String queryURL = forceCheckURL != null ? forceCheckURL : QUERY_URL;
       String url = queryURL + "?v=" + About.GWT_VERSION_NUM + "&id="
-          + firstLaunch;
-
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Checking for new version at " + url);
+          + firstLaunch + "&r=" + About.GWT_SVNREV;
+      if (entryPoint != null) {
+        url += "&e=" + entryPoint;
       }
+
+      branch.log(CHECK_INFO, "Checking for new version at " + url);
 
       // Do the HTTP GET.
       //
       byte[] response;
       String fullUserAgent = makeUserAgent();
-      if (System.getProperty("gwt.forceVersionCheckNonNative") == null) {
+      if (System.getProperty(PROPERTY_FORCE_NONNATIVE) == null) {
         // Use subclass.
         //
-        response = doHttpGet(fullUserAgent, url);
+        response = doHttpGet(branch, fullUserAgent, url);
       } else {
         // Use the pure Java version, but it probably doesn't work with proxies.
         //
-        response = httpGetNonNative(fullUserAgent, url);
+        response = httpGetNonNative(branch, fullUserAgent, url);
       }
 
       if (response == null || response.length == 0) {
         // Problem. Quietly fail.
         //
-        if (DEBUG_VERSION_CHECK) {
-          System.out.println("Failed to obtain current version info via HTTP");
-        }
-        return;
+        branch.log(CHECK_ERROR,
+            "Failed to obtain current version info via HTTP");
+        return null;
       }
 
       // Parse and process the response.
       // Bad responses will be silently ignored.
       //
-      parseResponse(prefs, response, callback);
+      return parseResponse(branch, prefs, response);
 
     } catch (Throwable e) {
       // Always silently ignore any errors.
       //
-      if (DEBUG_VERSION_CHECK) {
-        System.out.println("Exception while processing version info");
-        e.printStackTrace();
-      }
+      branch.log(CHECK_INFO, "Exception while processing version info", e);
     }
+    return null;
   }
 
-  protected abstract byte[] doHttpGet(String userAgent, String url);
+  /**
+   * Default implementation just uses the platform-independent method. A
+   * subclass should override this method for platform-dependent proxy handling,
+   * for example.
+   * 
+   * @param branch TreeLogger to use
+   * @param userAgent user agent string to send in request
+   * @param url URL to fetch
+   * @return byte array of response, or null if an error
+   */
+  protected byte[] doHttpGet(TreeLogger branch, String userAgent, String url) {
+    return httpGetNonNative(branch, userAgent, url);
+  }
 
   /**
    * This default implementation uses regular Java HTTP, which doesn't deal with
    * proxies automagically. See the IE6 subclasses for an implementation that
    * does deal with proxies.
+   * 
+   * @param branch TreeLogger to use
+   * @param userAgent user agent string to send in request
+   * @param url URL to fetch
+   * @return byte array of response, or null if an error
    */
-  protected byte[] httpGetNonNative(String userAgent, String url) {
+  protected byte[] httpGetNonNative(TreeLogger branch, String userAgent,
+      String url) {
     Throwable caught;
     InputStream is = null;
     try {
@@ -458,8 +410,8 @@ public abstract class CheckForUpdates {
       }
     }
 
-    if (System.getProperty("gwt.debugLowLevelHttpGet") != null) {
-      caught.printStackTrace();
+    if (System.getProperty(PROPERTY_DEBUG_HTTP_GET) != null) {
+      branch.log(CHECK_ERROR, "Exception in HTTP request", caught);
     }
 
     return null;
@@ -495,5 +447,166 @@ public abstract class CheckForUpdates {
     }
 
     return ua;
+  }
+
+  private UpdateResult parseResponse(TreeLogger branch, Preferences prefs,
+      byte[] response) throws IOException, ParserConfigurationException,
+      SAXException {
+
+    branch.log(CHECK_SPAM, "Parsing response (length " + response.length + ")");
+
+    DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder builder = factory.newDocumentBuilder();
+    ByteArrayInputStream bais = new ByteArrayInputStream(response);
+
+    // Parse the XML.
+    //
+    builder.setErrorHandler(new ErrorHandler() {
+
+      public void error(SAXParseException exception) throws SAXException {
+        // fail quietly
+      }
+
+      public void fatalError(SAXParseException exception) throws SAXException {
+        // fail quietly
+      }
+
+      public void warning(SAXParseException exception) throws SAXException {
+        // fail quietly
+      }
+    });
+    Document doc = builder.parse(bais);
+
+    // The latest version number.
+    //
+    String versionString = getTextOfLastElementHavingTag(doc, "latest-version");
+    if (versionString == null) {
+      // Not valid; quietly fail.
+      //
+      branch.log(CHECK_ERROR, "Failed to find <latest-version>");
+      return null;
+    }
+    GwtVersion currentReleasedVersion;
+    try {
+      currentReleasedVersion = new GwtVersion(versionString.trim());
+    } catch (NumberFormatException e) {
+      branch.log(CHECK_ERROR, "Bad version: " + versionString, e);
+      return null;
+    }
+
+    // Ping delay for server-controlled throttling.
+    //
+    String pingDelaySecsStr = getTextOfLastElementHavingTag(doc,
+        "min-wait-seconds");
+    int pingDelaySecs = 0;
+    if (pingDelaySecsStr == null) {
+      // Not valid; quietly fail.
+      //
+      branch.log(CHECK_ERROR, "Missing <min-wait-seconds>");
+      return null;
+    }
+    try {
+      pingDelaySecs = Integer.parseInt(pingDelaySecsStr.trim());
+    } catch (NumberFormatException e) {
+      // Not a valid number; quietly fail.
+      //
+      branch.log(CHECK_ERROR, "Bad min-wait-seconds number: "
+          + pingDelaySecsStr);
+      return null;
+    }
+
+    String url = getTextOfLastElementHavingTag(doc, "notification-url");
+
+    if (url == null) {
+      // no URL, so write the HTML locally and provide a URL from that
+
+      // Read the HTML.
+      //
+      String html = getTextOfLastElementHavingTag(doc, "notification");
+
+      if (html == null) {
+        // Not valid; quietly fail.
+        //
+        branch.log(CHECK_ERROR, "Missing <notification>");
+        return null;
+      }
+      PrintWriter writer = null;
+      try {
+        String tempDir = System.getProperty("java.io.tmpdir");
+        File updateHtml = new File(tempDir, "gwt-update-"
+            + currentReleasedVersion + ".html");
+        writer = new PrintWriter(new FileOutputStream(updateHtml));
+        writer.print(html);
+        url = "file://" + updateHtml.getAbsolutePath();
+      } finally {
+        if (writer != null) {
+          writer.close();
+        }
+      }
+    }
+
+    // Okay -- this is a valid response.
+    //
+    return processResponse(branch, prefs, currentReleasedVersion,
+        pingDelaySecs, url);
+  }
+
+  private UpdateResult processResponse(TreeLogger branch, Preferences prefs,
+      final GwtVersion serverVersion, int pingDelaySecs, final String notifyUrl) {
+
+    // Record a ping; don't ping again until the delay is up.
+    //
+    long currentTimeMillis = System.currentTimeMillis();
+    long nextPingTime = currentTimeMillis + pingDelaySecs * 1000;
+    prefs.put(NEXT_PING, String.valueOf(nextPingTime));
+    prefs.put(LAST_PING, String.valueOf(currentTimeMillis));
+
+    branch.log(CHECK_INFO, "Ping delay is " + pingDelaySecs + "; next ping at "
+        + new Date(nextPingTime));
+
+    if (myVersion.isNoNagVersion()) {
+      // If the version number indicates no nagging about updates, exit here
+      // once we have recorded the next ping time. No-nag versions (ie,
+      // trunk builds) should also not update the highest version that has been
+      // run.
+      return null;
+    }
+
+    // Update the highest version of GWT that has been run if we are later.
+    GwtVersion highestRunVersion = new GwtVersion(prefs.get(
+        HIGHEST_RUN_VERSION, null));
+    if (myVersion.compareTo(highestRunVersion) > 0) {
+      highestRunVersion = myVersion;
+      prefs.put(HIGHEST_RUN_VERSION, highestRunVersion.toString());
+    }
+
+    // Are we up to date already?
+    //
+    if (highestRunVersion.compareTo(serverVersion) >= 0) {
+      // Yes, we are.
+      //
+      branch.log(CHECK_INFO, "Server version (" + serverVersion
+          + ") is not newer than " + highestRunVersion);
+      return null;
+    }
+
+    // Commence nagging.
+    //
+    URL url = null;
+    try {
+      url = new URL(notifyUrl);
+    } catch (MalformedURLException e) {
+      logger.log(CHECK_ERROR, "Malformed notify URL: " + notifyUrl, e);
+    }
+    final URL finalUrl = url;
+    return new UpdateResult() {
+      public GwtVersion getNewVersion() {
+        return serverVersion;
+      }
+
+      public URL getURL() {
+        return finalUrl;
+      }
+    };
   }
 }

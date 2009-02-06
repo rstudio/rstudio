@@ -77,6 +77,7 @@
           <java classname="com.google.gwt.user.tools.WebAppCreator" classpath="${gwt.user.jar}:${gwt.dev.jar}" failonerror="true">
             <!-- Relative path is important! Paths will be relative in final distro -->
             <sysproperty key="gwt.devjar" value="../../gwt-dev-@{platform}.jar" />
+            <arg value="-XnoEclipse" />
             <arg value="-overwrite" />
             <arg value="-out" />
             <arg file="${samples.scripts}/@{platform}/${sample.upper}" />

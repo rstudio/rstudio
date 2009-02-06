@@ -42,8 +42,6 @@ import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.dom.client.MouseWheelEvent;
 import com.google.gwt.event.dom.client.MouseWheelHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.DeferredCommand;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.impl.ClippedImageImpl;
 
@@ -66,10 +64,7 @@ import java.util.HashMap;
  * will be lost.
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class="css">
- * <li>.gwt-Image { }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> <ul class="css"> <li>.gwt-Image { }</li> </ul>
  * 
  * Tranformations between clipped and unclipped state will result in a loss of
  * any style names that were set/added; the only style names that are preserved
@@ -113,8 +108,8 @@ public class Image extends Widget implements SourcesLoadEvents,
       image.replaceElement(impl.createStructure(url, left, top, width, height));
       // Todo(ecc) This is wrong, we should not be sinking these here on such a
       // common widget.After the branch is stable, this should be fixed.
-      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL);
-      fireSyntheticLoadEvent(image);
+      image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONMOUSEWHEEL
+          | Event.ONLOAD);
     }
 
     @Override
@@ -160,7 +155,7 @@ public class Image extends Widget implements SourcesLoadEvents,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        fireSyntheticLoadEvent(image);
+        impl.fireSyntheticLoadEvent(image);
       }
     }
 
@@ -181,7 +176,7 @@ public class Image extends Widget implements SourcesLoadEvents,
         this.height = height;
 
         impl.adjust(image.getElement(), url, left, top, width, height);
-        fireSyntheticLoadEvent(image);
+        impl.fireSyntheticLoadEvent(image);
       }
     }
 
@@ -189,30 +184,6 @@ public class Image extends Widget implements SourcesLoadEvents,
     @Override
     protected String getStateName() {
       return "clipped";
-    }
-
-    private void fireSyntheticLoadEvent(final Image image) {
-      /*
-       * We need to synthesize a load event, because the native events that are
-       * fired would correspond to the loading of clear.cache.gif, which is
-       * incorrect. A native event would not even fire in Internet Explorer,
-       * because the root element is a wrapper element around the <img> element.
-       * Since we are synthesizing a load event, we do not need to sink the
-       * onload event.
-       * 
-       * We use a deferred command here to simulate the native version of the
-       * load event as closely as possible. In the native event case, it is
-       * unlikely that a second load event would occur while you are in the load
-       * event handler.
-       */
-      DeferredCommand.addCommand(new Command() {
-        public void execute() {
-          // TODO(ecc) once event triggering is committed, this call should
-          // fire a native load event instead.
-          image.fireEvent(new LoadEvent() {
-          });
-        }
-      });
     }
   }
 
@@ -251,16 +222,20 @@ public class Image extends Widget implements SourcesLoadEvents,
   private static class UnclippedState extends State {
 
     UnclippedState(Element element) {
-      // Todo(ecc) This is wrong, we should not be sinking these here on such a
-      // common widget.After the branch is stable, this should be fixed.
+      // This case is relatively unusual, in that we swapped a clipped image
+      // out, so does not need to be efficient.
       Event.sinkEvents(element, Event.ONCLICK | Event.MOUSEEVENTS
           | Event.ONLOAD | Event.ONERROR | Event.ONMOUSEWHEEL);
     }
 
     UnclippedState(Image image) {
       image.replaceElement(Document.get().createImageElement());
-      // Todo(ecc) This is wrong, we should not be sinking these here on such a
-      // common widget.After the branch is stable, this should be fixed.
+      // We are working around an IE race condition that can make the image
+      // incorrectly cache itself if the load event is assigned at the same time
+      // as the image is added to the dom.
+      Event.sinkEvents(image.getElement(), Event.ONLOAD);
+
+      // Todo(ecc) this could be more efficient overall.
       image.sinkEvents(Event.ONCLICK | Event.MOUSEEVENTS | Event.ONLOAD
           | Event.ONERROR | Event.ONMOUSEWHEEL);
     }

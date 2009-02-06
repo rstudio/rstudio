@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.DeferredCommand;
@@ -68,6 +70,20 @@ public class DialogBoxTest extends PopupTest {
     assertEquals("text", dialogBox.getText());
     assertTrue(dialogBox.getHTML().equalsIgnoreCase("<b>text</b>"));
   }
+  
+  public void testSimpleCloseButtonOnModalDialog() {
+    final DialogBox dialogBox = new DialogBox(false, true);
+    Button button = new Button();
+    button.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        dialogBox.hide();
+      }
+    });
+    dialogBox.add(button);
+    dialogBox.show();
+    button.click();
+    assertFalse(dialogBox.isShowing());
+  }
 
   public void testDebugId() {
     DialogBox dBox = new DialogBox();
@@ -86,7 +102,6 @@ public class DialogBoxTest extends PopupTest {
     // Check the header IDs
     DeferredCommand.addCommand(new Command() {
       public void execute() {
-        String prefix = UIObject.DEBUG_ID_PREFIX;
         UIObjectTest.assertDebugIdContents("myDialogBox-caption",
             "test caption");
         finishTest();

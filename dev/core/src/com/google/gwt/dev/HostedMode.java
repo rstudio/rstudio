@@ -281,6 +281,15 @@ public class HostedMode extends SwtHostedModeBase {
   HostedMode() {
   }
 
+  public WebServerRestart hasWebServer() {
+    return options.isNoServer() ? WebServerRestart.DISABLED
+        : WebServerRestart.ENABLED;
+  }
+
+  public void restartServer(TreeLogger logger) throws UnableToCompleteException {
+    server.refresh();
+  }
+
   @Override
   protected void compile(TreeLogger logger) throws UnableToCompleteException {
     CompilerOptions newOptions = new CompilerOptionsImpl(options);
@@ -391,6 +400,11 @@ public class HostedMode extends SwtHostedModeBase {
   }
 
   @Override
+  protected String getTitleText() {
+    return "Google Web Toolkit Hosted Mode";
+  }
+
+  @Override
   protected boolean initModule(String moduleName) {
     ModuleDef module = modulesByName.get(moduleName);
     if (module == null) {
@@ -432,8 +446,8 @@ public class HostedMode extends SwtHostedModeBase {
    * 
    * @param logger the logger to use
    * @param module the module to link
-   * @param includePublicFiles if <code>true</code>, include public files in the
-   *          link, otherwise do not include them
+   * @param includePublicFiles if <code>true</code>, include public files in
+   *          the link, otherwise do not include them
    * @throws UnableToCompleteException
    */
   private void link(TreeLogger logger, ModuleDef module)

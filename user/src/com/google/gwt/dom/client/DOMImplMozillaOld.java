@@ -24,6 +24,16 @@ package com.google.gwt.dom.client;
  */
  class DOMImplMozillaOld extends DOMImplMozilla {
 
+  public native void buttonClick(ButtonElement button) /*-{
+    var doc = button.ownerDocument;
+    if (doc != null) {
+      var evt = doc.createEvent('MouseEvents');
+      evt.initMouseEvent('click', true, true, null, 0, 0,
+        0, 0, 0, false, false, false, false, 0, null);
+      button.dispatchEvent(evt);
+    }
+  }-*/;
+
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var style = $doc.defaultView.getComputedStyle(elem, null);

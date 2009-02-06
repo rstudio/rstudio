@@ -15,6 +15,7 @@
  */
 package com.google.gwt.sample.showcase.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.http.client.Request;
@@ -323,7 +324,7 @@ public abstract class ContentWidget extends LazyPanel implements
   /**
    * Load the contents of a remote file into the specified widget.
    * 
-   * @param url the URL of the file relative to the source directory in public
+   * @param url a partial path relative to the module base URL
    * @param target the target Widget to place the contents
    * @param callback the callback when the call completes
    */
@@ -331,14 +332,16 @@ public abstract class ContentWidget extends LazyPanel implements
       final RequestCallback callback) {
     // Show the loading image
     if (loadingImage == null) {
-      loadingImage = "<img src=\"images/loading.gif\">";
+      loadingImage = "<img src=\"" + GWT.getModuleBaseURL()
+          + "images/loading.gif\">";
     }
     target.setDirection(HasDirection.Direction.LTR);
     DOM.setStyleAttribute(target.getElement(), "textAlign", "left");
     target.setHTML("&nbsp;&nbsp;" + loadingImage);
 
     // Request the contents of the file
-    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET, url);
+    RequestBuilder builder = new RequestBuilder(RequestBuilder.GET,
+        GWT.getModuleBaseURL() + url);
     RequestCallback realCallback = new RequestCallback() {
       public void onError(Request request, Throwable exception) {
         target.setHTML("Cannot find resource");

@@ -19,6 +19,7 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
@@ -462,14 +463,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    *          {@link CloseHandler#onClose(CloseEvent)} when the popup is closed
    */
   public void hide(boolean autoClosed) {
-    if (!showing) {
+    if (!isShowing()) {
       return;
     }
-    showing = false;
-    if (nativePreviewHandlerRegistration != null) {
-      nativePreviewHandlerRegistration.removeHandler();
-      nativePreviewHandlerRegistration = null;
-    }
+    cleanup();
 
     // Hide the popup
     resizeAnimation.setState(false);
@@ -586,6 +583,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   @Deprecated
   public boolean onKeyUpPreview(char key, int modifiers) {
     return true;
+  }
+
+  @Override
+  protected void onUnload() {
+    // Just to be sure, we perform cleanup when the popup is unloaded (i.e.
+    // removed from the DOM). This is normally taken care of in hide(), but it
+    // can be missed if someone removes the popup directly from the RootPanel.
+    cleanup();
   }
 
   /**
@@ -822,14 +827,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   protected com.google.gwt.user.client.Element getStyleElement() {
     return impl.getStyleElement(getPopupImplElement());
   }
-
-  /**
-   * @see NativePreviewHandler#onPreviewNativeEvent(NativePreviewEvent)
-   */
-  @SuppressWarnings("deprecation")
+ 
   protected void onPreviewNativeEvent(NativePreviewEvent event) {
     // Cancel the event based on the deprecated onEventPreview() method
-    if (event.isFirstHandler() && !onEventPreview(event.getNativeEvent())) {
+    if (event.isFirstHandler()
+        && !onEventPreview(Event.as(event.getNativeEvent()))) {
       event.cancel();
     }
   }
@@ -892,13 +894,23 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
   }-*/;
 
+  private void cleanup() {
+    // Clear the 'showing' flag and make sure that the event preview is cleaned
+    // up.
+    showing = false;
+    if (nativePreviewHandlerRegistration != null) {
+      nativePreviewHandlerRegistration.removeHandler();
+      nativePreviewHandlerRegistration = null;
+    }
+  }
+
   /**
    * Does the event target one of the partner elements?
    * 
    * @param event the native event
    * @return true if the event targets a partner
    */
-  private boolean eventTargetsPartner(Event event) {
+  private boolean eventTargetsPartner(NativeEvent event) {
     if (autoHidePartners == null) {
       return false;
     }
@@ -918,7 +930,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param event the native event
    * @return true if the event targets the popup
    */
-  private boolean eventTargetsPopup(Event event) {
+  private boolean eventTargetsPopup(NativeEvent event) {
     return getElement().isOrHasChild(event.getTarget());
   }
 
@@ -1087,7 +1099,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
 
     // If the event targets the popup or the partner, consume it
-    Event nativeEvent = event.getNativeEvent();
+    Event nativeEvent = Event.as(event.getNativeEvent());
     boolean eventTargetsPopupOrPartner = eventTargetsPopup(nativeEvent)
         || eventTargetsPartner(nativeEvent);
     if (eventTargetsPopupOrPartner) {

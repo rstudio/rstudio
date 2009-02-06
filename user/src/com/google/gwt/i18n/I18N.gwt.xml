@@ -27,7 +27,7 @@
       // Look for the locale as a url argument
       if (locale == null) {
         var args = location.search;
-        var startLang = args.indexOf("locale");
+        var startLang = args.indexOf("locale=");
         if (startLang >= 0) {
           var language = args.substring(startLang);
           var begin = language.indexOf("=") + 1;
@@ -44,6 +44,11 @@
         locale = __gwt_getMetaProperty("locale")
       }
 
+      if (locale == null) {
+        // Look for an override computed by other means in the selection script
+        locale = $wnd['__gwt_Locale'];
+      }
+      
       if (locale == null) {
         return "default";
       }

@@ -24,6 +24,7 @@ import com.google.gwt.user.tools.util.ArgHandlerIgnore;
 import com.google.gwt.user.tools.util.ArgHandlerOverwrite;
 import com.google.gwt.user.tools.util.CreatorUtilities;
 import com.google.gwt.util.tools.ArgHandlerExtra;
+import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerOutDir;
 import com.google.gwt.util.tools.Utility;
 
@@ -55,6 +56,8 @@ public final class WebAppCreator {
       registerHandler(new ArgHandlerIgnoreExtension());
       registerHandler(new ArgHandlerModuleName());
       registerHandler(new ArgHandlerOutDirExtension());
+      registerHandler(new ArgHandlerNoEclipse());
+      registerHandler(new ArgHandlerOnlyEclipse());
     }
 
     @Override
@@ -74,10 +77,6 @@ public final class WebAppCreator {
       return true;
     }
   }
-
-  /*
-   * Arguments for the application creator.
-   */
 
   private final class ArgHandlerModuleName extends ArgHandlerExtra {
     @Override
@@ -114,6 +113,52 @@ public final class WebAppCreator {
     }
   }
 
+  private final class ArgHandlerNoEclipse extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Do not generate eclipse files";
+    }
+
+    @Override
+    public String getTag() {
+      return "-XnoEclipse";
+    }
+
+    @Override
+    public boolean isUndocumented() {
+      return true;
+    }
+
+    @Override
+    public boolean setFlag() {
+      noEclipse = true;
+      return true;
+    }
+  }
+
+  private final class ArgHandlerOnlyEclipse extends ArgHandlerFlag {
+    @Override
+    public String getPurpose() {
+      return "Generate only eclipse files";
+    }
+
+    @Override
+    public String getTag() {
+      return "-XonlyEclipse";
+    }
+
+    @Override
+    public boolean isUndocumented() {
+      return true;
+    }
+
+    @Override
+    public boolean setFlag() {
+      onlyEclipse = true;
+      return true;
+    }
+  }
+
   private final class ArgHandlerOverwriteExtension extends ArgHandlerOverwrite {
     @Override
     public boolean setFlag() {
@@ -127,8 +172,8 @@ public final class WebAppCreator {
   }
 
   private static final class FileCreator {
-    private final String destName;
     private final File destDir;
+    private final String destName;
     private final String sourceName;
 
     public FileCreator(File destDir, String destName, String sourceName) {
@@ -149,16 +194,19 @@ public final class WebAppCreator {
     System.exit(1);
   }
 
+  private boolean ignore = false;
+  private String moduleName;
+  private boolean noEclipse;
+  private boolean onlyEclipse;
+  private File outDir;
+  private boolean overwrite = false;
+
   /**
-   * @param moduleName name of the fully-qualified GWT module to create as an
-   *          Application.
-   * @param outDir Where to put the output files
-   * @param overwrite Overwrite an existing files if they exist.
-   * @param ignore Ignore existing files if they exist.
-   * @throws IOException
+   * Create the sample app.
+   * 
+   * @throws IOException if any disk write fails
    */
-  static void createApplication(String moduleName, File outDir,
-      boolean overwrite, boolean ignore) throws IOException {
+  protected void doRun() throws IOException {
 
     // Figure out the installation directory
     String installPath = Utility.getInstallPath();
@@ -213,24 +261,51 @@ public final class WebAppCreator {
     replacements.put("@vmargs", isMacOsX ? "&#10;-XstartOnFirstThread" : "");
     replacements.put("@renameTo", moduleShortName.toLowerCase());
 
+    String antEclipseRule = "";
+    if (noEclipse) {
+      /*
+       * Generate a rule into the build file that allows for the generation of
+       * an eclipse project later on. This is primarily for distro samples. This
+       * is a quick and dirty way to inject a build rule, but it works.
+       */
+      antEclipseRule = "\n\n"
+          + "  <target name=\"eclipse.generate\" depends=\"libs\" description=\"Generate eclipse project\">\n"
+          + "    <java failonerror=\"true\" fork=\"true\" classname=\""
+          + this.getClass().getName() + "\">\n" + "      <classpath>\n"
+          + "        <path refid=\"project.class.path\"/>\n"
+          + "      </classpath>\n" + "      <arg value=\"-XonlyEclipse\"/>\n"
+          + "      <arg value=\"-ignore\"/>\n" + "      <arg value=\""
+          + moduleName + "\"/>\n" + "    </java>\n" + "  </target>";
+    } else {
+      antEclipseRule = "";
+    }
+    replacements.put("@antEclipseRule", antEclipseRule);
+
     List<FileCreator> files = new ArrayList<FileCreator>();
-    files.add(new FileCreator(moduleDir, moduleShortName + ".gwt.xml",
-        "Module.gwt.xml"));
-    files.add(new FileCreator(warDir, moduleShortName + ".html", "AppHtml.html"));
-    files.add(new FileCreator(warDir, moduleShortName + ".css", "AppCss.css"));
-    files.add(new FileCreator(webInfDir, "web.xml", "web.xml"));
-    files.add(new FileCreator(clientDir, moduleShortName + ".java",
-        "AppClassTemplate.java"));
-    files.add(new FileCreator(clientDir, "EchoService" + ".java",
-        "RpcClientTemplate.java"));
-    files.add(new FileCreator(clientDir, "EchoServiceAsync" + ".java",
-        "RpcAsyncClientTemplate.java"));
-    files.add(new FileCreator(serverDir, "EchoServiceImpl" + ".java",
-        "RpcServerTemplate.java"));
-    files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
-    files.add(new FileCreator(outDir, ".project", ".project"));
-    files.add(new FileCreator(outDir, ".classpath", ".classpath"));
-    files.add(new FileCreator(outDir, moduleShortName + ".launch", "App.launch"));
+    if (!onlyEclipse) {
+      files.add(new FileCreator(moduleDir, moduleShortName + ".gwt.xml",
+          "Module.gwt.xml"));
+      files.add(new FileCreator(warDir, moduleShortName + ".html",
+          "AppHtml.html"));
+      files.add(new FileCreator(warDir, moduleShortName + ".css", "AppCss.css"));
+      files.add(new FileCreator(webInfDir, "web.xml", "web.xml"));
+      files.add(new FileCreator(clientDir, moduleShortName + ".java",
+          "AppClassTemplate.java"));
+      files.add(new FileCreator(clientDir, "EchoService" + ".java",
+          "RpcClientTemplate.java"));
+      files.add(new FileCreator(clientDir, "EchoServiceAsync" + ".java",
+          "RpcAsyncClientTemplate.java"));
+      files.add(new FileCreator(serverDir, "EchoServiceImpl" + ".java",
+          "RpcServerTemplate.java"));
+      files.add(new FileCreator(outDir, "build.xml", "project.ant.xml"));
+    }
+    if (!noEclipse) {
+      assert new File(gwtDevPath).isAbsolute();
+      files.add(new FileCreator(outDir, ".project", ".project"));
+      files.add(new FileCreator(outDir, ".classpath", ".classpath"));
+      files.add(new FileCreator(outDir, moduleShortName + ".launch",
+          "App.launch"));
+    }
 
     for (FileCreator fileCreator : files) {
       File file = Utility.createNormalFile(fileCreator.destDir,
@@ -247,14 +322,9 @@ public final class WebAppCreator {
     }
   }
 
-  private boolean ignore = false;
-  private String moduleName;
-  private File outDir;
-  private boolean overwrite = false;
-
   protected boolean run() {
     try {
-      createApplication(moduleName, outDir, overwrite, ignore);
+      doRun();
       return true;
     } catch (IOException e) {
       System.err.println(e.getClass().getName() + ": " + e.getMessage());

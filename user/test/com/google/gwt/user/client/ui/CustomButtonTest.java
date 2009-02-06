@@ -16,18 +16,23 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.CustomButton.Face;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
 /**
- * Test for <code>PushButton</code> as most of this widget's functionality is
- * UI based, the primary test will be in the new UI testing framework once it is
+ * Test for <code>PushButton</code> as most of this widget's functionality is UI
+ * based, the primary test will be in the new UI testing framework once it is
  * released.
  * 
  */
@@ -153,5 +158,32 @@ public class CustomButtonTest extends GWTTestCase {
     assertTrue(b.isHovering());
     assertFalse(b.isDown());
     assertFalse(b.isEnabled());
+  }
+
+  public void testSyntheticClick() {
+    PushButton b = new PushButton();
+    final ArrayList<String> events = new ArrayList<String>();
+
+    b.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        events.add(event.getNativeEvent().getType());
+      }
+    });
+
+    RootPanel.get().add(b);
+
+    // Synthesize over/down/up events, which should kick off CustomButton's
+    // internal machinery to synthesize a click.
+    b.getElement().dispatchEvent(
+        Document.get().createMouseOverEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT, null));
+    b.getElement().dispatchEvent(
+        Document.get().createMouseDownEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT));
+    b.getElement().dispatchEvent(
+        Document.get().createMouseUpEvent(1, 0, 0, 0, 0, false, false, false,
+            false, Event.BUTTON_LEFT));
+    assertEquals("Expecting one click event", 1, events.size());
+    assertEquals("Expecting one click event", "click", events.get(0));
   }
 }

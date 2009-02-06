@@ -15,11 +15,14 @@
  */
 package com.google.gwt.json.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 
+import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +42,7 @@ public class JSONObject extends JSONValue {
   private final JavaScriptObject jsObject;
 
   public JSONObject() {
-    jsObject = JavaScriptObject.createObject();
+    this(JavaScriptObject.createObject());
   }
 
   /**
@@ -107,12 +110,27 @@ public class JSONObject extends JSONValue {
   }
 
   /**
-   * Returns the set of properties defined on this JSONObject.
+   * Returns the set of properties defined on this JSONObject. The returned set
+   * is immutable.
    */
   public Set<String> keySet() {
-    HashSet<String> keySet = new HashSet<String>();
-    addAllKeys(keySet);
-    return keySet;
+    final String[] keys = computeKeys();
+    return new AbstractSet<String>() {
+      @Override
+      public boolean contains(Object o) {
+        return (o instanceof String) && containsKey((String) o);
+      }
+
+      @Override
+      public Iterator<String> iterator() {
+        return Arrays.asList(keys).iterator();
+      }
+
+      @Override
+      public int size() {
+        return keys.length;
+      }
+    };
   }
 
   /**
@@ -138,7 +156,8 @@ public class JSONObject extends JSONValue {
    * Determines the number of properties on this object.
    */
   public int size() {
-    return keySet().size();
+    // Must always recheck due to foreign changes. :(
+    return computeSize();
   }
 
   /**
@@ -152,8 +171,7 @@ public class JSONObject extends JSONValue {
     StringBuffer sb = new StringBuffer();
     sb.append("{");
     boolean first = true;
-    List<String> keys = new ArrayList<String>();
-    addAllKeys(keys);
+    String[] keys = computeKeys();
     for (String key : keys) {
       if (first) {
         first = false;
@@ -178,6 +196,34 @@ public class JSONObject extends JSONValue {
     for (var key in jsObject) {
       s.@java.util.Collection::add(Ljava/lang/Object;)(key);
     }
+  }-*/;
+
+  private String[] computeKeys() {
+    if (GWT.isScript()) {
+      return computeKeys0(new String[0]);
+    } else {
+      List<String> result = new ArrayList<String>();
+      addAllKeys(result);
+      return result.toArray(new String[result.size()]);
+    }
+  }
+
+  private native String[] computeKeys0(String[] result) /*-{
+    var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
+    var i = 0;
+    for (var key in jsObject) {
+      result[i++] = key;
+    }
+    return result;
+  }-*/;
+
+  private native int computeSize() /*-{
+    var jsObject = this.@com.google.gwt.json.client.JSONObject::jsObject;
+    var size = 0;
+    for (var key in jsObject) {
+      ++size;
+    }
+    return size;
   }-*/;
 
   private native JSONValue get0(String key) /*-{

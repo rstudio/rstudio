@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native context menu event.
  */
@@ -27,7 +25,7 @@ public class ContextMenuEvent extends DomEvent<ContextMenuHandler> {
    * with this event.
    */
   private static final Type<ContextMenuHandler> TYPE = new Type<ContextMenuHandler>(
-      Event.ONCONTEXTMENU, "contextmenu", new ContextMenuEvent());
+      "contextmenu", new ContextMenuEvent());
 
   /**
    * Gets the event type associated with context menu events.
@@ -40,7 +38,7 @@ public class ContextMenuEvent extends DomEvent<ContextMenuHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire context menu events.
    */
   protected ContextMenuEvent() {

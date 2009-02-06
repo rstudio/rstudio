@@ -41,33 +41,16 @@ class DOMImplIE6 extends DOMImpl {
 
   @Override
   public native Element eventGetFromElement(Event evt) /*-{
-    return evt.fromElement;
-  }-*/;
-
-  @Override
-  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return Math.round(-evt.wheelDelta / 40) || 0;
-  }-*/;
-
-  @Override
-  public native Element eventGetTarget(Event evt) /*-{
-    return evt.srcElement;
+    // Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
+    // explicitly sets relatedTarget when synthesizing mouse events).
+    return evt.relatedTarget || evt.fromElement;
   }-*/;
 
   @Override
   public native Element eventGetToElement(Event evt) /*-{
-    return evt.toElement;
-  }-*/;
-
-  @Override
-  public native void eventPreventDefault(Event evt) /*-{
-    evt.returnValue = false;
-  }-*/;
-
-  @Override
-  public native String eventToString(Event evt) /*-{
-    if (evt.toString) return evt.toString();
-      return "[object Event]";
+    // Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
+    // explicitly sets relatedTarget when synthesizing mouse events).
+    return evt.relatedTarget || evt.toElement;
   }-*/;
 
   @Override
@@ -125,7 +108,7 @@ class DOMImplIE6 extends DOMImpl {
 
     @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent = function() {
       var newEvent = $doc.createEventObject();
-      this.fireEvent('onclick', newEvent);
+      $wnd.event.srcElement.fireEvent('onclick', newEvent);
       if (this.__eventBits & 2) {
         @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent.call(this);
       }

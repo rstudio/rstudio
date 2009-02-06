@@ -17,7 +17,7 @@ package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
 
-import java.util.Set;
+import java.util.Map;
 
 /**
  * A location that acts as a starting point for finding resources
@@ -30,11 +30,12 @@ public abstract class ClassPathEntry {
    * begins with a prefix X from the path prefix set and P is allowed by the
    * filter associated with X.
    * 
-   * @return a set of zero or more resources; note no guarantees are made
-   *         regarding the identities of the returned resource objects, and the
-   *         same object may be returned across multiple calls
+   * @return a map with key as an allowed resource and value as the PathPrefix
+   *         that allows the resource; note no guarantees are made regarding the
+   *         identities of the returned resource objects, and the same object
+   *         may be returned across multiple calls
    */
-  public abstract Set<AbstractResource> findApplicableResources(
+  public abstract Map<AbstractResource, PathPrefix> findApplicableResources(
       TreeLogger logger, PathPrefixSet pathPrefixSet);
 
   /**

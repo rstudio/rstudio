@@ -16,10 +16,9 @@
 package com.google.gwt.dom.client;
 
 /**
- * A Document is the root of the HTML hierarchy and holds the entire
- * content. Besides providing access to the hierarchy, it also provides some
- * convenience methods for accessing certain sets of information from the
- * document.
+ * A Document is the root of the HTML hierarchy and holds the entire content.
+ * Besides providing access to the hierarchy, it also provides some convenience
+ * methods for accessing certain sets of information from the document.
  */
 public class Document extends Node {
 
@@ -73,6 +72,13 @@ public class Document extends Node {
   }
 
   /**
+   * Creates a 'blur' event.
+   */
+  public final NativeEvent createBlurEvent() {
+    return createHtmlEvent("blur", false, false);
+  }
+
+  /**
    * Creates a &lt;br&gt; element.
    * 
    * @return the newly created element
@@ -100,12 +106,48 @@ public class Document extends Node {
   }
 
   /**
+   * Creates a 'change' event.
+   */
+  public final NativeEvent createChangeEvent() {
+    return createHtmlEvent("change", false, true);
+  }
+
+  /**
    * Creates an &lt;input type='checkbox'&gt; element.
    * 
    * @return the newly created element
    */
   public final InputElement createCheckInputElement() {
     return DOMImpl.impl.createInputElement("checkbox");
+  }
+
+  /**
+   * Creates a 'click' event.
+   * 
+   * <p>
+   * Note that this method does not allow the event's 'button' field to be
+   * specified, because not all browsers support it reliably for click events.
+   * </p>
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @return the event object
+   */
+  public final NativeEvent createClickEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey) {
+    // We disallow setting the button here, because IE doesn't provide the
+    // button property for click events.
+    return createMouseEvent("click", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey,
+        NativeEvent.BUTTON_LEFT, null);
   }
 
   /**
@@ -124,6 +166,52 @@ public class Document extends Node {
    */
   public final TableColElement createColGroupElement() {
     return (TableColElement) DOMImpl.impl.createElement(TableColElement.TAG_COLGROUP);
+  }
+
+  /**
+   * Creates a 'contextmenu' event.
+   * 
+   * Note: Contextmenu events will not dispatch properly on Firefox 2 and
+   * earlier.
+   * 
+   * @return the event object
+   */
+  public final NativeEvent createContextMenuEvent() {
+    return createHtmlEvent("contextmenu", true, true);
+  }
+
+  /**
+   * Creates a 'dblclick' event.
+   * 
+   * <p>
+   * Note that this method does not allow the event's 'button' field to be
+   * specified, because not all browsers support it reliably for click events.
+   * </p>
+   * 
+   * <p>
+   * Note that on some browsers, this may cause 'click' events to be synthesized
+   * as well.
+   * </p>
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @return the event object
+   */
+  public final NativeEvent createDblClickEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey) {
+    // We disallow setting the button here, because IE doesn't provide the
+    // button property for click events.
+    return createMouseEvent("dblclick", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey,
+        NativeEvent.BUTTON_LEFT, null);
   }
 
   /**
@@ -164,6 +252,15 @@ public class Document extends Node {
   }
 
   /**
+   * Creates an 'error' event.
+   * 
+   * @return the event object
+   */
+  public final NativeEvent createErrorEvent() {
+    return createHtmlEvent("error", false, false);
+  }
+
+  /**
    * Creates a &lt;fieldset&gt; element.
    * 
    * @return the newly created element
@@ -179,6 +276,15 @@ public class Document extends Node {
    */
   public final InputElement createFileInputElement() {
     return DOMImpl.impl.createInputElement("file");
+  }
+
+  /**
+   * Creates a 'focus' event.
+   * 
+   * @return the event object
+   */
+  public final NativeEvent createFocusEvent() {
+    return createHtmlEvent("focus", false, false);
   }
 
   /**
@@ -247,6 +353,31 @@ public class Document extends Node {
   }
 
   /**
+   * Creates an event.
+   * 
+   * <p>
+   * While this method may be used to create events directly, it is generally
+   * preferable to use existing helper methods such as
+   * {@link #createFocusEvent()}.
+   * </p>
+   * 
+   * <p>
+   * Also, note that on Internet Explorer the 'canBubble' and 'cancelable'
+   * arguments will be ignored (the event's behavior is inferred by the browser
+   * based upon its type).
+   * </p>
+   * 
+   * @param type the type of event (e.g., "focus", "load", etc)
+   * @param canBubble <code>true</code> if the event should bubble
+   * @param cancelable <code>true</code> if the event should be cancelable
+   * @return the event object
+   */
+  public final NativeEvent createHtmlEvent(String type, boolean canBubble,
+      boolean cancelable) {
+    return DOMImpl.impl.createHtmlEvent(this, type, canBubble, cancelable);
+  }
+
+  /**
    * Creates an &lt;iframe&gt; element.
    * 
    * @return the newly created element
@@ -280,6 +411,91 @@ public class Document extends Node {
    */
   public final ModElement createInsElement() {
     return (ModElement) DOMImpl.impl.createElement(ModElement.TAG_INS);
+  }
+
+  /**
+   * Creates a 'keydown' event.
+   * 
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @param charCode the char-code to be set on the event
+   * @return the event object
+   */
+  public final NativeEvent createKeyDownEvent(boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
+    return createKeyEvent("keydown", true, true, ctrlKey, altKey, shiftKey,
+        metaKey, keyCode, charCode);
+  }
+
+  /**
+   * Creates a key event.
+   * 
+   * <p>
+   * While this method may be used to create events directly, it is generally
+   * preferable to use existing helper methods such as
+   * {@link #createKeyPressEvent(boolean, boolean, boolean, boolean, int, int)}
+   * .
+   * </p>
+   * 
+   * <p>
+   * Also, note that on Internet Explorer the 'canBubble' and 'cancelable'
+   * arguments will be ignored (the event's behavior is inferred by the browser
+   * based upon its type).
+   * </p>
+   * 
+   * @param type the type of event (e.g., "focus", "load", etc)
+   * @param canBubble <code>true</code> if the event should bubble
+   * @param cancelable <code>true</code> if the event should be cancelable
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @param charCode the char-code to be set on the event
+   * @return the event object
+   */
+  public final NativeEvent createKeyEvent(String type, boolean canBubble,
+      boolean cancelable, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int keyCode, int charCode) {
+    return DOMImpl.impl.createKeyEvent(this, type, canBubble, cancelable,
+        ctrlKey, altKey, shiftKey, metaKey, keyCode, charCode);
+  }
+
+  /**
+   * Creates a 'keypress' event.
+   * 
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @param charCode the char-code to be set on the event
+   * @return the event object
+   */
+  public final NativeEvent createKeyPressEvent(boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
+    return createKeyEvent("keypress", true, true, ctrlKey, altKey, shiftKey,
+        metaKey, keyCode, charCode);
+  }
+
+  /**
+   * Creates a 'keyup' event.
+   * 
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param keyCode the key-code to be set on the event
+   * @param charCode the char-code to be set on the event
+   * @return the event object
+   */
+  public final NativeEvent createKeyUpEvent(boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode) {
+    return createKeyEvent("keyup", true, true, ctrlKey, altKey, shiftKey,
+        metaKey, keyCode, charCode);
   }
 
   /**
@@ -319,6 +535,15 @@ public class Document extends Node {
   }
 
   /**
+   * Creates a 'load' event.
+   * 
+   * @return the event object
+   */
+  public final NativeEvent createLoadEvent() {
+    return createHtmlEvent("load", false, false);
+  }
+
+  /**
    * Creates a &lt;map&gt; element.
    * 
    * @return the newly created element
@@ -334,6 +559,174 @@ public class Document extends Node {
    */
   public final MetaElement createMetaElement() {
     return (MetaElement) DOMImpl.impl.createElement(MetaElement.TAG);
+  }
+
+  /**
+   * Creates a 'mousedown' event.
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param button the event's button property (values from
+   *          {@link Event#BUTTON_LEFT} et al)
+   * @return the event object
+   */
+  public final NativeEvent createMouseDownEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button) {
+    return createMouseEvent("mousedown", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
+  }
+
+  /**
+   * Creates an mouse event.
+   * 
+   * <p>
+   * While this method may be used to create events directly, it is generally
+   * preferable to use existing helper methods such as
+   * {@link #createClickEvent(int, int, int, int, int, boolean, boolean, boolean, boolean)}
+   * .
+   * </p>
+   * 
+   * <p>
+   * Also, note that on Internet Explorer the 'canBubble' and 'cancelable'
+   * arguments will be ignored (the event's behavior is inferred by the browser
+   * based upon its type).
+   * </p>
+   * 
+   * @param type the type of event (e.g., "focus", "load", etc)
+   * @param canBubble <code>true</code> if the event should bubble
+   * @param cancelable <code>true</code> if the event should be cancelable
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param button the event's button property (values from
+   *          {@link Event#BUTTON_LEFT} et al)
+   * @param relatedTarget the event's related target (only relevant for
+   *          mouseover and mouseout events)
+   * @return the event object
+   */
+  public final NativeEvent createMouseEvent(String type, boolean canBubble,
+      boolean cancelable, int detail, int screenX, int screenY, int clientX,
+      int clientY, boolean ctrlKey, boolean altKey, boolean shiftKey,
+      boolean metaKey, int button, Element relatedTarget) {
+    return DOMImpl.impl.createMouseEvent(this, type, canBubble, cancelable,
+        detail, screenX, screenY, clientX, clientY, ctrlKey, altKey, shiftKey,
+        metaKey, button, relatedTarget);
+  }
+
+  /**
+   * Creates a 'mousemove' event.
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param button the event's button property (values from
+   *          {@link Event#BUTTON_LEFT} et al)
+   * @return the event object
+   */
+  public final NativeEvent createMouseMoveEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button) {
+    return createMouseEvent("mousemove", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
+  }
+
+  /**
+   * Creates a 'mouseout' event.
+   * 
+   * Note: The 'relatedTarget' parameter will be ignored on Firefox 2 and
+   * earlier.
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param button the event's button property (values from
+   *          {@link Event#BUTTON_LEFT} et al)
+   * @param relatedTarget the event's related target
+   * @return the event object
+   */
+  public final NativeEvent createMouseOutEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button, Element relatedTarget) {
+    return createMouseEvent("mouseout", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
+        relatedTarget);
+  }
+
+  /**
+   * Creates a 'mouseover' event.
+   * 
+   * Note: The 'relatedTarget' parameter will be ignored on Firefox 2 and
+   * earlier.
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param button the event's button property (values from
+   *          {@link Event#BUTTON_LEFT} et al)
+   * @param relatedTarget the event's related target
+   * @return the event object
+   */
+  public final NativeEvent createMouseOverEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button, Element relatedTarget) {
+    return createMouseEvent("mouseover", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button,
+        relatedTarget);
+  }
+
+  /**
+   * Creates a 'mouseup' event.
+   * 
+   * @param detail the event's detail property
+   * @param screenX the event's screen-relative x-position
+   * @param screenY the event's screen-relative y-position
+   * @param clientX the event's client-relative x-position
+   * @param clientY the event's client-relative y-position
+   * @param ctrlKey <code>true</code> if the ctrl key is depressed
+   * @param altKey <code>true</code> if the alt key is depressed
+   * @param shiftKey <code>true</code> if the shift key is depressed
+   * @param metaKey <code>true</code> if the meta key is depressed
+   * @param button the event's button property (values from
+   *          {@link Event#BUTTON_LEFT} et al)
+   * @return the event object
+   */
+  public final NativeEvent createMouseUpEvent(int detail, int screenX, int screenY,
+      int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button) {
+    return createMouseEvent("mouseup", true, true, detail, screenX, screenY,
+        clientX, clientY, ctrlKey, altKey, shiftKey, metaKey, button, null);
   }
 
   /**
@@ -444,6 +837,18 @@ public class Document extends Node {
    */
   public final ScriptElement createScriptElement(String source) {
     return DOMImpl.impl.createScriptElement(source);
+  }
+
+  /**
+   * Creates a 'scroll' event.
+   * 
+   * Note: Contextmenu events will not dispatch properly on Firefox 2 and
+   * earlier.
+   * 
+   * @return the event object
+   */
+  public final NativeEvent createScrollEvent() {
+    return createHtmlEvent("scroll", false, false);
   }
 
   /**
@@ -628,6 +1033,7 @@ public class Document extends Node {
    * For example, to position an element directly under the mouse cursor
    * (assuming you are handling a mouse event), do the following:
    * </p>
+   * 
    * <pre>
    * Event event;
    * Document doc;
@@ -743,8 +1149,8 @@ public class Document extends Node {
    * that the two documents may have different DTDs in the XML case.
    * 
    * @param node the node to import
-   * @param deep If <code>true</code>, recursively import the subtree under
-   *          the specified node; if <code>false</code>, import only the node
+   * @param deep If <code>true</code>, recursively import the subtree under the
+   *          specified node; if <code>false</code>, import only the node
    *          itself, as explained above
    */
   public final native void importNode(Node node, boolean deep) /*-{

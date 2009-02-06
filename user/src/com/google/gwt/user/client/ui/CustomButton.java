@@ -16,6 +16,8 @@
 
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.DOM;
@@ -316,6 +318,12 @@ public abstract class CustomButton extends ButtonBase {
   private boolean isFocusing;
 
   /**
+   * Used to decide whether to allow clicks to propagate up to the superclass
+   * or container elements.
+   */
+  private boolean allowClick;
+
+  /**
    * Constructor for <code>CustomButton</code>.
    * 
    * @param upImage image for the default (up) face of the button
@@ -575,6 +583,14 @@ public abstract class CustomButton extends ButtonBase {
 
     int type = DOM.eventGetType(event);
     switch (type) {
+      case Event.ONCLICK:
+        // If clicks are currently disallowed, keep it from bubbling or being
+        // passed to the superclass.
+        if (!allowClick) {
+          event.stopPropagation();
+          return;
+        }
+        break;
       case Event.ONMOUSEDOWN:
         if (event.getButton() == Event.BUTTON_LEFT) {
           setFocus(true);
@@ -618,9 +634,6 @@ public abstract class CustomButton extends ButtonBase {
           }
         }
         break;
-      case Event.ONCLICK:
-        // we handle clicks ourselves
-        return;
       case Event.ONBLUR:
         if (isFocusing) {
           isFocusing = false;
@@ -748,7 +761,18 @@ public abstract class CustomButton extends ButtonBase {
    * widget display.
    */
   protected void onClick() {
-    fireClickListeners(null);
+    // Allow the click we're about to synthesize to pass through to the
+    // superclass and containing elements. Element.dispatchEvent() is
+    // synchronous, so we simply set and clear the flag within this method.
+    allowClick = true;
+
+    // Mouse coordinates are not always available (e.g., when the click is
+    // caused by a keyboard event).
+    NativeEvent evt = Document.get().createClickEvent(1, 0, 0, 0, 0, false,
+        false, false, false);
+    getElement().dispatchEvent(evt);
+
+    allowClick = false;
   }
 
   /**

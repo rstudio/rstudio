@@ -125,6 +125,7 @@ public class CwBasicText extends ContentWidget {
     // Add a text area
     TextArea textArea = new TextArea();
     textArea.ensureDebugId("cwBasicText-textarea");
+    textArea.setVisibleLines(5);
     vpanel.add(new HTML("<br><br>" + constants.cwBasicTextAreaLabel()));
     vpanel.add(createTextExample(textArea, true));
 

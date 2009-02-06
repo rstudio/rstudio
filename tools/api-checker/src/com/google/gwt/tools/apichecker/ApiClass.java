@@ -225,8 +225,7 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
     JField fields[] = getAccessibleFields();
     for (JField field : fields) {
       if (isApiMember(field)) {
-        apiFields.put(ApiField.computeApiSignature(field), new ApiField(field,
-            this));
+        apiFields.put(field.getName(), new ApiField(field, this));
       } else {
         notAddedFields.add(field.toString());
       }

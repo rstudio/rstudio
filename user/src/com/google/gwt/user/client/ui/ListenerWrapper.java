@@ -80,6 +80,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.BaseListenerWrapper;
+import com.google.gwt.user.client.Event;
 
 import java.util.EventListener;
 
@@ -98,8 +99,8 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
   /**
    * Wrapper for a {@link LoadListener}.
    */
-  public static class WrappedLoadListener extends ListenerWrapper<LoadListener> implements
-      LoadHandler, ErrorHandler {
+  public static class WrappedLoadListener extends ListenerWrapper<LoadListener>
+      implements LoadHandler, ErrorHandler {
 
     /**
      * Adds the wrapped listener.
@@ -341,14 +342,14 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
       getListener().onKeyDown(
           getSource(event),
           (char) event.getNativeKeyCode(),
-          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
+          KeyboardListenerCollection.getKeyboardModifiers(Event.as(event.getNativeEvent())));
     }
 
     public void onKeyPress(KeyPressEvent event) {
       getListener().onKeyPress(
           getSource(event),
           (char) event.getNativeEvent().getKeyCode(),
-          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
+          KeyboardListenerCollection.getKeyboardModifiers(Event.as(event.getNativeEvent())));
     }
 
     public void onKeyUp(KeyUpEvent event) {
@@ -356,7 +357,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
       getListener().onKeyUp(
           getSource(event),
           (char) event.getNativeKeyCode(),
-          KeyboardListenerCollection.getKeyboardModifiers(event.getNativeEvent()));
+          KeyboardListenerCollection.getKeyboardModifiers(Event.as(event.getNativeEvent())));
     }
   }
 
@@ -463,15 +464,17 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
     public void onMouseDown(MouseDownEvent event) {
       Widget source = getSource(event);
       Element elem = source.getElement();
-      getListener().onMouseDown(source, event.getRelativeX(elem),
-          event.getRelativeY(elem));
+      getListener().onMouseDown(source,
+          Event.getRelativeX(event.getNativeEvent(), elem),
+          Event.getRelativeY(event.getNativeEvent(), elem));
     }
 
     public void onMouseMove(MouseMoveEvent event) {
       Widget source = getSource(event);
       Element elem = source.getElement();
-      getListener().onMouseMove(source, event.getRelativeX(elem),
-          event.getRelativeY(elem));
+      getListener().onMouseMove(source,
+          Event.getRelativeX(event.getNativeEvent(), elem),
+          Event.getRelativeY(event.getNativeEvent(), elem));
     }
 
     public void onMouseOut(MouseOutEvent event) {
@@ -485,8 +488,9 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
     public void onMouseUp(MouseUpEvent event) {
       Widget source = getSource(event);
       Element elem = source.getElement();
-      getListener().onMouseUp(source, event.getRelativeX(elem),
-          event.getRelativeY(elem));
+      getListener().onMouseUp(source,
+          Event.getRelativeX(event.getNativeEvent(), elem),
+          Event.getRelativeY(event.getNativeEvent(), elem));
     }
   }
   /**
@@ -530,7 +534,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     public void onMouseWheel(MouseWheelEvent event) {
       getListener().onMouseWheel(getSource(event),
-          new MouseWheelVelocity(event.getNativeEvent()));
+          new MouseWheelVelocity(Event.as(event.getNativeEvent())));
     }
   }
   /**
@@ -708,8 +712,10 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
     public void onClick(ClickEvent event) {
       HTMLTable table = (HTMLTable) event.getSource();
       HTMLTable.Cell cell = table.getCellForEvent(event);
-      getListener().onCellClicked(table, cell.getRowIndex(),
-          cell.getCellIndex());
+      if (cell != null) {
+        getListener().onCellClicked(table, cell.getRowIndex(),
+            cell.getCellIndex());
+      }
     }
   }
 

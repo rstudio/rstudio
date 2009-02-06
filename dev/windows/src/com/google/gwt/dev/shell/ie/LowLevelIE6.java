@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.ie;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.LowLevel;
 
 /**
@@ -32,15 +33,17 @@ class LowLevelIE6 {
    * @return the bytes of the full response (including headers), or
    *         <code>null</code> if there's a problem
    */
-  public static byte[] httpGet(String userAgent, String url) {
+  public static byte[] httpGet(TreeLogger branch, String userAgent, String url,
+      boolean debugFlag) {
     init();
     byte[][] out = new byte[1][];
     int status = _httpGet(userAgent, url, out);
     if (status == 0) {
       return out[0];
     } else {
-      if (System.getProperty("gwt.debugLowLevelHttpGet") != null) {
-        System.err.println("GET failed with status " + status + " for " + url);
+      if (debugFlag) {
+        branch.log(TreeLogger.ERROR, "GET failed with status " + status
+            + " for " + url);
       }
       return null;
     }

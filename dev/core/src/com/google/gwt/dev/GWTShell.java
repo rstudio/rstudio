@@ -166,6 +166,14 @@ public class GWTShell extends SwtHostedModeBase {
     return new GWTCompilerOptionsImpl(options);
   }
 
+  public WebServerRestart hasWebServer() {
+    return WebServerRestart.NONE;
+  }
+
+  public void restartServer(TreeLogger logger) throws UnableToCompleteException {
+    // Unimplemented.
+  }
+
   public void setCompilerOptions(CompilerOptions options) {
     this.options.copyFrom(options);
   }
@@ -235,6 +243,11 @@ public class GWTShell extends SwtHostedModeBase {
       return -1;
     }
     return EmbeddedTomcatServer.getPort();
+  }
+
+  @Override
+  protected String getTitleText() {
+    return "Google Web Toolkit Development Shell";
   }
 
   @Override

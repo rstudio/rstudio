@@ -95,7 +95,7 @@ public class ApiContainerTest extends TestCase {
     StringBuffer sb = new StringBuffer();
     sb.append("package test.apicontainer;\n");
     sb.append("class NonApiClass extends java.lang.Object {\n");
-    sb.append("\tpublic void methodInNonApiClass(java.lang.Object a) { };\n");
+    sb.append("\tpublic void methodInNonApiClass(NonApiClass a) { };\n");
     sb.append("\tpublic int fieldInNonApiClass = 3;\n");
     sb.append("\tprotected class ApiClassInNonApiClass {\n");
     sb.append("\tprotected ApiClassInNonApiClass() { }\n");

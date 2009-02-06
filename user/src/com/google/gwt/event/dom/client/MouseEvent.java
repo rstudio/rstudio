@@ -15,10 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.shared.EventHandler;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Window;
 
 /**
  * Abstract class representing mouse events.
@@ -27,30 +24,6 @@ import com.google.gwt.user.client.Window;
  * 
  */
 public abstract class MouseEvent<H extends EventHandler> extends DomEvent<H> {
-  /**
-   * Gets the x coordinate relative to the given element.
-   * 
-   * @param nativeEvent the native event
-   * @param relativeTo the relative element
-   * @return the relative x
-   */
-  public static int getRelativeX(Event nativeEvent, Element relativeTo) {
-    return nativeEvent.getClientX() - relativeTo.getAbsoluteLeft()
-        + relativeTo.getScrollLeft() + Window.getScrollLeft();
-  }
-
-  /**
-   * Gets the y coordinate relative to the given element.
-   * 
-   * @param nativeEvent the native event
-   * @param relativeTo the relative element
-   * @return the relative y
-   */
-  public static int getRelativeY(Event nativeEvent, Element relativeTo) {
-    return nativeEvent.getClientY() - relativeTo.getAbsoluteTop()
-        + relativeTo.getScrollTop() + Window.getScrollTop();
-  }
-
   /**
    * Gets the mouse x-position within the browser window's client area.
    * 
@@ -70,34 +43,15 @@ public abstract class MouseEvent<H extends EventHandler> extends DomEvent<H> {
   }
 
   /**
-   * Gets the button value. Compare it to {@link Event#BUTTON_LEFT},
-   * {@link Event#BUTTON_RIGHT}, {@link Event#BUTTON_MIDDLE}
+   * Gets the button value. Compare it to
+   * {@link com.google.gwt.dom.client.NativeEvent#BUTTON_LEFT},
+   * {@link com.google.gwt.dom.client.NativeEvent#BUTTON_RIGHT},
+   * {@link com.google.gwt.dom.client.NativeEvent#BUTTON_MIDDLE}
    * 
    * @return the button value
    */
   public int getNativeButton() {
     return getNativeEvent().getButton();
-  }
-
-  /**
-   * Gets the x coordinate relative to the given element.
-   * 
-   * @param relativeTo the relative element
-   * @return the relative x
-   */
-  public int getRelativeX(Element relativeTo) {
-    return getRelativeX(getNativeEvent(), relativeTo);
-  }
-
-  /**
-   * Gets the y coordinate relative to the given element.
-   * 
-   * 
-   * @param relativeTo the relative element
-   * @return the relative y
-   */
-  public int getRelativeY(Element relativeTo) {
-    return getRelativeY(getNativeEvent(), relativeTo);
   }
 
   /**

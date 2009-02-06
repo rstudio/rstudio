@@ -111,7 +111,7 @@ public class CwRadioButton extends ContentWidget {
       radioButton.ensureDebugId("cwRadioButton-sport-"
           + sport.replaceAll(" ", ""));
       if (i == 2) {
-        radioButton.setChecked(true);
+        radioButton.setValue(true);
       }
       vPanel.add(radioButton);
     }

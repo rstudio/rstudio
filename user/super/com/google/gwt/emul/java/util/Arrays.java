@@ -493,8 +493,10 @@ public class Arrays {
         hash = hashCode((float[]) obj);
       } else if (obj instanceof double[]) {
         hash = hashCode((double[]) obj);
-      } else {
+      } else if (obj != null) {
         hash = obj.hashCode();
+      } else {
+        hash = 0;
       }
 
       // nasty trick related to JS and lack of integer rollover

@@ -15,8 +15,8 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasNativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -33,7 +33,8 @@ import com.google.gwt.event.shared.HandlerRegistration;
  * calling methods in the {@link com.google.gwt.user.client.DOM} class.
  * </p>
  */
-public class Event extends JavaScriptObject {
+public class Event extends NativeEvent {
+
   /**
    * Represents a preview of a native {@link Event}.
    */
@@ -69,8 +70,8 @@ public class Event extends JavaScriptObject {
      * @param nativeEvent the native event
      * @return true to fire the event normally, false to cancel the event
      */
-    private static boolean fire(HandlerManager handlers, Event nativeEvent) {
-      if (TYPE != null && handlers != null) {
+    private static boolean fire(HandlerManager handlers, NativeEvent nativeEvent) {
+      if (TYPE != null && handlers != null && handlers.isEventHandled(TYPE)) {
         // Revive the event
         singleton.revive();
         singleton.setNativeEvent(nativeEvent);
@@ -102,7 +103,7 @@ public class Event extends JavaScriptObject {
     /**
      * The event being previewed.
      */
-    private Event nativeEvent;
+    private NativeEvent nativeEvent;
 
     /**
      * Cancel the native event and prevent it from firing. Note that the event
@@ -130,8 +131,18 @@ public class Event extends JavaScriptObject {
       return TYPE;
     }
 
-    public Event getNativeEvent() {
+    public NativeEvent getNativeEvent() {
       return nativeEvent;
+    }
+
+    /**
+     * Gets the type int corresponding to the native event that triggered this
+     * preview.
+     * 
+     * @return the type int associated with this native event
+     */
+    public final int getTypeInt() {
+      return Event.as(getNativeEvent()).getTypeInt();
     }
 
     /**
@@ -185,7 +196,7 @@ public class Event extends JavaScriptObject {
      * 
      * @param nativeEvent the native {@link Event} being previewed.
      */
-    private void setNativeEvent(Event nativeEvent) {
+    private void setNativeEvent(NativeEvent nativeEvent) {
       this.nativeEvent = nativeEvent;
     }
   }
@@ -201,21 +212,6 @@ public class Event extends JavaScriptObject {
      */
     void onPreviewNativeEvent(NativePreviewEvent event);
   }
-
-  /**
-   * The left mouse button (used in {@link DOM#eventGetButton(Event)}).
-   */
-  public static final int BUTTON_LEFT = 1;
-
-  /**
-   * The middle mouse button (used in {@link DOM#eventGetButton(Event)}).
-   */
-  public static final int BUTTON_MIDDLE = 4;
-
-  /**
-   * The right mouse button (used in {@link DOM#eventGetButton(Event)}).
-   */
-  public static final int BUTTON_RIGHT = 2;
 
   /**
    * Fired when an element loses keyboard focus.
@@ -398,6 +394,25 @@ public class Event extends JavaScriptObject {
   }
 
   /**
+   * Converts the {@link NativeEvent} to Event. This is always safe.
+   * 
+   * @param event the event to downcast
+   */
+  public static Event as(NativeEvent event) {
+    return (Event) event;
+  }
+
+  /**
+   * Fire a {@link NativePreviewEvent} for the native event.
+   * 
+   * @param nativeEvent the native event
+   * @return true to fire the event normally, false to cancel the event
+   */
+  public static boolean fireNativePreviewEvent(NativeEvent nativeEvent) {
+    return NativePreviewEvent.fire(handlers, nativeEvent);
+  }
+
+  /**
    * Gets the current event that is being fired. The current event is only
    * available within the lifetime of the onBrowserEvent function. Once the
    * onBrowserEvent method returns, the current event is reset to null.
@@ -417,6 +432,40 @@ public class Event extends JavaScriptObject {
    */
   public static int getEventsSunk(Element elem) {
     return DOM.getEventsSunk((com.google.gwt.user.client.Element) elem);
+  }
+
+  /**
+   * Gets the x coordinate relative to the given element.
+   * 
+   * @param nativeEvent the native event
+   * @param relativeTo the relative element
+   * @return the relative x
+   */
+  public static int getRelativeX(NativeEvent nativeEvent, Element relativeTo) {
+    return nativeEvent.getClientX() - relativeTo.getAbsoluteLeft()
+        + relativeTo.getScrollLeft() + Window.getScrollLeft();
+  }
+
+  /**
+   * Gets the y coordinate relative to the given element.
+   * 
+   * @param nativeEvent the native event
+   * @param relativeTo the relative element
+   * @return the relative y
+   */
+  public static int getRelativeY(NativeEvent nativeEvent, Element relativeTo) {
+    return nativeEvent.getClientY() - relativeTo.getAbsoluteTop()
+        + relativeTo.getScrollTop() + Window.getScrollTop();
+  }
+
+  /**
+   * Gets the enumerated type of this event given a valid event type name.
+   * 
+   * @param typeName the typeName to be tested
+   * @return the event's enumerated type
+   */
+  public static int getTypeInt(String typeName) {
+    return DOM.impl.eventGetTypeInt(typeName);
   }
 
   /**
@@ -454,6 +503,17 @@ public class Event extends JavaScriptObject {
   }
 
   /**
+   * Sets the {@link EventListener} to receive events for the given element.
+   * Only one such listener may exist for a single element.
+   * 
+   * @param elem the element whose listener is to be set
+   * @param listener the listener to receive {@link Event events}
+   */
+  public static void setEventListener(Element elem, EventListener listener) {
+    DOM.setEventListener((com.google.gwt.user.client.Element) elem, listener);
+  }
+
+  /**
    * Sets the current set of events sunk by a given element. These events will
    * be fired to the nearest {@link EventListener} specified on any of the
    * element's parents.
@@ -464,16 +524,6 @@ public class Event extends JavaScriptObject {
    */
   public static void sinkEvents(Element elem, int eventBits) {
     DOM.sinkEvents((com.google.gwt.user.client.Element) elem, eventBits);
-  }
-
-  /**
-   * Fire a {@link NativePreviewEvent} for the native event.
-   * 
-   * @param nativeEvent the native event
-   * @return true to fire the event normally, false to cancel the event
-   */
-  static boolean fireNativePreviewEvent(Event nativeEvent) {
-    return NativePreviewEvent.fire(handlers, nativeEvent);
   }
 
   /**
@@ -494,52 +544,6 @@ public class Event extends JavaScriptObject {
   }
 
   /**
-   * Gets whether the ALT key was depressed when the given event occurred.
-   * 
-   * @return <code>true</code> if ALT was depressed when the event occurred
-   */
-  public final boolean getAltKey() {
-    return DOM.eventGetAltKey(this);
-  }
-
-  /**
-   * Gets the mouse buttons that were depressed when the given event occurred.
-   * 
-   * @return a bit-field, defined by {@link Event#BUTTON_LEFT},
-   *         {@link Event#BUTTON_MIDDLE}, and {@link Event#BUTTON_RIGHT}
-   */
-  public final int getButton() {
-    return DOM.eventGetButton(this);
-  }
-
-  /**
-   * Gets the mouse x-position within the browser window's client area.
-   * 
-   * @return the mouse x-position
-   */
-  public final int getClientX() {
-    return DOM.eventGetClientX(this);
-  }
-
-  /**
-   * Gets the mouse y-position within the browser window's client area.
-   * 
-   * @return the mouse y-position
-   */
-  public final int getClientY() {
-    return DOM.eventGetClientY(this);
-  }
-
-  /**
-   * Gets whether the CTRL key was depressed when the given event occurred.
-   * 
-   * @return <code>true</code> if CTRL was depressed when the event occurred
-   */
-  public final boolean getCtrlKey() {
-    return DOM.eventGetCtrlKey(this);
-  }
-
-  /**
    * Gets the current target element of this event. This is the element whose
    * listener fired last, not the element which fired the event initially.
    * 
@@ -553,129 +557,35 @@ public class Event extends JavaScriptObject {
    * Gets the element from which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOVER}).
    * 
+   * @deprecated use {@link NativeEvent#getRelatedTarget()} instead
    * @return the element from which the mouse pointer was moved
    */
+  @Deprecated
   public final Element getFromElement() {
     return DOM.eventGetFromElement(this);
-  }
-
-  /**
-   * Gets the key code associated with this event.
-   * 
-   * <p>
-   * For {@link Event#ONKEYPRESS}, this method returns the Unicode value of the
-   * character generated. For {@link Event#ONKEYDOWN} and {@link Event#ONKEYUP},
-   * it returns the code associated with the physical key.
-   * </p>
-   * 
-   * @return the Unicode character or key code.
-   * @see com.google.gwt.event.dom.client.KeyCodes
-   */
-  public final int getKeyCode() {
-    return DOM.eventGetKeyCode(this);
-  }
-
-  /**
-   * Gets whether the META key was depressed when the given event occurred.
-   * 
-   * @return <code>true</code> if META was depressed when the event occurred
-   */
-  public final boolean getMetaKey() {
-    return DOM.eventGetMetaKey(this);
-  }
-
-  /**
-   * Gets the velocity of the mouse wheel associated with the event along the Y
-   * axis.
-   * <p>
-   * The velocity of the event is an artifical measurement for relative
-   * comparisons of wheel activity. It is affected by some non-browser factors,
-   * including choice of input hardware and mouse acceleration settings. The
-   * sign of the velocity measurement agrees with the screen coordinate system;
-   * negative values are towards the origin and positive values are away from
-   * the origin. Standard scrolling speed is approximately ten units per event.
-   * </p>
-   * 
-   * @return The velocity of the mouse wheel.
-   */
-  public final int getMouseWheelVelocityY() {
-    return DOM.eventGetMouseWheelVelocityY(this);
   }
 
   /**
    * Gets the key-repeat state of this event.
    * 
    * @return <code>true</code> if this key event was an auto-repeat
+   * @deprecated not supported on all browsers
    */
+  @Deprecated
   public final boolean getRepeat() {
     return DOM.eventGetRepeat(this);
-  }
-
-  /**
-   * Gets the mouse x-position on the user's display.
-   * 
-   * @return the mouse x-position
-   */
-  public final int getScreenX() {
-    return DOM.eventGetScreenX(this);
-  }
-
-  /**
-   * Gets the mouse y-position on the user's display.
-   * 
-   * @return the mouse y-position
-   */
-  public final int getScreenY() {
-    return DOM.eventGetScreenY(this);
-  }
-
-  /**
-   * Gets whether the shift key was depressed when the given event occurred.
-   * 
-   * @return <code>true</code> if shift was depressed when the event occurred
-   */
-  public final boolean getShiftKey() {
-    return DOM.eventGetShiftKey(this);
-  }
-
-  /**
-   * Gets a string representation of this event.
-   * 
-   * We do not override {@link #toString()} because it is final in
-   * {@link JavaScriptObject}.
-   * 
-   * @return the string representation of this event
-   */
-  public final String getString() {
-    return DOM.eventToString(this);
-  }
-
-  /**
-   * Returns the element that was the actual target of the given event.
-   * 
-   * @return the target element
-   */
-  public final Element getTarget() {
-    return DOM.eventGetTarget(this);
   }
 
   /**
    * Gets the element to which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOUT}).
    * 
+   * @deprecated use {@link NativeEvent#getRelatedTarget()} instead
    * @return the element to which the mouse pointer was moved
    */
+  @Deprecated
   public final Element getToElement() {
     return DOM.eventGetToElement(this);
-  }
-
-  /**
-   * Gets the enumerated type of this event (as defined in {@link Event}).
-   * 
-   * @return the event's enumerated type
-   */
-  public final String getType() {
-    return DOM.eventGetTypeString(this);
   }
 
   /**
@@ -686,12 +596,5 @@ public class Event extends JavaScriptObject {
    */
   public final int getTypeInt() {
     return DOM.eventGetType(this);
-  }
-
-  /**
-   * Prevents the browser from taking its default action for the given event.
-   */
-  public final void preventDefault() {
-    DOM.eventPreventDefault(this);
   }
 }

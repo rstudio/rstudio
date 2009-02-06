@@ -23,9 +23,11 @@ import com.google.gwt.user.client.EventTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
+import com.google.gwt.user.client.ui.ButtonTest;
 import com.google.gwt.user.client.ui.CaptionPanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CompositeTest;
+import com.google.gwt.user.client.ui.CreateEventTest;
 import com.google.gwt.user.client.ui.CustomButtonTest;
 import com.google.gwt.user.client.ui.DOMTest;
 import com.google.gwt.user.client.ui.DateBoxTest;
@@ -95,6 +97,7 @@ public class UISuite {
     suite.addTestSuite(AbsolutePanelTest.class);
     suite.addTestSuite(AnchorTest.class);
     suite.addTestSuite(AsyncProxyTest.class);
+    suite.addTestSuite(ButtonTest.class);
     suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
@@ -160,6 +163,7 @@ public class UISuite {
     suite.addTestSuite(XMLTest.class);
     suite.addTestSuite(ClassInitTest.class);
     suite.addTestSuite(DateChangeEventTest.class);
+    suite.addTestSuite(CreateEventTest.class);
     return suite;
   }
 }

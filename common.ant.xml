@@ -253,10 +253,12 @@
     <element name="sourcepath" implicit="yes" optional="true" />
     <sequential>
       <taskdef resource="checkstyletask.properties" classpath="${gwt.tools.antlib}/checkstyle-all-4.2.jar;${gwt.build.lib}/gwt-customchecks.jar" />
-      <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxWarnings="0">
+      <checkstyle config="${gwt.root}/eclipse/settings/code-style/gwt-checkstyle.xml" maxErrors="0">
+      	<formatter type="xml" toFile="${project.build}/checkstyle_log.xml"/>
         <property key="checkstyle.header.file" file="${gwt.root}/eclipse/settings/code-style/google.header" />
         <sourcepath />
       </checkstyle>
+     <echo message="Checkstyle messages are reported in checkstyle_log.xml located at ${project.build}" />
     </sequential>
   </macrodef>
 

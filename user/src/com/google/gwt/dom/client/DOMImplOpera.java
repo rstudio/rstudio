@@ -21,6 +21,11 @@ package com.google.gwt.dom.client;
 class DOMImplOpera extends DOMImplStandard {
 
   @Override
+  public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
+    return evt.detail * 4 || 0;
+  }-*/;
+
+  @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var left = 0;
 
@@ -63,7 +68,7 @@ class DOMImplOpera extends DOMImplStandard {
     }
     return top;
   }-*/;
-  
+
   @Override
   public native void scrollIntoView(Element elem) /*-{
     elem.scrollIntoView();

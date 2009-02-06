@@ -979,8 +979,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     // clear the selection; a keyboard user can cursor down to the first item
     selectItem(null);
   }
-
-  @SuppressWarnings("deprecation")
+ 
   private void openPopup(final MenuItem item) {
     // Only the last popup to be opened should preview all event
     if (parentMenu != null && parentMenu.popup != null) {
@@ -1002,12 +1001,12 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
         // Hook the popup panel's event preview. We use this to keep it from
         // auto-hiding when the parent menu is clicked.
         if (!event.isCanceled()) {
-          Event nativeEvent = event.getNativeEvent();
-          switch (nativeEvent.getTypeInt()) {
+
+          switch (event.getTypeInt()) {
             case Event.ONMOUSEDOWN:
               // If the event target is part of the parent menu, suppress the
               // event altogether.
-              com.google.gwt.dom.client.Element target = nativeEvent.getTarget();
+              com.google.gwt.dom.client.Element target = event.getNativeEvent().getTarget();
               Element parentMenuElement = item.getParentMenu().getElement();
               if (parentMenuElement.isOrHasChild(target)) {
                 event.cancel();

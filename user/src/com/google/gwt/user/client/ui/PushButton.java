@@ -96,6 +96,17 @@ public class PushButton extends CustomButton {
    * 
    * @param upImage image for the default(up) face of the button
    * @param downImage image for the down face of the button
+   * @param handler the click handler
+   */
+  public PushButton(Image upImage, Image downImage, ClickHandler handler) {
+    super(upImage, downImage, handler);
+  }
+
+  /**
+   * Constructor for <code>PushButton</code>.
+   * 
+   * @param upImage image for the default(up) face of the button
+   * @param downImage image for the down face of the button
    * @param listener clickListener
    */
   @Deprecated

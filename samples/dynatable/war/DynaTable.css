@@ -43,15 +43,15 @@ body {
 }
 
 .DynaTable-DynaTableWidget .table td.name {
-	width: 10em;
+	width: 20%;
 }
 
 .DynaTable-DynaTableWidget .table td.desc {
-	width: 20em;
+	width: 30%;
 }
 
 .DynaTable-DynaTableWidget .table td.sched {
-	width: 20em;
+	width: 50%;
 }
 
 .DynaTable-DynaTableWidget .table td {

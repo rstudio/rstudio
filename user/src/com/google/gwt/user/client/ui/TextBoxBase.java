@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -31,7 +32,7 @@ import com.google.gwt.user.client.ui.impl.TextBoxImpl;
  */
 @SuppressWarnings("deprecation")
 public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
-    HasText, HasName, HasValue<String> {
+    HasChangeHandlers, HasText, HasName, HasValue<String> {
 
   /**
    * Text alignment constant, used in
@@ -88,9 +89,13 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     super(elem);
   }
 
+  public HandlerRegistration addChangeHandler(ChangeHandler handler) {
+    return addDomHandler(handler, ChangeEvent.getType());
+  }
+
   @Deprecated
   public void addChangeListener(ChangeListener listener) {
-    addDomHandler(new ListenerWrapper.WrappedChangeListener(listener), ChangeEvent.getType());
+    addChangeHandler(new ListenerWrapper.WrappedChangeListener(listener));
   }
 
   public HandlerRegistration addValueChangeHandler(
@@ -98,11 +103,11 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
     // Initialization code
     if (!valueChangeHandlerInitialized) {
       valueChangeHandlerInitialized = true;
-      addDomHandler(new ChangeHandler() {
+      addChangeHandler(new ChangeHandler() {
         public void onChange(ChangeEvent event) {
           ValueChangeEvent.fire(TextBoxBase.this, getText());
         }
-      }, ChangeEvent.getType());
+      });
     }
     return addHandler(handler, ValueChangeEvent.getType());
   }

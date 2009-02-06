@@ -47,15 +47,6 @@ public abstract class KeyEvent<H extends EventHandler> extends DomEvent<H> {
   }
 
   /**
-   * Gets the key-repeat state of this event.
-   * 
-   * @return <code>true</code> if this key event was an auto-repeat
-   */
-  public boolean isAutoRepeat() {
-    return getNativeEvent().getRepeat();
-  }
-
-  /**
    * Is the <code>control</code> key down?
    * 
    * @return whether the control key is down

@@ -303,11 +303,12 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
       throw new IllegalArgumentException("value must not be null");
     }
 
-    if (value.equals(getValue())) {
-      return;
-    }
+    Boolean oldValue = getValue();
     inputElem.setChecked(value);
     inputElem.setDefaultChecked(value);
+    if (value.equals(oldValue)) {
+      return;
+    }
     if (fireEvents) {
       ValueChangeEvent.fire(this, value);
     }

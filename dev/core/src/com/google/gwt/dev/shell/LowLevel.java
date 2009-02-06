@@ -103,7 +103,6 @@ public class LowLevel {
             + "'.  Detailed error:\n");
         sb.append(e.getMessage() + ")\n\n");
         sb.append("Your GWT installation may be corrupt");
-        System.err.println(sb.toString());
         throw new UnsatisfiedLinkError(sb.toString());
       }
       sInitialized = true;

@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native scroll event.
  */
@@ -27,7 +25,7 @@ public class ScrollEvent extends DomEvent<ScrollHandler> {
    * event.
    */
   private static final Type<ScrollHandler> TYPE = new Type<ScrollHandler>(
-      Event.ONSCROLL, "scroll", new ScrollEvent());
+      "scroll", new ScrollEvent());
 
   /**
    * Gets the event type associated with scroll events.
@@ -40,7 +38,7 @@ public class ScrollEvent extends DomEvent<ScrollHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire scroll events.
    */
   protected ScrollEvent() {

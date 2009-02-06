@@ -16,18 +16,11 @@
 package com.google.gwt.user.client.impl;
 
 import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.Event;
 
 /**
  * Opera implementation of {@link com.google.gwt.user.client.impl.DOMImpl}.
  */
 public class DOMImplOpera extends DOMImplStandard {
-
-  @Override
-  public native int eventGetMouseWheelVelocityY(Event evt) /*-{
-    return evt.detail * 4 || 0;
-  }-*/;
-
   /**
    * As Opera sinks events very quickly, adding guards to prevent the sinking of
    * events actually slows Opera down.

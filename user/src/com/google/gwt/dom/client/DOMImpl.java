@@ -21,9 +21,16 @@ abstract class DOMImpl {
 
   static final DOMImpl impl = GWT.create(DOMImpl.class);
 
+  public native void buttonClick(ButtonElement button) /*-{
+    button.click();
+  }-*/;
+
   public native Element createElement(String tag) /*-{
     return $doc.createElement(tag);
   }-*/;
+
+  public abstract NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
+      boolean cancelable);
 
   public native InputElement createInputElement(String type) /*-{
     var e = $doc.createElement("INPUT");
@@ -32,6 +39,15 @@ abstract class DOMImpl {
   }-*/;
 
   public abstract InputElement createInputRadioElement(String name);
+
+  public abstract NativeEvent createKeyEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int keyCode, int charCode);
+
+  public abstract NativeEvent createMouseEvent(Document doc, String type,
+      boolean canBubble, boolean cancelable, int detail, int screenX,
+      int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
+      boolean shiftKey, boolean metaKey, int button, Element relatedTarget);
 
   public ScriptElement createScriptElement(String source) {
     ScriptElement elem = (ScriptElement) createElement("script");
@@ -46,6 +62,73 @@ abstract class DOMImpl {
     }
     return select;
   }
+
+  public abstract void dispatchEvent(Element target, NativeEvent evt);
+
+  public native boolean eventGetAltKey(NativeEvent evt) /*-{
+    return !!evt.altKey;
+  }-*/;
+
+  public native int eventGetButton(NativeEvent evt) /*-{
+    return evt.button || 0;
+  }-*/;
+
+  public native int eventGetClientX(NativeEvent evt) /*-{
+    return evt.clientX || 0;
+  }-*/;
+
+  public native int eventGetClientY(NativeEvent evt) /*-{
+    return evt.clientY || 0;
+  }-*/;
+
+  public native boolean eventGetCtrlKey(NativeEvent evt) /*-{
+    return !!evt.ctrlKey;
+  }-*/;
+
+  public final native int eventGetKeyCode(NativeEvent evt) /*-{
+    // 'which' gives the right key value, except when it doesn't -- in which
+    // case, keyCode gives the right value on all browsers.
+    // If all else fails, return an error code
+    return evt.which || evt.keyCode || 0;
+  }-*/;
+
+  public native boolean eventGetMetaKey(NativeEvent evt) /*-{
+    return !!evt.metaKey;
+  }-*/;
+
+  public abstract int eventGetMouseWheelVelocityY(NativeEvent evt);
+
+  public abstract Element eventGetRelatedTarget(NativeEvent nativeEvent);
+
+  public native int eventGetScreenX(NativeEvent evt) /*-{
+    return evt.screenX || 0;
+  }-*/;
+
+  public native int eventGetScreenY(NativeEvent evt) /*-{
+    return evt.screenY || 0;
+  }-*/;
+
+  public native boolean eventGetShiftKey(NativeEvent evt) /*-{
+    return !!evt.shiftKey;
+  }-*/;
+
+  public abstract Element eventGetTarget(NativeEvent evt);
+
+  public final native String eventGetType(NativeEvent evt) /*-{
+    return evt.type;
+  }-*/;
+
+  public abstract void eventPreventDefault(NativeEvent evt);
+
+  public native void eventSetKeyCode(NativeEvent evt, char key) /*-{
+    evt.keyCode = key;
+  }-*/;
+
+  public native void eventStopPropagation(NativeEvent evt) /*-{
+    evt.stopPropagation();
+  }-*/;
+
+  public abstract String eventToString(NativeEvent evt);
 
   public native int getAbsoluteLeft(Element elem) /*-{
     var left = 0;

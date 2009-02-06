@@ -62,8 +62,7 @@ import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
  * 
  * <li>.Application-menu { The main menu }</li>
  * 
- * <li>.Application-content-wrapper { The scrollable element around the content
- * }</li>
+ * <li>.Application-content-wrapper { The scrollable element around the content }</li>
  * 
  * </ul>
  */
@@ -293,8 +292,8 @@ public class Application extends Composite implements ResizeHandler,
 
   protected void onWindowResizedImpl(int width) {
     int menuWidth = mainMenu.getOffsetWidth();
-    int contentWidth = width - menuWidth - 30;
-    int contentWidthInner = contentWidth - 10;
+    int contentWidth = Math.max(width - menuWidth - 30, 1);
+    int contentWidthInner = Math.max(contentWidth - 10, 1);
     bottomPanel.setCellWidth(mainMenu, menuWidth + "px");
     bottomPanel.setCellWidth(contentDecorator, contentWidth + "px");
     contentLayout.getCellFormatter().setWidth(0, 0, contentWidthInner + "px");

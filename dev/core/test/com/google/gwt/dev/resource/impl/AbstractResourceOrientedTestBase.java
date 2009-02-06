@@ -25,7 +25,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.jar.JarFile;
 
@@ -67,14 +68,14 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
     }
 
     @Override
-    public Set<AbstractResource> findApplicableResources(TreeLogger logger,
-        PathPrefixSet pathPrefixSet) {
-      Set<AbstractResource> results = new HashSet<AbstractResource>();
-      Set<AbstractResource> rs = cpe.findApplicableResources(logger,
-          pathPrefixSet);
-      for (AbstractResource r : rs) {
+    public Map<AbstractResource, PathPrefix> findApplicableResources(
+        TreeLogger logger, PathPrefixSet pathPrefixSet) {
+      Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
+      Map<AbstractResource, PathPrefix> rs = cpe.findApplicableResources(
+          logger, pathPrefixSet);
+      for (AbstractResource r : rs.keySet()) {
         if (r.getPath().indexOf(".svn/") < 0) {
-          results.add(r);
+          results.put(r, rs.get(r));
         }
       }
       return results;
@@ -114,6 +115,7 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
       addResource("com/google/gwt/i18n/rebind/LocalizableGenerator.java");
       addResource("org/example/bar/client/BarClient2.txt");
       addResource("org/example/bar/client/BarClient3.txt");
+      addResource("org/example/foo/client/BarClient1.txt");
     }
   }
 

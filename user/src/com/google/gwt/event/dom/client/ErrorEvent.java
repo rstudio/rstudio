@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native error event.
  */
@@ -27,7 +25,7 @@ public class ErrorEvent extends DomEvent<ErrorHandler> {
    * event.
    */
   private static final Type<ErrorHandler> TYPE = new Type<ErrorHandler>(
-      Event.ONERROR, "error", new ErrorEvent());
+      "error", new ErrorEvent());
 
   /**
    * Gets the event type associated with error events.
@@ -40,7 +38,7 @@ public class ErrorEvent extends DomEvent<ErrorHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire error events.
    */
   protected ErrorEvent() {

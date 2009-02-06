@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,19 +13,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.dev.shell.mac;
-
-import com.google.gwt.dev.shell.CheckForUpdates;
+package com.google.gwt.dev.util.arg;
 
 /**
- * Safari specific implementation of CheckForUpdates.
+ * Option to set the compiler working directory.
  */
-public class CheckForUpdatesSaf extends CheckForUpdates {
+public interface OptionDisableUpdateCheck {
 
-  @Override
-  protected byte[] doHttpGet(String userAgent, String url) {
-    // Don't attempt to support proxies on Linux.
-    //
-    return httpGetNonNative(userAgent, url);
-  }
+  /**
+   * Check to see if update checks are disabled.
+   */
+  boolean isUpdateCheckDisabled();
+
+  /**
+   * Sets the disable update check flag.
+   */
+  void setDisableUpdateCheck(boolean disabled);
 }

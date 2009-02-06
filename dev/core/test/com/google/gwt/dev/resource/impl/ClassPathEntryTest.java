@@ -81,7 +81,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     {
       // Examine cpe1.
-      Set<AbstractResource> r = cpe1.findApplicableResources(logger, pps);
+      Set<AbstractResource> r = cpe1.findApplicableResources(logger, pps).keySet();
 
       assertEquals(3, r.size());
       assertPathIncluded(r, "com/google/gwt/user/client/Command.java");
@@ -91,7 +91,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     {
       // Examine cpe2.
-      Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps);
+      Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps).keySet();
 
       assertEquals(1, r.size());
       assertPathIncluded(r, "com/google/gwt/i18n/client/Messages.java");
@@ -106,7 +106,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
     PathPrefixSet pps = new PathPrefixSet();
     pps.add(new PathPrefix("", null));
 
-    Set<AbstractResource> r = cpe1.findApplicableResources(logger, pps);
+    Set<AbstractResource> r = cpe1.findApplicableResources(logger, pps).keySet();
 
     assertEquals(9, r.size());
     assertPathIncluded(r, "com/google/gwt/user/User.gwt.xml");
@@ -127,15 +127,16 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     PathPrefixSet pps = new PathPrefixSet();
     pps.add(new PathPrefix("", null));
-    Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps);
+    Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps).keySet();
 
-    assertEquals(5, r.size());
+    assertEquals(6, r.size());
     assertPathIncluded(r, "com/google/gwt/i18n/I18N.gwt.xml");
     assertPathIncluded(r, "com/google/gwt/i18n/client/Messages.java");
     assertPathIncluded(r,
         "com/google/gwt/i18n/rebind/LocalizableGenerator.java");
     assertPathIncluded(r, "org/example/bar/client/BarClient2.txt");
     assertPathIncluded(r, "org/example/bar/client/BarClient3.txt");
+    assertPathIncluded(r, "org/example/foo/client/BarClient1.txt");
   }
 
   private void testPathPrefixSetChanges(ClassPathEntry cpe1, ClassPathEntry cpe2) {
@@ -148,7 +149,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
       pps.add(new PathPrefix("com/google/gwt/i18n/", null));
 
       // Examine cpe1 in the absence of the filter.
-      Set<AbstractResource> r1 = cpe1.findApplicableResources(logger, pps);
+      Set<AbstractResource> r1 = cpe1.findApplicableResources(logger, pps).keySet();
 
       assertEquals(4, r1.size());
       assertPathIncluded(r1, "com/google/gwt/user/User.gwt.xml");
@@ -157,7 +158,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
       assertPathIncluded(r1, "com/google/gwt/user/client/ui/Widget.java");
 
       // Examine cpe2 in the absence of the filter.
-      Set<AbstractResource> r2 = cpe2.findApplicableResources(logger, pps);
+      Set<AbstractResource> r2 = cpe2.findApplicableResources(logger, pps).keySet();
 
       assertEquals(3, r2.size());
       assertPathIncluded(r2, "com/google/gwt/i18n/I18N.gwt.xml");
@@ -179,7 +180,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
       pps.add(new PathPrefix("com/google/gwt/i18n/", excludeXmlFiles));
 
       // Examine cpe1 in the presence of the filter.
-      Set<AbstractResource> r1 = cpe1.findApplicableResources(logger, pps);
+      Set<AbstractResource> r1 = cpe1.findApplicableResources(logger, pps).keySet();
 
       assertEquals(3, r1.size());
       assertPathNotIncluded(r1, "com/google/gwt/user/User.gwt.xml");
@@ -188,7 +189,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
       assertPathIncluded(r1, "com/google/gwt/user/client/ui/Widget.java");
 
       // Examine cpe2 in the presence of the filter.
-      Set<AbstractResource> r2 = cpe2.findApplicableResources(logger, pps);
+      Set<AbstractResource> r2 = cpe2.findApplicableResources(logger, pps).keySet();
 
       assertEquals(2, r2.size());
       assertPathNotIncluded(r1, "com/google/gwt/user/User.gwt.xml");
@@ -211,12 +212,12 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
       }));
 
       // Examine cpe1 in the presence of the filter.
-      Set<AbstractResource> r1 = cpe1.findApplicableResources(logger, pps);
+      Set<AbstractResource> r1 = cpe1.findApplicableResources(logger, pps).keySet();
 
       assertEquals(0, r1.size());
 
       // Examine cpe2 in the presence of the filter.
-      Set<AbstractResource> r2 = cpe2.findApplicableResources(logger, pps);
+      Set<AbstractResource> r2 = cpe2.findApplicableResources(logger, pps).keySet();
 
       assertEquals(0, r2.size());
     }
@@ -238,7 +239,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     {
       // Examine cpe1.
-      Set<AbstractResource> r = cpe1.findApplicableResources(logger, pps);
+      Set<AbstractResource> r = cpe1.findApplicableResources(logger, pps).keySet();
 
       assertEquals(3, r.size());
       // User.gwt.xml would be included but for the filter.
@@ -249,7 +250,7 @@ public class ClassPathEntryTest extends AbstractResourceOrientedTestBase {
 
     {
       // Examine cpe2.
-      Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps);
+      Set<AbstractResource> r = cpe2.findApplicableResources(logger, pps).keySet();
 
       assertEquals(2, r.size());
       // I18N.gwt.xml would be included but for the filter.

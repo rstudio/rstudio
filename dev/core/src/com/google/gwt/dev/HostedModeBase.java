@@ -27,7 +27,9 @@ import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 import com.google.gwt.dev.shell.BrowserWindowController;
+import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
+import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
@@ -40,9 +42,6 @@ import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionLogLevel;
 import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
-import com.google.gwt.util.tools.ToolBase;
-
-import org.eclipse.swt.widgets.Display;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -324,14 +323,6 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
-  static {
-    // Force ToolBase to clinit, which causes SWT stuff to happen.
-    new ToolBase() {
-    };
-    // Correct menu on Mac OS X
-    Display.setAppName("GWT");
-  }
-
   protected final HostedModeBaseOptions options;
 
   /**
@@ -427,6 +418,13 @@ abstract class HostedModeBase implements BrowserWindowController {
   }
 
   /**
+   * Derived classes can override to lengthen ping delay.
+   */
+  protected long checkForUpdatesInterval() {
+    return CheckForUpdates.ONE_MINUTE;
+  }
+
+  /**
    * Compiles all modules.
    */
   protected abstract void compile(TreeLogger logger)
@@ -463,13 +461,6 @@ abstract class HostedModeBase implements BrowserWindowController {
             "gen"), doCreateArtifactAcceptor(moduleDef));
   }
 
-  /**
-   * Derived classes can override to prevent automatic update checking.
-   */
-  protected boolean doShouldCheckForUpdates() {
-    return true;
-  }
-
   protected abstract void doShutDownServer();
 
   protected boolean doStartup() {
@@ -481,6 +472,22 @@ abstract class HostedModeBase implements BrowserWindowController {
     // Initialize the logger.
     //
     initializeLogger();
+    
+    // Check for updates
+    final TreeLogger logger = getTopLogger();
+    final CheckForUpdates updateChecker
+        = PlatformSpecific.createUpdateChecker(logger);
+    if (updateChecker != null) {
+      Thread checkerThread = new Thread("GWT Update Checker") {
+        @Override
+        public void run() {
+          PlatformSpecific.logUpdateAvailable(logger,
+              updateChecker.check(checkForUpdatesInterval()));
+        }
+      };
+      checkerThread.setDaemon(true);
+      checkerThread.start();
+    }
     return true;
   }
 

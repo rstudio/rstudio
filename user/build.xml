@@ -12,6 +12,11 @@
 
   <fileset id="default.emma.tests" dir="${javac.junit.out}" 
        includes="**/EmmaClassLoadingTest.class" />
+  
+  <fileset id="default.hosted.emma.tests" dir="${javac.junit.out}" 
+      excludes="**/CoverageTest.class" includes="**/*Test.class" />
+  <!-- everything succeeds except CoverageTest.java. It fails due to a javac bug in sun/OpenJDK's Java. See the file contents for details -->
+  
   <!--
     Default web mode test cases
   -->
@@ -96,6 +101,15 @@
     </gwt.junit>
   </target>
 
+  <target name="test.hosted.emma" depends="compile, compile.tests" description="Run all hosted-mode tests in emma mode.">
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.emma.tests" >
+      <extraclasspaths>
+        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+        <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
+      </extraclasspaths>
+    </gwt.junit>
+  </target>
+
   <target name="test.hosted" depends="compile, compile.tests" description="Run only hosted-mode tests for this project.">
     <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" >
       <extraclasspaths>
@@ -107,7 +121,7 @@
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
         <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
       </extraclasspaths>
-    </gwt.junit>
+    </gwt.junit> 
   </target>
 
   <target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
@@ -150,5 +164,7 @@
     <delete dir="${project.build}" />
     <delete file="${project.lib}" />
   </target>
-
+  <target name="presubmit" depends="test, checkstyle" description="runs the gwt api checker, user checkstyle, and user tests">
+   <gwt.ant dir=".." target="apicheck-nobuild"/>
+  </target>
 </project>

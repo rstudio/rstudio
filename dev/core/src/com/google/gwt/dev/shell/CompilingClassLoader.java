@@ -360,7 +360,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private static EmmaStrategy emmaStrategy;
 
-  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d+(\\$.*)?");
+  private static final Pattern GENERATED_CLASSNAME_PATTERN = Pattern.compile(".+\\$\\d.*");
 
   /**
    * Caches the byte code for {@link JavaScriptHost}.
@@ -390,9 +390,10 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   /**
    * Checks if the class names is generated. Accepts any classes whose names
-   * match .+$\d+($.*)? (handling named classes within anonymous classes).
-   * Checks if the class or any of its enclosing classes are anonymous or
-   * synthetic.
+   * match .+$\d.* (handling named classes within anonymous classes and
+   * multiple named classes of the same name in a class, but in different
+   * methods). Checks if the class or any of its enclosing classes are anonymous
+   * or synthetic.
    * <p>
    * If new compilers have different conventions for anonymous and synthetic
    * classes, this code needs to be updated.
@@ -744,7 +745,7 @@ public final class CompilingClassLoader extends ClassLoader implements
         lookupClassName);
 
     CompilationUnit unit = (compiledClass == null)
-        ? getUnitForClassName(className) : compiledClass.getUnit();
+        ? getUnitForClassName(lookupClassName) : compiledClass.getUnit();
     if (emmaAvailable) {
       /*
        * build the map for anonymous classes. Do so only if unit has anonymous
@@ -756,20 +757,12 @@ public final class CompilingClassLoader extends ClassLoader implements
       if (unit != null && !unit.isSuperSource() && unit.hasAnonymousClasses()
           && jsniMethods != null && jsniMethods.size() > 0
           && !unit.createdClassMapping()) {
-        String mainLookupClassName = unit.getTypeName().replace('.', '/');
-        byte mainClassBytes[] = emmaStrategy.getEmmaClassBytes(null,
-            mainLookupClassName, 0);
-        if (mainClassBytes != null) {
-          if (!unit.constructAnonymousClassMappings(mainClassBytes)) {
-            logger.log(TreeLogger.ERROR,
-                "Our heuristic for mapping anonymous classes between compilers "
-                    + "failed. Unsafe to continue because the wrong jsni code "
-                    + "could end up running. className = " + className);
-            return null;
-          }
-        } else {
-          logger.log(TreeLogger.ERROR, "main class bytes is null for unit = "
-              + unit + ", mainLookupClassName = " + mainLookupClassName);
+        if (!unit.constructAnonymousClassMappings(logger)) {
+          logger.log(TreeLogger.ERROR,
+              "Our heuristic for mapping anonymous classes between compilers "
+                  + "failed. Unsafe to continue because the wrong jsni code "
+                  + "could end up running. className = " + className);
+          return null;
         }
       }
     }
@@ -791,7 +784,8 @@ public final class CompilingClassLoader extends ClassLoader implements
        * find it on disk. Typically this is a synthetic class added by the
        * compiler.
        */
-      if (typeHasCompilationUnit(className) && isClassnameGenerated(className)) {
+      if (typeHasCompilationUnit(lookupClassName)
+          && isClassnameGenerated(className)) {
         /*
          * modification time = 0 ensures that whatever is on the disk is always
          * loaded.
@@ -827,17 +821,19 @@ public final class CompilingClassLoader extends ClassLoader implements
   /**
    * Returns the compilationUnit corresponding to the className. For nested
    * classes, the unit corresponding to the top level type is returned.
+   * 
+   * Since a file might have several top-level types, search using classFileMap.
    */
   private CompilationUnit getUnitForClassName(String className) {
     String mainTypeName = className;
     int index = mainTypeName.length();
-    CompilationUnit unit = null;
-    while (unit == null && index != -1) {
+    CompiledClass cc = null;
+    while (cc == null && index != -1) {
       mainTypeName = mainTypeName.substring(0, index);
-      unit = compilationState.getCompilationUnitMap().get(mainTypeName);
+      cc = compilationState.getClassFileMap().get(mainTypeName);
       index = mainTypeName.lastIndexOf('$');
     }
-    return unit;
+    return cc == null ? null : cc.getUnit();
   }
 
   private void injectJsniMethods(CompilationUnit unit) {

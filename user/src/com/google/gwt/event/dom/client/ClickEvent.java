@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native click event.
  */
@@ -27,7 +25,7 @@ public class ClickEvent extends DomEvent<ClickHandler> {
    * event.
    */
   private static final Type<ClickHandler> TYPE = new Type<ClickHandler>(
-      Event.ONCLICK, "click", new ClickEvent());
+      "click", new ClickEvent());
 
   /**
    * Gets the event type associated with click events.
@@ -40,7 +38,7 @@ public class ClickEvent extends DomEvent<ClickHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire click events.
    */
   protected ClickEvent() {

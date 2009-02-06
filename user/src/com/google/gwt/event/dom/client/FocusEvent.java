@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native focus event.
  */
@@ -27,7 +25,7 @@ public class FocusEvent extends DomEvent<FocusHandler> {
    * event.
    */
   private static final Type<FocusHandler> TYPE = new Type<FocusHandler>(
-      Event.ONFOCUS, "focus", new FocusEvent());
+      "focus", new FocusEvent());
 
   /**
    * Gets the event type associated with focus events.
@@ -40,7 +38,7 @@ public class FocusEvent extends DomEvent<FocusHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire focus events.
    */
   protected FocusEvent() {

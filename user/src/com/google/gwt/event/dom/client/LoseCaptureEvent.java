@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native lose capture event.
  */
@@ -27,7 +25,7 @@ public class LoseCaptureEvent extends DomEvent<LoseCaptureHandler> {
    * with this event.
    */
   private static final Type<LoseCaptureHandler> TYPE = new Type<LoseCaptureHandler>(
-      Event.ONLOSECAPTURE, "losecapture", new LoseCaptureEvent());
+      "losecapture", new LoseCaptureEvent());
 
   /**
    * Gets the event type associated with lose capture events.
@@ -40,7 +38,7 @@ public class LoseCaptureEvent extends DomEvent<LoseCaptureHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire lose capture events.
    */
   protected LoseCaptureEvent() {

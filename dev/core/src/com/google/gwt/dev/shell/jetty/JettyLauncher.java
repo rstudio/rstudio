@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 
 import org.mortbay.jetty.Server;
 import org.mortbay.jetty.nio.SelectChannelConnector;
+import org.mortbay.jetty.webapp.WebAppClassLoader;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.log.Log;
 import org.mortbay.log.Logger;
@@ -137,8 +138,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     private final int actualPort;
     private final File appRootDir;
     private final TreeLogger logger;
-    private final WebAppContext wac;
     private final Server server;
+    private final WebAppContext wac;
 
     public JettyServletContainer(TreeLogger logger, Server server,
         WebAppContext wac, int actualPort, File appRootDir) {
@@ -188,7 +189,61 @@ public class JettyLauncher extends ServletContainerLauncher {
     }
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * A {@link WebAppContext} tailored to GWT hosted mode. Features hot-reload
+   * with a new {@link WebAppClassLoader} to pick up disk changes. The default
+   * Jetty {@code WebAppContext} will create new instances of servlets, but it
+   * will not create a brand new {@link ClassLoader}. By creating a new
+   * {@code ClassLoader} each time, we re-read updated classes from disk.
+   * 
+   * Also provides special class filtering to isolate the web app from the GWT
+   * hosting environment.
+   */
+  private final class WebAppContextWithReload extends WebAppContext {
+    /**
+     * Ensures that only Jetty and other server classes can be loaded into the
+     * {@link WebAppClassLoader}. This forces the user to put any necessary
+     * dependencies into WEB-INF/lib.
+     */
+    private final ClassLoader parentClassLoader = new ClassLoader(null) {
+      private final ClassLoader delegateTo = Thread.currentThread().getContextClassLoader();
+
+      @Override
+      protected Class<?> findClass(String name) throws ClassNotFoundException {
+        if (webAppClassLoader != null
+            && (webAppClassLoader.isServerPath(name) || webAppClassLoader.isSystemPath(name))) {
+          return delegateTo.loadClass(name);
+        }
+        throw new ClassNotFoundException();
+      }
+
+    };
+
+    private WebAppClassLoader webAppClassLoader;
+
+    @SuppressWarnings("unchecked")
+    private WebAppContextWithReload(String webApp, String contextPath) {
+      super(webApp, contextPath);
+      // Prevent file locking on Windows; pick up file changes.
+      getInitParams().put(
+          "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+    }
+
+    @Override
+    protected void doStart() throws Exception {
+      webAppClassLoader = new WebAppClassLoader(parentClassLoader, this);
+      setClassLoader(webAppClassLoader);
+      super.doStart();
+    }
+
+    @Override
+    protected void doStop() throws Exception {
+      super.doStop();
+      webAppClassLoader = null;
+      setClassLoader(null);
+    }
+  }
+
   public ServletContainer start(TreeLogger logger, int port, File appRootDir)
       throws Exception {
     checkStartParams(logger, port, appRootDir);
@@ -221,11 +276,8 @@ public class JettyLauncher extends ServletContainerLauncher {
     server.addConnector(connector);
 
     // Create a new web app in the war directory.
-    WebAppContext wac = new WebAppContext(appRootDir.getAbsolutePath(), "/");
-
-    // Prevent file locking on Windows; pick up file changes.
-    wac.getInitParams().put(
-        "org.mortbay.jetty.servlet.Default.useFileMappedBuffer", "false");
+    WebAppContext wac = new WebAppContextWithReload(
+        appRootDir.getAbsolutePath(), "/");
 
     server.setHandler(wac);
     server.start();

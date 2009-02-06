@@ -16,7 +16,7 @@
 
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
+import com.google.gwt.dom.client.NativeEvent;
 
 /**
  * An object that implements this interface has a native event associated with
@@ -28,5 +28,5 @@ public interface HasNativeEvent {
    * 
    * @return the native event
    */
-  Event getNativeEvent();
+  NativeEvent getNativeEvent();
 }

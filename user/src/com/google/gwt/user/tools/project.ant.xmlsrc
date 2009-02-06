@@ -4,6 +4,7 @@
   <path id="project.class.path">
     <pathelement location="war/WEB-INF/classes"/>
     <pathelement location="@gwtUserPath"/>
+    <pathelement location="@gwtDevPath"/>
     <!-- Add any additional non-server libs (such as JUnit) -->
     <fileset dir="war/WEB-INF/lib">
       <include name="**/*.jar"/>
@@ -32,7 +33,6 @@
       <classpath>
         <pathelement location="src"/>
         <path refid="project.class.path"/>
-        <pathelement location="@gwtDevPath"/>
       </classpath>
       <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
       <jvmarg value="-Xmx256M"/>@antVmargs
@@ -45,7 +45,6 @@
       <classpath>
         <pathelement location="src"/>
         <path refid="project.class.path"/>
-        <pathelement location="@gwtDevPath"/>
       </classpath>
       <jvmarg value="-Xmx256M"/>@antVmargs
       <arg value="-startupUrl"/>
@@ -53,7 +52,7 @@
       <arg value="@moduleName"/>
       <!-- Additional arguments like -style PRETTY or -logLevel DEBUG -->
     </java>
-  </target>
+  </target>@antEclipseRule
 
   <target name="build" depends="gwtc" description="Build this project" />
 

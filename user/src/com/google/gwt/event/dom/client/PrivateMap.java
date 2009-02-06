@@ -89,12 +89,12 @@ class PrivateMap<V> {
   public final V safeGet(String key) {
     return unsafeGet(":" + key);
   }
- 
+
   // ONLY use this for values that will be accessed with safeGet.
   public final void safePut(String key, V value) {
     unsafePut(":" + key, value);
   }
-  
+
   // ONLY use this for values put with unsafePut.
   public final V unsafeGet(String key) {
     if (GWT.isScript()) {
@@ -103,7 +103,7 @@ class PrivateMap<V> {
       return javaMap.get(key);
     }
   }
-  
+
   // ONLY use this for values that will be accessed with unsafeGet.
   public final void unsafePut(String key, V value) {
     if (GWT.isScript()) {

@@ -94,6 +94,7 @@ public class CwHyperlink extends ContentWidget {
     vPanel.add(getHyperlink(CwCustomButton.class,
         allConstants.cwCustomButtonName()));
     vPanel.add(getHyperlink(CwFileUpload.class, allConstants.cwFileUploadName()));
+    vPanel.add(getHyperlink(CwDatePicker.class, allConstants.cwDatePickerName()));
 
     // Return the panel
     return vPanel;

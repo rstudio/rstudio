@@ -15,8 +15,6 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.user.client.Event;
-
 /**
  * Represents a native change event.
  */
@@ -27,7 +25,7 @@ public class ChangeEvent extends DomEvent<ChangeHandler> {
    * event.
    */
   private static final Type<ChangeHandler> TYPE = new Type<ChangeHandler>(
-      Event.ONCHANGE, "change", new ChangeEvent());
+      "change", new ChangeEvent());
 
   /**
    * Gets the event type associated with change events.
@@ -40,7 +38,7 @@ public class ChangeEvent extends DomEvent<ChangeHandler> {
 
   /**
    * Protected constructor, use
-   * {@link DomEvent#fireNativeEvent(Event, com.google.gwt.event.shared.HandlerManager)}
+   * {@link DomEvent#fireNativeEvent(com.google.gwt.dom.client.NativeEvent, com.google.gwt.event.shared.HasHandlers)}
    * to fire change events.
    */
   protected ChangeEvent() {

@@ -21,9 +21,8 @@ import com.google.gwt.dev.resource.Resource;
 import junit.framework.Assert;
 
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class MockClassPathEntry extends ClassPathEntry {
 
@@ -46,14 +45,15 @@ public class MockClassPathEntry extends ClassPathEntry {
   }
 
   @Override
-  public Set<AbstractResource> findApplicableResources(TreeLogger logger,
-      PathPrefixSet pathPrefixes) {
+  public Map<AbstractResource, PathPrefix> findApplicableResources(
+      TreeLogger logger, PathPrefixSet pathPrefixes) {
     // Only include resources that have the prefix and pass its filter.
-    HashSet<AbstractResource> results = new HashSet<AbstractResource>();
+    Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
     for (Map.Entry<String, MockAbstractResource> entry : resourceMap.entrySet()) {
       String path = entry.getKey();
-      if (pathPrefixes.includesResource(path)) {
-        results.add(entry.getValue());
+      PathPrefix prefix = null;
+      if ((prefix = pathPrefixes.includesResource(path)) != null) {
+        results.put(entry.getValue(), prefix);
       }
     }
 

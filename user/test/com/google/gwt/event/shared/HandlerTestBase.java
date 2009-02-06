@@ -29,6 +29,7 @@ import java.util.HashSet;
  */
 public abstract class HandlerTestBase extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.event.Event";
   }
