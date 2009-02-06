@@ -544,14 +544,6 @@ public class GWTShell extends HostedModeBase {
     return Type.INFO;
   }
 
-  /**
-   * Derived classes can override to prevent automatic update checking.
-   */
-  @Override
-  protected boolean doShouldCheckForUpdates() {
-    return true;
-  }
-
   @Override
   protected void doShutDownServer() {
     // Stop the HTTP server.
