@@ -40,9 +40,9 @@ public class ButtonElement extends Element {
   /**
    * Simulate a mouse-click.
    */
-  public final native void click() /*-{
-    this.click();
-  }-*/;
+  public final void click() {
+    DOMImpl.impl.buttonClick(this);
+  }
 
   /**
    * A single character access key to give access to the form control.

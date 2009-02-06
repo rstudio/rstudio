@@ -21,6 +21,10 @@ abstract class DOMImpl {
 
   static final DOMImpl impl = GWT.create(DOMImpl.class);
 
+  public native void buttonClick(ButtonElement button) /*-{
+    button.click();
+  }-*/;
+
   public native Element createElement(String tag) /*-{
     return $doc.createElement(tag);
   }-*/;

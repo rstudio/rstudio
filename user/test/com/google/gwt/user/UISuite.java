@@ -22,6 +22,7 @@ import com.google.gwt.user.client.EventTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
+import com.google.gwt.user.client.ui.ButtonTest;
 import com.google.gwt.user.client.ui.CaptionPanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
 import com.google.gwt.user.client.ui.CompositeTest;
@@ -94,6 +95,7 @@ public class UISuite {
 
     suite.addTestSuite(AbsolutePanelTest.class);
     suite.addTestSuite(AnchorTest.class);
+    suite.addTestSuite(ButtonTest.class);
     suite.addTestSuite(CaptionPanelTest.class);
     suite.addTestSuite(CheckBoxTest.class);
     suite.addTestSuite(ClippedImagePrototypeTest.class);
