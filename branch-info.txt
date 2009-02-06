@@ -27,7 +27,7 @@ Merges:
 /releases/1.6/@r4359:4490 was merged (r4491) into trunk
 /releases/1.6/@c4498 was merged (r4499) into trunk
 /releases/1.6/@r4490:4497,4498:4511 was merged (r4512) into trunk, skipping c4498 (cherry picked above)
-/trunk@c4503 was merged (r4505) into /releases/1.6
+/trunk@c4603 was merged (r4605) into /releases/1.6
 
 The next merge into trunk will be:
-svn merge -r4511:4505,4506:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge -r4511:4605,4606:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
