@@ -1,3 +1,18 @@
+/*
+ * Copyright 2009 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
 package com.google.gwt.dev.js;
 
 import com.google.gwt.dev.js.ast.JsBlock;
@@ -15,15 +30,23 @@ import java.util.Set;
 import java.util.Stack;
 
 /**
- * Force all functions to be evaluated at the top of the lexical scope in
- * which they reside. This makes {@link StaticEvalVisitor} simpler in that we
- * no longer have to worry about function declarations within expressions.
- * After this runs, only statements can contain declarations. Moved functions
- * will end up just before the statement in which they presently reside.
+ * Force all functions to be evaluated at the top of the lexical scope in which
+ * they reside. This makes {@link StaticEvalVisitor} simpler in that we no
+ * longer have to worry about function declarations within expressions. After
+ * this runs, only statements can contain declarations. Moved functions will end
+ * up just before the statement in which they presently reside.
  */
 public class EvalFunctionsAtTopScope extends JsModVisitor {
+
+  public static void exec(JsProgram jsProgram) {
+    EvalFunctionsAtTopScope fev = new EvalFunctionsAtTopScope();
+    fev.accept(jsProgram);
+  }
+
   private final Set<JsFunction> dontMove = new HashSet<JsFunction>();
+
   private final Stack<ListIterator<JsStatement>> itrStack = new Stack<ListIterator<JsStatement>>();
+
   private final Stack<JsBlock> scopeStack = new Stack<JsBlock>();
 
   @Override
@@ -76,8 +99,8 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
       /*
        * Reinsert this function into the statement immediately before the
        * current statement. The current statement will have already been
-       * returned from the current iterator's next(), so we have to
-       * backshuffle one step to get in front of it.
+       * returned from the current iterator's next(), so we have to backshuffle
+       * one step to get in front of it.
        */
       ListIterator<JsStatement> itr = itrStack.peek();
       itr.previous();
@@ -103,10 +126,5 @@ public class EvalFunctionsAtTopScope extends JsModVisitor {
   public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
     scopeStack.push(x.getGlobalBlock());
     return true;
-  }
-
-  public static void exec(JsProgram jsProgram) {
-    EvalFunctionsAtTopScope fev = new EvalFunctionsAtTopScope();
-    fev.accept(jsProgram);
   }
 }

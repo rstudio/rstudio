@@ -99,6 +99,11 @@ public class Link {
       return extraDir;
     }
 
+    @Deprecated
+    public File getOutDir() {
+      return outDir;
+    }
+
     public File getWarDir() {
       return warDir;
     }
@@ -107,18 +112,13 @@ public class Link {
       this.extraDir = extraDir;
     }
 
-    public void setWarDir(File warDir) {
-      this.warDir = warDir;
-    }
-
-    @Deprecated
-    public File getOutDir() {
-      return outDir;
-    }
-
     @Deprecated
     public void setOutDir(File outDir) {
       this.outDir = outDir;
+    }
+
+    public void setWarDir(File warDir) {
+      this.warDir = warDir;
     }
   }
 

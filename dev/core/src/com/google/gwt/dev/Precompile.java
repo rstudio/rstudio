@@ -159,12 +159,12 @@ public class Precompile {
       jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
     }
 
-    public void setDraftCompile(boolean draft) {
-      jjsOptions.setDraftCompile(draft);
-    }
-
     public void setDisableUpdateCheck(boolean disabled) {
       disableUpdateCheck = disabled;
+    }
+
+    public void setDraftCompile(boolean draft) {
+      jjsOptions.setDraftCompile(draft);
     }
 
     public void setEnableAssertions(boolean enableAssertions) {

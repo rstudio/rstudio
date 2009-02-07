@@ -15,6 +15,12 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.util.msg.Message0;
+import com.google.gwt.dev.util.msg.Message1String;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,12 +39,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipFile;
-
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.dev.resource.ResourceOracle;
-import com.google.gwt.dev.util.msg.Message0;
-import com.google.gwt.dev.util.msg.Message1String;
 
 /**
  * The normal implementation of {@link ResourceOracle}.
