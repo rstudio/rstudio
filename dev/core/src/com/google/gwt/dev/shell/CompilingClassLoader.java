@@ -673,7 +673,7 @@ public final class CompilingClassLoader extends ClassLoader implements
      * class is loaded.
      */
     if (!classRewriter.isJsoIntf(className)) {
-      CompilationUnit unit = getUnitForClassName(className);
+      CompilationUnit unit = getUnitForClassName(canonicalizeClassName(className));
       if (unit != null) {
         toInject.push(unit);
       }
