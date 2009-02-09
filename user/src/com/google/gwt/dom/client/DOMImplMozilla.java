@@ -20,6 +20,16 @@ package com.google.gwt.dom.client;
  */
 class DOMImplMozilla extends DOMImplStandard {
 
+  public native void buttonClick(ButtonElement button) /*-{
+    var doc = button.ownerDocument;
+    if (doc != null) {
+      var evt = doc.createEvent('MouseEvents');
+      evt.initMouseEvent('click', true, true, null, 0, 0,
+        0, 0, 0, false, false, false, false, 0, null);
+      button.dispatchEvent(evt);
+    }
+  }-*/;
+
   @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
     return evt.detail || 0;
