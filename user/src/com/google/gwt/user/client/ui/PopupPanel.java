@@ -109,14 +109,14 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   static class ResizeAnimation extends Animation {
     /**
-     * The offset height and width of the current {@link PopupPanel}.
-     */
-    private int offsetHeight, offsetWidth = -1;
-
-    /**
      * The {@link PopupPanel} being affected.
      */
     private PopupPanel curPanel = null;
+
+    /**
+     * The offset height and width of the current {@link PopupPanel}.
+     */
+    private int offsetHeight, offsetWidth = -1;
 
     /**
      * A boolean indicating whether we are showing or hiding the popup.
@@ -281,9 +281,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    */
   private AnimationType animType = AnimationType.CENTER;
 
-  private HandlerRegistration nativePreviewHandlerRegistration;
-
   private boolean autoHide, previewAllNativeEvents, modal, showing;
+
+  private List<Element> autoHidePartners;
 
   // Used to track requested size across changing child widgets
   private String desiredHeight;
@@ -292,15 +292,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
 
   private boolean isAnimationEnabled = false;
 
-  private List<Element> autoHidePartners;
+  // the left style attribute in pixels
+  private int leftPosition = -1;
+
+  private HandlerRegistration nativePreviewHandlerRegistration;
 
   /**
    * The {@link ResizeAnimation} used to open and close the {@link PopupPanel}s.
    */
   private ResizeAnimation resizeAnimation = new ResizeAnimation(this);
-
-  // the left style attribute in pixels
-  private int leftPosition = -1;
 
   // The top style attribute in pixels
   private int topPosition = -1;
@@ -585,14 +585,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return true;
   }
 
-  @Override
-  protected void onUnload() {
-    // Just to be sure, we perform cleanup when the popup is unloaded (i.e.
-    // removed from the DOM). This is normally taken care of in hide(), but it
-    // can be missed if someone removes the popup directly from the RootPanel.
-    cleanup();
-  }
-
   /**
    * Remove an autoHide partner.
    * 
@@ -827,13 +819,21 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   protected com.google.gwt.user.client.Element getStyleElement() {
     return impl.getStyleElement(getPopupImplElement());
   }
- 
+
   protected void onPreviewNativeEvent(NativePreviewEvent event) {
     // Cancel the event based on the deprecated onEventPreview() method
     if (event.isFirstHandler()
         && !onEventPreview(Event.as(event.getNativeEvent()))) {
       event.cancel();
     }
+  }
+ 
+  @Override
+  protected void onUnload() {
+    // Just to be sure, we perform cleanup when the popup is unloaded (i.e.
+    // removed from the DOM). This is normally taken care of in hide(), but it
+    // can be missed if someone removes the popup directly from the RootPanel.
+    cleanup();
   }
 
   /**
