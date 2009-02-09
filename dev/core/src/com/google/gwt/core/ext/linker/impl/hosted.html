@@ -12,6 +12,7 @@ if ($stats) {
   $stats({moduleName:moduleName,subSystem:'startup',evtGroup:'moduleStartup',millis:(new Date()).getTime(),type:'moduleEvalStart'});
 }
 
+var gwtOnLoad;
 var $hosted = "localhost:9997";
 var $legacyHosted = false;
 try {
@@ -23,7 +24,7 @@ try {
 } catch(e) {
 }
 if ($legacyHosted) {
-  function gwtOnLoad(errFn, modName, modBase){
+  gwtOnLoad = function(errFn, modName, modBase) {
     $moduleName = modName;
     $moduleBase = modBase;
     if (!external.gwtOnLoad(window, modName, "1.6")) {
@@ -150,7 +151,7 @@ if ($legacyHosted) {
     }
   }
 
-  function gwtOnLoad(errFn, modName, modBase){
+  gwtOnLoad = function(errFn, modName, modBase){
     $moduleName = modName;
     $moduleBase = modBase;
 
