@@ -4,9 +4,6 @@
 
   <property.ensure name="gwt.core.root" location="../core" />
   <property.ensure name="gwt.core.build" location="${project.build}/../core" />
-	
-  <taskdef name="jarjar"   
-	classname="com.tonicsystems.jarjar.JarJarTask" classpath="${gwt.tools.lib}/tonicsystems/jarjar-1.0rc8.jar"/>  
 
   <target name="compile" description="Compile all java files">
     <mkdir dir="${javac.out}" />
@@ -21,8 +18,7 @@
 
   <target name="build" depends="compile" description="Build and package this project">
     <mkdir dir="${gwt.build.lib}" />
-    <!-- Use jar instead of gwt.jar here because gwt.jar fixes the destfile -->
-    <jar destfile="${project.lib.raw}" update="true" duplicate="preserve" index="true" >
+    <gwt.jar>
       <fileset dir="src" excludes="**/package.html"/>
       <fileset dir="${gwt.core.root}/src">
         <exclude name="**/package.html"/>
@@ -36,40 +32,12 @@
       <manifest>
         <attribute name="Main-Class" value="com.google.gwt.dev.GWTMain" />
       </manifest>
-    </jar>
- 
-    <outofdate>
-      <sourcefiles>
-        <fileset file="${project.lib.raw}" />
-      </sourcefiles>
-      <targetfiles path="${project.lib}" />
-      <sequential>
-        <jarjar destfile="${project.lib}">
-          <zipfileset src="${project.lib.raw}" />
-          <!-- Don't rename these packages, because they are actually supplied by external jars -->
-          <rule pattern="org.xml.**" result="@0" />
-          <rule pattern="org.w3c.**" result="@0" />
-          <rule pattern="org.omg.**" result="@0" />
-          <rule pattern="org.ietf.**" result="@0" />
-
-          <!-- Don't rename SWT, because it includes native methods -->
-          <rule pattern="org.eclipse.swt.**" result="@0" />
-            
-          <!-- Don't rename tapestry, because it ends up broken.  The problem is
-               that it computes class names throuh string operations in a way that
-               jarjar does not understand.  -->
-          <rule pattern="org.apache.tapestry.**" result="@0" />
-            
-          <!-- Put all other org.* packages under com.google.gwt.thirdparty -->
-          <rule pattern="org.**" result="com.google.gwt.thirdparty.@0" />
-        </jarjar>
-      </sequential>
-    </outofdate>
+    </gwt.jar>
   </target>
 
   <target name="clean" description="Cleans this project's intermediate and output files">
     <delete dir="${project.build}" failonerror="false" />
-    <delete file="${project.lib.raw}" failonerror="false" />
     <delete file="${project.lib}" failonerror="false" />
   </target>
+
 </project>
