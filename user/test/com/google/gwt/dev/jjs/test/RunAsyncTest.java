@@ -17,22 +17,23 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
+import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
  * Tests runAsync in various ways.
  */
 public class RunAsyncTest extends GWTTestCase {
+  private static final String HELLO = "hello";
+
   private static final int RUNASYNC_TIMEOUT = 10000;
+
+  private static String staticWrittenInBaseButReadLater;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
   }
-
-  private static final String HELLO = "hello";
-
-  private static String staticWrittenInBaseButReadLater;
 
   public void testBasic() {
     delayTestFinish(RUNASYNC_TIMEOUT);
@@ -71,4 +72,74 @@ public class RunAsyncTest extends GWTTestCase {
     });
   }
 
+  /**
+   * Test that callbacks are called in the order they are posted.
+   */
+  public void testOrder() {
+    class Util {
+      int callNumber = 0;
+      int seen = 0;
+
+      void scheduleCallback() {
+        final int thisCallNumber = callNumber++;
+
+        GWT.runAsync(new RunAsyncCallback() {
+
+          public void onFailure(Throwable caught) {
+            throw new RuntimeException(caught);
+          }
+
+          public void onSuccess() {
+            assertEquals(seen, thisCallNumber);
+            seen++;
+            if (seen == 3) {
+              finishTest();
+            }
+          }
+        });
+      }
+    }
+    Util util = new Util();
+
+    delayTestFinish(RUNASYNC_TIMEOUT);
+
+    util.scheduleCallback();
+    util.scheduleCallback();
+    util.scheduleCallback();
+  }
+
+  public void testUnhandledExceptions() {
+    // Create an exception that will be thrown from an onSuccess method
+    final RuntimeException toThrow = new RuntimeException(
+        "Should be caught by the uncaught exception handler");
+
+    // save the original handler
+    final UncaughtExceptionHandler originalHandler = GWT.getUncaughtExceptionHandler();
+
+    // set a handler that catches toThrow and nothing else
+    GWT.setUncaughtExceptionHandler(new GWT.UncaughtExceptionHandler() {
+      public void onUncaughtException(Throwable e) {
+        GWT.setUncaughtExceptionHandler(originalHandler);
+
+        if (e == toThrow) {
+          // expected
+          finishTest();
+        } else {
+          // some other exception; pass it on
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
+    delayTestFinish(RUNASYNC_TIMEOUT);
+
+    GWT.runAsync(new RunAsyncCallback() {
+      public void onFailure(Throwable caught) {
+      }
+
+      public void onSuccess() {
+        throw toThrow;
+      }
+    });
+  }
 }

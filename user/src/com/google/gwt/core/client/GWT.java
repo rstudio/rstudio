@@ -188,10 +188,20 @@ public final class GWT {
    */
   public static void runAsync(RunAsyncCallback callback) {
     /*
-     * By default, just call the callback. This allows using <code>runAsync</code>
-     * in code that might or might not run in a web browser.
+     * By default, just call the callback. This allows using
+     * <code>runAsync</code> in code that might or might not run in a web
+     * browser.
      */
-    callback.onSuccess();
+    UncaughtExceptionHandler handler = sUncaughtExceptionHandler;
+    if (handler == null) {
+      callback.onSuccess();
+    } else {
+      try {
+        callback.onSuccess();
+      } catch (Throwable e) {
+        handler.onUncaughtException(e);
+      }
+    }
   }
 
   /**
