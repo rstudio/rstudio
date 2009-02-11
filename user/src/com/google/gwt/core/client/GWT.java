@@ -184,15 +184,6 @@ public final class GWT {
   }
 
   /**
-   * Run the supplied callback. The system is allowed to delay before running
-   * the callback while additional code is downloaded, but that feature is not
-   * yet implemented. Currently, the callback runs immediately.
-   */
-  public static void runAsync(RunAsyncCallback callback) {
-    callback.onSuccess();
-  }
-
-  /**
    * Sets a custom uncaught exception handler. See
    * {@link #getUncaughtExceptionHandler()} for details.
    * 
