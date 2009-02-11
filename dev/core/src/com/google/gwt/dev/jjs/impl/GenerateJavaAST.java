@@ -2943,7 +2943,15 @@ public class GenerateJavaAST {
           JMethod method, JsContext<JsExpression> ctx) {
         JReferenceType enclosingType = method.getEnclosingType();
         if (enclosingType != null) {
-          if (method.isStatic() && nameRef.getQualifier() != null) {
+          JClassType jsoImplType = program.typeOracle.getSingleJsoImpls().get(
+              enclosingType);
+          if (jsoImplType != null) {
+            reportJsniError(info, methodDecl, "Illegal reference to method '"
+                + method.getName() + "' in type '" + enclosingType.getName()
+                + "', which is implemented by an overlay type '"
+                + jsoImplType.getName() + "'. Use a stronger type in the JSNI "
+                + "identifier or a Java trampoline method.");
+          } else if (method.isStatic() && nameRef.getQualifier() != null) {
             reportJsniError(info, methodDecl,
                 "Cannot make a qualified reference to the static method "
                     + method.getName());

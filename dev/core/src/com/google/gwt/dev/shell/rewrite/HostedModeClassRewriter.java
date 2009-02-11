@@ -19,13 +19,17 @@ import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
 import com.google.gwt.dev.asm.Opcodes;
+import com.google.gwt.dev.asm.commons.Method;
 import com.google.gwt.dev.shell.JsValueGlue;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 
 /**
  * This class performs any and all byte code rewriting needed to make hosted
@@ -87,7 +91,7 @@ public class HostedModeClassRewriter {
   static final String JAVASCRIPTOBJECT_IMPL_DESC = JsValueGlue.JSO_IMPL_CLASS.replace(
       '.', '/');
 
-  static final String REFERENCE_FIELD = JsValueGlue.HOSTED_MODE_REFERENCE;;
+  static final String REFERENCE_FIELD = JsValueGlue.HOSTED_MODE_REFERENCE;
 
   static String addSyntheticThisParam(String owner, String methodDescriptor) {
     return "(L" + owner + ";" + methodDescriptor.substring(1);
@@ -112,12 +116,16 @@ public class HostedModeClassRewriter {
   /**
    * Records the superclass of every JSO for generating empty JSO interfaces.
    */
-  private final Map<String, String> jsoSuperDescs;
+  private final Map<String, List<String>> jsoSuperDescs;
 
   /**
    * Maps methods to the class in which they are declared.
    */
   private InstanceMethodOracle mapper;
+
+  private final SortedMap<String, Method> mangledNamesToImplementations;
+
+  private final Set<String> singleJsoImplTypes;
 
   /**
    * Creates a new {@link HostedModeClassRewriter} for a specified set of
@@ -128,21 +136,31 @@ public class HostedModeClassRewriter {
    * @param mapper maps methods to the class in which they are declared
    */
   public HostedModeClassRewriter(Set<String> jsoSubtypes,
-      Map<String, String> jsoSuperTypes, InstanceMethodOracle mapper) {
+      Map<String, List<String>> jsoSuperTypes,
+      SortedMap<String, Method> mangledNamesToImplementations,
+      Set<String> singleJsoImplTypes, InstanceMethodOracle mapper) {
     Set<String> buildJsoIntfDescs = new HashSet<String>();
     Set<String> buildJsoImplDescs = new HashSet<String>();
-    Map<String, String> buildJsoSuperDescs = new HashMap<String, String>();
+    Map<String, List<String>> buildJsoSuperDescs = new HashMap<String, List<String>>();
     for (String jsoSubtype : jsoSubtypes) {
       String desc = toDescriptor(jsoSubtype);
       buildJsoIntfDescs.add(desc);
       buildJsoImplDescs.add(desc + "$");
-      String superType = jsoSuperTypes.get(jsoSubtype);
-      assert (superType != null);
-      buildJsoSuperDescs.put(desc, toDescriptor(superType));
+
+      List<String> superTypes = jsoSuperTypes.get(jsoSubtype);
+      assert (superTypes != null);
+      assert (superTypes.size() > 0);
+      for (ListIterator<String> i = superTypes.listIterator(); i.hasNext();) {
+        i.set(toDescriptor(i.next()));
+      }
+      buildJsoSuperDescs.put(desc, Collections.unmodifiableList(superTypes));
     }
+
     this.jsoIntfDescs = Collections.unmodifiableSet(buildJsoIntfDescs);
     this.jsoImplDescs = Collections.unmodifiableSet(buildJsoImplDescs);
     this.jsoSuperDescs = Collections.unmodifiableMap(buildJsoSuperDescs);
+    this.mangledNamesToImplementations = Collections.unmodifiableSortedMap(mangledNamesToImplementations);
+    this.singleJsoImplTypes = Collections.unmodifiableSet(singleJsoImplTypes);
     this.mapper = mapper;
   }
 
@@ -182,10 +200,14 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
+    v = new RewriteSingleJsoImplDispatches(v, singleJsoImplTypes,
+        mangledNamesToImplementations);
+
     v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);
 
     if (jsoImplDescs.contains(desc)) {
-      v = new WriteJsoImpl(v, jsoIntfDescs, mapper);
+      v = WriteJsoImpl.create(v, desc, jsoIntfDescs, mapper,
+          mangledNamesToImplementations);
     }
 
     v = new RewriteJsniMethods(v, anonymousClassMap);
@@ -202,8 +224,9 @@ public class HostedModeClassRewriter {
     String desc = toDescriptor(className);
     assert (jsoIntfDescs.contains(desc));
     assert (jsoSuperDescs.containsKey(desc));
-    String superDesc = jsoSuperDescs.get(desc);
-    assert (superDesc != null);
+    List<String> superDescs = jsoSuperDescs.get(desc);
+    assert (superDescs != null);
+    assert (superDescs.size() > 0);
 
     // The ASM model is to chain a bunch of visitors together.
     ClassWriter writer = new ClassWriter(0);
@@ -213,10 +236,11 @@ public class HostedModeClassRewriter {
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
     String[] interfaces;
-    if ("java/lang/Object".equals(superDesc)) {
+    // TODO(bov): something better than linear?
+    if (superDescs.contains("java/lang/Object")) {
       interfaces = null;
     } else {
-      interfaces = new String[] {superDesc};
+      interfaces = superDescs.toArray(new String[superDescs.size()]);
     }
     v.visit(Opcodes.V1_5, Opcodes.ACC_PUBLIC | Opcodes.ACC_INTERFACE, desc,
         null, "java/lang/Object", interfaces);

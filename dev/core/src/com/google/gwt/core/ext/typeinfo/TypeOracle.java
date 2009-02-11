@@ -23,6 +23,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -198,6 +199,8 @@ public class TypeOracle {
 
   private final Map<String, List<JWildcardType>> wildcardTypes = new HashMap<String, List<JWildcardType>>();
 
+  private final Set<JRealClassType> singleJsoImplTypes = new HashSet<JRealClassType>();
+
   public TypeOracle() {
     // Always create the default package.
     //
@@ -216,10 +219,10 @@ public class TypeOracle {
 
   /**
    * Finds a class or interface given its fully-qualified name.
-   *
-   * @param name fully-qualified class/interface name -  for nested
-   * classes, use its source name rather than its binary name (that is, use a
-   * "." rather than a "$")
+   * 
+   * @param name fully-qualified class/interface name - for nested classes, use
+   *          its source name rather than its binary name (that is, use a "."
+   *          rather than a "$")
    * 
    * @return <code>null</code> if the type is not found
    */
@@ -434,6 +437,14 @@ public class TypeOracle {
   }
 
   /**
+   * Returns an unmodifiable, live view of all interface types annotated with
+   * the SingleJsoImpl annotation.
+   */
+  public Set<JRealClassType> getSingleJsoImplTypes() {
+    return Collections.unmodifiableSet(singleJsoImplTypes);
+  }
+
+  /**
    * Finds a type given its fully qualified name. For nested classes, use its
    * source name rather than its binary name (that is, use a "." rather than a
    * "$").
@@ -603,6 +614,12 @@ public class TypeOracle {
     String fqcn = newType.getQualifiedSourceName();
     allTypes.put(fqcn, newType);
     recentTypes.add(newType);
+  }
+
+  void addSingleJsoInterface(JRealClassType singleJsoImplType) {
+    assert singleJsoImplType.isInterface() == singleJsoImplType : singleJsoImplType.getName()
+        + " has SingleJsoImpl, but is not an interface";
+    singleJsoImplTypes.add(singleJsoImplType);
   }
 
   void invalidate(JRealClassType realClassType) {
@@ -983,7 +1000,7 @@ public class TypeOracle {
       JRealClassType classType = iter.next();
       String fqcn = classType.getQualifiedSourceName();
       allTypes.remove(fqcn);
-
+      singleJsoImplTypes.remove(classType);
       JPackage pkg = classType.getPackage();
       if (pkg != null) {
         pkg.remove(classType);

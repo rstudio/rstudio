@@ -18,9 +18,12 @@ package com.google.gwt.dev.shell;
 import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JType;
+import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
@@ -50,13 +53,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
 import java.util.Stack;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
  * An isolated {@link ClassLoader} for running all user code. All user files are
- * compiled from source code byte a {@link ByteCodeCompiler}. After
- * compilation, some byte code rewriting is performed to support
+ * compiled from source code byte a {@link ByteCodeCompiler}. After compilation,
+ * some byte code rewriting is performed to support
  * <code>JavaScriptObject</code> and its subtypes.
  * 
  * TODO: we should refactor this class to move the getClassInfoByDispId,
@@ -131,6 +136,23 @@ public final class CompilingClassLoader extends ClassLoader implements
       DispatchClassInfo dispClassInfo = getClassInfoFromClassName(className);
       if (dispClassInfo != null) {
         String memberName = parsed.memberSignature();
+
+        /*
+         * Disallow the use of JSNI references to SingleJsoImpl interface
+         * methods. This policy is due to web-mode dispatch implementation
+         * details; resolving the JSNI reference wouldn't be just be a name
+         * replacement, instead it would be necessary to significantly alter the
+         * semantics of the hand-written JS.
+         */
+        if (singleJsoImplTypes.contains(canonicalizeClassName(parsed.className()))) {
+          logger.log(TreeLogger.WARN,
+              "Invalid JSNI reference to SingleJsoImpl interface ("
+                  + parsed.className() + "); consider using a trampoline. "
+                  + "Expect subsequent failures.", new NoSuchFieldError(
+                  jsniMemberRef));
+          return -1;
+        }
+
         int memberId = dispClassInfo.getMemberId(memberName);
         if (memberId < 0) {
           logger.log(TreeLogger.WARN, "Member '" + memberName
@@ -352,9 +374,10 @@ public final class CompilingClassLoader extends ClassLoader implements
   private static final Class<?>[] BRIDGE_CLASSES = new Class<?>[] {
       ShellJavaScriptHost.class, GWTBridge.class};
 
-  private static final boolean CLASS_DUMP = false;
+  private static final boolean CLASS_DUMP = Boolean.getBoolean("gwt.dev.classDump");
 
-  private static final String CLASS_DUMP_PATH = "rewritten-classes";
+  private static final String CLASS_DUMP_PATH = System.getProperty(
+      "gwt.dev.classDumpPath", "rewritten-classes");
 
   private static boolean emmaAvailable = false;
 
@@ -503,6 +526,7 @@ public final class CompilingClassLoader extends ClassLoader implements
 
   private ShellJavaScriptHost shellJavaScriptHost;
 
+  private final Set<String> singleJsoImplTypes = new HashSet<String>();
   /**
    * Used by {@link #findClass(String)} to prevent reentrant JSNI injection.
    */
@@ -543,17 +567,28 @@ public final class CompilingClassLoader extends ClassLoader implements
       jsoTypes.add(jsoType);
 
       Set<String> jsoTypeNames = new HashSet<String>();
-      Map<String, String> jsoSuperTypes = new HashMap<String, String>();
+      Map<String, List<String>> jsoSuperTypes = new HashMap<String, List<String>>();
       for (JClassType type : jsoTypes) {
+        List<String> types = new ArrayList<String>();
+        types.add(getBinaryName(type.getSuperclass()));
+        for (JClassType impl : type.getImplementedInterfaces()) {
+          types.add(getBinaryName(impl));
+        }
+
         String binaryName = getBinaryName(type);
         jsoTypeNames.add(binaryName);
-        jsoSuperTypes.put(binaryName, getBinaryName(type.getSuperclass()));
+        jsoSuperTypes.put(binaryName, types);
       }
+
+      // computeSingleJsoImplData has two out parameters
+      SortedMap<String, com.google.gwt.dev.asm.commons.Method> mangledNamesToImplementations = new TreeMap<String, com.google.gwt.dev.asm.commons.Method>();
+      computeSingleJsoImplData(singleJsoImplTypes,
+          mangledNamesToImplementations);
 
       MyInstanceMethodOracle mapper = new MyInstanceMethodOracle(jsoTypes,
           typeOracle.getJavaLangObject());
       classRewriter = new HostedModeClassRewriter(jsoTypeNames, jsoSuperTypes,
-          mapper);
+          mangledNamesToImplementations, singleJsoImplTypes, mapper);
     } else {
       // If we couldn't find the JSO class, we don't need to do any rewrites.
       classRewriter = null;
@@ -598,8 +633,8 @@ public final class CompilingClassLoader extends ClassLoader implements
    * was previously cached and has not been garbage collected.
    * 
    * @param javaObject the Object being wrapped
-   * @return the mapped wrapper, or <code>null</code> if the Java object
-   *         mapped or if the wrapper has been garbage collected
+   * @return the mapped wrapper, or <code>null</code> if the Java object mapped
+   *         or if the wrapper has been garbage collected
    */
   public Object getWrapperForObject(Object javaObject) {
     return weakJavaWrapperCache.get(javaObject);
@@ -727,6 +762,111 @@ public final class CompilingClassLoader extends ClassLoader implements
     return lookupClassName;
   }
 
+  /**
+   * Cook up the data we need to support JSO subtypes that implement interfaces
+   * with methods. This includes the set of SingleJsoImpl interfaces actually
+   * implemented by a JSO type, the mangled method names, and the names of the
+   * Methods that should actually implement the virtual functions.
+   * 
+   * Given the current implementation of JSO$ and incremental execution of
+   * rebinds, it's not possible for Generators to produce additional
+   * JavaScriptObject subtypes, so this data can remain static.
+   */
+  private void computeSingleJsoImplData(
+      Set<String> singleJsoImplTypes,
+      SortedMap<String, com.google.gwt.dev.asm.commons.Method> mangledNamesToImplementations) {
+
+    // Loop over all types declared with the SingleJsoImpl annotation
+    typeLoop : for (JClassType type : typeOracle.getSingleJsoImplTypes()) {
+      assert type.isInterface() == type : "Expecting interfaces only";
+
+      /*
+       * By preemptively adding all possible mangled names by which a method
+       * could be called, we greatly simplify the logic necessary to rewrite the
+       * call-site.
+       * 
+       * interface A {void m();}
+       * 
+       * interface B extends A {void z();}
+       * 
+       * becomes
+       * 
+       * c_g_p_A_m() -> JsoA$.m$()
+       * 
+       * c_g_p_B_m() -> JsoA$.m$()
+       * 
+       * c_g_p_B_z() -> JsoB$.z$()
+       */
+      for (JMethod m : type.getOverridableMethods()) {
+        assert m.isAbstract() : "Expecting only abstract methods";
+
+        /*
+         * It is necessary to locate the implementing type on a per-method
+         * basis. Consider the case of
+         * 
+         * @SingleJsoImpl interface C extends A, B {}
+         * 
+         * Methods interited from interfaces A and B must be dispatched to their
+         * respective JSO implementations.
+         */
+        JClassType implementingType = findImplementingJsoType(m,
+            m.getEnclosingType().getSubtypes());
+
+        if (implementingType == null) {
+          /*
+           * This means that there is no concrete implementation of the
+           * interface by a JSO. Any implementation that might be created by a
+           * Generator won't be a JSO subtype, so we'll just ignore it as an
+           * actionable type. Were Generators ever able to create new JSO
+           * subtypes, we'd have to speculatively rewrite the callsite.
+           */
+          continue typeLoop;
+        }
+
+        /*
+         * Record the type as being actionable.
+         */
+        singleJsoImplTypes.add(canonicalizeClassName(getBinaryName(type)));
+
+        /*
+         * The mangled name adds the current interface like
+         * 
+         * com_foo_Bar_methodName
+         */
+        String mangledName = getBinaryName(type).replace('.', '_') + "_"
+            + m.getName();
+
+        /*
+         * Cook up the a pseudo-method declaration for the concrete type. This
+         * should look something like
+         * 
+         * ReturnType method$ (JsoType, ParamType, ParamType)
+         * 
+         * This must be kept in sync with the WriteJsoImpl class.
+         */
+        String decl = m.getReturnType().getParameterizedQualifiedSourceName()
+            + " " + m.getName() + "$ (" + getBinaryName(implementingType);
+        for (JParameter p : m.getParameters()) {
+          decl += ",";
+          decl += p.getType().getParameterizedQualifiedSourceName();
+        }
+        decl += ")";
+
+        com.google.gwt.dev.asm.commons.Method toImplement = com.google.gwt.dev.asm.commons.Method.getMethod(decl);
+
+        mangledNamesToImplementations.put(mangledName, toImplement);
+      }
+    }
+
+    if (logger.isLoggable(Type.SPAM)) {
+      TreeLogger dumpLogger = logger.branch(Type.SPAM,
+          "SingleJsoImpl method mappings");
+      for (Map.Entry<String, com.google.gwt.dev.asm.commons.Method> entry : mangledNamesToImplementations.entrySet()) {
+        dumpLogger.log(Type.SPAM, entry.getKey() + " -> " + entry.getValue());
+      }
+    }
+  }
+
   private byte[] findClassBytes(String className) {
     if (JavaScriptHost.class.getName().equals(className)) {
       // No need to rewrite.
@@ -735,7 +875,11 @@ public final class CompilingClassLoader extends ClassLoader implements
 
     if (classRewriter != null && classRewriter.isJsoIntf(className)) {
       // Generate a synthetic JSO interface class.
-      return classRewriter.writeJsoIntf(className);
+      byte[] newBytes = classRewriter.writeJsoIntf(className);
+      if (CLASS_DUMP) {
+        classDump(className, newBytes);
+      }
+      return newBytes;
     }
 
     // A JSO impl class needs the class bytes for the original class.
@@ -810,6 +954,35 @@ public final class CompilingClassLoader extends ClassLoader implements
       classBytes = newBytes;
     }
     return classBytes;
+  }
+
+  private JClassType findImplementingJsoType(JMethod toImplement,
+      JClassType[] types) {
+    JClassType jsoType = typeOracle.findType(JsValueGlue.JSO_CLASS);
+    JType[] paramTypes = new JType[toImplement.getParameters().length];
+    for (int i = 0, j = paramTypes.length; i < j; i++) {
+      paramTypes[i] = toImplement.getParameters()[i].getType();
+    }
+
+    for (JClassType type : types) {
+      if (type == null) {
+        continue;
+      } else if (type.isAbstract()) {
+        continue;
+      } else if (!type.isAssignableTo(jsoType)) {
+        continue;
+      } else {
+        try {
+          JMethod m = type.getMethod(toImplement.getName(), paramTypes);
+          if (!m.isAbstract()) {
+            return type;
+          }
+        } catch (NotFoundException e) {
+          // Ignore
+        }
+      }
+    }
+    return null;
   }
 
   private String getBinaryName(JClassType type) {

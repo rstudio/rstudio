@@ -55,7 +55,8 @@ public class TypeOracleTestingUtils {
         validBinaryTypeNames.add(compiledClass.getBinaryName());
       }
     }
-    CompilationUnitInvalidator.validateCompilationUnits(units,
+    CompilationUnitInvalidator.InvalidatorState state = new CompilationUnitInvalidator.InvalidatorState();
+    CompilationUnitInvalidator.validateCompilationUnits(state, units,
         validBinaryTypeNames);
     if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
       CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger, units);

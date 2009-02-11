@@ -174,7 +174,7 @@ public class JavaToJavaScriptCompiler {
       Pruner.exec(jprogram, false);
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
-      jprogram.typeOracle.recomputeClinits();
+      jprogram.typeOracle.recomputeAfterOptimizations();
       final JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(jprogram,
           jsProgram, options.getOutput());
 
@@ -420,7 +420,7 @@ public class JavaToJavaScriptCompiler {
       }
 
       // Recompute clinits each time, they can become empty.
-      jprogram.typeOracle.recomputeClinits();
+      jprogram.typeOracle.recomputeAfterOptimizations();
       didChange = false;
 
       // Remove unreferenced types, fields, methods, [params, locals]
@@ -457,7 +457,7 @@ public class JavaToJavaScriptCompiler {
        * Ensure that references to dead clinits are removed. Otherwise, the
        * application won't run reliably.
        */
-      jprogram.typeOracle.recomputeClinits();
+      jprogram.typeOracle.recomputeAfterOptimizations();
       DeadCodeElimination.exec(jprogram);
     }
   }

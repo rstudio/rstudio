@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.core.client.SingleJsoImpl;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -93,6 +95,12 @@ public class JRealClassType extends JClassType {
   public void addAnnotations(
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     annotations.addAnnotations(declaredAnnotations);
+    for (Class<? extends Annotation> clazz : declaredAnnotations.keySet()) {
+      if (SingleJsoImpl.class.equals(clazz)) {
+        oracle.addSingleJsoInterface(this);
+        break;
+      }
+    }
   }
 
   public void addImplementedInterface(JClassType intf) {
@@ -286,7 +294,7 @@ public class JRealClassType extends JClassType {
    * Determines if the class can be constructed using a simple <code>new</code>
    * operation. Specifically, the class must
    * <ul>
-   * <li>be a class rather than an interface, </li>
+   * <li>be a class rather than an interface,</li>
    * <li>have either no constructors or a parameterless constructor, and</li>
    * <li>be a top-level class or a static nested class.</li>
    * </ul>

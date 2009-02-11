@@ -82,6 +82,8 @@ public class CompilationState {
    */
   private final JavaSourceOracle sourceOracle;
 
+  private CompilationUnitInvalidator.InvalidatorState invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
+
   /**
    * Construct a new {@link CompilationState}.
    * 
@@ -170,6 +172,19 @@ public class CompilationState {
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(TreeLogger.NULL,
         getCompilationUnits());
 
+    /*
+     * Only retain state for units marked as CHECKED; because CHECKED units
+     * won't be revalidated.
+     */
+    Set<CompilationUnit> toRetain = new HashSet<CompilationUnit>(exposedUnits);
+    for (Iterator<CompilationUnit> it = toRetain.iterator(); it.hasNext();) {
+      CompilationUnit unit = it.next();
+      if (unit.getState() != State.CHECKED) {
+        it.remove();
+      }
+    }
+    invalidatorState.retainAll(toRetain);
+
     jdtCompiler = new JdtCompiler();
     compile(logger, getCompilationUnits());
     mediator.refresh(logger, getCompilationUnits());
@@ -188,8 +203,8 @@ public class CompilationState {
           logger, newUnits);
 
       // Check all units using our custom checks.
-      CompilationUnitInvalidator.validateCompilationUnits(newUnits,
-          jdtCompiler.getBinaryTypeNames());
+      CompilationUnitInvalidator.validateCompilationUnits(invalidatorState,
+          newUnits, jdtCompiler.getBinaryTypeNames());
 
       // More units may have errors now.
       anyErrors |= CompilationUnitInvalidator.invalidateUnitsWithErrors(logger,

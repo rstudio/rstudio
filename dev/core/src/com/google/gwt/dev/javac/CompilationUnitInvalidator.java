@@ -24,6 +24,7 @@ import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -32,10 +33,21 @@ import java.util.Set;
  * Helper class to invalidate units in a set based on errors or references to
  * other invalidate units.
  * 
- * TODO: {@link ClassFileReader#hasStructuralChanges(byte[])} could help us
- * optimize this process!
+ * TODO: ClassFileReader#hasStructuralChanges(byte[]) could help us optimize
+ * this process!
  */
 public class CompilationUnitInvalidator {
+
+  /**
+   * Maintain cross-validation state.
+   */
+  public static class InvalidatorState {
+    private final JSORestrictionsChecker.CheckerState jsoState = new JSORestrictionsChecker.CheckerState();
+
+    public void retainAll(Collection<CompilationUnit> toRetain) {
+      jsoState.retainAll(toRetain);
+    }
+  }
 
   /**
    * For all units containing one or more errors whose state is currently
@@ -129,16 +141,17 @@ public class CompilationUnitInvalidator {
     } while (changed);
   }
 
-  public static void validateCompilationUnits(Set<CompilationUnit> units,
-      Set<String> validBinaryTypeNames) {
+  public static void validateCompilationUnits(InvalidatorState state,
+      Set<CompilationUnit> units, Set<String> validBinaryTypeNames) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
-        JSORestrictionsChecker.check(jdtCud);
+        JSORestrictionsChecker.check(state.jsoState, jdtCud);
         LongFromJSNIChecker.check(jdtCud);
         BinaryTypeReferenceRestrictionsChecker.check(jdtCud,
             validBinaryTypeNames);
       }
     }
+    state.jsoState.finalCheck();
   }
 }

@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
+import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -412,6 +413,12 @@ public class CastNormalizer {
    */
   private class ReplaceTypeChecksVisitor extends JModVisitor {
 
+    private final Set<JInterfaceType> dualImpls;
+
+    public ReplaceTypeChecksVisitor(JProgram program) {
+      dualImpls = program.typeOracle.getInterfacesWithJavaAndJsoImpls();
+    }
+
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JExpression replaceExpr;
@@ -441,9 +448,19 @@ public class CastNormalizer {
           // just remove the cast
           replaceExpr = curExpr;
         } else {
+
+          JMethod method;
           boolean isJsoCast = program.isJavaScriptObject(toType);
-          JMethod method = program.getIndexedMethod(isJsoCast
-              ? "Cast.dynamicCastJso" : "Cast.dynamicCast");
+          if (isJsoCast) {
+            // A cast to JSO
+            method = program.getIndexedMethod("Cast.dynamicCastJso");
+          } else if (dualImpls.contains(toType)) {
+            // A cast that may succeed when the object is a JSO
+            method = program.getIndexedMethod("Cast.dynamicCastAllowJso");
+          } else {
+            // A regular cast
+            method = program.getIndexedMethod("Cast.dynamicCast");
+          }
           // override the type of the called method with the target cast type
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               method, toType);
@@ -548,9 +565,15 @@ public class CastNormalizer {
             x.getExpr(), nullLit);
         ctx.replaceMe(eq);
       } else {
+        JMethod method;
         boolean isJsoCast = program.isJavaScriptObject(toType);
-        JMethod method = program.getIndexedMethod(isJsoCast
-            ? "Cast.instanceOfJso" : "Cast.instanceOf");
+        if (isJsoCast) {
+          method = program.getIndexedMethod("Cast.instanceOfJso");
+        } else if (dualImpls.contains(toType)) {
+          method = program.getIndexedMethod("Cast.instanceOfOrJso");
+        } else {
+          method = program.getIndexedMethod("Cast.instanceOf");
+        }
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method);
         call.getArgs().add(x.getExpr());
@@ -590,7 +613,7 @@ public class CastNormalizer {
       assigner.computeTypeIds();
     }
     {
-      ReplaceTypeChecksVisitor replacer = new ReplaceTypeChecksVisitor();
+      ReplaceTypeChecksVisitor replacer = new ReplaceTypeChecksVisitor(program);
       replacer.accept(program);
     }
   }

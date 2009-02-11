@@ -19,9 +19,11 @@ import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -203,6 +205,8 @@ public class JTypeOracle implements Serializable {
 
   private final Map<JClassType, Set<JInterfaceType>> couldImplementMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
+  private final Set<JInterfaceType> dualImpl = new HashSet<JInterfaceType>();
+
   private final Set<JReferenceType> hasClinitSet = new HashSet<JReferenceType>();
 
   private final Map<JClassType, Set<JInterfaceType>> implementsMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
@@ -212,6 +216,8 @@ public class JTypeOracle implements Serializable {
   private final Map<JInterfaceType, Set<JClassType>> isImplementedMap = new IdentityHashMap<JInterfaceType, Set<JClassType>>();
 
   private JClassType javaLangObject = null;
+
+  private final Map<JInterfaceType, JClassType> jsoSingleImpls = new IdentityHashMap<JInterfaceType, JClassType>();
 
   private final JProgram program;
 
@@ -227,6 +233,29 @@ public class JTypeOracle implements Serializable {
 
   public JTypeOracle(JProgram program) {
     this.program = program;
+  }
+
+  /**
+   * Collect all supertypes and superinterfaces for a type.
+   */
+  public Set<JReferenceType> allAssignableFrom(JReferenceType type) {
+    Set<JReferenceType> toReturn = new HashSet<JReferenceType>();
+    List<JReferenceType> q = new LinkedList<JReferenceType>();
+    q.add(type);
+
+    while (!q.isEmpty()) {
+      JReferenceType t = q.remove(0);
+
+      if (toReturn.add(t)) {
+        if (t.extnds != null) {
+          q.add(t.extnds);
+        }
+
+        q.addAll(t.implments);
+      }
+    }
+
+    return toReturn;
   }
 
   public boolean canTheoreticallyCast(JReferenceType type, JReferenceType qType) {
@@ -409,6 +438,8 @@ public class JTypeOracle implements Serializable {
         computeVirtualUpRefs((JClassType) type);
       }
     }
+
+    computeSingleJsoImplData();
   }
 
   /**
@@ -416,6 +447,18 @@ public class JTypeOracle implements Serializable {
    */
   public boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
     return getOrCreate(superInterfaceMap, type).contains(qType);
+  }
+
+  public JMethod findConcreteImplementation(JMethod method,
+      JClassType concreteType) {
+    for (JMethod m : concreteType.methods) {
+      if (getAllOverrides(m).contains(method)) {
+        if (!m.isAbstract()) {
+          return m;
+        }
+      }
+    }
+    return null;
   }
 
   public Set<JMethod> getAllOverrides(JMethod method) {
@@ -457,6 +500,14 @@ public class JTypeOracle implements Serializable {
     return results;
   }
 
+  public Set<JInterfaceType> getInterfacesWithJavaAndJsoImpls() {
+    return Collections.unmodifiableSet(dualImpl);
+  }
+
+  public Map<JInterfaceType, JClassType> getSingleJsoImpls() {
+    return Collections.unmodifiableMap(jsoSingleImpls);
+  }
+
   public boolean hasClinit(JReferenceType type) {
     return hasClinitSet.contains(type);
   }
@@ -487,13 +538,19 @@ public class JTypeOracle implements Serializable {
     return getOrCreate(superClassMap, type).contains(qType);
   }
 
-  public void recomputeClinits() {
+  /**
+   * This method should be called after altering the types that are live in the
+   * associated JProgram.
+   */
+  public void recomputeAfterOptimizations() {
     hasClinitSet.clear();
     Set<JReferenceType> computed = new HashSet<JReferenceType>();
     for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
       JReferenceType type = program.getDeclaredTypes().get(i);
       computeHasClinit(type, computed);
     }
+
+    computeSingleJsoImplData();
   }
 
   public void setInstantiatedTypes(Set<JReferenceType> instantiatedTypes) {
@@ -589,6 +646,52 @@ public class JTypeOracle implements Serializable {
     for (JInterfaceType impl : implementsSet) {
       add(isImplementedMap, impl, type);
     }
+  }
+
+  private void computeSingleJsoImplData() {
+    dualImpl.clear();
+    jsoSingleImpls.clear();
+
+    for (JReferenceType type : program.getDeclaredTypes()) {
+      if (!program.isJavaScriptObject(type)) {
+        if (type instanceof JClassType) {
+          dualImpl.addAll(type.implments);
+        }
+        continue;
+      }
+
+      for (JReferenceType refType : allAssignableFrom(type)) {
+        if (!(refType instanceof JInterfaceType)) {
+          continue;
+        }
+        JInterfaceType intr = (JInterfaceType) refType;
+        if (intr.methods.size() <= 1) {
+          // Ignore tag interfaces
+          assert intr.methods.size() == 0
+              || intr.methods.get(0).getName().equals("$clinit");
+          continue;
+        }
+
+        if (jsoSingleImpls.containsKey(intr)) {
+          // See if we're looking at a supertype
+          JClassType alreadySeen = jsoSingleImpls.get(intr);
+
+          if (allAssignableFrom(alreadySeen).contains(type)) {
+            jsoSingleImpls.put(intr, (JClassType) type);
+          } else {
+            assert allAssignableFrom(type).contains(alreadySeen) : "Already recorded "
+                + alreadySeen.getName()
+                + " as single impl for "
+                + intr.getName()
+                + " while looking at unrelated type "
+                + type.getName();
+          }
+        } else {
+          jsoSingleImpls.put(intr, (JClassType) type);
+        }
+      }
+    }
+    dualImpl.retainAll(jsoSingleImpls.keySet());
   }
 
   /**

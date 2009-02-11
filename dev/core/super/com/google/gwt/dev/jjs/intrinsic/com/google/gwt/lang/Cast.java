@@ -52,6 +52,17 @@ final class Cast {
   }
 
   /**
+   * Allow a dynamic cast to an object, always succeeding if it's a JSO.
+   */
+  static Object dynamicCastAllowJso(Object src, int dstId) {
+    if (src != null && !isJavaScriptObject(src) &&
+        !canCastUnsafe(Util.getTypeId(src), dstId)) {
+      throw new ClassCastException();
+    }
+    return src;
+  }
+  
+  /**
    * Allow a cast to JSO only if there's no type ID.
    */
   static Object dynamicCastJso(Object src) {
@@ -72,12 +83,25 @@ final class Cast {
     return (src != null) && isJavaScriptObject(src);
   }
 
+  /**
+   * Returns true if the object is a Java object and can be cast, or if it's a
+   * non-null JSO.
+   */
+  static boolean instanceOfOrJso(Object src, int dstId) {
+    return (src != null) &&
+        (isJavaScriptObject(src) || canCast(Util.getTypeId(src), dstId));
+  }
+
   static boolean isJavaObject(Object src) {
     return Util.getTypeMarker(src) == getNullMethod() || Util.getTypeId(src) == 2;
   }
 
   static boolean isJavaScriptObject(Object src) {
     return Util.getTypeMarker(src) != getNullMethod() && Util.getTypeId(src) != 2;
+  }
+
+  static boolean isJavaScriptObjectOrString(Object src) {
+    return Util.getTypeMarker(src) != getNullMethod();
   }
 
   /**
