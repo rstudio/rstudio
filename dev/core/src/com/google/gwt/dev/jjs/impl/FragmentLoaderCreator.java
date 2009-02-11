@@ -141,14 +141,16 @@ public class FragmentLoaderCreator {
 
   private void generateOnLoadMethod(PrintWriter srcWriter) {
     srcWriter.println("public static void onLoad() {");
-    srcWriter.println(ASYNC_FRAGMENT_LOADER + ".logEventProgress(\"download"
-        + entryNumber + "\", \"end\");");
     srcWriter.println("loaded = true;");
     srcWriter.println("instance = new " + getLoaderSimpleName() + "();");
     srcWriter.println(ASYNC_FRAGMENT_LOADER + ".fragmentHasLoaded("
         + entryNumber + ");");
 
+    srcWriter.println(ASYNC_FRAGMENT_LOADER
+        + ".logEventProgress(\"runCallbacks" + entryNumber + "\", \"begin\");");
     srcWriter.println("instance.runCallbacks();");
+    srcWriter.println(ASYNC_FRAGMENT_LOADER
+        + ".logEventProgress(\"runCallbacks" + entryNumber + "\", \"end\");");
 
     srcWriter.println("}");
   }

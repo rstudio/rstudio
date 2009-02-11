@@ -29,25 +29,44 @@ import java.util.Queue;
  * points:
  * 
  * <ul>
- * <li> 0 -- the <em>base</em> fragment, which is initially downloaded
- * <li> 1-m -- the <em>exclusively live</em> fragments, holding the code
- * needed exclusively for each split point
- * <li> m -- the <em>secondary base</em> fragment for entry point 1. It holds
+ * <li>0 -- the <em>base</em> fragment, which is initially downloaded
+ * <li>1-m -- the <em>exclusively live</em> fragments, holding the code needed
+ * exclusively for each split point
+ * <li>m -- the <em>secondary base</em> fragment for entry point 1. It holds
  * precisely that code needed if entry point 1 is the first one reached after
  * the application downloads.
- * <li> m+1 -- the <em>leftovers fragment</em> for entry point 1. It holds all
+ * <li>m+1 -- the <em>leftovers fragment</em> for entry point 1. It holds all
  * code not in fragments 0-(m-1) nor in fragment m.
- * <li> (m+2)..(3m) -- secondary bases and leftovers for entry points 2..m
+ * <li>(m+2)..(3m) -- secondary bases and leftovers for entry points 2..m
  * </ul>
  * 
  * <p>
  * Different linkers have different requirements about how the code is
  * downloaded and installed. Thus, when it is time to actually download the
  * code, this class defers to a JavaScript function named
- * <code>__gwtStartLoadingFragment</code>. Linkers must arrange that a
- * suitable <code>__gwtStartLoadingFragment</code> function is in scope.
+ * <code>__gwtStartLoadingFragment</code>. Linkers must arrange that a suitable
+ * <code>__gwtStartLoadingFragment</code> function is in scope.
  */
 public class AsyncFragmentLoader {
+  /**
+   * Labels used for runAsync lightweight metrics.
+   */
+  public static class LwmLabels {
+    public static final String BEGIN = "begin";
+
+    public static final String END = "end";
+
+    private static final String LEFTOVERS_DOWNLOAD = "leftoversDownload";
+
+    /**
+     * @param splitPoint
+     * @return
+     */
+    private static String downloadGroup(int splitPoint) {
+      return "download" + splitPoint;
+    }
+  }
+
   /**
    * The first entry point reached after the program started.
    */
@@ -88,6 +107,10 @@ public class AsyncFragmentLoader {
    * @param entry The entry whose code fragment is now loaded.
    */
   public static void fragmentHasLoaded(int entry) {
+    int fragment = base >= 0 ? entry : baseFragmentNumber(entry);
+    logEventProgress(LwmLabels.downloadGroup(entry), LwmLabels.END, fragment,
+        null);
+
     if (base < 0) {
       // The base fragment has loaded
       base = entry;
@@ -95,7 +118,9 @@ public class AsyncFragmentLoader {
 
       // Go ahead and download the appropriate leftovers fragment
       leftoversLoading = true;
-      startLoadingFragment(numEntries + 2 * (entry - 1) + 1);
+      logEventProgress(LwmLabels.LEFTOVERS_DOWNLOAD, LwmLabels.BEGIN,
+          leftoversFragmentNumber(), null);
+      startLoadingFragment(leftoversFragmentNumber());
     }
   }
 
@@ -110,6 +135,8 @@ public class AsyncFragmentLoader {
        * A base and a leftovers fragment have loaded. Load an exclusively live
        * fragment.
        */
+      logEventProgress(LwmLabels.downloadGroup(splitPoint), LwmLabels.BEGIN,
+          splitPoint, null);
       startLoadingFragment(splitPoint);
       return;
     }
@@ -124,7 +151,9 @@ public class AsyncFragmentLoader {
 
     // Nothing has loaded or started to load. Treat this fragment as the base.
     baseLoading = true;
-    startLoadingFragment(numEntries + 2 * (splitPoint - 1));
+    logEventProgress(LwmLabels.downloadGroup(splitPoint), LwmLabels.BEGIN,
+        baseFragmentNumber(splitPoint), null);
+    startLoadingFragment(baseFragmentNumber(splitPoint));
   }
 
   /**
@@ -133,33 +162,45 @@ public class AsyncFragmentLoader {
   public static void leftoversFragmentHasLoaded() {
     leftoversLoaded = true;
     leftoversLoading = false;
+    logEventProgress(LwmLabels.LEFTOVERS_DOWNLOAD, LwmLabels.END,
+        leftoversFragmentNumber(), null);
+
     while (!waitingForLeftovers.isEmpty()) {
       inject(waitingForLeftovers.remove());
     }
   }
 
   /**
-   * Logs an event with the GWT lightweight metrics framework.
+   * Log an event with the lightweight metrics framework.
    */
   public static void logEventProgress(String eventGroup, String type) {
-    @SuppressWarnings("unused")
-    boolean toss = isStatsAvailable()
-        && stats(createStatsEvent(eventGroup, type));
+    logEventProgress(eventGroup, type, null, null);
   }
 
   /**
-   * Create an event object suitable for submitting to the lightweight metrics
-   * framework.
+   * Compute the fragment number for the base fragment of
+   * <code>splitPoint</code>.
    */
+  private static int baseFragmentNumber(int splitPoint) {
+    return numEntries + 2 * (splitPoint - 1);
+  }
+
   private static native JavaScriptObject createStatsEvent(String eventGroup,
-      String type) /*-{
-    return {
+      String type, Integer fragment, Integer size) /*-{
+    var evt = {
       moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
       subSystem: 'runAsync',
       evtGroup: eventGroup,
       millis: (new Date()).getTime(),
       type: type
     };
+    if (fragment != null) {
+      evt.fragment = fragment.@java.lang.Integer::intValue()();
+    }
+    if (size != null) {
+      evt.size = size.@java.lang.Integer::intValue()();
+    }
+    return evt;
   }-*/;
 
   private static native void gwtStartLoadingFragment(int fragment) /*-{
@@ -170,8 +211,28 @@ public class AsyncFragmentLoader {
     return !!$stats;
   }-*/;
 
+  /**
+   * Compute the leftovers fragment number. This method can only be called once
+   * <code>base</code> has been set.
+   */
+  private static int leftoversFragmentNumber() {
+    assert (base >= 0);
+    return numEntries + 2 * (base - 1) + 1;
+  }
+
+  /**
+   * Log an event with the lightweight metrics framework. The
+   * <code>fragment</code> and <code>size</code> objects are allowed to be
+   * <code>null</code>.
+   */
+  private static void logEventProgress(String eventGroup, String type,
+      Integer fragment, Integer size) {
+    @SuppressWarnings("unused")
+    boolean toss = isStatsAvailable()
+        && stats(createStatsEvent(eventGroup, type, fragment, size));
+  }
+
   private static void startLoadingFragment(int fragment) {
-    logEventProgress("download" + fragment, "begin");
     gwtStartLoadingFragment(fragment);
   }
 
