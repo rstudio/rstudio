@@ -281,6 +281,11 @@ public class PopupTest extends GWTTestCase {
     return new PopupPanel();
   }
 
+  @Override
+  protected void gwtTearDown() throws Exception {
+    RootPanel.get().clear();
+  }
+
   /**
    * @see #testDependantPopupPanel()
    */
