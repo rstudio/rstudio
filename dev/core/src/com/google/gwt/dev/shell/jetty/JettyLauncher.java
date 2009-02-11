@@ -168,7 +168,7 @@ public class JettyLauncher extends ServletContainerLauncher {
       try {
         wac.start();
       } catch (Exception e) {
-        branch.log(TreeLogger.ERROR, "Unable to stop embedded Jetty server", e);
+        branch.log(TreeLogger.ERROR, "Unable to start embedded Jetty server", e);
         throw new UnableToCompleteException();
       }
 
