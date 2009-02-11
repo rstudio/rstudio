@@ -466,10 +466,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (!isShowing()) {
       return;
     }
-    cleanup();
-
-    // Hide the popup
-    resizeAnimation.setState(false);
+    setState(false, true);
     CloseEvent.fire(this, this, autoClosed);
   }
 
@@ -782,13 +779,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (showing) {
       return;
     }
-    showing = true;
-    nativePreviewHandlerRegistration = Event.addNativePreviewHandler(new NativePreviewHandler() {
-      public void onPreviewNativeEvent(NativePreviewEvent event) {
-        previewNativeEvent(event);
-      }
-    });
-    resizeAnimation.setState(true);
+    setState(true, true);
   }
 
   /**
@@ -827,13 +818,15 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       event.cancel();
     }
   }
- 
+
   @Override
   protected void onUnload() {
     // Just to be sure, we perform cleanup when the popup is unloaded (i.e.
     // removed from the DOM). This is normally taken care of in hide(), but it
     // can be missed if someone removes the popup directly from the RootPanel.
-    cleanup();
+    if (isShowing()) {
+      setState(false, false);
+    }
   }
 
   /**
@@ -893,16 +886,6 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       elt.blur();
     }
   }-*/;
-
-  private void cleanup() {
-    // Clear the 'showing' flag and make sure that the event preview is cleaned
-    // up.
-    showing = false;
-    if (nativePreviewHandlerRegistration != null) {
-      nativePreviewHandlerRegistration.removeHandler();
-      nativePreviewHandlerRegistration = null;
-    }
-  }
 
   /**
    * Does the event target one of the partner elements?
@@ -1172,6 +1155,35 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         }
         break;
       }
+    }
+  }
+
+  /**
+   * Set the showing state of the popup. If maybeAnimate is true, the animation
+   * will be used to set the state. If it is false, the animation will be
+   * cancelled.
+   * 
+   * @param showing the new state
+   * @param maybeAnimate true to possibly run the animation
+   */
+  private void setState(boolean showing, boolean maybeAnimate) {
+    if (maybeAnimate) {
+      resizeAnimation.setState(showing);
+    } else {
+      resizeAnimation.cancel();
+    }
+    this.showing = showing;
+
+    // Create or remove the native preview handler
+    if (showing) {
+      nativePreviewHandlerRegistration = Event.addNativePreviewHandler(new NativePreviewHandler() {
+        public void onPreviewNativeEvent(NativePreviewEvent event) {
+          previewNativeEvent(event);
+        }
+      });
+    } else if (nativePreviewHandlerRegistration != null) {
+      nativePreviewHandlerRegistration.removeHandler();
+      nativePreviewHandlerRegistration = null;
     }
   }
 }

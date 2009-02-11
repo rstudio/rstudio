@@ -180,6 +180,28 @@ public class PopupTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Test the showing a popup while it is hiding will not result in an illegal
+   * state.
+   */
+  public void testShowWhileHiding() {
+    PopupPanel popup = createPopupPanel();
+
+    // Show the popup
+    popup.setAnimationEnabled(false);
+    popup.show();
+    assertTrue(popup.isShowing());
+
+    // Start hiding the popup
+    popup.setAnimationEnabled(true);
+    popup.hide();
+    assertFalse(popup.isShowing());
+
+    // Show the popup while its hiding
+    popup.show();
+    assertTrue(popup.isShowing());
+  }
+
   public void testPopup() {
     // Get rid of window margins so we can test absolute position.
     Window.setMargin("0px");
