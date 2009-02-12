@@ -95,7 +95,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     @Override
     public String getPurpose() {
-      return "Prevents the embedded Tomcat server from running, even if a port is specified";
+      return "Prevents the embedded web server from running";
     }
 
     @Override
@@ -128,7 +128,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     @Override
     public String getPurpose() {
-      return "Runs an embedded Tomcat instance on the specified port (defaults to 8888)";
+      return "Specify the TCP port for the embedded web server (defaults to 8888)";
     }
 
     @Override
