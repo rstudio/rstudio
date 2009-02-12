@@ -33,4 +33,5 @@ Merges:
 /releases/1.6/@r4658:4669 was merged (r4670) into trunk
 
 The next merge into trunk will be:
-svn merge -r4669:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge -r4669:4694 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
+svn merge -r4695:???? https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
