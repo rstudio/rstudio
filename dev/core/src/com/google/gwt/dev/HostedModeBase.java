@@ -202,8 +202,9 @@ abstract class HostedModeBase implements BrowserWindowController {
       }
     }
 
-    public abstract ModuleSpaceHost createModuleSpaceHost(BrowserWidget widget,
-        final String moduleName) throws UnableToCompleteException;
+    public abstract ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
+        BrowserWidget widget, String moduleName)
+        throws UnableToCompleteException;
 
     public TreeLogger getLogger() {
       return getTopLogger();

@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.mac;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.JsValueGlue;
@@ -36,9 +37,10 @@ public class ModuleSpaceSaf extends ModuleSpace {
    * @param moduleName name of the module
    * @param key unique key for this instance of the module
    */
-  public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject,
-      int scriptGlobalContext, String moduleName, Object key) {
-    super(host, moduleName, key);
+  public ModuleSpaceSaf(TreeLogger logger, ModuleSpaceHost host,
+      int scriptGlobalObject, int scriptGlobalContext, String moduleName,
+      Object key) {
+    super(logger, host, moduleName, key);
 
     // Hang on to the global execution state.
     //
@@ -86,7 +88,7 @@ public class ModuleSpaceSaf extends ModuleSpace {
     int argc = args.length;
     int[] argv = new int[argc];
     // GC protect passed arguments on the Java stack for call duration.
-    JsValueSaf[] jsValueArgs = new JsValueSaf[argc]; 
+    JsValueSaf[] jsValueArgs = new JsValueSaf[argc];
     for (int i = 0; i < argc; ++i) {
       JsValueSaf jsValue = jsValueArgs[i] = new JsValueSaf();
       JsValueGlue.set(jsValue, isolatedClassLoader, types[i], args[i]);

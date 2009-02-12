@@ -52,13 +52,14 @@ public class BrowserWidgetSaf extends BrowserWidget {
     }
 
     public boolean gwtOnLoad(int scriptObject, String moduleName, String version) {
-      try {
-        if (moduleName == null) {
-          // Indicates one or more modules are being unloaded.
-          handleUnload(scriptObject);
-          return true;
-        }
+      if (moduleName == null) {
+        // Indicates one or more modules are being unloaded.
+        return handleUnload(scriptObject);
+      }
 
+      TreeLogger logger = getHost().getLogger().branch(TreeLogger.DEBUG,
+          "Loading an instance of module '" + moduleName + "'");
+      try {
         if (!validHostedHtmlVersion(version)) {
           return false;
         }
@@ -66,7 +67,7 @@ public class BrowserWidgetSaf extends BrowserWidget {
         // Attach a new ModuleSpace to make it programmable.
         //
         Integer key = new Integer(scriptObject);
-        ModuleSpaceHost msh = getHost().createModuleSpaceHost(
+        ModuleSpaceHost msh = getHost().createModuleSpaceHost(logger,
             BrowserWidgetSaf.this, moduleName);
 
         /*
@@ -76,17 +77,17 @@ public class BrowserWidgetSaf extends BrowserWidget {
          */
         final int globalContext = globalContexts.get(scriptObject).intValue();
 
-        ModuleSpace moduleSpace = new ModuleSpaceSaf(msh, scriptObject,
+        ModuleSpace moduleSpace = new ModuleSpaceSaf(logger, msh, scriptObject,
             globalContext, moduleName, key);
-        attachModuleSpace(moduleSpace);
+        attachModuleSpace(logger, moduleSpace);
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
         // that can go wrong trying to load a module, including Error-dervied
         // things like NoClassDefFoundError.
         // 
-        getHost().getLogger().log(TreeLogger.ERROR,
-            "Failure to load module '" + moduleName + "'", e);
+        logger.log(TreeLogger.ERROR, "Failure to load module '" + moduleName
+            + "'", e);
         return false;
       }
     }
@@ -117,12 +118,19 @@ public class BrowserWidgetSaf extends BrowserWidget {
      * 
      * @param scriptObject window to unload, 0 if all
      */
-    protected void handleUnload(int scriptObject) {
-      Integer key = null;
-      if (scriptObject != 0) {
-        key = new Integer(scriptObject);
+    protected boolean handleUnload(int scriptObject) {
+      try {
+        Integer key = null;
+        if (scriptObject != 0) {
+          key = new Integer(scriptObject);
+        }
+        doUnload(key);
+        return true;
+      } catch (Throwable e) {
+        getHost().getLogger().log(TreeLogger.ERROR,
+            "Failure to unload modules", e);
+        return false;
       }
-      doUnload(key);
     }
   }
 

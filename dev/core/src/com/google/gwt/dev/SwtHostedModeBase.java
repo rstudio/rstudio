@@ -49,12 +49,10 @@ abstract class SwtHostedModeBase extends HostedModeBase {
   private class SwtBrowserWidgetHostImpl extends BrowserWidgetHostImpl {
 
     @Override
-    public ModuleSpaceHost createModuleSpaceHost(BrowserWidget widget,
-        final String moduleName) throws UnableToCompleteException {
-      TreeLogger logger = getLogger();
-
+    public ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
+        BrowserWidget widget, String moduleName)
+        throws UnableToCompleteException {
       // Switch to a wait cursor.
-      //
       Shell widgetShell = widget.getShell();
       try {
         Cursor waitCursor = display.getSystemCursor(SWT.CURSOR_WAIT);
@@ -66,8 +64,8 @@ abstract class SwtHostedModeBase extends HostedModeBase {
         assert (moduleDef != null);
 
         TypeOracle typeOracle = moduleDef.getTypeOracle(logger);
-        ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(logger,
-            typeOracle, moduleDef);
+        ShellModuleSpaceHost host = doCreateShellModuleSpaceHost(
+            getTopLogger(), typeOracle, moduleDef);
         return host;
       } finally {
         Cursor normalCursor = display.getSystemCursor(SWT.CURSOR_ARROW);

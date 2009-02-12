@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.ie;
 
+import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.shell.JsValue;
 import com.google.gwt.dev.shell.ModuleSpace;
@@ -85,9 +86,9 @@ public class ModuleSpaceIE6 extends ModuleSpace {
    * 
    * @param moduleName
    */
-  public ModuleSpaceIE6(ModuleSpaceHost host, IDispatch scriptFrameWindow,
-      String moduleName, Object key) {
-    super(host, moduleName, key);
+  public ModuleSpaceIE6(TreeLogger logger, ModuleSpaceHost host,
+      IDispatch scriptFrameWindow, String moduleName, Object key) {
+    super(logger, host, moduleName, key);
 
     window = new OleAutomation(scriptFrameWindow);
   }

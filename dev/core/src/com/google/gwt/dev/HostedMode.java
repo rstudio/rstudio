@@ -339,7 +339,7 @@ public class HostedMode extends SwtHostedModeBase {
 
     for (String moduleName : options.getModuleNames()) {
       TreeLogger loadLogger = getTopLogger().branch(TreeLogger.DEBUG,
-          "Loading module " + moduleName);
+          "Bootstrap link for command-line module " + moduleName);
       try {
         ModuleDef module = loadModule(loadLogger, moduleName, false);
 
@@ -405,12 +405,14 @@ public class HostedMode extends SwtHostedModeBase {
       return false;
     }
     try {
+      TreeLogger logger = getTopLogger().branch(TreeLogger.DEBUG,
+          "Initializing module '" + module.getName() + "' for hosted mode");
       boolean shouldRefreshPage = false;
       if (module.isGwtXmlFileStale()) {
         shouldRefreshPage = true;
-        module = loadModule(getTopLogger(), module.getCanonicalName(), false);
+        module = loadModule(logger, module.getCanonicalName(), false);
       }
-      link(getTopLogger(), module);
+      link(logger, module);
       return shouldRefreshPage;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -441,18 +443,21 @@ public class HostedMode extends SwtHostedModeBase {
    */
   private void link(TreeLogger logger, ModuleDef module)
       throws UnableToCompleteException {
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
+        + module.getName() + "'");
+
     // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(options.getWarDir(), module.getName());
     File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
         options.getExtraDir(), module.getName());
 
     // Create a new active linker stack for the fresh link.
-    StandardLinkerContext linkerStack = new StandardLinkerContext(logger,
+    StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
         module, options);
     linkerStacks.put(module.getName(), linkerStack);
 
-    ArtifactSet artifacts = linkerStack.invokeLink(logger);
-    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
+    ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
+    linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
         moduleExtraDir);
   }
 
@@ -467,6 +472,9 @@ public class HostedMode extends SwtHostedModeBase {
    */
   private void relink(TreeLogger logger, ModuleDef module,
       ArtifactSet newlyGeneratedArtifacts) throws UnableToCompleteException {
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG,
+        "Relinking module '" + module.getName() + "'");
+
     // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(options.getWarDir(), module.getName());
     File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
@@ -476,9 +484,9 @@ public class HostedMode extends SwtHostedModeBase {
     StandardLinkerContext linkerStack = linkerStacks.get(module.getName());
     assert linkerStack != null;
 
-    ArtifactSet artifacts = linkerStack.invokeRelink(logger,
+    ArtifactSet artifacts = linkerStack.invokeRelink(linkLogger,
         newlyGeneratedArtifacts);
-    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
+    linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
         moduleExtraDir);
   }
 }

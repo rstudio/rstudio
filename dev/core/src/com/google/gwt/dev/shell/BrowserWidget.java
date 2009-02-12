@@ -332,7 +332,7 @@ public abstract class BrowserWidget extends Composite {
    * 
    * @param space ModuleSpace instance to initialize
    */
-  protected final void attachModuleSpace(ModuleSpace space)
+  protected final void attachModuleSpace(TreeLogger logger, ModuleSpace space)
       throws UnableToCompleteException {
     Object key = space.getKey();
     loadedModules.put(key, space);
