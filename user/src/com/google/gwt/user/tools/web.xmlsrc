@@ -8,13 +8,13 @@
   
   <!-- Servlets -->
   <servlet>
-    <servlet-name>echoServlet</servlet-name>
-    <servlet-class>@serverPackage.EchoServiceImpl</servlet-class>
+    <servlet-name>greetServlet</servlet-name>
+    <servlet-class>@serverPackage.GreetingServiceImpl</servlet-class>
   </servlet>
   
   <servlet-mapping>
-    <servlet-name>echoServlet</servlet-name>
-    <url-pattern>/@renameTo/echo</url-pattern>
+    <servlet-name>greetServlet</servlet-name>
+    <url-pattern>/@renameTo/greet</url-pattern>
   </servlet-mapping>
 
 </web-app>
