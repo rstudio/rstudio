@@ -50,7 +50,7 @@ public class ReplaceRunAsyncs {
         JExpression asyncCallback = x.getArgs().get(0);
 
         int entryNumber = entryCount++;
-        logger.log(TreeLogger.INFO, "Assigning split point #" + entryNumber
+        logger.log(TreeLogger.DEBUG, "Assigning split point #" + entryNumber
             + " in method " + fullMethodDescription(currentMethod));
 
         String methodDescription = fullMethodDescription(currentMethod);

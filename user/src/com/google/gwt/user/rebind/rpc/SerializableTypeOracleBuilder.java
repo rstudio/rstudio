@@ -1325,7 +1325,7 @@ public class SerializableTypeOracleBuilder {
       return;
     }
 
-    logger.log(TreeLogger.INFO, path.toString());
+    logger.log(TreeLogger.DEBUG, path.toString());
     logPath(logger, path.getParent());
   }
 
@@ -1340,7 +1340,7 @@ public class SerializableTypeOracleBuilder {
       logger = printWriterTreeLogger;
     }
 
-    logger.log(TreeLogger.INFO, "Reachable types computed on: "
+    logger.log(TreeLogger.DEBUG, "Reachable types computed on: "
         + new Date().toString());
     Set<JType> keySet = typeToTypeInfoComputed.keySet();
     JType[] types = keySet.toArray(new JType[0]);
@@ -1350,24 +1350,24 @@ public class SerializableTypeOracleBuilder {
       TypeInfoComputed tic = typeToTypeInfoComputed.get(type);
       assert (tic != null);
 
-      TreeLogger typeLogger = logger.branch(TreeLogger.INFO,
+      TreeLogger typeLogger = logger.branch(TreeLogger.DEBUG,
           tic.getType().getParameterizedQualifiedSourceName());
-      TreeLogger serializationStatus = typeLogger.branch(TreeLogger.INFO,
+      TreeLogger serializationStatus = typeLogger.branch(TreeLogger.DEBUG,
           "Serialization status");
       if (tic.isInstantiable()) {
-        serializationStatus.branch(TreeLogger.INFO, "Instantiable");
+        serializationStatus.branch(TreeLogger.DEBUG, "Instantiable");
       } else {
         if (tic.isFieldSerializable()) {
-          serializationStatus.branch(TreeLogger.INFO, "Field serializable");
+          serializationStatus.branch(TreeLogger.DEBUG, "Field serializable");
         } else {
-          serializationStatus.branch(TreeLogger.INFO, "Not serializable");
+          serializationStatus.branch(TreeLogger.DEBUG, "Not serializable");
         }
       }
 
-      TreeLogger pathLogger = typeLogger.branch(TreeLogger.INFO, "Path");
+      TreeLogger pathLogger = typeLogger.branch(TreeLogger.DEBUG, "Path");
 
       logPath(pathLogger, tic.getPath());
-      logger.log(TreeLogger.INFO, "");
+      logger.log(TreeLogger.DEBUG, "");
     }
 
     if (printWriter != null) {
