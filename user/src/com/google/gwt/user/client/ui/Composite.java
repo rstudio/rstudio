@@ -127,8 +127,7 @@ public abstract class Composite extends Widget {
    * This method was for initializing the Widget to be wrapped by this
    * Composite, but has been deprecated in favor of {@link #initWidget(Widget)}.
    * 
-   * @deprecated this method is deprecated, and will be removed (use
-   *             {@link #initWidget(Widget)} instead)
+   * @deprecated Use {@link #initWidget(Widget)} instead
    */
   @Deprecated
   protected void setWidget(Widget widget) {

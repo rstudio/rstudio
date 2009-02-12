@@ -75,17 +75,15 @@ import com.google.gwt.junit.client.GWTTestCase;
  * <h2>Examples of benchmarking in action</h2>
  * 
  * <h3>A simple benchmark example</h3>
- * {@link com.google.gwt.examples.benchmarks.AllocBenchmark} is a simple example
- * of a basic benchmark that doesn't take advantage of most of benchmarking's
- * advanced features.
+ * <code>AllocBenchmark</code> is an example of a basic benchmark that doesn't
+ * take advantage of most of benchmarking's advanced features.
  * 
  * {@example com.google.gwt.examples.benchmarks.AllocBenchmark}
  * 
  * <h3>An advanced benchmark example</h3>
- * {@link com.google.gwt.examples.benchmarks.ArrayListBenchmark} is a more
- * sophisticated example of benchmarking. It demonstrates the use of
- * {@code Setup} and {@code Teardown} test methods, parameterized test methods,
- * and time limits.
+ * <code>ArrayListBenchmark</code> is a more sophisticated example of
+ * benchmarking. It demonstrates the use of {@code Setup} and {@code Teardown}
+ * test methods, parameterized test methods, and time limits.
  * 
  * {@example com.google.gwt.examples.benchmarks.ArrayListBenchmark}
  */

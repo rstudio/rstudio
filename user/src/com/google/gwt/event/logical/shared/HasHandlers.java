@@ -21,7 +21,7 @@ package com.google.gwt.event.logical.shared;
  * HasHandlers has moved to com.google.gwt.event.shared.HasHandlers. This
  * interface will be removed before the first GWT 1.6 milestone.
  * 
- * @deprecated use com.google.gwt.event.shared.HasHandlers instead.
+ * @deprecated Use {@link com.google.gwt.event.shared.HasHandlers} instead
  */
 @Deprecated
 public interface HasHandlers extends com.google.gwt.event.shared.HasHandlers {

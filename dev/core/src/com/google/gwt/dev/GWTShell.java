@@ -33,7 +33,7 @@ import java.io.File;
 /**
  * The main executable class for the hosted mode shell.
  * 
- * @deprecated use {@link HostedMode} instead
+ * @deprecated Use {@link HostedMode} instead
  */
 @Deprecated
 public class GWTShell extends SwtHostedModeBase {

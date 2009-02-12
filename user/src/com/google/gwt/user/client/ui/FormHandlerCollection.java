@@ -23,7 +23,7 @@ import java.util.ArrayList;
  * of ArrayList assumes that all items added to it will be of type
  * {@link com.google.gwt.user.client.ui.FormHandler}.
  * 
- * @deprecated {@link FormPanel} now handles all handler management internally
+ * @deprecated {@link FormPanel} now implements all handler management internally
  */
 @Deprecated
 public class FormHandlerCollection extends ArrayList<FormHandler> {

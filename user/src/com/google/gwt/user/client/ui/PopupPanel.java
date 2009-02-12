@@ -96,8 +96,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * 
    * <ul>
    * <li>CENTER - Expand from the center of the popup</li>
-   * <li>ONE_WAY_CORNER - Expand from the top left corner, do not animate hiding
-   * </li>
+   * <li>ONE_WAY_CORNER - Expand from the top left corner, do not animate
+   * hiding </li>
    * </ul>
    */
   static enum AnimationType {
@@ -475,8 +475,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * Returns <code>true</code> if the popup should be automatically hidden when
-   * the user clicks outside of it.
+   * Returns <code>true</code> if the popup should be automatically hidden
+   * when the user clicks outside of it.
    * 
    * @return true if autoHide is enabled, false if disabled
    */
@@ -530,7 +530,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onEventPreview(Event event) {
@@ -545,7 +546,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onKeyDownPreview(char key, int modifiers) {
@@ -560,7 +562,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onKeyPressPreview(char key, int modifiers) {
@@ -575,7 +578,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onKeyUpPreview(char key, int modifiers) {
@@ -722,8 +726,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * <code>visibility</code> style attribute. You need to call {@link #show()}
    * to actually attached/detach the {@link PopupPanel} to the page.
    * 
-   * @param visible <code>true</code> to show the object, <code>false</code> to
-   *          hide it
+   * @param visible <code>true</code> to show the object, <code>false</code>
+   *          to hide it
    * @see #show()
    * @see #hide()
    */
@@ -881,11 +885,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param elt The Element on which <code>blur()</code> will be invoked
    */
   private native void blur(Element elt) /*-{
-    // Issue 2390: blurring the body causes IE to disappear to the background
-    if (elt.blur && elt != $doc.body) {
-      elt.blur();
-    }
-  }-*/;
+            // Issue 2390: blurring the body causes IE to disappear to the background
+            if (elt.blur && elt != $doc.body) {
+              elt.blur();
+            }
+          }-*/;
 
   /**
    * Does the event target one of the partner elements?

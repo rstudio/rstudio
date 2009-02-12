@@ -36,7 +36,7 @@ public interface BrowserWidgetHost {
    * 
    * @param modules the names of the modules to compile
    * @throws UnableToCompleteException
-   * @deprecated will be removed when legacy shell mode is removed
+   * @deprecated Will be removed when legacy shell mode is removed
    */
   @Deprecated
   void compile(String[] modules) throws UnableToCompleteException;
@@ -62,7 +62,7 @@ public interface BrowserWidgetHost {
   /**
    * Returns <code>true</code> if running in legacy mode.
    * 
-   * @deprecated will be removed when legacy shell mode is removed
+   * @deprecated Will be removed when legacy shell mode is removed
    */
   @Deprecated
   boolean isLegacyMode();

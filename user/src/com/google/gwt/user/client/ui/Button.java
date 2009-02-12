@@ -95,7 +95,7 @@ public class Button extends ButtonBase {
    * 
    * @param html the HTML caption
    * @param listener the click listener
-   * @deprecated use {@link Button#Button(String, ClickHandler)} instead
+   * @deprecated Use {@link Button#Button(String, ClickHandler)} instead
    */
   @Deprecated
   public Button(String html, ClickListener listener) {

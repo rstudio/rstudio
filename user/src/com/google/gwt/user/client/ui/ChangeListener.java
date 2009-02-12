@@ -20,10 +20,12 @@ import java.util.EventListener;
 /**
  * Event listener interface for 'change' events.
  * 
- * @deprecated we have now separated dom and logical change events. Use {@link com.google.gwt.event.dom.client.ChangeHandler} if the
- *             change listener was triggered by a dom change event or
- *             {@link com.google.gwt.event.logical.shared.ValueChangeHandler} if
- *             it was based on a logical event
+ * @deprecated As of GWT 1.6, DOM and logical change events are separate. Use
+ *             {@link com.google.gwt.event.dom.client.ChangeHandler} for changes
+ *             triggered by a DOM-based change event and
+ *             {@link com.google.gwt.event.logical.shared.ValueChangeHandler}
+ *             for changes resulting from a logical event such as a method call
+ *             that changes state
  */
 @Deprecated
 public interface ChangeListener extends EventListener {
@@ -34,11 +36,7 @@ public interface ChangeListener extends EventListener {
    * 
    * @param sender the widget that has changed
    * 
-   * @deprecated use
-   *             {@link com.google.gwt.event.dom.client.ChangeHandler#onChange(com.google.gwt.event.dom.client.ChangeEvent)}
-   *             if the change listener was triggered by a dom change event or
-   *             {@link com.google.gwt.event.logical.shared.ValueChangeHandler#onValueChange(com.google.gwt.event.logical.shared.ValueChangeEvent)}
-   *             if it was based on a logical event
+   * @deprecated See the deprecation message on the enclosing interface for details.
    */
   @Deprecated
   void onChange(Widget sender);

@@ -39,7 +39,7 @@ package com.google.gwt.user.client.ui;
  *  }
  *</pre>
  * 
- * @deprecated use <code>Widget#delegateEvent</code> instead
+ * @deprecated Use {@link Widget#delegateEvent Widget.delegateEvent} instead
  */
 @Deprecated
 public class DelegatingFocusListenerCollection extends FocusListenerCollection

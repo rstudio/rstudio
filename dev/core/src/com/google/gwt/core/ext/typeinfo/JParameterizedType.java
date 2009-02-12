@@ -184,7 +184,7 @@ public class JParameterizedType extends JMaybeParameterizedType {
   }
 
   /**
-   * @deprecated see {@link #getQualifiedSourceName()}
+   * @deprecated See {@link #getQualifiedSourceName()}
    */
   @Deprecated
   public String getNonParameterizedQualifiedSourceName() {
