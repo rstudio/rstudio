@@ -251,9 +251,9 @@ public final class WebAppCreator {
     replacements.put("@moduleName", moduleName);
     replacements.put("@clientPackage", modulePackageName + ".client");
     replacements.put("@serverPackage", modulePackageName + ".server");
+    replacements.put("@gwtSdk", installPath);
     replacements.put("@gwtUserPath", gwtUserPath);
     replacements.put("@gwtDevPath", gwtDevPath);
-    replacements.put("@gwtServletPath", gwtServletPath);
     replacements.put("@gwtVersion", About.GWT_VERSION_NUM);
     replacements.put("@gwtModuleDtd", gwtModuleDtd);
     replacements.put("@shellClass", HostedMode.class.getName());
