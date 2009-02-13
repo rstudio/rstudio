@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 
@@ -27,7 +28,28 @@ import java.util.Set;
 /**
  * Test access to longs from JSNI.
  */
-public class LongFromJSNITest extends TestCase {
+public class JsniCheckerTest extends TestCase {
+
+  /**
+   * JSNI references to anonymous inner classes is deprecated.
+   */
+  public void testAnoymousJsniRef() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  static void main() {\n");
+    code.append("    new Object() {\n");
+    code.append("      int foo = 3;\n");
+    code.append("    };\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth(Object o) /*-{\n");
+    code.append("    o.@Buggy$1::foo;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateWarning(code, 7, "Referencing class \'Buggy$1: "
+        + "JSNI references to anonymous classes are deprecated");
+  }
+
   public void testCyclicReferences() {
     {
       StringBuffer buggy = new StringBuffer();
@@ -281,22 +303,31 @@ public class LongFromJSNITest extends TestCase {
         units.toArray(new CompilationUnit[units.size()]));
   }
 
-  private void shouldGenerateError(CharSequence buggyCode,
-      CharSequence extraCode, int line, String message) {
+  private void shouldGenerate(CharSequence buggyCode, CharSequence extraCode,
+      int line, Type logLevel, String logHeader, String message) {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.setLowestLogLevel(TreeLogger.ERROR);
+    b.setLowestLogLevel(logLevel);
     if (message != null) {
-      b.expect(TreeLogger.ERROR, "Errors in '/mock/Buggy'", null);
+      b.expect(logLevel, logHeader + " in '/mock/Buggy'", null);
       final String fullMessage = "Line " + line + ": " + message;
-      b.expect(TreeLogger.ERROR, fullMessage, null);
+      b.expect(logLevel, fullMessage, null);
     }
     UnitTestTreeLogger logger = b.createLogger();
     TypeOracle oracle = buildOracle(buggyCode, extraCode, logger);
     logger.assertCorrectLogEntries();
-    if (message != null) {
-      assertEquals("Buggy compilation unit not removed from type oracle", null,
+    if (message != null && logLevel == TreeLogger.ERROR) {
+      assertNull("Buggy compilation unit not removed from type oracle",
+          oracle.findType("Buggy"));
+    } else {
+      assertNotNull("Buggy compilation unit removed with only a warning",
           oracle.findType("Buggy"));
     }
+  }
+
+  private void shouldGenerateError(CharSequence buggyCode,
+      CharSequence extraCode, int line, String message) {
+    shouldGenerate(buggyCode, extraCode, line, TreeLogger.ERROR, "Errors",
+        message);
   }
 
   private void shouldGenerateError(CharSequence buggyCode, int line,
@@ -310,5 +341,16 @@ public class LongFromJSNITest extends TestCase {
 
   private void shouldGenerateNoError(CharSequence code, CharSequence extraCode) {
     shouldGenerateError(code, extraCode, -1, null);
+  }
+
+  private void shouldGenerateWarning(CharSequence buggyCode,
+      CharSequence extraCode, int line, String message) {
+    shouldGenerate(buggyCode, extraCode, line, TreeLogger.WARN, "Warnings",
+        message);
+  }
+
+  private void shouldGenerateWarning(CharSequence buggyCode, int line,
+      String message) {
+    shouldGenerateWarning(buggyCode, null, line, message);
   }
 }

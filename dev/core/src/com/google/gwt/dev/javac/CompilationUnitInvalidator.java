@@ -156,7 +156,7 @@ public class CompilationUnitInvalidator {
       if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
         JSORestrictionsChecker.check(jdtCud);
-        LongFromJSNIChecker.check(jdtCud);
+        JsniChecker.check(jdtCud);
         BinaryTypeReferenceRestrictionsChecker.check(jdtCud,
             validBinaryTypeNames);
       }
