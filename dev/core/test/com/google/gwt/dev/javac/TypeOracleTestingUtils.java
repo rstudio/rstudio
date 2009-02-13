@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 
 import java.util.Collections;
@@ -48,13 +49,16 @@ public class TypeOracleTestingUtils {
 
   public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<CompilationUnit> units) {
-    JdtCompiler.compile(units);
     Set<String> validBinaryTypeNames = new HashSet<String>();
     for (CompilationUnit unit : units) {
-      for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-        validBinaryTypeNames.add(compiledClass.getBinaryName());
+      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
+      if (compiledClasses != null) {
+        for (CompiledClass compiledClass : compiledClasses) {
+          validBinaryTypeNames.add(compiledClass.getBinaryName());
+        }
       }
     }
+    JdtCompiler.compile(units);
     CompilationUnitInvalidator.validateCompilationUnits(units,
         validBinaryTypeNames);
     if (CompilationUnitInvalidator.invalidateUnitsWithErrors(logger, units)) {
