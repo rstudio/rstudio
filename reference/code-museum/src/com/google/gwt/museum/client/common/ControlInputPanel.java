@@ -16,6 +16,7 @@
 
 package com.google.gwt.museum.client.common;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasText;
@@ -37,9 +38,8 @@ public class ControlInputPanel extends Composite {
     protected V value;
     protected W widget;
 
-    protected Input(String name, V defaultValue) {
+    protected Input(String name) {
       this.name = name;
-      this.value = defaultValue;
       this.widget = createInputWidget();
     }
 
@@ -73,9 +73,16 @@ public class ControlInputPanel extends Composite {
 
   public static class IntegerInput extends Input<Integer, TextBox> {
     public IntegerInput(String name, int defaultValue, ControlInputPanel p) {
-      super(name, defaultValue);
+      this(name, defaultValue, defaultValue, p);
+    }
+
+    public IntegerInput(String name, int defaultHostedValue,
+        int defaultWebValue, ControlInputPanel p) {
+      super(name);
+
+      this.value = GWT.isScript() ? defaultWebValue : defaultHostedValue;
       p.add(this);
-      widget.setText(String.valueOf(defaultValue));
+      widget.setText(value.toString());
     }
 
     @Override
@@ -93,7 +100,7 @@ public class ControlInputPanel extends Composite {
     initWidget(layout);
   }
 
-  private void add(Input input) {
+  private void add(Input<?, ?> input) {
     layout.setText(0, numInputs, input.getName());
     layout.setWidget(1, numInputs, input.widget);
   }

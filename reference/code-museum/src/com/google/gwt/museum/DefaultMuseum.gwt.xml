@@ -4,5 +4,5 @@
     <inherits name='com.google.gwt.museum.Museum'/>
     <source path="client/defaultmuseum"/>
       <!-- Specify the app entry point class.                   -->
-    <entry-point class='com.google.gwt.museum.client.defaultmuseum.Issue3190'/>
+    <entry-point class='com.google.gwt.museum.client.defaultmuseum.DefaultMuseum'/>
  </module>
