@@ -263,6 +263,9 @@ public class JettyLauncher extends ServletContainerLauncher {
       }
     }
 
+    // Turn off XML validation.
+    System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
+
     SelectChannelConnector connector = new SelectChannelConnector();
     connector.setPort(port);
 

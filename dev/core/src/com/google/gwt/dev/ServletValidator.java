@@ -16,7 +16,6 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.util.InstalledHelpInfo;
 
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
@@ -51,7 +50,10 @@ class ServletValidator {
 
   public static ServletValidator create(TreeLogger logger, URL webXmlUrl) {
     String webXmlUrlString = webXmlUrl.toExternalForm();
+    String oldProp = System.getProperty("org.mortbay.xml.XmlParser.Validating",
+        "false");
     try {
+      System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
       WebXmlConfiguration wxc = new WebXmlConfiguration();
       ServletHandler myServletHandler = new ServletHandler();
       wxc.setWebAppContext(new WebAppContext(null, null, myServletHandler, null));
@@ -79,14 +81,9 @@ class ServletValidator {
       logger.log(TreeLogger.WARN, "Unable to process '" + webXmlUrlString
           + "' for servlet validation", e);
       return null;
+    } finally {
+      System.setProperty("org.mortbay.xml.XmlParser.Validating", oldProp);
     }
-  }
-
-  public static TreeLogger createServletValidatorBranch(TreeLogger logger,
-      String moduleName) {
-    return logger.branch(TreeLogger.DEBUG,
-        "Validating <servlet> tags for module '" + moduleName + "'", null,
-        new InstalledHelpInfo("servletMappings.html"));
   }
 
   static String generateMissingMappingMessage(String servletClass,
