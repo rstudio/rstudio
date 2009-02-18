@@ -209,6 +209,7 @@ public class JsniChecker {
         ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
         if (prb.problemId() == ProblemReasons.NotVisible) {
           // It's just a visibility problem, so try drilling down manually
+          // UNNECESSARY CAST: javac is barfing without it for some reason.
           ReferenceBinding drilling  = (ReferenceBinding) prb.closestMatch();
           for (int i = prb.compoundName.length; i < compoundName.length; i++) {
             drilling = drilling.getMemberType(compoundName[i]);
