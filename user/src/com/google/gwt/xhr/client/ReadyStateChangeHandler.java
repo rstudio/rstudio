@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,25 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.impl;
-
-import com.google.gwt.core.client.JavaScriptObject;
+package com.google.gwt.xhr.client;
 
 /**
- * Internet Explorer 6 implementation of {@link HTTPRequestImpl}.
+ * A ready-state callback for an {@Link XMLHttpRequest} object.
  */
-class HTTPRequestImplIE6 extends HTTPRequestImpl {
+public interface ReadyStateChangeHandler {
 
-  @Override
-  protected native JavaScriptObject doCreateXmlHTTPRequest() /*-{
-    if ($wnd.XMLHttpRequest) {
-      return new XMLHttpRequest();
-    } else {
-      try {
-        return new ActiveXObject('MSXML2.XMLHTTP.3.0');
-      } catch (e) {
-        return new ActiveXObject("Microsoft.XMLHTTP");
-      }
-    }
-  }-*/;
+  /**
+   * This is called whenever the state of the XMLHttpRequest changes. See
+   * {@link XMLHttpRequest#setOnReadyStateHandler}.
+   * 
+   * @param xhr the object whose state has changed.
+   */
+  void onReadyStateChange(XMLHttpRequest xhr);
 }

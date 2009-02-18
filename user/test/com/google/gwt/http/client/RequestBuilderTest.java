@@ -24,6 +24,11 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class RequestBuilderTest extends GWTTestCase {
   private static final int TEST_FINISH_DELAY = 10000;
 
+  public static final String SERVLET_GET_RESPONSE = "get";
+  public static final String SERVLET_POST_RESPONSE = "post";
+  public static final String SERVLET_HEAD_RESPONSE = "head";
+  public static final String SERVLET_PUT_RESPONSE = "put";
+
   private static String getTestBaseURL() {
     return GWT.getModuleBaseURL() + "testRequestBuilder/";
   }
@@ -155,6 +160,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_GET_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         finishTest();
       }
@@ -177,6 +183,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_POST_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         finishTest();
       }
@@ -200,6 +207,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_GET_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         finishTest();
       }
@@ -222,6 +230,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_POST_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         finishTest();
       }
@@ -316,6 +325,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_GET_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         finishTest();
       }
@@ -345,6 +355,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_GET_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         finishTest();
       }
@@ -374,6 +385,7 @@ public class RequestBuilderTest extends GWTTestCase {
       }
 
       public void onResponseReceived(Request request, Response response) {
+        assertEquals(SERVLET_GET_RESPONSE, response.getText());
         assertEquals(200, response.getStatusCode());
         fail("Test did not timeout");
       }

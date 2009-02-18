@@ -15,9 +15,6 @@
  */
 package com.google.gwt.user.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.impl.HTTPRequestImpl;
-
 /**
  * This class allows you to make asynchronous HTTP requests to the originating
  * server.
@@ -28,8 +25,6 @@ import com.google.gwt.user.client.impl.HTTPRequestImpl;
 @Deprecated
 public class HTTPRequest {
 
-  private static final HTTPRequestImpl httpRequest = GWT.create(HTTPRequestImpl.class);
-
   /**
    * Makes an asynchronous HTTP GET to a remote server.
    * 
@@ -39,7 +34,7 @@ public class HTTPRequest {
    * @return <code>false</code> if the invocation fails to issue
    */
   public static boolean asyncGet(String url, ResponseTextHandler handler) {
-    return httpRequest.asyncGet(url, handler);
+    return asyncGetImpl(null, null, url, handler);
   }
 
   /**
@@ -52,7 +47,7 @@ public class HTTPRequest {
    */
   public static boolean asyncGet(String user, String pwd, String url,
       ResponseTextHandler handler) {
-    return httpRequest.asyncGet(user, pwd, url, handler);
+    return asyncGetImpl(user, pwd, url, handler);
   }
 
   /**
@@ -66,7 +61,7 @@ public class HTTPRequest {
    */
   public static boolean asyncPost(String url, String postData,
       ResponseTextHandler handler) {
-    return httpRequest.asyncPost(url, postData, handler);
+    return asyncPostImpl(null, null, url, postData, handler);
   }
 
   /**
@@ -80,6 +75,51 @@ public class HTTPRequest {
    */
   public static boolean asyncPost(String user, String pwd, String url,
       String postData, ResponseTextHandler handler) {
-    return httpRequest.asyncPost(user, pwd, url, postData, handler);
+    return asyncPostImpl(user, pwd, url, postData, handler);
   }
+
+  private static native boolean asyncGetImpl(String user, String pwd, String url,
+      ResponseTextHandler handler) /*-{
+    var xmlHttp = @com.google.gwt.xhr.client.XMLHttpRequest::create()();
+    try {
+      xmlHttp.open("GET", url, true);
+      xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
+      xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState == 4) {
+          $wnd.setTimeout(function() {
+            xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+          }, 0);
+          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText || "");
+        }
+      };
+      xmlHttp.send('');
+      return true;
+    } catch (e) {
+      xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+      return false;
+    }
+  }-*/;
+
+  private static native boolean asyncPostImpl(String user, String pwd, String url,
+      String postData, ResponseTextHandler handler) /*-{
+    var xmlHttp = @com.google.gwt.xhr.client.XMLHttpRequest::create()();
+    try {
+      xmlHttp.open("POST", url, true);
+      xmlHttp.setRequestHeader("Content-Type", "text/plain; charset=utf-8");
+      xmlHttp.onreadystatechange = function() {
+        if (xmlHttp.readyState == 4) {
+          $wnd.setTimeout(function() {
+            xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+          }, 0);
+          handler.@com.google.gwt.user.client.ResponseTextHandler::onCompletion(Ljava/lang/String;)(xmlHttp.responseText || "");
+        }
+      };
+      xmlHttp.send(postData);
+      return true;
+    }
+    catch (e) {
+      xmlHttp.onreadystatechange = @com.google.gwt.user.client.impl.HTTPRequestImpl::nullFunc;
+      return false;
+    }
+  }-*/;
 }

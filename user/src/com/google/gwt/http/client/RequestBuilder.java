@@ -15,9 +15,9 @@
  */
 package com.google.gwt.http.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.impl.HTTPRequestImpl;
+import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.xhr.client.ReadyStateChangeHandler;
+import com.google.gwt.xhr.client.XMLHttpRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,11 +36,11 @@ import java.util.Map;
  * http://bugs.webkit.org/show_bug.cgi?id=3812</a> for more details.
  * </p>
  * 
- * <h3>Required Module</h3>
- * Modules that use this class should inherit
+ * <h3>Required Module</h3> Modules that use this class should inherit
  * <code>com.google.gwt.http.HTTP</code>.
  * 
- * {@gwt.include com/google/gwt/examples/http/InheritsExample.gwt.xml}
+ * {@gwt.include
+ * com/google/gwt/examples/http/InheritsExample.gwt.xml}
  * 
  */
 public class RequestBuilder {
@@ -69,8 +69,6 @@ public class RequestBuilder {
    * Specifies that the HTTP POST method should be used.
    */
   public static final Method POST = new Method("POST");
-
-  private static final HTTPRequestImpl httpRequest = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
 
   /**
    * The callback to call when the request completes.
@@ -139,11 +137,12 @@ public class RequestBuilder {
    * @throws IllegalArgumentException if the httpMethod or URL are empty
    * @throws NullPointerException if the httpMethod or the URL are null
    * 
-   * <p>
-   * <b>WARNING:</b>This method is provided in order to allow the creation of
-   * HTTP request other than GET and POST to be made. If this is done, the
-   * developer must accept that the behavior on Safari is undefined.
-   * </p>
+   *           <p>
+   *           <b>WARNING:</b>This method is provided in order to allow the
+   *           creation of HTTP request other than GET and POST to be made. If
+   *           this is done, the developer must accept that the behavior on
+   *           Safari is undefined.
+   *           </p>
    */
   protected RequestBuilder(String httpMethod, String url) {
 
@@ -156,8 +155,8 @@ public class RequestBuilder {
 
   /**
    * Returns the callback previously set by
-   * {@link #setCallback(RequestCallback)}, or <code>null</code> if no
-   * callback was set.
+   * {@link #setCallback(RequestCallback)}, or <code>null</code> if no callback
+   * was set.
    */
   public RequestCallback getCallback() {
     return callback;
@@ -165,8 +164,8 @@ public class RequestBuilder {
 
   /**
    * Returns the value of a header previous set by
-   * {@link #setHeader(String, String)}, or <code>null</code> if no such
-   * header was set.
+   * {@link #setHeader(String, String)}, or <code>null</code> if no such header
+   * was set.
    * 
    * @param header the name of the header
    */
@@ -265,8 +264,7 @@ public class RequestBuilder {
    * @param callback the response handler to be notified when the request fails
    *          or completes
    * 
-   * @throws NullPointerException if <code>callback</code> is
-   *           <code>null</code>
+   * @throws NullPointerException if <code>callback</code> is <code>null</code>
    */
   public void setCallback(RequestCallback callback) {
     StringValidator.throwIfNull("callback", callback);
@@ -367,34 +365,43 @@ public class RequestBuilder {
    * @throws NullPointerException if request data has not been set
    * @throws NullPointerException if a request callback has not been set
    */
-  private Request doSend(String requestData, RequestCallback callback)
+  private Request doSend(String requestData, final RequestCallback callback)
       throws RequestException {
-    JavaScriptObject xmlHttpRequest = httpRequest.createXmlHTTPRequest();
-    String openError;
-    if (user != null && password != null) {
-      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
-          user, password);
-    } else if (user != null) {
-      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true,
-          user);
-    } else {
-      openError = XMLHTTPRequest.open(xmlHttpRequest, httpMethod, url, true);
-    }
-    if (openError != null) {
+    XMLHttpRequest xmlHttpRequest = XMLHttpRequest.create();
+
+    try {
+      if (user != null && password != null) {
+        xmlHttpRequest.open(httpMethod, url, user, password);
+      } else if (user != null) {
+        xmlHttpRequest.open(httpMethod, url, user);
+      } else {
+        xmlHttpRequest.open(httpMethod, url);
+      }
+    } catch (JavaScriptException e) {
       RequestPermissionException requestPermissionException = new RequestPermissionException(
           url);
-      requestPermissionException.initCause(new RequestException(openError));
+      requestPermissionException.initCause(new RequestException(e.getMessage()));
       throw requestPermissionException;
     }
 
     setHeaders(xmlHttpRequest);
 
-    Request request = new Request(xmlHttpRequest, timeoutMillis, callback);
+    final Request request = new Request(xmlHttpRequest, timeoutMillis, callback);
 
-    String sendError = XMLHTTPRequest.send(xmlHttpRequest, request,
-        requestData, callback);
-    if (sendError != null) {
-      throw new RequestException(sendError);
+    // Must set the onreadystatechange handler before calling send().
+    xmlHttpRequest.setOnReadyStateChange(new ReadyStateChangeHandler() {
+      public void onReadyStateChange(XMLHttpRequest xhr) {
+        if (xhr.getReadyState() == XMLHttpRequest.DONE) {
+          xhr.clearOnReadyStateChange();
+          request.fireOnResponseReceived(callback);
+        }
+      }
+    });
+
+    try {
+      xmlHttpRequest.send(requestData);
+    } catch (JavaScriptException e) {
+      throw new RequestException(e.getMessage());
     }
 
     return request;
@@ -406,18 +413,18 @@ public class RequestBuilder {
    * the "Content-Type" to "text/plain; charset=utf-8". This is really lining us
    * up for integration with RPC.
    */
-  private void setHeaders(JavaScriptObject xmlHttpRequest)
+  private void setHeaders(XMLHttpRequest xmlHttpRequest)
       throws RequestException {
     if (headers != null && headers.size() > 0) {
       for (Map.Entry<String, String> header : headers.entrySet()) {
-        String errorMessage = XMLHTTPRequest.setRequestHeader(xmlHttpRequest,
-            header.getKey(), header.getValue());
-        if (errorMessage != null) {
-          throw new RequestException(errorMessage);
+        try {
+          xmlHttpRequest.setRequestHeader(header.getKey(), header.getValue());
+        } catch (JavaScriptException e) {
+          throw new RequestException(e.getMessage());
         }
       }
     } else {
-      XMLHTTPRequest.setRequestHeader(xmlHttpRequest, "Content-Type",
+      xmlHttpRequest.setRequestHeader("Content-Type",
           "text/plain; charset=utf-8");
     }
   }

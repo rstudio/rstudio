@@ -22,6 +22,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.google.gwt.http.client.RequestBuilderTest;
+
 /**
  * Servlet component of the
  * {@link com.google.gwt.http.client.RequestBuilderTest RequestBuilderTest}.
@@ -41,42 +43,46 @@ public class RequestBuilderTestServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest request, HttpServletResponse response)
       throws IOException {
-    String method = request.getMethod();
     String pathInfo = request.getPathInfo();
     if (pathInfo.equals(getPathInfoBase() + "setRequestHeader")) {
       String value = request.getHeader("Foo");
-      response.getWriter().print("Hello");
       if (value.equals("Bar1")) {
         response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().print(RequestBuilderTest.SERVLET_GET_RESPONSE);
       } else {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
     } else if (pathInfo.equals(getPathInfoBase() + "send_GET")) {
       response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().write("<html><body>hello</body></html>");
-      response.setContentType("text/html");
+      response.getWriter().write(RequestBuilderTest.SERVLET_GET_RESPONSE);
     } else if (pathInfo.equals(getPathInfoBase() + "sendRequest_GET")) {
       response.setStatus(HttpServletResponse.SC_OK);
-      response.getWriter().write("<html><body>hello</body></html>");
-      response.setContentType("text/html");
+      response.getWriter().write(RequestBuilderTest.SERVLET_GET_RESPONSE);
     } else if (pathInfo.equals(getPathInfoBase() + "setTimeout/timeout")) {
       // cause a timeout on the client
       try {
         Thread.sleep(5000);
       } catch (InterruptedException e) {
-        e.printStackTrace();
       }
       response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().print(RequestBuilderTest.SERVLET_GET_RESPONSE);
     } else if (pathInfo.equals(getPathInfoBase() + "setTimeout/noTimeout")) {
       // wait but not long enough to timeout
       try {
         Thread.sleep(1000);
       } catch (InterruptedException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
       }
-      response.getWriter().print("setTimeout/noTimeout");
       response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().print(RequestBuilderTest.SERVLET_GET_RESPONSE);
+    } else if (pathInfo.equals(getPathInfoBase() + "user/pass")) {
+      String auth = request.getHeader("Authorization");
+      if (auth == null) {
+        response.setHeader("WWW-Authenticate", "BASIC");
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      } else {
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.getWriter().print(RequestBuilderTest.SERVLET_GET_RESPONSE);
+      }
     } else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
     }
@@ -84,27 +90,35 @@ public class RequestBuilderTestServlet extends HttpServlet {
 
   @Override
   protected void doHead(HttpServletRequest request, HttpServletResponse response) {
-    response.setStatus(HttpServletResponse.SC_OK);
+    try {
+      response.setStatus(HttpServletResponse.SC_OK);
+      response.getWriter().print(RequestBuilderTest.SERVLET_HEAD_RESPONSE);
+    } catch (IOException e) {
+      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Override
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
-    String parameter = request.getParameter("method");
-    if ("test request".equals(parameter)) {
-      try {
+    try {
+      String parameter = request.getParameter("method");
+      if ("test request".equals(parameter)) {
         /*
          * On Safari 2.0.4, if the HTTP response does not include any response
          * text the status message will be undefined. So, we make sure that the
          * post returns some data. See
          * http://bugs.webkit.org/show_bug.cgi?id=3810.
          */
-        response.getWriter().println("Hello");
+        response.getWriter().print(RequestBuilderTest.SERVLET_POST_RESPONSE);
         response.setStatus(HttpServletResponse.SC_OK);
-      } catch (IOException e) {
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      } else if (request.getPathInfo().equals(getPathInfoBase() + "simplePost")) {
+        response.getWriter().print(RequestBuilderTest.SERVLET_POST_RESPONSE);
+        response.setStatus(HttpServletResponse.SC_OK);
+      } else {
+        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
       }
-    } else {
-      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+    } catch (IOException e) {
+      response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -114,6 +128,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
     BufferedReader reader = request.getReader();
     String content = reader.readLine();
     if (content.equals("<html><body>Put Me</body></html>")) {
+      response.getWriter().print(RequestBuilderTest.SERVLET_PUT_RESPONSE);
       response.setStatus(HttpServletResponse.SC_OK);
     } else {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

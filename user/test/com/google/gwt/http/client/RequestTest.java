@@ -17,7 +17,7 @@ package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.impl.HTTPRequestImpl;
+import com.google.gwt.xhr.client.XMLHttpRequest;
 
 /**
  * TODO: document me.
@@ -76,29 +76,28 @@ public class RequestTest extends GWTTestCase {
     };
 
     try {
-      Request request = new Request(null, 0, callback);
+      new Request(null, 0, callback);
       fail();
     } catch (NullPointerException ex) {
-      // Success.
+      // Success (The Request ctor explicitly throws an NPE).
     }
 
-    HTTPRequestImpl impl = (HTTPRequestImpl) GWT.create(HTTPRequestImpl.class);
     try {
-      Request request = new Request(impl.createXmlHTTPRequest(), -1, callback);
+      new Request(XMLHttpRequest.create(), -1, callback);
       fail();
     } catch (IllegalArgumentException ex) {
       // Success.
     }
 
     try {
-      Request request = new Request(impl.createXmlHTTPRequest(), -1, null);
+      new Request(XMLHttpRequest.create(), -1, null);
       fail();
     } catch (NullPointerException ex) {
-      // Success.
+      // Success (The Request ctor explicitly throws an NPE).
     }
 
     try {
-      Request request = new Request(impl.createXmlHTTPRequest(), 0, callback);
+      new Request(XMLHttpRequest.create(), 0, callback);
     } catch (Throwable ex) {
       fail(ex.getMessage());
     }

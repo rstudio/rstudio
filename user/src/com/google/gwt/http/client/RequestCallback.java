@@ -26,6 +26,7 @@ package com.google.gwt.http.client;
  * {@gwt.include com/google/gwt/examples/http/InheritsExample.gwt.xml}
  */
 public interface RequestCallback {
+
   /**
    * Called when a pending {@link com.google.gwt.http.client.Request} completes
    * normally.  Note this method is called even when the status code of the 

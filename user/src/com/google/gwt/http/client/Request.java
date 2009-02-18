@@ -16,22 +16,23 @@
 package com.google.gwt.http.client;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.xhr.client.XMLHttpRequest;
 
 /**
  * An HTTP request that is waiting for a response. Requests can be queried for
  * their pending status or they can be canceled.
  * 
- * <h3>Required Module</h3>
- * Modules that use this class should inherit
+ * <h3>Required Module</h3> Modules that use this class should inherit
  * <code>com.google.gwt.http.HTTP</code>.
  * 
- * {@gwt.include com/google/gwt/examples/http/InheritsExample.gwt.xml}
+ * {@gwt.include
+ * com/google/gwt/examples/http/InheritsExample.gwt.xml}
  * 
  */
 public class Request {
+
   /**
    * Creates a {@link Response} instance for the given JavaScript XmlHttpRequest
    * object.
@@ -39,42 +40,95 @@ public class Request {
    * @param xmlHttpRequest xmlHttpRequest object for which we need a response
    * @return a {@link Response} object instance
    */
-  private static Response createResponse(final JavaScriptObject xmlHttpRequest) {
-    assert (XMLHTTPRequest.isResponseReady(xmlHttpRequest));
+  private static Response createResponse(final XMLHttpRequest xmlHttpRequest) {
+    assert (isResponseReady(xmlHttpRequest));
     Response response = new Response() {
       @Override
       public String getHeader(String header) {
         StringValidator.throwIfEmptyOrNull("header", header);
 
-        return XMLHTTPRequest.getResponseHeader(xmlHttpRequest, header);
+        return xmlHttpRequest.getResponseHeader(header);
       }
 
       @Override
       public Header[] getHeaders() {
-        return XMLHTTPRequest.getHeaders(xmlHttpRequest);
+        return Request.getHeaders(xmlHttpRequest);
       }
 
       @Override
       public String getHeadersAsString() {
-        return XMLHTTPRequest.getAllResponseHeaders(xmlHttpRequest);
+        return xmlHttpRequest.getAllResponseHeaders();
       }
 
       @Override
       public int getStatusCode() {
-        return XMLHTTPRequest.getStatusCode(xmlHttpRequest);
+        return xmlHttpRequest.getStatus();
       }
 
       @Override
       public String getStatusText() {
-        return XMLHTTPRequest.getStatusText(xmlHttpRequest);
+        return xmlHttpRequest.getStatusText();
       }
 
       @Override
       public String getText() {
-        return XMLHTTPRequest.getResponseText(xmlHttpRequest);
+        return xmlHttpRequest.getResponseText();
       }
     };
     return response;
+  }
+
+  /**
+   * Returns an array of headers built by parsing the string of headers returned
+   * by the JavaScript <code>XmlHttpRequest</code> object.
+   * 
+   * @param xmlHttpRequest
+   * @return array of Header items
+   */
+  private static Header[] getHeaders(XMLHttpRequest xmlHttp) {
+    String allHeaders = xmlHttp.getAllResponseHeaders();
+    String[] unparsedHeaders = allHeaders.split("\n");
+    Header[] parsedHeaders = new Header[unparsedHeaders.length];
+
+    for (int i = 0, n = unparsedHeaders.length; i < n; ++i) {
+      String unparsedHeader = unparsedHeaders[i];
+
+      if (unparsedHeader.length() == 0) {
+        continue;
+      }
+
+      int endOfNameIdx = unparsedHeader.indexOf(':');
+      if (endOfNameIdx < 0) {
+        continue;
+      }
+
+      final String name = unparsedHeader.substring(0, endOfNameIdx).trim();
+      final String value = unparsedHeader.substring(endOfNameIdx + 1).trim();
+      Header header = new Header() {
+        @Override
+        public String getName() {
+          return name;
+        }
+
+        @Override
+        public String getValue() {
+          return value;
+        }
+
+        @Override
+        public String toString() {
+          return name + " : " + value;
+        }
+      };
+
+      parsedHeaders[i] = header;
+    }
+
+    return parsedHeaders;
+  }
+
+  private static boolean isResponseReady(XMLHttpRequest xhr) {
+    return xhr.getReadyState() == XMLHttpRequest.DONE;
   }
 
   /**
@@ -93,7 +147,7 @@ public class Request {
    * not final because we transfer ownership of it to the HTTPResponse object
    * and set this field to null.
    */
-  private JavaScriptObject xmlHttpRequest;
+  private XMLHttpRequest xmlHttpRequest;
 
   /**
    * Constructs an instance of the Request object.
@@ -105,7 +159,7 @@ public class Request {
    * @throws IllegalArgumentException if timeoutMillis &lt; 0
    * @throws NullPointerException if xmlHttpRequest, or callback are null
    */
-  Request(JavaScriptObject xmlHttpRequest, int timeoutMillis,
+  Request(XMLHttpRequest xmlHttpRequest, int timeoutMillis,
       final RequestCallback callback) {
     if (xmlHttpRequest == null) {
       throw new NullPointerException();
@@ -157,10 +211,11 @@ public class Request {
      * this in Java by nulling out our reference to the XmlHttpRequest object.
      */
     if (xmlHttpRequest != null) {
-      JavaScriptObject xmlHttp = xmlHttpRequest;
+      XMLHttpRequest xmlHttp = xmlHttpRequest;
       xmlHttpRequest = null;
 
-      XMLHTTPRequest.abort(xmlHttp);
+      xmlHttp.clearOnReadyStateChange();
+      xmlHttp.abort();
 
       cancelTimer();
     }
@@ -176,23 +231,36 @@ public class Request {
       return false;
     }
 
-    int readyState = XMLHTTPRequest.getReadyState(xmlHttpRequest);
+    int readyState = xmlHttpRequest.getReadyState();
 
     /*
      * Because we are doing asynchronous requests it is possible that we can
      * call XmlHttpRequest.send and still have the XmlHttpRequest.getReadyState
      * method return the state as XmlHttpRequest.OPEN. That is why we include
-     * open although it is not *technically* true since open implies that the
+     * open although it is nottechnically true since open implies that the
      * request has not been sent.
      */
     switch (readyState) {
-      case XMLHTTPRequest.OPEN:
-      case XMLHTTPRequest.SENT:
-      case XMLHTTPRequest.RECEIVING:
+      case XMLHttpRequest.OPENED:
+      case XMLHttpRequest.HEADERS_RECEIVED:
+      case XMLHttpRequest.LOADING:
         return true;
     }
 
     return false;
+  }
+
+  /*
+   * Method called when the JavaScript XmlHttpRequest object's readyState
+   * reaches 4 (LOADED).
+   */
+  void fireOnResponseReceived(RequestCallback callback) {
+    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
+    if (handler != null) {
+      fireOnResponseReceivedAndCatch(handler, callback);
+    } else {
+      fireOnResponseReceivedImpl(callback);
+    }
   }
 
   /*
@@ -201,22 +269,6 @@ public class Request {
   private void cancelTimer() {
     if (timer != null) {
       timer.cancel();
-    }
-  }
-
-  /*
-   * Method called when the JavaScript XmlHttpRequest object's readyState
-   * reaches 4 (LOADED).
-   * 
-   * NOTE: this method is called from JSNI
-   */
-  @SuppressWarnings("unused")
-  private void fireOnResponseReceived(RequestCallback callback) {
-    UncaughtExceptionHandler handler = GWT.getUncaughtExceptionHandler();
-    if (handler != null) {
-      fireOnResponseReceivedAndCatch(handler, callback);
-    } else {
-      fireOnResponseReceivedImpl(callback);
     }
   }
 
@@ -242,15 +294,15 @@ public class Request {
      * JavaScript XmlHttpRequest object so we manually null out our reference to
      * the JavaScriptObject
      */
-    final JavaScriptObject xmlHttp = xmlHttpRequest;
+    final XMLHttpRequest xhr = xmlHttpRequest;
     xmlHttpRequest = null;
 
-    String errorMsg = XMLHTTPRequest.getBrowserSpecificFailure(xmlHttp);
+    String errorMsg = getBrowserSpecificFailure(xhr);
     if (errorMsg != null) {
       Throwable exception = new RuntimeException(errorMsg);
       callback.onError(this, exception);
     } else {
-      Response response = createResponse(xmlHttp);
+      Response response = createResponse(xhr);
       callback.onResponseReceived(this, response);
     }
   }
@@ -270,4 +322,41 @@ public class Request {
 
     callback.onError(this, new RequestTimeoutException(this, timeoutMillis));
   }
+
+  /**
+   * Tests if the JavaScript <code>XmlHttpRequest.status</code> property is
+   * readable. This can return failure in two different known scenarios:
+   * 
+   * <ol>
+   * <li>On Mozilla, after a network error, attempting to read the status code
+   * results in an exception being thrown. See <a
+   * href="https://bugzilla.mozilla.org/show_bug.cgi?id=238559">https://bugzilla.mozilla.org/show_bug.cgi?id=238559</a>.
+   * </li>
+   * <li>On Safari, if the HTTP response does not include any response text.
+   * See <a
+   * href="http://bugs.webkit.org/show_bug.cgi?id=3810">http://bugs.webkit.org/show_bug.cgi?id=3810</a>.
+   * </li>
+   * </ol>
+   * 
+   * @param xhr the JavaScript <code>XmlHttpRequest</code> object
+   *          to test
+   * @return a String message containing an error message if the
+   *         <code>XmlHttpRequest.status</code> code is unreadable or null if
+   *         the status code could be successfully read.
+   */
+  private native String getBrowserSpecificFailure(
+      XMLHttpRequest xhr) /*-{
+    try {
+      if (xhr.status === undefined) {
+        return "XmlHttpRequest.status == undefined, please see Safari bug " +
+               "http://bugs.webkit.org/show_bug.cgi?id=3810 for more details";
+      }
+      return null;
+    } catch (e) {
+      return "Unable to read XmlHttpRequest.status; likely causes are a " +
+             "networking error or bad cross-domain request. Please see " +
+             "https://bugzilla.mozilla.org/show_bug.cgi?id=238559 for more " +
+             "details";
+    }
+  }-*/;
 }
