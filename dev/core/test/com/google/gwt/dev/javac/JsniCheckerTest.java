@@ -50,6 +50,28 @@ public class JsniCheckerTest extends TestCase {
         + "JSNI references to anonymous classes are deprecated");
   }
 
+  /**
+   * JSNI references to anonymous inner classes is deprecated.
+   */
+  public void testAnoymousJsniRefNested() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  static void main() {\n");
+    code.append("    new Object() {\n");
+    code.append("      class A {\n");
+    code.append("        int foo = 3;\n");
+    code.append("      };\n");
+    code.append("    };\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth(Object o) /*-{\n");
+    code.append("    o.@Buggy$1.A::foo;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateWarning(code, 9, "Referencing class \'Buggy$1.A: "
+        + "JSNI references to anonymous classes are deprecated");
+  }
+
   public void testCyclicReferences() {
     {
       StringBuffer buggy = new StringBuffer();
@@ -120,6 +142,21 @@ public class JsniCheckerTest extends TestCase {
     code.append("}\n");
 
     shouldGenerateError(code, 5, "Referencing field 'Buggy.Inner.x': "
+        + "type 'long' is not safe to access in JSNI code");
+  }
+
+  public void testInnerClassDollar() {
+    StringBuffer code = new StringBuffer();
+    code.append("public class Buggy {\n");
+    code.append("  static class Inner {\n");
+    code.append("    long x = 3;\n");
+    code.append("  }\n");
+    code.append("  native void jsniMeth() /*-{\n");
+    code.append("    $wnd.alert(@Buggy$Inner::x);\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateError(code, 5, "Referencing field 'Buggy$Inner.x': "
         + "type 'long' is not safe to access in JSNI code");
   }
 

@@ -36,7 +36,6 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReasons;
 import org.eclipse.jdt.internal.compiler.lookup.ProblemReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
-import org.eclipse.jdt.internal.compiler.lookup.TagBits;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
@@ -140,27 +139,28 @@ public class JsniChecker {
       for (String jsniRefString : sloppyRefsVisitor.getJsniRefs()) {
         JsniRef jsniRef = JsniRef.parse(jsniRefString);
         if (jsniRef != null) {
-          Set<String> refErrors = new LinkedHashSet<String>();
           ReferenceBinding clazz = findClass(jsniRef);
-          if (clazz != null) {
-            if (clazz.isAnonymousType()) {
-              GWTProblem.recordInCud(
-                  ProblemSeverities.Warning,
-                  meth,
-                  cud,
-                  "Referencing class '" + jsniRef.className()
-                      + ": JSNI references to anonymous classes are deprecated",
-                  null);
+          if (looksLikeAnonymousClass(jsniRef)
+              || (clazz != null && clazz.isAnonymousType())) {
+            GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
+                "Referencing class '" + jsniRef.className()
+                    + ": JSNI references to anonymous classes are deprecated",
+                null);
+          } else if (clazz != null) {
+            Set<String> refErrors = new LinkedHashSet<String>();
+            if (jsniRef.isMethod()) {
+              checkMethodRef(clazz, jsniRef, refErrors);
             } else {
-              if (jsniRef.isMethod()) {
-                checkMethodRef(clazz, jsniRef, refErrors);
-              } else {
-                checkFieldRef(clazz, jsniRef, refErrors);
-              }
-              if (!refErrors.isEmpty()) {
-                errors.put(jsniRefString, refErrors);
-              }
+              checkFieldRef(clazz, jsniRef, refErrors);
             }
+            if (!refErrors.isEmpty()) {
+              errors.put(jsniRefString, refErrors);
+            }
+          } else {
+            GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
+                "Referencing class '" + jsniRef.className()
+                    + ": unable to resolve class, expect subsequent failures",
+                null);
           }
         }
       }
@@ -200,16 +200,14 @@ public class JsniChecker {
     }
 
     private ReferenceBinding findClass(JsniRef jsniRef) {
-      String className = jsniRef.className().replace('$', '.');
-      char[][] compoundName = CharOperation.splitOn('.',
-          className.toCharArray());
+      char[][] compoundName = getCompoundName(jsniRef);
       TypeBinding binding = cud.scope.getType(compoundName, compoundName.length);
 
       if (binding instanceof ProblemReferenceBinding) {
         ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
         if (prb.problemId() == ProblemReasons.NotVisible) {
           // It's just a visibility problem, so try drilling down manually
-          ReferenceBinding drilling  = prb.closestReferenceMatch();
+          ReferenceBinding drilling = prb.closestReferenceMatch();
           for (int i = prb.compoundName.length; i < compoundName.length; i++) {
             drilling = drilling.getMemberType(compoundName[i]);
           }
@@ -221,17 +219,14 @@ public class JsniChecker {
           && !(binding instanceof ProblemReferenceBinding)) {
         return (ReferenceBinding) binding;
       }
-      // See if it looks like an anonymous inner class, we can't look those up.
-      for (char[] part : compoundName) {
-        if (Character.isDigit(part[0])) {
-          return new ReferenceBinding() {
-            {
-              tagBits = TagBits.IsAnonymousType;
-            }
-          };
-        }
-      }
       return null;
+    }
+
+    private char[][] getCompoundName(JsniRef jsniRef) {
+      String className = jsniRef.className().replace('$', '.');
+      char[][] compoundName = CharOperation.splitOn('.',
+          className.toCharArray());
+      return compoundName;
     }
 
     private FieldBinding getField(ReferenceBinding clazz, JsniRef jsniRef) {
@@ -280,6 +275,16 @@ public class JsniChecker {
     private void longAccessError(ASTNode node, String message) {
       GWTProblem.recordInCud(node, cud, message, new InstalledHelpInfo(
           "longJsniRestriction.html"));
+    }
+
+    private boolean looksLikeAnonymousClass(JsniRef jsniRef) {
+      char[][] compoundName = getCompoundName(jsniRef);
+      for (char[] part : compoundName) {
+        if (Character.isDigit(part[0])) {
+          return true;
+        }
+      }
+      return false;
     }
 
     private boolean paramTypesMatch(MethodBinding method, JsniRef jsniRef) {
