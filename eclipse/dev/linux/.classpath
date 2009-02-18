@@ -8,7 +8,7 @@
 	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/org.eclipse.swt.gtk-linux-3.2.1.jar" sourcepath="/GWT_TOOLS/lib/eclipse/org.eclipse.swt.gtk-linux-3.2.1.src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/ant-1.6.5.jar" sourcepath="/GWT_TOOLS/lib/apache/ant-1.6.5-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2.jar" sourcepath="/GWT_TOOLS/lib/apache/tapestry-util-text-4.0.2-src.zip"/>
-	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.3.1.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.3.1-src.zip"/>
+	<classpathentry kind="var" path="GWT_TOOLS/lib/eclipse/jdt-3.4.2.jar" sourcepath="/GWT_TOOLS/lib/eclipse/jdt-3.4.2-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/jetty/jetty-6.1.11.jar" sourcepath="/GWT_TOOLS/lib/jetty/jetty-6.1.11-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/junit/junit-3.8.1.jar" sourcepath="/GWT_TOOLS/lib/junit/junit-3.8.1-src.zip"/>
 	<classpathentry kind="var" path="GWT_TOOLS/lib/tomcat/ant-launcher-1.6.5.jar"/>
