@@ -25,6 +25,7 @@ import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
+import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
@@ -337,20 +338,18 @@ public class HostedMode extends SwtHostedModeBase {
       }
     }
 
+    ServletValidator servletValidator = null;
+    File webXml = new File(options.getWarDir(), "WEB-INF/web.xml");
+    if (webXml.exists()) {
+      servletValidator = ServletValidator.create(getTopLogger(), webXml);
+    }
+
     for (String moduleName : options.getModuleNames()) {
       TreeLogger loadLogger = getTopLogger().branch(TreeLogger.DEBUG,
-          "Bootstrap link for command-line module " + moduleName);
+          "Bootstrap link for command-line module '" + moduleName + "'");
       try {
         ModuleDef module = loadModule(loadLogger, moduleName, false);
-
-        // TODO: Validate servlet tags.
-        String[] servletPaths = module.getServletPaths();
-        if (servletPaths.length > 0) {
-          loadLogger.log(TreeLogger.WARN,
-              "Ignoring legacy <servlet> tag(s) in module '" + moduleName
-                  + "'; add servlet tags to your web.xml instead");
-        }
-
+        validateServletTags(loadLogger, servletValidator, module, webXml);
         link(loadLogger, module);
       } catch (UnableToCompleteException e) {
         // Already logged.
@@ -488,5 +487,29 @@ public class HostedMode extends SwtHostedModeBase {
         newlyGeneratedArtifacts);
     linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
         moduleExtraDir);
+  }
+
+  private void validateServletTags(TreeLogger logger,
+      ServletValidator servletValidator, ModuleDef module, File webXml) {
+    TreeLogger servletLogger = logger.branch(TreeLogger.DEBUG,
+        "Validating <servlet> tags for module '" + module.getName() + "'",
+        null, new InstalledHelpInfo("servletMappings.html"));
+    String[] servletPaths = module.getServletPaths();
+    if (servletValidator == null && servletPaths.length > 0) {
+      servletLogger.log(
+          TreeLogger.WARN,
+          "Module declares "
+              + servletPaths.length
+              + " <servlet> declaration(s), but a valid 'web.xml' was not found at '"
+              + webXml.getAbsolutePath() + "'");
+    } else {
+      for (String servletPath : servletPaths) {
+        String servletClass = module.findServletForPath(servletPath);
+        assert (servletClass != null);
+        // Prefix module name to convert module mapping to global mapping.
+        servletPath = "/" + module.getName() + servletPath;
+        servletValidator.validate(servletLogger, servletClass, servletPath);
+      }
+    }
   }
 }

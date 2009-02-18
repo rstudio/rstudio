@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+  
+  <servlet>
+    <servlet-name>noMappings</servlet-name>
+    <servlet-class>org.test.NoMappings</servlet-class>
+  </servlet>
+  
+  <servlet>
+    <servlet-name>oneMapping</servlet-name>
+    <servlet-class>org.test.OneMapping</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>oneMapping</servlet-name>
+    <url-pattern>/one/mapping</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>twoMappings</servlet-name>
+    <servlet-class>org.test.TwoMappings</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>twoMappings</servlet-name>
+    <url-pattern>/two/mappings1</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>twoMappings</servlet-name>
+    <url-pattern>/two/mappings2</url-pattern>
+  </servlet-mapping>
+
+</web-app>
