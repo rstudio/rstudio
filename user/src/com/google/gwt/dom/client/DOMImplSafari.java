@@ -98,6 +98,14 @@ class DOMImplSafari extends DOMImplStandard {
       // This intentionally excludes body which has a null offsetParent.
       while (curr.offsetParent) {
         left -= curr.scrollLeft;
+
+        // In RTL mode, offsetLeft is relative to the left edge of the
+        // scrollable area when scrolled all the way to the right, so we need
+        // to add back that difference.
+        if ($doc.defaultView.getComputedStyle(curr, '').getPropertyValue('direction') == 'rtl') {
+          left += (curr.scrollWidth - curr.clientWidth);
+        }
+
         curr = curr.parentNode;
       }
     }
