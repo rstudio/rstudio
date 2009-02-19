@@ -1600,6 +1600,8 @@ public class GenerateJavaScriptAST {
       if (!typeOracle.checkClinit(currentMethod.getEnclosingType(),
           enclosingType)) {
         return null;
+      } else if (enclosingType.equals(program.getTypeClassLiteralHolder())) {
+        return null;
       }
 
       JMethod clinitMethod = enclosingType.methods.get(0);
