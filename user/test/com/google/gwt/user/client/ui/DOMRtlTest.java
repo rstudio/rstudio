@@ -33,10 +33,8 @@ public class DOMRtlTest extends GWTTestCase {
   /**
    * Tests {@link DOM#getAbsoluteLeft(Element)} for consistency when the element
    * contains children and has scrollbars.
-   * 
-   * TODO(jlabanca): Activate this test (deactivated on 2/18/09)
    */
-  public void disabledTestGetAbsolutePositionWhenScrolled() {
+  public void testGetAbsolutePositionWhenScrolled() {
     assertTrue(LocaleInfo.getCurrentLocale().isRTL());
     final Element outer = DOM.createDiv();
     final Element inner = DOM.createDiv();
@@ -45,7 +43,7 @@ public class DOMRtlTest extends GWTTestCase {
     outer.getStyle().setProperty("position", "absolute");
     outer.getStyle().setProperty("overflow", "auto");
     outer.getStyle().setPropertyPx("top", 0);
-    outer.getStyle().setPropertyPx("left", 0);
+    outer.getStyle().setPropertyPx("left", 100);
     outer.getStyle().setPropertyPx("width", 200);
     outer.getStyle().setPropertyPx("height", 200);
     RootPanel.getBodyElement().appendChild(outer);
@@ -58,9 +56,11 @@ public class DOMRtlTest extends GWTTestCase {
 
     // Check the position when scrolled
     outer.setScrollLeft(50);
-    assertTrue(outer.getScrollLeft() > 0);
-    assertEquals(-50, inner.getAbsoluteLeft()
-        - Document.get().getBodyOffsetLeft());
+    assertEquals(outer.getScrollLeft(), 50);
+    int absLeft = inner.getAbsoluteLeft() - Document.get().getBodyOffsetLeft();
+    // TODO (jlabanca): FF2 incorrectly reports the absolute left as 49.  When
+    // we drop FF2 support, the only valid return value is 50.
+    assertTrue(50 == absLeft || 49 == absLeft);
 
     // Cleanup test
     RootPanel.getBodyElement().removeChild(outer);
