@@ -87,6 +87,7 @@ public class JArrayType extends JClassType {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
+      visitor.acceptWithInsertRemove(fields);
     }
     visitor.endVisit(this, ctx);
   }

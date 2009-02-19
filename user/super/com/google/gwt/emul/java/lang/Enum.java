@@ -93,7 +93,12 @@ public abstract class Enum<E extends Enum<E>> implements Comparable<E>,
   @SuppressWarnings("unchecked")
   public final Class<E> getDeclaringClass() {
     Class clazz = getClass();
-    Class superclass = clazz.getSuperclass();
+    assert clazz != null : "clazz";
+
+    // Don't use getSuperclass() to allow that method to be pruned for most
+    // class types
+    Class superclass = clazz.getEnumSuperclass();
+    assert superclass != null : "superclass";
 
     return (superclass == Enum.class) ? clazz : superclass;
   }

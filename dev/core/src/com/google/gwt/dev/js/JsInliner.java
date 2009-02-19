@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsArrayAccess;
@@ -46,6 +47,7 @@ import com.google.gwt.dev.js.ast.JsParameter;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.js.ast.JsProgramFragment;
 import com.google.gwt.dev.js.ast.JsRegExp;
 import com.google.gwt.dev.js.ast.JsReturn;
 import com.google.gwt.dev.js.ast.JsScope;
@@ -153,6 +155,12 @@ public class JsInliner {
       return op.getOperator().equals(JsBinaryOperator.COMMA) ? op : null;
     }
 
+    private final List<JsName> localVariableNames;
+
+    public CommaNormalizer(List<JsName> localVariableNames) {
+      this.localVariableNames = localVariableNames;
+    }
+
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       if (isComma(x) == null) {
@@ -177,6 +185,41 @@ public class JsInliner {
         if (inner != null && !inner.getArg2().hasSideEffects()) {
           x.setArg1(inner.getArg1());
           didChange = true;
+        }
+
+        /*
+         * Eliminate the pattern (localVar = expr, localVar). This tends to
+         * occur when a method interacted with pruned fields or had statements
+         * removed.
+         */
+        JsName assignmentRef = null;
+        JsExpression expr = null;
+        JsName returnRef = null;
+
+        if (x.getArg1() instanceof JsBinaryOperation) {
+          JsBinaryOperation op = (JsBinaryOperation) x.getArg1();
+          if (op.getOperator() == JsBinaryOperator.ASG
+              && op.getArg1() instanceof JsNameRef) {
+            JsNameRef nameRef = (JsNameRef) op.getArg1();
+            if (nameRef.getQualifier() == null) {
+              assignmentRef = nameRef.getName();
+              expr = op.getArg2();
+            }
+          }
+        }
+
+        if (x.getArg2() instanceof JsNameRef) {
+          JsNameRef nameRef = (JsNameRef) x.getArg2();
+          if (nameRef.getQualifier() == null) {
+            returnRef = nameRef.getName();
+          }
+        }
+
+        if (assignmentRef != null && assignmentRef.equals(returnRef)
+            && localVariableNames.contains(assignmentRef)) {
+          assert expr != null;
+          localVariableNames.remove(assignmentRef);
+          ctx.replaceMe(expr);
         }
         return;
       }
@@ -680,9 +723,13 @@ public class JsInliner {
     private final Set<JsFunction> blacklist = new HashSet<JsFunction>();
     private final Stack<JsFunction> functionStack = new Stack<JsFunction>();
     private final InvocationCountingVisitor invocationCountingVisitor = new InvocationCountingVisitor();
-
     private final Stack<List<JsName>> newLocalVariableStack = new Stack<List<JsName>>();
     private final JsProgram program;
+
+    /**
+     * Not a stack because program fragments aren't nested.
+     */
+    private JsFunction programFunction;
 
     public InliningVisitor(JsProgram program) {
       this.program = program;
@@ -785,33 +832,10 @@ public class JsInliner {
         throw new InternalCompilerException("Unexpected function popped");
       }
 
+      JsBlock body = x.getBody();
       List<JsName> newLocalVariables = newLocalVariableStack.pop();
 
-      // Nothing to do
-      if (newLocalVariables.isEmpty()) {
-        return;
-      }
-
-      List<JsStatement> statements = x.getBody().getStatements();
-
-      // The body can't be empty if we have local variables to create
-      assert !statements.isEmpty();
-
-      // Find or create the JsVars as the first statement
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          InliningVisitor.class, "Synthetic locals");
-      JsVars vars;
-      if (statements.get(0) instanceof JsVars) {
-        vars = (JsVars) statements.get(0);
-      } else {
-        vars = new JsVars(sourceInfo);
-        statements.add(0, vars);
-      }
-
-      // Add all variables
-      for (JsName name : newLocalVariables) {
-        vars.add(new JsVar(sourceInfo, name));
-      }
+      addVars(x, body, newLocalVariables);
     }
 
     @Override
@@ -837,13 +861,22 @@ public class JsInliner {
         return;
       }
 
-      List<JsName> localVariableNames = new ArrayList<JsName>();
-      List<JsStatement> statements = new ArrayList<JsStatement>(
-          f.getBody().getStatements());
+      List<JsStatement> statements;
+      if (f.getBody() != null) {
+        statements = new ArrayList<JsStatement>(f.getBody().getStatements());
+      } else {
+        /*
+         * Will see this with certain classes whose clinits are folded into the
+         * main JsProgram body.
+         */
+        statements = Collections.emptyList();
+      }
+
       List<JsExpression> hoisted = new ArrayList<JsExpression>(
           statements.size());
-
+      List<JsName> localVariableNames = new ArrayList<JsName>();
       boolean sawReturnStatement = false;
+
       for (JsStatement statement : statements) {
         if (sawReturnStatement) {
           /*
@@ -875,10 +908,11 @@ public class JsInliner {
           return;
         }
 
-        hoisted.add(h);
-
         if (isReturnStatement(statement)) {
           sawReturnStatement = true;
+          hoisted.add(h);
+        } else if (hasSideEffects(Collections.singletonList(h))) {
+          hoisted.add(h);
         }
       }
 
@@ -940,7 +974,7 @@ public class JsInliner {
       op = v.accept(op);
 
       // Normalize any nested comma expressions that we may have generated.
-      op = (new CommaNormalizer()).accept(op);
+      op = (new CommaNormalizer(localVariableNames)).accept(op);
 
       /*
        * Compare the relative complexity of the original invocation versus the
@@ -950,6 +984,12 @@ public class JsInliner {
       int inlinedComplexity = complexity(op);
       double ratio = ((double) inlinedComplexity) / originalComplexity;
       if (ratio > MAX_COMPLEXITY_INCREASE && isInvokedMoreThanOnce(f)) {
+        return;
+      }
+
+      if (functionStack.peek() == programFunction
+          && localVariableNames.size() > 0) {
+        // Don't add additional variables to the top-level program.
         return;
       }
 
@@ -971,10 +1011,76 @@ public class JsInliner {
     }
 
     @Override
+    public void endVisit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+      if (!functionStack.pop().equals(programFunction)) {
+        throw new InternalCompilerException("Unexpected function popped");
+      }
+
+      assert programFunction.getBody().getStatements().size() == 0 : "Should not have moved statements into program";
+
+      List<JsName> newLocalVariables = newLocalVariableStack.pop();
+      assert newLocalVariables.size() == 0 : "Should not have tried to create variables in program";
+    }
+
+    @Override
+    public boolean visit(JsExprStmt x, JsContext<JsStatement> ctx) {
+      if (functionStack.peek() == programFunction) {
+        /* Don't inline top-level invocations. */
+        if (x.getExpression() instanceof JsInvocation) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    @Override
     public boolean visit(JsFunction x, JsContext<JsExpression> ctx) {
       functionStack.push(x);
       newLocalVariableStack.push(new ArrayList<JsName>());
       return true;
+    }
+
+    /**
+     * Create a synthetic context to attempt to simplify statements in the
+     * top-level of the program.
+     */
+    @Override
+    public boolean visit(JsProgramFragment x, JsContext<JsProgramFragment> ctx) {
+      programFunction = new JsFunction(program.getSourceInfo(),
+          program.getScope());
+      programFunction.setBody(new JsBlock(x.getSourceInfo()));
+      functionStack.push(programFunction);
+      newLocalVariableStack.push(new ArrayList<JsName>());
+      return true;
+    }
+
+    private void addVars(HasSourceInfo x, JsBlock body,
+        List<JsName> newLocalVariables) {
+      // Nothing to do
+      if (newLocalVariables.isEmpty()) {
+        return;
+      }
+
+      List<JsStatement> statements = body.getStatements();
+
+      // The body can't be empty if we have local variables to create
+      assert !statements.isEmpty();
+
+      // Find or create the JsVars as the first statement
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
+          InliningVisitor.class, "Synthetic locals");
+      JsVars vars;
+      if (statements.get(0) instanceof JsVars) {
+        vars = (JsVars) statements.get(0);
+      } else {
+        vars = new JsVars(sourceInfo);
+        statements.add(0, vars);
+      }
+
+      // Add all variables
+      for (JsName name : newLocalVariables) {
+        vars.add(new JsVar(sourceInfo, name));
+      }
     }
 
     private boolean isInvokedMoreThanOnce(JsFunction f) {

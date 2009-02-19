@@ -36,6 +36,20 @@ public class JClassLiteral extends JLiteral {
     String typeName = getTypeName(program, type);
 
     JMethod method = program.getIndexedMethod(type.getClassLiteralFactoryMethod());
+
+    /*
+     * Use the classForEnum() constructor even for enum subtypes to aid in
+     * pruning supertype data.
+     */
+    boolean isEnumOrSubclass = false;
+    if (type instanceof JClassType) {
+      JEnumType maybeEnum = ((JClassType) type).isEnumOrSubclass();
+      if (maybeEnum != null) {
+        isEnumOrSubclass = true;
+        method = program.getIndexedMethod(maybeEnum.getClassLiteralFactoryMethod());
+      }
+    }
+
     assert method != null;
 
     JMethodCall call = new JMethodCall(program, info, null, method);
@@ -80,9 +94,16 @@ public class JClassLiteral extends JLiteral {
         JsniMethodRef jsniMethodRef = new JsniMethodRef(program, info, null,
             valuesMethod);
         call.getArgs().add(jsniMethodRef);
+      } else if (isEnumOrSubclass) {
+        // A subclass of an enum class
+        call.getArgs().add(program.getLiteralNull());
       }
+    } else if (type instanceof JArrayType) {
+      JArrayType arrayType = (JArrayType) type;
+      JClassLiteral componentLiteral = program.getLiteralClass(arrayType.getElementType());
+      call.getArgs().add(componentLiteral);
     } else {
-      assert (type instanceof JArrayType || type instanceof JInterfaceType || type instanceof JPrimitiveType);
+      assert (type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }
     return call;
   }

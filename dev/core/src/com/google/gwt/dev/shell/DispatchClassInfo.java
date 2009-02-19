@@ -177,7 +177,6 @@ public class DispatchClassInfo {
      * or
      * 
      * x.@java.lang.Object::equals(Ljava/lang/Object;)(y)
-     * 
      */
 
     // Get the methods on this class/interface.
@@ -193,5 +192,8 @@ public class DispatchClassInfo {
       field.setAccessible(true);
       addMember(field, field.getName());
     }
+
+    // Add a magic field to access class literals from JSNI
+    addMember(new SyntheticClassMember(targetClass), "class");
   }
 }

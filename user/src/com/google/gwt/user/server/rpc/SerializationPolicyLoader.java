@@ -16,6 +16,7 @@
 package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.server.rpc.impl.StandardSerializationPolicy;
+import com.google.gwt.user.server.rpc.impl.TypeNameObfuscator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -36,7 +37,8 @@ public final class SerializationPolicyLoader {
    */
   public static final String SERIALIZATION_POLICY_FILE_ENCODING = "UTF-8";
 
-  private static final String FORMAT_ERROR_MESSAGE = "Expected: className, [true | false], [true | false], [true | false], [true | false]";
+  private static final String FORMAT_ERROR_MESSAGE = "Expected: className, "
+      + "[true | false], [true | false], [true | false], [true | false], typeId, signature";
 
   /**
    * Returns the serialization policy file name from the from the serialization
@@ -101,6 +103,7 @@ public final class SerializationPolicyLoader {
 
     Map<Class<?>, Boolean> whitelistSer = new HashMap<Class<?>, Boolean>();
     Map<Class<?>, Boolean> whitelistDeser = new HashMap<Class<?>, Boolean>();
+    Map<Class<?>, String> typeIds = new HashMap<Class<?>, String>();
 
     InputStreamReader isr = new InputStreamReader(inputStream,
         SERIALIZATION_POLICY_FILE_ENCODING);
@@ -113,7 +116,7 @@ public final class SerializationPolicyLoader {
       if (line.length() > 0) {
         String[] components = line.split(",");
 
-        if (components.length != 2 && components.length != 5) {
+        if (components.length != 2 && components.length != 7) {
           throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
         }
 
@@ -123,16 +126,18 @@ public final class SerializationPolicyLoader {
             throw new ParseException(FORMAT_ERROR_MESSAGE, lineNum);
           }
         }
-        String[] fields = new String[components.length];
 
         String binaryTypeName = components[0].trim();
         boolean fieldSer;
         boolean instantSer;
         boolean fieldDeser;
         boolean instantDeser;
+        String typeId;
+
         if (components.length == 2) {
           fieldSer = fieldDeser = true;
           instantSer = instantDeser = Boolean.valueOf(components[1]);
+          typeId = binaryTypeName;
         } else {
           int idx = 1;
           // TODO: Validate the instantiable string better.
@@ -140,11 +145,13 @@ public final class SerializationPolicyLoader {
           instantSer = Boolean.valueOf(components[idx++]);
           fieldDeser = Boolean.valueOf(components[idx++]);
           instantDeser = Boolean.valueOf(components[idx++]);
+          typeId = components[idx++];
 
-          if (!fieldSer && !fieldDeser) {
+          if (!fieldSer && !fieldDeser
+              && !TypeNameObfuscator.SERVICE_INTERFACE_ID.equals(typeId)) {
             throw new ParseException("Type " + binaryTypeName
-                + " is neither field serializable nor field deserializable",
-                lineNum);
+                + " is neither field serializable, field deserializable "
+                + "nor the service interface", lineNum);
           }
         }
 
@@ -159,6 +166,7 @@ public final class SerializationPolicyLoader {
           if (fieldDeser) {
             whitelistDeser.put(clazz, instantDeser);
           }
+          typeIds.put(clazz, typeId);
         } catch (ClassNotFoundException ex) {
           // Ignore the error, but add it to the list of errors if one was
           // provided.
@@ -172,7 +180,8 @@ public final class SerializationPolicyLoader {
       lineNum++;
     }
 
-    return new StandardSerializationPolicy(whitelistSer, whitelistDeser);
+    return new StandardSerializationPolicy(whitelistSer, whitelistDeser,
+        typeIds);
   }
 
   private SerializationPolicyLoader() {

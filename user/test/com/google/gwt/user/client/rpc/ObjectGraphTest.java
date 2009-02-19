@@ -20,6 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableDoublyLinkedNode;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializablePrivateNoArg;
 import com.google.gwt.user.client.rpc.TestSetFactory.SerializableWithTwoArrays;
+import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
 
 /**
  * TODO: document me.
@@ -84,7 +85,7 @@ public class ObjectGraphTest extends GWTTestCase {
       }
     });
   }
-  
+
   public void testDoublyReferencedArray() {
     delayTestFinish(TEST_DELAY);
 
@@ -102,7 +103,24 @@ public class ObjectGraphTest extends GWTTestCase {
       }
     });
   }
-  
+
+  public void testElision() throws SerializationException {
+    ObjectGraphTestServiceAsync async = getServiceAsync();
+
+    SerializationStreamWriter writer = ((SerializationStreamFactory) async).createStreamWriter();
+    AbstractSerializationStream stream = (AbstractSerializationStream) writer;
+    assertEquals("Missing flag", expectedObfuscationState(),
+        stream.hasFlags(AbstractSerializationStream.FLAG_ELIDE_TYPE_NAMES));
+
+    SerializableDoublyLinkedNode node = new SerializableDoublyLinkedNode();
+    writer.writeObject(node);
+    String s = writer.toString();
+
+    // Don't use class.getName() due to conflict with removal of type names
+    assertEquals("Checking for SerializableDoublyLinkedNode",
+        expectedObfuscationState(), !s.contains("SerializableDoublyLinkedNode"));
+  }
+
   public void testPrivateNoArg() {
     delayTestFinish(TEST_DELAY);
 
@@ -137,6 +155,10 @@ public class ObjectGraphTest extends GWTTestCase {
             finishTest();
           }
         });
+  }
+
+  protected boolean expectedObfuscationState() {
+    return false;
   }
 
   private ObjectGraphTestServiceAsync getServiceAsync() {

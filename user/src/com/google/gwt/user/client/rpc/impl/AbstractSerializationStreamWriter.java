@@ -183,7 +183,8 @@ public abstract class AbstractSerializationStreamWriter extends
    * @param instance the instance to inspect
    * @return the type signature of the instance
    */
-  protected abstract String getObjectTypeSignature(Object instance);
+  protected abstract String getObjectTypeSignature(Object instance)
+      throws SerializationException;
 
   /**
    * Gets the string table.

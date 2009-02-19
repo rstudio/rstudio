@@ -24,6 +24,11 @@ import java.lang.reflect.Method;
 public final class RPCRequest {
 
   /**
+   * The flags associated with the RPC request.
+   */
+  private final int flags;
+
+  /**
    * The method for this request.
    */
   private final Method method;
@@ -43,10 +48,15 @@ public final class RPCRequest {
    * Construct an RPCRequest.
    */
   public RPCRequest(Method method, Object[] parameters,
-      SerializationPolicy serializationPolicy) {
+      SerializationPolicy serializationPolicy, int flags) {
     this.method = method;
     this.parameters = parameters;
     this.serializationPolicy = serializationPolicy;
+    this.flags = flags;
+  }
+
+  public int getFlags() {
+    return flags;
   }
 
   /**

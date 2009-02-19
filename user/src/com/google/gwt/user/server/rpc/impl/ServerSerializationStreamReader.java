@@ -400,7 +400,7 @@ public final class ServerSerializationStreamReader extends
       if (idx == 0) {
         throw new IncompatibleRemoteServiceException(
             "Malformed or old RPC message received - expecting version "
-            + SERIALIZATION_STREAM_VERSION);
+                + SERIALIZATION_STREAM_VERSION);
       } else {
         int version = Integer.valueOf(encodedTokens.substring(0, idx));
         throw new IncompatibleRemoteServiceException("Expecting version "
@@ -479,17 +479,30 @@ public final class ServerSerializationStreamReader extends
   protected Object deserialize(String typeSignature)
       throws SerializationException {
     Object instance = null;
-    SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
 
     try {
-      Class<?> instanceClass = Class.forName(serializedInstRef.getName(),
-          false, classLoader);
+      Class<?> instanceClass;
+      if (hasFlags(FLAG_ELIDE_TYPE_NAMES)) {
+        if (getSerializationPolicy() instanceof TypeNameObfuscator) {
+          TypeNameObfuscator obfuscator = (TypeNameObfuscator) getSerializationPolicy();
+          String instanceClassName = obfuscator.getClassNameForTypeId(typeSignature);
+          instanceClass = Class.forName(instanceClassName, false, classLoader);
+        } else {
+          throw new SerializationException(
+              "The GWT module was compiled with RPC type name elision enabled, but "
+                  + getSerializationPolicy().getClass().getName()
+                  + " does not implement " + TypeNameObfuscator.class.getName());
+        }
+      } else {
+        SerializedInstanceReference serializedInstRef = SerializabilityUtil.decodeSerializedInstanceReference(typeSignature);
+        instanceClass = Class.forName(serializedInstRef.getName(), false,
+            classLoader);
+        validateTypeVersions(instanceClass, serializedInstRef);
+      }
 
       assert (serializationPolicy != null);
 
       serializationPolicy.validateDeserialize(instanceClass);
-
-      validateTypeVersions(instanceClass, serializedInstRef);
 
       Class<?> customSerializer = SerializabilityUtil.hasCustomFieldSerializer(instanceClass);
 
@@ -625,8 +638,8 @@ public final class ServerSerializationStreamReader extends
         while (idx >= 0) {
           buf.append(str.substring(pos, idx));
           if (++idx == str.length()) {
-            throw new SerializationException("Unmatched backslash: \""
-                + str + "\"");
+            throw new SerializationException("Unmatched backslash: \"" + str
+                + "\"");
           }
           char ch = str.charAt(idx);
           pos = idx + 1;
@@ -642,7 +655,8 @@ public final class ServerSerializationStreamReader extends
               break;
             case 'u':
               try {
-                ch = (char) Integer.parseInt(str.substring(idx + 1, idx + 5), 16);
+                ch = (char) Integer.parseInt(str.substring(idx + 1, idx + 5),
+                    16);
               } catch (NumberFormatException e) {
                 throw new SerializationException(
                     "Invalid Unicode escape sequence in \"" + str + "\"");

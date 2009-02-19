@@ -17,6 +17,8 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -30,14 +32,18 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamReader;
 import com.google.gwt.user.client.rpc.SerializationStreamWriter;
 import com.google.gwt.user.client.rpc.impl.Serializer;
+import com.google.gwt.user.client.rpc.impl.SerializerBase;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,6 +52,11 @@ import java.util.Set;
  * of types is obtained from the SerializableTypeOracle object.
  */
 public class TypeSerializerCreator {
+
+  /**
+   * Configuration property to use type indices instead of type signatures.
+   */
+  public static final String GWT_ELIDE_TYPE_NAMES_FROM_RPC = "gwt.elideTypeNamesFromRPC";
 
   /**
    * Default number of types to split createMethodMap entries into. Zero means
@@ -59,22 +70,10 @@ public class TypeSerializerCreator {
    */
   private static final String DEFAULT_CREATEMETHODMAP_SHARD_SIZE = "0";
 
-  private static final String DESERIALIZE_METHOD_SIGNATURE = "public native void deserialize("
-      + "SerializationStreamReader streamReader, Object instance, String typeSignature)"
-      + " throws SerializationException";
-
   /**
    * Java system property name to override the above.
    */
   private static final String GWT_CREATEMETHODMAP_SHARD_SIZE = "gwt.typecreator.shard.size";
-
-  private static final String INSTANTIATE_METHOD_SIGNATURE = "public native Object instantiate("
-      + "SerializationStreamReader streamReader, String typeSignature)"
-      + " throws SerializationException";
-
-  private static final String SERIALIZE_METHOD_SIGNATURE = "public native void serialize("
-      + "SerializationStreamWriter streamWriter, Object instance, String typeSignature)"
-      + " throws SerializationException";
 
   private static int shardSize = -1;
 
@@ -100,6 +99,8 @@ public class TypeSerializerCreator {
 
   private final SerializableTypeOracle deserializationOracle;
 
+  private final boolean elideTypeNames;
+
   private final SerializableTypeOracle serializationOracle;
 
   private final JType[] serializableTypes;
@@ -109,6 +110,8 @@ public class TypeSerializerCreator {
   private final TypeOracle typeOracle;
 
   private final String typeSerializerClassName;
+
+  private final Map<JType, String> typeStrings = new IdentityHashMap<JType, String>();
 
   public TypeSerializerCreator(TreeLogger logger,
       SerializableTypeOracle serializationOracle,
@@ -125,6 +128,8 @@ public class TypeSerializerCreator {
     typesSet.addAll(Arrays.asList(serializationOracle.getSerializableTypes()));
     typesSet.addAll(Arrays.asList(deserializationOracle.getSerializableTypes()));
     serializableTypes = typesSet.toArray(new JType[0]);
+    Arrays.sort(serializableTypes,
+        SerializableTypeOracleBuilder.JTYPE_COMPARATOR);
 
     srcWriter = getSourceWriter(logger, context);
     if (shardSize < 0) {
@@ -132,6 +137,21 @@ public class TypeSerializerCreator {
     }
     logger.log(TreeLogger.TRACE, "Using a shard size of " + shardSize
         + " for TypeSerializerCreator createMethodMap");
+
+    try {
+      String value = context.getPropertyOracle().getPropertyValue(logger,
+          GWT_ELIDE_TYPE_NAMES_FROM_RPC);
+      elideTypeNames = Boolean.parseBoolean(value);
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.ERROR, "The configuration property "
+          + GWT_ELIDE_TYPE_NAMES_FROM_RPC
+          + " was not defined. Is RemoteService.gwt.xml inherited?");
+      throw new UnableToCompleteException();
+    }
+  }
+
+  public Map<JType, String> getTypeStrings() {
+    return Collections.unmodifiableMap(typeStrings);
   }
 
   public String realize(TreeLogger logger) throws UnableToCompleteException {
@@ -147,21 +167,15 @@ public class TypeSerializerCreator {
 
     writeStaticFields();
 
+    writeStaticInitializer();
+
     writeCreateMethods();
 
-    writeCreateMethodMapMethod(logger);
+    writeRegisterSignatures();
 
-    writeCreateSignatureMapMethod();
+    writeRegisterMethods();
 
     writeRaiseSerializationException();
-
-    writeDeserializeMethod();
-
-    writeGetSerializationSignatureMethod();
-
-    writeInstantiateMethod();
-
-    writeSerializeMethod();
 
     srcWriter.commit(logger);
 
@@ -252,12 +266,13 @@ public class TypeSerializerCreator {
         packageName, className);
 
     composerFactory.addImport(JavaScriptObject.class.getName());
+    composerFactory.addImport(JsArrayString.class.getName());
     composerFactory.addImport(Serializer.class.getName());
     composerFactory.addImport(SerializationException.class.getName());
     composerFactory.addImport(SerializationStreamReader.class.getName());
     composerFactory.addImport(SerializationStreamWriter.class.getName());
 
-    composerFactory.addImplementedInterface("Serializer");
+    composerFactory.setSuperclass(SerializerBase.class.getName());
     return composerFactory.createSourceWriter(ctx, printWriter);
   }
 
@@ -309,34 +324,6 @@ public class TypeSerializerCreator {
     return true;
   }
 
-  /**
-   * Generate the createMethodMap function, possibly splitting it into smaller
-   * pieces if necessary to avoid an old Mozilla crash when dealing with
-   * excessively large JS functions.
-   * 
-   * @param logger TreeLogger instance
-   * @throws UnableToCompleteException if an error is logged
-   */
-  private void writeCreateMethodMapMethod(TreeLogger logger)
-      throws UnableToCompleteException {
-    ArrayList<JType> filteredTypes = new ArrayList<JType>();
-    JType[] types = getSerializableTypes();
-    int n = types.length;
-    for (int index = 0; index < n; ++index) {
-      JType type = types[index];
-      if (serializationOracle.maybeInstantiated(type)
-          || deserializationOracle.maybeInstantiated(type)) {
-        filteredTypes.add(type);
-      }
-    }
-    if (shardSize > 0 && filteredTypes.size() > shardSize) {
-      writeShardedCreateMethodMapMethod(filteredTypes, shardSize);
-    } else {
-      writeSingleCreateMethodMapMethod(filteredTypes);
-    }
-    srcWriter.println();
-  }
-
   private void writeCreateMethods() {
     JType[] types = getSerializableTypes();
     for (int typeIndex = 0; typeIndex < types.length; ++typeIndex) {
@@ -366,87 +353,6 @@ public class TypeSerializerCreator {
     }
   }
 
-  private void writeCreateSignatureMapMethod() {
-    srcWriter.println("private static native JavaScriptObject createSignatureMap() /*-" + '{');
-    {
-      srcWriter.indent();
-      srcWriter.println("return {");
-      JType[] types = getSerializableTypes();
-      boolean needComma = false;
-      for (int index = 0; index < types.length; ++index) {
-        JType type = types[index];
-        if (!serializationOracle.maybeInstantiated(type)
-            && !deserializationOracle.maybeInstantiated(type)) {
-          continue;
-        }
-        if (needComma) {
-          srcWriter.println(",");
-        } else {
-          needComma = true;
-        }
-
-        srcWriter.print("\"" + TypeOracleMediator.computeBinaryClassName(type)
-            + "\":\""
-            + SerializationUtils.getSerializationSignature(typeOracle, type)
-            + "\"");
-      }
-      srcWriter.println();
-      srcWriter.println("};");
-      srcWriter.outdent();
-    }
-    srcWriter.println("}-*/;");
-    srcWriter.println();
-  }
-
-  private void writeDeserializeMethod() {
-    srcWriter.print(DESERIALIZE_METHOD_SIGNATURE);
-    srcWriter.println(" /*-" + '{');
-    {
-      String serializerTypeName = getTypeSerializerClassName();
-      srcWriter.indent();
-      srcWriter.println("var methodTable = @" + serializerTypeName
-          + "::methodMap[typeSignature];");
-      srcWriter.println("if (!methodTable) {");
-      srcWriter.indentln("@" + serializerTypeName
-          + "::raiseSerializationException(Ljava/lang/String;)(typeSignature);");
-      srcWriter.println("}");
-      srcWriter.println("methodTable[1](streamReader, instance);");
-      srcWriter.outdent();
-    }
-    srcWriter.println("}-*/;");
-    srcWriter.println();
-  }
-
-  private void writeGetSerializationSignatureMethod() {
-    String serializerTypeName = getTypeSerializerClassName();
-    srcWriter.println("public native String getSerializationSignature(String typeName) /*-" + '{');
-    srcWriter.indent();
-    srcWriter.println("return @" + serializerTypeName
-        + "::signatureMap[typeName];");
-    srcWriter.outdent();
-    srcWriter.println("}-*/;");
-    srcWriter.println();
-  }
-
-  private void writeInstantiateMethod() {
-    srcWriter.print(INSTANTIATE_METHOD_SIGNATURE);
-    srcWriter.println(" /*-" + '{');
-    {
-      String serializerTypeName = getTypeSerializerClassName();
-      srcWriter.indent();
-      srcWriter.println("var methodTable = @" + serializerTypeName
-          + "::methodMap[typeSignature];");
-      srcWriter.println("if (!methodTable) {");
-      srcWriter.indentln("@" + serializerTypeName
-          + "::raiseSerializationException(Ljava/lang/String;)(typeSignature);");
-      srcWriter.println("}");
-      srcWriter.println("return methodTable[0](streamReader);");
-      srcWriter.outdent();
-    }
-    srcWriter.println("}-*/;");
-    srcWriter.println();
-  }
-
   private void writeRaiseSerializationException() {
     srcWriter.println("private static void raiseSerializationException(String msg) throws SerializationException {");
     srcWriter.indentln("throw new SerializationException(msg);");
@@ -454,93 +360,105 @@ public class TypeSerializerCreator {
     srcWriter.println();
   }
 
-  private void writeSerializeMethod() {
-    srcWriter.print(SERIALIZE_METHOD_SIGNATURE);
-    srcWriter.println(" /*-" + '{');
-    {
-      String serializerTypeName = getTypeSerializerClassName();
-      srcWriter.indent();
-      srcWriter.println("var methodTable = @" + serializerTypeName
-          + "::methodMap[typeSignature];");
-      srcWriter.println("if (!methodTable) {");
-      srcWriter.indentln("@" + serializerTypeName
-          + "::raiseSerializationException(Ljava/lang/String;)(typeSignature);");
-      srcWriter.println("}");
-      srcWriter.println("methodTable[2](streamWriter, instance);");
-      srcWriter.outdent();
-    }
-    srcWriter.println("}-*/;");
-    srcWriter.println();
-  }
-
-  /**
-   * Create a createMethodMap method which is sharded into smaller methods. This
-   * avoids a crash in old Mozilla dealing with very large JS functions being
-   * evaluated.
-   * 
-   * @param types list of types to include
-   * @param shardSize batch size for sharding
-   */
-  private void writeShardedCreateMethodMapMethod(List<JType> types,
-      int shardSize) {
-    srcWriter.println("private static JavaScriptObject createMethodMap() {");
-    int n = types.size();
+  private void writeRegisterMethods() {
+    srcWriter.println("private static native void registerMethods() /*-{");
     srcWriter.indent();
-    srcWriter.println("JavaScriptObject map = JavaScriptObject.createObject();");
-    for (int i = 0; i < n; i += shardSize) {
-      srcWriter.println("createMethodMap_" + i + "(map);");
+
+    List<JType> filteredTypes = new ArrayList<JType>();
+    JType[] types = getSerializableTypes();
+    int n = types.length;
+    for (int index = 0; index < n; ++index) {
+      JType type = types[index];
+      if (serializationOracle.maybeInstantiated(type)
+          || deserializationOracle.maybeInstantiated(type)) {
+        filteredTypes.add(type);
+      }
     }
-    srcWriter.println("return map;");
-    srcWriter.outdent();
-    srcWriter.println("}");
-    srcWriter.println();
-    for (int outerIndex = 0; outerIndex < n; outerIndex += shardSize) {
-      srcWriter.println("@SuppressWarnings(\"restriction\")");
-      srcWriter.println("private static native void createMethodMap_"
-          + outerIndex + "(JavaScriptObject map) /*-" + '{');
+
+    for (JType type : filteredTypes) {
+
+      srcWriter.println("@com.google.gwt.user.client.rpc.impl.SerializerBase"
+          + "::registerMethods("
+          + "Lcom/google/gwt/user/client/rpc/impl/SerializerBase$MethodMap;"
+          + "Ljava/lang/String;" + "Lcom/google/gwt/core/client/JsArray;)(");
+
+      srcWriter.indentln("@" + typeSerializerClassName + "::methodMap,");
+
+      String typeString = typeStrings.get(type);
+      assert typeString != null : "Missing type signature for "
+          + type.getQualifiedSourceName();
+      srcWriter.indentln("\"" + typeString + "\" , [");
+
       srcWriter.indent();
-      int last = outerIndex + shardSize;
-      if (last > n) {
-        last = n;
-      }
-      for (int i = outerIndex; i < last; ++i) {
-        JType type = types.get(i);
-        String typeString = getTypeString(type);
-        srcWriter.print("map[\"" + typeString + "\"]=[");
-        writeTypeMethods(type);
-        srcWriter.println("];");
-      }
+      writeTypeMethods(type);
       srcWriter.outdent();
-      srcWriter.println("}-*/;");
+
+      srcWriter.indentln("]);");
       srcWriter.println();
     }
-  }
 
-  private void writeSingleCreateMethodMapMethod(List<JType> types) {
-    srcWriter.println("@SuppressWarnings(\"restriction\")");
-    srcWriter.println("private static native JavaScriptObject createMethodMap() /*-" + '{');
-    srcWriter.indent();
-    srcWriter.println("return {");
-    int n = types.size();
-    for (int i = 0; i < n; ++i) {
-      if (i > 0) {
-        srcWriter.println(",");
-      }
-      JType type = types.get(i);
-      String typeString = getTypeString(type);
-      srcWriter.print("\"" + typeString + "\":[");
-      writeTypeMethods(type);
-      srcWriter.print("]");
-    }
-    srcWriter.println("};");
     srcWriter.outdent();
     srcWriter.println("}-*/;");
+    srcWriter.println();
+  }
+
+  private void writeRegisterSignatures() {
+    srcWriter.println("private static native void registerSignatures() /*-{");
+    srcWriter.indent();
+
+    int index = 0;
+
+    for (JType type : getSerializableTypes()) {
+
+      String typeString;
+      if (elideTypeNames) {
+        typeString = Integer.toString(++index, Character.MAX_RADIX);
+      } else {
+        typeString = getTypeString(type);
+      }
+      typeStrings.put(type, typeString);
+
+      if (!serializationOracle.maybeInstantiated(type)
+          && !deserializationOracle.maybeInstantiated(type)) {
+        continue;
+      }
+
+      String jsniTypeRef;
+      jsniTypeRef = TypeOracleMediator.computeBinaryClassName(type.getLeafType());
+      while (type.isArray() != null) {
+        jsniTypeRef += "[]";
+        type = type.isArray().getComponentType();
+      }
+      srcWriter.println("@com.google.gwt.user.client.rpc.impl.SerializerBase"
+          + "::registerSignature("
+          + "Lcom/google/gwt/core/client/JsArrayString;" + "Ljava/lang/Class;"
+          + "Ljava/lang/String;)(");
+      srcWriter.indent();
+      srcWriter.println("@" + typeSerializerClassName + "::signatureMap,");
+      srcWriter.println("@" + jsniTypeRef + "::class,");
+      srcWriter.println("\"" + typeString + "\");");
+      srcWriter.outdent();
+      srcWriter.println();
+    }
+
+    srcWriter.outdent();
+    srcWriter.println("}-*/;");
+    srcWriter.println();
   }
 
   private void writeStaticFields() {
-    srcWriter.println("private static final JavaScriptObject methodMap = createMethodMap();");
-    srcWriter.println("private static final JavaScriptObject signatureMap = createSignatureMap();");
+    srcWriter.println("private static final MethodMap methodMap = JavaScriptObject.createObject().cast();");
+    srcWriter.println("private static final JsArrayString signatureMap = JavaScriptObject.createArray().cast();");
+    srcWriter.println("protected MethodMap getMethodMap() { return methodMap; }");
+    srcWriter.println("protected JsArrayString getSignatureMap() { return signatureMap; }");
     srcWriter.println();
+  }
+
+  private void writeStaticInitializer() {
+    srcWriter.println("static {");
+    srcWriter.indentln("registerMethods();");
+    srcWriter.indentln("registerSignatures();");
+    srcWriter.println("}");
   }
 
   /**

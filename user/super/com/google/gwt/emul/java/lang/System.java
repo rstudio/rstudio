@@ -43,14 +43,17 @@ public final class System {
     if (src == null || dest == null) {
       throw new NullPointerException();
     }
-    
-    // TODO: use Class objects when Class.getComponentType() is supported.
-    String srcTypeName = src.getClass().getName();
-    String destTypeName = dest.getClass().getName();
-    if (srcTypeName.charAt(0) != '[' || destTypeName.charAt(0) != '[') {
+
+    Class<?> srcType = src.getClass();
+    Class<?> destType = dest.getClass();
+    if (!srcType.isArray() || !destType.isArray()) {
       throw new ArrayStoreException("Must be array types");
     }
-    if (srcTypeName.charAt(1) != destTypeName.charAt(1)) {
+
+    Class<?> srcComp = srcType.getComponentType();
+    Class<?> destComp = destType.getComponentType();
+    if (srcComp.modifiers != destComp.modifiers
+        || (srcComp.isPrimitive() && !srcComp.equals(destComp))) {
       throw new ArrayStoreException("Array types must match");
     }
     int srclen = getArrayLength(src);
@@ -64,8 +67,8 @@ public final class System {
      * can copy them in native code for speed. Otherwise, we have to copy them
      * in Java so we get appropriate errors.
      */
-    if ((srcTypeName.charAt(1) == 'L' || srcTypeName.charAt(1) == '[')
-        && !srcTypeName.equals(destTypeName)) {
+    if ((!srcComp.isPrimitive() || srcComp.isArray())
+        && !srcType.equals(destType)) {
       // copy in Java to make sure we get ArrayStoreExceptions if the values
       // aren't compatible
       Object[] srcArray = (Object[]) src;
@@ -125,7 +128,7 @@ public final class System {
 
   /**
    * Copy an array using native Javascript. The destination array must be a real
-   * Java array (ie, already has the GWT type info on it).  No error checking is
+   * Java array (ie, already has the GWT type info on it). No error checking is
    * performed -- the caller is expected to have verified everything first.
    * 
    * @param src source array for copy

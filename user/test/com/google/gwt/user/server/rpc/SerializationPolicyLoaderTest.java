@@ -16,6 +16,7 @@
 package com.google.gwt.user.server.rpc;
 
 import com.google.gwt.user.client.rpc.SerializationException;
+import com.google.gwt.user.server.rpc.impl.TypeNameObfuscator;
 
 import junit.framework.TestCase;
 
@@ -39,6 +40,9 @@ public class SerializationPolicyLoaderTest extends TestCase {
   static class B {
   }
 
+  static class I {
+  }
+
   private static final String OLD_VALID_POLICY_FILE_CONTENTS = A.class.getName()
       + ", true";
 
@@ -48,8 +52,10 @@ public class SerializationPolicyLoaderTest extends TestCase {
   private static final String POLICY_FILE_TRIGGERS_CLASSNOTFOUND = "C,false";
 
   private static final String VALID_POLICY_FILE_CONTENTS = A.class.getName()
-      + ", true, true, false, false\n" + B.class.getName()
-      + ", false, false, true, false\n";
+      + ", true, true, false, false, a, 1234\n" + B.class.getName()
+      + ", false, false, true, false, b, 5678\n" + I.class.getName()
+      + ", false, false, false, false, "
+      + TypeNameObfuscator.SERVICE_INTERFACE_ID + ", 999\n";
 
   public static InputStream getInputStreamFromString(String content)
       throws UnsupportedEncodingException {
@@ -82,6 +88,17 @@ public class SerializationPolicyLoaderTest extends TestCase {
     assertCannotDeserialize(sp, B.class);
     assertTrue(sp.shouldDeserializeFields(B.class));
     assertCannotDeserialize(sp, B.class);
+
+    assertTrue(sp instanceof TypeNameObfuscator);
+    TypeNameObfuscator ob = (TypeNameObfuscator) sp;
+    assertEquals("a", ob.getTypeIdForClass(A.class));
+    assertEquals(A.class.getName(), ob.getClassNameForTypeId("a"));
+    assertEquals("b", ob.getTypeIdForClass(B.class));
+    assertEquals(B.class.getName(), ob.getClassNameForTypeId("b"));
+    assertEquals(TypeNameObfuscator.SERVICE_INTERFACE_ID,
+        ob.getTypeIdForClass(I.class));
+    assertEquals(I.class.getName(),
+        ob.getClassNameForTypeId(TypeNameObfuscator.SERVICE_INTERFACE_ID));
   }
 
   /**

@@ -32,9 +32,9 @@ public interface Serializer {
       String typeSignature) throws SerializationException;
 
   /**
-   * Return the serialization signature for the given type name.
+   * Return the serialization signature for the given type.
    */
-  String getSerializationSignature(String typeName);
+  String getSerializationSignature(Class<?> clazz);
 
   /**
    * Instantiate an object of the given typeName from the serialized stream.

@@ -44,6 +44,7 @@ import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
 import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
@@ -83,6 +84,7 @@ public class Precompile {
       registerHandler(new ArgHandlerScriptStyle(options));
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
+      registerHandler(new ArgHandlerDisableClassMetadata(options));
       registerHandler(new ArgHandlerValidateOnlyFlag(options));
       registerHandler(new ArgHandlerDisableRunAsync(options));
       registerHandler(new ArgHandlerDraftCompile(options));
@@ -131,6 +133,10 @@ public class Precompile {
       return jjsOptions.isAggressivelyOptimize();
     }
 
+    public boolean isClassMetadataDisabled() {
+      return jjsOptions.isClassMetadataDisabled();
+    }
+
     public boolean isDraftCompile() {
       return jjsOptions.isDraftCompile();
     }
@@ -157,6 +163,10 @@ public class Precompile {
 
     public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
       jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
+    }
+
+    public void setClassMetadataDisabled(boolean disabled) {
+      jjsOptions.setClassMetadataDisabled(disabled);
     }
 
     public void setDisableUpdateCheck(boolean disabled) {

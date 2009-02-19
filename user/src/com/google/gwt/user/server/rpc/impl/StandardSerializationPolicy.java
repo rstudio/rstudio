@@ -18,12 +18,14 @@ package com.google.gwt.user.server.rpc.impl;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Standard implementation of a {@link SerializationPolicy}.
  */
-public class StandardSerializationPolicy extends SerializationPolicy {
+public class StandardSerializationPolicy extends SerializationPolicy implements
+    TypeNameObfuscator {
   /**
    * Field serializable types are primitives and types on the specified
    * whitelist.
@@ -50,27 +52,56 @@ public class StandardSerializationPolicy extends SerializationPolicy {
   }
 
   private final Map<Class<?>, Boolean> deserializationWhitelist;
-
   private final Map<Class<?>, Boolean> serializationWhitelist;
+  private final Map<Class<?>, String> typeIds;
+  private final Map<String, Class<?>> typeIdsToClasses = new HashMap<String, Class<?>>();
 
   /**
    * Constructs a {@link SerializationPolicy} from a {@link Map}.
    */
   public StandardSerializationPolicy(
       Map<Class<?>, Boolean> serializationWhitelist,
-      Map<Class<?>, Boolean> deserializationWhitelist) {
+      Map<Class<?>, Boolean> deserializationWhitelist,
+      Map<Class<?>, String> obfuscatedTypeIds) {
     if (serializationWhitelist == null || deserializationWhitelist == null) {
       throw new NullPointerException("whitelist");
     }
 
     this.serializationWhitelist = serializationWhitelist;
     this.deserializationWhitelist = deserializationWhitelist;
+    this.typeIds = obfuscatedTypeIds;
+
+    for (Map.Entry<Class<?>, String> entry : obfuscatedTypeIds.entrySet()) {
+      assert entry.getKey() != null : "null key";
+      assert entry.getValue() != null : "null value for "
+          + entry.getKey().getName();
+      assert !typeIdsToClasses.containsKey(entry.getValue()) : "Duplicate type id "
+          + entry.getValue();
+      typeIdsToClasses.put(entry.getValue(), entry.getKey());
+    }
+  }
+
+  public final String getClassNameForTypeId(String id)
+      throws SerializationException {
+    Class<?> clazz = typeIdsToClasses.get(id);
+    if (clazz == null) {
+      return null;
+    }
+
+    return clazz.getName();
+  }
+
+  public final String getTypeIdForClass(Class<?> clazz)
+      throws SerializationException {
+    return typeIds.get(clazz);
   }
 
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.gwt.user.server.rpc.SerializationPolicy#shouldDerializeFields(java.lang.String)
+   * @see
+   * com.google.gwt.user.server.rpc.SerializationPolicy#shouldDerializeFields
+   * (java.lang.String)
    */
   @Override
   public boolean shouldDeserializeFields(Class<?> clazz) {
@@ -80,7 +111,9 @@ public class StandardSerializationPolicy extends SerializationPolicy {
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.gwt.user.server.rpc.SerializationPolicy#shouldSerializeFields(java.lang.String)
+   * @see
+   * com.google.gwt.user.server.rpc.SerializationPolicy#shouldSerializeFields
+   * (java.lang.String)
    */
   @Override
   public boolean shouldSerializeFields(Class<?> clazz) {
@@ -90,7 +123,9 @@ public class StandardSerializationPolicy extends SerializationPolicy {
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.gwt.user.server.rpc.SerializationPolicy#validateDeserialize(java.lang.String)
+   * @see
+   * com.google.gwt.user.server.rpc.SerializationPolicy#validateDeserialize(
+   * java.lang.String)
    */
   @Override
   public void validateDeserialize(Class<?> clazz) throws SerializationException {
@@ -105,7 +140,9 @@ public class StandardSerializationPolicy extends SerializationPolicy {
   /*
    * (non-Javadoc)
    * 
-   * @see com.google.gwt.user.server.rpc.SerializationPolicy#validateSerialize(java.lang.String)
+   * @see
+   * com.google.gwt.user.server.rpc.SerializationPolicy#validateSerialize(java
+   * .lang.String)
    */
   @Override
   public void validateSerialize(Class<?> clazz) throws SerializationException {

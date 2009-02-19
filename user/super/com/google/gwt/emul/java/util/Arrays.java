@@ -411,14 +411,14 @@ public class Arrays {
       if (obj1.equals(obj2)) {
         continue;
       }
-      String class1 = obj1.getClass().getName();
-      String class2 = obj2.getClass().getName();
+      Class<?> class1 = obj1.getClass();
+      Class<?> class2 = obj2.getClass();
 
       // We have to test and see if these are two arrays of the same type,
       // then see what types of arrays they are and dispatch to the
       // appropriate equals
 
-      if (!class1.startsWith("[") || !class1.equals(class2)) {
+      if (!class1.isArray() || !class1.equals(class2)) {
         return false;
       }
 
@@ -1165,7 +1165,7 @@ public class Arrays {
       Object obj = a[i];
       if (obj == null) {
         b.append("null");
-      } else if (obj.getClass().getName().startsWith("[")) {
+      } else if (obj.getClass().isArray()) {
         if (obj instanceof Object[]) {
           if (arraysIveSeen.contains(obj)) {
             b.append("[...]");

@@ -61,7 +61,19 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @return the field
    */
   public Field getField(int dispId) {
-    return (Field) getMember(dispId);
+    Member member = getMember(dispId);
+
+    if (member instanceof SyntheticClassMember) {
+      try {
+        Field f = SyntheticClassMember.class.getDeclaredField("clazz");
+        assert f != null;
+        return f;
+      } catch (SecurityException e) {
+      } catch (NoSuchFieldException e) {
+      }
+      assert false : "Should never get here";
+    }
+    return (Field) member;
   }
 
   /**
@@ -70,7 +82,13 @@ public class JavaDispatchImpl implements JavaDispatch {
    * @throws IllegalArgumentException
    */
   public Object getFieldValue(int dispId) {
-    Field field = (Field) getMember(dispId);
+    Member member = getMember(dispId);
+
+    if (member instanceof SyntheticClassMember) {
+      return member.getDeclaringClass();
+    }
+
+    Field field = (Field) member;
     try {
       return field.get(target);
     } catch (IllegalAccessException e) {
@@ -108,7 +126,8 @@ public class JavaDispatchImpl implements JavaDispatch {
       return false;
     }
 
-    return getMember(dispId) instanceof Field;
+    Member member = getMember(dispId);
+    return member instanceof Field || member instanceof SyntheticClassMember;
   }
 
   /**

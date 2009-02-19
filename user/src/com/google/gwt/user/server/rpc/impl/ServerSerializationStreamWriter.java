@@ -404,14 +404,10 @@ public final class ServerSerializationStreamWriter extends
    * consumed and/or interpreted as a special character when the JSON encoded
    * response is evaluated. For example, 0x2028 and 0x2029 are alternate line
    * endings for JS per ECMA-232, which are respected by Firefox and Mozilla.
-   * 
-   * @param ch character to check
-   * @return <code>true</code> if the character requires the \\uXXXX unicode
-   *         character escape
-   * 
+   * <p>
    * Notes:
    * <ol>
-   * <li> The following cases are a more conservative set of cases which are are
+   * <li>The following cases are a more conservative set of cases which are are
    * in the future proofing space as opposed to the required minimal set. We
    * could remove these and still pass our tests.
    * <ul>
@@ -426,18 +422,20 @@ public final class ServerSerializationStreamWriter extends
    * <li>Total Characters Escaped: 13515</li>
    * </ul>
    * </li>
-   * <li> The following cases are the minimal amount of escaping required to
+   * <li>The following cases are the minimal amount of escaping required to
    * prevent test failure.
    * <ul>
    * <li>LINE_SEPARATOR - 1</li>
    * <li>PARAGRAPH_SEPARATOR - 1</li>
    * <li>FORMAT - 32</li>
    * <li>SURROGATE - 2048</li>
-   * <li>Total Characters Escaped: 2082</li>
-   * </li>
-   * </ul>
-   * </li>
+   * <li>Total Characters Escaped: 2082</li></li>
+   * </ul> </li>
    * </ol>
+   * 
+   * @param ch character to check
+   * @return <code>true</code> if the character requires the \\uXXXX unicode
+   *         character escape
    */
   private static boolean needsUnicodeEscape(char ch) {
     switch (ch) {
@@ -450,8 +448,8 @@ public final class ServerSerializationStreamWriter extends
         // these must be quoted or they will break the protocol
         return true;
       case NON_BREAKING_HYPHEN:
-          // This can be expanded into a break followed by a hyphen
-          return true;
+        // This can be expanded into a break followed by a hyphen
+        return true;
       default:
         switch (Character.getType(ch)) {
           // Conservative
@@ -479,9 +477,9 @@ public final class ServerSerializationStreamWriter extends
   }
 
   /**
-   * Writes a safe escape sequence for a character.  Some characters have a
-   * short form, such as \n for U+000D, while others are represented as \\xNN
-   * or \\uNNNN.
+   * Writes a safe escape sequence for a character. Some characters have a short
+   * form, such as \n for U+000D, while others are represented as \\xNN or
+   * \\uNNNN.
    * 
    * @param ch character to unicode escape
    * @param charVector char vector to receive the unicode escaped representation
@@ -574,11 +572,23 @@ public final class ServerSerializationStreamWriter extends
   }
 
   @Override
-  protected String getObjectTypeSignature(Object instance) {
+  protected String getObjectTypeSignature(Object instance)
+      throws SerializationException {
     assert (instance != null);
 
     Class<?> clazz = getClassForSerialization(instance);
-    return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
+    if (hasFlags(FLAG_ELIDE_TYPE_NAMES)) {
+      if (serializationPolicy instanceof TypeNameObfuscator) {
+        return ((TypeNameObfuscator) serializationPolicy).getTypeIdForClass(clazz);
+      }
+
+      throw new SerializationException("The GWT module was compiled with RPC "
+          + "type name elision enabled, but "
+          + serializationPolicy.getClass().getName() + " does not implement "
+          + TypeNameObfuscator.class.getName());
+    } else {
+      return SerializabilityUtil.encodeSerializedInstanceReference(clazz);
+    }
   }
 
   @Override

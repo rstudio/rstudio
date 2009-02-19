@@ -430,8 +430,11 @@ public class JsoTest extends GWTTestCase {
     assertEquals(JavaScriptObject.class, Bar.class);
     assertEquals(Foo.class, Bar.class);
 
-    assertEquals("com.google.gwt.core.client.JavaScriptObject$",
-        JavaScriptObject.class.getName());
+    if (!JavaScriptObject.class.getName().startsWith("Class$")) {
+      // Class metadata could be disabled
+      assertEquals("com.google.gwt.core.client.JavaScriptObject$",
+          JavaScriptObject.class.getName());
+    }
   }
 
   public void testClassLiteralsArray() {
@@ -451,8 +454,11 @@ public class JsoTest extends GWTTestCase {
     assertEquals(JavaScriptObject[][].class, Bar[][].class);
     assertEquals(Foo[][].class, Bar[][].class);
 
-    assertEquals("[[Lcom.google.gwt.core.client.JavaScriptObject$;",
-        JavaScriptObject[][].class.getName());
+    if (!JavaScriptObject.class.getName().startsWith("Class$")) {
+      // Class metadata could be disabled
+      assertEquals("[[Lcom.google.gwt.core.client.JavaScriptObject$;",
+          JavaScriptObject[][].class.getName());
+    }
   }
 
   public void testEquality() {

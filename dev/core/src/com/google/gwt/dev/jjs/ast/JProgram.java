@@ -574,6 +574,7 @@ public class JProgram extends JNode {
 
   public JReferenceType getFromTypeMap(String qualifiedBinaryOrSourceName) {
     String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
+
     return typeNameMap.get(srcTypeName);
   }
 
@@ -817,6 +818,46 @@ public class JProgram extends JNode {
     return typeSpecialClassLiteralHolder;
   }
 
+  /**
+   * Returns the JType corresponding to a JSNI type reference.
+   */
+  public JType getTypeFromJsniRef(String className) {
+    int dim = 0;
+    while (className.endsWith("[]")) {
+      dim++;
+      className = className.substring(0, className.length() - 2);
+    }
+
+    JType type;
+    if ("Z".equals(className)) {
+      type = program.getTypePrimitiveBoolean();
+    } else if ("B".equals(className)) {
+      type = program.getTypePrimitiveByte();
+    } else if ("C".equals(className)) {
+      type = program.getTypePrimitiveChar();
+    } else if ("D".equals(className)) {
+      type = program.getTypePrimitiveDouble();
+    } else if ("F".equals(className)) {
+      type = program.getTypePrimitiveFloat();
+    } else if ("I".equals(className)) {
+      type = program.getTypePrimitiveInt();
+    } else if ("J".equals(className)) {
+      type = program.getTypePrimitiveLong();
+    } else if ("S".equals(className)) {
+      type = program.getTypePrimitiveShort();
+    } else if ("V".equals(className)) {
+      type = program.getTypeVoid();
+    } else {
+      type = getFromTypeMap(className);
+    }
+
+    if (type == null || dim == 0) {
+      return type;
+    } else {
+      return getTypeArray(type, dim);
+    }
+  }
+
   public int getTypeId(JClassType classType) {
     Integer integer = typeIdMap.get(classType);
     if (integer == null) {
@@ -955,6 +996,7 @@ public class JProgram extends JNode {
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(allTypes);
+      visitor.accept(new ArrayList<JArrayType>(allArrayTypes));
     }
     visitor.endVisit(this, ctx);
   }

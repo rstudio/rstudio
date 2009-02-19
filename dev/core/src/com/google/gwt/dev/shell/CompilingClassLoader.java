@@ -42,6 +42,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -194,7 +195,42 @@ public final class CompilingClassLoader extends ClassLoader implements
      */
     private Class<?> getClassFromBinaryName(String binaryClassName) {
       try {
-        return Class.forName(binaryClassName, false, CompilingClassLoader.this);
+        int dims = 0;
+        while (binaryClassName.endsWith("[]")) {
+          dims++;
+          binaryClassName = binaryClassName.substring(0,
+              binaryClassName.length() - 2);
+        }
+
+        Class<?> clazz;
+        if ("Z".equals(binaryClassName)) {
+          clazz = boolean.class;
+        } else if ("B".equals(binaryClassName)) {
+          clazz = byte.class;
+        } else if ("C".equals(binaryClassName)) {
+          clazz = char.class;
+        } else if ("D".equals(binaryClassName)) {
+          clazz = double.class;
+        } else if ("F".equals(binaryClassName)) {
+          clazz = float.class;
+        } else if ("I".equals(binaryClassName)) {
+          clazz = int.class;
+        } else if ("J".equals(binaryClassName)) {
+          clazz = long.class;
+        } else if ("S".equals(binaryClassName)) {
+          clazz = short.class;
+        } else if ("V".equals(binaryClassName)) {
+          clazz = void.class;
+        } else {
+          clazz = Class.forName(binaryClassName, false,
+              CompilingClassLoader.this);
+        }
+
+        if (dims > 0) {
+          return Array.newInstance(clazz, new int[dims]).getClass();
+        } else {
+          return clazz;
+        }
       } catch (ClassNotFoundException e) {
         return null;
       }

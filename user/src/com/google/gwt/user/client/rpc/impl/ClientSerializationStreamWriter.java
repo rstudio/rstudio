@@ -69,13 +69,13 @@ public final class ClientSerializationStreamWriter extends
       return /[\u0000\|\\\u0080-\uFFFF]/g;
     } else if (webkit < 522) {
       // Safari 2 doesn't handle \\uXXXX in regexes
-      // TODO(jat): should iPhone be treated specially?
-      return /[\x00\|\\]/g;
+    // TODO(jat): should iPhone be treated specially?
+    return /[\x00\|\\]/g;
     } else if (webkit > 0) {
-      // other WebKit-based browsers need some additional quoting
-      return /[\u0000\|\\\u0300-\u036F\u0590-\u05FF\uD800-\uFFFF]/g;
+    // other WebKit-based browsers need some additional quoting
+    return /[\u0000\|\\\u0300-\u036F\u0590-\u05FF\uD800-\uFFFF]/g;
     } else {
-      return /[\u0000\|\\\uD800-\uFFFF]/g;
+    return /[\u0000\|\\\uD800-\uFFFF]/g;
     }
   }-*/;
 
@@ -201,13 +201,7 @@ public final class ClientSerializationStreamWriter extends
       clazz = e.getDeclaringClass();
     }
 
-    String typeName = clazz.getName();
-
-    String serializationSignature = serializer.getSerializationSignature(typeName);
-    if (serializationSignature != null) {
-      typeName += "/" + serializationSignature;
-    }
-    return typeName;
+    return serializer.getSerializationSignature(clazz);
   }
 
   @Override

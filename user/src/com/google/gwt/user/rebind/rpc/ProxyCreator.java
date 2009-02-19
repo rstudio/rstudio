@@ -16,6 +16,7 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -43,6 +44,7 @@ import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
+import com.google.gwt.user.server.rpc.impl.TypeNameObfuscator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -148,15 +150,23 @@ class ProxyCreator {
    * Take the union of two type arrays, and then sort the results
    * alphabetically.
    */
-  private static JType[] unionOfTypeArrays(JType[] types1, JType[] types2) {
+  private static JType[] unionOfTypeArrays(JType[]... types) {
     Set<JType> typesList = new HashSet<JType>();
-    typesList.addAll(Arrays.asList(types1));
-    typesList.addAll(Arrays.asList(types2));
+    for (JType[] a : types) {
+      typesList.addAll(Arrays.asList(a));
+    }
     JType[] serializableTypes = typesList.toArray(new JType[0]);
     Arrays.sort(serializableTypes,
         SerializableTypeOracleBuilder.JTYPE_COMPARATOR);
     return serializableTypes;
   }
+
+  private boolean elideTypeNames;
+
+  /**
+   * The possibly obfuscated type signatures used to represent a type.
+   */
+  private Map<JType, String> typeStrings;
 
   private JClassType serviceIntf;
 
@@ -242,6 +252,16 @@ class ProxyCreator {
       throw new UnableToCompleteException();
     }
 
+    try {
+      elideTypeNames = Boolean.parseBoolean(context.getPropertyOracle().getPropertyValue(
+          logger, TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC));
+    } catch (BadPropertyValueException e) {
+      logger.log(TreeLogger.ERROR, "Configuration property "
+          + TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC
+          + " is not defined. Is RemoteService.gwt.xml inherited?");
+      throw new UnableToCompleteException();
+    }
+
     // Create a resource file to receive all of the serialization information
     // computed by STOB and mark it as private so it does not end up in the
     // output.
@@ -259,16 +279,26 @@ class ProxyCreator {
         SerializationUtils.getTypeSerializerQualifiedName(serviceIntf));
     tsc.realize(logger);
 
+    typeStrings = new HashMap<JType, String>(tsc.getTypeStrings());
+    typeStrings.put(serviceIntf, TypeNameObfuscator.SERVICE_INTERFACE_ID);
+
     String serializationPolicyStrongName = writeSerializationPolicyFile(logger,
         context, typesSentFromBrowser, typesSentToBrowser);
 
+    String remoteServiceInterfaceName = elideTypeNames
+        ? TypeNameObfuscator.SERVICE_INTERFACE_ID
+        : TypeOracleMediator.computeBinaryClassName(serviceIntf);
     generateProxyFields(srcWriter, typesSentFromBrowser,
-        serializationPolicyStrongName);
+        serializationPolicyStrongName, remoteServiceInterfaceName);
 
     generateProxyContructor(javadocAnnotationDeprecationBranch, srcWriter);
 
     generateProxyMethods(srcWriter, typesSentFromBrowser,
         syncMethToAsyncMethMap);
+
+    if (elideTypeNames) {
+      generateStreamWriterOverride(srcWriter);
+    }
 
     srcWriter.commit(logger);
 
@@ -300,10 +330,10 @@ class ProxyCreator {
    */
   private void generateProxyFields(SourceWriter srcWriter,
       SerializableTypeOracle serializableTypeOracle,
-      String serializationPolicyStrongName) {
+      String serializationPolicyStrongName, String remoteServiceInterfaceName) {
     // Initialize a field with binary name of the remote service interface
-    srcWriter.println("private static final String REMOTE_SERVICE_INTERFACE_NAME = \""
-        + TypeOracleMediator.computeBinaryClassName(serviceIntf) + "\";");
+    srcWriter.println("private static final String REMOTE_SERVICE_INTERFACE_NAME = "
+        + "\"" + remoteServiceInterfaceName + "\";");
     srcWriter.println("private static final String SERIALIZATION_POLICY =\""
         + serializationPolicyStrongName + "\";");
     String typeSerializerName = SerializationUtils.getTypeSerializerQualifiedName(serviceIntf);
@@ -392,10 +422,16 @@ class ProxyCreator {
     JParameter[] syncParams = syncMethod.getParameters();
     w.println(streamWriterName + ".writeInt(" + syncParams.length + ");");
     for (JParameter param : syncParams) {
-      w.println(streamWriterName
-          + ".writeString(\""
-          + TypeOracleMediator.computeBinaryClassName(param.getType().getErasedType())
-          + "\");");
+      JType paramType = param.getType().getErasedType();
+      String typeName;
+      if (typeStrings.containsKey(paramType)) {
+        typeName = typeStrings.get(paramType);
+      } else {
+        typeName = TypeOracleMediator.computeBinaryClassName(paramType);
+      }
+      assert typeName != null : "Could not compute a type name for "
+          + paramType.getQualifiedSourceName();
+      w.println(streamWriterName + ".writeString(\"" + typeName + "\");");
     }
 
     // Encode all of the arguments to the asynchronous method, but exclude the
@@ -484,6 +520,17 @@ class ProxyCreator {
     }
   }
 
+  private void generateStreamWriterOverride(SourceWriter srcWriter) {
+    srcWriter.println("@Override");
+    srcWriter.println("public ClientSerializationStreamWriter createStreamWriter() {");
+    srcWriter.indent();
+    srcWriter.println("ClientSerializationStreamWriter toReturn = super.createStreamWriter();");
+    srcWriter.println("toReturn.addFlags(ClientSerializationStreamWriter.FLAG_ELIDE_TYPE_NAMES);");
+    srcWriter.println("return toReturn;");
+    srcWriter.outdent();
+    srcWriter.println("}");
+  }
+
   private String getProxyQualifiedName() {
     String[] name = Shared.synthesizeTopLevelClassName(serviceIntf,
         PROXY_SUFFIX);
@@ -565,11 +612,12 @@ class ProxyCreator {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       OutputStreamWriter osw = new OutputStreamWriter(baos,
           SerializationPolicyLoader.SERIALIZATION_POLICY_FILE_ENCODING);
+      TypeOracle oracle = ctx.getTypeOracle();
       PrintWriter pw = new PrintWriter(osw);
 
       JType[] serializableTypes = unionOfTypeArrays(
           serializationSto.getSerializableTypes(),
-          deserializationSto.getSerializableTypes());
+          deserializationSto.getSerializableTypes(), new JType[] {serviceIntf});
 
       for (int i = 0; i < serializableTypes.length; ++i) {
         JType type = serializableTypes[i];
@@ -581,7 +629,16 @@ class ProxyCreator {
             + Boolean.toString(deserializationSto.maybeInstantiated(type)));
         pw.print(", " + Boolean.toString(serializationSto.isSerializable(type)));
         pw.print(", "
-            + Boolean.toString(serializationSto.maybeInstantiated(type)) + '\n');
+            + Boolean.toString(serializationSto.maybeInstantiated(type)));
+        pw.print(", " + typeStrings.get(type));
+
+        /*
+         * Include the serialization signature to bump the RPC file name if
+         * obfuscated identifiers are used.
+         */
+        pw.print(", "
+            + SerializationUtils.getSerializationSignature(oracle, type));
+        pw.print('\n');
       }
 
       // Closes the wrapped streams.

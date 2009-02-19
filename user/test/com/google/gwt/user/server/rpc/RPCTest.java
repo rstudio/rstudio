@@ -23,9 +23,11 @@ import com.google.gwt.user.client.rpc.SerializableException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.AbstractSerializationStream;
 import com.google.gwt.user.server.rpc.impl.ServerSerializationStreamReader;
+import com.google.gwt.user.server.rpc.impl.TypeNameObfuscator;
 
 import junit.framework.TestCase;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 
 /**
@@ -33,6 +35,24 @@ import java.lang.reflect.Method;
  */
 @SuppressWarnings("deprecation")
 public class RPCTest extends TestCase {
+
+  /**
+   * Test serialization class.
+   * 
+   * @see RPCTest#testElision()
+   */
+  public static class C implements Serializable {
+    int i = 0;
+  }
+
+  /**
+   * Test serialization class.
+   * 
+   * @see RPCTest#testElision()
+   */
+  private static interface CC {
+    C c();
+  }
 
   private static interface A extends RemoteService {
     void method1() throws SerializableException;
@@ -46,9 +66,9 @@ public class RPCTest extends TestCase {
     void method1();
   }
 
-  private static final String VALID_ENCODED_REQUEST = "" +
-      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
-      RPC_SEPARATOR_CHAR + // version
+  private static final String VALID_ENCODED_REQUEST = ""
+      + AbstractSerializationStream.SERIALIZATION_STREAM_VERSION
+      + RPC_SEPARATOR_CHAR + // version
       "0" + RPC_SEPARATOR_CHAR + // flags
       "4" + RPC_SEPARATOR_CHAR + // string table entry count
       A.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
@@ -61,9 +81,9 @@ public class RPCTest extends TestCase {
       "2" + RPC_SEPARATOR_CHAR + // method name
       "0" + RPC_SEPARATOR_CHAR; // param count
 
-  private static final String INVALID_METHOD_REQUEST = "" +
-      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
-      RPC_SEPARATOR_CHAR + // version
+  private static final String INVALID_METHOD_REQUEST = ""
+      + AbstractSerializationStream.SERIALIZATION_STREAM_VERSION
+      + RPC_SEPARATOR_CHAR + // version
       "0" + RPC_SEPARATOR_CHAR + // flags
       "4" + RPC_SEPARATOR_CHAR + // string table entry count
       A.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
@@ -76,9 +96,9 @@ public class RPCTest extends TestCase {
       "2" + RPC_SEPARATOR_CHAR + // method name
       "0" + RPC_SEPARATOR_CHAR; // param count
 
-  private static final String INVALID_INTERFACE_REQUEST = "" +
-      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
-      RPC_SEPARATOR_CHAR + // version
+  private static final String INVALID_INTERFACE_REQUEST = ""
+      + AbstractSerializationStream.SERIALIZATION_STREAM_VERSION
+      + RPC_SEPARATOR_CHAR + // version
       "0" + RPC_SEPARATOR_CHAR + // flags
       "4" + RPC_SEPARATOR_CHAR + // string table entry count
       B.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
@@ -91,9 +111,9 @@ public class RPCTest extends TestCase {
       "2" + RPC_SEPARATOR_CHAR + // method name
       "0" + RPC_SEPARATOR_CHAR; // param count
 
-  private static final String STRING_QUOTE_REQUEST = "" +
-      AbstractSerializationStream.SERIALIZATION_STREAM_VERSION +
-      RPC_SEPARATOR_CHAR + // version
+  private static final String STRING_QUOTE_REQUEST = ""
+      + AbstractSerializationStream.SERIALIZATION_STREAM_VERSION
+      + RPC_SEPARATOR_CHAR + // version
       "0" + RPC_SEPARATOR_CHAR + // flags
       "7" + RPC_SEPARATOR_CHAR + // string table entry count
       A.class.getName() + RPC_SEPARATOR_CHAR + // string table entry #1
@@ -106,8 +126,7 @@ public class RPCTest extends TestCase {
       "3" + RPC_SEPARATOR_CHAR + // module base URL
       "4" + RPC_SEPARATOR_CHAR + // whitelist hashcode
       "5" + RPC_SEPARATOR_CHAR + // begin test data
-      "6" + RPC_SEPARATOR_CHAR +
-      "7" + RPC_SEPARATOR_CHAR;
+      "6" + RPC_SEPARATOR_CHAR + "7" + RPC_SEPARATOR_CHAR;
 
   private static final String VALID_V2_ENCODED_REQUEST = "2\uffff" + // version
       "0\uffff" + // flags
@@ -174,7 +193,8 @@ public class RPCTest extends TestCase {
   /**
    * Tests for method {@link RPC#decodeRequest(String)}
    * 
-   * <p/> Cases:
+   * <p/>
+   * Cases:
    * <ol>
    * <li>String == null</li>
    * <li>String == ""</li>
@@ -205,7 +225,8 @@ public class RPCTest extends TestCase {
   /**
    * Tests for method {@link RPC#decodeRequest(String, Class)}
    * 
-   * <p/> Cases:
+   * <p/>
+   * Cases:
    * <ol>
    * <li>String == null</li>
    * <li>String == ""</li>
@@ -265,6 +286,83 @@ public class RPCTest extends TestCase {
     }
   }
 
+  public void testElision() throws SecurityException, SerializationException,
+      NoSuchMethodException {
+    class TestPolicy extends SerializationPolicy implements TypeNameObfuscator {
+      private static final String C_NAME = "__c__";
+
+      public String getClassNameForTypeId(String id)
+          throws SerializationException {
+        assertEquals(C_NAME, id);
+        return C.class.getName();
+      }
+
+      public String getTypeIdForClass(Class<?> clazz)
+          throws SerializationException {
+        assertEquals(C.class, clazz);
+        return C_NAME;
+      }
+
+      @Override
+      public boolean shouldDeserializeFields(Class<?> clazz) {
+        return C.class.equals(clazz);
+      }
+
+      @Override
+      public boolean shouldSerializeFields(Class<?> clazz) {
+        return C.class.equals(clazz);
+      }
+
+      @Override
+      public void validateDeserialize(Class<?> clazz)
+          throws SerializationException {
+      }
+
+      @Override
+      public void validateSerialize(Class<?> clazz)
+          throws SerializationException {
+      }
+    }
+
+    String rpc = RPC.encodeResponseForSuccess(CC.class.getMethod("c"), new C(),
+        new TestPolicy(), AbstractSerializationStream.FLAG_ELIDE_TYPE_NAMES);
+    assertTrue(rpc.contains(TestPolicy.C_NAME));
+    assertFalse(rpc.contains(C.class.getName()));
+  }
+
+  public void testElisionWithNoObfuscator() throws SecurityException,
+      NoSuchMethodException {
+    class TestPolicy extends SerializationPolicy {
+      @Override
+      public boolean shouldDeserializeFields(Class<?> clazz) {
+        return C.class.equals(clazz);
+      }
+
+      @Override
+      public boolean shouldSerializeFields(Class<?> clazz) {
+        return C.class.equals(clazz);
+      }
+
+      @Override
+      public void validateDeserialize(Class<?> clazz)
+          throws SerializationException {
+      }
+
+      @Override
+      public void validateSerialize(Class<?> clazz)
+          throws SerializationException {
+      }
+    }
+
+    try {
+      RPC.encodeResponseForSuccess(CC.class.getMethod("c"), new C(),
+          new TestPolicy(), AbstractSerializationStream.FLAG_ELIDE_TYPE_NAMES);
+      fail("Should have thrown a SerializationException");
+    } catch (SerializationException e) {
+      // OK
+    }
+  }
+
   /**
    * Tests for method {@link RPC#encodeResponseForFailure(Method, Throwable)}.
    * 
@@ -307,8 +405,8 @@ public class RPCTest extends TestCase {
     }
 
     // Case 4
-    String str = RPC.encodeResponseForFailure(
-        A.class.getMethod("method1"), new SerializableException());
+    String str = RPC.encodeResponseForFailure(A.class.getMethod("method1"),
+        new SerializableException());
     assertTrue(str.indexOf("SerializableException") != -1);
   }
 
@@ -451,9 +549,10 @@ public class RPCTest extends TestCase {
       }
     }, A_method1, null);
   }
-  
+
   public void testSerializationStreamDequote() throws SerializationException {
-    ServerSerializationStreamReader reader = new ServerSerializationStreamReader(null, null);
+    ServerSerializationStreamReader reader = new ServerSerializationStreamReader(
+        null, null);
     reader.prepareToRead(STRING_QUOTE_REQUEST);
     assertEquals("Raw backslash \\", reader.readString());
     assertEquals("Quoted separator " + RPC_SEPARATOR_CHAR, reader.readString());

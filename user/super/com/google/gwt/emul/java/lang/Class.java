@@ -35,12 +35,13 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static <T> Class<T> createForArray(String packageName, String className) {
+  static <T> Class<T> createForArray(String packageName, String className, Class<?> componentType) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
     clazz.modifiers = ARRAY;
     clazz.superclass = Object.class;
+    clazz.componentType = componentType;
     return clazz;
   }
 
@@ -68,8 +69,8 @@ public final class Class<T> {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
     clazz.typeName = packageName + className;
-    clazz.modifiers = ENUM;
-    clazz.superclass = superclass;
+    clazz.modifiers = (enumConstantsFunc != null) ? ENUM : 0;
+    clazz.superclass = clazz.enumSuperclass = superclass;
     clazz.enumConstantsFunc = enumConstantsFunc;
     return clazz;
   }
@@ -99,11 +100,15 @@ public final class Class<T> {
     clazz.modifiers = PRIMITIVE;
     return clazz;
   }
+  
+  private Class<?> componentType;
 
   @SuppressWarnings("unused")
   private JavaScriptObject enumConstantsFunc;
+  
+  private Class<? super T> enumSuperclass;
 
-  private int modifiers;
+  int modifiers;
 
   private String typeName;
 
@@ -123,16 +128,29 @@ public final class Class<T> {
     return false;
   }
 
+  public Class<?> getComponentType() {
+    return componentType;
+  }
+
   public native T[] getEnumConstants() /*-{
     return this.@java.lang.Class::enumConstantsFunc
         && (this.@java.lang.Class::enumConstantsFunc)();
   }-*/;
 
+  /**
+   * Used by Enum to allow getSuperclass() to be pruned.
+   */
+  public Class<? super T> getEnumSuperclass() {
+    return enumSuperclass;
+  }
+
   public String getName() {
+    // This body may be replaced by the compiler
     return typeName;
   }
 
   public Class<? super T> getSuperclass() {
+    // This body may be replaced by the compiler
     return superclass;
   }
 

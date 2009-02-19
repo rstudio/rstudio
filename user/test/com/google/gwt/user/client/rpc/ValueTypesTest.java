@@ -22,6 +22,7 @@ import com.google.gwt.junit.client.GWTTestCase;
  * TODO: document me.
  */
 public class ValueTypesTest extends GWTTestCase {
+  
   private static final int TEST_DELAY = 5000;
 
   private ValueTypesTestServiceAsync primitiveTypeTestService;

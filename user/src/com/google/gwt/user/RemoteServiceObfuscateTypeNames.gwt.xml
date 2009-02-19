@@ -1,0 +1,28 @@
+<!--                                                                        -->
+<!-- Copyright 2009 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!--
+  Inheriting this module will remove type names from the RPC payload.  This
+  requires the server to be configured to use the RPC whitelist file.
+ -->
+<module>
+  <inherits name="com.google.gwt.user.RemoteService" />
+  
+  <!--
+    Do not simply copy this. It is likely that the mechanism used to enable
+    elision will change in the future, and it may be the case that elision
+    will be automatically enabled in a future release.
+   -->
+  <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="true" />
+</module>

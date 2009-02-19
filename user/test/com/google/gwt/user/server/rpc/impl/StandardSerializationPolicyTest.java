@@ -20,6 +20,7 @@ import com.google.gwt.user.client.rpc.SerializationException;
 import junit.framework.TestCase;
 
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tests for the {@link StandardSerializationPolicy} class.
@@ -116,9 +117,14 @@ public class StandardSerializationPolicyTest extends TestCase {
   }
 
   StandardSerializationPolicy getStandardSerializationPolicy() {
-    java.util.Map map = new HashMap();
+    Map map = new HashMap();
     map.put(A.class, Boolean.TRUE);
     map.put(C.class, Boolean.FALSE);
-    return new StandardSerializationPolicy(map, map);
+    
+    Map typeIds = new HashMap();
+    typeIds.put(A.class, "A");
+    typeIds.put(B.class, "B");
+    
+    return new StandardSerializationPolicy(map, map, typeIds);
   }
 }

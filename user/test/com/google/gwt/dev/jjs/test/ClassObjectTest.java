@@ -52,11 +52,13 @@ public class ClassObjectTest extends GWTTestCase {
   public void testArray() {
     Object o = new Foo[3];
     assertEquals(Foo[].class, o.getClass());
-    assertEquals(Object.class, o.getClass().getSuperclass());
-    assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
-        o.getClass().getName());
-    assertEquals("class [Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
-        o.getClass().toString());
+    if (expectClassMetadata()) {
+      assertEquals(Object.class, o.getClass().getSuperclass());
+      assertEquals("[Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
+          o.getClass().getName());
+      assertEquals("class [Lcom.google.gwt.dev.jjs.test.ClassObjectTest$Foo;",
+          o.getClass().toString());
+    }
     assertTrue(o.getClass().isArray());
     assertFalse(o.getClass().isEnum());
     assertFalse(o.getClass().isInterface());
@@ -81,11 +83,13 @@ public class ClassObjectTest extends GWTTestCase {
   public void testClass() {
     Object o = new Foo();
     assertEquals(Foo.class, o.getClass());
-    assertEquals(Object.class, o.getClass().getSuperclass());
-    assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
-        Foo.class.getName());
-    assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
-        Foo.class.toString());
+    if (expectClassMetadata()) {
+      assertEquals(Object.class, o.getClass().getSuperclass());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
+          Foo.class.getName());
+      assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Foo",
+          Foo.class.toString());
+    }
     assertFalse(Foo.class.isArray());
     assertFalse(Foo.class.isEnum());
     assertFalse(Foo.class.isInterface());
@@ -95,18 +99,22 @@ public class ClassObjectTest extends GWTTestCase {
 
   public void testCloneClassLiteral() {
     // getBarClass() should inline, causing a clone of a class literal
-    assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
-        getBarClass().getName());
+    if (expectClassMetadata()) {
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+          getBarClass().getName());
+    }
   }
 
   public void testEnum() {
     Object o = Bar.BAR;
     assertEquals(Bar.class, o.getClass());
-    assertEquals(Enum.class, o.getClass().getSuperclass());
-    assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
-        o.getClass().getName());
-    assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
-        o.getClass().toString());
+    if (expectClassMetadata()) {
+      assertEquals(Enum.class, o.getClass().getSuperclass());
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+          o.getClass().getName());
+      assertEquals("class com.google.gwt.dev.jjs.test.ClassObjectTest$Bar",
+          o.getClass().toString());
+    }
     assertFalse(o.getClass().isArray());
     assertTrue(o.getClass().isEnum());
     assertFalse(o.getClass().isInterface());
@@ -116,27 +124,32 @@ public class ClassObjectTest extends GWTTestCase {
 
   public void testEnumSubclass() {
     Object o = Bar.BAZ;
-    assertNotSame(Bar.class, o.getClass());
-    assertEquals(Bar.class, o.getClass().getSuperclass());
-    /*
-     * TODO: implement
-     */
-    // assertEquals(Bar.class, o.getClass().getDeclaringClass());
-    assertTrue(o.getClass().getName().endsWith("$1"));
-    assertTrue(o.getClass().toString().endsWith("$1"));
-    assertFalse(o.getClass().isArray());
-    assertFalse(o.getClass().isEnum());
-    assertFalse(o.getClass().isInterface());
-    assertFalse(o.getClass().isPrimitive());
-    assertNull(o.getClass().getEnumConstants());
+    assertNotSame("Classes unexpectedly the same", Bar.class, o.getClass());
+    if (expectClassMetadata()) {
+      assertEquals(Bar.class, o.getClass().getSuperclass());
+      /*
+       * TODO: implement
+       */
+      // assertEquals(Bar.class, o.getClass().getDeclaringClass());
+      assertTrue(o.getClass().getName().endsWith("$1"));
+      assertTrue(o.getClass().toString().endsWith("$1"));
+    }
+    assertFalse("Should not be array", o.getClass().isArray());
+    assertFalse("Should not be enum", o.getClass().isEnum());
+    assertFalse("Should not be interface", o.getClass().isInterface());
+    assertFalse("Should not be primitive", o.getClass().isPrimitive());
+    assertNull("Constands should be null", o.getClass().getEnumConstants());
   }
 
   public void testInterface() {
     assertNull(IFoo.class.getSuperclass());
-    assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
-        IFoo.class.getName());
-    assertEquals("interface com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
-        IFoo.class.toString());
+    if (expectClassMetadata()) {
+      assertEquals("com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
+          IFoo.class.getName());
+      assertEquals(
+          "interface com.google.gwt.dev.jjs.test.ClassObjectTest$IFoo",
+          IFoo.class.toString());
+    }
     assertFalse(IFoo.class.isArray());
     assertFalse(IFoo.class.isEnum());
     assertTrue(IFoo.class.isInterface());
@@ -146,13 +159,27 @@ public class ClassObjectTest extends GWTTestCase {
 
   public void testPrimitive() {
     assertNull(int.class.getSuperclass());
-    assertEquals("int", int.class.getName());
-    assertEquals("int", int.class.toString());
+    if (expectClassMetadata()) {
+      assertEquals("int", int.class.getName());
+      assertEquals("int", int.class.toString());
+    }
     assertFalse(int.class.isArray());
     assertFalse(int.class.isEnum());
     assertFalse(int.class.isInterface());
     assertTrue(int.class.isPrimitive());
     assertNull(int.class.getEnumConstants());
+  }
+
+  private boolean expectClassMetadata() {
+    String name = Object.class.getName();
+
+    if (name.equals("java.lang.Object")) {
+      return true;
+    } else if (name.startsWith("Class$")) {
+      return false;
+    }
+
+    throw new RuntimeException("Unexpected class name " + name);
   }
 
   private Class<? extends Bar> getBarClass() {

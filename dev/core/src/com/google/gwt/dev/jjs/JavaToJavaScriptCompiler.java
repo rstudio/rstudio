@@ -340,7 +340,7 @@ public class JavaToJavaScriptCompiler {
 
       // (2) Create our own Java AST from the JDT AST.
       GenerateJavaAST.exec(allTypeDeclarations, typeMap, jprogram, jsProgram,
-          options.isEnableAssertions());
+          options);
 
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);

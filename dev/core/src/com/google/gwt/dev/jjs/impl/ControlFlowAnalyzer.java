@@ -163,22 +163,8 @@ public class ControlFlowAnalyzer {
 
     @Override
     public boolean visit(JClassLiteral x, Context ctx) {
-      /*
-       * Rescue just slightly less than what would normally be rescued for a
-       * field reference to the literal's field. Rescue the field itself, and
-       * its initializer, but do NOT rescue the whole enclosing class. That
-       * would pull in the clinit of that class, which has initializers for all
-       * the class literals, which in turn have all of the strings of all of the
-       * class names.
-       * 
-       * TODO: Model ClassLiteral access a different way to avoid special magic.
-       * See Pruner.transformToNullFieldRef()/transformToNullMethodCall().
-       */
       JField field = x.getField();
       rescue(field);
-      accept(field.getInitializer());
-      referencedTypes.add(field.getEnclosingType());
-      liveFieldsAndMethods.add(field.getEnclosingType().methods.get(0));
       return true;
     }
 
@@ -542,6 +528,28 @@ public class ControlFlowAnalyzer {
              * itself becomes live.
              */
             accept(((JField) var).getLiteralInitializer());
+          } else if (var instanceof JField
+              && (program.getTypeClassLiteralHolder().equals(((JField) var).getEnclosingType()))) {
+            /*
+             * Rescue just slightly less than what would normally be rescued for
+             * a field reference to the literal's field. Rescue the field
+             * itself, and its initializer, but do NOT rescue the whole
+             * enclosing class. That would pull in the clinit of that class,
+             * which has initializers for all the class literals, which in turn
+             * have all of the strings of all of the class names.
+             * 
+             * This work is done in rescue() to allow JSNI references to class
+             * literals (via the @Foo::class syntax) to correctly rescue class
+             * literal initializers.
+             * 
+             * TODO: Model ClassLiteral access a different way to avoid special
+             * magic. See
+             * Pruner.transformToNullFieldRef()/transformToNullMethodCall().
+             */
+            JField field = (JField) var;
+            accept(field.getInitializer());
+            referencedTypes.add(field.getEnclosingType());
+            liveFieldsAndMethods.add(field.getEnclosingType().methods.get(0));
           }
         }
       }

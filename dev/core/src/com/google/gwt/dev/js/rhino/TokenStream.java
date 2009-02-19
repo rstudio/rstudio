@@ -1506,6 +1506,17 @@ public class TokenStream {
           break;
         }
       }
+      
+      // Arrray-type reference
+      while (c == '[') {
+        if (']' == in.peek()) {
+          addToString('[');
+          addToString(in.read());
+          c = in.read();
+        } else {
+          break;
+        }
+      }
 
       // We have a non-ident char to classify.
       //

@@ -23,6 +23,7 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
+  private boolean disableClassMetadata = false;
   private boolean draftCompile = false;
   private boolean enableAssertions;
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
@@ -38,6 +39,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void copyFrom(JJSOptions other) {
     setAggressivelyOptimize(other.isAggressivelyOptimize());
+    setClassMetadataDisabled(other.isClassMetadataDisabled());
     setDraftCompile(other.isDraftCompile());
     setEnableAssertions(other.isEnableAssertions());
     setOutput(other.getOutput());
@@ -51,6 +53,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isAggressivelyOptimize() {
     return aggressivelyOptimize;
+  }
+
+  public boolean isClassMetadataDisabled() {
+    return disableClassMetadata;
   }
 
   public boolean isDraftCompile() {
@@ -71,6 +77,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
     this.aggressivelyOptimize = aggressivelyOptimize;
+  }
+
+  public void setClassMetadataDisabled(boolean disabled) {
+    disableClassMetadata = disabled;
   }
 
   public void setDraftCompile(boolean draft) {

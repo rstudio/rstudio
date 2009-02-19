@@ -27,9 +27,9 @@ import com.google.gwt.junit.client.GWTTestCase;
  * hierarchy looking for the service interface. Prior to this test the servlet
  * would only look into the concrete class but not in any of its super classes.
  * 
- * See <a
- * href="http://code.google.com/p/google-web-toolkit/issues/detail?id=50&can=3&q=">Bug
- * 50</a> for more details.
+ * See <a href=
+ * "http://code.google.com/p/google-web-toolkit/issues/detail?id=50&can=3&q="
+ * >Bug 50</a> for more details.
  * <p>
  * This test works in conjunction with
  * {@link com.google.gwt.user.server.rpc.RemoteServiceServletTestServiceImpl}.
@@ -38,7 +38,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 public class RemoteServiceServletTest extends GWTTestCase {
   private static final int TEST_DELAY = 10000;
 
-  private static RemoteServiceServletTestServiceAsync getAsyncService() {
+  protected static RemoteServiceServletTestServiceAsync getAsyncService() {
     RemoteServiceServletTestServiceAsync service = (RemoteServiceServletTestServiceAsync) GWT.create(RemoteServiceServletTestService.class);
 
     ((ServiceDefTarget) service).setServiceEntryPoint(GWT.getModuleBaseURL()

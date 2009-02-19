@@ -23,6 +23,11 @@ package com.google.gwt.user.client.rpc.impl;
 public abstract class AbstractSerializationStream {
 
   /**
+   * The default flags to be used by serialization streams.
+   */
+  public static final int DEFAULT_FLAGS = 0;
+
+  /**
    * The character used to separate fields in client->server RPC messages.
    * 
    * Note that this character is referenced in the following places not using
@@ -39,7 +44,12 @@ public abstract class AbstractSerializationStream {
    */
   public static final int SERIALIZATION_STREAM_VERSION = 5;
 
-  private int flags = 0;
+  /**
+   * Indicates that obfuscated type names should be used in the RPC payload.
+   */
+  public static final int FLAG_ELIDE_TYPE_NAMES = 0x1;
+
+  private int flags = DEFAULT_FLAGS;
   private int version = SERIALIZATION_STREAM_VERSION;
 
   public final void addFlags(int flags) {
@@ -52,6 +62,10 @@ public abstract class AbstractSerializationStream {
 
   public final int getVersion() {
     return version;
+  }
+
+  public final boolean hasFlags(int flags) {
+    return (getFlags() & flags) == flags;
   }
 
   public final void setFlags(int flags) {

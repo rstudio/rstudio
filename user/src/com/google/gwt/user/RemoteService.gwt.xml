@@ -30,6 +30,11 @@
 	-->
 	<set-property name="gwt.suppressNonStaticFinalFieldWarnings" value="false" />
 
+    <!--
+        If this is ever turned on by default, fix up RPCSuiteWithElision 
+    -->
+    <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="false" />
+
 	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
 		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
 	</generate-with>

@@ -277,6 +277,11 @@ public class CompilerTest extends GWTTestCase {
   }
 
   public void testClassLiterals() {
+    if (Object.class.getName().startsWith("Class$")) {
+      // If class metadata is disabled
+      return;
+    }
+
     assertEquals("void", void.class.toString());
     assertEquals("int", int.class.toString());
     assertEquals("class java.lang.String", String.class.toString());

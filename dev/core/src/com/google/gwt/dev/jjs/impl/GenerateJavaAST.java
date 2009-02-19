@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
@@ -31,6 +32,7 @@ import com.google.gwt.dev.jjs.ast.JBreakStatement;
 import com.google.gwt.dev.jjs.ast.JCaseStatement;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JCharLiteral;
+import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
@@ -307,7 +309,9 @@ public class GenerateJavaAST {
 
     private int[] currentSeparatorPositions;
 
-    private boolean enableAsserts;
+    private final boolean disableClassMetadata;
+
+    private final boolean enableAsserts;
 
     private final Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = new HashMap<JsniMethodBody, AbstractMethodDeclaration>();
 
@@ -318,10 +322,16 @@ public class GenerateJavaAST {
     private final TypeMap typeMap;
 
     public JavaASTGenerationVisitor(TypeMap typeMap, JProgram program,
-        boolean enableAsserts) {
+        JJSOptions options) {
       this.typeMap = typeMap;
       this.program = program;
-      this.enableAsserts = enableAsserts;
+      this.enableAsserts = options.isEnableAssertions();
+
+      /*
+       * TODO: Determine if this should be controlled by a compiler flag or a
+       * module property.
+       */
+      this.disableClassMetadata = options.isClassMetadataDisabled();
       autoboxUtils = new AutoboxUtils(program);
     }
 
@@ -531,10 +541,33 @@ public class GenerateJavaAST {
           implementMethod(method, program.getLiteralBoolean(true));
         }
 
-        // Implement Class.desiredAssertionStatus
+        // Implement various methods on Class
         if (currentClass == program.getTypeJavaLangClass()) {
           JMethod method = program.getIndexedMethod("Class.desiredAssertionStatus");
           implementMethod(method, program.getLiteralBoolean(enableAsserts));
+
+          if (disableClassMetadata) {
+            SourceInfo info = currentClass.getSourceInfo().makeChild(
+                JavaASTGenerationVisitor.class, "Disabled class metadata");
+
+            JMethod nameMethod = program.getIndexedMethod("Class.getName");
+
+            // this.hashCode()
+            JMethodCall hashCall = new JMethodCall(program, info,
+                program.getExprThisRef(info, (JClassType) currentClass),
+                program.getIndexedMethod("Object.hashCode"));
+
+            // "Class$" + hashCode()
+            JBinaryOperation op = new JBinaryOperation(program, info,
+                program.getTypeJavaLangString(), JBinaryOperator.ADD,
+                program.getLiteralString(info, "Class$"), hashCall);
+
+            implementMethod(nameMethod, op);
+
+            // Forget the superclass
+            JMethod superclassMethod = program.getIndexedMethod("Class.getSuperclass");
+            implementMethod(superclassMethod, program.getLiteralNull());
+          }
         }
 
         if (currentClass instanceof JEnumType) {
@@ -2811,9 +2844,9 @@ public class GenerateJavaAST {
         }
 
         String className = parsed.className();
-        JReferenceType type = null;
+        JType type = null;
         if (!className.equals("null")) {
-          type = program.getFromTypeMap(className);
+          type = program.getTypeFromJsniRef(className);
           if (type == null) {
             reportJsniError(info, methodDecl,
                 "Unresolvable native reference to type '" + className + "'");
@@ -2828,9 +2861,24 @@ public class GenerateJavaAST {
             if (fieldName.equals("nullField")) {
               return program.getNullField();
             }
+
+          } else if (fieldName.equals("class")) {
+            JClassLiteral lit = program.getLiteralClass(type);
+            return lit.getField();
+
+          } else if (type instanceof JPrimitiveType) {
+            reportJsniError(info, methodDecl,
+                "May not refer to fields on primitive types");
+            return null;
+
+          } else if (type instanceof JArrayType) {
+            reportJsniError(info, methodDecl,
+                "May not refer to fields on array types");
+            return null;
+
           } else {
-            for (int i = 0; i < type.fields.size(); ++i) {
-              JField field = type.fields.get(i);
+            for (int i = 0; i < ((JReferenceType) type).fields.size(); ++i) {
+              JField field = ((JReferenceType) type).fields.get(i);
               if (field.getName().equals(fieldName)) {
                 return field;
               }
@@ -2841,6 +2889,12 @@ public class GenerateJavaAST {
               "Unresolvable native reference to field '" + fieldName
                   + "' in type '" + className + "'");
           return null;
+
+        } else if (type instanceof JPrimitiveType) {
+          reportJsniError(info, methodDecl,
+              "May not refer to methods on primitive types");
+          return null;
+
         } else {
           // look for a method
           TreeSet<String> almostMatches = new TreeSet<String>();
@@ -2852,7 +2906,7 @@ public class GenerateJavaAST {
             }
           } else {
             Queue<JReferenceType> workList = new LinkedList<JReferenceType>();
-            workList.add(type);
+            workList.add((JReferenceType) type);
             while (!workList.isEmpty()) {
               JReferenceType cur = workList.poll();
               for (int i = 0; i < cur.methods.size(); ++i) {
@@ -3037,10 +3091,10 @@ public class GenerateJavaAST {
    * a JProgram structure.
    */
   public static void exec(TypeDeclaration[] types, TypeMap typeMap,
-      JProgram jprogram, JsProgram jsProgram, boolean enableAsserts) {
+      JProgram jprogram, JsProgram jsProgram, JJSOptions options) {
     // Construct the basic AST.
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
-        jprogram, enableAsserts);
+        jprogram, options);
     for (int i = 0; i < types.length; ++i) {
       v.processType(types[i]);
     }

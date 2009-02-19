@@ -551,9 +551,9 @@ public class I18NTest extends GWTTestCase {
     assertEquals("'A', 'arg', ','", singleQuotes);
     String testSomeObjectTypes = typed.testSomeObjectTypes(new I18NTest(),
         new StringBuffer("hello"), new Integer("34"), null);
-    assertEquals(
-        "this(null(com.google.gwt.i18n.client.I18NTest)), StringBuffer(hello), Integer(34), "
-            + "null(null);", testSomeObjectTypes);
+    assertEquals("this(null(" + I18NTest.class.getName()
+        + ")), StringBuffer(hello), Integer(34), " + "null(null);",
+        testSomeObjectTypes);
   }
 
   private void assertArrayEquals(String[] shouldBe, String[] test) {

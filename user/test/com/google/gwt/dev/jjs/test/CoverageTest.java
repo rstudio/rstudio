@@ -335,8 +335,13 @@ public class CoverageTest extends CoverageBase {
     private void testClassLiteralAccess() {
       // ClassLiteralAccess
       o = Super.class;
-      assertEquals("class com.google.gwt.dev.jjs.test.CoverageTest$Super",
-          o.toString());
+      String str = o.toString();
+
+      // Class metadata could be disabled
+      if (!str.startsWith("class Class$")) {
+        assertEquals("class com.google.gwt.dev.jjs.test.CoverageTest$Super",
+            str);
+      }
     }
 
     private void testCompoundAssignment() {
