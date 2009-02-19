@@ -37,31 +37,17 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
 
   private class Buttons extends GridPanel {
     public Buttons(Composite parent) {
-      super(parent, SWT.NONE, hasCancel ? 2 : 1, true);
+      super(parent, SWT.NONE, 1, true, 12, 6);
 
-      if (hasOk) {
-        okButton = new Button(this, SWT.PUSH);
-        setGridData(okButton, 1, 1, FILL, FILL, false, false);
-        okButton.setText("    OK    ");
-        okButton.addSelectionListener(new SelectionAdapter() {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            clickOkButton();
-          }
-        });
-      }
-
-      if (hasCancel) {
-        cancelButton = new Button(this, SWT.PUSH);
-        setGridData(cancelButton, 1, 1, FILL, FILL, false, false);
-        cancelButton.setText("Cancel");
-        cancelButton.addSelectionListener(new SelectionAdapter() {
-          @Override
-          public void widgetSelected(SelectionEvent e) {
-            clickCancelButton();
-          }
-        });
-      }
+      okButton = new Button(this, SWT.PUSH);
+      setGridData(okButton, 1, 1, FILL, FILL, false, false);
+      okButton.setText("Close");
+      okButton.addSelectionListener(new SelectionAdapter() {
+        @Override
+        public void widgetSelected(SelectionEvent e) {
+          clickOkButton();
+        }
+      });
 
       shell.setDefaultButton(okButton);
     }
@@ -75,10 +61,8 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
       Control contents = createContents(this);
       setGridData(contents, 1, 1, FILL, FILL, true, true);
 
-      if (hasOk || hasCancel) {
-        Buttons buttons = new Buttons(this);
-        setGridData(buttons, 1, 1, RIGHT, BOTTOM, false, false);
-      }
+      Buttons buttons = new Buttons(this);
+      setGridData(buttons, 1, 1, RIGHT, BOTTOM, false, false);
     }
   }
 
@@ -93,13 +77,7 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
     return msgBox.open() == SWT.YES;
   }
 
-  private Button cancelButton;
-
   private boolean cancelled = true;
-
-  private boolean hasCancel;
-
-  private boolean hasOk;
 
   private int minHeight;
 
@@ -110,16 +88,9 @@ public abstract class DialogBase extends Dialog implements DisposeListener {
   private Shell shell;
 
   public DialogBase(Shell parent, int minWidth, int minHeight) {
-    this(parent, minWidth, minHeight, true, true);
-  }
-
-  public DialogBase(Shell parent, int minWidth, int minHeight,
-      boolean hasOkButton, boolean hasCancelButton) {
     super(parent, SWT.NONE);
     this.minWidth = minWidth;
     this.minHeight = minHeight;
-    hasOk = hasOkButton;
-    hasCancel = hasCancelButton;
   }
 
   public Shell getShell() {
