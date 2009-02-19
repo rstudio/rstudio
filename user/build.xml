@@ -157,7 +157,7 @@
       is executing
     -->
     <limit failonerror="true" hours="2">
-    <parallel threadsPerProcessor="1">
+    <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
       <!-- selenium-test is a no-op unless gwt.selenium.hosts is defined -->
       <antcall target="selenium-test"/>
       <!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
