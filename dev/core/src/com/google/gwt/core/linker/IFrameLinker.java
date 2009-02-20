@@ -132,7 +132,7 @@ public class IFrameLinker extends SelectionScriptLinker {
 
   /**
    * This is the real implementation of <code>getModulePrefix</code> for this
-   * linker.  The other versions forward to this one.
+   * linker. The other versions forward to this one.
    */
   private String getModulePrefix(LinkerContext context, String strongName,
       boolean supportRunAsync) {
@@ -150,6 +150,8 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.print("var $doc = $wnd.document;");
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
+    out.newlineOpt();
+    out.print("var $strongName = '" + strongName + "';");
     out.newlineOpt();
     if (supportRunAsync) {
       out.print("function __gwtStartLoadingFragment(frag) {");

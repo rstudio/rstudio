@@ -16,8 +16,10 @@
 package com.google.gwt.core;
 
 import com.google.gwt.core.client.GWTTest;
+import com.google.gwt.core.client.HttpThrowableReporterTest;
 import com.google.gwt.core.client.JavaScriptExceptionTest;
 import com.google.gwt.core.client.JsArrayTest;
+import com.google.gwt.core.client.impl.StackTraceCreatorTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -30,9 +32,11 @@ public class CoreSuite {
     GWTTestSuite suite = new GWTTestSuite("All core tests");
 
     // $JUnit-BEGIN$
+    suite.addTestSuite(HttpThrowableReporterTest.class);
     suite.addTestSuite(JavaScriptExceptionTest.class);
     suite.addTestSuite(JsArrayTest.class);
     suite.addTestSuite(GWTTest.class);
+    suite.addTestSuite(StackTraceCreatorTest.class);
     // $JUnit-END$
 
     return suite;

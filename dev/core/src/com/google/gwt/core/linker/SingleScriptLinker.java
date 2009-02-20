@@ -103,6 +103,9 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     }
     CompilationResult result = results.iterator().next();
 
+    out.print("var $strongName = '" + result.getStrongName() + "';");
+    out.newlineOpt();
+
     String[] js = result.getJavaScript();
     if (js.length != 1) {
       logger = logger.branch(TreeLogger.ERROR,

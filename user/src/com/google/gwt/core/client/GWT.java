@@ -50,6 +50,12 @@ public final class GWT {
   }
 
   /**
+   * This constant is used by {@link #getPermutationStrongName} when running in
+   * hosted mode.
+   */
+  public static final String HOSTED_MODE_PERMUTATION_STRONG_NAME = "HostedMode";
+
+  /**
    * Always <code>null</code> in web mode; in hosted mode provides the
    * implementation for certain methods.
    */
@@ -120,6 +126,19 @@ public final class GWT {
    */
   public static String getModuleName() {
     return Impl.getModuleName();
+  }
+
+  /**
+   * Returns the permutation's strong name. This can be used to distinguish
+   * between different permutations of the same module. In hosted mode, this
+   * method will return {@value #HOSTED_MODE_PERMUTATION_ID}.
+   */
+  public static String getPermutationStrongName() {
+    if (GWT.isScript()) {
+      return Impl.getPermutationStrongName();
+    } else {
+      return HOSTED_MODE_PERMUTATION_STRONG_NAME;
+    }
   }
 
   /**

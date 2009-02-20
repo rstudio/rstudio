@@ -32,6 +32,17 @@ public final class StackTraceElement implements Serializable {
 
   private String methodName;
 
+  public StackTraceElement() {
+  }
+
+  public StackTraceElement(String className, String methodName, String fileName,
+      int lineNumber) {
+    this.className = className;
+    this.methodName = methodName;
+    this.fileName = fileName;
+    this.lineNumber = lineNumber;
+  }
+
   public String getClassName() {
     return className;
   }

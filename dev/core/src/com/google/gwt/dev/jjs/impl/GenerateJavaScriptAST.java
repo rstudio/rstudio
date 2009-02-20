@@ -165,6 +165,7 @@ public class GenerateJavaScriptAST {
         JsName jsName = topScope.declareName(mangleName, name);
         x.getSourceInfo().addCorrelation(Correlation.by(jsName));
         names.put(x, jsName);
+        recordSymbol(x, jsName);
       } else {
         JsName jsName;
         if (x == arrayLengthField) {
@@ -178,6 +179,7 @@ public class GenerateJavaScriptAST {
         }
         x.getSourceInfo().addCorrelation(Correlation.by(jsName));
         names.put(x, jsName);
+        recordSymbol(x, jsName);
       }
     }
 
@@ -245,6 +247,7 @@ public class GenerateJavaScriptAST {
       JsName jsName = topScope.declareName(getNameString(x), x.getShortName());
       x.getSourceInfo().addCorrelation(Correlation.by(jsName));
       names.put(x, jsName);
+      recordSymbol(x, jsName);
 
       // My class scope
       if (x.extnds == null) {
@@ -313,6 +316,7 @@ public class GenerateJavaScriptAST {
       globalName = topScope.declareName(mangleName, name);
       x.getSourceInfo().addCorrelation(Correlation.by(globalName));
       names.put(x, globalName);
+      recordSymbol(x, globalName);
 
       JsFunction jsFunction;
       if (x.isNative()) {
@@ -371,6 +375,45 @@ public class GenerateJavaScriptAST {
     private void push(JsScope scope) {
       scopeStack.push(scope);
     }
+
+    private void recordSymbol(JReferenceType x, JsName jsName) {
+      assert !symbolTable.containsKey(x.getName());
+      symbolTable.put(x.getName(), jsName);
+    }
+
+    private <T extends HasEnclosingType & HasName> void recordSymbol(T x,
+        JsName jsName) {
+      StringBuilder sb = new StringBuilder();
+      sb.append(x.getEnclosingType().getName());
+      sb.append("::");
+
+      /*
+       * NB: The use of x.getName() can produce confusion in cases where a type
+       * has both polymorphic and static dispatch for a method, because you
+       * might see HashSet::$add() and HashSet::add(). Logically, these methods
+       * should be treated equally, however they will be implemented with
+       * separate global functions and must be recorded independently.
+       * 
+       * Automated systems that process the symbol information can easily map
+       * the statically-dispatched function by looking for method names that
+       * begin with a dollar-sign and whose first parameter is the enclosing
+       * type.
+       */
+      sb.append(x.getName());
+
+      if (x instanceof JMethod) {
+        sb.append('(');
+        for (JType t : ((JMethod) x).getOriginalParamTypes()) {
+          sb.append(t.getJsniSignatureName());
+        }
+        sb.append(')');
+      }
+
+      assert !symbolTable.containsKey(sb.toString()) : "Duplicate symbol "
+          + "recorded " + jsName.getIdent() + " for " + x.getName()
+          + " and key " + sb.toString();
+      symbolTable.put(sb.toString(), jsName);
+    }
   }
 
   private class GenerateJavaScriptVisitor extends GenerateJavaScriptLiterals {
@@ -388,8 +431,9 @@ public class GenerateJavaScriptAST {
     private JsFunction[] entryFunctions;
 
     /**
-     * A reverse index for the entry methods of the program ({@link JProgram#getAllEntryMethods()}).
-     * Each entry method is mapped to its integer index.
+     * A reverse index for the entry methods of the program (
+     * {@link JProgram#getAllEntryMethods()}). Each entry method is mapped to
+     * its integer index.
      */
     private Map<JMethod, Integer> entryMethodToIndex;
 
@@ -1450,7 +1494,6 @@ public class GenerateJavaScriptAST {
           JsNew newExpr = new JsNew(sourceInfo);
           JsNameRef superPrototypeRef = names.get(x.extnds).makeRef(sourceInfo);
           newExpr.setConstructorExpression(superPrototypeRef);
-          JsNode<?> staticRef = superPrototypeRef.getName().getStaticRef();
           rhs = newExpr;
         } else {
           rhs = new JsObjectLiteral(sourceInfo);
@@ -1760,9 +1803,9 @@ public class GenerateJavaScriptAST {
   }
 
   public static JavaToJavaScriptMap exec(JProgram program, JsProgram jsProgram,
-      JsOutputOption output) {
+      JsOutputOption output, Map<String, JsName> symbolTable) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
-        program, jsProgram, output);
+        program, jsProgram, output, symbolTable);
     return generateJavaScriptAST.execImpl();
   }
 
@@ -1831,8 +1874,13 @@ public class GenerateJavaScriptAST {
 
   private final Map<JsStatement, JMethod> vtableInitForMethodMap = new HashMap<JsStatement, JMethod>();
 
+  /**
+   * Maps JsNames to machine-usable identifiers.
+   */
+  private final Map<String, JsName> symbolTable;
+
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
-      JsOutputOption output) {
+      JsOutputOption output, Map<String, JsName> symbolTable) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
@@ -1840,6 +1888,7 @@ public class GenerateJavaScriptAST {
     objectScope = jsProgram.getObjectScope();
     interfaceScope = new JsScope(objectScope, "Interfaces");
     this.output = output;
+    this.symbolTable = symbolTable;
 
     /*
      * Because we modify String's prototype, all fields and polymorphic methods

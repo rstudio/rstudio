@@ -64,8 +64,7 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * Determines whether or not the URL is relative.
    * 
    * @param src the test url
-   * @return <code>true</code> if the URL is relative, <code>false</code> if
-   *         not
+   * @return <code>true</code> if the URL is relative, <code>false</code> if not
    */
   @SuppressWarnings("unused")
   protected static boolean isRelativeURL(String src) {
@@ -351,8 +350,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
   /**
    * Get the partial path on which a CompilationResult has been emitted.
    * 
-   * @return the partial path, or <code>null</code> if the CompilationResult
-   *         has not been emitted.
+   * @return the partial path, or <code>null</code> if the CompilationResult has
+   *         not been emitted.
    */
   protected String getCompilationStrongName(CompilationResult result) {
     return compilationStrongNames.get(result);
@@ -372,8 +371,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
    * {@link #getModulePrefix(TreeLogger, LinkerContext, String)}.
    * 
    * @param strongName strong name of the module being emitted
-   * @param numFragments the number of fragments for this module, including
-   *        the main fragment (fragment 0)
+   * @param numFragments the number of fragments for this module, including the
+   *          main fragment (fragment 0)
    */
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName, int numFragments) throws UnableToCompleteException {

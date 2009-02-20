@@ -15,12 +15,33 @@
  */
 package com.google.gwt.core.client;
 
+import com.google.gwt.core.client.impl.StackTraceCreator;
+
 /**
  * Any JavaScript exceptions occurring within JSNI methods are wrapped as this
  * class when caught in Java code. The wrapping does not occur until the
  * exception passes out of JSNI into Java. Before that, the thrown object
  * remains a native JavaScript exception object, and can be caught in JSNI as
  * normal.
+ * <p>
+ * The return value of {@link #getStackTrace()} may vary between browsers due to
+ * variations in the underlying error-reporting capabilities. When possible, the
+ * stack trace will be the stack trace of the underlying error object. If it is
+ * not possible to accurately report a stack trace, a zero-length array will be
+ * returned. In those cases where the underlying stack trace cannot be
+ * determined, {@link #fillInStackTrace()} can be called in the associated catch
+ * block to create a stack trace corresponding to the location where the
+ * JavaScriptException object was created.
+ * 
+ * <pre>
+ * try {
+ *   nativeMethod();
+ * } catch (JavaScriptException e) {
+ *   if (e.getStackTrace().length == 0) {
+ *     e.fillInStackTrace();
+ *   }
+ * }
+ * </pre>
  */
 public final class JavaScriptException extends RuntimeException {
 
@@ -105,6 +126,17 @@ public final class JavaScriptException extends RuntimeException {
    */
   public JavaScriptException(Object e) {
     this.e = e;
+    /*
+     * In hosted mode, JavaScriptExceptions are created exactly when the native
+     * method returns and their stack traces are fixed-up by the hosted-mode
+     * plumbing.
+     * 
+     * In web mode, we'll attempt to infer the stack trace from the thrown
+     * object, although this is not possible in all browsers.
+     */
+    if (GWT.isScript()) {
+      StackTraceCreator.createStackTrace(this);
+    }
   }
 
   public JavaScriptException(String name, String description) {
@@ -163,7 +195,7 @@ public final class JavaScriptException extends RuntimeException {
     }
     return name;
   }
-  
+
   private void init() {
     name = getName(e);
     description = getDescription(e);

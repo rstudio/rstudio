@@ -51,4 +51,5 @@
 
   <!-- Deferred binding to optimize JRE classes based on user agent. -->
   <inherits name="com.google.gwt.emul.EmulationWithUserAgent"/>
+  <inherits name="com.google.gwt.core.CoreWithUserAgent"/>
 </module>

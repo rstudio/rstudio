@@ -17,6 +17,7 @@ package com.google.gwt.json.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsonUtils;
 
 import java.util.AbstractSet;
 import java.util.ArrayList;
@@ -178,7 +179,7 @@ public class JSONObject extends JSONValue {
       } else {
         sb.append(", ");
       }
-      sb.append(JSONString.escapeValue(key));
+      sb.append(JsonUtils.escapeValue(key));
       sb.append(":");
       sb.append(get(key));
     }

@@ -75,6 +75,8 @@ public class XSLinker extends SelectionScriptLinker {
     out.newlineOpt();
     out.print("var $moduleName, $moduleBase;");
     out.newlineOpt();
+    out.print("var $strongName = '" + strongName + "';");
+    out.newlineOpt();
     out.print("var $stats = $wnd.__gwtStatsEvent ? function(a) {return $wnd.__gwtStatsEvent(a);} : null;");
     out.newlineOpt();
     out.print("$stats && $stats({moduleName:'" + context.getModuleName()

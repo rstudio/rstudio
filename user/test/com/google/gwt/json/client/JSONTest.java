@@ -205,7 +205,7 @@ public class JSONTest extends GWTTestCase {
   // Null characters do not work in hosted mode
   public void testEscaping() {
     JSONObject o = new JSONObject();
-    char[] charsToEscape = new char[40];
+    char[] charsToEscape = new char[42];
     for (char i = 1; i < 32; i++) {
       charsToEscape[i] = i;
     }
@@ -217,7 +217,9 @@ public class JSONTest extends GWTTestCase {
     charsToEscape[37] = '\r';
     charsToEscape[38] = '\t';
     charsToEscape[39] = '/';
-    for (int i = 1; i < 40; i++) {
+    charsToEscape[40] = '\u2028';
+    charsToEscape[41] = '\u2029';
+    for (int i = 1; i < charsToEscape.length; i++) {
       o.put("c" + i, new JSONString(new Character(charsToEscape[i]).toString()));
     }
     assertEquals("{\"c1\":\"\\u0001\", \"c2\":\"\\u0002\", "
@@ -233,7 +235,7 @@ public class JSONTest extends GWTTestCase {
         + "\"c30\":\"\\u001E\", \"c31\":\"\\u001F\", \"c32\":\"\\\"\", "
         + "\"c33\":\"\\\\\", \"c34\":\"\\b\", \"c35\":\"\\f\", "
         + "\"c36\":\"\\n\", \"c37\":\"\\r\", \"c38\":\"\\t\", "
-        + "\"c39\":\"/\"}", o.toString());
+        + "\"c39\":\"/\", \"c40\":\"\\u2028\", \"c41\":\"\\u2029\"}", o.toString());
   }
 
   public void testLargeArrays() {

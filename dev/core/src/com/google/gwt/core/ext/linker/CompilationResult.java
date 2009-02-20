@@ -34,12 +34,12 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
    * Returns the JavaScript compilation. The first element of the array contains
    * the code that should be run when the application starts up. The remaining
    * elements are loaded via
-   * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback) GWT.runAsync}.
-   * The linker should provide a function named
-   * <code>__gwtStartLoadingFragment</code> that can takes an integer as argument
-   * and loads that specified code segment. To see how this function is used,
-   * see
-   * {@link com.google.gwt.core.client.AsyncFragmentLoader AsyncFragmentLoader}.
+   * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)
+   * GWT.runAsync}. The linker should provide a function named
+   * <code>__gwtStartLoadingFragment</code> that can takes an integer as
+   * argument and loads that specified code segment. To see how this function is
+   * used, see {@link com.google.gwt.core.client.AsyncFragmentLoader
+   * AsyncFragmentLoader}.
    */
   public abstract String[] getJavaScript();
 
@@ -52,10 +52,18 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract SortedSet<SortedMap<SelectionProperty, String>> getPropertyMap();
 
   /**
-   * Return a string that uniquely identifies this compilation result.  Typically
+   * Return a string that uniquely identifies this compilation result. Typically
    * this is a cryptographic hash of the compiled data.
    */
   public abstract String getStrongName();
+
+  /**
+   * Returns a map of obfuscated symbol names in the compilation to JSNI-style
+   * identifiers. This data can allow for on-the-fly deobfuscation of stack
+   * trace information or to allow server components to have in-depth knowledge
+   * of the runtime structure of compiled objects.
+   */
+  public abstract SortedMap<String, String> getSymbolMap();
 
   @Override
   public final int hashCode() {

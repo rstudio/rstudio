@@ -100,6 +100,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
@@ -111,9 +113,12 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final String[] js;
+    private final SortedMap<String, String> symbolMap;
 
-    public PermutationResultImpl(String[] js) {
+    public PermutationResultImpl(String[] js,
+        SortedMap<String, String> symbolMap) {
       this.js = js;
+      this.symbolMap = symbolMap;
     }
 
     public ArtifactSet getArtifacts() {
@@ -122,6 +127,10 @@ public class JavaToJavaScriptCompiler {
 
     public String[] getJs() {
       return js;
+    }
+
+    public SortedMap<String, String> getSymbolMap() {
+      return symbolMap;
     }
   }
 
@@ -151,6 +160,7 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
       JJSOptions options = unifiedAst.getOptions();
+      Map<String, JsName> symbolTable = new HashMap<String, JsName>();
 
       ResolveRebinds.exec(jprogram, rebindAnswers);
 
@@ -175,8 +185,8 @@ public class JavaToJavaScriptCompiler {
 
       // (7) Generate a JavaScript code DOM from the Java type declarations
       jprogram.typeOracle.recomputeAfterOptimizations();
-      final JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(jprogram,
-          jsProgram, options.getOutput());
+      JavaToJavaScriptMap map = GenerateJavaScriptAST.exec(jprogram, jsProgram,
+          options.getOutput(), symbolTable);
 
       // (8) Normalize the JS AST.
       // Fix invalid constructs created during JS AST gen.
@@ -261,7 +271,9 @@ public class JavaToJavaScriptCompiler {
         }
       }
 
-      PermutationResult toReturn = new PermutationResultImpl(js);
+      SortedMap<String, String> symbolMap = makeSymbolMap(symbolTable);
+
+      PermutationResult toReturn = new PermutationResultImpl(js, symbolMap);
       if (sourceInfoMaps != null) {
         toReturn.getArtifacts().add(
             new StandardCompilationAnalysis(logger, sourceInfoMaps,
@@ -752,4 +764,15 @@ public class JavaToJavaScriptCompiler {
     return amp.makeStatement();
   }
 
+  private static SortedMap<String, String> makeSymbolMap(
+      Map<String, JsName> symbolTable) {
+
+    SortedMap<String, String> toReturn = new TreeMap<String, String>();
+
+    for (Map.Entry<String, JsName> entry : symbolTable.entrySet()) {
+      toReturn.put(entry.getKey(), entry.getValue().getShortIdent());
+    }
+
+    return toReturn;
+  }
 }

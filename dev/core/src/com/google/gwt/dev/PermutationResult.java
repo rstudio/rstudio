@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 
 import java.io.Serializable;
+import java.util.SortedMap;
 
 /**
  * An extensible return type for the results of compiling a single permutation.
@@ -33,4 +34,9 @@ public interface PermutationResult extends Serializable {
    * The compiled JavaScript code.
    */
   String[] getJs();
+
+  /**
+   * The symbol map for the permutation.
+   */
+  SortedMap<String, String> getSymbolMap();
 }

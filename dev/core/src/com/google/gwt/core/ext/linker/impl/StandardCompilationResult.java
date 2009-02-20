@@ -70,8 +70,11 @@ public class StandardCompilationResult extends CompilationResult {
    */
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
-  private final FileBackedObject<PermutationResult> resultFile;
   private transient SoftReference<String[]> js;
+
+  private final FileBackedObject<PermutationResult> resultFile;
+
+  private transient SoftReference<SortedMap<String, String>> symbolMap;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
@@ -104,16 +107,11 @@ public class StandardCompilationResult extends CompilationResult {
     }
 
     if (toReturn == null) {
-      PermutationResult result;
-      try {
-        result = resultFile.newInstance(TreeLogger.NULL);
-        toReturn = result.getJs();
-        js = new SoftReference<String[]>(toReturn);
-      } catch (UnableToCompleteException e) {
-        throw new RuntimeException(
-            "Unexpectedly unable to read PermutationResult");
-      }
+      PermutationResult result = loadPermutationResult();
+      toReturn = result.getJs();
+      js = new SoftReference<String[]>(toReturn);
     }
+
     return toReturn;
   }
 
@@ -125,5 +123,30 @@ public class StandardCompilationResult extends CompilationResult {
   @Override
   public String getStrongName() {
     return strongName;
+  }
+
+  @Override
+  public SortedMap<String, String> getSymbolMap() {
+    SortedMap<String, String> toReturn = null;
+    if (symbolMap != null) {
+      toReturn = symbolMap.get();
+    }
+
+    if (toReturn == null) {
+      PermutationResult result = loadPermutationResult();
+      toReturn = result.getSymbolMap();
+      symbolMap = new SoftReference<SortedMap<String, String>>(toReturn);
+    }
+
+    return toReturn;
+  }
+
+  private PermutationResult loadPermutationResult() {
+    try {
+      return resultFile.newInstance(TreeLogger.NULL);
+    } catch (UnableToCompleteException e) {
+      throw new RuntimeException(
+          "Unexpectedly unable to read PermutationResult");
+    }
   }
 }

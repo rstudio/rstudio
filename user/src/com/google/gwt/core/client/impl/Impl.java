@@ -66,6 +66,10 @@ public final class Impl {
     return $moduleName;
   }-*/;
 
+  public static native String getPermutationStrongName() /*-{
+    return $strongName;
+  }-*/;
+
   /**
    * Called from JSNI. Do not change this implementation without updating:
    * <ul>
