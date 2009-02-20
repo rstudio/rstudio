@@ -23,7 +23,6 @@ import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.DeferredBindingSite;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
-import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
@@ -31,6 +30,7 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -176,7 +176,7 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
           }
           dependentTypeNames.add(typeName);
         }
-        Util.addAll(dependentTypeNames, resultTypes);
+        Collections.addAll(dependentTypeNames, resultTypes);
       } catch (UnableToCompleteException e) {
         FindDeferredBindingSitesVisitor.reportRebindProblem(site,
             "Failed to resolve '" + reqType + "' via deferred binding");

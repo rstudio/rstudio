@@ -72,8 +72,8 @@ import com.google.gwt.dev.js.JsUnusedFunctionRemover;
 import com.google.gwt.dev.js.JsVerboseNamer;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.DefaultTextOutput;
+import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
-import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -81,6 +81,7 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -212,7 +213,10 @@ public class JavaToJavaScriptCompiler {
    * 
    * @param logger the logger to use
    * @param compilerFrontEnd the compiler front ent
-   * @param declEntryPts the set of entry classes
+   * @param declEntryPts the set of entry classes declared in a GWT module;
+   *          these will be automatically rebound
+   * @param additionalRootTypes additional classes that should serve as code
+   *          roots; will not be rebound; may be <code>null</code>
    * @param options the compiler options
    * @param singlePermutation if true, do not pre-optimize the resulting AST or
    *          allow serialization of the result
@@ -222,28 +226,33 @@ public class JavaToJavaScriptCompiler {
    */
   public static UnifiedAst precompile(TreeLogger logger,
       WebModeCompilerFrontEnd compilerFrontEnd, String[] declEntryPts,
-      JJSOptions options, boolean singlePermutation)
-      throws UnableToCompleteException {
+      String[] additionalRootTypes, JJSOptions options,
+      boolean singlePermutation) throws UnableToCompleteException {
 
-    if (declEntryPts.length == 0) {
+    if (additionalRootTypes == null) {
+      additionalRootTypes = Empty.STRINGS;
+    }
+    if (declEntryPts.length + additionalRootTypes.length == 0) {
       throw new IllegalArgumentException("entry point(s) required");
     }
 
     RebindPermutationOracle rpo = compilerFrontEnd.getRebindPermutationOracle();
 
-    // Find all the possible rebound entry points.
-    Set<String> allEntryPoints = new TreeSet<String>();
+    Set<String> allRootTypes = new TreeSet<String>();
+
+    // Find all the possible rebinds for declared entry point types.
     for (String element : declEntryPts) {
       String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
-      Util.addAll(allEntryPoints, all);
+      Collections.addAll(allRootTypes, all);
     }
-    allEntryPoints.addAll(JProgram.CODEGEN_TYPES_SET);
-    allEntryPoints.addAll(JProgram.INDEX_TYPES_SET);
+    Collections.addAll(allRootTypes, additionalRootTypes);
+    allRootTypes.addAll(JProgram.CODEGEN_TYPES_SET);
+    allRootTypes.addAll(JProgram.INDEX_TYPES_SET);
 
     // Compile the source and get the compiler so we can get the parse tree
     //
     CompilationUnitDeclaration[] goldenCuds = compilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allEntryPoints.toArray(new String[0]));
+        logger, allRootTypes.toArray(new String[0]));
 
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.

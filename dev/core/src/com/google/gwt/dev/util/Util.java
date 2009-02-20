@@ -83,12 +83,6 @@ public final class Util {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
 
-  public static <T> void addAll(Collection<T> c, T[] a) {
-    for (T val : a) {
-      c.add(val);
-    }
-  }
-
   public static byte[] append(byte[] xs, byte x) {
     int n = xs.length;
     byte[] t = new byte[n + 1];

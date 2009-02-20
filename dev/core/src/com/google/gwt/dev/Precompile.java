@@ -246,8 +246,8 @@ public class Precompile {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
-            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(logger,
-                CheckForUpdates.ONE_DAY);
+            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(
+                logger, CheckForUpdates.ONE_DAY);
           }
           boolean success = new Precompile(options).run(logger);
           if (success) {
@@ -298,7 +298,8 @@ public class Precompile {
           compilationState, rpo);
       PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
-          frontEnd, declEntryPts, jjsOptions, rpo.getPermuationCount() == 1);
+          frontEnd, declEntryPts, null, jjsOptions,
+          rpo.getPermuationCount() == 1);
       PerfLogger.end();
 
       // Merge all identical permutations together.
@@ -340,13 +341,14 @@ public class Precompile {
       CompilationState compilationState = module.getCompilationState(logger);
 
       String[] declEntryPts = module.getEntryPointTypeNames();
+      String[] additionalRootTypes = null;
       if (declEntryPts.length == 0) {
-        // Pretend that every single compilation unit is an entry point.
+        // No declared entry points, just validate all visible classes.
         Set<CompilationUnit> compilationUnits = compilationState.getCompilationUnits();
-        declEntryPts = new String[compilationUnits.size()];
+        additionalRootTypes = new String[compilationUnits.size()];
         int i = 0;
         for (CompilationUnit unit : compilationUnits) {
-          declEntryPts[i++] = unit.getTypeName();
+          additionalRootTypes[i++] = unit.getTypeName();
         }
       }
 
@@ -359,7 +361,7 @@ public class Precompile {
       WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
           compilationState, rpo);
       JavaToJavaScriptCompiler.precompile(logger, frontEnd, declEntryPts,
-          jjsOptions, true);
+          additionalRootTypes, jjsOptions, true);
       return true;
     } catch (UnableToCompleteException e) {
       // Already logged.
