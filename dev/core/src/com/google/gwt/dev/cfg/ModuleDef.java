@@ -26,15 +26,13 @@ import com.google.gwt.dev.javac.JavaSourceFile;
 import com.google.gwt.dev.javac.JavaSourceOracle;
 import com.google.gwt.dev.javac.impl.JavaSourceOracleImpl;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.impl.DefaultFilters;
 import com.google.gwt.dev.resource.impl.PathPrefix;
 import com.google.gwt.dev.resource.impl.PathPrefixSet;
-import com.google.gwt.dev.resource.impl.ResourceFilter;
 import com.google.gwt.dev.resource.impl.ResourceOracleImpl;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
-
-import org.apache.tools.ant.types.ZipScanner;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -54,11 +52,6 @@ import java.util.Map.Entry;
  * XML for unit tests.
  */
 public class ModuleDef implements PublicOracle {
-  /**
-   * Default to recursive inclusion of java files if no explicit include
-   * directives are specified.
-   */
-  private static final String[] DEFAULT_SOURCE_FILE_INCLUDES_LIST = new String[] {"**/*.java"};
 
   private static final Comparator<Map.Entry<String, ?>> REV_NAME_CMP = new Comparator<Map.Entry<String, ?>>() {
     public int compare(Map.Entry<String, ?> entry1, Map.Entry<String, ?> entry2) {
@@ -123,9 +116,11 @@ public class ModuleDef implements PublicOracle {
   private PathPrefixSet sourcePrefixSet = new PathPrefixSet();
 
   private final Styles styles = new Styles();
+  private final DefaultFilters defaultFilters;
 
   public ModuleDef(String name) {
     this.name = name;
+    defaultFilters = new DefaultFilters();
   }
 
   public synchronized void addEntryPointTypeName(String typeName) {
@@ -155,15 +150,9 @@ public class ModuleDef implements PublicOracle {
     if (lazyPublicOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
-
-    final ZipScanner scanner = getScanner(includeList, excludeList,
-        defaultExcludes, caseSensitive);
-
-    publicPrefixSet.add(new PathPrefix(publicPackage, new ResourceFilter() {
-      public boolean allows(String path) {
-        return scanner.match(path);
-      }
-    }, true));
+    publicPrefixSet.add(new PathPrefix(publicPackage,
+        defaultFilters.customResourceFilter(includeList, excludeList,
+            defaultExcludes, caseSensitive), true));
   }
 
   public void addSourcePackage(String sourcePackage, String[] includeList,
@@ -178,25 +167,9 @@ public class ModuleDef implements PublicOracle {
     if (lazySourceOracle != null) {
       throw new IllegalStateException("Already normalized");
     }
-
-    if (includeList.length == 0) {
-      /*
-       * If no includes list was provided then, use the default.
-       */
-      includeList = DEFAULT_SOURCE_FILE_INCLUDES_LIST;
-    }
-
-    final ZipScanner scanner = getScanner(includeList, excludeList,
-        defaultExcludes, caseSensitive);
-
-    ResourceFilter sourceFileFilter = new ResourceFilter() {
-      public boolean allows(String path) {
-        return path.endsWith(".java") && scanner.match(path);
-      }
-    };
-
-    PathPrefix pathPrefix = new PathPrefix(sourcePackage, sourceFileFilter,
-        isSuperSource);
+    PathPrefix pathPrefix = new PathPrefix(sourcePackage,
+        defaultFilters.customJavaFilter(includeList, excludeList,
+            defaultExcludes, caseSensitive), isSuperSource);
     sourcePrefixSet.add(pathPrefix);
   }
 
@@ -466,29 +439,6 @@ public class ModuleDef implements PublicOracle {
     lazyJavaSourceOracle = new JavaSourceOracleImpl(lazySourceOracle);
 
     PerfLogger.end();
-  }
-
-  private ZipScanner getScanner(String[] includeList, String[] excludeList,
-      boolean defaultExcludes, boolean caseSensitive) {
-    /*
-     * Hijack Ant's ZipScanner to handle inclusions/exclusions exactly as Ant
-     * does. We're only using its pattern-matching capabilities; the code path
-     * I'm using never tries to hit the filesystem in Ant 1.6.5.
-     */
-    ZipScanner scanner = new ZipScanner();
-    if (includeList.length > 0) {
-      scanner.setIncludes(includeList);
-    }
-    if (excludeList.length > 0) {
-      scanner.setExcludes(excludeList);
-    }
-    if (defaultExcludes) {
-      scanner.addDefaultExcludes();
-    }
-    scanner.setCaseSensitive(caseSensitive);
-    scanner.init();
-
-    return scanner;
   }
 
 }
