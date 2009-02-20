@@ -110,4 +110,22 @@ public class RadioButtonTest extends GWTTestCase {
     assertFalse(r2.getValue());
     assertTrue(r3.getValue());
   }
+
+  /**
+   * Ensures that the element order doesn't get reversed when the radio's
+   * name is changed.
+   */
+  public void testOrderAfterSetName() {
+    RadioButton radio = new RadioButton("oldName");
+    assertEquals("oldName", radio.getName());
+
+    radio.setName("newName");
+    assertEquals("newName", radio.getName());
+
+    Element parent = radio.getElement();
+    Element firstChild = parent.getFirstChildElement().cast();
+    Element secondChild = firstChild.getNextSiblingElement().cast();
+    assertEquals("input", firstChild.getTagName().toLowerCase());
+    assertEquals("label", secondChild.getTagName().toLowerCase());
+  }
 }

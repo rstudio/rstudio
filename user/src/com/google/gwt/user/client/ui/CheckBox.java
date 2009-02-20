@@ -387,8 +387,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     // Clear out the old input element
     setEventListener(asOld(inputElem), null);
 
-    getElement().removeChild(inputElem);
-    getElement().insertBefore(newInputElem, null);
+    getElement().replaceChild(newInputElem, inputElem);
 
     // Sink events on the new element
     Event.sinkEvents(elem, Event.getEventsSunk(inputElem));
