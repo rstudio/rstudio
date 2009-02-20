@@ -156,7 +156,7 @@ public class JsniChecker {
             if (!refErrors.isEmpty()) {
               errors.put(jsniRefString, refErrors);
             }
-          } else {
+          } else if (!jsniRef.className().equals("null")) {
             GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
                 "Referencing class '" + jsniRef.className()
                     + ": unable to resolve class, expect subsequent failures",

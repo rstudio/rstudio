@@ -223,6 +223,28 @@ public class JsniCheckerTest extends TestCase {
         "Referencing method 'Buggy.m': return type 'long' is not safe to access in JSNI code");
   }
 
+  public void testNullField() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  static native Object main() /*-{\n");
+    code.append("    return @null::nullField;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateNoWarning(code);
+  }
+
+  public void testNullMethod() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  static native Object main() /*-{\n");
+    code.append("    return @null::nullMethod()();\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateNoWarning(code);
+  }
+
   public void testOverloadedMethodWithNoWarning() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
@@ -378,6 +400,10 @@ public class JsniCheckerTest extends TestCase {
 
   private void shouldGenerateNoError(CharSequence code, CharSequence extraCode) {
     shouldGenerateError(code, extraCode, -1, null);
+  }
+
+  private void shouldGenerateNoWarning(CharSequence code) {
+    shouldGenerateWarning(code, -1, null);
   }
 
   private void shouldGenerateWarning(CharSequence buggyCode,
