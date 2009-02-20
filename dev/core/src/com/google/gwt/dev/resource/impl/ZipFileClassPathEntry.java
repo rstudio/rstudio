@@ -20,6 +20,7 @@ import com.google.gwt.dev.util.msg.Message1String;
 
 import java.io.File;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -52,11 +53,21 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
         TreeLogger.DEBUG, "$0");
   }
 
+  private static class ZipFileSnapshot {
+    private final int prefixSetSize;
+    private final Map<AbstractResource, PathPrefix> cachedAnswers;
+
+    ZipFileSnapshot(int prefixSetSize,
+        Map<AbstractResource, PathPrefix> cachedAnswers) {
+      this.prefixSetSize = prefixSetSize;
+      this.cachedAnswers = cachedAnswers;
+    }
+  }
+
   private Set<ZipFileResource> allZipFileResources;
-  private Map<AbstractResource, PathPrefix> cachedAnswers;
+  private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new HashMap<PathPrefixSet, ZipFileSnapshot>(
+      2); // currently gwt has just 2 ResourceOracles.
   private String cachedLocation;
-  private PathPrefixSet lastPrefixSet;
-  private int lastPrefixSetSize;
   private final ZipFile zipFile;
 
   public ZipFileClassPathEntry(ZipFile zipFile) {
@@ -74,13 +85,13 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
       allZipFileResources = buildIndex(logger);
     }
 
-    if (cachedAnswers == null || lastPrefixSet != pathPrefixSet
-        || lastPrefixSetSize != pathPrefixSet.getSize()) {
-      cachedAnswers = computeApplicableResources(logger, pathPrefixSet);
-      lastPrefixSet = pathPrefixSet;
-      lastPrefixSetSize = pathPrefixSet.getSize();
+    ZipFileSnapshot snapshot = cachedSnapshots.get(pathPrefixSet);
+    if (snapshot == null || snapshot.prefixSetSize != pathPrefixSet.getSize()) {
+      snapshot = new ZipFileSnapshot(pathPrefixSet.getSize(),
+          computeApplicableResources(logger, pathPrefixSet));
+      cachedSnapshots.put(pathPrefixSet, snapshot);
     }
-    return cachedAnswers;
+    return snapshot.cachedAnswers;
   }
 
   @Override

@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.util.tools.Utility;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,10 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.resource.Resource;
-import com.google.gwt.util.tools.Utility;
+import java.util.jar.JarFile;
 
 /**
  * Tests {@link ResourceOracleImpl}.
@@ -129,6 +130,37 @@ public class ResourceOracleImplTest extends AbstractResourceOrientedTestBase {
       }
       return null;
     }
+  }
+
+  public void testCachingOfJarResources() throws IOException,
+      URISyntaxException {
+    TreeLogger logger = createTestTreeLogger();
+    ClassPathEntry cpe1jar = new ZipFileClassPathEntry(new JarFile(
+        findJarFile("com/google/gwt/dev/resource/impl/testdata/cpe1.jar")));
+
+    // test basic caching
+    PathPrefixSet pps1 = new PathPrefixSet();
+    pps1.add(new PathPrefix("com/google/gwt", null, false));
+    Map<AbstractResource, PathPrefix> resourceMap1 = cpe1jar.findApplicableResources(
+        logger, pps1);
+    assertSame(resourceMap1, cpe1jar.findApplicableResources(logger, pps1));
+
+    // test that cache is invalidated if PathPrefixSet is modified.
+    pps1.add(new PathPrefix("com/google/gwt/user", null, false));
+    Map<AbstractResource, PathPrefix> resourceMap2 = cpe1jar.findApplicableResources(
+        logger, pps1);
+    assertNotSame(resourceMap1, resourceMap2);
+
+    PathPrefixSet pps2 = new PathPrefixSet();
+    pps2.add(new PathPrefix("org/example/bar", null, false));
+    Map<AbstractResource, PathPrefix> resourceMap3 = cpe1jar.findApplicableResources(
+        logger, pps2);
+    // check that the entry did go in the cache
+    assertSame(resourceMap3, cpe1jar.findApplicableResources(logger, pps2));
+
+    // check that the cache does not thrash
+    assertSame(resourceMap2, cpe1jar.findApplicableResources(logger, pps1));
+    assertSame(resourceMap3, cpe1jar.findApplicableResources(logger, pps2));
   }
 
   /**
