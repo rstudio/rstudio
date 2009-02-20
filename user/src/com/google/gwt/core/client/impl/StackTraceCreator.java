@@ -112,7 +112,7 @@ public class StackTraceCreator {
     }
 
     protected native JsArrayString getStack(JavaScriptObject e) /*-{
-      return !!e.stack ? e.stack.split('\n') : [];
+      return (e && e.stack) ? e.stack.split('\n') : [];
     }-*/;
 
     protected int toSplice() {
@@ -160,7 +160,7 @@ public class StackTraceCreator {
     }
 
     private native JsArrayString getMessage(JavaScriptObject e) /*-{
-      return !!e.message ? e.message.split('\n') : [];
+      return (e && e.message) ? e.message.split('\n') : [];
     }-*/;
 
     private native void setLength(JsArrayString obj, int length) /*-{
