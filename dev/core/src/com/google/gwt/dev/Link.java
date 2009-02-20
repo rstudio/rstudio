@@ -44,6 +44,7 @@ public class Link {
   /**
    * Options for Link.
    */
+  @Deprecated
   public interface LegacyLinkOptions extends CompileTaskOptions, OptionOutDir {
   }
 
