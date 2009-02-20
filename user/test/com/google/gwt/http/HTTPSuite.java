@@ -15,14 +15,14 @@
  */
 package com.google.gwt.http;
 
-import junit.framework.Test;
-
 import com.google.gwt.http.client.HTTPRequestTest;
 import com.google.gwt.http.client.RequestBuilderTest;
 import com.google.gwt.http.client.RequestTest;
 import com.google.gwt.http.client.ResponseTest;
 import com.google.gwt.http.client.URLTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
+
+import junit.framework.Test;
 
 /**
  * TODO: document me.

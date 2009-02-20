@@ -15,6 +15,10 @@
  */
 package com.google.gwt.dev.shell;
 
+import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.TreeLogger.HelpInfo;
+import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
+
 import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.util.concurrent.Callable;
@@ -22,10 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.TreeLogger.HelpInfo;
-import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 
 /**
  * Performs platform-specific class selection.

@@ -16,7 +16,6 @@
 package com.google.gwt.xhr.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.http.client.RequestBuilder;
 
 /**
  * The native XMLHttpRequest object. Most applications should use the higher-

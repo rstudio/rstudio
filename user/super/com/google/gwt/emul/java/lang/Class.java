@@ -101,14 +101,14 @@ public final class Class<T> {
     return clazz;
   }
   
+  int modifiers;
+
   private Class<?> componentType;
 
   @SuppressWarnings("unused")
   private JavaScriptObject enumConstantsFunc;
   
   private Class<? super T> enumSuperclass;
-
-  int modifiers;
 
   private String typeName;
 

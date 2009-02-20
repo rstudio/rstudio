@@ -15,14 +15,14 @@
  */
 package com.google.gwt.http.server;
 
+import com.google.gwt.http.client.RequestBuilderTest;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.google.gwt.http.client.RequestBuilderTest;
 
 /**
  * Servlet component of the
