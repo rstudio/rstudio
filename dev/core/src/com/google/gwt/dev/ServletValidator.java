@@ -40,7 +40,7 @@ class ServletValidator {
 
   public static ServletValidator create(TreeLogger logger, File webXml) {
     try {
-      return create(logger, webXml.toURL());
+      return create(logger, webXml.toURI().toURL());
     } catch (MalformedURLException e) {
       logger.log(TreeLogger.WARN, "Unable to process '"
           + webXml.getAbsolutePath() + "' for servlet validation", e);

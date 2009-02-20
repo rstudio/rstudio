@@ -68,7 +68,7 @@ public class ServletValidatorTest extends TestCase {
   public void testBadUrl() throws Exception {
     UnitTestTreeLogger.Builder builder = new UnitTestTreeLogger.Builder();
     builder.setLowestLogLevel(TreeLogger.WARN);
-    URL url = new File("nonexistent.web.xml").toURL();
+    URL url = new File("nonexistent.web.xml").toURI().toURL();
     builder.expectWarn("Unable to process '" + url.toExternalForm()
         + "' for servlet validation", IOException.class);
     UnitTestTreeLogger logger = builder.createLogger();
