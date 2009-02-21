@@ -18,8 +18,6 @@ package com.google.gwt.core.client.impl;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.impl.StackTraceCreator.Collector;
-import com.google.gwt.core.client.impl.StackTraceCreator.CollectorMoz;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
@@ -27,41 +25,33 @@ import com.google.gwt.junit.client.GWTTestCase;
  * static so that their names can be reliably determined in web mode.
  */
 public class StackTraceCreatorTest extends GWTTestCase {
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.core.Core";
-  }
-
   public static void testJavaScriptException() {
-    StackTraceElement[] stack = null;
+    Throwable t = null;
     try {
       throwNative();
+      fail("No exception thrown");
     } catch (JavaScriptException e) {
       /*
        * Some browsers may or may not be able to implement this at all, so we'll
        * at least make sure that an array is returned;
        */
-      stack = e.getStackTrace();
+      assertNotNull(e.getStackTrace());
+      if (e.getStackTrace().length == 0) {
+        assertTrue("hosted mode", GWT.isScript());
+        return;
+      } else {
+        t = e;
+      }
     }
-    assertNotNull(stack);
 
     String myName = null;
     if (!GWT.isScript()) {
       myName = "testJavaScriptException";
-    } else if (GWT.<Collector> create(Collector.class) instanceof CollectorMoz) {
-      myName = throwNativeName();
+    } else {
+      myName = testJavaScriptExceptionName();
     }
 
-    if (myName != null) {
-      boolean found = false;
-      for (StackTraceElement elt : stack) {
-        if (elt.getMethodName().equals(myName)) {
-          found = true;
-          break;
-        }
-      }
-      assertTrue("Did not find " + myName + " in the stack " + stack, found);
-    }
+    checkStack(myName, t);
   }
 
   /**
@@ -79,36 +69,51 @@ public class StackTraceCreatorTest extends GWTTestCase {
   }
 
   public static void testStackTraces() {
-    if (!GWT.isScript()) {
-      // StackTraceCreator.createStackTrace() is useless in hosted mode
-      return;
-    }
-
-    // Since we're in web mode, we can find the name of this method's function
-    String myName = testStackTracesName();
-
-    StackTraceElement[] stack;
+    Throwable t;
     try {
       throw new RuntimeException();
-    } catch (Throwable t) {
-      stack = t.getStackTrace();
+    } catch (Throwable t2) {
+      t = t2;
     }
 
-    assertNotNull(stack);
-    assertTrue(stack.length > 0);
+    String myName = null;
+    if (!GWT.isScript()) {
+      myName = "testStackTraces";
+    } else {
+      myName = testStackTracesName();
+    }
+
+    checkStack(myName, t);
+  }
+
+  private static void checkStack(String myName, Throwable t) {
+    assertNotNull("myName", myName);
+    assertNotNull("t", t);
+
+    assertEquals("Needs a trim()", myName.trim(), myName);
+    assertFalse("function", myName.startsWith("function"));
+    assertFalse("(", myName.contains("("));
+
+    StackTraceElement[] stack = t.getStackTrace();
+    assertNotNull("stack", stack);
+    assertTrue("stack.length", stack.length > 0);
 
     boolean found = false;
+    StringBuilder observedStack = new StringBuilder();
     for (int i = 0, j = stack.length; i < j; i++) {
       StackTraceElement elt = stack[i];
       String value = elt.getMethodName();
-      assertNotNull(value);
-      assertTrue(value.length() > 0);
-      assertEquals(value.length(), value.trim().length());
 
+      assertNotNull("value", value);
+      assertTrue("value.length", value.length() > 0);
+      assertEquals("value.trim()", value.length(), value.trim().length());
+
+      observedStack.append("\n").append(value);
       found |= myName.equals(value);
     }
 
-    assertTrue("Did not find " + myName + " in the stack " + stack, found);
+    assertTrue("Did not find " + myName + " in the stack " + observedStack,
+        found);
   }
 
   private static JsArrayString countDown(int count) {
@@ -119,19 +124,24 @@ public class StackTraceCreatorTest extends GWTTestCase {
     }
   }
 
+  private static native String testJavaScriptExceptionName() /*-{
+    var fn = @com.google.gwt.core.client.impl.StackTraceCreatorTest::testJavaScriptException();
+    return @com.google.gwt.core.client.impl.StackTraceCreator::extractNameFromToString(Ljava/lang/String;)(fn.toString());
+  }-*/;
+
   private static native String testStackTracesName() /*-{
     var fn = @com.google.gwt.core.client.impl.StackTraceCreatorTest::testStackTraces();
     return @com.google.gwt.core.client.impl.StackTraceCreator::extractNameFromToString(Ljava/lang/String;)(fn.toString());
   }-*/;
 
   private static native void throwNative() /*-{
-    throw new Error();
+    null.a();
   }-*/;
 
-  private static native String throwNativeName() /*-{
-    var fn = @com.google.gwt.core.client.impl.StackTraceCreatorTest::throwNative();
-    return @com.google.gwt.core.client.impl.StackTraceCreator::extractNameFromToString(Ljava/lang/String;)(fn.toString());
-  }-*/;
+  @Override
+  public String getModuleName() {
+    return "com.google.gwt.core.Core";
+  }
 
   public void testExtractName() {
     assertEquals("anonymous",
@@ -139,10 +149,14 @@ public class StackTraceCreatorTest extends GWTTestCase {
     assertEquals("anonymous",
         StackTraceCreator.extractNameFromToString("function (){}"));
     assertEquals("anonymous",
+        StackTraceCreator.extractNameFromToString("  function (){}"));
+    assertEquals("anonymous",
         StackTraceCreator.extractNameFromToString("function  (){}"));
     assertEquals("foo",
         StackTraceCreator.extractNameFromToString("function foo(){}"));
     assertEquals("foo",
         StackTraceCreator.extractNameFromToString("function foo (){}"));
+    assertEquals("foo",
+        StackTraceCreator.extractNameFromToString("  function foo (){}"));
   }
 }

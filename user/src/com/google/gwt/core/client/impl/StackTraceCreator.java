@@ -204,7 +204,7 @@ public class StackTraceCreator {
 
   static String extractNameFromToString(String fnToString) {
     String toReturn = "";
-
+    fnToString = fnToString.trim();
     int index = fnToString.indexOf("(");
     if (index != -1) {
       int start = fnToString.startsWith("function") ? 8 : 0;
@@ -215,7 +215,7 @@ public class StackTraceCreator {
   }
 
   private static native JsArrayString splice(JsArrayString arr, int length) /*-{
-    arr.splice(0, length);
+    (arr.length >= length) && arr.splice(0, length);
     return arr;
   }-*/;
 }
