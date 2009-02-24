@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.SingleJsoImpl;
+import com.google.gwt.dev.jjs.test.SingleJsoImplTest.JsoHasInnerJsoType.InnerType;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.io.IOException;
@@ -26,7 +26,6 @@ import java.io.IOException;
  */
 public class SingleJsoImplTest extends GWTTestCase {
 
-  @SingleJsoImpl
   interface Adder {
     int ADDER_CONST = 6;
 
@@ -44,9 +43,28 @@ public class SingleJsoImplTest extends GWTTestCase {
      * stack, so this ensures that we're handling that case correctly.
      */
     double add(double a, int b);
+
+    /*
+     * Ensure that we can return types whose sizes are larger than the size of
+     * the arguments.
+     */
+    long returnLong();
   }
 
-  @SingleJsoImpl
+  interface CallsMethodInInnerType {
+    interface InnerInterface {
+      void call(int a);
+
+      int get();
+    }
+
+    InnerInterface call(InnerInterface o, int a);
+  }
+
+  interface CallsStaticMethodInSubclass {
+    String call(int a, int b);
+  }
+
   interface Divider extends Multiplier {
     int divide(int a, int b);
   }
@@ -55,13 +73,17 @@ public class SingleJsoImplTest extends GWTTestCase {
     public double add(double a, int b) {
       return a + b;
     }
+
+    public long returnLong() {
+      return 5L;
+    }
   }
 
   /**
    * The extra declaration of implementing Multiplier should still be legal.
    */
   static class JavaDivider extends JavaMultiplier implements Divider,
-      Multiplier {
+      Multiplier, Tag {
     public int divide(int a, int b) {
       return a / b;
     }
@@ -87,28 +109,82 @@ public class SingleJsoImplTest extends GWTTestCase {
     protected JsoAdder() {
     }
 
-    public final native double add(double a, int b) /*-{return this.offset * (a + b);}-*/;
+    public final native double add(double a, int b) /*-{
+      return this.offset * (a + b);
+    }-*/;
+
+    public final long returnLong() {
+      return 5L;
+    }
   }
 
-  static class JsoDivider extends JsoMultiplier implements Divider {
+  static class JsoCallsStaticMethodInSubclass extends JavaScriptObject
+      implements CallsStaticMethodInSubclass {
+    protected JsoCallsStaticMethodInSubclass() {
+    }
+
+    public final native String call(int a, int b) /*-{
+      return "foo" + @com.google.gwt.dev.jjs.test.SingleJsoImplTest.JsoCallsStaticMethodInSubclassSubclass::actual(II)(a, b);
+    }-*/;
+  }
+
+  static class JsoCallsStaticMethodInSubclassSubclass extends
+      JsoCallsStaticMethodInSubclass {
+    public static String actual(int a, int b) {
+      return String.valueOf(a + b);
+    }
+
+    protected JsoCallsStaticMethodInSubclassSubclass() {
+    }
+  }
+
+  static class JsoDivider extends JsoMultiplier implements Divider, Tag {
     protected JsoDivider() {
     }
 
-    public final native int divide(int a, int b) /*-{return this.offset * a / b;}-*/;
+    public final native int divide(int a, int b) /*-{
+      return this.offset * a / b;
+    }-*/;
+  }
+
+  static class JsoHasInnerJsoType extends JavaScriptObject implements
+      CallsMethodInInnerType {
+    static class InnerType extends JavaScriptObject implements InnerInterface {
+      protected InnerType() {
+      }
+
+      public final native void call(int a) /*-{
+        this.foo = a;
+      }-*/;
+
+      public final native int get() /*-{
+        return this.foo;
+      }-*/;
+    }
+
+    protected JsoHasInnerJsoType() {
+    }
+
+    public final InnerInterface call(InnerInterface o, int a) {
+      o.call(a);
+      return o;
+    }
   }
 
   static class JsoMultiplier extends JavaScriptObject implements Multiplier {
     protected JsoMultiplier() {
     }
 
-    public final native int multiply(int a, int b) /*-{return this.offset * a * b;}-*/;
+    public final native int multiply(int a, int b) /*-{
+      return this.offset * a * b;
+    }-*/;
   }
 
   /**
    * Just a random JSO type for testing cross-casting.
    */
   final static class JsoRandom extends JavaScriptObject implements
-      SameDescriptors {
+      SameDescriptors, Tag {
     protected JsoRandom() {
     }
 
@@ -154,7 +230,6 @@ public class SingleJsoImplTest extends GWTTestCase {
     double log2(int a);
   }
 
-  @SingleJsoImpl
   interface Multiplier {
     int multiply(int a, int b);
   }
@@ -163,7 +238,6 @@ public class SingleJsoImplTest extends GWTTestCase {
    * This interface makes sure that types with identical method signatures will
    * still dispatch correctly.
    */
-  @SingleJsoImpl
   interface SameDescriptors {
     int SAME_NAME = 6;
 
@@ -174,7 +248,6 @@ public class SingleJsoImplTest extends GWTTestCase {
     int multiply(int a, int b);
   }
 
-  @SingleJsoImpl
   interface Simple {
     String a();
 
@@ -192,22 +265,39 @@ public class SingleJsoImplTest extends GWTTestCase {
     }
   }
 
-  @SingleJsoImpl
   interface SimpleOnlyJavaInterface {
     String simpleOnlyJava();
   }
 
-  private static native JsoAdder makeAdder(int offset) /*-{return {offset:offset};}-*/;
+  interface Tag {
+  }
 
-  private static native JsoDivider makeDivider(int offset) /*-{return {offset:offset};}-*/;
+  private static native JsoAdder makeAdder(int offset) /*-{
+    return {offset:offset};
+  }-*/;
 
-  private static native JsoMultiplier makeMultiplier(int offset) /*-{return {offset:offset};}-*/;
+  private static native JsoDivider makeDivider(int offset) /*-{
+    return {offset:offset};
+  }-*/;
 
-  private static native JsoSimple makeSimple() /*-{return {};}-*/;
+  private static native JsoMultiplier makeMultiplier(int offset) /*-{
+    return {offset:offset};
+  }-*/;
+
+  private static native JsoSimple makeSimple() /*-{
+    return {};
+  }-*/;
 
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  public void testCallsToInnerTypes() {
+    CallsMethodInInnerType a = (CallsMethodInInnerType) JavaScriptObject.createObject();
+    InnerType i = (InnerType) JavaScriptObject.createObject();
+    assertEquals(5, a.call(i, 5).get());
+    assertEquals(5, i.get());
   }
 
   public void testDualCase() {
@@ -218,6 +308,7 @@ public class SingleJsoImplTest extends GWTTestCase {
 
       JsoAdder jso = makeAdder(2);
       assertEquals(4.0, jso.add(1, 1));
+      assertEquals(5L, jso.returnLong());
     }
 
     // Just check dispatch via the interface
@@ -227,6 +318,7 @@ public class SingleJsoImplTest extends GWTTestCase {
 
       a = makeAdder(2);
       assertEquals(4.0, a.add(1, 1));
+      assertEquals(5L, a.returnLong());
     }
 
     // Check casting
@@ -234,8 +326,11 @@ public class SingleJsoImplTest extends GWTTestCase {
       Object a = new JavaAdder();
       assertEquals(2.0, ((Adder) a).add(1, 1));
       assertEquals(2.0, ((JavaAdder) a).add(1, 1));
+      assertEquals(5L, ((Adder) a).returnLong());
+      assertEquals(5L, ((JavaAdder) a).returnLong());
       assertTrue(a instanceof JavaAdder);
       assertFalse(a instanceof JsoAdder);
+      assertFalse(a instanceof Tag);
       try {
         ((JsoAdder) a).add(1, 1);
         fail("Should have thrown CCE");
@@ -246,8 +341,12 @@ public class SingleJsoImplTest extends GWTTestCase {
       a = makeAdder(2);
       assertEquals(4.0, ((Adder) a).add(1, 1));
       assertEquals(4.0, ((JsoAdder) a).add(1, 1));
+      assertEquals(5L, ((Adder) a).returnLong());
+      assertEquals(5L, ((JsoAdder) a).returnLong());
       assertTrue(a instanceof JsoAdder);
       assertFalse(a instanceof JavaAdder);
+      // NB: This is unexpected until you consider JSO$ as a roll-up type
+      assertTrue(a instanceof Tag);
       try {
         ((JavaAdder) a).add(1, 1);
         fail("Should have thrown CCE");
@@ -334,12 +433,21 @@ public class SingleJsoImplTest extends GWTTestCase {
     }
   }
 
+  public void testStaticCallsToSubclasses() {
+    Object o = "String";
+    assertEquals(String.class, o.getClass());
+    o = JavaScriptObject.createObject();
+    assertTrue(o instanceof CallsStaticMethodInSubclass);
+    assertEquals("foo5", ((CallsStaticMethodInSubclass) o).call(2, 3));
+  }
+
   @SuppressWarnings("cast")
   public void testSubclassing() {
     {
       JsoDivider d = makeDivider(1);
       assertTrue(d instanceof Divider);
       assertTrue(d instanceof Multiplier);
+      assertTrue(d instanceof Tag);
       assertEquals(5, d.divide(10, 2));
       assertEquals(10, d.multiply(5, 2));
       assertEquals(10, ((JsoMultiplier) d).multiply(5, 2));
@@ -353,6 +461,7 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(d instanceof JsoMultiplier);
       assertFalse(d instanceof JavaDivider);
       assertFalse(d instanceof JavaMultiplier);
+      assertTrue(d instanceof Tag);
 
       assertEquals(5, ((Divider) d).divide(10, 2));
       assertEquals(10, ((Divider) d).multiply(5, 2));
@@ -367,6 +476,7 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(d instanceof JavaMultiplier);
       assertFalse(d instanceof JsoDivider);
       assertFalse(d instanceof JsoMultiplier);
+      assertTrue(d instanceof Tag);
 
       assertEquals(5, ((Divider) d).divide(10, 2));
       assertEquals(10, ((Divider) d).multiply(5, 2));

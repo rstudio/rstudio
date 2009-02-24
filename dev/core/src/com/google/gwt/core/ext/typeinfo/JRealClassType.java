@@ -15,8 +15,6 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.core.client.SingleJsoImpl;
-
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -95,12 +93,6 @@ public class JRealClassType extends JClassType {
   public void addAnnotations(
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
     annotations.addAnnotations(declaredAnnotations);
-    for (Class<? extends Annotation> clazz : declaredAnnotations.keySet()) {
-      if (SingleJsoImpl.class.equals(clazz)) {
-        oracle.addSingleJsoInterface(this);
-        break;
-      }
-    }
   }
 
   public void addImplementedInterface(JClassType intf) {

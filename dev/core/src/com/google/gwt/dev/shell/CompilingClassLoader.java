@@ -22,13 +22,14 @@ import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
+import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
-import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JsniMethod;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter;
 import com.google.gwt.dev.shell.rewrite.HostedModeClassRewriter.InstanceMethodOracle;
 import com.google.gwt.dev.util.JsniRef;
@@ -813,7 +814,7 @@ public final class CompilingClassLoader extends ClassLoader implements
       SortedMap<String, com.google.gwt.dev.asm.commons.Method> mangledNamesToImplementations) {
 
     // Loop over all types declared with the SingleJsoImpl annotation
-    typeLoop : for (JClassType type : typeOracle.getSingleJsoImplTypes()) {
+    typeLoop : for (JClassType type : typeOracle.getSingleJsoImplInterfaces()) {
       assert type.isInterface() == type : "Expecting interfaces only";
 
       /*
@@ -842,11 +843,10 @@ public final class CompilingClassLoader extends ClassLoader implements
          * 
          * @SingleJsoImpl interface C extends A, B {}
          * 
-         * Methods interited from interfaces A and B must be dispatched to their
+         * Methods inherited from interfaces A and B must be dispatched to their
          * respective JSO implementations.
          */
-        JClassType implementingType = findImplementingJsoType(m,
-            m.getEnclosingType().getSubtypes());
+        JClassType implementingType = typeOracle.getSingleJsoImpl(m.getEnclosingType());
 
         if (implementingType == null) {
           /*
@@ -880,11 +880,11 @@ public final class CompilingClassLoader extends ClassLoader implements
          * 
          * This must be kept in sync with the WriteJsoImpl class.
          */
-        String decl = m.getReturnType().getParameterizedQualifiedSourceName()
-            + " " + m.getName() + "$ (" + getBinaryName(implementingType);
+        String decl = getBinaryOrPrimitiveName(m.getReturnType()) + " "
+            + m.getName() + "$ (" + getBinaryOrPrimitiveName(implementingType);
         for (JParameter p : m.getParameters()) {
           decl += ",";
-          decl += p.getType().getParameterizedQualifiedSourceName();
+          decl += getBinaryOrPrimitiveName(p.getType());
         }
         decl += ")";
 
@@ -992,39 +992,23 @@ public final class CompilingClassLoader extends ClassLoader implements
     return classBytes;
   }
 
-  private JClassType findImplementingJsoType(JMethod toImplement,
-      JClassType[] types) {
-    JClassType jsoType = typeOracle.findType(JsValueGlue.JSO_CLASS);
-    JType[] paramTypes = new JType[toImplement.getParameters().length];
-    for (int i = 0, j = paramTypes.length; i < j; i++) {
-      paramTypes[i] = toImplement.getParameters()[i].getType();
-    }
-
-    for (JClassType type : types) {
-      if (type == null) {
-        continue;
-      } else if (type.isAbstract()) {
-        continue;
-      } else if (!type.isAssignableTo(jsoType)) {
-        continue;
-      } else {
-        try {
-          JMethod m = type.getMethod(toImplement.getName(), paramTypes);
-          if (!m.isAbstract()) {
-            return type;
-          }
-        } catch (NotFoundException e) {
-          // Ignore
-        }
-      }
-    }
-    return null;
-  }
-
   private String getBinaryName(JClassType type) {
     String name = type.getPackage().getName() + '.';
     name += type.getName().replace('.', '$');
     return name;
+  }
+
+  private String getBinaryOrPrimitiveName(JType type) {
+    JClassType asClass = type.isClassOrInterface();
+    JPrimitiveType asPrimitive = type.isPrimitive();
+    if (asClass != null) {
+      return getBinaryName(asClass);
+    } else if (asPrimitive != null) {
+      return asPrimitive.getQualifiedSourceName();
+    } else {
+      throw new InternalCompilerException("Cannot create binary name for "
+          + type.getQualifiedSourceName());
+    }
   }
 
   /**

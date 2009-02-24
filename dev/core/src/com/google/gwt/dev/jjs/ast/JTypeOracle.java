@@ -665,10 +665,16 @@ public class JTypeOracle implements Serializable {
           continue;
         }
         JInterfaceType intr = (JInterfaceType) refType;
+
         if (intr.methods.size() <= 1) {
-          // Ignore tag interfaces
+          /*
+           * Record a tag interface as being implemented by JSO, since they
+           * don't actually have any methods and we want to avoid spurious
+           * messages about multiple JSO types implementing a common interface.
+           */
           assert intr.methods.size() == 0
               || intr.methods.get(0).getName().equals("$clinit");
+          jsoSingleImpls.put(intr, program.getJavaScriptObject());
           continue;
         }
 
@@ -678,6 +684,7 @@ public class JTypeOracle implements Serializable {
 
           if (allAssignableFrom(alreadySeen).contains(type)) {
             jsoSingleImpls.put(intr, (JClassType) type);
+
           } else {
             assert allAssignableFrom(type).contains(alreadySeen) : "Already recorded "
                 + alreadySeen.getName()

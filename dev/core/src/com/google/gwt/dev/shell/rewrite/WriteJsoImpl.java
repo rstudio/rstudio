@@ -150,6 +150,10 @@ abstract class WriteJsoImpl extends ClassAdapter {
           mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), var);
           var += t.getSize();
         }
+
+        // Make sure there's enough room for the return value
+        size = Math.max(size, implementingMethod.getReturnType().getSize());
+
         mv.visitMethodInsn(Opcodes.INVOKESTATIC,
             implementingType.getInternalName(), implementingMethod.getName(),
             implementingMethod.getDescriptor());

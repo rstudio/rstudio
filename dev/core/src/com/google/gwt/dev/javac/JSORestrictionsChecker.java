@@ -15,14 +15,12 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.core.client.SingleJsoImpl;
 import com.google.gwt.dev.util.InstalledHelpInfo;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.ASTNode;
 import org.eclipse.jdt.internal.compiler.ast.AllocationExpression;
-import org.eclipse.jdt.internal.compiler.ast.Annotation;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.ConstructorDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
@@ -37,7 +35,6 @@ import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -71,13 +68,6 @@ public class JSORestrictionsChecker {
   public static class CheckerState {
 
     /**
-     * This maps interfaces tagged with the SingleJsoImpl annotation to the
-     * names of their declared super-interfaces.
-     */
-    private final Map<TypeDeclaration, Set<String>> interfacesToSuperInterfaces = new HashMap<TypeDeclaration, Set<String>>();
-    private final Map<TypeDeclaration, Set<String>> trivialToSuperInterfaces = new HashMap<TypeDeclaration, Set<String>>();
-
-    /**
      * This maps JSO implementation types to their implemented SingleJsoImpl
      * interfaces.
      */
@@ -89,63 +79,17 @@ public class JSORestrictionsChecker {
     private final Map<TypeDeclaration, CompilationUnitDeclaration> nodesToCuds = new IdentityHashMap<TypeDeclaration, CompilationUnitDeclaration>();
 
     /**
-     * A convenience for validity checking.
-     */
-    private final Set<String> singleJsoImplInterfaceNames = new HashSet<String>();
-    private final Set<String> trivialInterfaceNames = new HashSet<String>();
-
-    /**
-     * Just used for sanity checking. Not populated unless assertions are on.
-     */
-    private final Set<String> regularInterfaceNames = getClass().desiredAssertionStatus()
-        ? new HashSet<String>() : null;
-
-    /**
      * This method should be called after all CUDs are passed into check().
      */
     public void finalCheck() {
       /*
-       * Compute all interfaces that are completely trivial.
-       */
-      Set<String> tagInterfaceNames = new HashSet<String>();
-      for (Map.Entry<TypeDeclaration, Set<String>> entry : trivialToSuperInterfaces.entrySet()) {
-        if (entry.getValue().isEmpty()
-            || trivialInterfaceNames.containsAll(entry.getValue())) {
-          tagInterfaceNames.add(CharOperation.toString(entry.getKey().binding.compoundName));
-        }
-      }
-
-      /*
-       * Make sure that all SingleJsoImpl interfaces extends only SingleJsoImpl
-       * interfaces or tag interfaces.
-       */
-      for (Map.Entry<TypeDeclaration, Set<String>> entry : interfacesToSuperInterfaces.entrySet()) {
-        TypeDeclaration node = entry.getKey();
-
-        for (String intfName : entry.getValue()) {
-          if (tagInterfaceNames.contains(intfName)
-              || singleJsoImplInterfaceNames.contains(intfName)) {
-            continue;
-          } else {
-            assert regularInterfaceNames.contains(intfName);
-            errorOn(node, nodesToCuds.get(node), ERR_INTF_EXTENDS_BAD_INTF);
-          }
-        }
-      }
-
-      /*
-       * Make sure that any interfaces implemented by the JSO types have the
-       * SingleJsoImpl annotation. Also, check the one-and-only JSO
-       * implementation of the interface types.
+       * Ensure that every interfaces has exactly zero or one JSO subtype that
+       * implements it.
        */
       Map<String, TypeDeclaration> singleImplementations = new HashMap<String, TypeDeclaration>();
       for (Map.Entry<TypeDeclaration, Set<String>> entry : jsoImplsToInterfaces.entrySet()) {
         TypeDeclaration node = entry.getKey();
         for (String intfName : entry.getValue()) {
-          if (!singleJsoImplInterfaceNames.contains(intfName)) {
-            errorOn(node, nodesToCuds.get(node),
-                errInterfaceWithMethodsNoAnnotation(intfName));
-          }
 
           if (!singleImplementations.containsKey(intfName)) {
             singleImplementations.put(intfName, node);
@@ -181,15 +125,8 @@ public class JSORestrictionsChecker {
     public void retainAll(Collection<CompilationUnit> units) {
       // Fast-path for removing everything
       if (units.isEmpty()) {
-        interfacesToSuperInterfaces.clear();
-        trivialToSuperInterfaces.clear();
         jsoImplsToInterfaces.clear();
         nodesToCuds.clear();
-        singleJsoImplInterfaceNames.clear();
-        trivialInterfaceNames.clear();
-        if (regularInterfaceNames != null) {
-          regularInterfaceNames.clear();
-        }
         return;
       }
 
@@ -211,22 +148,8 @@ public class JSORestrictionsChecker {
         if (!retainedTypeNames.contains(CharOperation.toString(decl.binding.compoundName))) {
           it.remove();
 
-          assert interfacesToSuperInterfaces.containsKey(decl)
-              || trivialToSuperInterfaces.containsKey(decl)
-              || jsoImplsToInterfaces.containsKey(decl) : "TypeDeclaration "
-              + CharOperation.toString(decl.binding.compoundName)
-              + " in nodesToCuds, but not in any of the maps";
-
-          interfacesToSuperInterfaces.remove(decl);
-          trivialToSuperInterfaces.remove(decl);
           jsoImplsToInterfaces.remove(decl);
         }
-      }
-
-      singleJsoImplInterfaceNames.retainAll(retainedTypeNames);
-      trivialInterfaceNames.retainAll(retainedTypeNames);
-      if (regularInterfaceNames != null) {
-        regularInterfaceNames.retainAll(retainedTypeNames);
       }
     }
 
@@ -245,12 +168,6 @@ public class JSORestrictionsChecker {
       add(jsoImplsToInterfaces, jsoType, interfaceName);
     }
 
-    private void empty(Map<TypeDeclaration, Set<String>> map,
-        TypeDeclaration key) {
-      assert !map.containsKey(key);
-      map.put(key, Collections.<String> emptySet());
-    }
-
     private boolean hasSupertypeNamed(TypeDeclaration type, char[][] qType) {
       ReferenceBinding b = type.binding;
       while (b != null) {
@@ -260,36 +177,6 @@ public class JSORestrictionsChecker {
         b = b.superclass();
       }
       return false;
-    }
-
-    private void jsoSingleImplInterface(TypeDeclaration type,
-        CompilationUnitDeclaration cud, String superInterface) {
-      nodesToCuds.put(type, cud);
-      singleJsoImplInterfaceNames.add(CharOperation.toString(type.binding.compoundName));
-      if (superInterface == null) {
-        empty(interfacesToSuperInterfaces, type);
-      } else {
-        add(interfacesToSuperInterfaces, type, superInterface);
-      }
-    }
-
-    private void regularInterface(TypeDeclaration intfType,
-        CompilationUnitDeclaration cud, String superInterfaceName) {
-      // Just used for sanity checking
-      if (getClass().desiredAssertionStatus()) {
-        regularInterfaceNames.add(CharOperation.toString(intfType.binding.compoundName));
-      }
-    }
-
-    private void trivialInterface(TypeDeclaration intfType,
-        CompilationUnitDeclaration cud, String superInterfaceName) {
-      nodesToCuds.put(intfType, cud);
-      trivialInterfaceNames.add(CharOperation.toString(intfType.binding.compoundName));
-      if (superInterfaceName == null) {
-        empty(trivialToSuperInterfaces, intfType);
-      } else {
-        add(trivialToSuperInterfaces, intfType, superInterfaceName);
-      }
     }
   }
 
@@ -387,64 +274,10 @@ public class JSORestrictionsChecker {
     }
 
     private boolean checkType(TypeDeclaration type) {
-      /*
-       * See if we're looking at something tagged with a SingleJsoImpl
-       * annotation.
-       */
-      if (type.annotations != null) {
-        for (Annotation a : type.annotations) {
-          if (!(a.resolvedType instanceof ReferenceBinding)) {
-            continue;
-          }
-
-          ReferenceBinding refBinding = (ReferenceBinding) a.resolvedType;
-          if (!SINGLE_JSO_IMPL_CLASS.equals(new String(
-              refBinding.readableName()))) {
-            continue;
-          }
-
-          if (!type.binding.isInterface()) {
-            errorOn(type, ERR_ONLY_INTERFACES);
-            continue;
-          }
-
-          // Interfaces should not have superclasses, just super-interfaces
-          assert type.superclass == null;
-
-          if (type.superInterfaces != null) {
-            for (ReferenceBinding ref : type.binding.superInterfaces) {
-              String superInterfaceName = CharOperation.toString(ref.compoundName);
-              state.jsoSingleImplInterface(type, cud, superInterfaceName);
-            }
-          } else {
-            state.jsoSingleImplInterface(type, cud, null);
-          }
-        }
-      }
-
-      if (type.binding.isInterface()) {
-        boolean isTrivial = type.methods == null || type.methods.length == 0;
-        if (type.superInterfaces != null) {
-          for (ReferenceBinding ref : type.binding.superInterfaces) {
-            String superInterfaceName = CharOperation.toString(ref.compoundName);
-            if (isTrivial) {
-              state.trivialInterface(type, cud, superInterfaceName);
-            } else {
-              state.regularInterface(type, cud, superInterfaceName);
-            }
-          }
-        } else {
-          if (isTrivial) {
-            state.trivialInterface(type, cud, null);
-          } else {
-            state.regularInterface(type, cud, null);
-          }
-        }
-      }
-
       if (!isJsoSubclass(type.binding)) {
         return false;
       }
+
       if (type.enclosingType != null && !type.binding.isStatic()) {
         errorOn(type, ERR_IS_NONSTATIC_NESTED);
       }
@@ -482,15 +315,12 @@ public class JSORestrictionsChecker {
   static final String ERR_CONSTRUCTOR_WITH_PARAMETERS = "Constructors must not have parameters in subclasses of JavaScriptObject";
   static final String ERR_INSTANCE_FIELD = "Instance fields cannot be used in subclasses of JavaScriptObject";
   static final String ERR_INSTANCE_METHOD_NONFINAL = "Instance methods must be 'final' in non-final subclasses of JavaScriptObject";
-  static final String ERR_INTF_EXTENDS_BAD_INTF = "SingleJsoImpl interfaces must only extend other SingleJsoImpl interfaces or tag interfaces";
   static final String ERR_IS_NONSTATIC_NESTED = "Nested classes must be 'static' if they extend JavaScriptObject";
   static final String ERR_NEW_JSO = "'new' cannot be used to create instances of JavaScriptObject subclasses; instances must originate in JavaScript";
   static final String ERR_NONEMPTY_CONSTRUCTOR = "Constructors must be totally empty in subclasses of JavaScriptObject";
   static final String ERR_NONPROTECTED_CONSTRUCTOR = "Constructors must be 'protected' in subclasses of JavaScriptObject";
-  static final String ERR_ONLY_INTERFACES = "SingleJsoImpl may only be applied to interface types";
   static final String ERR_OVERRIDDEN_METHOD = "Methods cannot be overridden in JavaScriptObject subclasses";
   static final String JSO_CLASS = "com/google/gwt/core/client/JavaScriptObject";
-  static final String SINGLE_JSO_IMPL_CLASS = SingleJsoImpl.class.getName();
 
   /**
    * Checks an entire
@@ -504,14 +334,9 @@ public class JSORestrictionsChecker {
 
   static String errAlreadyImplemented(String intfName, String impl1,
       String impl2) {
-    return "Only one JavaScriptObject type may implement the methods of a "
-        + "@SingleJsoImpl type interface. The interface (" + intfName
+    return "Only one JavaScriptObject type may implement the methods of an "
+        + "interface that declared methods. The interface (" + intfName
         + ") is implemented by both (" + impl1 + ") and (" + impl2 + ")";
-  }
-
-  static String errInterfaceWithMethodsNoAnnotation(String intfName) {
-    return "JavaScriptObject classes cannot implement interfaces with methods ("
-        + intfName + ") that do not define the @SingleJsoImpl annotation";
   }
 
   private static void errorOn(ASTNode node, CompilationUnitDeclaration cud,

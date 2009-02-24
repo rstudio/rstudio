@@ -33,21 +33,6 @@ public class JSORestrictionsTest extends TestCase {
     }
   }
 
-  public void testAnnotationOnClass() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    buggyCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  @SingleJsoImpl \n");
-    buggyCode.append("  static class Squeaks {\n");
-    buggyCode.append("    public void squeak() {}\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 5: "
-        + JSORestrictionsChecker.ERR_ONLY_INTERFACES);
-  }
-
   public void testFinalClass() {
     StringBuffer code = new StringBuffer();
     code.append("import com.google.gwt.core.client.JavaScriptObject;\n");
@@ -62,13 +47,10 @@ public class JSORestrictionsTest extends TestCase {
   public void testImplementsInterfaces() {
     StringBuffer goodCode = new StringBuffer();
     goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    goodCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
     goodCode.append("public class Buggy {\n");
-    goodCode.append("  @SingleJsoImpl\n");
     goodCode.append("  static interface Squeaks {\n");
     goodCode.append("    public void squeak();\n");
     goodCode.append("  }\n");
-    goodCode.append("  @SingleJsoImpl \n");
     goodCode.append("  static interface Squeaks2 extends Squeaks {\n");
     goodCode.append("    public void squeak();\n");
     goodCode.append("    public void squeak2();\n");
@@ -112,9 +94,7 @@ public class JSORestrictionsTest extends TestCase {
   public void testMultipleImplementations() {
     StringBuffer buggyCode = new StringBuffer();
     buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    buggyCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
     buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  @SingleJsoImpl\n");
     buggyCode.append("  static interface Squeaks {\n");
     buggyCode.append("    public void squeak();\n");
     buggyCode.append("  }\n");
@@ -128,9 +108,9 @@ public class JSORestrictionsTest extends TestCase {
     buggyCode.append("  }\n");
     buggyCode.append("}\n");
 
-    shouldGenerateError(buggyCode, "Line 8: "
+    shouldGenerateError(buggyCode, "Line 6: "
         + JSORestrictionsChecker.errAlreadyImplemented("Buggy$Squeaks",
-            "Buggy$Squeaker", "Buggy$Squeaker2"), "Line 12: "
+            "Buggy$Squeaker", "Buggy$Squeaker2"), "Line 10: "
         + JSORestrictionsChecker.errAlreadyImplemented("Buggy$Squeaks",
             "Buggy$Squeaker", "Buggy$Squeaker2"));
   }
@@ -152,103 +132,15 @@ public class JSORestrictionsTest extends TestCase {
   public void testNoAnnotationOnInterfaceSubtype() {
     StringBuffer goodCode = new StringBuffer();
     goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    goodCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
     goodCode.append("public class Buggy {\n");
-    goodCode.append("  @SingleJsoImpl\n");
     goodCode.append("  static interface Squeaks {\n");
     goodCode.append("    public void squeak();\n");
     goodCode.append("  }\n");
-    goodCode.append("  /* @SingleJsoImpl */\n");
     goodCode.append("  static interface Sub extends Squeaks {\n");
     goodCode.append("  }\n");
     goodCode.append("}\n");
 
     shouldGenerateNoError(goodCode);
-  }
-
-  public void testNoAnnotationOnInterfaceSupertype() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    buggyCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  /* @SingleJsoImpl */ \n");
-    buggyCode.append("  static interface Squeaks {\n");
-    buggyCode.append("    public void squeak();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("  @SingleJsoImpl \n");
-    buggyCode.append("  static interface Sub extends Squeaks {\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 9: "
-        + JSORestrictionsChecker.ERR_INTF_EXTENDS_BAD_INTF);
-  }
-
-  public void testNoAnnotationOnInterfaceSupertypeSandwich() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    buggyCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  @SingleJsoImpl\n");
-    buggyCode.append("  static interface Squeaks {\n");
-    buggyCode.append("    public void squeak();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("  /* @SingleJsoImpl */\n");
-    buggyCode.append("  static interface Squeaks2 extends Squeaks {\n");
-    buggyCode.append("    public void squeak2();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("  @SingleJsoImpl\n");
-    buggyCode.append("  static interface Squeaks3 extends Squeaks2 {\n");
-    buggyCode.append("    public void squeak3();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(buggyCode, "Line 13: "
-        + JSORestrictionsChecker.ERR_INTF_EXTENDS_BAD_INTF);
-  }
-
-  public void testNoAnnotationOnOtherwiseValidInterfaces() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  static interface Squeaks {\n");
-    buggyCode.append("    public void squeak();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("  static class Squeaker extends JavaScriptObject implements Squeaks {\n");
-    buggyCode.append("    public final void squeak() { }\n");
-    buggyCode.append("    protected Squeaker() { }\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(
-        buggyCode,
-        "Line 6: "
-            + JSORestrictionsChecker.errInterfaceWithMethodsNoAnnotation(("Buggy$Squeaks")));
-  }
-
-  public void testNoAnnotationOnOtherwiseValidDerivedInterfaces() {
-    StringBuffer buggyCode = new StringBuffer();
-    buggyCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    buggyCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
-    buggyCode.append("public class Buggy {\n");
-    buggyCode.append("  @SingleJsoImpl\n");
-    buggyCode.append("  static interface Squeaks {\n");
-    buggyCode.append("    public void squeak();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("  static interface Squeaks2 extends Squeaks {\n");
-    buggyCode.append("    public void squeak2();\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("  static class Squeaker extends JavaScriptObject implements Squeaks2 {\n");
-    buggyCode.append("    public final void squeak() { }\n");
-    buggyCode.append("    public final void squeak2() { }\n");
-    buggyCode.append("    protected Squeaker() { }\n");
-    buggyCode.append("  }\n");
-    buggyCode.append("}\n");
-
-    shouldGenerateError(
-        buggyCode,
-        "Line 11: "
-            + JSORestrictionsChecker.errInterfaceWithMethodsNoAnnotation(("Buggy$Squeaks2")));
   }
 
   public void testNoConstructor() {
@@ -288,9 +180,7 @@ public class JSORestrictionsTest extends TestCase {
   public void testNonJsoInterfaceExtension() {
     StringBuffer goodCode = new StringBuffer();
     goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    goodCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
     goodCode.append("public class Buggy {\n");
-    goodCode.append("  @SingleJsoImpl\n");
     goodCode.append("  static interface Squeaks {\n");
     goodCode.append("    public void squeak();\n");
     goodCode.append("  }\n");
@@ -361,11 +251,9 @@ public class JSORestrictionsTest extends TestCase {
   public void testTagInterfaces() {
     StringBuffer goodCode = new StringBuffer();
     goodCode.append("import com.google.gwt.core.client.JavaScriptObject;\n");
-    goodCode.append("import com.google.gwt.core.client.SingleJsoImpl;\n");
     goodCode.append("public class Buggy {\n");
     goodCode.append("  static interface Tag {}\n");
     goodCode.append("  static interface Tag2 extends Tag {}\n");
-    goodCode.append("  @SingleJsoImpl \n");
     goodCode.append("  static interface IntrExtendsTag extends Tag2 {\n");
     goodCode.append("    public void intrExtendsTag();\n");
     goodCode.append("  }\n");

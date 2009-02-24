@@ -15,28 +15,21 @@ Rationales are written <em>like this</em>.</p>
   explicitly final, a member of a final class, or private. <em>Methods
   of JSO classes cannot be overridden, because calls to such methods
   could require dynamic dispatch.</em></li>
-  <li>JSO classes may implement interfaces that define methods, but
-  only if those interfaces are annotated with <code>@SingleJsoImpl</code>.
-  <em>This ensures that polymorphic dispatch via a <code>@SingleJsoImpl</code>
-  interface can be statically resolved to exactly one implementing JSO
-  subtype.</em>
+  <li>An interface type may be implemented by at most one JSO
+  subtype. <em>This ensures that polymorphic dispatch via a
+  "SingleJsoImpl" interface can be statically resolved to exactly one
+  implementing JSO subtype.</em>
   <ol>
-    <li>A <code>@SingleJsoImpl</code> interface may only extend
-    "tag" interfaces that declare no methods or other interfaces
-    annotated with <code>@SingleJsoImpl</code>.</li>
-    <li>It is valid for a <code>@SingleJsoImpl</code> interface to
-    be extended by an interface that is not annotated in this fashion,
-    however the sub-interface may not be implemented by any <code>JavaScriptObjects</code>.</li>
-    <li>A <code>JavaScriptObject</code> that implements a <code>@SingleJsoImpl</code>
-    interface may be further extended. The subclasses may implement
-    additional <code>@SingleJsoImpl</code> interfaces. <em>The
-    methods on a JSO must be effectively final, so each <code>@SingleJsoImpl</code>
+    <li>A <code>JavaScriptObject</code> that implements a
+    "SingleJsoImpl" interface may be further extended. The subclasses
+    may implement additional "SingleJsoImpl" interfaces. <em>The
+    methods on a JSO must be effectively final, so each "SingleJsoImpl"
     method still has a 1:1 mapping to a method defined within a JSO
     subtype.</em></li>
     <li>It is valid for any number of any non-<code>JavaScriptObject</code>
-    types to implement a <code>@SingleJsoImpl</code> interface. <em>There
-    is a runtime dispatch penalty when a <code>@SingleJsoImpl</code>
-    interface is implemented by both JSO and non-JSO types.</em></li>
+    types to implement a "SingleJsoImpl" interface. <em>There is a
+    slight runtime dispatch penalty when a "SingleJsoImpl" interface is
+    implemented by both JSO and non-JSO types.</em></li>
   </ol>
   </li>
   <li>No instance methods on JSO classes may override another

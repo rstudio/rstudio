@@ -221,6 +221,10 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
           mv.visitVarInsn(t.getOpcode(Opcodes.ILOAD), var);
           var += t.getSize();
         }
+
+        // Make sure there's enough room for the return value
+        size = Math.max(size, toCall.getReturnType().getSize());
+
         mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, currentTypeName,
             toCall.getName(), toCall.getDescriptor());
         mv.visitInsn(toCall.getReturnType().getOpcode(Opcodes.IRETURN));

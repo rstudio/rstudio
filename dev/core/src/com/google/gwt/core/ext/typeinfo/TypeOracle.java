@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.typeinfo;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.generator.GenUtil;
+import com.google.gwt.dev.shell.JsValueGlue;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -199,7 +200,10 @@ public class TypeOracle {
 
   private final Map<String, List<JWildcardType>> wildcardTypes = new HashMap<String, List<JWildcardType>>();
 
-  private final Set<JRealClassType> singleJsoImplTypes = new HashSet<JRealClassType>();
+  /**
+   * Maps SingleJsoImpl interfaces to the implementing JSO subtype.
+   */
+  private final Map<JClassType, JClassType> jsoSingleImpls = new IdentityHashMap<JClassType, JClassType>();
 
   public TypeOracle() {
     // Always create the default package.
@@ -256,6 +260,7 @@ public class TypeOracle {
   public void finish(TreeLogger logger) {
     JClassType[] newTypes = recentTypes.toArray(NO_JCLASSES);
     computeHierarchyRelationships(newTypes);
+    computeSingleJsoImplData(logger, newTypes);
     consumeTypeArgMetaData(logger, newTypes);
     recentTypes.clear();
   }
@@ -437,11 +442,21 @@ public class TypeOracle {
   }
 
   /**
-   * Returns an unmodifiable, live view of all interface types annotated with
-   * the SingleJsoImpl annotation.
+   * Returns the single implementation type for an interface returned via
+   * {@link #getSingleJsoImplInterfaces()} or <code>null</code> if no JSO
+   * implementation is defined.
    */
-  public Set<JRealClassType> getSingleJsoImplTypes() {
-    return Collections.unmodifiableSet(singleJsoImplTypes);
+  public JClassType getSingleJsoImpl(JClassType intf) {
+    assert intf.isInterface() == intf;
+    return jsoSingleImpls.get(intf);
+  }
+
+  /**
+   * Returns an unmodifiable, live view of all interface types that are
+   * implemented by exactly one JSO subtype.
+   */
+  public Set<JClassType> getSingleJsoImplInterfaces() {
+    return Collections.unmodifiableSet(jsoSingleImpls.keySet());
   }
 
   /**
@@ -616,12 +631,6 @@ public class TypeOracle {
     recentTypes.add(newType);
   }
 
-  void addSingleJsoInterface(JRealClassType singleJsoImplType) {
-    assert singleJsoImplType.isInterface() == singleJsoImplType : singleJsoImplType.getName()
-        + " has SingleJsoImpl, but is not an interface";
-    singleJsoImplTypes.add(singleJsoImplType);
-  }
-
   void invalidate(JRealClassType realClassType) {
     invalidatedTypes.add(realClassType);
   }
@@ -632,6 +641,61 @@ public class TypeOracle {
     for (int i = 0; i < types.length; i++) {
       JClassType type = types[i];
       type.notifySuperTypes();
+    }
+  }
+
+  /**
+   * Updates the list of jsoSingleImpl types from recently-added types.
+   */
+  private void computeSingleJsoImplData(TreeLogger logger, JClassType[] newTypes) {
+    JClassType jsoType = findType(JsValueGlue.JSO_CLASS);
+    if (jsoType == null) {
+      return;
+    }
+
+    for (JClassType type : newTypes) {
+      if (!jsoType.isAssignableFrom(type)) {
+        continue;
+      }
+
+      for (JClassType intf : JClassType.getFlattenedSuperTypeHierarchy(type)) {
+        if (intf.isInterface() == null) {
+          // Not an interface
+          continue;
+        }
+
+        if (intf.getOverridableMethods().length == 0) {
+          /*
+           * Record a tag interface as being implemented by JSO, since they
+           * don't actually have any methods and we want to avoid spurious
+           * messages about multiple JSO types implementing a common interface.
+           */
+          jsoSingleImpls.put(intf, jsoType);
+          continue;
+        }
+
+        /*
+         * If the previously-registered implementation type for a SingleJsoImpl
+         * interface is a subtype of the type we're currently looking at, we
+         * want to choose the least-derived class.
+         */
+        JClassType previousType = jsoSingleImpls.get(intf);
+        if (previousType == null) {
+          jsoSingleImpls.put(intf, type);
+        } else if (type.isAssignableFrom(previousType)) {
+          jsoSingleImpls.put(intf, type);
+        } else if (type.isAssignableTo(previousType)) {
+          // Do nothing
+        } else {
+          // This should have been taken care of by JSORetrictionsChecker
+          logger.log(TreeLogger.ERROR,
+              "Already seen an implementing JSO subtype ("
+                  + previousType.getName() + ") for interface ("
+                  + intf.getName() + ") while examining newly-added type ("
+                  + type.getName() + "). This is a bug in "
+                  + "JSORestrictionsChecker.");
+        }
+      }
     }
   }
 
@@ -1000,7 +1064,7 @@ public class TypeOracle {
       JRealClassType classType = iter.next();
       String fqcn = classType.getQualifiedSourceName();
       allTypes.remove(fqcn);
-      singleJsoImplTypes.remove(classType);
+      jsoSingleImpls.remove(classType);
       JPackage pkg = classType.getPackage();
       if (pkg != null) {
         pkg.remove(classType);
