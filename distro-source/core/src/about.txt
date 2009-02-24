@@ -1,6 +1,6 @@
 Google Web Toolkit @GWT_VERSION@
 (svn revision @GWT_SVNREV@)
-Copyright (c) Google, Inc. 2008.  All rights reserved.
+Copyright (c) Google, Inc. 2009.  All rights reserved.
 Visit Google Code (http://code.google.com/webtoolkit/).
 
 This product includes software developed by:
