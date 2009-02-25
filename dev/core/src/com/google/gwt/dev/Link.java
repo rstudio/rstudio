@@ -26,6 +26,7 @@ import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
+import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -54,7 +55,7 @@ public class Link {
    * Options for Link.
    */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
-      OptionWarDir, OptionOutDir /*deprecated*/ {
+      OptionWarDir, OptionOutDir /* deprecated */{
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -123,33 +124,25 @@ public class Link {
   }
 
   public static void legacyLink(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation,
-      List<FileBackedObject<PermutationResult>> resultFiles, File outDir)
-      throws UnableToCompleteException {
+      ArtifactSet generatedArtifacts, Permutation[] permutations,
+      List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
+      JJSOptions precompileOptions) throws UnableToCompleteException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
-        module, precompilation.getUnifiedAst().getOptions());
-    ArtifactSet artifacts = doLink(logger, linkerContext, precompilation,
-        resultFiles);
+        module, precompileOptions);
+    ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
+        permutations, resultFiles);
     doProduceLegacyOutput(logger, artifacts, linkerContext, module, outDir);
   }
 
-  public static ArtifactSet link(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation,
-      List<FileBackedObject<PermutationResult>> resultFiles)
+  public static void link(TreeLogger logger, ModuleDef module,
+      ArtifactSet generatedArtifacts, Permutation[] permutations,
+      List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
+      File extrasDir, JJSOptions precompileOptions)
       throws UnableToCompleteException {
     StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
-        module, precompilation.getUnifiedAst().getOptions());
-    return doLink(logger, linkerContext, precompilation, resultFiles);
-  }
-
-  public static void link(TreeLogger logger, ModuleDef module,
-      Precompilation precompilation,
-      List<FileBackedObject<PermutationResult>> resultFiles, File outDir,
-      File extrasDir) throws UnableToCompleteException {
-    StandardLinkerContext linkerContext = new StandardLinkerContext(logger,
-        module, precompilation.getUnifiedAst().getOptions());
-    ArtifactSet artifacts = doLink(logger, linkerContext, precompilation,
-        resultFiles);
+        module, precompileOptions);
+    ArtifactSet artifacts = doLink(logger, linkerContext, generatedArtifacts,
+        permutations, resultFiles);
     doProduceOutput(logger, artifacts, linkerContext, module, outDir, extrasDir);
   }
 
@@ -161,7 +154,7 @@ public class Link {
      * still implementation-dependent.
      */
     final LinkOptions options = new LinkOptionsImpl();
-    
+
     if (new ArgProcessor(options).processArgs(args)) {
       CompileTask task = new CompileTask() {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
@@ -178,10 +171,9 @@ public class Link {
   }
 
   private static ArtifactSet doLink(TreeLogger logger,
-      StandardLinkerContext linkerContext, Precompilation precompilation,
-      List<FileBackedObject<PermutationResult>> resultFiles)
+      StandardLinkerContext linkerContext, ArtifactSet generatedArtifacts,
+      Permutation[] perms, List<FileBackedObject<PermutationResult>> resultFiles)
       throws UnableToCompleteException {
-    Permutation[] perms = precompilation.getPermutations();
     if (perms.length != resultFiles.size()) {
       throw new IllegalArgumentException(
           "Mismatched resultFiles.length and permutation count");
@@ -191,7 +183,7 @@ public class Link {
       finishPermuation(logger, perms[i], resultFiles.get(i), linkerContext);
     }
 
-    linkerContext.addOrReplaceArtifacts(precompilation.getGeneratedArtifacts());
+    linkerContext.addOrReplaceArtifacts(generatedArtifacts);
     return linkerContext.invokeLink(logger);
   }
 
@@ -259,16 +251,17 @@ public class Link {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-    File precompilationFile = new File(options.getCompilerWorkDir(moduleName),
-        Precompile.PRECOMPILATION_FILENAME);
-    if (!precompilationFile.exists()) {
-      logger.log(TreeLogger.ERROR, "File not found '"
-          + precompilationFile.getAbsolutePath()
-          + "'; please run Precompile first");
-      return false;
-    }
+      File precompilationFile = new File(
+          options.getCompilerWorkDir(moduleName),
+          Precompile.PRECOMPILATION_FILENAME);
+      if (!precompilationFile.exists()) {
+        logger.log(TreeLogger.ERROR, "File not found '"
+            + precompilationFile.getAbsolutePath()
+            + "'; please run Precompile first");
+        return false;
+      }
 
-    Precompilation precompilation;
+      Precompilation precompilation;
       try {
         precompilation = Util.readFileAsObject(precompilationFile,
             Precompilation.class);
@@ -278,11 +271,16 @@ public class Link {
         return false;
       }
       Permutation[] perms = precompilation.getPermutations();
+      ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
+      JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
+
+      precompilation = null; // No longer needed, and it needs a lot of memory
 
       List<FileBackedObject<PermutationResult>> resultFiles = new ArrayList<FileBackedObject<PermutationResult>>(
           perms.length);
       for (int i = 0; i < perms.length; ++i) {
-        File f = CompilePerms.makePermFilename(compilerWorkDir, perms[i].getId());
+        File f = CompilePerms.makePermFilename(compilerWorkDir,
+            perms[i].getId());
         if (!f.exists()) {
           logger.log(TreeLogger.ERROR, "File not found '"
               + precompilationFile.getAbsolutePath()
@@ -296,9 +294,10 @@ public class Link {
       TreeLogger branch = logger.branch(TreeLogger.INFO, "Linking module "
           + module.getName());
       StandardLinkerContext linkerContext = new StandardLinkerContext(branch,
-          module, precompilation.getUnifiedAst().getOptions());
-      ArtifactSet artifacts = doLink(branch, linkerContext, precompilation,
-          resultFiles);
+          module, precompileOptions);
+
+      ArtifactSet artifacts = doLink(branch, linkerContext, generatedArtifacts,
+          perms, resultFiles);
 
       if (options.getOutDir() == null) {
         doProduceOutput(branch, artifacts, linkerContext, module,

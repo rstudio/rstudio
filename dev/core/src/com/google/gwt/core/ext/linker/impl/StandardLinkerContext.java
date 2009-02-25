@@ -273,8 +273,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     String strongName = Util.computeStrongName(Util.getBytes(permutationResult.getJs()));
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
-      result = new StandardCompilationResult(permutationResult.getJs(),
-          strongName, resultFile);
+      result = new StandardCompilationResult(null, strongName, resultFile);
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
 

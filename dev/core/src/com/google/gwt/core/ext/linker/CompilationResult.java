@@ -35,11 +35,9 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
    * the code that should be run when the application starts up. The remaining
    * elements are loaded via
    * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)
-   * GWT.runAsync}. The linker should provide a function named
-   * <code>__gwtStartLoadingFragment</code> that can takes an integer as
-   * argument and loads that specified code segment. To see how this function is
-   * used, see {@link com.google.gwt.core.client.AsyncFragmentLoader
-   * AsyncFragmentLoader}.
+   * GWT.runAsync}. See {@link com.google.gwt.core.client.AsyncFragmentLoader
+   * AsyncFragmentLoader} for details on the necessary linker support for
+   * runAsync.
    */
   public abstract String[] getJavaScript();
 
@@ -93,18 +91,7 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
 
   @Override
   protected final int compareToComparableArtifact(CompilationResult o) {
-    String[] js = getJavaScript();
-    String[] otherJs = o.getJavaScript();
-    if (js.length != otherJs.length) {
-      return js.length - otherJs.length;
-    }
-    for (int i = 0; i < js.length; i++) {
-      int diff = js[i].compareTo(otherJs[i]);
-      if (diff != 0) {
-        return diff;
-      }
-    }
-    return 0;
+    return getStrongName().compareTo(o.getStrongName());
   }
 
   @Override

@@ -17,15 +17,17 @@ package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
 import com.google.gwt.dev.Link.LinkOptionsImpl;
 import com.google.gwt.dev.Precompile.PrecompileOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
-import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
+import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -111,7 +113,7 @@ public class Compiler {
     public void setOutDir(File outDir) {
       linkOptions.setOutDir(outDir);
     }
-    
+
     public void setWarDir(File outDir) {
       linkOptions.setWarDir(outDir);
     }
@@ -130,8 +132,8 @@ public class Compiler {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
-            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(logger,
-                CheckForUpdates.ONE_DAY);
+            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(
+                logger, CheckForUpdates.ONE_DAY);
           }
           boolean success = new Compiler(options).run(logger);
           if (success) {
@@ -187,15 +189,20 @@ public class Compiler {
           }
 
           Permutation[] allPerms = precompilation.getPermutations();
-          List<FileBackedObject<PermutationResult>> resultFiles
-              = CompilePerms.makeResultFiles(
+          List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
               options.getCompilerWorkDir(moduleName), allPerms);
-          CompilePerms.compile(logger, precompilation, allPerms, options.getLocalWorkers(),
-              resultFiles);
+          CompilePerms.compile(logger, precompilation, allPerms,
+              options.getLocalWorkers(), resultFiles);
+
+          ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
+          JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
+
+          precompilation = null; // No longer needed, so save the memory
 
           Link.link(logger.branch(TreeLogger.INFO, "Linking into "
-              + options.getWarDir().getPath()), module, precompilation,
-              resultFiles, options.getWarDir(), options.getExtraDir());
+              + options.getWarDir().getPath()), module, generatedArtifacts,
+              allPerms, resultFiles, options.getWarDir(),
+              options.getExtraDir(), precompileOptions);
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
