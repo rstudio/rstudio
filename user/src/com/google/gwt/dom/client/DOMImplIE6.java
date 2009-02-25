@@ -232,6 +232,10 @@ class DOMImplIE6 extends DOMImpl {
    */
   @SuppressWarnings("unused")
   private native double getZoomMultiple() /*-{
-    return $doc.body.parentElement.offsetWidth / $doc.body.offsetWidth;
+    if ($doc.compatMode == 'CSS1Compat') {
+      return 1;
+    } else {
+      return $doc.body.parentElement.offsetWidth / $doc.body.offsetWidth;
+    }
   }-*/;
 }
