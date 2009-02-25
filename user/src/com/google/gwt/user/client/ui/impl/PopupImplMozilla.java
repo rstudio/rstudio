@@ -48,12 +48,26 @@ public class PopupImplMozilla extends PopupImpl {
   /**
    * Cache the value to avoid repeated calls.
    */
-  private static boolean isMac = isMac();
+  private static boolean isFF2Mac = isFF2Mac();
   
-  private static native boolean isMac() /*-{
-    if (navigator.userAgent.indexOf("Macintosh") != -1) {
-      return true;
-    }  
+  private static native boolean isFF2Mac() /*-{
+    function makeVersion(result) {
+      return (parseInt(result[1]) * 1000) + parseInt(result[2]);
+    }
+
+    var ua = navigator.userAgent;
+    if (ua.indexOf("Macintosh") != -1) {
+      // Version logic taken from UserAgent.gwt.xml.
+      var result = /rv:([0-9]+)\.([0-9]+)/.exec(ua);
+      if (result && result.length == 3) {
+        // Gecko 1.8 and earlier had the scrollbar bug on OS X.
+        // (Firefox3 == Gecko 1.9)
+        if (makeVersion(result) <= 1008) {
+          return true;
+        }
+      }
+    }
+
     return false;
   }-*/;
 
@@ -61,7 +75,7 @@ public class PopupImplMozilla extends PopupImpl {
   public Element createElement() {
     final Element outerElem = DOM.createDiv();
 
-    if (isMac) {
+    if (isFF2Mac) {
       // To solve the scrollbar rendering problem on the Mac, we have to make
       // the PopupPanel a 'heavyweight' element by setting a style of
       // 'overflow:auto' on the outermost div. This ensures that all of the
@@ -95,12 +109,12 @@ public class PopupImplMozilla extends PopupImpl {
 
   @Override
   public Element getContainerElement(Element outerElem) {
-    return isMac ? DOM.getFirstChild(outerElem) : outerElem;
+    return isFF2Mac ? DOM.getFirstChild(outerElem) : outerElem;
   }
 
   @Override
   public Element getStyleElement(Element outerElem) {
-    return isMac ? outerElem : super.getStyleElement(outerElem);
+    return isFF2Mac ? outerElem : super.getStyleElement(outerElem);
   }
 
   @Override
