@@ -69,7 +69,7 @@ public class HostedMode extends SwtHostedModeBase {
 
     @Override
     public String getPurpose() {
-      return "Prevents the embedded Tomcat server from running, even if a port is specified";
+      return "Specify a different embedded web server to run (must implement ServletContainerLauncher)";
     }
 
     @Override
