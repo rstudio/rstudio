@@ -22,6 +22,7 @@ import com.google.gwt.user.client.EventTest;
 import com.google.gwt.user.client.WindowTest;
 import com.google.gwt.user.client.ui.AbsolutePanelTest;
 import com.google.gwt.user.client.ui.AnchorTest;
+import com.google.gwt.user.client.ui.WidgetTest;
 import com.google.gwt.user.client.ui.ButtonTest;
 import com.google.gwt.user.client.ui.CaptionPanelTest;
 import com.google.gwt.user.client.ui.CheckBoxTest;
@@ -164,6 +165,7 @@ public class UISuite {
     suite.addTestSuite(ClassInitTest.class);
     suite.addTestSuite(DateChangeEventTest.class);
     suite.addTestSuite(CreateEventTest.class);
+    suite.addTestSuite(WidgetTest.class);
     return suite;
   }
 }

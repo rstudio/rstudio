@@ -22,6 +22,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.event.shared.GwtEvent.Type;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
@@ -193,6 +194,16 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
    * @see #onDetach()
    */
   protected void doDetachChildren() {
+  }
+
+  /**
+   * Gets the number of handlers listening to the event type.
+   * 
+   * @param type the event type
+   * @return the number of registered handlers
+   */
+  protected int getHandlerCount(Type<?> type) {
+    return handlerManager == null ? 0 : handlerManager.getHandlerCount(type);
   }
 
   /**
