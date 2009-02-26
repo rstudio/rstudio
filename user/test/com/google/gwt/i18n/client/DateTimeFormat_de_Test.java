@@ -26,6 +26,7 @@ import java.util.Date;
 @SuppressWarnings("deprecation")
 public class DateTimeFormat_de_Test extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest_de";
   }
@@ -38,7 +39,7 @@ public class DateTimeFormat_de_Test extends GWTTestCase {
 
   public void test_EEEMMMddyy() {
     Date date = new Date(2006 - 1900, 6, 27, 13, 10, 10);
-    assertEquals("Do, Jul 27, 06",
+    assertEquals("Do., Jul 27, 06",
         DateTimeFormat.getFormat("EEE, MMM d, yy").format(date));
   }
 
