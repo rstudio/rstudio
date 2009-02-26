@@ -102,6 +102,13 @@ public final class JsRootScope extends JsScope {
         // Functions commonly defined on Object
         "toString", "getClass", "constructor", "prototype",
 
+        /*
+         * These keywords trigger the loading of the java-plugin. For the
+         * next-generation plugin, this results in starting a new Java process.
+         */
+        "java", "Packages", "netscape", "sun", "JavaObject", "JavaClass",
+        "JavaArray", "JavaMember",
+
         // GWT-defined identifiers
         "$wnd", "$doc", "$moduleName", "$moduleBase", "$gwt_version",
 
