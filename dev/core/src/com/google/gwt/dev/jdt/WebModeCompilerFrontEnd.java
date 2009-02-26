@@ -17,7 +17,10 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.CompiledClass;
 import com.google.gwt.dev.javac.JdtCompiler.CompilationUnitAdapter;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.MessageSendSite;
@@ -32,7 +35,9 @@ import org.eclipse.jdt.internal.compiler.lookup.MethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,28 +64,62 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
     this.fragmentLoaderCreator = fragmentLoaderCreator;
   }
 
+  /**
+   * Build the initial set of compilation units.
+   */
   public CompilationUnitDeclaration[] getCompilationUnitDeclarations(
       TreeLogger logger, String[] seedTypeNames)
       throws UnableToCompleteException {
 
-    // Build the initial set of compilation units.
+    TypeOracle oracle = compilationState.getTypeOracle();
+    Set<JClassType> intfTypes = oracle.getSingleJsoImplInterfaces();
     Map<String, CompiledClass> classMapBySource = compilationState.getClassFileMapBySource();
-    ICompilationUnit[] icus = new ICompilationUnit[seedTypeNames.length];
-    for (int i = 0; i < seedTypeNames.length; i++) {
-      String seedTypeName = seedTypeNames[i];
-      CompiledClass compiledClass = classMapBySource.get(seedTypeName);
-      if (compiledClass == null) {
-        logger.log(TreeLogger.ERROR,
-            "Unable to find compilation unit for type '" + seedTypeName + "'");
-        throw new UnableToCompleteException();
+
+    /*
+     * The alreadyAdded set prevents duplicate CompilationUnits from being added
+     * to the icu list in the case of multiple JSO implementations as inner
+     * classes in the same top-level class or seed classes as SingleJsoImpls
+     * (e.g. JSO itself as the SingleImpl for all tag interfaces).
+     */
+    Set<CompilationUnit> alreadyAdded = new HashSet<CompilationUnit>();
+
+    List<ICompilationUnit> icus = new ArrayList<ICompilationUnit>(
+        seedTypeNames.length + intfTypes.size());
+
+    for (String seedTypeName : seedTypeNames) {
+      CompilationUnit unit = getUnitForType(logger, classMapBySource,
+          seedTypeName);
+
+      if (alreadyAdded.add(unit)) {
+        icus.add(new CompilationUnitAdapter(unit));
+      } else {
+        logger.log(TreeLogger.WARN, "Duplicate compilation unit '"
+            + unit.getDisplayLocation() + "'in seed types");
       }
-      icus[i] = new CompilationUnitAdapter(compiledClass.getUnit());
     }
 
-    // Compile, which will pull in everything else via
-    // doFindAdditionalTypesUsingMagic()
-    //
-    CompilationUnitDeclaration[] cuds = compile(logger, icus);
+    /*
+     * Add all SingleJsoImpl types that we know about. It's likely that the
+     * concrete types are never explicitly referenced from the seed types.
+     */
+    for (JClassType intf : intfTypes) {
+      String implName = oracle.getSingleJsoImpl(intf).getQualifiedSourceName();
+      CompilationUnit unit = getUnitForType(logger, classMapBySource, implName);
+
+      if (alreadyAdded.add(unit)) {
+        icus.add(new CompilationUnitAdapter(unit));
+        logger.log(TreeLogger.SPAM, "Forced compilation of unit '"
+            + unit.getDisplayLocation()
+            + "' becasue it contains a SingleJsoImpl type");
+      }
+    }
+
+    /*
+     * Compile, which will pull in everything else via
+     * doFindAdditionalTypesUsingMagic()
+     */
+    CompilationUnitDeclaration[] cuds = compile(logger,
+        icus.toArray(new ICompilationUnit[icus.size()]));
     return cuds;
   }
 
@@ -211,5 +250,24 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
     }
 
     return dependentTypeNames.toArray(Empty.STRINGS);
+  }
+
+  /**
+   * Get the CompilationUnit for a named type or throw an
+   * UnableToCompleteException.
+   */
+  private CompilationUnit getUnitForType(TreeLogger logger,
+      Map<String, CompiledClass> classMapBySource, String typeName)
+      throws UnableToCompleteException {
+
+    CompiledClass compiledClass = classMapBySource.get(typeName);
+    if (compiledClass == null) {
+      logger.log(TreeLogger.ERROR, "Unable to find compilation unit for type '"
+          + typeName + "'");
+      throw new UnableToCompleteException();
+    }
+
+    assert compiledClass.getUnit() != null;
+    return compiledClass.getUnit();
   }
 }

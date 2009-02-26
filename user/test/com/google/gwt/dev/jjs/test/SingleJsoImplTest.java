@@ -17,6 +17,7 @@ package com.google.gwt.dev.jjs.test;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dev.jjs.test.SingleJsoImplTest.JsoHasInnerJsoType.InnerType;
+import com.google.gwt.dev.jjs.test.jsointfs.JsoInterfaceWithUnreferencedImpl;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.io.IOException;
@@ -512,5 +513,11 @@ public class SingleJsoImplTest extends GWTTestCase {
       assertTrue(l2 instanceof Divider);
       assertEquals(4.0, ((Log2) l2).log2(16));
     }
+  }
+
+  public void testUnreferencedType() {
+    JsoInterfaceWithUnreferencedImpl o = (JsoInterfaceWithUnreferencedImpl) JavaScriptObject.createObject();
+    assertNotNull(o);
+    assertTrue(o.isOk());
   }
 }
