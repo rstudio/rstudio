@@ -24,6 +24,10 @@ h1 {
   margin: 5px;
 }
 
+.serverResponseLabelError {
+  color: red;
+}
+
 /** Set ids using widget.getElement().setId("idOfElement") */
 #closeButton {
   margin: 15px 6px 6px;
