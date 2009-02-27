@@ -106,6 +106,7 @@ public class CwFlexTable extends ContentWidget {
             addRow(flexTable);
           }
         });
+    addRowButton.addStyleName("sc-FixedWidthButton");
 
     Button removeRowButton = new Button(constants.cwFlexTableRemoveRow(),
         new ClickHandler() {
@@ -113,6 +114,7 @@ public class CwFlexTable extends ContentWidget {
             removeRow(flexTable);
           }
         });
+    removeRowButton.addStyleName("sc-FixedWidthButton");
     VerticalPanel buttonPanel = new VerticalPanel();
     buttonPanel.setStyleName("cw-FlexTable-buttonPanel");
     buttonPanel.add(addRowButton);

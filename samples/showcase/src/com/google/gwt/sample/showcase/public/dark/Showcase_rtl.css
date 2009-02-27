@@ -115,6 +115,9 @@
   padding: 10px 2px;
   margin: 10px 0px;
 }
+.sc-FixedWidthButton {
+  width: 10em;
+}
 
 /**
  * Applied to specific components in Content Widgets.
