@@ -148,15 +148,18 @@ public class JavaScriptObjectNormalizer {
               x.getTarget());
           localCall.getArgs().addAll(x.getArgs());
 
+          // We need a second copy of the arguments for the else expression
+          CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
+
           // instance.jsoMethod(arg, arg)
-          JMethodCall jsoCall = new JMethodCall(program, info, instance,
-              jsoMethod);
-          jsoCall.getArgs().addAll(x.getArgs());
+          JMethodCall jsoCall = new JMethodCall(program, info,
+              cloner.cloneExpression(instance), jsoMethod);
+          jsoCall.getArgs().addAll(cloner.cloneExpressions(x.getArgs()));
 
           // Cast.isJavaScriptObject() ? instance.jsoMethod() :
           // instance.method();
-          JConditional newExpr = makeIsJsoConditional(info, instance,
-              x.getType(), jsoCall, localCall);
+          JConditional newExpr = makeIsJsoConditional(info,
+              cloner.cloneExpression(instance), x.getType(), jsoCall, localCall);
 
           multi.exprs.add(newExpr);
           // We may only have the ternary operation if there's no side-effect
