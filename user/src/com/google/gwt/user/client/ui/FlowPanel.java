@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Node;
 import com.google.gwt.user.client.DOM;
 
 /**
@@ -47,7 +48,13 @@ public class FlowPanel extends ComplexPanel {
   @Override
   public void clear() {
     super.doLogicalClear();
-    this.getElement().setInnerHTML("");
+
+    // Remove all existing child nodes.
+    Node child = getElement().getFirstChild();
+    while (child != null) {
+      getElement().removeChild(child);
+      child = getElement().getFirstChild();
+    }
   }
 
   /**
