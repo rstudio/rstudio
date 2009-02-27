@@ -34,6 +34,7 @@ Merges:
 /releases/1.6/@r4657:4658 was merged (r4662) into trunk
 /releases/1.6/@r4658:4669 was merged (r4670) into trunk
 /trunk@c4873 was merged (r4878) into /releases/1.6
+/trunk revision c4889 was merged (r4892) into this branch
 
 The next merge into trunk will be:
 svn merge -r4669:4694 https://google-web-toolkit.googlecode.com/svn/releases/1.6 .
