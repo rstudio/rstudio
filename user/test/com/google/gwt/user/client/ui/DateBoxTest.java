@@ -15,13 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.datepicker.client.DateBox;
 
 /**
- * Tests DateBox.
+ * Tests {@link DateBox}.
  */
-public class DateBoxTest extends GWTTestCase {
+public class DateBoxTest extends WidgetTestBase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -37,8 +38,32 @@ public class DateBoxTest extends GWTTestCase {
   }
 
   public void testValueChangeEvent() {
+
+    // Checks setValue(date, true);
     DateBox db = new DateBox();
     RootPanel.get().add(db);
     new DateValueChangeTester(db).run();
+
+    // Check setting the text directly in the text box.
+    final DateBox db2 = new DateBox();
+    RootPanel.get().add(db2);
+    new DateValueChangeTester(db2) {
+      @Override
+      protected void fire(java.util.Date d) {
+        db2.getTextBox().setText(d.toString());
+        NativeEvent e = Document.get().createBlurEvent();
+        db2.getTextBox().getElement().dispatchEvent(e);
+      };
+    }.run();
+
+    // Checks that setting the date picker's date works correctly.
+    final DateBox db3 = new DateBox();
+    RootPanel.get().add(db3);
+    new DateValueChangeTester(db3) {
+      @Override
+      protected void fire(java.util.Date d) {
+        db3.getDatePicker().setValue(d, true);
+      };
+    }.run();
   }
 }

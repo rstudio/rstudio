@@ -23,7 +23,8 @@ import junit.framework.TestCase;
 import java.util.Date;
 
 /**
- * Handy tool for testing classes that implement {@link HasValue<Date>}.
+ * Handy tool for testing classes that implement {@link HasValue} of
+ * {@link Date}.
  */
 public class DateValueChangeTester {
   static class Handler implements ValueChangeHandler<Date> {
@@ -34,7 +35,7 @@ public class DateValueChangeTester {
     }
   }
 
-  private final HasValue<Date> subject;
+  protected final HasValue<Date> subject;
 
   /**
    * The HasValue<Date> to be tested. It should have been freshly created before
@@ -51,6 +52,8 @@ public class DateValueChangeTester {
    */
   @SuppressWarnings("deprecation")
   public void run() {
+
+    // Negative test cases.
     TestCase.assertNull(subject.getValue());
 
     DateValueChangeTester.Handler h = new Handler();
@@ -72,16 +75,17 @@ public class DateValueChangeTester {
     subject.setValue(baker);
     TestCase.assertNull(h.received);
 
+    // Positive test cases.
+
     // Value has not changed, so should not fire a change event even though
     // fire event is true.
-    subject.setValue(baker, true);
+    fire(baker);
     TestCase.assertNull(h.received);
-
-    subject.setValue(able, true);
+    fire(able);
     TestCase.assertEquals(able, h.received);
     TestCase.assertNotSame(able, h.received);
 
-    subject.setValue(baker, true);
+    fire(baker);
     TestCase.assertEquals(baker, h.received);
     TestCase.assertNotSame(baker, h.received);
     
@@ -90,4 +94,9 @@ public class DateValueChangeTester {
     subject.setValue(baker, false);
     TestCase.assertNull(h.received);
   }
+
+  protected void fire(Date d) {
+    subject.setValue(d, true);
+  }
+
 }

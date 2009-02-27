@@ -117,6 +117,11 @@ public class ValueChangeEvent<I> extends GwtEvent<ValueChangeHandler<I>> {
   public I getValue() {
     return value;
   }
+ 
+  @Override
+  public String toDebugString() {
+    return super.toDebugString() + getValue();
+  }
 
   @Override
   protected void dispatch(ValueChangeHandler<I> handler) {
