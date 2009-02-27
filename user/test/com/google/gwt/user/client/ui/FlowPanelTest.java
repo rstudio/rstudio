@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.ArrayList;
@@ -57,5 +58,23 @@ public class FlowPanelTest extends GWTTestCase {
     for (Widget child : target) {
       assertNull(child.getElement().getPropertyString("__listener") == null);
     }
+  }
+
+  public void testClearWithNestedChildren() {
+    FlowPanel target = new FlowPanel();
+    FlowPanel child0 = new FlowPanel();
+    HTML child1 = new HTML();
+    target.add(child0);
+    child0.add(child1);
+
+    Element child0Elem = child0.getElement();
+    Element child1Elem = child1.getElement();
+
+    assertEquals(child0Elem, target.getElement().getFirstChild());
+    assertEquals(child1Elem, child0Elem.getFirstChild());
+
+    target.clear();
+
+    assertEquals(child1Elem, child0Elem.getFirstChildElement());
   }
 }
