@@ -79,10 +79,6 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     return requestId++;
   }
 
-  protected static int getRequestId() {
-    return requestId;
-  }
-
   /**
    * Return <code>true</code> if the encoded response contains a value
    * returned by the method invocation.
