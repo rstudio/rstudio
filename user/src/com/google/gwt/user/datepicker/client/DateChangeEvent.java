@@ -51,9 +51,11 @@ class DateChangeEvent extends ValueChangeEvent<Date> {
    * @param value the value
    */
   protected DateChangeEvent(Date value) {
-    super(value);
+    // The date must be copied in case one handler causes it to change.
+    super(CalendarUtil.copyDate(value));
   }
 
+  @Override
   public Date getValue() {
     return CalendarUtil.copyDate(super.getValue());
   }
