@@ -243,18 +243,14 @@ public class DefaultFiltersTest extends TestCase {
    */
   public void testFilterConversion() {
     List<String> nullFilters = Arrays.asList(new String[] {
-        "***/testing/**", "**/{/**", "**/}/**", "**/+/**", "**/testing/",
-        "**/testing/**/"});
+        "***/testing/**", "**/{/**", "**/}/**", "**/+/**",});
     List<String> okayFilters = new ArrayList<String>();
     okayFilters.addAll(Arrays.asList(new String[] {
         "**/#/**", "**/~/**", "Foo", "Bar", "foo/**", "foo/*Test*java",
         "**/testing/**", "**/testing/**/Foo*Bar*.java",
         "**/testing/**/Foo$*r.class",}));
     String doubleStarPrefixes[] = {"", "/", "**/", "/**/", "foo**/", "/foo**/"};
-    // TODO: uncomment when we handle prefixes that end in /
-    // String doubleStarSuffixes[] = {"", "/", "/**", "/**/", "/**foo",
-    // "/**foo/"};
-    String doubleStarSuffixes[] = {"", "/**", "/**foo"};
+    String doubleStarSuffixes[] = {"", "/", "/**", "/**/", "/**foo", "/**foo/"};
     String middleString = "testing";
     for (String doubleStarPrefix : doubleStarPrefixes) {
       for (String doubleStarSuffix : doubleStarSuffixes) {
@@ -263,11 +259,6 @@ public class DefaultFiltersTest extends TestCase {
     }
 
     List<String> testPaths = getMiscPaths("testing", false);
-    /*
-     * TODO: investigate inconsistencies.
-     * 
-     * ant pattern = testing/, path = testing/foo, result = true.
-     */
     DefaultFilters filters = new DefaultFilters();
     for (String filter : nullFilters) {
       assertNull(filter + " conversion should be null",
@@ -279,8 +270,8 @@ public class DefaultFiltersTest extends TestCase {
       assertNotNull(filter + " conversion should be non-null", pattern);
 
       ResourceFilterString antFilterString = getAntFilter(
-          new String[] {filter}, EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA, "ant_"
-              + filter);
+          new String[] {filter}, EMPTY_ARRAY, DEFAULT_EXCLUDES, NOT_JAVA,
+          "ant_" + filter);
       ResourceFilterString customFilterString = new ResourceFilterString(
           filters.customFilterWithCatchAll(new String[] {filter}, EMPTY_ARRAY,
               true, null, NOT_JAVA), "custom_" + pattern);
@@ -332,8 +323,8 @@ public class DefaultFiltersTest extends TestCase {
     // pass non-empty include and exclude array. Matches nothing
     filter = getFilterWithoutCatchAll(mergedPatterns, mergedPatterns, NOT_JAVA);
     advancedPaths.testAdvancedPath(
-        getAntFilter(mergedPatterns, mergedPatterns, DEFAULT_EXCLUDES, NOT_JAVA,
-            "ant_mergedPatterns_mergedPatterns"),
+        getAntFilter(mergedPatterns, mergedPatterns, DEFAULT_EXCLUDES,
+            NOT_JAVA, "ant_mergedPatterns_mergedPatterns"),
         new ResourceFilterString(filter, "custom_mergedPatterns_mergedPatterns"));
   }
 

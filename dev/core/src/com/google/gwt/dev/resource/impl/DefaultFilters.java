@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
  * TODO: this class needs to be revisited, when Gwt's Ant is upgraded.
  * 
  * Currently, we do not go to ant if (a) the filterList is empty, or (b) the
- * filterList has "common" patterns. Exception: When pattern or path ends in
- * '/', we defer to ant.
+ * filterList has "common" patterns. Exception: When path ends in '/', we defer
+ * to ant.
  * 
  * TODO: This code could be made more general and cleaner by removing the
  * dependency on Ant completely. All ant patterns could be compiled into
@@ -294,6 +294,14 @@ public class DefaultFilters {
     if (antPatternString.indexOf("***") != -1) {
       return null;
     }
+    if (antPatternString.endsWith("/")) {
+      /*
+       * From the DirectoryScanner.html spec: When a pattern ends with a '/' or
+       * '\', "**" is appended. if ant pattern = testing/, path = testing/foo,
+       * result = true.
+       */
+      antPatternString = antPatternString + "**";
+    }
     StringBuffer sb = new StringBuffer();
     int length = antPatternString.length();
     for (int i = 0; i < length; i++) {
@@ -312,15 +320,6 @@ public class DefaultFilters {
             sb.append("(/[^/]*)*");
             i += 2; // handled 2 more chars than usual
           } else {
-            /*
-             * TODO: handle patterns that end in /. For now, ant's matching seem
-             * inconsistent.
-             * 
-             * ant pattern = testing/, path = testing/foo, result = true.
-             */
-            if (i == length - 1) {
-              return null;
-            }
             sb.append(c);
           }
           break;
