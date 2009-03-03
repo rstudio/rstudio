@@ -150,8 +150,8 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
-   * Test that a double click results in exactly two click events, one real and
-   * one simulated. See issue 3392 for more info.
+   * Test that a double click results in exactly one simulated click event in
+   * IE. See issue 3392 for more info.
    */
   public void testDoubleClickEvent() {
     TestLabel label = new TestLabel();
@@ -181,8 +181,10 @@ public class EventTest extends GWTTestCase {
 
     // Verify the results
     if (isInternetExplorer()) {
+      // IE is expected to simulate exactly 1 click event
       assertEquals(2, clickInfo.fireCount);
     } else {
+      // Other browsers should not simulate any events
       assertEquals(1, clickInfo.fireCount);
     }
     assertEquals(1, dblclickInfo.fireCount);
