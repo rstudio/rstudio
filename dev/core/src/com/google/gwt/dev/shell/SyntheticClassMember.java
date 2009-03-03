@@ -21,7 +21,7 @@ import java.lang.reflect.Member;
  * This class is used to represent a synthetic field called "class" that allows
  * JSNI references to class literals.
  */
-class SyntheticClassMember implements Member {
+public class SyntheticClassMember implements Member {
   private final Class<?> clazz;
 
   public SyntheticClassMember(Class<?> clazz) {

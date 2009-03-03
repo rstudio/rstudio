@@ -146,21 +146,23 @@ public final class CompilingClassLoader extends ClassLoader implements
          * replacement, instead it would be necessary to significantly alter the
          * semantics of the hand-written JS.
          */
-        if (singleJsoImplTypes.contains(canonicalizeClassName(parsed.className()))) {
+        if (singleJsoImplTypes.contains(canonicalizeClassName(className))) {
           logger.log(TreeLogger.WARN,
               "Invalid JSNI reference to SingleJsoImpl interface ("
-                  + parsed.className() + "); consider using a trampoline. "
-                  + "Expect subsequent failures.", new NoSuchFieldError(
+              + className + "); consider using a trampoline. "
+              + "Expect subsequent failures.", new NoSuchFieldError(
                   jsniMemberRef));
           return -1;
         }
 
         int memberId = dispClassInfo.getMemberId(memberName);
         if (memberId < 0) {
-          logger.log(TreeLogger.WARN, "Member '" + memberName
-              + "' in JSNI reference '" + jsniMemberRef
-              + "' could not be found; expect subsequent failures",
-              new NoSuchFieldError(memberName));
+          if (!className.startsWith("java.")) {
+            logger.log(TreeLogger.WARN, "Member '" + memberName
+                + "' in JSNI reference '" + jsniMemberRef
+                + "' could not be found; expect subsequent failures",
+                new NoSuchFieldError(memberName));
+          }
         }
 
         return synthesizeDispId(dispClassInfo.getClassId(), memberId);

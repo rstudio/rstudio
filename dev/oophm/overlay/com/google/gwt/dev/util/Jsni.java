@@ -28,6 +28,7 @@ import com.google.gwt.dev.js.ast.JsNode;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.shell.DispatchIdOracle;
 import com.google.gwt.dev.shell.JavaScriptHost;
+import com.google.gwt.dev.shell.SyntheticClassMember;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -112,7 +113,8 @@ public class Jsni {
           member = dispatchInfo.getClassInfoByDispId(dispId).getMember(dispId);
         }
 
-        if (member == null || member instanceof Field) {
+        if (member == null || member instanceof Field
+            || member instanceof SyntheticClassMember) {
           if (q != null) {
             accept(q);
             out.print("[");
