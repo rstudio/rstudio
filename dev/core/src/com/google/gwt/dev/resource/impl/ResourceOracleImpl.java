@@ -42,10 +42,6 @@ import java.util.zip.ZipFile;
 
 /**
  * The normal implementation of {@link ResourceOracle}.
- * 
- * TODO: this incorporates a quick-and-dirty fix for issue 3078 -- a proper fix
- * that considers module inheritance order before classpath order should be
- * implemented.
  */
 public class ResourceOracleImpl implements ResourceOracle {
 
