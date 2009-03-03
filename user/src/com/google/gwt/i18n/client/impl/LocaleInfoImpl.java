@@ -15,6 +15,12 @@
  */
 package com.google.gwt.i18n.client.impl;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.constants.DateTimeConstants;
+import com.google.gwt.i18n.client.constants.DateTimeConstantsImpl;
+import com.google.gwt.i18n.client.constants.NumberConstants;
+import com.google.gwt.i18n.client.constants.NumberConstantsImpl;
+
 /**
  * Implementation detail of LocaleInfo -- not a public API and subject to
  * change.
@@ -27,10 +33,30 @@ package com.google.gwt.i18n.client.impl;
 public class LocaleInfoImpl {
 
   /**
+   * @return the runtime locale (note that this requires the i18n locale
+   *     property provider's assistance)
+   */
+  static native String getRuntimeLocale() /*-{
+    return $wnd['__gwt_Locale'];
+  }-*/;
+
+  /**
    * @return an array of available locale names
    */
   public String[] getAvailableLocaleNames() {
     return null;
+  }
+  
+  /**
+   * Create a DateTimeConstants instance appropriate for this locale.
+   * 
+   * Note that the caller takes care of any caching so subclasses need not
+   * bother.
+   * 
+   * @return a DateTimeConstants instance
+   */
+  public DateTimeConstants getDateTimeConstants() {
+    return GWT.create(DateTimeConstantsImpl.class);
   }
 
   /**
@@ -39,17 +65,24 @@ public class LocaleInfoImpl {
   public String getLocaleName() {
     return null;
   }
-  
+
   /**
    * Return the display name of the requested locale in its native locale, if
    * possible. If no native localization is available, the English name will
    * be returned, or as a last resort just the locale name will be returned.  If
-   * the locale name is unknown (including an user overrides), null is returned.
+   * the locale name is unknown (including user overrides), null is returned.
    * 
    * @param localeName the name of the locale to lookup.
    * @return the name of the locale in its native locale
    */
   public String getLocaleNativeDisplayName(String localeName) {
     return null;
+  }
+  
+  /**
+   * @return a NumberConstants instance appropriate for this locale.
+   */
+  public NumberConstants getNumberConstants() {
+    return GWT.create(NumberConstantsImpl.class);
   }
 }

@@ -27,19 +27,19 @@ public interface TestBinding extends Localizable {
 
 class Wrapper {
 
-  static class TestBinding_a extends TestBinding_ {
+  static class TestBinding_aa extends TestBinding_ {
     public String a() {
       return "a";
     }
   }
 
-  static class TestBinding_b_C_d extends TestBinding_ {
+  static class TestBinding_bb_CC_DDDDD extends TestBinding_ {
     public String a() {
       return "b_c_d";
     }
   }
 
-  static class TestBinding_b implements TestBinding {
+  static class TestBinding_bb implements TestBinding {
 
     public String a() {
       return "b";
@@ -69,13 +69,13 @@ class Wrapper2 {
     abstract String b();
   }
 
-  static class TestBindingImpl_a extends TestBindingImpl_b_C_d {
+  static class TestBindingImpl_aa extends TestBindingImpl_bb_CC_DDDDD {
     public String a() {
       return "a";
     }
   }
 
-  static class TestBindingImpl_b_C_d extends TestBindingImpl {
+  static class TestBindingImpl_bb_CC_DDDDD extends TestBindingImpl {
     public String a() {
       return "b_c_d";
     }

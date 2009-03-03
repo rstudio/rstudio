@@ -16,7 +16,6 @@
 
 package com.google.gwt.i18n.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
 import com.google.gwt.i18n.client.impl.DateRecord;
 
@@ -407,7 +406,7 @@ public class DateTimeFormat {
   private static DateTimeFormat cachedShortDateTimeFormat;
 
   private static final int NUM_MILLISECONDS_IN_DAY = 24 * 60 * 60000;
-  private static final DateTimeConstants defaultDateTimeConstants = (DateTimeConstants) GWT.create(DateTimeConstants.class);
+  private static final DateTimeConstants defaultDateTimeConstants = LocaleInfo.getCurrentLocale().getDateTimeConstants();
 
   private static final String PATTERN_CHARS = "GyMdkHmsSEDahKzZv";
 

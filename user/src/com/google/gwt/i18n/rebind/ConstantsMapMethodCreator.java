@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.i18n.client.impl.ConstantMap;
 import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 import java.util.LinkedHashMap;
@@ -52,7 +53,7 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
    */
   @Override
   public void createMethodFor(TreeLogger logger, JMethod method,
-      String mapName, ResourceList resourceList, String locale) {
+      String mapName, ResourceList resourceList, GwtLocale locale) {
     String methodName = method.getName();
     if (method.getParameters().length > 0) {
       error(

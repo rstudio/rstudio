@@ -134,16 +134,16 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testBindings() {
-    TestBinding b = (TestBinding) GWT.create(TestBinding.class);
+    TestBinding b = GWT.create(TestBinding.class);
     assertEquals("default", b.a());
-    TestLeafBundle c = (TestLeafBundle) GWT.create(TestLeafBundle.class);
-    assertEquals("TestLeafBundle_piglatin_UK_win", c.b());
-    com.google.gwt.i18n.client.Wrapper2.TestBindingImpl d = (com.google.gwt.i18n.client.Wrapper2.TestBindingImpl) GWT.create(com.google.gwt.i18n.client.Wrapper2.TestBindingImpl.class);
+    TestLeafBundle c = GWT.create(TestLeafBundle.class);
+    assertEquals("TestLeafBundle_piglatin_UK_WINDOWS", c.b());
+    com.google.gwt.i18n.client.Wrapper2.TestBindingImpl d = GWT.create(com.google.gwt.i18n.client.Wrapper2.TestBindingImpl.class);
     assertEquals("default", d.a());
   }
 
   public void testColors() {
-    Colors colors = (Colors) GWT.create(Colors.class);
+    Colors colors = GWT.create(Colors.class);
     assertNotNull(colors);
     // No piglatin version exists for grey
     assertEquals("ĝréý", colors.grey());
@@ -151,13 +151,13 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testConstantBooleans() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     assertEquals(false, types.booleanFalse());
     assertEquals(true, types.booleanTrue());
   }
 
   public void testConstantDoubles() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     double delta = 0.0000001;
     assertEquals(3.14159, types.doublePi(), delta);
     assertEquals(0.0, types.doubleZero(), delta);
@@ -170,7 +170,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testConstantFloats() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     double delta = 0.0000001;
     assertEquals(3.14159f, types.floatPi(), delta);
     assertEquals(0.0f, types.floatZero(), delta);
@@ -186,7 +186,7 @@ public class I18NTest extends GWTTestCase {
    * Exercises ConstantMap more than the other map tests.
    */
   public void testConstantMapABCD() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
 
     Map<String, String> map = types.mapABCD();
     Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {
@@ -288,7 +288,7 @@ public class I18NTest extends GWTTestCase {
    * Tests exercise the cache.
    */
   public void testConstantMapBACD() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     Map<String, String> map = types.mapBACD();
     Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {
         "B", "A", "C", "D"});
@@ -299,7 +299,7 @@ public class I18NTest extends GWTTestCase {
    * Tests exercise the cache.
    */
   public void testConstantMapBBB() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     Map<String, String> map = types.mapBBB();
     Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {"B"});
     compareMapsComprehensively(map, expectedMap);
@@ -311,7 +311,7 @@ public class I18NTest extends GWTTestCase {
    */
   @SuppressWarnings("unchecked")
   public void testConstantMapDCBA() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     Map<String, String> map = types.mapDCBA();
     Map<String, String> expectedMap = getMapFromArrayUsingASimpleRule(new String[] {
         "D", "C", "B", "A"});
@@ -322,7 +322,7 @@ public class I18NTest extends GWTTestCase {
    * Tests focus on correctness of entries, since ABCD exercises the map.
    */
   public void testConstantMapEmpty() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     Map<String, String> map = types.mapEmpty();
     Map<String, String> expectedMap = new HashMap<String, String>();
     compareMapsComprehensively(map, expectedMap);
@@ -333,7 +333,7 @@ public class I18NTest extends GWTTestCase {
    * type.
    */
   public void testConstantMapXYZ() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     Map<String, String> map = types.mapXYZ();
     Map<String, String> expectedMap = new HashMap<String, String>();
     expectedMap.put("keyX", "valueZ");
@@ -343,7 +343,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testConstantStringArrays() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     String[] s;
 
     s = types.stringArrayABCDEFG();
@@ -372,7 +372,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testConstantStrings() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     assertEquals("string", types.getString());
     assertEquals("stringTrimsLeadingWhitespace",
         types.stringTrimsLeadingWhitespace());
@@ -388,7 +388,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testConstantsWithLookup() {
-    TestConstantsWithLookup l = (TestConstantsWithLookup) GWT.create(TestConstantsWithLookup.class);
+    TestConstantsWithLookup l = GWT.create(TestConstantsWithLookup.class);
     Map<String, String> map = l.getMap("mapABCD");
     assertEquals("valueA", map.get("keyA"));
     map = l.getMap("mapDCBA");
@@ -439,7 +439,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testIntConstant() {
-    TestConstants types = (TestConstants) GWT.create(TestConstants.class);
+    TestConstants types = GWT.create(TestConstants.class);
     assertEquals(0, types.intZero());
     assertEquals(1, types.intOne());
     assertEquals(-1, types.intNegOne());
@@ -449,14 +449,14 @@ public class I18NTest extends GWTTestCase {
 
   public void testLocalizableInner() {
     // Check simple inner
-    LocalizableSimpleInner s = (LocalizableSimpleInner) GWT.create(Inners.LocalizableSimpleInner.class);
+    LocalizableSimpleInner s = GWT.create(Inners.LocalizableSimpleInner.class);
     assertEquals("getLocalizableInner", s.getLocalizableInner());
 
-    LocalizableInnerInner localizableInnerInner = (LocalizableInnerInner) GWT.create(Inners.InnerClass.LocalizableInnerInner.class);
+    LocalizableInnerInner localizableInnerInner = GWT.create(Inners.InnerClass.LocalizableInnerInner.class);
     assertEquals("localizableInnerInner", localizableInnerInner.string());
 
     // Check success of finding embedded
-    OuterLoc lock = (OuterLoc) GWT.create(OuterLoc.class);
+    OuterLoc lock = GWT.create(OuterLoc.class);
     assertEquals("piglatin", lock.string());
 
     assertEquals("InnerLoc", Inners.testInnerLoc());
@@ -466,32 +466,32 @@ public class I18NTest extends GWTTestCase {
     Inners inner = new Inners();
 
     // Simple Inner
-    SimpleInner simpleInner = (SimpleInner) GWT.create(Inners.SimpleInner.class);
+    SimpleInner simpleInner = GWT.create(Inners.SimpleInner.class);
     assertEquals(0, simpleInner.intZero());
     assertEquals("Simple Inner", simpleInner.simpleInner());
     assertTrue(inner.testProtectedInner());
 
     // Has Inner
-    HasInner hasInner = (HasInner) GWT.create(Inners.HasInner.class);
+    HasInner hasInner = GWT.create(Inners.HasInner.class);
     assertEquals("Has Inner", hasInner.hasInner());
     assertEquals(0, hasInner.floatZero(), .0001);
 
     // Is Inner
-    IsInner isInner = (IsInner) GWT.create(IsInner.class);
+    IsInner isInner = GWT.create(IsInner.class);
     assertEquals(2, isInner.isInner());
 
     // Inner Inner
-    InnerInner innerInner = (InnerInner) GWT.create(InnerInner.class);
+    InnerInner innerInner = GWT.create(InnerInner.class);
     assertEquals(4.321, innerInner.innerInner(), .0001);
     assertEquals("outer", innerInner.outer());
 
     // Inner Inner Message
-    InnerInnerMessages innerInnerMessages = (InnerInnerMessages) GWT.create(InnerInnerMessages.class);
+    InnerInnerMessages innerInnerMessages = GWT.create(InnerInnerMessages.class);
     assertEquals("I am a person",
         innerInnerMessages.innerClassMessages("person"));
 
     // Extends Inner Inner
-    ExtendsInnerInner extendsInnerInner = (ExtendsInnerInner) GWT.create(ExtendsInnerInner.class);
+    ExtendsInnerInner extendsInnerInner = GWT.create(ExtendsInnerInner.class);
     assertEquals("Extends Inner Inner", extendsInnerInner.extendsInnerInner());
 
     // Protected InnerClass
@@ -513,10 +513,10 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testShapesFamily() {
-    Shapes shapes = (Shapes) GWT.create(Shapes.class);
+    Shapes shapes = GWT.create(Shapes.class);
     // test overload
     assertEquals("aya irclecay", shapes.circle());
-    ColorsAndShapesAndConcepts s = (ColorsAndShapesAndConcepts) GWT.create(ColorsAndShapesAndConcepts.class);
+    ColorsAndShapesAndConcepts s = GWT.create(ColorsAndShapesAndConcepts.class);
     assertEquals("aya irclecay", s.circle());
     // test converge
     assertEquals("any primary color", s.shapeColor());
@@ -524,7 +524,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testTestMessages() {
-    TestMessages s = (TestMessages) GWT.create(TestMessages.class);
+    TestMessages s = GWT.create(TestMessages.class);
     assertEquals("no args", s.args0());
     assertEquals("a,b,c,d,e,f,g,h,i,j", s.args10("a", "b", "c", "d", "e", "f",
         "g", "h", "i", "j"));
@@ -539,7 +539,7 @@ public class I18NTest extends GWTTestCase {
   }
 
   public void testTypedMessages() {
-    TestTypedMessages typed = (TestTypedMessages) GWT.create(TestTypedMessages.class);
+    TestTypedMessages typed = GWT.create(TestTypedMessages.class);
     String expected = "int(0) float(1.5), long(0), boolean(true), Object([], char(a), byte(127), short(-32768);";
     assertEquals(expected, typed.testAllTypes(0, (float) 1.5, 0, true,
         new ArrayList<String>(), 'a', Byte.MAX_VALUE, Short.MIN_VALUE));

@@ -27,6 +27,7 @@ import junit.framework.Test;
 /**
  * TODO: document me.
  */
+@Deprecated
 public class HTTPSuite {
   public static Test suite() {
     GWTTestSuite suite = new GWTTestSuite(

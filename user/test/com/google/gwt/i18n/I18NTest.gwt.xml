@@ -16,7 +16,6 @@
 	<inherits name="com.google.gwt.i18n.I18N"/>
 	<source path='resolutiontest' />
 	<source path = 'client'/>
-	<!-- Browser-sensitive code should use the 'user.agent' property -->
-	<extend-property name = "locale" values ="piglatin,piglatin_UK, piglatin_UK_win"/>
-	<set-property name="locale" value="piglatin_UK_win" />
+	<extend-property name = "locale" values ="piglatin,piglatin_UK, piglatin_UK_WINDOWS"/>
+	<set-property name="locale" value="piglatin_UK_WINDOWS" />
  </module>

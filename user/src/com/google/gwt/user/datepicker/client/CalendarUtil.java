@@ -17,6 +17,7 @@
 package com.google.gwt.user.datepicker.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.LocaleInfo;
 import com.google.gwt.i18n.client.constants.DateTimeConstants;
 
 import java.util.Date;
@@ -35,7 +36,7 @@ public class CalendarUtil {
 
   static {
     if (GWT.isClient()) {
-      intlConstants = (DateTimeConstants) GWT.create(DateTimeConstants.class);
+      intlConstants = LocaleInfo.getCurrentLocale().getDateTimeConstants();
       // Finding the start and end of weekend
       firstDayOfWeekend = Integer.parseInt(intlConstants.weekendRange()[0]) - 1;
       lastDayOfWeekend = Integer.parseInt(intlConstants.weekendRange()[1]) - 1;

@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.i18n.client;
 
 /**
@@ -25,6 +24,7 @@ public abstract class TestLeafBundle implements TestBinding {
 
 class TestLeafBundleImpl extends TestLeafBundle {
 
+  @Override
   public String b() {
     return "TestLeafBundleImpl";
   }
@@ -35,19 +35,25 @@ class TestLeafBundleImpl extends TestLeafBundle {
 }
 
 class TestLeafBundle_piglatin extends TestLeafBundleImpl {
+
+  @Override
   public String b() {
     return "TestLeafBundle_piglatin";
   }
 }
 
 class TestLeafBundle_piglatin_UK extends TestLeafBundle_piglatin {
+
+  @Override
   public String b() {
     return "TestLeafBundle_piglatin_UK";
   }
 }
 
-class TestLeafBundle_piglatin_UK_win extends TestLeafBundleImpl {
+class TestLeafBundle_piglatin_UK_WINDOWS extends TestLeafBundleImpl {
+
+  @Override
   public String b() {
-    return "TestLeafBundle_piglatin_UK_win";
+    return "TestLeafBundle_piglatin_UK_WINDOWS";
   }
 }

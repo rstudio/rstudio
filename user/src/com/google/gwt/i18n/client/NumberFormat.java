@@ -307,7 +307,7 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
 public class NumberFormat {
 
   // Sets of constants as defined for the default locale.
-  private static final NumberConstants defaultNumberConstants = (NumberConstants) GWT.create(NumberConstants.class);
+  private static final NumberConstants defaultNumberConstants = LocaleInfo.getCurrentLocale().getNumberConstants();
 
   // Constants for characters used in programmatic (unlocalized) patterns.
   private static final char PATTERN_ZERO_DIGIT = '0';

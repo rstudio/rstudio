@@ -15,7 +15,6 @@
  */
 package com.google.gwt.i18n.rebind;
 
-import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
@@ -26,6 +25,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.client.impl.CurrencyData;
 import com.google.gwt.i18n.client.impl.CurrencyList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -37,13 +37,16 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Generator used to generate a localized version of CurrencyList, which
  * contains the list of currencies (with names, symbols, and other information)
- * localized to the current locale.  
+ * localized to the current locale.
  */
 public class CurrencyListGenerator extends Generator {
 
@@ -52,31 +55,23 @@ public class CurrencyListGenerator extends Generator {
   private static final String CURRENCY_LIST = CurrencyList.class.getCanonicalName();
 
   /**
-   * Prefix for properties files containing CLDR-derived currency data for
-   * each locale.
+   * Prefix for properties files containing CLDR-derived currency data for each
+   * locale.
    */
-  private static final String CURRENCY_DATA_PREFIX =
-      "com/google/gwt/i18n/client/impl/cldr/CurrencyData";
-  
+  private static final String CURRENCY_DATA_PREFIX = "com/google/gwt/i18n/client/impl/cldr/CurrencyData";
+
   /**
    * Prefix for properties files containing additional flags about currencies
    * each locale, which are not present in CLDR.
    */
-  private static final String CURRENCY_EXTRA_PREFIX =
-      "com/google/gwt/i18n/client/constants/CurrencyExtra";
-  
+  private static final String CURRENCY_EXTRA_PREFIX = "com/google/gwt/i18n/client/constants/CurrencyExtra";
+
   /**
-   * Prefix for properties files containing number formatting constants for
-   * each locale.  We use this only to get the default currency for our
-   * current locale.
+   * Prefix for properties files containing number formatting constants for each
+   * locale. We use this only to get the default currency for our current
+   * locale.
    */
-  private static final String NUMBER_CONSTANTS_PREFIX =
-      "com/google/gwt/i18n/client/constants/NumberConstants";
-  
-  /**
-   * The token representing the locale property controlling Localization.
-   */
-  private static final String PROP_LOCALE = "locale";
+  private static final String NUMBER_CONSTANTS_PREFIX = "com/google/gwt/i18n/client/constants/NumberConstantsImpl";
 
   /**
    * Generate an implementation for the given type.
@@ -93,14 +88,10 @@ public class CurrencyListGenerator extends Generator {
     assert CURRENCY_LIST.equals(typeName);
     TypeOracle typeOracle = context.getTypeOracle();
 
-    // Get the current locale.
     PropertyOracle propertyOracle = context.getPropertyOracle();
-    String locale = "default";
-    try {
-      locale = propertyOracle.getPropertyValue(logger, PROP_LOCALE);
-    } catch (BadPropertyValueException e) {
-      logger.log(TreeLogger.WARN, "locale property not defined, using defaults", e);
-    }
+    LocaleUtils.init(logger, propertyOracle);
+    GwtLocale locale = LocaleUtils.getCompileLocale();
+    Set<GwtLocale> runtimeLocales = LocaleUtils.getRuntimeLocales();
 
     JClassType targetClass;
     try {
@@ -109,12 +100,20 @@ public class CurrencyListGenerator extends Generator {
       logger.log(TreeLogger.ERROR, "No such type", e);
       throw new UnableToCompleteException();
     }
-    
-    String packageName = targetClass.getPackage().getName();
-    String className = targetClass.getName().replace('.', '_') + "_";
-    if (!locale.equals("default")) {
-      className += locale;
+    if (runtimeLocales.isEmpty()) {
+      return generateOne(logger, context, targetClass, locale);
     }
+    CachedGeneratorContext cachedContext = new CachedGeneratorContext(context);
+    return generateRuntimeSelection(logger, cachedContext, targetClass, locale,
+        runtimeLocales);
+  }
+  
+  private String generateOne(TreeLogger logger, GeneratorContext context,
+      JClassType targetClass, GwtLocale locale)
+      throws UnableToCompleteException {
+    String packageName = targetClass.getPackage().getName();
+    String className = targetClass.getName().replace('.', '_') + "_"
+        + locale.getAsString();
     PrintWriter pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
       ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
@@ -123,20 +122,26 @@ public class CurrencyListGenerator extends Generator {
       factory.addImport(CURRENCY_LIST);
       factory.addImport(CURRENCY_DATA);
       SourceWriter writer = factory.createSourceWriter(context, pw);
-      
+
       // Load property files for this locale, handling inheritance properly.
-      LocalizedProperties currencyData = readProperties(logger, CURRENCY_DATA_PREFIX, locale);
-      LocalizedProperties currencyExtra = readProperties(logger, CURRENCY_EXTRA_PREFIX, locale);
-      LocalizedProperties numberConstants = readProperties(logger, NUMBER_CONSTANTS_PREFIX, locale);
-      
+      GwtLocale[] currencyLocale = new GwtLocale[1];
+      LocalizedProperties currencyData = readProperties(logger,
+          CURRENCY_DATA_PREFIX, locale, currencyLocale);
+      GwtLocale[] extraLocale = new GwtLocale[1];
+      LocalizedProperties currencyExtra = readProperties(logger,
+          CURRENCY_EXTRA_PREFIX, locale, extraLocale);
+      GwtLocale[] numberLocale = new GwtLocale[1];
+      LocalizedProperties numberConstants = readProperties(logger,
+          NUMBER_CONSTANTS_PREFIX, locale, numberLocale);
+
       // Get default currency code, set defaults in case it isn't found.
       String defCurrencyCode = numberConstants.getProperty("defCurrencyCode");
       if (defCurrencyCode == null) {
         defCurrencyCode = "USD";
       }
-      
+
       // Sort for deterministic output.
-      Set<Object> keySet = currencyData.getPropertyMap().keySet();
+      Set<?> keySet = currencyData.getPropertyMap().keySet();
       String[] currencies = new String[keySet.size()];
       keySet.toArray(currencies);
       Arrays.sort(currencies);
@@ -163,7 +168,8 @@ public class CurrencyListGenerator extends Generator {
             currencyFractionDigits = Integer.valueOf(currencySplit[2]);
           } catch (NumberFormatException e) {
             // Ignore bad values
-            logger.log(TreeLogger.WARN, "Parse of \"" + currencySplit[2] + "\" failed", e);
+            logger.log(TreeLogger.WARN, "Parse of \"" + currencySplit[2]
+                + "\" failed", e);
           }
         }
         boolean currencyObsolete = false;
@@ -172,7 +178,8 @@ public class CurrencyListGenerator extends Generator {
             currencyObsolete = Integer.valueOf(currencySplit[3]) != 0;
           } catch (NumberFormatException e) {
             // Ignore bad values
-            logger.log(TreeLogger.WARN, "Parse of \"" + currencySplit[3] + "\" failed", e);
+            logger.log(TreeLogger.WARN, "Parse of \"" + currencySplit[3]
+                + "\" failed", e);
           }
         }
         int currencyFlags = currencyFractionDigits;
@@ -180,28 +187,33 @@ public class CurrencyListGenerator extends Generator {
         String portableSymbol = "";
         if (extraData != null) {
           // CurrencyExtra contains up to 3 fields separated by |
-          //   0 - portable currency symbol
-          //   1 - space-separated flags regarding currency symbol positioning/spacing
-          //   2 - override of CLDR-derived currency symbol
+          // 0 - portable currency symbol
+          // 1 - space-separated flags regarding currency symbol
+          // positioning/spacing
+          // 2 - override of CLDR-derived currency symbol
           String[] extraSplit = extraData.split("\\|");
           portableSymbol = extraSplit[0];
           if (extraSplit.length > 1) {
             if (extraSplit[1].contains("SymPrefix")) {
-              currencyFlags |= CurrencyData.POS_FIXED_FLAG; 
+              currencyFlags |= CurrencyData.POS_FIXED_FLAG;
             } else if (extraSplit[1].contains("SymSuffix")) {
-              currencyFlags |= CurrencyData.POS_FIXED_FLAG | CurrencyData.POS_SUFFIX_FLAG;
-            } 
+              currencyFlags |= CurrencyData.POS_FIXED_FLAG
+                  | CurrencyData.POS_SUFFIX_FLAG;
+            }
             if (extraSplit[1].contains("ForceSpace")) {
-              currencyFlags |= CurrencyData.SPACING_FIXED_FLAG | CurrencyData.SPACE_FORCED_FLAG;
+              currencyFlags |= CurrencyData.SPACING_FIXED_FLAG
+                  | CurrencyData.SPACE_FORCED_FLAG;
             } else if (extraSplit[1].contains("ForceNoSpace")) {
               currencyFlags |= CurrencyData.SPACING_FIXED_FLAG;
             }
           }
-          // If a non-empty override is supplied, use it for the currency symbol.
+          // If a non-empty override is supplied, use it for the currency
+          // symbol.
           if (extraSplit.length > 2 && extraSplit[2].length() > 0) {
             currencySymbol = extraSplit[2];
           }
-          // If we don't have a currency symbol yet, use the portable symbol if supplied.
+          // If we don't have a currency symbol yet, use the portable symbol if
+          // supplied.
           if (currencySymbol == null && portableSymbol.length() > 0) {
             currencySymbol = portableSymbol;
           }
@@ -210,8 +222,8 @@ public class CurrencyListGenerator extends Generator {
         if (currencySymbol == null) {
           currencySymbol = currencyCode;
         }
-        String currencyObject = "[ \"" + quote(currencyCode) + "\", \"" + quote(currencySymbol)
-            + "\", " + currencyFlags;
+        String currencyObject = "[ \"" + quote(currencyCode) + "\", \""
+            + quote(currencySymbol) + "\", " + currencyFlags;
         if (portableSymbol.length() > 0) {
           currencyObject += ", \"" + quote(portableSymbol) + "\"";
         }
@@ -219,10 +231,11 @@ public class CurrencyListGenerator extends Generator {
         if (!currencyObsolete) {
           nameMap.put(currencyCode, currencyDisplay);
           writer.println("// " + currencyDisplay);
-          writer.println("\":" + quote(currencyCode) + "\": " + currencyObject + ",");
+          writer.println("\":" + quote(currencyCode) + "\": " + currencyObject
+              + ",");
         }
         if (currencyCode.equals(defCurrencyCode)) {
-          defCurrencyObject  = currencyObject;
+          defCurrencyObject = currencyObject;
         }
       }
       writer.outdent();
@@ -231,14 +244,15 @@ public class CurrencyListGenerator extends Generator {
       writer.println("}-*/;");
       writer.println();
       writer.println("@Override");
-      writer.println("public native void loadNamesMap() /*-{");
+      writer.println("protected native void loadNamesMap() /*-{");
       writer.indent();
       writer.println("this.@com.google.gwt.i18n.client.impl.CurrencyList::namesMap = {");
       writer.indent();
       for (String currencyCode : currencies) {
         String displayName = nameMap.get(currencyCode);
         if (displayName != null && !currencyCode.equals(displayName)) {
-          writer.println("\"" + quote(currencyCode) + "\": \"" + quote(displayName) + "\",");
+          writer.println("\"" + quote(currencyCode) + "\": \""
+              + quote(displayName) + "\",");
         }
       }
       writer.outdent();
@@ -254,7 +268,118 @@ public class CurrencyListGenerator extends Generator {
     }
     return packageName + "." + className;
   }
-      
+
+  
+  private String generateRuntimeSelection(TreeLogger logger,
+      GeneratorContext context, JClassType targetClass,
+      GwtLocale compileLocale, Set<GwtLocale> locales)
+      throws UnableToCompleteException {
+    String packageName = targetClass.getPackage().getName();
+    String className = targetClass.getName().replace('.', '_') + "_"
+        + compileLocale.getAsString() + "_runtimeSelection";
+    PrintWriter pw = context.tryCreate(logger, packageName, className);
+    if (pw != null) {
+      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
+          packageName, className);
+      factory.setSuperclass(targetClass.getQualifiedSourceName());
+      factory.addImport(CURRENCY_LIST);
+      factory.addImport(CURRENCY_DATA);
+      factory.addImport("com.google.gwt.i18n.client.LocaleInfo");
+      SourceWriter writer = factory.createSourceWriter(context, pw);
+      writer.println("private CurrencyList instance;");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public CurrencyData getDefault() {");
+      writer.println("  ensureInstance();");
+      writer.println("  return instance.getDefault();");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("protected void loadCurrencyMap() {");
+      writer.println("  ensureInstance();");
+      writer.println("  instance.loadCurrencyMap();");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("protected void loadNamesMap() {");
+      writer.println("  ensureInstance();");
+      writer.println("  instance.loadNamesMap();");
+      writer.println("}");
+      writer.println();
+      writer.println("private void ensureInstance() {");
+      writer.indent();
+      writer.println("if (instance != null) {");
+      writer.println("  return;");
+      writer.println("}");
+      boolean fetchedLocale = false;
+      Map<String, Set<GwtLocale>> localeMap = new HashMap<String,
+          Set<GwtLocale>>();
+      String compileLocaleClass = processChildLocale(logger, context,
+          targetClass, localeMap, compileLocale);
+      if (compileLocaleClass == null) {
+        // already gave warning, just use default implementation
+        return null;
+      }
+      for (GwtLocale runtimeLocale : locales) {
+        processChildLocale(logger, context, targetClass, localeMap,
+            runtimeLocale);
+      }
+      for (Entry<String, Set<GwtLocale>> entry : localeMap.entrySet()) {
+        if (!fetchedLocale) {
+          writer.println("String runtimeLocale = LocaleInfo.getCurrentLocale().getLocaleName();");
+          fetchedLocale = true;
+        }
+        boolean firstLocale = true;
+        String generatedClass = entry.getKey();
+        if (compileLocaleClass.equals(generatedClass)) {
+          // The catch-all will handle this
+          continue;
+        }
+        writer.print("if (");
+        for (GwtLocale locale : entry.getValue()) {
+          if (firstLocale) {
+            firstLocale = false;
+          } else {
+            writer.println();
+            writer.print("    || ");
+          }
+          writer.print("\"" + locale.toString()
+              + "\".equals(runtimeLocale)");
+        }
+        writer.println(") {");
+        writer.println("  instance = new " + generatedClass + "();");
+        writer.println("  return;");
+        writer.println("}");
+      }
+      writer.println("instance = new " + compileLocaleClass + "();");
+      writer.outdent();
+      writer.println("}");
+      writer.commit(logger);
+    }
+    return packageName + "." + className;
+  }
+
+  private String processChildLocale(TreeLogger logger, GeneratorContext context,
+      JClassType targetClass, Map<String, Set<GwtLocale>> localeMap,
+      GwtLocale locale) throws UnableToCompleteException {
+    String generatedClass = generateOne(logger, context,
+        targetClass, locale);
+    if (generatedClass == null) {
+      logger.log(TreeLogger.ERROR, "Failed to generate "
+          + targetClass.getQualifiedSourceName() + " in locale "
+          + locale.toString());
+      // skip failed locale
+      return null;
+    }
+    Set<GwtLocale> locales = localeMap.get(generatedClass);
+    if (locales == null) {
+      locales = new HashSet<GwtLocale>();
+      localeMap.put(generatedClass, locales);
+    }
+    locales.add(locale);
+    return generatedClass;
+  }
+
   /**
    * Backslash-escape any double quotes in the supplied string.
    * 
@@ -266,49 +391,26 @@ public class CurrencyListGenerator extends Generator {
   }
 
   /**
-   * Load a chain of localized properties files, starting with the default and
-   * adding locale components so inheritance is properly recognized.
-   * 
-   * @param logger TreeLogger instance
-   * @param propFilePrefix property file name prefix; locale is added to it
-   * @return a LocalizedProperties object containing all properties
-   * @throws UnableToCompleteException if an error occurs reading the file
-   */
-  private LocalizedProperties readProperties(TreeLogger logger, String propFilePrefix,
-      String locale) throws UnableToCompleteException {
-    LocalizedProperties props = new LocalizedProperties();
-    ClassLoader classLoader = getClass().getClassLoader();
-    readProperties(logger, classLoader, propFilePrefix, props);
-    if (locale.equals("default")) {
-      return props;
-    }
-    int idx = -1;
-    while ((idx = locale.indexOf('_', idx + 1)) >= 0) {
-      readProperties(logger, classLoader, propFilePrefix + "_" + locale.substring(0, idx), props);
-    }
-    if (locale.length() > 0) {
-      readProperties(logger, classLoader, propFilePrefix + "_" + locale, props);
-    }
-    return props;
-  }
-  
-  /**
-   * Load a single localized properties file, adding to an existing LocalizedProperties object.
+   * Load a single localized properties file, adding to an existing
+   * LocalizedProperties object.
    * 
    * @param logger TreeLogger instance
    * @param classLoader class loader to use to find property file
    * @param propFile property file name
    * @param props existing LocalizedProperties object to add to
+   * @return true if the properties were successfully read
    * @throws UnableToCompleteException if an error occurs reading the file
    */
-  private void readProperties(TreeLogger logger, ClassLoader classLoader,
-      String propFile, LocalizedProperties props) throws UnableToCompleteException {
+  private boolean readProperties(TreeLogger logger, ClassLoader classLoader,
+      String propFile, LocalizedProperties props)
+      throws UnableToCompleteException {
     propFile += ".properties";
     InputStream str = null;
     try {
       str = classLoader.getResourceAsStream(propFile);
       if (str != null) {
         props.load(str, "UTF-8");
+        return true;
       }
     } catch (UnsupportedEncodingException e) {
       // UTF-8 should always be defined
@@ -327,5 +429,36 @@ public class CurrencyListGenerator extends Generator {
         }
       }
     }
+    return false;
+  }
+
+  /**
+   * Load a chain of localized properties files, starting with the default and
+   * adding locale components so inheritance is properly recognized.
+   * 
+   * @param logger TreeLogger instance
+   * @param propFilePrefix property file name prefix; locale is added to it
+   * @return a LocalizedProperties object containing all properties
+   * @throws UnableToCompleteException if an error occurs reading the file
+   */
+  private LocalizedProperties readProperties(TreeLogger logger,
+      String propFilePrefix, GwtLocale locale, GwtLocale[] foundLocale)
+      throws UnableToCompleteException {
+    LocalizedProperties props = new LocalizedProperties();
+    ClassLoader classLoader = getClass().getClassLoader();
+    List<GwtLocale> searchList = locale.getCompleteSearchList();
+    GwtLocale lastFound = LocaleUtils.getLocaleFactory().fromString(null);
+    for (int i = searchList.size(); i-- > 0; ) {
+      GwtLocale search = searchList.get(i);
+      String propFile = propFilePrefix;
+      if (!search.isDefault()) {
+        propFile += "_" + search.getAsString();
+      }
+      if (readProperties(logger, classLoader, propFile, props)) {
+        lastFound = search;
+      }
+    }
+    foundLocale[0] = lastFound;
+    return props;
   }
 }

@@ -19,6 +19,7 @@ import com.google.gwt.i18n.client.ColorsAndShapes;
 import com.google.gwt.i18n.client.ColorsAndShapesAndConcepts;
 import com.google.gwt.i18n.client.gen.Colors;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import junit.framework.TestCase;
 
@@ -33,13 +34,14 @@ import java.io.UnsupportedEncodingException;
  */
 public class AbstractResourceTest extends TestCase {
   public static final String UNICODE = "Îñţérñåţîöñåļîžåţîöñ";
-  private static final String LOCALE_NAME_PIGLATIN = "piglatin";
-  private static final String LOCALE_NAME_PIGLATIN_UK = "piglatin_UK";
+  private static final GwtLocale LOCALE_NAME_PIGLATIN = LocaleUtils.getLocaleFactory().fromString("piglatin");
+  private static final GwtLocale LOCALE_NAME_PIGLATIN_UK = LocaleUtils.getLocaleFactory().fromString("piglatin_UK");
+  private static final GwtLocale LOCALE_DEFAULT = LocaleUtils.getLocaleFactory().getDefault();
 
   public void testBundle() {
     // simple test
     String s = Colors.class.getName();
-    ResourceList resourceList = ResourceFactory.getBundle(s, null, true);
+    ResourceList resourceList = ResourceFactory.getBundle(s, LOCALE_DEFAULT, true);
     assertNotNull(resourceList);
     ResourceList pigLatinResourceList =
         ResourceFactory.getBundle(s, LOCALE_NAME_PIGLATIN, true);

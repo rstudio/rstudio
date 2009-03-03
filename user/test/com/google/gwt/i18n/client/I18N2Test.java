@@ -28,6 +28,7 @@ import java.util.Date;
  * uses different locales.
  */
 public class I18N2Test extends GWTTestCase {
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18N2Test";
@@ -54,7 +55,7 @@ public class I18N2Test extends GWTTestCase {
   }
   
   public void testBadKeys() {
-    TestBadKeys test = (TestBadKeys) GWT.create(TestBadKeys.class);
+    TestBadKeys test = GWT.create(TestBadKeys.class);
     assertEquals("zh_spacer", test.zh_spacer());
     assertEquals("zh_spacer", test.getString("zh_spacer"));
     assertEquals("logger_org_hibernate_jdbc", test.logger_org_hibernate_jdbc());
@@ -112,13 +113,13 @@ public class I18N2Test extends GWTTestCase {
   }
 
   public void testBinding() {
-    TestBinding t = (TestBinding) GWT.create(TestBinding.class);
+    TestBinding t = GWT.create(TestBinding.class);
     assertEquals("b_c_d", t.a());
     assertEquals("default", t.b());
   }
 
   public void testCheckColorsAndShapes() {
-    ColorsAndShapes s = (ColorsAndShapes) GWT.create(ColorsAndShapes.class);
+    ColorsAndShapes s = GWT.create(ColorsAndShapes.class);
     // Red comes from Colors_b_C_d
     assertEquals("red_b_C_d", s.red());
     // Blue comes from Colors_b_C
@@ -144,7 +145,7 @@ public class I18N2Test extends GWTTestCase {
   }
 
   public void testWalkUpColorTree() {
-    Colors colors = (Colors) GWT.create(Colors.class);
+    Colors colors = GWT.create(Colors.class);
     assertEquals("red_b_C_d", colors.red());
     assertEquals("blue_b_C", colors.blue());
     assertEquals("yellow_b", colors.yellow());

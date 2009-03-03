@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 /**
@@ -89,7 +90,8 @@ class SimpleValueMethodCreator extends AbstractLocalizableMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String key, ResourceList resource, String locale) throws UnableToCompleteException {
+      String key, ResourceList resource, GwtLocale locale)
+      throws UnableToCompleteException {
     String value = resource.getRequiredStringExt(key, null);
     try {
       String translatedValue = valueCreator.getValue(value);

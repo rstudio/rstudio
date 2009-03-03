@@ -28,6 +28,7 @@ import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.Messages;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 /**
  * Generator used to bind classes extending the <code>Localizable</code> and
@@ -65,14 +66,7 @@ public class LocalizableGenerator extends Generator {
   @Override
   public final String generate(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException {
-    // Clear cache if reset was done.
-    TypeOracle typeOracle = context.getTypeOracle();
-    if (lastReloadCount != typeOracle.getReloadCount()) {
-      ResourceFactory.clearCache();
-      lastReloadCount = typeOracle.getReloadCount();
-    }
-
-    // Get the current locale and interface type.
+    // Get the current locale
     PropertyOracle propertyOracle = context.getPropertyOracle();
     String locale;
     try {
@@ -99,6 +93,17 @@ public class LocalizableGenerator extends Generator {
       logger.log(TreeLogger.ERROR, "Could not parse specified locale", e);
       throw new UnableToCompleteException();
     }
+    return generate(logger, context, typeName, locale);
+  }
+  
+  public final String generate(TreeLogger logger, GeneratorContext context,
+      String typeName, String localeName) throws UnableToCompleteException {
+    // Clear cache if reset was done.
+    TypeOracle typeOracle = context.getTypeOracle();
+    if (lastReloadCount != typeOracle.getReloadCount()) {
+      ResourceFactory.clearCache();
+      lastReloadCount = typeOracle.getReloadCount();
+    }
 
     JClassType targetClass;
     try {
@@ -114,6 +119,8 @@ public class LocalizableGenerator extends Generator {
           "Checking for deprecated metadata", null);
     }
 
+    GwtLocale locale = LocaleUtils.getLocaleFactory().fromString(localeName);
+    
     // Link current locale and interface type to correct implementation class.
     String generatedClass = AbstractLocalizableImplCreator.generateConstantOrMessageClass(
         logger, deprecatedLogger , context, locale, targetClass);

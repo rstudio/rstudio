@@ -16,6 +16,7 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import org.apache.tapestry.util.text.LocalizedProperties;
 
@@ -35,15 +36,17 @@ class LocalizedPropertiesResource extends AbstractResource {
     }
 
     @Override
-    public AbstractResource load(InputStream m) {
-      LocalizedPropertiesResource bundle = new LocalizedPropertiesResource(m);
+    public AbstractResource load(InputStream m, GwtLocale locale) {
+      LocalizedPropertiesResource bundle = new LocalizedPropertiesResource(m,
+          locale);
       return bundle;
     }
   }
 
   private LocalizedProperties props;
 
-  public LocalizedPropertiesResource(InputStream m) {
+  public LocalizedPropertiesResource(InputStream m, GwtLocale locale) {
+    super(locale);
     props = new LocalizedProperties();
     try {
       props.load(m, Util.DEFAULT_ENCODING);

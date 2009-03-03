@@ -17,6 +17,7 @@ package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.i18n.client.PluralRule.PluralForm;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
@@ -126,6 +127,38 @@ public abstract class AbstractResource {
       for (AbstractResource resource : list) {
         resource.addToKeySet(s);
       }
+    }
+
+    /**
+     * From the list of locales matched for any resources in this resource list,
+     * choose the one that is least derived from the original search locale.
+     * 
+     * @param locale originally requested locale
+     * @return least derived matched locale
+     */
+    public GwtLocale findLeastDerivedLocale(GwtLocale locale) {
+      List<GwtLocale> searchList = locale.getCompleteSearchList();
+      Map<GwtLocale, Integer> derivedIndex = new HashMap<GwtLocale, Integer>();
+      for (int i = 0; i < searchList.size(); ++i) {
+        derivedIndex.put(searchList.get(i), i);
+      }
+      GwtLocale best = LocaleUtils.getLocaleFactory().getDefault();
+      int bestIdx = Integer.MAX_VALUE;
+      for (int i = 0; i < list.size(); ++i) {
+        GwtLocale matchLocale = list.get(i).getMatchLocale();
+        Integer wrappedIdx = derivedIndex.get(matchLocale);
+        if (wrappedIdx == null) {
+          assert false : "Locale " + matchLocale + " not in searchlist "
+              + searchList;
+          continue;
+        }
+        int idx = wrappedIdx;
+        if (idx < bestIdx) {
+          bestIdx = idx;
+          best = matchLocale;
+        }
+      }
+      return best; 
     }
 
     @Override
@@ -305,10 +338,16 @@ public abstract class AbstractResource {
     return key;
   }
 
+  private final GwtLocale matchLocale;
+
   private Set<String> keySet;
 
   private String path;
 
+  public AbstractResource(GwtLocale matchLocale) {
+    this.matchLocale = matchLocale;
+  }
+  
   public Collection<String> getExtensions(String key) {
     return new ArrayList<String>();
   }
@@ -393,6 +432,10 @@ public abstract class AbstractResource {
   }
 
   abstract void addToKeySet(Set<String> s);
+
+  GwtLocale getMatchLocale() {
+    return matchLocale;
+  }
 
   String getPath() {
     return path;

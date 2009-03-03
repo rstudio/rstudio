@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.SourceWriter;
 
 import java.util.Map;
@@ -154,8 +155,8 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
    * arg0...argN.
    */
   @Override
-  protected void emitMethodBody(TreeLogger logger, JMethod method, String locale)
-      throws UnableToCompleteException {
+  protected void emitMethodBody(TreeLogger logger, JMethod method,
+      GwtLocale locale) throws UnableToCompleteException {
     checkConstantMethod(logger, method);
     delegateToCreator(logger, method, locale);
   }

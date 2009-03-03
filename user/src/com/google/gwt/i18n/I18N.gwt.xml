@@ -47,6 +47,8 @@
       if (locale == null) {
         // Look for an override computed by other means in the selection script
         locale = $wnd['__gwt_Locale'];
+      } else {
+        $wnd['__gwt_Locale'] = locale || 'default';
       }
       
       if (locale == null) {
@@ -79,4 +81,13 @@
   <generate-with class="com.google.gwt.i18n.rebind.CurrencyListGenerator">
     <when-type-is class="com.google.gwt.i18n.client.impl.CurrencyList" />
   </generate-with>
+  
+  <!--
+      Set of locales to be selectable at runtime.  Only those which extend
+      the locale of the current permutation will actually be included.  Note
+      that currently only number/date format constants, locale names, and
+      currency data will support runtime locales - everything else will just
+      reference the compile-time locale set in the "locale" property. 
+   -->
+  <set-configuration-property name="runtime.locales" value=""/>
 </module>

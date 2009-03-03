@@ -34,14 +34,13 @@ import com.google.gwt.i18n.client.impl.plurals.DefaultRule;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.MessageFormatParser.ArgumentChunk;
 import com.google.gwt.i18n.rebind.MessageFormatParser.TemplateChunk;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Creator for methods of the form String getX(arg0,...,argN).
@@ -263,11 +262,6 @@ class MessagesMethodCreator extends AbstractMethodCreator {
   }
 
   /**
-   * Pattern to find MessageFormat argument references, including format and
-   * subformat pieces, if present.
-   */
-  private static final Pattern argPattern = Pattern.compile("\\{(\\d+)(,(\\w+)(,([^\\}]+))?)?\\}");
-  /**
    * Class names, in a refactor-friendly manner.
    */
   private static final String dtFormatClassName = DateTimeFormat.class.getCanonicalName();
@@ -300,7 +294,7 @@ class MessagesMethodCreator extends AbstractMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod m, String key,
-      ResourceList resourceList, String locale)
+      ResourceList resourceList, GwtLocale locale)
       throws UnableToCompleteException {
     JParameter[] params = m.getParameters();
     int pluralParamIndex = -1;
@@ -406,17 +400,15 @@ class MessagesMethodCreator extends AbstractMethodCreator {
    * TODO: consider impact of possibly having multiple TypeOracles
    */
   private PluralRule createLocalizedPluralRule(TreeLogger logger,
-      TypeOracle oracle, Class<? extends PluralRule> ruleClass, String locale)
+      TypeOracle oracle, Class<? extends PluralRule> ruleClass,
+      GwtLocale locale)
       throws UnableToCompleteException {
-    if (locale.length() == 0) {
-      locale = ResourceFactory.DEFAULT_TOKEN;
-    }
     String baseName = ruleClass.getCanonicalName();
     JClassType ruleJClassType = oracle.findType(baseName);
     Map<String, JClassType> matchingClasses = LocalizableLinkageCreator.findDerivedClasses(
         logger, ruleJClassType);
-    while (true) {
-      JClassType localizedType = matchingClasses.get(locale);
+    for (GwtLocale search : locale.getCompleteSearchList()) {
+      JClassType localizedType = matchingClasses.get(search.toString());
       if (localizedType != null) {
         try {
           Class<?> testClass = Class.forName(
@@ -435,12 +427,9 @@ class MessagesMethodCreator extends AbstractMethodCreator {
           // ignore inaccessible classes
         }
       }
-      if (locale.equals(ResourceFactory.DEFAULT_TOKEN)) {
-        // default of last resort
-        return new DefaultRule();
-      }
-      locale = ResourceFactory.getParentLocaleName(locale);
     }
+    // default of last resort
+    return new DefaultRule();
   }
 
   /**
@@ -458,7 +447,6 @@ class MessagesMethodCreator extends AbstractMethodCreator {
       JParameter[] params, boolean[] seenFlag, StringBuffer outputBuf)
       throws UnableToCompleteException {
     StringGenerator buf = new StringGenerator(outputBuf);
-    Matcher match = argPattern.matcher(template);
     try {
       for (TemplateChunk chunk : MessageFormatParser.parse(template)) {
         if (chunk.isLiteral()) {

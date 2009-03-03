@@ -15,16 +15,17 @@
  */
 package com.google.gwt.i18n.client.constants;
 
-import com.google.gwt.i18n.client.Constants;
-
 /**
  * DateTimeConstants class encapsulate a collection of DateTime formatting
  * symbols for use with DateTime format and parse services. This class extends
  * GWT's Constants class. The actual symbol collections are defined in a set of
  * property files named like "DateTimeConstants_xx.properties". GWT will will
  * perform late binding to the property file that specific to user's locale.
+ * 
+ * If you previously were using GWT.create on this interface, you should
+ * use LocaleInfo.getDateTimeConstants() instead.
  */
-public interface DateTimeConstants extends Constants {
+public interface DateTimeConstants {
   String[] ampms();
 
   String[] dateFormats();

@@ -16,6 +16,8 @@
 package com.google.gwt.i18n.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.i18n.client.constants.DateTimeConstants;
+import com.google.gwt.i18n.client.constants.NumberConstants;
 import com.google.gwt.i18n.client.impl.CldrImpl;
 import com.google.gwt.i18n.client.impl.LocaleInfoImpl;
 
@@ -37,7 +39,7 @@ public class LocaleInfo {
   /**
    * @return an array of available locale names
    */
-  public static String[] getAvailableLocaleNames() {
+  public static final String[] getAvailableLocaleNames() {
     /*
      * The set of all locales is constant across all permutations, so this
      * is static.  Ideally, the set of available locales would be generated
@@ -55,7 +57,7 @@ public class LocaleInfo {
   /**
    * @return a LocaleInfo instance for the current locale
    */
-  public static LocaleInfo getCurrentLocale() {
+  public static final LocaleInfo getCurrentLocale() {
     /*
      * In the future, we could make additional static methods which returned a
      * LocaleInfo instance for a specific locale (from the set of those the app
@@ -85,9 +87,13 @@ public class LocaleInfo {
   }
   
   private final LocaleInfoImpl infoImpl;
-  
+
   private final CldrImpl cldrImpl;
+
+  private DateTimeConstants dateTimeConstants;
   
+  private NumberConstants numberConstants;
+
   /**
    * Constructor to be used by subclasses, such as mock classes for testing.
    * Any such subclass should override all methods.
@@ -96,7 +102,7 @@ public class LocaleInfo {
     infoImpl = null;
     cldrImpl = null;
   }
-  
+
   /**
    * Create a LocaleInfo instance, passing in the implementation classes.
    * 
@@ -107,18 +113,46 @@ public class LocaleInfo {
     this.infoImpl = impl;
     this.cldrImpl = cldr;
   }
-
+  
   /**
-   * @return the name of this locale, such as "default, "en_US", etc
+   * @return a NumberConstants interface for this locale.
    */
-  public String getLocaleName() {
-    return infoImpl.getLocaleName();
+  public final DateTimeConstants getDateTimeConstants() {
+    ensureDateTimeConstants();
+    return dateTimeConstants;
   }
   
   /**
+   * @return the name of this locale, such as "default, "en_US", etc
+   */
+  public final String getLocaleName() {
+    return infoImpl.getLocaleName();
+  }
+
+  /**
+   * @return a NumberConstants interface for this locale.
+   */
+  public final NumberConstants getNumberConstants() {
+    ensureNumberConstants();
+    return numberConstants;
+  }
+
+  /**
    * @return true if this locale is right-to-left instead of left-to-right
    */
-  public boolean isRTL() {
+  public final boolean isRTL() {
     return cldrImpl.isRTL();
+  }
+
+  private void ensureDateTimeConstants() {
+    if (dateTimeConstants == null) {
+      dateTimeConstants = infoImpl.getDateTimeConstants();
+    }
+  }
+  
+  private void ensureNumberConstants() {
+    if (numberConstants == null) {
+      numberConstants = infoImpl.getNumberConstants();
+    }
   }
 }

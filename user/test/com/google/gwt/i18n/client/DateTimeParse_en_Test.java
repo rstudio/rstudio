@@ -24,7 +24,10 @@ import java.util.Date;
  * Tests parsing functionality in {@link DateTimeFormat} for the English
  * language.
  */
+@SuppressWarnings("deprecation")
 public class DateTimeParse_en_Test extends GWTTestCase {
+  // TODO: replace the rest of the assertTrue calls to assertEquals
+  //    for better error reporting, where possible.
 
   @Override
   public String getModuleName() {
@@ -45,13 +48,9 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     String toParse = "July 11, 1938";
     DateTimeFormat longDateFormat = DateTimeFormat.getLongDateFormat();
 
-    try {
-      Date actualDate = longDateFormat.parse(toParse);
-      String actualFormat = longDateFormat.format(actualDate);
-      assertEquals(toParse, actualFormat);
-    } catch (IllegalArgumentException e) {
-      fail("Should not have thrown an exception");
-    }
+    Date actualDate = longDateFormat.parse(toParse);
+    String actualFormat = longDateFormat.format(actualDate);
+    assertEquals(toParse, actualFormat);
 
     try {
       String toParseMangled = toParse + " asdfasdfasdf";
@@ -66,42 +65,42 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     Date date = new Date();
 
     assertTrue(parse("hhmm", "1122", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(11, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("hhmm", "122", 0, date) > 0);
-    assertTrue(date.getHours() == 1);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(1, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("hhmmss", "112233", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
-    assertTrue(date.getSeconds() == 33);
+    assertEquals(11, date.getHours());
+    assertEquals(22, date.getMinutes());
+    assertEquals(33, date.getSeconds());
 
     assertTrue(parse("hhmmss", "12233", 0, date) > 0);
-    assertTrue(date.getHours() == 1);
-    assertTrue(date.getMinutes() == 22);
-    assertTrue(date.getSeconds() == 33);
+    assertEquals(1, date.getHours());
+    assertEquals(22, date.getMinutes());
+    assertEquals(33, date.getSeconds());
 
     assertTrue(parse("yyyyMMdd", "19991202", 0, date) > 0);
-    assertTrue(date.getYear() == (1999 - 1900));
-    assertTrue(date.getMonth() == 12 - 1);
-    assertTrue(date.getDate() == 02);
+    assertEquals(1999 - 1900, date.getYear());
+    assertEquals(12 - 1, date.getMonth());
+    assertEquals(2, date.getDate());
 
     assertTrue(parse("yyyyMMdd", "9991202", 0, date) > 0);
-    assertTrue(date.getYear() == (999 - 1900));
-    assertTrue(date.getMonth() == 12 - 1);
-    assertTrue(date.getDate() == 02);
+    assertEquals(999 - 1900, date.getYear());
+    assertEquals(12 - 1, date.getMonth());
+    assertEquals(2, date.getDate());
 
     assertTrue(parse("yyyyMMdd", "991202", 0, date) > 0);
-    assertTrue(date.getYear() == (99 - 1900));
-    assertTrue(date.getMonth() == 12 - 1);
-    assertTrue(date.getDate() == 02);
+    assertEquals(99 - 1900, date.getYear());
+    assertEquals(12 - 1, date.getMonth());
+    assertEquals(2, date.getDate());
 
     assertTrue(parse("yyyyMMdd", "91202", 0, date) > 0);
-    assertTrue(date.getYear() == (9 - 1900));
-    assertTrue(date.getMonth() == 12 - 1);
-    assertTrue(date.getDate() == 02);
+    assertEquals(9 - 1900, date.getYear());
+    assertEquals(12 - 1,date.getMonth());
+    assertEquals(2, date.getDate());
   }
 
   public void testAmbiguousYear() {
@@ -120,27 +119,27 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     orgDate.setDate(1);
     String str = format("MM/dd/yy", orgDate);
     assertTrue(parse("MM/dd/yy", str, 0, date) > 0);
-    assertTrue(date.getYear() == orgDate.getYear());
+    assertEquals(date.getYear(), orgDate.getYear());
 
     orgDate.setMonth(11);
     orgDate.setDate(31);
     str = format("MM/dd/yy", orgDate);
     assertTrue(parse("MM/dd/yy", str, 0, date) > 0);
-    assertTrue(date.getYear() + 100 == orgDate.getYear());
+    assertEquals(date.getYear() + 100, orgDate.getYear());
 
     assertTrue(parse("yy,MM,dd", "2097,07,21", 0, date) > 0);
-    assertTrue(date.getYear() == 2097 - 1900);
+    assertEquals(2097 - 1900, date.getYear());
   }
 
   public void testEnglishDate() {
     Date date = new Date();
 
     assertTrue(parse("yyyy MMM dd hh:mm", "2006 Jul 10 15:44", 0, date) > 0);
-    assertTrue(date.getYear() == 2006 - 1900);
-    assertTrue(date.getMonth() == 7 - 1);
-    assertTrue(date.getDate() == 10);
-    assertTrue(date.getHours() == 15);
-    assertTrue(date.getMinutes() == 44);
+    assertEquals(2006 - 1900, date.getYear());
+    assertEquals(7 - 1, date.getMonth());
+    assertEquals(10, date.getDate());
+    assertEquals(15, date.getHours());
+    assertEquals(44, date.getMinutes());
   }
 
   /**
@@ -150,85 +149,85 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     Date date = new Date();
 
     assertTrue(parse("hh:mm:ss.SSS", "11:12:13.956", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 12);
-    assertTrue(date.getSeconds() == 13);
-    assertTrue((date.getTime() % 1000) == 956);
+    assertEquals(11, date.getHours());
+    assertEquals(12, date.getMinutes());
+    assertEquals(13, date.getSeconds());
+    assertEquals(956, (date.getTime() % 1000));
 
     assertTrue(parse("hh:mm:ss.SSS", "11:12:13.95", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 12);
-    assertTrue(date.getSeconds() == 13);
-    assertTrue((date.getTime() % 1000) == 950);
+    assertEquals(11, date.getHours());
+    assertEquals(12, date.getMinutes());
+    assertEquals(13, date.getSeconds());
+    assertEquals(950, (date.getTime() % 1000));
 
     assertTrue(parse("hh:mm:ss.SSS", "11:12:13.9", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 12);
-    assertTrue(date.getSeconds() == 13);
-    assertTrue((date.getTime() % 1000) == 900);
+    assertEquals(11, date.getHours());
+    assertEquals(12, date.getMinutes());
+    assertEquals(13, date.getSeconds());
+    assertEquals(900, (date.getTime() % 1000));
   }
 
   public void testHourParsingFHH() {
     Date date = new Date();
     assertTrue(parse("HHmm", "0022", 0, date) > 0);
-    assertTrue(date.getHours() == 00);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmm", "1122", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(11, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmm", "1222", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmm", "2322", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmm", "2422", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "0022am", 0, date) > 0);
-    assertTrue(date.getHours() == 00);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "1122am", 0, date) > 0);
-    assertTrue(date.getHours() == 11);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(11, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "1222am", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "2322am", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "2422am", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "0022pm", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "1122pm", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "1222pm", 0, date) > 0);
-    assertTrue(date.getHours() == 12);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(12, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "2322pm", 0, date) > 0);
-    assertTrue(date.getHours() == 23);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(23, date.getHours());
+    assertEquals(22, date.getMinutes());
 
     assertTrue(parse("HHmma", "2422pm", 0, date) > 0);
-    assertTrue(date.getHours() == 0);
-    assertTrue(date.getMinutes() == 22);
+    assertEquals(0, date.getHours());
+    assertEquals(22, date.getMinutes());
   }
 
   public void testHourParsingFhh() {

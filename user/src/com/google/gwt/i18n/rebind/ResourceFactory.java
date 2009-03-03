@@ -18,8 +18,10 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.i18n.client.LocalizableResource.DefaultLocale;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -130,10 +132,6 @@ public abstract class ResourceFactory {
     }
   }
 
-  /**
-   * Represents default locale.
-   */
-  public static final String DEFAULT_TOKEN = "default";
   public static final char LOCALE_SEPARATOR = '_';
 
   private static Map<String, ResourceList> cache = new HashMap<String, ResourceList>();
@@ -150,11 +148,15 @@ public abstract class ResourceFactory {
     cache.clear();
   }
 
-  public static ResourceList getBundle(Class<?> clazz, String locale, boolean isConstants) {
+  public static ResourceList getBundle(Class<?> clazz, GwtLocale locale,
+      boolean isConstants) {
+    assert locale != null;
     return getBundle(TreeLogger.NULL, clazz, locale, isConstants);
   }
 
-  public static ResourceList getBundle(String path, String locale, boolean isConstants) {
+  public static ResourceList getBundle(String path, GwtLocale locale,
+      boolean isConstants) {
+    assert locale != null;
     return getBundle(TreeLogger.NULL, path, locale, isConstants);
   }
 
@@ -166,7 +168,7 @@ public abstract class ResourceFactory {
    * @return the resource
    */
   public static ResourceList getBundle(TreeLogger logger, Class<?> javaInterface,
-      String locale, boolean isConstants) {
+      GwtLocale locale, boolean isConstants) {
     if (javaInterface.isInterface() == false) {
       throw new IllegalArgumentException(javaInterface
           + " should be an interface.");
@@ -182,10 +184,10 @@ public abstract class ResourceFactory {
    * @param locale locale name
    * @return the resource
    */
-  public static ResourceList getBundle(TreeLogger logger, JClassType javaInterface,
-      String locale, boolean isConstants) {
-    return getBundleAux(logger, new JClassTypePathTree(javaInterface), javaInterface, locale,
-        true, isConstants);
+  public static ResourceList getBundle(TreeLogger logger,
+      JClassType javaInterface, GwtLocale locale, boolean isConstants) {
+    return getBundleAux(logger, new JClassTypePathTree(javaInterface),
+        javaInterface, locale, true, isConstants);
   }
 
   /**
@@ -195,33 +197,10 @@ public abstract class ResourceFactory {
    * @param locale locale name
    * @return the resource
    */
-  public static ResourceList getBundle(TreeLogger logger, String path, String locale,
-      boolean isConstants) {
-    return getBundleAux(logger, new SimplePathTree(path), null, locale, true, isConstants);
-  }
-
-  /**
-   * Given a locale name, derives the parent's locale name. For example, if
-   * the locale name is "en_US", the parent locale name would be "en". If the
-   * locale name is that of a top level locale (i.e. no '_' characters, such
-   * as "fr"), then the the parent locale name is that of the default locale.
-   * If the locale name is null, the empty string, or is already that of the
-   * default locale, then null is returned.
-   *
-   * @param localeName the locale name
-   * @return the parent's locale name
-   */
-  public static String getParentLocaleName(String localeName) {
-    if (localeName == null ||
-        localeName.length() == 0 ||
-        localeName.equals(DEFAULT_TOKEN)) {
-      return null;
-    }
-    int pos = localeName.lastIndexOf(LOCALE_SEPARATOR);
-    if (pos != -1) {
-      return localeName.substring(0, pos);
-    }
-    return DEFAULT_TOKEN;
+  public static ResourceList getBundle(TreeLogger logger, String path,
+      GwtLocale locale, boolean isConstants) {
+    return getBundleAux(logger, new SimplePathTree(path), null, locale, true,
+        isConstants);
   }
 
   public static String getResourceName(JClassType targetClass) {
@@ -233,7 +212,7 @@ public abstract class ResourceFactory {
   }
 
   private static void addAlternativeParents(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
+      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
       boolean useAlternativeParents, boolean isConstants,
       ResourceList resources, Set<String> seenPaths) {
     if (tree != null) {
@@ -246,24 +225,26 @@ public abstract class ResourceFactory {
   }
 
   private static void addPrimaryParent(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
+      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
       boolean isConstants, ResourceList resources, Set<String> seenPaths) {
-
-    // If we are not in the default case, calculate parent
-    if (!DEFAULT_TOKEN.equals(locale)) {
-      addResources(logger, tree, clazz, getParentLocaleName(locale),
-          false, isConstants, resources, seenPaths);
+    for (GwtLocale search : locale.getCompleteSearchList()) {
+      // This relies on addResources exiting if it has seen a given path
+      // (derived from the locale) to avoid infinite loops, since the search
+      // list includes this locale as well as aliases which will refer back
+      // to this locale.
+      addResources(logger, tree, clazz, search, false, isConstants, resources,
+          seenPaths);
     }
   }
 
   private static void addResources(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
+      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
       boolean useAlternateParents, boolean isConstants,
       ResourceList resources, Set<String> seenPaths) {
     String targetPath = tree.getPath();
     String localizedPath = targetPath;
-    if (!DEFAULT_TOKEN.equals(locale)) {
-      localizedPath = targetPath + LOCALE_SEPARATOR + locale;
+    if (!locale.isDefault()) {
+      localizedPath = targetPath + LOCALE_SEPARATOR + locale.getAsString();
     }
     if (seenPaths.contains(localizedPath)) {
       return;
@@ -279,7 +260,15 @@ public abstract class ResourceFactory {
          * In this case, we specifically want to be able to look at the interface
          * instead of just implementations.
          */
-        matchingClasses.put(ResourceFactory.DEFAULT_TOKEN, clazz);
+        String defLocaleValue = DefaultLocale.DEFAULT_LOCALE;
+        DefaultLocale defLocale = clazz.getAnnotation(DefaultLocale.class);
+        if (defLocale != null) {
+          defLocaleValue = defLocale.value();
+          if (!GwtLocale.DEFAULT_LOCALE.equals(defLocaleValue)) {
+            matchingClasses.put(defLocaleValue, clazz);
+          }
+        }
+        matchingClasses.put(GwtLocale.DEFAULT_LOCALE, clazz);
       } catch (UnableToCompleteException e) {
         // ignore error, fall through
       }
@@ -287,17 +276,6 @@ public abstract class ResourceFactory {
     if (matchingClasses == null) {
       // empty map
       matchingClasses = new HashMap<String, JClassType>();
-    }
-
-    if (locale == null || locale.length() == 0) {
-      // This should never happen, since the only legitimate user of this
-      // method traces back to AbstractLocalizableImplCreator. The locale
-      // that is passed in from AbstractLocalizableImplCreator is produced
-      // by the I18N property provider, which guarantees that the locale
-      // will not be of zero length or null. However, we add this check
-      // in here in the event that a future user of ResourceFactory does
-      // not obey this constraint.
-      locale = DEFAULT_TOKEN;
     }
 
     // Check for file-based resources.
@@ -314,14 +292,14 @@ public abstract class ResourceFactory {
         m = loader.getResourceAsStream(path);
       }
       if (m != null) {
-        AbstractResource found = element.load(m);
+        AbstractResource found = element.load(m, locale);
         found.setPath(path);
         resources.add(found);
       }
     }
 
     // Check for annotations
-    JClassType currentClass = matchingClasses.get(locale);
+    JClassType currentClass = matchingClasses.get(locale.toString());
     if (currentClass != null) {
       AnnotationsResource resource;
       try {
@@ -348,9 +326,9 @@ public abstract class ResourceFactory {
   }
 
   private static ResourceList getBundleAux(TreeLogger logger,
-      ResourceFactory.AbstractPathTree tree, JClassType clazz, String locale,
+      ResourceFactory.AbstractPathTree tree, JClassType clazz, GwtLocale locale,
       boolean required, boolean isConstants) {
-    String cacheKey = tree.getPath() + "_" + locale;
+    String cacheKey = tree.getPath() + "_" + locale.getAsString();
     if (cache.containsKey(cacheKey)) {
       return cache.get(cacheKey);
     }
@@ -373,5 +351,5 @@ public abstract class ResourceFactory {
 
   abstract String getExt();
 
-  abstract AbstractResource load(InputStream m);
+  abstract AbstractResource load(InputStream m, GwtLocale locale);
 }

@@ -23,6 +23,7 @@ import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.i18n.rebind.AbstractResource;
 import com.google.gwt.i18n.rebind.AbstractResource.MissingResourceException;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -108,7 +109,8 @@ public abstract class AbstractGeneratorClassCreator extends
    * @param locale 
    * @throws UnableToCompleteException
    */
-  public void emitClass(TreeLogger logger, String locale) throws UnableToCompleteException {
+  public void emitClass(TreeLogger logger, GwtLocale locale)
+      throws UnableToCompleteException {
     logger = branch(logger, branchMessage());
     classPrologue();
     emitMethods(logger, targetClass, locale);
@@ -180,8 +182,8 @@ public abstract class AbstractGeneratorClassCreator extends
    * @param locale locale for this generation
    * @throws UnableToCompleteException
    */
-  protected abstract void emitMethodBody(TreeLogger logger, JMethod method, String locale)
-      throws UnableToCompleteException;
+  protected abstract void emitMethodBody(TreeLogger logger, JMethod method,
+      GwtLocale locale) throws UnableToCompleteException;
 
   /**
    * Gets the method creator associated with the return type of the method.
@@ -224,7 +226,7 @@ public abstract class AbstractGeneratorClassCreator extends
     return writer;
   }
 
-  private void emitMethods(TreeLogger logger, JClassType cur, String locale)
+  private void emitMethods(TreeLogger logger, JClassType cur, GwtLocale locale)
       throws UnableToCompleteException {
     JMethod[] x = getAllInterfaceMethods(cur);
     for (int i = 0; i < x.length; i++) {
@@ -240,7 +242,7 @@ public abstract class AbstractGeneratorClassCreator extends
    * @param locale 
    * @throws UnableToCompleteException
    */
-  private void genMethod(TreeLogger logger, JMethod method, String locale)
+  private void genMethod(TreeLogger logger, JMethod method, GwtLocale locale)
       throws UnableToCompleteException {
     String name = method.getName();
     String returnType = method.getReturnType().getParameterizedQualifiedSourceName();

@@ -18,6 +18,7 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 /**
@@ -61,7 +62,7 @@ class ConstantsStringArrayMethodCreator extends
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod method, String key,
-      ResourceList resource, String locale) {
+      ResourceList resource, GwtLocale locale) {
     String methodName = method.getName();
     // Make sure cache exists.
     enableCache();

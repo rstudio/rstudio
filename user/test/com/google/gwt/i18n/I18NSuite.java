@@ -23,6 +23,8 @@ import com.google.gwt.i18n.client.DateTimeParse_en_Test;
 import com.google.gwt.i18n.client.DateTimeParse_zh_CN_Test;
 import com.google.gwt.i18n.client.I18N2Test;
 import com.google.gwt.i18n.client.I18NTest;
+import com.google.gwt.i18n.client.I18N_es_MX_Test;
+import com.google.gwt.i18n.client.I18N_iw_Test;
 import com.google.gwt.i18n.client.LocaleInfoTest;
 import com.google.gwt.i18n.client.LocaleInfo_ar_Test;
 import com.google.gwt.i18n.client.NumberFormat_ar_Test;
@@ -30,10 +32,13 @@ import com.google.gwt.i18n.client.NumberFormat_en_Test;
 import com.google.gwt.i18n.client.NumberFormat_fr_Test;
 import com.google.gwt.i18n.client.NumberParse_en_Test;
 import com.google.gwt.i18n.client.NumberParse_fr_Test;
+import com.google.gwt.i18n.client.RuntimeLocalesTest;
 import com.google.gwt.i18n.client.TimeZoneInfoTest;
 import com.google.gwt.i18n.client.TimeZoneTest;
 import com.google.gwt.i18n.rebind.AbstractResourceTest;
 import com.google.gwt.i18n.rebind.MessageFormatParserTest;
+import com.google.gwt.i18n.server.GwtLocaleTest;
+import com.google.gwt.i18n.server.RegionInheritanceTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -54,8 +59,11 @@ public class I18NSuite {
     suite.addTestSuite(DateTimeFormat_en_Test.class);
     suite.addTestSuite(DateTimeParse_en_Test.class);
     suite.addTestSuite(DateTimeParse_zh_CN_Test.class);
+    suite.addTestSuite(GwtLocaleTest.class);
     suite.addTestSuite(I18NTest.class);
     suite.addTestSuite(I18N2Test.class);
+    suite.addTestSuite(I18N_iw_Test.class);
+    suite.addTestSuite(I18N_es_MX_Test.class);
     suite.addTestSuite(LocaleInfo_ar_Test.class);    
     suite.addTestSuite(LocaleInfoTest.class);
     suite.addTestSuite(MessageFormatParserTest.class);
@@ -64,6 +72,8 @@ public class I18NSuite {
     suite.addTestSuite(NumberFormat_fr_Test.class);
     suite.addTestSuite(NumberParse_en_Test.class);
     suite.addTestSuite(NumberParse_fr_Test.class);
+    suite.addTestSuite(RegionInheritanceTest.class);
+    suite.addTestSuite(RuntimeLocalesTest.class);
     suite.addTestSuite(TimeZoneInfoTest.class);
     suite.addTestSuite(TimeZoneTest.class);
     // $JUnit-END$

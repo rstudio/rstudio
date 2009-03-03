@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 /**
  * Creates method factories depending upon the method type. Includes the core
@@ -51,7 +52,8 @@ public abstract class AbstractMethodCreator extends AbstractSourceCreator {
    * @throws UnableToCompleteException
    */
   public abstract void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String key, ResourceList resourceList, String locale) throws UnableToCompleteException;
+      String key, ResourceList resourceList, GwtLocale locale)
+      throws UnableToCompleteException;
 
   /**
    * Prints to the current <code>AbstractGeneratorClassCreator</code>.

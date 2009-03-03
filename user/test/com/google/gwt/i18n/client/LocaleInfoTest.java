@@ -22,19 +22,20 @@ import com.google.gwt.junit.client.GWTTestCase;
  */
 public class LocaleInfoTest extends GWTTestCase {
 
+  @Override
   public String getModuleName() {
     return "com.google.gwt.i18n.I18NTest";
   }
 
   public void testCurrentLocale() {
     String locale = LocaleInfo.getCurrentLocale().getLocaleName();
-    assertEquals("piglatin_UK_win", locale);
+    assertEquals("piglatin_UK_WINDOWS", locale);
   }
 
   public void testAvailableLocales() {
     String[] locales = LocaleInfo.getAvailableLocaleNames();
     assertArrayEquals(new String[] {
-        "default", "piglatin", "piglatin_UK", "piglatin_UK_win"}, locales);
+        "default", "piglatin", "piglatin_UK", "piglatin_UK_WINDOWS"}, locales);
   }
 
   public void testNativeDisplayNames() {

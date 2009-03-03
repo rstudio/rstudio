@@ -105,6 +105,9 @@ public class AnnotationsTest extends GWTTestCase {
     @DefaultMessage("You have {0} widgets.")
     @PluralText({"one", "You have a widget."})
     String getWidgetCount(@PluralCount int count);
+    
+    @DefaultMessage("from en")
+    String leastDerived();
   }
 
   /**
@@ -139,5 +142,10 @@ public class AnnotationsTest extends GWTTestCase {
     assertEquals("Test foo", m.getTest("foo"));
     assertEquals("You have 2 widgets.", m.getWidgetCount(2));
     assertEquals("You have a widget.", m.getWidgetCount(1));
+  }
+  
+  public void testLeastDerived() {
+    AllMessages m = GWT.create(AllMessages.class);
+    assertEquals("from en_US", m.leastDerived());
   }
 }

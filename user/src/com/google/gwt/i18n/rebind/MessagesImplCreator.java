@@ -22,6 +22,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.SourceWriter;
 
 /**
@@ -31,7 +32,7 @@ import com.google.gwt.user.rebind.SourceWriter;
 class MessagesImplCreator extends AbstractLocalizableImplCreator {
   
   /**
-   * Constructor for <code>ConstantsImplCreator</code>.
+   * Constructor for <code>MessagesImplCreator</code>.
    * 
    * @param writer <code>Writer</code> to print to
    * @param localizableClass Class/Interface to conform to
@@ -41,10 +42,12 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
    * @param deprecatedLogger logger for deprecated metadata warnings
    * @throws UnableToCompleteException
    */
-  public MessagesImplCreator(TreeLogger logger, TreeLogger deprecatedLogger, SourceWriter writer,
-      JClassType localizableClass, ResourceList resourceList,
-      TypeOracle oracle) throws UnableToCompleteException {
-    super(logger, deprecatedLogger, writer, localizableClass, resourceList, false);
+  public MessagesImplCreator(TreeLogger logger, TreeLogger deprecatedLogger,
+      SourceWriter writer, JClassType localizableClass,
+      ResourceList resourceList, TypeOracle oracle)
+      throws UnableToCompleteException {
+    super(logger, deprecatedLogger, writer, localizableClass, resourceList,
+        false);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       register(stringClass, new MessagesMethodCreator(this));
@@ -65,8 +68,7 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
       throws UnableToCompleteException {
     if (!method.getReturnType().getQualifiedSourceName().equals(
       "java.lang.String")) {
-      throw error(
-        logger,
+      throw error(logger,
         "All methods in interfaces extending Messages must have a return type of String.");
     }
   }
@@ -79,7 +81,7 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
    * @throws UnableToCompleteException
    */
   @Override
-  protected void emitMethodBody(TreeLogger logger, JMethod m, String locale)
+  protected void emitMethodBody(TreeLogger logger, JMethod m, GwtLocale locale)
       throws UnableToCompleteException {
     checkMessagesMethod(logger, m);
     delegateToCreator(logger, m, locale);

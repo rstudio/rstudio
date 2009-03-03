@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
@@ -46,7 +47,7 @@ class LookupMethodCreator extends AbstractMethodCreator {
 
   @Override
   public void createMethodFor(TreeLogger logger, JMethod targetMethod,
-      String key, ResourceList resourceList, String locale) {
+      String key, ResourceList resourceList, GwtLocale locale) {
     createMethodFor(targetMethod);
   }
 

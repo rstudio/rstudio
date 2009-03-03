@@ -16,17 +16,18 @@
 
 package com.google.gwt.i18n.client.constants;
 
-import com.google.gwt.i18n.client.Constants;
-
 /**
  * NumberConstants class encapsulate a collection of Number formatting 
  * symbols for use with Number format and parse services. This class extends
  * GWT's Constants class. The actual symbol collections are defined in a set
  * of property files named like "NumberConstants_xx.properties". GWT will 
  * will perform late binding to the property file that specific to user's 
- * locale. 
+ * locale.
+ * 
+ * If you previously were using GWT.create on this interface, you should
+ * use LocaleInfo.getCurrentLocale().getNumberConstants() instead.
  */
-public interface NumberConstants extends Constants  {
+public interface NumberConstants {
   String   notANumber();
   String   currencyPattern();
   String   decimalPattern();

@@ -30,6 +30,7 @@ import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
 import com.google.gwt.i18n.rebind.AnnotationsResource.AnnotationsError;
 import com.google.gwt.i18n.rebind.format.MessageCatalogFormat;
 import com.google.gwt.i18n.rebind.keygen.KeyGenerator;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -51,7 +52,7 @@ abstract class AbstractLocalizableImplCreator extends
     AbstractGeneratorClassCreator {
 
   static String generateConstantOrMessageClass(TreeLogger logger,
-      TreeLogger deprecatedLogger, GeneratorContext context, String locale,
+      TreeLogger deprecatedLogger, GeneratorContext context, GwtLocale locale,
       JClassType targetClass) throws UnableToCompleteException {
     TypeOracle oracle = context.getTypeOracle();
     JClassType constantsClass;
@@ -108,10 +109,9 @@ abstract class AbstractLocalizableImplCreator extends
 
     // generated implementations for interface X will be named X_, X_en,
     // X_en_CA, etc.
+    GwtLocale generatedLocale = resourceList.findLeastDerivedLocale(locale);
     String localeSuffix = String.valueOf(ResourceFactory.LOCALE_SEPARATOR);
-    if (!ResourceFactory.DEFAULT_TOKEN.equals(locale)) {
-      localeSuffix += locale;
-    }
+    localeSuffix += generatedLocale.getAsString();
     // Use _ rather than "." in class name, cannot use $
     String resourceName = targetClass.getName().replace('.', '_');
     String className = resourceName + localeSuffix;
@@ -126,17 +126,17 @@ abstract class AbstractLocalizableImplCreator extends
         ConstantsWithLookupImplCreator c = new ConstantsWithLookupImplCreator(
             logger, deprecatedLogger, writer, targetClass, resourceList,
             context.getTypeOracle());
-        c.emitClass(logger, locale);
+        c.emitClass(logger, generatedLocale);
       } else if (constantsClass.isAssignableFrom(targetClass)) {
         ConstantsImplCreator c = new ConstantsImplCreator(logger,
             deprecatedLogger, writer, targetClass, resourceList,
             context.getTypeOracle());
-        c.emitClass(logger, locale);
+        c.emitClass(logger, generatedLocale);
       } else {
         MessagesImplCreator messages = new MessagesImplCreator(logger,
             deprecatedLogger, writer, targetClass, resourceList,
             context.getTypeOracle());
-        messages.emitClass(logger, locale);
+        messages.emitClass(logger, generatedLocale);
       }
       context.commit(logger, pw);
     }
@@ -155,7 +155,7 @@ abstract class AbstractLocalizableImplCreator extends
       if (genLocales.length != 0) {
         // verify the current locale is in the list
         for (String genLocale : genLocales) {
-          if (genLocale.equals(locale)) {
+          if (genLocale.equals(locale.toString())) {
             found = true;
             break;
           }
@@ -194,7 +194,7 @@ abstract class AbstractLocalizableImplCreator extends
           if (genLocales.length != 1) {
             // If the user explicitly specified only one locale, do not add the
             // locale.
-            genPath += '_' + locale;
+            genPath += '_' + locale.toString();
           }
           genPath += msgWriter.getExtension();
           OutputStream outStr = context.tryCreateResource(logger, genPath);
@@ -210,7 +210,9 @@ abstract class AbstractLocalizableImplCreator extends
               throw error(logger, e.getMessage());
             }
             try {
-              msgWriter.write(branch, locale, resourceList, out, targetClass);
+              // TODO(jat): change writer interface to use GwtLocale
+              msgWriter.write(branch, locale.toString(), resourceList, out,
+                  targetClass);
               out.flush();
               context.commitResource(logger, outStr).setPrivate(true);
             } catch (UnableToCompleteException e) {
@@ -296,7 +298,7 @@ abstract class AbstractLocalizableImplCreator extends
    * @throws UnableToCompleteException
    */
   protected void delegateToCreator(TreeLogger logger, JMethod method,
-      String locale) throws UnableToCompleteException {
+      GwtLocale locale) throws UnableToCompleteException {
     AbstractMethodCreator methodCreator = getMethodCreator(logger, method);
     String key = getKey(logger, method);
     if (key == null) {

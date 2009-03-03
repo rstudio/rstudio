@@ -24,6 +24,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
 import com.google.gwt.i18n.rebind.AbstractResource.ResourceList;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractMethodCreator;
 import com.google.gwt.user.rebind.SourceWriter;
 
@@ -156,8 +157,8 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
    * arg0...argN.
    */
   @Override
-  protected void emitMethodBody(TreeLogger logger, JMethod method, String locale)
-      throws UnableToCompleteException {
+  protected void emitMethodBody(TreeLogger logger, JMethod method,
+      GwtLocale locale) throws UnableToCompleteException {
     checkMethod(logger, method);
     if (method.getParameters().length == 1) {
       String name = method.getName();

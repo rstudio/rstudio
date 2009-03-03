@@ -46,6 +46,7 @@ import com.google.gwt.i18n.client.Messages.PluralCount;
 import com.google.gwt.i18n.client.Messages.PluralText;
 import com.google.gwt.i18n.rebind.keygen.KeyGenerator;
 import com.google.gwt.i18n.rebind.keygen.MethodNameKeyGenerator;
+import com.google.gwt.i18n.shared.GwtLocale;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,8 +111,8 @@ public class AnnotationsResource extends AbstractResource {
       return argInfo;
     }
 
-    public void addPluralText(String form, String text) {
-      pluralText.put(form, text);
+    public void addPluralText(String form, String pluralFormText) {
+      pluralText.put(form, pluralFormText);
     }
   }
 
@@ -374,15 +375,31 @@ public class AnnotationsResource extends AbstractResource {
    *           annotations
    */
   public AnnotationsResource(TreeLogger logger, JClassType clazz,
-      String locale, boolean isConstants) throws AnnotationsError {
+      GwtLocale locale, boolean isConstants) throws AnnotationsError {
+    super(locale);
     KeyGenerator keyGenerator = getKeyGenerator(clazz);
     map = new HashMap<String, MethodEntry>();
     setPath(clazz.getQualifiedSourceName());
-    DefaultLocale defLocale = getClassAnnotation(clazz, DefaultLocale.class);
-    if (defLocale != null && !ResourceFactory.DEFAULT_TOKEN.equals(locale)
-        && !locale.equalsIgnoreCase(defLocale.value())) {
-      logger.log(TreeLogger.WARN, "@DefaultLocale on "
-          + clazz.getQualifiedSourceName() + " doesn't match " + locale);  
+    String defLocaleValue = null;
+    
+    // If the class has an embedded locale in it, use that for the default
+    String className = clazz.getSimpleSourceName();
+    int underscore = className.indexOf('_');
+    if (underscore >= 0) {
+      defLocaleValue = className.substring(underscore + 1);
+    }
+    
+    // If there is an annotation declaring the default locale, use that
+    DefaultLocale defLocaleAnnot = getClassAnnotation(clazz,
+        DefaultLocale.class);
+    if (defLocaleAnnot != null) {
+      defLocaleValue = defLocaleAnnot.value();
+    }
+    GwtLocale defLocale = LocaleUtils.getLocaleFactory().fromString(
+        defLocaleValue);
+    if (!locale.isDefault() && !locale.equals(defLocale)) {
+      logger.log(TreeLogger.WARN, "Default locale " + defLocale + " on "
+          + clazz.getQualifiedSourceName() + " doesn't match " + locale);
       return;
     }
     for (JMethod method : clazz.getMethods()) {
@@ -492,6 +509,6 @@ public class AnnotationsResource extends AbstractResource {
 
   @Override
   public String toString() {
-    return "Annotations from class " + getPath();
+    return "Annotations from class " + getPath() + " @" + getMatchLocale();
   }
 }

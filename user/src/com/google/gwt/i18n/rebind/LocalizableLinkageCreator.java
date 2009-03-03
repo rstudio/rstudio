@@ -18,6 +18,7 @@ package com.google.gwt.i18n.rebind;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.i18n.shared.GwtLocale;
 import com.google.gwt.user.rebind.AbstractSourceCreator;
 
 import java.util.HashMap;
@@ -34,7 +35,7 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
     Map<String, JClassType> matchingClasses = new HashMap<String, JClassType>();
     // Add base class if possible.
     if (baseClass.isInterface() == null && baseClass.isAbstract() == false) {
-      matchingClasses.put(ResourceFactory.DEFAULT_TOKEN, baseClass);
+      matchingClasses.put(GwtLocale.DEFAULT_LOCALE, baseClass);
     }
     String baseName = baseClass.getSimpleSourceName();
 
@@ -54,16 +55,16 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
         if (matches) {
           boolean isDefault = localeIndex == -1
               || localeIndex == name.length() - 1
-              || ResourceFactory.DEFAULT_TOKEN.equals(name.substring(localeIndex + 1));
+              || GwtLocale.DEFAULT_LOCALE.equals(name.substring(localeIndex + 1));
           if (isDefault) {
             // Don't override base as default if present.
             JClassType defaultClass = 
-              matchingClasses.get(ResourceFactory.DEFAULT_TOKEN);
+              matchingClasses.get(GwtLocale.DEFAULT_LOCALE);
             if (defaultClass != null) {
               throw error(logger, defaultClass + " and " + baseName
                   + " are both potential default classes for " + baseClass);
             } else {
-              matchingClasses.put(ResourceFactory.DEFAULT_TOKEN, subType);
+              matchingClasses.put(GwtLocale.DEFAULT_LOCALE, subType);
             }
           } else {
             // Don't allow a locale to be ambiguous. Very similar to default
@@ -103,14 +104,13 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
    * @throws UnableToCompleteException
    */
   String linkWithImplClass(TreeLogger logger, JClassType baseClass,
-      String locale) throws UnableToCompleteException {
-
+      GwtLocale locale) throws UnableToCompleteException {
     String baseName = baseClass.getQualifiedSourceName();
     /**
      * Try to find implementation class, as the current class is not a Constant
      * or Message.
      */
-    String className = implCache.get(baseName + locale);
+    String className = implCache.get(baseName + locale.toString());
     if (className != null) {
       return className;
     }
@@ -122,23 +122,16 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
     Map<String, JClassType> matchingClasses =
       findDerivedClasses(logger, baseClass);
     // Now that we have all matches, find best class
-    String localeSuffix = locale;
     JClassType result = null;  
-    while (true) {
-      // Check for current result.
-      result = matchingClasses.get(localeSuffix);
+    for (GwtLocale search : locale.getCompleteSearchList()) {
+      result = matchingClasses.get(search.toString());
       if (result != null) {
-        break;
+        implCache.put(baseName + locale.toString(), className);
+        return result.getQualifiedSourceName();
       }
-      if (localeSuffix.equals(ResourceFactory.DEFAULT_TOKEN)) {
-        // No classes matched.
-        throw error(logger, "Cannot find a class to bind to argument type "
-            + baseClass.getQualifiedSourceName());
-      }
-      
-      localeSuffix = ResourceFactory.getParentLocaleName(localeSuffix);
     }
-    implCache.put(baseName + locale, className);
-    return result.getQualifiedSourceName();
+    // No classes matched.
+    throw error(logger, "Cannot find a class to bind to argument type "
+            + baseClass.getQualifiedSourceName());
   }
 }

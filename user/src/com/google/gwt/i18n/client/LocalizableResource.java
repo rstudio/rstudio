@@ -36,15 +36,18 @@ import java.lang.annotation.Target;
  * one.
  */
 public interface LocalizableResource extends Localizable {
-
+  
   /**
    * Specifies the default locale for messages in this file.  If not
-   * specified, the default is en_US.
+   * specified, the default is <code>DEFAULT_LOCALE</code>.
    */
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
   public @interface DefaultLocale {
-    String value() default "en_US";
+
+    String DEFAULT_LOCALE = "en";
+
+    String value() default DEFAULT_LOCALE;
   }
 
   /**

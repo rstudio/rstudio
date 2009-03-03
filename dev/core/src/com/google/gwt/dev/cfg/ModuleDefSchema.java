@@ -50,6 +50,10 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __add_linker_1_name = null;
 
+    protected final String __append_configuration_property_1_name = null;
+
+    protected final String __append_configuration_property_2_value = null;
+
     protected final String __define_linker_1_name = null;
 
     protected final String __define_linker_2_class = null;
@@ -127,6 +131,31 @@ public class ModuleDefSchema extends Schema {
         throw new UnableToCompleteException();
       }
       moduleDef.addLinker(name.name);
+      return null;
+    }
+
+    protected Schema __append_configuration_property_begin(PropertyName name,
+        String value) throws UnableToCompleteException {
+
+      // Property must already exist
+      Property prop = moduleDef.getProperties().find(name.token);
+      if (prop == null || !(prop instanceof ConfigurationProperty)) {
+        logger.log(TreeLogger.ERROR, "The property " + name.token
+            + " must already exist as a configuration property");
+        throw new UnableToCompleteException();
+      }
+
+      ConfigurationProperty configProp = (ConfigurationProperty) prop;
+      String oldValue = configProp.getValue();
+      if (oldValue == null) {
+        oldValue = "";
+      }
+      if (oldValue.length() > 0) {
+        oldValue += ",";
+      }
+      configProp.setValue(oldValue + value);
+
+      // No children.
       return null;
     }
 
