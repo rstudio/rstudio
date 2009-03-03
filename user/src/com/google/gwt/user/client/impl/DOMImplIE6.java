@@ -108,9 +108,16 @@ class DOMImplIE6 extends DOMImpl {
 
     @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent = function() {
       var newEvent = $doc.createEventObject();
-      $wnd.event.srcElement.fireEvent('onclick', newEvent);
+      // Synthesize a click event if one hasn't already been synthesized.
+      if ($wnd.event.returnValue == null) {
+        $wnd.event.srcElement.fireEvent('onclick', newEvent);
+      }
       if (this.__eventBits & 2) {
         @com.google.gwt.user.client.impl.DOMImplIE6::dispatchEvent.call(this);
+      } else if ($wnd.event.returnValue == null) {
+        // Ensure that we preview the event even if we aren't handling it.
+        $wnd.event.returnValue = true;
+        @com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event);
       }
     };
 
