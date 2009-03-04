@@ -42,9 +42,10 @@ public class ModuleSpaceSaf extends ModuleSpace {
    * @param moduleName name of the module
    * @param key unique key for this instance of the module
    */
-  public ModuleSpaceSaf(ModuleSpaceHost host, int scriptGlobalObject,
-      int scriptGlobalContext, String moduleName, Object key) {
-    super(host, moduleName, key);
+  public ModuleSpaceSaf(TreeLogger logger, ModuleSpaceHost host,
+      int scriptGlobalObject, int scriptGlobalContext, String moduleName,
+      Object key) {
+    super(logger, host, moduleName, key);
 
     // Hang on to the global execution state.
     //

@@ -415,6 +415,7 @@ public class TypeOracleMediator {
    * Full refresh based on new units.
    */
   public void refresh(TreeLogger logger, Set<CompilationUnit> units) {
+    logger = logger.branch(TreeLogger.DEBUG, "Refreshing TypeOracle");
     binaryMapper.clear();
     typeOracle.reset();
     addNewUnits(logger, units);

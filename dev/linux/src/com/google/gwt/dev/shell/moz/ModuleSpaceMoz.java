@@ -38,9 +38,9 @@ public class ModuleSpaceMoz extends ModuleSpace {
   /**
    * Constructs a browser interface for use with a Mozilla global window object.
    */
-  public ModuleSpaceMoz(ModuleSpaceHost host, int scriptGlobalObject,
-      String moduleName, Object key) {
-    super(host, moduleName, key);
+  public ModuleSpaceMoz(TreeLogger logger, ModuleSpaceHost host,
+      int scriptGlobalObject, String moduleName, Object key) {
+    super(logger, host, moduleName, key);
 
     // Hang on to the parent window.
     //

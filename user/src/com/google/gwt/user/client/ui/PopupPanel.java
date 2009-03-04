@@ -466,10 +466,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (!isShowing()) {
       return;
     }
-    cleanup();
-
-    // Hide the popup
-    resizeAnimation.setState(false);
+    setState(false, true);
     CloseEvent.fire(this, this, autoClosed);
   }
 
@@ -533,7 +530,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onEventPreview(Event event) {
@@ -548,7 +546,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onKeyDownPreview(char key, int modifiers) {
@@ -563,7 +562,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onKeyPressPreview(char key, int modifiers) {
@@ -578,7 +578,8 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated use {@link #onPreviewNativeEvent(NativePreviewEvent)} instead
+   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   *             instead
    */
   @Deprecated
   public boolean onKeyUpPreview(char key, int modifiers) {
@@ -782,13 +783,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     if (showing) {
       return;
     }
-    showing = true;
-    nativePreviewHandlerRegistration = Event.addNativePreviewHandler(new NativePreviewHandler() {
-      public void onPreviewNativeEvent(NativePreviewEvent event) {
-        previewNativeEvent(event);
-      }
-    });
-    resizeAnimation.setState(true);
+    setState(true, true);
   }
 
   /**
@@ -833,7 +828,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     // Just to be sure, we perform cleanup when the popup is unloaded (i.e.
     // removed from the DOM). This is normally taken care of in hide(), but it
     // can be missed if someone removes the popup directly from the RootPanel.
-    cleanup();
+    if (isShowing()) {
+      setState(false, false);
+    }
   }
 
   /**
@@ -888,21 +885,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param elt The Element on which <code>blur()</code> will be invoked
    */
   private native void blur(Element elt) /*-{
-    // Issue 2390: blurring the body causes IE to disappear to the background
-    if (elt.blur && elt != $doc.body) {
-      elt.blur();
-    }
-  }-*/;
-
-  private void cleanup() {
-    // Clear the 'showing' flag and make sure that the event preview is cleaned
-    // up.
-    showing = false;
-    if (nativePreviewHandlerRegistration != null) {
-      nativePreviewHandlerRegistration.removeHandler();
-      nativePreviewHandlerRegistration = null;
-    }
-  }
+            // Issue 2390: blurring the body causes IE to disappear to the background
+            if (elt.blur && elt != $doc.body) {
+              elt.blur();
+            }
+          }-*/;
 
   /**
    * Does the event target one of the partner elements?
@@ -1172,6 +1159,35 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
         }
         break;
       }
+    }
+  }
+
+  /**
+   * Set the showing state of the popup. If maybeAnimate is true, the animation
+   * will be used to set the state. If it is false, the animation will be
+   * cancelled.
+   * 
+   * @param showing the new state
+   * @param maybeAnimate true to possibly run the animation
+   */
+  private void setState(boolean showing, boolean maybeAnimate) {
+    if (maybeAnimate) {
+      resizeAnimation.setState(showing);
+    } else {
+      resizeAnimation.cancel();
+    }
+    this.showing = showing;
+
+    // Create or remove the native preview handler
+    if (showing) {
+      nativePreviewHandlerRegistration = Event.addNativePreviewHandler(new NativePreviewHandler() {
+        public void onPreviewNativeEvent(NativePreviewEvent event) {
+          previewNativeEvent(event);
+        }
+      });
+    } else if (nativePreviewHandlerRegistration != null) {
+      nativePreviewHandlerRegistration.removeHandler();
+      nativePreviewHandlerRegistration = null;
     }
   }
 }

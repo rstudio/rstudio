@@ -19,7 +19,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 
 /**
- * A widget that can be placed in a
+ * An entry in a 
  * {@link com.google.gwt.user.client.ui.MenuBar}. Menu items can either fire a
  * {@link com.google.gwt.user.client.Command} when they are clicked, or open a
  * cascading sub-menu.

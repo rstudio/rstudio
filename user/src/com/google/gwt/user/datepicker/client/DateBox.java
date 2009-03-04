@@ -223,7 +223,7 @@ public class DateBox extends Composite implements HasValue<Date> {
     }
 
     public void onValueChange(ValueChangeEvent<Date> event) {
-      setValue(event.getValue());
+      setValue(parseDate(false), event.getValue(),true);
       hideDatePicker();
       preventDatePickerPopup();
       box.setFocus(true);
@@ -432,16 +432,7 @@ public class DateBox extends Composite implements HasValue<Date> {
   }
 
   public void setValue(Date date, boolean fireEvents) {
-    Date oldDate = parseDate(false);
-    if (date != null) {
-      picker.setCurrentMonth(date);
-    }
-    picker.setValue(date, false);
-    setDate(date);
-
-    if (fireEvents) {
-      DateChangeEvent.fireIfNotEqualDates(this, oldDate, date);
-    }
+    setValue(picker.getValue(), date, fireEvents);
   }
 
   /**
@@ -473,19 +464,23 @@ public class DateBox extends Composite implements HasValue<Date> {
     });
   }
 
-  /**
-   * Does the actual work of setting the date. Performs no validation, fires no
-   * events.
-   */
-  private void setDate(Date value) {
+  private void setValue(Date oldDate, Date date, boolean fireEvents) {
+    if (date != null) {
+      picker.setCurrentMonth(date);
+    }
+    picker.setValue(date, false);
     format.reset(this, false);
-    box.setText(getFormat().format(this, value));
+    box.setText(getFormat().format(this, date));
+
+    if (fireEvents) {
+      DateChangeEvent.fireIfNotEqualDates(this, oldDate, date);
+    }
   }
 
   private void updateDateFromTextBox() {
     Date parsedDate = parseDate(true);
     if (parsedDate != null) {
-      setValue(parsedDate);
+      setValue(picker.getValue(), parsedDate,true);
     }
   }
 }

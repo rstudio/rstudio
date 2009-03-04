@@ -51,6 +51,8 @@ class DOMImplMozilla extends DOMImplStandard {
       // here due to a change in getBoxObjectFor which causes inconsistencies
       // on whether the calculations are inside or outside of the element's
       // border.
+      // If the element is in a scrollable div, getBoxObjectFor(elem) can return
+      // a value that varies by 1 pixel.
       return $doc.getBoxObjectFor(elem).screenX -
         $doc.getBoxObjectFor($doc.documentElement).screenX;
     }

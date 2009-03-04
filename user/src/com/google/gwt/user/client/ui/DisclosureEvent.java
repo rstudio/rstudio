@@ -20,7 +20,7 @@ import java.util.EventObject;
 /**
  * Event object containing information about {@link DisclosurePanel} changes.
  * 
- * @deprecated use
+ * @deprecated Use
  *             {@link com.google.gwt.event.logical.shared.CloseEvent} and
  *             {@link  com.google.gwt.event.logical.shared.OpenEvent} instead
  */

@@ -236,9 +236,10 @@ public class HandlerManager {
    * 
    * @param type the event type
    * @param handler the handler
-   * @deprecated We currently believe this method will not be needed after
-   *             listeners are removed in GWT 2.0. If you have a use case for it
-   *             after that time, please add your comments to gwt issue 3102
+   * @deprecated This method is likely to be removed along with "listener"
+   *             interfaces in a future release. If you have a reason it should
+   *             be retained beyond that time, please add your comments to GWT
+   *             <a href="http://code.google.com/p/google-web-toolkit/issues/detail?id=3102">issue 3102</a>
    */
   @Deprecated
   public <H extends EventHandler> void removeHandler(GwtEvent.Type<H> type,

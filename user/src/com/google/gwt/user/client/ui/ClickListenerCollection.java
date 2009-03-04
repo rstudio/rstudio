@@ -22,7 +22,8 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ClickListener}.
  * 
- * @deprecated use <code>addDomHandler(myHandler, ClickEvent.getType())</code>
+ * @deprecated As of GWT 1.6, call
+ *             <code>{@link Widget#addDomHandler(com.google.gwt.event.shared.EventHandler, com.google.gwt.event.dom.client.DomEvent.Type) addDomHandler}(myHandler, ClickEvent.getType())</code>
  *             to manage handlers for your widget instead
  */
 @Deprecated

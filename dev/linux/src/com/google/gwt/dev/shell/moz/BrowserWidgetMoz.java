@@ -37,34 +37,32 @@ public class BrowserWidgetMoz extends BrowserWidget {
   private class ExternalObjectImpl implements ExternalObject {
 
     public boolean gwtOnLoad(int scriptObject, String moduleName, String version) {
-      try {
-        if (moduleName == null) {
-          // Indicates one or more modules are being unloaded.
-          //
-          handleUnload(scriptObject);
-          return true;
-        }
+      if (moduleName == null) {
+        // Indicates one or more modules are being unloaded.
+        return handleUnload(scriptObject);
+      }
 
+      TreeLogger logger = getHost().getLogger().branch(TreeLogger.DEBUG,
+          "Loading an instance of module '" + moduleName + "'");
+      try {
         if (!validHostedHtmlVersion(version)) {
           return false;
         }
 
         Object key = new Integer(scriptObject);
         // Attach a new ModuleSpace to make it programmable.
-        //
-        ModuleSpaceHost msh = getHost().createModuleSpaceHost(
+        ModuleSpaceHost msh = getHost().createModuleSpaceHost(logger,
             BrowserWidgetMoz.this, moduleName);
-        ModuleSpace moduleSpace = new ModuleSpaceMoz(msh, scriptObject,
+        ModuleSpace moduleSpace = new ModuleSpaceMoz(logger, msh, scriptObject,
             moduleName, key);
-        attachModuleSpace(moduleSpace);
+        attachModuleSpace(logger, moduleSpace);
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
         // that can go wrong trying to load a module, including Error-derived
         // things like NoClassDefFoundError.
-        // 
-        getHost().getLogger().log(TreeLogger.ERROR,
-            "Failure to load module '" + moduleName + "'", e);
+        logger.log(TreeLogger.ERROR, "Failure to load module '" + moduleName
+            + "'", e);
         return false;
       }
     }
@@ -85,12 +83,19 @@ public class BrowserWidgetMoz extends BrowserWidget {
      * 
      * @param scriptObject window to unload, 0 if all
      */
-    protected void handleUnload(int scriptObject) {
-      Integer key = null;
-      if (scriptObject != 0) {
-        key = new Integer(scriptObject);
+    protected boolean handleUnload(int scriptObject) {
+      try {
+        Integer key = null;
+        if (scriptObject != 0) {
+          key = new Integer(scriptObject);
+        }
+        doUnload(key);
+        return true;
+      } catch (Throwable e) {
+        getHost().getLogger().log(TreeLogger.ERROR,
+            "Failure to unload modules", e);
+        return false;
       }
-      doUnload(key);
     }
   }
 

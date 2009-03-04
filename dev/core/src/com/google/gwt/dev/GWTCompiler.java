@@ -43,7 +43,7 @@ import java.util.concurrent.FutureTask;
 /**
  * The main executable entry point for the GWT Java to JavaScript compiler.
  * 
- * @deprecated use {@link Compiler} instead
+ * @deprecated Use {@link Compiler} instead
  */
 @Deprecated
 public class GWTCompiler {

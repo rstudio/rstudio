@@ -18,7 +18,7 @@ package com.google.gwt.user.client.ui;
 /**
  * A widget that implements this interface can receive keyboard focus.
  * 
- * @deprecated use {@link Focusable} instead
+ * @deprecated Use {@link Focusable} instead
  */
 @Deprecated
 public interface HasFocus extends Focusable, SourcesFocusEvents,

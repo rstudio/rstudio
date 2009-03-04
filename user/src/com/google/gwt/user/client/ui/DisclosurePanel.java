@@ -364,7 +364,7 @@ public final class DisclosurePanel extends Composite implements
    * notification.
    * 
    * @param handler the handler to be added (should not be null)
-   * @deprecated use {@link DisclosurePanel#addOpenHandler(OpenHandler)} and
+   * @deprecated Use {@link DisclosurePanel#addOpenHandler(OpenHandler)} and
    * {@link DisclosurePanel#addCloseHandler(CloseHandler)} instead
    */
   @Deprecated

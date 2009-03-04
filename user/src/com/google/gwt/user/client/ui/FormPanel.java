@@ -184,7 +184,7 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
      * This method is used for legacy support and should be removed when
      * {@link FormHandler} is removed.
      * 
-     * @deprecated use {@link FormPanel.SubmitEvent#cancel()} instead
+     * @deprecated Use {@link FormPanel.SubmitEvent#cancel()} instead
      */
     @Deprecated
     void setCanceled(boolean canceled) {
@@ -308,9 +308,9 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
    * <p>
    * The back-end server is expected to respond with a content-type of
    * 'text/html', meaning that the text returned will be treated as HTML. If any
-   * other content-type is specified by the server, then the result html sent in
+   * other content-type is specified by the server, then the result HTML sent in
    * the onFormSubmit event will be unpredictable across browsers, and the
-   * {@link SubmitCompleteHandler#onSubmitComplete(SubmitCompleteEvent)} event
+   * {@link SubmitCompleteHandler#onSubmitComplete(com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent) onSubmitComplete} event
    * may not fire at all.
    * </p>
    * 

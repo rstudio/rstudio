@@ -3,8 +3,8 @@ package @clientPackage;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 /**
- * The async counterpart of <code>EchoService</code>. 
+ * The async counterpart of <code>GreetingService</code>.
  */
-public interface EchoServiceAsync {
-  void echo(String input, AsyncCallback<String> callback);
+public interface GreetingServiceAsync {
+  void greetServer(String input, AsyncCallback<String> callback);
 }

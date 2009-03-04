@@ -36,14 +36,14 @@ public interface BrowserWidgetHost {
    * 
    * @param modules the names of the modules to compile
    * @throws UnableToCompleteException
-   * @deprecated will be removed when legacy shell mode is removed
+   * @deprecated Will be removed when legacy shell mode is removed
    */
   @Deprecated
   void compile(String[] modules) throws UnableToCompleteException;
 
   // Factor this out if BrowserWidget becomes decoupled from hosted mode
-  ModuleSpaceHost createModuleSpaceHost(BrowserWidget widget, String moduleName)
-      throws UnableToCompleteException;
+  ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
+      BrowserWidget widget, String moduleName) throws UnableToCompleteException;
 
   TreeLogger getLogger();
 
@@ -62,7 +62,7 @@ public interface BrowserWidgetHost {
   /**
    * Returns <code>true</code> if running in legacy mode.
    * 
-   * @deprecated will be removed when legacy shell mode is removed
+   * @deprecated Will be removed when legacy shell mode is removed
    */
   @Deprecated
   boolean isLegacyMode();

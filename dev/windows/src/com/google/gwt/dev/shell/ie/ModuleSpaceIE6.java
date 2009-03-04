@@ -90,9 +90,9 @@ public class ModuleSpaceIE6 extends ModuleSpace {
    * 
    * @param moduleName
    */
-  public ModuleSpaceIE6(ModuleSpaceHost host, IDispatch scriptFrameWindow,
-      String moduleName, Object key) {
-    super(host, moduleName, key);
+  public ModuleSpaceIE6(TreeLogger logger, ModuleSpaceHost host,
+      IDispatch scriptFrameWindow, String moduleName, Object key) {
+    super(logger, host, moduleName, key);
 
     window = new OleAutomation(scriptFrameWindow);
   }

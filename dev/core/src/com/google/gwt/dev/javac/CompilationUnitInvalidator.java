@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.HelpInfo;
+import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.util.Util;
 
@@ -67,37 +68,57 @@ public class CompilationUnitInvalidator {
         continue;
       }
       CompilationResult result = unit.getJdtCud().compilationResult();
-      if (result.hasErrors()) {
-        anyRemoved = true;
+      if (result.hasProblems()) {
 
-        // TODO: defer this until later?
-        TreeLogger branch = logger.branch(TreeLogger.ERROR, "Errors in '"
-            + unit.getDisplayLocation() + "'", null);
-
-        for (CategorizedProblem error : result.getErrors()) {
+        // Log the errors and GWT warnings.
+        TreeLogger branch = null;
+        for (CategorizedProblem problem : result.getProblems()) {
+          TreeLogger.Type logLevel;
+          if (problem.isError()) {
+            // Log errors.
+            logLevel = TreeLogger.ERROR;
+            // Only log GWT-specific warnings.
+          } else if (problem.isWarning() && problem instanceof GWTProblem) {
+            logLevel = TreeLogger.WARN;
+          } else {
+            // Ignore all other problems.
+            continue;
+          }
           // Append 'Line #: msg' to the error message.
           StringBuffer msgBuf = new StringBuffer();
-          int line = error.getSourceLineNumber();
+          int line = problem.getSourceLineNumber();
           if (line > 0) {
             msgBuf.append("Line ");
             msgBuf.append(line);
             msgBuf.append(": ");
           }
-          msgBuf.append(error.getMessage());
+          msgBuf.append(problem.getMessage());
 
           HelpInfo helpInfo = null;
-          if (error instanceof GWTProblem) {
-            GWTProblem gwtProblem = (GWTProblem) error;
+          if (problem instanceof GWTProblem) {
+            GWTProblem gwtProblem = (GWTProblem) problem;
             helpInfo = gwtProblem.getHelpInfo();
           }
-          branch.log(TreeLogger.ERROR, msgBuf.toString(), null, helpInfo);
+          if (branch == null) {
+            Type branchType = result.hasErrors() ? TreeLogger.ERROR
+                : TreeLogger.WARN;
+            String branchString = result.hasErrors() ? "Errors" : "Warnings";
+            branch = logger.branch(branchType, branchString + " in '"
+                + unit.getDisplayLocation() + "'", null);
+          }
+          branch.log(logLevel, msgBuf.toString(), null, helpInfo);
         }
 
-        Util.maybeDumpSource(branch, unit.getDisplayLocation(),
-            unit.getSource(), unit.getTypeName());
+        if (branch != null) {
+          Util.maybeDumpSource(branch, unit.getDisplayLocation(),
+              unit.getSource(), unit.getTypeName());
+        }
 
-        // TODO: hold onto errors?
-        unit.setState(State.ERROR);
+        // Invalidate the unit if there are errors.
+        if (result.hasErrors()) {
+          unit.setState(State.ERROR);
+          anyRemoved = true;
+        }
       }
     }
 
@@ -147,7 +168,7 @@ public class CompilationUnitInvalidator {
       if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();
         JSORestrictionsChecker.check(state.jsoState, jdtCud);
-        LongFromJSNIChecker.check(jdtCud);
+        JsniChecker.check(jdtCud);
         BinaryTypeReferenceRestrictionsChecker.check(jdtCud,
             validBinaryTypeNames);
       }

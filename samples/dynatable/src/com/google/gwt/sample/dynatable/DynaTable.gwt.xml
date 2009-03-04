@@ -15,8 +15,5 @@
 <module rename-to="dynatable">
 	<inherits name='com.google.gwt.user.User' />
 	<entry-point class='com.google.gwt.sample.dynatable.client.DynaTable' />
-	<!--
-		Re-enable this when we have web.xml validation.
-		<servlet path='/calendar' class='com.google.gwt.sample.dynatable.server.SchoolCalendarServiceImpl'/>
-	-->
+	<servlet path='/calendar' class='com.google.gwt.sample.dynatable.server.SchoolCalendarServiceImpl'/>
 </module>

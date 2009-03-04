@@ -428,10 +428,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
    * Gets this tree's default image package.
    * 
    * @return the tree's image package
-   * @see #setImageBase
-   * @deprecated Use {@link #Tree(TreeImages)} as it provides a more efficent
+   * @deprecated Use {@link #Tree(TreeImages)} as it provides a more efficient
    *             and manageable way to supply a set of images to be used within
-   *             a tree.
+   *             a tree
    */
   @Deprecated
   public String getImageBase() {

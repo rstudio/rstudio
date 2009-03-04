@@ -274,6 +274,7 @@ public class CwAnimation extends ContentWidget {
 
     // Add start button
     startButton = new Button(constants.cwAnimationStart());
+    startButton.addStyleName("sc-FixedWidthButton");
     startButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         animation.run(2000);
@@ -283,6 +284,7 @@ public class CwAnimation extends ContentWidget {
 
     // Add cancel button
     cancelButton = new Button(constants.cwAnimationCancel());
+    cancelButton.addStyleName("sc-FixedWidthButton");
     cancelButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         animation.cancel();

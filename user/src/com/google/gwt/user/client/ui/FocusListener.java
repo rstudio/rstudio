@@ -20,7 +20,7 @@ import java.util.EventListener;
 /**
  * Event listener for focus events.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.FocusHandler} and/or
+ * @deprecated Use {@link com.google.gwt.event.dom.client.FocusHandler} and/or
  *             {@link com.google.gwt.event.dom.client.BlurHandler} instead
  */
 @Deprecated
@@ -30,7 +30,7 @@ public interface FocusListener extends EventListener {
    * Fired when a widget receives keyboard focus.
    * 
    * @param sender the widget receiving focus.
-   * @deprecated use
+   * @deprecated Use
    *             {@link com.google.gwt.event.dom.client.FocusHandler#onFocus(com.google.gwt.event.dom.client.FocusEvent)}
    *             instead
    */
@@ -41,7 +41,7 @@ public interface FocusListener extends EventListener {
    * Fired when a widget loses keyboard focus.
    * 
    * @param sender the widget losing focus.
-   * @deprecated use
+   * @deprecated Use
    *             {@link com.google.gwt.event.dom.client.BlurHandler#onBlur(com.google.gwt.event.dom.client.BlurEvent)}
    *             instead
    */

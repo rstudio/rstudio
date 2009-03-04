@@ -367,32 +367,32 @@ public class HostedTest extends GWTTestCase {
   public void testJsniParamUnboxedPrimitives() {
     class Inner {
       native boolean nativeJsniParamUnboxedBoolean(boolean param) /*-{
-    return (param == true);
-  }-*/;
+        return (param == true);
+      }-*/;
 
       native boolean nativeJsniParamUnboxedByte(byte param) /*-{
-    return (param == 99);
-  }-*/;
+        return (param == 99);
+      }-*/;
 
       native boolean nativeJsniParamUnboxedCharacter(char param) /*-{
-    return (param == 77);
-  }-*/;
+        return (param == 77);
+      }-*/;
 
       native boolean nativeJsniParamUnboxedDouble(double param) /*-{
-    return (param == 1234.56789);
-  }-*/;
+        return (param == 1234.56789);
+      }-*/;
 
       native boolean nativeJsniParamUnboxedFloat(float param) /*-{
-    return (param == 1234.5);
-  }-*/;
+        return (param == 1234.5);
+      }-*/;
 
       native boolean nativeJsniParamUnboxedInteger(int param) /*-{
-    return (param == 9876543);
-  }-*/;
+        return (param == 9876543);
+      }-*/;
 
       native boolean nativeJsniParamUnboxedShort(short param) /*-{
-    return (param == 1234);
-  }-*/;
+        return (param == 1234);
+      }-*/;
     }
     Inner inner = new Inner();
 
@@ -403,8 +403,7 @@ public class HostedTest extends GWTTestCase {
     assertTrue("Unboxed float",
         inner.nativeJsniParamUnboxedFloat((float) 1234.5));
     assertTrue("Unboxed int", inner.nativeJsniParamUnboxedInteger(9876543));
-    // long type intentionally omitted - it is emulated and not usable w/in
-    // JavaScript.
+    // long type intentionally omitted - it is emulated and not usable in JS
     assertTrue("Unboxed short", inner.nativeJsniParamUnboxedShort((short) 1234));
   }
 
@@ -415,37 +414,37 @@ public class HostedTest extends GWTTestCase {
   public void testJsniPassthroughPrimitives() {
     class Inner {
       native boolean nativeBoolean(boolean param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       native byte nativeByte(byte param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       native char nativeCharacter(char param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       native double nativeDouble(double param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       native float nativeFloat(float param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       native int nativeInteger(int param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       @UnsafeNativeLong
       native long nativeLong(long param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
 
       native short nativeShort(short param) /*-{
-    return param;
-  }-*/;
+        return param;
+      }-*/;
     }
     Inner inner = new Inner();
 
@@ -534,32 +533,32 @@ public class HostedTest extends GWTTestCase {
   public void testJsniReturnUnboxedPrimitives() {
     class Inner {
       native boolean nativeJsniReturnUnboxedBoolean() /*-{
-    return true;
-  }-*/;
+        return true;
+      }-*/;
 
       native byte nativeJsniReturnUnboxedByte() /*-{
-    return 99;
-  }-*/;
+        return 99;
+      }-*/;
 
       native char nativeJsniReturnUnboxedCharacter() /*-{
-    return 77;
-  }-*/;
+        return 77;
+      }-*/;
 
       native double nativeJsniReturnUnboxedDouble() /*-{
-    return 1234.56789;
-  }-*/;
+        return 1234.56789;
+      }-*/;
 
       native float nativeJsniReturnUnboxedFloat() /*-{
-    return 1234.5;
-  }-*/;
+        return 1234.5;
+      }-*/;
 
       native int nativeJsniReturnUnboxedInteger() /*-{
-    return 9876543;
-  }-*/;
+        return 9876543;
+      }-*/;
 
       native short nativeJsniReturnUnboxedShort() /*-{
-    return 1234;
-  }-*/;
+        return 1234;
+      }-*/;
     }
     Inner inner = new Inner();
 
@@ -573,8 +572,7 @@ public class HostedTest extends GWTTestCase {
     assertTrue("Unboxed float",
         inner.nativeJsniReturnUnboxedFloat() == (float) 1234.5);
     assertTrue("Unboxed int", inner.nativeJsniReturnUnboxedInteger() == 9876543);
-    // long type intentionally omitted - it is emulated and not usable w/in
-    // JavaScript.
+    // long type intentionally omitted - it is emulated and not usable in JS
     assertTrue("Unboxed short",
         inner.nativeJsniReturnUnboxedShort() == (short) 1234);
   }
@@ -738,7 +736,7 @@ public class HostedTest extends GWTTestCase {
 
   }-*/;
 
-  /** comment */
+  /** comment. */
   private native void jsniG()/*-{
 
   }-*/;

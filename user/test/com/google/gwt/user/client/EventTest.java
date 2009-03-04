@@ -15,10 +15,19 @@
  */
 package com.google.gwt.user.client;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.DoubleClickEvent;
+import com.google.gwt.event.dom.client.DoubleClickHandler;
+import com.google.gwt.event.dom.client.HasDoubleClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Test Case for {@link Event}.
@@ -88,6 +97,23 @@ public class EventTest extends GWTTestCase {
     }
   }
 
+  /**
+   * A custom {@link Label} used for testing.
+   */
+  private static class TestLabel extends Label implements
+      HasDoubleClickHandlers {
+    public HandlerRegistration addDoubleClickHandler(DoubleClickHandler handler) {
+      return addDomHandler(handler, DoubleClickEvent.getType());
+    }
+  }
+
+  /**
+   * Debug information used to test events.
+   */
+  private static class EventInfo {
+    private int fireCount = 0;
+  }
+
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.User";
@@ -124,8 +150,50 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
-   * Test that {@link Event#fireNativePreviewEvent(Event)} returns the correct
-   * value if the native event is canceled.
+   * Test that a double click results in exactly one simulated click event in
+   * IE. See issue 3392 for more info.
+   */
+  public void testDoubleClickEvent() {
+    TestLabel label = new TestLabel();
+    RootPanel.get().add(label);
+
+    // Add some handlers
+    final EventInfo clickInfo = new EventInfo();
+    label.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        clickInfo.fireCount++;
+      }
+    });
+    final EventInfo dblclickInfo = new EventInfo();
+    label.addDoubleClickHandler(new DoubleClickHandler() {
+      public void onDoubleClick(DoubleClickEvent event) {
+        dblclickInfo.fireCount++;
+      }
+    });
+
+    // Fire a click event
+    NativeEvent clickEvent = Document.get().createClickEvent(0, 0, 0, 0, 0,
+        false, false, false, false);
+    label.getElement().dispatchEvent(clickEvent);
+    NativeEvent dblclickEvent = Document.get().createDblClickEvent(0, 0, 0, 0,
+        0, false, false, false, false);
+    label.getElement().dispatchEvent(dblclickEvent);
+
+    // Verify the results
+    if (isInternetExplorer()) {
+      // IE is expected to simulate exactly 1 click event
+      assertEquals(2, clickInfo.fireCount);
+    } else {
+      // Other browsers should not simulate any events
+      assertEquals(1, clickInfo.fireCount);
+    }
+    assertEquals(1, dblclickInfo.fireCount);
+    RootPanel.get().remove(label);
+  }
+
+  /**
+   * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} returns the
+   * correct value if the native event is canceled.
    */
   public void testFireNativePreviewEventCancel() {
     TestNativePreviewHandler handler0 = new TestNativePreviewHandler(true,
@@ -142,9 +210,9 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
-   * Test that {@link Event#fireNativePreviewEvent(Event)} returns the correct
-   * value if the native event is prevented from being canceled, even if another
-   * handler cancels the event.
+   * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} returns the
+   * correct value if the native event is prevented from being canceled, even if
+   * another handler cancels the event.
    */
   public void testFireNativePreviewEventPreventCancel() {
     TestNativePreviewHandler handler0 = new TestNativePreviewHandler(false,
@@ -161,9 +229,9 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
-   * Test that {@link Event#fireNativePreviewEvent(Event)} fires handlers in
-   * reverse order, and that the legacy EventPreview fires only if it is at the
-   * top of the stack.
+   * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} fires handlers
+   * in reverse order, and that the legacy EventPreview fires only if it is at
+   * the top of the stack.
    */
   @SuppressWarnings("deprecation")
   public void testFireNativePreviewEventReverseOrder() {
@@ -254,8 +322,8 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
-   * Test that {@link Event#fireNativePreviewEvent(Event)} returns the correct
-   * value if the native event is not canceled.
+   * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} returns the
+   * correct value if the native event is not canceled.
    */
   public void testFireNativePreviewEventWithoutCancel() {
     TestNativePreviewHandler handler0 = new TestNativePreviewHandler(false,
@@ -272,8 +340,8 @@ public class EventTest extends GWTTestCase {
   }
 
   /**
-   * Test that {@link Event#fireNativePreviewEvent(Event)} returns the correct
-   * value if no handlers are present.
+   * Test that {@link Event#fireNativePreviewEvent(NativeEvent)} returns the
+   * correct value if no handlers are present.
    */
   public void testFireNativePreviewEventWithoutHandlers() {
     assertTrue(Event.fireNativePreviewEvent(null));
@@ -451,4 +519,8 @@ public class EventTest extends GWTTestCase {
     handler1.assertIsFired(true);
     reg1.removeHandler();
   }
+
+  private native boolean isInternetExplorer() /*-{
+     return navigator.userAgent.toLowerCase().indexOf("msie") != -1;
+   }-*/;
 }

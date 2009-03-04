@@ -133,6 +133,7 @@ public class CwCookies extends ContentWidget {
     // Display the existing cookies
     existingCookiesBox = new ListBox();
     Button deleteCookieButton = new Button(constants.cwCookiesDeleteCookie());
+    deleteCookieButton.addStyleName("sc-FixedWidthButton");
     mainLayout.setHTML(0, 0, "<b>" + constants.cwCookiesExistingLabel()
         + "</b>");
     mainLayout.setWidget(0, 1, existingCookiesBox);
@@ -146,6 +147,7 @@ public class CwCookies extends ContentWidget {
     // Display the name of the cookie
     cookieValueBox = new TextBox();
     Button setCookieButton = new Button(constants.cwCookiesSetCookie());
+    setCookieButton.addStyleName("sc-FixedWidthButton");
     mainLayout.setHTML(2, 0, "<b>" + constants.cwCookiesValueLabel() + "</b>");
     mainLayout.setWidget(2, 1, cookieValueBox);
     mainLayout.setWidget(2, 2, setCookieButton);

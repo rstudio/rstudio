@@ -142,7 +142,7 @@ public final class GWT {
   }
 
   /**
-   * @deprecated Use {@link Object#getClass()}, {@link Class#getName()}.
+   * @deprecated Use {@link Object#getClass()}, {@link Class#getName()}
    */
   @Deprecated
   public static String getTypeName(Object o) {

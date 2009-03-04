@@ -20,7 +20,7 @@ import java.util.EventListener;
 /**
  * Event handler interface for {@link DisclosureEvent}.
  * 
- * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler}
+ * @deprecated Use {@link com.google.gwt.event.logical.shared.CloseHandler}
  *             and/or {@link com.google.gwt.event.logical.shared.OpenHandler}
  *             instead
  * @see DisclosurePanel
@@ -31,7 +31,7 @@ public interface DisclosureHandler extends EventListener {
    * Fired when the panel is closed.
    * 
    * @param event event representing this action.
-   * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler}
+   * @deprecated Use {@link com.google.gwt.event.logical.shared.CloseHandler}
    *             instead
    */
   @Deprecated
@@ -41,7 +41,7 @@ public interface DisclosureHandler extends EventListener {
    * Fired when the panel is opened.
    * 
    * @param event event representing this action.
-   * @deprecated use {@link com.google.gwt.event.logical.shared.OpenHandler} instead
+   * @deprecated Use {@link com.google.gwt.event.logical.shared.OpenHandler} instead
    */
   @Deprecated
   void onOpen(DisclosureEvent event);

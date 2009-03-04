@@ -1,16 +1,18 @@
 package @serverPackage;
 
-import @clientPackage.EchoService;
+import @clientPackage.GreetingService;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 /**
  * The server side implementation of the Rpc service.
  */
-public class EchoServiceImpl extends RemoteServiceServlet implements
-    EchoService {
+public class GreetingServiceImpl extends RemoteServiceServlet implements
+    GreetingService {
 
-  public String echo(String input) {
-    return "Server says: " + input;
+  public String greetServer(String input) {
+    String serverInfo = getServletContext().getServerInfo();
+    String userAgent = getThreadLocalRequest().getHeader("User-Agent");
+    return "Hello, " + input + "!<br><br>I am running " + serverInfo
+        + ".<br><br>It looks like you are using:<br>" + userAgent;
   }
-
 }

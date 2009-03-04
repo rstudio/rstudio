@@ -351,6 +351,8 @@ public class ModuleDef implements PublicOracle {
   public synchronized void refresh(TreeLogger logger)
       throws UnableToCompleteException {
     PerfLogger.start("ModuleDef.refresh");
+    logger = logger.branch(TreeLogger.DEBUG, "Refreshing module '" + getName()
+        + "'");
 
     // Refresh resource oracles.
     lazyPublicOracle.refresh(logger);

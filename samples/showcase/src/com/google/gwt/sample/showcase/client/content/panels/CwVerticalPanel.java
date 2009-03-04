@@ -86,7 +86,7 @@ public class CwVerticalPanel extends ContentWidget {
 
     // Add some content to the panel
     for (int i = 1; i < 10; i++) {
-      vPanel.add(new Button(constants.cwVerticalPanelButton() + "" + i));
+      vPanel.add(new Button(constants.cwVerticalPanelButton() + " " + i));
     }
 
     // Return the content

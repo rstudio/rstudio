@@ -20,7 +20,9 @@ package com.google.gwt.user.client.ui;
  * before they are passed to the focused widget.
  * 
  * @see com.google.gwt.event.dom.client.KeyCodeEvent
- * @deprecated This interface hasn't worked in at least two years. Oops.
+ * @deprecated This interface is no longer implemented by any GWT library. Use
+ *             {@link com.google.gwt.user.client.Event#addNativePreviewHandler}
+ *             instead.
  */
 @Deprecated
 public interface HasKeyPreview {

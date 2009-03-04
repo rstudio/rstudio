@@ -38,6 +38,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ProblemReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
+import org.eclipse.jdt.internal.compiler.problem.ProblemSeverities;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -45,15 +46,16 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Tests for access to Java longs from JSNI. Issues a warning for:
+ * Tests for access to Java from JSNI. Issues a warning for:
  * <ul>
- * <li> JSNI methods with a parameter or return type of long.
- * <li> Access from JSNI to a field whose type is long.
- * <li> Access from JSNI to a method with a parameter or return type of long.
+ * <li>JSNI methods with a parameter or return type of long.</li>
+ * <li>Access from JSNI to a field whose type is long.</li>
+ * <li>Access from JSNI to a method with a parameter or return type of long.</li>
+ * <li>JSNI references to anonymous classes.</li>
  * </ul>
  * All tests also apply for arrays of longs, arrays of arrays of longs, etc.
  */
-public class LongFromJSNIChecker {
+public class JsniChecker {
   private class CheckingVisitor extends ASTVisitor implements
       ClassFileConstants {
     @Override
@@ -82,9 +84,10 @@ public class LongFromJSNIChecker {
       }
     }
 
-    private void checkFieldRef(JsniRef jsniRef, Set<String> errors) {
+    private void checkFieldRef(ReferenceBinding clazz, JsniRef jsniRef,
+        Set<String> errors) {
       assert jsniRef.isField();
-      FieldBinding target = getField(jsniRef);
+      FieldBinding target = getField(clazz, jsniRef);
       if (target == null) {
         return;
       }
@@ -95,9 +98,10 @@ public class LongFromJSNIChecker {
       }
     }
 
-    private void checkMethodRef(JsniRef jsniRef, Set<String> errors) {
+    private void checkMethodRef(ReferenceBinding clazz, JsniRef jsniRef,
+        Set<String> errors) {
       assert jsniRef.isMethod();
-      MethodBinding target = getMethod(jsniRef);
+      MethodBinding target = getMethod(clazz, jsniRef);
       if (target == null) {
         return;
       }
@@ -135,14 +139,28 @@ public class LongFromJSNIChecker {
       for (String jsniRefString : sloppyRefsVisitor.getJsniRefs()) {
         JsniRef jsniRef = JsniRef.parse(jsniRefString);
         if (jsniRef != null) {
-          Set<String> refErrors = new LinkedHashSet<String>();
-          if (jsniRef.isMethod()) {
-            checkMethodRef(jsniRef, refErrors);
-          } else {
-            checkFieldRef(jsniRef, refErrors);
-          }
-          if (!refErrors.isEmpty()) {
-            errors.put(jsniRefString, refErrors);
+          ReferenceBinding clazz = findClass(jsniRef);
+          if (looksLikeAnonymousClass(jsniRef)
+              || (clazz != null && clazz.isAnonymousType())) {
+            GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
+                "Referencing class '" + jsniRef.className()
+                    + ": JSNI references to anonymous classes are deprecated",
+                null);
+          } else if (clazz != null) {
+            Set<String> refErrors = new LinkedHashSet<String>();
+            if (jsniRef.isMethod()) {
+              checkMethodRef(clazz, jsniRef, refErrors);
+            } else {
+              checkFieldRef(clazz, jsniRef, refErrors);
+            }
+            if (!refErrors.isEmpty()) {
+              errors.put(jsniRefString, refErrors);
+            }
+          } else if (!jsniRef.className().equals("null")) {
+            GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
+                "Referencing class '" + jsniRef.className()
+                    + ": unable to resolve class, expect subsequent failures",
+                null);
           }
         }
       }
@@ -182,18 +200,14 @@ public class LongFromJSNIChecker {
     }
 
     private ReferenceBinding findClass(JsniRef jsniRef) {
-      String className = jsniRef.className().replace('$', '.');
-      char[][] compoundName = CharOperation.splitOn('.',
-          className.toCharArray());
+      char[][] compoundName = getCompoundName(jsniRef);
       TypeBinding binding = cud.scope.getType(compoundName, compoundName.length);
 
       if (binding instanceof ProblemReferenceBinding) {
         ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
-        if (prb.problemId() == ProblemReasons.NotVisible
-            && prb.closestMatch() instanceof ReferenceBinding) {
-          // It's just a visibility problem, so try drilling
-          // down manually
-          ReferenceBinding drilling = (ReferenceBinding) prb.closestMatch();
+        if (prb.problemId() == ProblemReasons.NotVisible) {
+          // It's just a visibility problem, so try drilling down manually
+          ReferenceBinding drilling = prb.closestReferenceMatch();
           for (int i = prb.compoundName.length; i < compoundName.length; i++) {
             drilling = drilling.getMemberType(compoundName[i]);
           }
@@ -201,31 +215,28 @@ public class LongFromJSNIChecker {
         }
       }
 
-      if (binding instanceof ProblemReferenceBinding) {
-        return null;
-      }
-      if (binding instanceof ReferenceBinding) {
+      if (binding instanceof ReferenceBinding
+          && !(binding instanceof ProblemReferenceBinding)) {
         return (ReferenceBinding) binding;
       }
       return null;
     }
 
-    private FieldBinding getField(JsniRef jsniRef) {
-      assert jsniRef.isField();
-      ReferenceBinding type = findClass(jsniRef);
-      if (type == null) {
-        return null;
-      }
-      return type.getField(jsniRef.memberName().toCharArray(), false);
+    private char[][] getCompoundName(JsniRef jsniRef) {
+      String className = jsniRef.className().replace('$', '.');
+      char[][] compoundName = CharOperation.splitOn('.',
+          className.toCharArray());
+      return compoundName;
     }
 
-    private MethodBinding getMethod(JsniRef jsniRef) {
+    private FieldBinding getField(ReferenceBinding clazz, JsniRef jsniRef) {
+      assert jsniRef.isField();
+      return clazz.getField(jsniRef.memberName().toCharArray(), false);
+    }
+
+    private MethodBinding getMethod(ReferenceBinding clazz, JsniRef jsniRef) {
       assert jsniRef.isMethod();
-      ReferenceBinding type = findClass(jsniRef);
-      if (type == null) {
-        return null;
-      }
-      for (MethodBinding method : type.getMethods(jsniRef.memberName().toCharArray())) {
+      for (MethodBinding method : clazz.getMethods(jsniRef.memberName().toCharArray())) {
         if (paramTypesMatch(method, jsniRef)) {
           return method;
         }
@@ -266,6 +277,16 @@ public class LongFromJSNIChecker {
           "longJsniRestriction.html"));
     }
 
+    private boolean looksLikeAnonymousClass(JsniRef jsniRef) {
+      char[][] compoundName = getCompoundName(jsniRef);
+      for (char[] part : compoundName) {
+        if (Character.isDigit(part[0])) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     private boolean paramTypesMatch(MethodBinding method, JsniRef jsniRef) {
       StringBuilder methodSig = new StringBuilder();
       if (method.parameters != null) {
@@ -294,13 +315,13 @@ public class LongFromJSNIChecker {
    * 
    */
   public static void check(CompilationUnitDeclaration cud) {
-    LongFromJSNIChecker checker = new LongFromJSNIChecker(cud);
+    JsniChecker checker = new JsniChecker(cud);
     checker.check();
   }
 
   private final CompilationUnitDeclaration cud;
 
-  private LongFromJSNIChecker(CompilationUnitDeclaration cud) {
+  private JsniChecker(CompilationUnitDeclaration cud) {
     this.cud = cud;
   }
 

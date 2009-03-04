@@ -123,14 +123,17 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   private final Object key;
 
+  private final TreeLogger logger;
+
   private final String moduleName;
 
-  protected ModuleSpace(ModuleSpaceHost host, String moduleName, Object key) {
+  protected ModuleSpace(TreeLogger logger, ModuleSpaceHost host,
+      String moduleName, Object key) {
     this.host = host;
     this.moduleName = moduleName;
     this.key = key;
-    TreeLogger hostLogger = host.getLogger();
-    threadLocalLogger.set(hostLogger);
+    this.logger = logger;
+    threadLocalLogger.set(host.getLogger());
   }
 
   public void dispose() {
@@ -289,10 +292,13 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
       Object[] args) throws Throwable {
     JsValue result = invokeNative(name, jthis, types, args);
     if (!result.isUndefined()) {
-      getLogger().log(
+      logger.log(
           TreeLogger.WARN,
-          "JSNI method '" + name + "' returned a value of type "
-              + result.getTypeString() + " but was declared void; it should not have returned a value at all",
+          "JSNI method '"
+              + name
+              + "' returned a value of type "
+              + result.getTypeString()
+              + " but was declared void; it should not have returned a value at all",
           null);
     }
   }
@@ -301,12 +307,12 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
    * Allows client-side code to log to the tree logger.
    */
   public void log(String message, Throwable e) {
-    TreeLogger logger = host.getLogger();
     TreeLogger.Type type = TreeLogger.INFO;
     if (e != null) {
       type = TreeLogger.ERROR;
     }
-    logger.log(type, message, e);
+    // Log at the top level for visibility.
+    getLogger().log(type, message, e);
   }
 
   /**
@@ -512,7 +518,7 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
 
   protected String rebind(String sourceName) throws UnableToCompleteException {
     try {
-      String result = host.rebind(host.getLogger(), sourceName);
+      String result = host.rebind(logger, sourceName);
       if (result != null) {
         return result;
       } else {
@@ -527,7 +533,8 @@ public abstract class ModuleSpace implements ShellJavaScriptHost {
   }
 
   private String composeResultErrorMsgPrefix(String name, String typePhrase) {
-    return "Something other than " + typePhrase + " was returned from JSNI method '" + name + "'";
+    return "Something other than " + typePhrase
+        + " was returned from JSNI method '" + name + "'";
   }
 
   private boolean isUserFrame(StackTraceElement element) {

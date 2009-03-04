@@ -473,7 +473,6 @@ public class NumberFormat {
    * @param pattern pattern that specify how number should be formatted
    * @param cdata currency data that should be used
    * @param userSuppliedPattern true if the pattern was supplied by the user
-   * @skip
    */
   protected NumberFormat(NumberConstants numberConstants, String pattern, CurrencyData cdata,
       boolean userSuppliedPattern) {
@@ -500,7 +499,6 @@ public class NumberFormat {
    * @param pattern pattern that specify how number should be formatted
    * @param cdata currency data that should be used
    * @param userSuppliedPattern true if the pattern was supplied by the user
-   * @skip
    */
   protected NumberFormat(String pattern, CurrencyData cdata, boolean userSuppliedPattern) {
     this(defaultNumberConstants, pattern, cdata, userSuppliedPattern);

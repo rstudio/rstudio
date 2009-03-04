@@ -48,13 +48,16 @@ public class TypeOracleTestingUtils {
 
   public static TypeOracle buildTypeOracle(TreeLogger logger,
       Set<CompilationUnit> units) {
-    JdtCompiler.compile(units);
     Set<String> validBinaryTypeNames = new HashSet<String>();
     for (CompilationUnit unit : units) {
-      for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-        validBinaryTypeNames.add(compiledClass.getBinaryName());
+      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
+      if (compiledClasses != null) {
+        for (CompiledClass compiledClass : compiledClasses) {
+          validBinaryTypeNames.add(compiledClass.getBinaryName());
+        }
       }
     }
+    JdtCompiler.compile(units);
     CompilationUnitInvalidator.InvalidatorState state = new CompilationUnitInvalidator.InvalidatorState();
     CompilationUnitInvalidator.validateCompilationUnits(state, units,
         validBinaryTypeNames);

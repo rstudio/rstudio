@@ -24,6 +24,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressEvent;
@@ -36,15 +37,16 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.ChangeListener;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.FocusListener;
 import com.google.gwt.user.client.ui.HasHTML;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.KeyboardListener;
 import com.google.gwt.user.client.ui.MouseListener;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.SuggestionEvent;
 import com.google.gwt.user.client.ui.SuggestionHandler;
 import com.google.gwt.user.client.ui.UIObject;
@@ -73,7 +75,9 @@ public class EventReporter<V, T> extends SimpleLogger implements
       ValueChangeHandler<Boolean> {
     String name;
 
-    public CheckBoxEvent(String name, Panel p) {
+    private HandlerRegistration registration;
+
+    public CheckBoxEvent(String name, HasWidgets p) {
       this.name = name;
       this.setText(name);
       p.add(this);
@@ -81,25 +85,78 @@ public class EventReporter<V, T> extends SimpleLogger implements
       this.setValue(true, true);
     }
 
-    public abstract void addHandler();
+    public abstract HandlerRegistration addHandler();
 
     public void onValueChange(ValueChangeEvent<Boolean> event) {
       if (event.getValue().booleanValue()) {
         report("add " + name);
-        addHandler();
+        registration = addHandler();
       } else {
         report("remove " + name);
         removeHandler();
       }
     }
 
-    public abstract void removeHandler();
+    public void removeHandler() {
+      registration.removeHandler();
+      registration = null;
+    }
   }
 
-  public EventReporter(Panel parent) {
+  /**
+   * Add/remove handlers via check box.
+   * 
+   */
+  public abstract class CheckBoxListener extends CheckBox implements
+      ValueChangeHandler<Boolean> {
+    String name;
+
+    public CheckBoxListener(String name, HasWidgets p) {
+      this.name = name;
+      this.setText(name);
+      p.add(this);
+      this.addValueChangeHandler(this);
+      this.setValue(true, true);
+    }
+
+    public abstract void addListener();
+
+    public void onValueChange(ValueChangeEvent<Boolean> event) {
+      if (event.getValue().booleanValue()) {
+        report("add " + name);
+        addListener();
+      } else {
+        report("remove " + name);
+        removeListener();
+      }
+    }
+
+    public abstract void removeListener();
+  }
+
+  public EventReporter() {
+  }
+
+  public EventReporter(HasWidgets parent) {
     parent.add(this);
   }
 
+  public void addClickHandler(final HasClickHandlers h, HasWidgets p) {
+    addClickHandler(h, p, getInfo(h) + " click handler");
+  }
+
+  public void addClickHandler(final HasClickHandlers h, HasWidgets p,
+      String title) {
+
+    new CheckBoxEvent(title, p) {
+      @Override
+      public HandlerRegistration addHandler() {
+        return h.addClickHandler(EventReporter.this);
+      }
+    };
+  }
+
+  @Override
   public String getInfo(Object sender) {
     if (sender instanceof HasText) {
       return ((HasText) sender).getText();
@@ -121,7 +178,6 @@ public class EventReporter<V, T> extends SimpleLogger implements
     report(event);
   }
 
-  @SuppressWarnings("deprecation")
   public void onChange(Widget sender) {
     report("change on " + getInfo(sender));
   }
@@ -130,7 +186,6 @@ public class EventReporter<V, T> extends SimpleLogger implements
     report(event);
   }
 
-  @SuppressWarnings("deprecation")
   public void onClick(Widget sender) {
     report("click: " + getInfo(sender));
   }

@@ -75,7 +75,10 @@
     <delete dir="${gwt.build}" />
   </target>
 
-  <target name="apicheck" depends="build"
+  <target name ="presubmit" description="Runs checkstyle,apichecker, and all tests" depends="test,apicheck-nobuild,checkstyle">		
+ </target>
+	
+  <target name="apicheck-nobuild" 
     description="Checks API compatibility to prior GWT revision">
     <copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
           file="${gwt.apicheck.config}"
@@ -100,5 +103,7 @@
       <arg file="${gwt.build.out}/userApi.conf"/>
     </java>
   </target>
-
+  
+  <target name="apicheck" depends="build,apicheck-nobuild"/>
+ 
 </project>

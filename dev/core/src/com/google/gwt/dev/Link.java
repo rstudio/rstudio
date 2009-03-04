@@ -48,6 +48,7 @@ public class Link {
   /**
    * Options for Link.
    */
+  @Deprecated
   public interface LegacyLinkOptions extends CompileTaskOptions, OptionOutDir {
   }
 
@@ -55,10 +56,11 @@ public class Link {
    * Options for Link.
    */
   public interface LinkOptions extends CompileTaskOptions, OptionExtraDir,
-      OptionWarDir, OptionOutDir /* deprecated */{
+      OptionWarDir, LegacyLinkOptions {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
+    @SuppressWarnings("deprecation")
     public ArgProcessor(LinkOptions options) {
       super(options);
       registerHandler(new ArgHandlerExtraDir(options));

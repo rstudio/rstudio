@@ -57,7 +57,7 @@ public class JSONNumber extends JSONValue {
   /**
    * Gets the double value this JSONNumber represents.
    * 
-   * @deprecated use {@link #doubleValue()}
+   * @deprecated See {@link #doubleValue()}
    */
   @Deprecated
   public double getValue() {

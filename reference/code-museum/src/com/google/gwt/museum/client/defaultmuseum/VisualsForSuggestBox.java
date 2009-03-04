@@ -15,6 +15,8 @@
  */
 package com.google.gwt.museum.client.defaultmuseum;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -40,6 +42,8 @@ public class VisualsForSuggestBox extends AbstractIssue {
   MultiWordSuggestOracle girlsNames = new MultiWordSuggestOracle();
   MultiWordSuggestOracle girlsNamesWithDefault = new MultiWordSuggestOracle();
 
+  Element textBoxToWrap;
+
   VisualsForSuggestBox() {
     List<String> femaleNames = Arrays.asList("Jamie", "Jill", "Jackie",
         "Susan", "Helen", "Emily", "Karen", "Emily", "Isabella", "Emma", "Ava",
@@ -59,8 +63,14 @@ public class VisualsForSuggestBox extends AbstractIssue {
   /**
    * This is the entry point method.
    */
+  @Override
   public Widget createIssue() {
     VerticalPanel panel = new VerticalPanel();
+    HTML wrapperText = new HTML(
+        "Make sure this wrapped suggest box works as normal.");
+    panel.add(wrapperText);
+    textBoxToWrap = Document.get().createTextInputElement();
+    wrapperText.getElement().appendChild(textBoxToWrap);
 
     panel.add(new HTML(
         "Select the show button, nothing should open <br/> Type 'e' and select the button again, now a suggestion list should open and close."));
@@ -112,7 +122,6 @@ public class VisualsForSuggestBox extends AbstractIssue {
   }
 
   private SuggestBox simpleSuggestBox() {
-
     SuggestBox b = new SuggestBox(girlsNames);
     return b;
   }

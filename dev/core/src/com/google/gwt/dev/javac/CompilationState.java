@@ -98,6 +98,8 @@ public class CompilationState {
   @SuppressWarnings("unchecked")
   public void addGeneratedCompilationUnits(TreeLogger logger,
       Set<? extends CompilationUnit> generatedCups) {
+    logger = logger.branch(TreeLogger.DEBUG, "Adding '" + generatedCups.size()
+        + "' new generated units");
     for (CompilationUnit unit : generatedCups) {
       String typeName = unit.getTypeName();
       assert (!unitMap.containsKey(typeName));
@@ -156,6 +158,8 @@ public class CompilationState {
    * TODO: something more optimal with generated files?
    */
   public void refresh(TreeLogger logger) {
+    logger = logger.branch(TreeLogger.DEBUG, "Refreshing module from source");
+
     // Always remove all generated compilation units.
     for (Iterator<CompilationUnit> it = unitMap.values().iterator(); it.hasNext();) {
       CompilationUnit unit = it.next();
@@ -198,6 +202,9 @@ public class CompilationState {
   private void compile(TreeLogger logger, Set<CompilationUnit> newUnits) {
     PerfLogger.start("CompilationState.compile");
     if (jdtCompiler.doCompile(newUnits)) {
+      logger = logger.branch(TreeLogger.DEBUG,
+          "Validating newly compiled units");
+
       // Dump all units with direct errors; we cannot safely check them.
       boolean anyErrors = CompilationUnitInvalidator.invalidateUnitsWithErrors(
           logger, newUnits);

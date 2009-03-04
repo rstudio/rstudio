@@ -21,8 +21,9 @@ import com.google.gwt.util.tools.ArgHandlerOutDir;
 import java.io.File;
 
 /**
- * Deprecated handler for -out options
+ * Deprecated handler for -out options.
  */
+@Deprecated
 public class ArgHandlerOutDirDeprecated extends ArgHandlerOutDir {
 
   OptionOutDir option;

@@ -149,7 +149,7 @@ public final class JavaScriptException extends RuntimeException {
   /**
    * Used for server-side instantiation during JUnit runs. Exceptions are
    * manually marshaled through
-   * {@link com.google.gwt.junit.client.impl.ExceptionWrapper} objects.
+   * <code>com.google.gwt.junit.client.impl.ExceptionWrapper</code> objects.
    * 
    * @param message the detail message
    */

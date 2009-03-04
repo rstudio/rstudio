@@ -35,7 +35,7 @@ public class JavaCompilationSuite {
     suite.addTestSuite(JdtCompilerTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
     suite.addTestSuite(JavaSourceOracleImplTest.class);
-    suite.addTestSuite(LongFromJSNITest.class);
+    suite.addTestSuite(JsniCheckerTest.class);
     suite.addTestSuite(TypeOracleMediatorTest.class);
 
     return suite;

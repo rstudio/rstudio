@@ -21,7 +21,7 @@ package com.google.gwt.user.client.rpc;
  * 
  * @deprecated As of GWT 1.5, {@link Exception} implements
  *             {@link java.io.Serializable Serializable} and can be used in place
- *             of this class.
+ *             of this class
  */
 @Deprecated
 public class SerializableException extends Exception implements IsSerializable {

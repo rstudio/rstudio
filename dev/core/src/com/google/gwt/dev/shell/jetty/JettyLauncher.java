@@ -168,7 +168,7 @@ public class JettyLauncher extends ServletContainerLauncher {
       try {
         wac.start();
       } catch (Exception e) {
-        branch.log(TreeLogger.ERROR, "Unable to stop embedded Jetty server", e);
+        branch.log(TreeLogger.ERROR, "Unable to start embedded Jetty server", e);
         throw new UnableToCompleteException();
       }
 
@@ -262,6 +262,9 @@ public class JettyLauncher extends ServletContainerLauncher {
         Log.setLog(new JettyTreeLogger());
       }
     }
+
+    // Turn off XML validation.
+    System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
 
     SelectChannelConnector connector = new SelectChannelConnector();
     connector.setPort(port);

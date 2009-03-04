@@ -45,31 +45,32 @@ public class UnitTestTreeLogger extends TreeLogger {
       return new UnitTestTreeLogger(expected, loggableTypes);
     }
 
-    public void expect(TreeLogger.Type type, String msg, Throwable caught) {
+    public void expect(TreeLogger.Type type, String msg,
+        Class<? extends Throwable> caught) {
       expected.add(new LogEntry(type, msg, caught));
     }
 
-    public void expectDebug(String msg, Throwable caught) {
+    public void expectDebug(String msg, Class<? extends Throwable> caught) {
       expect(TreeLogger.DEBUG, msg, caught);
     }
 
-    public void expectError(String msg, Throwable caught) {
+    public void expectError(String msg, Class<? extends Throwable> caught) {
       expect(TreeLogger.ERROR, msg, caught);
     }
 
-    public void expectInfo(String msg, Throwable caught) {
+    public void expectInfo(String msg, Class<? extends Throwable> caught) {
       expect(TreeLogger.INFO, msg, caught);
     }
 
-    public void expectSpam(String msg, Throwable caught) {
+    public void expectSpam(String msg, Class<? extends Throwable> caught) {
       expect(TreeLogger.SPAM, msg, caught);
     }
 
-    public void expectTrace(String msg, Throwable caught) {
+    public void expectTrace(String msg, Class<? extends Throwable> caught) {
       expect(TreeLogger.TRACE, msg, caught);
     }
 
-    public void expectWarn(String msg, Throwable caught) {
+    public void expectWarn(String msg, Class<? extends Throwable> caught) {
       expect(TreeLogger.WARN, msg, caught);
     }
 
@@ -97,18 +98,23 @@ public class UnitTestTreeLogger extends TreeLogger {
    * Represents a log event to check for.
    */
   private static class LogEntry {
-    private final Throwable caught;
+    private final Class<? extends Throwable> caught;
     private final String msg;
     private final Type type;
 
-    public LogEntry(TreeLogger.Type type, String msg, Throwable caught) {
+    public LogEntry(TreeLogger.Type type, String msg,
+        Class<? extends Throwable> caught) {
       assert (type != null);
       this.type = type;
       this.msg = msg;
       this.caught = caught;
     }
 
-    public Throwable getCaught() {
+    public LogEntry(Type type, String msg, Throwable caught) {
+      this(type, msg, (caught == null) ? null : caught.getClass());
+    }
+
+    public Class<? extends Throwable> getCaught() {
       return caught;
     }
 
@@ -126,26 +132,40 @@ public class UnitTestTreeLogger extends TreeLogger {
       sb.append(type.getLabel());
       sb.append(": ");
       sb.append(getMessage());
-      Throwable t = getCaught();
+      Class<? extends Throwable> t = getCaught();
       if (t != null) {
         sb.append("; ");
-        sb.append(t);
+        sb.append(t.getName());
       }
       return sb.toString();
     }
   }
 
-  private static String createLog(List<LogEntry> entries) {
-    StringBuilder sb = new StringBuilder();
-    for (LogEntry entry : entries) {
-      sb.append(entry.toString());
-      sb.append('\n');
+  private static void assertCorrectLogEntry(LogEntry expected, LogEntry actual) {
+    Assert.assertEquals("Log types do not match", expected.getType(),
+        actual.getType());
+    Assert.assertEquals("Log messages do not match", expected.getMessage(),
+        actual.getMessage());
+    if (expected.getCaught() == null) {
+      Assert.assertNull("Actual log exception type should have been null",
+          actual.getCaught());
+    } else {
+      Assert.assertNotNull(
+          "Actual log exception type should not have been null",
+          actual.getCaught());
+      Assert.assertTrue("Actual log exception type ("
+          + actual.getCaught().getName()
+          + ") cannot be assigned to expected log exception type ("
+          + expected.getCaught().getName() + ")",
+          expected.getCaught().isAssignableFrom(actual.getCaught()));
     }
-    return sb.toString();
+    Assert.assertEquals("Log types do not match", expected.getType(),
+        actual.getType());
   }
 
   private final List<LogEntry> actualEntries = new ArrayList<LogEntry>();
   private final List<LogEntry> expectedEntries = new ArrayList<LogEntry>();
+
   private final EnumSet<TreeLogger.Type> loggableTypes;
 
   public UnitTestTreeLogger(List<LogEntry> expectedEntries,
@@ -163,9 +183,11 @@ public class UnitTestTreeLogger extends TreeLogger {
   }
 
   public void assertCorrectLogEntries() {
-    String expected = createLog(expectedEntries);
-    String actual = createLog(actualEntries);
-    Assert.assertEquals("Logs do not match", expected, actual);
+    Assert.assertEquals("Log lengths do not match", expectedEntries.size(),
+        actualEntries.size());
+    for (int i = 0, c = expectedEntries.size(); i < c; ++i) {
+      assertCorrectLogEntry(expectedEntries.get(i), actualEntries.get(i));
+    }
   }
 
   public TreeLogger branch(Type type, String msg, Throwable caught,

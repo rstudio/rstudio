@@ -24,12 +24,14 @@ import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.museum.client.common.AbstractIssue;
+import com.google.gwt.museum.client.common.SimpleLogger;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ScrollEvent;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import java.util.ArrayList;
@@ -41,15 +43,16 @@ public class VisualsForWindowEvents extends AbstractIssue implements
     CloseHandler<Window>, Window.ClosingHandler, Window.ScrollHandler,
     ResizeHandler {
   static int numResizes = 0;
-
+  private SimpleLogger messages = new SimpleLogger();
   private ArrayList<HandlerRegistration> registrations = new ArrayList<HandlerRegistration>();
-  private FlowPanel messages = new FlowPanel();
 
   @Override
   public Widget createIssue() {
     FlowPanel out = new FlowPanel();
 
     FlowPanel body = new FlowPanel();
+
+    body.setHeight(Window.getClientHeight() * 2 + "px");
     FlowPanel buttons = new FlowPanel();
 
     Button addHandlersButton = new Button("Add window handlers.");
@@ -66,19 +69,19 @@ public class VisualsForWindowEvents extends AbstractIssue implements
       }
     });
 
-    Button clearButton = new Button("Clear events");
-    clearButton.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        messages.clear();
-      }
-    });
-
     buttons.add(addHandlersButton);
     buttons.add(removeHandlersButton);
-    buttons.add(clearButton);
 
     body.add(buttons);
     body.add(messages);
+    ScrollPanel p = new ScrollPanel();
+    p.setHeight("100%");
+    p.setWidth("100%");
+    HTML tester = new HTML("scroller");
+    tester.setHeight("500px");
+    tester.getElement().getStyle().setProperty("border", "10px solid green");
+    p.add(tester);
+    body.add(p);
 
     out.add(body);
 
@@ -110,7 +113,8 @@ public class VisualsForWindowEvents extends AbstractIssue implements
   }
 
   public void onResize(ResizeEvent event) {
-    Window.setTitle("Got resize " + numResizes++);
+    messages.report("Got resize " + numResizes++ + " with values "
+        + event.getWidth() + ", " + event.getHeight());
   }
 
   public void onWindowClosing(ClosingEvent event) {
@@ -118,23 +122,27 @@ public class VisualsForWindowEvents extends AbstractIssue implements
   }
 
   public void onWindowScroll(ScrollEvent event) {
-    addMessage("Got a window scroll!");
+    addMessage("Got a window scroll with " + event.getScrollLeft() + ", "
+        + event.getScrollTop());
   }
 
   private void addMessage(String msg) {
-    messages.add(new Label(msg));
+    messages.report(msg);
   }
 
   private void removeWindowHandlers() {
     for (HandlerRegistration reg : registrations) {
       reg.removeHandler();
     }
+    registrations.clear();
   }
 
   private void setupWindowHandlers() {
-    registrations.add(Window.addCloseHandler(this));
-    registrations.add(Window.addResizeHandler(this));
-    registrations.add(Window.addWindowClosingHandler(this));
-    registrations.add(Window.addWindowScrollHandler(this));
+    if (registrations.size() == 0) {
+      registrations.add(Window.addCloseHandler(this));
+      registrations.add(Window.addResizeHandler(this));
+      registrations.add(Window.addWindowClosingHandler(this));
+      registrations.add(Window.addWindowScrollHandler(this));
+    }
   }
 }

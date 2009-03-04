@@ -25,6 +25,7 @@ import com.google.gwt.dev.Compiler.CompilerOptionsImpl;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.ArtifactAcceptor;
 import com.google.gwt.dev.shell.jetty.JettyLauncher;
+import com.google.gwt.dev.util.InstalledHelpInfo;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
@@ -68,7 +69,7 @@ public class HostedMode extends SwtHostedModeBase {
 
     @Override
     public String getPurpose() {
-      return "Prevents the embedded Tomcat server from running, even if a port is specified";
+      return "Specify a different embedded web server to run (must implement ServletContainerLauncher)";
     }
 
     @Override
@@ -348,20 +349,18 @@ public class HostedMode extends SwtHostedModeBase {
       }
     }
 
+    ServletValidator servletValidator = null;
+    File webXml = new File(options.getWarDir(), "WEB-INF/web.xml");
+    if (webXml.exists()) {
+      servletValidator = ServletValidator.create(getTopLogger(), webXml);
+    }
+
     for (String moduleName : options.getModuleNames()) {
       TreeLogger loadLogger = getTopLogger().branch(TreeLogger.DEBUG,
-          "Loading module " + moduleName);
+          "Bootstrap link for command-line module '" + moduleName + "'");
       try {
         ModuleDef module = loadModule(loadLogger, moduleName, false);
-
-        // TODO: Validate servlet tags.
-        String[] servletPaths = module.getServletPaths();
-        if (servletPaths.length > 0) {
-          loadLogger.log(TreeLogger.WARN,
-              "Ignoring legacy <servlet> tag(s) in module '" + moduleName
-                  + "'; add servlet tags to your web.xml instead");
-        }
-
+        validateServletTags(loadLogger, servletValidator, module, webXml);
         link(loadLogger, module);
       } catch (UnableToCompleteException e) {
         // Already logged.
@@ -416,12 +415,14 @@ public class HostedMode extends SwtHostedModeBase {
       return false;
     }
     try {
+      TreeLogger logger = getTopLogger().branch(TreeLogger.DEBUG,
+          "Initializing module '" + module.getName() + "' for hosted mode");
       boolean shouldRefreshPage = false;
       if (module.isGwtXmlFileStale()) {
         shouldRefreshPage = true;
-        module = loadModule(getTopLogger(), module.getCanonicalName(), false);
+        module = loadModule(logger, module.getCanonicalName(), false);
       }
-      link(getTopLogger(), module);
+      link(logger, module);
       return shouldRefreshPage;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -452,18 +453,21 @@ public class HostedMode extends SwtHostedModeBase {
    */
   private void link(TreeLogger logger, ModuleDef module)
       throws UnableToCompleteException {
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
+        + module.getName() + "'");
+
     // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(options.getWarDir(), module.getName());
     File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
         options.getExtraDir(), module.getName());
 
     // Create a new active linker stack for the fresh link.
-    StandardLinkerContext linkerStack = new StandardLinkerContext(logger,
+    StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
         module, options);
     linkerStacks.put(module.getName(), linkerStack);
 
-    ArtifactSet artifacts = linkerStack.invokeLink(logger);
-    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
+    ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
+    linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
         moduleExtraDir);
   }
 
@@ -478,6 +482,9 @@ public class HostedMode extends SwtHostedModeBase {
    */
   private void relink(TreeLogger logger, ModuleDef module,
       ArtifactSet newlyGeneratedArtifacts) throws UnableToCompleteException {
+    TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG,
+        "Relinking module '" + module.getName() + "'");
+
     // TODO: move the module-specific computations to a helper function.
     File moduleOutDir = new File(options.getWarDir(), module.getName());
     File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
@@ -487,9 +494,33 @@ public class HostedMode extends SwtHostedModeBase {
     StandardLinkerContext linkerStack = linkerStacks.get(module.getName());
     assert linkerStack != null;
 
-    ArtifactSet artifacts = linkerStack.invokeRelink(logger,
+    ArtifactSet artifacts = linkerStack.invokeRelink(linkLogger,
         newlyGeneratedArtifacts);
-    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir,
+    linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
         moduleExtraDir);
+  }
+
+  private void validateServletTags(TreeLogger logger,
+      ServletValidator servletValidator, ModuleDef module, File webXml) {
+    TreeLogger servletLogger = logger.branch(TreeLogger.DEBUG,
+        "Validating <servlet> tags for module '" + module.getName() + "'",
+        null, new InstalledHelpInfo("servletMappings.html"));
+    String[] servletPaths = module.getServletPaths();
+    if (servletValidator == null && servletPaths.length > 0) {
+      servletLogger.log(
+          TreeLogger.WARN,
+          "Module declares "
+              + servletPaths.length
+              + " <servlet> declaration(s), but a valid 'web.xml' was not found at '"
+              + webXml.getAbsolutePath() + "'");
+    } else {
+      for (String servletPath : servletPaths) {
+        String servletClass = module.findServletForPath(servletPath);
+        assert (servletClass != null);
+        // Prefix module name to convert module mapping to global mapping.
+        servletPath = "/" + module.getName() + servletPath;
+        servletValidator.validate(servletLogger, servletClass, servletPath);
+      }
+    }
   }
 }

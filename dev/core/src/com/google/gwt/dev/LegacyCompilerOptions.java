@@ -21,7 +21,7 @@ import com.google.gwt.dev.Precompile.PrecompileOptions;
 /**
  * The complete set of options for the GWT compiler.
  */
-public interface LegacyCompilerOptions extends PrecompileOptions, LegacyLinkOptions,
-    OptionLocalWorkers {
+@Deprecated
+public interface LegacyCompilerOptions extends PrecompileOptions,
+    LegacyLinkOptions, OptionLocalWorkers {
 }
- 

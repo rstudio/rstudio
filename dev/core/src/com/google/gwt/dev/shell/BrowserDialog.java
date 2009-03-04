@@ -41,7 +41,7 @@ public class BrowserDialog extends DialogBase {
   private final TreeLogger logger;
 
   public BrowserDialog(Shell parent, TreeLogger logger, String html) {
-    super(parent, 550, 520, true, false);
+    super(parent, 550, 520);
     this.logger = logger;
     this.html = html;
     this.url = null;

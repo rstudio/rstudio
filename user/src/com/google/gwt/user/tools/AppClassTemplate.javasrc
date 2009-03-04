@@ -4,80 +4,133 @@ import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.Window;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
 public class @moduleShortName implements EntryPoint {
+  /**
+   * The message displayed to the user when the server cannot be reached or
+   * returns an error.
+   */
+  private static final String SERVER_ERROR = "An error occurred while "
+      + "attempting to contact the server. Please check your network "
+      + "connection and try again.";
 
   /**
-   * Create a remote service proxy to talk to the server-side Echo service.
+   * Create a remote service proxy to talk to the server-side Greeting service.
    */
-  private final EchoServiceAsync echoService = GWT.create(EchoService.class);
+  private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
   /**
    * This is the entry point method.
    */
   public void onModuleLoad() {
-    Image img = new Image("http://code.google.com/webtoolkit/logo-185x175.png");
-    Button button = new Button("Click me");
+    final Button sendButton = new Button("Send");
+    final TextBox nameField = new TextBox();
+    nameField.setText("GWT User");
 
-    // We can add style names
-    button.addStyleName("pc-template-btn");
-    // or we can set an id on a specific element for styling
-    img.getElement().setId("pc-template-img");
+    // We can add style names to widgets
+    sendButton.addStyleName("sendButton");
 
-    VerticalPanel vPanel = new VerticalPanel();
-    vPanel.setWidth("100%");
-    vPanel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
-    vPanel.add(img);
-    vPanel.add(button);
+    // Add the nameField and sendButton to the RootPanel
+    // Use RootPanel.get() to get the entire body element
+    RootPanel.get("nameFieldContainer").add(nameField);
+    RootPanel.get("sendButtonContainer").add(sendButton);
 
-    // Add image and button to the RootPanel
-    RootPanel.get().add(vPanel);
+    // Focus the cursor on the name field when the app loads
+    nameField.setFocus(true);
+    nameField.selectAll();
 
-    // Create the dialog box
+    // Create the popup dialog box
     final DialogBox dialogBox = new DialogBox();
+    dialogBox.setText("Remote Procedure Call");
     dialogBox.setAnimationEnabled(true);
-    Button closeButton = new Button("close");
+    final Button closeButton = new Button("Close");
+    // We can set the id of a widget by accessing its Element
+    closeButton.getElement().setId("closeButton");
+    final Label textToServerLabel = new Label();
+    final HTML serverResponseLabel = new HTML();
     VerticalPanel dialogVPanel = new VerticalPanel();
-    dialogVPanel.setWidth("100%");
-    dialogVPanel.setHorizontalAlignment(VerticalPanel.ALIGN_CENTER);
+    dialogVPanel.addStyleName("dialogVPanel");
+    dialogVPanel.add(new HTML("<b>Sending name to the server:</b>"));
+    dialogVPanel.add(textToServerLabel);
+    dialogVPanel.add(new HTML("<br><b>Server replies:</b>"));
+    dialogVPanel.add(serverResponseLabel);
+    dialogVPanel.setHorizontalAlignment(VerticalPanel.ALIGN_RIGHT);
     dialogVPanel.add(closeButton);
+    dialogBox.setWidget(dialogVPanel);
 
+    // Add a handler to close the DialogBox
     closeButton.addClickHandler(new ClickHandler() {
       public void onClick(ClickEvent event) {
         dialogBox.hide();
+        sendButton.setEnabled(true);
+        sendButton.setFocus(true);
       }
     });
 
-    // Set the contents of the Widget
-    dialogBox.setWidget(dialogVPanel);
-
-    button.addClickHandler(new ClickHandler() {
+    // Create a handler for the sendButton and nameField
+    class MyHandler implements ClickHandler, KeyUpHandler {
+      /**
+       * Fired when the user clicks on the sendButton.
+       */
       public void onClick(ClickEvent event) {
-        final String textToServer = "Hello GWT World!";
-        final String dialogBoxText = "Sending to the server: " + textToServer;
-        dialogBox.setText(dialogBoxText);
-        dialogBox.center();
-        dialogBox.show();
-        echoService.echo(textToServer, new AsyncCallback<String>() {
+        sendNameToServer();
+      }
+
+      /**
+       * Fired when the user types in the nameField.
+       */
+      public void onKeyUp(KeyUpEvent event) {
+        if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+          sendNameToServer();
+        }
+      }
+
+      /**
+       * Send the name from the nameField to the server and wait for a response.
+       */
+      private void sendNameToServer() {
+        sendButton.setEnabled(false);
+        String textToServer = nameField.getText();
+        textToServerLabel.setText(textToServer);
+        serverResponseLabel.setText("");
+        greetingService.greetServer(textToServer, new AsyncCallback<String>() {
           public void onFailure(Throwable caught) {
-            Window.alert("Rpc failure");
+            // Show the RPC error message to the user
+            dialogBox.setText("Remote Procedure Call - Failure");
+            serverResponseLabel.addStyleName("serverResponseLabelError");
+            serverResponseLabel.setHTML(SERVER_ERROR);
+            dialogBox.center();
+            closeButton.setFocus(true);
           }
 
           public void onSuccess(String result) {
-            dialogBox.setText(dialogBoxText + "\n " + result);
+            dialogBox.setText("Remote Procedure Call");
+            serverResponseLabel.removeStyleName("serverResponseLabelError");
+            serverResponseLabel.setHTML(result);
+            dialogBox.center();
+            closeButton.setFocus(true);
           }
         });
       }
-    });
+    }
+
+    // Add a handler to send the name to the server
+    MyHandler handler = new MyHandler();
+    sendButton.addClickHandler(handler);
+    nameField.addKeyUpHandler(handler);
   }
 }

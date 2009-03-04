@@ -180,7 +180,7 @@ public class PlatformSpecific {
   public static void logUpdateAvailable(TreeLogger logger, UpdateResult result) {
     if (result != null) {
       final URL url = result.getURL();
-      logger.log(TreeLogger.WARN, "A new version of GWT ("
+      logger.log(TreeLogger.INFO, "A new version of GWT ("
           + result.getNewVersion() + ") is available", null, new HelpInfo() {
         @Override
         public URL getURL() {

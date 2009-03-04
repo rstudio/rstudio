@@ -20,7 +20,7 @@ import java.util.EventListener;
 /**
  * Handler interface for form submit events.
  * 
- * @deprecated use {@link FormPanel.SubmitCompleteHandler} and/or
+ * @deprecated Use {@link FormPanel.SubmitCompleteHandler} and/or
  *             {@link FormPanel.SubmitHandler} instead
  */
 @Deprecated
@@ -37,7 +37,7 @@ public interface FormHandler extends EventListener {
    * 
    * @param event an event object containing information about the form
    *          submission
-   * @deprecated use {@link FormPanel.SubmitHandler} instead
+   * @deprecated Use {@link FormPanel.SubmitHandler} instead
    */
   @Deprecated
   void onSubmit(FormSubmitEvent event);
@@ -47,7 +47,7 @@ public interface FormHandler extends EventListener {
    * 
    * @param event an event object containing information about the form
    *          submission
-   * @deprecated use {@link FormPanel.SubmitCompleteHandler} instead
+   * @deprecated Use {@link FormPanel.SubmitCompleteHandler} instead
    */
   @Deprecated
   void onSubmitComplete(FormSubmitCompleteEvent event);

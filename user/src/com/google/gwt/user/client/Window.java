@@ -397,6 +397,9 @@ public class Window {
   private static boolean closeHandlersInitialized;
   private static boolean scrollHandlersInitialized;
   private static boolean resizeHandlersInitialized;
+  private static int lastResizeWidth;
+  private static int lastResizeHeight;
+  
   private static final WindowImpl impl = GWT.create(WindowImpl.class);
 
   /**
@@ -767,7 +770,15 @@ public class Window {
 
   private static void fireResizedImpl() {
     if (resizeHandlersInitialized) {
-      ResizeEvent.fire(getHandlers(), getClientWidth(), getClientHeight());
+      // On webkit and IE we sometimes get duplicate window resize events.
+      // Here, we manually filter them.
+      int width = getClientWidth();
+      int height = getClientHeight();
+      if (lastResizeWidth != width || lastResizeHeight != height) {
+        lastResizeWidth = width;
+        lastResizeHeight = height;
+        ResizeEvent.fire(getHandlers(), width, height);
+      }
     }
   }
 

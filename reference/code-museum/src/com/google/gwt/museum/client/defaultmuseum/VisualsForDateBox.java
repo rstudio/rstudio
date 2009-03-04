@@ -24,6 +24,7 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.museum.client.common.AbstractIssue;
+import com.google.gwt.museum.client.common.EventReporter;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -176,6 +177,12 @@ public class VisualsForDateBox extends AbstractIssue {
             + "\" End: \"" + (d2 == null ? "null" : f.format(d2)) + "\"");
       }
     }));
+
+    EventReporter<Date, DateBox> reporter = new EventReporter<Date, DateBox>();
+    start.addValueChangeHandler(reporter);
+    end.addValueChangeHandler(reporter);
+    reporter.report("Events are logged here");
+    v.add(reporter);
     return v;
   }
 

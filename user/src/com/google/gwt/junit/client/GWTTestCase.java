@@ -89,9 +89,9 @@ public abstract class GWTTestCase extends TestCase {
    * Clears the accumulated list of checkpoint messages.
    * 
    * @see #addCheckpoint(String)
-   * @deprecated This method will be removed when web mode supports stack
+   * @deprecated This method will be removed if and when web mode supports stack
    *             traces. It can be useful for debugging web mode failures, but
-   *             production code should not depend on it.
+   *             production code should not depend on it
    */
   @Deprecated
   public final void clearCheckpoints() {
@@ -103,9 +103,9 @@ public abstract class GWTTestCase extends TestCase {
    * 
    * @return a non-<code>null</code> array of checkpoint messages
    * @see #addCheckpoint(String)
-   * @deprecated This method will be removed when web mode supports stack
+   * @deprecated This method will be removed if and when web mode supports stack
    *             traces. It can be useful for debugging web mode failures, but
-   *             production code should not depend on it.
+   *             production code should not depend on it
    */
   @Deprecated
   public final String[] getCheckpoints() {

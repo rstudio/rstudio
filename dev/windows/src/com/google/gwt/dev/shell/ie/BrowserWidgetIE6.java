@@ -51,13 +51,14 @@ public class BrowserWidgetIE6 extends BrowserWidget {
      */
     public boolean gwtOnLoad(IDispatch frameWnd, String moduleName,
         String version) {
-      try {
-        if (moduleName == null) {
-          // Indicates one or more modules are being unloaded.
-          handleUnload(frameWnd);
-          return true;
-        }
+      if (moduleName == null) {
+        // Indicates one or more modules are being unloaded.
+        return handleUnload(frameWnd);
+      }
 
+      TreeLogger logger = getHost().getLogger().branch(TreeLogger.DEBUG,
+          "Loading an instance of module '" + moduleName + "'");
+      try {
         if (!validHostedHtmlVersion(version)) {
           throw new HResultException(COM.E_INVALIDARG);
         }
@@ -69,19 +70,19 @@ public class BrowserWidgetIE6 extends BrowserWidget {
 
         // Attach a new ModuleSpace to make it programmable.
         //
-        ModuleSpaceHost msh = getHost().createModuleSpaceHost(
+        ModuleSpaceHost msh = getHost().createModuleSpaceHost(logger,
             BrowserWidgetIE6.this, moduleName);
-        ModuleSpaceIE6 moduleSpace = new ModuleSpaceIE6(msh, frameWnd,
+        ModuleSpaceIE6 moduleSpace = new ModuleSpaceIE6(logger, msh, frameWnd,
             moduleName, key);
-        attachModuleSpace(moduleSpace);
+        attachModuleSpace(logger, moduleSpace);
         return true;
       } catch (Throwable e) {
         // We do catch Throwable intentionally because there are a ton of things
         // that can go wrong trying to load a module, including Error-derived
         // things like NoClassDefFoundError.
         // 
-        getHost().getLogger().log(TreeLogger.ERROR,
-            "Failure to load module '" + moduleName + "'", e);
+        logger.log(TreeLogger.ERROR, "Failure to load module '" + moduleName
+            + "'", e);
         return false;
       }
     }
@@ -122,12 +123,19 @@ public class BrowserWidgetIE6 extends BrowserWidget {
      * 
      * @param frameWnd window to unload, null if all
      */
-    protected void handleUnload(IDispatch frameWnd) {
-      Integer key = null;
-      if (frameWnd != null) {
-        key = new Integer(getIntProperty(frameWnd, "__gwt_module_id"));
+    protected boolean handleUnload(IDispatch frameWnd) {
+      try {
+        Integer key = null;
+        if (frameWnd != null) {
+          key = new Integer(getIntProperty(frameWnd, "__gwt_module_id"));
+        }
+        doUnload(key);
+        return true;
+      } catch (Throwable e) {
+        getHost().getLogger().log(TreeLogger.ERROR,
+            "Failure to unload modules", e);
+        return false;
       }
-      doUnload(key);
     }
 
     @Override

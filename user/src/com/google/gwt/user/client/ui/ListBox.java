@@ -312,7 +312,9 @@ public class ListBox extends FocusWidget implements SourcesChangeEvents,
    * fail on Internet Explorer 6.0.</em>
    * 
    * @param multiple <code>true</code> to allow multiple selections
+   * @deprecated use {@link #ListBox(boolean) instead
    */
+  @Deprecated
   public void setMultipleSelect(boolean multiple) {
     // TODO: we can remove the above doc admonition once we address issue 1007
     getSelectElement().setMultiple(multiple);

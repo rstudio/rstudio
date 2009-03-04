@@ -134,8 +134,6 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * <p>
    * Don't confuse this with {@link #getValue}, which returns true or false if
    * the widget is checked.
-   * 
-   * @return
    */
   public String getFormValue() {
     return inputElem.getValue();
@@ -182,7 +180,7 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * Determines whether this check box is currently checked.
    * 
    * @return <code>true</code> if the check box is checked
-   * @deprecated use {@link #getValue} instead
+   * @deprecated Use {@link #getValue} instead
    */
   @Deprecated
   public boolean isChecked() {
@@ -278,8 +276,8 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * input element wrapped by this widget. For access to that property, see
    * {@link #setFormValue(String)}
    * 
-   * @param value true to check, false to uncheck. Must not be null.
-   * @thows IllegalArgumentException if value is null
+   * @param value true to check, false to uncheck; must not be null
+   * @throws IllegalArgumentException if value is null
    */
   public void setValue(Boolean value) {
     setValue(value, false);
@@ -293,10 +291,10 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
    * input element wrapped by this widget. For access to that property, see
    * {@link #setFormValue(String)}
    *
-   * @param value true to check, false to uncheck. Must not be null.
+   * @param value true to check, false to uncheck; must not be null
    * @param fireEvents If true, and value has changed, fire a
    *          {@link ValueChangeEvent}
-   * @thows IllegalArgumentException if value is null
+   * @throws IllegalArgumentException if value is null
    */
   public void setValue(Boolean value, boolean fireEvents) {
     if (value == null) {

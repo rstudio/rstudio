@@ -19,9 +19,9 @@ package com.google.gwt.user.client.ui;
  * A widget that implements this interface fires the events defined by the
  * {@link com.google.gwt.user.client.ui.FormHandler} interface.
  * 
- * @deprecated Only {@link FormPanel} was expected to use this interface.
- *             Instead, it now uses {@link FormPanel.SubmitCompleteEvent} and
- *             {@link SubmitEvent}.
+ * @deprecated This interface was specific to {@link FormPanel}; it is not generally useful and will be removed in a future version.
+ *             Use {@link FormPanel#addSubmitHandler(com.google.gwt.user.client.ui.FormPanel.SubmitHandler) FormPanel.addSubmitHandler} and
+ *             {@link com.google.gwt.user.client.ui.FormPanel#addSubmitCompleteHandler(com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler) FormPanel.addSubmitCompleteHandler} instead
  */
 @Deprecated
 public interface FiresFormEvents {
@@ -29,8 +29,8 @@ public interface FiresFormEvents {
   /**
    * Adds a handler interface to receive click events.
    * 
-   * @deprecated use {@link FormPanel#addSubmitCompleteHandler} and
-   *             {@link FormPanel#addSubmitHandler} instead
+   * @deprecated Use {@link FormPanel#addSubmitCompleteHandler FormPanel.addSubmitCompleteHandler} and
+   *             {@link FormPanel#addSubmitHandler FormPanel.addSubmitHandler} instead
    * @param handler the handler interface to add
    */
   @Deprecated

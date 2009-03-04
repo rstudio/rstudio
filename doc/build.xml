@@ -120,7 +120,7 @@
           <arg value="-classpath" />
           <arg pathref="USER_CLASS_PATH" />
           <arg value="-sourcepath" />
-          <arg path="${gwt.root}/user/super/com/google/gwt/emul" />
+          <arg path="${gwt.root}/user/super/com/google/gwt/emul:${gwt.root}/dev/core/super/com/google/gwt/dev/jjs/intrinsic" />
           <arg value="-packages" />
           <arg value="${LANG_PKGS}" />
         </java>

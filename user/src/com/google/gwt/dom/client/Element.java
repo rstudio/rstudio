@@ -39,7 +39,8 @@ public class Element extends Node {
    * Note: Because the browser's normal dispatch mechanism is used, exceptions
    * thrown from within handlers triggered by this method cannot be caught by
    * wrapping this method in a try/catch block. Such exceptions will be caught
-   * by the {@link GWT#setUncaughtExceptionHandler() uncaught exception handler}
+   * by the
+   * {@link com.google.gwt.core.client.GWT#setUncaughtExceptionHandler(com.google.gwt.core.client.GWT.UncaughtExceptionHandler) uncaught exception handler}
    * as usual.
    * 
    * @param evt the event to be dispatched
@@ -72,26 +73,28 @@ public class Element extends Node {
    *         does not have a specified or default value
    */
   public final native String getAttribute(String name) /*-{
-    return this.getAttribute(name) || '';
-  }-*/;
+     return this.getAttribute(name) || '';
+   }-*/;
 
   /**
    * The class attribute of the element. This attribute has been renamed due to
    * conflicts with the "class" keyword exposed by many languages.
    * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class">W3C HTML Specification</a>
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class">W3C
+   *      HTML Specification</a>
    */
   public final native String getClassName() /*-{
-    return this.className;
-  }-*/;
+     return this.className;
+   }-*/;
 
   /**
    * Specifies the base direction of directionally neutral text and the
    * directionality of tables.
    */
   public final native String getDir() /*-{
-    return this.dir;
-  }-*/;
+     return this.dir;
+   }-*/;
 
   /**
    * Returns a NodeList of all descendant Elements with a given tag name, in the
@@ -103,8 +106,8 @@ public class Element extends Node {
    * @return A list of matching Element nodes
    */
   public final native NodeList<Element> getElementsByTagName(String name) /*-{
-    return this.getElementsByTagName(name);
-  }-*/;
+     return this.getElementsByTagName(name);
+   }-*/;
 
   /**
    * The first child of element this element. If there is no such element, this
@@ -117,11 +120,13 @@ public class Element extends Node {
   /**
    * The element's identifier.
    * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id">W3C HTML Specification</a>
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id">W3C
+   *      HTML Specification</a>
    */
   public final native String getId() /*-{
-    return this.id;
-  }-*/;
+     return this.id;
+   }-*/;
 
   /**
    * All of the markup and content within a given element.
@@ -141,8 +146,8 @@ public class Element extends Node {
    * Language code defined in RFC 1766.
    */
   public final native String getLang() /*-{
-    return this.lang;
-  }-*/;
+     return this.lang;
+   }-*/;
 
   /**
    * The element immediately following this element. If there is no such
@@ -156,39 +161,39 @@ public class Element extends Node {
    * The height of an element relative to the layout.
    */
   public final native int getOffsetHeight() /*-{
-    return this.offsetHeight || 0;
-  }-*/;
+     return this.offsetHeight || 0;
+   }-*/;
 
   /**
    * The number of pixels that the upper left corner of the current element is
    * offset to the left within the offsetParent node.
    */
   public final native int getOffsetLeft() /*-{
-    return this.offsetLeft || 0;
-  }-*/;
+     return this.offsetLeft || 0;
+   }-*/;
 
   /**
    * Returns a reference to the object which is the closest (nearest in the
    * containment hierarchy) positioned containing element.
    */
   public final native Element getOffsetParent() /*-{
-    return this.offsetParent;
-  }-*/;
+     return this.offsetParent;
+   }-*/;
 
   /**
    * The number of pixels that the upper top corner of the current element is
    * offset to the top within the offsetParent node.
    */
   public final native int getOffsetTop() /*-{
-    return this.offsetTop || 0;
-  }-*/;
+     return this.offsetTop || 0;
+   }-*/;
 
   /**
    * The width of an element relative to the layout.
    */
   public final native int getOffsetWidth() /*-{
-    return this.offsetWidth || 0;
-  }-*/;
+     return this.offsetWidth || 0;
+   }-*/;
 
   /**
    * The parent element of this element.
@@ -204,8 +209,8 @@ public class Element extends Node {
    * @return the property value
    */
   public final native boolean getPropertyBoolean(String name) /*-{
-    return !!this[name];
-  }-*/;
+     return !!this[name];
+   }-*/;
 
   /**
    * Gets a double property from this element.
@@ -214,8 +219,8 @@ public class Element extends Node {
    * @return the property value
    */
   public final native double getPropertyDouble(String name) /*-{
-    return parseFloat(this[name]) || 0.0;
-  }-*/;
+     return parseFloat(this[name]) || 0.0;
+   }-*/;
 
   /**
    * Gets an integer property from this element.
@@ -224,8 +229,8 @@ public class Element extends Node {
    * @return the property value
    */
   public final native int getPropertyInt(String name) /*-{
-    return parseInt(this[name]) || 0;
-  }-*/;
+     return parseInt(this[name]) || 0;
+   }-*/;
 
   /**
    * Gets a property from this element.
@@ -234,36 +239,36 @@ public class Element extends Node {
    * @return the property value
    */
   public final native String getPropertyString(String name) /*-{
-    return (this[name] == null) ? null : String(this[name]);
-  }-*/;
+     return (this[name] == null) ? null : String(this[name]);
+   }-*/;
 
   /**
    * The height of the scroll view of an element.
    */
   public final native int getScrollHeight() /*-{
-    return this.scrollHeight || 0;
-  }-*/;
+     return this.scrollHeight || 0;
+   }-*/;
 
   /**
    * The number of pixels that an element's content is scrolled to the left.
    */
   public final native int getScrollLeft() /*-{
-    return this.scrollLeft || 0;
-  }-*/;
+     return this.scrollLeft || 0;
+   }-*/;
 
   /**
    * The number of pixels that an element's content is scrolled to the top.
    */
   public final native int getScrollTop() /*-{
-    return this.scrollTop || 0;
-  }-*/;
+     return this.scrollTop || 0;
+   }-*/;
 
   /**
    * The height of the scroll view of an element.
    */
   public final native int getScrollWidth() /*-{
-    return this.scrollWidth || 0;
-  }-*/;
+     return this.scrollWidth || 0;
+   }-*/;
 
   /**
    * Gets a string representation of this element (as outer HTML).
@@ -281,22 +286,22 @@ public class Element extends Node {
    * Gets this element's {@link Style} object.
    */
   public final native Style getStyle() /*-{
-    return this.style;
-  }-*/;
+     return this.style;
+   }-*/;
 
   /**
    * The name of the element.
    */
   public final native String getTagName() /*-{
-    return this.tagName;
-  }-*/;
+     return this.tagName;
+   }-*/;
 
   /**
    * The element's advisory title.
    */
   public final native String getTitle() /*-{
-    return this.title;
-  }-*/;
+     return this.title;
+   }-*/;
 
   /**
    * Determine whether an element is equal to, or the child of, this element.
@@ -312,8 +317,8 @@ public class Element extends Node {
    * Removes an attribute by name.
    */
   public final native void removeAttribute(String name) /*-{
-    this.removeAttribute(name);
-  }-*/;
+     this.removeAttribute(name);
+   }-*/;
 
   /**
    * Scrolls this element into view.
@@ -337,42 +342,46 @@ public class Element extends Node {
    * @param value Value to set in string form
    */
   public final native void setAttribute(String name, String value) /*-{
-    this.setAttribute(name, value);
-  }-*/;
+     this.setAttribute(name, value);
+   }-*/;
 
   /**
    * The class attribute of the element. This attribute has been renamed due to
    * conflicts with the "class" keyword exposed by many languages.
    * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class">W3C HTML Specification</a>
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-class">W3C
+   *      HTML Specification</a>
    */
   public final native void setClassName(String className) /*-{
-    this.className = className;
-  }-*/;
+     this.className = className;
+   }-*/;
 
   /**
    * Specifies the base direction of directionally neutral text and the
    * directionality of tables.
    */
   public final native void setDir(String dir) /*-{
-    this.dir = dir;
-  }-*/;
+     this.dir = dir;
+   }-*/;
 
   /**
    * The element's identifier.
    * 
-   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id">W3C HTML Specification</a>
+   * @see <a
+   *      href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/global.html#adef-id">W3C
+   *      HTML Specification</a>
    */
   public final native void setId(String id) /*-{
-    this.id = id;
-  }-*/;
+     this.id = id;
+   }-*/;
 
   /**
    * All of the markup and content within a given element.
    */
   public final native void setInnerHTML(String html) /*-{
-    this.innerHTML = html || '';
-  }-*/;
+     this.innerHTML = html || '';
+   }-*/;
 
   /**
    * The text between the start and end tags of the object.
@@ -385,8 +394,8 @@ public class Element extends Node {
    * Language code defined in RFC 1766.
    */
   public final native void setLang(String lang) /*-{
-    this.lang = lang;
-  }-*/;
+     this.lang = lang;
+   }-*/;
 
   /**
    * Sets a boolean property on this element.
@@ -395,8 +404,8 @@ public class Element extends Node {
    * @param value the new property value
    */
   public final native void setPropertyBoolean(String name, boolean value) /*-{
-    this[name] = value;
-  }-*/;
+     this[name] = value;
+   }-*/;
 
   /**
    * Sets a double property on this element.
@@ -405,8 +414,8 @@ public class Element extends Node {
    * @param value the new property value
    */
   public final native void setPropertyDouble(String name, double value) /*-{
-    this[name] = value;
-  }-*/;
+     this[name] = value;
+   }-*/;
 
   /**
    * Sets an integer property on this element.
@@ -415,8 +424,8 @@ public class Element extends Node {
    * @param value the new property value
    */
   public final native void setPropertyInt(String name, int value) /*-{
-    this[name] = value;
-  }-*/;
+     this[name] = value;
+   }-*/;
 
   /**
    * Sets a property on this element.
@@ -425,29 +434,29 @@ public class Element extends Node {
    * @param value the new property value
    */
   public final native void setPropertyString(String name, String value) /*-{
-    this[name] = value;
-  }-*/;
+     this[name] = value;
+   }-*/;
 
   /**
    * The number of pixels that an element's content is scrolled to the left.
    */
   public final native void setScrollLeft(int scrollLeft) /*-{
-    this.scrollLeft = scrollLeft;
-  }-*/;
+     this.scrollLeft = scrollLeft;
+   }-*/;
 
   /**
    * The number of pixels that an element's content is scrolled to the top.
    */
   public final native void setScrollTop(int scrollTop) /*-{
-    this.scrollTop = scrollTop;
-  }-*/;
+     this.scrollTop = scrollTop;
+   }-*/;
 
   /**
    * The element's advisory title.
    */
   public final native void setTitle(String title) /*-{
-    // Setting the title to null results in the string "null" being displayed
-    // on some browsers.
-    this.title = title || '';
-  }-*/;
+     // Setting the title to null results in the string "null" being displayed
+     // on some browsers.
+     this.title = title || '';
+   }-*/;
 }

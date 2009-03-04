@@ -574,7 +574,7 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param button the event's button property (values from
-   *          {@link Event#BUTTON_LEFT} et al)
+   *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @return the event object
    */
   public final NativeEvent createMouseDownEvent(int detail, int screenX, int screenY,
@@ -613,7 +613,7 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param button the event's button property (values from
-   *          {@link Event#BUTTON_LEFT} et al)
+   *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @param relatedTarget the event's related target (only relevant for
    *          mouseover and mouseout events)
    * @return the event object
@@ -640,7 +640,7 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param button the event's button property (values from
-   *          {@link Event#BUTTON_LEFT} et al)
+   *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @return the event object
    */
   public final NativeEvent createMouseMoveEvent(int detail, int screenX, int screenY,
@@ -666,7 +666,7 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param button the event's button property (values from
-   *          {@link Event#BUTTON_LEFT} et al)
+   *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @param relatedTarget the event's related target
    * @return the event object
    */
@@ -694,7 +694,7 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param button the event's button property (values from
-   *          {@link Event#BUTTON_LEFT} et al)
+   *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @param relatedTarget the event's related target
    * @return the event object
    */
@@ -719,7 +719,7 @@ public class Document extends Node {
    * @param shiftKey <code>true</code> if the shift key is depressed
    * @param metaKey <code>true</code> if the meta key is depressed
    * @param button the event's button property (values from
-   *          {@link Event#BUTTON_LEFT} et al)
+   *          {@link NativeEvent#BUTTON_LEFT} et al)
    * @return the event object
    */
   public final NativeEvent createMouseUpEvent(int detail, int screenX, int screenY,
