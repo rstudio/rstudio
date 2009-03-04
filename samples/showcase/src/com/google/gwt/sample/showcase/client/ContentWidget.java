@@ -120,21 +120,6 @@ public abstract class ContentWidget extends LazyPanel implements
   private HTML styleWidget = null;
 
   /**
-   * Whether the demo widget has been initialized.
-   */
-  private boolean widgetInitialized;
-
-  /**
-   * Whether the demo widget is (asynchronously) initializing.
-   */
-  private boolean widgetInitializing;
-
-  /**
-   * A vertical panel that holds the demo widget once it is initialized.
-   */
-  private VerticalPanel widgetVpanel;
-
-  /**
    * Constructor.
    * 
    * @param constants the constants
@@ -154,12 +139,6 @@ public abstract class ContentWidget extends LazyPanel implements
   public void add(Widget w, String tabText) {
     tabBar.addTab(tabText);
     deckPanel.add(w);
-  }
-
-  @Override
-  public void ensureWidget() {
-    super.ensureWidget();
-    ensureWidgetInitialized(widgetVpanel);
   }
 
   /**
@@ -276,7 +255,6 @@ public abstract class ContentWidget extends LazyPanel implements
    * Initialize this widget by creating the elements that should be added to the
    * page.
    */
-  @Override
   protected final Widget createWidget() {
     deckPanel = new DeckPanel();
 
@@ -286,18 +264,18 @@ public abstract class ContentWidget extends LazyPanel implements
     tabBar.addSelectionHandler(this);
 
     // Create a container for the main example
-    widgetVpanel = new VerticalPanel();
-    add(widgetVpanel, constants.contentWidgetExample());
+    final VerticalPanel vPanel = new VerticalPanel();
+    add(vPanel, constants.contentWidgetExample());
 
     // Add the name
     HTML nameWidget = new HTML(getName());
     nameWidget.setStyleName(DEFAULT_STYLE_NAME + "-name");
-    widgetVpanel.add(nameWidget);
+    vPanel.add(nameWidget);
 
     // Add the description
     HTML descWidget = new HTML(getDescription());
     descWidget.setStyleName(DEFAULT_STYLE_NAME + "-description");
-    widgetVpanel.add(descWidget);
+    vPanel.add(descWidget);
 
     // Add source code tab
     if (hasSource()) {
@@ -313,6 +291,22 @@ public abstract class ContentWidget extends LazyPanel implements
       styleWidget = new HTML();
       add(styleWidget, constants.contentWidgetStyle());
     }
+
+    asyncOnInitialize(new AsyncCallback<Widget>() {
+
+      public void onFailure(Throwable caught) {
+        Window.alert("exception: " + caught);
+      }
+
+      public void onSuccess(Widget result) {
+        // Initialize the showcase widget (if any) and add it to the page
+        Widget widget = result;
+        if (widget != null) {
+          vPanel.add(widget);
+        }
+        onInitializeComplete();
+      }
+    });
 
     return deckPanel;
   }
@@ -372,35 +366,5 @@ public abstract class ContentWidget extends LazyPanel implements
     } catch (RequestException e) {
       realCallback.onError(request, e);
     }
-  }
-
-  /**
-   * Ensure that the demo widget has been initialized. Note that initialization
-   * can fail if there is a network failure.
-   */
-  private void ensureWidgetInitialized(final VerticalPanel vPanel) {
-    if (widgetInitializing || widgetInitialized) {
-      return;
-    }
-
-    widgetInitializing = true;
-
-    asyncOnInitialize(new AsyncCallback<Widget>() {
-      public void onFailure(Throwable reason) {
-        widgetInitializing = false;
-        Window.alert("Failed to download code for this widget (" + reason + ")");
-      }
-
-      public void onSuccess(Widget result) {
-        widgetInitializing = false;
-        widgetInitialized = true;
-
-        Widget widget = result;
-        if (widget != null) {
-          vPanel.add(widget);
-        }
-        onInitializeComplete();
-      }
-    });
   }
 }

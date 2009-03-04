@@ -22,9 +22,9 @@ package com.google.gwt.core.client;
 public interface RunAsyncCallback {
   /**
    * Called when, for some reason, the necessary code cannot be loaded. For
-   * example, the web browser might no longer have network access.
+   * example, the user might no longer be on the network.
    */
-  void onFailure(Throwable reason);
+  void onFailure(Throwable caught);
 
   /**
    * Called once the necessary code for it has been loaded.

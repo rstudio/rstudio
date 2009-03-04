@@ -15,12 +15,7 @@
  */
 package com.google.gwt.core.client;
 
-import com.google.gwt.xhr.client.ReadyStateChangeHandler;
-import com.google.gwt.xhr.client.XMLHttpRequest;
-
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
 
 /**
@@ -46,31 +41,13 @@ import java.util.Queue;
  * </ul>
  * 
  * <p>
- * Since the precise way to load code depends on the linker, each linker should
- * provide functions for fragment loading for any compilation that includes more
- * than one fragment. Linkers should always provide a function
- * <code>__gwtStartLoadingFragment</code>. This function is called by
- * AsyncFragmentLoader with an integer fragment number that needs to be
- * downloaded. If the mechanism for loading the contents of fragments is
- * provided by the linker, this function should return <code>null</code> or
- * <code>undefined</code>.
- * </p>
- * <p>
- * Alternatively, the function can return a URL designating from where the code
- * for the requested fragment can be downloaded. In that case, the linker should
- * also provide a function <code>__gwtInstallCode</code> for actually installing
- * the code once it is downloaded. That function will be passed the loaded code
- * once it has been downloaded.
- * </p>
+ * Different linkers have different requirements about how the code is
+ * downloaded and installed. Thus, when it is time to actually download the
+ * code, this class defers to a JavaScript function named
+ * <code>__gwtStartLoadingFragment</code>. Linkers must arrange that a suitable
+ * <code>__gwtStartLoadingFragment</code> function is in scope.
  */
 public class AsyncFragmentLoader {
-  /**
-   * An interface for handlers of load errors.
-   */
-  public static interface LoadErrorHandler {
-    void loadFailed(Throwable reason);
-  }
-
   /**
    * Labels used for runAsync lightweight metrics.
    */
@@ -91,73 +68,6 @@ public class AsyncFragmentLoader {
   }
 
   /**
-   * Handles a failure to download a base fragment.
-   */
-  private static class BaseDownloadFailed implements LoadErrorHandler {
-    private final LoadErrorHandler chainedHandler;
-
-    public BaseDownloadFailed(LoadErrorHandler chainedHandler) {
-      this.chainedHandler = chainedHandler;
-    }
-
-    public void loadFailed(Throwable reason) {
-      baseLoading = false;
-      chainedHandler.loadFailed(reason);
-    }
-  }
-
-  /**
-   * An exception indicating than at HTTP download failed.
-   */
-  private static class HttpDownloadFailure extends RuntimeException {
-    private final int statusCode;
-
-    public HttpDownloadFailure(int statusCode) {
-      super("HTTP download failed with status " + statusCode);
-      this.statusCode = statusCode;
-    }
-    
-    public int getStatusCode() {
-      return statusCode;
-    }
-  }
-
-  /**
-   * Handles a failure to download a leftovers fragment.
-   */
-  private static class LeftoversDownloadFailed implements LoadErrorHandler {
-    public void loadFailed(Throwable reason) {
-      leftoversLoading = false;
-
-      /*
-       * Cancel all other pending downloads. If any exception is thrown while
-       * cancelling any of them, throw only the last one.
-       */
-      RuntimeException lastException = null;
-
-      assert waitingForLeftovers.size() == waitingForLeftoversErrorHandlers.size();
-
-      // Copy the list in case a handler makes another runAsync call
-      List<LoadErrorHandler> handlersToRun = new ArrayList<LoadErrorHandler>(
-          waitingForLeftoversErrorHandlers);
-      waitingForLeftoversErrorHandlers.clear();
-      waitingForLeftovers.clear();
-
-      for (LoadErrorHandler handler : handlersToRun) {
-        try {
-          handler.loadFailed(reason);
-        } catch (RuntimeException e) {
-          lastException = e;
-        }
-      }
-
-      if (lastException != null) {
-        throw lastException;
-      }
-    }
-  }
-
-  /**
    * The first entry point reached after the program started.
    */
   private static int base = -1;
@@ -166,10 +76,6 @@ public class AsyncFragmentLoader {
    * Whether the secondary base fragment is currently loading.
    */
   private static boolean baseLoading = false;
-
-  private static final String HTTP_GET = "GET";
-
-  private static final int HTTP_STATUS_OK = 200;
 
   /**
    * Whether the leftovers fragment has loaded yet.
@@ -195,11 +101,6 @@ public class AsyncFragmentLoader {
   private static Queue<Integer> waitingForLeftovers = new LinkedList<Integer>();
 
   /**
-   * Error handlers for the above queue.
-   */
-  private static Queue<LoadErrorHandler> waitingForLeftoversErrorHandlers = new LinkedList<LoadErrorHandler>();
-
-  /**
    * Inform the loader that the code for an entry point has now finished
    * loading.
    * 
@@ -216,7 +117,10 @@ public class AsyncFragmentLoader {
       baseLoading = false;
 
       // Go ahead and download the appropriate leftovers fragment
-      startLoadingLeftovers();
+      leftoversLoading = true;
+      logEventProgress(LwmLabels.LEFTOVERS_DOWNLOAD, LwmLabels.BEGIN,
+          leftoversFragmentNumber(), null);
+      startLoadingFragment(leftoversFragmentNumber());
     }
   }
 
@@ -225,7 +129,7 @@ public class AsyncFragmentLoader {
    * 
    * @param splitPoint the fragment to load
    */
-  public static void inject(int splitPoint, LoadErrorHandler loadErrorHandler) {
+  public static void inject(int splitPoint) {
     if (leftoversLoaded) {
       /*
        * A base and a leftovers fragment have loaded. Load an exclusively live
@@ -233,7 +137,7 @@ public class AsyncFragmentLoader {
        */
       logEventProgress(LwmLabels.downloadGroup(splitPoint), LwmLabels.BEGIN,
           splitPoint, null);
-      startLoadingFragment(splitPoint, loadErrorHandler);
+      startLoadingFragment(splitPoint);
       return;
     }
 
@@ -242,15 +146,6 @@ public class AsyncFragmentLoader {
        * Wait until the leftovers fragment has loaded before loading this one.
        */
       waitingForLeftovers.add(splitPoint);
-      waitingForLeftoversErrorHandlers.add(loadErrorHandler);
-
-      /*
-       * Also, restart the leftovers download if it previously failed.
-       */
-      if (!leftoversLoading) {
-        startLoadingLeftovers();
-      }
-
       return;
     }
 
@@ -258,8 +153,7 @@ public class AsyncFragmentLoader {
     baseLoading = true;
     logEventProgress(LwmLabels.downloadGroup(splitPoint), LwmLabels.BEGIN,
         baseFragmentNumber(splitPoint), null);
-    startLoadingFragment(baseFragmentNumber(splitPoint),
-        new BaseDownloadFailed(loadErrorHandler));
+    startLoadingFragment(baseFragmentNumber(splitPoint));
   }
 
   /**
@@ -271,10 +165,8 @@ public class AsyncFragmentLoader {
     logEventProgress(LwmLabels.LEFTOVERS_DOWNLOAD, LwmLabels.END,
         leftoversFragmentNumber(), null);
 
-    assert (waitingForLeftovers.size() == waitingForLeftoversErrorHandlers.size());
     while (!waitingForLeftovers.isEmpty()) {
-      inject(waitingForLeftovers.remove(),
-          waitingForLeftoversErrorHandlers.remove());
+      inject(waitingForLeftovers.remove());
     }
   }
 
@@ -311,17 +203,8 @@ public class AsyncFragmentLoader {
     return evt;
   }-*/;
 
-  /**
-   * Use the linker-supplied __gwtStartLoadingFragment function. It should
-   * either start the download and return null or undefined, or it should return
-   * a URL that should be downloaded to get the code.
-   * */
-  private static native String gwtStartLoadingFragment(int fragment) /*-{
-    return __gwtStartLoadingFragment(fragment);
-  }-*/;
-
-  private static native void installCode(String text) /*-{
-    __gwtInstallCode(text);
+  private static native void gwtStartLoadingFragment(int fragment) /*-{
+    __gwtStartLoadingFragment(fragment);
   }-*/;
 
   private static native boolean isStatsAvailable() /*-{
@@ -349,43 +232,8 @@ public class AsyncFragmentLoader {
         && stats(createStatsEvent(eventGroup, type, fragment, size));
   }
 
-  private static void startLoadingFragment(int fragment,
-      final LoadErrorHandler loadErrorHandler) {
-    String fragmentUrl = gwtStartLoadingFragment(fragment);
-
-    if (fragmentUrl != null) {
-      // use XHR
-      final XMLHttpRequest xhr = XMLHttpRequest.create();
-
-      xhr.open(HTTP_GET, fragmentUrl);
-
-      xhr.setOnReadyStateChange(new ReadyStateChangeHandler() {
-        public void onReadyStateChange(XMLHttpRequest xhr) {
-          if (xhr.getReadyState() == XMLHttpRequest.DONE) {
-            xhr.clearOnReadyStateChange();
-            if (xhr.getStatus() == HTTP_STATUS_OK) {
-              try {
-                installCode(xhr.getResponseText());
-              } catch (RuntimeException e) {
-                loadErrorHandler.loadFailed(e);
-              }
-            } else {
-              loadErrorHandler.loadFailed(new HttpDownloadFailure(xhr.getStatus()));
-            }
-          }
-        }
-      });
-
-      xhr.send();
-    }
-  }
-
-  private static void startLoadingLeftovers() {
-    leftoversLoading = true;
-    logEventProgress(LwmLabels.LEFTOVERS_DOWNLOAD, LwmLabels.BEGIN,
-        leftoversFragmentNumber(), null);
-    startLoadingFragment(leftoversFragmentNumber(),
-        new LeftoversDownloadFailed());
+  private static void startLoadingFragment(int fragment) {
+    gwtStartLoadingFragment(fragment);
   }
 
   /**
