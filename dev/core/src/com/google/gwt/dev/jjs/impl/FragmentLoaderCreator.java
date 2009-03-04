@@ -180,7 +180,13 @@ public class FragmentLoaderCreator {
     srcWriter.println("}");
     srcWriter.println("if (!loading) {");
     srcWriter.println("loading = true;");
-    srcWriter.println("AsyncFragmentLoader.inject(" + entryNumber + ");");
+    srcWriter.println("AsyncFragmentLoader.inject(" + entryNumber + ",");
+    srcWriter.println("  new AsyncFragmentLoader.LoadErrorHandler() {");
+    srcWriter.println("    public void loadFailed(Throwable reason) {");
+    srcWriter.println("      loading = false;");
+    srcWriter.println("      runCallbackOnFailures(reason);");
+    srcWriter.println("    }");
+    srcWriter.println("  });");
     srcWriter.println("}");
     srcWriter.println("}");
   }

@@ -155,13 +155,18 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.newlineOpt();
     if (supportRunAsync) {
       out.print("function __gwtStartLoadingFragment(frag) {");
-      out.newlineOpt();
       out.indentIn();
-      out.print("  var script = document.createElement('script');");
       out.newlineOpt();
-      out.print("  script.src = '" + FRAGMENT_SUBDIR + "/" + strongName
-          + "/' + frag + '" + FRAGMENT_EXTENSION + "';");
-      out.print("  document.getElementsByTagName('head').item(0).appendChild(script);");
+      out.print("  return $moduleBase + '" + FRAGMENT_SUBDIR
+          + "/'  + $strongName + '/' + frag + '" + FRAGMENT_EXTENSION + "';");
+      out.indentOut();
+      out.newlineOpt();
+      out.print("};");
+      out.newlineOpt();
+      out.print("function __gwtInstallCode(code) {");
+      out.indentIn();
+      out.newlineOpt();
+      out.print("$wnd.eval(code)");
       out.indentOut();
       out.newlineOpt();
       out.print("};");
