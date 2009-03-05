@@ -83,6 +83,7 @@ import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JWhileStatement;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 import com.google.gwt.dev.jjs.ast.js.JsniFieldRef;
+import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
@@ -735,7 +736,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printTypeName(x.getSourceType());
     return false;
   }
-  
+
   @Override
   public boolean visit(JReturnStatement x, Context ctx) {
     print(CHARS_RETURN);
@@ -749,6 +750,16 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JsniFieldRef x, Context ctx) {
     return visit(x.getField(), ctx);
+  }
+
+  @Override
+  public boolean visit(JsniMethodBody x, Context ctx) {
+    print(" /*-");
+    String source = x.getFunc().getBody().toSource();
+    print(source.trim());
+    print("-*/");
+    semi();
+    return false;
   }
 
   @Override

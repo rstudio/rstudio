@@ -23,7 +23,6 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
 import com.google.gwt.dev.util.TextOutput;
 
 /**
@@ -113,16 +112,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
       newline();
       newline();
     }
-    return false;
-  }
-
-  @Override
-  public boolean visit(JsniMethodBody x, Context ctx) {
-    print(" /*-");
-    String source = x.getFunc().getBody().toSource();
-    print(source.trim());
-    print("-*/");
-    semi();
     return false;
   }
 
