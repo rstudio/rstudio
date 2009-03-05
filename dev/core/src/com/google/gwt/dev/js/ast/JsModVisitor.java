@@ -166,8 +166,12 @@ public class JsModVisitor extends JsVisitor {
 
   @Override
   protected <T extends JsVisitable<T>> void doAcceptList(List<T> collection) {
+    NodeContext<T> ctx = new NodeContext<T>();
     for (int i = 0, c = collection.size(); i < c; ++i) {
-      collection.set(i, new NodeContext<T>().traverse(collection.get(i)));
+      ctx.traverse(collection.get(i));
+      if (ctx.replaced) {
+        collection.set(i, ctx.node);
+      }
     }
   }
 

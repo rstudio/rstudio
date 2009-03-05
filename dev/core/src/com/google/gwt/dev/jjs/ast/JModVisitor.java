@@ -142,9 +142,11 @@ public class JModVisitor extends JVisitor {
     NodeContext ctx = new NodeContext();
     try {
       for (int i = 0, c = list.size(); i < c; ++i) {
-        ctx.replaced = false;
         (ctx.node = list.get(i)).traverse(this, ctx);
-        ((List) list).set(i, ctx.node);
+        if (ctx.replaced) {
+          ((List) list).set(i, ctx.node);
+          ctx.replaced = false;
+        }
       }
       didChange |= ctx.didChange;
     } catch (Throwable e) {
