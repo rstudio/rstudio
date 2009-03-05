@@ -93,7 +93,6 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsProgram;
-import com.google.gwt.dev.js.ast.JsSourceInfo;
 import com.google.gwt.dev.util.JsniRef;
 
 import org.eclipse.jdt.core.compiler.IProblem;
@@ -3123,12 +3122,6 @@ public class GenerateJavaAST {
         IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
         info.getStartPos(), info.getEndPos(), info.getStartLine(), startColumn);
     compResult.record(problem, methodDeclaration);
-  }
-
-  @SuppressWarnings("unused")
-  public static SourceInfo translateInfo(JsSourceInfo info) {
-    // TODO implement this
-    return null;
   }
 
   private static void addSuperclassesAndInterfaces(JReferenceType clazz,
