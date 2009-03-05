@@ -352,4 +352,9 @@ public class SourceInfo implements Serializable {
       }
     }
   }
+
+  @Override
+  public String toString() {
+    return origin.toString();
+  }
 }

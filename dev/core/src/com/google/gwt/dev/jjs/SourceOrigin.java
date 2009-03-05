@@ -105,4 +105,9 @@ public final class SourceOrigin implements Serializable {
   public int hashCode() {
     return hash;
   }
+
+  @Override
+  public String toString() {
+    return getFileName() + '(' + getStartLine() + ')';
+  }
 }

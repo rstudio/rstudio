@@ -961,7 +961,6 @@ public class ModuleDefSchema extends Schema {
   private boolean foundExplicitSourceOrSuperSource;
   private final ObjAttrCvt<Generator> genAttrCvt = new ObjAttrCvt<Generator>(
       Generator.class);
-  private final JsParser jsParser = new JsParser();
   private final JsProgram jsPgm = new JsProgram();
   private final LinkerNameAttrCvt linkerNameAttrCvt = new LinkerNameAttrCvt();
   private final ModuleDefLoader loader;
@@ -1034,9 +1033,8 @@ public class ModuleDefSchema extends Schema {
     List<JsStatement> stmts;
     try {
       // TODO Provide more context here
-      jsParser.setSourceInfo(jsPgm.createSourceInfoSynthetic(
-          ModuleDefSchema.class, "Module.xml"));
-      stmts = jsParser.parse(jsPgm.getScope(), r, startLineNumber);
+      stmts = JsParser.parse(jsPgm.createSourceInfo(startLineNumber,
+          moduleURL.toExternalForm()), jsPgm.getScope(), r);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Error reading script source", e);
       throw new UnableToCompleteException();

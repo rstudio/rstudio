@@ -65,7 +65,7 @@ public class JsniCollector {
     private final String[] paramNames;
     private final String source;
     private final JsProgram program;
-    
+
     private JsniMethodImpl(String name, String source, String[] paramNames,
         int line, String location, JsProgram program) {
       this.name = name;
@@ -281,9 +281,8 @@ public class JsniCollector {
     }
 
     try {
-      JsParser parser = new JsParser();
-      parser.setSourceInfo(program.createSourceInfo(startLine, location));
-      List<JsStatement> stmts = parser.parse(program.getScope(), r, startLine);
+      List<JsStatement> stmts = JsParser.parse(program.createSourceInfo(
+          startLine, location), program.getScope(), r);
 
       return (JsFunction) ((JsExprStmt) stmts.get(0)).getExpression();
     } catch (IOException e) {

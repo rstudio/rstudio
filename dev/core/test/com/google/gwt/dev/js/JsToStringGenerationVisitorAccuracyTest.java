@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
@@ -27,8 +28,6 @@ import java.io.StringReader;
 import java.util.List;
 
 public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
-
-  private JsParser parser = new JsParser();
 
   public void testAdditionPositive() throws Exception {
     // x plus positive 3
@@ -135,8 +134,8 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
   }
 
   private void doTest(String js) throws Exception {
-    List<JsStatement> expected = parser.parse(new JsProgram().getScope(),
-        new StringReader(js), 0);
+    List<JsStatement> expected = JsParser.parse(SourceInfo.UNKNOWN,
+        new JsProgram().getScope(), new StringReader(js));
     List<JsStatement> actual = parse(expected, true);
     ComparingVisitor.exec(expected, actual);
 
@@ -149,7 +148,7 @@ public class JsToStringGenerationVisitorAccuracyTest extends TestCase {
     TextOutput text = new DefaultTextOutput(compact);
     JsVisitor generator = new JsSourceGenerationVisitor(text);
     generator.acceptList(expected);
-    return parser.parse(new JsProgram().getScope(), new StringReader(
-        text.toString()), 0);
+    return JsParser.parse(SourceInfo.UNKNOWN, new JsProgram().getScope(),
+        new StringReader(text.toString()));
   }
 }

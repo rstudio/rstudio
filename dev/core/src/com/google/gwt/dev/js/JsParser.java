@@ -69,7 +69,6 @@ import com.google.gwt.dev.js.rhino.TokenStream;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Stack;
 
@@ -78,14 +77,30 @@ import java.util.Stack;
  */
 public class JsParser {
 
+  public static List<JsStatement> parse(SourceInfo rootSourceInfo,
+      JsScope scope, Reader r) throws IOException, JsParserException {
+    return new JsParser(scope.getProgram()).parseImpl(rootSourceInfo, scope, r);
+  }
+
+  public static void parseInto(SourceInfo rootSourceInfo, JsScope scope,
+      JsBlock block, Reader r) throws IOException, JsParserException {
+    List<JsStatement> childStmts = parse(rootSourceInfo, scope, r);
+    List<JsStatement> parentStmts = block.getStatements();
+    parentStmts.addAll(childStmts);
+  }
+
   private JsProgram program;
-  private SourceInfo rootSourceInfo = SourceInfo.UNKNOWN;
+
   private final Stack<JsScope> scopeStack = new Stack<JsScope>();
   private final Stack<SourceInfo> sourceInfoStack = new Stack<SourceInfo>();
 
-  public JsParser() {
+  private JsParser(JsProgram program) {
+    this.program = program;
+  }
+
+  List<JsStatement> parseImpl(SourceInfo rootSourceInfo, JsScope scope, Reader r)
+      throws JsParserException, IOException {
     // Create a custom error handler so that we can throw our own exceptions.
-    //
     Context.enter().setErrorReporter(new ErrorReporter() {
       public void error(String msg, String loc, int ln, String src, int col) {
         throw new UncheckedJsParserException(new JsParserException(msg, ln,
@@ -103,44 +118,24 @@ public class JsParser {
         // Ignore warnings.
       }
     });
-  }
-
-  public List<JsStatement> parse(JsScope scope, Reader r, int startLine)
-      throws IOException, JsParserException {
     try {
       // Parse using the Rhino parser.
       //
-      TokenStream ts = new TokenStream(r, "", startLine);
+      TokenStream ts = new TokenStream(r, rootSourceInfo.getFileName(),
+          rootSourceInfo.getStartLine());
       Parser parser = new Parser(new IRFactory(ts));
       Node topNode = (Node) parser.parse(ts);
 
       // Map the Rhino AST to ours.
-      //
-      program = scope.getProgram();
       pushScope(scope, rootSourceInfo);
       List<JsStatement> stmts = mapStatements(topNode);
       popScope();
-
       return stmts;
     } catch (UncheckedJsParserException e) {
       throw e.getParserException();
+    } finally {
+      Context.exit();
     }
-  }
-
-  public void parseInto(JsScope scope, JsBlock block, Reader r, int startLine)
-      throws IOException, JsParserException {
-    List<JsStatement> childStmts = parse(scope, r, startLine);
-    List<JsStatement> parentStmts = block.getStatements();
-    for (Iterator<JsStatement> iter = childStmts.iterator(); iter.hasNext();) {
-      parentStmts.add(iter.next());
-    }
-  }
-
-  /**
-   * Set the base SourceInfo object to use when creating new JS AST nodes.
-   */
-  public void setSourceInfo(SourceInfo sourceInfo) {
-    rootSourceInfo = sourceInfo;
   }
 
   private JsParserException createParserException(String msg, Node offender) {
@@ -155,8 +150,8 @@ public class JsParser {
 
   private SourceInfo makeSourceInfo(Node node) {
     SourceInfo parent = sourceInfoStack.peek();
-    SourceInfo toReturn = program.createSourceInfo(node.getLineno()
-        + parent.getStartLine() + 1, parent.getFileName());
+    SourceInfo toReturn = program.createSourceInfo(node.getLineno(),
+        parent.getFileName());
     toReturn.copyMissingCorrelationsFrom(parent);
     return toReturn;
   }
@@ -884,7 +879,7 @@ public class JsParser {
 
       case TokenStream.NULL:
         return program.getNullLiteral();
-        
+
       case TokenStream.UNDEFINED:
         return program.getUndefinedLiteral();
 

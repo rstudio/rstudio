@@ -371,7 +371,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   public String optimizeJavaScript(TreeLogger logger, String program)
       throws UnableToCompleteException {
     logger = logger.branch(TreeLogger.DEBUG, "Attempting to optimize JS", null);
-    JsParser parser = new JsParser();
     Reader r = new StringReader(program);
     JsProgram jsProgram = new JsProgram();
     JsScope topScope = jsProgram.getScope();
@@ -381,8 +380,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     try {
       SourceInfo sourceInfo = jsProgram.createSourceInfoSynthetic(
           StandardLinkerContext.class, "Linker-derived JS");
-      parser.setSourceInfo(sourceInfo);
-      parser.parseInto(topScope, jsProgram.getGlobalBlock(), r, 1);
+      JsParser.parseInto(sourceInfo, topScope, jsProgram.getGlobalBlock(), r);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to parse JavaScript", e);
       throw new UnableToCompleteException();

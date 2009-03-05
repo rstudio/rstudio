@@ -95,6 +95,19 @@ public final class ReflectiveParser {
       // Call the handler.
       //
       try {
+        // The line number is at the end of the text; subtract however many
+        // newlines the text contains.
+        for (int i = start, e = start + length, l = e - 1; i < e; ++i) {
+          switch (ch[i]) {
+            case '\r':
+              if (i < l && ch[i + 1] == '\n') {
+                continue;
+              }
+              // Intentional fall-through
+            case '\n':
+              --lineNumber;
+          }
+        }
         final String text = String.valueOf(ch, start, length);
         method.invokeText(lineNumber, text, schemaLevel);
       } catch (UnableToCompleteException e) {

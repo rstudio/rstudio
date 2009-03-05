@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
@@ -27,8 +28,6 @@ import java.io.StringReader;
 import java.util.List;
 
 public class JsToStringGenerationVisitorConcisenessTest extends TestCase {
-
-  private JsParser parser = new JsParser();
 
   public void testComplexDecrement() throws Exception {
     String output = parse("var x = -(-(-(--y)))");
@@ -76,8 +75,8 @@ public class JsToStringGenerationVisitorConcisenessTest extends TestCase {
   }
 
   private String parse(String js) throws Exception {
-    List<JsStatement> statements = parser.parse(new JsProgram().getScope(),
-        new StringReader(js), 0);
+    List<JsStatement> statements = JsParser.parse(SourceInfo.UNKNOWN,
+        new JsProgram().getScope(), new StringReader(js));
     TextOutput text = new DefaultTextOutput(true);
     JsVisitor generator = new JsToStringGenerationVisitor(text);
     generator.acceptList(statements);

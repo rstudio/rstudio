@@ -120,7 +120,6 @@ public class BuildTypeMap {
 
     private int[] currentSeparatorPositions;
 
-    private final JsParser jsParser = new JsParser();
     private final JsProgram jsProgram;
     private JProgram program;
     private List<TypeDeclaration> typeDecls = new ArrayList<TypeDeclaration>();
@@ -728,12 +727,9 @@ public class BuildTypeMap {
         syntheticFnHeader += param.getName();
       }
       syntheticFnHeader += ')';
-      StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
+      StringReader sr = new StringReader(syntheticFnHeader + ' ' + jsniCode);
       try {
-        // start at -1 to avoid counting our synthetic header
-        // TODO: get the character position start correct
-        jsParser.setSourceInfo(info);
-        List<JsStatement> result = jsParser.parse(jsProgram.getScope(), sr, -1);
+        List<JsStatement> result = JsParser.parse(info, jsProgram.getScope(), sr);
         JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
         JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
         jsFunction.setFromJava(true);
