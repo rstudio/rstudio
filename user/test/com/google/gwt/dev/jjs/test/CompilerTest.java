@@ -20,6 +20,8 @@ import com.google.gwt.junit.client.GWTTestCase;
 
 import junit.framework.Assert;
 
+import java.util.EventListener;
+
 /**
  * Miscellaneous tests of the Java to JavaScript compiler.
  */
@@ -37,6 +39,23 @@ public class CompilerTest extends GWTTestCase {
   }
 
   private abstract static class Apple implements Fruit {
+  }
+
+  private abstract static class Bm2BaseEvent {
+  }
+
+  private abstract static class Bm2ComponentEvent extends Bm2BaseEvent {
+  }
+
+  private static class Bm2KeyNav<E extends Bm2ComponentEvent> implements
+      Bm2Listener<E> {
+    public int handleEvent(Bm2ComponentEvent ce) {
+      return 5;
+    }
+  }
+
+  private interface Bm2Listener<E extends Bm2BaseEvent> extends EventListener {
+    int handleEvent(E be);
   }
 
   private static class ConcreteSub extends AbstractSuper {
@@ -240,7 +259,7 @@ public class CompilerTest extends GWTTestCase {
    * superclass, it can be necessary to add a bridge method that overrides the
    * interface method and calls the inherited method.
    */
-  public void testBridgeMethods() {
+  public void testBridgeMethods1() {
     abstract class AbstractFoo {
       public int compareTo(AbstractFoo o) {
         return 0;
@@ -262,10 +281,20 @@ public class CompilerTest extends GWTTestCase {
     Comparable<AbstractFoo> comparable1 = new MyFooSub();
     assertEquals(0, comparable1.compareTo(new MyFoo()));
 
-  
     Comparable<AbstractFoo> comparable2 = new MyFoo();
     assertEquals(0, comparable2.compareTo(new MyFooSub()));
-}
+  }
+
+  /**
+   * Issue 3304. Doing superclasses first is tricky when the superclass is a raw
+   * type.
+   */
+  @SuppressWarnings("unchecked")
+  public void testBridgeMethods2() {
+    Bm2KeyNav<?> obs = new Bm2KeyNav() {
+    };
+    assertEquals(5, obs.handleEvent(null));
+  }
 
   public void testCastOptimizer() {
     Granny g = new Granny();

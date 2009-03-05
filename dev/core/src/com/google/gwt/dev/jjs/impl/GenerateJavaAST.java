@@ -173,6 +173,7 @@ import org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.ReferenceBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SyntheticArgumentBinding;
+import org.eclipse.jdt.internal.compiler.lookup.SyntheticMethodBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.VariableBinding;
@@ -184,11 +185,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -226,55 +225,6 @@ public class GenerateJavaAST {
    * them to our AST.
    */
   private static class JavaASTGenerationVisitor {
-
-    /**
-     * Find all interface methods declared to be implemented by a specified
-     * class.
-     */
-    private static Collection<MethodBinding> findInterfaceMethods(
-        ReferenceBinding clazzBinding) {
-      List<MethodBinding> methods = new ArrayList<MethodBinding>();
-      Set<ReferenceBinding> seen = new HashSet<ReferenceBinding>();
-      findInterfaceMethodsRecursive(clazzBinding, methods, seen);
-      return methods;
-    }
-
-    private static void findInterfaceMethodsRecursive(
-        ReferenceBinding clazzBinding, List<MethodBinding> methods,
-        Set<ReferenceBinding> seen) {
-      if (!seen.add(clazzBinding)) {
-        return;
-      }
-
-      if (clazzBinding.isInterface()) {
-        methods.addAll(Arrays.asList(clazzBinding.methods()));
-      }
-
-      ReferenceBinding superclass = clazzBinding.superclass();
-      if (superclass != null) {
-        findInterfaceMethodsRecursive(superclass, methods, seen);
-      }
-
-      ReferenceBinding[] interfaces = clazzBinding.superInterfaces();
-      if (interfaces != null) {
-        for (ReferenceBinding supinterf : interfaces) {
-          findInterfaceMethodsRecursive(supinterf, methods, seen);
-        }
-      }
-    }
-
-    private static boolean inheritsMethodWithIdenticalSignature(
-        JClassType clazz, JMethod method) {
-      for (JClassType sup = clazz.extnds; sup != null; sup = sup.extnds) {
-        for (JMethod m : sup.methods) {
-          if (JTypeOracle.methodsDoMatch(m, method)) {
-            return true;
-          }
-        }
-      }
-      return false;
-    }
-
     private static InternalCompilerException translateException(JNode node,
         Throwable e) {
       if (e instanceof OutOfMemoryError) {
@@ -342,11 +292,6 @@ public class GenerateJavaAST {
      * </p>
      * 
      * <p>
-     * This method assumes that method overrides are already recorded for the
-     * class and all its inherited classes and interfaces.
-     * </p>
-     * 
-     * <p>
      * The need for these bridges was pointed out in issue 3064. The goal is
      * that virtual method calls through an interface type are translated to
      * JavaScript that will function correctly. If the interface signature
@@ -360,57 +305,31 @@ public class GenerateJavaAST {
      * case, a bridge method should be added that overrides the interface method
      * and then calls the implementation method.
      * </p>
+     * 
+     * <p>
+     * This method should only be called once all regular, non-bridge methods
+     * have been installed on the GWT types.
+     * </p>
      */
-    public void addBridgeMethods(ReferenceBinding clazzBinding,
-        JProgram program, Set<ReferenceBinding> typesWithBridges) {
+    public void addBridgeMethods(SourceTypeBinding clazzBinding) {
       if (clazzBinding.isInterface() || clazzBinding.isAbstract()) {
         // Only add bridges in concrete classes, to simplify matters.
         return;
       }
 
-      if (!typesWithBridges.add(clazzBinding)) {
-        // Nothing to do -- this class already has bridges added.
-        return;
-      }
-
-      /*
-       * Add to the superclass first, so that bridge methods end up as high in
-       * the hierarchy as possible.
-       */
-      if (clazzBinding.superclass() != null) {
-        addBridgeMethods(clazzBinding.superclass(), program, typesWithBridges);
-      }
-
       JClassType clazz = (JClassType) typeMap.get(clazzBinding);
 
-      for (MethodBinding imethBinding : findInterfaceMethods(clazzBinding)) {
-        JMethod interfmeth = (JMethod) typeMap.get(imethBinding);
-        JMethod implmeth = (JMethod) typeMap.get(findMethodImplementing(
-            imethBinding, clazzBinding));
+      /*
+       * The JDT adds bridge methods in all the places GWT needs them. Look
+       * through the bridge methods the JDT added.
+       */
+      if (clazzBinding.syntheticMethods() != null) {
+        for (SyntheticMethodBinding synthmeth : clazzBinding.syntheticMethods()) {
+          if (synthmeth.purpose == SyntheticMethodBinding.BridgeMethod) {
+            JMethod implmeth = (JMethod) typeMap.get(synthmeth.targetMethod);
 
-        assert (!implmeth.isStatic());
-
-        if (!implmeth.overrides.contains(interfmeth)) {
-          if (JTypeOracle.methodsDoMatch(interfmeth, implmeth)) {
-            /*
-             * Two cases are caught here. First, a bridge method might already
-             * be included in a superclass. In that case, there's nothing to do.
-             * Second, the bridge method might have the exact signature as the
-             * bridged-to method. In that case, leave out the bridge method. It
-             * makes things harder on the optimizers, but it avoids adding a
-             * bridge method that must later be removed. Further, such a bridge
-             * method would need to be different from the current ones in order
-             * to avoid an infinite recursion.
-             */
-            continue;
+            createBridgeMethod(clazz, synthmeth, implmeth);
           }
-
-          if (inheritsMethodWithIdenticalSignature(clazz, interfmeth)) {
-            // An equivalent bridge has already been added in a superclass
-            continue;
-          }
-
-          createBridgeMethod(program, clazz, interfmeth, implmeth);
         }
       }
     }
@@ -2117,29 +2036,44 @@ public class GenerateJavaAST {
       }
     }
 
+    private boolean classHasMethodOverriding(JClassType clazz, JMethod over) {
+      for (JMethod meth : clazz.methods) {
+        if (meth.overrides.contains(over)) {
+          return true;
+        }
+      }
+
+      if (clazz.extnds != null && classHasMethodOverriding(clazz.extnds, over)) {
+        return true;
+      }
+
+      return false;
+    }
+
     /**
      * Create a bridge method. It calls a same-named method with the same
      * arguments, but with a different type signature.
-     * 
-     * @param program The program being modified
      * @param clazz The class to put the bridge method in
-     * @param interfmeth The interface method to bridge from
+     * @param jdtBridgeMethod The corresponding bridge method added in the JDT
      * @param implmeth The implementation method to bridge to
      */
-    private void createBridgeMethod(JProgram program, JClassType clazz,
-        JMethod interfmeth, JMethod implmeth) {
+    private void createBridgeMethod(JClassType clazz, SyntheticMethodBinding jdtBridgeMethod,
+        JMethod implmeth) {
       SourceInfo info = program.createSourceInfoSynthetic(
           GenerateJavaAST.class, "bridge method");
 
       // create the method itself
       JMethod bridgeMethod = program.createMethod(info,
-          interfmeth.getName().toCharArray(), clazz, interfmeth.getType(),
-          false, false, true, false, false);
-      for (JParameter param : interfmeth.params) {
+          jdtBridgeMethod.selector, clazz,
+          (JType) typeMap.get(jdtBridgeMethod.returnType.erasure()), false,
+          false, true, false, false);
+      int paramIdx = 0;
+      for (TypeBinding jdtParamType : jdtBridgeMethod.parameters) {
+        String paramName = "p" + paramIdx++;
+        JType paramType = (JType) typeMap.get(jdtParamType.erasure());
         program.createParameter(program.createSourceInfoSynthetic(
             GenerateJavaAST.class, "part of a bridge method"),
-            param.getName().toCharArray(), param.getType(), true, false,
-            bridgeMethod);
+            paramName.toCharArray(), paramType, true, false, bridgeMethod);
       }
       bridgeMethod.freezeParamTypes();
 
@@ -2173,9 +2107,15 @@ public class GenerateJavaAST {
       JMethodBody body = (JMethodBody) bridgeMethod.getBody();
       body.getStatements().add(callOrReturn);
 
-      // make the bridge override the interface method
-      bridgeMethod.overrides.add(interfmeth);
-      bridgeMethod.overrides.addAll(interfmeth.overrides);
+      // add overrides, but only for interface methods that the class does not
+      // already override
+      List<JMethod> overrides = new ArrayList<JMethod>();
+      tryFindUpRefs(bridgeMethod, overrides);
+      for (JMethod over : overrides) {
+        if (!classHasMethodOverriding(clazz, over)) {
+          bridgeMethod.overrides.add(over);
+        }
+      }
     }
 
     private JDeclarationStatement createDeclaration(SourceInfo info,
@@ -2356,27 +2296,6 @@ public class GenerateJavaAST {
     }
 
     /**
-     * Search the class hierarchy starting at <code>clazz</code> looking for a
-     * method implementing <code>imeth</code>. Look only in classes, not
-     * interfaces.
-     */
-    private MethodBinding findMethodImplementing(MethodBinding interfmeth,
-        ReferenceBinding clazz) {
-      for (MethodBinding tryMethod : clazz.getMethods(interfmeth.selector)) {
-        if (methodParameterErasuresAreEqual(interfmeth, tryMethod)) {
-          return tryMethod;
-        }
-      }
-
-      if (clazz.superclass() == null) {
-        throw new InternalCompilerException("Could not find implementation of "
-            + interfmeth + " for class " + clazz);
-      }
-
-      return findMethodImplementing(interfmeth, clazz.superclass());
-    }
-
-    /**
      * Get a new label of a particular name, or create a new one if it doesn't
      * exist already.
      */
@@ -2514,32 +2433,6 @@ public class GenerateJavaAST {
     }
 
     /**
-     * Check whether two methods have matching parameter types. Assumes the
-     * selectors match.
-     */
-    private boolean methodParameterErasuresAreEqual(MethodBinding meth1,
-        MethodBinding meth2) {
-      /*
-       * Don't use MethodBinding.areParameterErasuresEqual because that method
-       * assumes equal types are ==, but that's not necessarily true in this
-       * context.
-       */
-      if (meth1.parameters.length != meth2.parameters.length) {
-        return false;
-      }
-
-      for (int i = 0; i < meth1.parameters.length; i++) {
-        TypeBinding type1 = meth1.parameters[i].erasure();
-        TypeBinding type2 = meth2.parameters[i].erasure();
-        if (typeMap.get(type1) != typeMap.get(type2)) {
-          return false;
-        }
-      }
-
-      return true;
-    }
-
-    /**
      * Sometimes a variable reference can be to a local or parameter in an an
      * enclosing method. This is a tricky situation to detect. There's no
      * obvious way to tell, but the clue we can get from JDT is that the local's
@@ -2650,13 +2543,15 @@ public class GenerateJavaAST {
 
     /**
      * For a given method, try to find all methods that it overrides/implements.
-     * An experimental version that doesn't use JDT. Right now it's only used to
-     * resolve upRefs for Object.getClass(), which is synthetic on everything
-     * other than object.
+     * This version does not use JDT.
      */
     private void tryFindUpRefs(JMethod method) {
+      tryFindUpRefs(method, method.overrides);
+    }
+
+    private void tryFindUpRefs(JMethod method, List<JMethod> overrides) {
       if (method.getEnclosingType() != null) {
-        tryFindUpRefsRecursive(method, method.getEnclosingType());
+        tryFindUpRefsRecursive(method, method.getEnclosingType(), overrides);
       }
     }
 
@@ -2673,28 +2568,14 @@ public class GenerateJavaAST {
      * methods that it overrides/implements.
      */
     private void tryFindUpRefsRecursive(JMethod method,
-        JReferenceType searchThisType) {
+        JReferenceType searchThisType, List<JMethod> overrides) {
 
       // See if this class has any uprefs, unless this class is myself
       if (method.getEnclosingType() != searchThisType) {
-        outer : for (JMethod upRef : searchThisType.methods) {
-          if (upRef.isStatic()) {
-            continue;
-          }
-          if (!upRef.getName().equals(method.getName())) {
-            continue;
-          }
-          if (upRef.params.size() != method.params.size()) {
-            continue;
-          }
-          for (int i = 0, c = upRef.params.size(); i < c; ++i) {
-            if (upRef.params.get(i).getType() != method.params.get(i).getType()) {
-              continue outer;
-            }
-          }
-
-          if (!method.overrides.contains(upRef)) {
-            method.overrides.add(upRef);
+        for (JMethod upRef : searchThisType.methods) {
+          if (JTypeOracle.methodsDoMatch(method, upRef)
+              && !overrides.contains(upRef)) {
+            overrides.add(upRef);
             break;
           }
         }
@@ -2702,12 +2583,12 @@ public class GenerateJavaAST {
 
       // recurse super class
       if (searchThisType.extnds != null) {
-        tryFindUpRefsRecursive(method, searchThisType.extnds);
+        tryFindUpRefsRecursive(method, searchThisType.extnds, overrides);
       }
 
       // recurse super interfaces
       for (JInterfaceType intf : searchThisType.implments) {
-        tryFindUpRefsRecursive(method, intf);
+        tryFindUpRefsRecursive(method, intf, overrides);
       }
     }
 
@@ -3094,16 +2975,13 @@ public class GenerateJavaAST {
     // Construct the basic AST.
     JavaASTGenerationVisitor v = new JavaASTGenerationVisitor(typeMap,
         jprogram, options);
-    for (int i = 0; i < types.length; ++i) {
-      v.processType(types[i]);
+    for (TypeDeclaration type : types) {
+      v.processType(type);
+    }
+    for (TypeDeclaration type : types) {
+      v.addBridgeMethods(type.binding);
     }
     Collections.sort(jprogram.getDeclaredTypes(), new HasNameSort());
-
-    // add any necessary bridge methods
-    Set<ReferenceBinding> typesWithBridges = new HashSet<ReferenceBinding>();
-    for (TypeDeclaration decl : types) {
-      v.addBridgeMethods(decl.binding, jprogram, typesWithBridges);
-    }
 
     // Process JSNI.
     Map<JsniMethodBody, AbstractMethodDeclaration> jsniMethodMap = v.getJsniMethodMap();
@@ -3122,32 +3000,6 @@ public class GenerateJavaAST {
         IProblem.ExternalProblemNotFixable, null, ProblemSeverities.Error,
         info.getStartPos(), info.getEndPos(), info.getStartLine(), startColumn);
     compResult.record(problem, methodDeclaration);
-  }
-
-  private static void addSuperclassesAndInterfaces(JReferenceType clazz,
-      Set<JReferenceType> supers) {
-    if (clazz == null) {
-      return;
-    }
-    if (supers.contains(clazz)) {
-      return;
-    }
-    supers.add(clazz);
-    addSuperclassesAndInterfaces(clazz.extnds, supers);
-    for (JReferenceType intf : clazz.implments) {
-      addSuperclassesAndInterfaces(intf, supers);
-    }
-  }
-
-  /**
-   * Returns a collection of all inherited classes and interfaces, plus the
-   * class itself.
-   */
-  private static Collection<JReferenceType> allSuperClassesAndInterfaces(
-      JClassType clazz) {
-    Set<JReferenceType> supers = new LinkedHashSet<JReferenceType>();
-    addSuperclassesAndInterfaces(clazz, supers);
-    return supers;
   }
 
   /**
