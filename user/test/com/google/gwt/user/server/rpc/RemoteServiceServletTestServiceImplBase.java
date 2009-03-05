@@ -20,7 +20,8 @@ import com.google.gwt.user.client.rpc.RemoteServiceServletTestService;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * TODO: document me.
+ * A RemoteService for testing the details of the "over-HTTP" part of
+ * RPC-over-HTTP.
  */
 public class RemoteServiceServletTestServiceImplBase extends
     RemoteServiceServlet implements RemoteServiceServletTestService {
@@ -32,6 +33,17 @@ public class RemoteServiceServletTestServiceImplBase extends
     HttpServletRequest req = getThreadLocalRequest();
     if (!Boolean.parseBoolean(req.getHeader("X-Custom-Header"))) {
       throw new RuntimeException("Missing header");
+    }
+  }
+
+  public void testExpectPermutationStrongName(String expectedStrongName) {
+    if (getPermutationStrongName() == null) {
+      throw new NullPointerException("getPermutationStrongName()");
+    }
+
+    if (!expectedStrongName.equals(getPermutationStrongName())) {
+      throw new RuntimeException(expectedStrongName + " != "
+          + getPermutationStrongName());
     }
   }
 }

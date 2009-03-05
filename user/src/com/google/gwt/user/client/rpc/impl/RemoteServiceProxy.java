@@ -15,6 +15,7 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
@@ -34,6 +35,12 @@ import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader
  */
 public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     ServiceDefTarget {
+
+  /**
+   * NB: Keep in sync with RemoteServiceServlet.
+   */
+  private static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
+
   /**
    * A global id to track any given request.
    */
@@ -300,6 +307,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
         getServiceEntryPoint());
 
     rb.setHeader("Content-Type", "text/x-gwt-rpc; charset=utf-8");
+    rb.setHeader(STRONG_NAME_HEADER, GWT.getPermutationStrongName());
     rb.setCallback(responseHandler);
     rb.setRequestData(requestData);
     return rb;

@@ -16,10 +16,13 @@
 package com.google.gwt.user.client.rpc;
 
 /**
- * TODO: document me.
+ * A RemoteService for testing the details of the "over-HTTP" part of
+ * RPC-over-HTTP.
  */
 public interface RemoteServiceServletTestService extends RemoteService {
   void test();
 
   void testExpectCustomHeader();
+
+  void testExpectPermutationStrongName(String expectedStrongName);
 }

@@ -19,10 +19,13 @@ import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 
 /**
- * TODO: document me.
+ * Async peer of {@link RemoteServiceServletTestService}.
  */
 public interface RemoteServiceServletTestServiceAsync {
   Request test(AsyncCallback<Void> callback);
 
   RequestBuilder testExpectCustomHeader(AsyncCallback<Void> callback);
+
+  void testExpectPermutationStrongName(String expectedStrongName,
+      AsyncCallback<Void> callback);
 }

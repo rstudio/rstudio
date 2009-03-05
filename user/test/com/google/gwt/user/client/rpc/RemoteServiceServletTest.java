@@ -100,6 +100,25 @@ public class RemoteServiceServletTest extends GWTTestCase {
     assertTrue(req.isPending());
   }
 
+  public void testPermutationStrongName() {
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+
+    delayTestFinish(TEST_DELAY);
+
+    assertNotNull(GWT.getPermutationStrongName());
+    service.testExpectPermutationStrongName(GWT.getPermutationStrongName(),
+        new AsyncCallback<Void>() {
+
+          public void onFailure(Throwable caught) {
+            TestSetValidator.rethrowException(caught);
+          }
+
+          public void onSuccess(Void result) {
+            finishTest();
+          }
+        });
+  }
+
   public void testServiceInterfaceLocation() {
     RemoteServiceServletTestServiceAsync service = getAsyncService();
 

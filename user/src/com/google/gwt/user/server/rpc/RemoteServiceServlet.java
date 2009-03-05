@@ -40,6 +40,11 @@ import javax.servlet.http.HttpServletResponse;
 public class RemoteServiceServlet extends HttpServlet implements
     SerializationPolicyProvider {
 
+  /**
+   * NB: Keep in sync with RemoteServiceProxy.
+   */
+  private static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
+
   private final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
 
   private final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
@@ -285,6 +290,16 @@ public class RemoteServiceServlet extends HttpServlet implements
     ServletContext servletContext = getServletContext();
     RPCServletUtils.writeResponseForUnexpectedFailure(servletContext,
         getThreadLocalResponse(), e);
+  }
+
+  /**
+   * Returns the strong name of the permutation, as reported by the client that
+   * issued the request, or <code>null</code> if it could not be determined.
+   * This information is encoded in the {@value #STRONG_NAME_HEADER} HTTP
+   * header.
+   */
+  protected final String getPermutationStrongName() {
+    return getThreadLocalRequest().getHeader(STRONG_NAME_HEADER);
   }
 
   /**
