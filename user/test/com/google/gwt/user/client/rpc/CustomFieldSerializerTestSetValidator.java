@@ -27,11 +27,16 @@ public class CustomFieldSerializerTestSetValidator {
     if (manuallySerializedClass == null) {
       return false;
     }
+    
+    StackTraceElement ste = manuallySerializedClass.getStackTraceElement();
 
     return manuallySerializedClass.getA() == 4
         && manuallySerializedClass.getB() == 5
         && manuallySerializedClass.getC() == 6
-        && manuallySerializedClass.getString().equals("bye");
+        && manuallySerializedClass.getString().equals("bye")
+        && ste.getClassName().equals("HighClass")
+        && ste.getMethodName().equals("highClassMethod")
+        && ste.getFileName().equals("HighClass.java");
   }
 
   // Must be a non-null array with two == elements

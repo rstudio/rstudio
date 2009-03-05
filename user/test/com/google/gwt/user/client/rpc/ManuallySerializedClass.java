@@ -30,6 +30,9 @@ public class ManuallySerializedClass {
   private int c = 3;
 
   private String str = "hello";
+  
+  private StackTraceElement ste = new StackTraceElement("FakeClass",
+      "fakeMethod", "FakeClass.java", 1234);
 
   public int getA() {
     return a;
@@ -46,6 +49,10 @@ public class ManuallySerializedClass {
   public String getString() {
     return str;
   }
+  
+  public StackTraceElement getStackTraceElement() {
+    return ste;
+  }
 
   public void setA(int a) {
     this.a = a;
@@ -61,5 +68,9 @@ public class ManuallySerializedClass {
 
   public void setString(String str) {
     this.str = str;
+  }
+  
+  public void setStackTraceElement(StackTraceElement ste) {
+    this.ste = ste;
   }
 }

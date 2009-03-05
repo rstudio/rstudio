@@ -27,6 +27,7 @@ public class ManuallySerializedClass_CustomFieldSerializer {
     instance.setB(streamReader.readInt());
     instance.setC(streamReader.readInt());
     instance.setString(streamReader.readString());
+    instance.setStackTraceElement((StackTraceElement)streamReader.readObject());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,
@@ -35,5 +36,7 @@ public class ManuallySerializedClass_CustomFieldSerializer {
     streamWriter.writeInt(5);
     streamWriter.writeInt(6);
     streamWriter.writeString("bye");
+    streamWriter.writeObject(new StackTraceElement("HighClass", 
+        "highClassMethod", "HighClass.java", 5789));
   }
 }
