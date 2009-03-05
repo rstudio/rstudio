@@ -652,6 +652,13 @@ public class JTypeOracle implements Serializable {
     dualImpl.clear();
     jsoSingleImpls.clear();
 
+    JClassType jsoType = program.getJavaScriptObject();
+    if (jsoType == null) {
+      return;
+    }
+
+    jsoType.implments.clear();
+
     for (JReferenceType type : program.getDeclaredTypes()) {
       if (!program.isJavaScriptObject(type)) {
         if (type instanceof JClassType) {
@@ -675,6 +682,7 @@ public class JTypeOracle implements Serializable {
           assert intr.methods.size() == 0
               || intr.methods.get(0).getName().equals("$clinit");
           jsoSingleImpls.put(intr, program.getJavaScriptObject());
+          jsoType.implments.add(intr);
           continue;
         }
 

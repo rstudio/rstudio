@@ -37,7 +37,6 @@ import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JType;
-import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
 import java.util.Map;
@@ -48,19 +47,6 @@ import java.util.Stack;
  * Replace references to JSO subtypes with JSO itself.
  */
 public class JavaScriptObjectNormalizer {
-  private class Collector extends JVisitor {
-
-    @Override
-    public void endVisit(JClassType x, Context ctx) {
-      if (program.isJavaScriptObject(x)) {
-        for (JInterfaceType intr : x.implments) {
-          if (isTagInterface(intr) && !jsoType.implments.contains(intr)) {
-            jsoType.implments.add(intr);
-          }
-        }
-      }
-    }
-  }
   /**
    * Map types from JSO subtypes to JSO itself.
    */
@@ -275,43 +261,16 @@ public class JavaScriptObjectNormalizer {
    */
   private final Map<JInterfaceType, JClassType> jsoSingleImpls;
 
-  private final JClassType jsoType;
-
   private final JProgram program;
 
   private JavaScriptObjectNormalizer(JProgram program) {
     this.program = program;
     dualImpl = program.typeOracle.getInterfacesWithJavaAndJsoImpls();
     jsoSingleImpls = program.typeOracle.getSingleJsoImpls();
-
-    jsoType = program.getJavaScriptObject();
-    jsoType.implments.addAll(dualImpl);
   }
 
   private void execImpl() {
-    new Collector().accept(program);
-
     NormalizeVisitor visitor = new NormalizeVisitor();
     visitor.accept(program);
-  }
-
-  private boolean isTagInterface(JReferenceType intr) {
-    if (!(intr instanceof JInterfaceType)) {
-      return false;
-    }
-
-    if (intr.methods.size() > 1) {
-      assert intr.methods.size() == 0
-          || intr.methods.get(0).getName().equals("$clinit");
-      return false;
-    }
-
-    for (JInterfaceType t : intr.implments) {
-      if (!isTagInterface(t)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }
