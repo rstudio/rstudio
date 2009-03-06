@@ -46,13 +46,15 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
-import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
+import com.google.gwt.dev.util.arg.ArgHandlerDraftCompile;
+import com.google.gwt.dev.util.arg.ArgHandlerDumpSignatures;
 import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
+import com.google.gwt.dev.util.arg.OptionDumpSignatures;
 import com.google.gwt.dev.util.arg.OptionGenDir;
 import com.google.gwt.dev.util.arg.OptionValidateOnly;
 
@@ -74,7 +76,8 @@ public class Precompile {
    * The set of options for the precompiler.
    */
   public interface PrecompileOptions extends JJSOptions, CompileTaskOptions,
-      OptionGenDir, OptionValidateOnly, OptionDisableUpdateCheck {
+      OptionGenDir, OptionValidateOnly, OptionDisableUpdateCheck,
+      OptionDumpSignatures {
   }
 
   static class ArgProcessor extends CompileArgProcessor {
@@ -89,6 +92,7 @@ public class Precompile {
       registerHandler(new ArgHandlerDisableRunAsync(options));
       registerHandler(new ArgHandlerDraftCompile(options));
       registerHandler(new ArgHandlerDisableUpdateCheck(options));
+      registerHandler(new ArgHandlerDumpSignatures(options));
     }
 
     @Override
@@ -100,6 +104,7 @@ public class Precompile {
   static class PrecompileOptionsImpl extends CompileTaskOptionsImpl implements
       PrecompileOptions {
     private boolean disableUpdateCheck;
+    private File dumpFile;
     private File genDir;
     private final JJSOptionsImpl jjsOptions = new JJSOptionsImpl();
     private boolean validateOnly;
@@ -117,8 +122,13 @@ public class Precompile {
       jjsOptions.copyFrom(other);
 
       setDisableUpdateCheck(other.isUpdateCheckDisabled());
+      setDumpSignatureFile(other.getDumpSignatureFile());
       setGenDir(other.getGenDir());
       setValidateOnly(other.isValidateOnly());
+    }
+
+    public File getDumpSignatureFile() {
+      return dumpFile;
     }
 
     public File getGenDir() {
@@ -175,6 +185,10 @@ public class Precompile {
 
     public void setDraftCompile(boolean draft) {
       jjsOptions.setDraftCompile(draft);
+    }
+
+    public void setDumpSignatureFile(File dumpFile) {
+      this.dumpFile = dumpFile;
     }
 
     public void setEnableAssertions(boolean enableAssertions) {
@@ -317,9 +331,14 @@ public class Precompile {
    */
   public static Precompilation precompile(TreeLogger logger,
       JJSOptions jjsOptions, ModuleDef module, File genDir,
-      File generatorResourcesDir) {
+      File generatorResourcesDir, File dumpSignatureFile) {
     try {
       CompilationState compilationState = module.getCompilationState(logger);
+      if (dumpSignatureFile != null) {
+        // Dump early to avoid generated types.
+        SignatureDumper.dumpSignatures(logger, module.getTypeOracle(logger),
+            dumpSignatureFile);
+      }
 
       String[] declEntryPts = module.getEntryPointTypeNames();
       if (declEntryPts.length == 0) {
@@ -377,9 +396,15 @@ public class Precompile {
    * @param generatorResourcesDir required directory to dump generator resources
    */
   public static boolean validate(TreeLogger logger, JJSOptions jjsOptions,
-      ModuleDef module, File genDir, File generatorResourcesDir) {
+      ModuleDef module, File genDir, File generatorResourcesDir,
+      File dumpSignatureFile) {
     try {
       CompilationState compilationState = module.getCompilationState(logger);
+      if (dumpSignatureFile != null) {
+        // Dump early to avoid generated types.
+        SignatureDumper.dumpSignatures(logger, module.getTypeOracle(logger),
+            dumpSignatureFile);
+      }
 
       String[] declEntryPts = module.getEntryPointTypeNames();
       String[] additionalRootTypes = null;
@@ -435,7 +460,7 @@ public class Precompile {
         TreeLogger branch = logger.branch(TreeLogger.INFO,
             "Validating compilation " + module.getName());
         if (!validate(branch, options, module, options.getGenDir(),
-            compilerWorkDir)) {
+            compilerWorkDir, options.getDumpSignatureFile())) {
           branch.log(TreeLogger.ERROR, "Validation failed");
           return false;
         }
@@ -444,7 +469,8 @@ public class Precompile {
         TreeLogger branch = logger.branch(TreeLogger.INFO,
             "Precompiling module " + module.getName());
         Precompilation precompilation = precompile(branch, options, module,
-            options.getGenDir(), compilerWorkDir);
+            options.getGenDir(), compilerWorkDir,
+            options.getDumpSignatureFile());
         if (precompilation == null) {
           branch.log(TreeLogger.ERROR, "Precompilation failed");
           return false;

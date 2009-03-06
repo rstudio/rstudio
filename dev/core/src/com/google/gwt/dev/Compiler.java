@@ -173,7 +173,8 @@ public class Compiler {
 
         if (options.isValidateOnly()) {
           if (!Precompile.validate(logger, options, module,
-              options.getGenDir(), compilerWorkDir)) {
+              options.getGenDir(), compilerWorkDir,
+              options.getDumpSignatureFile())) {
             return false;
           }
         } else {
@@ -182,7 +183,8 @@ public class Compiler {
               + moduleName);
 
           Precompilation precompilation = Precompile.precompile(logger,
-              options, module, options.getGenDir(), compilerWorkDir);
+              options, module, options.getGenDir(), compilerWorkDir,
+              options.getDumpSignatureFile());
 
           if (precompilation == null) {
             return false;
