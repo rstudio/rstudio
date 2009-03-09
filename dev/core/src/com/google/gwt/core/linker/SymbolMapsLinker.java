@@ -44,7 +44,7 @@ public class SymbolMapsLinker extends AbstractLinker {
    * This value is appended to the strong name of the CompilationResult to form
    * the symbol map's filename.
    */
-  public static final String STRONG_NAME_SUFFIX = "_sybolMap.properties";
+  public static final String STRONG_NAME_SUFFIX = "_symbolMap.properties";
 
   @Override
   public String getDescription() {
