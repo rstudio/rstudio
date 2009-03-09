@@ -118,6 +118,69 @@ public class JsniCheckerTest extends TestCase {
     }
   }
 
+  public void testDeprecationField() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  @Deprecated int bar;\n");
+    code.append("  native void jsniMethod() /*-{\n");
+    code.append("    @Buggy::bar;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateWarning(code, 3, "Referencing deprecated field 'Buggy.bar'");
+  }
+
+  public void testDeprecationMethod() {
+    StringBuffer code = new StringBuffer();
+    code.append("class Buggy {\n");
+    code.append("  @Deprecated void foo(){}\n");
+    code.append("  native void jsniMethod() /*-{\n");
+    code.append("    @Buggy::foo();\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateWarning(code, 3, "Referencing deprecated method 'Buggy.foo'");
+  }
+
+  public void testDeprecationSuppression() {
+    StringBuffer code = new StringBuffer();
+    code.append("@Deprecated class D {\n");
+    code.append("  int bar;\n");
+    code.append("}\n");
+    code.append("class Buggy {\n");
+    code.append("  @Deprecated void foo(){}\n");
+    code.append("  @Deprecated int bar;\n");
+    code.append("  @SuppressWarnings(\"deprecation\")\n");
+    code.append("  native void jsniMethod1() /*-{\n");
+    code.append("    @Buggy::foo();\n");
+    code.append("    @Buggy::bar;\n");
+    code.append("    @D::bar;\n");
+    code.append("  }-*/;\n");
+    code.append("  @SuppressWarnings({\"deprecation\", \"other\"})\n");
+    code.append("  native void jsniMethod2() /*-{\n");
+    code.append("    @Buggy::foo();\n");
+    code.append("    @Buggy::bar;\n");
+    code.append("    @D::bar;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateNoWarning(code);
+  }
+
+  public void testDeprecationType() {
+    StringBuffer code = new StringBuffer();
+    code.append("@Deprecated class D {\n");
+    code.append("  int bar;\n");
+    code.append("}\n");
+    code.append("class Buggy {\n");
+    code.append("  native void jsniMethod() /*-{\n");
+    code.append("    @D::bar;\n");
+    code.append("  }-*/;\n");
+    code.append("}\n");
+
+    shouldGenerateWarning(code, 5, "Referencing deprecated class 'D'");
+  }
+
   public void testFieldAccess() {
     StringBuffer code = new StringBuffer();
     code.append("class Buggy {\n");
