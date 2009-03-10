@@ -28,6 +28,12 @@ import java.util.EventListener;
 @SuppressWarnings("unused")
 public class CompilerTest extends GWTTestCase {
 
+  interface Silly { }
+
+  interface SillyComparable<T extends Silly> extends Comparable<T> {
+    int compareTo(T obj);
+  }
+
   private abstract static class AbstractSuper {
     public static String foo() {
       if (FALSE) {
@@ -294,6 +300,25 @@ public class CompilerTest extends GWTTestCase {
     Bm2KeyNav<?> obs = new Bm2KeyNav() {
     };
     assertEquals(5, obs.handleEvent(null));
+  }
+
+  /**
+   * When adding a bridge method, be sure to handle transitive overrides
+   * relationships.
+   */
+  public void testBridgeMethods3() {
+    class AbstractFoo implements Silly {
+      public int compareTo(AbstractFoo obj) {
+        if (FALSE) {
+          return compareTo(obj);
+        }
+        return 0;
+      }
+    }
+    class MyFoo extends AbstractFoo implements SillyComparable<AbstractFoo> {
+    }
+    
+    assertEquals(0, new MyFoo().compareTo(new MyFoo()));
   }
 
   public void testCastOptimizer() {

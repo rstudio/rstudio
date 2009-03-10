@@ -2111,6 +2111,7 @@ public class GenerateJavaAST {
       for (JMethod over : overrides) {
         if (!classHasMethodOverriding(clazz, over)) {
           bridgeMethod.overrides.add(over);
+          bridgeMethod.overrides.addAll(over.overrides);
         }
       }
     }
