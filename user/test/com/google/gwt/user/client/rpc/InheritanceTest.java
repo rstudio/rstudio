@@ -17,6 +17,7 @@ package com.google.gwt.user.client.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.AnonymousClassInterface;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.Circle;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
@@ -174,6 +175,37 @@ public class InheritanceTest extends GWTTestCase {
             finishTest();
           }
         });
+  }
+
+  public void testSerializationExceptionPreventsCall() {
+    final boolean serializationExceptionCaught[] = new boolean[1];
+    new Timer() {
+      @Override
+      public void run() {
+        assertTrue("serializationExceptionCaught was not true",
+            serializationExceptionCaught[0]);
+        finishTest();
+      }
+    }.schedule(TEST_DELAY / 2);
+    delayTestFinish(TEST_DELAY);
+
+    InheritanceTestServiceAsync service = getServiceAsync();
+    service.echo(new AnonymousClassInterface() {
+      public void foo() {
+        // purposely empty
+      }
+    }, new AsyncCallback() {
+      public void onFailure(Throwable caught) {
+        assertTrue(
+            "onFailure: got something other than a SerializationException",
+            caught instanceof SerializationException);
+        serializationExceptionCaught[0] = true;
+      }
+
+      public void onSuccess(Object result) {
+        fail("onSuccess: call should not have succeeded");
+      }
+    });
   }
 
   /**
