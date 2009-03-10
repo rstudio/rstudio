@@ -445,21 +445,6 @@ class ProxyCreator {
       w.println("(" + asyncParam.getName() + ");");
     }
 
-    JParameter callbackParam = asyncParams[asyncParams.length - 1];
-    String callbackName = callbackParam.getName();
-    if (needsTryCatchBlock) {
-      w.outdent();
-      w.print("} catch (SerializationException ");
-      String exceptionName = nameFactory.createName("ex");
-      w.println(exceptionName + ") {");
-      w.indent();
-      w.println(callbackName + ".onFailure(" + exceptionName + ");");
-      w.outdent();
-      w.println("}");
-    }
-
-    w.println();
-
     String payloadName = nameFactory.createName("payload");
     w.println("String " + payloadName + " = " + streamWriterName
         + ".toString();");
@@ -486,11 +471,24 @@ class ProxyCreator {
           + asyncReturnType.getQualifiedSourceName());
     }
 
+    JParameter callbackParam = asyncParams[asyncParams.length - 1];
+    String callbackName = callbackParam.getName();
     JType returnType = syncMethod.getReturnType();
     w.print("ResponseReader." + getResponseReaderFor(returnType).name());
     w.println(", \"" + getProxySimpleName() + "." + syncMethod.getName()
         + "\", " + requestIdName + ", " + payloadName + ", " + callbackName
         + ");");
+
+    if (needsTryCatchBlock) {
+      w.outdent();
+      w.print("} catch (SerializationException ");
+      String exceptionName = nameFactory.createName("ex");
+      w.println(exceptionName + ") {");
+      w.indent();
+      w.println(callbackName + ".onFailure(" + exceptionName + ");");
+      w.outdent();
+      w.println("}");
+    }
     w.outdent();
     w.println("}");
   }
