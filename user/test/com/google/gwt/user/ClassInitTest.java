@@ -22,10 +22,10 @@ import junit.framework.TestCase;
 import java.io.File;
 
 /**
- * Tests that every class in com.google.gwt.user.client.ui can be init'd by the
- * real Java runtime. By ensuring this, we ensure that these classes all may be
- * referenced mocked out by pure Java unit tests, e.g. with EasyMock Class
- * Extension
+ * Tests that every class in com.google.gwt.user.client.ui and
+ * com.google.gwt.user.datepicker.client can be init'd by the real Java
+ * runtime. By ensuring this, we ensure that these classes all may be referenced
+ * mocked out by pure Java unit tests, e.g. with EasyMock Class Extension
  */
 public class ClassInitTest extends TestCase {
   private static final String DOT_CLASS = ".class";
@@ -41,8 +41,15 @@ public class ClassInitTest extends TestCase {
     GWTMockUtilities.restore();
   }
 
-  public void testOne() throws ClassNotFoundException {
-    String packageName = "com.google.gwt.user.client.ui";
+  public void testUi() throws ClassNotFoundException {
+    doPackage("com.google.gwt.user.client.ui");
+  }
+  
+  public void testDatePicker() throws ClassNotFoundException {
+    doPackage("com.google.gwt.user.datepicker.client");
+  }
+  
+  private void doPackage(String packageName) throws ClassNotFoundException {
     String path = packageNameToPath(packageName);
     File directory = pathToResourceDirectory(path);
 

@@ -39,12 +39,6 @@ public class CalendarModel {
 
   private static final String[] dayOfWeekNames = new String[7];
 
-  private static final DateTimeFormat dayOfMonthFormatter = DateTimeFormat.getFormat("d");
-
-  private static final DateTimeFormat dayOfWeekFormatter = DateTimeFormat.getFormat("ccccc");
-
-  private static final DateTimeFormat monthAndYearFormatter = DateTimeFormat.getFormat("MMM yyyy");
-
   private static String[] dayOfMonthNames = new String[32];
 
   private final Date currentMonth;
@@ -171,7 +165,7 @@ public class CalendarModel {
    * @return the day of month formatter
    */
   protected DateTimeFormat getDayOfMonthFormatter() {
-    return dayOfMonthFormatter;
+    return DateTimeFormat.getFormat("d");
   }
 
   /**
@@ -180,7 +174,7 @@ public class CalendarModel {
    * @return the day of week formatter
    */
   protected DateTimeFormat getDayOfWeekFormatter() {
-    return dayOfWeekFormatter;
+    return DateTimeFormat.getFormat("ccccc");
   }
 
   /**
@@ -189,7 +183,7 @@ public class CalendarModel {
    * @return the month and year formatter
    */
   protected DateTimeFormat getMonthAndYearFormatter() {
-    return monthAndYearFormatter;
+    return DateTimeFormat.getFormat("MMM yyyy");
   }
 
   /**

@@ -16,6 +16,7 @@
 
 package com.google.gwt.user.datepicker.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -239,7 +240,8 @@ public class DateBox extends Composite implements HasValue<Date> {
    * Default style name.
    */
   public static final String DEFAULT_STYLENAME = "gwt-DateBox";
-  private static final DefaultFormat DEFAULT_FORMAT = new DefaultFormat();
+  private static final DefaultFormat DEFAULT_FORMAT = 
+    GWT.create(DefaultFormat.class);
   private final PopupPanel popup;
   private final TextBox box = new TextBox();
   private final DatePicker picker;

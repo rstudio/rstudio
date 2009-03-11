@@ -406,8 +406,6 @@ public class DateTimeFormat {
   private static DateTimeFormat cachedShortDateTimeFormat;
 
   private static final int NUM_MILLISECONDS_IN_DAY = 24 * 60 * 60000;
-  private static final DateTimeConstants defaultDateTimeConstants = LocaleInfo.getCurrentLocale().getDateTimeConstants();
-
   private static final String PATTERN_CHARS = "GyMdkHmsSEDahKzZv";
 
   private static final String NUMERIC_FORMAT_CHARS = "MydhHmsSDkK";
@@ -433,7 +431,11 @@ public class DateTimeFormat {
    *           parsed
    */
   public static DateTimeFormat getFormat(String pattern) {
-    return new DateTimeFormat(pattern, defaultDateTimeConstants);
+    return new DateTimeFormat(pattern, getDefaultDateTimeConstants());
+  }
+
+  private static DateTimeConstants getDefaultDateTimeConstants() {
+    return LocaleInfo.getCurrentLocale().getDateTimeConstants();
   }
 
   /**
@@ -444,7 +446,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getFullDateFormat() {
     if (cachedFullDateFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[FULL_DATE_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[FULL_DATE_FORMAT];
       cachedFullDateFormat = new DateTimeFormat(pattern);
     }
     return cachedFullDateFormat;
@@ -458,8 +460,8 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getFullDateTimeFormat() {
     if (cachedFullDateTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[FULL_DATE_FORMAT]
-          + " " + defaultDateTimeConstants.timeFormats()[FULL_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[FULL_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[FULL_TIME_FORMAT];
       cachedFullDateTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedFullDateTimeFormat;
@@ -473,7 +475,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getFullTimeFormat() {
     if (cachedFullTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.timeFormats()[FULL_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().timeFormats()[FULL_TIME_FORMAT];
       cachedFullTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedFullTimeFormat;
@@ -487,7 +489,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getLongDateFormat() {
     if (cachedLongDateFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[LONG_DATE_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[LONG_DATE_FORMAT];
       cachedLongDateFormat = new DateTimeFormat(pattern);
     }
     return cachedLongDateFormat;
@@ -501,8 +503,8 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getLongDateTimeFormat() {
     if (cachedLongDateTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[LONG_DATE_FORMAT]
-          + " " + defaultDateTimeConstants.timeFormats()[LONG_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[LONG_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[LONG_TIME_FORMAT];
       cachedLongDateTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedLongDateTimeFormat;
@@ -516,7 +518,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getLongTimeFormat() {
     if (cachedLongTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.timeFormats()[LONG_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().timeFormats()[LONG_TIME_FORMAT];
       cachedLongTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedLongTimeFormat;
@@ -530,7 +532,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getMediumDateFormat() {
     if (cachedMediumDateFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[MEDIUM_DATE_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[MEDIUM_DATE_FORMAT];
       cachedMediumDateFormat = new DateTimeFormat(pattern);
     }
     return cachedMediumDateFormat;
@@ -544,8 +546,8 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getMediumDateTimeFormat() {
     if (cachedMediumDateTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[MEDIUM_DATE_FORMAT]
-          + " " + defaultDateTimeConstants.timeFormats()[MEDIUM_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[MEDIUM_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[MEDIUM_TIME_FORMAT];
       cachedMediumDateTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedMediumDateTimeFormat;
@@ -559,7 +561,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getMediumTimeFormat() {
     if (cachedMediumTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.timeFormats()[MEDIUM_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().timeFormats()[MEDIUM_TIME_FORMAT];
       cachedMediumTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedMediumTimeFormat;
@@ -573,7 +575,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getShortDateFormat() {
     if (cachedShortDateFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[SHORT_DATE_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[SHORT_DATE_FORMAT];
       cachedShortDateFormat = new DateTimeFormat(pattern);
     }
     return cachedShortDateFormat;
@@ -587,8 +589,8 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getShortDateTimeFormat() {
     if (cachedShortDateTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.dateFormats()[SHORT_DATE_FORMAT]
-          + " " + defaultDateTimeConstants.timeFormats()[SHORT_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().dateFormats()[SHORT_DATE_FORMAT]
+          + " " + getDefaultDateTimeConstants().timeFormats()[SHORT_TIME_FORMAT];
       cachedShortDateTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedShortDateTimeFormat;
@@ -602,7 +604,7 @@ public class DateTimeFormat {
    */
   public static DateTimeFormat getShortTimeFormat() {
     if (cachedShortTimeFormat == null) {
-      String pattern = defaultDateTimeConstants.timeFormats()[SHORT_TIME_FORMAT];
+      String pattern = getDefaultDateTimeConstants().timeFormats()[SHORT_TIME_FORMAT];
       cachedShortTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedShortTimeFormat;
@@ -621,7 +623,7 @@ public class DateTimeFormat {
    * @param pattern string pattern specification
    */
   protected DateTimeFormat(String pattern) {
-    this(pattern, defaultDateTimeConstants);
+    this(pattern, getDefaultDateTimeConstants());
   }
 
   /**
