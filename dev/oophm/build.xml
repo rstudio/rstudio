@@ -8,16 +8,13 @@
 
   <target name="compile" description="Compile all java files">
     <mkdir dir="${javac.out}" />
-    <!-- TODO: merge into gwc.java rule? -->
-    <javac destdir="${javac.out}" debug="${javac.debug}" debuglevel="${javac.debuglevel}" source="${javac.source}" target="${javac.target}" nowarn="${javac.nowarn}" encoding="${javac.encoding}" >
-      <src path="src" />
+    <gwt.javac>
       <src path="overlay" />
       <classpath>
         <pathelement location="${gwt.tools.lib}/sun/swingworker/swing-worker-1.1.jar" />
         <pathelement location="${gwt.core.build}/bin" />
-        <pathelement location="${gwt.core.build}/alldeps.jar" />
       </classpath>
-    </javac>
+    </gwt.javac>
   </target>
 
   <target name="build" depends="compile" description="Build and package this project">
