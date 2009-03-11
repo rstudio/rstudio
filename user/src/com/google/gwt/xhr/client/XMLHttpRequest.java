@@ -215,16 +215,16 @@ public class XMLHttpRequest extends JavaScriptObject {
   }-*/;
 
   /**
-   * Initiates a request.
-   * 
-   * @see http://www.w3.org/TR/XMLHttpRequest/#send
+   * Initiates a request with no request data. This simply calls
+   * {@link #send(String)} with <code>null</code> as an argument, because the
+   * no-argument <code>send()</code> method is unavailable on Firefox.
    */
-  public final native void send() /*-{
-    this.send();
-  }-*/;
+  public final void send() {
+    send(null);
+  }
 
   /**
-   * Initiates a request with data.
+   * Initiates a request with data.  If there is no data, specify null.
    * 
    * @param requestData the data to be sent with the request
    * @see http://www.w3.org/TR/XMLHttpRequest/#send

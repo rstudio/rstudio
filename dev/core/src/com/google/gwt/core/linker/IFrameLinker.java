@@ -155,13 +155,34 @@ public class IFrameLinker extends SelectionScriptLinker {
     out.newlineOpt();
     if (supportRunAsync) {
       out.print("function __gwtStartLoadingFragment(frag) {");
-      out.newlineOpt();
       out.indentIn();
-      out.print("  var script = document.createElement('script');");
       out.newlineOpt();
-      out.print("  script.src = '" + FRAGMENT_SUBDIR + "/" + strongName
-          + "/' + frag + '" + FRAGMENT_EXTENSION + "';");
-      out.print("  document.getElementsByTagName('head').item(0).appendChild(script);");
+      out.print("  return $moduleBase + '" + FRAGMENT_SUBDIR
+          + "/'  + $strongName + '/' + frag + '" + FRAGMENT_EXTENSION + "';");
+      out.indentOut();
+      out.newlineOpt();
+      out.print("};");
+      out.newlineOpt();
+      out.print("function __gwtInstallCode(code) {");
+      /*
+       * Use a script tag on all platforms, for simplicity. It would be cleaner
+       * to use window.eval, but at the time of writing that only reliably works
+       * on Firefox. It would also be cleaner to use window.execScript on
+       * platforms that support it (IE and Chrome). However, trying this causes
+       * IE 6 (and possibly others) to emit "error 80020101", apparently due to
+       * something objectionable in the compiler's output JavaScript.
+       */
+      out.indentIn();
+      out.newlineOpt();
+      out.print("var head = document.getElementsByTagName('head').item(0);");
+      out.newlineOpt();
+      out.print("var script = document.createElement('script');");
+      out.newlineOpt();
+      out.print("script.type = 'text/javascript';");
+      out.newlineOpt();
+      out.print("script.text = code;");
+      out.newlineOpt();
+      out.print("head.appendChild(script);");
       out.indentOut();
       out.newlineOpt();
       out.print("};");
