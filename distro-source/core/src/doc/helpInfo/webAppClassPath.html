@@ -1,0 +1,39 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Web App Classpath Problem</title>
+</head>
+<body>
+
+<h1>Web App Classpath Problem</h1>
+
+<p>You were directed to this help topic because your server code needed a class or
+resource that was not found on the <i>web app classpath</i>, but <b>was</b> found
+on the <i>system classpath</i>. The <i>system classpath</i> is the classpath
+you specify when launching the Java VM to run hosted mode.  The <i>web app
+classpath</i> is different &mdash; it consists of classes that live in your web
+application's <i>war directory</i>.  All server classes and dependencies should
+to be placed in your war directory: libraries (jars) should be placed in
+<nobr><code>war/WEB-INF/lib/</code></nobr> and classes that don't live in 
+jars should be placed in <nobr><code>war/WEB-INF/classes/</code></nobr>.
+
+<p>GWT hosted mode helpfully works around this problem by mapping these outside
+resources into your web app classpath.  This warning reminds you that failing to
+address the issue can lead to problems when you actually deploy your web app to
+a real server.</p>
+
+<h2>Tips</h2>
+
+<ul>
+<li>The most common reason to encounter this problem with a new project is
+using RPC, which tries to load 
+<nobr><code>com.google.gwt.user.client.rpc.RemoteService</code></nobr>. The
+solution to is copy <code>gwt-servlet.jar</code> from the GWT install directory
+into your web app's <nobr><code>war/WEB-INF/lib/</code></nobr> directory.</li>
+<li>If you have a good reason for not following the recommended configuration,
+you can suppress warning by setting the Java system property
+<nobr><code>gwt.nowarn.webapp.classpath</code></nobr>.  Specify
+<nobr><code>-Dgwt.nowarn.webapp.classpath</code></nobr> as a JVM argument when 
+launching hosted mode.
+</li>
+</ul>

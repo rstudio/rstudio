@@ -16,6 +16,7 @@
 package com.google.gwt.benchmarks.viewer.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 
 import java.util.List;
 
@@ -26,6 +27,7 @@ import java.util.List;
  * @see com.google.gwt.junit.viewer.server.ReportServerImpl
  * @see ReportViewer
  */
+@RemoteServiceRelativePath("test_reports")
 public interface ReportServer extends RemoteService {
 
   /**
@@ -34,12 +36,12 @@ public interface ReportServer extends RemoteService {
    * @param reportId The id of the report. Originates from the ReportSummary.
    * @return the matching Report, or null if the Report could not be found.
    */
-  public Report getReport(String reportId);
+  Report getReport(String reportId);
 
   /**
    * Returns a list of summaries of all the Benchmark reports.
    * 
    * @return a non-null list of ReportSummary
    */
-  public List<ReportSummary> getReportSummaries();
+  List<ReportSummary> getReportSummaries();
 }

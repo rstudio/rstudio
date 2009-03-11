@@ -784,6 +784,17 @@ public class DOM {
   }
 
   /**
+   * Gets the {@link EventListener} that will receive events for the given
+   * element. Only one such listener may exist for a single element.
+   * 
+   * @param elem the element whose listener is to be set
+   * @return the element's event listener
+   */
+  public static EventListener getEventListener(Element elem) {
+    return impl.getEventListener(elem);
+  }
+
+  /**
    * Gets the current set of events sunk by a given element.
    * 
    * @param elem the element whose events are to be retrieved

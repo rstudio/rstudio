@@ -31,7 +31,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * [get|set|remove]Attribute
+   * [get|set|remove]Attribute.
    */
   public void testElementAttribute() {
     DivElement div = Document.get().createDivElement();
@@ -44,7 +44,21 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * getAbsolute[Left|Top]
+   * Ensure that the return type of an attribute is always a string. IE should
+   * not return a numeric attribute based on the element property. See issue
+   * 3238.
+   */
+  public void testElementAttributeNumeric() {
+    DivElement div = Document.get().createDivElement();
+    Document.get().getBody().appendChild(div);
+    div.setInnerText("Hello World");
+    div.getAttribute("offsetWidth").length();
+    div.getAttribute("offsetWidth").trim().length();
+    Document.get().getBody().removeChild(div);
+  }
+
+  /**
+   * getAbsolute[Left|Top].
    */
   public void testGetAbsolutePosition() {
     final int border = 8;
@@ -77,7 +91,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * scroll[Left|Top], scrollIntoView
+   * scroll[Left|Top], scrollIntoView.
    */
   public void testGetAbsolutePositionWhenScrolled() {
     final DivElement outer = Document.get().createDivElement();
@@ -111,7 +125,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * getParentElement
+   * getParentElement.
    */
   public void testGetParent() {
     Element element = Document.get().getBody();
@@ -131,7 +145,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * firstChildElement, nextSiblingElement
+   * firstChildElement, nextSiblingElement.
    */
   public void testChildElements() {
     Document doc = Document.get();
@@ -151,7 +165,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * isOrHasChild
+   * isOrHasChild.
    */
   public void testIsOrHasChild() {
     DivElement div = Document.get().createDivElement();
@@ -171,7 +185,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * innerText
+   * innerText.
    */
   public void testSetInnerText() {
     Document doc = Document.get();
@@ -198,7 +212,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * innerHTML
+   * innerHTML.
    */
   public void testSetInnerHTML() {
     DivElement div = Document.get().createDivElement();
@@ -213,7 +227,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * setProperty*, getProperty*
+   * setProperty*, getProperty*.
    */
   public void testProperties() {
     DivElement div = Document.get().createDivElement();
@@ -231,7 +245,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * className, id, tagName, title, dir, lang
+   * className, id, tagName, title, dir, lang.
    */
   public void testNativeProperties() {
     DivElement div = Document.get().createDivElement();
@@ -255,7 +269,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * style
+   * style.
    */
   public void testStyle() {
     DivElement div = Document.get().createDivElement();
@@ -303,7 +317,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * offset[Left|Top|Width|Height], offsetParent
+   * offset[Left|Top|Width|Height], offsetParent.
    */
   public void testOffsets() {
     DivElement outer = Document.get().createDivElement();
@@ -329,7 +343,7 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * getElementsByTagName
+   * getElementsByTagName.
    */
   public void testGetElementsByTagName() {
     DivElement div = Document.get().createDivElement();

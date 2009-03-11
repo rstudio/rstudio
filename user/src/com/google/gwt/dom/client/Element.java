@@ -66,15 +66,18 @@ public class Element extends Node {
   }
 
   /**
-   * Retrieves an attribute value by name.
+   * Retrieves an attribute value by name.  Attribute support can be
+   * inconsistent across various browsers.  Consider using the accessors in
+   * {@link Element} and its specific subclasses to retrieve attributes and
+   * properties.
    * 
    * @param name The name of the attribute to retrieve
    * @return The Attr value as a string, or the empty string if that attribute
    *         does not have a specified or default value
    */
-  public final native String getAttribute(String name) /*-{
-     return this.getAttribute(name) || '';
-   }-*/;
+  public final String getAttribute(String name) {
+    return DOMImpl.impl.getAttribute(this, name);
+  }
 
   /**
    * The class attribute of the element. This attribute has been renamed due to
@@ -87,6 +90,26 @@ public class Element extends Node {
   public final native String getClassName() /*-{
      return this.className;
    }-*/;
+
+  /**
+   * Returns the inner height of an element in pixels, including padding but not
+   * the horizontal scrollbar height, border, or margin.
+   * 
+   * @return the element's client height
+   */
+  public final native int getClientHeight() /*-{
+    return this.clientHeight;
+  }-*/;
+
+  /**
+   * Returns the inner width of an element in pixels, including padding but not
+   * the vertical scrollbar width, border, or margin.
+   * 
+   * @return the element's client width
+   */
+  public final native int getClientWidth() /*-{
+    return this.clientWidth;
+  }-*/;
 
   /**
    * Specifies the base direction of directionally neutral text and the
@@ -250,14 +273,14 @@ public class Element extends Node {
    }-*/;
 
   /**
-   * The number of pixels that an element's content is scrolled to the left.
+   * The number of pixels that an element's content is scrolled from the left.
    */
   public final native int getScrollLeft() /*-{
      return this.scrollLeft || 0;
    }-*/;
 
   /**
-   * The number of pixels that an element's content is scrolled to the top.
+   * The number of pixels that an element's content is scrolled from the top.
    */
   public final native int getScrollTop() /*-{
      return this.scrollTop || 0;

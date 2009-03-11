@@ -97,7 +97,7 @@ public abstract class UIObject {
    * The implementation of the set debug id method, which does nothing by
    * default.
    */
-  public static class DebugIdImpl {
+  private static class DebugIdImpl {
     @SuppressWarnings("unused")
     // parameters
     public void ensureDebugId(UIObject uiObject, String id) {
@@ -113,7 +113,8 @@ public abstract class UIObject {
    * The implementation of the setDebugId method, which sets the id of the
    * {@link Element}s in this {@link UIObject}.
    */
-  public static class DebugIdImplEnabled extends DebugIdImpl {
+  @SuppressWarnings("unused")
+  private static class DebugIdImplEnabled extends DebugIdImpl {
     @Override
     public void ensureDebugId(UIObject uiObject, String id) {
       uiObject.onEnsureDebugId(id);

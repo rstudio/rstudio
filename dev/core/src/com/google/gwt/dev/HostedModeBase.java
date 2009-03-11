@@ -326,6 +326,27 @@ abstract class HostedModeBase implements BrowserWindowController {
     }
   }
 
+  public static String normalizeURL(String unknownUrlText, int port, String host) {
+    if (unknownUrlText.indexOf(":") != -1) {
+      // Assume it's a full url.
+      return unknownUrlText;
+    }
+
+    // Assume it's a trailing url path.
+    if (unknownUrlText.length() > 0 && unknownUrlText.charAt(0) == '/') {
+      unknownUrlText = unknownUrlText.substring(1);
+    }
+
+    if (port != 80) {
+      // CHECKSTYLE_OFF: Not really an assembled error message, so no space
+      // after ':'.
+      return "http://" + host + ":" + port + "/" + unknownUrlText;
+      // CHECKSTYLE_ON
+    } else {
+      return "http://" + host + "/" + unknownUrlText;
+    }
+  }
+
   protected final HostedModeBaseOptions options;
 
   /**
@@ -367,26 +388,7 @@ abstract class HostedModeBase implements BrowserWindowController {
   public abstract void launchStartupUrls(final TreeLogger logger);
 
   public final String normalizeURL(String unknownUrlText) {
-    if (unknownUrlText.indexOf(":") != -1) {
-      // Assume it's a full url.
-      return unknownUrlText;
-    }
-
-    // Assume it's a trailing url path.
-    if (unknownUrlText.length() > 0 && unknownUrlText.charAt(0) == '/') {
-      unknownUrlText = unknownUrlText.substring(1);
-    }
-
-    int port = getPort();
-    String host = getHost();
-    if (port != 80) {
-      // CHECKSTYLE_OFF: Not really an assembled error message, so no space
-      // after ':'.
-      return "http://" + host + ":" + port + "/" + unknownUrlText;
-      // CHECKSTYLE_ON
-    } else {
-      return "http://" + host + "/" + unknownUrlText;
-    }
+    return normalizeURL(unknownUrlText, getPort(), getHost());
   }
 
   /**

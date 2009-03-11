@@ -1,3 +1,3 @@
 #!/bin/sh
 APPDIR=`dirname $0`;
-java  -Dcom.google.gwt.junit.reportPath="$1" -XstartOnFirstThread -cp "$APPDIR/gwt-user.jar:$APPDIR/gwt-dev-mac.jar:$APPDIR/gwt-benchmark-viewer.jar" com.google.gwt.dev.GWTShell -port auto com.google.gwt.benchmarks.viewer.ReportViewer/ReportViewer.html?gwt.hybrid;
+java  -Dcom.google.gwt.junit.reportPath="$1" -XstartOnFirstThread -cp "$APPDIR/gwt-dev-mac.jar" com.google.gwt.dev.RunWebApp -port auto $APPDIR/gwt-benchmark-viewer.war;

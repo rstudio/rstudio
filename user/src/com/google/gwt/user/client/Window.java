@@ -17,6 +17,7 @@ package com.google.gwt.user.client;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.GWT.UncaughtExceptionHandler;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
@@ -513,7 +514,7 @@ public class Window {
    * @param enable <code>false</code> to disable window scrolling
    */
   public static void enableScrolling(boolean enable) {
-    impl.enableScrolling(enable);
+    Document.get().enableScrolling(enable);
   }
 
   /**
@@ -523,7 +524,7 @@ public class Window {
    * @return the window's client height
    */
   public static int getClientHeight() {
-    return impl.getClientHeight();
+    return Document.get().getClientHeight();
   }
 
   /**
@@ -533,7 +534,7 @@ public class Window {
    * @return the window's client width
    */
   public static int getClientWidth() {
-    return impl.getClientWidth();
+    return Document.get().getClientWidth();
   }
 
   /**
@@ -542,7 +543,7 @@ public class Window {
    * @return window's scroll left
    */
   public static int getScrollLeft() {
-    return impl.getScrollLeft();
+    return Document.get().getScrollLeft();
   }
 
   /**
@@ -551,7 +552,7 @@ public class Window {
    * @return the window's scroll top
    */
   public static int getScrollTop() {
-    return impl.getScrollTop();
+    return Document.get().getScrollTop();
   }
 
   /**

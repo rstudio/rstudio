@@ -89,16 +89,29 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
     }
     DomEvent.fireNativeEvent(event, this);
   }
- 
+
   /**
-   * Removes this widget from its parent widget. If it has no parent, this
-   * method does nothing.
+   * Removes this widget from its parent widget, if one exists.
+   * 
+   * <p>
+   * If it has no parent, this method does nothing. If it is a "root" widget
+   * (meaning it's been added to the detach list via
+   * {@link RootPanel#detachOnWindowClose(Widget)}), it will be removed from the
+   * detached immediately. This makes it possible for Composites and Panels to
+   * adopt root widgets.
+   * </p>
    * 
    * @throws IllegalStateException if this widget's parent does not support
    *           removal (e.g. {@link Composite})
    */
   public void removeFromParent() {
-    if (parent instanceof HasWidgets) {
+    if (parent == null) {
+      // If the widget had no parent, check to see if it was in the detach list
+      // and remove it if necessary.
+      if (RootPanel.isInDetachList(this)) {
+        RootPanel.detachNow(this);
+      }
+    } else if (parent instanceof HasWidgets) {
       ((HasWidgets) parent).remove(this);
     } else if (parent != null) {
       throw new IllegalStateException(

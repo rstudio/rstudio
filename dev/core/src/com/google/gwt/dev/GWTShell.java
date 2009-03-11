@@ -27,6 +27,7 @@ import com.google.gwt.dev.shell.tomcat.EmbeddedTomcatServer;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.util.tools.ArgHandlerExtra;
+import com.google.gwt.util.tools.ToolBase;
 
 import java.io.File;
 
@@ -128,9 +129,8 @@ public class GWTShell extends SwtHostedModeBase {
   }
 
   public static void main(String[] args) {
-    System.err.println("WARNING: '" + GWTShell.class.getName()
-        + "' is deprecated and will be removed in a future release.");
-    System.err.println("Use '" + HostedMode.class.getName() + "' instead.");
+    ToolBase.legacyWarn(GWTShell.class, HostedMode.class);
+
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to

@@ -10,15 +10,21 @@
 			<arguments>
 			</arguments>
 		</buildCommand>
+		<buildCommand>
+			<name>com.atlassw.tools.eclipse.checkstyle.CheckstyleBuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
 	</buildSpec>
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
+		<nature>com.atlassw.tools.eclipse.checkstyle.CheckstyleNature</nature>
 	</natures>
 	<linkedResources>
 		<link>
-			<name>src</name>
+			<name>core</name>
 			<type>2</type>
-			<locationURI>GWT_ROOT/tools/benchmark-viewer/src</locationURI>
+			<locationURI>GWT_ROOT/tools/benchmark-viewer</locationURI>
 		</link>
 	</linkedResources>
 </projectDescription>

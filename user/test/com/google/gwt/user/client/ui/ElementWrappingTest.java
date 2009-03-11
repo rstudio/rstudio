@@ -34,6 +34,9 @@ public class ElementWrappingTest extends GWTTestCase {
     return "com.google.gwt.user.UserTest";
   }
 
+  /**
+   * Tests {@link Anchor#wrap(Element)}.
+   */
   public void testAnchor() {
     ensureDiv().setInnerHTML("<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
     Anchor anchor = Anchor.wrap(Document.get().getElementById("foo"));
@@ -43,6 +46,9 @@ public class ElementWrappingTest extends GWTTestCase {
     assertEquals("myAnchor", anchor.getText());
   }
 
+  /**
+   * Tests {@link Button#wrap(Element)}.
+   */
   public void testButton() {
     ensureDiv().setInnerHTML("<button id='foo'>myButton</button>");
     Button button = Button.wrap(Document.get().getElementById("foo"));
@@ -51,136 +57,10 @@ public class ElementWrappingTest extends GWTTestCase {
     assertEquals("myButton", button.getText());
   }
 
-  public void testFileUpload() {
-    ensureDiv().setInnerHTML("<input type='file' id='foo'>myInput</input>");
-    FileUpload upload = FileUpload.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(upload);
-  }
-
-  public void testFormPanel() {
-    ensureDiv().setInnerHTML("<form id='foo'></form>");
-    FormPanel formPanel = FormPanel.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(formPanel);
-  }
-
-  public void testFrame() {
-    ensureDiv().setInnerHTML("<iframe id='foo'>myFrame</iframe>");
-    Frame frame = Frame.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(frame);
-  }
-
-  public void testHidden() {
-    ensureDiv().setInnerHTML("<input type='hidden' id='foo'></input>");
-    Hidden hidden = Hidden.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(hidden);
-  }
-
-  public void testHTML() {
-    ensureDiv().setInnerHTML("<div id='foo'>myHTML</div>");
-    HTML html = HTML.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(html);
-    assertEquals("myHTML", html.getHTML());
-  }
-
-  public void testImage() {
-    ensureDiv().setInnerHTML("<img id='foo' src='" + IMG_URL + "'>");
-    Image image = Image.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(image);
-    assertEquals(IMG_URL, image.getUrl());
-  }
-
-  public void testInlineHTML() {
-    ensureDiv().setInnerHTML("<span id='foo'>myInlineHTML</span>");
-    InlineHTML html = InlineHTML.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(html);
-    assertEquals("myInlineHTML", html.getHTML());
-  }
-
-  public void testInlineLabel() {
-    ensureDiv().setInnerHTML("<span id='foo'>myInlineLabel</span>");
-    InlineLabel label = InlineLabel.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(label);
-    assertEquals("myInlineLabel", label.getText());
-  }
-
-  public void testLabel() {
-    ensureDiv().setInnerHTML("<div id='foo'>myLabel</div>");
-    Label label = Label.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(label);
-    assertEquals("myLabel", label.getText());
-  }
-
-  public void testListBox() {
-    ensureDiv().setInnerHTML("<select id='foo'></select>");
-    ListBox listBox = ListBox.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(listBox);
-  }
-
-  public void testPasswordTextBox() {
-    ensureDiv().setInnerHTML("<input type='password' id='foo'></input>");
-    PasswordTextBox textBox = PasswordTextBox.wrap(Document.get().getElementById(
-        "foo"));
-
-    assertExistsAndAttached(textBox);
-  }
-
-  public void testSimpleCheckBox() {
-    ensureDiv().setInnerHTML("<input type='checkbox' id='foo'></input>");
-    SimpleCheckBox checkBox = SimpleCheckBox.wrap(Document.get().getElementById(
-        "foo"));
-
-    assertExistsAndAttached(checkBox);
-  }
-
-  public void testSimpleRadioButton() {
-    ensureDiv().setInnerHTML("<input type='radio' id='foo'></input>");
-    SimpleRadioButton radio = SimpleRadioButton.wrap(Document.get().getElementById(
-        "foo"));
-
-    assertExistsAndAttached(radio);
-  }
-
-  public void testTextArea() {
-    ensureDiv().setInnerHTML("<textarea rows='1' cols='1' id='foo'></textarea>");
-    TextArea textArea = TextArea.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(textArea);
-  }
-
-  public void testTextBox() {
-    ensureDiv().setInnerHTML("<input type='text' id='foo'></input>");
-    TextBox textBox = TextBox.wrap(Document.get().getElementById("foo"));
-
-    assertExistsAndAttached(textBox);
-  }
-
-  public void testDetachOnUnloadTwiceFails() {
-    // Testing hosted-mode-only assertion.
-    if (!GWT.isScript()) {
-      try {
-        // Trying to pass the same widget to RootPanel.detachOnUnload() twice
-        // should fail an assertion (the first call is implicit through
-        // Anchor.wrap()).
-        ensureDiv().setInnerHTML(
-            "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
-        Anchor a = Anchor.wrap(Document.get().getElementById("foo")); // pass
-        RootPanel.detachOnWindowClose(a); // fail
-        fail("Expected assertion failure calling detachOnLoad() twice");
-      } catch (AssertionError e) {
-      }
-    }
-  }
-
+  /**
+   * Tests that {@link RootPanel#detachNow(Widget)} can only be called once per
+   * widget.
+   */
   public void testDetachNowTwiceFails() {
     // Testing hosted-mode-only assertion.
     if (!GWT.isScript()) {
@@ -198,6 +78,245 @@ public class ElementWrappingTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Tests that {@link RootPanel#detachOnWindowClose(Widget)} can only be called
+   * once per widget.
+   */
+  public void testDetachOnWindowCloseTwiceFails() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      try {
+        // Trying to pass the same widget to RootPanel.detachOnUnload() twice
+        // should fail an assertion (the first call is implicit through
+        // Anchor.wrap()).
+        ensureDiv().setInnerHTML(
+            "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
+        Anchor a = Anchor.wrap(Document.get().getElementById("foo")); // pass
+        RootPanel.detachOnWindowClose(a); // fail
+        fail("Expected assertion failure calling detachOnLoad() twice");
+      } catch (AssertionError e) {
+      }
+    }
+  }
+
+  /**
+   * Tests {@link FileUpload#wrap(Element)}.
+   */
+  public void testFileUpload() {
+    ensureDiv().setInnerHTML("<input type='file' id='foo'>myInput</input>");
+    FileUpload upload = FileUpload.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(upload);
+  }
+
+  /**
+   * Tests {@link FormPanel#wrap(Element)}.
+   */
+  public void testFormPanel() {
+    ensureDiv().setInnerHTML("<form id='foo'></form>");
+    FormPanel formPanel = FormPanel.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(formPanel);
+  }
+
+  /**
+   * Tests {@link Frame#wrap(Element)}.
+   */
+  public void testFrame() {
+    ensureDiv().setInnerHTML("<iframe id='foo'>myFrame</iframe>");
+    Frame frame = Frame.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(frame);
+  }
+
+  /**
+   * Tests {@link Hidden#wrap(Element)}.
+   */
+  public void testHidden() {
+    ensureDiv().setInnerHTML("<input type='hidden' id='foo'></input>");
+    Hidden hidden = Hidden.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(hidden);
+  }
+
+  /**
+   * Tests {@link HTML#wrap(Element)}.
+   */
+  public void testHTML() {
+    ensureDiv().setInnerHTML("<div id='foo'>myHTML</div>");
+    HTML html = HTML.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(html);
+    assertEquals("myHTML", html.getHTML());
+  }
+
+  /**
+   * Tests {@link Image#wrap(Element)}.
+   */
+  public void testImage() {
+    ensureDiv().setInnerHTML("<img id='foo' src='" + IMG_URL + "'>");
+    Image image = Image.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(image);
+    assertEquals(IMG_URL, image.getUrl());
+  }
+
+  /**
+   * Tests {@link InlineHTML#wrap(Element)}.
+   */
+  public void testInlineHTML() {
+    ensureDiv().setInnerHTML("<span id='foo'>myInlineHTML</span>");
+    InlineHTML html = InlineHTML.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(html);
+    assertEquals("myInlineHTML", html.getHTML());
+  }
+
+  /**
+   * Tests {@link InlineLabel#wrap(Element)}.
+   */
+  public void testInlineLabel() {
+    ensureDiv().setInnerHTML("<span id='foo'>myInlineLabel</span>");
+    InlineLabel label = InlineLabel.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(label);
+    assertEquals("myInlineLabel", label.getText());
+  }
+
+  /**
+   * Tests {@link Label#wrap(Element)}.
+   */
+  public void testLabel() {
+    ensureDiv().setInnerHTML("<div id='foo'>myLabel</div>");
+    Label label = Label.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(label);
+    assertEquals("myLabel", label.getText());
+  }
+
+  /**
+   * Tests {@link ListBox#wrap(Element)}.
+   */
+  public void testListBox() {
+    ensureDiv().setInnerHTML("<select id='foo'></select>");
+    ListBox listBox = ListBox.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(listBox);
+  }
+
+  /**
+   * Tests that all widgets passed to
+   * {@link RootPanel#detachOnWindowClose(Widget)} are cleaned up properly when
+   * the window is unloaded, regardless of whether their associated elements are
+   * still in the DOM or not.
+   */
+  public void testOnUnloadDetachesAllWidgets() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      ensureDiv().setInnerHTML(
+          "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>"
+              + "<a id='bar' href='" + TEST_URL + "'>myOtherAnchor</a>");
+
+      // Wrap one widget that will be left in the DOM normally.
+      Element fooElem = Document.get().getElementById("foo");
+      Anchor fooAnchor = Anchor.wrap(fooElem);
+
+      // Wrap another widget and remove its element from the DOM.
+      Element barElem = Document.get().getElementById("bar");
+      Anchor barAnchor = Anchor.wrap(barElem);
+      barElem.getParentElement().removeChild(barElem);
+
+      // Fake an unload by telling the RootPanel to go ahead and detach all
+      // of its widgets.
+      RootPanel.detachWidgets();
+
+      // Now make sure that both widgets were detached properly.
+      assertFalse("fooAnchor should have been detached", fooAnchor.isAttached());
+      assertFalse("barAnchor should have been detached", barAnchor.isAttached());
+    }
+  }
+
+  /**
+   * Tests {@link PasswordTextBox#wrap(Element)}.
+   */
+  public void testPasswordTextBox() {
+    ensureDiv().setInnerHTML("<input type='password' id='foo'></input>");
+    PasswordTextBox textBox = PasswordTextBox.wrap(Document.get().getElementById(
+        "foo"));
+
+    assertExistsAndAttached(textBox);
+  }
+
+  /**
+   * Tests {@link SimpleCheckBox#wrap(Element)}.
+   */
+  public void testSimpleCheckBox() {
+    ensureDiv().setInnerHTML("<input type='checkbox' id='foo'></input>");
+    SimpleCheckBox checkBox = SimpleCheckBox.wrap(Document.get().getElementById(
+        "foo"));
+
+    assertExistsAndAttached(checkBox);
+  }
+
+  /**
+   * Tests {@link SimpleRadioButton#wrap(Element)}.
+   */
+  public void testSimpleRadioButton() {
+    ensureDiv().setInnerHTML("<input type='radio' id='foo'></input>");
+    SimpleRadioButton radio = SimpleRadioButton.wrap(Document.get().getElementById(
+        "foo"));
+
+    assertExistsAndAttached(radio);
+  }
+
+  /**
+   * Tests {@link TextArea#wrap(Element)}.
+   */
+  public void testTextArea() {
+    ensureDiv().setInnerHTML("<textarea rows='1' cols='1' id='foo'></textarea>");
+    TextArea textArea = TextArea.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(textArea);
+  }
+
+  /**
+   * Tests {@link TextBox#wrap(Element)}.
+   */
+  public void testTextBox() {
+    ensureDiv().setInnerHTML("<input type='text' id='foo'></input>");
+    TextBox textBox = TextBox.wrap(Document.get().getElementById("foo"));
+
+    assertExistsAndAttached(textBox);
+  }
+
+  /**
+   * Tests that wrapping an element that is already a child of an existing
+   * widget's element fails.
+   */
+  public void testWrappingChildElementFails() {
+    // Testing hosted-mode-only assertion.
+    if (!GWT.isScript()) {
+      try {
+        // Create a panel that contains HTML with a unique id, which we're
+        // going to try and wrap below.
+        FlowPanel p = new FlowPanel();
+        RootPanel.get().add(p);
+        p.add(new HTML("<a id='twcef_id'>foo</a>"));
+
+        // Get the element and try to wrap it.
+        Element unwrappableElement = Document.get().getElementById("twcef_id");
+        Anchor.wrap(unwrappableElement);
+        fail("Attempting to wrap the above element should have failed.");
+      } catch (AssertionError e) {
+        // Expected error.
+      }
+    }
+  }
+
+  /**
+   * Tests that wrap() may only be called on elements that are already attached
+   * to the DOM.
+   */
   public void testWrapUnattachedFails() {
     // Testing hosted-mode-only assertion.
     if (!GWT.isScript()) {
@@ -209,28 +328,6 @@ public class ElementWrappingTest extends GWTTestCase {
         AnchorElement aElem = Document.get().createAnchorElement();
         Anchor.wrap(aElem);
         fail("Expected assertion failure wrapping unattached element");
-      } catch (AssertionError e) {
-      }
-    }
-  }
-
-  public void testOnUnloadAssertions() {
-    // Testing hosted-mode-only assertion.
-    if (!GWT.isScript()) {
-      try {
-        // When a wrap()ed element is detached from the document without being
-        // properly unwrapped, there will be an assertion to catch this run on
-        // unload.
-        ensureDiv().setInnerHTML(
-            "<a id='foo' href='" + TEST_URL + "'>myAnchor</a>");
-        Element aElem = Document.get().getElementById("foo");
-        Anchor.wrap(aElem);
-        aElem.getParentElement().removeChild(aElem);
-
-        // Fake an unload by telling the RootPanel to go ahead and detach all
-        // of its widgets.
-        RootPanel.detachWidgets();
-        fail("Assertion expected for orphaned wrap()ed widgets");
       } catch (AssertionError e) {
       }
     }

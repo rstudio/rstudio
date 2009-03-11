@@ -100,6 +100,10 @@ public abstract class DOMImpl {
 
   public abstract int getChildIndex(Element parent, Element child);
 
+  public native EventListener getEventListener(Element elem) /*-{
+    return elem.__listener;
+  }-*/;
+
   public native int getEventsSunk(Element elem) /*-{
     return elem.__eventBits || 0;
   }-*/;

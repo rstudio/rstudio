@@ -25,20 +25,20 @@ abstract class DOMImpl {
     button.click();
   }-*/;
 
-  public native Element createElement(String tag) /*-{
-    return $doc.createElement(tag);
+  public native Element createElement(Document doc, String tag) /*-{
+    return doc.createElement(tag);
   }-*/;
 
   public abstract NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
       boolean cancelable);
 
-  public native InputElement createInputElement(String type) /*-{
-    var e = $doc.createElement("INPUT");
+  public native InputElement createInputElement(Document doc, String type) /*-{
+    var e = doc.createElement("INPUT");
     e.type = type;
     return e;
   }-*/;
 
-  public abstract InputElement createInputRadioElement(String name);
+  public abstract InputElement createInputRadioElement(Document doc, String name);
 
   public abstract NativeEvent createKeyEvent(Document doc, String type,
       boolean canBubble, boolean cancelable, boolean ctrlKey, boolean altKey,
@@ -49,14 +49,14 @@ abstract class DOMImpl {
       int screenY, int clientX, int clientY, boolean ctrlKey, boolean altKey,
       boolean shiftKey, boolean metaKey, int button, Element relatedTarget);
 
-  public ScriptElement createScriptElement(String source) {
-    ScriptElement elem = (ScriptElement) createElement("script");
+  public ScriptElement createScriptElement(Document doc, String source) {
+    ScriptElement elem = (ScriptElement) createElement(doc, "script");
     elem.setText(source);
     return elem;
   }
 
-  public SelectElement createSelectElement(boolean multiple) {
-    SelectElement select = (SelectElement) createElement("select");
+  public SelectElement createSelectElement(Document doc, boolean multiple) {
+    SelectElement select = (SelectElement) createElement(doc, "select");
     if (multiple) {
       select.setMultiple(true);
     }
@@ -160,11 +160,15 @@ abstract class DOMImpl {
     return top;
   }-*/;
 
-  public native int getBodyOffsetLeft() /*-{
+  public native String getAttribute(Element elem, String name) /*-{
+    return elem.getAttribute(name) || '';
+  }-*/;
+
+  public native int getBodyOffsetLeft(Document doc) /*-{
     return 0;
   }-*/;
 
-  public native int getBodyOffsetTop() /*-{
+  public native int getBodyOffsetTop(Document doc) /*-{
     return 0;
   }-*/;
 
@@ -211,6 +215,14 @@ abstract class DOMImpl {
       parent = null;
     return parent;
   }-*/;
+
+  public int getScrollLeft(Document doc) {
+    return doc.getViewportElement().getScrollLeft();
+  }
+
+  public int getScrollTop(Document doc) {
+    return doc.getViewportElement().getScrollTop();
+  }
 
   public native String imgGetSrc(Element img) /*-{
     return img.src;
@@ -286,9 +298,17 @@ abstract class DOMImpl {
     }
     // Add a new text node.
     if (text != null) {
-      elem.appendChild($doc.createTextNode(text));
+      elem.appendChild(elem.ownerDocument.createTextNode(text));
     }
   }-*/;
+
+  public void setScrollLeft(Document doc, int left) {
+    doc.getViewportElement().setScrollLeft(left);
+  }
+
+  public void setScrollTop(Document doc, int top) {
+    doc.getViewportElement().setScrollTop(top);
+  }
 
   public native String toString(Element elem) /*-{
     return elem.outerHTML;

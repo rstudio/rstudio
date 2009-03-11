@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,19 +18,19 @@ package com.google.gwt.debug.client;
 import com.google.gwt.junit.client.GWTTestCase;
 
 /**
- * Test Case for {@link DebugInfo} when <code>gwt.enableDebugId</code> is enabled.
+ * Test Case for {@link DebugInfo} when <code>gwt.enableDebugId</code> is disabled.
  */
-public class DebugInfoTest extends GWTTestCase {
+public class DebugInfoTestDisabled extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.user.DebugTest";
+    return "com.google.gwt.user.DebugTestDisabled";
   }
 
   /**
-   * Test that the {@link DebugInfo#isDebugIdEnabled()} method works correctly.
+   * Test that the {@link DebugInfo#isDebugIdEnabled()} method works correctly when debug ids are disabled.
    */
-  public void testIsDebugIdEnabled() {
-    assertTrue(DebugInfo.isDebugIdEnabled());
+  public void testIsDebugIdDisabled() {
+    assertFalse(DebugInfo.isDebugIdEnabled());
   }
 }

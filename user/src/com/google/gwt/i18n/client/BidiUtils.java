@@ -15,8 +15,7 @@
  */
 package com.google.gwt.i18n.client;
 
-import com.google.gwt.user.client.Element;
-import com.google.gwt.user.client.DOM;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.i18n.client.HasDirection.Direction;
 
 /**
@@ -50,8 +49,7 @@ public class BidiUtils {
    *         <code>DEFAULT</code> if the directionality is not explicitly set
    */
   public static HasDirection.Direction getDirectionOnElement(Element elem) {
-
-    String dirPropertyValue = DOM.getElementProperty(elem, DIR_PROPERTY_NAME);
+    String dirPropertyValue = elem.getPropertyString(DIR_PROPERTY_NAME);
 
     if (DIR_PROPERTY_VALUE_RTL.equalsIgnoreCase(dirPropertyValue)) {
       return HasDirection.Direction.RTL;
@@ -71,15 +69,14 @@ public class BidiUtils {
    *                  <code>DEFAULT</code> if the directionality should be removed from the element   
    */
   public static void setDirectionOnElement(Element elem, Direction direction) {
-    
     switch (direction) {            
       case RTL: {
-        DOM.setElementProperty(elem, DIR_PROPERTY_NAME, DIR_PROPERTY_VALUE_RTL);
+        elem.setPropertyString(DIR_PROPERTY_NAME, DIR_PROPERTY_VALUE_RTL);
         break;
       }
       
       case LTR: {
-        DOM.setElementProperty(elem, DIR_PROPERTY_NAME, DIR_PROPERTY_VALUE_LTR);
+        elem.setPropertyString(DIR_PROPERTY_NAME, DIR_PROPERTY_VALUE_LTR);
         break;        
       }
       
@@ -87,7 +84,7 @@ public class BidiUtils {
         if (getDirectionOnElement(elem) != HasDirection.Direction.DEFAULT) {
           // only clear out the the dir property if it has already been set to something
           // explicitly
-          DOM.setElementProperty(elem, DIR_PROPERTY_NAME, "");
+          elem.setPropertyString(DIR_PROPERTY_NAME, "");
         }
         break;        
       }     

@@ -48,6 +48,8 @@ import java.util.Set;
  */
 public abstract class ToolBase {
 
+  private static final String PROPERTY_NOWARN_LEGACY_TOOLS = "gwt.nowarn.legacy.tools";
+
   static {
     String installPath = Utility.getInstallPath();
     try {
@@ -57,6 +59,16 @@ public abstract class ToolBase {
       // ignore problems, failures will occur when the libs try to load
     }
     System.setProperty("swt.library.path", installPath + '/');
+  }
+
+  public static void legacyWarn(Class<?> legacy, Class<?> replacement) {
+    if (System.getProperty(PROPERTY_NOWARN_LEGACY_TOOLS) == null) {
+      System.err.println("WARNING: '" + legacy.getName()
+          + "' is deprecated and will be removed in a future release.");
+      System.err.println("Use '" + replacement.getName() + "' instead.");
+      System.err.println("(To disable this warning, pass -D"
+          + PROPERTY_NOWARN_LEGACY_TOOLS + " as a JVM arg.)");
+    }
   }
 
   /**

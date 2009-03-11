@@ -32,8 +32,8 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native InputElement createInputRadioElement(String name) /*-{
-    return $doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
+  public native InputElement createInputRadioElement(Document doc, String name) /*-{
+    return doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
   }-*/; 
 
   @Override
@@ -91,9 +91,9 @@ class DOMImplIE6 extends DOMImpl {
    * but it should be harmless.
    */
   @Override
-  public native SelectElement createSelectElement(boolean multiple) /*-{
+  public native SelectElement createSelectElement(Document doc, boolean multiple) /*-{
     var html = multiple ? "<SELECT MULTIPLE>" : "<SELECT>"; 
-    return $doc.createElement(html);
+    return doc.createElement(html);
   }-*/;
 
   public native void dispatchEvent(Element target, NativeEvent evt) /*-{
@@ -135,40 +135,39 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native int getAbsoluteLeft(Element elem) /*-{
-    // getBoundingClientRect() throws a JS exception if the elem is not attached
-    // to the document, so we wrap it in a try/catch block
-    try {
-      return Math.floor((elem.getBoundingClientRect().left /
-        this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft);
-    } catch (e) {
-      return 0;
-    }
+  public int getAbsoluteLeft(Element elem) {
+    Document doc = elem.getOwnerDocument();
+    return (int) Math.floor(getBoundingClientRectLeft(elem)
+        / getZoomMultiple(doc) + doc.getScrollLeft());
+  }
+
+  @Override
+  public int getAbsoluteTop(Element elem) {
+    Document doc = elem.getOwnerDocument();
+    return (int) Math.floor(getBoundingClientRectTop(elem)
+        / getZoomMultiple(doc) + doc.getScrollTop());
+  }
+
+  /**
+   * IE returns a numeric type for some attributes that are really properties,
+   * such as offsetWidth.  We need to coerce these to strings to prevent a
+   * runtime JS exception.
+   */
+  @Override
+  public native String getAttribute(Element elem, String name) /*-{
+    var attr = elem.getAttribute(name);
+    return attr == null? '' : attr + '';
   }-*/;
 
   @Override
-  public native int getAbsoluteTop(Element elem) /*-{
-    // getBoundingClientRect() throws a JS exception if the elem is not attached
-    // to the document, so we wrap it in a try/catch block
-    try {
-      return Math.floor((elem.getBoundingClientRect().top /
-        this.@com.google.gwt.dom.client.DOMImplIE6::getZoomMultiple()()) +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop);
-    } catch (e) {
-      return 0;
-    }
-  }-*/;
+  public int getBodyOffsetLeft(Document doc) {
+    return getClientLeft(doc.getViewportElement());
+  }
 
   @Override
-  public native int getBodyOffsetLeft() /*-{
-    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientLeft;
-  }-*/;
-
-  @Override
-  public native int getBodyOffsetTop() /*-{
-    return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientTop;
-  }-*/;
+  public int getBodyOffsetTop(Document doc) {
+    return getClientTop(doc.getViewportElement());
+  }
 
   @Override
   public native String getInnerText(Element elem) /*-{
@@ -224,6 +223,40 @@ class DOMImplIE6 extends DOMImpl {
     elem.innerText = text || '';
   }-*/;
 
+  private native int getBoundingClientRectLeft(Element elem) /*-{
+    // getBoundingClientRect() throws a JS exception if the elem is not attached
+    // to the document, so we wrap it in a try/catch block
+    try {
+      return elem.getBoundingClientRect().left;
+    } catch (e) {
+      return 0;
+    }
+  }-*/;
+
+  private native int getBoundingClientRectTop(Element elem) /*-{
+    // getBoundingClientRect() throws a JS exception if the elem is not attached
+    // to the document, so we wrap it in a try/catch block
+    try {
+      return elem.getBoundingClientRect().top;
+    } catch (e) {
+      return 0;
+    }
+  }-*/;
+
+  /**
+   * clientLeft is non-standard and not implemented on all browsers.
+   */
+  private native int getClientLeft(Element elem) /*-{
+    return elem.clientLeft;
+  }-*/;
+
+  /**
+   * clientTop is non-standard and not implemented on all browsers.
+   */
+  private native int getClientTop(Element elem) /*-{
+    return elem.clientTop;
+  }-*/;
+
   /**
    * Get the zoom multiple based on the current IE zoom level. A multiple of 2.0
    * means that the user has zoomed in to 200%.
@@ -231,11 +264,12 @@ class DOMImplIE6 extends DOMImpl {
    * @return the zoom multiple
    */
   @SuppressWarnings("unused")
-  private native double getZoomMultiple() /*-{
-    if ($doc.compatMode == 'CSS1Compat') {
+  private double getZoomMultiple(Document doc) {
+    if (doc.getCompatMode().equals("CSS1Compat")) {
       return 1;
     } else {
-      return $doc.body.parentElement.offsetWidth / $doc.body.offsetWidth;
+      return doc.getBody().getParentElement().getOffsetWidth() /
+        doc.getBody().getOffsetWidth();
     }
-  }-*/;
+  }
 }

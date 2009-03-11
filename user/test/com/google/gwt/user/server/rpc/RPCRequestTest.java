@@ -53,7 +53,6 @@ public class RPCRequestTest extends TestCase {
     Object params2[] = new Object[] {"ab\"cde\"fg", 1234};
     RPCRequest request2 = new RPCRequest(method, params2, null, 0);
     String strRequest2 = request2.toString();
-    System.out.println(strRequest2);
     assertEquals("com.google.gwt.user.server.rpc.RPCRequestTest$"
         + "MockRequestImplementation.doSomething(\"ab\\\"cde\\\"fg\", 1234)",
         strRequest2);

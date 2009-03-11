@@ -35,7 +35,6 @@ import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
-import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -96,7 +95,8 @@ public class ReportImageServer extends HttpServlet {
     try {
       handleRequest(request, response);
     } catch (Exception e) {
-      if (e.getClass().getName().endsWith("ClientAbortException")) {
+      if (e.getClass().getName().endsWith(".ClientAbortException")
+          || e.getClass().getName().endsWith(".EofException")) {
         // No big deal, the client browser terminated a download.
       } else {
         logException("An error occured while trying to create the chart.", e,

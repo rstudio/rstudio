@@ -41,7 +41,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final AnchorElement createAnchorElement() {
-    return (AnchorElement) DOMImpl.impl.createElement(AnchorElement.TAG);
+    return (AnchorElement) DOMImpl.impl.createElement(this, AnchorElement.TAG);
   }
 
   /**
@@ -50,7 +50,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final AreaElement createAreaElement() {
-    return (AreaElement) DOMImpl.impl.createElement(AreaElement.TAG);
+    return (AreaElement) DOMImpl.impl.createElement(this, AreaElement.TAG);
   }
 
   /**
@@ -59,7 +59,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final BaseElement createBaseElement() {
-    return (BaseElement) DOMImpl.impl.createElement(BaseElement.TAG);
+    return (BaseElement) DOMImpl.impl.createElement(this, BaseElement.TAG);
   }
 
   /**
@@ -68,7 +68,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final QuoteElement createBlockQuoteElement() {
-    return (QuoteElement) DOMImpl.impl.createElement(QuoteElement.TAG_BLOCKQUOTE);
+    return (QuoteElement) DOMImpl.impl.createElement(this, QuoteElement.TAG_BLOCKQUOTE);
   }
 
   /**
@@ -84,7 +84,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final BRElement createBRElement() {
-    return (BRElement) DOMImpl.impl.createElement(BRElement.TAG);
+    return (BRElement) DOMImpl.impl.createElement(this, BRElement.TAG);
   }
 
   /**
@@ -93,7 +93,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ButtonElement createButtonElement() {
-    return (ButtonElement) DOMImpl.impl.createElement(ButtonElement.TAG);
+    return (ButtonElement) DOMImpl.impl.createElement(this, ButtonElement.TAG);
   }
 
   /**
@@ -102,7 +102,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableCaptionElement createCaptionElement() {
-    return (TableCaptionElement) DOMImpl.impl.createElement(TableCaptionElement.TAG);
+    return (TableCaptionElement) DOMImpl.impl.createElement(this, TableCaptionElement.TAG);
   }
 
   /**
@@ -118,7 +118,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createCheckInputElement() {
-    return DOMImpl.impl.createInputElement("checkbox");
+    return DOMImpl.impl.createInputElement(this, "checkbox");
   }
 
   /**
@@ -156,7 +156,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableColElement createColElement() {
-    return (TableColElement) DOMImpl.impl.createElement(TableColElement.TAG_COL);
+    return (TableColElement) DOMImpl.impl.createElement(this, TableColElement.TAG_COL);
   }
 
   /**
@@ -165,7 +165,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableColElement createColGroupElement() {
-    return (TableColElement) DOMImpl.impl.createElement(TableColElement.TAG_COLGROUP);
+    return (TableColElement) DOMImpl.impl.createElement(this, TableColElement.TAG_COLGROUP);
   }
 
   /**
@@ -220,7 +220,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ModElement createDelElement() {
-    return (ModElement) DOMImpl.impl.createElement(ModElement.TAG_DEL);
+    return (ModElement) DOMImpl.impl.createElement(this, ModElement.TAG_DEL);
   }
 
   /**
@@ -229,7 +229,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final DivElement createDivElement() {
-    return (DivElement) DOMImpl.impl.createElement(DivElement.TAG);
+    return (DivElement) DOMImpl.impl.createElement(this, DivElement.TAG);
   }
 
   /**
@@ -238,7 +238,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final DListElement createDLElement() {
-    return (DListElement) DOMImpl.impl.createElement(DListElement.TAG);
+    return (DListElement) DOMImpl.impl.createElement(this, DListElement.TAG);
   }
 
   /**
@@ -248,7 +248,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final Element createElement(String tagName) {
-    return DOMImpl.impl.createElement(tagName);
+    return DOMImpl.impl.createElement(this, tagName);
   }
 
   /**
@@ -266,7 +266,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final FieldSetElement createFieldSetElement() {
-    return (FieldSetElement) DOMImpl.impl.createElement(FieldSetElement.TAG);
+    return (FieldSetElement) DOMImpl.impl.createElement(this, FieldSetElement.TAG);
   }
 
   /**
@@ -275,7 +275,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createFileInputElement() {
-    return DOMImpl.impl.createInputElement("file");
+    return DOMImpl.impl.createInputElement(this, "file");
   }
 
   /**
@@ -293,7 +293,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final FormElement createFormElement() {
-    return (FormElement) DOMImpl.impl.createElement(FormElement.TAG);
+    return (FormElement) DOMImpl.impl.createElement(this, FormElement.TAG);
   }
 
   /**
@@ -302,7 +302,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final FrameElement createFrameElement() {
-    return (FrameElement) DOMImpl.impl.createElement(FrameElement.TAG);
+    return (FrameElement) DOMImpl.impl.createElement(this, FrameElement.TAG);
   }
 
   /**
@@ -311,7 +311,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final FrameSetElement createFrameSetElement() {
-    return (FrameSetElement) DOMImpl.impl.createElement(FrameSetElement.TAG);
+    return (FrameSetElement) DOMImpl.impl.createElement(this, FrameSetElement.TAG);
   }
 
   /**
@@ -320,7 +320,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final HeadElement createHeadElement() {
-    return (HeadElement) DOMImpl.impl.createElement(HeadElement.TAG);
+    return (HeadElement) DOMImpl.impl.createElement(this, HeadElement.TAG);
   }
 
   /**
@@ -331,7 +331,7 @@ public class Document extends Node {
    */
   public final HeadingElement createHElement(int n) {
     assert (n >= 1) && (n <= 6);
-    return (HeadingElement) DOMImpl.impl.createElement("h" + n);
+    return (HeadingElement) DOMImpl.impl.createElement(this, "h" + n);
   }
 
   /**
@@ -340,7 +340,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createHiddenInputElement() {
-    return DOMImpl.impl.createInputElement("hidden");
+    return DOMImpl.impl.createInputElement(this, "hidden");
   }
 
   /**
@@ -349,7 +349,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final HRElement createHRElement() {
-    return (HRElement) DOMImpl.impl.createElement(HRElement.TAG);
+    return (HRElement) DOMImpl.impl.createElement(this, HRElement.TAG);
   }
 
   /**
@@ -383,7 +383,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final IFrameElement createIFrameElement() {
-    return (IFrameElement) DOMImpl.impl.createElement(IFrameElement.TAG);
+    return (IFrameElement) DOMImpl.impl.createElement(this, IFrameElement.TAG);
   }
 
   /**
@@ -392,7 +392,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ImageElement createImageElement() {
-    return (ImageElement) DOMImpl.impl.createElement(ImageElement.TAG);
+    return (ImageElement) DOMImpl.impl.createElement(this, ImageElement.TAG);
   }
 
   /**
@@ -401,7 +401,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createImageInputElement() {
-    return DOMImpl.impl.createInputElement("image");
+    return DOMImpl.impl.createInputElement(this, "image");
   }
 
   /**
@@ -410,7 +410,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ModElement createInsElement() {
-    return (ModElement) DOMImpl.impl.createElement(ModElement.TAG_INS);
+    return (ModElement) DOMImpl.impl.createElement(this, ModElement.TAG_INS);
   }
 
   /**
@@ -504,7 +504,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final LabelElement createLabelElement() {
-    return (LabelElement) DOMImpl.impl.createElement(LabelElement.TAG);
+    return (LabelElement) DOMImpl.impl.createElement(this, LabelElement.TAG);
   }
 
   /**
@@ -513,7 +513,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final LegendElement createLegendElement() {
-    return (LegendElement) DOMImpl.impl.createElement(LegendElement.TAG);
+    return (LegendElement) DOMImpl.impl.createElement(this, LegendElement.TAG);
   }
 
   /**
@@ -522,7 +522,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final LIElement createLIElement() {
-    return (LIElement) DOMImpl.impl.createElement(LIElement.TAG);
+    return (LIElement) DOMImpl.impl.createElement(this, LIElement.TAG);
   }
 
   /**
@@ -531,7 +531,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final LinkElement createLinkElement() {
-    return (LinkElement) DOMImpl.impl.createElement(LinkElement.TAG);
+    return (LinkElement) DOMImpl.impl.createElement(this, LinkElement.TAG);
   }
 
   /**
@@ -549,7 +549,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final MapElement createMapElement() {
-    return (MapElement) DOMImpl.impl.createElement(MapElement.TAG);
+    return (MapElement) DOMImpl.impl.createElement(this, MapElement.TAG);
   }
 
   /**
@@ -558,7 +558,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final MetaElement createMetaElement() {
-    return (MetaElement) DOMImpl.impl.createElement(MetaElement.TAG);
+    return (MetaElement) DOMImpl.impl.createElement(this, MetaElement.TAG);
   }
 
   /**
@@ -735,7 +735,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ObjectElement createObjectElement() {
-    return (ObjectElement) DOMImpl.impl.createElement(ObjectElement.TAG);
+    return (ObjectElement) DOMImpl.impl.createElement(this, ObjectElement.TAG);
   }
 
   /**
@@ -744,7 +744,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final OListElement createOLElement() {
-    return (OListElement) DOMImpl.impl.createElement(OListElement.TAG);
+    return (OListElement) DOMImpl.impl.createElement(this, OListElement.TAG);
   }
 
   /**
@@ -753,7 +753,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final OptGroupElement createOptGroupElement() {
-    return (OptGroupElement) DOMImpl.impl.createElement(OptGroupElement.TAG);
+    return (OptGroupElement) DOMImpl.impl.createElement(this, OptGroupElement.TAG);
   }
 
   /**
@@ -762,7 +762,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final OptionElement createOptionElement() {
-    return (OptionElement) DOMImpl.impl.createElement(OptionElement.TAG);
+    return (OptionElement) DOMImpl.impl.createElement(this, OptionElement.TAG);
   }
 
   /**
@@ -771,7 +771,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ParamElement createParamElement() {
-    return (ParamElement) DOMImpl.impl.createElement(ParamElement.TAG);
+    return (ParamElement) DOMImpl.impl.createElement(this, ParamElement.TAG);
   }
 
   /**
@@ -780,7 +780,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createPasswordInputElement() {
-    return DOMImpl.impl.createInputElement("password");
+    return DOMImpl.impl.createInputElement(this, "password");
   }
 
   /**
@@ -789,7 +789,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ParagraphElement createPElement() {
-    return (ParagraphElement) DOMImpl.impl.createElement(ParagraphElement.TAG);
+    return (ParagraphElement) DOMImpl.impl.createElement(this, ParagraphElement.TAG);
   }
 
   /**
@@ -798,7 +798,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final PreElement createPreElement() {
-    return (PreElement) DOMImpl.impl.createElement(PreElement.TAG);
+    return (PreElement) DOMImpl.impl.createElement(this, PreElement.TAG);
   }
 
   /**
@@ -807,7 +807,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final QuoteElement createQElement() {
-    return (QuoteElement) DOMImpl.impl.createElement(QuoteElement.TAG_Q);
+    return (QuoteElement) DOMImpl.impl.createElement(this, QuoteElement.TAG_Q);
   }
 
   /**
@@ -817,7 +817,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createRadioInputElement(String name) {
-    return DOMImpl.impl.createInputRadioElement(name);
+    return DOMImpl.impl.createInputRadioElement(this, name);
   }
 
   /**
@@ -826,7 +826,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ScriptElement createScriptElement() {
-    return (ScriptElement) DOMImpl.impl.createElement(ScriptElement.TAG);
+    return (ScriptElement) DOMImpl.impl.createElement(this, ScriptElement.TAG);
   }
 
   /**
@@ -836,7 +836,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final ScriptElement createScriptElement(String source) {
-    return DOMImpl.impl.createScriptElement(source);
+    return DOMImpl.impl.createScriptElement(this, source);
   }
 
   /**
@@ -857,7 +857,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final SelectElement createSelectElement() {
-    return DOMImpl.impl.createSelectElement(false);
+    return DOMImpl.impl.createSelectElement(this, false);
   }
 
   /**
@@ -867,7 +867,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final SelectElement createSelectElement(boolean multiple) {
-    return DOMImpl.impl.createSelectElement(multiple);
+    return DOMImpl.impl.createSelectElement(this, multiple);
   }
 
   /**
@@ -876,7 +876,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final SpanElement createSpanElement() {
-    return (SpanElement) DOMImpl.impl.createElement(SpanElement.TAG);
+    return (SpanElement) DOMImpl.impl.createElement(this, SpanElement.TAG);
   }
 
   /**
@@ -885,7 +885,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final StyleElement createStyleElement() {
-    return (StyleElement) DOMImpl.impl.createElement(StyleElement.TAG);
+    return (StyleElement) DOMImpl.impl.createElement(this, StyleElement.TAG);
   }
 
   /**
@@ -894,7 +894,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableElement createTableElement() {
-    return (TableElement) DOMImpl.impl.createElement(TableElement.TAG);
+    return (TableElement) DOMImpl.impl.createElement(this, TableElement.TAG);
   }
 
   /**
@@ -903,7 +903,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableSectionElement createTBodyElement() {
-    return (TableSectionElement) DOMImpl.impl.createElement(TableSectionElement.TAG_TBODY);
+    return (TableSectionElement) DOMImpl.impl.createElement(this, TableSectionElement.TAG_TBODY);
   }
 
   /**
@@ -912,7 +912,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableCellElement createTDElement() {
-    return (TableCellElement) DOMImpl.impl.createElement(TableCellElement.TAG_TD);
+    return (TableCellElement) DOMImpl.impl.createElement(this, TableCellElement.TAG_TD);
   }
 
   /**
@@ -921,7 +921,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TextAreaElement createTextAreaElement() {
-    return (TextAreaElement) DOMImpl.impl.createElement(TextAreaElement.TAG);
+    return (TextAreaElement) DOMImpl.impl.createElement(this, TextAreaElement.TAG);
   }
 
   /**
@@ -930,7 +930,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final InputElement createTextInputElement() {
-    return DOMImpl.impl.createInputElement("text");
+    return DOMImpl.impl.createInputElement(this, "text");
   }
 
   /**
@@ -949,7 +949,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableSectionElement createTFootElement() {
-    return (TableSectionElement) DOMImpl.impl.createElement(TableSectionElement.TAG_TFOOT);
+    return (TableSectionElement) DOMImpl.impl.createElement(this, TableSectionElement.TAG_TFOOT);
   }
 
   /**
@@ -958,7 +958,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableSectionElement createTHeadElement() {
-    return (TableSectionElement) DOMImpl.impl.createElement(TableSectionElement.TAG_THEAD);
+    return (TableSectionElement) DOMImpl.impl.createElement(this, TableSectionElement.TAG_THEAD);
   }
 
   /**
@@ -967,7 +967,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableCellElement createTHElement() {
-    return (TableCellElement) DOMImpl.impl.createElement(TableCellElement.TAG_TH);
+    return (TableCellElement) DOMImpl.impl.createElement(this, TableCellElement.TAG_TH);
   }
 
   /**
@@ -976,7 +976,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TitleElement createTitleElement() {
-    return (TitleElement) DOMImpl.impl.createElement(TitleElement.TAG);
+    return (TitleElement) DOMImpl.impl.createElement(this, TitleElement.TAG);
   }
 
   /**
@@ -985,7 +985,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final TableRowElement createTRElement() {
-    return (TableRowElement) DOMImpl.impl.createElement(TableRowElement.TAG);
+    return (TableRowElement) DOMImpl.impl.createElement(this, TableRowElement.TAG);
   }
 
   /**
@@ -994,7 +994,7 @@ public class Document extends Node {
    * @return the newly created element
    */
   public final UListElement createULElement() {
-    return (UListElement) DOMImpl.impl.createElement(UListElement.TAG);
+    return (UListElement) DOMImpl.impl.createElement(this, UListElement.TAG);
   }
 
   /**
@@ -1013,6 +1013,16 @@ public class Document extends Node {
 
     return "gwt-uid-" + this.gwt_uid++;
   }-*/;
+
+  /**
+   * Enables or disables scrolling of the document
+   * 
+   * @param enable whether scrolling should be enabled or disabled
+   */
+  public final void enableScrolling(boolean enable) {
+    getViewportElement().getStyle().setProperty("overflow",
+        enable ? "" : "hidden");
+  }
 
   /**
    * The element that contains the content for the document. In documents with
@@ -1052,7 +1062,7 @@ public class Document extends Node {
    * @return the left offset of the body's positioning coordinate system
    */
   public final int getBodyOffsetLeft() {
-    return DOMImpl.impl.getBodyOffsetLeft();
+    return DOMImpl.impl.getBodyOffsetLeft(this);
   }
 
   /**
@@ -1064,8 +1074,45 @@ public class Document extends Node {
    * @see #getBodyOffsetLeft()
    */
   public final int getBodyOffsetTop() {
-    return DOMImpl.impl.getBodyOffsetTop();
+    return DOMImpl.impl.getBodyOffsetTop(this);
   }
+
+  /**
+   * The height of the document's client area.
+   * 
+   * @return the document's client height
+   */
+  public final int getClientHeight() {
+    return getViewportElement().getClientHeight();
+  }
+
+  /**
+   * The width of the document's client area.
+   * 
+   * @return the document's client width
+   */
+  public final int getClientWidth() {
+    return getViewportElement().getClientWidth();
+  }
+
+  /**
+   * Gets the document's "compatibility mode", typically used for determining
+   * whether the document is in "quirks" or "strict" mode.
+   * 
+   * @return one of "BackCompat" or "CSS1Compat"
+   */
+  public final native String getCompatMode() /*-{
+    return this.compatMode;
+  }-*/;
+
+  /**
+   * Gets the document's element. This is typically the &lt;html&gt; element.
+   * 
+   * @return the document element
+   */
+  public final native Element getDocumentElement() /*-{
+    return this.documentElement;
+  }-*/;
 
   /**
    * The domain name of the server that served the document, or null if the
@@ -1114,6 +1161,42 @@ public class Document extends Node {
   }-*/;
 
   /**
+   * The height of the scrollable area of the document.
+   * 
+   * @return the height of the document's scrollable area
+   */
+  public final int getScrollHeight() {
+    return getViewportElement().getScrollHeight();
+  }
+
+  /**
+   * The number of pixels that the document's content is scrolled from the left.
+   * 
+   * @return the document's left scroll position
+   */
+  public final int getScrollLeft() {
+    return DOMImpl.impl.getScrollLeft(this);
+  }
+
+  /**
+   * The number of pixels that the document's content is scrolled from the top.
+   * 
+   * @return the document's top scroll position
+   */
+  public final int getScrollTop() {
+    return DOMImpl.impl.getScrollTop(this);
+  }
+
+  /**
+   * The width of the scrollable area of the document.
+   * 
+   * @return the width of the document's scrollable area
+   */
+  public final int getScrollWidth() {
+    return getViewportElement().getScrollWidth();
+  }
+
+  /**
    * Gets the title of a document as specified by the TITLE element in the head
    * of the document.
    * 
@@ -1158,6 +1241,36 @@ public class Document extends Node {
   }-*/;
 
   /**
+   * Determines whether the document's "compatMode" is "CSS1Compat". This is
+   * normally described as "strict" mode.
+   * 
+   * @return <code>true</code> if the document is in CSS1Compat mode
+   */
+  public final boolean isCSS1Compat() {
+    return getCompatMode().equals("CSS1Compat");
+  }
+
+  /**
+   * Sets the number of pixels that the document's content is scrolled from the
+   * left.
+   * 
+   * @param left the document's left scroll position
+   */
+  public final void setScrollLeft(int left) {
+    DOMImpl.impl.setScrollLeft(this, left);
+  }
+
+  /**
+   * Sets the number of pixels that the document's content is scrolled from the
+   * top.
+   * 
+   * @param top the document's top scroll position
+   */
+  public final void setScrollTop(int top) {
+    DOMImpl.impl.setScrollTop(this, top);
+  }
+
+  /**
    * Sets the title of a document as specified by the TITLE element in the head
    * of the document.
    * 
@@ -1166,4 +1279,18 @@ public class Document extends Node {
   public final native void setTitle(String title) /*-{
     this.title = title;
   }-*/;
+
+  /**
+   * Gets the document's viewport element. This is the element that should be
+   * used to for scrolling and client-area measurement. In quirks-mode it is the
+   * &lt;body&gt; element, while in standards-mode it is the &lt;html&gt;
+   * element.
+   * 
+   * This is package-protected because the viewport is
+   * 
+   * @return the document's viewport element
+   */
+  final Element getViewportElement() {
+    return isCSS1Compat() ? getDocumentElement() : getBody();
+  }
 }

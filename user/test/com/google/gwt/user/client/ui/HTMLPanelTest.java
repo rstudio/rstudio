@@ -15,10 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.junit.client.GWTTestCase;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 
 /**
  * Tests the HTMLPanel widget.
@@ -44,10 +43,8 @@ public class HTMLPanelTest extends GWTTestCase {
     p.add(labelA, "a");
     p.add(labelB, "b");
     // Ensure that both Label's have the correct parent.
-    assertEquals("a", DOM.getElementAttribute(
-        DOM.getParent(labelA.getElement()), "id"));
-    assertEquals("b", DOM.getElementAttribute(
-        DOM.getParent(labelB.getElement()), "id"));
+    assertEquals("a", labelA.getElement().getParentElement().getId());
+    assertEquals("b", labelB.getElement().getParentElement().getId());
   }
 
   /**
@@ -70,9 +67,12 @@ public class HTMLPanelTest extends GWTTestCase {
 
     // If all goes well, the HTMLPanel's element should still be properly
     // connected to the SimplePanel's element.
-    assertTrue(DOM.isOrHasChild(sp.getElement(), p.getElement()));
+    assertTrue(sp.getElement().isOrHasChild(p.getElement()));
   }
 
+  /**
+   * Tests child attachment order using {@link HasWidgetsTester}.
+   */
   public void testAttachDetachOrder() {
     HTMLPanel p = new HTMLPanel("<div id='w00t'></div>");
     HasWidgetsTester.testAll(p, new Adder());
@@ -96,9 +96,9 @@ public class HTMLPanelTest extends GWTTestCase {
 
     hp.add(new Button("foo"), "foo");
 
-    assertTrue(DOM.isOrHasChild(fp.getElement(), hp.getElement()));
-    assertTrue(DOM.getNextSibling(ba.getElement()) == hp.getElement());
-    assertTrue(DOM.getNextSibling(hp.getElement()) == bb.getElement());
+    assertTrue(fp.getElement().isOrHasChild(hp.getElement()));
+    assertTrue(ba.getElement().getNextSibling() == hp.getElement());
+    assertTrue(hp.getElement().getNextSibling() == bb.getElement());
   }
 
   /**
@@ -119,6 +119,10 @@ public class HTMLPanelTest extends GWTTestCase {
     assertEquals("bar", next.getNodeValue());
   }
 
+  /**
+   * Ensure that {@link HTMLPanel#getElementById(String)} behaves properly in
+   * both attached and unattached states.
+   */
   public void testGetElementById() {
     HTMLPanel hp = new HTMLPanel("foo<div id='toFind'>bar</div>baz");
 
@@ -129,5 +133,28 @@ public class HTMLPanelTest extends GWTTestCase {
 
     // Make sure we got the same element in both cases.
     assertEquals(elem0, elem1);
+  }
+
+  /**
+   * Tests that the HTMLPanel's element is not moved from its original location
+   * when {@link HTMLPanel#add(Widget, String)} is called on it while it is
+   * unattached.
+   */
+  public void testElementIsUnmoved() {
+    HTMLPanel unattached = new HTMLPanel("<div id='unattached'></div>");
+    HTMLPanel attached = new HTMLPanel("<div id='attached'></div>");
+
+    RootPanel.get().add(attached);
+
+    Element unattachedParentElem = unattached.getElement().getParentElement();
+    Element attachedParentElem = attached.getElement().getParentElement();
+
+    unattached.add(new Button("unattached"), "unattached");
+    attached.add(new Button("attached"), "attached");
+
+    assertEquals("Unattached's parent element should be unaffected",
+        unattachedParentElem, unattached.getElement().getParentElement());
+    assertEquals("Unattached's parent element should be unaffected",
+        attachedParentElem, attached.getElement().getParentElement());
   }
 }

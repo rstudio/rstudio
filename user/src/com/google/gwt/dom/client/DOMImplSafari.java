@@ -41,43 +41,11 @@ class DOMImplSafari extends DOMImplStandard {
    * Safari 2 does not support {@link ScriptElement#setText(String)}.
    */
   @Override
-  public ScriptElement createScriptElement(String source) {
-    ScriptElement elem = (ScriptElement) createElement("script");
+  public ScriptElement createScriptElement(Document doc, String source) {
+    ScriptElement elem = (ScriptElement) createElement(doc, "script");
     elem.setInnerText(source);
     return elem;
   }
-
-  @Override
-  public native int eventGetClientX(NativeEvent evt) /*-{
-    // In Safari2: clientX is wrong and pageX is returned instead.
-    // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
-    if ($wnd.devicePixelRatio) {
-      return evt.clientX || 0;
-    } else {
-      // Subtract the margin and border of the HTML element in Safari 2 
-      // TODO: Remove this code when we drop Safari 2 support
-      var style = document.defaultView.getComputedStyle($doc.getElementsByTagName('html')[0], '');
-      return evt.pageX - $doc.body.scrollLeft
-          - parseInt(style.getPropertyValue('margin-left'))
-          - parseInt(style.getPropertyValue('border-left-width')) || 0;
-    }
-  }-*/;
-
-  @Override
-  public native int eventGetClientY(NativeEvent evt) /*-{
-    // In Safari2: clientY is wrong and pageY is returned instead.
-    // $wnd.devicePixelRatio identifies Safari 3 from Safari 2
-    if ($wnd.devicePixelRatio) {
-      return evt.clientY || 0;
-    } else {
-      // Subtract the margin and border of the HTML element in Safari 2 
-      // TODO: Remove this code when we drop Safari 2 support
-      var style = document.defaultView.getComputedStyle($doc.getElementsByTagName('html')[0], '');
-      return evt.pageY - $doc.body.scrollTop
-          - parseInt(style.getPropertyValue('margin-top'))
-          - parseInt(style.getPropertyValue('border-top-width')) || 0;
-    }
-  }-*/;
 
   @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
@@ -93,6 +61,7 @@ class DOMImplSafari extends DOMImplStandard {
     }
 
     var left = 0;
+    var doc = elem.ownerDocument;
     var curr = elem.parentNode;
     if (curr) {
       // This intentionally excludes body which has a null offsetParent.
@@ -102,7 +71,7 @@ class DOMImplSafari extends DOMImplStandard {
         // In RTL mode, offsetLeft is relative to the left edge of the
         // scrollable area when scrolled all the way to the right, so we need
         // to add back that difference.
-        if ($doc.defaultView.getComputedStyle(curr, '').getPropertyValue('direction') == 'rtl') {
+        if (doc.defaultView.getComputedStyle(curr, '').getPropertyValue('direction') == 'rtl') {
           left += (curr.scrollWidth - curr.clientWidth);
         }
 
@@ -117,7 +86,7 @@ class DOMImplSafari extends DOMImplStandard {
       // the borders of the parent manually.
       var parent = elem.offsetParent;
       if (parent && $wnd.devicePixelRatio) {
-        left += parseInt($doc.defaultView.getComputedStyle(parent, '').getPropertyValue('border-left-width'));
+        left += parseInt(doc.defaultView.getComputedStyle(parent, '').getPropertyValue('border-left-width'));
       }
 
       // Safari bug: a top-level absolutely positioned element includes the
@@ -141,6 +110,7 @@ class DOMImplSafari extends DOMImplStandard {
     }
 
     var top = 0;
+    var doc = elem.ownerDocument;
     var curr = elem.parentNode;
     if (curr) {
       // This intentionally excludes body which has a null offsetParent.
@@ -157,7 +127,7 @@ class DOMImplSafari extends DOMImplStandard {
       // borders of the parent manually.
       var parent = elem.offsetParent;
       if (parent && $wnd.devicePixelRatio) {
-        top += parseInt($doc.defaultView.getComputedStyle(parent, '').getPropertyValue('border-top-width'));
+        top += parseInt(doc.defaultView.getComputedStyle(parent, '').getPropertyValue('border-top-width'));
       }
 
       // Safari bug: a top-level absolutely positioned element includes the
@@ -171,6 +141,20 @@ class DOMImplSafari extends DOMImplStandard {
     }
     return top;
   }-*/;
+
+  @Override
+  public int getScrollLeft(Document doc) {
+    // Safari always applies document scrolling to the body element, even in
+    // strict mode.
+    return doc.getBody().getScrollLeft();
+  }
+
+  @Override
+  public int getScrollTop(Document doc) {
+    // Safari always applies document scrolling to the body element, even in
+    // strict mode.
+    return doc.getBody().getScrollTop();
+  }
 
   @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
@@ -215,4 +199,18 @@ class DOMImplSafari extends DOMImplStandard {
   public native void selectRemoveOption(SelectElement select, int index) /*-{
     select.removeChild(select.children[index]);
   }-*/;
+
+  @Override
+  public void setScrollLeft(Document doc, int left) {
+    // Safari always applies document scrolling to the body element, even in
+    // strict mode.
+    doc.getBody().setScrollLeft(left);
+  }
+
+  @Override
+  public void setScrollTop(Document doc, int top) {
+    // Safari always applies document scrolling to the body element, even in
+    // strict mode.
+    doc.getBody().setScrollTop(top);
+  }
 }

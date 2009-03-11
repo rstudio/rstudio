@@ -16,12 +16,14 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.shell.jetty.JettyNullLogger;
 
 import org.mortbay.jetty.servlet.ServletHandler;
 import org.mortbay.jetty.servlet.ServletHolder;
 import org.mortbay.jetty.servlet.ServletMapping;
 import org.mortbay.jetty.webapp.WebAppContext;
 import org.mortbay.jetty.webapp.WebXmlConfiguration;
+import org.mortbay.log.Log;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -37,6 +39,12 @@ import java.util.Set;
  * from a <code>WEB-INF/web.xml</code>.
  */
 class ServletValidator {
+
+  static {
+    // Suppress spammy Jetty log initialization.
+    System.setProperty("org.mortbay.log.class", JettyNullLogger.class.getName());
+    Log.getLog();
+  }
 
   public static ServletValidator create(TreeLogger logger, File webXml) {
     try {

@@ -20,18 +20,6 @@ package com.google.gwt.user.client.impl;
  * {@link com.google.gwt.user.client.Window}.
  */
 public class WindowImpl {
-  public native void enableScrolling(boolean enable) /*-{
-   @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.style.overflow =
-       enable ? "" : "hidden";
-  }-*/;
-
-  public native int getClientHeight() /*-{
-   return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientHeight;
-  }-*/;
-
-  public native int getClientWidth() /*-{
-   return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.clientWidth;
-  }-*/;
 
   public native String getHash() /*-{
     return $wnd.location.hash;
@@ -41,14 +29,6 @@ public class WindowImpl {
     return $wnd.location.search;
   }-*/;
   
-  public native int getScrollLeft() /*-{
-   return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
-  }-*/;
-
-  public native int getScrollTop() /*-{
-   return @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
-  }-*/;
-
   public native void initWindowCloseHandler() /*-{
     var oldOnBeforeUnload = $wnd.onbeforeunload;
     var oldOnUnload = $wnd.onunload;

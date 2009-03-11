@@ -26,11 +26,12 @@ package com.google.gwt.dom.client;
 
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
-    var style = $doc.defaultView.getComputedStyle(elem, null);
-    var left = $doc.getBoxObjectFor(elem).x - Math.round(
+    var doc = elem.ownerDocument;
+    var style = doc.defaultView.getComputedStyle(elem, null);
+    var left = doc.getBoxObjectFor(elem).x - Math.round(
         style.getPropertyCSSValue('border-left-width').getFloatValue(
         CSSPrimitiveValue.CSS_PX));
-        
+
     var parent = elem.parentNode;
     while (parent) {
       // Sometimes get NAN.
@@ -46,8 +47,9 @@ package com.google.gwt.dom.client;
 
   @Override
   public native int getAbsoluteTop(Element elem) /*-{
-    var style = $doc.defaultView.getComputedStyle(elem, null);
-    var top = $doc.getBoxObjectFor(elem).y - Math.round(
+    var doc = elem.ownerDocument;
+    var style = doc.defaultView.getComputedStyle(elem, null);
+    var top = doc.getBoxObjectFor(elem).y - Math.round(
         style.getPropertyCSSValue('border-top-width').getFloatValue(
         CSSPrimitiveValue.CSS_PX));
       
@@ -89,8 +91,7 @@ package com.google.gwt.dom.client;
     }
     // Add a new text node.
     if (text != null) {
-      elem.appendChild($doc.createTextNode(text));
+      elem.appendChild(elem.ownerDocument.createTextNode(text));
     }
   }-*/;
-
 }

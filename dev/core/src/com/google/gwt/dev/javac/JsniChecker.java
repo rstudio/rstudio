@@ -179,10 +179,16 @@ public class JsniChecker {
               errors.put(jsniRefString, refErrors);
             }
           } else if (!jsniRef.className().equals("null")) {
-            GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
-                "Referencing class '" + jsniRef.className()
-                    + ": unable to resolve class, expect subsequent failures",
-                null);
+            /*
+             * TODO(scottb): re-enable this when we no longer get a bunch of
+             * false failures. Currently we can't resolve top level types (like
+             * boolean_Array_Rank_1_FieldSerializer), and we also don't resolve
+             * array and primitive refs, like @Z[]::class.
+             */
+            // GWTProblem.recordInCud(ProblemSeverities.Warning, meth, cud,
+            // "Referencing class '" + jsniRef.className()
+            // + ": unable to resolve class, expect subsequent failures",
+            // null);
           }
         }
 
@@ -282,6 +288,21 @@ public class JsniChecker {
       char[][] compoundName = getCompoundName(jsniRef);
       TypeBinding binding = cud.scope.getType(compoundName, compoundName.length);
 
+      /*
+       * TODO(scottb): we cannot currently resolve top-level types; here's some
+       * experimental code that will let us do this.
+       */
+      // ReferenceBinding binding = cud.scope.environment().askForType(
+      // compoundName);
+      // while (binding == null && compoundName.length > 1) {
+      // int newLen = compoundName.length - 1;
+      // char[][] next = new char[newLen][];
+      // System.arraycopy(compoundName, 0, next, 0, newLen - 1);
+      // next[newLen - 1] = CharOperation.concat(compoundName[newLen - 1],
+      // compoundName[newLen], '$');
+      // compoundName = next;
+      // binding = cud.scope.environment().askForType(compoundName);
+      // }
       if (binding instanceof ProblemReferenceBinding) {
         ProblemReferenceBinding prb = (ProblemReferenceBinding) binding;
         if (prb.problemId() == ProblemReasons.NotVisible) {

@@ -18,13 +18,15 @@ package com.google.gwt.debug.client;
 import com.google.gwt.core.client.GWT;
 
 /**
- * This class provides a set of static methods related to Debugging.
+ * Provides low-level functionality to support the creation of testing and diagnostic frameworks.
+ * 
+ * @see com.google.gwt.user.client.ui.UIObject#ensureDebugId(String)
  */
 public class DebugInfo {
   /**
    * Implementation class for {@link DebugInfo}.
    */
-  public static class DebugInfoImpl {
+  private static class DebugInfoImpl {
     public boolean isDebugIdEnabled() {
       return false;
     }
@@ -33,7 +35,8 @@ public class DebugInfo {
   /**
    * Implementation class for {@link DebugInfo} used when debug IDs are enabled.
    */
-  public static class DebugInfoImplEnabled extends DebugInfoImpl {
+  @SuppressWarnings("unused")
+  private static class DebugInfoImplEnabled extends DebugInfoImpl {
     @Override
     public boolean isDebugIdEnabled() {
       return true;

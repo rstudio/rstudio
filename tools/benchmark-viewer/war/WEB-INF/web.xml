@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+
+  <!-- Default page to serve -->
+  <welcome-file-list>
+    <welcome-file>ReportViewer.html</welcome-file>
+  </welcome-file-list>
+  
+  <!-- Servlets -->
+  <servlet>
+    <servlet-name>test_reports</servlet-name>
+    <servlet-class>com.google.gwt.benchmarks.viewer.server.ReportServerImpl</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>test_reports</servlet-name>
+    <url-pattern>/reportViewer/test_reports</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>test_images</servlet-name>
+    <servlet-class>com.google.gwt.benchmarks.viewer.server.ReportImageServer</servlet-class>
+  </servlet>
+  
+  <servlet-mapping>
+    <servlet-name>test_images</servlet-name>
+    <url-pattern>/reportViewer/test_images/*</url-pattern>
+  </servlet-mapping>
+
+</web-app>

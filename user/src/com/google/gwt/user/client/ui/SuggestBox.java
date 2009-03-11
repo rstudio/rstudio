@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.HandlesAllKeyEvents;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -207,6 +209,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     }
   }
 
+
   /**
    * Class for menu items in a SuggestionMenu. A SuggestionMenuItem differs from
    * a MenuItem in that each item is backed by a Suggestion object. The text of
@@ -240,6 +243,31 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   }
 
   private static final String STYLENAME_DEFAULT = "gwt-SuggestBox";
+
+  /**
+   * Creates a {@link SuggestBox} widget that wraps an existing &lt;input
+   * type='text'&gt; element.
+   * 
+   * This element must already be attached to the document. If the element is
+   * removed from the document, you must call
+   * {@link RootPanel#detachNow(Widget)}.
+   * 
+   * @param oracle the suggest box oracle to use
+   * @param element the element to be wrapped
+   */
+  public static SuggestBox wrap(SuggestOracle oracle, Element element) {
+    // Assert that the element is attached.
+    assert Document.get().getBody().isOrHasChild(element);
+
+    TextBox textBox = new TextBox(element);
+    SuggestBox suggestBox = new SuggestBox(oracle, textBox);
+
+    // Mark it attached and remember it for cleanup.
+    suggestBox.onAttach();
+    RootPanel.detachOnWindowClose(suggestBox);
+
+    return suggestBox;
+  }
 
   private int limit = 20;
   private boolean selectsFirstItem = true;

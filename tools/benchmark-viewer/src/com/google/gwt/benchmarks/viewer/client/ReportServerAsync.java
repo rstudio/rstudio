@@ -26,7 +26,7 @@ import java.util.List;
  */
 public interface ReportServerAsync {
 
-  public void getReport(String reportId, AsyncCallback<Report> callback);
+  void getReport(String reportId, AsyncCallback<Report> callback);
 
-  public void getReportSummaries(AsyncCallback<List<ReportSummary>> callback);
+  void getReportSummaries(AsyncCallback<List<ReportSummary>> callback);
 }

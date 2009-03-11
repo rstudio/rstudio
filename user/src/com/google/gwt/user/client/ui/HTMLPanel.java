@@ -116,7 +116,7 @@ public class HTMLPanel extends ComplexPanel {
     if (hiddenDiv == null) {
       hiddenDiv = DOM.createDiv();
       UIObject.setVisible(hiddenDiv, false);
-      DOM.appendChild(RootPanel.getBodyElement(), hiddenDiv);
+      RootPanel.getBodyElement().appendChild(hiddenDiv);
     }
 
     // Hang on to the panel's original parent and sibling elements so that it
@@ -133,6 +133,8 @@ public class HTMLPanel extends ComplexPanel {
     // Put the panel's element back where it was.
     if (origParent != null) {
       DOM.insertBefore(origParent, getElement(), origSibling);
+    } else {
+      DOM.removeChild(hiddenDiv, getElement());
     }
 
     return child;

@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.junit.client.GWTTestCase;
 
 import java.util.Arrays;
@@ -110,7 +112,31 @@ public class SuggestBoxTest extends GWTTestCase {
     RootPanel.get().clear();
   }
 
+  public void testWrapUsingStaticWrapMethod() {
+    Element wrapper = Document.get().createTextInputElement();
+    RootPanel.get().getElement().appendChild(wrapper);
+
+    // Use direct wrap method from suggest box.
+    SuggestBox box = SuggestBox.wrap(createOracle(), wrapper);
+    assertTrue(box.isAttached());
+    assertTrue(box.getWidget().getParent() == box);
+  }
+
+  public void testWrapUsingComposite() {
+    // Ensure we can use this with normal composites
+    Element wrapper = Document.get().createTextInputElement();
+    RootPanel.get().getElement().appendChild(wrapper);
+    TextBox b = TextBox.wrap(wrapper);
+    SuggestBox box = new SuggestBox(createOracle(), b);
+    assertTrue(b.getParent() == box);
+  }
+
   protected SuggestBox createSuggestBox() {
+    MultiWordSuggestOracle oracle = createOracle();
+    return new SuggestBox(oracle);
+  }
+
+  private MultiWordSuggestOracle createOracle() {
     MultiWordSuggestOracle oracle = new MultiWordSuggestOracle();
     oracle.add("test");
     oracle.add("test1");
@@ -118,6 +144,6 @@ public class SuggestBoxTest extends GWTTestCase {
     oracle.add("test3");
     oracle.add("test4");
     oracle.add("john");
-    return new SuggestBox(oracle);
+    return oracle;
   }
 }

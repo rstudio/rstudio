@@ -33,6 +33,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
 import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
+import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
 
 import java.io.File;
@@ -104,9 +105,8 @@ public class GWTCompiler {
   }
 
   public static void main(String[] args) {
-    System.err.println("WARNING: '" + GWTCompiler.class.getName()
-        + "' is deprecated and will be removed in a future release.");
-    System.err.println("Use '" + Compiler.class.getName() + "' instead.");
+    ToolBase.legacyWarn(GWTCompiler.class, Compiler.class);
+
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to

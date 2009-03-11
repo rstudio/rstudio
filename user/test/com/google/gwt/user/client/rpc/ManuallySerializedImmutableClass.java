@@ -32,8 +32,21 @@ public class ManuallySerializedImmutableClass {
   @SuppressWarnings("unused")
   private Date dateTypeExposeToSerialization;
 
-  private final Date endDate;
-  private final Date startDate;
+  /**
+   * Transient to avoid 'cannot serialize final field' RPC warning.
+   * 
+   * FIXME: when final fields are supported, or don't generate warnings for
+   * custom serialized classes.
+   */
+  private final transient Date endDate;
+
+  /**
+   * Transient to avoid 'cannot serialize final field' RPC warning.
+   * 
+   * FIXME: when final fields are supported, or don't generate warnings for
+   * custom serialized classes.
+   */
+  private final transient Date startDate;
 
   public ManuallySerializedImmutableClass(Date startDate, Date endDate) {
     this.startDate = startDate;

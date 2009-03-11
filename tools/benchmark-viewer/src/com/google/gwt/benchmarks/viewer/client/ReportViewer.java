@@ -23,7 +23,6 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.HistoryListener;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.CellPanel;
 import com.google.gwt.user.client.ui.ClickListener;
@@ -36,10 +35,10 @@ import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.SourcesTableEvents;
+import com.google.gwt.user.client.ui.TableListener;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.TableListener;
-import com.google.gwt.user.client.ui.SourcesTableEvents;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,6 +64,7 @@ import java.util.Map;
  * from by setting the system property named in
  * {@link com.google.gwt.benchmarks.client.Benchmark#REPORT_PATH}.
  */
+@SuppressWarnings("deprecation")
 public class ReportViewer implements EntryPoint, HistoryListener {
 
   private static class MutableBool {
@@ -79,17 +79,18 @@ public class ReportViewer implements EntryPoint, HistoryListener {
   private class SummariesTableListener implements TableListener {
 
     public void onCellClicked(SourcesTableEvents sender, int row, int col) {
-      ReportSummary summary = summaries.get(row - 1);
-      String token = summary.getId();
-      // Short circuit the history loop.
-      selectReport(row, token);
-      History.newItem(token);
+      if (row > 0) {
+        ReportSummary summary = summaries.get(row - 1);
+        String token = summary.getId();
+        // Short circuit the history loop.
+        selectReport(row, token);
+        History.newItem(token);
+      }
     }
   }
 
-  private static final String baseUrl = GWT.getModuleBaseURL();
-
-  private static final String imageServer = baseUrl + "test_images/";
+  private static final String imageServer = GWT.getModuleBaseURL()
+      + "test_images/";
 
   HTML detailsLabel;
 
@@ -132,9 +133,7 @@ public class ReportViewer implements EntryPoint, HistoryListener {
     init();
 
     // Asynchronously load the summaries
-    ServiceDefTarget target = (ServiceDefTarget) GWT.create(ReportServer.class);
-    target.setServiceEntryPoint(GWT.getModuleBaseURL() + "test_reports");
-    reportServer = (ReportServerAsync) target;
+    reportServer = (ReportServerAsync) GWT.create(ReportServer.class);
 
     reportServer.getReportSummaries(new AsyncCallback<List<ReportSummary>>() {
       public void onFailure(Throwable caught) {

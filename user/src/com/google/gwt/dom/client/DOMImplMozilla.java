@@ -20,6 +20,7 @@ package com.google.gwt.dom.client;
  */
 class DOMImplMozilla extends DOMImplStandard {
 
+  @Override
   public native void buttonClick(ButtonElement button) /*-{
     var doc = button.ownerDocument;
     if (doc != null) {
@@ -36,58 +37,26 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
-  public native int getAbsoluteLeft(Element elem) /*-{
-    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
-    // so we use getBoundingClientRect() whenever possible (but it's not
-    // supported on older versions). If changing this code, make sure to check
-    // the museum entry for issue 1932.
-    // (x) | 0 is used to coerce the value to an integer
-    if (Element.prototype.getBoundingClientRect) {
-      return (elem.getBoundingClientRect().left +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft) | 0;
-    } else {
-      // We cannot use DOMImpl here because offsetLeft/Top return erroneous
-      // values when overflow is not visible.  We have to difference screenX
-      // here due to a change in getBoxObjectFor which causes inconsistencies
-      // on whether the calculations are inside or outside of the element's
-      // border.
-      // If the element is in a scrollable div, getBoxObjectFor(elem) can return
-      // a value that varies by 1 pixel.
-      return $doc.getBoxObjectFor(elem).screenX -
-        $doc.getBoxObjectFor($doc.documentElement).screenX;
-    }
-  }-*/;
+  public int getAbsoluteLeft(Element elem) {
+    return getAbsoluteLeftImpl(elem.getOwnerDocument().getViewportElement(),
+        elem);
+  }
 
   @Override
-  public native int getAbsoluteTop(Element elem) /*-{
-    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
-    // so we use getBoundingClientRect() whenever possible (but it's not
-    // supported on older versions). If changing this code, make sure to check
-    // the museum entry for issue 1932.
-    // (x) | 0 is used to coerce the value to an integer
-    if (Element.prototype.getBoundingClientRect) {
-      return (elem.getBoundingClientRect().top +
-        @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop) | 0;
-    } else {
-      // We cannot use DOMImpl here because offsetLeft/Top return erroneous
-      // values when overflow is not visible.  We have to difference screenX
-      // here due to a change in getBoxObjectFor which causes inconsistencies
-      // on whether the calculations are inside or outside of the element's
-      // border.
-      return $doc.getBoxObjectFor(elem).screenY -
-        $doc.getBoxObjectFor($doc.documentElement).screenY;
-    }
-  }-*/;
+  public int getAbsoluteTop(Element elem) {
+    return getAbsoluteTopImpl(elem.getOwnerDocument().getViewportElement(),
+        elem);
+  }
 
   @Override
-  public native int getBodyOffsetLeft() /*-{
-    var style = $wnd.getComputedStyle($doc.documentElement, '');
+  public native int getBodyOffsetLeft(Document doc) /*-{
+    var style = $wnd.getComputedStyle(doc.documentElement, '');
     return parseInt(style.marginLeft) + parseInt(style.borderLeftWidth);
   }-*/;
 
   @Override
-  public native int getBodyOffsetTop() /*-{
-    var style = $wnd.getComputedStyle($doc.documentElement, '');
+  public native int getBodyOffsetTop(Document doc) /*-{
+    var style = $wnd.getComputedStyle(doc.documentElement, '');
     return parseInt(style.marginTop) + parseInt(style.borderTopWidth);
   }-*/;
 
@@ -112,11 +81,54 @@ class DOMImplMozilla extends DOMImplStandard {
   public native String toString(Element elem) /*-{
     // Basic idea is to use the innerHTML property by copying the node into a
     // div and getting the innerHTML
+    var doc = elem.ownerDocument;
     var temp = elem.cloneNode(true);
-    var tempDiv = $doc.createElement("DIV");
+    var tempDiv = doc.createElement("DIV");
     tempDiv.appendChild(temp);
     outer = tempDiv.innerHTML;
     temp.innerHTML = "";
     return outer;
+  }-*/;
+
+  private native int getAbsoluteLeftImpl(Element viewport, Element elem) /*-{
+    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
+    // so we use getBoundingClientRect() whenever possible (but it's not
+    // supported on older versions). If changing this code, make sure to check
+    // the museum entry for issue 1932.
+    // (x) | 0 is used to coerce the value to an integer
+    if (Element.prototype.getBoundingClientRect) {
+      return (elem.getBoundingClientRect().left + viewport.scrollLeft) | 0;
+    } else {
+      // We cannot use DOMImpl here because offsetLeft/Top return erroneous
+      // values when overflow is not visible.  We have to difference screenX
+      // here due to a change in getBoxObjectFor which causes inconsistencies
+      // on whether the calculations are inside or outside of the element's
+      // border.
+      // If the element is in a scrollable div, getBoxObjectFor(elem) can return
+      // a value that varies by 1 pixel.
+      var doc = elem.ownerDocument;
+      return doc.getBoxObjectFor(elem).screenX -
+        doc.getBoxObjectFor(doc.documentElement).screenX;
+    }
+  }-*/;
+
+  private native int getAbsoluteTopImpl(Element viewport, Element elem) /*-{
+    // Firefox 3 is actively throwing errors when getBoxObjectFor() is called,
+    // so we use getBoundingClientRect() whenever possible (but it's not
+    // supported on older versions). If changing this code, make sure to check
+    // the museum entry for issue 1932.
+    // (x) | 0 is used to coerce the value to an integer
+    if (Element.prototype.getBoundingClientRect) {
+      return (elem.getBoundingClientRect().top + viewport.scrollTop) | 0;
+    } else {
+      // We cannot use DOMImpl here because offsetLeft/Top return erroneous
+      // values when overflow is not visible.  We have to difference screenX
+      // here due to a change in getBoxObjectFor which causes inconsistencies
+      // on whether the calculations are inside or outside of the element's
+      // border.
+      var doc = elem.ownerDocument;
+      return doc.getBoxObjectFor(elem).screenY -
+        doc.getBoxObjectFor(doc.documentElement).screenY;
+    }
   }-*/;
 }
