@@ -19,6 +19,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
+import junit.framework.AssertionFailedError;
+
 /**
  * Tests the following scenarios.
  * <ul>
@@ -50,6 +52,8 @@ public class CustomFieldSerializerTest extends GWTTestCase {
         CustomFieldSerializerTestSetFactory.createUnserializableSubclass(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
+            assertTrue("Should be a SerializationException",
+                caught instanceof SerializationException);
             finishTest();
           }
 
@@ -70,7 +74,10 @@ public class CustomFieldSerializerTest extends GWTTestCase {
         CustomFieldSerializerTestSetFactory.createUnserializableClass(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail("Class UnserializableClass should be serializable because it has a custom field serializer");
+            AssertionFailedError er = new AssertionFailedError(
+                "Class UnserializableClass should be serializable because it has a custom field serializer");
+            er.initCause(caught);
+            throw er;
           }
 
           public void onSuccess(Object result) {
@@ -93,7 +100,10 @@ public class CustomFieldSerializerTest extends GWTTestCase {
         CustomFieldSerializerTestSetFactory.createSerializableImmutablesArray(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail("Could not serialize/deserialize immutable classes: " + caught);
+            AssertionFailedError er = new AssertionFailedError(
+                "Could not serialize/deserialize immutable classes");
+            er.initCause(caught);
+            throw er;
           }
 
           public void onSuccess(Object result) {
@@ -116,7 +126,10 @@ public class CustomFieldSerializerTest extends GWTTestCase {
         CustomFieldSerializerTestSetFactory.createSerializableSubclass(),
         new AsyncCallback() {
           public void onFailure(Throwable caught) {
-            fail("Class UnserializableClass should be serializable because it has a custom field serializer");
+            AssertionFailedError er = new AssertionFailedError(
+                "Class SerializableSubclass should be serializable automatically");
+            er.initCause(caught);
+            throw er;
           }
 
           public void onSuccess(Object result) {
