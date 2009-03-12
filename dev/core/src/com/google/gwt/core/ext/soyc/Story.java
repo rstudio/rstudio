@@ -79,13 +79,6 @@ public interface Story extends Serializable {
   SortedSet<Member> getMembers();
 
   /**
-   * Gets a list of transformations applied to the original source code in order
-   * to produce the story entry. This method will not return any data unless the
-   * compiler has been configured to collect mutation data.
-   */
-  List<String> getMutations();
-
-  /**
    * Returns the locations of the Story's source. Identical structures (such as
    * string literals) that appear in multiple locations in the source may be
    * merged by the compiler into a single Story.

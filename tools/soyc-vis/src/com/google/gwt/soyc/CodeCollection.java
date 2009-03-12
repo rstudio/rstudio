@@ -19,41 +19,40 @@ package com.google.gwt.soyc;
 import java.util.TreeSet;
 
 public class CodeCollection {
-  
+
   public String codeType = "";
   public TreeSet<String> classes = new TreeSet<String>();
   public TreeSet<String> stories = new TreeSet<String>();
   public float cumPartialSize = 0f;
   public int cumSize = 0;
-  
-  
-  public CodeCollection(String type){
+
+  public CodeCollection(String type) {
     codeType = type;
   }
-  
-  public int getCumSize(){
+
+  public int getCumSize() {
     cumSize = 0;
-    for (String className : classes){
-      if (! GlobalInformation.classToSize.containsKey(className)){
-        System.err.println("*** NO SIZE FOUND FOR CLASS " + className + " *****");
-      }
-      else{
+    for (String className : classes) {
+      if (!GlobalInformation.classToSize.containsKey(className)) {
+        System.err.println("*** NO SIZE FOUND FOR CLASS " + className
+            + " *****");
+      } else {
         cumSize += GlobalInformation.classToSize.get(className);
       }
     }
     return cumSize;
- }
-  
-  public float getCumPartialSize(){
+  }
+
+  public float getCumPartialSize() {
     cumPartialSize = 0f;
-    for (String className : classes){
-      if (!GlobalInformation.classToPartialSize.containsKey(className)){
-        System.err.println("*** NO PARTIAL SIZE FOUND FOR CLASS " + className + " *****");
-      }
-      else{
+    for (String className : classes) {
+      if (!GlobalInformation.classToPartialSize.containsKey(className)) {
+        System.err.println("*** NO PARTIAL SIZE FOUND FOR CLASS " + className
+            + " *****");
+      } else {
         cumPartialSize += GlobalInformation.classToPartialSize.get(className);
       }
     }
     return cumPartialSize;
- }
+  }
 }

@@ -20,6 +20,11 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
 import com.google.gwt.core.ext.soyc.Range;
+import com.google.gwt.core.ext.soyc.SplitPointRecorder;
+import com.google.gwt.core.ext.soyc.StoryRecorder;
+import com.google.gwt.core.ext.soyc.impl.DependencyRecorderImpl;
+import com.google.gwt.core.ext.soyc.impl.SplitPointRecorderImpl;
+import com.google.gwt.core.ext.soyc.impl.StoryRecorderImpl;
 import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
@@ -94,6 +99,7 @@ import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -148,8 +154,8 @@ public class JavaToJavaScriptCompiler {
    *           {@link OutOfMemoryError} occurs
    */
   public static PermutationResult compilePermutation(TreeLogger logger,
-      UnifiedAst unifiedAst, Map<String, String> rebindAnswers)
-      throws UnableToCompleteException {
+      UnifiedAst unifiedAst, Map<String, String> rebindAnswers,
+      int permutationId) throws UnableToCompleteException {
     try {
       if (JProgram.isTracingEnabled()) {
         System.out.println("------------------------------------------------------------");
@@ -276,11 +282,20 @@ public class JavaToJavaScriptCompiler {
 
       PermutationResult toReturn = new PermutationResultImpl(js, symbolMap);
       if (sourceInfoMaps != null) {
-        toReturn.getArtifacts().add(
-            new StandardCompilationAnalysis(logger, sourceInfoMaps,
-                jprogram.getSplitPointMap()));
-      }
 
+        // get method dependencies
+        DependencyRecorderImpl dr = new DependencyRecorderImpl();
+        File depFile = dr.recordDependencies(jprogram, options.getWorkDir(), permutationId, logger);
+        
+        StoryRecorder sr = new StoryRecorderImpl();
+        File storyFile = sr.recordStories(jprogram, options.getWorkDir(), permutationId, logger, sourceInfoMaps, js);
+        
+        SplitPointRecorder spr = new SplitPointRecorderImpl();
+        File splitPointsFile = spr.recordSplitPoints(jprogram, options.getWorkDir(), permutationId, logger);
+        
+        toReturn.getArtifacts().add(
+            new StandardCompilationAnalysis(logger, depFile, storyFile, splitPointsFile));
+      }    
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);

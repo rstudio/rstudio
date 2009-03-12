@@ -68,6 +68,18 @@ import java.util.Set;
  * execution at a specified location.
  */
 public class ControlFlowAnalyzer {
+  /**
+   * A callback for recording control-flow dependencies as they are discovered.
+   * See {@link ControlFlowAnalyzer#setDependencyRecorder(DependencyRecorder)}.
+   */
+  public interface DependencyRecorder {
+
+    /**
+     * Used to record the dependencies of a specific method
+     */
+    void methodIsLiveBecause(JMethod liveMethod,
+        ArrayList<JMethod> dependencyChain);
+  }
 
   /**
    * Marks as "referenced" any types, methods, and fields that are reachable.
@@ -77,6 +89,8 @@ public class ControlFlowAnalyzer {
    * TODO(later): make RescueVisitor use less stack?
    */
   private class RescueVisitor extends JVisitor {
+    private ArrayList<JMethod> curMethodStack = new ArrayList<JMethod>();
+
     @Override
     public boolean visit(JArrayType type, Context ctx) {
       assert (referencedTypes.contains(type));
@@ -477,9 +491,14 @@ public class ControlFlowAnalyzer {
         if (!liveFieldsAndMethods.contains(method)) {
           liveFieldsAndMethods.add(method);
           methodsLiveExceptForInstantiability.remove(method);
-
+          if (dependencyRecorder != null) {
+            curMethodStack.add(method);
+            dependencyRecorder.methodIsLiveBecause(method, curMethodStack);
+          }
           accept(method);
-
+          if (dependencyRecorder != null) {
+            curMethodStack.remove(curMethodStack.size() - 1);
+          }
           if (method.isNative()) {
             /*
              * SPECIAL: returning from this method passes a value from
@@ -487,9 +506,7 @@ public class ControlFlowAnalyzer {
              */
             maybeRescueJavaScriptObjectPassingIntoJava(method.getType());
           }
-
           rescueOverridingMethods(method);
-
           return true;
         }
       }
@@ -638,6 +655,8 @@ public class ControlFlowAnalyzer {
     }
   }
 
+  private DependencyRecorder dependencyRecorder;
+
   private Set<JField> fieldsWritten = new HashSet<JField>();
   private Set<JReferenceType> instantiatedTypes = new HashSet<JReferenceType>();
   private Set<JNode> liveFieldsAndMethods = new HashSet<JNode>();
@@ -711,6 +730,18 @@ public class ControlFlowAnalyzer {
    */
   public Set<? extends JReferenceType> getReferencedTypes() {
     return referencedTypes;
+  }
+
+  /**
+   * Specify the {@link DependencyRecorder} to be used for future traversals.
+   * Specifying <code>null</code> means to stop recording dependencies.
+   */
+  public void setDependencyRecorder(DependencyRecorder dr) {
+    if (dependencyRecorder != null && dr != null) {
+      throw new IllegalArgumentException(
+          "Attempting to set multiple dependency recorders");
+    }
+    this.dependencyRecorder = dr;
   }
 
   /**

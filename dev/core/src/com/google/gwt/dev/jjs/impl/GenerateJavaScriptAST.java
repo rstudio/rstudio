@@ -163,7 +163,6 @@ public class GenerateJavaScriptAST {
       String mangleName = mangleName(x);
       if (x.isStatic()) {
         JsName jsName = topScope.declareName(mangleName, name);
-        x.getSourceInfo().addCorrelation(Correlation.by(jsName));
         names.put(x, jsName);
         recordSymbol(x, jsName);
       } else {
@@ -177,7 +176,6 @@ public class GenerateJavaScriptAST {
         } else {
           jsName = peek().declareName(mangleName, name);
         }
-        x.getSourceInfo().addCorrelation(Correlation.by(jsName));
         names.put(x, jsName);
         recordSymbol(x, jsName);
       }
@@ -245,7 +243,6 @@ public class GenerateJavaScriptAST {
 
       // My seed function name
       JsName jsName = topScope.declareName(getNameString(x), x.getShortName());
-      x.getSourceInfo().addCorrelation(Correlation.by(jsName));
       names.put(x, jsName);
       recordSymbol(x, jsName);
 
@@ -331,7 +328,6 @@ public class GenerateJavaScriptAST {
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
       }
       methodBodyMap.put(x.getBody(), jsFunction);
-      jsFunction.getSourceInfo().addCorrelation(Correlation.by(jsFunction));
       jsFunction.getSourceInfo().addCorrelation(Correlation.by(globalName));
       push(jsFunction.getScope());
       return true;
@@ -1399,7 +1395,6 @@ public class GenerateJavaScriptAST {
       gwtOnLoadName.setObfuscatable(false);
       JsFunction gwtOnLoad = new JsFunction(sourceInfo, topScope,
           gwtOnLoadName, true);
-      sourceInfo.addCorrelation(Correlation.by(gwtOnLoad));
       globalStmts.add(gwtOnLoad.makeStmt());
       JsBlock body = new JsBlock(sourceInfo);
       gwtOnLoad.setBody(body);
@@ -1461,7 +1456,6 @@ public class GenerateJavaScriptAST {
           GenerateJavaScriptAST.class, "Null function");
       JsFunction nullFunc = new JsFunction(sourceInfo, topScope,
           nullMethodName, true);
-      sourceInfo.addCorrelation(Correlation.by(nullFunc));
       nullFunc.setBody(new JsBlock(sourceInfo));
       globalStatements.add(nullFunc.makeStmt());
     }
@@ -1478,7 +1472,6 @@ public class GenerateJavaScriptAST {
         JsFunction seedFunc = new JsFunction(sourceInfo, topScope,
             seedFuncName, true);
         seedFuncName.setStaticRef(seedFunc);
-        sourceInfo.addCorrelation(Correlation.by(seedFunc));
         JsBlock body = new JsBlock(sourceInfo);
         seedFunc.setBody(body);
         JsExprStmt seedFuncStmt = seedFunc.makeStmt();

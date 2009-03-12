@@ -22,11 +22,12 @@ import com.google.gwt.dev.util.arg.OptionEnableAssertions;
 import com.google.gwt.dev.util.arg.OptionRunAsyncEnabled;
 import com.google.gwt.dev.util.arg.OptionScriptStyle;
 import com.google.gwt.dev.util.arg.OptionSoycEnabled;
+import com.google.gwt.dev.util.arg.OptionWorkDir;
 
 /**
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionAggressivelyOptimize,
     OptionDisableClassMetadata, OptionDraftCompile, OptionEnableAssertions,
-    OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled {
+    OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionWorkDir {
 }

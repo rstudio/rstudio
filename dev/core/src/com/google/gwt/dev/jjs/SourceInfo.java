@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -30,32 +31,6 @@ import java.util.Set;
  * Tracks file and line information for AST nodes.
  */
 public class SourceInfo implements Serializable {
-
-  /**
-   * Describes how the SourceInfo's node was mutated during the compile cycle.
-   */
-  public static final class Mutation implements Serializable {
-    private final String caller;
-    private final String description;
-    private final long ts = System.currentTimeMillis();
-
-    private Mutation(String description, String caller) {
-      this.caller = caller;
-      this.description = description;
-    }
-
-    public String getCaller() {
-      return caller;
-    }
-
-    public String getDescription() {
-      return description;
-    }
-
-    public long getTimestamp() {
-      return ts;
-    }
-  }
 
   /**
    * A totally-immutable version of SourceInfo.
@@ -98,13 +73,6 @@ public class SourceInfo implements Serializable {
       "Unknown source", true);
 
   /**
-   * Collecting mutation data is expensive in terms of additional objects and
-   * string literals and only of interest to compiler hackers, so we'll just
-   * normally have it disabled.
-   */
-  private static final boolean COLLECT_MUTATIONS = Boolean.getBoolean("gwt.soyc.collectMutations");
-
-  /**
    * Micro-opt for {@link #makeChild(Class, String)}.
    */
   private static final SourceInfo[] EMPTY_SOURCEINFO_ARRAY = new SourceInfo[0];
@@ -117,13 +85,7 @@ public class SourceInfo implements Serializable {
   /**
    * Any Correlation associated with the SourceInfo.
    */
-  private final Set<Correlation> allCorrelations;
-
-  /**
-   * Holds Mutation objects if the compiler is configured to collect mutations.
-   */
-  private final List<Mutation> mutations = COLLECT_MUTATIONS
-      ? new ArrayList<Mutation>() : null;
+  private final List<Correlation> allCorrelations;
 
   /**
    * Holds the origin data for the SourceInfo.
@@ -144,41 +106,40 @@ public class SourceInfo implements Serializable {
 
     // Be very aggressive in not allocating collections that we don't need.
     if (accumulateData) {
-      allCorrelations = new HashSet<Correlation>();
+      allCorrelations = new ArrayList<Correlation>();
       primaryCorrelations = new EnumMap<Axis, Correlation>(Axis.class);
-      // Don't use addCorrelation because of the immutable subclasses
-      Correlation originCorrelation = Correlation.by(origin);
-      allCorrelations.add(originCorrelation);
-      primaryCorrelations.put(Axis.ORIGIN, originCorrelation);
     } else {
       allCorrelations = null;
       primaryCorrelations = null;
     }
   }
 
+  private boolean isAlreadyInAllCorrelations(Correlation c) {
+    //make sure this correlations is not yet in the allCorrelations list
+    boolean alreadyThere = false;
+    Iterator<Correlation> it = allCorrelations.iterator();
+    while((alreadyThere == false)&&(it.hasNext())){
+      if (it.next().equals(c)){
+        alreadyThere = true;
+      }
+    }
+    return alreadyThere;
+  }
+
   private SourceInfo(SourceInfo parent, String mutation, String caller,
       SourceInfo... additionalAncestors) {
     assert parent != null;
-    assert mutation != null;
     assert caller != null;
-
     this.accumulateData = parent.accumulateData;
     this.origin = parent.origin;
-
     if (accumulateData) {
-      this.allCorrelations = new HashSet<Correlation>(parent.allCorrelations);
+      this.allCorrelations = new ArrayList<Correlation>(parent.allCorrelations);
       this.primaryCorrelations = new EnumMap<Axis, Correlation>(
           parent.primaryCorrelations);
     } else {
       allCorrelations = null;
       primaryCorrelations = null;
     }
-
-    if (COLLECT_MUTATIONS) {
-      this.mutations.addAll(parent.mutations);
-      this.mutations.add(new Mutation(mutation, caller));
-    }
-
     merge(additionalAncestors);
   }
 
@@ -189,9 +150,9 @@ public class SourceInfo implements Serializable {
     if (!accumulateData) {
       return;
     }
-
-    allCorrelations.add(c);
-
+    if (! isAlreadyInAllCorrelations(c)){
+      allCorrelations.add(c);
+    }    
     if (!primaryCorrelations.containsKey(c.getAxis())) {
       primaryCorrelations.put(c.getAxis(), c);
     }
@@ -222,21 +183,24 @@ public class SourceInfo implements Serializable {
    * Returns all Correlations applied to this SourceInfo, its parent, additional
    * ancestor SourceInfo, and any supertype SourceInfos.
    */
-  public Set<Correlation> getAllCorrelations() {
-    return accumulateData ? allCorrelations
-        : Collections.<Correlation> emptySet();
+  public List<Correlation> getAllCorrelations() {
+    if (accumulateData){
+      return allCorrelations;
+    }
+    else{
+      return Collections.<Correlation> emptyList();
+    }
   }
 
   /**
    * Returns all Correlations along a given axis applied to this SourceInfo, its
    * parent, additional ancestor SourceInfo, and any supertype SourceInfos.
    */
-  public Set<Correlation> getAllCorrelations(Axis axis) {
+  public List<Correlation> getAllCorrelations(Axis axis) {
     if (!accumulateData) {
-      return Collections.emptySet();
+      return Collections.emptyList();
     }
-
-    Set<Correlation> toReturn = new HashSet<Correlation>();
+    List<Correlation> toReturn = new ArrayList<Correlation>();
     for (Correlation c : getAllCorrelations()) {
       if (c.getAxis() == axis) {
         toReturn.add(c);
@@ -251,20 +215,6 @@ public class SourceInfo implements Serializable {
 
   public String getFileName() {
     return getOrigin().getFileName();
-  }
-
-  /**
-   * Returns a summary of the mutations applied to the SourceInfo. It it
-   * expensive to collect mutation data, so this method will only return useful
-   * values if the <code>gwt.jjs.collectMutations</code> system property is
-   * defined.
-   */
-  public List<Mutation> getMutations() {
-    if (COLLECT_MUTATIONS) {
-      return mutations;
-    } else {
-      return Collections.emptyList();
-    }
   }
 
   public SourceOrigin getOrigin() {
@@ -338,17 +288,17 @@ public class SourceInfo implements Serializable {
         continue;
       }
 
-      allCorrelations.addAll(info.getAllCorrelations());
+      for (Correlation c : info.getAllCorrelations()){
+        if (! isAlreadyInAllCorrelations(c)){
+          allCorrelations.add(c);
+        }
+      }
 
       if (primaryCorrelations.size() < Axis.values().length) {
         EnumMap<Axis, Correlation> copy = new EnumMap<Axis, Correlation>(
             info.primaryCorrelations);
         copy.keySet().removeAll(primaryCorrelations.keySet());
         primaryCorrelations.putAll(copy);
-      }
-
-      if (COLLECT_MUTATIONS) {
-        mutations.addAll(0, info.getMutations());
       }
     }
   }

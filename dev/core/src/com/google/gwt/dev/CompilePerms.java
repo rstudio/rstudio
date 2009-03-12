@@ -18,6 +18,7 @@ package com.google.gwt.dev;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.CompileTaskRunner.CompileTask;
+import com.google.gwt.dev.GWTCompiler.GWTCompilerOptionsImpl;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.util.FileBackedObject;
@@ -182,7 +183,7 @@ public class CompilePerms {
       Permutation permutation, UnifiedAst unifiedAst)
       throws UnableToCompleteException {
     return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
-        permutation.getRebindAnswers());
+        permutation.getRebindAnswers(), permutation.getId());
   }
 
   /**

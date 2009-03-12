@@ -17,13 +17,10 @@ package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Story;
-import com.google.gwt.dev.jjs.SourceInfo.Mutation;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 import java.util.SortedSet;
 
 /**
@@ -46,18 +43,16 @@ public class StoryImpl implements Story, Serializable {
   private final int length;
   private final String literalDescription;
   private final SortedSet<Member> members;
-  private final List<String> mutations;
   private final SortedSet<Origin> origins;
 
   /**
    * Standard constructor. This constructor will create unmodifiable versions of
    * the collections passed into it.
    */
-  public StoryImpl(int id, SortedSet<Member> members, List<Mutation> mutations,
+  public StoryImpl(int id, SortedSet<Member> members, 
       SortedSet<Origin> origins, String literalDescription, int fragment,
       int length) {
     assert members != null;
-    assert mutations != null;
     assert origins != null;
     assert fragment >= 0;
     assert length > 0;
@@ -69,12 +64,6 @@ public class StoryImpl implements Story, Serializable {
     this.literalDescription = literalDescription == null ? null
         : literalDescription.intern();
     this.members = Collections.unmodifiableSortedSet(members);
-
-    List<String> mutableMutations = new ArrayList<String>(mutations.size());
-    for (Mutation m : mutations) {
-      mutableMutations.add(m.getDescription() + " by " + m.getCaller());
-    }
-    this.mutations = Collections.unmodifiableList(mutableMutations);
     this.origins = Collections.unmodifiableSortedSet(origins);
   }
 
@@ -89,7 +78,6 @@ public class StoryImpl implements Story, Serializable {
     this.length = length;
     this.literalDescription = other.literalDescription;
     this.members = other.members;
-    this.mutations = other.mutations;
     this.origins = other.origins;
   }
 
@@ -126,10 +114,6 @@ public class StoryImpl implements Story, Serializable {
 
   public SortedSet<Member> getMembers() {
     return members;
-  }
-
-  public List<String> getMutations() {
-    return mutations;
   }
 
   public SortedSet<Origin> getSourceOrigin() {

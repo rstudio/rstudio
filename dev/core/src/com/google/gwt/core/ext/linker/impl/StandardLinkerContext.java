@@ -269,7 +269,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       FileBackedObject<PermutationResult> resultFile)
       throws UnableToCompleteException {
     PermutationResult permutationResult = resultFile.newInstance(logger);
-
     String strongName = Util.computeStrongName(Util.getBytes(permutationResult.getJs()));
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
@@ -280,10 +279,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       // Add any other Permutations
       ArtifactSet otherArtifacts = permutationResult.getArtifacts();
       if (otherArtifacts != null) {
-        // Fixups for StandardCompilationAnalysis objects
-        for (StandardCompilationAnalysis a : otherArtifacts.find(StandardCompilationAnalysis.class)) {
-          a.setCompilationResult(result);
-        }
         artifacts.addAll(otherArtifacts);
       }
     }
@@ -460,6 +455,18 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
         outFile.setLastModified(artifact.getLastModified());
       }
+    }
+    for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)){
+        TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
+            "Emitting soyc resources.", null);
+        File depFile = new File(extraPath + "/soycReport", soycFiles.getDepFile().getName());
+        Util.copy(artifactLogger, soycFiles.getDepFile(), depFile);
+
+        File storiesFile = new File(extraPath + "/soycReport", soycFiles.getStoriesFile().getName());
+        Util.copy(artifactLogger, soycFiles.getStoriesFile(), storiesFile);
+
+        File splitPointsFile = new File(extraPath + "/soycReport", soycFiles.getSplitPointsFile().getName());
+        Util.copy(artifactLogger, soycFiles.getSplitPointsFile(), splitPointsFile);
     }
   }
 
