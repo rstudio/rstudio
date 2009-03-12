@@ -20,7 +20,7 @@ import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestSetFactory.SerializableSubclass;
 
 /**
- * Tests the following scenarios:
+ * Tests the following scenarios.
  * <ul>
  * <li>Manually serializable types use their custom field serializer</li>
  * <li>Subtypes of manually serializable types that are not auto-serializable
@@ -40,7 +40,7 @@ public class CustomFieldSerializerTest extends GWTTestCase {
 
   /**
    * Test that custom field serializers do not make their subclasses
-   * serializable
+   * serializable.
    */
   public void testCustomFieldSerializabilityInheritance() {
     delayTestFinish(TEST_DELAY);
@@ -60,7 +60,7 @@ public class CustomFieldSerializerTest extends GWTTestCase {
   }
 
   /**
-   * Tests that the custom field serializers are actually called
+   * Tests that the custom field serializers are actually called.
    */
   public void testCustomFieldSerialization() {
     delayTestFinish(TEST_DELAY);
@@ -82,8 +82,31 @@ public class CustomFieldSerializerTest extends GWTTestCase {
   }
 
   /**
+   * Test that custom serializers that call readObject() inside instantiate (as
+   * is required for most immutable classes) work.
+   */
+  public void testSerializableImmutables() {
+    delayTestFinish(TEST_DELAY);
+
+    CustomFieldSerializerTestServiceAsync service = getServiceAsync();
+    service.echo(
+        CustomFieldSerializerTestSetFactory.createSerializableImmutablesArray(),
+        new AsyncCallback() {
+          public void onFailure(Throwable caught) {
+            fail("Could not serialize/deserialize immutable classes: " + caught);
+          }
+
+          public void onSuccess(Object result) {
+            assertNotNull(result);
+            assertTrue(CustomFieldSerializerTestSetValidator.isValid((ManuallySerializedImmutableClass[]) result));
+            finishTest();
+          }
+        });
+  }
+
+  /**
    * Test that serializable subclasses of classes that have custom field
-   * serializers serialize and deserialize correctly
+   * serializers serialize and deserialize correctly.
    */
   public void testSerializableSubclasses() {
     delayTestFinish(TEST_DELAY);
@@ -99,31 +122,6 @@ public class CustomFieldSerializerTest extends GWTTestCase {
           public void onSuccess(Object result) {
             assertNotNull(result);
             assertTrue(CustomFieldSerializerTestSetValidator.isValid((SerializableSubclass) result));
-            finishTest();
-          }
-        });
-  }
-
-  /**
-   * Test that custom serializers that call readObject() inside instantiate
-   * (as is required for most immutable classes) work.
-   */
-  public void testSerializableImmutables() {
-    delayTestFinish(TEST_DELAY);
-
-    CustomFieldSerializerTestServiceAsync service = getServiceAsync();
-    service.echo(
-        CustomFieldSerializerTestSetFactory.createSerializableImmutablesArray(),
-        new AsyncCallback() {
-          public void onFailure(Throwable caught) {
-            fail("Could not serialize/deserialize immutable classes: " +
-                caught);
-          }
-
-          public void onSuccess(Object result) {
-            assertNotNull(result);
-            assertTrue(CustomFieldSerializerTestSetValidator.isValid(
-                (ManuallySerializedImmutableClass[]) result));
             finishTest();
           }
         });

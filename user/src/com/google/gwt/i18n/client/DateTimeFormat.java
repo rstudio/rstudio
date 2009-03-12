@@ -434,10 +434,6 @@ public class DateTimeFormat {
     return new DateTimeFormat(pattern, getDefaultDateTimeConstants());
   }
 
-  private static DateTimeConstants getDefaultDateTimeConstants() {
-    return LocaleInfo.getCurrentLocale().getDateTimeConstants();
-  }
-
   /**
    * Retrieve the DateTimeFormat object for full date format. The pattern for
    * this format is predefined for each locale.
@@ -608,6 +604,10 @@ public class DateTimeFormat {
       cachedShortTimeFormat = new DateTimeFormat(pattern);
     }
     return cachedShortTimeFormat;
+  }
+
+  private static DateTimeConstants getDefaultDateTimeConstants() {
+    return LocaleInfo.getCurrentLocale().getDateTimeConstants();
   }
 
   private final ArrayList<PatternPart> patternParts = new ArrayList<PatternPart>();
