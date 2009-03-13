@@ -702,6 +702,7 @@ public class JUnitShell extends GWTShell {
           AssertionFailedError newException = new AssertionFailedError(msg
               + "\n" + exception.getMessage());
           newException.setStackTrace(exception.getStackTrace());
+          newException.initCause(exception.getCause());
           exception = newException;
         } else {
           exception = new RuntimeException(msg, exception);
