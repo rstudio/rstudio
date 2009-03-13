@@ -24,10 +24,12 @@ import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
+import java.net.URI;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -44,7 +46,7 @@ public class SymbolMapsLinker extends AbstractLinker {
    * This value is appended to the strong name of the CompilationResult to form
    * the symbol map's filename.
    */
-  public static final String STRONG_NAME_SUFFIX = "_symbolMap.properties";
+  public static final String STRONG_NAME_SUFFIX = ".symbolMap";
 
   @Override
   public String getDescription() {
@@ -107,12 +109,32 @@ public class SymbolMapsLinker extends AbstractLinker {
       pw.println(" }");
     }
 
-    for (Map.Entry<String, String> entry : result.getSymbolMap().entrySet()) {
-      // Don't use an actual Properties object because it emits a timestamp
-      pw.print(entry.getKey());
-      pw.print(" = ");
+    pw.println("# jsName, jsniIdent, className, memberName, sourceUri, sourceLine");
+    for (Map.Entry<SymbolData, String> entry : result.getSymbolMap().entrySet()) {
+      SymbolData symbol = entry.getKey();
+
       pw.print(entry.getValue());
+
+      print(pw, symbol.getJsniIdent());
+      print(pw, symbol.getClassName());
+      print(pw, symbol.getMemberName());
+      print(pw, symbol.getSourceUri());
+      print(pw, String.valueOf(symbol.getSourceLine()));
       pw.println();
+    }
+  }
+
+  private void print(PrintWriter pw, String value) {
+    pw.print(",");
+    if (value != null) {
+      pw.print(value);
+    }
+  }
+
+  private void print(PrintWriter pw, URI uri) {
+    pw.print(",");
+    if (uri != null) {
+      pw.print(uri.toASCIIString());
     }
   }
 }

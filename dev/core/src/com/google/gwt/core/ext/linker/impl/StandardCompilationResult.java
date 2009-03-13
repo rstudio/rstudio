@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
+import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.util.FileBackedObject;
 
@@ -74,7 +75,7 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final FileBackedObject<PermutationResult> resultFile;
 
-  private transient SoftReference<SortedMap<String, String>> symbolMap;
+  private transient SoftReference<SortedMap<SymbolData, String>> symbolMap;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
@@ -126,8 +127,8 @@ public class StandardCompilationResult extends CompilationResult {
   }
 
   @Override
-  public SortedMap<String, String> getSymbolMap() {
-    SortedMap<String, String> toReturn = null;
+  public SortedMap<SymbolData, String> getSymbolMap() {
+    SortedMap<SymbolData, String> toReturn = null;
     if (symbolMap != null) {
       toReturn = symbolMap.get();
     }
@@ -135,7 +136,7 @@ public class StandardCompilationResult extends CompilationResult {
     if (toReturn == null) {
       PermutationResult result = loadPermutationResult();
       toReturn = result.getSymbolMap();
-      symbolMap = new SoftReference<SortedMap<String, String>>(toReturn);
+      symbolMap = new SoftReference<SortedMap<SymbolData, String>>(toReturn);
     }
 
     return toReturn;

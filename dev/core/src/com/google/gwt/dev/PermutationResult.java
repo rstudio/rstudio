@@ -16,6 +16,7 @@
 package com.google.gwt.dev;
 
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.SymbolData;
 
 import java.io.Serializable;
 import java.util.SortedMap;
@@ -38,5 +39,5 @@ public interface PermutationResult extends Serializable {
   /**
    * The symbol map for the permutation.
    */
-  SortedMap<String, String> getSymbolMap();
+  SortedMap<SymbolData, String> getSymbolMap();
 }

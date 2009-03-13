@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
+import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.SplitPointRecorder;
@@ -120,10 +121,10 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final String[] js;
-    private final SortedMap<String, String> symbolMap;
+    private final SortedMap<SymbolData, String> symbolMap;
 
     public PermutationResultImpl(String[] js,
-        SortedMap<String, String> symbolMap) {
+        SortedMap<SymbolData, String> symbolMap) {
       this.js = js;
       this.symbolMap = symbolMap;
     }
@@ -136,7 +137,7 @@ public class JavaToJavaScriptCompiler {
       return js;
     }
 
-    public SortedMap<String, String> getSymbolMap() {
+    public SortedMap<SymbolData, String> getSymbolMap() {
       return symbolMap;
     }
   }
@@ -167,7 +168,8 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
       JJSOptions options = unifiedAst.getOptions();
-      Map<String, JsName> symbolTable = new HashMap<String, JsName>();
+      Map<SymbolData, JsName> symbolTable = new TreeMap<SymbolData, JsName>(
+          new SymbolData.ClassIdentComparator());
 
       ResolveRebinds.exec(jprogram, rebindAnswers);
 
@@ -278,7 +280,7 @@ public class JavaToJavaScriptCompiler {
         }
       }
 
-      SortedMap<String, String> symbolMap = makeSymbolMap(symbolTable);
+      SortedMap<SymbolData, String> symbolMap = makeSymbolMap(symbolTable);
 
       PermutationResult toReturn = new PermutationResultImpl(js, symbolMap);
       if (sourceInfoMaps != null) {
@@ -788,12 +790,15 @@ public class JavaToJavaScriptCompiler {
     return amp.makeStatement();
   }
 
-  private static SortedMap<String, String> makeSymbolMap(
-      Map<String, JsName> symbolTable) {
+  private static SortedMap<SymbolData, String> makeSymbolMap(
+      Map<SymbolData, JsName> symbolTable) {
 
-    SortedMap<String, String> toReturn = new TreeMap<String, String>();
+    SortedMap<SymbolData, String> toReturn = new TreeMap<SymbolData, String>(
+        new SymbolData.ClassIdentComparator());
 
-    for (Map.Entry<String, JsName> entry : symbolTable.entrySet()) {
+    for (Map.Entry<SymbolData, JsName> entry : symbolTable.entrySet()) {
+      assert !toReturn.containsKey(entry.getKey()) : "Duplicate key for "
+          + entry.getKey().toString();
       toReturn.put(entry.getKey(), entry.getValue().getShortIdent());
     }
 

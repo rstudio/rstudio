@@ -15,7 +15,10 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
+import com.google.gwt.core.ext.linker.SymbolData;
+import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.jjs.Correlation;
+import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -373,12 +376,14 @@ public class GenerateJavaScriptAST {
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
-      assert !symbolTable.containsKey(x.getName());
-      symbolTable.put(x.getName(), jsName);
+      SymbolData symbolData = StandardSymbolData.forClass(x.getName(),
+          x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine());
+      assert !symbolTable.containsKey(symbolData);
+      symbolTable.put(symbolData, jsName);
     }
 
-    private <T extends HasEnclosingType & HasName> void recordSymbol(T x,
-        JsName jsName) {
+    private <T extends HasEnclosingType & HasName & HasSourceInfo> void recordSymbol(
+        T x, JsName jsName) {
       StringBuilder sb = new StringBuilder();
       sb.append(x.getEnclosingType().getName());
       sb.append("::");
@@ -405,10 +410,13 @@ public class GenerateJavaScriptAST {
         sb.append(')');
       }
 
-      assert !symbolTable.containsKey(sb.toString()) : "Duplicate symbol "
+      SymbolData symbolData = StandardSymbolData.forMember(
+          x.getEnclosingType().getName(), x.getName(), sb.toString(),
+          x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine());
+      assert !symbolTable.containsKey(symbolData) : "Duplicate symbol "
           + "recorded " + jsName.getIdent() + " for " + x.getName()
           + " and key " + sb.toString();
-      symbolTable.put(sb.toString(), jsName);
+      symbolTable.put(symbolData, jsName);
     }
   }
 
@@ -1796,7 +1804,7 @@ public class GenerateJavaScriptAST {
   }
 
   public static JavaToJavaScriptMap exec(JProgram program, JsProgram jsProgram,
-      JsOutputOption output, Map<String, JsName> symbolTable) {
+      JsOutputOption output, Map<SymbolData, JsName> symbolTable) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
         program, jsProgram, output, symbolTable);
     return generateJavaScriptAST.execImpl();
@@ -1870,10 +1878,10 @@ public class GenerateJavaScriptAST {
   /**
    * Maps JsNames to machine-usable identifiers.
    */
-  private final Map<String, JsName> symbolTable;
+  private final Map<SymbolData, JsName> symbolTable;
 
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
-      JsOutputOption output, Map<String, JsName> symbolTable) {
+      JsOutputOption output, Map<SymbolData, JsName> symbolTable) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;
