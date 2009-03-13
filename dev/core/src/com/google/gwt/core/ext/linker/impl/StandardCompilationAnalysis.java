@@ -18,6 +18,7 @@ package com.google.gwt.core.ext.linker.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationAnalysis;
+
 import java.io.File;
 
 /**
@@ -28,29 +29,29 @@ import java.io.File;
 public class StandardCompilationAnalysis extends CompilationAnalysis {
 
   /**
-   *  File containing method-level control-flow dependencies (corresponding to the current report)
+   * File containing method-level control-flow dependencies (corresponding to
+   * the current report).
    */
   private File depFile;
-  
+
   /**
-   * File containing stories
-   */
-  private File storiesFile;
-  
-  /**
-   * File containing split points
+   * File containing split points.
    */
   private File splitPointsFile;
-  
+
+  /**
+   * File containing stories.
+   */
+  private File storiesFile;
+
   /**
    * Constructed by PermutationCompiler.
    */
-  public StandardCompilationAnalysis(TreeLogger logger, File depFile, File storiesFile, File splitPointsFile)
-      throws UnableToCompleteException {
+  public StandardCompilationAnalysis(TreeLogger logger, File depFile,
+      File storiesFile, File splitPointsFile) throws UnableToCompleteException {
     super(StandardLinkerContext.class);
-    logger = logger.branch(TreeLogger.INFO,
-        "Creating CompilationAnalysis");
-    
+    logger = logger.branch(TreeLogger.INFO, "Creating CompilationAnalysis");
+
     this.depFile = depFile;
     this.storiesFile = storiesFile;
     this.splitPointsFile = splitPointsFile;
@@ -64,12 +65,12 @@ public class StandardCompilationAnalysis extends CompilationAnalysis {
   }
 
   @Override
-  public File getStoriesFile() {
-    return storiesFile;
+  public File getSplitPointsFile() {
+    return splitPointsFile;
   }
 
   @Override
-  public File getSplitPointsFile() {
-    return splitPointsFile;
+  public File getStoriesFile() {
+    return storiesFile;
   }
 }

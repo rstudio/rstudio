@@ -29,6 +29,9 @@ import java.io.PrintWriter;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * Records split points to a file for SOYC reports.
+ */
 public class SplitPointRecorderImpl implements SplitPointRecorder {
 
   private FileOutputStream stream;
@@ -37,7 +40,7 @@ public class SplitPointRecorderImpl implements SplitPointRecorder {
   private HtmlTextOutput htmlOut;
 
   /**
-   * Used to record (runAsync) split points of a program
+   * Used to record (runAsync) split points of a program.
    * 
    * @param jprogram
    * @param workDir
@@ -47,8 +50,9 @@ public class SplitPointRecorderImpl implements SplitPointRecorder {
    */
   public File recordSplitPoints(JProgram jprogram, File workDir,
       int permutationId, TreeLogger logger) {
-    
-    logger = logger.branch(TreeLogger.INFO, "Creating Split Point Map file for SOYC");
+
+    logger = logger.branch(TreeLogger.INFO,
+        "Creating Split Point Map file for SOYC");
 
     File splitPointsFile = new File(workDir, "splitPoints"
         + Integer.toString(permutationId) + ".xml.gz");
@@ -97,14 +101,13 @@ public class SplitPointRecorderImpl implements SplitPointRecorder {
 
       Utility.close(writer);
       pw.close();
-      
+
       logger.log(TreeLogger.INFO, "Done");
-      
+
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);
     }
 
     return splitPointsFile;
-
   }
 }

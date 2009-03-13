@@ -114,18 +114,6 @@ public class SourceInfo implements Serializable {
     }
   }
 
-  private boolean isAlreadyInAllCorrelations(Correlation c) {
-    //make sure this correlations is not yet in the allCorrelations list
-    boolean alreadyThere = false;
-    Iterator<Correlation> it = allCorrelations.iterator();
-    while((alreadyThere == false)&&(it.hasNext())){
-      if (it.next().equals(c)){
-        alreadyThere = true;
-      }
-    }
-    return alreadyThere;
-  }
-
   private SourceInfo(SourceInfo parent, String mutation, String caller,
       SourceInfo... additionalAncestors) {
     assert parent != null;
@@ -150,9 +138,9 @@ public class SourceInfo implements Serializable {
     if (!accumulateData) {
       return;
     }
-    if (! isAlreadyInAllCorrelations(c)){
+    if (!isAlreadyInAllCorrelations(c)) {
       allCorrelations.add(c);
-    }    
+    }
     if (!primaryCorrelations.containsKey(c.getAxis())) {
       primaryCorrelations.put(c.getAxis(), c);
     }
@@ -184,10 +172,9 @@ public class SourceInfo implements Serializable {
    * ancestor SourceInfo, and any supertype SourceInfos.
    */
   public List<Correlation> getAllCorrelations() {
-    if (accumulateData){
+    if (accumulateData) {
       return allCorrelations;
-    }
-    else{
+    } else {
       return Collections.<Correlation> emptyList();
     }
   }
@@ -288,8 +275,8 @@ public class SourceInfo implements Serializable {
         continue;
       }
 
-      for (Correlation c : info.getAllCorrelations()){
-        if (! isAlreadyInAllCorrelations(c)){
+      for (Correlation c : info.getAllCorrelations()) {
+        if (!isAlreadyInAllCorrelations(c)) {
           allCorrelations.add(c);
         }
       }
@@ -306,5 +293,17 @@ public class SourceInfo implements Serializable {
   @Override
   public String toString() {
     return origin.toString();
+  }
+
+  private boolean isAlreadyInAllCorrelations(Correlation c) {
+    // make sure this correlations is not yet in the allCorrelations list
+    boolean alreadyThere = false;
+    Iterator<Correlation> it = allCorrelations.iterator();
+    while ((alreadyThere == false) && (it.hasNext())) {
+      if (it.next().equals(c)) {
+        alreadyThere = true;
+      }
+    }
+    return alreadyThere;
   }
 }

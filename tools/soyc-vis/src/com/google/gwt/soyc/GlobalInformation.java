@@ -21,6 +21,9 @@ import java.util.TreeMap;
 import java.util.HashSet;
 import java.util.TreeSet;
 
+/**
+ * Information global to the entire SOYC report generator.
+ */
 public class GlobalInformation {
 
   public static Boolean displayDependencies = false;

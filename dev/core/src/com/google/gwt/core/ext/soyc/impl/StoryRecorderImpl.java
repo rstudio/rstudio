@@ -17,9 +17,13 @@
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.soyc.ClassMember;
+import com.google.gwt.core.ext.soyc.FunctionMember;
+import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.Story;
 import com.google.gwt.core.ext.soyc.StoryRecorder;
+import com.google.gwt.core.ext.soyc.Story.Origin;
 import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.Correlation.Axis;
@@ -30,10 +34,6 @@ import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.util.HtmlTextOutput;
 import com.google.gwt.util.tools.Utility;
-import com.google.gwt.core.ext.soyc.ClassMember;
-import com.google.gwt.core.ext.soyc.FunctionMember;
-import com.google.gwt.core.ext.soyc.Member;
-import com.google.gwt.core.ext.soyc.Story.Origin;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -51,19 +51,53 @@ import java.util.Stack;
 import java.util.TreeSet;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * Records {@link Story}s to a file for SOYC.
+ */
 public class StoryRecorderImpl implements StoryRecorder {
 
-  private FileOutputStream stream;
-  private OutputStreamWriter writer;
-  private PrintWriter pw;
-  private HtmlTextOutput htmlOut;
+  /**
+   * Associates a SourceInfo with a Range.
+   */
+  private static class RangeInfo {
+    public final SourceInfo info;
+    public final Range range;
 
-  private Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
-  private String[] js;
+    public RangeInfo(Range range, SourceInfo info) {
+      this.range = range;
+      this.info = info;
+    }
+  }
+
   private int curHighestFragment = 0;
+  private HtmlTextOutput htmlOut;
+  private String[] js;
 
   /**
-   * Used to record dependencies of a program
+   * Used by {@link #popAndRecord(Stack)} to determine start and end ranges.
+   */
+  private int lastEnd = 0;
+  /**
+   * This is a class field for convenience, but it should be deleted at the end
+   * of the constructor.
+   */
+  private transient Map<Correlation, Member> membersByCorrelation = new IdentityHashMap<Correlation, Member>();
+  private PrintWriter pw;
+
+  /**
+   * This is a class field for convenience, but it should be deleted at the end
+   * of the constructor.
+   */
+  private transient Map<SourceInfo, StoryImpl> storyCache = new IdentityHashMap<SourceInfo, StoryImpl>();
+
+  private Map<Story, Integer> storyIds = new HashMap<Story, Integer>();
+
+  private FileOutputStream stream;
+
+  private OutputStreamWriter writer;
+
+  /**
+   * Used to record dependencies of a program.
    * 
    * @param jprogram
    * @param workDir
@@ -145,45 +179,15 @@ public class StoryRecorderImpl implements StoryRecorder {
 
       Utility.close(writer);
       pw.close();
-     
+
       logger.log(TreeLogger.INFO, "Done");
-      
+
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);
     }
 
     return storiesFile;
   }
-
-  /**
-   * Associates a SourceInfo with a Range.
-   */
-  private static class RangeInfo {
-    public final SourceInfo info;
-    public final Range range;
-
-    public RangeInfo(Range range, SourceInfo info) {
-      this.range = range;
-      this.info = info;
-    }
-  }
-
-  /**
-   * Used by {@link #popAndRecord(Stack)} to determine start and end ranges.
-   */
-  private int lastEnd = 0;
-
-  /**
-   * This is a class field for convenience, but it should be deleted at the end
-   * of the constructor.
-   */
-  private transient Map<SourceInfo, StoryImpl> storyCache = new IdentityHashMap<SourceInfo, StoryImpl>();
-
-  /**
-   * This is a class field for convenience, but it should be deleted at the end
-   * of the constructor.
-   */
-  private transient Map<Correlation, Member> membersByCorrelation = new IdentityHashMap<Correlation, Member>();
 
   private void analyzeFragment(MemberFactory memberFactory,
       TreeSet<ClassMember> classesMutable,
@@ -287,89 +291,8 @@ public class StoryRecorderImpl implements StoryRecorder {
     assert dependencyOrder[0].getEnd() == lastEnd;
   }
 
-  /**
-   * Remove an element from the RangeInfo stack and stare a new StoryImpl with
-   * the right length, possibly sub-dividing the super-enclosing Range in the
-   * process.
-   */
-  private void popAndRecord(Stack<RangeInfo> dependencyScope, int fragment) {
-    RangeInfo rangeInfo = dependencyScope.pop();
-    Range toStore = rangeInfo.range;
-
-    /*
-     * Make a new Range for the gap between the popped Range and whatever we
-     * last stored.
-     */
-    if (lastEnd < toStore.getStart()) {
-      Range newRange = new Range(lastEnd, toStore.getStart());
-      assert !dependencyScope.isEmpty();
-
-      SourceInfo gapInfo = dependencyScope.peek().info;
-      recordStory(gapInfo, fragment, newRange.length(), newRange);
-      
-      lastEnd += newRange.length();
-    }
-
-    /*
-     * Store as much of the current Range as we haven't previously stored. The
-     * Max.max() is there to take care of the tail end of Ranges that have had a
-     * sub-range previously stored.
-     */
-    if (lastEnd < toStore.getEnd()) {
-      Range newRange = new Range(Math.max(lastEnd, toStore.getStart()),
-          toStore.getEnd());
-      recordStory(rangeInfo.info, fragment, newRange.length(), newRange);
-      lastEnd += newRange.length();
-    }
-  }
-
-  private void recordStory(SourceInfo info, int fragment, int length,
-      Range range) {
-    assert storyCache != null;
-
-    if (fragment > curHighestFragment) {
-      curHighestFragment = fragment;
-    }
-
-    StoryImpl theStory;
-    if (!storyCache.containsKey(info)) {
-
-      SortedSet<Member> members = new TreeSet<Member>(
-          Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
-
-      if (info != null) {
-        for (Correlation c : info.getAllCorrelations()) {
-          Member m = membersByCorrelation.get(c);
-          if (m != null) {
-            members.add(m);
-          }
-        }
-      }
-
-      SortedSet<Origin> origins = new TreeSet<Origin>();
-      for (Correlation c : info.getAllCorrelations(Axis.ORIGIN)) {
-        origins.add(new OriginImpl(c.getOrigin()));
-      }
-
-      String literalType = null;
-      Correlation literalCorrelation = info.getPrimaryCorrelation(Axis.LITERAL);
-      if (literalCorrelation != null) {
-        literalType = literalCorrelation.getLiteral().getDescription();
-      }
-
-      theStory = new StoryImpl(storyCache.size(), members, origins,
-          literalType, fragment, length);
-      storyCache.put(info, theStory);
-    } else {
-      // Use a copy-constructed instance
-      theStory = new StoryImpl(storyCache.get(info), length);
-    }
-
-    emitStory(theStory, range);
-  }
-
   private void emitStory(StoryImpl story, Range range) {
-    
+
     int storyNum;
     if (storyIds.containsKey(story)) {
       storyNum = storyIds.get(story);
@@ -481,5 +404,86 @@ public class StoryRecorderImpl implements StoryRecorder {
     escaped = escaped.replaceAll("\\\"", "&quot;");
     // escaped = escaped.replaceAll("\\'", "&apos;");
     return escaped;
+  }
+
+  /**
+   * Remove an element from the RangeInfo stack and stare a new StoryImpl with
+   * the right length, possibly sub-dividing the super-enclosing Range in the
+   * process.
+   */
+  private void popAndRecord(Stack<RangeInfo> dependencyScope, int fragment) {
+    RangeInfo rangeInfo = dependencyScope.pop();
+    Range toStore = rangeInfo.range;
+
+    /*
+     * Make a new Range for the gap between the popped Range and whatever we
+     * last stored.
+     */
+    if (lastEnd < toStore.getStart()) {
+      Range newRange = new Range(lastEnd, toStore.getStart());
+      assert !dependencyScope.isEmpty();
+
+      SourceInfo gapInfo = dependencyScope.peek().info;
+      recordStory(gapInfo, fragment, newRange.length(), newRange);
+
+      lastEnd += newRange.length();
+    }
+
+    /*
+     * Store as much of the current Range as we haven't previously stored. The
+     * Max.max() is there to take care of the tail end of Ranges that have had a
+     * sub-range previously stored.
+     */
+    if (lastEnd < toStore.getEnd()) {
+      Range newRange = new Range(Math.max(lastEnd, toStore.getStart()),
+          toStore.getEnd());
+      recordStory(rangeInfo.info, fragment, newRange.length(), newRange);
+      lastEnd += newRange.length();
+    }
+  }
+
+  private void recordStory(SourceInfo info, int fragment, int length,
+      Range range) {
+    assert storyCache != null;
+
+    if (fragment > curHighestFragment) {
+      curHighestFragment = fragment;
+    }
+
+    StoryImpl theStory;
+    if (!storyCache.containsKey(info)) {
+
+      SortedSet<Member> members = new TreeSet<Member>(
+          Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
+
+      if (info != null) {
+        for (Correlation c : info.getAllCorrelations()) {
+          Member m = membersByCorrelation.get(c);
+          if (m != null) {
+            members.add(m);
+          }
+        }
+      }
+
+      SortedSet<Origin> origins = new TreeSet<Origin>();
+      for (Correlation c : info.getAllCorrelations(Axis.ORIGIN)) {
+        origins.add(new OriginImpl(c.getOrigin()));
+      }
+
+      String literalType = null;
+      Correlation literalCorrelation = info.getPrimaryCorrelation(Axis.LITERAL);
+      if (literalCorrelation != null) {
+        literalType = literalCorrelation.getLiteral().getDescription();
+      }
+
+      theStory = new StoryImpl(storyCache.size(), members, origins,
+          literalType, fragment, length);
+      storyCache.put(info, theStory);
+    } else {
+      // Use a copy-constructed instance
+      theStory = new StoryImpl(storyCache.get(info), length);
+    }
+
+    emitStory(theStory, range);
   }
 }

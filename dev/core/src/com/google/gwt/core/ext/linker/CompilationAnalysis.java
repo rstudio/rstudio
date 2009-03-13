@@ -16,8 +16,7 @@
 package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
-import com.google.gwt.core.ext.soyc.Range;
-import com.google.gwt.core.ext.soyc.Story;
+
 import java.io.File;
 
 /**
@@ -35,68 +34,68 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
   public abstract File getDepFile();
 
   /**
-   * @return a file of stories
-   */
-  public abstract File getStoriesFile();
-
-  /**
    * @return a file of split points
    */
   public abstract File getSplitPointsFile();
 
+  /**
+   * @return a file of stories
+   */
+  public abstract File getStoriesFile();
+
+  @Override
+  public final int hashCode() {
+
+    assert (getDepFile() != null);
+    assert (getStoriesFile() != null);
+    assert (getSplitPointsFile() != null);
+
+    return 17 * (37 + getDepFile().getName().hashCode())
+        + (37 + getStoriesFile().getName().hashCode())
+        + (37 + getSplitPointsFile().getName().hashCode());
+  }
+
   @Override
   protected final int compareToComparableArtifact(CompilationAnalysis o) {
-    
-    if ((getDepFile() == null)&&(o.getDepFile()==null)){
+
+    if ((getDepFile() == null) && (o.getDepFile() == null)) {
       return 0;
-    }
-    else if ((getDepFile() == null)&&(o.getDepFile() != null)){
+    } else if ((getDepFile() == null) && (o.getDepFile() != null)) {
       return 1;
-    }
-    else if ((getDepFile() != null)&&(o.getDepFile() == null)){
+    } else if ((getDepFile() != null) && (o.getDepFile() == null)) {
       return -1;
-    }
-    else if (getDepFile().getName().compareTo(o.getDepFile().getName()) == 0){
-      if ((getStoriesFile() == null)&&(o.getStoriesFile() == null)){
+    } else if (getDepFile().getName().compareTo(o.getDepFile().getName()) == 0) {
+      if ((getStoriesFile() == null) && (o.getStoriesFile() == null)) {
         return 0;
-      }
-      else if ((getStoriesFile() == null)&&(o.getStoriesFile() != null)){
+      } else if ((getStoriesFile() == null) && (o.getStoriesFile() != null)) {
         return 1;
-      }
-      else if ((getStoriesFile() != null)&&(o.getStoriesFile() == null)){
+      } else if ((getStoriesFile() != null) && (o.getStoriesFile() == null)) {
         return -1;
-      }
-      else if (getStoriesFile().getName().compareTo(o.getStoriesFile().getName()) == 0){
-        if ((getSplitPointsFile() == null)&&(o.getSplitPointsFile() == null)){
+      } else if (getStoriesFile().getName().compareTo(
+          o.getStoriesFile().getName()) == 0) {
+        if ((getSplitPointsFile() == null) && (o.getSplitPointsFile() == null)) {
           return 0;
         }
-        if ((getSplitPointsFile() == null)&&(o.getSplitPointsFile() != null)){
+        if ((getSplitPointsFile() == null) && (o.getSplitPointsFile() != null)) {
           return 1;
-        }
-        else if ((getSplitPointsFile() != null)&&(o.getSplitPointsFile() == null)){
+        } else if ((getSplitPointsFile() != null)
+            && (o.getSplitPointsFile() == null)) {
           return -1;
+        } else {
+          return getSplitPointsFile().getName().compareTo(
+              o.getSplitPointsFile().getName());
         }
-        else return getSplitPointsFile().getName().compareTo(o.getSplitPointsFile().getName());
+      } else {
+        return getStoriesFile().getName().compareTo(
+            o.getStoriesFile().getName());
       }
-      else{
-        return getStoriesFile().getName().compareTo(o.getStoriesFile().getName());
-      }
+    } else {
+      return getDepFile().getName().compareTo(o.getDepFile().getName());
     }
-    else return getDepFile().getName().compareTo(o.getDepFile().getName());
   }
 
   @Override
   protected final Class<CompilationAnalysis> getComparableArtifactType() {
     return CompilationAnalysis.class;
-  }
-  
-  @Override
-  public final int hashCode() {
-    
-    assert(getDepFile() != null);
-    assert(getStoriesFile() != null);
-    assert(getSplitPointsFile() != null);
-
-    return 17 * (37 + getDepFile().getName().hashCode()) + (37 + getStoriesFile().getName().hashCode()) + (37 + getSplitPointsFile().getName().hashCode());
   }
 }

@@ -30,14 +30,18 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.zip.GZIPOutputStream;
 
-public class DependencyRecorderImpl implements ControlFlowAnalyzer.DependencyRecorder {
+/**
+ * The control-flow dependency recorder for SOYC.
+ */
+public class DependencyRecorderImpl implements
+    ControlFlowAnalyzer.DependencyRecorder {
 
-  private OutputStreamWriter writer;
-  private PrintWriter pw;
   private HtmlTextOutput htmlOut;
+  private PrintWriter pw;
+  private OutputStreamWriter writer;
 
   /**
-   * Used to record the dependencies of a specific method
+   * Used to record the dependencies of a specific method.
    * 
    * @param liveMethod
    * @param dependencyChain
@@ -48,7 +52,7 @@ public class DependencyRecorderImpl implements ControlFlowAnalyzer.DependencyRec
   }
 
   /**
-   * Used to record dependencies of a program
+   * Used to record dependencies of a program.
    * 
    * @param jprogram
    * @param workDir
@@ -58,12 +62,13 @@ public class DependencyRecorderImpl implements ControlFlowAnalyzer.DependencyRec
    */
   public File recordDependencies(JProgram jprogram, File workDir,
       int permutationId, TreeLogger logger) {
-    
-    logger = logger.branch(TreeLogger.INFO, "Creating Dependencies file for SOYC");
-    
+
+    logger = logger.branch(TreeLogger.INFO,
+        "Creating Dependencies file for SOYC");
+
     ControlFlowAnalyzer dependencyAnalyzer = new ControlFlowAnalyzer(jprogram);
     dependencyAnalyzer.setDependencyRecorder(this);
-    
+
     File appendDepFile = new File(workDir, "dependencies" + permutationId
         + ".xml.gz");
     try {
@@ -83,14 +88,14 @@ public class DependencyRecorderImpl implements ControlFlowAnalyzer.DependencyRec
     printPost();
     pw.close();
     Utility.close(writer);
-    
+
     logger.log(TreeLogger.INFO, "Done");
-    
+
     return appendDepFile;
   }
 
   /**
-   * Prints the control-flow dependencies to a file in a specific format
+   * Prints the control-flow dependencies to a file in a specific format.
    * 
    * @param liveMethod
    * @param dependencyChain
@@ -125,7 +130,18 @@ public class DependencyRecorderImpl implements ControlFlowAnalyzer.DependencyRec
   }
 
   /**
-   * Prints the preamble necessary for the dependencies file
+   * Prints the closing lines necessary for the dependencies file.
+   */
+  private void printPost() {
+    String curLine = "</soyc-dependencies>";
+    htmlOut.indentOut();
+    htmlOut.indentOut();
+    htmlOut.printRaw(curLine);
+    htmlOut.newline();
+  }
+
+  /**
+   * Prints the preamble necessary for the dependencies file.
    */
   private void printPre() {
     String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
@@ -136,16 +152,5 @@ public class DependencyRecorderImpl implements ControlFlowAnalyzer.DependencyRec
     htmlOut.newline();
     htmlOut.indentIn();
     htmlOut.indentIn();
-  }
-
-  /**
-   * Prints the closing lines necessary for the dependencies file
-   */
-  private void printPost() {
-    String curLine = "</soyc-dependencies>";
-    htmlOut.indentOut();
-    htmlOut.indentOut();
-    htmlOut.printRaw(curLine);
-    htmlOut.newline();
   }
 }

@@ -31,7 +31,6 @@
 package com.google.gwt.core.ext.soyc;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.SortedSet;
 
 /**

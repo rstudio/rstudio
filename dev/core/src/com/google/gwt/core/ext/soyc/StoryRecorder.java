@@ -24,17 +24,11 @@ import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Used to record dependencies of a program.
+ */
 public interface StoryRecorder {
-  /**
-   * Used to record dependencies of a program
-   * 
-   * @param jprogram
-   * @param workDir
-   * @param permutationId
-   * @param logger
-   * @return The file that the dependencies are recorded in
-   */
-  public File recordStories(JProgram jprogram, File workDir, int permutationId,
+  File recordStories(JProgram jprogram, File workDir, int permutationId,
       TreeLogger logger, List<Map<Range, SourceInfo>> sourceInfoMaps,
       String[] js);
 }

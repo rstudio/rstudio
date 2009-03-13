@@ -21,16 +21,10 @@ import com.google.gwt.dev.jjs.ast.JProgram;
 
 import java.io.File;
 
+/**
+ * Used to record (runAsync) split points of a program.
+ */
 public interface SplitPointRecorder {
-  /**
-   * Used to record (runAsync) split points of a program
-   * 
-   * @param jprogram
-   * @param workDir
-   * @param permutationId
-   * @param logger
-   * @return The file that the dependencies are recorded in
-   */
-  public File recordSplitPoints(JProgram jprogram, File workDir, int permutationId, TreeLogger logger);
-
+  File recordSplitPoints(JProgram jprogram, File workDir, int permutationId,
+      TreeLogger logger);
 }

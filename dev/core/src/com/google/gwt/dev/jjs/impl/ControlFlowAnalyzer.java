@@ -75,7 +75,7 @@ public class ControlFlowAnalyzer {
   public interface DependencyRecorder {
 
     /**
-     * Used to record the dependencies of a specific method
+     * Used to record the dependencies of a specific method.
      */
     void methodIsLiveBecause(JMethod liveMethod,
         ArrayList<JMethod> dependencyChain);

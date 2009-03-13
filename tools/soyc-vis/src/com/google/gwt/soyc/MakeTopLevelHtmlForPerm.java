@@ -33,446 +33,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 
+/**
+ * A utility to make the top level HTTML file for one permutation.
+ */
 public class MakeTopLevelHtmlForPerm {
-
-  private static void makePackageHtml(String outFileName) throws IOException {
-
-    TreeMap<Float, String> sortedPackages = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-    float maxSize = 0f;
-    float sumSize = 0f;
-    for (String packageName : GlobalInformation.packageToPartialSize.keySet()) {
-      sortedPackages.put(
-          GlobalInformation.packageToPartialSize.get(packageName), packageName);
-      sumSize += GlobalInformation.packageToPartialSize.get(packageName);
-      if (GlobalInformation.packageToPartialSize.get(packageName) > maxSize) {
-        maxSize = GlobalInformation.packageToPartialSize.get(packageName);
-      }
-    }
-
-    final PrintWriter outFile = new PrintWriter(outFileName);
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-
-    outFile.println("</head>");
-    outFile.println("<body>");
-
-    int yOffset = 0;
-    for (Float size : sortedPackages.keySet()) {
-
-      String packageName = sortedPackages.get(size);
-      String drillDownFileName = packageName + "Classes.html";
-
-      float ratio = (size / maxSize) * 79;
-
-      if (ratio < 3) {
-        ratio = 3;
-      }
-
-      float perc = (size / sumSize) * 100;
-
-      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
-          + yOffset + "px; left: 110px;\">");
-      outFile.println("<div id=\"lb\">");
-      outFile.println("<div id=\"rb\">");
-      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-      outFile.println("<div id=\"content\">");
-      outFile.println("</div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div>");
-
-      int yOffsetText = yOffset + 8;
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:70px;\">%.1f", perc);
-      outFile.println("%</div>\n");
-      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:110px;\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + packageName + "</a></div>");
-
-      yOffset = yOffset + 25;
-
-    }
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-
-  }
-
-  private static void makeFragmentsHtml(String outFileName) throws IOException {
-
-    // TreeMap<Float, Integer> sortedFragments = new TreeMap<Float,
-    // Integer>(Collections.reverseOrder());
-    TreeMap<Float, String> sortedSplitPoints = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-    float maxSize = 0f;
-    float sumSize = 0f;
-
-    // initial fragment
-    float initialSize = GlobalInformation.fragmentToPartialSize.get(0);
-    sumSize += initialSize;
-    maxSize = initialSize;
-    sortedSplitPoints.put(initialSize, "initialDownload");
-
-    // all fragments that are not in the initial load order
-    float allOtherFragmentsSize = GlobalInformation.allOtherFragmentsPartialSize;
-    sumSize += allOtherFragmentsSize;
-    if (allOtherFragmentsSize > maxSize) {
-      maxSize = allOtherFragmentsSize;
-    }
-    sortedSplitPoints.put(allOtherFragmentsSize, "allOtherFragments");
-
-    // all exclusive fragments
-    System.out.println("");
-    for (Integer splitPointId : GlobalInformation.splitPointToLocation.keySet()) {
-      System.out.println("splitPointId is: " + splitPointId);
-      Float sizeOfCurExclusiveFrag = GlobalInformation.fragmentToPartialSize.get(splitPointId);
-      sortedSplitPoints.put(sizeOfCurExclusiveFrag,
-          GlobalInformation.splitPointToLocation.get(splitPointId));
-      sumSize += sizeOfCurExclusiveFrag;
-      if (sizeOfCurExclusiveFrag > maxSize) {
-        maxSize = sizeOfCurExclusiveFrag;
-      }
-    }
-
-    final PrintWriter outFile = new PrintWriter(outFileName);
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-    outFile.println("</head>");
-    outFile.println("<body>");
-
-    int yOffset = 0;
-    for (Float size : sortedSplitPoints.keySet()) {
-      String splitPointName = sortedSplitPoints.get(size);
-      String drillDownFileName = "splitPoint" + splitPointName + "Classes.html";
-
-      float ratio = (size / maxSize) * 79;
-      if (ratio < 3) {
-        ratio = 3;
-      }
-      float perc = (size / sumSize) * 100;
-
-      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
-          + yOffset + "px; left: 110px;\">");
-      outFile.println("<div id=\"lb\">");
-      outFile.println("<div id=\"rb\">");
-      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-      outFile.println("<div id=\"content\">");
-      outFile.println("</div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div>");
-
-      int yOffsetText = yOffset + 8;
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:80px;\">%.1f", perc);
-      outFile.println("%</div>\n");
-      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:120px;\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + splitPointName + "</a></div>");
-
-      yOffset = yOffset + 25;
-
-    }
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-
-  }
-
-  private static void makeCodeTypeHtml(String outFileName,
-      HashMap<String, CodeCollection> nameToCodeColl) throws IOException {
-
-    float maxSize = 0f;
-    float sumSize = 0f;
-    TreeMap<Float, String> sortedCodeTypes = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-
-    // TODO(kprobst): turn this into a multimap?
-    // com.google.common.collect.TreeMultimap
-    for (String codeType : nameToCodeColl.keySet()) {
-      float curSize = nameToCodeColl.get(codeType).getCumPartialSize();
-      sumSize += curSize;
-
-      if (curSize != 0f) {
-        sortedCodeTypes.put(curSize, codeType);
-        if (curSize > maxSize) {
-          maxSize = curSize;
-        }
-      }
-    }
-
-    final PrintWriter outFile = new PrintWriter(outFileName);
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-    outFile.println("</head>");
-    outFile.println("<body>");
-
-    int yOffset = 0;
-    for (Float size : sortedCodeTypes.keySet()) {
-
-      String codeType = sortedCodeTypes.get(size);
-      String drillDownFileName = codeType + "Classes.html";
-
-      float ratio = (size / maxSize) * 79;
-      float perc = (size / sumSize) * 100;
-
-      if (ratio < 3) {
-        ratio = 3;
-      }
-
-      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
-          + yOffset + "px; left: 110px;\">");
-      outFile.println("<div id=\"lb\">");
-      outFile.println("<div id=\"rb\">");
-      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-      outFile.println("<div id=\"content\">");
-      outFile.println("</div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div>");
-
-      int yOffsetText = yOffset + 8;
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:70px;\">%.1f", perc);
-      outFile.println("%</div>\n");
-      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:110px;\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + codeType + "</a></div>");
-
-      yOffset = yOffset + 25;
-
-    }
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-
-  }
-
-  private static void makeLiteralsHtml(String outFileName,
-      TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException {
-
-    float maxSize = 0f;
-    float sumSize = 0f;
-    TreeMap<Float, String> sortedLitTypes = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-
-    for (String literal : nameToLitColl.keySet()) {
-      float curSize = nameToLitColl.get(literal).cumSize;
-      sumSize += curSize;
-
-      if (curSize != 0f) {
-        sortedLitTypes.put(curSize, literal);
-
-        if (curSize > maxSize) {
-          maxSize = curSize;
-        }
-      }
-    }
-
-    final PrintWriter outFile = new PrintWriter(outFileName);
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-    outFile.println("</head>");
-    outFile.println("<body>");
-
-    int yOffset = 0;
-    for (Float size : sortedLitTypes.keySet()) {
-
-      String literal = sortedLitTypes.get(size);
-      String drillDownFileName = literal + "Lits.html";
-
-      float ratio = (size / maxSize) * 79;
-      float perc = (size / sumSize) * 100;
-
-      if (ratio < 3) {
-        ratio = 3;
-      }
-
-      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
-          + yOffset + "px; left: 110px;\">");
-      outFile.println("<div id=\"lb\">");
-      outFile.println("<div id=\"rb\">");
-      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-      outFile.println("<div id=\"content\">");
-      outFile.println("</div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div></div></div></div>");
-      outFile.println("</div>");
-
-      int yOffsetText = yOffset + 8;
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:5px;\">%.1f</div>\n", size);
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:70px;\">%.1f", perc);
-      outFile.println("%</div>\n");
-      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:110px;\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + literal + "</a></div>");
-
-      yOffset = yOffset + 25;
-
-    }
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-
-  }
-
-  private static void makeStringLiteralsHtml(String outFileName,
-      TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException {
-
-    final PrintWriter outFile = new PrintWriter(outFileName);
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-    outFile.println("</head>");
-    outFile.println("<body>");
-
-    if (nameToLitColl.get("string").stringTypeToSize.size() > 0) {
-
-      float maxSize = 0f;
-      float sumSize = 0f;
-      TreeMap<Float, String> sortedStLitTypes = new TreeMap<Float, String>(
-          Collections.reverseOrder());
-
-      for (String stringLiteral : nameToLitColl.get("string").stringTypeToSize.keySet()) {
-        float curSize = nameToLitColl.get("string").stringTypeToSize.get(stringLiteral);
-        sumSize += curSize;
-
-        if (curSize != 0f) {
-          sortedStLitTypes.put(curSize, stringLiteral);
-
-          if (curSize > maxSize) {
-            maxSize = curSize;
-          }
-        }
-      }
-
-      int yOffset = 0;
-      for (Float size : sortedStLitTypes.keySet()) {
-
-        String stringLiteral = sortedStLitTypes.get(size);
-        String drillDownFileName = stringLiteral + "Strings.html";
-
-        float ratio = (size / maxSize) * 79;
-        float perc = (size / sumSize) * 100;
-
-        if (ratio < 3) {
-          ratio = 3;
-        }
-
-        outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
-            + yOffset + "px; left: 110px;\">");
-        outFile.println("<div id=\"lb\">");
-        outFile.println("<div id=\"rb\">");
-        outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
-        outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
-        outFile.println("<div id=\"content\">");
-        outFile.println("</div>");
-        outFile.println("</div></div></div></div>");
-        outFile.println("</div></div></div></div>");
-        outFile.println("</div>");
-
-        int yOffsetText = yOffset + 8;
-        outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:5px;\">%.1f</div>\n", size);
-        outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:70px;\">%.1f", perc);
-        outFile.println("%</div>\n");
-        outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
-            + "px; left:110px;\"><a href=\"" + drillDownFileName
-            + "\" target=\"_top\">" + stringLiteral + "</a></div>");
-
-        yOffset = yOffset + 25;
-
-      }
-
-    }
-
-    else {
-      outFile.println("No string literals found for this application.");
-
-    }
-
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
-  }
-
-  public static void copyFileOrDirectoryFromJar(String jarFileName,
-      String inputFileName, File dstPath, boolean isDirectory)
-      throws IOException {
-
-    JarFile jarFile = new JarFile(jarFileName);
-    if (isDirectory) {
-      dstPath.mkdir();
-
-      JarInputStream jarFileIS = new JarInputStream(new FileInputStream(
-          jarFileName));
-      JarEntry jarEntry = jarFileIS.getNextJarEntry();
-      while (jarEntry != null) {
-        if (!inputFileName.endsWith("/")) {
-          inputFileName += "/";
-        }
-        if ((jarEntry.getName().compareTo(inputFileName) != 0)
-            && (jarEntry.getName().startsWith(inputFileName))) {
-          File newDstPath = new File(jarEntry.getName());
-          copyFileOrDirectoryFromJar(jarFileName, jarEntry.getName(),
-              newDstPath, false);
-        }
-        jarEntry = jarFileIS.getNextJarEntry();
-      }
-      jarFileIS.close();
-    }
-
-    else {
-      InputStream in = jarFile.getInputStream(jarFile.getEntry(inputFileName));
-      OutputStream out = new FileOutputStream(dstPath);
-
-      int c;
-      while ((c = in.read()) != -1) {
-        out.write(c);
-      }
-      in.close();
-      out.close();
-      jarFile.close();
-    }
-  }
 
   public static void copyFileOrDirectory(File srcPath, File dstPath,
       String classPath, String inputFileName, boolean isDirectory)
@@ -502,6 +66,44 @@ public class MakeTopLevelHtmlForPerm {
         in.close();
         out.close();
       }
+    }
+  }
+
+  public static void copyFileOrDirectoryFromJar(String jarFileName,
+      String inputFileName, File dstPath, boolean isDirectory)
+      throws IOException {
+
+    JarFile jarFile = new JarFile(jarFileName);
+    if (isDirectory) {
+      dstPath.mkdir();
+
+      JarInputStream jarFileIS = new JarInputStream(new FileInputStream(
+          jarFileName));
+      JarEntry jarEntry = jarFileIS.getNextJarEntry();
+      while (jarEntry != null) {
+        if (!inputFileName.endsWith("/")) {
+          inputFileName += "/";
+        }
+        if ((jarEntry.getName().compareTo(inputFileName) != 0)
+            && (jarEntry.getName().startsWith(inputFileName))) {
+          File newDstPath = new File(jarEntry.getName());
+          copyFileOrDirectoryFromJar(jarFileName, jarEntry.getName(),
+              newDstPath, false);
+        }
+        jarEntry = jarFileIS.getNextJarEntry();
+      }
+      jarFileIS.close();
+    } else {
+      InputStream in = jarFile.getInputStream(jarFile.getEntry(inputFileName));
+      OutputStream out = new FileOutputStream(dstPath);
+
+      int c;
+      while ((c = in.read()) != -1) {
+        out.write(c);
+      }
+      in.close();
+      out.close();
+      jarFile.close();
     }
   }
 
@@ -601,13 +203,100 @@ public class MakeTopLevelHtmlForPerm {
             + "px; left:70px;\">" + className + "</div>");
 
         yOffset = yOffset + 25;
-
       }
 
       outFile.println("</div>");
       outFile.println("</body>");
       outFile.println("</html>");
       outFile.close();
+    }
+  }
+
+  public static void makeDependenciesHtml(
+      Map<String, ArrayList<String>> dependencies) throws IOException {
+
+    String origOutFileName = "methodDependencies-";
+    PrintWriter outFile = null;
+    String curPackageName = "";
+    String curClassName = "";
+
+    for (String method : dependencies.keySet()) {
+      // this key set is already in alphabetical order
+      // get the package of this method, i.e., everything up to .[A-Z]
+
+      String packageName = method;
+      packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
+
+      String className = method;
+      className = className.replaceAll("::.*", "");
+
+      if ((curPackageName.compareTo("") == 0)
+          || (curPackageName.compareTo(packageName) != 0)) {
+
+        curPackageName = packageName;
+        if (outFile != null) {
+          // finish up the current file
+          outFile.println("</table>");
+          outFile.println("<center>");
+
+          outFile.println("</div>");
+          outFile.println("</body>");
+          outFile.println("</html>");
+          outFile.close();
+        }
+
+        String outFileName = origOutFileName + curPackageName + ".html";
+        outFile = new PrintWriter(outFileName);
+
+        outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+        outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+        outFile.println("<html>");
+        outFile.println("<head>");
+        outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+        outFile.println("<title>Method Dependencies</title>");
+        outFile.println("</head>");
+
+        outFile.println("<style type=\"text/css\">");
+        outFile.println("body {background-color: #728FCE}");
+        outFile.println("h2 {background-color: transparent}");
+        outFile.println("p {background-color: fuchsia}");
+        outFile.println("</style>");
+
+        outFile.println("<body>");
+        outFile.println("<center>");
+        outFile.println("<h2>Method Dependencies for package " + curPackageName
+            + "</h2>");
+        outFile.println("</center>");
+        outFile.println("<hr>");
+
+        outFile.println("<center>");
+        outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+      }
+      outFile.println("<tr>");
+      if (curClassName.compareTo(className) != 0) {
+        outFile.println("<td width=\"80%\"><a name=\"" + className + "\">"
+            + "<a name=\"" + method + "\">" + method
+            + "</a></a><font color=\"green\"> called by</font></td>");
+        curClassName = className;
+      } else {
+        outFile.println("<td width=\"80%\"><a name=\"" + method + "\">"
+            + method + "</a><font color=\"green\"> called by</font></td>");
+      }
+      outFile.println("</tr>");
+
+      for (int i = 0; i < dependencies.get(method).size(); i++) {
+        String depMethod = dependencies.get(method).get(i);
+
+        outFile.println("<tr>");
+        outFile.println("<td width=\"20%\"></td>");
+        if (i != dependencies.get(method).size() - 1) {
+          outFile.println("<td width=\"60%\">" + depMethod
+              + "<font color=\"green\"> called by</font></td>");
+        } else {
+          outFile.println("<td width=\"60%\">" + depMethod + "</td>");
+        }
+        outFile.println("</tr>");
+      }
     }
   }
 
@@ -747,7 +436,105 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("  </body>");
     outFile.println("</html>");
     outFile.close();
+  }
 
+  public static void makeLiteralsClassesHtmls(
+      TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException {
+
+    for (String literalType : nameToLitColl.keySet()) {
+
+      String outFileName = literalType + "Lits.html";
+      final PrintWriter outFile = new PrintWriter(outFileName);
+
+      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+      outFile.println("<html>");
+      outFile.println("<head>");
+      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+      outFile.println("<title>Literals of type \"" + literalType + "\"</title>");
+      outFile.println("</head>");
+
+      outFile.println("<style type=\"text/css\">");
+      outFile.println("body {background-color: #728FCE}");
+      outFile.println("h2 {background-color: transparent}");
+      outFile.println("p {background-color: fuchsia}");
+      outFile.println(".tablediv {");
+      outFile.println("display:  table;");
+      outFile.println("width:100%;");
+      outFile.println("background-color:#eee;");
+      outFile.println("border:1px solid  #666666;");
+      outFile.println("border-spacing:5px;/*cellspacing:poor IE support for  this*/");
+      outFile.println("border-collapse:separate;");
+      outFile.println("}");
+      outFile.println(".celldiv {");
+      outFile.println("float:left;/*fix for  buggy browsers*/");
+      outFile.println("display:  table-cell;");
+      outFile.println("width:50%;");
+      outFile.println("font-size: 14px;");
+      outFile.println("background-color:white;");
+      outFile.println("}");
+      outFile.println(".rowdiv  {");
+      outFile.println("display:  table-row;");
+      outFile.println("}");
+      outFile.println("</style>");
+
+      outFile.println("<body>");
+      outFile.println("<center>");
+      outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
+      outFile.println("</center>");
+      outFile.println("<hr>");
+
+      outFile.println("<div style=\"width:90%; height:80%; overflow-y:auto; overflow-x:auto; top: 30px; left:60px; position:relative; background-color:white\"");
+      outFile.println("<div class=\"tablediv\">");
+      for (String literal : nameToLitColl.get(literalType).literalToLocations.keySet()) {
+
+        if (literal.trim().compareTo("") == 0) {
+          literal = "[whitespace only string]";
+        }
+
+        String newLiteral = "";
+        if (literal.length() > 100) {
+          int i;
+          for (i = 100; i < literal.length(); i = i + 100) {
+            String part1 = literal.substring(i - 100, i);
+            newLiteral = newLiteral + part1 + " ";
+          }
+          if (i - 100 > 0) {
+            newLiteral = newLiteral + literal.substring(i - 100);
+          }
+        } else {
+          newLiteral = literal;
+        }
+
+        String escliteral = escapeXml(newLiteral);
+        outFile.println("<div class=\"rowdiv\">");
+        outFile.println("<div class=\"celldiv\">" + escliteral + "</div>");
+
+        for (String location : nameToLitColl.get(literalType).literalToLocations.get(literal)) {
+
+          String newLocation = "";
+          if (location.length() > 100) {
+            int i;
+            for (i = 100; i < location.length(); i = i + 100) {
+              String part1 = location.substring(i - 100, i);
+              newLocation = newLocation + part1 + " ";
+            }
+            if (i - 100 > 0) {
+              newLocation = newLocation + location.substring(i - 100);
+            }
+          } else {
+            newLocation = location;
+          }
+
+          outFile.println("<div class=\"celldiv\">" + newLocation + "</div>");
+        }
+        outFile.println("</div>");
+      }
+      outFile.println("</div>");
+      outFile.println("</body>");
+      outFile.println("</html>");
+      outFile.close();
+    }
   }
 
   public static void makeLiteralsClassesTableHtmls(
@@ -843,111 +630,11 @@ public class MakeTopLevelHtmlForPerm {
         }
 
         outFile.println("</tr>");
-
       }
 
       outFile.println("</table>");
       outFile.println("<center>");
 
-      outFile.println("</div>");
-      outFile.println("</body>");
-      outFile.println("</html>");
-      outFile.close();
-    }
-  }
-
-  public static void makeLiteralsClassesHtmls(
-      TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException {
-
-    for (String literalType : nameToLitColl.keySet()) {
-
-      String outFileName = literalType + "Lits.html";
-      final PrintWriter outFile = new PrintWriter(outFileName);
-
-      outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-      outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-      outFile.println("<html>");
-      outFile.println("<head>");
-      outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-      outFile.println("<title>Literals of type \"" + literalType + "\"</title>");
-      outFile.println("</head>");
-
-      outFile.println("<style type=\"text/css\">");
-      outFile.println("body {background-color: #728FCE}");
-      outFile.println("h2 {background-color: transparent}");
-      outFile.println("p {background-color: fuchsia}");
-      outFile.println(".tablediv {");
-      outFile.println("display:  table;");
-      outFile.println("width:100%;");
-      outFile.println("background-color:#eee;");
-      outFile.println("border:1px solid  #666666;");
-      outFile.println("border-spacing:5px;/*cellspacing:poor IE support for  this*/");
-      outFile.println("border-collapse:separate;");
-      outFile.println("}");
-      outFile.println(".celldiv {");
-      outFile.println("float:left;/*fix for  buggy browsers*/");
-      outFile.println("display:  table-cell;");
-      outFile.println("width:50%;");
-      outFile.println("font-size: 14px;");
-      outFile.println("background-color:white;");
-      outFile.println("}");
-      outFile.println(".rowdiv  {");
-      outFile.println("display:  table-row;");
-      outFile.println("}");
-      outFile.println("</style>");
-
-      outFile.println("<body>");
-      outFile.println("<center>");
-      outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
-      outFile.println("</center>");
-      outFile.println("<hr>");
-
-      outFile.println("<div style=\"width:90%; height:80%; overflow-y:auto; overflow-x:auto; top: 30px; left:60px; position:relative; background-color:white\"");
-      outFile.println("<div class=\"tablediv\">");
-      for (String literal : nameToLitColl.get(literalType).literalToLocations.keySet()) {
-
-        if (literal.trim().compareTo("") == 0) {
-          literal = "[whitespace only string]";
-        }
-
-        String newLiteral = "";
-        if (literal.length() > 100) {
-          int i;
-          for (i = 100; i < literal.length(); i = i + 100) {
-            String part1 = literal.substring(i - 100, i);
-            newLiteral = newLiteral + part1 + " ";
-          }
-          if (i - 100 > 0) {
-            newLiteral = newLiteral + literal.substring(i - 100);
-          }
-        } else {
-          newLiteral = literal;
-        }
-
-        String escliteral = escapeXml(newLiteral);
-        outFile.println("<div class=\"rowdiv\">");
-        outFile.println("<div class=\"celldiv\">" + escliteral + "</div>");
-
-        for (String location : nameToLitColl.get(literalType).literalToLocations.get(literal)) {
-
-          String newLocation = "";
-          if (location.length() > 100) {
-            int i;
-            for (i = 100; i < location.length(); i = i + 100) {
-              String part1 = location.substring(i - 100, i);
-              newLocation = newLocation + part1 + " ";
-            }
-            if (i - 100 > 0) {
-              newLocation = newLocation + location.substring(i - 100);
-            }
-          } else {
-            newLocation = location;
-          }
-
-          outFile.println("<div class=\"celldiv\">" + newLocation + "</div>");
-        }
-        outFile.println("</div>");
-      }
       outFile.println("</div>");
       outFile.println("</body>");
       outFile.println("</html>");
@@ -1082,7 +769,6 @@ public class MakeTopLevelHtmlForPerm {
          * "\" target=\"_top\">Dependencies: " + depCount + "</a></div>");
          */
         yOffset = yOffset + 25;
-
       }
 
       outFile.println("</div>");
@@ -1291,7 +977,6 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("</body>");
     outFile.println("</html>");
     outFile.close();
-
   }
 
   public static void makeStringLiteralsClassesHtmls(
@@ -1398,7 +1083,6 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</html>");
       outFile.close();
     }
-
   }
 
   public static void makeStringLiteralsClassesTableHtmls(
@@ -1510,92 +1194,389 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
-  public static void makeDependenciesHtml(
-      Map<String, ArrayList<String>> dependencies) throws IOException {
+  private static void makeCodeTypeHtml(String outFileName,
+      HashMap<String, CodeCollection> nameToCodeColl) throws IOException {
 
-    String origOutFileName = "methodDependencies-";
-    PrintWriter outFile = null;
-    String curPackageName = "";
-    String curClassName = "";
+    float maxSize = 0f;
+    float sumSize = 0f;
+    TreeMap<Float, String> sortedCodeTypes = new TreeMap<Float, String>(
+        Collections.reverseOrder());
 
-    for (String method : dependencies.keySet()) {
-      // this key set is already in alphabetical order
-      // get the package of this method, i.e., everything up to .[A-Z]
+    // TODO(kprobst): turn this into a multimap?
+    // com.google.common.collect.TreeMultimap
+    for (String codeType : nameToCodeColl.keySet()) {
+      float curSize = nameToCodeColl.get(codeType).getCumPartialSize();
+      sumSize += curSize;
 
-      String packageName = method;
-      packageName = packageName.replaceAll("\\.\\p{Upper}.*", "");
-
-      String className = method;
-      className = className.replaceAll("::.*", "");
-
-      if ((curPackageName.compareTo("") == 0)
-          || (curPackageName.compareTo(packageName) != 0)) {
-
-        curPackageName = packageName;
-        if (outFile != null) {
-          // finish up the current file
-          outFile.println("</table>");
-          outFile.println("<center>");
-
-          outFile.println("</div>");
-          outFile.println("</body>");
-          outFile.println("</html>");
-          outFile.close();
+      if (curSize != 0f) {
+        sortedCodeTypes.put(curSize, codeType);
+        if (curSize > maxSize) {
+          maxSize = curSize;
         }
-
-        String outFileName = origOutFileName + curPackageName + ".html";
-        outFile = new PrintWriter(outFileName);
-
-        outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-        outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-        outFile.println("<html>");
-        outFile.println("<head>");
-        outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-        outFile.println("<title>Method Dependencies</title>");
-        outFile.println("</head>");
-
-        outFile.println("<style type=\"text/css\">");
-        outFile.println("body {background-color: #728FCE}");
-        outFile.println("h2 {background-color: transparent}");
-        outFile.println("p {background-color: fuchsia}");
-        outFile.println("</style>");
-
-        outFile.println("<body>");
-        outFile.println("<center>");
-        outFile.println("<h2>Method Dependencies for package " + curPackageName
-            + "</h2>");
-        outFile.println("</center>");
-        outFile.println("<hr>");
-
-        outFile.println("<center>");
-        outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
-
-      }
-      outFile.println("<tr>");
-      if (curClassName.compareTo(className) != 0) {
-        outFile.println("<td width=\"80%\"><a name=\"" + className + "\">"
-            + "<a name=\"" + method + "\">" + method
-            + "</a></a><font color=\"green\"> called by</font></td>");
-        curClassName = className;
-      } else {
-        outFile.println("<td width=\"80%\"><a name=\"" + method + "\">"
-            + method + "</a><font color=\"green\"> called by</font></td>");
-      }
-      outFile.println("</tr>");
-
-      for (int i = 0; i < dependencies.get(method).size(); i++) {
-        String depMethod = dependencies.get(method).get(i);
-
-        outFile.println("<tr>");
-        outFile.println("<td width=\"20%\"></td>");
-        if (i != dependencies.get(method).size() - 1) {
-          outFile.println("<td width=\"60%\">" + depMethod
-              + "<font color=\"green\"> called by</font></td>");
-        } else {
-          outFile.println("<td width=\"60%\">" + depMethod + "</td>");
-        }
-        outFile.println("</tr>");
       }
     }
+
+    final PrintWriter outFile = new PrintWriter(outFileName);
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
+    outFile.println("</head>");
+    outFile.println("<body>");
+
+    int yOffset = 0;
+    for (Float size : sortedCodeTypes.keySet()) {
+
+      String codeType = sortedCodeTypes.get(size);
+      String drillDownFileName = codeType + "Classes.html";
+
+      float ratio = (size / maxSize) * 79;
+      float perc = (size / sumSize) * 100;
+
+      if (ratio < 3) {
+        ratio = 3;
+      }
+
+      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
+          + yOffset + "px; left: 110px;\">");
+      outFile.println("<div id=\"lb\">");
+      outFile.println("<div id=\"rb\">");
+      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
+      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
+      outFile.println("<div id=\"content\">");
+      outFile.println("</div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div>");
+
+      int yOffsetText = yOffset + 8;
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:5px;\">%.1f</div>\n", size);
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:70px;\">%.1f", perc);
+      outFile.println("%</div>\n");
+      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:110px;\"><a href=\"" + drillDownFileName
+          + "\" target=\"_top\">" + codeType + "</a></div>");
+
+      yOffset = yOffset + 25;
+    }
+    outFile.println("</body>");
+    outFile.println("</html>");
+    outFile.close();
+  }
+
+  private static void makeFragmentsHtml(String outFileName) throws IOException {
+
+    // TreeMap<Float, Integer> sortedFragments = new TreeMap<Float,
+    // Integer>(Collections.reverseOrder());
+    TreeMap<Float, String> sortedSplitPoints = new TreeMap<Float, String>(
+        Collections.reverseOrder());
+    float maxSize = 0f;
+    float sumSize = 0f;
+
+    // initial fragment
+    float initialSize = GlobalInformation.fragmentToPartialSize.get(0);
+    sumSize += initialSize;
+    maxSize = initialSize;
+    sortedSplitPoints.put(initialSize, "initialDownload");
+
+    // all fragments that are not in the initial load order
+    float allOtherFragmentsSize = GlobalInformation.allOtherFragmentsPartialSize;
+    sumSize += allOtherFragmentsSize;
+    if (allOtherFragmentsSize > maxSize) {
+      maxSize = allOtherFragmentsSize;
+    }
+    sortedSplitPoints.put(allOtherFragmentsSize, "allOtherFragments");
+
+    // all exclusive fragments
+    System.out.println("");
+    for (Integer splitPointId : GlobalInformation.splitPointToLocation.keySet()) {
+      System.out.println("splitPointId is: " + splitPointId);
+      Float sizeOfCurExclusiveFrag = GlobalInformation.fragmentToPartialSize.get(splitPointId);
+      sortedSplitPoints.put(sizeOfCurExclusiveFrag,
+          GlobalInformation.splitPointToLocation.get(splitPointId));
+      sumSize += sizeOfCurExclusiveFrag;
+      if (sizeOfCurExclusiveFrag > maxSize) {
+        maxSize = sizeOfCurExclusiveFrag;
+      }
+    }
+
+    final PrintWriter outFile = new PrintWriter(outFileName);
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
+    outFile.println("</head>");
+    outFile.println("<body>");
+
+    int yOffset = 0;
+    for (Float size : sortedSplitPoints.keySet()) {
+      String splitPointName = sortedSplitPoints.get(size);
+      String drillDownFileName = "splitPoint" + splitPointName + "Classes.html";
+
+      float ratio = (size / maxSize) * 79;
+      if (ratio < 3) {
+        ratio = 3;
+      }
+      float perc = (size / sumSize) * 100;
+
+      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
+          + yOffset + "px; left: 110px;\">");
+      outFile.println("<div id=\"lb\">");
+      outFile.println("<div id=\"rb\">");
+      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
+      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
+      outFile.println("<div id=\"content\">");
+      outFile.println("</div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div>");
+
+      int yOffsetText = yOffset + 8;
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:5px;\">%.1f</div>\n", size);
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:80px;\">%.1f", perc);
+      outFile.println("%</div>\n");
+      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:120px;\"><a href=\"" + drillDownFileName
+          + "\" target=\"_top\">" + splitPointName + "</a></div>");
+
+      yOffset = yOffset + 25;
+    }
+    outFile.println("</body>");
+    outFile.println("</html>");
+    outFile.close();
+  }
+
+  private static void makeLiteralsHtml(String outFileName,
+      TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException {
+
+    float maxSize = 0f;
+    float sumSize = 0f;
+    TreeMap<Float, String> sortedLitTypes = new TreeMap<Float, String>(
+        Collections.reverseOrder());
+
+    for (String literal : nameToLitColl.keySet()) {
+      float curSize = nameToLitColl.get(literal).cumSize;
+      sumSize += curSize;
+
+      if (curSize != 0f) {
+        sortedLitTypes.put(curSize, literal);
+
+        if (curSize > maxSize) {
+          maxSize = curSize;
+        }
+      }
+    }
+
+    final PrintWriter outFile = new PrintWriter(outFileName);
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
+    outFile.println("</head>");
+    outFile.println("<body>");
+
+    int yOffset = 0;
+    for (Float size : sortedLitTypes.keySet()) {
+
+      String literal = sortedLitTypes.get(size);
+      String drillDownFileName = literal + "Lits.html";
+
+      float ratio = (size / maxSize) * 79;
+      float perc = (size / sumSize) * 100;
+
+      if (ratio < 3) {
+        ratio = 3;
+      }
+
+      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
+          + yOffset + "px; left: 110px;\">");
+      outFile.println("<div id=\"lb\">");
+      outFile.println("<div id=\"rb\">");
+      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
+      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
+      outFile.println("<div id=\"content\">");
+      outFile.println("</div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div>");
+
+      int yOffsetText = yOffset + 8;
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:5px;\">%.1f</div>\n", size);
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:70px;\">%.1f", perc);
+      outFile.println("%</div>\n");
+      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:110px;\"><a href=\"" + drillDownFileName
+          + "\" target=\"_top\">" + literal + "</a></div>");
+
+      yOffset = yOffset + 25;
+    }
+    outFile.println("</body>");
+    outFile.println("</html>");
+    outFile.close();
+  }
+
+  private static void makePackageHtml(String outFileName) throws IOException {
+
+    TreeMap<Float, String> sortedPackages = new TreeMap<Float, String>(
+        Collections.reverseOrder());
+    float maxSize = 0f;
+    float sumSize = 0f;
+    for (String packageName : GlobalInformation.packageToPartialSize.keySet()) {
+      sortedPackages.put(
+          GlobalInformation.packageToPartialSize.get(packageName), packageName);
+      sumSize += GlobalInformation.packageToPartialSize.get(packageName);
+      if (GlobalInformation.packageToPartialSize.get(packageName) > maxSize) {
+        maxSize = GlobalInformation.packageToPartialSize.get(packageName);
+      }
+    }
+
+    final PrintWriter outFile = new PrintWriter(outFileName);
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
+
+    outFile.println("</head>");
+    outFile.println("<body>");
+
+    int yOffset = 0;
+    for (Float size : sortedPackages.keySet()) {
+
+      String packageName = sortedPackages.get(size);
+      String drillDownFileName = packageName + "Classes.html";
+
+      float ratio = (size / maxSize) * 79;
+
+      if (ratio < 3) {
+        ratio = 3;
+      }
+
+      float perc = (size / sumSize) * 100;
+
+      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
+          + yOffset + "px; left: 110px;\">");
+      outFile.println("<div id=\"lb\">");
+      outFile.println("<div id=\"rb\">");
+      outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
+      outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
+      outFile.println("<div id=\"content\">");
+      outFile.println("</div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div></div></div></div>");
+      outFile.println("</div>");
+
+      int yOffsetText = yOffset + 8;
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:5px;\">%.1f</div>\n", size);
+      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:70px;\">%.1f", perc);
+      outFile.println("%</div>\n");
+      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
+          + "px; left:110px;\"><a href=\"" + drillDownFileName
+          + "\" target=\"_top\">" + packageName + "</a></div>");
+
+      yOffset = yOffset + 25;
+    }
+    outFile.println("</body>");
+    outFile.println("</html>");
+    outFile.close();
+  }
+
+  private static void makeStringLiteralsHtml(String outFileName,
+      TreeMap<String, LiteralsCollection> nameToLitColl) throws IOException {
+
+    final PrintWriter outFile = new PrintWriter(outFileName);
+
+    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
+    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
+    outFile.println("<html>");
+    outFile.println("<head>");
+    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
+    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
+    outFile.println("</head>");
+    outFile.println("<body>");
+
+    if (nameToLitColl.get("string").stringTypeToSize.size() > 0) {
+
+      float maxSize = 0f;
+      float sumSize = 0f;
+      TreeMap<Float, String> sortedStLitTypes = new TreeMap<Float, String>(
+          Collections.reverseOrder());
+
+      for (String stringLiteral : nameToLitColl.get("string").stringTypeToSize.keySet()) {
+        float curSize = nameToLitColl.get("string").stringTypeToSize.get(stringLiteral);
+        sumSize += curSize;
+
+        if (curSize != 0f) {
+          sortedStLitTypes.put(curSize, stringLiteral);
+
+          if (curSize > maxSize) {
+            maxSize = curSize;
+          }
+        }
+      }
+
+      int yOffset = 0;
+      for (Float size : sortedStLitTypes.keySet()) {
+
+        String stringLiteral = sortedStLitTypes.get(size);
+        String drillDownFileName = stringLiteral + "Strings.html";
+
+        float ratio = (size / maxSize) * 79;
+        float perc = (size / sumSize) * 100;
+
+        if (ratio < 3) {
+          ratio = 3;
+        }
+
+        outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
+            + yOffset + "px; left: 110px;\">");
+        outFile.println("<div id=\"lb\">");
+        outFile.println("<div id=\"rb\">");
+        outFile.println("<div id=\"bb\"><div id=\"blc\"><div id=\"brc\">");
+        outFile.println("<div id=\"tb\"><div id=\"tlc\"><div id=\"trc\">");
+        outFile.println("<div id=\"content\">");
+        outFile.println("</div>");
+        outFile.println("</div></div></div></div>");
+        outFile.println("</div></div></div></div>");
+        outFile.println("</div>");
+
+        int yOffsetText = yOffset + 8;
+        outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+            + "px; left:5px;\">%.1f</div>\n", size);
+        outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+            + "px; left:70px;\">%.1f", perc);
+        outFile.println("%</div>\n");
+        outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
+            + "px; left:110px;\"><a href=\"" + drillDownFileName
+            + "\" target=\"_top\">" + stringLiteral + "</a></div>");
+
+        yOffset = yOffset + 25;
+      }
+    } else {
+      outFile.println("No string literals found for this application.");
+    }
+
+    outFile.println("</body>");
+    outFile.println("</html>");
+    outFile.close();
   }
 }

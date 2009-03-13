@@ -21,36 +21,36 @@ import java.util.Map;
 import java.util.HashSet;
 import java.util.TreeMap;
 
+/**
+ * A collection of literals.
+ */
 public class LiteralsCollection {
   public int cumSize = 0;
   public int cumStringSize = 0;
   public String literalType = "";
   public Map<String, HashSet<String>> literalToLocations = new TreeMap<String, HashSet<String>>();
-  public Map<String, HashSet<String> > storyToLocations = new HashMap<String, HashSet<String>>();
+  public Map<String, HashSet<String>> storyToLocations = new HashMap<String, HashSet<String>>();
   public TreeMap<String, String> stringLiteralToType = new TreeMap<String, String>();
   public Map<String, Integer> stringTypeToSize = new HashMap<String, Integer>();
   public Map<String, Integer> stringTypeToCount = new HashMap<String, Integer>();
-  
-  /**
-   * constructor
-   */
-  public LiteralsCollection(String type){
+
+  public LiteralsCollection(String type) {
     literalType = type;
   }
 
   /**
-   * Utility method
+   * Utility method.
    */
-  public void printAllStrings(){
+  public void printAllStrings() {
     int iSum = 0;
     System.out.println("--- now printing strings ---");
-    for (String st : stringLiteralToType.keySet()){
-        int numBytes = st.getBytes().length;
-        iSum += numBytes;
-        System.out.println(st + "[" + numBytes + "]");
+    for (String st : stringLiteralToType.keySet()) {
+      int numBytes = st.getBytes().length;
+      iSum += numBytes;
+      System.out.println(st + "[" + numBytes + "]");
     }
     System.out.println("sum: " + iSum);
     System.out.println("--- done printing strings ---");
   }
-  
+
 }

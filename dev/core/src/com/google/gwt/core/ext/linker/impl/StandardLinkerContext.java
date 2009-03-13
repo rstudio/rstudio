@@ -456,17 +456,20 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         outFile.setLastModified(artifact.getLastModified());
       }
     }
-    for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)){
-        TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-            "Emitting soyc resources.", null);
-        File depFile = new File(extraPath + "/soycReport", soycFiles.getDepFile().getName());
-        Util.copy(artifactLogger, soycFiles.getDepFile(), depFile);
+    for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)) {
+      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
+          "Emitting soyc resources.", null);
+      File depFile = new File(extraPath + "/soycReport",
+          soycFiles.getDepFile().getName());
+      Util.copy(artifactLogger, soycFiles.getDepFile(), depFile);
 
-        File storiesFile = new File(extraPath + "/soycReport", soycFiles.getStoriesFile().getName());
-        Util.copy(artifactLogger, soycFiles.getStoriesFile(), storiesFile);
+      File storiesFile = new File(extraPath + "/soycReport",
+          soycFiles.getStoriesFile().getName());
+      Util.copy(artifactLogger, soycFiles.getStoriesFile(), storiesFile);
 
-        File splitPointsFile = new File(extraPath + "/soycReport", soycFiles.getSplitPointsFile().getName());
-        Util.copy(artifactLogger, soycFiles.getSplitPointsFile(), splitPointsFile);
+      File splitPointsFile = new File(extraPath + "/soycReport",
+          soycFiles.getSplitPointsFile().getName());
+      Util.copy(artifactLogger, soycFiles.getSplitPointsFile(), splitPointsFile);
     }
   }
 
