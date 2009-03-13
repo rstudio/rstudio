@@ -30,9 +30,11 @@ class CommandRunner {
 
   /**
    * Returns the output of running a command as a string. Will fail if the
-   * invoked process returns a non-zero status code.
+   * invoked process returns a non-zero status code and
+   * <code>checkStatusCode</code> is <code>true</code>.
    */
-  public static String getCommandOutput(File workDir, String... cmd) {
+  public static String getCommandOutput(boolean checkStatusCode, File workDir,
+      String... cmd) {
     Process process = runCommandIgnoringErr(workDir, cmd);
     StringBuilder output = new StringBuilder();
     LineNumberReader lnr = new LineNumberReader(new InputStreamReader(
@@ -43,7 +45,7 @@ class CommandRunner {
         output.append('\n');
       }
       int statusCode = process.waitFor();
-      if (statusCode != 0) {
+      if (checkStatusCode && statusCode != 0) {
         throw new BuildException("Non-zero status code result (" + statusCode
             + ") running command: " + makeCmdString(cmd));
       }
@@ -55,6 +57,14 @@ class CommandRunner {
       throw new BuildException("Interrupted waiting for command: "
           + makeCmdString(cmd), e);
     }
+  }
+
+  /**
+   * Returns the output of running a command as a string. Will fail if the
+   * invoked process returns a non-zero status code.
+   */
+  public static String getCommandOutput(File workDir, String... cmd) {
+    return getCommandOutput(true, workDir, cmd);
   }
 
   /**

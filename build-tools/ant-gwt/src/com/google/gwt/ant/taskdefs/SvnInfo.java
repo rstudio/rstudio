@@ -79,6 +79,69 @@ public class SvnInfo extends Task {
       + URL_REGEX + ")\\s*");
 
   /**
+   * Returns true if this git working copy matches the specified svn revision,
+   * and also has no local modifications.
+   */
+  static boolean doesGitWorkingCopyMatchSvnRevision(File dir, String svnRevision) {
+    String workingRev = getGitWorkingRev(dir);
+    String targetRev = getGitRevForSvnRev(dir, svnRevision);
+    if (!workingRev.equals(targetRev)) {
+      return false;
+    }
+    String status = getGitStatus(dir);
+    return status.contains("nothing to commit (working directory clean)");
+  }
+
+  /**
+   * Returns the git commit number matching the specified svn revision.
+   */
+  static String getGitRevForSvnRev(File dir, String svnRevision) {
+    String output = CommandRunner.getCommandOutput(dir, "git", "svn",
+        "find-rev", "r" + svnRevision);
+    output = output.trim();
+    if (output.length() == 0) {
+      throw new BuildException("git svn find-rev didn't give any answer");
+    }
+    return output;
+  }
+
+  /**
+   * Runs "git status" and returns the result.
+   */
+  static String getGitStatus(File dir) {
+    // git status returns 1 for a status code, so just don't check it.
+    String output = CommandRunner.getCommandOutput(false, dir, "git", "status");
+    if (output.length() == 0) {
+      throw new BuildException("git status didn't give any answer");
+    }
+    return output;
+  }
+
+  /**
+   * Runs "git svn info", returning the output as a string.
+   */
+  static String getGitSvnInfo(File dir) {
+    String output = CommandRunner.getCommandOutput(dir, "git", "svn", "info");
+    if (output.length() == 0) {
+      throw new BuildException("git svn info didn't give any answer");
+    }
+    return output;
+  }
+
+  /**
+   * Returns the current git commit number of the working copy.
+   */
+  static String getGitWorkingRev(File dir) {
+    String output = CommandRunner.getCommandOutput(dir, "git", "rev-list",
+        "--max-count=1", "HEAD");
+    output = output.trim();
+    if (output.length() == 0) {
+      throw new BuildException("git rev-list didn't give any answer");
+    }
+    return output;
+  }
+
+  /**
    * Runs "svn info", returning the output as a string.
    */
   static String getSvnInfo(File dir) {
@@ -99,6 +162,17 @@ public class SvnInfo extends Task {
       throw new BuildException("svnversion didn't give any answer");
     }
     return output;
+  }
+
+  static boolean looksLikeGit(File dir) {
+    dir = dir.getAbsoluteFile();
+    while (dir != null) {
+      if (new File(dir, ".git").isDirectory()) {
+        return true;
+      }
+      dir = dir.getParentFile();
+    }
+    return false;
   }
 
   /**
@@ -189,13 +263,20 @@ public class SvnInfo extends Task {
     }
 
     Info info;
-    if (!looksLikeSvn(workDirFile)) {
-      info = new Info("unknown", "unknown");
-    } else {
+    if (looksLikeSvn(workDirFile)) {
       info = parseInfo(getSvnInfo(workDirFile));
 
       // Use svnversion to get a more exact revision string.
       info.revision = getSvnVersion(workDirFile);
+    } else if (looksLikeGit(workDirFile)) {
+      info = parseInfo(getGitSvnInfo(workDirFile));
+
+      // Add a 'M' tag if this working copy is not pristine.
+      if (!doesGitWorkingCopyMatchSvnRevision(workDirFile, info.revision)) {
+        info.revision += "M";
+      }
+    } else {
+      info = new Info("unknown", "unknown");
     }
 
     getProject().setNewProperty(outprop, info.branch + "@" + info.revision);
