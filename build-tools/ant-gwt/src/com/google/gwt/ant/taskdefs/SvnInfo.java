@@ -20,8 +20,8 @@ import org.apache.tools.ant.Task;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.io.StringReader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,9 +32,137 @@ import java.util.regex.Pattern;
  */
 public class SvnInfo extends Task {
 
-  // URL line from svn info output, selecting the very last term of the URL as
-  // the branch specifier
-  private static final String URL_REGEX = "\\s*URL:\\s*https?://.*/([^/]*)\\s*";
+  /**
+   * Structured svn info.
+   */
+  static class Info {
+    /**
+     * The relative path of this svn working copy within the root of the remote
+     * repository. That is, if the root is "http://example.com/svn" and the
+     * working copy URL is "http://example.com/svn/tags/w00t", this will be set
+     * to "tags/w00t".
+     */
+    public final String branch;
+
+    /**
+     * The revision of this working copy. Initially set to the value parsed from
+     * "svn info" given a more detailed value via "svnversion".
+     */
+    public String revision;
+
+    public Info(String branch, String revision) {
+      this.branch = branch;
+      this.revision = revision;
+    }
+  }
+
+  /**
+   * A regex that matches a URL.
+   */
+  static final String URL_REGEX = "\\w+://\\S*";
+
+  /**
+   * A pattern that matches the URL line in svn info output.
+   */
+  private static final Pattern BRANCH_PATTERN = Pattern.compile("\\s*URL:\\s*("
+      + URL_REGEX + ")\\s*");
+
+  /**
+   * A pattern that matches the Revision line in svn info output.
+   */
+  private static final Pattern REVISION_PATTERN = Pattern.compile("\\s*Revision:\\s*(\\d+)\\s*");
+
+  /**
+   * A pattern that matches the Repository Root line in svn info output.
+   */
+  private static final Pattern ROOT_PATTERN = Pattern.compile("\\s*Repository Root:\\s*("
+      + URL_REGEX + ")\\s*");
+
+  /**
+   * Runs "svn info", returning the output as a string.
+   */
+  static String getSvnInfo(File dir) {
+    String output = CommandRunner.getCommandOutput(dir, "svn", "info");
+    if (output.length() == 0) {
+      throw new BuildException("svn info didn't give any answer");
+    }
+    return output;
+  }
+
+  /**
+   * Runs "svnversion", returning the output as a string.
+   */
+  static String getSvnVersion(File dir) {
+    String output = CommandRunner.getCommandOutput(dir, "svnversion", ".");
+    output = output.trim();
+    if (output.length() == 0) {
+      throw new BuildException("svnversion didn't give any answer");
+    }
+    return output;
+  }
+
+  /**
+   * Returns <code>true</code> if the specified directory looks like an svn
+   * working copy.
+   */
+  static boolean looksLikeSvn(File dir) {
+    return new File(dir, ".svn").isDirectory();
+  }
+
+  /**
+   * Parses the output of running "svn info".
+   */
+  static Info parseInfo(String svnInfo) {
+    String rootUrl = null;
+    String branchUrl = null;
+    String revision = null;
+    LineNumberReader lnr = new LineNumberReader(new StringReader(svnInfo));
+    try {
+      for (String line = lnr.readLine(); line != null; line = lnr.readLine()) {
+        Matcher m;
+        if ((m = ROOT_PATTERN.matcher(line)) != null && m.matches()) {
+          rootUrl = m.group(1);
+        } else if ((m = BRANCH_PATTERN.matcher(line)) != null && m.matches()) {
+          branchUrl = m.group(1);
+        } else if ((m = REVISION_PATTERN.matcher(line)) != null && m.matches()) {
+          revision = m.group(1);
+        }
+      }
+    } catch (IOException e) {
+      throw new BuildException("Should never happen", e);
+    }
+
+    if (rootUrl == null) {
+      throw new BuildException("svn info didn't get root URL: " + svnInfo);
+    }
+    if (branchUrl == null) {
+      throw new BuildException("svn info didn't get branch URL: " + svnInfo);
+    }
+    if (revision == null) {
+      throw new BuildException("svn info didn't get revision: " + svnInfo);
+    }
+    rootUrl = removeTrailingSlash(rootUrl);
+    branchUrl = removeTrailingSlash(branchUrl);
+    if (!branchUrl.startsWith(rootUrl)) {
+      throw new BuildException("branch URL (" + branchUrl + ") and root URL ("
+          + rootUrl + ") did not match");
+    }
+
+    String branch;
+    if (branchUrl.length() == rootUrl.length()) {
+      branch = "";
+    } else {
+      branch = branchUrl.substring(rootUrl.length() + 1);
+    }
+    return new Info(branch, revision);
+  }
+
+  static String removeTrailingSlash(String url) {
+    if (url.endsWith("/")) {
+      return url.substring(0, url.length() - 1);
+    }
+    return url;
+  }
 
   private String fileprop;
 
@@ -59,24 +187,21 @@ public class SvnInfo extends Task {
     if (!workDirFile.isDirectory()) {
       throw new BuildException(workdir + " is not a directory");
     }
-    
-    String branch;
-    String revision;
 
-    File svnDirFile = new File(workdir, ".svn");
-    if (!svnDirFile.exists()) {
-      // This is not svn workdir. We can't guess the version... 
-      branch = "unknown";
-      revision = "unknown";
+    Info info;
+    if (!looksLikeSvn(workDirFile)) {
+      info = new Info("unknown", "unknown");
     } else {
-      branch = getSvnBranch(workDirFile);
-      revision = getSvnVersion(workDirFile);
+      info = parseInfo(getSvnInfo(workDirFile));
+
+      // Use svnversion to get a more exact revision string.
+      info.revision = getSvnVersion(workDirFile);
     }
 
-    getProject().setNewProperty(outprop, branch + "@" + revision);
+    getProject().setNewProperty(outprop, info.branch + "@" + info.revision);
     if (fileprop != null) {
       getProject().setNewProperty(fileprop,
-          branch + "-" + revision.replaceAll(":", "-"));
+          info.branch + "-" + info.revision.replaceAll(":", "-"));
     }
   }
 
@@ -106,87 +231,5 @@ public class SvnInfo extends Task {
    */
   public void setOutputProperty(String propname) {
     outprop = propname;
-  }
-
-  private String getSvnBranch(File workdir) {
-    String branchName = null;
-
-    LineNumberReader svnout = runCommand(workdir, "svn", "info");
-    try {
-      String line = svnout.readLine();
-
-      Pattern urlRegex = Pattern.compile(URL_REGEX);
-      while (line != null) {
-        Matcher m = urlRegex.matcher(line);
-
-        if (m.matches()) {
-          branchName = m.group(1);
-          if (branchName == null || "".equals(branchName)) {
-            throw new BuildException(
-                "svn info didn't get branch from URL line " + line);
-          }
-          break;
-        }
-        line = svnout.readLine();
-      }
-    } catch (IOException e) {
-      throw new BuildException(
-          "<svninfo> cannot read svn info's output stream", e);
-    }
-    return branchName;
-  }
-
-  private String getSvnVersion(File workdir) {
-    String line = null;
-
-    LineNumberReader svnout = runCommand(workdir, "svnversion", ".");
-    try {
-      line = svnout.readLine();
-    } catch (IOException e) {
-      throw new BuildException(
-          "<svninfo> cannot read svnversion's output stream", e);
-    }
-    if (line == null || "".equals(line)) {
-      throw new BuildException("svnversion didn't give any answer");
-    }
-    return line;
-  }
-
-  private LineNumberReader runCommand(File workdir, String... cmd) {
-    String cmdString = "";
-    for (String arg : cmd) {
-      cmdString = cmdString + arg + " ";
-    }
-    cmdString = cmdString.substring(0, cmdString.length() - 1);
-
-    ProcessBuilder svnPb = new ProcessBuilder(cmd);
-    svnPb.directory(workdir);
-    Process svnproc;
-    try {
-      svnproc = svnPb.start();
-    } catch (IOException e) {
-      throw new BuildException("cannot launch command " + cmdString, e);
-    }
-
-    LineNumberReader svnerr = new LineNumberReader(new InputStreamReader(
-        svnproc.getErrorStream()));
-    try {
-      String line = svnerr.readLine();
-      String errorText = "";
-      if (line != null) {
-        while (line != null) {
-          errorText = errorText + "  " + line + "\n";
-          line = svnerr.readLine();
-        }
-        throw new BuildException(cmdString + " returned error output:\n"
-            + errorText);
-      }
-    } catch (IOException e) {
-      throw new BuildException("cannot read error stream from " + cmdString, e);
-    }
-
-    LineNumberReader svnout = new LineNumberReader(new InputStreamReader(
-        svnproc.getInputStream()));
-    return svnout;
   }
 }
