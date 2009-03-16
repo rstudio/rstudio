@@ -298,12 +298,14 @@ public class CurrencyListGenerator extends Generator {
       writer.println("protected void loadCurrencyMap() {");
       writer.println("  ensureInstance();");
       writer.println("  instance.loadCurrencyMap();");
+      writer.println("  dataMap = instance.dataMap;");
       writer.println("}");
       writer.println();
       writer.println("@Override");
       writer.println("protected void loadNamesMap() {");
       writer.println("  ensureInstance();");
       writer.println("  instance.loadNamesMap();");
+      writer.println("  namesMap = instance.namesMap;");
       writer.println("}");
       writer.println();
       writer.println("private void ensureInstance() {");
