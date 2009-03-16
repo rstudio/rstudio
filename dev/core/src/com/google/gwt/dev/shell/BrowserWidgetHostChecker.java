@@ -17,6 +17,8 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -31,7 +33,7 @@ public class BrowserWidgetHostChecker {
   /**
    * The set of always allowed URLs, which are immune to blacklisting.
    */
-  private static final Set<String> alwaysValidHttpHosts = new HashSet<String>();
+  private static final Pattern alwaysValidHttpHosts;
 
   /**
    * The set of blacklisted URLs.
@@ -48,19 +50,49 @@ public class BrowserWidgetHostChecker {
   private static final Set<String> validHttpHosts = new HashSet<String>();
 
   static {
-    alwaysValidHttpHosts.add("^https?://localhost");
-    alwaysValidHttpHosts.add("^file:");
-    alwaysValidHttpHosts.add("^about:");
-    alwaysValidHttpHosts.add("^res:");
-    alwaysValidHttpHosts.add("^javascript:");
-    alwaysValidHttpHosts.add("^([a-zA-Z][:])[/\\\\]");
+    Set<String> regexes = new HashSet<String>();
+    // Regular URLs may or may not have a port, and must either end with
+    // the host+port, or be followed by a slash (to avoid attacks like
+    // localhost.evildomain.org).
+    String portSuffix = "(:\\d+)?(/.*)?";
+    regexes.add("https?://localhost" + portSuffix);
+    regexes.add("https?://localhost[.]localdomain" + portSuffix);
+    regexes.add("https?://127[.]0[.]0[.]1" + portSuffix);
+    String hostName;
+    try {
+      hostName = InetAddress.getLocalHost().getHostName();
+      if (hostName != null) {
+        hostName = hostName.replace(".", "[.]");
+        regexes.add("https?://" + hostName + portSuffix);
+      }
+    } catch (UnknownHostException e) {
+      // Ignore
+    }
+    String addr;
+    try {
+      addr = InetAddress.getLocalHost().getHostAddress();
+      if (addr != null) {
+        addr = addr.replace(".", "[.]");
+        regexes.add("https?://" + addr + portSuffix);
+      }
+    } catch (UnknownHostException e) {
+      // Ignore
+    }
+    regexes.add("file:.*");
+    regexes.add("about:.*");
+    regexes.add("res:.*");
+    regexes.add("javascript:.*");
+    regexes.add("([a-z][:])[/\\\\].*");
     // matches c:\ and c:/
-    alwaysValidHttpHosts.add("^https?://localhost/");
-    alwaysValidHttpHosts.add("^https?://localhost[.]localdomain/");
-    alwaysValidHttpHosts.add("^https?://127[.]0[.]0[.]1/");
-    alwaysValidHttpHosts.add("^https?://localhost$");
-    alwaysValidHttpHosts.add("^https?://localhost[.]localdomain$");
-    alwaysValidHttpHosts.add("^https?://127[.]0[.]0[.]1$");
+    StringBuilder buf = new StringBuilder();
+    String prefix = "(";
+    for (String regex : regexes) {
+      buf.append(prefix).append('(').append(regex).append(')');
+      prefix = "|";
+    }
+    buf.append(")");
+    alwaysValidHttpHosts = Pattern.compile(buf.toString(),
+        Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
   }
 
   /**
@@ -90,9 +122,10 @@ public class BrowserWidgetHostChecker {
    * @return true if the host matches
    */
   public static String checkHost(String hostUnderConsideration, Set<String> hosts) {
+    // TODO(jat): build a single regex instead of looping
     hostUnderConsideration = hostUnderConsideration.toLowerCase();
-    for (Iterator<String> i = hosts.iterator(); i.hasNext();) {
-      String rule = i.next().toString().toLowerCase();
+    for (String rule : hosts) {
+      rule = rule.toLowerCase();
       // match on lowercased regex
       if (hostUnderConsideration.matches(".*" + rule + ".*")) {
         return rule;
@@ -149,20 +182,18 @@ public class BrowserWidgetHostChecker {
   }
 
   /**
-   * This method returns true if the host is always admissable, regardless of
+   * This method returns true if the host is always admissible, regardless of
    * the blacklist.
    * 
    * @param url the URL to be verified
-   * @return returns true if the host is always admissable
+   * @return returns true if the host is always admissible
    */
   public static boolean isAlwaysWhitelisted(String url) {
-    String whitelistRuleFound;
-    whitelistRuleFound = checkHost(url, alwaysValidHttpHosts);
-    return whitelistRuleFound != null;
+    return alwaysValidHttpHosts.matcher(url).matches();
   }
 
   /**
-   * This method returns true if the host is forbidden.
+   * This method returns non-null if the host is forbidden.
    * 
    * @param url the URL to be verified
    * @return returns the regex that specified the host matches the blacklist
@@ -173,7 +204,7 @@ public class BrowserWidgetHostChecker {
   }
 
   /**
-   * This method returns true if the host is admissable, provided it is not on
+   * This method returns null if the host is admissible, provided it is not on
    * the blacklist.
    * 
    * @param url the URL to be verified

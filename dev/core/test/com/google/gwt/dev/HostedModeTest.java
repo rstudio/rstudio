@@ -31,7 +31,9 @@ import java.net.BindException;
 public class HostedModeTest extends ArgProcessorTestBase {
 
   public static class MySCL extends ServletContainerLauncher {
-    public ServletContainer start(TreeLogger logger, int port, File appRootDir)
+    @Override
+    public ServletContainer start(TreeLogger logger, String bindAddr, int port,
+        File appRootDir)
         throws BindException, Exception {
       throw new UnsupportedOperationException();
     }
@@ -55,6 +57,21 @@ public class HostedModeTest extends ArgProcessorTestBase {
 
     assertNotNull(BrowserWidgetHostChecker.matchWhitelisted("white"));
     assertNotNull(BrowserWidgetHostChecker.matchBlacklisted("black"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40:88"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40:88/"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1.40:88/foo"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org:88"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org:88/"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org:88/foo"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org/"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://localhost.evildomain.org/foo"));
+    assertFalse(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://www.evildomain.org/foo?http://localhost"));
+    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1"));
+    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1:88"));
+    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1:88/"));
+    assertTrue(BrowserWidgetHostChecker.isAlwaysWhitelisted("http://127.0.0.1:88/foo"));
 
     assertEquals(new File("myGen").getAbsoluteFile(),
         options.getGenDir().getAbsoluteFile());
