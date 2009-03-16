@@ -32,8 +32,7 @@ public class HostedModeTest extends ArgProcessorTestBase {
 
   public static class MySCL extends ServletContainerLauncher {
     @Override
-    public ServletContainer start(TreeLogger logger, String bindAddr, int port,
-        File appRootDir)
+    public ServletContainer start(TreeLogger logger, int port, File appRootDir)
         throws BindException, Exception {
       throw new UnsupportedOperationException();
     }
