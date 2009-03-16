@@ -148,6 +148,16 @@ public class Request {
    * and set this field to null.
    */
   private XMLHttpRequest xmlHttpRequest;
+  
+  /**
+   * Only used for building a
+   * {@link com.google.gwt.user.client.rpc.impl.FailedRequest}.
+   */
+  protected Request() {
+    timeoutMillis = 0;
+    xmlHttpRequest = null;
+    timer = null;
+  }
 
   /**
    * Constructs an instance of the Request object.

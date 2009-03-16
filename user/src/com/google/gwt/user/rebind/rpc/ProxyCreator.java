@@ -39,6 +39,8 @@ import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.impl.ClientSerializationStreamWriter;
+import com.google.gwt.user.client.rpc.impl.FailedRequest;
+import com.google.gwt.user.client.rpc.impl.FailingRequestBuilder;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -485,7 +487,25 @@ class ProxyCreator {
       String exceptionName = nameFactory.createName("ex");
       w.println(exceptionName + ") {");
       w.indent();
-      w.println(callbackName + ".onFailure(" + exceptionName + ");");
+      if (!asyncReturnType.getQualifiedSourceName().equals(
+          RequestBuilder.class.getName())) {
+        /*
+         * If the method returns void or Request, signal the serialization error
+         * immediately. If the method returns RequestBuilder, the error will be
+         * signaled whenever RequestBuilder.send() is invoked.
+         */
+        w.println(callbackName + ".onFailure(" + exceptionName + ");");
+      }
+      if (asyncReturnType.getQualifiedSourceName().equals(
+          RequestBuilder.class.getName())) {
+        w.println("return new " + FailingRequestBuilder.class.getName() + "("
+            + exceptionName + ", " + callbackName + ");");
+      } else if (asyncReturnType.getQualifiedSourceName().equals(
+          Request.class.getName())) {
+        w.println("return new " + FailedRequest.class.getName() + "();");
+      } else {
+        assert asyncReturnType == JPrimitiveType.VOID;
+      }
       w.outdent();
       w.println("}");
     }

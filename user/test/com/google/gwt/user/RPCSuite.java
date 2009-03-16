@@ -23,10 +23,13 @@ import com.google.gwt.user.client.rpc.CustomFieldSerializerTest;
 import com.google.gwt.user.client.rpc.CustomFieldSerializerTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.EnumsTest;
 import com.google.gwt.user.client.rpc.EnumsTestWithTypeObfuscation;
+import com.google.gwt.user.client.rpc.FailedRequestTest;
+import com.google.gwt.user.client.rpc.FailingRequestBuilderTest;
 import com.google.gwt.user.client.rpc.InheritanceTest;
 import com.google.gwt.user.client.rpc.InheritanceTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ObjectGraphTest;
 import com.google.gwt.user.client.rpc.ObjectGraphTestWithTypeObfuscation;
+import com.google.gwt.user.client.rpc.RunTimeSerializationErrorsTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTest;
 import com.google.gwt.user.client.rpc.UnicodeEscapingTestWithTypeObfuscation;
 import com.google.gwt.user.client.rpc.ValueTypesTest;
@@ -70,6 +73,8 @@ public class RPCSuite {
     suite.addTestSuite(SerializationPolicyLoaderTest.class);
     suite.addTestSuite(RPCServletUtilsTest.class);
     suite.addTestSuite(RPCRequestTest.class);
+    suite.addTestSuite(FailedRequestTest.class);
+    suite.addTestSuite(FailingRequestBuilderTest.class);
 
     // GWTTestCases
     suite.addTestSuite(ValueTypesTest.class);
@@ -80,6 +85,7 @@ public class RPCSuite {
     suite.addTestSuite(ObjectGraphTest.class);
     suite.addTestSuite(com.google.gwt.user.client.rpc.RemoteServiceServletTest.class);
     suite.addTestSuite(UnicodeEscapingTest.class);
+    suite.addTestSuite(RunTimeSerializationErrorsTest.class);
 
     // This test turns on the type-elision feature of RPC
     suite.addTestSuite(ValueTypesTestWithTypeObfuscation.class);
