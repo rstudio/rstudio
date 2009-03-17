@@ -110,7 +110,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     soycEnabled = enabled;
   }
   
-  public void setWorkDir(File workDir){
+  public void setWorkDir(File workDir) {
     this.workDir = workDir;
   }
 }
