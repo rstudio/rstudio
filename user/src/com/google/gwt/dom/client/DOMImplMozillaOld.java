@@ -24,6 +24,18 @@ package com.google.gwt.dom.client;
  */
  class DOMImplMozillaOld extends DOMImplMozilla {
 
+  // Used by JSNI to avoid JSO restrictions from JSNI
+  @SuppressWarnings("unused")
+  private static int getDocumentScrollLeft() {
+    return Document.get().getScrollLeft();
+  }
+
+  // Used by JSNI to avoid JSO restrictions from JSNI
+  @SuppressWarnings("unused")
+  private static int getDocumentScrollTop() {
+    return Document.get().getScrollTop();
+  }
+
   @Override
   public native int getAbsoluteLeft(Element elem) /*-{
     var doc = elem.ownerDocument;
@@ -41,8 +53,8 @@ package com.google.gwt.dom.client;
       parent = parent.parentNode;
     }
 
-    return left +
-      @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollLeft;
+    return left
+        + @com.google.gwt.dom.client.DOMImplMozillaOld::getDocumentScrollLeft()();
   }-*/;
 
   @Override
@@ -62,8 +74,8 @@ package com.google.gwt.dom.client;
       parent = parent.parentNode;
     }
 
-    return top +
-      @com.google.gwt.user.client.impl.DocumentRootImpl::documentRoot.scrollTop;
+    return top
+        + @com.google.gwt.dom.client.DOMImplMozillaOld::getDocumentScrollTop()();
   }-*/;
   
   @Override
