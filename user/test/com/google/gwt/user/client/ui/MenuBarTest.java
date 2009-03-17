@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -74,7 +74,7 @@ public class MenuBarTest extends GWTTestCase {
     bar.removeSeparator(separator0);
     assertEquals(item1, items.get(0));
     assertNull(separator0.getParentMenu());
-    
+
     // Add a bunch of items and clear them all
     MenuItem item2 = bar.addItem("test2", true, blankCommand);
     MenuItemSeparator separator1 = bar.addSeparator();
@@ -182,6 +182,29 @@ public class MenuBarTest extends GWTTestCase {
     }
   }
 
+  public void testSelectItem() {
+    Command emptyCommand = new Command() {
+      public void execute() {
+      }
+    };
+
+    MenuBar bar = new MenuBar(false);
+    MenuItem item1 = new MenuItem("item1", emptyCommand);
+    MenuItem item2 = new MenuItem("item2", emptyCommand);
+    MenuItem item3 = new MenuItem("item3", emptyCommand);
+    bar.addItem(item1);
+    bar.addItem(item2);
+    bar.addItem(item3);
+    RootPanel.get().add(bar);
+
+    bar.selectItem(item1);
+    assertEquals(item1, bar.getSelectedItem());
+    bar.selectItem(item3);
+    assertEquals(item3, bar.getSelectedItem());
+    bar.selectItem(null);
+    assertNull(bar.getSelectedItem());
+  }
+
   public void testDebugId() {
     Command emptyCommand = new Command() {
       public void execute() {
@@ -202,7 +225,7 @@ public class MenuBarTest extends GWTTestCase {
     bar.addItem("top1", emptyCommand);
     MenuItem top2 = bar.addItem("top2", subMenu);
     RootPanel.get().add(bar);
-    
+
     // Open the item with a submenu
     bar.itemOver(top2, true);
 

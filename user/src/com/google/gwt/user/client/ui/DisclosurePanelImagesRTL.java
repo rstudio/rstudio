@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Google Inc.
+ * Copyright 2009 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,21 +16,16 @@
 package com.google.gwt.user.client.ui;
 
 /**
- * An {@link ImageBundle} that provides images for {@link DisclosurePanel}.
+ * A bundle containing the RTL versions of the images for DisclosurePanel. Right now, we
+ * only need to override the disclosurePanelClosed() method, as the image that we provide
+ * for disclosurePanelOpen() is direction-agnostic.
  */
-public interface DisclosurePanelImages extends ImageBundle {
-
+public interface DisclosurePanelImagesRTL extends DisclosurePanelImages {
   /**
-   * An image indicating an open disclosure panel.
+   * An image indicating a closed disclosure panel for a RTL context.
    *
    * @return a prototype of this image
    */
-  AbstractImagePrototype disclosurePanelOpen();
-
-  /**
-   * An image indicating a closed disclosure panel.
-   *
-   * @return a prototype of this image
-   */
+  @Resource("disclosurePanelClosed_rtl.png")
   AbstractImagePrototype disclosurePanelClosed();
 }
