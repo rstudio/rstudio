@@ -29,7 +29,6 @@ import com.google.gwt.dev.shell.BrowserWidgetHostChecker;
 import com.google.gwt.dev.shell.BrowserWindowController;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
-import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
@@ -193,6 +192,7 @@ abstract class HostedModeBase implements BrowserWindowController {
       HostedModeBase.this.compile(getLogger());
     }
 
+    @Deprecated
     public void compile(String[] moduleNames) throws UnableToCompleteException {
       if (!isLegacyMode()) {
         throw new UnsupportedOperationException();
@@ -431,6 +431,8 @@ abstract class HostedModeBase implements BrowserWindowController {
 
   /**
    * Compiles all modules.
+   * 
+   * @throws UnableToCompleteException
    */
   protected abstract void compile(TreeLogger logger)
       throws UnableToCompleteException;
@@ -481,12 +483,12 @@ abstract class HostedModeBase implements BrowserWindowController {
     // Check for updates
     final TreeLogger logger = getTopLogger();
     final CheckForUpdates updateChecker
-        = PlatformSpecific.createUpdateChecker(logger);
+        = CheckForUpdates.createUpdateChecker(logger);
     if (updateChecker != null) {
       Thread checkerThread = new Thread("GWT Update Checker") {
         @Override
         public void run() {
-          PlatformSpecific.logUpdateAvailable(logger,
+          CheckForUpdates.logUpdateAvailable(logger,
               updateChecker.check(checkForUpdatesInterval()));
         }
       };

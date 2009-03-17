@@ -22,7 +22,6 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.shell.BrowserWidget;
 import com.google.gwt.dev.shell.BrowserWidgetHost;
 import com.google.gwt.dev.shell.ModuleSpaceHost;
-import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.ShellMainWindow;
 import com.google.gwt.dev.shell.ShellModuleSpaceHost;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
@@ -35,9 +34,12 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.internal.Library;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,12 +76,63 @@ abstract class SwtHostedModeBase extends HostedModeBase {
     }
   }
 
+  /**
+   * All of these classes must extend BrowserWidget. The first one that loads
+   * will be used, so it is important that only the correct one be on the
+   * classpath.
+   */
+  private static final String[] browserClassNames = new String[] {
+      "com.google.gwt.dev.shell.ie.BrowserWidgetIE6",
+      "com.google.gwt.dev.shell.moz.BrowserWidgetMoz",
+      "com.google.gwt.dev.shell.mac.BrowserWidgetSaf"};
+
   static {
     // Force ToolBase to clinit, which causes SWT stuff to happen.
     new ToolBase() {
     };
     // Correct menu on Mac OS X
     Display.setAppName("GWT");
+  }
+
+  private static BrowserWidget createBrowserWidget(TreeLogger logger,
+      Composite parent, BrowserWidgetHost host)
+      throws UnableToCompleteException {
+    Throwable caught = null;
+    try {
+      for (int i = 0; i < browserClassNames.length; i++) {
+        Class<? extends BrowserWidget> clazz = null;
+        try {
+          clazz = Class.forName(browserClassNames[i]).asSubclass(
+              BrowserWidget.class);
+          Constructor<? extends BrowserWidget> ctor = clazz.getDeclaredConstructor(new Class[] {
+              Shell.class, BrowserWidgetHost.class});
+          BrowserWidget bw = ctor.newInstance(new Object[] {parent, host});
+          return bw;
+        } catch (ClassNotFoundException e) {
+          caught = e;
+        }
+      }
+      logger.log(TreeLogger.ERROR,
+          "No instantiable browser widget class could be found", caught);
+      throw new UnableToCompleteException();
+    } catch (SecurityException e) {
+      caught = e;
+    } catch (NoSuchMethodException e) {
+      caught = e;
+    } catch (IllegalArgumentException e) {
+      caught = e;
+    } catch (InstantiationException e) {
+      caught = e;
+    } catch (IllegalAccessException e) {
+      caught = e;
+    } catch (InvocationTargetException e) {
+      caught = e.getTargetException();
+    } catch (ClassCastException e) {
+      caught = e;
+    }
+    logger.log(TreeLogger.ERROR,
+        "The browser widget class could not be instantiated", caught);
+    throw new UnableToCompleteException();
   }
 
   private BrowserWidgetHostImpl browserHost = new SwtBrowserWidgetHostImpl();
@@ -147,8 +200,7 @@ abstract class SwtHostedModeBase extends HostedModeBase {
     boolean succeeded = false;
     Shell s = createTrackedBrowserShell();
     try {
-      BrowserWidget bw = PlatformSpecific.createBrowserWidget(getTopLogger(),
-          s, browserHost);
+      BrowserWidget bw = createBrowserWidget(getTopLogger(), s, browserHost);
 
       if (mainWnd != null) {
         Rectangle r = mainWnd.getShell().getBounds();

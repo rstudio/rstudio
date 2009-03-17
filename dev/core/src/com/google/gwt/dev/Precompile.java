@@ -38,7 +38,6 @@ import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
 import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.shell.CheckForUpdates;
-import com.google.gwt.dev.shell.PlatformSpecific;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.PerfLogger;
@@ -299,12 +298,12 @@ public class Precompile {
         public boolean run(TreeLogger logger) throws UnableToCompleteException {
           FutureTask<UpdateResult> updater = null;
           if (!options.isUpdateCheckDisabled()) {
-            updater = PlatformSpecific.checkForUpdatesInBackgroundThread(
-                logger, CheckForUpdates.ONE_DAY);
+            updater = CheckForUpdates.checkForUpdatesInBackgroundThread(logger,
+                CheckForUpdates.ONE_DAY);
           }
           boolean success = new Precompile(options).run(logger);
           if (success) {
-            PlatformSpecific.logUpdateAvailable(logger, updater);
+            CheckForUpdates.logUpdateAvailable(logger, updater);
           }
           return success;
         }
