@@ -43,6 +43,7 @@ import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableAggressiveOptimization;
+import com.google.gwt.dev.util.arg.ArgHandlerDisableCastChecking;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableClassMetadata;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableRunAsync;
 import com.google.gwt.dev.util.arg.ArgHandlerDisableUpdateCheck;
@@ -87,6 +88,7 @@ public class Precompile {
       registerHandler(new ArgHandlerEnableAssertions(options));
       registerHandler(new ArgHandlerDisableAggressiveOptimization(options));
       registerHandler(new ArgHandlerDisableClassMetadata(options));
+      registerHandler(new ArgHandlerDisableCastChecking(options));
       registerHandler(new ArgHandlerValidateOnlyFlag(options));
       registerHandler(new ArgHandlerDisableRunAsync(options));
       registerHandler(new ArgHandlerDraftCompile(options));
@@ -142,6 +144,10 @@ public class Precompile {
       return jjsOptions.isAggressivelyOptimize();
     }
 
+    public boolean isCastCheckingDisabled() {
+      return jjsOptions.isCastCheckingDisabled();
+    }
+
     public boolean isClassMetadataDisabled() {
       return jjsOptions.isClassMetadataDisabled();
     }
@@ -172,6 +178,10 @@ public class Precompile {
 
     public void setAggressivelyOptimize(boolean aggressivelyOptimize) {
       jjsOptions.setAggressivelyOptimize(aggressivelyOptimize);
+    }
+
+    public void setCastCheckingDisabled(boolean disabled) {
+      jjsOptions.setCastCheckingDisabled(disabled);
     }
 
     public void setClassMetadataDisabled(boolean disabled) {

@@ -24,6 +24,7 @@ import java.io.Serializable;
 public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   private boolean aggressivelyOptimize = true;
+  private boolean disableCastChecking = false;
   private boolean disableClassMetadata = false;
   private boolean draftCompile = false;
   private boolean enableAssertions;
@@ -42,6 +43,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void copyFrom(JJSOptions other) {
     setAggressivelyOptimize(other.isAggressivelyOptimize());
     setClassMetadataDisabled(other.isClassMetadataDisabled());
+    setCastCheckingDisabled(other.isCastCheckingDisabled());
     setDraftCompile(other.isDraftCompile());
     setEnableAssertions(other.isEnableAssertions());
     setOutput(other.getOutput());
@@ -60,6 +62,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public boolean isAggressivelyOptimize() {
     return aggressivelyOptimize;
+  }
+
+  public boolean isCastCheckingDisabled() {
+    return disableCastChecking;
   }
 
   public boolean isClassMetadataDisabled() {
@@ -86,6 +92,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     this.aggressivelyOptimize = aggressivelyOptimize;
   }
 
+  public void setCastCheckingDisabled(boolean disabled) {
+    disableCastChecking = disabled;
+  }
+
   public void setClassMetadataDisabled(boolean disabled) {
     disableClassMetadata = disabled;
   }
@@ -109,7 +119,7 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   public void setSoycEnabled(boolean enabled) {
     soycEnabled = enabled;
   }
-  
+
   public void setWorkDir(File workDir) {
     this.workDir = workDir;
   }

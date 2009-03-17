@@ -76,11 +76,11 @@ public class CastNormalizer {
   private class AssignTypeIdsVisitor extends JVisitor {
 
     Set<JClassType> alreadyRan = new HashSet<JClassType>();
-    private Map<JReferenceType, Set<JReferenceType>> queriedTypes = new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
-    private int nextQueryId = 0;
-    private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
     private List<JClassType> classes = new ArrayList<JClassType>();
+    private final List<JArrayType> instantiatedArrayTypes = new ArrayList<JArrayType>();
     private List<JsonObject> jsonObjects = new ArrayList<JsonObject>();
+    private int nextQueryId = 0;
+    private Map<JReferenceType, Set<JReferenceType>> queriedTypes = new IdentityHashMap<JReferenceType, Set<JReferenceType>>();
 
     {
       JTypeOracle typeOracle = program.typeOracle;
@@ -193,6 +193,9 @@ public class CastNormalizer {
 
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
+      if (disableCastChecking) {
+        return;
+      }
       if (x.getCastType() != program.getTypeNull()) {
         recordCast(x.getCastType(), x.getExpr());
       }
@@ -424,6 +427,10 @@ public class CastNormalizer {
       JExpression replaceExpr;
       JType toType = x.getCastType();
       JExpression expr = x.getExpr();
+      if (disableCastChecking && toType instanceof JReferenceType) {
+        ctx.replaceMe(expr);
+        return;
+      }
       if (toType instanceof JNullType) {
         /*
          * Magic: a null type cast means the user tried a cast that couldn't
@@ -586,16 +593,19 @@ public class CastNormalizer {
     }
   }
 
-  public static void exec(JProgram program) {
-    new CastNormalizer(program).execImpl();
+  public static void exec(JProgram program, boolean disableCastChecking) {
+    new CastNormalizer(program, disableCastChecking).execImpl();
   }
 
-  private Map<JReferenceType, Integer> queryIds = new IdentityHashMap<JReferenceType, Integer>();
+  private final boolean disableCastChecking;
 
   private final JProgram program;
 
-  private CastNormalizer(JProgram program) {
+  private Map<JReferenceType, Integer> queryIds = new IdentityHashMap<JReferenceType, Integer>();
+
+  private CastNormalizer(JProgram program, boolean disableCastChecking) {
     this.program = program;
+    this.disableCastChecking = disableCastChecking;
   }
 
   private void execImpl() {

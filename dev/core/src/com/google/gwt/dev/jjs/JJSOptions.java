@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs;
 
 import com.google.gwt.dev.util.arg.OptionAggressivelyOptimize;
+import com.google.gwt.dev.util.arg.OptionDisableCastChecking;
 import com.google.gwt.dev.util.arg.OptionDisableClassMetadata;
 import com.google.gwt.dev.util.arg.OptionDraftCompile;
 import com.google.gwt.dev.util.arg.OptionEnableAssertions;
@@ -28,6 +29,7 @@ import com.google.gwt.dev.util.arg.OptionWorkDir;
  * Controls options for the {@link JavaToJavaScriptCompiler}.
  */
 public interface JJSOptions extends OptionAggressivelyOptimize,
-    OptionDisableClassMetadata, OptionDraftCompile, OptionEnableAssertions,
-    OptionRunAsyncEnabled, OptionScriptStyle, OptionSoycEnabled, OptionWorkDir {
+    OptionDisableClassMetadata, OptionDisableCastChecking, OptionDraftCompile,
+    OptionEnableAssertions, OptionRunAsyncEnabled, OptionScriptStyle,
+    OptionSoycEnabled, OptionWorkDir {
 }

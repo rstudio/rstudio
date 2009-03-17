@@ -184,7 +184,7 @@ public class JavaToJavaScriptCompiler {
       CatchBlockNormalizer.exec(jprogram);
       PostOptimizationCompoundAssignmentNormalizer.exec(jprogram);
       LongEmulationNormalizer.exec(jprogram);
-      CastNormalizer.exec(jprogram);
+      CastNormalizer.exec(jprogram, options.isCastCheckingDisabled());
       ArrayNormalizer.exec(jprogram);
       EqualityNormalizer.exec(jprogram);
 

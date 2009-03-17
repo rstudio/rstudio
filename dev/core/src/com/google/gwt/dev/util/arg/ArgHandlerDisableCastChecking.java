@@ -15,11 +15,32 @@
  */
 package com.google.gwt.dev.util.arg;
 
+import com.google.gwt.util.tools.ArgHandlerFlag;
+
 /**
- * Encapsulates a compiler option to disable runtime cast checking.
+ * An ArgHandler to provide the -disableCastChecking flag.
  */
-public interface OptionDisableClassMetadata {
-  boolean isClassMetadataDisabled();
-  
-  void setClassMetadataDisabled(boolean disabled);
+public class ArgHandlerDisableCastChecking extends ArgHandlerFlag {
+
+  private final OptionDisableCastChecking option;
+
+  public ArgHandlerDisableCastChecking(OptionDisableCastChecking option) {
+    this.option = option;
+  }
+
+  @Override
+  public String getPurpose() {
+    return "EXPERIMENTAL: Disables run-time checking of cast operations";
+  }
+
+  @Override
+  public String getTag() {
+    return "-XdisableCastChecking";
+  }
+
+  @Override
+  public boolean setFlag() {
+    option.setCastCheckingDisabled(true);
+    return true;
+  }
 }
