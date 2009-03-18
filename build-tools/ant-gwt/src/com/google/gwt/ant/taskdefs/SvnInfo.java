@@ -282,7 +282,7 @@ public class SvnInfo extends Task {
     getProject().setNewProperty(outprop, info.branch + "@" + info.revision);
     if (fileprop != null) {
       getProject().setNewProperty(fileprop,
-          info.branch + "-" + info.revision.replaceAll(":", "-"));
+          info.branch.replace('/', '-') + "-" + info.revision.replace(':', '-'));
     }
   }
 
