@@ -133,6 +133,7 @@ abstract class OophmHostedModeBase extends HostedModeBase {
   private class OophmBrowserWidgetHostImpl extends BrowserWidgetHostImpl {
     private final Map<ModuleSpaceHost, ModulePanel> moduleTabs = new IdentityHashMap<ModuleSpaceHost, ModulePanel>();
 
+    @Override
     public ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
         BrowserWidget widget, String moduleName)
         throws UnableToCompleteException {

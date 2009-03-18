@@ -200,6 +200,7 @@ public class HostedMode extends OophmHostedModeBase {
       return scl;
     }
 
+    @Override
     public File getShellBaseWorkDir(ModuleDef moduleDef) {
       return new File(new File(getWorkDir(), moduleDef.getName()), "shell");
     }
