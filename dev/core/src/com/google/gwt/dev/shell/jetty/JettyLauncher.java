@@ -187,10 +187,12 @@ public class JettyLauncher extends ServletContainerLauncher {
       this.appRootDir = appRootDir;
     }
 
+    @Override
     public int getPort() {
       return actualPort;
     }
 
+    @Override
     public void refresh() throws UnableToCompleteException {
       String msg = "Reloading web app to reflect changes in "
           + appRootDir.getAbsolutePath();
@@ -212,6 +214,7 @@ public class JettyLauncher extends ServletContainerLauncher {
       branch.log(TreeLogger.INFO, "Reload completed successfully");
     }
 
+    @Override
     public void stop() throws UnableToCompleteException {
       TreeLogger branch = logger.branch(TreeLogger.INFO,
           "Stopping Jetty server");
@@ -416,6 +419,19 @@ public class JettyLauncher extends ServletContainerLauncher {
     Log.getLog();
   }
 
+  @Override
+  public String getIconPath() {
+    return JettyLauncher.class.getPackage().getName().replace('.', '/')
+        + "/icon24.png";
+  }
+
+  @Override
+  public String getName() {
+    // Use only the icon for the tab.
+    return null;
+  }
+
+  @Override
   public ServletContainer start(TreeLogger logger, int port, File appRootDir)
       throws Exception {
     checkStartParams(logger, port, appRootDir);

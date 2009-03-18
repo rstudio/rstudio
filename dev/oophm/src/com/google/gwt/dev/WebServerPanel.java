@@ -19,17 +19,44 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.util.log.SwingLoggerPanel;
 
 import java.awt.BorderLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
+import javax.swing.JButton;
 import javax.swing.JPanel;
 
 /**
  */
 public class WebServerPanel extends JPanel {
+  
+  /**
+   * Callback interface for when the server should be restarted.
+   */
+  public interface RestartAction {
+    void restartServer(TreeLogger logger);
+  }
+  
   private SwingLoggerPanel logWindow;
 
   public WebServerPanel(int serverPort, TreeLogger.Type maxLevel) {
+    this(serverPort, maxLevel, null);
+  }
+
+  public WebServerPanel(int serverPort, TreeLogger.Type maxLevel,
+      final RestartAction restartServerAction) {
     super(new BorderLayout());
     logWindow = new SwingLoggerPanel(maxLevel);
+    if (restartServerAction != null) {
+      JPanel panel = new JPanel();
+      JButton restartButton = new JButton("Restart Server");
+      restartButton.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          restartServerAction.restartServer(getLogger());
+        }
+      });
+      panel.add(restartButton);
+      add(panel, BorderLayout.NORTH);
+    }
     add(logWindow);
   }
 

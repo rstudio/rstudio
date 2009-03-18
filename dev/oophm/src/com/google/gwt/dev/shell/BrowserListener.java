@@ -16,6 +16,7 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler;
 
 import java.io.IOException;
@@ -88,7 +89,11 @@ public class BrowserListener {
     }
   }
 
-  public String getEndpointIdentifier() {
+  public String getEndpointIdentifier() throws UnableToCompleteException {
+    if (listenSocket == null) {
+      // If we failed to initialize our socket, just bail here.
+      throw new UnableToCompleteException();
+    }
     try {
       return InetAddress.getLocalHost().getHostAddress() + ":"
           + listenSocket.getLocalPort();

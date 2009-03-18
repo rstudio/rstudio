@@ -25,6 +25,22 @@ import java.net.BindException;
 public abstract class ServletContainerLauncher {
 
   /**
+   * @return a path to a 24-pixel high image file (relative to the classpath) to
+   *     be used for this servlet container, or null if none.
+   */
+  public String getIconPath() {
+    return null;
+  }
+
+  /**
+   * @return a short human-readable name of this servlet container, or null
+   *     if no name should be displayed.
+   */
+  public String getName() {
+    return "Web Server";
+  }
+
+  /**
    * Start an embedded HTTP servlet container.
    * 
    * @param logger the server logger

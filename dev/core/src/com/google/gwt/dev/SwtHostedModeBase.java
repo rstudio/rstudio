@@ -74,6 +74,16 @@ abstract class SwtHostedModeBase extends HostedModeBase {
         widgetShell.setCursor(normalCursor);
       }
     }
+
+    public ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
+        String moduleName, String userAgent, String remoteEndpoint)
+        throws UnableToCompleteException {
+      throw new UnsupportedOperationException();
+    }
+
+    public void unloadModule(ModuleSpaceHost moduleSpaceHost) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   /**

@@ -16,7 +16,6 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.GWTShell;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.SwingLoggerPanel;
 
@@ -34,7 +33,7 @@ public class ShellMainWindow extends JPanel {
 
   private SwingLoggerPanel logWindow;
 
-  public ShellMainWindow(GWTShell shell, TreeLogger.Type maxLevel) {
+  public ShellMainWindow(TreeLogger.Type maxLevel) {
     super(new BorderLayout());
     JPanel panel = new JPanel(new GridLayout(2, 1));
     JPanel optionPanel = new JPanel();

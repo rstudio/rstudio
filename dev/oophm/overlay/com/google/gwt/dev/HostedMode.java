@@ -41,12 +41,14 @@ import java.net.BindException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.ImageIcon;
+
 /**
  * The main executable class for the hosted mode shell. NOTE: the public API for
  * this class is to be determined. Consider this class as having <b>no</b>
  * public API other than {@link #main(String[])}.
  */
-public class HostedMode extends SwtHostedModeBase {
+public class HostedMode extends OophmHostedModeBase {
 
   /**
    * Handles the -server command line flag.
@@ -140,7 +142,7 @@ public class HostedMode extends SwtHostedModeBase {
     }
   }
 
-  static class ArgProcessor extends HostedModeBase.ArgProcessor {
+  static class ArgProcessor extends OophmHostedModeBase.ArgProcessor {
     public ArgProcessor(HostedModeOptions options) {
       super(options, false);
       registerHandler(new ArgHandlerServer(options));
@@ -163,7 +165,8 @@ public class HostedMode extends SwtHostedModeBase {
     }
   }
 
-  interface HostedModeOptions extends HostedModeBaseOptions, CompilerOptions {
+  interface HostedModeOptions extends OophmHostedModeBaseOptions,
+      CompilerOptions {
     ServletContainerLauncher getServletContainerLauncher();
 
     void setServletContainerLauncher(ServletContainerLauncher scl);
@@ -172,7 +175,7 @@ public class HostedMode extends SwtHostedModeBase {
   /**
    * Concrete class to implement all hosted mode options.
    */
-  static class HostedModeOptionsImpl extends HostedModeBaseOptionsImpl
+  static class HostedModeOptionsImpl extends OophmHostedModeBaseOptionsImpl
       implements HostedModeOptions {
     private File extraDir;
     private int localWorkers;
@@ -219,7 +222,7 @@ public class HostedMode extends SwtHostedModeBase {
 
     @Deprecated
     public void setOutDir(File outDir) {
-      this.outDir = outDir;     
+      this.outDir = outDir;
     }
 
     public void setServletContainerLauncher(ServletContainerLauncher scl) {
@@ -375,8 +378,9 @@ public class HostedMode extends SwtHostedModeBase {
   @Override
   protected int doStartUpServer() {
     try {
-      TreeLogger serverLogger = getTopLogger().branch(TreeLogger.INFO,
-          "Starting HTTP on port " + getPort(), null);
+      TreeLogger serverLogger = webServerLog.getLogger();
+      serverLogger.log(TreeLogger.INFO, "Starting HTTP on port " + getPort(),
+          null);
       server = options.getServletContainerLauncher().start(serverLogger,
           getPort(), options.getWarDir());
       assert (server != null);
@@ -401,8 +405,14 @@ public class HostedMode extends SwtHostedModeBase {
   }
 
   @Override
-  protected String getTitleText() {
-    return "Google Web Toolkit Hosted Mode";
+  protected ImageIcon getWebServerIcon() {
+    return loadImageIcon(options.getServletContainerLauncher().getIconPath(),
+        false);
+  }
+
+  @Override
+  protected String getWebServerName() {
+    return options.getServletContainerLauncher().getName();
   }
 
   @Override

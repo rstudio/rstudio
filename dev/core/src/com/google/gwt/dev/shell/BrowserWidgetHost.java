@@ -41,9 +41,17 @@ public interface BrowserWidgetHost {
   @Deprecated
   void compile(String[] modules) throws UnableToCompleteException;
 
-  // Factor this out if BrowserWidget becomes decoupled from hosted mode
+  /**
+   * For SWT.
+   */
   ModuleSpaceHost createModuleSpaceHost(TreeLogger logger,
       BrowserWidget widget, String moduleName) throws UnableToCompleteException;
+
+  /**
+   * For OOPHM.
+   */
+  ModuleSpaceHost createModuleSpaceHost(TreeLogger logger, String moduleName,
+      String userAgent, String remoteEndpoint) throws UnableToCompleteException;
 
   TreeLogger getLogger();
 
@@ -69,5 +77,13 @@ public interface BrowserWidgetHost {
 
   String normalizeURL(String whatTheUserTyped);
 
+  /**
+   * For SWT.
+   */
   BrowserWidget openNewBrowserWindow() throws UnableToCompleteException;
+
+  /**
+   * For OOPHM.
+   */
+  void unloadModule(ModuleSpaceHost moduleSpaceHost);
 }

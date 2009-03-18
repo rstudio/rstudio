@@ -458,7 +458,6 @@ abstract class HostedModeBase implements BrowserWindowController {
    * @param logger TreeLogger to use
    * @param typeOracle
    * @param moduleDef
-   * @param genDir
    * @return ShellModuleSpaceHost instance
    */
   protected final ShellModuleSpaceHost doCreateShellModuleSpaceHost(
