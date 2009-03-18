@@ -90,7 +90,8 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers {
           // Trigger a change event now.
           if (eventPending) {
             allowEvent = true;
-            fileUpload.getElement().dispatchEvent(Document.get().createChangeEvent());
+            fileUpload.getElement().dispatchEvent(
+                Document.get().createChangeEvent());
             allowEvent = false;
             eventPending = false;
           }
@@ -165,11 +166,30 @@ public class FileUpload extends Widget implements HasName, HasChangeHandlers {
     return getInputElement().getName();
   }
 
+  /**
+   * Gets whether this widget is enabled.
+   * 
+   * @return <code>true</code> if the widget is enabled
+   */
+  public boolean isEnabled() {
+    return !getElement().getPropertyBoolean("disabled");
+  }
+
   @Override
   public void onBrowserEvent(Event event) {
     if (impl.onBrowserEvent(event)) {
       super.onBrowserEvent(event);
     }
+  }
+
+  /**
+   * Sets whether this widget is enabled.
+   * 
+   * @param enabled <code>true</code> to enable the widget, <code>false</code>
+   *          to disable it
+   */
+  public void setEnabled(boolean enabled) {
+    getElement().setPropertyBoolean("disabled", !enabled);
   }
 
   public void setName(String name) {
