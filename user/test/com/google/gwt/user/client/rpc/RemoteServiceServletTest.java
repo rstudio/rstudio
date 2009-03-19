@@ -18,6 +18,7 @@ package com.google.gwt.user.client.rpc;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -36,6 +37,60 @@ import com.google.gwt.junit.client.GWTTestCase;
  * </p>
  */
 public class RemoteServiceServletTest extends GWTTestCase {
+  private static class MyRpcRequestBuilder extends RpcRequestBuilder {
+    private boolean doCreate;
+    private boolean doFinish;
+    private boolean doSetCallback;
+    private boolean doSetContentType;
+    private boolean doSetRequestData;
+    private boolean doSetRequestId;
+
+    public void check() {
+      assertTrue("doCreate", doCreate);
+      assertTrue("doFinish", doFinish);
+      assertTrue("doSetCallback", doSetCallback);
+      assertTrue("doSetContentType", doSetContentType);
+      assertTrue("doSetRequestData", doSetRequestData);
+      assertTrue("doSetRequestId", doSetRequestId);
+    }
+
+    @Override
+    protected RequestBuilder doCreate(String serviceEntryPoint) {
+      doCreate = true;
+      return super.doCreate(serviceEntryPoint);
+    }
+
+    @Override
+    protected void doFinish(RequestBuilder rb) {
+      doFinish = true;
+      super.doFinish(rb);
+    }
+
+    @Override
+    protected void doSetCallback(RequestBuilder rb, RequestCallback callback) {
+      doSetCallback = true;
+      super.doSetCallback(rb, callback);
+    }
+
+    @Override
+    protected void doSetContentType(RequestBuilder rb, String contentType) {
+      doSetContentType = true;
+      super.doSetContentType(rb, contentType);
+    }
+
+    @Override
+    protected void doSetRequestData(RequestBuilder rb, String data) {
+      doSetRequestData = true;
+      super.doSetRequestData(rb, data);
+    }
+
+    @Override
+    protected void doSetRequestId(RequestBuilder rb, int id) {
+      doSetRequestId = true;
+      super.doSetRequestId(rb, id);
+    }
+  }
+
   private static final int TEST_DELAY = 10000;
 
   protected static RemoteServiceServletTestServiceAsync getAsyncService() {
@@ -117,6 +172,27 @@ public class RemoteServiceServletTest extends GWTTestCase {
             finishTest();
           }
         });
+  };
+
+  /**
+   * Ensure that each doFoo method is called.
+   */
+  public void testRpcRequestBuilder() {
+    final MyRpcRequestBuilder builder = new MyRpcRequestBuilder();
+    RemoteServiceServletTestServiceAsync service = getAsyncService();
+    ((ServiceDefTarget) service).setRpcRequestBuilder(builder);
+
+    delayTestFinish(TEST_DELAY);
+    service.test(new AsyncCallback<Void>() {
+      public void onFailure(Throwable caught) {
+        TestSetValidator.rethrowException(caught);
+      }
+
+      public void onSuccess(Void result) {
+        builder.check();
+        finishTest();
+      }
+    });
   }
 
   public void testServiceInterfaceLocation() {

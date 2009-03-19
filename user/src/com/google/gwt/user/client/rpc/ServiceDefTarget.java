@@ -18,8 +18,8 @@ package com.google.gwt.user.client.rpc;
 /**
  * An interface implemented by client-side RPC proxy objects. Cast the object
  * returned from {@link com.google.gwt.core.client.GWT#create(Class)} on a
- * {@link RemoteService} should be cast to this interface to initialize the
- * target URL for the remote service.
+ * {@link RemoteService} to this interface to initialize the target URL for the
+ * remote service.
  */
 public interface ServiceDefTarget {
 
@@ -41,6 +41,14 @@ public interface ServiceDefTarget {
    * @return the last value passed to {@link #setServiceEntryPoint(String)}
    */
   String getServiceEntryPoint();
+
+  /**
+   * Sets the RpcRequestBuilder that should be used by the service
+   * implementation. This method can be called if customized request behavior is
+   * desired. Calling this method with a null value will reset any custom
+   * behavior to the default implementation.
+   */
+  void setRpcRequestBuilder(RpcRequestBuilder builder);
 
   /**
    * Sets the URL of a service implementation.

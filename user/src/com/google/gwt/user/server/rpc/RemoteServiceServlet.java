@@ -41,9 +41,12 @@ public class RemoteServiceServlet extends HttpServlet implements
     SerializationPolicyProvider {
 
   /**
+   * Used by {@link #getPermutationStrongName()}.
+   */
+  /*
    * NB: Keep in sync with RemoteServiceProxy.
    */
-  private static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
+  protected static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
 
   private final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
 

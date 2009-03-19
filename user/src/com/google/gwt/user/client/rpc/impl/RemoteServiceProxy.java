@@ -15,13 +15,13 @@
  */
 package com.google.gwt.user.client.rpc.impl;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.http.client.Request;
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.http.client.RequestException;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.rpc.InvocationException;
+import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.client.rpc.SerializationStreamFactory;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
@@ -37,9 +37,9 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     ServiceDefTarget {
 
   /**
-   * NB: Keep in sync with RemoteServiceServlet.
+   * The content type to be used in HTTP requests.
    */
-  private static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
+  private static final String RPC_CONTENT_TYPE = "text/x-gwt-rpc; charset=utf-8";
 
   /**
    * A global id to track any given request.
@@ -56,9 +56,6 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   /**
    * Indicates if RPC statistics should be gathered.
    */
-  /**
-   * Indicates if RPC statistics should be gathered.
-   */
   public static native boolean isStatsAvailable() /*-{
     return !!$stats;
   }-*/;
@@ -71,7 +68,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     return $stats(data);
   }-*/;
 
-  public static native JavaScriptObject timeStat(String method, int count, String eventType) /*-{
+  public static native JavaScriptObject timeStat(String method, int count,
+      String eventType) /*-{
     return {
       moduleName: @com.google.gwt.core.client.GWT::getModuleName()(), 
       subSystem: 'rpc',
@@ -86,17 +84,21 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     return requestId++;
   }
 
+  /**
+   * @deprecated Use {@link RpcRequestBuilder} instead.
+   */
+  @Deprecated
   protected static int getRequestId() {
     return requestId;
   }
 
   /**
-   * Return <code>true</code> if the encoded response contains a value
-   * returned by the method invocation.
+   * Return <code>true</code> if the encoded response contains a value returned
+   * by the method invocation.
    * 
    * @param encodedResponse
-   * @return <code>true</code> if the encoded response contains a value
-   *         returned by the method invocation
+   * @return <code>true</code> if the encoded response contains a value returned
+   *         by the method invocation
    */
   static boolean isReturnValue(String encodedResponse) {
     return encodedResponse.startsWith("//OK");
@@ -135,10 +137,12 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   private final String moduleBaseURL;
 
   /**
-   * URL of the
-   * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}.
+   * URL of the {@link com.google.gwt.user.client.rpc.RemoteService
+   * RemoteService}.
    */
   private String remoteServiceURL;
+
+  private RpcRequestBuilder rpcRequestBuilder;
 
   /**
    * The name of the serialization policy file specified during construction.
@@ -169,13 +173,12 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   }
 
   /**
-   * Returns a
-   * {@link com.google.gwt.user.client.rpc.SerializationStreamReader SerializationStreamReader}
-   * that is ready for reading.
+   * Returns a {@link com.google.gwt.user.client.rpc.SerializationStreamReader
+   * SerializationStreamReader} that is ready for reading.
    * 
    * @param encoded string that encodes the response of an RPC request
-   * @return {@link com.google.gwt.user.client.rpc.SerializationStreamReader SerializationStreamReader}
-   *         that is ready for reading
+   * @return {@link com.google.gwt.user.client.rpc.SerializationStreamReader
+   *         SerializationStreamReader} that is ready for reading
    * @throws SerializationException
    */
   public ClientSerializationStreamReader createStreamReader(String encoded)
@@ -187,14 +190,14 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   }
 
   /**
-   * Returns a
-   * {@link com.google.gwt.user.client.rpc.SerializationStreamWriter SerializationStreamWriter}
-   * that has had {@link ClientSerializationStreamWriter#prepareToWrite()}
-   * called on it and it has already had had the name of the remote service
-   * interface written as well.
+   * Returns a {@link com.google.gwt.user.client.rpc.SerializationStreamWriter
+   * SerializationStreamWriter} that has had
+   * {@link ClientSerializationStreamWriter#prepareToWrite()} called on it and
+   * it has already had had the name of the remote service interface written as
+   * well.
    * 
-   * @return {@link com.google.gwt.user.client.rpc.SerializationStreamWriter SerializationStreamWriter}
-   *         that has had
+   * @return {@link com.google.gwt.user.client.rpc.SerializationStreamWriter
+   *         SerializationStreamWriter} that has had
    *         {@link ClientSerializationStreamWriter#prepareToWrite()} called on
    *         it and it has already had had the name of the remote service
    *         interface written as well
@@ -213,6 +216,10 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     return remoteServiceURL;
   }
 
+  public void setRpcRequestBuilder(RpcRequestBuilder builder) {
+    this.rpcRequestBuilder = builder;
+  }
+
   /**
    * @see ServiceDefTarget#setServiceEntryPoint(String)
    */
@@ -221,7 +228,8 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
   }
 
   /**
-   * Performs a remote service method invocation.
+   * Performs a remote service method invocation. This method is called by
+   * generated proxy classes.
    * 
    * @param <T> return type for the AsyncCallback
    * @param responseReader instance used to read the return value of the
@@ -249,7 +257,7 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     } finally {
       if (RemoteServiceProxy.isStatsAvailable()
           && RemoteServiceProxy.stats(RemoteServiceProxy.bytesStat(methodName,
-          invocationCount, requestData.length(), "requestSent"))) {
+              invocationCount, requestData.length(), "requestSent"))) {
       }
     }
     return null;
@@ -303,13 +311,19 @@ public abstract class RemoteServiceProxy implements SerializationStreamFactory,
     RequestCallbackAdapter<T> responseHandler = new RequestCallbackAdapter<T>(
         this, methodName, invocationCount, callback, responseReader);
 
-    RequestBuilder rb = new RequestBuilder(RequestBuilder.POST,
-        getServiceEntryPoint());
+    ensureRpcRequestBuilder();
 
-    rb.setHeader("Content-Type", "text/x-gwt-rpc; charset=utf-8");
-    rb.setHeader(STRONG_NAME_HEADER, GWT.getPermutationStrongName());
-    rb.setCallback(responseHandler);
-    rb.setRequestData(requestData);
-    return rb;
+    rpcRequestBuilder.create(getServiceEntryPoint());
+    rpcRequestBuilder.setCallback(responseHandler);
+    rpcRequestBuilder.setContentType(RPC_CONTENT_TYPE);
+    rpcRequestBuilder.setRequestData(requestData);
+    rpcRequestBuilder.setRequestId(invocationCount);
+    return rpcRequestBuilder.finish();
+  }
+
+  private void ensureRpcRequestBuilder() {
+    if (rpcRequestBuilder == null) {
+      rpcRequestBuilder = new RpcRequestBuilder();
+    }
   }
 }
