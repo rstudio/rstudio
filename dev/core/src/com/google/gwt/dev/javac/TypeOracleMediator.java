@@ -38,6 +38,7 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.JTypeParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.Empty;
 
@@ -366,22 +367,34 @@ public class TypeOracleMediator {
   public void addNewUnits(TreeLogger logger, Set<CompilationUnit> units) {
     // Perform a shallow pass to establish identity for new and old types.
     for (CompilationUnit unit : units) {
-      if (!unit.isCompiled()) {
-        continue;
-      }
-      Set<CompiledClass> compiledClasses = unit.getCompiledClasses();
-      for (CompiledClass compiledClass : compiledClasses) {
-        JRealClassType type = compiledClass.getRealClassType();
-        if (type == null) {
-          type = createType(compiledClass);
-        }
-        binaryMapper.put(compiledClass.getBinaryName(), type);
+      switch (unit.getState()) {
+        case GRAVEYARD:
+          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+            JRealClassType type = compiledClass.getRealClassType();
+            assert (type != null);
+            type.resurrect();
+            binaryMapper.put(compiledClass.getBinaryName(), type);
+          }
+          break;
+        case COMPILED:
+          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+            JRealClassType type = createType(compiledClass);
+            binaryMapper.put(compiledClass.getBinaryName(), type);
+          }
+          break;
+        case CHECKED:
+          for (CompiledClass compiledClass : unit.getCompiledClasses()) {
+            JRealClassType type = compiledClass.getRealClassType();
+            assert (type != null);
+            binaryMapper.put(compiledClass.getBinaryName(), type);
+          }
+          break;
       }
     }
 
     // Perform a deep pass to resolve all new types in terms of our types.
     for (CompilationUnit unit : units) {
-      if (!unit.isCompiled()) {
+      if (unit.getState() != State.COMPILED) {
         continue;
       }
       TreeLogger cudLogger = logger.branch(TreeLogger.SPAM,

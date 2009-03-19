@@ -26,6 +26,7 @@ import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -116,7 +117,7 @@ public class CompilationUnitInvalidator {
 
         // Invalidate the unit if there are errors.
         if (result.hasErrors()) {
-          unit.setState(State.ERROR);
+          unit.setError();
           anyRemoved = true;
         }
       }
@@ -125,35 +126,66 @@ public class CompilationUnitInvalidator {
     return anyRemoved;
   }
 
+  /**
+   * Invalidate any units that contain either a) references to non-compiled
+   * units or b) references to unknown units.
+   * 
+   * @param logger
+   * @param unitsToCheck to units that might be invalid, this should be a closed
+   *          set that reference each other
+   */
   public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
-      Set<CompilationUnit> units) {
+      Set<CompilationUnit> unitsToCheck) {
+    invalidateUnitsWithInvalidRefs(logger, unitsToCheck,
+        Collections.<CompilationUnit> emptySet());
+  }
+
+  /**
+   * Invalidate any units that contain either a) references to non-compiled
+   * units or b) references to unknown units.
+   * 
+   * @param logger
+   * @param unitsToCheck to units that might be invalid, these will be the only
+   *          units we will invalidate
+   * @param knownUnits a set of reference units (may contain invalid units) (set
+   *          may be empty)
+   */
+  public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
+      Set<CompilationUnit> unitsToCheck, Set<CompilationUnit> knownUnits) {
     logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
 
-    // Assume all compiled units are valid at first.
-    boolean changed;
-    Set<CompilationUnit> validUnits = new HashSet<CompilationUnit>();
-    for (CompilationUnit unit : units) {
+    Set<String> knownValidRefs = new HashSet<String>();
+    for (CompilationUnit unit : knownUnits) {
       if (unit.isCompiled()) {
-        validUnits.add(unit);
+        knownValidRefs.add(unit.getDisplayLocation());
       }
     }
+
+    // Assume all compiled units are valid at first.
+    Set<CompilationUnit> currentlyValidUnitsToCheck = new HashSet<CompilationUnit>();
+    for (CompilationUnit unit : unitsToCheck) {
+      if (unit.isCompiled()) {
+        currentlyValidUnitsToCheck.add(unit);
+        knownValidRefs.add(unit.getDisplayLocation());
+      }
+    }
+
+    boolean changed;
     do {
       changed = false;
-      Set<String> validRefs = new HashSet<String>();
-      for (CompilationUnit unit : validUnits) {
-        validRefs.add(unit.getDisplayLocation());
-      }
-      for (Iterator<CompilationUnit> it = validUnits.iterator(); it.hasNext();) {
-        CompilationUnit unit = it.next();
+      for (Iterator<CompilationUnit> it = currentlyValidUnitsToCheck.iterator(); it.hasNext();) {
+        CompilationUnit currentlyValidUnitToCheck = it.next();
         TreeLogger branch = null;
-        for (String ref : unit.getFileNameRefs()) {
-          if (!validRefs.contains(ref)) {
+        for (String ref : currentlyValidUnitToCheck.getFileNameRefs()) {
+          if (!knownValidRefs.contains(ref)) {
             if (branch == null) {
               branch = logger.branch(TreeLogger.WARN, "Compilation unit '"
-                  + unit + "' is removed due to invalid reference(s):");
+                  + currentlyValidUnitToCheck
+                  + "' is removed due to invalid reference(s):");
               it.remove();
+              knownValidRefs.remove(currentlyValidUnitToCheck.getDisplayLocation());
+              currentlyValidUnitToCheck.setFresh();
               changed = true;
-              unit.setState(State.FRESH);
             }
             branch.log(TreeLogger.WARN, ref);
           }

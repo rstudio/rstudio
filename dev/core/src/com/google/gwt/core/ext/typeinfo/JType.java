@@ -20,6 +20,14 @@ package com.google.gwt.core.ext.typeinfo;
  */
 public abstract class JType {
 
+  /**
+   * All types use identity for comparison.
+   */
+  @Override
+  public final boolean equals(Object obj) {
+    return super.equals(obj);
+  }
+
   public abstract JType getErasedType();
 
   public abstract String getJNISignature();
@@ -35,6 +43,14 @@ public abstract class JType {
   public abstract String getQualifiedSourceName();
 
   public abstract String getSimpleSourceName();
+
+  /**
+   * All types use identity for comparison.
+   */
+  @Override
+  public final int hashCode() {
+    return super.hashCode();
+  }
 
   /**
    * Returns this instance if it is a annotation or <code>null</code> if it is
@@ -70,7 +86,7 @@ public abstract class JType {
 
   // TODO: Rename this to isGeneric
   public abstract JGenericType isGenericType();
-  
+
   public abstract JClassType isInterface();
 
   public abstract JParameterizedType isParameterized();

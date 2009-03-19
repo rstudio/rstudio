@@ -393,6 +393,13 @@ public class JRealClassType extends JClassType {
     return null;
   }
 
+  /**
+   * TODO: solve this better.
+   */
+  public void resurrect() {
+    oracle.resurrect(this);
+  }
+
   @Override
   public void setSuperclass(JClassType type) {
     assert (type != null);

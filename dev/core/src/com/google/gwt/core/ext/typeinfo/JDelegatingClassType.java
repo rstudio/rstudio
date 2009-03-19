@@ -201,11 +201,6 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
-  public int hashCode() {
-    return baseType.hashCode();
-  }
-
-  @Override
   public boolean isAbstract() {
     return baseType.isAbstract();
   }

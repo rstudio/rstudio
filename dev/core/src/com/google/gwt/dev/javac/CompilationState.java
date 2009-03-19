@@ -22,6 +22,7 @@ import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.util.PerfLogger;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,17 +37,33 @@ import java.util.Set;
  */
 public class CompilationState {
 
+  private static Set<CompilationUnit> concatSet(Collection<CompilationUnit> a,
+      Collection<CompilationUnit> b) {
+    Set<CompilationUnit> result = new HashSet<CompilationUnit>(a.size()
+        + b.size());
+    result.addAll(a);
+    result.addAll(b);
+    return result;
+  }
+
   private static void markSurvivorsChecked(Set<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
-      if (unit.getState() == State.COMPILED) {
-        unit.setState(State.CHECKED);
+      if (unit.getState() == State.COMPILED
+          || unit.getState() == State.GRAVEYARD) {
+        unit.setChecked();
       }
     }
   }
 
   protected final Map<String, CompilationUnit> unitMap = new HashMap<String, CompilationUnit>();
 
+  /**
+   * Generated units become graveyardUnits when refresh is hit. Package
+   * protected for testing.
+   */
+  Map<String, CompilationUnit> graveyardUnits;
   private Set<JavaSourceFile> cachedSourceFiles = Collections.emptySet();
+
   /**
    * Classes mapped by binary name.
    */
@@ -67,6 +84,8 @@ public class CompilationState {
    */
   private Set<CompilationUnit> exposedUnits = Collections.emptySet();
 
+  private CompilationUnitInvalidator.InvalidatorState invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
+
   /**
    * Recreated on refresh, allows incremental compiles.
    */
@@ -82,8 +101,6 @@ public class CompilationState {
    */
   private final JavaSourceOracle sourceOracle;
 
-  private CompilationUnitInvalidator.InvalidatorState invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
-
   /**
    * Construct a new {@link CompilationState}.
    * 
@@ -95,20 +112,18 @@ public class CompilationState {
     refresh(logger);
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * The method processes generatedCompilationUnits and adds them to the
+   * TypeOracle, using graveyardUnits wherever possible.
+   */
   public void addGeneratedCompilationUnits(TreeLogger logger,
       Set<? extends CompilationUnit> generatedCups) {
     logger = logger.branch(TreeLogger.DEBUG, "Adding '" + generatedCups.size()
         + "' new generated units");
-    for (CompilationUnit unit : generatedCups) {
-      String typeName = unit.getTypeName();
-      assert (!unitMap.containsKey(typeName));
-      unitMap.put(typeName, unit);
-    }
-    updateExposedUnits();
-    compile(logger, (Set<CompilationUnit>) generatedCups);
-    mediator.addNewUnits(logger, (Set<CompilationUnit>) generatedCups);
-    markSurvivorsChecked((Set<CompilationUnit>) generatedCups);
+    Map<String, CompilationUnit> usefulGraveyardUnits = getUsefulGraveyardUnits(generatedCups);
+    logger.log(TreeLogger.DEBUG, "Using " + usefulGraveyardUnits.values()
+        + " units from graveyard");
+    addGeneratedCompilationUnits(logger, generatedCups, usefulGraveyardUnits);
   }
 
   /**
@@ -153,18 +168,29 @@ public class CompilationState {
   /**
    * Synchronize against the source oracle to check for added/removed/updated
    * units. Updated units are invalidated, and any units depending on changed
-   * units are also invalidated. All generated units are removed.
-   * 
-   * TODO: something more optimal with generated files?
+   * units are also invalidated. All generated units are moved to GRAVEYARD.
    */
   public void refresh(TreeLogger logger) {
     logger = logger.branch(TreeLogger.DEBUG, "Refreshing module from source");
+    /*
+     * Clear out existing graveyard units that were never regenerated during the
+     * current refresh cycle.
+     * 
+     * TODO: we could possibly <i>not</i> clear this out entirely, but it would
+     * be slightly more complicated.
+     */
+    graveyardUnits = new HashMap<String, CompilationUnit>();
 
     // Always remove all generated compilation units.
     for (Iterator<CompilationUnit> it = unitMap.values().iterator(); it.hasNext();) {
       CompilationUnit unit = it.next();
       if (unit.isGenerated()) {
-        unit.setState(State.FRESH);
+        if (unit.getState() == State.CHECKED) {
+          unit.setGraveyard();
+          graveyardUnits.put(unit.getTypeName(), unit);
+        } else {
+          unit.setFresh();
+        }
         it.remove();
       }
     }
@@ -173,8 +199,11 @@ public class CompilationState {
     updateExposedUnits();
 
     // Don't log about invalidated units via refresh.
+    Set<CompilationUnit> allUnitsPlusGraveyard = concatSet(
+        getCompilationUnits(), graveyardUnits.values());
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(TreeLogger.NULL,
-        getCompilationUnits());
+        allUnitsPlusGraveyard);
+    removeInvalidatedGraveyardUnits(graveyardUnits);
 
     /*
      * Only retain state for units marked as CHECKED; because CHECKED units
@@ -190,16 +219,94 @@ public class CompilationState {
     invalidatorState.retainAll(toRetain);
 
     jdtCompiler = new JdtCompiler();
-    compile(logger, getCompilationUnits());
+    compile(logger, getCompilationUnits(),
+        Collections.<CompilationUnit> emptySet());
     mediator.refresh(logger, getCompilationUnits());
     markSurvivorsChecked(getCompilationUnits());
+  }
+
+  /**
+   * This method processes generatedCups using usefulGraveyardUnits wherever
+   * possible.
+   */
+  void addGeneratedCompilationUnits(TreeLogger logger,
+      Set<? extends CompilationUnit> newGeneratedCups,
+      Map<String, CompilationUnit> usefulGraveyardUnitsMap) {
+
+    Set<CompilationUnit> usefulGeneratedCups = new HashSet<CompilationUnit>();
+    for (CompilationUnit newGeneratedUnit : newGeneratedCups) {
+      String typeName = newGeneratedUnit.getTypeName();
+      CompilationUnit oldGeneratedUnit = usefulGraveyardUnitsMap.get(typeName);
+      if (oldGeneratedUnit != null) {
+        usefulGeneratedCups.add(oldGeneratedUnit);
+        unitMap.put(typeName, oldGeneratedUnit);
+      } else {
+        usefulGeneratedCups.add(newGeneratedUnit);
+        unitMap.put(typeName, newGeneratedUnit);
+      }
+    }
+    assert (newGeneratedCups.size() == usefulGeneratedCups.size());
+    for (CompilationUnit generatedUnit : usefulGeneratedCups) {
+      unitMap.put(generatedUnit.getTypeName(), generatedUnit);
+    }
+    updateExposedUnits();
+
+    compile(logger, usefulGeneratedCups, getCompilationUnits());
+    mediator.addNewUnits(logger, usefulGeneratedCups);
+    markSurvivorsChecked(usefulGeneratedCups);
+  }
+
+  /**
+   * Given a set of generatedCups, returns the useful graveyardUnits that do not
+   * need to be compiled. Additionally, updates the graveyardUnits by removing
+   * units that are either stale or depend on some other stale unit.
+   */
+  Map<String, CompilationUnit> getUsefulGraveyardUnits(
+      Set<? extends CompilationUnit> generatedCups) {
+    boolean anyGraveyardUnitsWereInvalidated = false;
+    Map<String, CompilationUnit> usefulGraveyardUnits = new HashMap<String, CompilationUnit>();
+    for (CompilationUnit unit : generatedCups) {
+      String typeName = unit.getTypeName();
+      assert (!unitMap.containsKey(typeName));
+      CompilationUnit graveyardUnit = graveyardUnits.remove(typeName);
+      if (graveyardUnit != null) {
+        assert graveyardUnit.getState() == State.GRAVEYARD;
+        if (unit.getSource().equals(graveyardUnit.getSource())) {
+          usefulGraveyardUnits.put(typeName, graveyardUnit);
+        } else {
+          // The old unit is invalidated.
+          anyGraveyardUnitsWereInvalidated = true;
+          graveyardUnit.setFresh();
+        }
+      }
+    }
+
+    assert Collections.disjoint(usefulGraveyardUnits.values(),
+        graveyardUnits.values());
+
+    /*
+     * If any units became fresh, we need to ensure that any units that might
+     * refer to that unit get invalidated.
+     */
+    if (anyGraveyardUnitsWereInvalidated) {
+      /* Remove units that refer the graveyard units marked FRESH */
+      Set<CompilationUnit> allGraveyardUnits = concatSet(
+          graveyardUnits.values(), usefulGraveyardUnits.values());
+      CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(
+          TreeLogger.NULL, allGraveyardUnits, exposedUnits);
+
+      removeInvalidatedGraveyardUnits(graveyardUnits);
+      removeInvalidatedGraveyardUnits(usefulGraveyardUnits);
+    }
+    return usefulGraveyardUnits;
   }
 
   /**
    * Compile units and update their internal state. Invalidate any units with
    * compile errors.
    */
-  private void compile(TreeLogger logger, Set<CompilationUnit> newUnits) {
+  private void compile(TreeLogger logger, Set<CompilationUnit> newUnits,
+      Set<CompilationUnit> existingUnits) {
     PerfLogger.start("CompilationState.compile");
     if (jdtCompiler.doCompile(newUnits)) {
       logger = logger.branch(TreeLogger.DEBUG,
@@ -219,7 +326,7 @@ public class CompilationState {
 
       if (anyErrors) {
         CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(logger,
-            newUnits);
+            newUnits, existingUnits);
       }
 
       JsniCollector.collectJsniMethods(logger, newUnits, new JsProgram());
@@ -263,7 +370,7 @@ public class CompilationState {
       CompilationUnit unit = it.next();
       SourceFileCompilationUnit sourceFileUnit = (SourceFileCompilationUnit) unit;
       if (!unchanged.contains(sourceFileUnit.getSourceFile())) {
-        unit.setState(State.FRESH);
+        unit.setFresh();
         it.remove();
       }
     }
@@ -273,10 +380,25 @@ public class CompilationState {
       String typeName = newSourceFile.getTypeName();
       assert (!unitMap.containsKey(typeName));
       unitMap.put(typeName, new SourceFileCompilationUnit(newSourceFile));
+      // invalid a graveyard unit, if a new unit has the same type.
+      CompilationUnit graveyardUnit = graveyardUnits.remove(typeName);
+      if (graveyardUnit != null) {
+        graveyardUnit.setFresh();
+      }
     }
 
     // Record the update.
     cachedSourceFiles = newSourceFiles;
+  }
+
+  private void removeInvalidatedGraveyardUnits(
+      Map<String, CompilationUnit> tempUnits) {
+    for (Iterator<CompilationUnit> it = tempUnits.values().iterator(); it.hasNext();) {
+      CompilationUnit graveyardUnit = it.next();
+      if (graveyardUnit.getState() != State.GRAVEYARD) {
+        it.remove();
+      }
+    }
   }
 
   private void updateExposedUnits() {

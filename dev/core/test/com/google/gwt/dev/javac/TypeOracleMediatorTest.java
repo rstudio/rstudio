@@ -16,6 +16,7 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
@@ -25,13 +26,16 @@ import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.TypeOracleException;
-import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceMap;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,10 +53,10 @@ public class TypeOracleMediatorTest extends TestCase {
       }
     }
 
+    public abstract void check(JClassType type) throws NotFoundException;
+
     @Override
     public abstract String getSource();
-
-    public abstract void check(JClassType type) throws NotFoundException;
   }
 
   private static void assertEqualArraysUnordered(Object[] expected,
@@ -787,6 +791,49 @@ public class TypeOracleMediatorTest extends TestCase {
     }
   }
 
+  /**
+   * Tests which variant of AbstractRefrenceMap we want to store the map for
+   * parameterizedTypes, arrayTypes, and wildCardTypes in TypeOracle. Note: this
+   * test is manual because gc can be unreliable.
+   */
+  @SuppressWarnings("unchecked")
+  public void manualTestAbstractRefrenceMap() {
+
+    /*
+     * with a HARD -> WEAK map, verify that the entry remains if there is no
+     * reference to key, but is deleted when the reference to value is gone
+     */
+    Map<Integer, Integer> simpleMap = new ReferenceMap(
+        AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
+    Integer bar = new Integer(42);
+    simpleMap.put(new Integer(32), bar);
+    Runtime.getRuntime().gc();
+    assertEquals(1, simpleMap.size());
+    bar = null;
+    Runtime.getRuntime().gc();
+    assertEquals(0, simpleMap.size());
+
+    /*
+     * with a WEAK -> WEAK map, verify that the entry is gone if there are no
+     * references to either the key or the value.
+     */
+    simpleMap = new ReferenceMap(AbstractReferenceMap.WEAK,
+        AbstractReferenceMap.WEAK, true);
+    Map<Integer, Integer> reverseMap = new ReferenceMap(
+        AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
+    Integer foo = new Integer(32);
+    bar = new Integer(42);
+    simpleMap.put(foo, bar);
+    reverseMap.put(bar, foo);
+    Runtime.getRuntime().gc();
+    assertEquals(1, simpleMap.size());
+    assertEquals(1, reverseMap.size());
+    bar = null;
+    Runtime.getRuntime().gc();
+    assertEquals(0, simpleMap.size());
+    assertEquals(0, reverseMap.size());
+  }
+
   public void testAssignable() throws TypeOracleException {
     units.add(CU_Object);
     units.add(CU_Assignable);
@@ -943,7 +990,7 @@ public class TypeOracleMediatorTest extends TestCase {
      * Invalidate CU_GenericList and simulate a refresh. This should cause
      * anything that depends on GenericList to be rebuilt by the type oracle.
      */
-    CU_GenericList.setState(State.FRESH);
+    CU_GenericList.setFresh();
     compileAndRefresh();
 
     assertNotSame(genericListType.getQualifiedSourceName() + "; ",
@@ -1008,8 +1055,8 @@ public class TypeOracleMediatorTest extends TestCase {
       }
 
       @Override
-      void setState(State newState) {
-        super.setState(newState);
+      void setFresh() {
+        super.setFresh();
         source = "This will cause a syntax error.";
       }
     };
@@ -1040,7 +1087,7 @@ public class TypeOracleMediatorTest extends TestCase {
     addCompilationUnit("test.refresh.with.errors.BadClass", sb);
 
     // Now this cup should cause errors.
-    unitThatWillGoBad.setState(State.FRESH);
+    unitThatWillGoBad.setFresh();
 
     compileAndRefresh();
 

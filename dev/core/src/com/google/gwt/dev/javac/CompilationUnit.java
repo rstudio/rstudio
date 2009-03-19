@@ -26,7 +26,9 @@ import com.google.gwt.dev.util.Util;
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
+import org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.BlockScope;
 import org.eclipse.jdt.internal.compiler.lookup.ClassScope;
 import org.eclipse.jdt.internal.compiler.lookup.CompilationUnitScope;
@@ -204,7 +206,14 @@ public abstract class CompilationUnit {
      * been added to the module's TypeOracle, as well as byte code, JSNI
      * methods, and all other final state.
      */
-    CHECKED
+    CHECKED,
+    /**
+     * A CHECKED generated unit enters this state at the start of a refresh. If
+     * a generator generates the same unit with identical source, the unit is
+     * immediately promoted to CHECKED, bypassing costly compilation,
+     * validation, and TypeOracle building.
+     */
+    GRAVEYARD,
   }
 
   private class FindTypesInCud extends ASTVisitor {
@@ -250,9 +259,20 @@ public abstract class CompilationUnit {
     }
   }
 
-  private static Set<String> computeFileNameRefs(CompilationUnitDeclaration cud) {
+  private static Set<String> computeFileNameRefs(
+      CompilationUnitDeclaration cud,
+      final Map<String, String> binaryTypeToSourceFileMap) {
     final Set<String> result = new HashSet<String>();
     cud.traverse(new TypeRefVisitor() {
+      @Override
+      protected void onBinaryTypeRef(BinaryTypeBinding referencedType,
+          CompilationUnitDeclaration unitOfReferrer, Expression expression) {
+        String fileName = binaryTypeToSourceFileMap.get(String.valueOf(referencedType.getFileName()));
+        if (fileName != null) {
+          result.add(fileName);
+        }
+      }
+
       @Override
       protected void onTypeRef(SourceTypeBinding referencedType,
           CompilationUnitDeclaration unitOfReferrer) {
@@ -378,7 +398,8 @@ public abstract class CompilationUnit {
    * Returns <code>true</code> if this unit is compiled and valid.
    */
   public boolean isCompiled() {
-    return state == State.COMPILED || state == State.CHECKED;
+    return state == State.COMPILED || state == State.CHECKED
+        || state == State.GRAVEYARD;
   }
 
   public boolean isError() {
@@ -402,6 +423,13 @@ public abstract class CompilationUnit {
    */
   public final String toString() {
     return getDisplayLocation();
+  }
+
+  /*
+   * A unit that will not be resurrected without being re-compiled.
+   */
+  public boolean willNotBeResurrected() {
+    return state == State.FRESH || state == State.ERROR;
   }
 
   /**
@@ -433,9 +461,6 @@ public abstract class CompilationUnit {
   }
 
   Set<String> getFileNameRefs() {
-    if (fileNameRefs == null) {
-      fileNameRefs = computeFileNameRefs(cud);
-    }
     return fileNameRefs;
   }
 
@@ -451,50 +476,53 @@ public abstract class CompilationUnit {
     return state;
   }
 
+  void setChecked() {
+    dumpSource();
+    assert cud != null || state == State.GRAVEYARD;
+    for (CompiledClass compiledClass : getCompiledClasses()) {
+      compiledClass.checked();
+    }
+    cud = null;
+    state = State.CHECKED;
+  }
+
   /**
    * Sets the compiled JDT AST for this unit.
    */
-  void setJdtCud(CompilationUnitDeclaration cud) {
+  void setCompiled(CompilationUnitDeclaration cud,
+      Map<String, String> binaryTypeToSourceFileMap) {
     assert (state == State.FRESH || state == State.ERROR);
     this.cud = cud;
+    fileNameRefs = computeFileNameRefs(cud, binaryTypeToSourceFileMap);
     state = State.COMPILED;
+  }
+
+  void setError() {
+    dumpSource();
+    this.errors = cud.compilationResult().getErrors();
+    invalidate();
+    state = State.ERROR;
+  }
+
+  void setFresh() {
+    dumpSource();
+    this.errors = null;
+    invalidate();
+    state = State.FRESH;
+  }
+
+  void setGraveyard() {
+    assert (state == State.CHECKED);
+    if (exposedCompiledClasses != null) {
+      for (CompiledClass compiledClass : exposedCompiledClasses) {
+        compiledClass.graveyard();
+      }
+    }
+    state = State.GRAVEYARD;
   }
 
   void setJsniMethods(List<JsniMethod> jsniMethods) {
     this.jsniMethods = Collections.unmodifiableList(jsniMethods);
-  }
-
-  /**
-   * Changes the compilation unit's internal state.
-   */
-  void setState(State newState) {
-    assert (newState != State.COMPILED);
-    if (state == newState) {
-      return;
-    }
-    state = newState;
-
-    dumpSource();
-    switch (newState) {
-      case CHECKED:
-        // Must cache before we destroy the cud.
-        assert (cud != null);
-        getFileNameRefs();
-        for (CompiledClass compiledClass : getCompiledClasses()) {
-          compiledClass.checked();
-        }
-        cud = null;
-        break;
-
-      case ERROR:
-        this.errors = cud.compilationResult().getErrors();
-        invalidate();
-        break;
-      case FRESH:
-        this.errors = null;
-        invalidate();
-        break;
-    }
   }
 
   private List<String> getJdtClassNames(String topLevelClass) {
@@ -540,5 +568,4 @@ public abstract class CompilationUnit {
     }
     return CompilingClassLoader.isClassnameGenerated(cc.getBinaryName());
   }
-
 }

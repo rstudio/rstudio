@@ -30,6 +30,7 @@ public class JavaCompilationSuite {
 
     suite.addTestSuite(BinaryTypeReferenceRestrictionsCheckerTest.class);
     suite.addTestSuite(CompilationStateTest.class);
+    suite.addTestSuite(CompilationUnitFileReferenceTest.class);
     suite.addTestSuite(GWTProblemTest.class);
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);

@@ -17,8 +17,14 @@ package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.generator.GenUtil;
+import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.shell.JsValueGlue;
+
+import org.apache.commons.collections.map.AbstractReferenceMap;
+import org.apache.commons.collections.map.ReferenceIdentityMap;
+import org.apache.commons.collections.map.ReferenceMap;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -29,7 +35,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -57,6 +62,62 @@ import java.util.Set;
  * </p>
  */
 public class TypeOracle {
+
+  private static class ParameterizedTypeKey {
+    private final JClassType enclosingType;
+    private final JGenericType genericType;
+    private final JClassType[] typeArgs;
+
+    public ParameterizedTypeKey(JGenericType genericType,
+        JClassType enclosingType, JClassType[] typeArgs) {
+      this.genericType = genericType;
+      this.enclosingType = enclosingType;
+      this.typeArgs = typeArgs;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof ParameterizedTypeKey)) {
+        return false;
+      }
+      ParameterizedTypeKey other = (ParameterizedTypeKey) obj;
+      return genericType == other.genericType
+          && enclosingType == other.enclosingType
+          && Arrays.equals(typeArgs, other.typeArgs);
+    }
+
+    @Override
+    public int hashCode() {
+      return 29 * genericType.hashCode() + 17
+          * ((enclosingType == null) ? 0 : enclosingType.hashCode())
+          + Arrays.hashCode(typeArgs);
+    }
+  }
+
+  private static class WildCardKey {
+    private final BoundType boundType;
+    private final JClassType typeBound;
+
+    public WildCardKey(BoundType boundType, JClassType typeBound) {
+      this.boundType = boundType;
+      this.typeBound = typeBound;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof WildCardKey)) {
+        return false;
+      }
+      WildCardKey other = (WildCardKey) obj;
+      return boundType == other.boundType && typeBound == other.typeBound;
+    }
+
+    @Override
+    public int hashCode() {
+      return 29 * typeBound.hashCode() + boundType.hashCode();
+    }
+  }
+
   /**
    * A reserved metadata tag to indicates that a field type, method return type
    * or method parameter type is intended to be parameterized. Note that
@@ -138,57 +199,27 @@ public class TypeOracle {
   }
 
   /**
-   * Returns true if the type has been invalidated because it is in the set of
-   * invalid types or if it is a parameterized type and either it raw type or
-   * any one of its type args has been invalidated.
-   * 
-   * @param type type to check
-   * @param invalidTypes set of type known to be invalid
-   * @return true if the type has been invalidated
-   */
-  private static boolean isInvalidatedTypeRecursive(JType type,
-      Set<JRealClassType> invalidTypes) {
-    if (type instanceof JParameterizedType) {
-      JParameterizedType parameterizedType = (JParameterizedType) type;
-      if (isInvalidatedTypeRecursive(parameterizedType.getBaseType(),
-          invalidTypes)) {
-        return true;
-      }
-
-      JType[] typeArgs = parameterizedType.getTypeArgs();
-      for (int i = 0; i < typeArgs.length; ++i) {
-        JType typeArg = typeArgs[i];
-
-        if (isInvalidatedTypeRecursive(typeArg, invalidTypes)) {
-          return true;
-        }
-      }
-
-      return false;
-    } else {
-      return invalidTypes.contains(type);
-    }
-  }
-
-  /**
    * A map of fully-qualify source names (ie, use "." rather than "$" for nested
    * classes) to JRealClassTypes.
    */
   private final Map<String, JRealClassType> allTypes = new HashMap<String, JRealClassType>();
 
-  private final Map<JType, JArrayType> arrayTypes = new IdentityHashMap<JType, JArrayType>();
-
-  /**
-   * A set of invalidated types queued up to be removed on the next
-   * {@link #reset()}.
-   */
-  private final Set<JRealClassType> invalidatedTypes = new HashSet<JRealClassType>();
+  @SuppressWarnings("unchecked")
+  private final Map<JType, JArrayType> arrayTypes = new ReferenceIdentityMap(
+      AbstractReferenceMap.WEAK, AbstractReferenceMap.WEAK, true);
 
   private JClassType javaLangObject;
 
+  /**
+   * Maps SingleJsoImpl interfaces to the implementing JSO subtype.
+   */
+  private final Map<JClassType, JClassType> jsoSingleImpls = new IdentityHashMap<JClassType, JClassType>();
+
   private final Map<String, JPackage> packages = new HashMap<String, JPackage>();
 
-  private final Map<String, List<JParameterizedType>> parameterizedTypes = new HashMap<String, List<JParameterizedType>>();
+  @SuppressWarnings("unchecked")
+  private final Map<ParameterizedTypeKey, JParameterizedType> parameterizedTypes = new ReferenceMap(
+      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
 
   /**
    * A list of recently-added types that will be fully initialized on the next
@@ -198,12 +229,11 @@ public class TypeOracle {
 
   private int reloadCount = 0;
 
-  private final Map<String, List<JWildcardType>> wildcardTypes = new HashMap<String, List<JWildcardType>>();
+  private JWildcardType unboundWildCardType;
 
-  /**
-   * Maps SingleJsoImpl interfaces to the implementing JSO subtype.
-   */
-  private final Map<JClassType, JClassType> jsoSingleImpls = new IdentityHashMap<JClassType, JClassType>();
+  @SuppressWarnings("unchecked")
+  private final Map<WildCardKey, JWildcardType> wildcardTypes = new ReferenceMap(
+      AbstractReferenceMap.HARD, AbstractReferenceMap.WEAK, true);
 
   public TypeOracle() {
     // Always create the default package.
@@ -260,7 +290,7 @@ public class TypeOracle {
   public void finish(TreeLogger logger) {
     JClassType[] newTypes = recentTypes.toArray(NO_JCLASSES);
     computeHierarchyRelationships(newTypes);
-    computeSingleJsoImplData(logger, newTypes);
+    computeSingleJsoImplData(newTypes);
     consumeTypeArgMetaData(logger, newTypes);
     recentTypes.clear();
   }
@@ -356,8 +386,11 @@ public class TypeOracle {
    */
   public JParameterizedType getParameterizedType(JGenericType genericType,
       JClassType enclosingType, JClassType[] typeArgs) {
-    if (genericType == null) {
-      throw new NullPointerException("genericType");
+    ParameterizedTypeKey key = new ParameterizedTypeKey(genericType,
+        enclosingType, typeArgs);
+    JParameterizedType result = parameterizedTypes.get(key);
+    if (result != null) {
+      return result;
     }
 
     if (genericType.isMemberType() && !genericType.isStatic()) {
@@ -392,29 +425,9 @@ public class TypeOracle {
     // TODO: validate that the type arguments satisfy the generic type parameter
     // bounds if any were specified
 
-    // Uses the generated string signature to intern parameterized types.
-    //
-    JParameterizedType parameterized = new JParameterizedType(genericType,
-        enclosingType, typeArgs);
-
-    // TODO: parameterized qualified source name does not account for the type
-    // args of the enclosing type
-    String sig = parameterized.getParameterizedQualifiedSourceName();
-    List<JParameterizedType> candidates = parameterizedTypes.get(sig);
-    if (candidates == null) {
-      candidates = new ArrayList<JParameterizedType>();
-      parameterizedTypes.put(sig, candidates);
-    } else {
-      for (JParameterizedType candidate : candidates) {
-        if (candidate.hasTypeArgs(typeArgs)) {
-          return candidate;
-        }
-      }
-    }
-
-    candidates.add(parameterized);
-
-    return parameterized;
+    result = new JParameterizedType(genericType, enclosingType, typeArgs);
+    parameterizedTypes.put(key, result);
+    return result;
   }
 
   /**
@@ -502,23 +515,25 @@ public class TypeOracle {
 
   public JWildcardType getWildcardType(JWildcardType.BoundType boundType,
       JClassType typeBound) {
-    JWildcardType wildcardType = new JWildcardType(boundType, typeBound);
-    String sig = wildcardType.getQualifiedSourceName();
-    List<JWildcardType> candidates = wildcardTypes.get(sig);
-    if (candidates == null) {
-      candidates = new ArrayList<JWildcardType>();
-      wildcardTypes.put(sig, candidates);
-    } else {
-      for (JWildcardType candidate : candidates) {
-        if (candidate.boundsMatch(wildcardType)) {
-          return candidate;
-        }
+    // Special fast case for <? extends Object>
+    // TODO(amitmanjhi): make sure this actually does speed things up!
+    if (typeBound == getJavaLangObject() && boundType == BoundType.UNBOUND) {
+      if (unboundWildCardType == null) {
+        unboundWildCardType = new JWildcardType(boundType, typeBound);
       }
+      return unboundWildCardType;
+    }
+    // End special case / todo.
+
+    WildCardKey key = new WildCardKey(boundType, typeBound);
+    JWildcardType result = wildcardTypes.get(key);
+    if (result != null) {
+      return result;
     }
 
-    candidates.add(wildcardType);
-
-    return wildcardType;
+    result = new JWildcardType(boundType, typeBound);
+    wildcardTypes.put(key, result);
+    return result;
   }
 
   /**
@@ -559,11 +574,7 @@ public class TypeOracle {
    */
   public void reset() {
     recentTypes.clear();
-    if (!invalidatedTypes.isEmpty()) {
-      invalidateTypes(invalidatedTypes);
-      invalidatedTypes.clear();
-      ++reloadCount;
-    }
+    ++reloadCount;
   }
 
   /**
@@ -632,7 +643,11 @@ public class TypeOracle {
   }
 
   void invalidate(JRealClassType realClassType) {
-    invalidatedTypes.add(realClassType);
+    removeType(realClassType);
+  }
+
+  void resurrect(JRealClassType realClassType) {
+    resurrectType(realClassType);
   }
 
   private void computeHierarchyRelationships(JClassType[] types) {
@@ -647,7 +662,7 @@ public class TypeOracle {
   /**
    * Updates the list of jsoSingleImpl types from recently-added types.
    */
-  private void computeSingleJsoImplData(TreeLogger logger, JClassType[] newTypes) {
+  private void computeSingleJsoImplData(JClassType... newTypes) {
     JClassType jsoType = findType(JsValueGlue.JSO_CLASS);
     if (jsoType == null) {
       return;
@@ -687,8 +702,7 @@ public class TypeOracle {
         } else if (type.isAssignableTo(previousType)) {
           // Do nothing
         } else {
-          // This should have been taken care of by JSORetrictionsChecker
-          logger.log(TreeLogger.ERROR,
+          throw new InternalCompilerException(
               "Already seen an implementing JSO subtype ("
                   + previousType.getName() + ") for interface ("
                   + intf.getName() + ") while examining newly-added type ("
@@ -874,12 +888,6 @@ public class TypeOracle {
     return resultingType;
   }
 
-  private void invalidateTypes(Set<JRealClassType> invalidTypes) {
-    removeInvalidatedArrayTypes(invalidTypes);
-    removeInvalidatedParameterizedTypes(invalidTypes);
-    removeTypes(invalidTypes);
-  }
-
   private JType parseImpl(String type) throws NotFoundException,
       ParseException, BadTypeArgsException {
     if (type.endsWith("[]")) {
@@ -1023,56 +1031,47 @@ public class TypeOracle {
     return parameterizedType;
   }
 
-  /**
-   * Remove any array type whose leaf type has been invalidated.
-   * 
-   * @param invalidTypes set of types that have been invalidated.
-   */
-  private void removeInvalidatedArrayTypes(Set<JRealClassType> invalidTypes) {
-    arrayTypes.keySet().removeAll(invalidTypes);
-  }
+  private void removeSingleJsoImplData(JClassType... types) {
+    JClassType jsoType = findType(JsValueGlue.JSO_CLASS);
+    if (jsoType == null) {
+      return;
+    }
 
-  /**
-   * Remove any parameterized type that was invalidated because either its raw
-   * type or any one of its type arguments was invalidated.
-   * 
-   * @param invalidTypes set of types known to have been invalidated
-   */
-  private void removeInvalidatedParameterizedTypes(
-      Set<JRealClassType> invalidTypes) {
-    Iterator<List<JParameterizedType>> listIterator = parameterizedTypes.values().iterator();
-
-    while (listIterator.hasNext()) {
-      List<JParameterizedType> list = listIterator.next();
-      Iterator<JParameterizedType> typeIterator = list.iterator();
-      while (typeIterator.hasNext()) {
-        JType type = typeIterator.next();
-        if (isInvalidatedTypeRecursive(type, invalidTypes)) {
-          typeIterator.remove();
+    for (JClassType type : types) {
+      if (!jsoType.isAssignableFrom(type)) {
+        continue;
+      }
+      for (JClassType intf : JClassType.getFlattenedSuperTypeHierarchy(type)) {
+        if (jsoSingleImpls.get(intf) == type) {
+          jsoSingleImpls.remove(intf);
         }
       }
     }
   }
 
   /**
-   * Removes the specified types from the type oracle.
-   * 
-   * @param invalidTypes set of types to remove
+   * Removes the specified type from the type oracle.
    */
-  private void removeTypes(Set<JRealClassType> invalidTypes) {
-    for (Iterator<JRealClassType> iter = invalidTypes.iterator(); iter.hasNext();) {
-      JRealClassType classType = iter.next();
-      String fqcn = classType.getQualifiedSourceName();
-      allTypes.remove(fqcn);
-      jsoSingleImpls.remove(classType);
-      JPackage pkg = classType.getPackage();
-      if (pkg != null) {
-        pkg.remove(classType);
-      }
-
-      classType.removeFromSupertypes();
-
-      iter.remove();
+  private void removeType(JRealClassType invalidType) {
+    allTypes.remove(invalidType.getQualifiedSourceName());
+    JPackage pkg = invalidType.getPackage();
+    if (pkg != null) {
+      pkg.remove(invalidType);
     }
+    invalidType.removeFromSupertypes();
+    removeSingleJsoImplData(invalidType);
+  }
+
+  /**
+   * Restore the specific type from the type oracle.
+   */
+  private void resurrectType(JRealClassType type) {
+    allTypes.put(type.getQualifiedSourceName(), type);
+    JPackage pkg = type.getPackage();
+    if (pkg != null) {
+      pkg.addType(type);
+    }
+    type.notifySuperTypes();
+    computeSingleJsoImplData(type);
   }
 }

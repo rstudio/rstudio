@@ -60,6 +60,7 @@ public final class CompiledClass {
   // The state below is transient.
   private NameEnvironmentAnswer nameEnvironmentAnswer;
   private JRealClassType realClassType;
+
   // Can be killed after parent is CHECKED.
   private TypeDeclaration typeDeclaration;
 
@@ -150,6 +151,10 @@ public final class CompiledClass {
 
   TypeDeclaration getTypeDeclaration() {
     return typeDeclaration;
+  }
+
+  void graveyard() {
+    realClassType.invalidate();
   }
 
   void invalidate() {

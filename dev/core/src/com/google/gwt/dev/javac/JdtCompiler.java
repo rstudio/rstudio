@@ -102,7 +102,7 @@ public class JdtCompiler {
       ICompilationUnit icu = cud.compilationResult().compilationUnit;
       CompilationUnitAdapter adapter = (CompilationUnitAdapter) icu;
       CompilationUnit unit = adapter.getUnit();
-      unit.setJdtCud(cud);
+      unit.setCompiled(cud, binaryTypesRefs);
       if (!cud.compilationResult().hasErrors()) {
         recordBinaryTypes(unit.getCompiledClasses());
       }
@@ -233,6 +233,11 @@ public class JdtCompiler {
    */
   private final Map<String, CompiledClass> binaryTypes = new HashMap<String, CompiledClass>();
 
+  /**
+   * Maps dotted binary names the containing unit location.
+   */
+  private final Map<String, String> binaryTypesRefs = new HashMap<String, String>();
+
   private final CompilerImpl compiler = new CompilerImpl();
 
   private final Set<String> notPackages = new HashSet<String>();
@@ -287,6 +292,8 @@ public class JdtCompiler {
   private void recordBinaryTypes(Set<CompiledClass> compiledClasses) {
     for (CompiledClass compiledClass : compiledClasses) {
       binaryTypes.put(compiledClass.getBinaryName(), compiledClass);
+      binaryTypesRefs.put(compiledClass.getBinaryName(),
+          compiledClass.getUnit().getDisplayLocation());
     }
   }
 
