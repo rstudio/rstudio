@@ -375,7 +375,18 @@ public class TypeSerializerCreator {
       }
     }
 
+    boolean shard = shardSize > 0 && filteredTypes.size() > shardSize;
+    int shardCount = 0;
+
+    if (shard) {
+      srcWriter.println("(function() {");
+    }
+
     for (JType type : filteredTypes) {
+      if (shard && ++shardCount % shardSize == 0) {
+        srcWriter.println("})();");
+        srcWriter.println("(function() {");
+      }
 
       srcWriter.println("@com.google.gwt.user.client.rpc.impl.SerializerBase"
           + "::registerMethods("
@@ -397,6 +408,10 @@ public class TypeSerializerCreator {
       srcWriter.println();
     }
 
+    if (shard) {
+      srcWriter.println("})();");
+    }
+
     srcWriter.outdent();
     srcWriter.println("}-*/;");
     srcWriter.println();
@@ -407,6 +422,12 @@ public class TypeSerializerCreator {
     srcWriter.indent();
 
     int index = 0;
+    boolean shard = shardSize > 0 && getSerializableTypes().length > shardSize;
+    int shardCount = 0;
+
+    if (shard) {
+      srcWriter.println("(function() {");
+    }
 
     for (JType type : getSerializableTypes()) {
 
@@ -429,6 +450,12 @@ public class TypeSerializerCreator {
         jsniTypeRef += "[]";
         type = type.isArray().getComponentType();
       }
+
+      if (shard && ++shardCount % shardSize == 0) {
+        srcWriter.println("})();");
+        srcWriter.println("(function() {");
+      }
+
       srcWriter.println("@com.google.gwt.user.client.rpc.impl.SerializerBase"
           + "::registerSignature("
           + "Lcom/google/gwt/core/client/JsArrayString;" + "Ljava/lang/Class;"
@@ -439,6 +466,10 @@ public class TypeSerializerCreator {
       srcWriter.println("\"" + typeString + "\");");
       srcWriter.outdent();
       srcWriter.println();
+    }
+
+    if (shard) {
+      srcWriter.println("})();");
     }
 
     srcWriter.outdent();
