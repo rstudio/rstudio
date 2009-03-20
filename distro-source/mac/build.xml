@@ -6,6 +6,7 @@
   <target name="build" depends="filter" description="Packages the distro">
     <!-- TODO: figure out how to share most of this across platforms -->
     <mkdir dir="${gwt.build.dist}" />
+    <mkdir dir="${gwt.build.out}/samples-scripts/${dist.platform}"/>
     <gwt.tgz.cat destfile="${project.dist}">
       <!-- jars -->
       <tarfileset file="${gwt.build.lib}/gwt-dev-${dist.platform}.jar" prefix="${project.distname}" />
