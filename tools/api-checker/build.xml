@@ -60,6 +60,7 @@
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
         <pathelement location="${gwt.tools.lib}/junit/junit-3.8.1.jar" />
+        <pathelement location="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar"/>
         <pathelement location="${javac.junit.out}" />
       </classpath>
   
