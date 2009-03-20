@@ -179,7 +179,7 @@ public class CompilationUnitInvalidator {
         for (String ref : currentlyValidUnitToCheck.getFileNameRefs()) {
           if (!knownValidRefs.contains(ref)) {
             if (branch == null) {
-              branch = logger.branch(TreeLogger.WARN, "Compilation unit '"
+              branch = logger.branch(TreeLogger.DEBUG, "Compilation unit '"
                   + currentlyValidUnitToCheck
                   + "' is removed due to invalid reference(s):");
               it.remove();
@@ -187,7 +187,7 @@ public class CompilationUnitInvalidator {
               currentlyValidUnitToCheck.setFresh();
               changed = true;
             }
-            branch.log(TreeLogger.WARN, ref);
+            branch.log(TreeLogger.DEBUG, ref);
           }
         }
       }
