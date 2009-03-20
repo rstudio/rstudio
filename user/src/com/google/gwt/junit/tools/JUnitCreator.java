@@ -300,7 +300,7 @@ public final class JUnitCreator extends ToolBase {
 
       @Override
       public String getPurpose() {
-        return "Specify the path to your junit.jar (required)";
+        return "Specifies the path to your junit.jar (required)";
       }
 
       @Override
@@ -339,7 +339,7 @@ public final class JUnitCreator extends ToolBase {
 
       @Override
       public String getPurpose() {
-        return "Specify the name of the GWT module to use (required)";
+        return "Specifies the name of the GWT module to use (required)";
       }
 
       @Override

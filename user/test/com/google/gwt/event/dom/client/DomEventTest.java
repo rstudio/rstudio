@@ -15,9 +15,13 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HandlerTestBase;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.RootPanel;
 
 /**
  * Events test.
@@ -59,7 +63,6 @@ public class DomEventTest extends HandlerTestBase {
   }
 
   public void testMouseEvents() {
-
     final Flag flag = new Flag();
     manager = new HandlerManager(flag);
 
@@ -126,6 +129,28 @@ public class DomEventTest extends HandlerTestBase {
     checkFire(new ClickEvent(), clickRegistration, flag, "onClick");
     checkFire(new DoubleClickEvent(), dblclickRegistration, flag,
         "onDoubleClick");
+  }
+
+  public void testMouseEventCoordinates() {
+    Button b = new Button();
+    RootPanel.get().add(b);
+
+    final Flag flag = new Flag();
+    b.addMouseDownHandler(new MouseDownHandler() {
+      public void onMouseDown(MouseDownEvent event) {
+        assertEquals("", 16, event.getX());
+        assertEquals("", 8, event.getY());
+        flag.flag = true;
+      }
+    });
+
+    int x = b.getAbsoluteLeft() + 16;
+    int y = b.getAbsoluteTop() + 8;
+    NativeEvent event = Document.get().createMouseDownEvent(0, x, y, x, y,
+        false, false, false, false, 1);
+    b.getElement().dispatchEvent(event);
+
+    assertTrue("Never received expected mouse-down event", flag.flag);
   }
 
   private void checkFire(DomEvent<?> event, HandlerRegistration registration,

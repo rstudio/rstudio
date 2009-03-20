@@ -22,7 +22,6 @@ import java.util.EventListener;
  * 
  * @deprecated use {@link com.google.gwt.event.dom.client.MouseWheelHandler}
  *             instead
- * 
  */
 @Deprecated
 public interface MouseWheelListener extends EventListener {
@@ -32,6 +31,8 @@ public interface MouseWheelListener extends EventListener {
    * 
    * @param sender the widget sending the event
    * @param velocity the velocity information for the wheel event
+   * @deprecated use {@link com.google.gwt.event.dom.client.MouseWheelHandler#onMouseWheel}
+   *             instead
    */
   @Deprecated
   void onMouseWheel(Widget sender, MouseWheelVelocity velocity);

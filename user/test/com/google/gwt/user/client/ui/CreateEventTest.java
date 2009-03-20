@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -75,21 +76,23 @@ public class CreateEventTest extends GWTTestCase {
     public void onBrowserEvent(Event event) {
       assertEquals(eventType, event.getType());
 
-      Element target = event.getCurrentTarget();
-      if (target == child) {
-        assertFalse("Expecting child to receive the event only once",
-            childReceived);
-        assertFalse("Expecting child to receive the event before parent",
-            parentReceived);
+      EventTarget target = event.getCurrentEventTarget();
+      if (Element.is(target)) {
+        if (Element.as(target) == child) {
+          assertFalse("Expecting child to receive the event only once",
+              childReceived);
+          assertFalse("Expecting child to receive the event before parent",
+              parentReceived);
 
-        childReceived = true;
-      } else if (target == parent) {
-        assertFalse("Expecting parent to receive the event only once",
-            parentReceived);
-        assertTrue("Expecting parent to receive the event after the child",
-            childReceived);
+          childReceived = true;
+        } else if (Element.as(target) == parent) {
+          assertFalse("Expecting parent to receive the event only once",
+              parentReceived);
+          assertTrue("Expecting parent to receive the event after the child",
+              childReceived);
 
-        parentReceived = true;
+          parentReceived = true;
+        }
       }
     }
   }

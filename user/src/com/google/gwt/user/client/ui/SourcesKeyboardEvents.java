@@ -41,6 +41,8 @@ public interface SourcesKeyboardEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
    */
   @Deprecated
   void removeKeyboardListener(KeyboardListener listener);

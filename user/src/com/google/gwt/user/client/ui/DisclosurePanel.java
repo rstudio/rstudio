@@ -440,6 +440,8 @@ public final class DisclosurePanel extends Composite implements
    * Removes an event handler from the panel.
    * 
    * @param handler the handler to be removed
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * the object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeEventHandler(DisclosureHandler handler) {

@@ -31,7 +31,11 @@ public interface SourcesTabEvents {
    * Adds a listener interface to receive click events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use addBeforeSelectionHandler and addSelectionHandler instead
+   * @deprecated use (@link
+   * com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers#addBeforeSelectionHandler}
+   * and {@link
+   * com.google.gwt.event.logical.shared.SelectionHandler#addSelectionHandler}
+   * instead
    */
   @Deprecated
   void addTabListener(TabListener listener);
@@ -40,6 +44,8 @@ public interface SourcesTabEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by and add*Handler method instead
    */
   @Deprecated
   void removeTabListener(TabListener listener);

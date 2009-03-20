@@ -113,6 +113,9 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     return addHandler(handler, ClickEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addClickHandler} instead
+   */
   @Deprecated
   public void addClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.add(this, listener);
@@ -145,6 +148,10 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     }
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
+   */
   @Deprecated
   public void removeClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.remove(this, listener);

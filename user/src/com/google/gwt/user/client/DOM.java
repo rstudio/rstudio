@@ -457,7 +457,7 @@ public class DOM {
    * @see DOM#eventGetTarget(Event)
    */
   public static Element eventGetCurrentTarget(Event evt) {
-    return impl.eventGetCurrentTarget(evt);
+    return evt.getCurrentTarget().cast();
   }
 
   /**

@@ -331,7 +331,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * source Widget for these events will be the SuggestBox.
    * 
    * @param listener the listener interface to add
-   * @deprecated use getTextBox().addChangeHandler instead
+   * @deprecated use {@link #getTextBox}().addChangeHandler instead
    */
   @Deprecated
   public void addChangeListener(final ChangeListener listener) {
@@ -343,7 +343,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * source Widget for these events will be the SuggestBox.
    * 
    * @param listener the listener interface to add
-   * @deprecated use getTextBox().addClickHandler instead
+   * @deprecated use {@link #getTextBox}().addClickHandler instead
    */
   @Deprecated
   public void addClickListener(final ClickListener listener) {
@@ -355,7 +355,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
   /**
    * Adds an event to this handler.
    * 
-   * @deprecated use addSelectionHandler instead.
+   * @deprecated use {@link #addSelectionHandler} instead.
    */
   @Deprecated
   public void addEventHandler(final SuggestionHandler handler) {
@@ -367,7 +367,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * source Widget for these events will be the SuggestBox.
    * 
    * @param listener the listener interface to add
-   * @deprecated use getTextBox().addFocusHandler/addBlurHandler() instead
+   * @deprecated use {@link getTextBox}().addFocusHandler/addBlurHandler() instead
    */
   @Deprecated
   public void addFocusListener(final FocusListener listener) {
@@ -376,6 +376,10 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     focus.setSource(this);
   }
 
+  /**
+   * @deprecated Use {@link #addKeyDownHandler}, {@link
+   * #addKeyUpHandler} and {@link #addKeyPressHandler} instead
+   */
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.add(this, listener);
@@ -472,26 +476,46 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     return suggestionPopup.isShowing();
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #getTextBox}().addChangeHandler instead
+   */
   @Deprecated
   public void removeChangeListener(ChangeListener listener) {
     ListenerWrapper.WrappedChangeListener.remove(box, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #getTextBox}().addClickHandler instead
+   */
   @Deprecated
   public void removeClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.remove(box, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method no the object returned by {@link #addSelectionHandler} instead
+   */
   @Deprecated
   public void removeEventHandler(SuggestionHandler handler) {
     ListenerWrapper.WrappedOldSuggestionHandler.remove(this, handler);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #getTextBox}().addFocusListener instead
+   */
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #getTextBox}().add*Handler instead
+   */
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.remove(this, listener);

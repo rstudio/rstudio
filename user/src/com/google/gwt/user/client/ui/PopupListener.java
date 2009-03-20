@@ -32,6 +32,8 @@ public interface PopupListener extends EventListener {
    * @param sender popup being closed.
    * @param autoClosed <code>true</code> if the popup was automatically closed;
    *          <code>false</code> if it was closed programmatically.
+   * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler#onClose}
+   *             instead
    */
   @Deprecated
   void onPopupClosed(PopupPanel sender, boolean autoClosed);

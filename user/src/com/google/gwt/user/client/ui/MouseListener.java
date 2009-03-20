@@ -23,7 +23,7 @@ import java.util.EventListener;
  * @deprecated use {@link com.google.gwt.event.dom.client.MouseDownHandler},
  *             {@link com.google.gwt.event.dom.client.MouseUpHandler},
  *             {@link com.google.gwt.event.dom.client.MouseOverHandler},
- *             {@link com.google.gwt.event.dom.client.MouseMoveHandler}, and/or
+ *             {@link com.google.gwt.event.dom.client.MouseMoveHandler}, and
  *             {@link com.google.gwt.event.dom.client.MouseOutHandler} instead
  */
 @Deprecated

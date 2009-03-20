@@ -39,7 +39,7 @@ package com.google.gwt.user.client.ui;
  *  }
  *</pre>
  * 
- * @deprecated Use <code>Widget#delegateEvent</code> instead
+ * @deprecated Use {@link Widget#delegateEvent} instead
  */
 @Deprecated
 public class DelegatingClickListenerCollection extends ClickListenerCollection

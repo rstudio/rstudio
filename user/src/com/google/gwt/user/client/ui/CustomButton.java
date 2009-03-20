@@ -349,6 +349,7 @@ public abstract class CustomButton extends ButtonBase {
    * 
    * @param upImage image for the default (up) face of the button
    * @param listener the click listener
+   * @deprecated Use {@link #CustomButton(Image, ClickHandler)} instead
    */
   @Deprecated
   public CustomButton(Image upImage, ClickListener listener) {
@@ -385,6 +386,7 @@ public abstract class CustomButton extends ButtonBase {
    * @param upImage image for the default (up) face of the button
    * @param downImage image for the down face of the button
    * @param listener clickListener
+   * @deprecated Use {@link #CustomButton(Image, Image, ClickHandler} instead
    */
   @Deprecated
   public CustomButton(Image upImage, Image downImage, ClickListener listener) {
@@ -418,6 +420,7 @@ public abstract class CustomButton extends ButtonBase {
    * 
    * @param upText the text for the default (up) face of the button
    * @param listener the click listener
+   * @deprecated Use {@link #CustomButton(String, ClickListener)} instead
    */
   @Deprecated
   public CustomButton(String upText, ClickListener listener) {
@@ -454,6 +457,7 @@ public abstract class CustomButton extends ButtonBase {
    * @param upText the text for the default (up) face of the button
    * @param downText the text for the down face of the button
    * @param listener the click listener
+   * @deprecated Use {@link #CustomButton(String, String, ClickHandler)} instead
    */
   @Deprecated
   public CustomButton(String upText, String downText, ClickListener listener) {

@@ -87,7 +87,7 @@ public class Widget extends UIObject implements EventListener, HasHandlers {
         }
         break;
     }
-    DomEvent.fireNativeEvent(event, this);
+    DomEvent.fireNativeEvent(event, this, this.getElement());
   }
 
   /**

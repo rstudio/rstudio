@@ -15,7 +15,7 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -31,10 +31,10 @@ public class ButtonTest extends GWTTestCase {
 
   private class H implements ClickHandler {
     boolean clicked;
-    Element target;
+    EventTarget target;
 
     public void onClick(ClickEvent event) {
-      target = event.getNativeEvent().getTarget();
+      target = event.getNativeEvent().getEventTarget();
       clicked = true;
     }
   }

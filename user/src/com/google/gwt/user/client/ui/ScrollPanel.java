@@ -52,6 +52,9 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     return addDomHandler(handler, ScrollEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addScrollHandler} instead
+   */
   @Deprecated
   public void addScrollListener(ScrollListener listener) {
     ListenerWrapper.WrappedScrollListener.add(this, listener);
@@ -87,6 +90,10 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
     return DOM.getElementPropertyInt(getElement(), "scrollTop");
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link addScrollHandler} instead
+   */
   @Deprecated
   public void removeScrollListener(ScrollListener listener) {
     ListenerWrapper.WrappedScrollListener.remove(this, listener);

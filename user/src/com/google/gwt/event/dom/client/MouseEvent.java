@@ -102,21 +102,29 @@ public abstract class MouseEvent<H extends EventHandler> extends DomEvent<H> {
   }
 
   /**
-   * Gets the mouse x-position relative to the event's target element.
+   * Gets the mouse x-position relative to the event's current target element.
    * 
    * @return the relative x-position
    */
-  public int getTargetX() {
-    return getRelativeX(getNativeEvent().getTarget());
+  public int getX() {
+    Element relativeElem = getRelativeElement();
+    if (relativeElem != null) {
+      return getRelativeX(relativeElem);
+    }
+    return getClientX();
   }
 
   /**
-   * Gets the mouse y-position relative to the event's target element.
+   * Gets the mouse y-position relative to the event's current target element.
    * 
    * @return the relative y-position
    */
-  public int getTargetY() {
-    return getRelativeY(getNativeEvent().getTarget());
+  public int getY() {
+    Element relativeElem = getRelativeElement();
+    if (relativeElem != null) {
+      return getRelativeY(relativeElem);
+    }
+    return getClientY();
   }
 
   /**

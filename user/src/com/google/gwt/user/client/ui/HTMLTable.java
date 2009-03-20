@@ -956,6 +956,9 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    * Removes the specified table listener.
    * 
    * @param listener listener to remove
+   *
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
    */
   @Deprecated
   public void removeTableListener(TableListener listener) {

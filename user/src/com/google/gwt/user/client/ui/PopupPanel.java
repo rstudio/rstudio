@@ -19,6 +19,7 @@ import com.google.gwt.animation.client.Animation;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -364,6 +365,9 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     return addHandler(handler, CloseEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addCloseHandler} instead
+   */
   @Deprecated
   public void addPopupListener(final PopupListener listener) {
     ListenerWrapper.WrappedPopupListener.add(this, listener);
@@ -530,7 +534,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
   }
 
   /**
-   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
    *             instead
    */
   @Deprecated
@@ -546,7 +550,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
    *             instead
    */
   @Deprecated
@@ -562,7 +566,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
    *             instead
    */
   @Deprecated
@@ -578,7 +582,7 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @param modifiers keyboard modifiers, as specified in
    *          {@link com.google.gwt.event.dom.client.KeyCodes}.
    * @return <code>false</code> to suppress the event
-   * @deprecated Use <code>onPreviewNativeEvent(NativePreviewEvent)</code>
+   * @deprecated Use {@link #onPreviewNativeEvent(NativePreviewEvent)}
    *             instead
    */
   @Deprecated
@@ -598,6 +602,10 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
     }
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #addCloseHandler} instead
+   */
   @Deprecated
   public void removePopupListener(PopupListener listener) {
     ListenerWrapper.WrappedPopupListener.remove(this, listener);
@@ -902,10 +910,12 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
       return false;
     }
 
-    Element target = event.getTarget();
-    for (Element elem : autoHidePartners) {
-      if (elem.isOrHasChild(target)) {
-        return true;
+    EventTarget target = event.getEventTarget();
+    if (Element.is(target)) {
+      for (Element elem : autoHidePartners) {
+        if (elem.isOrHasChild(Element.as(target))) {
+          return true;
+        }
       }
     }
     return false;
@@ -918,7 +928,11 @@ public class PopupPanel extends SimplePanel implements SourcesPopupEvents,
    * @return true if the event targets the popup
    */
   private boolean eventTargetsPopup(NativeEvent event) {
-    return getElement().isOrHasChild(event.getTarget());
+    EventTarget target = event.getEventTarget();
+    if (Element.is(target)) {
+      return getElement().isOrHasChild(Element.as(target));
+    }
+    return false;
   }
 
   /**

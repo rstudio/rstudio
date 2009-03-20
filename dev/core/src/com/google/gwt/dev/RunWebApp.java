@@ -72,12 +72,12 @@ public class RunWebApp {
 
     @Override
     public String getPurpose() {
-      return "Specifies the name(s) of the module(s)";
+      return "Specifies the location of the target .war file or war directory";
     }
 
     @Override
     public String[] getTagArgs() {
-      return new String[] {"module[s]"};
+      return new String[] {"war"};
     }
 
     @Override

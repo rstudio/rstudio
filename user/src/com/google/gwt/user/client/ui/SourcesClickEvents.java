@@ -38,6 +38,8 @@ public interface SourcesClickEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #addClickHandler} instead
    */
   @Deprecated
   void removeClickListener(ClickListener listener);

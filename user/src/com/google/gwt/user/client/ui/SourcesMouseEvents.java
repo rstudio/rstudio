@@ -29,7 +29,8 @@ public interface SourcesMouseEvents {
    * Adds a listener interface to receive mouse events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use <code>addMouse(Down/Up/Over/Out/Move/Scroll)Handler</code>
+   * @deprecated use add* methods of {@link
+   *             com.google.gwt.event.dom.client.HasAllMouseHandlers}
    *             instead
    */
   @Deprecated
@@ -39,6 +40,8 @@ public interface SourcesMouseEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
    */
   @Deprecated
   void removeMouseListener(MouseListener listener);

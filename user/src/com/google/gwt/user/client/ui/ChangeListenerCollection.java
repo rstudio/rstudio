@@ -22,11 +22,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.ChangeListener}.
  * 
- * @deprecated As of GWT 1.6, to manage handlers for your widget, call
- *             <code>{@link Widget#addDomHandler(com.google.gwt.event.shared.EventHandler, com.google.gwt.event.dom.client.DomEvent.Type) addDomHandler}(myHandler, ChangeEvent.getType())</code>
- *             for DOM-based change events, and call
- *             <code>{@link Widget#addHandler(com.google.gwt.event.shared.EventHandler, com.google.gwt.event.shared.GwtEvent.Type) addHandler}(myHandler, ValueChangeEvent.getType())</code>
- *             for logical change events
+ * @deprecated Widgets should now manage their own handlers via {@link Widget#addDomHandler}
  */
 @Deprecated
 public class ChangeListenerCollection extends ArrayList<ChangeListener> {

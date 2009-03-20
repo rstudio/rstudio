@@ -32,6 +32,9 @@ public class DisclosureEvent extends EventObject {
    * @param sender the panel from which the event is originating.
    * 
    * @see DisclosureHandler
+   * @deprecated Use
+   *             {@link com.google.gwt.event.logical.shared.CloseEvent} and
+   *             {@link  com.google.gwt.event.logical.shared.OpenEvent} instead
    */
   @Deprecated
   public DisclosureEvent(DisclosurePanel sender) {

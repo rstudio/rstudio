@@ -26,18 +26,10 @@ import com.google.gwt.user.client.Event;
 class DOMImplIE6 extends DOMImpl {
 
   @SuppressWarnings("unused")
-  private static Element currentEventTarget;
-
-  @SuppressWarnings("unused")
   private static JavaScriptObject dispatchEvent;
 
   @SuppressWarnings("unused")
   private static JavaScriptObject dispatchDblClickEvent;
-
-  @Override
-  public native Element eventGetCurrentTarget(Event evt) /*-{
-    return @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget;
-  }-*/;
 
   @Override
   public native Element eventGetFromElement(Event evt) /*-{
@@ -81,13 +73,13 @@ class DOMImplIE6 extends DOMImpl {
       // also seems that IE won't allow you to add expandos to the event object,
       // so we have to store it in a global. This is ok because only one event
       // can actually be dispatched at a time.
-      var oldEventTarget = @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget;
-      @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = this;
+      var oldEventTarget = @com.google.gwt.dom.client.DOMImplIE6::currentEventTarget;
+      @com.google.gwt.dom.client.DOMImplIE6::currentEventTarget = this;
 
       if ($wnd.event.returnValue == null) {
         $wnd.event.returnValue = true;
         if (!@com.google.gwt.user.client.DOM::previewEvent(Lcom/google/gwt/user/client/Event;)($wnd.event)) {
-          @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = oldEventTarget;
+          @com.google.gwt.dom.client.DOMImplIE6::currentEventTarget = oldEventTarget;
           return;
         }
       }
@@ -103,7 +95,7 @@ class DOMImplIE6 extends DOMImpl {
         }
       }
 
-      @com.google.gwt.user.client.impl.DOMImplIE6::currentEventTarget = oldEventTarget;
+      @com.google.gwt.dom.client.DOMImplIE6::currentEventTarget = oldEventTarget;
     };
 
     @com.google.gwt.user.client.impl.DOMImplIE6::dispatchDblClickEvent = function() {

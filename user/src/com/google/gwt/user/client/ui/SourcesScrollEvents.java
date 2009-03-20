@@ -29,7 +29,8 @@ public interface SourcesScrollEvents {
    * Adds a listener interface to receive scroll events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use addScrollHandler instead
+   * @deprecated use {@link com.google.gwt.event.dom.client.HasScrollHandlers#addScrollHandler}
+   *             instead
    */
   @Deprecated
   void addScrollListener(ScrollListener listener);
@@ -38,6 +39,10 @@ public interface SourcesScrollEvents {
    * Removes a previously added scroll listener.
    * 
    * @param listener the listener interface to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link
+   * com.google.gwt.event.dom.client.HasScrollHandlers#addScrollHandler}
+   * instead instead
    */
   @Deprecated
   void removeScrollListener(ScrollListener listener);

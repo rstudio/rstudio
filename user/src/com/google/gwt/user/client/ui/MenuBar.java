@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
@@ -508,7 +509,7 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   /**
    * Closes the menu bar.
    *
-   * @deprecated use {@link #addCloseHandler(CloseHandler)} instead.
+   * @deprecated Use {@link #addCloseHandler(CloseHandler)} instead
    */
   @Deprecated
   public void onPopupClosed(PopupPanel sender, boolean autoClosed) {
@@ -1016,9 +1017,9 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
             case Event.ONMOUSEDOWN:
               // If the event target is part of the parent menu, suppress the
               // event altogether.
-              com.google.gwt.dom.client.Element target = event.getNativeEvent().getTarget();
+              EventTarget target = event.getNativeEvent().getEventTarget();
               Element parentMenuElement = item.getParentMenu().getElement();
-              if (parentMenuElement.isOrHasChild(target)) {
+              if (parentMenuElement.isOrHasChild(Element.as(target))) {
                 event.cancel();
                 return;
               }

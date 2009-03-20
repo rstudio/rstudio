@@ -22,8 +22,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.PopupListener}.
  * 
- * @deprecated use <code>addHandler(myHandler,  CloseEvent.getType())</code> to
- *             manage handlers within your widget instead
+ * @deprecated Widgets should now manage their own handlers via {@link Widget#addDomHandler}
  */
 @Deprecated
 public class PopupListenerCollection extends ArrayList<PopupListener> {
@@ -34,6 +33,8 @@ public class PopupListenerCollection extends ArrayList<PopupListener> {
    * @param sender the widget sending the event.
    * @param autoClosed <code>true</code> if the popup was automatically closed;
    *          <code>false</code> if it was closed programmatically.
+   * @deprecated use {@link com.google.gwt.event.logical.shared.CloseHandler#onClose}
+   *             instead
    */
   @Deprecated
   public void firePopupClosed(PopupPanel sender, boolean autoClosed) {

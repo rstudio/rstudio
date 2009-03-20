@@ -29,7 +29,8 @@ public interface SourcesPopupEvents {
    * Adds a listener interface to receive popup events.
    * 
    * @param listener the listener interface to add.
-   * @deprecated use <code>addCloseHandler<PopupPanel></code> instead
+   * @deprecated use {@link com.google.gwt.event.logical.shared.HasCloseHandlers#addCloseHandler}
+   *             instead
    */
   @Deprecated
   void addPopupListener(PopupListener listener);
@@ -38,6 +39,10 @@ public interface SourcesPopupEvents {
    * Removes a previously added popup listener.
    * 
    * @param listener the listener interface to remove.
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link
+   * com.google.gwt.event.logical.shared.HasCloseHandlers#addCloseHandler}
+   * instead
    */
   @Deprecated
   void removePopupListener(PopupListener listener);

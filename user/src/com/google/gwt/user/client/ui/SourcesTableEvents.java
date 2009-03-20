@@ -30,7 +30,7 @@ public interface SourcesTableEvents {
    * Adds a listener interface to receive click events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use addClickHandler and getCell(DomEvent) instead
+   * @deprecated See the {@link SourcesTableEvents interface doc} instead
    */
   @Deprecated
   void addTableListener(TableListener listener);
@@ -39,6 +39,8 @@ public interface SourcesTableEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
    */
   @Deprecated
   void removeTableListener(TableListener listener);

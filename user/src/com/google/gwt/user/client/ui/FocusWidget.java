@@ -91,6 +91,9 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return addDomHandler(handler, ClickEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addClickHandler} instead
+   */
   @Deprecated
   public void addClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.add(this, listener);
@@ -100,11 +103,18 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return addDomHandler(handler, FocusEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addFocusHandler} instead
+   */
   @Deprecated
   public void addFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.add(this, listener);
   }
 
+  /**
+   * @deprecated Use {@link #addKeyDownHandler}, {@link
+   * #addKeyUpHandler} and {@link #addKeyPressHandler} instead
+   */
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.add(this, listener);
@@ -126,6 +136,11 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return addDomHandler(handler, MouseDownEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addMouseOverHandler} {@link
+   * #addMouseMoveHandler}, {@link #addMouseDownHandler}, {@link
+   * #addMouseUpHandler} and {@link #addMouseOutHandler} instead
+   */
   @Deprecated
   public void addMouseListener(MouseListener listener) {
     ListenerWrapper.WrappedMouseListener.add(this, listener);
@@ -151,6 +166,9 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return addDomHandler(handler, MouseWheelEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addMouseWheelHandler} instead
+   */
   @Deprecated
   public void addMouseWheelListener(MouseWheelListener listener) {
     ListenerWrapper.WrappedMouseWheelListener.add(this, listener);
@@ -174,26 +192,46 @@ public abstract class FocusWidget extends Widget implements SourcesClickEvents,
     return !DOM.getElementPropertyBoolean(getElement(), "disabled");
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * the object returned by {@link #addClickHandler} instead
+   */
   @Deprecated
   public void removeClickListener(ClickListener listener) {
     ListenerWrapper.WrappedClickListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * the object returned by {@link #addFocusHandler} instead
+   */
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
+   */
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
+   */
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
     ListenerWrapper.WrappedMouseListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #addMouseWheelHandler} instead
+   */
   @Deprecated
   public void removeMouseWheelListener(MouseWheelListener listener) {
     ListenerWrapper.WrappedMouseWheelListener.remove(this, listener);

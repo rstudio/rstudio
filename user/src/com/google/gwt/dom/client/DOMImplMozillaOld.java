@@ -37,47 +37,17 @@ package com.google.gwt.dom.client;
   }
 
   @Override
-  public native int getAbsoluteLeft(Element elem) /*-{
-    var doc = elem.ownerDocument;
-    var style = doc.defaultView.getComputedStyle(elem, null);
-    var left = doc.getBoxObjectFor(elem).x - Math.round(
-        style.getPropertyCSSValue('border-left-width').getFloatValue(
-        CSSPrimitiveValue.CSS_PX));
-
-    var parent = elem.parentNode;
-    while (parent) {
-      // Sometimes get NAN.
-      if (parent.scrollLeft > 0) {
-        left -= parent.scrollLeft;
-      }
-      parent = parent.parentNode;
-    }
-
-    return left
-        + @com.google.gwt.dom.client.DOMImplMozillaOld::getDocumentScrollLeft()();
-  }-*/;
+  public int getAbsoluteLeft(Element elem) {
+    return getAbsoluteLeftImpl(elem.getOwnerDocument().getViewportElement(),
+        elem);
+  }
 
   @Override
-  public native int getAbsoluteTop(Element elem) /*-{
-    var doc = elem.ownerDocument;
-    var style = doc.defaultView.getComputedStyle(elem, null);
-    var top = doc.getBoxObjectFor(elem).y - Math.round(
-        style.getPropertyCSSValue('border-top-width').getFloatValue(
-        CSSPrimitiveValue.CSS_PX));
-      
-    var parent = elem.parentNode;
-    while (parent) {
-      // Sometimes get NAN.
-      if (parent.scrollTop > 0) {
-        top -= parent.scrollTop;
-      }
-      parent = parent.parentNode;
-    }
+  public int getAbsoluteTop(Element elem) {
+    return getAbsoluteTopImpl(elem.getOwnerDocument().getViewportElement(),
+        elem);
+  }
 
-    return top
-        + @com.google.gwt.dom.client.DOMImplMozillaOld::getDocumentScrollTop()();
-  }-*/;
-  
   @Override
   public native String getInnerText(Element node) /*-{
     // To mimic IE's 'innerText' property in the W3C DOM, we need to recursively
@@ -94,7 +64,7 @@ package com.google.gwt.dom.client;
     }
     return text;
   }-*/;
-  
+
   @Override
   public native void setInnerText(Element elem, String text) /*-{
     // Remove all children first.
@@ -105,5 +75,43 @@ package com.google.gwt.dom.client;
     if (text != null) {
       elem.appendChild(elem.ownerDocument.createTextNode(text));
     }
+  }-*/;
+  
+  private native int getAbsoluteLeftImpl(Element viewport, Element elem) /*-{
+    var doc = elem.ownerDocument;
+    var style = doc.defaultView.getComputedStyle(elem, null);
+    var left = doc.getBoxObjectFor(elem).x - Math.round(
+        style.getPropertyCSSValue('border-left-width').getFloatValue(
+        CSSPrimitiveValue.CSS_PX));
+
+    var parent = elem.parentNode;
+    while (parent) {
+      // Sometimes get NAN.
+      if (parent.scrollLeft > 0) {
+        left -= parent.scrollLeft;
+      }
+      parent = parent.parentNode;
+    }
+
+    return left + viewport.scrollLeft;
+  }-*/;
+  
+  private native int getAbsoluteTopImpl(Element viewport, Element elem) /*-{
+    var doc = elem.ownerDocument;
+    var style = doc.defaultView.getComputedStyle(elem, null);
+    var top = doc.getBoxObjectFor(elem).y - Math.round(
+        style.getPropertyCSSValue('border-top-width').getFloatValue(
+        CSSPrimitiveValue.CSS_PX));
+      
+    var parent = elem.parentNode;
+    while (parent) {
+      // Sometimes get NAN.
+      if (parent.scrollTop > 0) {
+        top -= parent.scrollTop;
+      }
+      parent = parent.parentNode;
+    }
+
+    return top + viewport.scrollTop;
   }-*/;
 }

@@ -40,7 +40,7 @@ package com.google.gwt.user.client.ui;
  *  }
  *</pre>
  * 
- * @deprecated Use {@link Widget#delegateEvent Widget.delegateEvent} instead
+ * @deprecated Use {@link Widget#delegateEvent} instead
  */
 @Deprecated
 public class DelegatingKeyboardListenerCollection extends

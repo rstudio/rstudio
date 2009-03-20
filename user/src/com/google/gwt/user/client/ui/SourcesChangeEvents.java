@@ -44,6 +44,9 @@ public interface SourcesChangeEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
+   *
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by {@link #addChangeHandler} instead
    */
   @Deprecated
   void removeChangeListener(ChangeListener listener);

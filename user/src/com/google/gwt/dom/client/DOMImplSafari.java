@@ -48,6 +48,11 @@ class DOMImplSafari extends DOMImplStandard {
   }
 
   @Override
+  public native EventTarget eventGetCurrentTarget(NativeEvent event) /*-{
+    return event.currentTarget || $wnd;
+  }-*/;
+
+  @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
     return Math.round(-evt.wheelDelta / 40) || 0;
   }-*/;

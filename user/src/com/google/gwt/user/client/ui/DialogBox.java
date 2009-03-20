@@ -16,6 +16,7 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.HasAllMouseHandlers;
 import com.google.gwt.event.dom.client.MouseDownEvent;
@@ -236,7 +237,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   }
 
   /**
-   * @deprecated Use {@link #beginDragging} instead and {@link #getCaption}
+   * @deprecated Use {@link #beginDragging} and {@link #getCaption}
    *             instead
    */
   @Deprecated
@@ -247,10 +248,16 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
     dragStartY = y;
   }
 
+  /**
+   * @deprecated Use {@link Caption#addMouseOverHandler} instead
+   */
   @Deprecated
   public void onMouseEnter(Widget sender) {
   }
 
+  /**
+   * @deprecated Use {@link Caption#addMouseOutHandler} instead
+   */
   @Deprecated
   public void onMouseLeave(Widget sender) {
   }
@@ -329,8 +336,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
    * @param event the mouse down event that triggered dragging
    */
   protected void beginDragging(MouseDownEvent event) {
-    onMouseDown(caption, Event.getRelativeX(event.getNativeEvent(),
-        getElement()), Event.getRelativeY(event.getNativeEvent(), getElement()));
+    onMouseDown(caption, event.getX(), event.getY());
   }
 
   /**
@@ -342,8 +348,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
    * @param event the mouse move event that continues dragging
    */
   protected void continueDragging(MouseMoveEvent event) {
-    onMouseMove(caption, Event.getRelativeX(event.getNativeEvent(),
-        getElement()), Event.getRelativeY(event.getNativeEvent(), getElement()));
+    onMouseMove(caption, event.getX(), event.getY());
   }
 
   @Override
@@ -376,9 +381,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
    * @see #endDragging
    */
   protected void endDragging(MouseUpEvent event) {
-    onMouseUp(caption,
-        Event.getRelativeX(event.getNativeEvent(), getElement()),
-        Event.getRelativeY(event.getNativeEvent(), getElement()));
+    onMouseUp(caption, event.getX(), event.getY());
   }
 
   /**
@@ -414,7 +417,11 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   }
 
   private boolean isCaptionEvent(NativeEvent event) {
-    return getCellElement(0, 1).getParentElement().isOrHasChild(
-        event.getTarget());
+    EventTarget target = event.getEventTarget();
+    if (Element.is(target)) {
+      return getCellElement(0, 1).getParentElement().isOrHasChild(
+          Element.as(target));
+    }
+    return false;
   }
 }

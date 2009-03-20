@@ -19,12 +19,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.LineNumberReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.io.Reader;
+import java.io.StringReader;
 import java.io.Writer;
 import java.net.Socket;
 import java.net.URI;
@@ -317,9 +319,12 @@ public final class Utility {
       replacedContents = replacedContents.replaceAll(replaceThis, withThis);
     }
 
-    FileWriter fw = new FileWriter(file);
-    fw.write(replacedContents);
-    close(fw);
+    PrintWriter pw = new PrintWriter(file);
+    LineNumberReader lnr = new LineNumberReader(new StringReader(replacedContents));
+    for (String line = lnr.readLine(); line != null; line = lnr.readLine()) {
+      pw.println(line);
+    }
+    close(pw);
   }
 
   private static void computeInstallationPath() {

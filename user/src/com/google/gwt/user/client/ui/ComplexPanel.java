@@ -151,7 +151,7 @@ public abstract class ComplexPanel extends Panel implements IndexedPanel {
    * {@link #insert(Widget, Element, int, boolean)}, which clarifies this
    * ambiguity.
    * 
-   * @deprecated Use {@link #insert(Widget, Element, int, boolean)}.
+   * @deprecated Use {@link #insert(Widget, Element, int, boolean)} instead
    */
   @Deprecated
   protected void insert(Widget child, Element container, int beforeIndex) {

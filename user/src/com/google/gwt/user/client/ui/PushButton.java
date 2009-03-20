@@ -75,6 +75,7 @@ public class PushButton extends CustomButton {
    * 
    * @param upImage image for the default (up) face of the button
    * @param listener the click listener
+   * @deprecated Use {@link #PushButton(Image, ClickHandler)} instead
    */
   @Deprecated
   public PushButton(Image upImage, ClickListener listener) {
@@ -108,6 +109,7 @@ public class PushButton extends CustomButton {
    * @param upImage image for the default(up) face of the button
    * @param downImage image for the down face of the button
    * @param listener clickListener
+   * @deprecated Use {@link #PushButton(Image, Image, ClickHandler)} instead
    */
   @Deprecated
   public PushButton(Image upImage, Image downImage, ClickListener listener) {
@@ -141,6 +143,7 @@ public class PushButton extends CustomButton {
    * 
    * @param upText the text for the default (up) face of the button
    * @param listener the click listener
+   * @deprecated Use {@link #PushButton(String, ClickHandler)} instead
    */
   @Deprecated
   public PushButton(String upText, ClickListener listener) {
@@ -174,6 +177,7 @@ public class PushButton extends CustomButton {
    * @param upText the text for the default (up) face of the button
    * @param downText the text for down face of the button
    * @param listener the click listener
+   * @deprecated Use {@link #PushButton(String, String, ClickHandler)} instead
    */
   @Deprecated
   public PushButton(String upText, String downText, ClickListener listener) {

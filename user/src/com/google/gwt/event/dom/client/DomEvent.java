@@ -15,6 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -87,16 +88,35 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
    */
   public static void fireNativeEvent(NativeEvent nativeEvent,
       HasHandlers handlerSource) {
+    fireNativeEvent(nativeEvent, handlerSource, null);
+  }
+
+  /**
+   * Fires the given native event on the specified handlers.
+   * 
+   * @param nativeEvent the native event
+   * @param handlerSource the source of the handlers to fire
+   * @param relativeElem the element relative to which event coordinates will be
+   *          measured
+   */
+  public static void fireNativeEvent(NativeEvent nativeEvent,
+      HasHandlers handlerSource, Element relativeElem) {
     assert nativeEvent != null : "nativeEvent must not be null";
+
     if (registered != null) {
       final DomEvent.Type<?> typeKey = registered.unsafeGet(nativeEvent.getType());
       if (typeKey != null) {
         // Store and restore native event just in case we are in recursive
         // loop.
         NativeEvent currentNative = typeKey.flyweight.nativeEvent;
+        Element currentRelativeElem = typeKey.flyweight.relativeElem;
         typeKey.flyweight.setNativeEvent(nativeEvent);
+        typeKey.flyweight.setRelativeElement(relativeElem);
+
         handlerSource.fireEvent(typeKey.flyweight);
+
         typeKey.flyweight.setNativeEvent(currentNative);
+        typeKey.flyweight.setRelativeElement(currentRelativeElem);
       }
     }
   }
@@ -107,6 +127,7 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
   }
 
   private NativeEvent nativeEvent;
+  private Element relativeElem;
 
   @Override
   public abstract DomEvent.Type<H> getAssociatedType();
@@ -114,6 +135,18 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
   public final NativeEvent getNativeEvent() {
     assertLive();
     return nativeEvent;
+  }
+
+  /**
+   * Gets the element relative to which event coordinates will be measured.
+   * If this element is <code>null</code>, event coordinates will be measured
+   * relative to the window's client area.
+   * 
+   * @return the event's relative element
+   */
+  public final Element getRelativeElement() {
+    assertLive();
+    return relativeElem;
   }
 
   /**
@@ -132,6 +165,15 @@ public abstract class DomEvent<H extends EventHandler> extends GwtEvent<H>
    */
   public final void setNativeEvent(NativeEvent nativeEvent) {
     this.nativeEvent = nativeEvent;
+  }
+
+  /**
+   * Gets the element relative to which event coordinates will be measured.
+   * 
+   * @param relativeElem the event's relative element
+   */
+  public void setRelativeElement(Element relativeElem) {
+    this.relativeElem = relativeElem;
   }
 
   /**

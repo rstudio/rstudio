@@ -15,18 +15,47 @@
  */
 package com.google.gwt.dom.client;
 
+import com.google.gwt.core.client.JavaScriptObject;
+
 /**
  * All HTML element interfaces derive from this class.
  */
 public class Element extends Node {
 
   /**
-   * Assert that the given {@link Node} is of type {@link Node#ELEMENT_NODE} and
-   * automatically typecast it.
+   * Assert that the given {@link Node} is an {@link Element} and automatically
+   * typecast it.
+   */
+  public static Element as(JavaScriptObject o) {
+    assert is(o);
+    return (Element)o;
+  }
+
+  /**
+   * Assert that the given {@link Node} is an {@link Element} and automatically
+   * typecast it.
    */
   public static Element as(Node node) {
-    assert node.getNodeType() == Node.ELEMENT_NODE;
+    assert is(node);
     return (Element) node;
+  }
+
+  /**
+   * Determines whether the given {@link JavaScriptObject} can be cast to an
+   * {@link Element}.
+   */
+  public static boolean is(JavaScriptObject o) {
+    if (Node.is(o)) {
+      return is((Node)o);
+    }
+    return false;
+  }
+
+  /**
+   * Determine whether the given {@link Node} can be cast to an {@link Element}.
+   */
+  public static boolean is(Node node) {
+    return node.getNodeType() == Node.ELEMENT_NODE;
   }
 
   protected Element() {

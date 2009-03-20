@@ -36,7 +36,7 @@ public interface ChangeListener extends EventListener {
    * 
    * @param sender the widget that has changed
    * 
-   * @deprecated See the deprecation message on the enclosing interface for details.
+   * @deprecated See the deprecation message on this interface for details
    */
   @Deprecated
   void onChange(Widget sender);

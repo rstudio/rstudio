@@ -130,7 +130,7 @@ abstract class HostedModeBase implements BrowserWindowController {
 
     @Override
     public String getPurpose() {
-      return "Specify the TCP port for the embedded web server (defaults to 8888)";
+      return "Specifies the TCP port for the embedded web server (defaults to 8888)";
     }
 
     @Override

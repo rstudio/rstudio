@@ -260,6 +260,10 @@ public class TabPanel extends Composite implements TabListener,
     return addHandler(handler, SelectionEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addBeforeSelectionHandler} and {@link
+   * #addSelectionHandler} instead
+   */
   @Deprecated
   public void addTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.add(this, listener);
@@ -354,12 +358,18 @@ public class TabPanel extends Composite implements TabListener,
     return deck.iterator();
   }
 
+  /**
+   * @deprecated Use {@link BeforeSelectionHandler#onBeforeSelection} instead
+   */
   @Deprecated
   public boolean onBeforeTabSelected(SourcesTabEvents sender, int tabIndex) {
     BeforeSelectionEvent<Integer> event = BeforeSelectionEvent.fire(this, tabIndex);
     return event == null || !event.isCanceled();
   }
 
+  /**
+   * @deprecated Use {@link SelectionHandler#onSelection} instead
+   */
   @Deprecated
   public void onTabSelected(SourcesTabEvents sender, int tabIndex) {
     deck.showWidget(tabIndex);
@@ -381,6 +391,10 @@ public class TabPanel extends Composite implements TabListener,
     return deck.remove(widget);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by and add*Handler method instead
+   */
   @Deprecated
   public void removeTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.remove(this, listener);

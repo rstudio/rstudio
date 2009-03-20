@@ -39,6 +39,8 @@ public interface FiresSuggestionEvents {
    * Removes a previously added handler interface.
    * 
    * @param handler the handler to remove
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * the object returned by an add*Handler method instead
    */
   @Deprecated
   void removeEventHandler(SuggestionHandler handler);

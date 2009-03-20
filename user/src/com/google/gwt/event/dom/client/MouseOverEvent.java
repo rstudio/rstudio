@@ -15,7 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 
 /**
  * Represents a native mouse over event.
@@ -52,26 +52,16 @@ public class MouseOverEvent extends MouseEvent<MouseOverHandler> {
   }
 
   /**
-   * Gets the element from which the mouse pointer was moved.
+   * Gets the target from which the mouse pointer was moved.
    * 
-   * @return the element from which the mouse pointer was moved
+   * @return the target from which the mouse pointer was moved
    */
-  public Element getFromElement() {
-    return getNativeEvent().getRelatedTarget();
-  }
-
-  /**
-   * Gets the element to which the mouse pointer was moved.
-   * 
-   * @return the element to which the mouse pointer was moved
-   */
-  public Element getToElement() {
-    return getNativeEvent().getTarget();
+  public EventTarget getRelatedTarget() {
+    return getNativeEvent().getRelatedEventTarget();
   }
 
   @Override
   protected void dispatch(MouseOverHandler handler) {
     handler.onMouseOver(this);
   }
-
 }

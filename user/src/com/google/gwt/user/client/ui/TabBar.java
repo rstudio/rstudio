@@ -248,6 +248,10 @@ public class TabBar extends Composite implements SourcesTabEvents,
     insertTab(widget, getTabCount());
   }
 
+  /**
+   * @deprecated Use {@link #addBeforeSelectionHandler} and {#link
+   *             #addSelectionHandler} instead
+   */
   @Deprecated
   public void addTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.add(this, listener);
@@ -379,7 +383,8 @@ public class TabBar extends Composite implements SourcesTabEvents,
   }
 
   /**
-   * @deprecated add a key down handler to the individual tab wrappers instead.
+   * @deprecated add a key down handler to the individual {@link Tab} objects
+   *  instead.
    */
   @Deprecated
   public void onKeyDown(Widget sender, char keyCode, int modifiers) {
@@ -420,6 +425,10 @@ public class TabBar extends Composite implements SourcesTabEvents,
     panel.remove(toRemove);
   }
 
+  /**
+   * @deprecated Instead use the {@link HandlerRegistration#removeHandler}
+   * call on the object returned by an add*Handler method
+   */
   @Deprecated
   public void removeTabListener(TabListener listener) {
     ListenerWrapper.WrappedTabListener.remove(this, listener);

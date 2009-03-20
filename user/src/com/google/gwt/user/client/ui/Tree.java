@@ -301,6 +301,9 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return addDomHandler(handler, FocusEvent.getType());
   }
 
+  /**
+   * @deprecate Use {@link #addFocusHandler} instead
+   */
   @Deprecated
   public void addFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.add(this, listener);
@@ -338,6 +341,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return root.addItem(widget);
   }
 
+  /**
+   * @deprecated Use {@link #addKeyDownHandler}, {@link
+   * #addKeyUpHandler} and {@link #addKeyPressHandler} instead
+   */
   @Deprecated
   public void addKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.add(this, listener);
@@ -359,6 +366,11 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return addHandler(handler, MouseDownEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addMouseOverHandler} {@link
+   * #addMouseMoveHandler}, {@link #addMouseDownHandler}, {@link
+   * #addMouseUpHandler} and {@link #addMouseOutHandler} instead
+   */
   @Deprecated
   public void addMouseListener(MouseListener listener) {
     ListenerWrapper.WrappedMouseListener.add(this, listener);
@@ -393,6 +405,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return addHandler(handler, SelectionEvent.getType());
   }
 
+  /**
+   * @deprecated Use {@link #addSelectionHandler}, {@link
+   * #addOpenHandler}, and {@link #addCloseHandler} instead
+   */
   @Deprecated
   public void addTreeListener(TreeListener listener) {
     ListenerWrapper.WrappedTreeListener.add(this, listener);
@@ -585,6 +601,10 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     return true;
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
+   * the object returned by {@link #addFocusHandler} instead
+   */
   @Deprecated
   public void removeFocusListener(FocusListener listener) {
     ListenerWrapper.WrappedFocusListener.remove(this, listener);
@@ -608,16 +628,28 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
     }
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
+   */
   @Deprecated
   public void removeKeyboardListener(KeyboardListener listener) {
     ListenerWrapper.WrappedKeyboardListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
+   */
   @Deprecated
   public void removeMouseListener(MouseListener listener) {
     ListenerWrapper.WrappedMouseListener.remove(this, listener);
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
+   */
   @Deprecated
   public void removeTreeListener(TreeListener listener) {
     ListenerWrapper.WrappedTreeListener.remove(this, listener);

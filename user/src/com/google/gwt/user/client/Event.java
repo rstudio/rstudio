@@ -446,30 +446,6 @@ public class Event extends NativeEvent {
   }
 
   /**
-   * Gets the x coordinate relative to the given element.
-   * 
-   * @param nativeEvent the native event
-   * @param relativeTo the relative element
-   * @return the relative x
-   */
-  public static int getRelativeX(NativeEvent nativeEvent, Element relativeTo) {
-    return nativeEvent.getClientX() - relativeTo.getAbsoluteLeft()
-        + relativeTo.getScrollLeft() + Window.getScrollLeft();
-  }
-
-  /**
-   * Gets the y coordinate relative to the given element.
-   * 
-   * @param nativeEvent the native event
-   * @param relativeTo the relative element
-   * @return the relative y
-   */
-  public static int getRelativeY(NativeEvent nativeEvent, Element relativeTo) {
-    return nativeEvent.getClientY() - relativeTo.getAbsoluteTop()
-        + relativeTo.getScrollTop() + Window.getScrollTop();
-  }
-
-  /**
    * Gets the enumerated type of this event given a valid event type name.
    * 
    * @param typeName the typeName to be tested
@@ -549,7 +525,9 @@ public class Event extends NativeEvent {
    * propagated to parent elements.
    * 
    * @param cancel <code>true</code> to cancel bubbling
+   * @deprecated use {@link NativeEvent#stopPropagation()} instead
    */
+  @Deprecated
   public final void cancelBubble(boolean cancel) {
     DOM.eventCancelBubble(this, cancel);
   }
@@ -559,9 +537,11 @@ public class Event extends NativeEvent {
    * listener fired last, not the element which fired the event initially.
    * 
    * @return the event's current target element
+   * @deprecated use {@link NativeEvent#getCurrentEventTarget()} instead
    */
+  @Deprecated
   public final Element getCurrentTarget() {
-    return DOM.eventGetCurrentTarget(this);
+    return getCurrentEventTarget().cast();
   }
 
   /**
@@ -577,6 +557,17 @@ public class Event extends NativeEvent {
   }
 
   /**
+   * Gets the related target for this event.
+   * 
+   * @return the related target
+   * @deprecated use {@link NativeEvent#getRelatedEventTarget()} instead
+   */
+  @Deprecated
+  public final Element getRelatedTarget() {
+    return getRelatedEventTarget().cast();
+  }
+
+  /**
    * Gets the key-repeat state of this event.
    * 
    * @return <code>true</code> if this key event was an auto-repeat
@@ -585,6 +576,17 @@ public class Event extends NativeEvent {
   @Deprecated
   public final boolean getRepeat() {
     return DOM.eventGetRepeat(this);
+  }
+
+  /**
+   * Returns the element that was the actual target of the given event.
+   * 
+   * @return the target element
+   * @deprecated use {@link NativeEvent#getEventTarget()} instead
+   */
+  @Deprecated
+  public final Element getTarget() {
+    return getEventTarget().cast();
   }
 
   /**

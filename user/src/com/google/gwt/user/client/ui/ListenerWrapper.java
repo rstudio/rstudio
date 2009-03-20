@@ -463,18 +463,12 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     public void onMouseDown(MouseDownEvent event) {
       Widget source = getSource(event);
-      Element elem = source.getElement();
-      getListener().onMouseDown(source,
-          Event.getRelativeX(event.getNativeEvent(), elem),
-          Event.getRelativeY(event.getNativeEvent(), elem));
+      getListener().onMouseDown(source, event.getX(), event.getY());
     }
 
     public void onMouseMove(MouseMoveEvent event) {
       Widget source = getSource(event);
-      Element elem = source.getElement();
-      getListener().onMouseMove(source,
-          Event.getRelativeX(event.getNativeEvent(), elem),
-          Event.getRelativeY(event.getNativeEvent(), elem));
+      getListener().onMouseMove(source, event.getX(), event.getY());
     }
 
     public void onMouseOut(MouseOutEvent event) {
@@ -487,10 +481,7 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
     public void onMouseUp(MouseUpEvent event) {
       Widget source = getSource(event);
-      Element elem = source.getElement();
-      getListener().onMouseUp(source,
-          Event.getRelativeX(event.getNativeEvent(), elem),
-          Event.getRelativeY(event.getNativeEvent(), elem));
+      getListener().onMouseUp(source, event.getX(), event.getY());
     }
   }
   /**
@@ -652,6 +643,9 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
   static class WrappedOldSuggestionHandler extends
       ListenerWrapper<SuggestionHandler> implements
       SelectionHandler<SuggestOracle.Suggestion> {
+    /**
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
     @Deprecated
     public static void add(SuggestBox source, SuggestionHandler listener) {
       source.addSelectionHandler(new WrappedOldSuggestionHandler(listener));
@@ -696,6 +690,9 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
   static class WrappedTableListener extends ListenerWrapper<TableListener>
       implements ClickHandler {
+    /**
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
     @Deprecated
     public static void add(HasClickHandlers source, TableListener listener) {
       source.addClickHandler(new WrappedTableListener(listener));
@@ -721,6 +718,9 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
 
   static class WrappedTabListener extends ListenerWrapper<TabListener>
       implements SelectionHandler<Integer>, BeforeSelectionHandler<Integer> {
+    /**
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
     @Deprecated
     public static void add(TabBar source, TabListener listener) {
       WrappedTabListener t = new WrappedTabListener(listener);
@@ -759,6 +759,9 @@ public abstract class ListenerWrapper<T> extends BaseListenerWrapper<T> {
   static class WrappedTreeListener extends ListenerWrapper<TreeListener>
       implements SelectionHandler<TreeItem>, CloseHandler<TreeItem>,
       OpenHandler<TreeItem> {
+    /**
+     * @deprecated will be removed in GWT 2.0 along with the listener classes
+     */
     @Deprecated
     public static void add(com.google.gwt.user.client.ui.Tree tree,
         TreeListener listener) {

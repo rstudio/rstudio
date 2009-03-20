@@ -197,35 +197,39 @@ public class JettyLauncher extends ServletContainerLauncher {
       String msg = "Reloading web app to reflect changes in "
           + appRootDir.getAbsolutePath();
       TreeLogger branch = logger.branch(TreeLogger.INFO, msg);
+      // Temporarily log Jetty on the branch.
+      Log.setLog(new JettyTreeLogger(branch));
       try {
         wac.stop();
-      } catch (Exception e) {
-        branch.log(TreeLogger.ERROR, "Unable to stop embedded Jetty server", e);
-        throw new UnableToCompleteException();
-      }
-
-      try {
         wac.start();
+        branch.log(TreeLogger.INFO, "Reload completed successfully");
       } catch (Exception e) {
-        branch.log(TreeLogger.ERROR, "Unable to start embedded Jetty server", e);
+        branch.log(TreeLogger.ERROR, "Unable to restart embedded Jetty server",
+            e);
         throw new UnableToCompleteException();
+      } finally {
+        // Reset the top-level logger.
+        Log.setLog(new JettyTreeLogger(logger));
       }
-
-      branch.log(TreeLogger.INFO, "Reload completed successfully");
     }
 
     @Override
     public void stop() throws UnableToCompleteException {
       TreeLogger branch = logger.branch(TreeLogger.INFO,
           "Stopping Jetty server");
+      // Temporarily log Jetty on the branch.
+      Log.setLog(new JettyTreeLogger(branch));
       try {
         server.stop();
         server.setStopAtShutdown(false);
+        branch.log(TreeLogger.INFO, "Stopped successfully");
       } catch (Exception e) {
         branch.log(TreeLogger.ERROR, "Unable to stop embedded Jetty server", e);
         throw new UnableToCompleteException();
+      } finally {
+        // Reset the top-level logger.
+        Log.setLog(new JettyTreeLogger(logger));
       }
-      branch.log(TreeLogger.INFO, "Stopped successfully");
     }
   }
 
@@ -434,10 +438,13 @@ public class JettyLauncher extends ServletContainerLauncher {
   @Override
   public ServletContainer start(TreeLogger logger, int port, File appRootDir)
       throws Exception {
-    checkStartParams(logger, port, appRootDir);
+    TreeLogger branch = logger.branch(TreeLogger.INFO,
+        "Starting Jetty on port " + port, null);
 
-    // Setup our own logger.
-    Log.setLog(new JettyTreeLogger(logger));
+    checkStartParams(branch, port, appRootDir);
+
+    // Setup our branch logger during startup.
+    Log.setLog(new JettyTreeLogger(branch));
 
     // Turn off XML validation.
     System.setProperty("org.mortbay.xml.XmlParser.Validating", "false");
@@ -464,6 +471,9 @@ public class JettyLauncher extends ServletContainerLauncher {
     server.setHandler(logHandler);
     server.start();
     server.setStopAtShutdown(true);
+
+    // Now that we're started, log to the top level logger.
+    Log.setLog(new JettyTreeLogger(logger));
 
     return new JettyServletContainer(logger, server, wac,
         connector.getLocalPort(), appRootDir);

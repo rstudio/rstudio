@@ -94,12 +94,12 @@ abstract class DOMImplStandard extends DOMImpl {
   }-*/;
 
   @Override
-  public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
+  public native EventTarget eventGetRelatedTarget(NativeEvent evt) /*-{
     return evt.relatedTarget;
   }-*/;
 
   @Override
-  public native Element eventGetTarget(NativeEvent evt) /*-{
+  public native EventTarget eventGetTarget(NativeEvent evt) /*-{
     return evt.target;
   }-*/;
 

@@ -631,8 +631,8 @@ public class TreeItem extends UIObject implements HasHTML {
    * Returns the widget, if any, that should be focused on if this TreeItem is
    * selected.
    * 
-   * @deprecated use {@link #getFocusable()} instead
    * @return widget to be focused.
+   * @deprecated use {@link #getFocusable()} instead
    */
   @Deprecated
   protected HasFocus getFocusableWidget() {

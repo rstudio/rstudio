@@ -21,6 +21,15 @@ package com.google.gwt.dom.client;
  */
 class DOMImplIE6 extends DOMImpl {
 
+  /**
+   * This field *must* be filled in from JSNI code before dispatching an event
+   * on IE. It should be set to the 'this' context of the handler that receives
+   * the event, then restored to its initial value when the dispatcher is done.
+   * See {@link com.google.gwt.user.client.impl.DOMImplIE6#initEventSystem()}
+   * for an example of how this should be done.
+   */
+  private static EventTarget currentEventTarget;
+
   @Override
   public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
       boolean cancelable) /*-{
@@ -34,7 +43,7 @@ class DOMImplIE6 extends DOMImpl {
   @Override
   public native InputElement createInputRadioElement(Document doc, String name) /*-{
     return doc.createElement("<INPUT type='RADIO' name='" + name + "'>");
-  }-*/; 
+  }-*/;
 
   @Override
   public native NativeEvent createKeyEvent(Document doc, String type, boolean canBubble,
@@ -101,12 +110,17 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
+  public EventTarget eventGetCurrentTarget(NativeEvent event) {
+    return currentEventTarget;
+  }
+
+  @Override
   public native int eventGetMouseWheelVelocityY(NativeEvent evt) /*-{
     return Math.round(-evt.wheelDelta / 40) || 0;
   }-*/;
 
   @Override
-  public native Element eventGetRelatedTarget(NativeEvent evt) /*-{
+  public native EventTarget eventGetRelatedTarget(NativeEvent evt) /*-{
     // Prefer 'relatedTarget' if it's set (see createMouseEvent(), which
     // explicitly sets relatedTarget when synthesizing mouse events).
     return evt.relatedTarget ||
@@ -114,7 +128,7 @@ class DOMImplIE6 extends DOMImpl {
   }-*/;
 
   @Override
-  public native Element eventGetTarget(NativeEvent evt) /*-{
+  public native EventTarget eventGetTarget(NativeEvent evt) /*-{
     return evt.srcElement;
   }-*/;
 

@@ -7,7 +7,6 @@
     <ant target="${target}" dir="JSON"/>
     <ant target="${target}" dir="Mail"/>
     <ant target="${target}" dir="Showcase"/>
-    <ant target="${target}" dir="SimpleXML"/>
   </target>
 
   <target name="build" description="Build all samples">

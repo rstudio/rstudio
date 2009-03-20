@@ -15,7 +15,7 @@
  */
 package com.google.gwt.event.dom.client;
 
-import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
 
 /**
  * Represents a native mouse out event.
@@ -52,27 +52,16 @@ public class MouseOutEvent extends MouseEvent<MouseOutHandler> {
   }
 
   /**
-   * Gets the element from which the mouse pointer was moved.
+   * Gets the target to which the mouse pointer was moved.
    * 
-   * @return the element from which the mouse pointer was moved
+   * @return the target to which the mouse pointer was moved
    */
-  public Element getFromElement() {
-    return getNativeEvent().getTarget();
-  }
-
-  /**
-   * Gets the element to which the mouse pointer was moved.
-   * 
-   * @return the element to which the mouse pointer was moved
-   */
-  public Element getToElement() {
-    // Use a deferred binding instead of DOMImpl's inefficient switch statement
-    return getNativeEvent().getRelatedTarget();
+  public EventTarget getRelatedTarget() {
+    return getNativeEvent().getRelatedEventTarget();
   }
 
   @Override
   protected void dispatch(MouseOutHandler handler) {
     handler.onMouseOut(this);
   }
-
 }

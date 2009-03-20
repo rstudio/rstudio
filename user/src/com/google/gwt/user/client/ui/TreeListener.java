@@ -20,8 +20,8 @@ import java.util.EventListener;
 /**
  * Event listener interface for tree events.
  * 
- * @deprecated use {@link com.google.gwt.event.logical.shared.SelectionHandler},
- *             {@link com.google.gwt.event.logical.shared.OpenHandler}, and/or
+ * @deprecated Use {@link com.google.gwt.event.logical.shared.SelectionHandler},
+ *             {@link com.google.gwt.event.logical.shared.OpenHandler}, and
  *             {@link com.google.gwt.event.logical.shared.CloseHandler} instead
  */
 @Deprecated

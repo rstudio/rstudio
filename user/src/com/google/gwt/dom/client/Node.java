@@ -40,6 +40,22 @@ public class Node extends JavaScriptObject {
    */
   public static final short DOCUMENT_NODE = 9;
 
+  /**
+   * Assert that the given {@link JavaScriptObject} is a DOM node and
+   * automatically typecast it.
+   */
+  public static Node as(JavaScriptObject o) {
+    assert is(o);
+    return (Node)o;
+  }
+
+  /**
+   * Determines whether the given {@link JavaScriptObject} is a DOM node.
+   */
+  public static native boolean is(JavaScriptObject o) /*-{
+    return !!o.nodeType;
+  }-*/;
+
   protected Node() {
   }
 

@@ -402,6 +402,10 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     }
   }
 
+  /**
+   * @deprecated Use {@link #addSubmitCompleteHandler} and
+   * {@link #addSubmitHandler} instead
+   */
   @Deprecated
   public void addFormHandler(FormHandler handler) {
     ListenerWrapper.WrappedOldFormHandler.add(this, handler);
@@ -492,6 +496,10 @@ public class FormPanel extends SimplePanel implements FiresFormEvents,
     }
   }
 
+  /**
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by and add*Handler method instead
+   */
   @Deprecated
   public void removeFormHandler(FormHandler handler) {
     ListenerWrapper.WrappedOldFormHandler.remove(this, handler);

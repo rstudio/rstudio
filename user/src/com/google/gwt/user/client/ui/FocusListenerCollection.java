@@ -26,9 +26,7 @@ import java.util.ArrayList;
  * subclass of {@link ArrayList} assumes that all objects added to it will be of
  * type {@link com.google.gwt.user.client.ui.FocusListener}
  * 
- * @deprecated Use <code>{@link Widget#addDomHandler(com.google.gwt.event.shared.EventHandler, com.google.gwt.event.dom.client.DomEvent.Type) addDomHandler}(myHandler, FocusEvent.getType())</code>
- *             and <code>{@link Widget#addDomHandler(com.google.gwt.event.shared.EventHandler, com.google.gwt.event.dom.client.DomEvent.Type) addDomHandler}(myHandler, BlurEvent.getType())</code> to
- *             manage your widget's handlers instead
+ * @deprecated Widgets should now manage their own handlers via {@link Widget#addDomHandler}
  */
 @Deprecated
 public class FocusListenerCollection extends ArrayList<FocusListener> {

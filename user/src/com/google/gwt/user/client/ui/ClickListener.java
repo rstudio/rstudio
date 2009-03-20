@@ -29,6 +29,8 @@ public interface ClickListener extends EventListener {
    * Fired when the user clicks on a widget.
    * 
    * @param sender the widget sending the event.
+   * @deprecated Use {@link com.google.gwt.event.dom.client.ClickHandler#onClick} 
+   *             instead
    */
   @Deprecated
   void onClick(Widget sender);

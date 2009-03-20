@@ -85,6 +85,10 @@ abstract class DOMImpl {
     return !!evt.ctrlKey;
   }-*/;
 
+  public native EventTarget eventGetCurrentTarget(NativeEvent event) /*-{
+    return event.currentTarget;
+  }-*/;
+
   public final native int eventGetKeyCode(NativeEvent evt) /*-{
     // 'which' gives the right key value, except when it doesn't -- in which
     // case, keyCode gives the right value on all browsers.
@@ -98,7 +102,7 @@ abstract class DOMImpl {
 
   public abstract int eventGetMouseWheelVelocityY(NativeEvent evt);
 
-  public abstract Element eventGetRelatedTarget(NativeEvent nativeEvent);
+  public abstract EventTarget eventGetRelatedTarget(NativeEvent nativeEvent);
 
   public native int eventGetScreenX(NativeEvent evt) /*-{
     return evt.screenX || 0;
@@ -112,7 +116,7 @@ abstract class DOMImpl {
     return !!evt.shiftKey;
   }-*/;
 
-  public abstract Element eventGetTarget(NativeEvent evt);
+  public abstract EventTarget eventGetTarget(NativeEvent evt);
 
   public final native String eventGetType(NativeEvent evt) /*-{
     return evt.type;
