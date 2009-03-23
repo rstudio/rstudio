@@ -36,6 +36,7 @@ public class JStaticEvalTest extends GWTTestCase {
   }
 
   private volatile double fieldDoubleFive = 5.0;
+  private volatile boolean fieldFalse = false;
   private volatile float fieldFloatFive = 5.0F;
   private volatile int[] fieldIntArray = new int[10];
   private volatile int fieldIntFive = 5;
@@ -46,6 +47,31 @@ public class JStaticEvalTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.dev.jjs.CompilerSuite";
+  }
+
+  /**
+   * Tests simplifications on ternary conditional expressions.
+   */
+  public void testConditionalExpressions() {
+    assertEquals(1, returnTrue() ? 1 : 2);
+    assertEquals(2, returnFalse() ? 1 : 2);
+    assertEquals(true, fieldTrue ? true : fieldFalse);
+    assertEquals(false, fieldTrue ? false : fieldTrue);
+    assertEquals(true, fieldTrue ? fieldTrue : false);
+    assertEquals(false, fieldTrue ? fieldFalse : true);
+    assertEquals(2, !fieldTrue ? 1 : 2);
+    assertEquals(2, !fieldTrue ? 1 : 2);
+
+    /*
+     * This example causes Simplifier to recurse into itself, which in previous
+     * versions could cause a NullPointerException. The sequence of
+     * simplifications is:
+     */
+    // (fieldFalse = false, !fieldFalse) ? 1 : 2 // inlining
+    // (fieldFalse = false, !fieldfalse ? 1 : 2) // move multi outward
+    // (fieldFalse = false, fieldFalse ? 2 : 1) // flip negative condition
+    int res = doSomethingAndReturnTrue() ? 1 : 2;
+    assertEquals(1, res);
   }
 
   /**
@@ -276,6 +302,14 @@ public class JStaticEvalTest extends GWTTestCase {
     if (fieldObject == null) {
       fail();
     }
+  }
+
+  /**
+   * This method will inline as a multi.
+   */
+  private boolean doSomethingAndReturnTrue() {
+    fieldTrue = true;
+    return !fieldFalse;
   }
 
   // All of these returnFoo() methods exist so that the

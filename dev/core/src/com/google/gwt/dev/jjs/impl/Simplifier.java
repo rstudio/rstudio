@@ -145,17 +145,15 @@ public class Simplifier {
     } else if (thenExpr instanceof JBooleanLiteral) {
       if (((JBooleanLiteral) thenExpr).getValue()) {
         // e.g. (cond ? true : else) -> cond || else
-        JBinaryOperation binOp = new JBinaryOperation(program,
-            original.getSourceInfo(), original.getType(), JBinaryOperator.OR,
-            condExpr, elseExpr);
+        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
+            type, JBinaryOperator.OR, condExpr, elseExpr);
         return binOp;
       } else {
         // e.g. (cond ? false : else) -> !cond && else
         JPrefixOperation notCondExpr = new JPrefixOperation(program,
             condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
-        JBinaryOperation binOp = new JBinaryOperation(program,
-            original.getSourceInfo(), original.getType(), JBinaryOperator.AND,
-            notCondExpr, elseExpr);
+        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
+            type, JBinaryOperator.AND, notCondExpr, elseExpr);
         return binOp;
       }
     } else if (elseExpr instanceof JBooleanLiteral) {
@@ -163,23 +161,21 @@ public class Simplifier {
         // e.g. (cond ? then : true) -> !cond || then
         JPrefixOperation notCondExpr = new JPrefixOperation(program,
             condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
-        JBinaryOperation binOp = new JBinaryOperation(program,
-            original.getSourceInfo(), original.getType(), JBinaryOperator.OR,
-            notCondExpr, thenExpr);
+        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
+            type, JBinaryOperator.OR, notCondExpr, thenExpr);
         return binOp;
       } else {
         // e.g. (cond ? then : false) -> cond && then
-        JBinaryOperation binOp = new JBinaryOperation(program,
-            original.getSourceInfo(), original.getType(), JBinaryOperator.AND,
-            condExpr, thenExpr);
+        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
+            type, JBinaryOperator.AND, condExpr, thenExpr);
         return binOp;
       }
     } else {
       // e.g. (!cond ? then : else) -> (cond ? else : then)
       JExpression unflipped = maybeUnflipBoolean(condExpr);
       if (unflipped != null) {
-        return new JConditional(program, original.getSourceInfo(),
-            original.getType(), unflipped, elseExpr, thenExpr);
+        return new JConditional(program, sourceInfo, type, unflipped, elseExpr,
+            thenExpr);
       }
     }
 
