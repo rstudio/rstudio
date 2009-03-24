@@ -227,6 +227,28 @@ public class CodeSplitter {
     new CodeSplitter(logger, jprogram, jsprogram, map).execImpl();
   }
 
+  public static int getBaseFragmentNumber(int sp, int numSplitPoints) {
+    return numSplitPoints + 2 * sp - 1;
+  }
+
+  public static int getExclusiveFragmentNumber(int splitPoint,
+      int numSplitPoints) {
+    return splitPoint;
+  }
+
+  public static int getLeftoversFragmentNumber(int splitPoint,
+      int numSplitPoints) {
+    return numSplitPoints + 2 * splitPoint;
+  }
+
+  /**
+   * Infer the number of split points for a given number of code fragments.
+   */
+  public static int numSplitPointsForFragments(int codeFragments) {
+    assert (((codeFragments - 1) % 3) == 0);
+    return (codeFragments - 1) / 3;
+  }
+
   private static Map<JField, JClassLiteral> buildFieldToClassLiteralMap(
       JProgram jprogram) {
     final Map<JField, JClassLiteral> map = new HashMap<JField, JClassLiteral>();
