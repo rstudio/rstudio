@@ -32,6 +32,16 @@ public class ArgHandlerOutDirDeprecated extends ArgHandlerOutDir {
     this.option = option;
   }
 
+  /**
+   * Override the {@link ArgHandlerOutDir}'s default, which is to set and
+   * outDir for the current directory. We don't want a default outDir because we
+   * want a warDir to be the default if no options are specified.
+   */
+  @Override
+  public String[] getDefaultArgs() {
+    return null;
+  }
+
   @Override
   public String getPurpose() {
     return super.getPurpose() + " (deprecated)";
