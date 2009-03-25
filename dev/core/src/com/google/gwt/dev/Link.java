@@ -297,7 +297,7 @@ public class Link {
       maxTotalSize += adjustment;
     }
 
-    logger.log(TreeLogger.DEBUG, "Permutation " + permId + " (strong name "
+    logger.log(TreeLogger.TRACE, "Permutation " + permId + " (strong name "
         + compilation.getStrongName() + ") has an initial download size of "
         + javaScript[0].length() + " and max total script size of "
         + maxTotalSize);
