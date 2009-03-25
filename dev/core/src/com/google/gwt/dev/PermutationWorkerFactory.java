@@ -210,8 +210,6 @@ public abstract class PermutationWorkerFactory {
    */
   public static final int WORKERS_AUTO = 0;
 
-  private static List<PermutationWorkerFactory> lazyFactories;
-
   /**
    * Compiles all Permutations in a Precompilation and returns an array of Files
    * that can be consumed by Link using the system-default
@@ -291,11 +289,6 @@ public abstract class PermutationWorkerFactory {
     logger = logger.branch(TreeLogger.TRACE,
         "Creating PermutationWorkerFactory instances");
 
-    if (lazyFactories != null) {
-      logger.log(TreeLogger.SPAM, "Using lazy instances");
-      return lazyFactories;
-    }
-
     List<PermutationWorkerFactory> mutableFactories = new ArrayList<PermutationWorkerFactory>();
     String classes = System.getProperty(FACTORY_IMPL_PROPERTY,
         ThreadedPermutationWorkerFactory.class.getName() + ","
@@ -333,7 +326,7 @@ public abstract class PermutationWorkerFactory {
       throw new UnableToCompleteException();
     }
 
-    return lazyFactories = Collections.unmodifiableList(mutableFactories);
+    return Collections.unmodifiableList(mutableFactories);
   }
 
   /**
