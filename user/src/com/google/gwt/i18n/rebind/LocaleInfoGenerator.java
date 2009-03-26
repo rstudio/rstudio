@@ -93,37 +93,24 @@ public class LocaleInfoGenerator extends Generator {
     assert (LocaleInfoImpl.class.getName().equals(targetClass.getQualifiedSourceName()));
 
     String packageName = targetClass.getPackage().getName();
-    GwtLocale locale = LocaleUtils.getCompileLocale();
-    String className = targetClass.getName().replace('.', '_') + "_"
-        + locale.getAsString();
-    Set<GwtLocale> runtimeLocales = LocaleUtils.getRuntimeLocales();
-    if (!runtimeLocales.isEmpty()) {
-      className += "_runtimeSelection";
-    }
-    String qualName = packageName + "." + className;
-
-    PrintWriter pw = context.tryCreate(logger, packageName, className);
+    String superClassName = targetClass.getName().replace('.', '_') + "_shared";
+    Set<GwtLocale> localeSet = LocaleUtils.getAllLocales();
+    GwtLocaleImpl[] allLocales = localeSet.toArray(new GwtLocaleImpl[localeSet.size()]);
+    // sort for deterministic output
+    Arrays.sort(allLocales);
+    PrintWriter pw = context.tryCreate(logger, packageName, superClassName);
     if (pw != null) {
+      String qualName = packageName + "." + superClassName;
       ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
-          packageName, className);
+          packageName, superClassName);
       factory.setSuperclass(targetClass.getQualifiedSourceName());
-      factory.addImport("com.google.gwt.core.client.GWT");
       factory.addImport("com.google.gwt.core.client.JavaScriptObject");
-      factory.addImport("com.google.gwt.i18n.client.LocaleInfo");
-      factory.addImport("com.google.gwt.i18n.client.constants.NumberConstants");
-      factory.addImport("com.google.gwt.i18n.client.constants.NumberConstantsImpl");
-      factory.addImport("com.google.gwt.i18n.client.constants.DateTimeConstants");
-      factory.addImport("com.google.gwt.i18n.client.constants.DateTimeConstantsImpl");
       SourceWriter writer = factory.createSourceWriter(context, pw);
       writer.println("private JavaScriptObject nativeDisplayNames;");
       writer.println();
       writer.println("@Override");
       writer.println("public String[] getAvailableLocaleNames() {");
       writer.println("  return new String[] {");
-      // sort for deterministic output
-      Set<GwtLocale> localeSet = LocaleUtils.getAllLocales();
-      GwtLocaleImpl[] allLocales = localeSet.toArray(new GwtLocaleImpl[localeSet.size()]);
-      Arrays.sort(allLocales);
       for (GwtLocaleImpl possibleLocale : allLocales) {
         writer.println("    \""
             + possibleLocale.toString().replaceAll("\"", "\\\"") + "\",");
@@ -132,40 +119,11 @@ public class LocaleInfoGenerator extends Generator {
       writer.println("}");
       writer.println();
       writer.println("@Override");
-      writer.println("public String getLocaleName() {");
-      if (runtimeLocales.isEmpty()) {
-        writer.println("  return \"" + locale + "\";");
-      } else {
-        writer.println("  String rtLocale = getRuntimeLocale();");
-        writer.println("  return rtLocale != null ? rtLocale : \"" + locale
-            + "\";");
-      }
-      writer.println("}");
-      writer.println();
-      writer.println("@Override");
       writer.println("public native String getLocaleNativeDisplayName(String localeName) /*-{");
       writer.println("  this.@" + qualName + "::ensureNativeDisplayNames()();");
       writer.println("  return this.@" + qualName
           + "::nativeDisplayNames[localeName];");
       writer.println("}-*/;");
-      writer.println();
-      writer.println("@Override");
-      writer.println("public DateTimeConstants getDateTimeConstants() {");
-      LocalizableGenerator localizableGenerator = new LocalizableGenerator();
-      // Avoid warnings for trying to create the same type multiple times
-      @SuppressWarnings("hiding")
-      GeneratorContext subContext = new CachedGeneratorContext(context);
-      generateConstantsLookup(logger, subContext, writer, localizableGenerator,
-          runtimeLocales, locale,
-          "com.google.gwt.i18n.client.constants.DateTimeConstantsImpl");
-      writer.println("}");
-      writer.println();
-      writer.println("@Override");
-      writer.println("public NumberConstants getNumberConstants() {");
-      generateConstantsLookup(logger, subContext, writer, localizableGenerator,
-          runtimeLocales, locale,
-          "com.google.gwt.i18n.client.constants.NumberConstantsImpl");
-      writer.println("}");
       writer.println();
       writer.println("private native void ensureNativeDisplayNames() /*-{");
       writer.println("  if (this.@" + qualName
@@ -224,6 +182,57 @@ public class LocaleInfoGenerator extends Generator {
       }
       writer.println("  };");
       writer.println("}-*/;");
+      writer.commit(logger);
+    }
+    GwtLocale locale = LocaleUtils.getCompileLocale();
+    String className = targetClass.getName().replace('.', '_') + "_"
+        + locale.getAsString();
+    Set<GwtLocale> runtimeLocales = LocaleUtils.getRuntimeLocales();
+    if (!runtimeLocales.isEmpty()) {
+      className += "_runtimeSelection";
+    }
+    String qualName = packageName + "." + className;
+
+    pw = context.tryCreate(logger, packageName, className);
+    if (pw != null) {
+      ClassSourceFileComposerFactory factory = new ClassSourceFileComposerFactory(
+          packageName, className);
+      factory.setSuperclass(superClassName);
+      factory.addImport("com.google.gwt.core.client.GWT");
+      factory.addImport("com.google.gwt.i18n.client.LocaleInfo");
+      factory.addImport("com.google.gwt.i18n.client.constants.NumberConstants");
+      factory.addImport("com.google.gwt.i18n.client.constants.NumberConstantsImpl");
+      factory.addImport("com.google.gwt.i18n.client.constants.DateTimeConstants");
+      factory.addImport("com.google.gwt.i18n.client.constants.DateTimeConstantsImpl");
+      SourceWriter writer = factory.createSourceWriter(context, pw);
+      writer.println("@Override");
+      writer.println("public String getLocaleName() {");
+      if (runtimeLocales.isEmpty()) {
+        writer.println("  return \"" + locale + "\";");
+      } else {
+        writer.println("  String rtLocale = getRuntimeLocale();");
+        writer.println("  return rtLocale != null ? rtLocale : \"" + locale
+            + "\";");
+      }
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public DateTimeConstants getDateTimeConstants() {");
+      LocalizableGenerator localizableGenerator = new LocalizableGenerator();
+      // Avoid warnings for trying to create the same type multiple times
+      @SuppressWarnings("hiding")
+      GeneratorContext subContext = new CachedGeneratorContext(context);
+      generateConstantsLookup(logger, subContext, writer, localizableGenerator,
+          runtimeLocales, locale,
+          "com.google.gwt.i18n.client.constants.DateTimeConstantsImpl");
+      writer.println("}");
+      writer.println();
+      writer.println("@Override");
+      writer.println("public NumberConstants getNumberConstants() {");
+      generateConstantsLookup(logger, subContext, writer, localizableGenerator,
+          runtimeLocales, locale,
+          "com.google.gwt.i18n.client.constants.NumberConstantsImpl");
+      writer.println("}");
       writer.commit(logger);
     }
     return packageName + "." + className;
