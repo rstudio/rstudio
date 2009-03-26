@@ -47,10 +47,16 @@ public class BindingProperty extends Property {
     definedValues.add(newValue);
   }
 
+  /**
+   * Returns the set of allowed values in sorted order.
+   */
   public String[] getAllowedValues() {
     return allowedValues.toArray(new String[allowedValues.size()]);
   }
 
+  /**
+   * Returns the set of defined values in sorted order.
+   */
   public String[] getDefinedValues() {
     return definedValues.toArray(new String[definedValues.size()]);
   }

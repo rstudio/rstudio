@@ -72,6 +72,23 @@ public class Properties implements Iterable<Property> {
     return map.values().iterator();
   }
 
+  /**
+   * Count the total number of permutations that this property set supports.
+   */
+  public int numPermutations() {
+    BindingProperty[] bindingPropsArray = bindingProps.toArray(new BindingProperty[0]);
+
+    int count = 1;
+
+    for (BindingProperty prop : bindingPropsArray) {
+      String[] options = prop.getAllowedValues();
+      assert (options.length > 0);
+      count *= options.length;
+    }
+
+    return count;
+  }
+
   private <T extends Property> T create(String name, Class<T> clazz) {
     if (clazz == null) {
       throw new NullPointerException("clazz");

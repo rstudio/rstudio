@@ -37,7 +37,10 @@ import com.google.gwt.dev.util.arg.OptionOutDir;
 import com.google.gwt.dev.util.arg.OptionWarDir;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -312,32 +315,42 @@ public class Link {
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
     for (String moduleName : options.getModuleNames()) {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
+      Collection<PrecompilationFile> precomps;
+      try {
+        precomps = PrecompilationFile.scanJarFile(new File(compilerWorkDir,
+            Precompile.PRECOMPILE_FILENAME));
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Failed to scan "
+            + Precompile.PRECOMPILE_FILENAME, e);
+        return false;
+      }
+
       ModuleDef module = ModuleDefLoader.loadFromClassPath(logger, moduleName);
 
-      File precompilationFile = new File(
-          options.getCompilerWorkDir(moduleName),
-          Precompile.PRECOMPILATION_FILENAME);
-      if (!precompilationFile.exists()) {
-        logger.log(TreeLogger.ERROR, "File not found '"
-            + precompilationFile.getAbsolutePath()
+      if (precomps.isEmpty()) {
+        logger.log(TreeLogger.ERROR, "No precompilation files found in '"
+            + compilerWorkDir.getAbsolutePath()
             + "'; please run Precompile first");
         return false;
       }
 
-      Precompilation precompilation;
-      try {
-        precompilation = Util.readFileAsObject(precompilationFile,
-            Precompilation.class);
-      } catch (ClassNotFoundException e) {
-        logger.log(TreeLogger.ERROR, "Unable to deserialize '"
-            + precompilationFile.getAbsolutePath() + "'", e);
-        return false;
-      }
-      Permutation[] perms = precompilation.getPermutations();
-      ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
-      JJSOptions precompileOptions = precompilation.getUnifiedAst().getOptions();
+      List<Permutation> permsList = new ArrayList<Permutation>();
+      ArtifactSet generatedArtifacts = new ArtifactSet();
+      JJSOptions precompileOptions = null;
 
-      precompilation = null; // No longer needed, and it needs a lot of memory
+      for (PrecompilationFile precompilationFile : precomps) {
+        Precompilation precompilation;
+        try {
+          precompilation = precompilationFile.newInstance(logger);
+        } catch (UnableToCompleteException e) {
+          return false;
+        }
+        permsList.addAll(Arrays.asList(precompilation.getPermutations()));
+        generatedArtifacts.addAll(precompilation.getGeneratedArtifacts());
+        precompileOptions = precompilation.getUnifiedAst().getOptions();
+      }
+
+      Permutation[] perms = permsList.toArray(new Permutation[0]);
 
       List<FileBackedObject<PermutationResult>> resultFiles = new ArrayList<FileBackedObject<PermutationResult>>(
           perms.length);
@@ -345,8 +358,7 @@ public class Link {
         File f = CompilePerms.makePermFilename(compilerWorkDir,
             perms[i].getId());
         if (!f.exists()) {
-          logger.log(TreeLogger.ERROR, "File not found '"
-              + precompilationFile.getAbsolutePath()
+          logger.log(TreeLogger.ERROR, "File not found '" + f.getAbsolutePath()
               + "'; please compile all permutations");
           return false;
         }

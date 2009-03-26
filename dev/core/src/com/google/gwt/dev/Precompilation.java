@@ -35,23 +35,30 @@ public class Precompilation implements Serializable {
   private final Permutation[] permutations;
   private final UnifiedAst unifiedAst;
 
+  public Precompilation(UnifiedAst unifiedAst,
+      Collection<Permutation> permutations, ArtifactSet generatedArtifacts) {
+    this(unifiedAst, permutations, 0, generatedArtifacts);
+  }
+
   /**
-   * Constructs a new precompilation.  We create new Permutations with
-   * a new id so that the ids are consecutive and correspond to the index
-   * in the array.
+   * Constructs a new precompilation. We create new Permutations with a new id
+   * so that the ids are consecutive and correspond to the index in the array.
    * 
    * @param unifiedAst the unified AST used by
    *          {@link com.google.gwt.dev.jjs.JavaToJavaScriptCompiler}
    * @param permutations the set of permutations that can be run
+   * @param permutationBase the id to use for the first permutation
    * @param generatedArtifacts the set of artifacts created by generators
    */
   public Precompilation(UnifiedAst unifiedAst,
-      Collection<Permutation> permutations, ArtifactSet generatedArtifacts) {
+      Collection<Permutation> permutations, int permutationBase,
+      ArtifactSet generatedArtifacts) {
+
     this.unifiedAst = unifiedAst;
     this.permutations = new Permutation[permutations.size()];
     int i = 0;
     for (Permutation permutation : permutations) {
-      this.permutations[i] = new Permutation(i, permutation);
+      this.permutations[i] = new Permutation(i + permutationBase, permutation);
       ++i;
     }
     this.generatedArtifacts = generatedArtifacts;
@@ -62,6 +69,15 @@ public class Precompilation implements Serializable {
    */
   public ArtifactSet getGeneratedArtifacts() {
     return generatedArtifacts;
+  }
+
+  public Permutation getPermutation(int id) {
+    for (Permutation perm : permutations) {
+      if (perm.getId() == id) {
+        return perm;
+      }
+    }
+    return null;
   }
 
   /**

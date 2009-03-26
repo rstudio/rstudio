@@ -277,7 +277,7 @@ public final class Util {
     }
   }
 
-  /**
+/**
    * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
    */
   public static String escapeXml(String unescaped) {
@@ -617,36 +617,12 @@ public final class Util {
   public static <T extends Serializable> T readFileAsObject(File file,
       Class<T> type) throws ClassNotFoundException {
     FileInputStream fileInputStream = null;
-    ObjectInputStream objectInputStream = null;
     try {
       fileInputStream = new FileInputStream(file);
-      objectInputStream = new ObjectInputStream(fileInputStream);
-      return type.cast(objectInputStream.readObject());
+      return readStreamAsObject(fileInputStream, type);
     } catch (IOException e) {
       return null;
     } finally {
-      Utility.close(objectInputStream);
-      Utility.close(fileInputStream);
-    }
-  }
-
-  public static Serializable[] readFileAsObjects(File file,
-      Class<? extends Serializable>... types) throws ClassNotFoundException {
-    FileInputStream fileInputStream = null;
-    ObjectInputStream objectInputStream = null;
-    try {
-      fileInputStream = new FileInputStream(file);
-      objectInputStream = new ObjectInputStream(fileInputStream);
-      Serializable[] results = new Serializable[types.length];
-      for (int i = 0; i < results.length; ++i) {
-        Object object = objectInputStream.readObject();
-        results[i] = types[i].cast(object);
-      }
-      return results;
-    } catch (IOException e) {
-      return null;
-    } finally {
-      Utility.close(objectInputStream);
       Utility.close(fileInputStream);
     }
   }
@@ -679,6 +655,19 @@ public final class Util {
       return line;
     } catch (IOException e) {
       return null;
+    }
+  }
+
+  public static <T extends Serializable> T readStreamAsObject(
+      InputStream inputStream, Class<T> type) throws ClassNotFoundException {
+    ObjectInputStream objectInputStream = null;
+    try {
+      objectInputStream = new ObjectInputStream(inputStream);
+      return type.cast(objectInputStream.readObject());
+    } catch (IOException e) {
+      return null;
+    } finally {
+      Utility.close(objectInputStream);
     }
   }
 
@@ -1100,22 +1089,30 @@ public final class Util {
   public static void writeObjectAsFile(TreeLogger logger, File file,
       Serializable... objects) throws UnableToCompleteException {
     FileOutputStream stream = null;
-    ObjectOutputStream objectStream = null;
     try {
       file.getParentFile().mkdirs();
       stream = new FileOutputStream(file);
-      objectStream = new ObjectOutputStream(stream);
-      for (Serializable object : objects) {
-        objectStream.writeObject(object);
-      }
+      writeObjectToStream(stream, objects);
     } catch (IOException e) {
       logger.log(TreeLogger.ERROR, "Unable to write file: "
           + file.getAbsolutePath(), e);
       throw new UnableToCompleteException();
     } finally {
-      Utility.close(objectStream);
       Utility.close(stream);
     }
+  }
+
+  /**
+   * Serializes an object and writes it to a stream.
+   */
+  public static void writeObjectToStream(OutputStream stream,
+      Serializable... objects) throws IOException {
+    ObjectOutputStream objectStream = null;
+    objectStream = new ObjectOutputStream(stream);
+    for (Serializable object : objects) {
+      objectStream.writeObject(object);
+    }
+    objectStream.flush();
   }
 
   public static boolean writeStringAsFile(File file, String string) {
