@@ -1,0 +1,77 @@
+/*
+ * Copyright 2009 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+ 
+/* Tests swapping background positions */
+.selector1 {
+  background-position-x: 40%;
+}
+
+.selector2 {
+  background-position-x: left;
+}
+
+/* This isn't a defined property, but it appears to be in common use */
+.selector3 {
+  background-position-x: right;
+}
+
+.selector4 {
+  background-position: 40% 40%;
+}
+
+.selector5 {
+  background-position: left top;
+}
+
+.selector6 {
+  background-position: top right;
+}
+
+.selector7 {
+  background: url("chess.png") gray 40% repeat fixed;
+}
+
+/* Reported NPE bug */
+.selector8 {
+    background-position: 0 0;
+}
+
+/* Tests below here should be unchanged */
+
+.selector10 {
+  background-position-x: auto;
+}
+
+.selector11 {
+  background-position-x: center;
+}
+
+.selector12 {
+  background-position-y: 0;
+}
+
+.selector13 {
+  background-position: 10px 40%;
+}
+
+.selector14 {
+  background: url("chess.png") gray right 40% repeat fixed;
+}
+
+/* This probably isn't valid, but try it anyway */
+.selector15 {
+  background: url("chess.png") gray center 40% right repeat fixed;
+}

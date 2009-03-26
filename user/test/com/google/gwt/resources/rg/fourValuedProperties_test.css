@@ -1,0 +1,53 @@
+/*
+ * Copyright 2009 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+ 
+/* Tests border and margin properties with four values */
+.selector1 {
+  padding: 1px 2px 3px 4px;
+  margin: 1px 2px 3px 4px;
+}
+
+.selector2 {
+  padding: 1px auto 3px inherit;
+  margin: 1px inherit 3px auto;
+}
+
+.selector3 {
+  padding: 1px 2px 3px 'string';
+}
+
+.selector4 {
+  border-color: red green blue yellow;
+  border-style: solid dotted dashed double;
+  border-width: thin medium thick 0;
+}
+
+/* Nothing below here should be changed */
+.selector10 {
+  padding: 1px 2px 3px;
+}
+
+.selector11 {
+  padding: 1px 2px;
+}
+
+.selector12 {
+  padding: 1px;
+}
+
+.selector13 {
+  border: thin solid red collapse;
+}

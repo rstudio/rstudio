@@ -31,6 +31,7 @@ public abstract class Generator {
     int extra = 0;
     for (int in = 0, n = unescaped.length(); in < n; ++in) {
       switch (unescaped.charAt(in)) {
+        case '\0':
         case '\n':
         case '\r':
         case '\"':
@@ -49,6 +50,10 @@ public abstract class Generator {
     for (int in = 0, out = 0, n = oldChars.length; in < n; ++in, ++out) {
       char c = oldChars[in];
       switch (c) {
+        case '\0':
+          newChars[out++] = '\\';
+          c = '0';
+          break;
         case '\n':
           newChars[out++] = '\\';
           c = 'n';

@@ -1,0 +1,210 @@
+/*
+ * Copyright 2008 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+@def BIG 50px;
+@def DIRECTION ltr;
+@eval RED com.google.gwt.resources.client.CSSResourceTest.red();
+@url BACKGROUND dataMethod;
+
+/* Check @def expansion */
+@def SPRITEWIDTH value("spriteMethod.getWidth", "px");
+@def SPRITESIZE SPRITEWIDTH value("spriteMethod.getHeight", "px");
+
+/*
+ * We'll use the token FAIL to indicate text that should never be seen in the output.
+ */
+
+/* Test @sprite expansion */
+@sprite .spriteClass, .extraSpriteClass {
+  gwt-image: "spriteMethod";
+  more: properties;
+}
+
+.affectedBySprite {
+    offset-left: "guard" SPRITEWIDTH !important;
+    offset: SPRITESIZE;
+}
+
+.blahA {
+	background-color: #000;
+}
+
+.blahA[someAttribute="foo"][beer="baz"] {
+	background-color: #fff;
+}
+
+/* Test value substitution */
+div {
+    border: BIG solid RED;
+    direction: DIRECTION;
+    background: BACKGROUND;
+}
+
+div[foo="bar"] {
+    content: 'bar';
+}
+
+/* Test structural modifications */
+@if (false) {
+  div {
+    runtime: FAIL;
+  }
+} @elif (true) {
+  div {
+    runtime: PASSED;
+  }
+} @else {
+  div {
+    runtime: FAIL;
+  }
+}
+
+@if CssResource.style obf OBF {
+  div {
+    static: PASSED;
+  }
+} @elif CssResource.style pretty PRETTY {
+  div {
+    static: PASSED;
+  }
+} @else {
+  div {
+    static: FAIL;
+  }
+}
+
+/* Test named classes */
+.replacement {
+  color: red;
+}
+
+.replacement:after {
+  content: "Hello\\\" world";
+}
+
+.replacement-not-java-ident {
+  color: blue;
+}
+
+/* Test unusual tag, class, and property names and values */
+div {
+  \-some-wacky-extension : boo;
+  another-extension: \-bar;
+}
+
+div {
+  filter: "alpha(opacity = 30)";
+}
+
+div-with-literal {
+  top: literal("expression(document.compatMode==\"CSS1Compat\" ? documentElement.scrollTop:document.body.scrollTop \\ 2)");
+}
+
+.ns\:tag {
+  border: red;
+}
+
+.ns\:tag:pseudo {
+  content : "blah";
+}
+
+/* Test merging / promotion functions*/
+
+.may-merge {
+  border: 0;
+}
+
+.may-combine {
+  border: 0;
+}
+
+/* Test merging around empty rules */
+.FAIL {}
+
+/* Make sure rules in @if and @media are respected */
+@media blah {
+  @if (true) {
+    .this-does-not-matter {
+      after: merge;
+    }
+  }
+}
+
+.may-merge {
+  before: merge;
+}
+
+.may-combine2 {
+  border: 0;
+}
+
+.may-not-merge {
+  merge: merge;
+}
+
+.may-not-combine {
+  combine: combine;
+  prevent-combine: true;
+}
+
+/* Make sure rules in @if and @media are respected */
+@media blah {
+  @if (true) {
+    .may-not-merge-or-combine-because-of-this {
+      prevent: true;
+    }
+  }
+}
+.may-not-merge {
+  prevent-merge: true;
+}
+
+.may-not-combine2 {
+  combine: combine;
+  prevent-combine: true;
+}
+
+/* Ensure preservation of standard @rules */
+
+@MEDIA print {
+  div {
+    media: no-merge;
+  }
+}
+
+@page {
+  margin: 3cm;
+}
+
+@page :left {
+  margin: 4cm;
+}
+
+/* Ensure multi-class selectors fully obfuscate */
+.multiClassA {
+  border: 1px solid red;
+}
+
+.multiClassB {
+  border: 1px solid blue;
+}
+
+.multiClassA.multiClassB {
+  border: 1px solid blue;
+}
+
+.css3Color {
+  background-color: rgba(0, 0, 0, 0.5); 
+}

@@ -1,0 +1,75 @@
+<!--                                                                        -->
+<!-- Copyright 2008 Google Inc.                                             -->
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
+<!-- may not use this file except in compliance with the License. You may   -->
+<!-- may obtain a copy of the License at                                    -->
+<!--                                                                        -->
+<!-- http://www.apache.org/licenses/LICENSE-2.0                             -->
+<!--                                                                        -->
+<!-- Unless required by applicable law or agreed to in writing, software    -->
+<!-- distributed under the License is distributed on an "AS IS" BASIS,      -->
+<!-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or        -->
+<!-- implied. License for the specific language governing permissions and   -->
+<!-- limitations under the License.                                         -->
+
+<!-- ClientBundle supports renaming files with strong names at compile time  -->
+<module>
+  <!-- Pull in the necessary base support, including user.agent detection -->
+  <inherits name="com.google.gwt.core.Core" />
+  <!-- Used by ExternalTextResource -->
+  <inherits name="com.google.gwt.http.HTTP" />
+
+  <!--  This acts as a switch to disable the use of data: URLs -->
+  <define-property name="ClientBundle.enableInlining" values="true,false" />
+  <set-property name="ClientBundle.enableInlining" value="true" />
+
+  <!-- Specify the default behavior -->
+  <generate-with
+    class="com.google.gwt.resources.rebind.context.StaticClientBundleGenerator">
+
+    <!-- We have to specify on which types to execute the Generator -->
+    <when-type-assignable
+      class="com.google.gwt.resources.client.ClientBundle" />
+  </generate-with>
+
+  <!-- Last-matches wins, so this will selectively override the previous rule -->
+  <generate-with
+    class="com.google.gwt.resources.rebind.context.InlineClientBundleGenerator">
+
+    <!-- We have a number of conditions that must be satisfied -->
+    <all>
+      <!-- Is inlining enabled? -->
+      <when-property-is name="ClientBundle.enableInlining" value="true" />
+
+      <!-- Again, it's necessary to specify which types the generator runs on -->
+      <when-type-assignable
+        class="com.google.gwt.resources.client.ClientBundle" />
+
+      <!-- Only some browsers support RFC 2397 data: URLs -->
+      <any>
+        <when-property-is name="user.agent" value="safari" />
+        <when-property-is name="user.agent" value="opera" />
+        <when-property-is name="user.agent" value="gecko" />
+        <when-property-is name="user.agent" value="gecko1_8" />
+      </any>
+    </all>
+  </generate-with>
+
+  <!-- This can be used to disable the use of strongly-named files -->
+  <set-configuration-property name="ClientBundle.enableRenaming" value="true" />
+
+  <!-- This allows merging of CSS rules to be disabled. -->
+  <set-configuration-property name="CssResource.mergeEnabled" value="true" />
+
+  <!-- This forces all CssResource accessor functions to have the @Strict -->
+  <!-- annotation. This is intended primarily for application developers and -->
+  <!-- the library test code. -->
+  <set-configuration-property name="CssResource.strictAccessors" value="false" />
+
+  <!-- This allows the developer to use shorter obfuscated class names. -->
+  <!-- Is is valid to extend this property to use a custom name. -->
+  <set-configuration-property name="CssResource.obfuscationPrefix" value="default" />
+
+  <!-- This can be used to make CssResource produce human-readable CSS -->
+  <set-configuration-property name="CssResource.style" value="obf" />
+</module>

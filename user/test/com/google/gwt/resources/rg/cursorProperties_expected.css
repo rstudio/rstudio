@@ -1,0 +1,56 @@
+/*
+ * Copyright 2009 Google Inc.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+ 
+/* Tests swapping cursor directions */
+.selector {
+  cursor: nw-resize;
+}
+
+.selector2 {
+  cursor: w-resize;
+}
+
+.selector3 {
+  cursor: sw-resize;
+}
+
+.selector4 {
+  cursor: se-resize;
+}
+.selector5 {
+  cursor: e-resize;
+}
+
+.selector6 {
+  cursor: ne-resize;
+}
+
+/* Below should be unchanged */
+.selector10 {
+  cursor: be-resize;
+}
+
+.selector11 {
+  cursor: z-resize;
+}
+
+.selector12 {
+  cursor: inherit;
+}
+
+.selector13 {
+  cursor: no-resize;
+}
