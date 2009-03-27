@@ -116,11 +116,11 @@ public class GWTShellServlet extends HttpServlet {
 
   private int nextRequestId;
 
-  private WorkDirs workDirs;
-
   private final Object requestIdLock = new Object();
 
   private TreeLogger topLogger;
+
+  private WorkDirs workDirs;
 
   public GWTShellServlet() {
     initMimeTypes();
@@ -409,9 +409,11 @@ public class GWTShellServlet extends HttpServlet {
     logger = logger.branch(TreeLogger.TRACE, msg, null);
 
     // Handle auto-generation of resources.
-    if (autoGenerateResources(request, response, logger, partialPath,
-        moduleName)) {
-      return;
+    if (shouldAutoGenerateResources()) {
+      if (autoGenerateResources(request, response, logger, partialPath,
+          moduleName)) {
+        return;
+      }
     }
 
     URL foundResource = null;
@@ -419,20 +421,22 @@ public class GWTShellServlet extends HttpServlet {
       // Look for the requested file on the public path.
       //
       ModuleDef moduleDef = getModuleDef(logger, moduleName);
-      Resource publicResource = moduleDef.findPublicFile(partialPath);
-      if (publicResource != null) {
-        foundResource = publicResource.getURL();
-      }
+      if (shouldAutoGenerateResources()) {
+        Resource publicResource = moduleDef.findPublicFile(partialPath);
+        if (publicResource != null) {
+          foundResource = publicResource.getURL();
+        }
 
-      if (foundResource == null) {
-        // Look for public generated files
-        File shellDir = getShellWorkDirs().getShellPublicGenDir(moduleDef);
-        File requestedFile = new File(shellDir, partialPath);
-        if (requestedFile.exists()) {
-          try {
-            foundResource = requestedFile.toURI().toURL();
-          } catch (MalformedURLException e) {
-            // ignore since it was speculative anyway
+        if (foundResource == null) {
+          // Look for public generated files
+          File shellDir = getShellWorkDirs().getShellPublicGenDir(moduleDef);
+          File requestedFile = new File(shellDir, partialPath);
+          if (requestedFile.exists()) {
+            try {
+              foundResource = requestedFile.toURI().toURL();
+            } catch (MalformedURLException e) {
+              // ignore since it was speculative anyway
+            }
           }
         }
       }
@@ -884,6 +888,16 @@ public class GWTShellServlet extends HttpServlet {
         HttpHeaders.CACHE_CONTROL_MAXAGE + cacheTime);
     String expiresString = HttpHeaders.toInternetDateFormat(expires);
     response.setHeader(HttpHeaders.EXPIRES, expiresString);
+  }
+
+  private boolean shouldAutoGenerateResources() {
+    ServletContext servletContext = getServletContext();
+    final String attr = "com.google.gwt.dev.shell.shouldAutoGenerateResources";
+    Boolean attrValue = (Boolean) servletContext.getAttribute(attr);
+    if (attrValue == null) {
+      return true;
+    }
+    return attrValue;
   }
 
   private void streamOut(InputStream in, OutputStream out, int bufferSize)

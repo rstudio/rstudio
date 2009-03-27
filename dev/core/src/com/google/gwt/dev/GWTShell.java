@@ -234,7 +234,7 @@ public class GWTShell extends SwtHostedModeBase {
   protected int doStartUpServer() {
     // TODO(bruce): make tomcat work in terms of the modular launcher
     String whyFailed = EmbeddedTomcatServer.start(getTopLogger(), getPort(),
-        options);
+        options, shouldAutoGenerateResources());
 
     // TODO(bruce): test that we can remove this old approach in favor of
     // a better, logger-based error reporting
@@ -259,5 +259,15 @@ public class GWTShell extends SwtHostedModeBase {
      * magic?
      */
     return false;
+  }
+
+  /**
+   * Whether this shell should auto-generate GWT resources when it recognizes
+   * requests for them. By default this is true. Subclasses can disable such
+   * auto-generation and make this servlet appear to be like any arbitrary web
+   * server that knows nothing about GWT.
+   */
+  protected boolean shouldAutoGenerateResources() {
+    return true;
   }
 }

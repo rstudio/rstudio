@@ -60,14 +60,19 @@ public class EmbeddedTomcatServer {
     return sTomcat.port;
   }
 
+  public static String start(TreeLogger topLogger, int port, WorkDirs workDirs) {
+    return start(topLogger, port, workDirs, true);
+  }
+
   public static synchronized String start(TreeLogger topLogger, int port,
-      WorkDirs workDirs) {
+      WorkDirs workDirs, boolean shouldAutoGenerateResources) {
     if (sTomcat != null) {
       throw new IllegalStateException("Embedded Tomcat is already running");
     }
 
     try {
-      new EmbeddedTomcatServer(topLogger, port, workDirs);
+      new EmbeddedTomcatServer(topLogger, port, workDirs,
+          shouldAutoGenerateResources);
       return null;
     } catch (LifecycleException e) {
       String msg = e.getMessage();
@@ -146,7 +151,8 @@ public class EmbeddedTomcatServer {
   private final TreeLogger startupBranchLogger;
 
   private EmbeddedTomcatServer(final TreeLogger topLogger, int listeningPort,
-      final WorkDirs workDirs) throws LifecycleException {
+      final WorkDirs workDirs, final boolean shouldAutoGenerateResources)
+      throws LifecycleException {
     if (topLogger == null) {
       throw new NullPointerException("No logger specified");
     }
@@ -233,6 +239,8 @@ public class EmbeddedTomcatServer {
           StandardContext webapp = (StandardContext) event.getData();
           publishShellLoggerAttribute(logger, topLogger, webapp);
           publishShellWorkDirsAttribute(logger, workDirs, webapp);
+          publishShouldAutoGenerateResourcesAttribute(logger,
+              shouldAutoGenerateResources, webapp);
         }
       }
     });
@@ -428,5 +436,15 @@ public class EmbeddedTomcatServer {
       WorkDirs workDirs, StandardContext webapp) {
     final String attr = "com.google.gwt.dev.shell.workdirs";
     publishAttributeToWebApp(logger, webapp, attr, workDirs);
+  }
+
+  /**
+   * Publish to the web app whether it should automatically generate resources.
+   */
+  private void publishShouldAutoGenerateResourcesAttribute(TreeLogger logger,
+      boolean shouldAutoGenerateResources, StandardContext webapp) {
+    publishAttributeToWebApp(logger, webapp,
+        "com.google.gwt.dev.shell.shouldAutoGenerateResources",
+        shouldAutoGenerateResources);
   }
 }
