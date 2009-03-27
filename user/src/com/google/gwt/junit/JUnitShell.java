@@ -116,6 +116,25 @@ public class JUnitShell extends GWTShell {
       registerHandler(new ArgHandlerFlag() {
         @Override
         public String getPurpose() {
+          return "Causes your test to run in -noserver hosted mode (defaults to hosted mode)";
+        }
+
+        @Override
+        public String getTag() {
+          return "-noserver";
+        }
+
+        @Override
+        public boolean setFlag() {
+          runStyle = new RunStyleNoServerHosted(JUnitShell.this);
+          numClients = 1;
+          return true;
+        }
+      });
+
+      registerHandler(new ArgHandlerFlag() {
+        @Override
+        public String getPurpose() {
           return "Causes your test to run in web (compiled) mode (defaults to hosted mode)";
         }
 
@@ -587,6 +606,11 @@ public class JUnitShell extends GWTShell {
     }
 
     return !messageQueue.hasResult();
+  }
+
+  @Override
+  protected boolean shouldAutoGenerateResources() {
+    return runStyle.shouldAutoGenerateResources();
   }
 
   @Override

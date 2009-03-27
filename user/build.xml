@@ -13,11 +13,14 @@
 
   <fileset id="default.emma.tests" dir="${javac.junit.out}" 
        includes="**/EmmaClassLoadingTest.class" />
-  
+
   <fileset id="default.hosted.emma.tests" dir="${javac.junit.out}" 
       excludes="**/CoverageTest.class,**/CompilerSuite.class" includes="${gwt.junit.emmatestcase.includes}" />
   <!-- everything succeeds except CoverageTest.java. It fails due to a javac bug in sun/OpenJDK's Java. See the file contents for details -->
-  
+
+  <fileset id="default.noserver.tests" dir="${javac.junit.out}" includes="**/IFrameLinkerTest.class" />
+  <!-- Only IFrameLinker actually supports -noserver mode; run the other linker tests if and when they are supported -->
+
   <!--
     Default web mode test cases
   -->
@@ -49,11 +52,11 @@
 
   <!--
     Compile test code for dev/core to pick up TypeOracleTestUtils and others.
-  -->	
+  -->
   <target name="compile.dev.core.tests" description="Compiles test dependencies in dev/core">
     <gwt.ant dir="../dev/core" target="compile.tests" />
   </target>
-    
+
   <target name="compile.tests" depends="compile.dev.core.tests" description="Compiles the test code for this project">
     <mkdir dir="${javac.junit.out}" />
     <gwt.javac srcdir="test" excludes="com/google/gwt/langtest/**" destdir="${javac.junit.out}">
@@ -126,11 +129,19 @@
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
         <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
       </extraclasspaths>
-    </gwt.junit> 
+    </gwt.junit>
+  </target>
+
+  <target name="test.noserver" depends="compile, compile.tests" description="Run noserver hosted-mode tests for this project.">
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-noserver-mode" test.cases="default.noserver.tests">
+      <extraclasspaths>
+        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
+      </extraclasspaths>
+    </gwt.junit>
   </target>
 
   <target name="test.web" depends="compile, compile.tests" description="Run only web-mode tests for this project.">
-    <gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests" >
+    <gwt.junit test.args="${test.args} -out www -web" test.out="${junit.out}/${build.host.platform}-web-mode" test.cases="default.web.tests">
       <extraclasspaths>
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
       </extraclasspaths>
@@ -167,6 +178,7 @@
       <!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
       <antcall target="remoteweb-test"/>
       <antcall target="test.hosted"/>
+      <antcall target="test.noserver"/>
       <antcall target="test.web"/>
       <antcall target="test.web.disableClassMetadata"/>
       <antcall target="test.web.draft"/>
@@ -179,6 +191,6 @@
     <delete file="${project.lib}" />
   </target>
   <target name="presubmit" depends="test, checkstyle" description="runs the gwt api checker, user checkstyle, and user tests">
-   <gwt.ant dir=".." target="apicheck-nobuild"/>
+    <gwt.ant dir=".." target="apicheck-nobuild"/>
   </target>
 </project>

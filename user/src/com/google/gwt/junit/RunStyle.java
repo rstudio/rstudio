@@ -60,6 +60,15 @@ abstract class RunStyle {
       throws UnableToCompleteException;
 
   /**
+   * Whether the embedded server should ever generate resources.  Hosted mode
+   * needs this, but not noserver hosted.  TODO(spoon) does web mode get
+   * simpler if this is turned on?
+   */
+  public boolean shouldAutoGenerateResources() {
+    return true;
+  }
+
+  /**
    * Tests whether the test was interrupted.
    * 
    * @return <code>true</code> if the test has been interrupted.
