@@ -17,6 +17,7 @@ package com.google.gwt.resources.rg;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.resources.ext.ResourceContext;
 
 import java.awt.Graphics2D;
@@ -429,7 +430,8 @@ class ImageBundleBuilder {
    */
   private static final String BUNDLE_FILE_TYPE = "png";
   private static final String BUNDLE_MIME_TYPE = "image/png";
-  private static final int IMAGE_MAX_SIZE = 256;
+  private static final int IMAGE_MAX_SIZE = Integer.getInteger(
+      "gwt.imageResource.maxBundleSize", 256);
 
   public static byte[] toPng(TreeLogger logger, HasRect rect)
       throws UnableToCompleteException {
@@ -479,6 +481,11 @@ class ImageBundleBuilder {
 
   private final Map<String, ImageRect> imageNameToImageRectMap = new HashMap<String, ImageRect>();
 
+  /**
+   * This map is used to de-duplicate images in generated image strips.
+   */
+  private final Map<String, String> strongNametoCanonicalImageNameMap = new HashMap<String, String>();
+
   public ImageBundleBuilder() {
   }
 
@@ -514,11 +521,21 @@ class ImageBundleBuilder {
      * aren't computed until the composite is written.
      */
     ImageRect rect = getMapping(imageName);
-    if (rect == null) {
-      // Assimilate the image into the composite.
-      rect = addImage(logger, imageName, resource);
 
-      imageNameToImageRectMap.put(imageName, rect);
+    if (rect == null) {
+      String strongName = Util.computeStrongName(Util.readURLAsBytes(resource));
+      if (strongNametoCanonicalImageNameMap.containsKey(strongName)) {
+        String previousImageName = strongNametoCanonicalImageNameMap.get(strongName);
+        rect = getMapping(previousImageName);
+        assert rect != null;
+        imageNameToImageRectMap.put(imageName, rect);
+      } else {
+        // Assimilate the image into the composite.
+        rect = addImage(logger, imageName, resource);
+
+        imageNameToImageRectMap.put(imageName, rect);
+        strongNametoCanonicalImageNameMap.put(strongName, imageName);
+      }
     }
     return rect;
   }
@@ -531,7 +548,11 @@ class ImageBundleBuilder {
     return imageNameToImageRectMap.get(imageName);
   }
 
+  /**
+   * Remove an image from the builder.
+   */
   public ImageRect removeMapping(String imageName) {
+    strongNametoCanonicalImageNameMap.values().remove(imageName);
     return imageNameToImageRectMap.remove(imageName);
   }
 

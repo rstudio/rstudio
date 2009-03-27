@@ -113,9 +113,9 @@ public class ImageResourceTest extends GWTTestCase {
     ImageResource lossy = r.largeLossy();
     ImageResource lossless = r.largeLossless();
 
-    // The large, lossless image should be bundled
+    // The large, lossless image should not be bundled
     if (!i64.getURL().startsWith("data:")) {
-      assertEquals(i64.getURL(), lossless.getURL());
+      assertFalse(i64.getURL().equals(lossless.getURL()));
     }
 
     // Make sure that the large, lossy image isn't bundled with the rest

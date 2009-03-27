@@ -17,6 +17,7 @@ package com.google.gwt.resources;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 import com.google.gwt.resources.client.CSSResourceTest;
+import com.google.gwt.resources.client.ImageResourceNoInliningTest;
 import com.google.gwt.resources.client.ImageResourceTest;
 import com.google.gwt.resources.client.NestedBundleTest;
 import com.google.gwt.resources.client.TextResourceTest;
@@ -37,8 +38,8 @@ public class ResourcesSuite {
     suite.addTestSuite(CssReorderTest.class);
     suite.addTestSuite(CssRtlTest.class);
     suite.addTestSuite(CssNodeClonerTest.class);
-    // TODO(bobv) Re-enable after fixing this case in non-inlining mode
-    // suite.addTestSuite(ImageResourceTest.class);
+    suite.addTestSuite(ImageResourceTest.class);
+    suite.addTestSuite(ImageResourceNoInliningTest.class);
     suite.addTestSuite(NestedBundleTest.class);
     suite.addTestSuite(TextResourceTest.class);
 
