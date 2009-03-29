@@ -28,13 +28,6 @@ import com.google.gwt.core.client.impl.Impl;
 public class JavaScriptObject {
 
   /**
-   * Call the toSource() on the JSO
-   */
-  public native String toSource() /*-{
-    this.toSource ? this.toSource() : "NO SOURCE";
-  }-*/;
-
-  /**
    * Returns a new array.
    */
   public static native JavaScriptObject createArray() /*-{
@@ -97,6 +90,13 @@ public class JavaScriptObject {
   public final int hashCode() {
     return Impl.getHashCode(this);
   }
+
+  /**
+   * Call the toSource() on the JSO
+   */
+  public native String toSource() /*-{
+    this.toSource ? this.toSource() : "NO SOURCE";
+  }-*/;
 
   /**
    * catch-all toString in lieu of a better mechanism.
