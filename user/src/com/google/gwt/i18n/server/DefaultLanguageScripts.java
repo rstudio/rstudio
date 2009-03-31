@@ -170,8 +170,8 @@ public class DefaultLanguageScripts {
   /**
    * Returns the default script for a language, or null if none.
    * 
-   * @param language
-   * @return
+   * @param language language code to get default script for
+   * @return default script for language, or null if none
    */
   public static String getDefaultScript(String language) {
     return defaultScripts.get(language);
