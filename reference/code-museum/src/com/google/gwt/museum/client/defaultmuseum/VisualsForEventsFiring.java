@@ -385,24 +385,25 @@ public class VisualsForEventsFiring extends AbstractIssue {
     });
     button.addMouseOutHandler(new MouseOutHandler() {
       public void onMouseOut(MouseOutEvent event) {
-        assert event.getFromElement() != null;
-        assert event.getToElement() != null;
-        if (button.getElement().equals(event.getFromElement())
+        NativeEvent nativeEvent = event.getNativeEvent();
+        assert nativeEvent.getRelatedEventTarget() != null;
+        assert nativeEvent.getEventTarget() != null;
+        if (button.getElement().equals(nativeEvent.getEventTarget())
             && button.getElement().getParentElement().equals(
-                event.getToElement())) {
-          passTest(event.getNativeEvent());
+                nativeEvent.getRelatedEventTarget())) {
+          passTest(nativeEvent);
         }
       }
     });
     button.addMouseOverHandler(new MouseOverHandler() {
       public void onMouseOver(MouseOverEvent event) {
-        assert event.getFromElement() != null;
-        assert event.getToElement() != null;
-
-        if (button.getElement().equals(event.getToElement())
+        NativeEvent nativeEvent = event.getNativeEvent();
+        assert nativeEvent.getRelatedEventTarget() != null;
+        assert nativeEvent.getEventTarget() != null;
+        if (button.getElement().equals(nativeEvent.getEventTarget())
             && button.getElement().getParentElement().equals(
-                event.getFromElement())) {
-          passTest(event.getNativeEvent());
+                nativeEvent.getRelatedEventTarget())) {
+          passTest(nativeEvent);
         }
       }
     });

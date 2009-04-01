@@ -122,7 +122,7 @@ public class Issue1932 extends AbstractIssue {
       public void onPreviewNativeEvent(NativePreviewEvent event) {
         // Ignore events outside of the sandbox
         NativeEvent nativeEvent = event.getNativeEvent();
-        Element target = nativeEvent.getTarget();
+        Element target = Element.as(nativeEvent.getEventTarget());
         if (!sandbox.getElement().isOrHasChild(target)
             && !positioner.getElement().isOrHasChild(target)) {
           positioner.removeFromParent();
