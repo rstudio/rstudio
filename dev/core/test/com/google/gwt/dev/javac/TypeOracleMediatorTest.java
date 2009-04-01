@@ -59,21 +59,6 @@ public class TypeOracleMediatorTest extends TestCase {
     public abstract String getSource();
   }
 
-  private static void assertEqualArraysUnordered(Object[] expected,
-      Object[] actual) {
-    assertEquals(expected.length, actual.length);
-    for (Object element : expected) {
-      boolean matched = false;
-      for (Object element2 : actual) {
-        if (element.equals(element2)) {
-          matched = true;
-          break;
-        }
-      }
-      assertTrue(matched);
-    }
-  }
-
   private static void assertIsAssignable(JClassType from, JClassType to) {
     assertTrue("'" + from + "' should be assignable to '" + to + "'",
         from.isAssignableTo(to));
@@ -501,90 +486,6 @@ public class TypeOracleMediatorTest extends TestCase {
     }
   };
 
-  protected CheckedMockCompilationUnit CU_MetaData = new CheckedMockCompilationUnit(
-      "test", "MetaData") {
-
-    public void check(JClassType type) throws NotFoundException {
-      {
-        String[] tags = type.getMetaDataTags();
-        assertEqualArraysUnordered(new String[] {"gwt.tag1"}, tags);
-        String[][] md = type.getMetaData("gwt.tag1");
-        assertEquals("tagValueA", md[0][0]);
-        assertEquals("tagValueB", md[0][1]);
-        assertEquals("tagValueC", md[1][0]);
-        assertEquals("tagValueD", md[1][1]);
-      }
-
-      {
-        JMethod method = type.getOverloads("foo")[0]; // will succeed
-        String[] tags = method.getMetaDataTags();
-        assertEqualArraysUnordered(new String[] {"gwt.tag2", "gwt.tag3"}, tags);
-
-        String[][] mdNotThere = method.getMetaData("not there");
-        assertNotNull(mdNotThere);
-        assertEquals(0, mdNotThere.length);
-
-        String[][] mdTag2 = method.getMetaData("gwt.tag2");
-        assertEquals(2, mdTag2.length);
-        assertEquals(3, mdTag2[0].length);
-        assertEquals("tagValueV", mdTag2[0][0]);
-        assertEquals("tagValueW", mdTag2[0][1]);
-        assertEquals("tagValueX", mdTag2[0][2]);
-        assertEquals(2, mdTag2[1].length);
-        assertEquals("tagValueY", mdTag2[1][0]);
-        assertEquals("tagValueZ", mdTag2[1][1]);
-
-        String[][] mdTag3 = method.getMetaData("gwt.tag3");
-        assertEquals(1, mdTag3.length);
-        assertEquals(0, mdTag3[0].length);
-      }
-
-      {
-        JField field = type.getField("bar");
-        String[] tags = field.getMetaDataTags();
-        assertEqualArraysUnordered(new String[] {"gwt.tag4"}, tags);
-
-        String[][] mdTag4 = field.getMetaData("gwt.tag4");
-        assertEquals(2, mdTag4.length);
-        assertEquals(2, mdTag4[0].length);
-        assertEquals("tagValueQ", mdTag4[0][0]);
-        assertEquals("tagValueR", mdTag4[0][1]);
-        assertEquals(1, mdTag4[1].length);
-        assertEquals("tagValueS", mdTag4[1][0]);
-      }
-
-      {
-        JField field = type.getField("noMd");
-        String[] tags = field.getMetaDataTags();
-        assertEquals(0, tags.length);
-      }
-    }
-
-    public String getSource() {
-      StringBuffer sb = new StringBuffer();
-      sb.append("package test;\n");
-      sb.append("/**\n");
-      sb.append(" * Class metadata.\n");
-      sb.append(" * @gwt.tag1 tagValueA tagValueB\n");
-      sb.append(" * @gwt.tag1 tagValueC tagValueD\n");
-      sb.append(" */\n");
-      sb.append("public class MetaData {\n");
-      sb.append("   /**\n");
-      sb.append("    * Method metadata.\n");
-      sb.append("    * @gwt.tag2 tagValueV tagValueW tagValueX\n");
-      sb.append("    * @gwt.tag2 tagValueY tagValueZ\n");
-      sb.append("    * @gwt.tag3*/\n");
-      sb.append("   private void foo(int x) { };\n");
-      sb.append("\n");
-      sb.append("   /**@gwt.tag4 tagValueQ tagValueR\n"); // funny start
-      sb.append("    * @gwt.tag4 tagValueS*/\n"); // funny end
-      sb.append("   private Object bar = null;\n");
-      sb.append("   private Object noMd = null;\n");
-      sb.append("}\n");
-      return sb.toString();
-    }
-  };
-
   protected CheckedMockCompilationUnit CU_MethodsAndParams = new CheckedMockCompilationUnit(
       "test", "Methods") {
 
@@ -918,14 +819,6 @@ public class TypeOracleMediatorTest extends TestCase {
     compileAndRefresh();
     JClassType[] types = typeOracle.getTypes();
     assertEquals(3, types.length);
-  }
-
-  public void testMetaData() throws TypeOracleException {
-    units.add(CU_Object);
-    units.add(CU_MetaData);
-    compileAndRefresh();
-    JClassType[] types = typeOracle.getTypes();
-    assertEquals(2, types.length);
   }
 
   public void testMethodsAndParams() throws TypeOracleException {

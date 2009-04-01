@@ -19,11 +19,8 @@ import com.google.gwt.benchmarks.client.impl.BenchmarkResults;
 import com.google.gwt.benchmarks.client.impl.Trial;
 import com.google.gwt.benchmarks.rebind.BenchmarkGenerator;
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.HasAnnotations;
-import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
-import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.util.tools.Utility;
 
@@ -203,8 +200,6 @@ public class BenchmarkReport {
    */
   private class ReportXml {
 
-    private Map<String, Element> categoryElementMap = new HashMap<String, Element>();
-
     private Date date = new Date();
 
     private String version = "unknown";
@@ -221,8 +216,7 @@ public class BenchmarkReport {
         TestCase test = entry.getKey();
         List<BenchmarkResults> results = entry.getValue();
         BenchmarkXml xml = new BenchmarkXml(test, results);
-        Element categoryElement = getCategoryElement(doc, report,
-            xml.metaData.getCategory().getClassName());
+        Element categoryElement = getCategoryElement(doc, report);
         categoryElement.appendChild(xml.toElement(doc));
       }
 
@@ -238,30 +232,14 @@ public class BenchmarkReport {
      * 
      * @return The matching category element
      */
-    private Element getCategoryElement(Document doc, Element report, String name) {
-      Element e = categoryElementMap.get(name);
-
-      if (e != null) {
-        return e;
-      }
-
+    private Element getCategoryElement(Document doc, Element report) {
       Element categoryElement = doc.createElement("category");
-      categoryElementMap.put(name, categoryElement);
-      CategoryImpl category = testCategories.get(name);
-      categoryElement.setAttribute("name", category.getName());
-      categoryElement.setAttribute("description", category.getDescription());
-
+      categoryElement.setAttribute("name", "");
+      categoryElement.setAttribute("description", "");
       report.appendChild(categoryElement);
-
       return categoryElement;
     }
   }
-
-  private static final String GWT_BENCHMARK_CATEGORY = "gwt.benchmark.category";
-
-  private static final String GWT_BENCHMARK_DESCRIPTION = "gwt.benchmark.description";
-
-  private static final String GWT_BENCHMARK_NAME = "gwt.benchmark.name";
 
   private static File findSourceFile(JClassType clazz) {
     final char separator = File.separator.charAt(0);
@@ -285,36 +263,11 @@ public class BenchmarkReport {
     return path.split(File.pathSeparator);
   }
 
-  private static String getSimpleMetaData(HasMetaData hasMetaData, String name) {
-    String[][] allValues = hasMetaData.getMetaData(name);
-
-    if (allValues == null) {
-      return null;
-    }
-
-    StringBuffer result = new StringBuffer();
-
-    for (int i = 0; i < allValues.length; ++i) {
-      String[] values = allValues[i];
-      for (int j = 0; j < values.length; ++j) {
-        result.append(values[j]);
-        result.append(" ");
-      }
-    }
-
-    String resultString = result.toString().trim();
-    return resultString.equals("") ? null : resultString;
-  }
-
   private Parser parser = new Parser();
-
-  private Map<String, CategoryImpl> testCategories = new HashMap<String, CategoryImpl>();
 
   private Map<String, Map<String, MetaData>> testMetaData = new HashMap<String, Map<String, MetaData>>();
 
   private Map<TestCase, List<BenchmarkResults>> testResults = new HashMap<TestCase, List<BenchmarkResults>>();
-
-  private TypeOracle typeOracle;
 
   public BenchmarkReport() {
   }
@@ -324,19 +277,10 @@ public class BenchmarkReport {
    * (category, name, description, etc...) is recorded from the TypeOracle.
    * 
    * @param logger to log the process
-   * @param deprecationBranch to log usages of old-style metadata
    * @param benchmarkClass The benchmark class to record. Must not be
    *          <code>null</code>.
-   * @param typeOracle The <code>TypeOracle</code> for the compilation session
-   *          must not be <code>null</code>.
    */
-  public void addBenchmark(TreeLogger logger, TreeLogger deprecationBranch,
-      JClassType benchmarkClass, TypeOracle typeOracle) {
-
-    this.typeOracle = typeOracle;
-    String categoryType = getBenchmarkCategory(deprecationBranch,
-        benchmarkClass);
-
+  public void addBenchmark(TreeLogger logger, JClassType benchmarkClass) {
     Map<String, JMethod> zeroArgMethods = BenchmarkGenerator.getNotOverloadedTestMethods(benchmarkClass);
     Map<String, JMethod> parameterizedMethods = BenchmarkGenerator.getParameterizedTestMethods(
         benchmarkClass, TreeLogger.NULL);
@@ -354,14 +298,6 @@ public class BenchmarkReport {
     // Add all of the benchmark methods
     for (JMethod method : testMethods) {
       String methodName = method.getName();
-      String methodCategoryType = getBenchmarkCategory(deprecationBranch,
-          method);
-      if (methodCategoryType == null) {
-        methodCategoryType = categoryType;
-      }
-      CategoryImpl methodCategory = getCategory(deprecationBranch,
-          methodCategoryType);
-
       String methodSource = parser.getMethod(logger, method);
       StringBuffer sourceBuffer = (methodSource == null) ? null
           : new StringBuffer(methodSource);
@@ -370,8 +306,8 @@ public class BenchmarkReport {
       getComment(sourceBuffer, summary, comment);
 
       MetaData metaData = new MetaData(benchmarkClass.toString(), methodName,
-          (sourceBuffer != null) ? sourceBuffer.toString() : null,
-          methodCategory, methodName, summary.toString());
+          (sourceBuffer != null) ? sourceBuffer.toString() : null, methodName,
+          summary.toString());
       metaDataMap.put(methodName, metaData);
     }
   }
@@ -431,58 +367,6 @@ public class BenchmarkReport {
     // new FileOutputStream(outputPath));
     // serializer.transform(new DOMSource(doc), new StreamResult(docOut));
     // docOut.close();
-  }
-
-  private <T extends HasMetaData & HasAnnotations> String getBenchmarkCategory(
-      TreeLogger deprecationBranch, T element) {
-    String category = getSimpleMetaData(element, GWT_BENCHMARK_CATEGORY);
-    if (category != null && deprecationBranch != null) {
-      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_CATEGORY + " has "
-          + "been deprecated with no replacement.", null);
-    }
-    return category;
-  }
-
-  private CategoryImpl getCategory(TreeLogger deprecationBranch, String name) {
-    CategoryImpl c = testCategories.get(name);
-
-    if (c != null) {
-      return c;
-    }
-
-    c = getCategoryMetaData(deprecationBranch, name);
-    testCategories.put(name, c);
-    return c;
-  }
-
-  private CategoryImpl getCategoryMetaData(TreeLogger deprecationBranch,
-      String typeName) {
-    if (typeName == null) {
-      return new CategoryImpl(null, "", "");
-    }
-
-    JClassType categoryType = typeOracle.findType(typeName);
-
-    if (categoryType == null) {
-      return new CategoryImpl(typeName, "", "");
-    }
-
-    String categoryName = getSimpleMetaData(categoryType, GWT_BENCHMARK_NAME);
-    String categoryDescription = getSimpleMetaData(categoryType,
-        GWT_BENCHMARK_DESCRIPTION);
-
-    if ((categoryName != null || categoryDescription != null)
-        && deprecationBranch != null) {
-      deprecationBranch.log(TreeLogger.WARN, GWT_BENCHMARK_NAME + " and "
-          + GWT_BENCHMARK_DESCRIPTION + " have been deprecated with no "
-          + "replacement", null);
-    }
-
-    categoryName = categoryName == null ? "" : categoryName;
-    categoryDescription = categoryDescription == null ? ""
-        : categoryDescription;
-
-    return new CategoryImpl(typeName, categoryName, categoryDescription);
   }
 
   /**

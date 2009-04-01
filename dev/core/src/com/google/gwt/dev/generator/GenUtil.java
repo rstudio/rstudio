@@ -21,12 +21,11 @@ package com.google.gwt.dev.generator;
 public class GenUtil {
 
   /**
-   * If <code>true</code>, the default, generators should warn when a client
-   * uses old-style javadoc metadata rather than Java 1.5 annotations. If
-   * <code>false</code>, generators should not warn.
+   * @deprecated All metadata has been removed, use Java Annotations instead.
    */
+  @Deprecated
   public static boolean warnAboutMetadata() {
-    return System.getProperty("gwt.nowarn.metadata") == null;
+    return false;
   }
 
   /**

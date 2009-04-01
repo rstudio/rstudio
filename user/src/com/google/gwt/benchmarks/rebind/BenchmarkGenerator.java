@@ -16,7 +16,6 @@
 package com.google.gwt.benchmarks.rebind;
 
 import com.google.gwt.benchmarks.BenchmarkShell;
-import com.google.gwt.benchmarks.client.Benchmark;
 import com.google.gwt.benchmarks.client.IterationTimeLimit;
 import com.google.gwt.benchmarks.client.RangeEnum;
 import com.google.gwt.benchmarks.client.RangeField;
@@ -32,7 +31,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
-import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.generator.ast.ForLoop;
 import com.google.gwt.dev.generator.ast.MethodCall;
 import com.google.gwt.dev.generator.ast.Statement;
@@ -62,8 +60,6 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
   }
 
   private static final String BEGIN_PREFIX = "begin";
-
-  private static final String BENCHMARK_CLASS = Benchmark.class.getName();
 
   private static final String BENCHMARK_PARAM_META = "gwt.benchmark.param";
 
@@ -235,24 +231,15 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     });
   }
 
-  private TreeLogger deprecationBranch;
-
   @Override
   public void writeSource() throws UnableToCompleteException {
     super.writeSource();
-
-    if (GenUtil.warnAboutMetadata()) {
-      deprecationBranch = logger.branch(TreeLogger.TRACE,
-          "Scanning Benchmarks for deprecated annotations; please see "
-              + BENCHMARK_CLASS + " for more information", null);
-    }
 
     generateEmptyFunc(getSourceWriter());
     implementZeroArgTestMethods();
     implementParameterizedTestMethods();
     generateAsyncCode();
-    BenchmarkShell.getReport().addBenchmark(logger, deprecationBranch,
-        getRequestedClass(), getTypeOracle());
+    BenchmarkShell.getReport().addBenchmark(logger, getRequestedClass());
   }
 
   /**
@@ -486,58 +473,6 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
     return defaultTimeout;
   }
 
-  private Map<String, String> getParamMetaData(JMethod method, MutableLong bound)
-      throws UnableToCompleteException {
-    String[][] allValues = method.getMetaData(BENCHMARK_PARAM_META);
-
-    if (allValues == null || allValues.length == 0) {
-      return getAnnotationMetaData(method, bound);
-    }
-
-    if (deprecationBranch != null) {
-      deprecationBranch.log(TreeLogger.WARN, "Deprecated use of "
-          + BENCHMARK_PARAM_META + " at " + method.getEnclosingType() + " in "
-          + method + "; please use the new Benchmark JDK 1.5 annotations in "
-          + "com.google.gwt.benchmark.client", null);
-    }
-
-    Map<String, String> params = new HashMap<String, String>();
-
-    for (int i = 0; i < allValues.length; ++i) {
-      String[] values = allValues[i];
-      StringBuffer result = new StringBuffer();
-      for (int j = 0; j < values.length; ++j) {
-        result.append(values[j]);
-        result.append(" ");
-      }
-      String expr = result.toString();
-      String[] lhsAndRhs = expr.split("=");
-      String paramName = lhsAndRhs[0].trim();
-      String[] nameExprs = paramName.split(" ");
-      if (nameExprs.length > 1 && nameExprs[1].equals("-limit")) {
-        paramName = nameExprs[0];
-        // Make sure this is the last parameter
-        JParameter[] parameters = method.getParameters();
-        if (!parameters[parameters.length - 1].getName().equals(paramName)) {
-          JClassType cls = method.getEnclosingType();
-          String msg = "Error at "
-              + cls
-              + "."
-              + method.getName()
-              + ": only the last parameter of a method can be marked with the -limit flag";
-          logger.log(TreeLogger.ERROR, msg, null);
-          throw new UnableToCompleteException();
-        }
-
-        bound.value = getDefaultTimeout();
-      }
-      String paramValue = lhsAndRhs[1].trim();
-      params.put(paramName, paramValue);
-    }
-
-    return params;
-  }
-
   private void implementParameterizedTestMethods()
       throws UnableToCompleteException {
 
@@ -562,7 +497,8 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       sw.println();
 
       MutableLong bound = new MutableLong();
-      Map<String, String> metaDataByParams = getParamMetaData(method, bound);
+      Map<String, String> metaDataByParams = getAnnotationMetaData(method,
+          bound);
       validateParams(method, metaDataByParams);
 
       JParameter[] methodParams = method.getParameters();
@@ -614,19 +550,12 @@ public class BenchmarkGenerator extends JUnitTestCaseStubGenerator {
       Statements testBench = genBenchTarget(beginMethod, endMethod, paramNames,
           new Statement(new MethodCall(method.getName(), paramNames)));
 
-      StringBuffer recordResultsCode = new StringBuffer(
-          BENCHMARK_RESULTS_CLASS
-              + " results = __getOrCreateTestResult();\n"
-              + TRIAL_CLASS
-              + " trial = new "
-              + TRIAL_CLASS
-              + "();\n"
-              + "trial.setRunTimeMillis( "
-              + testTimingName
-              + " - "
-              + setupTimingName
-              + " );\n"
-              + "java.util.Map<String, String> variables = trial.getVariables();\n");
+      StringBuffer recordResultsCode = new StringBuffer(BENCHMARK_RESULTS_CLASS
+          + " results = __getOrCreateTestResult();\n" + TRIAL_CLASS
+          + " trial = new " + TRIAL_CLASS + "();\n"
+          + "trial.setRunTimeMillis( " + testTimingName + " - "
+          + setupTimingName + " );\n"
+          + "java.util.Map<String, String> variables = trial.getVariables();\n");
 
       for (String paramName : paramNames) {
         recordResultsCode.append("variables.put( \"").append(paramName).append(

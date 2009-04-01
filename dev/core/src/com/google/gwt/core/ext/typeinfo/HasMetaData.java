@@ -29,31 +29,12 @@
 package com.google.gwt.core.ext.typeinfo;
 
 /**
- * Manages doc comment metadata for an AST item. The structure of the metadata
- * attempts to mirror the way in which tags and values were originally declared.
- * 
- * <p>
- * For example, for the following declaration
- * 
- * <pre>
- * /**
- *  * @myTag value1 value2
- *  * @myTag value3 value4
- *  * ... 
- * </pre>
- * 
- * a call to <code>getMetaData("myTag")</code> would return this array of
- * string arrays
- * 
- * <pre>
- *[0][0] = value1
- *[0][1] = value2
- *[1][0] = value3
- *[1][1] = value4
- * </pre>
- * 
- * </p>
+ * @deprecated Formerly used to manage Javadoc-comment style metadata. Replaced
+ *             by Java 1.5 annotations. All implementations now return empty
+ *             arrays. This interface and all implementations methods will be
+ *             removed in a future release.
  */
+@Deprecated
 public interface HasMetaData {
   /**
    * Adds additional metadata.

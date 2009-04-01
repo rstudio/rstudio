@@ -52,8 +52,8 @@ abstract class AbstractLocalizableImplCreator extends
     AbstractGeneratorClassCreator {
 
   static String generateConstantOrMessageClass(TreeLogger logger,
-      TreeLogger deprecatedLogger, GeneratorContext context, GwtLocale locale,
-      JClassType targetClass) throws UnableToCompleteException {
+      GeneratorContext context, GwtLocale locale, JClassType targetClass)
+      throws UnableToCompleteException {
     TypeOracle oracle = context.getTypeOracle();
     JClassType constantsClass;
     JClassType messagesClass;
@@ -95,11 +95,9 @@ abstract class AbstractLocalizableImplCreator extends
       resourceList = ResourceFactory.getBundle(logger, targetClass, locale,
           assignableToConstants);
     } catch (MissingResourceException e) {
-      throw error(
-          logger,
+      throw error(logger,
           "Localization failed; there must be at least one resource accessible through"
-              + " the classpath in package '"
-              + packageName
+              + " the classpath in package '" + packageName
               + "' whose base name is '"
               + ResourceFactory.getResourceName(targetClass) + "'");
     } catch (IllegalArgumentException e) {
@@ -124,18 +122,15 @@ abstract class AbstractLocalizableImplCreator extends
       // Now that we have all the information set up, process the class
       if (constantsWithLookupClass.isAssignableFrom(targetClass)) {
         ConstantsWithLookupImplCreator c = new ConstantsWithLookupImplCreator(
-            logger, deprecatedLogger, writer, targetClass, resourceList,
-            context.getTypeOracle());
+            logger, writer, targetClass, resourceList, context.getTypeOracle());
         c.emitClass(logger, generatedLocale);
       } else if (constantsClass.isAssignableFrom(targetClass)) {
-        ConstantsImplCreator c = new ConstantsImplCreator(logger,
-            deprecatedLogger, writer, targetClass, resourceList,
-            context.getTypeOracle());
+        ConstantsImplCreator c = new ConstantsImplCreator(logger, writer,
+            targetClass, resourceList, context.getTypeOracle());
         c.emitClass(logger, generatedLocale);
       } else {
-        MessagesImplCreator messages = new MessagesImplCreator(logger,
-            deprecatedLogger, writer, targetClass, resourceList,
-            context.getTypeOracle());
+        MessagesImplCreator messages = new MessagesImplCreator(logger, writer,
+            targetClass, resourceList, context.getTypeOracle());
         messages.emitClass(logger, generatedLocale);
       }
       context.commit(logger, pw);
@@ -242,11 +237,6 @@ abstract class AbstractLocalizableImplCreator extends
   private ResourceList resourceList;
 
   /**
-   * Logger to use for deprecated warnings.
-   */
-  private TreeLogger deprecatedLogger;
-
-  /**
    * True if the class being generated uses Constants-style annotations/quoting.
    */
   private boolean isConstants;
@@ -254,16 +244,13 @@ abstract class AbstractLocalizableImplCreator extends
   /**
    * Constructor for <code>AbstractLocalizableImplCreator</code>.
    * 
-   * @param deprecatedLogger logger to use for deprecated warnings.
    * @param writer writer
    * @param targetClass current target
    * @param resourceList backing resource
    */
-  public AbstractLocalizableImplCreator(TreeLogger logger,
-      TreeLogger deprecatedLogger, SourceWriter writer, JClassType targetClass,
-      ResourceList resourceList, boolean isConstants) {
+  public AbstractLocalizableImplCreator(TreeLogger logger, SourceWriter writer,
+      JClassType targetClass, ResourceList resourceList, boolean isConstants) {
     super(writer, targetClass);
-    this.deprecatedLogger = deprecatedLogger;
     this.resourceList = resourceList;
     this.isConstants = isConstants;
     try {
@@ -322,31 +309,6 @@ abstract class AbstractLocalizableImplCreator extends
     if (key != null) {
       return key.value();
     }
-    String[][] id = method.getMetaData(LocalizableGenerator.GWT_KEY);
-    if (id.length > 0) {
-      warnOnMetadata(method);
-      if (id[0].length == 0) {
-        logger.log(TreeLogger.WARN, method
-            + " had a mislabeled gwt.key, using default key", null);
-      } else {
-        String tag = id[0][0];
-        return tag;
-      }
-    }
     return AnnotationsResource.getKey(logger, keyGenerator, method, isConstants);
   }
-
-  /**
-   * Issue a warning about deprecated metadata.
-   * 
-   * @param method method to warn about
-   */
-  void warnOnMetadata(JMethod method) {
-    if (deprecatedLogger != null) {
-      deprecatedLogger.log(TreeLogger.WARN, "Deprecated metadata found on "
-          + method.getEnclosingType().getSimpleSourceName() + "."
-          + method.getName() + ";svn use annotations instead", null);
-    }
-  }
-
 }

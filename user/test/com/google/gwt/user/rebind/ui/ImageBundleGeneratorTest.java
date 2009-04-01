@@ -16,7 +16,6 @@
 package com.google.gwt.user.rebind.ui;
 
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ui.ImageBundleBuilder.HasRect;
@@ -217,32 +216,7 @@ public class ImageBundleGeneratorTest extends TestCase {
 
     try {
       getImageName(logger, new String[0], "nonexistentImg", "from.metadata",
-          new String[0][],
           getResourceAnnotation("testResourceNotFoundGivenAnnotation"));
-      fail("Should have thrown");
-    } catch (UnableToCompleteException e) {
-    }
-    logger.assertCorrectLogEntries();
-  }
-
-  /**
-   * Tests that a message is logged and an exception is thrown when a resource
-   * isn't found after being sought based on a javadoc "gwt.resource"
-   * pseudo-annotation.
-   */
-  public void testResourceNotFoundGivenLegacyJavaDoc() {
-    UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    if (GenUtil.warnAboutMetadata()) {
-      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-    }
-    b.expectError(
-        ImageBundleGenerator.msgCannotFindImageFromMetaData("from/metadata/notfound.png"),
-        null);
-    UnitTestTreeLogger logger = b.createLogger();
-
-    try {
-      getImageName(logger, new String[0], "nonexistentImg", "from.metadata",
-          new String[][] {{"notfound.png"}}, null);
       fail("Should have thrown");
     } catch (UnableToCompleteException e) {
     }
@@ -262,8 +236,7 @@ public class ImageBundleGeneratorTest extends TestCase {
     UnitTestTreeLogger logger = b.createLogger();
 
     try {
-      getImageName(logger, new String[0], "nonexistentImg", "test",
-          new String[0][], null);
+      getImageName(logger, new String[0], "nonexistentImg", "test", null);
       fail("Should have thrown");
     } catch (UnableToCompleteException e) {
     }
@@ -277,57 +250,27 @@ public class ImageBundleGeneratorTest extends TestCase {
   public void testResourcesFoundFromImageBundleInDefaultPackage()
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    if (GenUtil.warnAboutMetadata()) {
-      // Due to [2] below
-      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-      // Due to [4] below
-      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-    }
     UnitTestTreeLogger logger = b.createLogger();
 
     {
       // [1] Find an image in the default package using the method name.
       String imgName = getImageName(logger, new String[] {
-          "cabbage.jpg", "lettuce.jpg",}, "cabbage", "", new String[0][], null);
+          "cabbage.jpg", "lettuce.jpg",}, "cabbage", "", null);
       assertEquals("cabbage.jpg", imgName);
     }
 
     {
-      // [2] Find an image in the default package using javadoc.
+      // [2] Find an image in the default package using an annotation.
       String imgName = getImageName(logger, new String[] {
           "car.png", "dunebuggy.gif",}, "vehicleImage", "",
-          new String[][] {{"dunebuggy.gif"}}, null);
-      assertEquals("dunebuggy.gif", imgName);
-    }
-
-    {
-      // [3] Find an image in
-      // the default package
-      // using an annotation.
-      String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif",}, "vehicleImage", "", new String[0][],
           getResourceAnnotation("duneBuggyInDefaultPackage"));
       assertEquals("dunebuggy.gif", imgName);
     }
-
     {
-      // [4] Find an image in a
-      // non-default package using
-      // javadoc.
+      // [3] Find an image in a non-default package using an annotation.
       String imgName = getImageName(logger, new String[] {
           "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
-          "", new String[][] {{"a/b/c/dunebuggy.gif"}}, null);
-      assertEquals("a/b/c/dunebuggy.gif", imgName);
-    }
-
-    {
-      // [5] Find an image in a
-      // non-default package using an
-      // annotation.
-      String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
-          "", new String[0][],
-          getResourceAnnotation("duneBuggyInNonDefaultPackage"));
+          "", getResourceAnnotation("duneBuggyInNonDefaultPackage"));
       assertEquals("a/b/c/dunebuggy.gif", imgName);
     }
 
@@ -341,107 +284,39 @@ public class ImageBundleGeneratorTest extends TestCase {
   public void testResourcesFoundFromImageBundleInNonDefaultPackage()
       throws UnableToCompleteException {
     UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    if (GenUtil.warnAboutMetadata()) {
-      // Due to [2] below
-      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-      // Due to [4] below
-      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-    }
     UnitTestTreeLogger logger = b.createLogger();
 
     {
       // [1] Find an image in the same package using the method name.
       String imgName = getImageName(logger, new String[] {
-          "x/y/z/europa.png", "x/y/z/io.jpg",}, "io", "x.y.z", new String[0][],
-          null);
+          "x/y/z/europa.png", "x/y/z/io.jpg",}, "io", "x.y.z", null);
       assertEquals("x/y/z/io.jpg", imgName);
     }
 
     {
-      // [2] Find an image in the same package using javadoc.
+      // [2] Find an image in the same package using an annotation.
       String imgName = getImageName(logger, new String[] {
           "x/y/z/europa.png", "x/y/z/io.jpg",}, "moonImage", "x.y.z",
-          new String[][] {{"io.jpg"}}, null);
+          getResourceAnnotation("ioInSamePackage"));
       assertEquals("x/y/z/io.jpg", imgName);
     }
 
     {
-      // [3] Find an image in the same package using an annotation.
-      String imgName = getImageName(logger, new String[] {
-          "x/y/z/europa.png", "x/y/z/io.jpg",}, "moonImage", "x.y.z",
-          new String[0][], getResourceAnnotation("ioInSamePackage"));
-      assertEquals("x/y/z/io.jpg", imgName);
-    }
-
-    {
-      // [4] Find an image in a non-default package using javadoc.
+      // [3] Find an image in a non-default package using an annotation.
       String imgName = getImageName(logger, new String[] {
           "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
-          "x.y.z", new String[][] {{"a/b/c/dunebuggy.gif"}}, null);
+          "x.y.z", getResourceAnnotation("duneBuggyInNonDefaultPackage"));
       assertEquals("a/b/c/dunebuggy.gif", imgName);
     }
 
-    {
-      // [5] Find an image in a non-default package using an annotation.
-      String imgName = getImageName(logger, new String[] {
-          "car.png", "dunebuggy.gif", "a/b/c/dunebuggy.gif",}, "vehicleImage",
-          "x.y.z", new String[0][],
-          getResourceAnnotation("duneBuggyInNonDefaultPackage"));
-      assertEquals("a/b/c/dunebuggy.gif", imgName);
-    }
-
-    logger.assertCorrectLogEntries();
-  }
-
-  /**
-   * Tests that a warning is logged if both the old "gwt.resource" javadoc
-   * construct is used and a resource annotation is used.
-   */
-  @Resource("Horse Shoes.jpg")
-  public void testWarnOnUseOfAnnotationAndLegacyJavaDoc()
-      throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    b.expectWarn(ImageBundleGenerator.MSG_MULTIPLE_ANNOTATIONS, null);
-    UnitTestTreeLogger logger = b.createLogger();
-
-    Resource resAnn = getResourceAnnotation("testWarnOnUseOfAnnotationAndLegacyJavaDoc");
-    String imgName = getImageName(logger, new String[] {
-        "test/flypaper.gif", "test/horse shoes.jpg", "test/Horse Shoes.jpg"},
-        "horseshoes", "test", new String[][] {{"Horse Shoes.jpg"}}, resAnn);
-
-    assertEquals("test/Horse Shoes.jpg", imgName);
-    logger.assertCorrectLogEntries();
-  }
-
-  /**
-   * Tests that a warning is logged if the old "gwt.resource" javadoc construct
-   * is used.
-   */
-  public void testWarnOnUseOfLegacyJavaDoc() throws UnableToCompleteException {
-    UnitTestTreeLogger.Builder b = new UnitTestTreeLogger.Builder();
-    if (GenUtil.warnAboutMetadata()) {
-      b.expectWarn(ImageBundleGenerator.MSG_JAVADOC_FORM_DEPRECATED, null);
-    }
-    UnitTestTreeLogger logger = b.createLogger();
-
-    String imgName = getImageName(logger, new String[] {
-        "test/flypaper.gif", "test/horse shoes.jpg", "test/Horse Shoes.jpg"},
-        "horseshoes", "test", new String[][] {{"Horse Shoes.jpg"}}, null);
-
-    assertEquals("test/Horse Shoes.jpg", imgName);
     logger.assertCorrectLogEntries();
   }
 
   private JMethodOracle createJMethodOracle(final String methodName,
-      final String packageName, final String[][] resourceMetadata,
-      final Resource resourceAnnotation) {
+      final String packageName, final Resource resourceAnnotation) {
     return new JMethodOracle() {
       public Resource getAnnotation(Class<Resource> clazz) {
         return resourceAnnotation;
-      }
-
-      public String[][] getMetaData(String metadataTag) {
-        return resourceMetadata;
       }
 
       public String getName() {
@@ -456,8 +331,7 @@ public class ImageBundleGeneratorTest extends TestCase {
 
   private String getImageName(UnitTestTreeLogger logger,
       final String[] pretendResources, String methodName, String pkgName,
-      String[][] resMetadata, final Resource resAnn)
-      throws UnableToCompleteException {
+      final Resource resAnn) throws UnableToCompleteException {
     ImageBundleGenerator ibg = new ImageBundleGenerator(
         new ImageBundleGenerator.ResourceLocator() {
           private final List<String> resList = Arrays.asList(pretendResources);
@@ -467,7 +341,7 @@ public class ImageBundleGeneratorTest extends TestCase {
           }
         });
     JMethodOracle methodOracle = createJMethodOracle(methodName, pkgName,
-        resMetadata, resAnn);
+        resAnn);
     return ibg.getImageResourceName(logger, methodOracle);
   }
 

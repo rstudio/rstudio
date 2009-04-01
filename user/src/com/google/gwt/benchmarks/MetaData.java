@@ -20,8 +20,6 @@ package com.google.gwt.benchmarks;
  */
 class MetaData {
 
-  private CategoryImpl category;
-
   private String className;
 
   private String methodName;
@@ -33,11 +31,10 @@ class MetaData {
   private String testName;
 
   public MetaData(String className, String methodName, String sourceCode,
-      CategoryImpl category, String testName, String testDescription) {
+      String testName, String testDescription) {
     this.className = className;
     this.methodName = methodName;
     this.sourceCode = sourceCode;
-    this.category = category;
     this.testName = testName;
     this.testDescription = testDescription;
   }
@@ -51,10 +48,6 @@ class MetaData {
     MetaData md = (MetaData) obj;
 
     return md.className.equals(className) && md.methodName.equals(methodName);
-  }
-
-  public CategoryImpl getCategory() {
-    return category;
   }
 
   public String getClassName() {

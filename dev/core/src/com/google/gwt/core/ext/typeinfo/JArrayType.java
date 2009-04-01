@@ -44,12 +44,6 @@ public class JArrayType extends JClassType {
   }
 
   @Override
-  public void addMetaData(String tagName, String[] values) {
-    throw new UnsupportedOperationException("modifying a "
-        + getClass().getSimpleName());
-  }
-
-  @Override
   public void addModifierBits(int bits) {
     throw new UnsupportedOperationException("modifying a "
         + getClass().getSimpleName());
@@ -128,16 +122,6 @@ public class JArrayType extends JClassType {
   @Override
   public JType getLeafType() {
     return componentType.getLeafType();
-  }
-
-  @Override
-  public String[][] getMetaData(String tagName) {
-    return TypeOracle.NO_STRING_ARR_ARR;
-  }
-
-  @Override
-  public String[] getMetaDataTags() {
-    return TypeOracle.NO_STRINGS;
   }
 
   @Override

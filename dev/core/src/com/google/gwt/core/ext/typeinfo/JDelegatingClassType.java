@@ -36,12 +36,6 @@ abstract class JDelegatingClassType extends JClassType {
   }
 
   @Override
-  public final void addMetaData(String tagName, String[] values) {
-    throw new UnsupportedOperationException("modifying a "
-        + getClass().getSimpleName());
-  }
-
-  @Override
   public final void addModifierBits(int bits) {
     throw new UnsupportedOperationException("modifying a "
         + getClass().getSimpleName());
@@ -130,16 +124,6 @@ abstract class JDelegatingClassType extends JClassType {
   @Override
   public String getJNISignature() {
     return baseType.getJNISignature();
-  }
-
-  @Override
-  public String[][] getMetaData(String tagName) {
-    return baseType.getMetaData(tagName);
-  }
-
-  @Override
-  public String[] getMetaDataTags() {
-    return baseType.getMetaDataTags();
   }
 
   /**

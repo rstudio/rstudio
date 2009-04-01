@@ -29,7 +29,6 @@ import com.google.gwt.core.ext.typeinfo.JPrimitiveType;
 import com.google.gwt.core.ext.typeinfo.JType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.generator.NameFactory;
 import com.google.gwt.dev.javac.TypeOracleMediator;
 import com.google.gwt.dev.util.Util;
@@ -66,7 +65,6 @@ import java.util.Set;
  * as well as the necessary type and field serializers.
  */
 class ProxyCreator {
-  private static final String ENTRY_POINT_TAG = "gwt.defaultEntryPoint";
 
   private static final Map<JPrimitiveType, ResponseReader> JPRIMITIVETYPE_TO_RESPONSEREADER = new HashMap<JPrimitiveType, ResponseReader>();
 
@@ -206,14 +204,6 @@ class ProxyCreator {
       throws UnableToCompleteException {
     TypeOracle typeOracle = context.getTypeOracle();
 
-    TreeLogger javadocAnnotationDeprecationBranch = null;
-    if (GenUtil.warnAboutMetadata()) {
-      javadocAnnotationDeprecationBranch = logger.branch(TreeLogger.TRACE,
-          "Scanning this RemoteService for deprecated annotations; "
-              + "Please see " + RemoteServiceRelativePath.class.getName()
-              + " for more information.", null);
-    }
-
     JClassType serviceAsync = typeOracle.findType(serviceIntf.getQualifiedSourceName()
         + "Async");
     if (serviceAsync == null) {
@@ -293,7 +283,7 @@ class ProxyCreator {
     generateProxyFields(srcWriter, typesSentFromBrowser,
         serializationPolicyStrongName, remoteServiceInterfaceName);
 
-    generateProxyContructor(javadocAnnotationDeprecationBranch, srcWriter);
+    generateProxyContructor(srcWriter);
 
     generateProxyMethods(srcWriter, typesSentFromBrowser,
         syncMethToAsyncMethMap);
@@ -312,14 +302,12 @@ class ProxyCreator {
    * using the default address for the
    * {@link com.google.gwt.user.client.rpc.RemoteService RemoteService}.
    */
-  private void generateProxyContructor(
-      TreeLogger javadocAnnotationDeprecationBranch, SourceWriter srcWriter) {
+  private void generateProxyContructor(SourceWriter srcWriter) {
     srcWriter.println("public " + getProxySimpleName() + "() {");
     srcWriter.indent();
     srcWriter.println("super(GWT.getModuleBaseURL(),");
     srcWriter.indent();
-    srcWriter.println(getRemoteServiceRelativePath(javadocAnnotationDeprecationBranch)
-        + ", ");
+    srcWriter.println(getRemoteServiceRelativePath() + ", ");
     srcWriter.println("SERIALIZATION_POLICY, ");
     srcWriter.println("SERIALIZER);");
     srcWriter.outdent();
@@ -564,21 +552,10 @@ class ProxyCreator {
     return name[1];
   }
 
-  private String getRemoteServiceRelativePath(
-      TreeLogger javadocAnnotationDeprecationBranch) {
-    String[][] metaData = serviceIntf.getMetaData(ENTRY_POINT_TAG);
-    if (metaData.length != 0) {
-      if (javadocAnnotationDeprecationBranch != null) {
-        javadocAnnotationDeprecationBranch.log(TreeLogger.WARN,
-            "Deprecated use of " + ENTRY_POINT_TAG + "; Please use "
-                + RemoteServiceRelativePath.class.getName() + " instead", null);
-      }
-      return metaData[0][0];
-    } else {
-      RemoteServiceRelativePath moduleRelativeURL = serviceIntf.getAnnotation(RemoteServiceRelativePath.class);
-      if (moduleRelativeURL != null) {
-        return "\"" + moduleRelativeURL.value() + "\"";
-      }
+  private String getRemoteServiceRelativePath() {
+    RemoteServiceRelativePath moduleRelativeURL = serviceIntf.getAnnotation(RemoteServiceRelativePath.class);
+    if (moduleRelativeURL != null) {
+      return "\"" + moduleRelativeURL.value() + "\"";
     }
 
     return null;

@@ -58,7 +58,7 @@ public class JdtBehaviorTest extends TestCase {
     public CompilerImpl(INameEnvironment environment,
         ICompilerRequestor requestor) {
       super(environment, DefaultErrorHandlingPolicies.proceedWithAllProblems(),
-          JdtCompiler.getCompilerOptions(false), requestor,
+          JdtCompiler.getCompilerOptions(), requestor,
           new DefaultProblemFactory(Locale.getDefault()));
     }
   }

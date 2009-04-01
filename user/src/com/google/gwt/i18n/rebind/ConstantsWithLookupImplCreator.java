@@ -34,26 +34,22 @@ import java.util.Map;
 class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
   final JMethod[] allInterfaceMethods;
 
-  private final Map<String, AbstractMethodCreator> namesToMethodCreators =
-    new HashMap<String, AbstractMethodCreator>();
+  private final Map<String, AbstractMethodCreator> namesToMethodCreators = new HashMap<String, AbstractMethodCreator>();
 
   /**
    * Constructor for <code>ConstantsWithLookupImplCreator</code>.
    * 
    * @param logger logger to print errors
-   * @param deprecatedLogger logger to use for deprecated warnings
    * @param writer <code>Writer</code> to print to
    * @param localizableClass class/interface to conform to
    * @param resourceList resource bundle used to generate the class
    * @param oracle types
    * @throws UnableToCompleteException
    */
-  ConstantsWithLookupImplCreator(TreeLogger logger,
-      TreeLogger deprecatedLogger, SourceWriter writer,
-      JClassType localizableClass, ResourceList resourceList,
-      TypeOracle oracle) throws UnableToCompleteException {
-    super(logger, deprecatedLogger, writer, localizableClass, resourceList,
-        oracle);
+  ConstantsWithLookupImplCreator(TreeLogger logger, SourceWriter writer,
+      JClassType localizableClass, ResourceList resourceList, TypeOracle oracle)
+      throws UnableToCompleteException {
+    super(logger, writer, localizableClass, resourceList, oracle);
     try {
 
       // Boolean
@@ -122,12 +118,13 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
 
       // Map - use erased type for matching
       JType mapType = oracle.parse(Map.class.getName()).getErasedType();
-      namesToMethodCreators.put("getMap", new LookupMethodCreator(this, mapType) {
-        @Override
-        public String getReturnTypeName() {
-          return ConstantsMapMethodCreator.GENERIC_STRING_MAP_TYPE;
-        }
-      });
+      namesToMethodCreators.put("getMap",
+          new LookupMethodCreator(this, mapType) {
+            @Override
+            public String getReturnTypeName() {
+              return ConstantsMapMethodCreator.GENERIC_STRING_MAP_TYPE;
+            }
+          });
 
       // String
       JType stringType = oracle.parse(String.class.getName());
@@ -188,7 +185,8 @@ class ConstantsWithLookupImplCreator extends ConstantsImplCreator {
         checkConstantMethod(logger, method);
       } else {
         if (params.length != 1
-            || !params[0].getType().getQualifiedSourceName().equals("java.lang.String")) {
+            || !params[0].getType().getQualifiedSourceName().equals(
+                "java.lang.String")) {
           throw error(logger, method + " must have a single String argument.");
         }
         checkReturnType(logger, method);

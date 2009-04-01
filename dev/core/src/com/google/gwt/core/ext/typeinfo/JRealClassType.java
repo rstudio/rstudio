@@ -46,8 +46,6 @@ public class JRealClassType extends JClassType {
 
   private final Members members = new Members(this);
 
-  private final HasMetaData metaData = new MetaData();
-
   private int modifierBits;
 
   private final String name;
@@ -99,11 +97,6 @@ public class JRealClassType extends JClassType {
   public void addImplementedInterface(JClassType intf) {
     assert (intf != null);
     interfaces = Lists.add(interfaces, intf);
-  }
-
-  @SuppressWarnings("deprecation")
-  public void addMetaData(String tagName, String[] values) {
-    metaData.addMetaData(tagName, values);
   }
 
   public void addModifierBits(int bits) {
@@ -176,16 +169,6 @@ public class JRealClassType extends JClassType {
       packageName += "/";
     }
     return "L" + packageName + typeName + ";";
-  }
-
-  @SuppressWarnings("deprecation")
-  public String[][] getMetaData(String tagName) {
-    return metaData.getMetaData(tagName);
-  }
-
-  @SuppressWarnings("deprecation")
-  public String[] getMetaDataTags() {
-    return metaData.getMetaDataTags();
   }
 
   @Override

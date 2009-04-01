@@ -447,7 +447,7 @@ public abstract class AbstractCompiler {
     IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
-    CompilerOptions options = JdtCompiler.getCompilerOptions(true);
+    CompilerOptions options = JdtCompiler.getCompilerOptions();
 
     // This is only needed by TypeOracleBuilder to parse metadata.
     options.docCommentSupport = false;

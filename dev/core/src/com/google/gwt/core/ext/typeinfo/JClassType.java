@@ -25,6 +25,7 @@ import java.util.Set;
 /**
  * Type used to represent any non-primitive type.
  */
+@SuppressWarnings("deprecation")
 public abstract class JClassType extends JType implements HasAnnotations,
     HasMetaData {
 
@@ -333,7 +334,10 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract void addImplementedInterface(JClassType intf);
 
-  public abstract void addMetaData(String tagName, String[] values);
+  @Deprecated
+  public final void addMetaData(String tagName, String[] values) {
+    throw new UnsupportedOperationException();
+  }
 
   public abstract void addModifierBits(int bits);
 
@@ -344,7 +348,7 @@ public abstract class JClassType extends JType implements HasAnnotations,
       if (isParameterized != null && isParameterized.getBaseType() == type) {
         return isParameterized;
       }
-      
+
       JRawType isRaw = supertype.isRawType();
       if (isRaw != null && isRaw.getBaseType() == type) {
         return isRaw.asParameterizedByWildcards();
@@ -381,9 +385,15 @@ public abstract class JClassType extends JType implements HasAnnotations,
 
   public abstract JClassType[] getImplementedInterfaces();
 
-  public abstract String[][] getMetaData(String tagName);
+  @Deprecated
+  public final String[][] getMetaData(String tagName) {
+    return TypeOracle.NO_STRING_ARR_ARR;
+  }
 
-  public abstract String[] getMetaDataTags();
+  @Deprecated
+  public final String[] getMetaDataTags() {
+    return TypeOracle.NO_STRINGS;
+  }
 
   public abstract JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException;

@@ -30,7 +30,7 @@ import com.google.gwt.user.rebind.SourceWriter;
  * standard <code>AbstractGeneratorClassCreator</code>.
  */
 class MessagesImplCreator extends AbstractLocalizableImplCreator {
-  
+
   /**
    * Constructor for <code>MessagesImplCreator</code>.
    * 
@@ -39,15 +39,12 @@ class MessagesImplCreator extends AbstractLocalizableImplCreator {
    * @param resourceList resource bundle used to generate the class
    * @param oracle types
    * @param logger logger to print errors
-   * @param deprecatedLogger logger for deprecated metadata warnings
    * @throws UnableToCompleteException
    */
-  public MessagesImplCreator(TreeLogger logger, TreeLogger deprecatedLogger,
-      SourceWriter writer, JClassType localizableClass,
-      ResourceList resourceList, TypeOracle oracle)
+  public MessagesImplCreator(TreeLogger logger, SourceWriter writer,
+      JClassType localizableClass, ResourceList resourceList, TypeOracle oracle)
       throws UnableToCompleteException {
-    super(logger, deprecatedLogger, writer, localizableClass, resourceList,
-        false);
+    super(logger, writer, localizableClass, resourceList, false);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       register(stringClass, new MessagesMethodCreator(this));

@@ -24,14 +24,13 @@ import java.util.Map;
 /**
  * Common superclass for {@link JMethod} and {@link JConstructor}.
  */
+@SuppressWarnings("deprecation")
 public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     HasTypeParameters {
 
   private final Annotations annotations;
 
   private boolean isVarArgs = false;
-
-  private final HasMetaData metaData = new MetaData();
 
   private int modifierBits;
 
@@ -46,7 +45,6 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   JAbstractMethod(JAbstractMethod srcMethod) {
     this.annotations = new Annotations(srcMethod.annotations);
     this.isVarArgs = srcMethod.isVarArgs;
-    MetaData.copy(this, srcMethod.metaData);
     this.modifierBits = srcMethod.modifierBits;
     this.name = srcMethod.name;
   }
@@ -63,9 +61,9 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
     }
   }
 
-  @SuppressWarnings("deprecation")
-  public void addMetaData(String tagName, String[] values) {
-    metaData.addMetaData(tagName, values);
+  @Deprecated
+  public final void addMetaData(String tagName, String[] values) {
+    throw new UnsupportedOperationException();
   }
 
   public void addModifierBits(int bits) {
@@ -94,14 +92,14 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
    */
   public abstract JClassType getEnclosingType();
 
-  @SuppressWarnings("deprecation")
-  public String[][] getMetaData(String tagName) {
-    return metaData.getMetaData(tagName);
+  @Deprecated
+  public final String[][] getMetaData(String tagName) {
+    return TypeOracle.NO_STRING_ARR_ARR;
   }
 
-  @SuppressWarnings("deprecation")
-  public String[] getMetaDataTags() {
-    return metaData.getMetaDataTags();
+  @Deprecated
+  public final String[] getMetaDataTags() {
+    return TypeOracle.NO_STRINGS;
   }
 
   public String getName() {

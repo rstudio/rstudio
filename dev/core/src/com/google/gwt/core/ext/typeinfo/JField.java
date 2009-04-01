@@ -21,13 +21,12 @@ import java.util.Map;
 /**
  * Represents a field declaration.
  */
+@SuppressWarnings("deprecation")
 public class JField implements HasAnnotations, HasMetaData {
 
   private final Annotations annotations;
 
   private final JClassType enclosingType;
-
-  private final HasMetaData metaData = new MetaData();
 
   private int modifierBits;
 
@@ -54,13 +53,11 @@ public class JField implements HasAnnotations, HasMetaData {
     this.modifierBits = srcField.modifierBits;
     this.name = srcField.name;
     this.type = srcField.type;
-
-    MetaData.copy(this, srcField);
   }
 
-  @SuppressWarnings("deprecation")
-  public void addMetaData(String tagName, String[] values) {
-    metaData.addMetaData(tagName, values);
+  @Deprecated
+  public final void addMetaData(String tagName, String[] values) {
+    throw new UnsupportedOperationException();
   }
 
   public void addModifierBits(int modifierBits) {
@@ -75,14 +72,14 @@ public class JField implements HasAnnotations, HasMetaData {
     return enclosingType;
   }
 
-  @SuppressWarnings("deprecation")
-  public String[][] getMetaData(String tagName) {
-    return metaData.getMetaData(tagName);
+  @Deprecated
+  public final String[][] getMetaData(String tagName) {
+    return TypeOracle.NO_STRING_ARR_ARR;
   }
 
-  @SuppressWarnings("deprecation")
-  public String[] getMetaDataTags() {
-    return metaData.getMetaDataTags();
+  @Deprecated
+  public final String[] getMetaDataTags() {
+    return TypeOracle.NO_STRINGS;
   }
 
   public String getName() {

@@ -23,7 +23,6 @@ import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.user.client.ui.ImageBundle;
 import com.google.gwt.user.client.ui.ImageBundle.Resource;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
@@ -51,11 +50,9 @@ public class ImageBundleGenerator extends Generator {
   /**
    * Simple wrapper around JMethod that allows for unit test mocking.
    */
-  /* private */interface JMethodOracle {
+  interface JMethodOracle {
 
     Resource getAnnotation(Class<Resource> clazz);
-
-    String[][] getMetaData(String metadataTag);
 
     String getName();
 
@@ -87,10 +84,6 @@ public class ImageBundleGenerator extends Generator {
       return delegate.getAnnotation(clazz);
     }
 
-    public String[][] getMetaData(String metadataTag) {
-      return delegate.getMetaData(metadataTag);
-    }
-
     public String getName() {
       return delegate.getName();
     }
@@ -99,10 +92,6 @@ public class ImageBundleGenerator extends Generator {
       return delegate.getEnclosingType().getPackage().getName();
     }
   }
-
-  /* private */static final String MSG_JAVADOC_FORM_DEPRECATED = "Use of @gwt.resource in javadoc is deprecated; use the annotation ImageBundle.@Resource instead";
-
-  /* private */static final String MSG_MULTIPLE_ANNOTATIONS = "You are using both the @Resource annotation and the deprecated @gwt.resource in javadoc; @Resource will be used, and @gwt.resource will be ignored";
 
   /* private */static final String MSG_NO_FILE_BASED_ON_METHOD_NAME = "No matching image resource was found; any of the following filenames would have matched had they been present:";
 
@@ -115,8 +104,6 @@ public class ImageBundleGenerator extends Generator {
   private static final String[] IMAGE_FILE_EXTENSIONS = {"png", "gif", "jpg"};
 
   private static final String IMAGEBUNDLE_QNAME = "com.google.gwt.user.client.ui.ImageBundle";
-
-  private static final String METADATA_TAG = "gwt.resource";
 
   /* private */static String msgCannotFindImageFromMetaData(String imgResName) {
     return "Unable to find image resource '" + imgResName + "'";
@@ -415,30 +402,10 @@ public class ImageBundleGenerator extends Generator {
   }
 
   /**
-   * Attempts to get the image name (verbatim) from old-school javadoc metadata.
+   * Attempts to get the image name from an annotation.
    * 
-   * @return the string specified in "resource" javadoc metdata tag; never
-   *         returns <code>null</code>
-   */
-  private String tryGetImageNameFromJavaDoc(JMethodOracle method) {
-    String imgName = null;
-    String[][] md = method.getMetaData(METADATA_TAG);
-    if (md.length == 1) {
-      int lastTagIndex = md.length - 1;
-      int lastValueIndex = md[lastTagIndex].length - 1;
-      imgName = md[lastTagIndex][lastValueIndex];
-    }
-    return imgName;
-  }
-
-  /**
-   * Attempts to get the image name from either an annotation or from pre-1.5
-   * javadoc metadata, logging warnings to educate the user about deprecation
-   * and behaviors in the face of conflicting metadata (for example, if both
-   * forms of metadata are present).
-   * 
-   * @param logger if metadata is found but the specified resource isn't
-   *          available, a warning is logged
+   * @param logger if an annotation is found but the specified resource isn't
+   *          available, an error is logged
    * @param method the image bundle method whose associated image resource is
    *          being sought
    * @return a resource name that is suitable to be passed into
@@ -449,27 +416,7 @@ public class ImageBundleGenerator extends Generator {
    */
   private String tryGetImageNameFromMetaData(TreeLogger logger,
       JMethodOracle method) throws UnableToCompleteException {
-    String imgFileName = null;
-    String imgNameAnn = tryGetImageNameFromAnnotation(method);
-    String imgNameJavaDoc = tryGetImageNameFromJavaDoc(method);
-    if (imgNameJavaDoc != null) {
-      if (imgNameAnn == null) {
-        // There is JavaDoc metadata but no annotation.
-        imgFileName = imgNameJavaDoc;
-        if (GenUtil.warnAboutMetadata()) {
-          logger.log(TreeLogger.WARN, MSG_JAVADOC_FORM_DEPRECATED, null);
-        }
-      } else {
-        // There is both JavaDoc metadata and an annotation.
-        logger.log(TreeLogger.WARN, MSG_MULTIPLE_ANNOTATIONS, null);
-        imgFileName = imgNameAnn;
-      }
-    } else if (imgNameAnn != null) {
-      // There is only an annotation.
-      imgFileName = imgNameAnn;
-    }
-    assert (imgFileName == null || (imgNameAnn != null || imgNameJavaDoc != null));
-
+    String imgFileName = tryGetImageNameFromAnnotation(method);
     if (imgFileName == null) {
       // Exit early because neither an annotation nor javadoc was found.
       return null;

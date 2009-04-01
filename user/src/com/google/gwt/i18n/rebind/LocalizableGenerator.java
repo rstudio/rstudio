@@ -24,7 +24,6 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
-import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.i18n.client.Constants;
 import com.google.gwt.i18n.client.ConstantsWithLookup;
 import com.google.gwt.i18n.client.Messages;
@@ -45,7 +44,7 @@ public class LocalizableGenerator extends Generator {
   public static final String CONSTANTS_WITH_LOOKUP_NAME = ConstantsWithLookup.class.getName();
 
   public static final String MESSAGES_NAME = Messages.class.getName();
-  
+
   private static long lastReloadCount = -1;
   /**
    * The token representing the locale property controlling Localization.
@@ -75,20 +74,20 @@ public class LocalizableGenerator extends Generator {
       // property. Basically,
       //
       // 1) If the locale is specified by the user using a request parameter
-      //    or a meta tag, AND
+      // or a meta tag, AND
       // 2) The locale matches or is a parent of one of the locales
-      //    exposed in the application's gwt.xml file, THEN
+      // exposed in the application's gwt.xml file, THEN
       //
       // the value returned by getPropertyValue() will be:
       //
       // a) the locale specified by the user, OR
       // b) the parent locale, if an exact match between the user-specified
-      //    locale and the exposed locales cannot be found
+      // locale and the exposed locales cannot be found
       //
       // If the locale is not specified by the user as a request parameter
       // or via a meta tag, or if the locale is formatted incorrectly,
       // getPropertyValue() will return "default".
-      locale = propertyOracle.getPropertyValue(logger, PROP_LOCALE);   
+      locale = propertyOracle.getPropertyValue(logger, PROP_LOCALE);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Could not parse specified locale", e);
       throw new UnableToCompleteException();
@@ -113,17 +112,11 @@ public class LocalizableGenerator extends Generator {
       throw new UnableToCompleteException();
     }
 
-    TreeLogger deprecatedLogger = null;
-    if (GenUtil.warnAboutMetadata()) {
-      deprecatedLogger = logger.branch(TreeLogger.TRACE,
-          "Checking for deprecated metadata", null);
-    }
-
     GwtLocale locale = LocaleUtils.getLocaleFactory().fromString(localeName);
     
     // Link current locale and interface type to correct implementation class.
     String generatedClass = AbstractLocalizableImplCreator.generateConstantOrMessageClass(
-        logger, deprecatedLogger , context, locale, targetClass);
+        logger, context, locale, targetClass);
     if (generatedClass != null) {
       return generatedClass;
     }

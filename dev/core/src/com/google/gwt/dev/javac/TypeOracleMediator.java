@@ -16,7 +16,6 @@
 package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.typeinfo.HasMetaData;
 import com.google.gwt.core.ext.typeinfo.HasTypeParameters;
 import com.google.gwt.core.ext.typeinfo.JAbstractMethod;
 import com.google.gwt.core.ext.typeinfo.JAnnotationMethod;
@@ -40,7 +39,6 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.Shared;
-import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
@@ -58,7 +56,6 @@ import org.eclipse.jdt.internal.compiler.ast.Clinit;
 import org.eclipse.jdt.internal.compiler.ast.Expression;
 import org.eclipse.jdt.internal.compiler.ast.FieldDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.Initializer;
-import org.eclipse.jdt.internal.compiler.ast.Javadoc;
 import org.eclipse.jdt.internal.compiler.ast.MemberValuePair;
 import org.eclipse.jdt.internal.compiler.ast.MethodDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.NameReference;
@@ -82,9 +79,6 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeIds;
 import org.eclipse.jdt.internal.compiler.lookup.TypeVariableBinding;
 import org.eclipse.jdt.internal.compiler.lookup.WildcardBinding;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.StringReader;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
@@ -92,7 +86,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * Builds or rebuilds a {@link com.google.gwt.core.ext.typeinfo.TypeOracle} from
@@ -101,7 +94,6 @@ import java.util.regex.Pattern;
 public class TypeOracleMediator {
 
   private static final JClassType[] NO_JCLASSES = new JClassType[0];
-  private static final Pattern PATTERN_WHITESPACE = Pattern.compile("\\s");
 
   /**
    * Returns the binary name of a type. This is the same name that would be
@@ -139,97 +131,6 @@ public class TypeOracleMediator {
     }
 
     return classType.getQualifiedSourceName();
-  }
-
-  static boolean parseMetaDataTags(String unitSource, HasMetaData hasMetaData,
-      Javadoc javadoc) {
-
-    int start = javadoc.sourceStart;
-    int end = javadoc.sourceEnd;
-    if (start < 0 || end > unitSource.length() || start > end) {
-      // Invalid.
-      return false;
-    }
-    String comment = unitSource.substring(start, end + 1);
-    BufferedReader reader = new BufferedReader(new StringReader(
-        comment.toString()));
-    String activeTag = null;
-    final List<String> tagValues = new ArrayList<String>();
-    try {
-      boolean firstLine = true;
-      for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-        if (firstLine) {
-          firstLine = false;
-          int commentStart = line.indexOf("/**");
-          if (commentStart == -1) {
-            // Malformed.
-            return false;
-          }
-          line = line.substring(commentStart + 3);
-        }
-
-        if (activeTag == null && line.indexOf('@') < 0) {
-          continue;
-        }
-
-        String[] tokens = PATTERN_WHITESPACE.split(line);
-        boolean canIgnoreStar = true;
-        for (int i = 0; i < tokens.length; i++) {
-          String token = tokens[i];
-
-          // Check for the end.
-          if (token.endsWith("*/")) {
-            token = token.substring(0, token.length() - 2);
-          }
-
-          // Check for an ignored leading star.
-          if (canIgnoreStar && token.startsWith("*")) {
-            token = token.substring(1);
-            canIgnoreStar = false;
-          }
-
-          // Decide what to do with whatever is left.
-          if (token.length() > 0) {
-            canIgnoreStar = false;
-            if (token.startsWith("@")) {
-              // A new tag has been introduced.
-              // Subsequent tokens will attach to it.
-              // Make sure we finish the previously active tag before moving on.
-              //
-              if (activeTag != null) {
-                finishTag(hasMetaData, activeTag, tagValues);
-              }
-              activeTag = token.substring(1);
-            } else if (activeTag != null) {
-              // Attach this item to the active tag.
-              //
-              tagValues.add(token);
-            } else {
-              // Just ignore it.
-              //
-            }
-          }
-        }
-      }
-    } catch (IOException e) {
-      return false;
-    }
-
-    // To catch the last batch of values, if any.
-    //
-    finishTag(hasMetaData, activeTag, tagValues);
-    return true;
-  }
-
-  @SuppressWarnings("deprecation")
-  private static void finishTag(HasMetaData hasMetaData, String tagName,
-      List<String> tagValues) {
-    // Add the values even if the list is empty, because the presence of the
-    // tag itself might be important.
-    // 
-    String[] values = tagValues.toArray(Empty.STRINGS);
-    hasMetaData.addMetaData(tagName, values);
-    tagValues.clear();
   }
 
   /**
@@ -404,8 +305,7 @@ public class TypeOracleMediator {
       for (CompiledClass compiledClass : compiledClasses) {
         if (unresolvedTypes.remove(compiledClass.getRealClassType())) {
           TypeDeclaration typeDeclaration = compiledClass.getTypeDeclaration();
-          if (!resolveTypeDeclaration(cudLogger, unit.getSource(),
-              typeDeclaration)) {
+          if (!resolveTypeDeclaration(cudLogger, typeDeclaration)) {
             logger.log(TreeLogger.WARN,
                 "Unexpectedly unable to fully resolve type "
                     + compiledClass.getSourceName());
@@ -418,7 +318,7 @@ public class TypeOracleMediator {
     sourceMapper.clear();
     tvMapper.clear();
 
-    typeOracle.finish(logger);
+    typeOracle.finish();
   }
 
   public TypeOracle getTypeOracle() {
@@ -473,7 +373,8 @@ public class TypeOracleMediator {
       identifierToValue.put(identifier, elementValue);
     }
 
-    return AnnotationProxyFactory.create(clazz, Maps.normalize(identifierToValue));
+    return AnnotationProxyFactory.create(clazz,
+        Maps.normalize(identifierToValue));
   }
 
   private JRealClassType createType(CompiledClass compiledClass) {
@@ -903,8 +804,8 @@ public class TypeOracleMediator {
     return true;
   }
 
-  private boolean resolveField(TreeLogger logger, String unitSource,
-      JClassType enclosingType, FieldDeclaration jfield) {
+  private boolean resolveField(TreeLogger logger, JClassType enclosingType,
+      FieldDeclaration jfield) {
 
     if (jfield instanceof Initializer) {
       // Pretend we didn't see this.
@@ -942,23 +843,15 @@ public class TypeOracleMediator {
     }
     field.setType(fieldType);
 
-    // Get tags.
-    //
-    if (jfield.javadoc != null) {
-      if (!parseMetaDataTags(unitSource, field, jfield.javadoc)) {
-        return false;
-      }
-    }
-
     return true;
   }
 
-  private boolean resolveFields(TreeLogger logger, String unitSource,
-      JClassType type, FieldDeclaration[] jfields) {
+  private boolean resolveFields(TreeLogger logger, JClassType type,
+      FieldDeclaration[] jfields) {
     if (jfields != null) {
       for (int i = 0; i < jfields.length; i++) {
         FieldDeclaration jfield = jfields[i];
-        if (!resolveField(logger, unitSource, type, jfield)) {
+        if (!resolveField(logger, type, jfield)) {
           return false;
         }
       }
@@ -966,8 +859,8 @@ public class TypeOracleMediator {
     return true;
   }
 
-  private boolean resolveMethod(TreeLogger logger, String unitSource,
-      JClassType enclosingType, AbstractMethodDeclaration jmethod) {
+  private boolean resolveMethod(TreeLogger logger, JClassType enclosingType,
+      AbstractMethodDeclaration jmethod) {
 
     if (jmethod instanceof Clinit) {
       // Pretend we didn't see this.
@@ -1053,23 +946,15 @@ public class TypeOracleMediator {
       return false;
     }
 
-    // Get tags.
-    //
-    if (jmethod.javadoc != null) {
-      if (!parseMetaDataTags(unitSource, method, jmethod.javadoc)) {
-        return false;
-      }
-    }
-
     return true;
   }
 
-  private boolean resolveMethods(TreeLogger logger, String unitSource,
-      JClassType type, AbstractMethodDeclaration[] jmethods) {
+  private boolean resolveMethods(TreeLogger logger, JClassType type,
+      AbstractMethodDeclaration[] jmethods) {
     if (jmethods != null) {
       for (int i = 0; i < jmethods.length; i++) {
         AbstractMethodDeclaration jmethod = jmethods[i];
-        if (!resolveMethod(logger, unitSource, type, jmethod)) {
+        if (!resolveMethod(logger, type, jmethod)) {
           return false;
         }
       }
@@ -1371,7 +1256,7 @@ public class TypeOracleMediator {
     return null;
   }
 
-  private boolean resolveTypeDeclaration(TreeLogger logger, String unitSource,
+  private boolean resolveTypeDeclaration(TreeLogger logger,
       TypeDeclaration clazz) {
     SourceTypeBinding binding = clazz.binding;
     assert (binding.constantPoolName() != null);
@@ -1443,7 +1328,7 @@ public class TypeOracleMediator {
     // Resolve fields.
     //
     FieldDeclaration[] fields = clazz.fields;
-    if (!resolveFields(logger, unitSource, jtype, fields)) {
+    if (!resolveFields(logger, jtype, fields)) {
       return false;
     }
 
@@ -1459,16 +1344,8 @@ public class TypeOracleMediator {
     // bounds resolution for generic methods must happen after the resolution
     // of methods is complete.
     AbstractMethodDeclaration[] methods = clazz.methods;
-    if (!resolveMethods(logger, unitSource, jtype, methods)) {
+    if (!resolveMethods(logger, jtype, methods)) {
       return false;
-    }
-
-    // Get tags.
-    //
-    if (clazz.javadoc != null) {
-      if (!parseMetaDataTags(unitSource, jtype, clazz.javadoc)) {
-        return false;
-      }
     }
 
     return true;

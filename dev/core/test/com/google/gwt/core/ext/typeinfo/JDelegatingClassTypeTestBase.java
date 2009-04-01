@@ -50,8 +50,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     validateAnnotations(preSubMethod.getAnnotations(),
         postSubMethod.getAnnotations());
 
-    validateMetaData(preSubMethod, postSubMethod);
-
     JParameter[] preSubParams = preSubMethod.getParameters();
     JParameter[] postSubParams = postSubMethod.getParameters();
 
@@ -63,7 +61,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
       validateAnnotations(preSubParam.getAnnotations(),
           postSubParam.getAnnotations());
-      validateMetaData(preSubParam, postSubParam);
 
       assertEquals(substitution.getSubstitution(preSubParam.getType()),
           postSubParam.getType());
@@ -234,28 +231,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
     }
   }
 
-  @SuppressWarnings("deprecation")
-  protected static void validateMetaData(HasMetaData md1, HasMetaData md2) {
-    validateMetaDataTags(md1, md2);
-
-    String[] md1TagNames = md1.getMetaDataTags();
-    String[] md2TagNames = md2.getMetaDataTags();
-
-    for (int i = 0; i < md1TagNames.length; ++i) {
-      assertEquals(md1TagNames[i], md2TagNames[i]);
-
-      String[][] md1TagValues = md1.getMetaData(md1TagNames[i]);
-      String[][] md2TagValues = md2.getMetaData(md2TagNames[i]);
-
-      assertTrue(Arrays.deepEquals(md1TagValues, md2TagValues));
-    }
-  }
-
-  @SuppressWarnings("deprecation")
-  protected static void validateMetaDataTags(HasMetaData md1, HasMetaData md2) {
-    assertEquals(md1.getMetaDataTags().length, md2.getMetaDataTags().length);
-  }
-
   protected static void validateMethodSubstitution(JMethod preSubMethod,
       JMethod postSubMethod, Substitution substitution) {
 
@@ -301,8 +276,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
 
     validateAnnotations(preSubstitution.getAnnotations(),
         postSubstituion.getAnnotations());
-
-    validateMetaData(preSubstitution, postSubstituion);
 
     assertEquals(preSubstitution.getName(), postSubstituion.getName());
     // assertEquals(preSubstitution.getSubstitution(substitution),
@@ -489,28 +462,6 @@ public abstract class JDelegatingClassTypeTestBase extends TestCase {
    * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getJNISignature()}.
    */
   public void testGetJNISignature() {
-  }
-
-  /**
-   * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getMetaData(java.lang.String)}.
-   */
-  public void testGetMetaData() throws NotFoundException {
-    JDelegatingClassType testType = getTestType();
-    JClassType baseType = testType.getBaseType();
-
-    validateMetaData(baseType, testType);
-  }
-
-  /**
-   * Test method for
-   * {@link com.google.gwt.core.ext.typeinfo.JDelegatingClassType#getMetaDataTags()}.
-   */
-  public void testGetMetaDataTags() throws NotFoundException {
-    JDelegatingClassType testType = getTestType();
-    JClassType baseType = testType.getBaseType();
-
-    validateMetaDataTags(baseType, testType);
   }
 
   /**

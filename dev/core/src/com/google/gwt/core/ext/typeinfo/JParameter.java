@@ -21,11 +21,10 @@ import java.util.Map;
 /**
  * Represents a parameter in a declaration.
  */
+@SuppressWarnings("deprecation")
 public class JParameter implements HasAnnotations, HasMetaData {
 
   private final Annotations annotations;
-
-  private final HasMetaData metaData = new MetaData();
 
   private final String name;
 
@@ -53,12 +52,11 @@ public class JParameter implements HasAnnotations, HasMetaData {
     this.type = srcParam.type;
     this.name = srcParam.name;
     this.annotations = new Annotations(srcParam.annotations);
-    MetaData.copy(this, srcParam);
   }
 
-  @SuppressWarnings("deprecation")
-  public void addMetaData(String tagName, String[] values) {
-    metaData.addMetaData(tagName, values);
+  @Deprecated
+  public final void addMetaData(String tagName, String[] values) {
+    throw new UnsupportedOperationException();
   }
 
   public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
@@ -69,14 +67,14 @@ public class JParameter implements HasAnnotations, HasMetaData {
     return enclosingMethod;
   }
 
-  @SuppressWarnings("deprecation")
-  public String[][] getMetaData(String tagName) {
-    return metaData.getMetaData(tagName);
+  @Deprecated
+  public final String[][] getMetaData(String tagName) {
+    return TypeOracle.NO_STRING_ARR_ARR;
   }
 
-  @SuppressWarnings("deprecation")
-  public String[] getMetaDataTags() {
-    return metaData.getMetaDataTags();
+  @Deprecated
+  public final String[] getMetaDataTags() {
+    return TypeOracle.NO_STRINGS;
   }
 
   public String getName() {

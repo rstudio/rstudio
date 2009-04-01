@@ -46,17 +46,16 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
    * Constructor for <code>ConstantsImplCreator</code>.
    * 
    * @param logger logger to print errors
-   * @param deprecatedLogger logger to use for deprecated warnings
    * @param writer <code>Writer</code> to print to
    * @param localizableClass class/interface to conform to
    * @param resourceList resource bundle used to generate the class
    * @param oracle types
    * @throws UnableToCompleteException
    */
-  public ConstantsImplCreator(TreeLogger logger, TreeLogger deprecatedLogger, SourceWriter writer,
-      JClassType localizableClass, ResourceList resourceList,
-      TypeOracle oracle) throws UnableToCompleteException {
-    super(logger, deprecatedLogger, writer, localizableClass, resourceList, true);
+  public ConstantsImplCreator(TreeLogger logger, SourceWriter writer,
+      JClassType localizableClass, ResourceList resourceList, TypeOracle oracle)
+      throws UnableToCompleteException {
+    super(logger, writer, localizableClass, resourceList, true);
     try {
       JClassType stringClass = oracle.getType(String.class.getName());
       JClassType mapClass = oracle.getType(Map.class.getName());
@@ -94,7 +93,8 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
   protected void checkConstantMethod(TreeLogger logger, JMethod method)
       throws UnableToCompleteException {
     if (method.getParameters().length > 0) {
-      throw error(logger, "Methods in interfaces extending Constant must have no parameters");
+      throw error(logger,
+          "Methods in interfaces extending Constant must have no parameters");
     }
     checkReturnType(logger, method);
   }
@@ -108,10 +108,10 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
       throws UnableToCompleteException {
     JType returnType = method.getReturnType();
     JPrimitiveType primitive = returnType.isPrimitive();
-    if (primitive != null && (primitive == JPrimitiveType.BOOLEAN
-        || primitive == JPrimitiveType.DOUBLE
-        || primitive == JPrimitiveType.FLOAT
-        || primitive == JPrimitiveType.INT)) {
+    if (primitive != null
+        && (primitive == JPrimitiveType.BOOLEAN
+            || primitive == JPrimitiveType.DOUBLE
+            || primitive == JPrimitiveType.FLOAT || primitive == JPrimitiveType.INT)) {
       return;
     }
     JArrayType arrayType = returnType.isArray();
@@ -131,16 +131,18 @@ class ConstantsImplCreator extends AbstractLocalizableImplCreator {
       JParameterizedType paramType = returnType.isParameterized();
       if (paramType != null) {
         JClassType[] typeArgs = paramType.getTypeArgs();
-        if (typeArgs.length != 2 || !typeArgs[0].getQualifiedSourceName().equals("java.lang.String")
+        if (typeArgs.length != 2
+            || !typeArgs[0].getQualifiedSourceName().equals("java.lang.String")
             || !typeArgs[1].getQualifiedSourceName().equals("java.lang.String")) {
           throw error(logger,
-          "Map Methods in interfaces extending Constant must be raw or <String, String>");
+              "Map Methods in interfaces extending Constant must be raw or <String, String>");
         }
       }
       return;
     }
-    throw error(logger, "Methods in interfaces extending Constant must have a return type of "
-        + "String/int/float/boolean/double/String[]/Map");
+    throw error(logger,
+        "Methods in interfaces extending Constant must have a return type of "
+            + "String/int/float/boolean/double/String[]/Map");
   }
 
   @Override

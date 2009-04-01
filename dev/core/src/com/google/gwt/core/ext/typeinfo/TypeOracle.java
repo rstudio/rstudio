@@ -15,14 +15,10 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
-import com.google.gwt.dev.generator.GenUtil;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.shell.JsValueGlue;
 import com.google.gwt.dev.util.collect.HashMap;
-import com.google.gwt.dev.util.collect.HashSet;
 import com.google.gwt.dev.util.collect.IdentityHashMap;
 
 import org.apache.commons.collections.map.AbstractReferenceMap;
@@ -144,15 +140,6 @@ public class TypeOracle {
   static final JType[] NO_JTYPES = new JType[0];
   static final String[][] NO_STRING_ARR_ARR = new String[0][];
   static final String[] NO_STRINGS = new String[0];
-
-  static String combine(String[] strings, int startIndex) {
-    StringBuffer sb = new StringBuffer();
-    for (int i = startIndex; i < strings.length; i++) {
-      String s = strings[i];
-      sb.append(s);
-    }
-    return sb.toString();
-  }
 
   static String[] modifierBitsToNames(int bits) {
     List<String> strings = new ArrayList<String>();
@@ -287,11 +274,10 @@ public class TypeOracle {
    * 
    * TODO: make not public?
    */
-  public void finish(TreeLogger logger) {
+  public void finish() {
     JClassType[] newTypes = recentTypes.toArray(NO_JCLASSES);
     computeHierarchyRelationships(newTypes);
     computeSingleJsoImplData(newTypes);
-    consumeTypeArgMetaData(logger, newTypes);
     recentTypes.clear();
   }
 
@@ -713,181 +699,6 @@ public class TypeOracle {
     }
   }
 
-  private void consumeTypeArgMetaData(TreeLogger logger, JClassType[] types) {
-    if (GenUtil.warnAboutMetadata()) {
-      logger = logger.branch(
-          TreeLogger.DEBUG,
-          "Scanning source for uses of the deprecated "
-              + TAG_TYPEARGS
-              + " javadoc annotation; please use Java parameterized types instead",
-          null);
-    }
-    for (int i = 0; i < types.length; i++) {
-      JClassType type = types[i];
-      // CTORS not supported yet
-
-      TreeLogger branch = logger.branch(TreeLogger.DEBUG, "Type "
-          + type.getQualifiedSourceName(), null);
-
-      consumeTypeArgMetaData(branch, type.getMethods());
-      consumeTypeArgMetaData(branch, type.getFields());
-    }
-  }
-
-  private void consumeTypeArgMetaData(TreeLogger logger, JField[] fields) {
-    TreeLogger branch;
-    for (int i = 0; i < fields.length; i++) {
-      JField field = fields[i];
-
-      String[][] tokensArray = field.getMetaData(TAG_TYPEARGS);
-      if (tokensArray.length == 0) {
-        // No tag.
-        continue;
-      }
-
-      try {
-        String msg = "Field " + field.getName();
-        branch = logger.branch(TreeLogger.TRACE, msg, null);
-
-        if (tokensArray.length > 1) {
-          // Too many.
-          branch.log(TreeLogger.WARN, "Metadata error on field '"
-              + field.getName() + "' in type '" + field.getEnclosingType()
-              + "': expecting at most one " + TAG_TYPEARGS
-              + " (the last one will be used)", null);
-        }
-
-        // (1) Parse it.
-        // (2) Update the field's type.
-        // If it wasn't a valid parameterized type, parse() would've thrown.
-        //
-        JType fieldType = field.getType();
-        String[] token = tokensArray[tokensArray.length - 1];
-        JType resultingType = determineActualType(branch, fieldType, token, 0);
-
-        if (GenUtil.warnAboutMetadata()) {
-          branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
-              + " for field " + field.getName() + "; Please use "
-              + resultingType.getParameterizedQualifiedSourceName()
-              + " as the field's type", null);
-        }
-
-        field.setType(resultingType);
-      } catch (UnableToCompleteException e) {
-        // Continue; the problem will have been logged.
-        //
-      }
-    }
-  }
-
-  private void consumeTypeArgMetaData(TreeLogger logger, JMethod[] methods) {
-    TreeLogger branch;
-    for (int i = 0; i < methods.length; i++) {
-      JMethod method = methods[i];
-
-      String[][] tokensArray = method.getMetaData(TAG_TYPEARGS);
-      if (tokensArray.length == 0) {
-        // No tag.
-        continue;
-      }
-      try {
-        String msg = "Method " + method.getReadableDeclaration();
-        branch = logger.branch(TreeLogger.TRACE, msg, null);
-
-        // Okay, parse each one and correlate it to a part of the decl.
-        //
-        boolean returnTypeHandled = false;
-        Set<JParameter> paramsAlreadySet = new HashSet<JParameter>();
-        for (int j = 0; j < tokensArray.length; j++) {
-          String[] tokens = tokensArray[j];
-          // It is either referring to the return type or a parameter type.
-          //
-          if (tokens.length == 0) {
-            // Expecting at least something.
-            //
-            branch.log(TreeLogger.WARN,
-                "Metadata error: expecting tokens after " + TAG_TYPEARGS, null);
-            throw new UnableToCompleteException();
-          }
-
-          // See if the first token is a parameter name.
-          //
-          JParameter param = method.findParameter(tokens[0]);
-          if (param != null) {
-            if (!paramsAlreadySet.contains(param)) {
-              // These are type args for a param.
-              //
-              JType resultingType = determineActualType(branch,
-                  param.getType(), tokens, 1);
-              param.setType(resultingType);
-
-              if (GenUtil.warnAboutMetadata()) {
-                branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
-                    + " for parameter " + param.getName() + "; Please use "
-                    + resultingType.getParameterizedQualifiedSourceName()
-                    + " as the parameter's type", null);
-              }
-              paramsAlreadySet.add(param);
-            } else {
-              // This parameter type has already been set.
-              //
-              msg = "Metadata error: duplicate attempt to specify type args for parameter '"
-                  + param.getName() + "'";
-              branch.log(TreeLogger.WARN, msg, null);
-              throw new UnableToCompleteException();
-            }
-          } else {
-            // It's either referring to the return type or a bad param name.
-            //
-            if (!returnTypeHandled) {
-              JType resultingType = determineActualType(branch,
-                  method.getReturnType(), tokens, 0);
-              method.setReturnType(resultingType);
-
-              if (GenUtil.warnAboutMetadata()) {
-                branch.log(TreeLogger.WARN, "Deprecated use of " + TAG_TYPEARGS
-                    + " for the return type; Please use "
-                    + resultingType.getParameterizedQualifiedSourceName()
-                    + " as the method's return type", null);
-              }
-              returnTypeHandled = true;
-            } else {
-              // The return type has already been set.
-              //
-              msg = "Metadata error: duplicate attempt to specify type args for the return type";
-              branch.log(TreeLogger.WARN, msg, null);
-            }
-          }
-        }
-      } catch (UnableToCompleteException e) {
-        // Continue; will already have been logged.
-        //
-      }
-    }
-  }
-
-  /*
-   * Given a declared type and some number of type arguments determine what the
-   * actual type should be.
-   */
-  private JType determineActualType(TreeLogger logger, JType declType,
-      String[] tokens, int startIndex) throws UnableToCompleteException {
-    // These are type args for a param.
-    //
-    JType leafType = declType.getLeafType();
-    String typeName = leafType.getQualifiedSourceName();
-    JType resultingType = parseTypeArgTokens(logger, typeName, tokens,
-        startIndex);
-    JArrayType arrayType = declType.isArray();
-    if (arrayType != null) {
-      arrayType.setLeafType(resultingType);
-
-      return declType;
-    }
-
-    return resultingType;
-  }
-
   private JType parseImpl(String type) throws NotFoundException,
       ParseException, BadTypeArgsException {
     if (type.endsWith("[]")) {
@@ -1012,23 +823,6 @@ public class TypeOracle {
 
     JClassType[] typeArgs = typeArgList.toArray(new JClassType[typeArgList.size()]);
     return typeArgs;
-  }
-
-  private JType parseTypeArgTokens(TreeLogger logger, String maybeRawType,
-      String[] tokens, int startIndex) throws UnableToCompleteException {
-    String munged = combine(tokens, startIndex).trim();
-    String toParse = maybeRawType + munged;
-    JType parameterizedType;
-    try {
-      parameterizedType = parse(toParse);
-    } catch (IllegalArgumentException e) {
-      logger.log(TreeLogger.WARN, e.getMessage(), e);
-      throw new UnableToCompleteException();
-    } catch (TypeOracleException e) {
-      logger.log(TreeLogger.WARN, e.getMessage(), e);
-      throw new UnableToCompleteException();
-    }
-    return parameterizedType;
   }
 
   private void removeSingleJsoImplData(JClassType... types) {
