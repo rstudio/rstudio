@@ -15,9 +15,7 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -26,7 +24,6 @@ abstract class AbstractMembers {
 
   protected final JClassType classType;
   private JMethod[] cachedOverridableMethods;
-  private final Map<String, JClassType> nestedTypes = new HashMap<String, JClassType>();
 
   public AbstractMembers(JClassType classType) {
     this.classType = classType;
@@ -43,9 +40,7 @@ abstract class AbstractMembers {
     return null;
   }
 
-  public JField findField(String name) {
-    return doGetFields().get(name);
-  }
+  public abstract JField findField(String name);
 
   public JMethod findMethod(String name, JType[] paramTypes) {
     JMethod[] overloads = getOverloads(name);
@@ -82,9 +77,7 @@ abstract class AbstractMembers {
     return field;
   }
 
-  public JField[] getFields() {
-    return doGetFields().values().toArray(TypeOracle.NO_JFIELDS);
-  }
+  public abstract JField[] getFields();
 
   public JMethod getMethod(String name, JType[] paramTypes)
       throws NotFoundException {
@@ -95,13 +88,7 @@ abstract class AbstractMembers {
     return result;
   }
 
-  public JMethod[] getMethods() {
-    List<JMethod> resultMethods = new ArrayList<JMethod>();
-    for (List<JMethod> overloads : doGetMethods().values()) {
-      resultMethods.addAll(overloads);
-    }
-    return resultMethods.toArray(TypeOracle.NO_JMETHODS);
-  }
+  public abstract JMethod[] getMethods();
 
   public JClassType getNestedType(String typeName) throws NotFoundException {
     JClassType result = findNestedType(typeName);
@@ -112,17 +99,10 @@ abstract class AbstractMembers {
   }
 
   public JClassType[] getNestedTypes() {
-    return nestedTypes.values().toArray(TypeOracle.NO_JCLASSES);
+    return doGetNestedTypes().values().toArray(TypeOracle.NO_JCLASSES);
   }
 
-  public JMethod[] getOverloads(String name) {
-    List<?> resultMethods = doGetMethods().get(name);
-    if (resultMethods != null) {
-      return resultMethods.toArray(TypeOracle.NO_JMETHODS);
-    } else {
-      return TypeOracle.NO_JMETHODS;
-    }
-  }
+  public abstract JMethod[] getOverloads(String name);
 
   public JMethod[] getOverridableMethods() {
     if (cachedOverridableMethods == null) {
@@ -132,45 +112,28 @@ abstract class AbstractMembers {
         getOverridableMethodsOnSuperclassesAndThisClass(methodsBySignature);
       }
       int size = methodsBySignature.size();
-      Collection<JMethod> leafMethods = methodsBySignature.values();
-      cachedOverridableMethods = leafMethods.toArray(new JMethod[size]);
+      if (size == 0) {
+        cachedOverridableMethods = TypeOracle.NO_JMETHODS;
+      } else {
+        Collection<JMethod> leafMethods = methodsBySignature.values();
+        cachedOverridableMethods = leafMethods.toArray(new JMethod[size]);
+      }
     }
     return cachedOverridableMethods;
   }
 
-  protected void addConstructor(JConstructor ctor) {
-    assert (!doGetConstructors().contains(ctor));
-    doGetConstructors().add(ctor);
-  }
+  protected abstract void addConstructor(JConstructor ctor);
 
-  protected void addField(JField field) {
-    Object existing = doGetFields().put(field.getName(), field);
-    assert (existing == null);
-  }
+  protected abstract void addField(JField field);
 
-  protected void addMethod(JMethod method) {
-    String methodName = method.getName();
-    Map<String, List<JMethod>> methods = doGetMethods();
-    List<JMethod> overloads = methods.get(methodName);
-    if (overloads == null) {
-      overloads = new ArrayList<JMethod>();
-      methods.put(methodName, overloads);
-    }
-    overloads.add(method);
-  }
-
-  protected void addNestedType(JClassType type) {
-    nestedTypes.put(type.getSimpleSourceName(), type);
-  }
+  protected abstract void addMethod(JMethod method);
 
   protected abstract List<JConstructor> doGetConstructors();
 
-  protected abstract Map<String, JField> doGetFields();
-
-  protected abstract Map<String, List<JMethod>> doGetMethods();
+  protected abstract Map<String, JClassType> doGetNestedTypes();
 
   protected JClassType findNestedTypeImpl(String[] typeName, int index) {
-    JClassType found = nestedTypes.get(typeName[index]);
+    JClassType found = doGetNestedTypes().get(typeName[index]);
     if (found == null) {
       return null;
     } else if (index < typeName.length - 1) {
