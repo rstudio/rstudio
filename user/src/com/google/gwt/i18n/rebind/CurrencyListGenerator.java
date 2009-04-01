@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 /**
@@ -314,7 +315,7 @@ public class CurrencyListGenerator extends Generator {
       writer.println("  return;");
       writer.println("}");
       boolean fetchedLocale = false;
-      Map<String, Set<GwtLocale>> localeMap = new HashMap<String,
+      Map<String, Set<GwtLocale>> localeMap = new TreeMap<String,
           Set<GwtLocale>>();
       String compileLocaleClass = processChildLocale(logger, context,
           targetClass, localeMap, compileLocale);
