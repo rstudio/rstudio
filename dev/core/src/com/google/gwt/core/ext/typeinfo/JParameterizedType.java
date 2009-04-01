@@ -16,10 +16,12 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -73,7 +75,7 @@ public class JParameterizedType extends JMaybeParameterizedType {
 
   private final AbstractMembers members;
 
-  private final List<JClassType> typeArgs = new ArrayList<JClassType>();
+  private final List<JClassType> typeArgs;
 
   /**
    * This map records the JClassType that should be used in place of a given
@@ -96,9 +98,8 @@ public class JParameterizedType extends JMaybeParameterizedType {
       }
     });
 
-    List<JClassType> typeArgsList = Arrays.asList(typeArgs);
-    this.typeArgs.addAll(typeArgsList);
-    assert (typeArgsList.indexOf(null) == -1);
+    this.typeArgs = Lists.create(typeArgs);
+    assert (this.typeArgs.indexOf(null) == -1);
 
     // NOTE: Can't perform substitutions until we are done building
   }
@@ -158,6 +159,7 @@ public class JParameterizedType extends JMaybeParameterizedType {
         JClassType newIntf = intf.getSubstitutedType(this);
         interfaces.add(newIntf);
       }
+      interfaces = Lists.normalize(interfaces);
     }
     return interfaces.toArray(TypeOracle.NO_JCLASSES);
   }
@@ -457,6 +459,7 @@ public class JParameterizedType extends JMaybeParameterizedType {
       }
       currentParameterizedType = maybeParameterizedType.isParameterized();
     }
+    lazySubstitutionMap = Maps.normalize(lazySubstitutionMap);
   }
 
   /**

@@ -16,8 +16,8 @@
 package com.google.gwt.core.ext.typeinfo;
 
 import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
+import com.google.gwt.dev.util.collect.Lists;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -27,7 +27,7 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
 
   private JRawType lazyRawType = null;
 
-  private final List<JTypeParameter> typeParams = new ArrayList<JTypeParameter>();
+  private List<JTypeParameter> typeParams = Lists.create();
 
   public JGenericType(TypeOracle oracle, JPackage declaringPackage,
       JClassType enclosingType, boolean isLocalType, String name,
@@ -109,7 +109,7 @@ public class JGenericType extends JRealClassType implements HasTypeParameters {
   }
 
   private void addTypeParameter(JTypeParameter typeParameter) {
-    typeParams.add(typeParameter);
+    typeParams = Lists.add(typeParams, typeParameter);
     typeParameter.setDeclaringClass(this);
   }
 }

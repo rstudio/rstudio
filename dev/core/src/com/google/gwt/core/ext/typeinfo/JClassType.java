@@ -15,8 +15,10 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.Sets;
+
 import java.lang.annotation.Annotation;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -32,11 +34,13 @@ public abstract class JClassType extends JType implements HasAnnotations,
    */
   protected static Set<JClassType> getFlattenedSuperTypeHierarchy(
       JClassType type) {
-    if (type.flattenedSupertypes == null) {
-      type.flattenedSupertypes = new HashSet<JClassType>();
-      getFlattenedSuperTypeHierarchyRecursive(type, type.flattenedSupertypes);
+    Set<JClassType> flattened = type.flattenedSupertypes;
+    if (flattened == null) {
+      flattened = new HashSet<JClassType>();
+      getFlattenedSuperTypeHierarchyRecursive(type, flattened);
+      type.flattenedSupertypes = Sets.normalizeUnmodifiable(flattened);
     }
-    return type.flattenedSupertypes;
+    return flattened;
   }
 
   /**

@@ -45,8 +45,7 @@ public class JParameter implements HasAnnotations, HasMetaData {
 
     enclosingMethod.addParameter(this);
 
-    annotations = new Annotations();
-    annotations.addAnnotations(declaredAnnotations);
+    annotations = new Annotations(declaredAnnotations);
   }
 
   JParameter(JAbstractMethod enclosingMethod, JParameter srcParam) {

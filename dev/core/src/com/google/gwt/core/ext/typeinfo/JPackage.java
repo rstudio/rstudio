@@ -15,8 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.Maps;
+
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -28,7 +29,7 @@ public class JPackage implements HasAnnotations {
 
   private final Annotations annotations = new Annotations();
 
-  private final Map<String, JRealClassType> types = new HashMap<String, JRealClassType>();
+  private Map<String, JRealClassType> types = Maps.create();
 
   JPackage(String name) {
     this.name = name;
@@ -82,7 +83,7 @@ public class JPackage implements HasAnnotations {
   }
 
   void addType(JRealClassType type) {
-    types.put(type.getSimpleSourceName(), type);
+    types = Maps.put(types, type.getSimpleSourceName(), type);
   }
 
   JClassType findTypeImpl(String[] typeName, int index) {
@@ -111,7 +112,7 @@ public class JPackage implements HasAnnotations {
   }
 
   void remove(JClassType type) {
-    types.remove(type.getSimpleSourceName());
+    types = Maps.remove(types, type.getSimpleSourceName());
     // JDT will occasionally remove non-existent items, such as packages.
   }
 }

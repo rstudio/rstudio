@@ -41,6 +41,10 @@ import com.google.gwt.core.ext.typeinfo.JWildcardType.BoundType;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+import com.google.gwt.dev.util.collect.Maps;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ast.AbstractMethodDeclaration;
@@ -85,9 +89,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -472,7 +473,7 @@ public class TypeOracleMediator {
       identifierToValue.put(identifier, elementValue);
     }
 
-    return AnnotationProxyFactory.create(clazz, identifierToValue);
+    return AnnotationProxyFactory.create(clazz, Maps.normalize(identifierToValue));
   }
 
   private JRealClassType createType(CompiledClass compiledClass) {

@@ -15,9 +15,10 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Sets;
+
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,7 @@ import java.util.Set;
  */
 public class JRealClassType extends JClassType {
 
-  private final Set<JClassType> allSubtypes = new HashSet<JClassType>();
+  private Set<JClassType> allSubtypes = Sets.create();
 
   private final Annotations annotations = new Annotations();
 
@@ -35,7 +36,7 @@ public class JRealClassType extends JClassType {
 
   private final JClassType enclosingType;
 
-  private final List<JClassType> interfaces = new ArrayList<JClassType>();
+  private List<JClassType> interfaces = Lists.create();
 
   private final boolean isInterface;
 
@@ -43,7 +44,7 @@ public class JRealClassType extends JClassType {
 
   private String lazyQualifiedName;
 
-  private final AbstractMembers members = new Members(this);
+  private final Members members = new Members(this);
 
   private final HasMetaData metaData = new MetaData();
 
@@ -97,7 +98,7 @@ public class JRealClassType extends JClassType {
 
   public void addImplementedInterface(JClassType intf) {
     assert (intf != null);
-    interfaces.add(intf);
+    interfaces = Lists.add(interfaces, intf);
   }
 
   @SuppressWarnings("deprecation")
@@ -427,7 +428,7 @@ public class JRealClassType extends JClassType {
 
   protected void acceptSubtype(JClassType me) {
     // TODO(scottb): revisit
-    allSubtypes.add(me);
+    allSubtypes = Sets.add(allSubtypes, me);
     notifySuperTypesOf(me);
   }
 
@@ -494,7 +495,7 @@ public class JRealClassType extends JClassType {
 
   protected void removeSubtype(JClassType me) {
     // TODO(scottb): revisit
-    allSubtypes.remove(me);
+    allSubtypes = Sets.remove(allSubtypes, me);
 
     if (superclass != null) {
       superclass.removeSubtype(me);

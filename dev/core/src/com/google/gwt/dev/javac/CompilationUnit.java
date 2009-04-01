@@ -22,6 +22,11 @@ import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.shell.CompilingClassLoader;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Sets;
 
 import org.eclipse.jdt.core.compiler.CategorizedProblem;
 import org.eclipse.jdt.internal.compiler.ASTVisitor;
@@ -39,9 +44,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -280,7 +282,7 @@ public abstract class CompilationUnit {
         result.add(String.valueOf(referencedType.getFileName()));
       }
     }, cud.scope);
-    return result;
+    return Sets.normalize(result);
   }
 
   /**
@@ -451,7 +453,7 @@ public abstract class CompilationUnit {
       FindTypesInCud typeFinder = new FindTypesInCud();
       cud.traverse(typeFinder, cud.scope);
       Set<CompiledClass> compiledClasses = typeFinder.getClasses();
-      exposedCompiledClasses = Collections.unmodifiableSet(compiledClasses);
+      exposedCompiledClasses = Sets.normalizeUnmodifiable(compiledClasses);
     }
     return exposedCompiledClasses;
   }
@@ -522,7 +524,7 @@ public abstract class CompilationUnit {
   }
 
   void setJsniMethods(List<JsniMethod> jsniMethods) {
-    this.jsniMethods = Collections.unmodifiableList(jsniMethods);
+    this.jsniMethods = Lists.normalizeUnmodifiable(jsniMethods);
   }
 
   private List<String> getJdtClassNames(String topLevelClass) {

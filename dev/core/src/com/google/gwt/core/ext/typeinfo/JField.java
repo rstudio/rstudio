@@ -45,8 +45,7 @@ public class JField implements HasAnnotations, HasMetaData {
     this.enclosingType = enclosingType;
     this.name = name;
     this.enclosingType.addField(this);
-    annotations = new Annotations();
-    annotations.addAnnotations(declaredAnnotations);
+    annotations = new Annotations(declaredAnnotations);
   }
 
   JField(JClassType enclosingType, JField srcField) {

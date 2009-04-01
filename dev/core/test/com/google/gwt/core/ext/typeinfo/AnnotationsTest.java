@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+
 import junit.framework.TestCase;
 
 import java.lang.annotation.Annotation;
@@ -52,7 +54,6 @@ public class AnnotationsTest extends TestCase {
     String value();
   }
 
-  
   @Inherited
   @Retention(RetentionPolicy.RUNTIME)
   @Target(ElementType.TYPE)
@@ -66,10 +67,12 @@ public class AnnotationsTest extends TestCase {
   private static Annotations initializeAnnotationsFromClass(
       Class<?> annotatedClass, Annotations parent) {
     Annotation[] jAnnotations = annotatedClass.getDeclaredAnnotations();
-    Annotations annotations = new Annotations();
+
+    Map<Class<? extends Annotation>, Annotation> map = new IdentityHashMap<Class<? extends Annotation>, Annotation>();
     for (Annotation annotation : jAnnotations) {
-      annotations.addAnnotation(annotation.annotationType(), annotation);
+      map.put(annotation.annotationType(), annotation);
     }
+    Annotations annotations = new Annotations(map);
 
     if (parent != null) {
       annotations.setParent(parent);
@@ -85,7 +88,8 @@ public class AnnotationsTest extends TestCase {
   public void testAddAnnotations() {
     Annotations annotations = new Annotations();
     Map<Class<? extends Annotation>, Annotation> entries = new HashMap<Class<? extends Annotation>, Annotation>();
-    entries.put(TestAnnotation1.class, AnnotatedClass1.class.getAnnotation(TestAnnotation1.class));
+    entries.put(TestAnnotation1.class,
+        AnnotatedClass1.class.getAnnotation(TestAnnotation1.class));
     annotations.addAnnotations(entries);
     assertNotNull(annotations.getAnnotation(TestAnnotation1.class));
   }

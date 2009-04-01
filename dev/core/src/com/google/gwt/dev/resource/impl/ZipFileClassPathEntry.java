@@ -16,13 +16,14 @@
 package com.google.gwt.dev.resource.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+import com.google.gwt.dev.util.collect.IdentityHashSet;
+import com.google.gwt.dev.util.collect.IdentityMaps;
+import com.google.gwt.dev.util.collect.Sets;
 import com.google.gwt.dev.util.msg.Message1String;
 
 import java.io.File;
 import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -65,8 +66,12 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   }
 
   private Set<ZipFileResource> allZipFileResources;
-  private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new HashMap<PathPrefixSet, ZipFileSnapshot>(
-      2); // currently gwt has just 2 ResourceOracles.
+
+  /**
+   * Currently gwt has just 2 ResourceOracles.
+   */
+  private final Map<PathPrefixSet, ZipFileSnapshot> cachedSnapshots = new IdentityHashMap<PathPrefixSet, ZipFileSnapshot>();
+
   private String cachedLocation;
   private final ZipFile zipFile;
 
@@ -109,7 +114,7 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
   private Set<ZipFileResource> buildIndex(TreeLogger logger) {
     logger = Messages.BUILDING_INDEX.branch(logger, zipFile.getName(), null);
 
-    HashSet<ZipFileResource> results = new HashSet<ZipFileResource>();
+    Set<ZipFileResource> results = new IdentityHashSet<ZipFileResource>();
     Enumeration<? extends ZipEntry> e = zipFile.entries();
     while (e.hasMoreElements()) {
       ZipEntry zipEntry = e.nextElement();
@@ -121,11 +126,12 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
         // Skip META-INF since classloaders normally make this invisible.
         continue;
       }
-      ZipFileResource zipResource = new ZipFileResource(this, zipEntry);
+      ZipFileResource zipResource = new ZipFileResource(this,
+          zipEntry.getName());
       results.add(zipResource);
       Messages.READ_ZIP_ENTRY.log(logger, zipEntry.getName(), null);
     }
-    return results;
+    return Sets.normalize(results);
   }
 
   private Map<AbstractResource, PathPrefix> computeApplicableResources(
@@ -144,6 +150,6 @@ public class ZipFileClassPathEntry extends ClassPathEntry {
         Messages.EXCLUDING_RESOURCE.log(logger, path, null);
       }
     }
-    return results;
+    return IdentityMaps.normalize(results);
   }
 }

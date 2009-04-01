@@ -15,8 +15,9 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.Lists;
+
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,11 +37,11 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
 
   private final String name;
 
-  private final List<JParameter> params = new ArrayList<JParameter>();
+  private List<JParameter> params = Lists.create();
 
-  private final List<JType> thrownTypes = new ArrayList<JType>();
+  private List<JType> thrownTypes = Lists.create();
 
-  private final List<JTypeParameter> typeParams = new ArrayList<JTypeParameter>();
+  private List<JTypeParameter> typeParams = Lists.create();
 
   JAbstractMethod(JAbstractMethod srcMethod) {
     this.annotations = new Annotations(srcMethod.annotations);
@@ -55,13 +56,10 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {
     this.name = name;
-    annotations = new Annotations();
-    annotations.addAnnotations(declaredAnnotations);
+    annotations = new Annotations(declaredAnnotations);
 
     if (jtypeParameters != null) {
-      for (JTypeParameter jtypeParameter : jtypeParameters) {
-        addTypeParameter(jtypeParameter);
-      }
+      typeParams = Lists.create(jtypeParameters);
     }
   }
 
@@ -75,7 +73,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   }
 
   public void addThrows(JType type) {
-    thrownTypes.add(type);
+    thrownTypes = Lists.add(thrownTypes, type);
   }
 
   public JParameter findParameter(String name) {
@@ -216,7 +214,7 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
   }
 
   void addParameter(JParameter param) {
-    params.add(param);
+    params = Lists.add(params, param);
   }
 
   /**
@@ -247,9 +245,5 @@ public abstract class JAbstractMethod implements HasAnnotations, HasMetaData,
       }
     }
     return true;
-  }
-
-  private void addTypeParameter(JTypeParameter typeParameter) {
-    typeParams.add(typeParameter);
   }
 }

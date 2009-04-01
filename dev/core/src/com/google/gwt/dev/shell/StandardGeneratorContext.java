@@ -31,6 +31,8 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.javac.impl.Shared;
 import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -38,8 +40,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;

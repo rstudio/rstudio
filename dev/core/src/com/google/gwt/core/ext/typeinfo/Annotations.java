@@ -15,10 +15,12 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.dev.util.collect.Maps;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -26,10 +28,28 @@ import java.util.Map.Entry;
  * Default implementation of the {@link HasAnnotations} interface.
  */
 class Annotations implements HasAnnotations {
+
+  private static Map<Class<? extends Annotation>, Annotation> copyOfAnnotations(
+      Annotations otherAnnotations) {
+    Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    if (otherAnnotations != null) {
+      Annotation[] otherDeclaredAnnotations = otherAnnotations.getDeclaredAnnotations();
+      for (Annotation otherDeclaredAnnotation : otherDeclaredAnnotations) {
+        Class<? extends Annotation> otherDeclaredAnnotationType = otherDeclaredAnnotation.annotationType();
+        assert (otherDeclaredAnnotationType != null);
+        assert (!declaredAnnotations.containsKey(otherDeclaredAnnotationType));
+
+        declaredAnnotations.put(otherDeclaredAnnotationType,
+            otherDeclaredAnnotation);
+      }
+    }
+    return declaredAnnotations;
+  }
+
   /**
    * All annotations declared on the annotated element.
    */
-  private final Map<Class<? extends Annotation>, Annotation> declaredAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+  private Map<Class<? extends Annotation>, Annotation> declaredAnnotations;
 
   /**
    * Lazily initialized collection of annotations declared on or inherited by
@@ -43,27 +63,22 @@ class Annotations implements HasAnnotations {
   private Annotations parent;
 
   Annotations() {
+    this.declaredAnnotations = Maps.create();
   }
-  
+
   Annotations(Annotations otherAnnotations) {
-    if (otherAnnotations != null) {
-      Annotation[] otherDeclaredAnnotations = otherAnnotations.getDeclaredAnnotations();
-      for (Annotation otherDeclaredAnnotation : otherDeclaredAnnotations) {
-        addAnnotation(otherDeclaredAnnotation.annotationType(),
-            otherDeclaredAnnotation);
-      }
-    }
+    this(copyOfAnnotations(otherAnnotations));
   }
 
   Annotations(Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {
-    this.declaredAnnotations.putAll(declaredAnnotations);
+    this.declaredAnnotations = Maps.normalize(declaredAnnotations);
   }
 
   public void addAnnotations(
       Map<Class<? extends Annotation>, Annotation> annotations) {
     if (annotations != null) {
       assert (!annotations.containsValue(null));
-      declaredAnnotations.putAll(annotations);
+      declaredAnnotations = Maps.putAll(declaredAnnotations, annotations);
     }
   }
 
@@ -87,15 +102,6 @@ class Annotations implements HasAnnotations {
     return getAnnotation(annotationClass) != null;
   }
 
-  void addAnnotation(Class<? extends Annotation> annotationClass,
-      Annotation annotationInstance) {
-    assert (annotationClass != null);
-    assert (annotationInstance != null);
-    assert (!declaredAnnotations.containsKey(annotationClass));
-
-    declaredAnnotations.put(annotationClass, annotationInstance);
-  }
-
   void setParent(Annotations parent) {
     this.parent = parent;
   }
@@ -116,6 +122,7 @@ class Annotations implements HasAnnotations {
       }
 
       lazyAnnotations.putAll(declaredAnnotations);
+      lazyAnnotations = Maps.normalize(lazyAnnotations);
     } else {
       lazyAnnotations = declaredAnnotations;
     }

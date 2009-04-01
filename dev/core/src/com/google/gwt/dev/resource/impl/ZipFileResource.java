@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
 /**
@@ -28,11 +28,11 @@ import java.util.zip.ZipEntry;
 public class ZipFileResource extends AbstractResource {
 
   private final ZipFileClassPathEntry classPathEntry;
-  private final ZipEntry zipEntry;
+  private final String path;
 
-  public ZipFileResource(ZipFileClassPathEntry classPathEntry, ZipEntry zipEntry) {
+  public ZipFileResource(ZipFileClassPathEntry classPathEntry, String path) {
     this.classPathEntry = classPathEntry;
-    this.zipEntry = zipEntry;
+    this.path = path;
   }
 
   @Override
@@ -42,21 +42,21 @@ public class ZipFileResource extends AbstractResource {
 
   @Override
   public long getLastModified() {
-    // Questionable: maybe we should do something with the jar's time instead.
-    return zipEntry.getTime();
+    return getEntry().getTime();
   }
 
   @Override
   public String getLocation() {
     // CHECKSTYLE_OFF
-    String proto = zipEntry instanceof JarEntry ? "jar:" : "zip:";
+    String proto = classPathEntry.getZipFile() instanceof JarFile ? "jar:"
+        : "zip:";
     // CHECKSTYLE_ON
-    return proto + classPathEntry.getLocation() + "!/" + getPath();
+    return proto + classPathEntry.getLocation() + "!/" + path;
   }
 
   @Override
   public String getPath() {
-    return zipEntry.getName();
+    return path;
   }
 
   @Override
@@ -66,10 +66,6 @@ public class ZipFileResource extends AbstractResource {
     } catch (MalformedURLException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  public ZipEntry getZipEntry() {
-    return zipEntry;
   }
 
   /**
@@ -84,7 +80,7 @@ public class ZipFileResource extends AbstractResource {
   @Override
   public InputStream openContents() {
     try {
-      return classPathEntry.getZipFile().getInputStream(zipEntry);
+      return classPathEntry.getZipFile().getInputStream(getEntry());
     } catch (IOException e) {
       // The spec for this method says it can return null.
       return null;
@@ -94,5 +90,9 @@ public class ZipFileResource extends AbstractResource {
   @Override
   public boolean wasRerooted() {
     return false;
+  }
+
+  private ZipEntry getEntry() {
+    return classPathEntry.getZipFile().getEntry(path);
   }
 }

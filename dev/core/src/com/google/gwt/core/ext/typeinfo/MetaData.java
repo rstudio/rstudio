@@ -15,9 +15,10 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
-import java.util.ArrayList;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
+
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,17 +43,22 @@ class MetaData implements HasMetaData {
     }
   }
 
-  private final Map<String, List<String[]>> tagNameToStringArrayList = new HashMap<String, List<String[]>>();
+  private Map<String, List<String[]>> tagNameToStringArrayList = Maps.create();
 
+  @SuppressWarnings("unchecked")
   public void addMetaData(String tagName, String[] values) {
     List<String[]> list = tagNameToStringArrayList.get(tagName);
     if (list == null) {
-      list = new ArrayList<String[]>();
-      tagNameToStringArrayList.put(tagName, list);
+      list = (List) Lists.create((Object) values);
+      tagNameToStringArrayList = Maps.put(tagNameToStringArrayList, tagName,
+          list);
+    } else {
+      List<String[]> newList = Lists.add(list, values);
+      if (newList != list) {
+        tagNameToStringArrayList = Maps.put(tagNameToStringArrayList, tagName,
+            newList);
+      }
     }
-    // Yes, we're adding the string array as an object into the list.
-    //
-    list.add(values);
   }
 
   public String[][] getMetaData(String tagName) {

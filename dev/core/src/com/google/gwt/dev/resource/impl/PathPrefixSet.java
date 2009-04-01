@@ -15,10 +15,11 @@
  */
 package com.google.gwt.dev.resource.impl;
 
+import com.google.gwt.dev.util.collect.Maps;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +41,7 @@ public class PathPrefixSet {
 
   private static class TrieNode {
     // TODO(amitmanjhi): Consider the memory-speed tradeoff here
-    private final Map<String, TrieNode> children = new HashMap<String, TrieNode>();
+    private Map<String, TrieNode> children = Maps.create();
     private final String part;
 
     private PathPrefix prefix;
@@ -51,8 +52,8 @@ public class PathPrefixSet {
 
     public TrieNode addChild(String part) {
       TrieNode newChild = new TrieNode(part);
-      TrieNode oldChild = children.put(part, newChild);
-      assert (oldChild == null);
+      assert !children.containsKey(part);
+      children = Maps.put(children, part, newChild);
       return newChild;
     }
 
