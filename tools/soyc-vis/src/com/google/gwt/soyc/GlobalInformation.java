@@ -58,6 +58,8 @@ public class GlobalInformation {
 
   public static HashMap<String, String> storiesToLitType = new HashMap<String, String>();
 
+  public static Settings settings = new Settings();
+
   public static void computePackageSizes() {
     cumSizeFromPackages = 0;
     packageToSize.clear();

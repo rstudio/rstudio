@@ -42,38 +42,20 @@ import javax.xml.parsers.SAXParserFactory;
  */
 public class SoycDashboard {
 
-  /**
-   * @param args Input: XML file containing soyc compile output
-   * @throws IOException
-   * @throws SAXException
-   */
   public static void main(String[] args) {
-
-    String storiesFileName = "";
-    String depFileName = "";
-    String splitPointsFileName = "";
-    if ((args.length == 1) || (args.length == 2) || (args.length == 3)) {
-
-      if (args.length == 1) {
-        GlobalInformation.displayDependencies = false;
-        GlobalInformation.displaySplitPoints = true;
-      } else if (args.length == 2) {
-        GlobalInformation.displayDependencies = true;
-        GlobalInformation.displaySplitPoints = false;
-        depFileName = args[1];
-      } else if (args.length == 3) {
-        GlobalInformation.displayDependencies = true;
-        GlobalInformation.displaySplitPoints = true;
-        depFileName = args[1];
-        splitPointsFileName = args[2];
-      }
-
-    } else {
-      System.err.println("Usage: java com/google/gwt/soyc/SoycDashboard soyc-report0.xml[.gz] [soyc-dependencies0.xml[.gz]] [soyc-splitpoints0.xml[.gz]]");
+    try {
+      GlobalInformation.settings = Settings.fromArgumentList(args);
+    } catch (Settings.ArgumentListException e) {
+      System.err.println(e.getMessage());
+      System.err.println("Usage: java com.google.gwt.soyc.SoycDashboard [options] report0.xml[.gz] [dependencies0.xml[.gz]] [splitpoints0.xml[.gz]]");
+      System.err.println("Options:");
+      System.err.println(Settings.settingsHelp());
       System.exit(1);
     }
 
-    storiesFileName = args[0];
+    Settings settings = GlobalInformation.settings;
+    GlobalInformation.displayDependencies = (settings.depFileName != null);
+    GlobalInformation.displaySplitPoints = (settings.splitPointsFileName != null);
 
     if (GlobalInformation.displayDependencies == true) {
       /**
@@ -88,8 +70,8 @@ public class SoycDashboard {
       depFactoryMain.setNamespaceAware(true);
       try {
         SAXParser saxParser = depFactoryMain.newSAXParser();
-        InputStream in = new FileInputStream(depFileName);
-        if (depFileName.endsWith(".gz")) {
+        InputStream in = new FileInputStream(settings.depFileName);
+        if (settings.depFileName.endsWith(".gz")) {
           in = new GZIPInputStream(in);
         }
         in = new BufferedInputStream(in);
@@ -123,8 +105,8 @@ public class SoycDashboard {
       splitPointsFactoryMain.setNamespaceAware(true);
       try {
         SAXParser saxParser = splitPointsFactoryMain.newSAXParser();
-        InputStream in = new FileInputStream(splitPointsFileName);
-        if (depFileName.endsWith(".gz")) {
+        InputStream in = new FileInputStream(settings.splitPointsFileName);
+        if (settings.depFileName.endsWith(".gz")) {
           in = new GZIPInputStream(in);
         }
         in = new BufferedInputStream(in);
@@ -184,8 +166,8 @@ public class SoycDashboard {
     factoryMain.setNamespaceAware(true);
     try {
       SAXParser saxParser = factoryMain.newSAXParser();
-      InputStream in = new FileInputStream(storiesFileName);
-      if (storiesFileName.endsWith(".gz")) {
+      InputStream in = new FileInputStream(settings.storiesFileName);
+      if (settings.storiesFileName.endsWith(".gz")) {
         in = new GZIPInputStream(in);
       }
       in = new BufferedInputStream(in);
@@ -293,7 +275,6 @@ public class SoycDashboard {
 
     DefaultHandler handler = new DefaultHandler() {
 
-      int ct = 0;
       String curClassId;
       Integer curFragment;
       String curLineNumber;
@@ -433,12 +414,6 @@ public class SoycDashboard {
       @Override
       public void startElement(String nsUri, String strippedName,
           String tagName, Attributes attributes) {
-
-        if ((ct % 10000) == 0) {
-          System.out.println(ct);
-        }
-        ct++;
-
         valueBuilder.delete(0, valueBuilder.length());
 
         if (strippedName.compareTo("story") == 0) {
@@ -871,9 +846,6 @@ public class SoycDashboard {
             GlobalInformation.splitPointToLocation.put(
                 Integer.parseInt(curSplitPoint), curSplitPointLocation);
             GlobalInformation.numSplitPoints++;
-
-            System.out.println("adding split point and location: "
-                + curSplitPoint + "-->" + curSplitPointLocation);
           }
         }
       }

@@ -306,18 +306,17 @@ public class MakeTopLevelHtmlForPerm {
     // this will contain the place holder iframes where the actual information
     // is going to go.
 
-    System.out.println("making html shell");
     // copy from the bin directory to the current directory
-    String classPath = System.getProperty("java.class.path");
+    String classPath = GlobalInformation.settings.resources.get();
+    if (classPath == null) {
+      classPath = System.getProperty("java.class.path");
+    }
     if (!classPath.endsWith("/")) {
       classPath += "/";
     }
     String inputFileName = "roundedCorners.css";
     File inputFile = new File(classPath + inputFileName);
     File outputFile = new File("roundedCorners.css");
-    System.err.println("now trying to copy inputFile |" + inputFile
-        + "| to outputFile |" + outputFile + "|, classPath is " + classPath
-        + ", inputFileName is: |" + inputFileName);
     copyFileOrDirectory(inputFile, outputFile, classPath, inputFileName, false);
 
     inputFileName = "classLevel.css";
@@ -339,6 +338,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.println("<head>");
     outFile.println("<title>Story of Your Compile - Top Level Dashboard for Permutation</title>");
 
+    outFile.println("<link rel=\"stylesheet\" href=\"roundedcorners.css\">");
     outFile.println("<style type=\"text/css\">");
     outFile.println("body {background-color: #728FCE}");
     outFile.println("h2 {background-color: transparent}");
@@ -419,18 +419,16 @@ public class MakeTopLevelHtmlForPerm {
 
     if (GlobalInformation.fragmentToStories.size() > 1) {
       outFile.println("  <div style=\"width:50%;  float:left; padding-top: 10px;\">");
-      outFile.println("<b>Breakdown by runAsync split points</b>");
+      outFile.println("<b>Breakdown of key runAsync fragments</b>");
       outFile.println("    </div>");
 
       outFile.println("  <div style=\"width:100%;  float:left; padding-top: 10px;\">");
       outFile.println("<div style=\"width: 110px; float: left; font-size:16px;\">Size</div>");
-      outFile.println("<div style=\"width: 200px; float: left; text-align:left; font-size:16px; \">Fragment Name</div>");
+      outFile.println("<div style=\"width: 200px; float: left; text-align:left; font-size:16px; \">Fragment</div>");
       outFile.println("    </div>");
 
-      outFile.println("<div style=\"height:35%; width:100%; margin:0 auto; background-color:white; float:left;\">");
-      outFile.println("<iframe src=\"fragmentsBreakdown.html\" width=100% height=100% scrolling=auto></iframe>");
-      outFile.println("</div>");
-      makeFragmentsHtml("fragmentsBreakdown.html");
+      outFile.println("<br style=\"clear:both\">");
+      makeFragmentsHtml(outFile);
     }
 
     outFile.println("  </body>");
@@ -806,9 +804,7 @@ public class MakeTopLevelHtmlForPerm {
             }
           }
         }
-      }
-
-      else {
+      } else {
         String curSplitPointLocation;
 
         if (fragmentName == 0) {
@@ -1269,65 +1265,33 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
-  private static void makeFragmentsHtml(String outFileName) throws IOException {
+  private static void makeFragmentsHtml(PrintWriter outFile) throws IOException {
+    int numSplitPoints = GlobalInformation.splitPointToLocation.size();
 
-    // TreeMap<Float, Integer> sortedFragments = new TreeMap<Float,
-    // Integer>(Collections.reverseOrder());
-    TreeMap<Float, String> sortedSplitPoints = new TreeMap<Float, String>(
-        Collections.reverseOrder());
-    float maxSize = 0f;
-    float sumSize = 0f;
 
-    // initial fragment
-    float initialSize = GlobalInformation.fragmentToPartialSize.get(0);
-    sumSize += initialSize;
-    maxSize = initialSize;
-    sortedSplitPoints.put(initialSize, "initialDownload");
-
-    // all fragments that are not in the initial load order
-    float allOtherFragmentsSize = GlobalInformation.allOtherFragmentsPartialSize;
-    sumSize += allOtherFragmentsSize;
-    if (allOtherFragmentsSize > maxSize) {
-      maxSize = allOtherFragmentsSize;
+    int outerHeight = 25 * (numSplitPoints + 1);
+    outFile.println("<div style=\"width:100%; margin:20px 0 20px 0; background-color:white;position:relative;height:"
+        + outerHeight + "\">");
+    float maxSize = 0;
+    for (int i = 0; i <= numSplitPoints; i++) {
+      maxSize += GlobalInformation.fragmentToPartialSize.get(i);
     }
-    sortedSplitPoints.put(allOtherFragmentsSize, "allOtherFragments");
-
-    // all exclusive fragments
-    System.out.println("");
-    for (Integer splitPointId : GlobalInformation.splitPointToLocation.keySet()) {
-      System.out.println("splitPointId is: " + splitPointId);
-      Float sizeOfCurExclusiveFrag = GlobalInformation.fragmentToPartialSize.get(splitPointId);
-      sortedSplitPoints.put(sizeOfCurExclusiveFrag,
-          GlobalInformation.splitPointToLocation.get(splitPointId));
-      sumSize += sizeOfCurExclusiveFrag;
-      if (sizeOfCurExclusiveFrag > maxSize) {
-        maxSize = sizeOfCurExclusiveFrag;
-      }
-    }
-
-    final PrintWriter outFile = new PrintWriter(outFileName);
-
-    outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
-    outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
-    outFile.println("<html>");
-    outFile.println("<head>");
-    outFile.println("<meta http-equiv=\"content-type\" content=\"text/html;charset=ISO-8859-1\">");
-    outFile.println("<link rel=\"stylesheet\" href=\"roundedCorners.css\" media=\"screen\">");
-    outFile.println("</head>");
-    outFile.println("<body>");
 
     int yOffset = 0;
-    for (Float size : sortedSplitPoints.keySet()) {
-      String splitPointName = sortedSplitPoints.get(size);
+    for (int i = 0; i <= numSplitPoints; i++) {
+      String splitPointName = i == 0 ? "initialDownload"
+          : GlobalInformation.splitPointToLocation.get(i);
       String drillDownFileName = "splitPoint" + splitPointName + "Classes.html";
+      String splitPointDescription = i == 0 ? "Initial download"
+          : ("Code exclusive to " + splitPointName);
 
+      float size = GlobalInformation.fragmentToPartialSize.get(i);
       float ratio = (size / maxSize) * 79;
       if (ratio < 3) {
         ratio = 3;
       }
-      float perc = (size / sumSize) * 100;
 
-      outFile.println("<div id=\"box\" style=\"width:" + ratio + "%; top: "
+      outFile.println("<div id=\"box\" style=\"width: " + ratio + "%; top: "
           + yOffset + "px; left: 110px;\">");
       outFile.println("<div id=\"lb\">");
       outFile.println("<div id=\"rb\">");
@@ -1340,20 +1304,15 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("</div>");
 
       int yOffsetText = yOffset + 8;
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
+      outFile.printf("<div class=\"barlabel\" style=\"top: " + yOffsetText
           + "px; left:5px;\">%.1f</div>\n", size);
-      outFile.printf("<div class=\"barlabel\" style=\"top:" + yOffsetText
-          + "px; left:80px;\">%.1f", perc);
-      outFile.println("%</div>\n");
-      outFile.println("<div class=\"barlabel\" style=\"top:" + yOffsetText
+      outFile.println("<div class=\"barlabel\" style=\"top: " + yOffsetText
           + "px; left:120px;\"><a href=\"" + drillDownFileName
-          + "\" target=\"_top\">" + splitPointName + "</a></div>");
+          + "\" target=\"_top\">" + splitPointDescription + "</a></div>");
 
       yOffset = yOffset + 25;
     }
-    outFile.println("</body>");
-    outFile.println("</html>");
-    outFile.close();
+    outFile.println("</div>");
   }
 
   private static void makeLiteralsHtml(String outFileName,
