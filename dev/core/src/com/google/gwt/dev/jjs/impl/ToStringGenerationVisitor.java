@@ -141,10 +141,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_TRY = "try ".toCharArray();
   protected static final char[] CHARS_WHILE = "while ".toCharArray();
 
-  protected static boolean isInitializer(JMethod x) {
-    return x.getName().equals("$clinit") || x.getName().equals("$init");
-  }
-
   private boolean needSemi = true;
 
   private boolean suppressType = false;
@@ -583,17 +579,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   @Override
   public boolean visit(JMethod x, Context ctx) {
-    // special: transcribe clinit and init as if they were initializer blocks
-    if (isInitializer(x)) {
-      if (x.isStatic()) {
-        print(CHARS_STATIC);
-      }
-      if (!shouldPrintMethodBody()) {
-        print("{...}");
-      }
-    } else {
-      printMethodHeader(x);
-    }
+    printMethodHeader(x);
 
     if (x.isAbstract() || !shouldPrintMethodBody()) {
       semi();
@@ -1028,18 +1014,6 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
     // Parameters
     printParameterList(x);
-
-    if (x.thrownExceptions.size() > 0) {
-      print(CHARS_THROWS);
-      Iterator<JClassType> iter = x.thrownExceptions.iterator();
-      if (iter.hasNext()) {
-        printTypeName(iter.next());
-      }
-      while (iter.hasNext()) {
-        print(CHARS_COMMA);
-        printTypeName(iter.next());
-      }
-    }
   }
 
   protected void printName(HasName x) {

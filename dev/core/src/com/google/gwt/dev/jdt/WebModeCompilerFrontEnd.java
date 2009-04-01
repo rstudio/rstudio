@@ -27,6 +27,7 @@ import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor.MessageSendSite;
 import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.JsniRef;
+import com.google.gwt.dev.util.Memory;
 
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
@@ -120,6 +121,7 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
      */
     CompilationUnitDeclaration[] cuds = compile(logger,
         icus.toArray(new ICompilationUnit[icus.size()]));
+    Memory.maybeDumpMemory("WebModeCompiler");
     return cuds;
   }
 

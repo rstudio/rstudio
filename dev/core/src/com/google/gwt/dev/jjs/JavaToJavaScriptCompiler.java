@@ -72,6 +72,7 @@ import com.google.gwt.dev.jjs.impl.RecordRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRebinds;
 import com.google.gwt.dev.jjs.impl.ReplaceRunAsyncs;
 import com.google.gwt.dev.jjs.impl.ResolveRebinds;
+import com.google.gwt.dev.jjs.impl.SourceGenerationVisitor;
 import com.google.gwt.dev.jjs.impl.TypeMap;
 import com.google.gwt.dev.jjs.impl.TypeTightener;
 import com.google.gwt.dev.js.EvalFunctionsAtTopScope;
@@ -91,9 +92,12 @@ import com.google.gwt.dev.js.JsReportGenerationVisitor.CountingTextOutput;
 import com.google.gwt.dev.js.ast.JsName;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
+import com.google.gwt.dev.util.AbstractTextOutput;
 import com.google.gwt.dev.util.DefaultTextOutput;
 import com.google.gwt.dev.util.Empty;
+import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.TextOutput;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
@@ -101,6 +105,9 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -346,6 +353,8 @@ public class JavaToJavaScriptCompiler {
     allRootTypes.addAll(JProgram.INDEX_TYPES_SET);
     allRootTypes.add(FragmentLoaderCreator.ASYNC_FRAGMENT_LOADER);
 
+    Memory.maybeDumpMemory("CompStateBuilt");
+
     // Compile the source and get the compiler so we can get the parse tree
     //
     CompilationUnitDeclaration[] goldenCuds = compilerFrontEnd.getCompilationUnitDeclarations(
@@ -383,10 +392,14 @@ public class JavaToJavaScriptCompiler {
       // GenerateJavaAST can uncover semantic JSNI errors; report & abort
       checkForErrors(logger, goldenCuds, true);
 
+      Memory.maybeDumpMemory("AstBuilt");
+
       // Allow GC
       goldenCuds = null;
       typeMap = null;
       allTypeDeclarations = null;
+
+      maybeDumpAST(jprogram);
 
       // (3) Perform Java AST normalizations.
 
@@ -456,6 +469,8 @@ public class JavaToJavaScriptCompiler {
       if (Thread.interrupted()) {
         throw new InterruptedException();
       }
+
+      maybeDumpAST(jprogram);
 
       // Recompute clinits each time, they can become empty.
       jprogram.typeOracle.recomputeAfterOptimizations();
@@ -803,5 +818,27 @@ public class JavaToJavaScriptCompiler {
     }
 
     return toReturn;
+  }
+
+  private static void maybeDumpAST(JProgram jprogram) {
+    String dumpFile = System.getProperty("gwt.jjs.dumpAst");
+    if (dumpFile != null) {
+      try {
+        FileOutputStream os = new FileOutputStream(dumpFile, true);
+        final PrintWriter pw = new PrintWriter(os);
+        TextOutput out = new AbstractTextOutput(false) {
+          {
+            setPrintWriter(pw);
+          }
+        };
+        SourceGenerationVisitor v = new SourceGenerationVisitor(out);
+        v.accept(jprogram);
+        pw.flush();
+        pw.close();
+      } catch (IOException e) {
+        System.out.println("Could not dump AST");
+        e.printStackTrace();
+      }
+    }
   }
 }

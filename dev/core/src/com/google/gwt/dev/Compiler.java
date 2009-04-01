@@ -27,6 +27,7 @@ import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.shell.CheckForUpdates;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerExtraDir;
@@ -119,6 +120,12 @@ public class Compiler {
   }
 
   public static void main(String[] args) {
+    Memory.initialize();
+    if (System.getProperty("gwt.jjs.dumpAst") != null) {
+      System.out.println("Will dump AST to: "
+          + System.getProperty("gwt.jjs.dumpAst"));
+    }
+
     /*
      * NOTE: main always exits with a call to System.exit to terminate any
      * non-daemon threads that were started in Generators. Typically, this is to

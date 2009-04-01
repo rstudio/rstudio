@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.TextOutput;
@@ -42,11 +41,6 @@ import com.google.gwt.dev.util.TextOutput;
  * try/catch/throw, and overrides of Object methods.
  */
 public class SourceGenerationVisitor extends ToStringGenerationVisitor {
-
-  private static boolean isEmptyInitializer(JMethod x) {
-    return isInitializer(x)
-        && (((JMethodBody) x.getBody()).getStatements().size() == 0);
-  }
 
   public SourceGenerationVisitor(TextOutput textOutput) {
     super(textOutput);
@@ -70,11 +64,9 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     }
     for (int i = 0; i < x.methods.size(); ++i) {
       JMethod it = x.methods.get(i);
-      if (!isEmptyInitializer(it)) {
-        accept(it);
-        newline();
-        newline();
-      }
+      accept(it);
+      newline();
+      newline();
     }
 
     closeBlock();
