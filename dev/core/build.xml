@@ -6,7 +6,7 @@
   <property name="alldeps.jar" location="${project.build}/alldeps.jar" />
 
   <fileset id="default.tests" dir="${javac.junit.out}">
-    <include name="**/*Test.class" />
+    <include name="**/com/google/**/*Test.class" />
   </fileset>
 
   <target name="compile.tests" depends="build" description="Compiles the test code for this project">
