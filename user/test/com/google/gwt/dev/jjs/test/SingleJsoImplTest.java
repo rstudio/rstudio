@@ -106,6 +106,56 @@ public class SingleJsoImplTest extends GWTTestCase {
     }
   }
 
+  static class JavaUsesArrays implements UsesArrays {
+    public void acceptInt3Array(int[][][] arr) {
+      assertTrue(arr.length == 3);
+    }
+
+    public void acceptIntArray(int[] arr) {
+      assertTrue(arr.length == 1);
+    }
+
+    public void acceptObject3Array(Object[][][] arr) {
+      assertTrue(arr.length == 3);
+    }
+
+    public void acceptObjectArray(Object[] arr) {
+      assertTrue(arr.length == 1);
+    }
+
+    public void acceptString3Array(String[][][] arr) {
+      assertTrue(arr.length == 3);
+    }
+
+    public void acceptStringArray(String[] arr) {
+      assertTrue(arr.length == 1);
+    }
+
+    public int[][][] returnInt3Array() {
+      return new int[3][2][1];
+    }
+
+    public int[] returnIntArray() {
+      return new int[1];
+    }
+
+    public Object[][][] returnObject3Array() {
+      return new Object[3][2][1];
+    }
+
+    public Object[] returnObjectArray() {
+      return new Object[1];
+    }
+
+    public String[][][] returnString3Array() {
+      return new String[3][2][1];
+    }
+
+    public String[] returnStringArray() {
+      return new String[1];
+    }
+  }
+
   static class JsoAdder extends JavaScriptObject implements Adder {
     protected JsoAdder() {
     }
@@ -223,6 +273,60 @@ public class SingleJsoImplTest extends GWTTestCase {
     }
   }
 
+  static final class JsoUsesArrays extends JavaScriptObject implements
+      UsesArrays {
+    protected JsoUsesArrays() {
+    }
+
+    public void acceptInt3Array(int[][][] arr) {
+      assertTrue(arr.length == 3);
+    }
+
+    public void acceptIntArray(int[] arr) {
+      assertTrue(arr.length == 1);
+    }
+
+    public void acceptObject3Array(Object[][][] arr) {
+      assertTrue(arr.length == 3);
+    }
+
+    public void acceptObjectArray(Object[] arr) {
+      assertTrue(arr.length == 1);
+    }
+
+    public void acceptString3Array(String[][][] arr) {
+      assertTrue(arr.length == 3);
+    }
+
+    public void acceptStringArray(String[] arr) {
+      assertTrue(arr.length == 1);
+    }
+
+    public int[][][] returnInt3Array() {
+      return new int[3][2][1];
+    }
+
+    public int[] returnIntArray() {
+      return new int[1];
+    }
+
+    public Object[][][] returnObject3Array() {
+      return new Object[3][2][1];
+    }
+
+    public Object[] returnObjectArray() {
+      return new Object[1];
+    }
+
+    public String[][][] returnString3Array() {
+      return new String[3][2][1];
+    }
+
+    public String[] returnStringArray() {
+      return new String[1];
+    }
+  }
+
   /**
    * Ensure that SingleJsoImpl interfaces can be extended and implemented by
    * regular Java types.
@@ -273,6 +377,35 @@ public class SingleJsoImplTest extends GWTTestCase {
   interface Tag {
   }
 
+  /**
+   * Ensure that arrays are valid return and parameter types.
+   */
+  interface UsesArrays {
+    void acceptInt3Array(int[][][] arr);
+
+    void acceptIntArray(int[] arr);
+
+    void acceptObject3Array(Object[][][] arr);
+
+    void acceptObjectArray(Object[] arr);
+
+    void acceptString3Array(String[][][] arr);
+
+    void acceptStringArray(String[] arr);
+
+    int[][][] returnInt3Array();
+
+    int[] returnIntArray();
+
+    Object[][][] returnObject3Array();
+
+    Object[] returnObjectArray();
+
+    String[][][] returnString3Array();
+
+    String[] returnStringArray();
+  }
+
   private static native JsoAdder makeAdder(int offset) /*-{
     return {offset:offset};
   }-*/;
@@ -299,6 +432,24 @@ public class SingleJsoImplTest extends GWTTestCase {
     InnerType i = (InnerType) JavaScriptObject.createObject();
     assertEquals(5, a.call(i, 5).get());
     assertEquals(5, i.get());
+  }
+
+  public void testCallsWithArrays() {
+    UsesArrays a = JavaScriptObject.createObject().<JsoUsesArrays> cast();
+    a.acceptIntArray(a.returnIntArray());
+    a.acceptInt3Array(a.returnInt3Array());
+    a.acceptStringArray(a.returnStringArray());
+    a.acceptString3Array(a.returnString3Array());
+    a.acceptObjectArray(a.returnStringArray());
+    a.acceptObject3Array(a.returnString3Array());
+
+    a = new JavaUsesArrays();
+    a.acceptIntArray(a.returnIntArray());
+    a.acceptInt3Array(a.returnInt3Array());
+    a.acceptStringArray(a.returnStringArray());
+    a.acceptString3Array(a.returnString3Array());
+    a.acceptObjectArray(a.returnStringArray());
+    a.acceptObject3Array(a.returnString3Array());
   }
 
   public void testDualCase() {

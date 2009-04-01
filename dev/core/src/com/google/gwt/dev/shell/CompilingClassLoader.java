@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWTBridge;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.TreeLogger.Type;
+import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
@@ -1001,12 +1002,16 @@ public final class CompilingClassLoader extends ClassLoader implements
   }
 
   private String getBinaryOrPrimitiveName(JType type) {
+    JArrayType asArray = type.isArray();
     JClassType asClass = type.isClassOrInterface();
     JPrimitiveType asPrimitive = type.isPrimitive();
     if (asClass != null) {
       return getBinaryName(asClass);
     } else if (asPrimitive != null) {
       return asPrimitive.getQualifiedSourceName();
+    } else if (asArray != null) {
+      JType componentType = asArray.getComponentType();
+      return getBinaryOrPrimitiveName(componentType) + "[]";
     } else {
       throw new InternalCompilerException("Cannot create binary name for "
           + type.getQualifiedSourceName());
