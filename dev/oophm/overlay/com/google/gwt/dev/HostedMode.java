@@ -298,6 +298,7 @@ public class HostedMode extends OophmHostedModeBase {
   @Override
   protected void compile(TreeLogger logger) throws UnableToCompleteException {
     CompilerOptions newOptions = new CompilerOptionsImpl(options);
+    newOptions.setCompilationStateRetained(true);
     new Compiler(newOptions).run(logger);
   }
 
