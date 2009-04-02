@@ -53,9 +53,4 @@ public abstract class JsniMethod {
    * Gets the JsProgram in which {@link #function(TreeLogger)} is located.
    */
   public abstract JsProgram program();
-
-  /**
-   * The script body.
-   */
-  public abstract String source();
 }

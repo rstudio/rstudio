@@ -25,6 +25,7 @@ import org.eclipse.jdt.internal.compiler.Compiler;
 import org.eclipse.jdt.internal.compiler.DefaultErrorHandlingPolicies;
 import org.eclipse.jdt.internal.compiler.ICompilerRequestor;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
+import org.eclipse.jdt.internal.compiler.classfmt.ClassFileConstants;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.ICompilationUnit;
@@ -194,32 +195,21 @@ public class JdtCompiler {
   }
 
   public static CompilerOptions getCompilerOptions() {
-    Map<String, String> settings = new HashMap<String, String>();
-    settings.put(CompilerOptions.OPTION_LineNumberAttribute,
-        CompilerOptions.GENERATE);
-    settings.put(CompilerOptions.OPTION_SourceFileAttribute,
-        CompilerOptions.GENERATE);
-    /*
-     * Tricks like "boolean stopHere = true;" depend on this setting to work in
-     * hosted mode. In web mode, our compiler should optimize them out once we
-     * do real data flow.
-     */
-    settings.put(CompilerOptions.OPTION_PreserveUnusedLocal,
-        CompilerOptions.PRESERVE);
-    settings.put(CompilerOptions.OPTION_ReportDeprecation,
-        CompilerOptions.IGNORE);
-    settings.put(CompilerOptions.OPTION_LocalVariableAttribute,
-        CompilerOptions.GENERATE);
+    CompilerOptions options = new CompilerOptions();
+    options.complianceLevel = options.sourceLevel = options.targetJDK = ClassFileConstants.JDK1_6;
 
-    /*
-     * Wish we could target 1.5 class file, but this isn't allowed. :(
-     */
-    settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_1_6);
-    settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_1_6);
-    settings.put(CompilerOptions.OPTION_TargetPlatform,
-        CompilerOptions.VERSION_1_6);
+    // Generate debug info for debugging the output.
+    options.produceDebugAttributes = ClassFileConstants.ATTR_VARS
+        | ClassFileConstants.ATTR_LINES | ClassFileConstants.ATTR_SOURCE;
+    // Tricks like "boolean stopHere = true;" depend on this setting.
+    options.preserveAllLocalVariables = true;
 
-    return new CompilerOptions(settings);
+    // Turn off all warnings, saves some memory / speed.
+    options.reportUnusedDeclaredThrownExceptionIncludeDocCommentReference = false;
+    options.reportUnusedDeclaredThrownExceptionExemptExceptionAndThrowable = false;
+    options.warningThreshold = 0;
+    options.inlineJsrBytecode = true;
+    return options;
   }
 
   /**
@@ -231,8 +221,6 @@ public class JdtCompiler {
    * Maps dotted binary names the containing unit location.
    */
   private final Map<String, String> binaryTypesRefs = new HashMap<String, String>();
-
-  private final CompilerImpl compiler = new CompilerImpl();
 
   private final Set<String> notPackages = new HashSet<String>();
 
@@ -262,7 +250,7 @@ public class JdtCompiler {
     }
 
     PerfLogger.start("JdtCompiler.compile");
-    compiler.compile(icus.toArray(new ICompilationUnit[icus.size()]));
+    new CompilerImpl().compile(icus.toArray(new ICompilationUnit[icus.size()]));
     PerfLogger.end();
     return true;
   }

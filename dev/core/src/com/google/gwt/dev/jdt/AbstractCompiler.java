@@ -49,7 +49,6 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 
 import java.net.URL;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
@@ -89,7 +88,7 @@ public abstract class AbstractCompiler {
     }
 
     @Override
-    public void process(CompilationUnitDeclaration cud, int index) {
+    public void process(CompilationUnitDeclaration unit, int index) {
 
       long processBeginNanos = System.nanoTime();
 
@@ -97,46 +96,66 @@ public abstract class AbstractCompiler {
       // with the modification that cud.generateCode is conditionally called
       // based on doGenerateBytes
       {
-        this.parser.getMethodBodies(cud);
+        this.lookupEnvironment.unitBeingCompleted = unit;
+        long parseStart = System.currentTimeMillis();
+
+        this.parser.getMethodBodies(unit);
+
+        long resolveStart = System.currentTimeMillis();
+        this.stats.parseTime += resolveStart - parseStart;
 
         // fault in fields & methods
-        if (cud.scope != null) {
-          cud.scope.faultInTypes();
+        if (unit.scope != null) {
+          unit.scope.faultInTypes();
         }
 
         // verify inherited methods
-        if (cud.scope != null) {
-          cud.scope.verifyMethods(lookupEnvironment.methodVerifier());
+        if (unit.scope != null) {
+          unit.scope.verifyMethods(lookupEnvironment.methodVerifier());
         }
 
         // type checking
-        cud.resolve();
+        unit.resolve();
+
+        long analyzeStart = System.currentTimeMillis();
+        this.stats.resolveTime += analyzeStart - resolveStart;
 
         // flow analysis
-        cud.analyseCode();
+        unit.analyseCode();
+
+        long generateStart = System.currentTimeMillis();
+        this.stats.analyzeTime += generateStart - analyzeStart;
 
         // code generation
+        // code generation
         if (doGenerateBytes) {
-          cud.generateCode();
+          unit.generateCode();
         }
 
         // reference info
-        if (options.produceReferenceInfo && cud.scope != null) {
-          cud.scope.storeDependencyInfo();
+        if (options.produceReferenceInfo && unit.scope != null) {
+          unit.scope.storeDependencyInfo();
         }
 
+        // finalize problems (suppressWarnings)
+        unit.finalizeProblems();
+
+        this.stats.generateTime += System.currentTimeMillis() - generateStart;
+
         // refresh the total number of units known at this stage
-        cud.compilationResult.totalUnitsKnown = totalUnits;
+        unit.compilationResult.totalUnitsKnown = totalUnits;
+
+        this.lookupEnvironment.unitBeingCompleted = null;
       }
 
-      ICompilationUnit cu = cud.compilationResult.compilationUnit;
+      ICompilationUnit cu = unit.compilationResult.compilationUnit;
       String loc = String.valueOf(cu.getFileName());
       TreeLogger logger = threadLogger.branch(TreeLogger.SPAM,
           "Scanning for additional dependencies: " + loc, null);
 
       // Examine the cud for magic types.
       //
-      String[] typeNames = doFindAdditionalTypesUsingJsni(logger, cud);
+      String[] typeNames = doFindAdditionalTypesUsingJsni(logger, unit);
 
       // Accept each new compilation unit.
       //
@@ -148,7 +167,7 @@ public abstract class AbstractCompiler {
         resolvePossiblyNestedType(typeName);
       }
 
-      typeNames = doFindAdditionalTypesUsingRebinds(logger, cud);
+      typeNames = doFindAdditionalTypesUsingRebinds(logger, unit);
 
       // Accept each new compilation unit, and check for instantiability
       //
@@ -164,12 +183,12 @@ public abstract class AbstractCompiler {
         resolvePossiblyNestedType(typeName);
       }
 
-      doCompilationUnitDeclarationValidation(cud, logger);
+      doCompilationUnitDeclarationValidation(unit, logger);
 
       // Optionally remember this cud.
       //
       if (cuds != null) {
-        cuds.add(cud);
+        cuds.add(unit);
       }
 
       jdtProcessNanos += System.nanoTime() - processBeginNanos;
@@ -286,13 +305,7 @@ public abstract class AbstractCompiler {
     }
 
     public NameEnvironmentAnswer findType(char[][] compoundTypeName) {
-
-      // Cache the answers to findType to prevent the creation of more
-      // CompilationUnitDeclarations than needed.
       String qname = CharOperation.toString(compoundTypeName);
-      if (nameEnvironmentAnswerForTypeName.containsKey(qname)) {
-        return (nameEnvironmentAnswerForTypeName.get(qname));
-      }
       TreeLogger logger = threadLogger.branch(TreeLogger.SPAM,
           "Compiler is asking about '" + qname + "'", null);
 
@@ -308,19 +321,13 @@ public abstract class AbstractCompiler {
       int pos = qname.indexOf('$');
       if (pos >= 0) {
         qname = qname.substring(0, pos);
-        // Recheck the cache for the outer type.
-        if (nameEnvironmentAnswerForTypeName.containsKey(qname)) {
-          return (nameEnvironmentAnswerForTypeName.get(qname));
-        }
       }
       CompilationUnit unit = findCompilationUnit(qname);
       if (unit != null) {
         logger.log(TreeLogger.SPAM, "Found type in compilation unit: "
             + unit.getDisplayLocation());
         ICompilationUnit icu = new CompilationUnitAdapter(unit);
-        NameEnvironmentAnswer out = new NameEnvironmentAnswer(icu, null);
-        nameEnvironmentAnswerForTypeName.put(qname, out);
-        return out;
+        return new NameEnvironmentAnswer(icu, null);
       } else {
         ClassLoader classLoader = getClassLoader();
         URL resourceURL = classLoader.getResource(className.replace('.', '/')
@@ -337,9 +344,7 @@ public abstract class AbstractCompiler {
             ClassFileReader cfr;
             try {
               cfr = new ClassFileReader(classBytes, null);
-              NameEnvironmentAnswer out = new NameEnvironmentAnswer(cfr, null);
-              nameEnvironmentAnswerForTypeName.put(qname, out);
-              return out;
+              return new NameEnvironmentAnswer(cfr, null);
             } catch (ClassFormatException e) {
               // Ignored.
             }
@@ -423,6 +428,15 @@ public abstract class AbstractCompiler {
     }
   };
 
+  public static CompilerOptions getCompilerOptions() {
+    CompilerOptions options = JdtCompiler.getCompilerOptions();
+
+    // Turn off all debugging for web mode.
+    options.produceDebugAttributes = 0;
+    options.preserveAllLocalVariables = false;
+    return options;
+  }
+
   protected final CompilationState compilationState;
 
   protected final ThreadLocalTreeLoggerProxy threadLogger = new ThreadLocalTreeLoggerProxy();
@@ -432,8 +446,6 @@ public abstract class AbstractCompiler {
   private final boolean doGenerateBytes;
 
   private final Set<String> knownPackages = new HashSet<String>();
-
-  private final Map<String, NameEnvironmentAnswer> nameEnvironmentAnswerForTypeName = new HashMap<String, NameEnvironmentAnswer>();
 
   private final Set<String> packages = new HashSet<String>();
 
@@ -447,7 +459,7 @@ public abstract class AbstractCompiler {
     IErrorHandlingPolicy pol = DefaultErrorHandlingPolicies.proceedWithAllProblems();
     IProblemFactory probFact = new DefaultProblemFactory(Locale.getDefault());
     ICompilerRequestor req = new ICompilerRequestorImpl();
-    CompilerOptions options = JdtCompiler.getCompilerOptions();
+    CompilerOptions options = getCompilerOptions();
 
     // This is only needed by TypeOracleBuilder to parse metadata.
     options.docCommentSupport = false;

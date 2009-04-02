@@ -63,10 +63,10 @@ public class JsniCollector {
     private final String location;
     private final String name;
     private final String[] paramNames;
-    private final String source;
     private final JsProgram program;
+    private char[] source;
 
-    private JsniMethodImpl(String name, String source, String[] paramNames,
+    private JsniMethodImpl(String name, char[] source, String[] paramNames,
         int line, String location, JsProgram program) {
       this.name = name;
       this.source = source;
@@ -79,8 +79,9 @@ public class JsniCollector {
     @Override
     public JsFunction function(TreeLogger logger) {
       if (func == null) {
-        func = parseAsAnonymousFunction(logger, program, source, paramNames,
-            location, line);
+        func = parseAsAnonymousFunction(logger, program,
+            String.valueOf(source), paramNames, location, line);
+        source = null;
       }
       return func;
     }
@@ -111,11 +112,6 @@ public class JsniCollector {
     }
 
     @Override
-    public String source() {
-      return source;
-    }
-
-    @Override
     public String toString() {
       StringBuffer sb = new StringBuffer();
       sb.append("function ");
@@ -130,8 +126,8 @@ public class JsniCollector {
         }
         sb.append(paramName);
       }
-      sb.append("} {\n");
-      sb.append(source);
+      sb.append(") {\n");
+      sb.append("  [...]");
       sb.append("}\n");
       return sb.toString();
     }
@@ -183,8 +179,8 @@ public class JsniCollector {
         String jsniSignature = getJsniSignature(enclosingType, method);
         String[] paramNames = getParamNames(method);
 
-        jsniMethods.add(new JsniMethodImpl(jsniSignature, js, paramNames,
-            startLine, loc, program));
+        jsniMethods.add(new JsniMethodImpl(jsniSignature, js.toCharArray(),
+            paramNames, startLine, loc, program));
       }
     }
     return jsniMethods;
