@@ -38,6 +38,9 @@ public class MockJavaSourceOracle implements JavaSourceOracle {
     add(sourceFiles);
   }
 
+  public void clear() {
+  }
+
   public Set<String> getClassNames() {
     return exportedMap.keySet();
   }

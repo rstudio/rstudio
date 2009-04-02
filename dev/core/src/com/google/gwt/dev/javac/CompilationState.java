@@ -138,9 +138,12 @@ public class CompilationState {
         it.remove();
       }
     }
+    unitMap.clear();
     updateExposedUnits();
     jdtCompiler = null;
     mediator = new TypeOracleMediator();
+    sourceOracle.clear();
+    invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
   }
 
   /**

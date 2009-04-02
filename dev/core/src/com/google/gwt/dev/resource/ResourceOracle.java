@@ -56,6 +56,13 @@ import java.util.Set;
 public interface ResourceOracle {
 
   /**
+   * Frees up all existing resources and transient internal state. All returned
+   * collections will be empty after this call until this ResoruceOracle is
+   * refreshed.
+   */
+  void clear();
+
+  /**
    * Returns an unmodifiable set of unique abstract path names with constant
    * lookup time.
    */

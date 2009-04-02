@@ -57,6 +57,9 @@ public class StandardGeneratorContextTest extends TestCase {
 
     public MockCompilationState() {
       super(TreeLogger.NULL, new JavaSourceOracle() {
+        public void clear() {
+        }
+
         public Set<String> getClassNames() {
           return Collections.emptySet();
         }
@@ -123,12 +126,12 @@ public class StandardGeneratorContextTest extends TestCase {
           public InputStream openContents() {
             return new ByteArrayInputStream(Util.getBytes("w00t!"));
           }
-          
+
           @Override
           public boolean wasRerooted() {
             return false;
           }
-          
+
         };
       }
       return null;

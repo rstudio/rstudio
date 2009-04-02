@@ -270,6 +270,13 @@ public class ResourceOracleImpl implements ResourceOracle {
     this(getAllClassPathEntries(logger, classLoader));
   }
 
+  public void clear() {
+    exposedPathNames = Collections.emptySet();
+    exposedResourceMap = Collections.emptyMap();
+    exposedResources = Collections.emptySet();
+    internalMap = Collections.emptyMap();
+  }
+
   public Set<String> getPathNames() {
     return exposedPathNames;
   }

@@ -51,6 +51,12 @@ import java.util.Set;
 public interface JavaSourceOracle {
 
   /**
+   * Frees up all existing resources and transient internal state. The
+   * underlying ResourceOracle must be refreshed to be valid again.
+   */
+  void clear();
+
+  /**
    * Returns an unmodifiable set of fully-qualified class names with constant
    * lookup time.
    */

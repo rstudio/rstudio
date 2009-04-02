@@ -38,6 +38,9 @@ public class MockResourceOracle implements ResourceOracle {
     add(resources);
   }
 
+  public void clear() {
+  }
+
   public Set<String> getPathNames() {
     return exportedMap.keySet();
   }

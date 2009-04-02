@@ -141,6 +141,15 @@ public class JavaSourceOracleImpl implements JavaSourceOracle {
     this.oracle = oracle;
   }
 
+  public void clear() {
+    cachedResources = Collections.emptySet();
+    exposedClassNames = Collections.emptySet();
+    exposedSourceFiles = Collections.emptySet();
+    exposedSourceMap = Collections.emptyMap();
+    sourceFiles.clear();
+    oracle.clear();
+  }
+
   public Set<String> getClassNames() {
     refresh();
     return exposedClassNames;
