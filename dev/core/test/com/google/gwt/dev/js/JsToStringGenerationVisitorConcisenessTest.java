@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dev.js;
 
-import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVisitor;
@@ -75,7 +75,7 @@ public class JsToStringGenerationVisitorConcisenessTest extends TestCase {
   }
 
   private String parse(String js) throws Exception {
-    List<JsStatement> statements = JsParser.parse(SourceInfo.UNKNOWN,
+    List<JsStatement> statements = JsParser.parse(SourceOrigin.UNKNOWN,
         new JsProgram().getScope(), new StringReader(js));
     TextOutput text = new DefaultTextOutput(true);
     JsVisitor generator = new JsToStringGenerationVisitor(text);

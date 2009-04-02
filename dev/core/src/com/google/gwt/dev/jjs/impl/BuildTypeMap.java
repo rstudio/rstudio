@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
@@ -189,7 +188,7 @@ public class BuildTypeMap {
         mapParameters(newMethod, ctorDecl);
         // original params are now frozen
 
-        info.addCorrelation(Correlation.by(newMethod));
+        info.addCorrelation(program.getCorrelator().by(newMethod));
 
         int syntheticParamCount = 0;
         ReferenceBinding declaringClass = b.declaringClass;
@@ -287,7 +286,7 @@ public class BuildTypeMap {
         SourceInfo info = makeSourceInfo(methodDeclaration, enclosingType);
         JMethod newMethod = processMethodBinding(b, enclosingType, info);
         mapParameters(newMethod, methodDeclaration);
-        info.addCorrelation(Correlation.by(newMethod));
+        info.addCorrelation(program.getCorrelator().by(newMethod));
 
         if (newMethod.isNative()) {
           processNativeMethod(methodDeclaration, info, enclosingType, newMethod);
@@ -320,7 +319,7 @@ public class BuildTypeMap {
       JType type = (JType) typeMap.get(binding.type);
       JField field = program.createEnumField(info, binding.name,
           (JEnumType) enclosingType, (JClassType) type, binding.original().id);
-      info.addCorrelation(Correlation.by(field));
+      info.addCorrelation(program.getCorrelator().by(field));
       typeMap.put(binding, field);
       return field;
     }
@@ -349,7 +348,7 @@ public class BuildTypeMap {
       JField field = program.createField(info, binding.name, enclosingType,
           type, binding.isStatic(), disposition);
       typeMap.put(binding, field);
-      info.addCorrelation(Correlation.by(field));
+      info.addCorrelation(program.getCorrelator().by(field));
       return field;
     }
 
@@ -360,7 +359,7 @@ public class BuildTypeMap {
           BuildDeclMapVisitor.class, "Field " + String.valueOf(binding.name));
       JField field = program.createField(info, binding.name, enclosingType,
           type, false, Disposition.FINAL);
-      info.addCorrelation(Correlation.by(field));
+      info.addCorrelation(program.getCorrelator().by(field));
       if (binding.matchingField != null) {
         typeMap.put(binding.matchingField, field);
       }
@@ -882,7 +881,7 @@ public class BuildTypeMap {
           assert (false);
           return false;
         }
-        info.addCorrelation(Correlation.by(newType));
+        info.addCorrelation(program.getCorrelator().by(newType));
 
         /**
          * We emulate static initializers and instance initializers as methods.

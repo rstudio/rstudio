@@ -26,7 +26,6 @@ import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsVisitable;
 import com.google.gwt.dev.js.ast.JsVisitor;
-import com.google.gwt.dev.js.ast.SourceInfoJs;
 
 /**
  * Searches for method invocations in constructor expressions that would not
@@ -34,11 +33,8 @@ import com.google.gwt.dev.js.ast.SourceInfoJs;
  */
 public class JsConstructExpressionVisitor extends JsVisitor {
 
-  private static final int PRECEDENCE_NEW = JsPrecedenceVisitor.exec(new JsNew(
-      SourceInfoJs.INTRINSIC));
-
   public static boolean exec(JsExpression expression) {
-    if (JsPrecedenceVisitor.exec(expression) < PRECEDENCE_NEW) {
+    if (JsPrecedenceVisitor.exec(expression) < JsPrecedenceVisitor.PRECEDENCE_NEW) {
       return true;
     }
     JsConstructExpressionVisitor visitor = new JsConstructExpressionVisitor();
@@ -120,7 +116,7 @@ public class JsConstructExpressionVisitor extends JsVisitor {
       int precedence = JsPrecedenceVisitor.exec(expression);
       // Only visit expressions that won't automatically be surrounded by
       // parentheses
-      if (precedence < PRECEDENCE_NEW) {
+      if (precedence < JsPrecedenceVisitor.PRECEDENCE_NEW) {
         return node;
       }
     }

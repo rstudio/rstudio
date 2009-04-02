@@ -18,17 +18,11 @@ package com.google.gwt.dev.jjs;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
-import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 
-import org.apache.commons.collections.map.ReferenceMap;
-
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumMap;
-import java.util.Map;
 
 /**
  * Each SourceInfo may define one or more axes by which it can be correlated
@@ -176,113 +170,6 @@ public final class Correlation implements Serializable {
   };
 
   /**
-   * This cuts down on the total number of Correlation objects allocated.
-   */
-  @SuppressWarnings("unchecked")
-  private static final Map<Object, Correlation> CANONICAL_MAP = Collections.synchronizedMap(new ReferenceMap(
-      ReferenceMap.WEAK, ReferenceMap.WEAK));
-
-  /**
-   * Correlations based on Literals are all the same, so we'll just cook up a
-   * Map to make {@link #by(Literal)} fast.
-   */
-  private static final Map<Literal, Correlation> LITERAL_CORRELATIONS = new EnumMap<Literal, Correlation>(
-      Literal.class);
-
-  static {
-    for (Literal l : Literal.values()) {
-      LITERAL_CORRELATIONS.put(l, new Correlation(Axis.LITERAL,
-          l.getDescription(), l));
-    }
-  }
-
-  public static Correlation by(JField field) {
-    Correlation toReturn = CANONICAL_MAP.get(field);
-    if (toReturn == null) {
-      toReturn = new Correlation(Axis.FIELD, field.getEnclosingType().getName()
-          + "::" + field.getName(), field);
-      CANONICAL_MAP.put(field, toReturn);
-    }
-    return toReturn;
-  }
-
-  public static Correlation by(JMethod method) {
-    Correlation toReturn = CANONICAL_MAP.get(method);
-    if (toReturn == null) {
-
-      toReturn = new Correlation(Axis.METHOD, getMethodIdent(method), method);
-      CANONICAL_MAP.put(method, toReturn);
-    }
-    return toReturn;
-  }
-
-  public static Correlation by(JReferenceType type) {
-    Correlation toReturn = CANONICAL_MAP.get(type);
-    if (toReturn == null) {
-      toReturn = new Correlation(Axis.CLASS, type.getName(), type);
-      CANONICAL_MAP.put(type, toReturn);
-    }
-    return toReturn;
-  }
-
-  public static Correlation by(JsFunction function) {
-    Correlation toReturn = CANONICAL_MAP.get(function);
-    if (toReturn == null) {
-      toReturn = new Correlation(Axis.FUNCTION, function.getName().getIdent(),
-          function);
-      CANONICAL_MAP.put(function, toReturn);
-    }
-    return toReturn;
-  }
-
-  /**
-   * Creates a JS_NAME Correlation.
-   */
-  public static Correlation by(JsName name) {
-    return by(name, false);
-  }
-
-  /**
-   * Creates either a JS_NAME or JS_ALIAS correlation, based on the value of
-   * <code>isAlias</code>.
-   */
-  public static Correlation by(JsName name, boolean isAlias) {
-    Correlation toReturn = CANONICAL_MAP.get(name);
-    if (toReturn == null) {
-      toReturn = new Correlation(isAlias ? Axis.JS_ALIAS : Axis.JS_NAME,
-          name.getIdent(), name);
-      CANONICAL_MAP.put(name, toReturn);
-    }
-    return toReturn;
-  }
-
-  public static Correlation by(Literal type) {
-    assert LITERAL_CORRELATIONS.containsKey(type);
-    return LITERAL_CORRELATIONS.get(type);
-  }
-
-  public static Correlation by(SourceOrigin origin) {
-    Correlation toReturn = CANONICAL_MAP.get(origin);
-    if (toReturn == null) {
-      toReturn = new Correlation(Axis.ORIGIN, origin.getFileName() + ":"
-          + origin.getStartLine(), origin);
-      CANONICAL_MAP.put(origin, toReturn);
-    }
-    return toReturn;
-  }
-
-  private static String getMethodIdent(JMethod method) {
-    StringBuilder sb = new StringBuilder();
-    sb.append(method.getEnclosingType().getName()).append("::");
-    sb.append(method.getName()).append("(");
-    for (JType type : method.getOriginalParamTypes()) {
-      sb.append(type.getJsniSignatureName());
-    }
-    sb.append(")");
-    return sb.toString();
-  }
-
-  /**
    * This may contain a reference to either a Java or Js AST node.
    */
   protected final Serializable astReference;
@@ -297,7 +184,7 @@ public final class Correlation implements Serializable {
    */
   protected final String ident;
 
-  private Correlation(Axis axis, String ident, Serializable astReference) {
+  Correlation(Axis axis, String ident, Serializable astReference) {
     if (axis == null) {
       throw new NullPointerException("axis");
     } else if (ident == null) {

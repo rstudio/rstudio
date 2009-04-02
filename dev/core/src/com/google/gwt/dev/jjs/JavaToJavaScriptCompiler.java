@@ -30,6 +30,8 @@ import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
+import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
+import com.google.gwt.dev.jjs.CorrelationFactory.RealCorrelationFactory;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
@@ -375,8 +377,10 @@ public class JavaToJavaScriptCompiler {
     checkForErrors(logger, goldenCuds, false);
 
     PerfLogger.start("Build AST");
-    JProgram jprogram = new JProgram(options.isSoycEnabled());
-    JsProgram jsProgram = new JsProgram(options.isSoycEnabled());
+    CorrelationFactory correlator = options.isSoycEnabled()
+        ? new RealCorrelationFactory() : new DummyCorrelationFactory();
+    JProgram jprogram = new JProgram(correlator);
+    JsProgram jsProgram = new JsProgram(correlator);
 
     try {
       /*

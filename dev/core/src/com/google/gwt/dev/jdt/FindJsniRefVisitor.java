@@ -16,7 +16,7 @@
 package com.google.gwt.dev.jdt;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
-import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.js.JsParser;
 import com.google.gwt.dev.js.JsParserException;
 import com.google.gwt.dev.js.ast.JsContext;
@@ -127,7 +127,7 @@ public class FindJsniRefVisitor extends ASTVisitor {
     StringReader sr = new StringReader(syntheticFnHeader + '\n' + jsniCode);
     try {
       // start at -1 to avoid counting our synthetic header
-      List<JsStatement> result = JsParser.parse(SourceInfo.UNKNOWN,
+      List<JsStatement> result = JsParser.parse(SourceOrigin.UNKNOWN,
           jsProgram.getScope(), sr);
       new JsVisitor() {
         public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {

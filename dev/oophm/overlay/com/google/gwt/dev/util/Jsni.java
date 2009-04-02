@@ -138,9 +138,10 @@ public class Jsni {
 
         // Use a clone instead of modifying the original JSNI
         // __gwt_makeTearOff(obj, dispId, paramCount)
-        JsInvocation rewritten = new JsInvocation(SourceInfo.UNKNOWN);
-        rewritten.setQualifier(new JsNameRef(SourceInfo.UNKNOWN,
-            "__gwt_makeTearOff"));
+        SourceInfo newSourceInfo = x.getSourceInfo().makeChild(getClass(),
+            "Replace JSNI ref for hosted mode");
+        JsInvocation rewritten = new JsInvocation(newSourceInfo);
+        rewritten.setQualifier(new JsNameRef(newSourceInfo, "__gwt_makeTearOff"));
 
         List<JsExpression> arguments = rewritten.getArguments();
         if (q == null) {
@@ -198,12 +199,14 @@ public class Jsni {
               paramCount = ((Constructor<?>) member).getParameterTypes().length;
             }
 
-            JsInvocation inner = new JsInvocation(SourceInfo.UNKNOWN);
-            inner.setQualifier(new JsNameRef(SourceInfo.UNKNOWN,
+            SourceInfo newSourceInfo = x.getSourceInfo().makeChild(getClass(),
+                "Replace JSNI ref for hosted mode");
+            JsInvocation inner = new JsInvocation(newSourceInfo);
+            inner.setQualifier(new JsNameRef(newSourceInfo,
                 "__gwt_makeJavaInvoke"));
             inner.getArguments().add(program.getNumberLiteral(paramCount));
 
-            JsInvocation outer = new JsInvocation(SourceInfo.UNKNOWN);
+            JsInvocation outer = new JsInvocation(newSourceInfo);
             outer.setQualifier(inner);
             JsExpression q = ref.getQualifier();
             if (q == null) {

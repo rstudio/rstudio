@@ -17,7 +17,6 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
-import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.JsOutputOption;
@@ -298,7 +297,8 @@ public class GenerateJavaScriptAST {
             polyName = interfaceScope.declareName(mangleName, name);
           }
           // Record this as an alias, not the primary name
-          x.getSourceInfo().addCorrelation(Correlation.by(polyName, true));
+          x.getSourceInfo().addCorrelation(
+              program.getCorrelator().by(polyName, true));
           polymorphicNames.put(x, polyName);
         }
       }
@@ -314,7 +314,7 @@ public class GenerateJavaScriptAST {
       assert x.getEnclosingType() != null;
       String mangleName = mangleNameForGlobal(x);
       globalName = topScope.declareName(mangleName, name);
-      x.getSourceInfo().addCorrelation(Correlation.by(globalName));
+      x.getSourceInfo().addCorrelation(program.getCorrelator().by(globalName));
       names.put(x, globalName);
       recordSymbol(x, globalName);
 
@@ -331,7 +331,8 @@ public class GenerateJavaScriptAST {
         jsFunction = new JsFunction(sourceInfo, topScope, globalName, true);
       }
       methodBodyMap.put(x.getBody(), jsFunction);
-      jsFunction.getSourceInfo().addCorrelation(Correlation.by(globalName));
+      jsFunction.getSourceInfo().addCorrelation(
+          program.getCorrelator().by(globalName));
       push(jsFunction.getScope());
       return true;
     }

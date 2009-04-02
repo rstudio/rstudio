@@ -85,6 +85,8 @@ import com.google.gwt.dev.js.ast.JsVars.JsVar;
  */
 class JsPrecedenceVisitor extends JsVisitor {
 
+  static final int PRECEDENCE_NEW = 15;
+
   public static int exec(JsExpression expression) {
     JsPrecedenceVisitor visitor = new JsPrecedenceVisitor();
     visitor.accept(expression);
@@ -223,7 +225,7 @@ class JsPrecedenceVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsNew x, JsContext<JsExpression> ctx) {
-    answer = 15;
+    answer = PRECEDENCE_NEW;
     return false;
   }
 

@@ -15,8 +15,9 @@
  */
 package com.google.gwt.dev.js.ast;
 
-import com.google.gwt.dev.jjs.Correlation;
+import com.google.gwt.dev.jjs.CorrelationFactory;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.Correlation.Axis;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 
@@ -27,30 +28,23 @@ import java.util.Map;
  * A JavaScript program.
  */
 public final class JsProgram extends JsNode<JsProgram> {
-  /**
-   * This method is used to create SourceInfos for fields in JsProgram. This
-   * method always creates a SourceInfo that has collection enabled.
-   */
-  private static SourceInfo createSourceInfoEnabled(String description) {
-    return new SourceInfoJs(-1, -1, 0, JsProgram.class.getName(), true).makeChild(
-        JsProgram.class, description);
-  }
 
-  private final JsStatement debuggerStmt = new JsDebugger(
-      createSourceInfoEnabled("debugger statement"));
+  private final CorrelationFactory correlator;
 
-  private final JsEmpty emptyStmt = new JsEmpty(
-      createSourceInfoEnabled("Empty statement"));
+  private final JsStatement debuggerStmt;
 
-  private final boolean enableSourceInfoDescendants;
+  private final JsEmpty emptyStmt;
 
-  private final JsBooleanLiteral falseLiteral = new JsBooleanLiteral(
-      createSourceInfoEnabled("false literal"), false);
+  private final JsBooleanLiteral falseLiteral;
 
   private JsProgramFragment[] fragments;
 
-  private final JsNullLiteral nullLiteral = new JsNullLiteral(
-      createSourceInfoEnabled("null literal"));
+  /**
+   * The root intrinsic source info.
+   */
+  private final SourceInfo intrinsic;
+
+  private final JsNullLiteral nullLiteral;
 
   private final Map<Double, JsNumberLiteral> numberLiteralMap = new HashMap<Double, JsNumberLiteral>();
 
@@ -64,11 +58,10 @@ public final class JsProgram extends JsNode<JsProgram> {
 
   private final JsScope topScope;
 
-  private final JsBooleanLiteral trueLiteral = new JsBooleanLiteral(
-      createSourceInfoEnabled("true literal"), true);
+  private final JsBooleanLiteral trueLiteral;
 
   public JsProgram() {
-    this(false);
+    this(new CorrelationFactory.DummyCorrelationFactory());
   }
 
   /**
@@ -79,28 +72,35 @@ public final class JsProgram extends JsNode<JsProgram> {
    *          feature will collect extra data during the compilation cycle, but
    *          at a cost of memory and object allocations.
    */
-  public JsProgram(boolean soycEnabled) {
-    super(SourceInfoJs.INTRINSIC.makeChild(JsProgram.class,
-        "JavaScript program"));
-    this.enableSourceInfoDescendants = soycEnabled;
+  public JsProgram(CorrelationFactory correlator) {
+    super(correlator.makeSourceInfo(SourceOrigin.create(0,
+        JsProgram.class.getName())));
+
+    this.correlator = correlator;
+    intrinsic = createSourceInfo(0, getClass().getName());
 
     rootScope = new JsRootScope(this);
     topScope = new JsScope(rootScope, "Global");
     objectScope = new JsScope(rootScope, "Object");
     setFragmentCount(1);
-    falseLiteral.getSourceInfo().addCorrelation(
-        Correlation.by(Literal.JS_BOOLEAN));
-    nullLiteral.getSourceInfo().addCorrelation(Correlation.by(Literal.JS_NULL));
+
+    debuggerStmt = new JsDebugger(createLiteralSourceInfo("debugger statement"));
+    emptyStmt = new JsEmpty(createLiteralSourceInfo("Empty statement"));
+    falseLiteral = new JsBooleanLiteral(createLiteralSourceInfo(
+        "false literal", Literal.JS_BOOLEAN), false);
+    nullLiteral = new JsNullLiteral(createLiteralSourceInfo("null literal",
+        Literal.JS_NULL));
+    trueLiteral = new JsBooleanLiteral(createLiteralSourceInfo("true literal",
+        Literal.JS_BOOLEAN), true);
+
     trueLiteral.getSourceInfo().addCorrelation(
-        Correlation.by(Literal.JS_BOOLEAN));
-    stringPoolSourceInfo = createSourceInfoSynthetic(JsProgram.class,
-        "String pool");
-    stringPoolSourceInfo.addCorrelation(Correlation.by(Literal.JS_STRING));
+        correlator.by(Literal.JS_BOOLEAN));
+    stringPoolSourceInfo = createLiteralSourceInfo("String pool",
+        Literal.JS_STRING);
   }
 
   public SourceInfo createSourceInfo(int lineNumber, String location) {
-    return new SourceInfoJs(-1, -1, lineNumber, location,
-        enableSourceInfoDescendants);
+    return correlator.makeSourceInfo(SourceOrigin.create(lineNumber, location));
   }
 
   public SourceInfo createSourceInfoSynthetic(Class<?> caller,
@@ -170,7 +170,7 @@ public final class JsProgram extends JsNode<JsProgram> {
       if (lit == null) {
         info = createSourceInfoSynthetic(JsProgram.class, "Number literal "
             + value);
-        info.addCorrelation(Correlation.by(Literal.JS_NUMBER));
+        info.addCorrelation(correlator.by(Literal.JS_NUMBER));
         lit = new JsNumberLiteral(info, value);
         numberLiteralMap.put(value, lit);
       }
@@ -181,7 +181,7 @@ public final class JsProgram extends JsNode<JsProgram> {
       if (info.getPrimaryCorrelation(Axis.LITERAL) == null) {
         // Don't mutate incoming SourceInfo
         info = info.makeChild(JsProgram.class, "Number literal " + value);
-        info.addCorrelation(Correlation.by(Literal.JS_NUMBER));
+        info.addCorrelation(correlator.by(Literal.JS_NUMBER));
       }
       return new JsNumberLiteral(info, value);
     }
@@ -231,7 +231,7 @@ public final class JsProgram extends JsNode<JsProgram> {
   public JsNameRef getUndefinedLiteral() {
     SourceInfo info = createSourceInfoSynthetic(JsProgram.class,
         "undefined reference");
-    info.addCorrelation(Correlation.by(Literal.JS_UNDEFINED));
+    info.addCorrelation(correlator.by(Literal.JS_UNDEFINED));
     return rootScope.findExistingName("undefined").makeRef(info);
   }
 
@@ -250,5 +250,15 @@ public final class JsProgram extends JsNode<JsProgram> {
       }
     }
     v.endVisit(this, ctx);
+  }
+
+  private SourceInfo createLiteralSourceInfo(String description) {
+    return intrinsic.makeChild(getClass(), description);
+  }
+
+  private SourceInfo createLiteralSourceInfo(String description, Literal literal) {
+    SourceInfo child = createLiteralSourceInfo(description);
+    child.addCorrelation(correlator.by(literal));
+    return child;
   }
 }

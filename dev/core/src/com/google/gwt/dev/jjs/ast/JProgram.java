@@ -15,9 +15,10 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-import com.google.gwt.dev.jjs.Correlation;
+import com.google.gwt.dev.jjs.CorrelationFactory;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 import com.google.gwt.dev.jjs.Correlation.Literal;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JClassSeed;
@@ -44,7 +45,6 @@ import java.util.TreeSet;
  * Root for the AST representing an entire Java program.
  */
 public class JProgram extends JNode {
-
   private static final class ArrayTypeComparator implements
       Comparator<JArrayType>, Serializable {
     public int compare(JArrayType o1, JArrayType o2) {
@@ -141,15 +141,6 @@ public class JProgram extends JNode {
     return traceMethods.size() > 0;
   }
 
-  /**
-   * This method is used to create SourceInfos for fields in JProgram. This
-   * method always creates a SourceInfo that has collection enabled.
-   */
-  private static SourceInfo createSourceInfoEnabled(String description) {
-    return new SourceInfoJava(-1, -1, 0, JProgram.class.getName(), true).makeChild(
-        JProgram.class, description);
-  }
-
   private static String dotify(char[][] name) {
     StringBuffer result = new StringBuffer();
     for (int i = 0; i < name.length; ++i) {
@@ -187,13 +178,16 @@ public class JProgram extends JNode {
   private final Map<JType, JClassLiteral> classLiterals = new IdentityHashMap<JType, JClassLiteral>();
 
   /**
+   * A factory to create correlations.
+   */
+  private final CorrelationFactory correlator;
+
+  /**
    * Each entry is a HashMap(JType => JArrayType), arranged such that the number
    * of dimensions is that index (plus one) at which the JArrayTypes having that
    * number of dimensions resides.
    */
   private final ArrayList<HashMap<JType, JArrayType>> dimensions = new ArrayList<HashMap<JType, JArrayType>>();
-
-  private final boolean enableSourceInfoDescendants;
 
   private final Map<String, JField> indexedFields = new HashMap<String, JField>();
 
@@ -203,28 +197,20 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
 
+  /**
+   * The root intrinsic source info.
+   */
+  private final SourceInfo intrinsic;
+
   private List<JsonObject> jsonTypeTable;
 
-  private final JAbsentArrayDimension literalAbsentArrayDim = new JAbsentArrayDimension(
-      this, createSourceInfoEnabled("Absent array dimension"));
-
-  private final JBooleanLiteral literalFalse = new JBooleanLiteral(this,
-      createSourceInfoEnabled("false literal"), false);
-
-  private final JIntLiteral literalIntNegOne = new JIntLiteral(this,
-      createSourceInfoEnabled("-1 literal"), -1);
-
-  private final JIntLiteral literalIntOne = new JIntLiteral(this,
-      createSourceInfoEnabled("1 literal"), 1);
-
-  private final JIntLiteral literalIntZero = new JIntLiteral(this,
-      createSourceInfoEnabled("0 literal"), 0);
-
-  private final JNullLiteral literalNull = new JNullLiteral(this,
-      createSourceInfoEnabled("null literal"));
-
-  private final JBooleanLiteral literalTrue = new JBooleanLiteral(this,
-      createSourceInfoEnabled("true literal"), true);
+  private final JAbsentArrayDimension literalAbsentArrayDim;
+  private final JBooleanLiteral literalFalse;
+  private final JIntLiteral literalIntNegOne;
+  private final JIntLiteral literalIntOne;
+  private final JIntLiteral literalIntZero;
+  private final JNullLiteral literalNull;
+  private final JBooleanLiteral literalTrue;
 
   private JField nullField;
 
@@ -241,42 +227,33 @@ public class JProgram extends JNode {
 
   private final Map<JMethod, JMethod> staticToInstanceMap = new IdentityHashMap<JMethod, JMethod>();
 
-  private final JPrimitiveType typeBoolean = new JPrimitiveType(this,
-      "boolean", "Z", "java.lang.Boolean", literalFalse);
+  private final JPrimitiveType typeBoolean;
 
-  private final JPrimitiveType typeByte = new JPrimitiveType(this, "byte", "B",
-      "java.lang.Byte", literalIntZero);
+  private final JPrimitiveType typeByte;
 
-  private final JPrimitiveType typeChar = new JPrimitiveType(this, "char", "C",
-      "java.lang.Character", getLiteralChar((char) 0));
+  private final JPrimitiveType typeChar;
 
   private JClassType typeClass;
 
-  private final JPrimitiveType typeDouble = new JPrimitiveType(this, "double",
-      "D", "java.lang.Double", getLiteralDouble(0));
+  private final JPrimitiveType typeDouble;
 
-  private final JPrimitiveType typeFloat = new JPrimitiveType(this, "float",
-      "F", "java.lang.Float", getLiteralFloat(0));
+  private final JPrimitiveType typeFloat;
 
   private Map<JClassType, Integer> typeIdMap = new HashMap<JClassType, Integer>();
 
-  private final JPrimitiveType typeInt = new JPrimitiveType(this, "int", "I",
-      "java.lang.Integer", literalIntZero);
+  private final JPrimitiveType typeInt;
 
   private JClassType typeJavaLangEnum;
 
   private JClassType typeJavaLangObject;
 
-  private final JPrimitiveType typeLong = new JPrimitiveType(this, "long", "J",
-      "java.lang.Long", getLiteralLong(0));
+  private final JPrimitiveType typeLong;
 
   private final Map<String, JReferenceType> typeNameMap = new HashMap<String, JReferenceType>();
 
-  private final JNullType typeNull = new JNullType(this,
-      createSourceInfoEnabled("null type"));
+  private final JNullType typeNull;
 
-  private final JPrimitiveType typeShort = new JPrimitiveType(this, "short",
-      "S", "java.lang.Short", literalIntZero);
+  private final JPrimitiveType typeShort;
 
   private JClassType typeSpecialClassLiteralHolder;
 
@@ -284,15 +261,14 @@ public class JProgram extends JNode {
 
   private JClassType typeString;
 
-  private final JPrimitiveType typeVoid = new JPrimitiveType(this, "void", "V",
-      "java.lang.Void", null);
+  private final JPrimitiveType typeVoid;
 
   private final SourceInfo stringPoolSourceInfo;
 
   private final Map<String, JStringLiteral> stringLiteralMap = new HashMap<String, JStringLiteral>();
 
   public JProgram() {
-    this(false);
+    this(new CorrelationFactory.DummyCorrelationFactory());
   }
 
   /**
@@ -303,20 +279,64 @@ public class JProgram extends JNode {
    *          Enabling this feature will collect extra data during the
    *          compilation cycle, but at a cost of memory and object allocations.
    */
-  public JProgram(boolean enableSourceInfoDescendants) {
-    super(null, SourceInfoJava.INTRINSIC.makeChild(JProgram.class,
-        "Top-level program"));
+  public JProgram(CorrelationFactory correlator) {
+    super(null, correlator.makeSourceInfo(SourceOrigin.create(0,
+        JProgram.class.getName())));
 
-    this.enableSourceInfoDescendants = enableSourceInfoDescendants;
-    literalFalse.getSourceInfo().addCorrelation(Correlation.by(Literal.BOOLEAN));
-    literalIntNegOne.getSourceInfo().addCorrelation(Correlation.by(Literal.INT));
-    literalIntOne.getSourceInfo().addCorrelation(Correlation.by(Literal.INT));
-    literalIntZero.getSourceInfo().addCorrelation(Correlation.by(Literal.INT));
-    literalNull.getSourceInfo().addCorrelation(Correlation.by(Literal.NULL));
-    literalTrue.getSourceInfo().addCorrelation(Correlation.by(Literal.BOOLEAN));
-    stringPoolSourceInfo = createSourceInfoSynthetic(JProgram.class,
-        "String pool");
-    stringPoolSourceInfo.addCorrelation(Correlation.by(Literal.STRING));
+    this.correlator = correlator;
+    intrinsic = createSourceInfo(0, getClass().getName());
+
+    literalAbsentArrayDim = new JAbsentArrayDimension(this,
+        createLiteralSourceInfo("Absent array dimension"));
+
+    literalFalse = new JBooleanLiteral(this, createLiteralSourceInfo(
+        "false literal", Literal.BOOLEAN), false);
+
+    literalIntNegOne = new JIntLiteral(this, createLiteralSourceInfo(
+        "-1 literal", Literal.INT), -1);
+
+    literalIntOne = new JIntLiteral(this, createLiteralSourceInfo("1 literal",
+        Literal.INT), 1);
+
+    literalIntZero = new JIntLiteral(this, createLiteralSourceInfo("0 literal",
+        Literal.INT), 0);
+
+    literalNull = new JNullLiteral(this, createLiteralSourceInfo(
+        "null literal", Literal.NULL));
+
+    literalTrue = new JBooleanLiteral(this, createLiteralSourceInfo(
+        "true literal", Literal.BOOLEAN), true);
+
+    typeBoolean = new JPrimitiveType(this, "boolean", "Z", "java.lang.Boolean",
+        literalFalse);
+
+    typeByte = new JPrimitiveType(this, "byte", "B", "java.lang.Byte",
+        literalIntZero);
+
+    typeChar = new JPrimitiveType(this, "char", "C", "java.lang.Character",
+        getLiteralChar((char) 0));
+
+    typeDouble = new JPrimitiveType(this, "double", "D", "java.lang.Double",
+        getLiteralDouble(0));
+
+    typeFloat = new JPrimitiveType(this, "float", "F", "java.lang.Float",
+        getLiteralFloat(0));
+
+    typeInt = new JPrimitiveType(this, "int", "I", "java.lang.Integer",
+        literalIntZero);
+
+    typeLong = new JPrimitiveType(this, "long", "J", "java.lang.Long",
+        getLiteralLong(0));
+
+    typeNull = new JNullType(this, createLiteralSourceInfo("null type"));
+
+    typeShort = new JPrimitiveType(this, "short", "S", "java.lang.Short",
+        literalIntZero);
+
+    typeVoid = new JPrimitiveType(this, "void", "V", "java.lang.Void", null);
+
+    stringPoolSourceInfo = createLiteralSourceInfo("String pool",
+        Literal.STRING);
   }
 
   public void addEntryMethod(JMethod entryPoint) {
@@ -506,8 +526,8 @@ public class JProgram extends JNode {
    */
   public SourceInfo createSourceInfo(int startPos, int endPos, int startLine,
       String fileName) {
-    return new SourceInfoJava(startPos, endPos, startLine, fileName,
-        enableSourceInfoDescendants);
+    return correlator.makeSourceInfo(SourceOrigin.create(startPos, endPos,
+        startLine, fileName));
   }
 
   /**
@@ -515,8 +535,7 @@ public class JProgram extends JNode {
    * location.
    */
   public SourceInfo createSourceInfo(int startLine, String fileName) {
-    return new SourceInfoJava(-1, -1, startLine, fileName,
-        enableSourceInfoDescendants);
+    return correlator.makeSourceInfo(SourceOrigin.create(startLine, fileName));
   }
 
   /**
@@ -554,6 +573,10 @@ public class JProgram extends JNode {
       allEntryMethods.addAll(entries);
     }
     return allEntryMethods;
+  }
+
+  public CorrelationFactory getCorrelator() {
+    return correlator;
   }
 
   public List<JReferenceType> getDeclaredTypes() {
@@ -624,7 +647,7 @@ public class JProgram extends JNode {
   public JCharLiteral getLiteralChar(char c) {
     // could be interned
     SourceInfo info = createSourceInfoSynthetic(JProgram.class, c + " literal");
-    info.addCorrelation(Correlation.by(Literal.CHAR));
+    info.addCorrelation(correlator.by(Literal.CHAR));
     return new JCharLiteral(this, info, c);
   }
 
@@ -665,7 +688,7 @@ public class JProgram extends JNode {
 
       SourceInfo literalInfo = createSourceInfoSynthetic(JProgram.class,
           "class literal for " + type.getName());
-      literalInfo.addCorrelation(Correlation.by(Literal.CLASS));
+      literalInfo.addCorrelation(correlator.by(Literal.CLASS));
       classLiteral = new JClassLiteral(this, literalInfo, type, field);
       classLiterals.put(type, classLiteral);
     } else {
@@ -693,14 +716,14 @@ public class JProgram extends JNode {
   public JDoubleLiteral getLiteralDouble(double d) {
     // could be interned
     SourceInfo info = createSourceInfoSynthetic(JProgram.class, d + " literal");
-    info.addCorrelation(Correlation.by(Literal.DOUBLE));
+    info.addCorrelation(correlator.by(Literal.DOUBLE));
     return new JDoubleLiteral(this, info, d);
   }
 
   public JFloatLiteral getLiteralFloat(float f) {
     // could be interned
     SourceInfo info = createSourceInfoSynthetic(JProgram.class, f + " literal");
-    info.addCorrelation(Correlation.by(Literal.FLOAT));
+    info.addCorrelation(correlator.by(Literal.FLOAT));
     return new JFloatLiteral(this, info, f);
   }
 
@@ -716,7 +739,7 @@ public class JProgram extends JNode {
         // could be interned
         SourceInfo info = createSourceInfoSynthetic(JProgram.class, i
             + " literal");
-        info.addCorrelation(Correlation.by(Literal.INT));
+        info.addCorrelation(correlator.by(Literal.INT));
         return new JIntLiteral(this, info, i);
       }
     }
@@ -724,7 +747,7 @@ public class JProgram extends JNode {
 
   public JLongLiteral getLiteralLong(long l) {
     SourceInfo info = createSourceInfoSynthetic(JProgram.class, l + " literal");
-    info.addCorrelation(Correlation.by(Literal.LONG));
+    info.addCorrelation(correlator.by(Literal.LONG));
     return new JLongLiteral(this, info, l);
   }
 
@@ -1176,4 +1199,13 @@ public class JProgram extends JNode {
     return count;
   }
 
+  private SourceInfo createLiteralSourceInfo(String description) {
+    return intrinsic.makeChild(getClass(), description);
+  }
+
+  private SourceInfo createLiteralSourceInfo(String description, Literal literal) {
+    SourceInfo child = createLiteralSourceInfo(description);
+    child.addCorrelation(correlator.by(literal));
+    return child;
+  }
 }

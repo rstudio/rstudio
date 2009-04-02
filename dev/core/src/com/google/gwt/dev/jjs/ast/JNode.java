@@ -32,23 +32,12 @@ public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
   private final SourceInfo info;
 
   protected JNode(JProgram program, SourceInfo info) {
+    assert info != null : "SourceInfo must be provided for JNodes";
+    this.info = info;
     if (program == null) {
-      assert (this instanceof JProgram);
       this.program = (JProgram) this;
     } else {
       this.program = program;
-    }
-
-    if (info != null) {
-      this.info = info;
-    } else {
-      /*
-       * This indicates a deficiency in the compiler. We use getClass() instead
-       * of the usual class literal to figure out what kind of thing was being
-       * constructed.
-       */
-      this.info = SourceInfo.UNKNOWN.makeChild(getClass(), "Unknown "
-          + getClass().getSimpleName());
     }
   }
 
