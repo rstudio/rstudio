@@ -59,9 +59,7 @@ public interface TestConstants extends com.google.gwt.i18n.client.Constants {
 
   float floatZero();
 
-  /**
-   * @gwt.key string
-   */
+  @Key("string")
   String getString();
 
   int intMax();

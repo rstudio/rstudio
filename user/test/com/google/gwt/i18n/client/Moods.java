@@ -24,26 +24,26 @@ public interface Moods extends Constants {
   /**
    * The word for 'Happy'.
    * 
-   * @gwt.key 123
    * @return 'happy'
    */
+  @Key("123")
   String getHappy();
 
   /**
    * Convenience method to get all key/value pairs associated with the mood
    * array.
    * 
-   * @gwt.key moods
    * @return returnType of moods
    */
+  @Key("moods")
   Map moodMap();
 
   /**
    * Gets the keys associated with moods. However note that this will not
    * display well as the values are "Sad", "123".
    * 
-   * @gwt.key moods
    * @return array of moods
    */
+  @Key("moods")
   String[] moodArray();
 }
