@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.soyc.impl.DependencyRecorderImpl;
 import com.google.gwt.core.ext.soyc.impl.SplitPointRecorderImpl;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorderImpl;
 import com.google.gwt.dev.PermutationResult;
+import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
@@ -315,7 +316,9 @@ public class JavaToJavaScriptCompiler {
    * Performs a precompilation, returning a unified AST.
    * 
    * @param logger the logger to use
-   * @param compilerFrontEnd the compiler front ent
+   * @param compilationState the CompilationState
+   * @param rpo the RebindPermutationOracle
+   * @param fragmentLoaderCreator a FragmentLoaderCreator
    * @param declEntryPts the set of entry classes declared in a GWT module;
    *          these will be automatically rebound
    * @param additionalRootTypes additional classes that should serve as code
@@ -328,7 +331,8 @@ public class JavaToJavaScriptCompiler {
    *           {@link OutOfMemoryError} occurs
    */
   public static UnifiedAst precompile(TreeLogger logger,
-      WebModeCompilerFrontEnd compilerFrontEnd, String[] declEntryPts,
+      CompilationState compilationState, RebindPermutationOracle rpo,
+      FragmentLoaderCreator fragmentLoaderCreator, String[] declEntryPts,
       String[] additionalRootTypes, JJSOptions options,
       boolean singlePermutation) throws UnableToCompleteException {
 
@@ -338,8 +342,6 @@ public class JavaToJavaScriptCompiler {
     if (declEntryPts.length + additionalRootTypes.length == 0) {
       throw new IllegalArgumentException("entry point(s) required");
     }
-
-    RebindPermutationOracle rpo = compilerFrontEnd.getRebindPermutationOracle();
 
     Set<String> allRootTypes = new TreeSet<String>();
 
@@ -357,8 +359,14 @@ public class JavaToJavaScriptCompiler {
 
     // Compile the source and get the compiler so we can get the parse tree
     //
-    CompilationUnitDeclaration[] goldenCuds = compilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allRootTypes.toArray(new String[0]));
+    CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
+        logger, allRootTypes.toArray(new String[0]), compilationState, rpo,
+        fragmentLoaderCreator);
+
+    // Free up memory.
+    if (!options.isCompilationStateRetained()) {
+      compilationState.clear();
+    }
 
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.

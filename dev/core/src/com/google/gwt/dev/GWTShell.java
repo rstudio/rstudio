@@ -192,6 +192,7 @@ public class GWTShell extends SwtHostedModeBase {
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
+    newOptions.setCompilationStateRetained(true);
     if (!new GWTCompiler(newOptions).run(logger, moduleDef)) {
       throw new UnableToCompleteException();
     }

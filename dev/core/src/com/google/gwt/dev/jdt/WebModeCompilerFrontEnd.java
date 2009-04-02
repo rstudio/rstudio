@@ -48,6 +48,17 @@ import java.util.Set;
  */
 public class WebModeCompilerFrontEnd extends AbstractCompiler {
 
+  public static CompilationUnitDeclaration[] getCompilationUnitDeclarations(
+      TreeLogger logger, String[] seedTypeNames,
+      CompilationState compilationState,
+      RebindPermutationOracle rebindPermOracle,
+      FragmentLoaderCreator fragmentLoaderCreator)
+      throws UnableToCompleteException {
+    return new WebModeCompilerFrontEnd(compilationState, rebindPermOracle,
+        fragmentLoaderCreator).getCompilationUnitDeclarations(logger,
+        seedTypeNames);
+  }
+
   private final FragmentLoaderCreator fragmentLoaderCreator;
   private final RebindPermutationOracle rebindPermOracle;
 
@@ -57,7 +68,7 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
    * generator infrastructure, and therefore needs access to more parts of the
    * compiler than WebModeCompilerFrontEnd currently has.
    */
-  public WebModeCompilerFrontEnd(CompilationState compilationState,
+  private WebModeCompilerFrontEnd(CompilationState compilationState,
       RebindPermutationOracle rebindPermOracle,
       FragmentLoaderCreator fragmentLoaderCreator) {
     super(compilationState, false);
@@ -123,10 +134,6 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
         icus.toArray(new ICompilationUnit[icus.size()]));
     Memory.maybeDumpMemory("WebModeCompiler");
     return cuds;
-  }
-
-  public RebindPermutationOracle getRebindPermutationOracle() {
-    return rebindPermOracle;
   }
 
   @Override

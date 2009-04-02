@@ -229,6 +229,7 @@ public class GWTShell extends OophmHostedModeBase {
   protected void compile(TreeLogger logger, ModuleDef moduleDef)
       throws UnableToCompleteException {
     LegacyCompilerOptions newOptions = new GWTCompilerOptionsImpl(options);
+    newOptions.setCompilationStateRetained(true);
     if (!new GWTCompiler(newOptions).run(logger, moduleDef)) {
       // TODO(jat): error dialog?
     }

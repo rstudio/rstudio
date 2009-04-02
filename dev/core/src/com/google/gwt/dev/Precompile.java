@@ -30,7 +30,6 @@ import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.javac.CompilationUnit;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
-import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.JJSOptions;
 import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
@@ -166,6 +165,10 @@ public class Precompile {
       return jjsOptions.isClassMetadataDisabled();
     }
 
+    public boolean isCompilationStateRetained() {
+      return jjsOptions.isCompilationStateRetained();
+    }
+
     public boolean isDraftCompile() {
       return jjsOptions.isDraftCompile();
     }
@@ -200,6 +203,10 @@ public class Precompile {
 
     public void setClassMetadataDisabled(boolean disabled) {
       jjsOptions.setClassMetadataDisabled(disabled);
+    }
+
+    public void setCompilationStateRetained(boolean retained) {
+      jjsOptions.setCompilationStateRetained(retained);
     }
 
     public void setDisableUpdateCheck(boolean disabled) {
@@ -414,10 +421,9 @@ public class Precompile {
       FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
           compilationState, module, genDir, generatorResourcesDir,
           generatorArtifacts);
-      WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-          compilationState, rpo, fragmentLoaderCreator);
-      JavaToJavaScriptCompiler.precompile(logger, frontEnd, declEntryPts,
-          additionalRootTypes, jjsOptions, true);
+      JavaToJavaScriptCompiler.precompile(logger, compilationState, rpo,
+          fragmentLoaderCreator, declEntryPts, additionalRootTypes, jjsOptions,
+          true);
       return true;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -454,12 +460,10 @@ public class Precompile {
       FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
           compilationState, module, genDir, generatorResourcesDir,
           generatedArtifacts);
-      WebModeCompilerFrontEnd frontEnd = new WebModeCompilerFrontEnd(
-          compilationState, rpo, fragmentLoaderCreator);
       PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
-          frontEnd, declEntryPts, null, jjsOptions,
-          rpo.getPermuationCount() == 1);
+          compilationState, rpo, fragmentLoaderCreator, declEntryPts, null,
+          jjsOptions, rpo.getPermuationCount() == 1);
       PerfLogger.end();
 
       // Merge all identical permutations together.

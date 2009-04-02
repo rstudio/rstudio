@@ -94,7 +94,7 @@ public class CompilationState {
   /**
    * Controls our type oracle.
    */
-  private final TypeOracleMediator mediator = new TypeOracleMediator();
+  private TypeOracleMediator mediator = new TypeOracleMediator();
 
   /**
    * Our source file inputs.
@@ -124,6 +124,23 @@ public class CompilationState {
     logger.log(TreeLogger.DEBUG, "Using " + usefulGraveyardUnits.values()
         + " units from graveyard");
     addGeneratedCompilationUnits(logger, generatedCups, usefulGraveyardUnits);
+  }
+
+  /**
+   * Reset all units to FRESH and clear TypeOracle to free up memory.
+   */
+  public void clear() {
+    // Always remove all generated compilation units.
+    for (Iterator<CompilationUnit> it = unitMap.values().iterator(); it.hasNext();) {
+      CompilationUnit unit = it.next();
+      unit.setFresh();
+      if (unit.isGenerated()) {
+        it.remove();
+      }
+    }
+    updateExposedUnits();
+    jdtCompiler = null;
+    mediator = new TypeOracleMediator();
   }
 
   /**
