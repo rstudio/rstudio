@@ -25,6 +25,12 @@ public class Rules {
 
   private final LinkedList<Rule> list = new LinkedList<Rule>();
 
+  public void dispose() {
+    for (Rule rule : list) {
+      rule.dispose();
+    }
+  }
+
   public boolean isEmpty() {
     return list.isEmpty();
   }

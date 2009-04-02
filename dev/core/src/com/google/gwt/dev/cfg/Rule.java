@@ -37,4 +37,7 @@ public abstract class Rule {
 
   public abstract String realize(TreeLogger logger, GeneratorContext context,
       String typeName) throws UnableToCompleteException;
+
+  protected void dispose() {
+  }
 }

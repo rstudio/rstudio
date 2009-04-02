@@ -28,7 +28,7 @@ import com.google.gwt.dev.shell.StandardGeneratorContext;
  */
 public class RuleGenerateWith extends Rule {
 
-  private final Generator generator;
+  private Generator generator;
 
   public RuleGenerateWith(Generator generator) {
     this.generator = generator;
@@ -69,5 +69,10 @@ public class RuleGenerateWith extends Rule {
 
   public String toString() {
     return "<generate-with class='" + generator.getClass().getName() + "'/>";
+  }
+
+  @Override
+  protected void dispose() {
+    generator = null;
   }
 }

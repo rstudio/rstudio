@@ -373,7 +373,7 @@ public class Precompile {
    * @return the precompilation
    */
   public static Precompilation precompile(TreeLogger logger,
-      PrecompileOptionsImpl jjsOptions, ModuleDef module, File genDir,
+      JJSOptions jjsOptions, ModuleDef module, File genDir,
       File generatorResourcesDir, File dumpSignatureFile) {
     return precompile(logger, jjsOptions, module, 0, 0,
         module.getProperties().numPermutations(), genDir,
@@ -421,7 +421,7 @@ public class Precompile {
       FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
           compilationState, module, genDir, generatorResourcesDir,
           generatorArtifacts);
-      JavaToJavaScriptCompiler.precompile(logger, compilationState, rpo,
+      JavaToJavaScriptCompiler.precompile(logger, module, rpo,
           fragmentLoaderCreator, declEntryPts, additionalRootTypes, jjsOptions,
           true);
       return true;
@@ -432,7 +432,7 @@ public class Precompile {
   }
 
   private static Precompilation precompile(TreeLogger logger,
-      PrecompileOptionsImpl jjsOptions, ModuleDef module, int permutationBase,
+      JJSOptions jjsOptions, ModuleDef module, int permutationBase,
       int firstPerm, int numPerms, File genDir, File generatorResourcesDir,
       File dumpSignatureFile) {
 
@@ -462,8 +462,8 @@ public class Precompile {
           generatedArtifacts);
       PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
-          compilationState, rpo, fragmentLoaderCreator, declEntryPts, null,
-          jjsOptions, rpo.getPermuationCount() == 1);
+          module, rpo, fragmentLoaderCreator, declEntryPts, null, jjsOptions,
+          rpo.getPermuationCount() == 1);
       PerfLogger.end();
 
       // Merge all identical permutations together.

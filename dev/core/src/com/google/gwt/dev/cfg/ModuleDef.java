@@ -173,6 +173,21 @@ public class ModuleDef implements PublicOracle {
         defaultExcludes, caseSensitive, true);
   }
 
+  /**
+   * Free up memory no longer needed in later compile stages. After calling this
+   * method, the TypeOracle, ResourceOracle, and CompilationState will be empty
+   * and unusable. Calling {@link #refresh(TreeLogger)} will restore them.
+   */
+  public void clear() {
+    if (lazySourceOracle != null) {
+      lazySourceOracle.clear();
+    }
+    if (lazyCompilationState != null) {
+      lazyCompilationState.clear();
+    }
+    rules.dispose();
+  }
+
   public void clearEntryPoints() {
     entryPointTypeNames.clear();
   }

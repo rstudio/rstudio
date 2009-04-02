@@ -146,7 +146,6 @@ public class CompilationState {
     updateExposedUnits();
     jdtCompiler = null;
     mediator = new TypeOracleMediator();
-    sourceOracle.clear();
     invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
   }
 

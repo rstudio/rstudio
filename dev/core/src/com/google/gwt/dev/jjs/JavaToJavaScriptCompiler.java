@@ -27,7 +27,7 @@ import com.google.gwt.core.ext.soyc.impl.DependencyRecorderImpl;
 import com.google.gwt.core.ext.soyc.impl.SplitPointRecorderImpl;
 import com.google.gwt.core.ext.soyc.impl.StoryRecorderImpl;
 import com.google.gwt.dev.PermutationResult;
-import com.google.gwt.dev.javac.CompilationState;
+import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
 import com.google.gwt.dev.jdt.WebModeCompilerFrontEnd;
 import com.google.gwt.dev.jjs.CorrelationFactory.DummyCorrelationFactory;
@@ -319,7 +319,7 @@ public class JavaToJavaScriptCompiler {
    * Performs a precompilation, returning a unified AST.
    * 
    * @param logger the logger to use
-   * @param compilationState the CompilationState
+   * @param module the module to compile
    * @param rpo the RebindPermutationOracle
    * @param fragmentLoaderCreator a FragmentLoaderCreator
    * @param declEntryPts the set of entry classes declared in a GWT module;
@@ -333,10 +333,9 @@ public class JavaToJavaScriptCompiler {
    * @throws UnableToCompleteException if an error other than
    *           {@link OutOfMemoryError} occurs
    */
-  public static UnifiedAst precompile(TreeLogger logger,
-      CompilationState compilationState, RebindPermutationOracle rpo,
-      FragmentLoaderCreator fragmentLoaderCreator, String[] declEntryPts,
-      String[] additionalRootTypes, JJSOptions options,
+  public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
+      RebindPermutationOracle rpo, FragmentLoaderCreator fragmentLoaderCreator,
+      String[] declEntryPts, String[] additionalRootTypes, JJSOptions options,
       boolean singlePermutation) throws UnableToCompleteException {
 
     if (additionalRootTypes == null) {
@@ -363,12 +362,12 @@ public class JavaToJavaScriptCompiler {
     // Compile the source and get the compiler so we can get the parse tree
     //
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
-        logger, allRootTypes.toArray(new String[0]), compilationState, rpo,
-        fragmentLoaderCreator);
+        logger, allRootTypes.toArray(new String[0]),
+        module.getCompilationState(logger), rpo, fragmentLoaderCreator);
 
     // Free up memory.
     if (!options.isCompilationStateRetained()) {
-      compilationState.clear();
+      module.clear();
     }
 
     // Check for compilation problems. We don't log here because any problems
