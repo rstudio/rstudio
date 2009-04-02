@@ -94,10 +94,7 @@
       <sysproperty key="gwt.devjar" value="${gwt.dev.staging.jar}" />
       <classpath>
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
-        <pathelement location="${gwt.build.out}/dev/core/bin"/>
-        <pathelement location="${gwt.build.out}/user/bin"/>
-        <pathelement location="${gwt.tools.lib}/eclipse/jdt-3.3.1.jar"/>
-        <pathelement location="${gwt.tools.lib}/tomcat/commons-collections-3.1.jar"/>
+        <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev-*.jar" />
         <pathelement path="${java.class.path}"/>
       </classpath>
       <arg value="-configFile"/>
