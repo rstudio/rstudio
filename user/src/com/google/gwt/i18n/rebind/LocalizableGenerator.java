@@ -94,13 +94,13 @@ public class LocalizableGenerator extends Generator {
     }
     return generate(logger, context, typeName, locale);
   }
-  
+
   public final String generate(TreeLogger logger, GeneratorContext context,
       String typeName, String localeName) throws UnableToCompleteException {
     // Clear cache if reset was done.
     TypeOracle typeOracle = context.getTypeOracle();
     if (lastReloadCount != typeOracle.getReloadCount()) {
-      ResourceFactory.clearCache();
+      ClearStaticData.clear();
       lastReloadCount = typeOracle.getReloadCount();
     }
 

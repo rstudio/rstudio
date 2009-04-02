@@ -369,6 +369,14 @@ public class JavaToJavaScriptCompiler {
     if (!options.isCompilationStateRetained()) {
       module.clear();
     }
+    try {
+      // HACK: Make i18n free its internal static state.
+      Class<?> clazz = Class.forName(
+          "com.google.gwt.i18n.rebind.ClearStaticData", false,
+          Thread.currentThread().getContextClassLoader());
+      clazz.getDeclaredMethod("clear").invoke(null);
+    } catch (Throwable e) {
+    }
 
     // Check for compilation problems. We don't log here because any problems
     // found here will have already been logged by AbstractCompiler.

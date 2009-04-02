@@ -68,6 +68,10 @@ public class GwtLocaleFactoryImpl implements GwtLocaleFactory {
   // one is used instead to preserved cached data structures.
   private Map<GwtLocaleImpl, GwtLocaleImpl> instanceCache = new HashMap<GwtLocaleImpl, GwtLocaleImpl>();
 
+  public void clear() {
+    instanceCache.clear();
+  }
+
   public GwtLocale fromComponents(String language, String script,
       String region, String variant) {
     if (language != null && language.length() == 0) {

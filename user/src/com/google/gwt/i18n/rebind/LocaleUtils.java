@@ -32,7 +32,7 @@ import java.util.Set;
 public class LocaleUtils {
   // TODO(jat): rewrite to avoid statics
 
-  private static GwtLocaleFactory factory = new GwtLocaleFactoryImpl();
+  private static final GwtLocaleFactoryImpl factory = new GwtLocaleFactoryImpl();
 
   /**
    * The token representing the locale property controlling Localization.
@@ -46,11 +46,19 @@ public class LocaleUtils {
 
   private static GwtLocale compileLocale;
 
-  private static Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
+  private static final Set<GwtLocale> allLocales = new HashSet<GwtLocale>();
 
-  private static Set<GwtLocale> allCompileLocales = new HashSet<GwtLocale>();
-  
-  private static Set<GwtLocale> runtimeLocales = new HashSet<GwtLocale>();
+  private static final Set<GwtLocale> allCompileLocales = new HashSet<GwtLocale>();
+
+  private static final Set<GwtLocale> runtimeLocales = new HashSet<GwtLocale>();
+
+  public static void clear() {
+    allCompileLocales.clear();
+    allLocales.clear();
+    compileLocale = null;
+    factory.clear();
+    runtimeLocales.clear();
+  }
 
   /**
    * Returns the set of all compile-time locales.
@@ -112,9 +120,9 @@ public class LocaleUtils {
         return;
       }
       compileLocale = newCompileLocale;
-      allLocales = new HashSet<GwtLocale>();
-      allCompileLocales = new HashSet<GwtLocale>();
-      runtimeLocales = new HashSet<GwtLocale>();
+      allLocales.clear();
+      allCompileLocales.clear();
+      runtimeLocales.clear();
       String[] localeValues = propertyOracle.getPropertyValueSet(logger,
           PROP_LOCALE);
       String rtLocaleNames = propertyOracle.getPropertyValue(logger,
