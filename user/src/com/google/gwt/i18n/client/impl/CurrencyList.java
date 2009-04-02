@@ -133,7 +133,7 @@ public class CurrencyList implements Iterable<CurrencyData> {
       loadNamesMap();
     }
   }
-
+  
   /**
    * Directly reference an entry in the currency map JSO.
    * 
@@ -141,14 +141,14 @@ public class CurrencyList implements Iterable<CurrencyData> {
    * @return currency data
    */
   protected final native CurrencyData getEntry(String code) /*-{
-    return this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap[':' + code];
+    return this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap[code];
   }-*/;
 
   /**
    * Directly reference an entry in the currency names map JSO.
    * 
    * @param code ISO4217 currency code
-   * @return currency name
+   * @return currency name, or the currency code if not known
    */
   protected final native String getNamesEntry(String code) /*-{
     return this.@com.google.gwt.i18n.client.impl.CurrencyList::namesMap[code] || code;
@@ -161,10 +161,10 @@ public class CurrencyList implements Iterable<CurrencyData> {
    */
   protected native void loadCurrencyMap() /*-{
     this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap = {
-        ":USD": [ "USD", "$", 2 ],
-        ":EUR": [ "EUR", "€", 2 ],
-        ":GBP": [ "GBP", "UK£", 2 ],
-        ":JPY": [ "JPY", "¥", 0 ],
+        "USD": [ "USD", "$", 2 ],
+        "EUR": [ "EUR", "€", 2 ],
+        "GBP": [ "GBP", "UK£", 2 ],
+        "JPY": [ "JPY", "¥", 0 ],
      };
   }-*/;
 
@@ -183,13 +183,45 @@ public class CurrencyList implements Iterable<CurrencyData> {
   }-*/;
 
   /**
+   * Add all entries in {@code override} to the currency data map, replacing
+   * any existing entries.  This is used by subclasses that need to slightly
+   * alter the data used by the parent locale.
+   * 
+   * @param override JS object with currency code -> CurrencyData pairs
+   */
+  protected final native void overrideCurrencyMap(JavaScriptObject override) /*-{
+    var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap;
+    for (var key in override) {
+      if (override.hasOwnProperty(key)) {
+        map[key] = override[key];
+      }
+    }
+  }-*/;
+
+  /**
+   * Add all entries in {@code override} to the currency name map, replacing
+   * any existing entries.  This is used by subclasses that need to slightly
+   * alter the data used by the parent locale.
+   * 
+   * @param override JS object with currency code -> name pairs
+   */
+  protected final native void overrideNamesMap(JavaScriptObject override) /*-{
+    var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::namesMap;
+    for (var key in override) {
+      if (override.hasOwnProperty(key)) {
+        map[key] = override[key];
+      }
+    }
+  }-*/;
+
+  /**
    * Add currency codes contained in the map to an ArrayList.
    */
   private native void loadCurrencyKeys(ArrayList<String> keys) /*-{
     var map = this.@com.google.gwt.i18n.client.impl.CurrencyList::dataMap;
     for (var key in map) {
-      if (key.charCodeAt(0) == 58) {
-        keys.@java.util.ArrayList::add(Ljava/lang/Object;)(key.substring(1));
+      if (map.hasOwnProperty(key)) {
+        keys.@java.util.ArrayList::add(Ljava/lang/Object;)(key);
       }
     }
   }-*/;
