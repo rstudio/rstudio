@@ -17,6 +17,8 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.javac.impl.JavaResourceBase;
+import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 
 import java.util.Collections;
@@ -73,7 +75,7 @@ public class TypeOracleTestingUtils {
    * Add compilation units for basic classes like Object and String.
    */
   private static void addStandardCups(Set<CompilationUnit> units) {
-    for (JavaSourceFile resource : JavaSourceCodeBase.getStandardResources()) {
+    for (MockJavaResource resource : JavaResourceBase.getStandardResources()) {
       units.add(new SourceFileCompilationUnit(resource));
     }
   }

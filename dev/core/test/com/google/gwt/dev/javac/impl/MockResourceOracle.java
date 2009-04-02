@@ -38,6 +38,16 @@ public class MockResourceOracle implements ResourceOracle {
     add(resources);
   }
 
+  public void add(Resource... resources) {
+    Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
+    for (Resource resource : resources) {
+      String path = resource.getPath();
+      Assert.assertFalse(newMap.containsKey(path));
+      newMap.put(path, resource);
+    }
+    export(newMap);
+  }
+
   public void clear() {
   }
 
@@ -53,17 +63,7 @@ public class MockResourceOracle implements ResourceOracle {
     return exportedValues;
   }
 
-  void add(Resource... resources) {
-    Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
-    for (Resource resource : resources) {
-      String path = resource.getPath();
-      Assert.assertFalse(newMap.containsKey(path));
-      newMap.put(path, resource);
-    }
-    export(newMap);
-  }
-
-  void remove(String... paths) {
+  public void remove(String... paths) {
     Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
     for (String path : paths) {
       Resource oldValue = newMap.remove(path);
@@ -72,7 +72,7 @@ public class MockResourceOracle implements ResourceOracle {
     export(newMap);
   }
 
-  void replace(Resource... resources) {
+  public void replace(Resource... resources) {
     Map<String, Resource> newMap = new HashMap<String, Resource>(exportedMap);
     for (Resource resource : resources) {
       String path = resource.getPath();

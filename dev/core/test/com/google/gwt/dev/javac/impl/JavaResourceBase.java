@@ -20,7 +20,7 @@ package com.google.gwt.dev.javac.impl;
  */
 public class JavaResourceBase {
 
-  public static final MockResource ANNOTATION = new MockJavaResource(
+  public static final MockJavaResource ANNOTATION = new MockJavaResource(
       "java.lang.annotation.Annotation") {
     @Override
     protected CharSequence getContent() {
@@ -42,7 +42,7 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource CLASS = new MockJavaResource(
+  public static final MockJavaResource CLASS = new MockJavaResource(
       "java.lang.Class") {
     @Override
     protected CharSequence getContent() {
@@ -64,7 +64,7 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource JAVASCRIPTOBJECT = new MockJavaResource(
+  public static final MockJavaResource JAVASCRIPTOBJECT = new MockJavaResource(
       "com.google.gwt.core.client.JavaScriptObject") {
     @Override
     protected CharSequence getContent() {
@@ -76,7 +76,8 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource MAP = new MockJavaResource("java.util.Map") {
+  public static final MockJavaResource MAP = new MockJavaResource(
+      "java.util.Map") {
     @Override
     protected CharSequence getContent() {
       StringBuffer code = new StringBuffer();
@@ -85,7 +86,7 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource OBJECT = new MockJavaResource(
+  public static final MockJavaResource OBJECT = new MockJavaResource(
       "java.lang.Object") {
     @Override
     protected CharSequence getContent() {
@@ -98,7 +99,7 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource SERIALIZABLE = new MockJavaResource(
+  public static final MockJavaResource SERIALIZABLE = new MockJavaResource(
       "java.io.Serializable") {
     @Override
     protected CharSequence getContent() {
@@ -108,7 +109,7 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource STRING = new MockJavaResource(
+  public static final MockJavaResource STRING = new MockJavaResource(
       "java.lang.String") {
     @Override
     protected CharSequence getContent() {
@@ -122,7 +123,7 @@ public class JavaResourceBase {
       return code;
     }
   };
-  public static final MockResource SUPPRESS_WARNINGS = new MockJavaResource(
+  public static final MockJavaResource SUPPRESS_WARNINGS = new MockJavaResource(
       "java.lang.SuppressWarnings") {
     @Override
     protected CharSequence getContent() {
@@ -135,8 +136,8 @@ public class JavaResourceBase {
     }
   };
 
-  public static MockResource[] getStandardResources() {
-    return new MockResource[] {
+  public static MockJavaResource[] getStandardResources() {
+    return new MockJavaResource[] {
         ANNOTATION, CLASS, JAVASCRIPTOBJECT, MAP, OBJECT, SERIALIZABLE, STRING,
         SUPPRESS_WARNINGS};
   }

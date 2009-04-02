@@ -15,7 +15,9 @@
  */
 package com.google.gwt.dev.javac;
 
+import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.resource.Resource;
 
 import junit.framework.TestCase;
 
@@ -31,6 +33,14 @@ import java.util.List;
  */
 public class JdtCompilerTest extends TestCase {
 
+  static void assertUnitHasErrors(CompilationUnit unit, int numErrors) {
+    CompilationUnitDeclaration cud = unit.getJdtCud();
+    CompilationResult result = cud.compilationResult();
+    assertTrue(result.hasErrors());
+    assertEquals(numErrors, result.getErrors().length);
+    assertTrue(result.getClassFiles().length > 0);
+  }
+
   static void assertUnitsCompiled(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
       CompilationUnitDeclaration cud = unit.getJdtCud();
@@ -41,26 +51,18 @@ public class JdtCompilerTest extends TestCase {
     }
   }
 
-  static void assertUnitHasErrors(CompilationUnit unit, int numErrors) {
-    CompilationUnitDeclaration cud = unit.getJdtCud();
-    CompilationResult result = cud.compilationResult();
-    assertTrue(result.hasErrors());
-    assertEquals(numErrors, result.getErrors().length);
-    assertTrue(result.getClassFiles().length > 0);
-  }
-
   public void testCompile() {
     List<CompilationUnit> units = new ArrayList<CompilationUnit>();
-    addAll(units, JavaSourceCodeBase.getStandardResources());
-    addAll(units, JavaSourceCodeBase.FOO, JavaSourceCodeBase.BAR);
+    addAll(units, JavaResourceBase.getStandardResources());
+    addAll(units, JavaResourceBase.FOO, JavaResourceBase.BAR);
     JdtCompiler.compile(units);
     assertUnitsCompiled(units);
   }
 
   public void testCompileError() {
     List<CompilationUnit> units = new ArrayList<CompilationUnit>();
-    addAll(units, JavaSourceCodeBase.getStandardResources());
-    addAll(units, JavaSourceCodeBase.BAR);
+    addAll(units, JavaResourceBase.getStandardResources());
+    addAll(units, JavaResourceBase.BAR);
     JdtCompiler.compile(units);
     assertUnitsCompiled(units.subList(0, units.size() - 1));
     assertUnitHasErrors(units.get(units.size() - 1), 1);
@@ -68,17 +70,17 @@ public class JdtCompilerTest extends TestCase {
 
   public void testCompileIncremental() {
     List<CompilationUnit> units = new ArrayList<CompilationUnit>();
-    addAll(units, JavaSourceCodeBase.getStandardResources());
+    addAll(units, JavaResourceBase.getStandardResources());
     JdtCompiler.compile(units);
     assertUnitsCompiled(units);
-    addAll(units, JavaSourceCodeBase.FOO, JavaSourceCodeBase.BAR);
+    addAll(units, JavaResourceBase.FOO, JavaResourceBase.BAR);
     JdtCompiler.compile(units);
     assertUnitsCompiled(units);
   }
 
   private void addAll(Collection<CompilationUnit> units,
-      JavaSourceFile... sourceFiles) {
-    for (JavaSourceFile sourceFile : sourceFiles) {
+      Resource... sourceFiles) {
+    for (Resource sourceFile : sourceFiles) {
       units.add(new SourceFileCompilationUnit(sourceFile));
     }
   }

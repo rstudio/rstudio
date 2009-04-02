@@ -20,6 +20,8 @@ import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.resource.ResourceOracle;
 import com.google.gwt.dev.util.PerfLogger;
 
 import java.util.Collection;
@@ -62,7 +64,8 @@ public class CompilationState {
    * protected for testing.
    */
   Map<String, CompilationUnit> graveyardUnits;
-  private Set<JavaSourceFile> cachedSourceFiles = Collections.emptySet();
+
+  private Set<Resource> cachedSourceFiles = Collections.emptySet();
 
   /**
    * Classes mapped by binary name.
@@ -99,7 +102,7 @@ public class CompilationState {
   /**
    * Our source file inputs.
    */
-  private final JavaSourceOracle sourceOracle;
+  private final ResourceOracle sourceOracle;
 
   /**
    * Construct a new {@link CompilationState}.
@@ -107,7 +110,7 @@ public class CompilationState {
    * @param sourceOracle an oracle used to retrieve source code and check for
    *          changes in the underlying source code base
    */
-  public CompilationState(TreeLogger logger, JavaSourceOracle sourceOracle) {
+  public CompilationState(TreeLogger logger, ResourceOracle sourceOracle) {
     this.sourceOracle = sourceOracle;
     refresh(logger);
   }
@@ -127,7 +130,8 @@ public class CompilationState {
   }
 
   /**
-   * Reset all units to FRESH and clear TypeOracle to free up memory.
+   * Clear up all internal state to free up memory. Resets all units to FRESH
+   * and clears TypeOracle.
    */
   public void clear() {
     // Always remove all generated compilation units.
@@ -372,17 +376,17 @@ public class CompilationState {
 
   private void refreshFromSourceOracle() {
     // See if the source oracle has changed.
-    Set<JavaSourceFile> newSourceFiles = sourceOracle.getSourceFiles();
+    Set<Resource> newSourceFiles = sourceOracle.getResources();
     if (cachedSourceFiles == newSourceFiles) {
       return;
     }
 
     // Divide resources into changed and unchanged.
-    Set<JavaSourceFile> unchanged = new HashSet<JavaSourceFile>(
+    Set<Resource> unchanged = new HashSet<Resource>(
         cachedSourceFiles);
     unchanged.retainAll(newSourceFiles);
 
-    Set<JavaSourceFile> changed = new HashSet<JavaSourceFile>(newSourceFiles);
+    Set<Resource> changed = new HashSet<Resource>(newSourceFiles);
     changed.removeAll(unchanged);
 
     // First remove any stale units.
@@ -396,8 +400,8 @@ public class CompilationState {
     }
 
     // Then add any new source files.
-    for (JavaSourceFile newSourceFile : changed) {
-      String typeName = newSourceFile.getTypeName();
+    for (Resource newSourceFile : changed) {
+      String typeName = SourceFileCompilationUnit.getTypeName(newSourceFile);
       assert (!unitMap.containsKey(typeName));
       unitMap.put(typeName, new SourceFileCompilationUnit(newSourceFile));
       // invalid a graveyard unit, if a new unit has the same type.

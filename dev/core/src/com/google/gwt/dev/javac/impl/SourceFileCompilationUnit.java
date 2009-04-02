@@ -16,16 +16,38 @@
 package com.google.gwt.dev.javac.impl;
 
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.JavaSourceFile;
+import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.util.Util;
+
+import java.io.InputStream;
 
 /**
  * A compilation unit that was generated.
  */
 public class SourceFileCompilationUnit extends CompilationUnit {
 
-  private JavaSourceFile sourceFile;
+  public static String getTypeName(Resource sourceFile) {
+    String path = sourceFile.getPath();
+    assert (path.endsWith(".java"));
+    path = path.substring(0, path.lastIndexOf('.'));
+    return path.replace('/', '.');
+  }
 
-  public SourceFileCompilationUnit(JavaSourceFile sourceFile) {
+  public static String readSource(Resource sourceFile) {
+    InputStream contents = sourceFile.openContents();
+    return Util.readStreamAsString(contents);
+  }
+
+  /**
+   * A token to retrieve this object's bytes from the disk cache. It's generally
+   * much faster to read from the disk cache than to reread individual
+   * resources.
+   */
+  private long cacheToken = -1;
+
+  private Resource sourceFile;
+
+  public SourceFileCompilationUnit(Resource sourceFile) {
     this.sourceFile = sourceFile;
   }
 
@@ -41,16 +63,22 @@ public class SourceFileCompilationUnit extends CompilationUnit {
 
   @Override
   public String getSource() {
-    return sourceFile.readSource();
+    if (cacheToken < 0) {
+      String sourceCode = readSource(sourceFile);
+      cacheToken = diskCache.writeString(sourceCode);
+      return sourceCode;
+    } else {
+      return diskCache.readString(cacheToken);
+    }
   }
 
-  public JavaSourceFile getSourceFile() {
+  public Resource getSourceFile() {
     return sourceFile;
   }
 
   @Override
   public String getTypeName() {
-    return sourceFile.getTypeName();
+    return getTypeName(sourceFile);
   }
 
   @Override
@@ -60,6 +88,6 @@ public class SourceFileCompilationUnit extends CompilationUnit {
 
   @Override
   public boolean isSuperSource() {
-    return sourceFile.isSuperSource();
+    return sourceFile.wasRerooted();
   }
 }

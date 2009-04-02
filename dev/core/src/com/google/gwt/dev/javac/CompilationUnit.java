@@ -21,6 +21,7 @@ import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.commons.EmptyVisitor;
 import com.google.gwt.dev.jdt.TypeRefVisitor;
 import com.google.gwt.dev.shell.CompilingClassLoader;
+import com.google.gwt.dev.util.DiskCache;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.collect.HashMap;
 import com.google.gwt.dev.util.collect.HashSet;
@@ -54,6 +55,8 @@ import java.util.Set;
  * module and may be invalidated at certain times and recomputed.
  */
 public abstract class CompilationUnit {
+
+  protected static final DiskCache diskCache = new DiskCache();
 
   /**
    * Encapsulates the functionality to find all nested classes of this class

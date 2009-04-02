@@ -22,9 +22,6 @@ import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.JavaSourceFile;
-import com.google.gwt.dev.javac.JavaSourceOracle;
-import com.google.gwt.dev.javac.impl.JavaSourceOracleImpl;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.impl.DefaultFilters;
 import com.google.gwt.dev.resource.impl.PathPrefix;
@@ -82,8 +79,6 @@ public class ModuleDef implements PublicOracle {
   private final Set<File> gwtXmlFiles = new HashSet<File>();
 
   private CompilationState lazyCompilationState;
-
-  private JavaSourceOracle lazyJavaSourceOracle;
 
   private ResourceOracleImpl lazyPublicOracle;
 
@@ -233,7 +228,7 @@ public class ModuleDef implements PublicOracle {
   public CompilationState getCompilationState(TreeLogger logger)
       throws UnableToCompleteException {
     if (lazyCompilationState == null) {
-      lazyCompilationState = new CompilationState(logger, lazyJavaSourceOracle);
+      lazyCompilationState = new CompilationState(logger, lazySourceOracle);
       checkForSeedTypes(logger);
     }
     return lazyCompilationState;
@@ -358,8 +353,8 @@ public class ModuleDef implements PublicOracle {
    * @param partialPath
    * @return
    */
-  synchronized JavaSourceFile findSourceFile(String partialPath) {
-    return lazyJavaSourceOracle.getSourceMap().get(partialPath);
+  synchronized Resource findSourceFile(String partialPath) {
+    return lazySourceOracle.getResourceMap().get(partialPath);
   }
 
   /**
@@ -409,7 +404,6 @@ public class ModuleDef implements PublicOracle {
       branch.log(TreeLogger.WARN,
           "No source path entries; expect subsequent failures", null);
     }
-    lazyJavaSourceOracle = new JavaSourceOracleImpl(lazySourceOracle);
 
     PerfLogger.end();
   }

@@ -142,14 +142,14 @@ public class JdtBehaviorTest extends TestCase {
 
   private class ResourceAdapter implements ICompilationUnit {
 
-    private final MockJavaSourceFile sourceFile;
+    private final MockResource sourceFile;
 
     public ResourceAdapter(MockResource resource) {
-      sourceFile = new MockJavaSourceFile(resource);
+      sourceFile = resource;
     }
 
     public char[] getContents() {
-      return sourceFile.readSource().toCharArray();
+      return SourceFileCompilationUnit.readSource(sourceFile).toCharArray();
     }
 
     public char[] getFileName() {
@@ -157,12 +157,13 @@ public class JdtBehaviorTest extends TestCase {
     }
 
     public char[] getMainTypeName() {
-      return sourceFile.getShortName().toCharArray();
+      return Shared.getShortName(
+          SourceFileCompilationUnit.getTypeName(sourceFile)).toCharArray();
     }
 
     public char[][] getPackageName() {
-      return CharOperation.splitOn('.',
-          sourceFile.getPackageName().toCharArray());
+      return CharOperation.splitOn('.', Shared.getPackageName(
+          SourceFileCompilationUnit.getTypeName(sourceFile)).toCharArray());
     }
 
     @Override

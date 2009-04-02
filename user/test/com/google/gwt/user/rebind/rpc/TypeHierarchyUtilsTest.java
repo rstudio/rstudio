@@ -16,7 +16,6 @@
 package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.NotFoundException;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
@@ -43,8 +42,7 @@ public class TypeHierarchyUtilsTest extends TestCase {
     return logger;
   }
 
-  public void testParameterizedInterface() throws UnableToCompleteException,
-      NotFoundException {
+  public void testParameterizedInterface() throws NotFoundException {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     {
       StringBuilder code = new StringBuilder();

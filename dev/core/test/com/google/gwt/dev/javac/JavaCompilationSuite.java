@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.javac;
 
-import com.google.gwt.dev.javac.impl.JavaSourceOracleImplTest;
 import com.google.gwt.dev.javac.impl.JdtBehaviorTest;
 
 import junit.framework.Test;
@@ -35,7 +34,6 @@ public class JavaCompilationSuite {
     suite.addTestSuite(JdtBehaviorTest.class);
     suite.addTestSuite(JdtCompilerTest.class);
     suite.addTestSuite(JSORestrictionsTest.class);
-    suite.addTestSuite(JavaSourceOracleImplTest.class);
     suite.addTestSuite(JsniCheckerTest.class);
     suite.addTestSuite(TypeOracleMediatorTest.class);
 

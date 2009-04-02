@@ -26,8 +26,7 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.javac.CompilationState;
-import com.google.gwt.dev.javac.JavaSourceFile;
-import com.google.gwt.dev.javac.JavaSourceOracle;
+import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.Util;
 
@@ -43,10 +42,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * A wide variety of tests on {@link StandardGeneratorContext}.
@@ -56,22 +52,7 @@ public class StandardGeneratorContextTest extends TestCase {
   public static class MockCompilationState extends CompilationState {
 
     public MockCompilationState() {
-      super(TreeLogger.NULL, new JavaSourceOracle() {
-        public void clear() {
-        }
-
-        public Set<String> getClassNames() {
-          return Collections.emptySet();
-        }
-
-        public Set<JavaSourceFile> getSourceFiles() {
-          return Collections.emptySet();
-        }
-
-        public Map<String, JavaSourceFile> getSourceMap() {
-          return Collections.emptyMap();
-        }
-      });
+      super(TreeLogger.NULL, new MockResourceOracle());
     }
 
   }

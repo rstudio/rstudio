@@ -119,10 +119,14 @@ public abstract class TestSuperAndSourceTags extends TestCase {
   }
 
   private void validateExcluded(Class<?> clazz) {
-    assertNull(moduleDef.findSourceFile(getLogicalPath(clazz)));
+    assertNull(moduleDef.findSourceFile(toPath(clazz)));
   }
 
   private void validateIncluded(Class<?> clazz) {
-    assertNotNull(moduleDef.findSourceFile(getLogicalPath(clazz)));
+    assertNotNull(moduleDef.findSourceFile(toPath(clazz)));
+  }
+
+  private String toPath(Class<?> clazz) {
+    return getLogicalPath(clazz).replace('.', '/') + ".java";
   }
 }

@@ -18,8 +18,10 @@ package com.google.gwt.dev.javac;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.javac.CompilationUnit.State;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
-import com.google.gwt.dev.javac.impl.MockJavaSourceFile;
+import com.google.gwt.dev.javac.impl.MockJavaResource;
+import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
+import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -60,8 +62,8 @@ public class CompilationStateTest extends TestCase {
     return TreeLogger.NULL;
   }
 
-  private MockJavaSourceOracle oracle = new MockJavaSourceOracle(
-      JavaSourceCodeBase.getStandardResources());
+  private MockResourceOracle oracle = new MockResourceOracle(
+      JavaResourceBase.getStandardResources());
 
   private CompilationState state = new CompilationState(createTreeLogger(),
       oracle);
@@ -70,9 +72,8 @@ public class CompilationStateTest extends TestCase {
     validateCompilationState();
 
     // Add a unit and ensure it shows up.
-    state.addGeneratedCompilationUnits(createTreeLogger(),
-        getCompilationUnits(JavaSourceCodeBase.FOO));
-    validateCompilationState(JavaSourceCodeBase.FOO.getTypeName());
+    addGeneratedUnits(JavaResourceBase.FOO);
+    validateCompilationState(SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO));
 
     // Ensure it disappears after a refresh.
     state.refresh(createTreeLogger());
@@ -81,20 +82,20 @@ public class CompilationStateTest extends TestCase {
 
   /* test that a generated unit, if unchanged, is reused */
   public void testCaching() {
-    testCaching(JavaSourceCodeBase.FOO);
+    testCaching(JavaResourceBase.FOO);
   }
 
   /* test that mutiple generated units, if unchanged, are reused */
   public void testCachingOfMultipleUnits() {
-    testCaching(JavaSourceCodeBase.BAR, JavaSourceCodeBase.FOO);
+    testCaching(JavaResourceBase.BAR, JavaResourceBase.FOO);
   }
 
   public void testCompileError() {
-    oracle.add(JavaSourceCodeBase.BAR);
+    oracle.add(JavaResourceBase.BAR);
     state.refresh(createTreeLogger());
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        JavaSourceCodeBase.BAR.getTypeName());
+        SourceFileCompilationUnit.getTypeName(JavaResourceBase.BAR));
     assertSame(State.ERROR, badUnit.getState());
 
     Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
@@ -105,18 +106,16 @@ public class CompilationStateTest extends TestCase {
 
   public void testCompileWithGeneratedUnits() {
     assertUnitsChecked(state.getCompilationUnits());
-    state.addGeneratedCompilationUnits(createTreeLogger(),
-        getCompilationUnits(JavaSourceCodeBase.FOO));
+    addGeneratedUnits(JavaResourceBase.FOO);
     assertUnitsChecked(state.getCompilationUnits());
   }
 
   public void testCompileWithGeneratedUnitsError() {
     assertUnitsChecked(state.getCompilationUnits());
-    state.addGeneratedCompilationUnits(createTreeLogger(),
-        getCompilationUnits(JavaSourceCodeBase.BAR));
+    addGeneratedUnits(JavaResourceBase.BAR);
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        JavaSourceCodeBase.BAR.getTypeName());
+        SourceFileCompilationUnit.getTypeName(JavaResourceBase.BAR));
     assertSame(State.ERROR, badUnit.getState());
 
     Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
@@ -127,20 +126,22 @@ public class CompilationStateTest extends TestCase {
 
   public void testCompileWithGeneratedUnitsErrorAndDepedentGeneratedUnit() {
     assertUnitsChecked(state.getCompilationUnits());
-    MockJavaSourceFile badFoo = new MockJavaSourceFile(JavaResourceBase.FOO) {
+    MockJavaResource badFoo = new MockJavaResource(
+        SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO)) {
       @Override
-      public String readSource() {
-        return super.readSource() + "\ncompilation error LOL!";
+      protected CharSequence getContent() {
+        return SourceFileCompilationUnit.readSource(JavaResourceBase.FOO)
+            + "\ncompilation error LOL!";
       }
     };
     state.addGeneratedCompilationUnits(createTreeLogger(), getCompilationUnits(
-        badFoo, JavaSourceCodeBase.BAR));
+        badFoo, JavaResourceBase.BAR));
 
     CompilationUnit badUnit = state.getCompilationUnitMap().get(
-        badFoo.getTypeName());
+        SourceFileCompilationUnit.getTypeName(badFoo));
     assertSame(State.ERROR, badUnit.getState());
     CompilationUnit invalidUnit = state.getCompilationUnitMap().get(
-        JavaSourceCodeBase.BAR.getTypeName());
+        SourceFileCompilationUnit.getTypeName(JavaResourceBase.BAR));
     assertSame(State.FRESH, invalidUnit.getState());
 
     Set<CompilationUnit> goodUnits = new HashSet<CompilationUnit>(
@@ -155,13 +156,12 @@ public class CompilationStateTest extends TestCase {
    * another generated unit it depends on can be reused
    */
   public void testComplexCacheInvalidation() {
-    Set<CompilationUnit> modifiedUnits = getCompilationUnits(JavaSourceCodeBase.FOO);
-    modifiedUnits.addAll(getModifiedCompilationUnits(JavaSourceCodeBase.BAR));
+    Set<CompilationUnit> modifiedUnits = getCompilationUnits(JavaResourceBase.FOO);
+    modifiedUnits.addAll(getModifiedCompilationUnits(JavaResourceBase.BAR));
     Set<String> reusedTypes = new HashSet<String>();
-    reusedTypes.add(JavaSourceCodeBase.FOO.getTypeName());
-    testCachingOverMultipleRefreshes(getCompilationUnits(
-        JavaSourceCodeBase.FOO, JavaSourceCodeBase.BAR), modifiedUnits,
-        reusedTypes, 1);
+    reusedTypes.add(SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO));
+    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.FOO,
+        JavaResourceBase.BAR), modifiedUnits, reusedTypes, 1);
   }
 
   public void testInitialization() {
@@ -169,17 +169,16 @@ public class CompilationStateTest extends TestCase {
   }
 
   public void testInvalidation() {
-    testCachingOverMultipleRefreshes(
-        getCompilationUnits(JavaSourceCodeBase.FOO),
-        getModifiedCompilationUnits(JavaSourceCodeBase.FOO),
+    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.FOO),
+        getModifiedCompilationUnits(JavaResourceBase.FOO),
         Collections.<String> emptySet(), 1);
   }
 
   public void testInvalidationOfMultipleUnits() {
-    testCachingOverMultipleRefreshes(getCompilationUnits(
-        JavaSourceCodeBase.BAR, JavaSourceCodeBase.FOO),
-        getModifiedCompilationUnits(JavaSourceCodeBase.BAR,
-            JavaSourceCodeBase.FOO), Collections.<String> emptySet(), 2);
+    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.BAR,
+        JavaResourceBase.FOO), getModifiedCompilationUnits(
+        JavaResourceBase.BAR, JavaResourceBase.FOO),
+        Collections.<String> emptySet(), 2);
   }
 
   /*
@@ -189,11 +188,11 @@ public class CompilationStateTest extends TestCase {
    */
   public void testInvalidationWhenSourceUnitsChange() {
     validateCompilationState();
-    oracle.add(JavaSourceCodeBase.FOO);
+    oracle.add(JavaResourceBase.FOO);
     state.refresh(createTreeLogger());
 
     // add generated units
-    Set<CompilationUnit> generatedCups = getCompilationUnits(JavaSourceCodeBase.BAR);
+    Set<CompilationUnit> generatedCups = getCompilationUnits(JavaResourceBase.BAR);
     Map<String, CompilationUnit> usefulUnits = state.getUsefulGraveyardUnits(generatedCups);
     assertEquals(0, usefulUnits.size());
     state.addGeneratedCompilationUnits(createTreeLogger(), generatedCups,
@@ -201,10 +200,12 @@ public class CompilationStateTest extends TestCase {
     assertUnitsChecked(state.getCompilationUnits());
 
     // change unit in source oracle
-    oracle.replace(new MockJavaSourceFile(JavaSourceCodeBase.FOO) {
+    oracle.replace(new MockJavaResource(
+        SourceFileCompilationUnit.getTypeName(JavaResourceBase.FOO)) {
       @Override
-      public String readSource() {
-        return JavaSourceCodeBase.FOO.readSource() + "\n";
+      protected CharSequence getContent() {
+        return SourceFileCompilationUnit.readSource(JavaResourceBase.FOO)
+            + "\n";
       }
     });
     state.refresh(createTreeLogger());
@@ -223,7 +224,7 @@ public class CompilationStateTest extends TestCase {
     validateCompilationState();
 
     int size = state.getCompilationUnits().size();
-    oracle.add(JavaSourceCodeBase.FOO);
+    oracle.add(JavaResourceBase.FOO);
     state.refresh(createTreeLogger());
     assertEquals(size + 1, state.getCompilationUnits().size());
     validateCompilationState();
@@ -234,7 +235,7 @@ public class CompilationStateTest extends TestCase {
   }
 
   public void testSourceOracleEmpty() {
-    oracle = new MockJavaSourceOracle();
+    oracle = new MockResourceOracle();
     state = new CompilationState(createTreeLogger(), oracle);
     validateCompilationState();
   }
@@ -243,7 +244,7 @@ public class CompilationStateTest extends TestCase {
     validateCompilationState();
 
     int size = state.getCompilationUnits().size();
-    oracle.remove(JavaSourceCodeBase.OBJECT.getTypeName());
+    oracle.remove(JavaResourceBase.OBJECT.getPath());
     state.refresh(createTreeLogger());
     assertEquals(size - 1, state.getCompilationUnits().size());
     validateCompilationState();
@@ -253,7 +254,12 @@ public class CompilationStateTest extends TestCase {
     validateCompilationState();
 
     int size = state.getCompilationUnits().size();
-    oracle.replace(new MockJavaSourceFile(JavaSourceCodeBase.OBJECT));
+    oracle.replace(new MockJavaResource("java.lang.Object") {
+      @Override
+      protected CharSequence getContent() {
+        return SourceFileCompilationUnit.readSource(JavaResourceBase.OBJECT);
+      }
+    });
     state.refresh(createTreeLogger());
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
@@ -263,7 +269,7 @@ public class CompilationStateTest extends TestCase {
     validateCompilationState();
 
     int size = state.getCompilationUnits().size();
-    oracle.replace(JavaSourceCodeBase.OBJECT);
+    oracle.replace(JavaResourceBase.OBJECT);
     state.refresh(createTreeLogger());
     assertEquals(size, state.getCompilationUnits().size());
     validateCompilationState();
@@ -271,17 +277,22 @@ public class CompilationStateTest extends TestCase {
 
   /* test if generatedUnits that depend on stale generatedUnits are invalidated */
   public void testTransitiveInvalidation() {
-    Set<CompilationUnit> modifiedUnits = getModifiedCompilationUnits(JavaSourceCodeBase.FOO);
-    modifiedUnits.addAll(getCompilationUnits(JavaSourceCodeBase.BAR));
-    testCachingOverMultipleRefreshes(getCompilationUnits(
-        JavaSourceCodeBase.BAR, JavaSourceCodeBase.FOO), modifiedUnits,
-        Collections.<String> emptySet(), 2);
+    Set<CompilationUnit> modifiedUnits = getModifiedCompilationUnits(JavaResourceBase.FOO);
+    modifiedUnits.addAll(getCompilationUnits(JavaResourceBase.BAR));
+    testCachingOverMultipleRefreshes(getCompilationUnits(JavaResourceBase.BAR,
+        JavaResourceBase.FOO), modifiedUnits, Collections.<String> emptySet(),
+        2);
+  }
+
+  private void addGeneratedUnits(MockJavaResource... sourceFiles) {
+    Set<CompilationUnit> units = getCompilationUnits(sourceFiles);
+    state.addGeneratedCompilationUnits(createTreeLogger(), units);
   }
 
   private Set<CompilationUnit> getCompilationUnits(
-      JavaSourceFile... sourceFiles) {
+      MockJavaResource... sourceFiles) {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    for (JavaSourceFile sourceFile : sourceFiles) {
+    for (MockJavaResource sourceFile : sourceFiles) {
       units.add(new SourceFileCompilationUnit(sourceFile) {
         @Override
         public boolean isGenerated() {
@@ -293,9 +304,9 @@ public class CompilationStateTest extends TestCase {
   }
 
   private Set<CompilationUnit> getModifiedCompilationUnits(
-      JavaSourceFile... sourceFiles) {
+      MockJavaResource... sourceFiles) {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    for (JavaSourceFile sourceFile : sourceFiles) {
+    for (MockJavaResource sourceFile : sourceFiles) {
       units.add(new SourceFileCompilationUnit(sourceFile) {
         /* modified the source */
         @Override
@@ -312,10 +323,10 @@ public class CompilationStateTest extends TestCase {
     return units;
   }
 
-  private void testCaching(JavaSourceFile... files) {
+  private void testCaching(MockJavaResource... files) {
     Set<String> reusedTypes = new HashSet<String>();
-    for (JavaSourceFile file : files) {
-      reusedTypes.add(file.getTypeName());
+    for (MockJavaResource file : files) {
+      reusedTypes.add(SourceFileCompilationUnit.getTypeName(file));
     }
     testCachingOverMultipleRefreshes(getCompilationUnits(files),
         getCompilationUnits(files), reusedTypes, 0);
@@ -406,8 +417,8 @@ public class CompilationStateTest extends TestCase {
     assertEquals(new HashSet<CompilationUnit>(unitMap.values()), units);
 
     // Save off a mutable copy of the source map and generated types to compare.
-    Map<String, JavaSourceFile> sourceMap = new HashMap<String, JavaSourceFile>(
-        oracle.getSourceMap());
+    Map<String, Resource> sourceMap = new HashMap<String, Resource>(
+        oracle.getResourceMap());
     Set<String> generatedTypes = new HashSet<String>(
         Arrays.asList(generatedTypeNames));
     assertEquals(sourceMap.size() + generatedTypes.size(), units.size());
@@ -422,9 +433,10 @@ public class CompilationStateTest extends TestCase {
         assertTrue(generatedTypes.contains(className));
         assertNotNull(generatedTypes.remove(className));
       } else {
-        assertTrue(sourceMap.containsKey(className));
+        String partialPath = className.replace('.', '/') + ".java";
+        assertTrue(sourceMap.containsKey(partialPath));
         // TODO: Validate the source file matches the resource.
-        assertNotNull(sourceMap.remove(className));
+        assertNotNull(sourceMap.remove(partialPath));
       }
     }
     // The mutable sets should be empty now.

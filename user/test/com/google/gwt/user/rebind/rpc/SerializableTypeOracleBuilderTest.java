@@ -34,9 +34,9 @@ import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.cfg.ModuleDefLoader;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
 import com.google.gwt.dev.javac.CompilationUnit;
-import com.google.gwt.dev.javac.JavaSourceCodeBase;
 import com.google.gwt.dev.javac.MockCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
+import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
@@ -141,7 +141,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   private static void addJavaIoSerializable(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaSourceCodeBase.SERIALIZABLE));
+    units.add(new SourceFileCompilationUnit(JavaResourceBase.SERIALIZABLE));
   }
 
   private static void addJavaLangException(Set<CompilationUnit> units) {
@@ -154,11 +154,11 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   private static void addJavaLangObject(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaSourceCodeBase.OBJECT));
+    units.add(new SourceFileCompilationUnit(JavaResourceBase.OBJECT));
   }
 
   private static void addJavaLangString(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaSourceCodeBase.STRING));
+    units.add(new SourceFileCompilationUnit(JavaResourceBase.STRING));
   }
 
   private static void addJavaLangThrowable(Set<CompilationUnit> units) {
@@ -179,7 +179,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   }
 
   private static void addJavaUtilMap(Set<CompilationUnit> units) {
-    units.add(new SourceFileCompilationUnit(JavaSourceCodeBase.MAP));
+    units.add(new SourceFileCompilationUnit(JavaResourceBase.MAP));
   }
 
   private static void addSerializationStreamReader(Set<CompilationUnit> units) {
@@ -2170,8 +2170,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
    * @throws UnableToCompleteException
    * @throws NotFoundException
    */
-  public void testTypeConstrainer() throws UnableToCompleteException,
-      NotFoundException {
+  public void testTypeConstrainer() throws NotFoundException {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     addStandardClasses(units);
 
@@ -2326,8 +2325,8 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
     JTypeParameter syntheticTypeParam = new JTypeParameter("U", 0);
     // Force the type parameter to have a declaring class
-    JClassType mockType = new JGenericType(to, a.getPackage(), null, false,
-        "C", false, new JTypeParameter[] {syntheticTypeParam});
+    new JGenericType(to, a.getPackage(), null, false, "C", false,
+        new JTypeParameter[] {syntheticTypeParam});
     syntheticTypeParam.setBounds(makeArray(b));
 
     JParameterizedType parameterizedType = to.getParameterizedType(a,
