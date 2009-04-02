@@ -18,6 +18,7 @@ package com.google.gwt.dev.util;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,16 +44,19 @@ public class DiskCache {
 
   private static class Shutdown implements Runnable {
     public void run() {
-      for (DiskCache diskCache : shutdownList) {
+      for (WeakReference<DiskCache> ref : shutdownList) {
         try {
-          diskCache.finalize();
+          DiskCache diskCache = ref.get();
+          if (diskCache != null) {
+            diskCache.finalize();
+          }
         } catch (Throwable e) {
         }
       }
     }
   }
 
-  private static List<DiskCache> shutdownList;
+  private static List<WeakReference<DiskCache>> shutdownList;
 
   private boolean atEnd = true;
   private RandomAccessFile file;
@@ -64,9 +68,10 @@ public class DiskCache {
       file = new RandomAccessFile(temp, "rw");
       file.setLength(0);
       if (shutdownList == null) {
-        shutdownList = new ArrayList<DiskCache>();
+        shutdownList = new ArrayList<WeakReference<DiskCache>>();
         Runtime.getRuntime().addShutdownHook(new Thread(new Shutdown()));
       }
+      shutdownList.add(new WeakReference<DiskCache>(this));
     } catch (IOException e) {
       throw new RuntimeException("Unable to initialize byte cache", e);
     }
