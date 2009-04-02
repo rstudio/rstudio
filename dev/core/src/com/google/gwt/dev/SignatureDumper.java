@@ -23,10 +23,12 @@ import com.google.gwt.core.ext.typeinfo.JField;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JParameter;
 import com.google.gwt.core.ext.typeinfo.TypeOracle;
+import com.google.gwt.dev.util.Util;
 
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 
 class SignatureDumper {
@@ -34,7 +36,10 @@ class SignatureDumper {
   public static void dumpSignatures(TreeLogger logger, TypeOracle typeOracle,
       File outFile) {
     try {
-      PrintWriter out = new PrintWriter(new FileWriter(outFile));
+      FileOutputStream fos = new FileOutputStream(outFile);
+      OutputStreamWriter osw = new OutputStreamWriter(fos,
+          Util.DEFAULT_ENCODING);
+      PrintWriter out = new PrintWriter(osw);
       out.println("# Contains all signatures dumped from the GWT compiler");
       out.println("FileVersion 1");
       out.println("GwtVersion " + About.GWT_VERSION_NUM);
