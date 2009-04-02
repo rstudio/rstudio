@@ -435,13 +435,6 @@ public abstract class CompilationUnit {
   }
 
   /**
-   * Called when this unit no longer needs to keep an internal cache of its
-   * source.
-   */
-  protected void dumpSource() {
-  }
-
-  /**
    * If compiled, returns all contained classes; otherwise returns
    * <code>null</code>.
    */
@@ -479,7 +472,6 @@ public abstract class CompilationUnit {
   }
 
   void setChecked() {
-    dumpSource();
     assert cud != null || state == State.GRAVEYARD;
     for (CompiledClass compiledClass : getCompiledClasses()) {
       compiledClass.checked();
@@ -500,14 +492,12 @@ public abstract class CompilationUnit {
   }
 
   void setError() {
-    dumpSource();
     this.errors = cud.compilationResult().getErrors();
     invalidate();
     state = State.ERROR;
   }
 
   void setFresh() {
-    dumpSource();
     this.errors = null;
     invalidate();
     state = State.FRESH;

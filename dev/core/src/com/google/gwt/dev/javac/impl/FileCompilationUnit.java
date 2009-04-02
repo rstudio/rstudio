@@ -23,7 +23,7 @@ import java.io.File;
 /**
  * A compilation unit based on a file.
  */
-public final class FileCompilationUnit extends CompilationUnit {
+public class FileCompilationUnit extends CompilationUnit {
   private final File file;
   private final String typeName;
 

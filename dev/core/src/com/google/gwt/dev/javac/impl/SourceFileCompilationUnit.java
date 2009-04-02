@@ -23,7 +23,6 @@ import com.google.gwt.dev.javac.JavaSourceFile;
  */
 public class SourceFileCompilationUnit extends CompilationUnit {
 
-  private String sourceCode;
   private JavaSourceFile sourceFile;
 
   public SourceFileCompilationUnit(JavaSourceFile sourceFile) {
@@ -42,10 +41,7 @@ public class SourceFileCompilationUnit extends CompilationUnit {
 
   @Override
   public String getSource() {
-    if (sourceCode == null) {
-      sourceCode = sourceFile.readSource();
-    }
-    return sourceCode;
+    return sourceFile.readSource();
   }
 
   public JavaSourceFile getSourceFile() {
@@ -66,10 +62,4 @@ public class SourceFileCompilationUnit extends CompilationUnit {
   public boolean isSuperSource() {
     return sourceFile.isSuperSource();
   }
-
-  @Override
-  protected void dumpSource() {
-    sourceCode = null;
-  }
-
 }

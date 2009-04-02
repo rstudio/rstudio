@@ -17,6 +17,7 @@ package com.google.gwt.dev.javac;
 
 import com.google.gwt.core.ext.typeinfo.JRealClassType;
 import com.google.gwt.dev.javac.impl.Shared;
+import com.google.gwt.dev.util.DiskCache;
 
 import org.eclipse.jdt.core.compiler.CharOperation;
 import org.eclipse.jdt.internal.compiler.ClassFile;
@@ -24,13 +25,14 @@ import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFileReader;
 import org.eclipse.jdt.internal.compiler.classfmt.ClassFormatException;
 import org.eclipse.jdt.internal.compiler.env.NameEnvironmentAnswer;
-import org.eclipse.jdt.internal.compiler.lookup.LocalTypeBinding;
 import org.eclipse.jdt.internal.compiler.lookup.SourceTypeBinding;
 
 /**
  * Encapsulates the state of a single compiled class file.
  */
 public final class CompiledClass {
+
+  private static final DiskCache diskCache = new DiskCache();
 
   private static ClassFile getClassFile(TypeDeclaration typeDecl,
       String binaryName) {
@@ -45,24 +47,21 @@ public final class CompiledClass {
     return null;
   }
 
-  private static String getPackagePrefix(String packageName) {
-    return packageName.length() > 0 ? packageName + "." : "";
-  }
-
   protected final String binaryName;
-  protected final byte[] bytes;
   protected final CompiledClass enclosingClass;
   protected final String location;
-  protected final String packageName;
-  protected final String sourceName;
   protected final CompilationUnit unit;
 
-  // The state below is transient.
-  private NameEnvironmentAnswer nameEnvironmentAnswer;
-  private JRealClassType realClassType;
+  /**
+   * A token to retrieve this object's bytes from the disk cache.
+   */
+  private final long cacheToken;
 
+  // The state below is transient.
+  private transient NameEnvironmentAnswer nameEnvironmentAnswer;
+  private transient JRealClassType realClassType;
   // Can be killed after parent is CHECKED.
-  private TypeDeclaration typeDeclaration;
+  private transient TypeDeclaration typeDeclaration;
 
   CompiledClass(CompilationUnit unit, TypeDeclaration typeDeclaration,
       CompiledClass enclosingClass) {
@@ -71,17 +70,9 @@ public final class CompiledClass {
     this.enclosingClass = enclosingClass;
     SourceTypeBinding binding = typeDeclaration.binding;
     this.binaryName = CharOperation.charToString(binding.constantPoolName());
-    this.packageName = Shared.getPackageNameFromBinary(binaryName);
-    if (binding instanceof LocalTypeBinding) {
-      // The source name of a local type must be determined from binary.
-      String qualifiedName = binaryName.replace('/', '.');
-      this.sourceName = qualifiedName.replace('$', '.');
-    } else {
-      this.sourceName = getPackagePrefix(packageName)
-          + String.valueOf(binding.qualifiedSourceName());
-    }
     ClassFile classFile = getClassFile(typeDeclaration, binaryName);
-    this.bytes = classFile.getBytes();
+    byte[] bytes = classFile.getBytes();
+    this.cacheToken = diskCache.writeByteArray(bytes);
     this.location = String.valueOf(classFile.fileName());
   }
 
@@ -96,7 +87,7 @@ public final class CompiledClass {
    * Returns the bytes of the compiled class.
    */
   public byte[] getBytes() {
-    return bytes;
+    return diskCache.readByteArray(cacheToken);
   }
 
   public CompiledClass getEnclosingClass() {
@@ -107,14 +98,14 @@ public final class CompiledClass {
    * Returns the enclosing package, e.g. {@code java.util}.
    */
   public String getPackageName() {
-    return packageName;
+    return Shared.getPackageNameFromBinary(binaryName);
   }
 
   /**
    * Returns the qualified source name, e.g. {@code java.util.Map.Entry}.
    */
   public String getSourceName() {
-    return sourceName;
+    return binaryName.replace('/', '.').replace('$', '.');
   }
 
   public CompilationUnit getUnit() {
@@ -136,7 +127,8 @@ public final class CompiledClass {
   NameEnvironmentAnswer getNameEnvironmentAnswer() {
     if (nameEnvironmentAnswer == null) {
       try {
-        ClassFileReader cfr = new ClassFileReader(bytes, location.toCharArray());
+        ClassFileReader cfr = new ClassFileReader(getBytes(),
+            location.toCharArray());
         nameEnvironmentAnswer = new NameEnvironmentAnswer(cfr, null);
       } catch (ClassFormatException e) {
         throw new RuntimeException("Unexpectedly unable to parse class file", e);

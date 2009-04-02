@@ -133,16 +133,38 @@ public class JsniCollector {
     }
   }
 
+  /**
+   * Just a little class to grab source only once for a compilation unit.
+   * 
+   * TODO: parse JSNI <i>during</i> JDT's cycle to avoiding having to read from
+   * disk twice.
+   */
+  private static final class SourceCache {
+    private String source;
+    private final CompilationUnit unit;
+
+    public SourceCache(CompilationUnit unit) {
+      this.unit = unit;
+    }
+
+    public String get() {
+      if (source == null) {
+        source = unit.getSource();
+      }
+      return source;
+    }
+  }
+
   public static void collectJsniMethods(TreeLogger logger,
       Set<CompilationUnit> units, JsProgram program) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         String loc = unit.getDisplayLocation();
-        String source = unit.getSource();
+        SourceCache sourceCache = new SourceCache(unit);
         assert unit.getJsniMethods() == null;
         List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
         for (CompiledClass compiledClass : unit.getCompiledClasses()) {
-          jsniMethods.addAll(collectJsniMethods(logger, loc, source,
+          jsniMethods.addAll(collectJsniMethods(logger, loc, sourceCache,
               compiledClass, program));
         }
         unit.setJsniMethods(jsniMethods);
@@ -154,7 +176,8 @@ public class JsniCollector {
    * TODO: log real errors, replacing GenerateJavaScriptAST?
    */
   private static List<JsniMethod> collectJsniMethods(TreeLogger logger,
-      String loc, String source, CompiledClass compiledClass, JsProgram program) {
+      String loc, SourceCache sourceCache, CompiledClass compiledClass,
+      JsProgram program) {
     TypeDeclaration typeDecl = compiledClass.getTypeDeclaration();
     int[] lineEnds = typeDecl.compilationResult.getLineSeparatorPositions();
     List<JsniMethod> jsniMethods = new ArrayList<JsniMethod>();
@@ -165,6 +188,7 @@ public class JsniCollector {
         if (!method.isNative()) {
           continue;
         }
+        String source = sourceCache.get();
         Interval interval = findJsniSource(source, method);
         if (interval == null) {
           String msg = "No JavaScript body found for native method '" + method
