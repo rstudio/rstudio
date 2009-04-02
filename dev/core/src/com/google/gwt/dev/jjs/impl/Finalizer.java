@@ -97,7 +97,9 @@ public class Finalizer {
 
     @Override
     public boolean visit(JMethodBody x, Context ctx) {
-      accept(x.locals);
+      for (JLocal local : x.getLocals()) {
+        maybeFinalize(local);
+      }
       return false;
     }
 
@@ -139,8 +141,8 @@ public class Finalizer {
 
     @Override
     public void endVisit(JMethod x, Context ctx) {
-      for (int i = 0; i < x.overrides.size(); ++i) {
-        JMethod it = x.overrides.get(i);
+      for (int i = 0; i < x.getOverrides().size(); ++i) {
+        JMethod it = x.getOverrides().get(i);
         isOverriden.add(it);
       }
     }

@@ -223,7 +223,7 @@ public class CloneExpressionVisitor extends JVisitor {
       newMethodCall.setCannotBePolymorphic();
     }
 
-    newMethodCall.getArgs().addAll(cloneExpressions(x.getArgs()));
+    newMethodCall.addArgs(cloneExpressions(x.getArgs()));
 
     expression = newMethodCall;
     return false;

@@ -70,7 +70,7 @@ public class ReplaceRunAsyncs {
 
         JMethodCall methodCall = new JMethodCall(program, x.getSourceInfo(),
             null, loadMethod);
-        methodCall.getArgs().add(asyncCallback);
+        methodCall.addArg(asyncCallback);
 
         program.addEntryMethod(getOnLoadMethod(loader), entryNumber);
 
@@ -127,7 +127,7 @@ public class ReplaceRunAsyncs {
     for (JMethod method : loaderType.methods) {
       if (method.getName().equals("onLoad")) {
         assert (method.isStatic());
-        assert (method.params.size() == 0);
+        assert (method.getParams().size() == 0);
         return method;
       }
     }
@@ -141,8 +141,8 @@ public class ReplaceRunAsyncs {
     for (JMethod method : loaderType.methods) {
       if (method.getName().equals("runAsync")) {
         assert (method.isStatic());
-        assert (method.params.size() == 1);
-        assert (method.params.get(0).getType().getName().equals(FragmentLoaderCreator.RUN_ASYNC_CALLBACK));
+        assert (method.getParams().size() == 1);
+        assert (method.getParams().get(0).getType().getName().equals(FragmentLoaderCreator.RUN_ASYNC_CALLBACK));
         return method;
       }
     }

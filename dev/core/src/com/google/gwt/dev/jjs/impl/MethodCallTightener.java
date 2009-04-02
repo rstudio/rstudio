@@ -103,7 +103,7 @@ public class MethodCallTightener {
        */
       JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
           x.getInstance(), foundMethod);
-      call.getArgs().addAll(x.getArgs());
+      call.addArgs(x.getArgs());
       ctx.replaceMe(call);
     }
 
@@ -118,7 +118,7 @@ public class MethodCallTightener {
      * 
      */
     private boolean methodOverrides(JMethod subMethod, JMethod supMethod) {
-      if (subMethod.params.size() != supMethod.params.size()) {
+      if (subMethod.getParams().size() != supMethod.getParams().size()) {
         // short cut: check the number of parameters
         return false;
       }

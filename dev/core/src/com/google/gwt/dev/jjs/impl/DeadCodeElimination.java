@@ -84,8 +84,8 @@ public class DeadCodeElimination {
    * operations in favor of pure side effects.
    * 
    * TODO(spoon): move more simplifications into methods like
-   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast}, so
-   * that more simplifications can be made on a single pass through a tree.
+   * {@link #cast(JExpression, SourceInfo, JType, JExpression) simplifyCast},
+   * so that more simplifications can be made on a single pass through a tree.
    */
   public class DeadCodeVisitor extends JModVisitor {
 
@@ -94,8 +94,8 @@ public class DeadCodeElimination {
     /**
      * Expressions whose result does not matter. A parent node should add any
      * children whose result does not matter to this set during the parent's
-     * <code>visit()</code> method. It should then remove those children during
-     * its own <code>endVisit()</code>.
+     * <code>visit()</code> method. It should then remove those children
+     * during its own <code>endVisit()</code>.
      * 
      * TODO: there's a latent bug here: some immutable nodes (such as literals)
      * can be multiply referenced in the AST. In theory, one reference to that
@@ -199,8 +199,8 @@ public class DeadCodeElimination {
        * Remove any dead statements after an abrupt change in code flow and
        * promote safe statements within nested blocks to this block.
        */
-      for (int i = 0; i < x.statements.size(); i++) {
-        JStatement stmt = x.statements.get(i);
+      for (int i = 0; i < x.getStatements().size(); i++) {
+        JStatement stmt = x.getStatements().get(i);
 
         if (stmt instanceof JBlock) {
           /*
@@ -209,8 +209,8 @@ public class DeadCodeElimination {
            */
           JBlock block = (JBlock) stmt;
           if (canPromoteBlock(block)) {
-            x.statements.remove(i);
-            x.statements.addAll(i, block.statements);
+            x.removeStmt(i);
+            x.addStmts(i, block.getStatements());
             i--;
             didChange = true;
             continue;
@@ -221,11 +221,11 @@ public class DeadCodeElimination {
           JExpressionStatement stmtExpr = (JExpressionStatement) stmt;
           if (stmtExpr.getExpr() instanceof JMultiExpression) {
             // Promote a multi's expressions to the current block
-            x.statements.remove(i);
+            x.removeStmt(i);
             int start = i;
             JMultiExpression multi = ((JMultiExpression) stmtExpr.getExpr());
             for (JExpression expr : multi.exprs) {
-              x.statements.add(i++, expr.makeStatement());
+              x.addStmt(i++, expr.makeStatement());
             }
             i = start - 1;
             continue;
@@ -234,14 +234,14 @@ public class DeadCodeElimination {
 
         if (stmt.unconditionalControlBreak()) {
           // Abrupt change in flow, chop the remaining items from this block
-          for (int j = i + 1; j < x.statements.size();) {
-            x.statements.remove(j);
+          for (int j = i + 1; j < x.getStatements().size();) {
+            x.removeStmt(j);
             didChange = true;
           }
         }
       }
 
-      if (ctx.canRemove() && x.statements.size() == 0) {
+      if (ctx.canRemove() && x.getStatements().size() == 0) {
         // Remove blocks with no effect
         ctx.removeMe();
       }
@@ -349,7 +349,7 @@ public class DeadCodeElimination {
         // If false, replace the for statement with its initializers
         if (!booleanLiteral.getValue()) {
           JBlock block = new JBlock(program, x.getSourceInfo());
-          block.statements.addAll(x.getInitializers());
+          block.addStmts(x.getInitializers());
           ctx.replaceMe(block);
         }
       }
@@ -386,16 +386,13 @@ public class DeadCodeElimination {
       if (target.isStatic() && x.getInstance() != null) {
         ignoringExpressionOutput.remove(x.getInstance());
       }
-      List<JExpression> args = x.getArgs();
-      int paramCount = target.params.size();
-      List<JExpression> ignoredArgs = args.subList(paramCount, args.size());
-      ignoringExpressionOutput.removeAll(ignoredArgs);
 
-      for (int i = 0; i < ignoredArgs.size(); ++i) {
-        JExpression arg = ignoredArgs.get(i);
+      int paramCount = target.getParams().size();
+      for (int i = paramCount; i < x.getArgs().size(); ++i) {
+        JExpression arg = x.getArgs().get(i);
+        ignoringExpressionOutput.remove(arg);
         if (!arg.hasSideEffects()) {
-          ignoredArgs.remove(i);
-          --i;
+          x.removeArg(i--);
           didChange = true;
         }
       }
@@ -608,7 +605,7 @@ public class DeadCodeElimination {
         ignoringExpressionOutput.add(x.getInstance());
       }
       List<JExpression> args = x.getArgs();
-      List<JExpression> ignoredArgs = args.subList(target.params.size(),
+      List<JExpression> ignoredArgs = args.subList(target.getParams().size(),
           args.size());
       ignoringExpressionOutput.addAll(ignoredArgs);
       return true;
@@ -651,7 +648,7 @@ public class DeadCodeElimination {
      * when the block contains no local declarations.
      */
     private boolean canPromoteBlock(JBlock block) {
-      for (JStatement nestedStmt : block.statements) {
+      for (JStatement nestedStmt : block.getStatements()) {
         if (nestedStmt instanceof JDeclarationStatement) {
           JDeclarationStatement decl = (JDeclarationStatement) nestedStmt;
           if (decl.getVariableRef() instanceof JLocalRef) {
@@ -1013,7 +1010,7 @@ public class DeadCodeElimination {
         return (JBreakStatement) statement;
       } else if (statement instanceof JBlock) {
         JBlock block = (JBlock) statement;
-        List<JStatement> blockStmts = block.statements;
+        List<JStatement> blockStmts = block.getStatements();
         if (blockStmts.size() > 0 && isUnconditionalBreak(blockStmts.get(0))) {
           return (JBreakStatement) blockStmts.get(0);
         }
@@ -1024,7 +1021,7 @@ public class DeadCodeElimination {
     private boolean hasNoDefaultCase(JSwitchStatement x) {
       JBlock body = x.getBody();
       boolean inDefault = false;
-      for (JStatement statement : body.statements) {
+      for (JStatement statement : body.getStatements()) {
         if (statement instanceof JCaseStatement) {
           JCaseStatement caseStmt = (JCaseStatement) statement;
           if (caseStmt.getExpr() == null) {
@@ -1210,20 +1207,20 @@ public class DeadCodeElimination {
     private void removeDoubleBreaks(JSwitchStatement x) {
       JBlock body = x.getBody();
       boolean lastWasBreak = true;
-      for (Iterator<JStatement> it = body.statements.iterator(); it.hasNext();) {
-        JStatement statement = it.next();
+      for (int i = 0; i < body.getStatements().size(); ++i) {
+        JStatement statement = body.getStatements().get(i);
         boolean isBreak = isUnconditionalBreak(statement);
         if (isBreak && lastWasBreak) {
-          it.remove();
+          body.removeStmt(i--);
           didChange = true;
         }
         lastWasBreak = isBreak;
       }
 
       // Remove a trailing break statement from a case block
-      if (body.statements.size() > 0
-          && isUnconditionalUnlabeledBreak(last(body.statements))) {
-        body.statements.remove(body.statements.size() - 1);
+      if (body.getStatements().size() > 0
+          && isUnconditionalUnlabeledBreak(last(body.getStatements()))) {
+        body.removeStmt(body.getStatements().size() - 1);
         didChange = true;
       }
     }
@@ -1239,7 +1236,7 @@ public class DeadCodeElimination {
        * A case statement has no effect if there is no code between it and
        * either an unconditional break or the end of the switch.
        */
-      for (JStatement statement : body.statements) {
+      for (JStatement statement : body.getStatements()) {
         if (statement instanceof JCaseStatement) {
           potentialNoOpCaseStatements.add(statement);
         } else if (isUnconditionalUnlabeledBreak(statement)) {
@@ -1256,7 +1253,7 @@ public class DeadCodeElimination {
 
       if (noOpCaseStatements.size() > 0) {
         for (JStatement statement : noOpCaseStatements) {
-          body.statements.remove(statement);
+          body.removeStmt(body.getStatements().indexOf(statement));
           didChange = true;
         }
       }
@@ -1346,8 +1343,8 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify <code>exp == bool</code>, where <code>bool</code> is a boolean
-     * literal.
+     * Simplify <code>exp == bool</code>, where <code>bool</code> is a
+     * boolean literal.
      */
     private void simplifyBooleanEq(JExpression exp, boolean bool, Context ctx) {
       if (bool) {
@@ -1361,8 +1358,8 @@ public class DeadCodeElimination {
     /**
      * Simplify <code>lhs == rhs</code>, where <code>lhs</code> and
      * <code>rhs</code> are known to be boolean. If <code>negate</code> is
-     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead of
-     * <code>lhs == rhs</code>. Assumes that the case where both sides are
+     * <code>true</code>, then treat it as <code>lhs != rhs</code> instead
+     * of <code>lhs == rhs</code>. Assumes that the case where both sides are
      * literals has already been checked.
      */
     private void simplifyBooleanEq(JExpression lhs, JExpression rhs,
@@ -1394,8 +1391,8 @@ public class DeadCodeElimination {
     }
 
     /**
-     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true, then
-     * it's actually static evaluation of <code>lhs != rhs</code>.
+     * Simplify <code>lhs == rhs</code>. If <code>negate</code> is true,
+     * then it's actually static evaluation of <code>lhs != rhs</code>.
      */
     private void simplifyEq(JExpression lhs, JExpression rhs, Context ctx,
         boolean negated) {
@@ -1579,7 +1576,7 @@ public class DeadCodeElimination {
         return;
       }
 
-      if (method.getOriginalParamTypes().size() != method.params.size()) {
+      if (method.getOriginalParamTypes().size() != method.getParams().size()) {
         // One or more parameters were pruned, abort.
         return;
       }
@@ -1609,7 +1606,7 @@ public class DeadCodeElimination {
       List<JType> params = method.getOriginalParamTypes();
       Class<?> paramTypes[] = new Class<?>[params.size()];
       Object paramValues[] = new Object[params.size()];
-      ArrayList<JExpression> args = x.getArgs();
+      List<JExpression> args = x.getArgs();
       for (int i = 0; i != params.size(); ++i) {
         paramTypes[i] = mapType(params.get(i));
         if (paramTypes[i] == null) {
@@ -1644,10 +1641,10 @@ public class DeadCodeElimination {
 
     private void tryRemoveSwitch(JSwitchStatement x, Context ctx) {
       JBlock body = x.getBody();
-      if (body.statements.size() == 0) {
+      if (body.getStatements().size() == 0) {
         // Empty switch; just run the switch condition.
         ctx.replaceMe(x.getExpr().makeStatement());
-      } else if (body.statements.size() == 2) {
+      } else if (body.getStatements().size() == 2) {
         /*
          * If there are only two statements, we know it's a case statement and
          * something with an effect.
@@ -1667,8 +1664,9 @@ public class DeadCodeElimination {
          * 
          * becomes if (i == 1) { a(); b(); } else { c(); d(); }
          */
-        JCaseStatement caseStatement = (JCaseStatement) body.statements.get(0);
-        JStatement statement = body.statements.get(1);
+        JCaseStatement caseStatement = (JCaseStatement) body.getStatements().get(
+            0);
+        JStatement statement = body.getStatements().get(1);
 
         FindBreakContinueStatementsVisitor visitor = new FindBreakContinueStatementsVisitor();
         visitor.accept(statement);
@@ -1683,15 +1681,15 @@ public class DeadCodeElimination {
               x.getSourceInfo(), program.getTypePrimitiveBoolean(),
               JBinaryOperator.EQ, x.getExpr(), caseStatement.getExpr());
           JBlock block = new JBlock(program, x.getSourceInfo());
-          block.statements.add(statement);
+          block.addStmt(statement);
           JIfStatement ifStatement = new JIfStatement(program,
               x.getSourceInfo(), compareOperation, block, null);
           ctx.replaceMe(ifStatement);
         } else {
           // All we have is a default case; convert to a JBlock.
           JBlock block = new JBlock(program, x.getSourceInfo());
-          block.statements.add(x.getExpr().makeStatement());
-          block.statements.add(statement);
+          block.addStmt(x.getExpr().makeStatement());
+          block.addStmt(statement);
           ctx.replaceMe(block);
         }
       }

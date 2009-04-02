@@ -35,7 +35,6 @@ import com.google.gwt.dev.jjs.ast.JThisRef;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -116,7 +115,7 @@ public class MethodInliner {
             && !stmts.isEmpty()) {
           // clinit() calls cannot be inlined unless they are empty
           possibleToInline = false;
-        } else if (!body.locals.isEmpty()) {
+        } else if (!body.getLocals().isEmpty()) {
           // methods with local variables cannot be inlined
           possibleToInline = false;
         } else {
@@ -273,9 +272,6 @@ public class MethodInliner {
      */
     private boolean tryInlineExpression(JMethodCall x, Context ctx,
         JMultiExpression targetExpr) {
-      List<JParameter> params = x.getTarget().params;
-      ArrayList<JExpression> args = x.getArgs();
-
       /*
        * Limit inlined methods to multiexpressions of length 2 for now. This
        * handles the simple { return JVariableRef; } or { expression; return
@@ -315,7 +311,7 @@ public class MethodInliner {
        * 
        * TODO: would this be possible in the trivial delegation case?
        */
-      if (params.size() != args.size()) {
+      if (x.getTarget().getParams().size() != x.getArgs().size()) {
         return true;
       }
 
@@ -330,7 +326,7 @@ public class MethodInliner {
        * Ensure correct evaluation order or params relative to each other and to
        * other expressions.
        */
-      OrderVisitor orderVisitor = new OrderVisitor(x.getTarget().params);
+      OrderVisitor orderVisitor = new OrderVisitor(x.getTarget().getParams());
       orderVisitor.accept(targetExpr);
 
       /*
@@ -449,7 +445,7 @@ public class MethodInliner {
 
     @Override
     public void endVisit(JParameterRef x, Context ctx) {
-      int paramIndex = methodCall.getTarget().params.indexOf(x.getParameter());
+      int paramIndex = methodCall.getTarget().getParams().indexOf(x.getParameter());
       assert paramIndex != -1;
 
       // Replace with a cloned call argument.

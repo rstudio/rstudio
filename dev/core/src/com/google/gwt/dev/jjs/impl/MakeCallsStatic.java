@@ -154,8 +154,8 @@ public class MakeCallsStatic {
           CreateStaticImplsVisitor.class, "Instance parameter"),
           "this$static".toCharArray(), enclosingType, true, true, newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
-      for (int i = 0; i < x.params.size(); ++i) {
-        JParameter oldVar = x.params.get(i);
+      for (int i = 0; i < x.getParams().size(); ++i) {
+        JParameter oldVar = x.getParams().get(i);
         JParameter newVar = program.createParameter(oldVar.getSourceInfo(),
             oldVar.getName().toCharArray(), oldVar.getType(), oldVar.isFinal(),
             false, newMethod);
@@ -179,11 +179,11 @@ public class MakeCallsStatic {
       x.setBody(newBody);
       JMethodCall newCall = new JMethodCall(program, delegateCallSourceInfo,
           null, newMethod);
-      newCall.getArgs().add(
+      newCall.addArg(
           program.getExprThisRef(delegateCallSourceInfo, enclosingType));
-      for (int i = 0; i < x.params.size(); ++i) {
-        JParameter param = x.params.get(i);
-        newCall.getArgs().add(
+      for (int i = 0; i < x.getParams().size(); ++i) {
+        JParameter param = x.getParams().get(i);
+        newCall.addArg(
             new JParameterRef(program, delegateCallSourceInfo, param));
       }
       JStatement statement;
@@ -193,7 +193,7 @@ public class MakeCallsStatic {
         statement = new JReturnStatement(program, delegateCallSourceInfo,
             newCall);
       }
-      newBody.getStatements().add(statement);
+      newBody.getBlock().addStmt(statement);
 
       /*
        * Rewrite the method body. Update all thisRefs to paramRefs. Update
@@ -300,8 +300,8 @@ public class MakeCallsStatic {
             "Devirtualized function call"), null, newMethod);
 
     // The qualifier becomes the first arg
-    newCall.getArgs().add(x.getInstance());
-    newCall.getArgs().addAll(x.getArgs());
+    newCall.addArg(x.getInstance());
+    newCall.addArgs(x.getArgs());
     return newCall;
   }
 

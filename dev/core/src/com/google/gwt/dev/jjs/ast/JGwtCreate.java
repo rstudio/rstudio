@@ -37,7 +37,7 @@ public class JGwtCreate extends JExpression implements HasSettableType {
     for (int i = 0; i < classType.methods.size(); ++i) {
       JMethod ctor = classType.methods.get(i);
       if (ctor.getName().equals(classType.getShortName())) {
-        if (ctor.params.size() == 0) {
+        if (ctor.getParams().size() == 0) {
           noArgCtor = ctor;
         }
       }

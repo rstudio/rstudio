@@ -34,6 +34,7 @@ import com.google.gwt.dev.jjs.InternalCompilerException.NodeInfo;
 import com.google.gwt.dev.jjs.UnifiedAst.AST;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
+import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -669,9 +670,9 @@ public class JavaToJavaScriptCompiler {
     bootStrapMethod.freezeParamTypes();
 
     JMethodBody body = (JMethodBody) bootStrapMethod.getBody();
-    List<JStatement> statements = body.getStatements();
+    JBlock block = body.getBlock();
     for (String mainClassName : mainClassNames) {
-      statements.add(makeStatsCalls(program, mainClassName));
+      block.addStmt(makeStatsCalls(program, mainClassName));
       JReferenceType mainType = program.getFromTypeMap(mainClassName);
 
       if (mainType == null) {
@@ -685,7 +686,7 @@ public class JavaToJavaScriptCompiler {
       if (mainMethod != null && mainMethod.isStatic()) {
         JMethodCall onModuleLoadCall = new JMethodCall(program, null, null,
             mainMethod);
-        statements.add(onModuleLoadCall.makeStatement());
+        block.addStmt(onModuleLoadCall.makeStatement());
         continue;
       }
 
@@ -709,11 +710,11 @@ public class JavaToJavaScriptCompiler {
         entryCalls.add(onModuleLoadCall);
       }
       if (resultTypes.size() == 1) {
-        statements.add(entryCalls.get(0).makeStatement());
+        block.addStmt(entryCalls.get(0).makeStatement());
       } else {
         JReboundEntryPoint reboundEntryPoint = new JReboundEntryPoint(program,
             null, mainType, resultTypes, entryCalls);
-        statements.add(reboundEntryPoint);
+        block.addStmt(reboundEntryPoint);
       }
     }
     program.addEntryMethod(bootStrapMethod);
@@ -723,7 +724,7 @@ public class JavaToJavaScriptCompiler {
     for (int j = 0; j < referenceType.methods.size(); ++j) {
       JMethod method = referenceType.methods.get(j);
       if (method.getName().equals("onModuleLoad")) {
-        if (method.params.size() == 0) {
+        if (method.getParams().size() == 0) {
           return method;
         }
       }
@@ -803,8 +804,7 @@ public class JavaToJavaScriptCompiler {
         isStatsAvailableMethod);
     JMethodCall onModuleStartCall = new JMethodCall(program, sourceInfo, null,
         onModuleStartMethod);
-    onModuleStartCall.getArgs().add(
-        program.getLiteralString(sourceInfo, mainClassName));
+    onModuleStartCall.addArg(program.getLiteralString(sourceInfo, mainClassName));
 
     JBinaryOperation amp = new JBinaryOperation(program, sourceInfo,
         program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,

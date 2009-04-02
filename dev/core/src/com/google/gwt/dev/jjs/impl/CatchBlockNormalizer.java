@@ -70,10 +70,10 @@ public class CatchBlockNormalizer {
       // $e = Exceptions.caught($e)
       JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
       JMethodCall call = new JMethodCall(program, catchInfo, null, caughtMethod);
-      call.getArgs().add(exRef);
+      call.addArg(exRef);
       JExpressionStatement asg = program.createAssignmentStmt(catchInfo, exRef,
           call);
-      newCatchBlock.statements.add(asg);
+      newCatchBlock.addStmt(asg);
 
       /*
        * Build up a series of if, else if statements to test the type of the
@@ -91,15 +91,15 @@ public class CatchBlockNormalizer {
         // if ($e instanceof ArgType) { userVar = $e; <user code> }
         JExpression ifTest = new JInstanceOf(program, catchInfo, argType, exRef);
         asg = program.createAssignmentStmt(catchInfo, arg, exRef);
-        if (!block.statements.isEmpty()) {
+        if (!block.getStatements().isEmpty()) {
           // Only bother adding the assignment if the block is non-empty
-          block.statements.add(0, asg);
+          block.addStmt(0, asg);
         }
         // nest the previous as an else for me
         cur = new JIfStatement(program, catchInfo, ifTest, block, cur);
       }
 
-      newCatchBlock.statements.add(cur);
+      newCatchBlock.addStmt(cur);
       x.getCatchArgs().clear();
       x.getCatchArgs().add(exRef);
       x.getCatchBlocks().clear();

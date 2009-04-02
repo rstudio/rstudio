@@ -16,9 +16,11 @@
 package com.google.gwt.dev.js.ast;
 
 import com.google.gwt.dev.js.JsKeywords;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Maps;
 
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +28,8 @@ import java.util.TreeMap;
 
 /**
  * A scope is a factory for creating and allocating
- * {@link com.google.gwt.dev.js.ast.JsName}s. A JavaScript AST is built
- * in terms of abstract name objects without worrying about obfuscation,
+ * {@link com.google.gwt.dev.js.ast.JsName}s. A JavaScript AST is built in
+ * terms of abstract name objects without worrying about obfuscation,
  * keyword/identifier blacklisting, and so on.
  * 
  * <p>
@@ -61,9 +63,9 @@ public class JsScope implements Serializable {
     return ident;
   }
 
-  private final List<JsScope> children = new ArrayList<JsScope>();
+  private List<JsScope> children = Collections.emptyList();
   private final String description;
-  private final Map<String, JsName> names = new TreeMap<String, JsName>();
+  private Map<String, JsName> names = Collections.emptyMap();
   private final JsScope parent;
 
   /**
@@ -73,7 +75,7 @@ public class JsScope implements Serializable {
     assert (parent != null);
     this.description = description;
     this.parent = parent;
-    this.parent.children.add(this);
+    parent.children = Lists.add(parent.children, this);
   }
 
   /**
@@ -160,7 +162,11 @@ public class JsScope implements Serializable {
    * Returns an iterator for all the names defined by this scope.
    */
   public Iterator<JsName> getAllNames() {
-    return names.values().iterator();
+    if (names.size() > 1) {
+      return new TreeMap<String, JsName>(names).values().iterator();
+    } else {
+      return names.values().iterator();
+    }
   }
 
   /**
@@ -200,7 +206,7 @@ public class JsScope implements Serializable {
    */
   protected JsName doCreateName(String ident, String shortIdent) {
     JsName name = new JsName(this, ident, shortIdent);
-    names.put(ident, name);
+    names = Maps.put(names, ident, name);
     return name;
   }
 

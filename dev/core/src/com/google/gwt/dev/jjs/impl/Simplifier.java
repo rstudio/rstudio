@@ -50,7 +50,7 @@ public class Simplifier {
     if (stmt == null) {
       return true;
     }
-    return (stmt instanceof JBlock && ((JBlock) stmt).statements.isEmpty());
+    return (stmt instanceof JBlock && ((JBlock) stmt).getStatements().isEmpty());
   }
 
   /**
@@ -194,9 +194,9 @@ public class Simplifier {
       JMultiExpression condMulti = (JMultiExpression) condExpr;
       JBlock newBlock = new JBlock(program, sourceInfo);
       for (JExpression expr : allButLast(condMulti.exprs)) {
-        newBlock.statements.add(expr.makeStatement());
+        newBlock.addStmt(expr.makeStatement());
       }
-      newBlock.statements.add(ifStatement(null, sourceInfo,
+      newBlock.addStmt(ifStatement(null, sourceInfo,
           last(condMulti.exprs), thenStmt, elseStmt));
       // TODO(spoon): immediately simplify the resulting block
       return newBlock;
@@ -303,7 +303,7 @@ public class Simplifier {
   private JStatement ensureBlock(JStatement stmt) {
     if (!(stmt instanceof JBlock)) {
       JBlock block = new JBlock(program, stmt.getSourceInfo());
-      block.statements.add(stmt);
+      block.addStmt(stmt);
       stmt = block;
     }
     return stmt;

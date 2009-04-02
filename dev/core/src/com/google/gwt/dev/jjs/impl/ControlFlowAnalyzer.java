@@ -316,7 +316,7 @@ public class ControlFlowAnalyzer {
               // JParameter
               int index = func.getParameters().indexOf(ident.getStaticRef());
               if (index != -1) {
-                rescue(x.params.get(index));
+                rescue(x.getParams().get(index));
               }
             }
           }
@@ -404,7 +404,7 @@ public class ControlFlowAnalyzer {
        * SPECIAL: each argument of the call passes a value from JavaScript into
        * Java.
        */
-      ArrayList<JParameter> params = x.getTarget().params;
+      List<JParameter> params = x.getTarget().getParams();
       for (int i = 0, c = params.size(); i < c; ++i) {
         JParameter param = params.get(i);
         maybeRescueJavaScriptObjectPassingIntoJava(param.getType());

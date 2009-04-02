@@ -16,8 +16,10 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.collect.Lists;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -25,20 +27,34 @@ import java.util.List;
  */
 public class JMethodBody extends JAbstractMethodBody {
 
-  public final ArrayList<JLocal> locals = new ArrayList<JLocal>();
   private JBlock block;
+  private List<JLocal> locals = Collections.emptyList();
 
   public JMethodBody(JProgram program, SourceInfo info) {
     super(program, info);
     block = new JBlock(program, info);
   }
 
+  /**
+   * Adds a local to this method body.
+   */
+  public void addLocal(JLocal local) {
+    locals = Lists.add(locals, local);
+  }
+
   public JBlock getBlock() {
     return block;
   }
 
+  /**
+   * Returns this method's local variables.
+   */
+  public List<JLocal> getLocals() {
+    return locals;
+  }
+
   public List<JStatement> getStatements() {
-    return block.statements;
+    return block.getStatements();
   }
 
   @Override
@@ -46,9 +62,23 @@ public class JMethodBody extends JAbstractMethodBody {
     return false;
   }
 
+  /**
+   * Removes a local from this method body.
+   */
+  public void removeLocal(int index) {
+    locals = Lists.remove(locals, index);
+  }
+
+  /**
+   * Sorts this method's locals according to the specified sort.
+   */
+  public void sortLocals(Comparator<? super JLocal> sort) {
+    locals = Lists.sort(locals, sort);
+  }
+
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.accept(locals);
+      locals = visitor.acceptImmutable(locals);
       block = (JBlock) visitor.accept(block);
     }
     visitor.endVisit(this, ctx);

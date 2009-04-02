@@ -132,7 +132,7 @@ public class JavaScriptObjectNormalizer {
           // instance.method(arg, arg)
           JMethodCall localCall = new JMethodCall(program, info, instance,
               x.getTarget());
-          localCall.getArgs().addAll(x.getArgs());
+          localCall.addArgs(x.getArgs());
 
           // We need a second copy of the arguments for the else expression
           CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
@@ -140,7 +140,7 @@ public class JavaScriptObjectNormalizer {
           // instance.jsoMethod(arg, arg)
           JMethodCall jsoCall = new JMethodCall(program, info,
               cloner.cloneExpression(instance), jsoMethod);
-          jsoCall.getArgs().addAll(cloner.cloneExpressions(x.getArgs()));
+          jsoCall.addArgs(cloner.cloneExpressions(x.getArgs()));
 
           // Cast.isJavaScriptObject() ? instance.jsoMethod() :
           // instance.method();
@@ -157,7 +157,7 @@ public class JavaScriptObjectNormalizer {
            */
           JMethodCall jsoCall = new JMethodCall(program, info, x.getInstance(),
               jsoMethod);
-          jsoCall.getArgs().addAll(x.getArgs());
+          jsoCall.addArgs(x.getArgs());
           ctx.replaceMe(jsoCall);
         }
       }
@@ -200,7 +200,7 @@ public class JavaScriptObjectNormalizer {
       JMethod isJavaScriptObjectMethod = program.getIndexedMethod("Cast.isJavaScriptObjectOrString");
       JMethodCall isJavaScriptObjectExpr = new JMethodCall(program, info, null,
           isJavaScriptObjectMethod);
-      isJavaScriptObjectExpr.getArgs().add(instance);
+      isJavaScriptObjectExpr.addArg(instance);
       return new JConditional(program, info, conditionalType,
           isJavaScriptObjectExpr, isJsoExpr, notJsoExpr);
     }

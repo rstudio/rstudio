@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.List;
 
@@ -24,12 +25,20 @@ import java.util.List;
  */
 public class JModVisitor extends JVisitor {
 
-  private static class ListContext implements Context {
-    boolean didChange;
+  /**
+   * Context for traversing a mutable list.
+   */
+  @SuppressWarnings("unchecked")
+  private class ListContext<T extends JNode> implements Context {
+    boolean ctxDidChange;
     int index;
-    List<JNode> list;
+    final List<T> list;
     boolean removed;
     boolean replaced;
+
+    public ListContext(List<T> list) {
+      this.list = list;
+    }
 
     public boolean canInsert() {
       return true;
@@ -41,27 +50,121 @@ public class JModVisitor extends JVisitor {
 
     public void insertAfter(JNode node) {
       checkRemoved();
-      list.add(index + 1, node);
-      didChange = true;
+      list.add(index + 1, (T) node);
+      ctxDidChange = true;
     }
 
     public void insertBefore(JNode node) {
       checkRemoved();
-      list.add(index++, node);
-      didChange = true;
+      list.add(index++, (T) node);
+      ctxDidChange = true;
     }
 
     public void removeMe() {
       checkState();
       list.remove(index--);
-      didChange = removed = true;
+      ctxDidChange = removed = true;
     }
 
     public void replaceMe(JNode node) {
       checkState();
       checkReplacement(list.get(index), node);
-      list.set(index, node);
-      didChange = replaced = true;
+      list.set(index, (T) node);
+      ctxDidChange = replaced = true;
+    }
+
+    /**
+     * Cause my list to be traversed by this context.
+     */
+    protected List<T> traverse() {
+      try {
+        for (index = 0; index < list.size(); ++index) {
+          removed = replaced = false;
+          list.get(index).traverse(JModVisitor.this, this);
+        }
+        didChange |= ctxDidChange;
+        return list;
+      } catch (Throwable e) {
+        throw translateException(list.get(index), e);
+      }
+    }
+
+    private void checkRemoved() {
+      if (removed) {
+        throw new InternalCompilerException("Node was already removed");
+      }
+    }
+
+    private void checkState() {
+      checkRemoved();
+      if (replaced) {
+        throw new InternalCompilerException("Node was already replaced");
+      }
+    }
+  }
+
+  /**
+   * Context for traversing an immutable list.
+   */
+  @SuppressWarnings("unchecked")
+  private class ListContextImmutable<T extends JNode> implements Context {
+    boolean ctxDidChange;
+    int index;
+    List<T> list;
+    boolean removed;
+    boolean replaced;
+
+    public ListContextImmutable(List<T> list) {
+      this.list = list;
+    }
+
+    public boolean canInsert() {
+      return true;
+    }
+
+    public boolean canRemove() {
+      return true;
+    }
+
+    public void insertAfter(JNode node) {
+      checkRemoved();
+      list = Lists.add(list, index + 1, (T) node);
+      ctxDidChange = true;
+    }
+
+    public void insertBefore(JNode node) {
+      checkRemoved();
+      list = Lists.add(list, index++, (T) node);
+      ctxDidChange = true;
+    }
+
+    public void removeMe() {
+      checkState();
+      list = Lists.remove(list, index--);
+      ctxDidChange = removed = true;
+    }
+
+    public void replaceMe(JNode node) {
+      checkState();
+      checkReplacement(list.get(index), node);
+      list = Lists.set(list, index, (T) node);
+      ctxDidChange = replaced = true;
+    }
+
+    /**
+     * Cause my list to be traversed by this context.
+     */
+    protected List<T> traverse() {
+      try {
+        for (index = 0; index < list.size(); ++index) {
+          removed = replaced = false;
+          list.get(index).traverse(JModVisitor.this, this);
+        }
+        didChange |= ctxDidChange;
+        return list;
+      } catch (Throwable e) {
+        throw translateException(list.get(index), e);
+      }
     }
 
     private void checkRemoved() {
@@ -138,13 +241,13 @@ public class JModVisitor extends JVisitor {
   }
 
   @SuppressWarnings("unchecked")
-  public void accept(List<? extends JNode> list) {
+  public <T extends JNode> void accept(List<T> list) {
     NodeContext ctx = new NodeContext();
     try {
       for (int i = 0, c = list.size(); i < c; ++i) {
         (ctx.node = list.get(i)).traverse(this, ctx);
         if (ctx.replaced) {
-          ((List) list).set(i, ctx.node);
+          list.set(i, (T) ctx.node);
           ctx.replaced = false;
         }
       }
@@ -155,18 +258,30 @@ public class JModVisitor extends JVisitor {
   }
 
   @SuppressWarnings("unchecked")
-  public void acceptWithInsertRemove(List<? extends JNode> list) {
-    ListContext ctx = new ListContext();
+  @Override
+  public <T extends JNode> List<T> acceptImmutable(List<T> list) {
+    NodeContext ctx = new NodeContext();
     try {
-      ctx.list = (List) list;
-      for (ctx.index = 0; ctx.index < list.size(); ++ctx.index) {
-        ctx.removed = ctx.replaced = false;
-        list.get(ctx.index).traverse(this, ctx);
+      for (int i = 0, c = list.size(); i < c; ++i) {
+        (ctx.node = list.get(i)).traverse(this, ctx);
+        if (ctx.replaced) {
+          list = Lists.set(list, i, (T) ctx.node);
+          ctx.replaced = false;
+        }
       }
       didChange |= ctx.didChange;
+      return list;
     } catch (Throwable e) {
-      throw translateException(list.get(ctx.index), e);
+      throw translateException(ctx.node, e);
     }
+  }
+
+  public <T extends JNode> void acceptWithInsertRemove(List<T> list) {
+    new ListContext<T>(list).traverse();
+  }
+
+  public <T extends JNode> List<T> acceptWithInsertRemoveImmutable(List<T> list) {
+    return new ListContextImmutable<T>(list).traverse();
   }
 
   public boolean didChange() {

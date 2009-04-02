@@ -112,8 +112,8 @@ public class AutoboxUtils {
     JMethod valueOfMethod = null;
     for (JMethod method : wrapperType.methods) {
       if ("valueOf".equals(method.getName())) {
-        if (method.params.size() == 1) {
-          JParameter param = method.params.get(0);
+        if (method.getParams().size() == 1) {
+          JParameter param = method.getParams().get(0);
           if (param.getType() == primitiveType) {
             // Found it.
             valueOfMethod = method;
@@ -135,7 +135,7 @@ public class AutoboxUtils {
     // Create the boxing call.
     JMethodCall call = new JMethodCall(program, toBox.getSourceInfo(), null,
         valueOfMethod);
-    call.getArgs().add(toBox);
+    call.addArg(toBox);
     return call;
   }
 
@@ -170,7 +170,7 @@ public class AutoboxUtils {
     for (JReferenceType boxType : boxTypes) {
       if (boxType != null) {
         for (JMethod method : boxType.methods) {
-          if (!method.isStatic() && method.params.isEmpty()
+          if (!method.isStatic() && method.getParams().isEmpty()
               && method.getName().endsWith("Value")
               && (method.getType() instanceof JPrimitiveType)) {
             unboxMethods.add(method);

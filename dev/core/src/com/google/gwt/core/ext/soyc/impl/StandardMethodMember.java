@@ -62,7 +62,7 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
 
     SortedSet<MethodMember> overrides = new TreeSet<MethodMember>(
         Member.SOURCE_NAME_COMPARATOR);
-    for (JMethod override : method.overrides) {
+    for (JMethod override : method.getOverrides()) {
       overrides.add(factory.get(override));
     }
     overridesView = Collections.unmodifiableSortedSet(overrides);

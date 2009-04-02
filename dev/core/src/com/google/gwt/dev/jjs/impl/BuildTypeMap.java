@@ -21,7 +21,6 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
-import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JLocal;
@@ -35,7 +34,6 @@ import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
-import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JField.Disposition;
 import com.google.gwt.dev.jjs.ast.js.JsniMethodBody;
@@ -178,7 +176,6 @@ public class BuildTypeMap {
         JMethod newMethod = program.createMethod(info, name.toCharArray(),
             enclosingType, enclosingType, false, false, true, b.isPrivate(),
             false);
-        mapThrownExceptions(newMethod, b);
 
         // Enums have hidden arguments for name and value
         if (enclosingType.isEnumOrSubclass() != null) {
@@ -420,8 +417,6 @@ public class BuildTypeMap {
       JMethodCall call = new JMethodCall(program,
           type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
               "constructor invocation"), newInstance, constructor);
-      List<JExpression> args = call.getArgs();
-
       /*
        * If the type isn't static, make the first parameter a reference to the
        * instance of the enclosing class. It's the first instance to allow the
@@ -439,14 +434,14 @@ public class BuildTypeMap {
        * In one pass, add the parameters to the synthetic constructor and
        * arguments to the method call.
        */
-      for (Iterator<JParameter> i = constructor.params.iterator(); i.hasNext();) {
+      for (Iterator<JParameter> i = constructor.getParams().iterator(); i.hasNext();) {
         JParameter param = i.next();
         /*
          * This supports x.new Inner() by passing the enclosing instance
          * implicitly as the last argument to the constructor.
          */
         if (enclosingInstance != null && !i.hasNext()) {
-          args.add(new JParameterRef(program,
+          call.addArg(new JParameterRef(program,
               synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
                   "enclosing instance"), enclosingInstance));
         } else {
@@ -455,7 +450,7 @@ public class BuildTypeMap {
                   "Argument " + param.getName()),
               param.getName().toCharArray(), param.getType(), true, false,
               synthetic);
-          args.add(new JParameterRef(program,
+          call.addArg(new JParameterRef(program,
               syntheticParam.getSourceInfo().makeChild(
                   BuildDeclMapVisitor.class, "reference"), syntheticParam));
         }
@@ -471,8 +466,7 @@ public class BuildTypeMap {
 
       // Add the return statement to the method body
       JMethodBody body = (JMethodBody) synthetic.getBody();
-      List<JStatement> statements = body.getStatements();
-      statements.add(ret);
+      body.getBlock().addStmt(ret);
 
       // Done
       return synthetic;
@@ -540,16 +534,6 @@ public class BuildTypeMap {
         }
       }
       method.freezeParamTypes();
-    }
-
-    private void mapThrownExceptions(JMethod method, MethodBinding b) {
-      if (b.thrownExceptions != null) {
-        for (int i = 0; i < b.thrownExceptions.length; ++i) {
-          ReferenceBinding refBinding = b.thrownExceptions[i];
-          JClassType thrownException = (JClassType) typeMap.get(refBinding);
-          method.thrownExceptions.add(thrownException);
-        }
-      }
     }
 
     /**
@@ -674,7 +658,6 @@ public class BuildTypeMap {
           returnType, b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
           b.isNative());
 
-      mapThrownExceptions(newMethod, b);
       typeMap.put(b, newMethod);
       return newMethod;
     }
@@ -717,8 +700,8 @@ public class BuildTypeMap {
       //
       String syntheticFnHeader = "function (";
       boolean first = true;
-      for (int i = 0; i < newMethod.params.size(); ++i) {
-        JParameter param = newMethod.params.get(i);
+      for (int i = 0; i < newMethod.getParams().size(); ++i) {
+        JParameter param = newMethod.getParams().get(i);
         if (first) {
           first = false;
         } else {

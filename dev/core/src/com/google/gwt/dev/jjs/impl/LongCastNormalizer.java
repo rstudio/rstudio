@@ -129,14 +129,13 @@ public class LongCastNormalizer {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      List<JParameter> params = x.getTarget().params;
-      List<JExpression> args = x.getArgs();
+      List<JParameter> params = x.getTarget().getParams();
       for (int i = 0; i < params.size(); ++i) {
         JParameter param = params.get(i);
-        JExpression arg = args.get(i);
+        JExpression arg = x.getArgs().get(i);
         JExpression newArg = checkAndReplace(arg, param.getType());
         if (arg != newArg) {
-          args.set(i, newArg);
+          x.setArg(i, newArg);
           this.didChange = true;
         }
       }

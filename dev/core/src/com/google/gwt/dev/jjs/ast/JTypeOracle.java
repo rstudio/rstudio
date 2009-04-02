@@ -16,13 +16,13 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.ast.js.JMultiExpression;
+import com.google.gwt.dev.util.collect.IdentityHashMap;
+import com.google.gwt.dev.util.collect.IdentityHashSet;
+import com.google.gwt.dev.util.collect.IdentitySets;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +46,7 @@ public class JTypeOracle implements Serializable {
    */
   private static final class CheckClinitVisitor extends JVisitor {
 
-    private final Set<JReferenceType> clinitTargets = new HashSet<JReferenceType>();
+    private final Set<JReferenceType> clinitTargets = new IdentityHashSet<JReferenceType>();
 
     /**
      * Tracks whether any live code is run in this clinit. This is only reliable
@@ -68,7 +68,7 @@ public class JTypeOracle implements Serializable {
 
     @Override
     public boolean visit(JBlock x, Context ctx) {
-      for (JStatement stmt : x.statements) {
+      for (JStatement stmt : x.getStatements()) {
         if (mightBeDeadCode(stmt)) {
           accept(stmt);
         } else {
@@ -178,8 +178,8 @@ public class JTypeOracle implements Serializable {
    * 
    * @param type any type
    * @param instantiatedTypes a set of types assumed to be instantiated. If
-   *          <code>null</code>, then there are no assumptions about which types
-   *          are instantiated.
+   *          <code>null</code>, then there are no assumptions about which
+   *          types are instantiated.
    * @return whether the type is instantiated
    */
   private static boolean isInstantiatedType(JReferenceType type,
@@ -205,9 +205,9 @@ public class JTypeOracle implements Serializable {
 
   private final Map<JClassType, Set<JInterfaceType>> couldImplementMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
-  private final Set<JInterfaceType> dualImpl = new HashSet<JInterfaceType>();
+  private final Set<JInterfaceType> dualImpl = new IdentityHashSet<JInterfaceType>();
 
-  private final Set<JReferenceType> hasClinitSet = new HashSet<JReferenceType>();
+  private final Set<JReferenceType> hasClinitSet = new IdentityHashSet<JReferenceType>();
 
   private final Map<JClassType, Set<JInterfaceType>> implementsMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
@@ -239,7 +239,7 @@ public class JTypeOracle implements Serializable {
    * Collect all supertypes and superinterfaces for a type.
    */
   public Set<JReferenceType> allAssignableFrom(JReferenceType type) {
-    Set<JReferenceType> toReturn = new HashSet<JReferenceType>();
+    Set<JReferenceType> toReturn = new IdentityHashSet<JReferenceType>();
     List<JReferenceType> q = new LinkedList<JReferenceType>();
     q.add(type);
 
@@ -299,13 +299,13 @@ public class JTypeOracle implements Serializable {
       if (qType instanceof JClassType) {
         return isSubClass(cType, (JClassType) qType);
       } else if (qType instanceof JInterfaceType) {
-        return getOrCreate(couldImplementMap, cType).contains(qType);
+        return get(couldImplementMap, cType).contains(qType);
       }
     } else if (type instanceof JInterfaceType) {
 
       JInterfaceType iType = (JInterfaceType) type;
       if (qType instanceof JClassType) {
-        return getOrCreate(couldBeImplementedMap, iType).contains(qType);
+        return get(couldBeImplementedMap, iType).contains(qType);
       }
     } else if (type instanceof JNullType) {
     }
@@ -376,15 +376,15 @@ public class JTypeOracle implements Serializable {
 
   /**
    * Returns <code>true</code> if a static field access of <code>toType</code>
-   * from within <code>fromType</code> should generate a clinit call. This will
-   * be true in cases where <code>toType</code> has a live clinit method which
-   * we cannot statically know has already run. We can statically know the
+   * from within <code>fromType</code> should generate a clinit call. This
+   * will be true in cases where <code>toType</code> has a live clinit method
+   * which we cannot statically know has already run. We can statically know the
    * clinit method has already run when:
    * <ol>
    * <li><code>fromType == toType</code></li>
-   * <li><code>toType</code> is a superclass of <code>fromType</code> (because
-   * <code>toType</code>'s clinit would have already run <code>fromType</code>'s
-   * clinit; see JLS 12.4)</li>
+   * <li><code>toType</code> is a superclass of <code>fromType</code>
+   * (because <code>toType</code>'s clinit would have already run
+   * <code>fromType</code>'s clinit; see JLS 12.4)</li>
    * </ol>
    */
   public boolean checkClinit(JReferenceType fromType, JReferenceType toType) {
@@ -446,7 +446,7 @@ public class JTypeOracle implements Serializable {
    * Returns true if qType is a superinterface of type, directly or indirectly.
    */
   public boolean extendsInterface(JInterfaceType type, JInterfaceType qType) {
-    return getOrCreate(superInterfaceMap, type).contains(qType);
+    return get(superInterfaceMap, type).contains(qType);
   }
 
   public JMethod findConcreteImplementation(JMethod method,
@@ -471,7 +471,7 @@ public class JTypeOracle implements Serializable {
    */
   public Set<JMethod> getAllOverrides(JMethod method,
       Set<JReferenceType> instantiatedTypes) {
-    Set<JMethod> results = new HashSet<JMethod>();
+    Set<JMethod> results = new IdentityHashSet<JMethod>();
     getAllRealOverrides(method, results);
     getAllVirtualOverrides(method, instantiatedTypes, results);
     return results;
@@ -483,7 +483,7 @@ public class JTypeOracle implements Serializable {
    * overrides list will contain both A and B.
    */
   public Set<JMethod> getAllRealOverrides(JMethod method) {
-    Set<JMethod> results = new HashSet<JMethod>();
+    Set<JMethod> results = new IdentityHashSet<JMethod>();
     getAllRealOverrides(method, results);
     return results;
   }
@@ -495,7 +495,7 @@ public class JTypeOracle implements Serializable {
    * override methods with identical signatures declared in unrelated classes.
    */
   public Set<JMethod> getAllVirtualOverrides(JMethod method) {
-    Set<JMethod> results = new HashSet<JMethod>();
+    Set<JMethod> results = new IdentityHashSet<JMethod>();
     getAllVirtualOverrides(method, instantiatedTypes, results);
     return results;
   }
@@ -517,7 +517,7 @@ public class JTypeOracle implements Serializable {
    * indirectly.
    */
   public boolean implementsInterface(JClassType type, JInterfaceType qType) {
-    return getOrCreate(implementsMap, type).contains(qType);
+    return get(implementsMap, type).contains(qType);
   }
 
   public boolean isInstantiatedType(JReferenceType type) {
@@ -528,14 +528,14 @@ public class JTypeOracle implements Serializable {
    * Returns true if qType is a subclass of type, directly or indirectly.
    */
   public boolean isSubClass(JClassType type, JClassType qType) {
-    return getOrCreate(subClassMap, type).contains(qType);
+    return get(subClassMap, type).contains(qType);
   }
 
   /**
    * Returns true if qType is a superclass of type, directly or indirectly.
    */
   public boolean isSuperClass(JClassType type, JClassType qType) {
-    return getOrCreate(superClassMap, type).contains(qType);
+    return get(superClassMap, type).contains(qType);
   }
 
   /**
@@ -544,7 +544,7 @@ public class JTypeOracle implements Serializable {
    */
   public void recomputeAfterOptimizations() {
     hasClinitSet.clear();
-    Set<JReferenceType> computed = new HashSet<JReferenceType>();
+    Set<JReferenceType> computed = new IdentityHashSet<JReferenceType>();
     for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
       JReferenceType type = program.getDeclaredTypes().get(i);
       computeHasClinit(type, computed);
@@ -554,7 +554,7 @@ public class JTypeOracle implements Serializable {
   }
 
   public void setInstantiatedTypes(Set<JReferenceType> instantiatedTypes) {
-    this.instantiatedTypes = new HashSet<JReferenceType>();
+    this.instantiatedTypes = new IdentityHashSet<JReferenceType>();
     this.instantiatedTypes.addAll(instantiatedTypes);
   }
 
@@ -567,27 +567,31 @@ public class JTypeOracle implements Serializable {
    * super types or sub types.
    */
   private void computeCouldImplement(JClassType type) {
-    Set<JInterfaceType> couldImplementSet = getOrCreate(couldImplementMap, type);
+    Set<JInterfaceType> couldImplementSet = new IdentityHashSet<JInterfaceType>();
     // all of my direct implements are trivially true
-    couldImplementSet.addAll(getOrCreate(implementsMap, type));
+    couldImplementSet.addAll(get(implementsMap, type));
     List<JClassType> subclasses = new ArrayList<JClassType>();
-    subclasses.addAll(getOrCreate(subClassMap, type));
+    subclasses.addAll(get(subClassMap, type));
     for (JClassType subclass : subclasses) {
       for (JInterfaceType intf : subclass.implments) {
         couldImplementSet.add(intf);
-        for (JInterfaceType isup : getOrCreate(superInterfaceMap, intf)) {
+        for (JInterfaceType isup : get(superInterfaceMap, intf)) {
           couldImplementSet.add(isup);
         }
       }
     }
-    for (JInterfaceType couldImpl : couldImplementSet) {
-      add(couldBeImplementedMap, couldImpl, type);
+    if (!couldImplementSet.isEmpty()) {
+      couldImplementMap.put(type, IdentitySets.normalize(couldImplementSet));
+      for (JInterfaceType couldImpl : couldImplementSet) {
+        add(couldBeImplementedMap, couldImpl, type);
+      }
     }
   }
 
   private void computeHasClinit(JReferenceType type,
       Set<JReferenceType> computed) {
-    if (computeHasClinitRecursive(type, computed, new HashSet<JReferenceType>())) {
+    if (computeHasClinitRecursive(type, computed,
+        new IdentityHashSet<JReferenceType>())) {
       hasClinitSet.add(type);
     }
     computed.add(type);
@@ -631,20 +635,23 @@ public class JTypeOracle implements Serializable {
    * Compute all of the things I implement directly, through super types.
    */
   private void computeImplements(JClassType type) {
-    Set<JInterfaceType> implementsSet = getOrCreate(implementsMap, type);
+    Set<JInterfaceType> implementsSet = new IdentityHashSet<JInterfaceType>();
     List<JClassType> list = new ArrayList<JClassType>();
     list.add(type);
-    list.addAll(getOrCreate(superClassMap, type));
+    list.addAll(get(superClassMap, type));
     for (JClassType superclass : list) {
       for (JInterfaceType intf : superclass.implments) {
         implementsSet.add(intf);
-        for (JInterfaceType isup : getOrCreate(superInterfaceMap, intf)) {
+        for (JInterfaceType isup : get(superInterfaceMap, intf)) {
           implementsSet.add(isup);
         }
       }
     }
-    for (JInterfaceType impl : implementsSet) {
-      add(isImplementedMap, impl, type);
+    if (!implementsSet.isEmpty()) {
+      implementsMap.put(type, IdentitySets.normalize(implementsSet));
+      for (JInterfaceType impl : implementsSet) {
+        add(isImplementedMap, impl, type);
+      }
     }
   }
 
@@ -728,8 +735,7 @@ public class JTypeOracle implements Serializable {
      */
     for (JInterfaceType intf : type.implments) {
       computeVirtualUpRefs(type, intf);
-      Set<JInterfaceType> superIntfs = getOrCreate(superInterfaceMap, intf);
-      for (JInterfaceType superIntf : superIntfs) {
+      for (JInterfaceType superIntf : get(superInterfaceMap, intf)) {
         computeVirtualUpRefs(type, superIntf);
       }
     }
@@ -763,8 +769,7 @@ public class JTypeOracle implements Serializable {
 
             Map<JClassType, Set<JMethod>> classToMethodMap = getOrCreateMap(
                 virtualUpRefMap, superMethod);
-            Set<JMethod> methodSet = getOrCreate(classToMethodMap, type);
-            methodSet.add(intfMethod);
+            add(classToMethodMap, type, intfMethod);
 
             // do not search additional super types
             continue outer;
@@ -774,20 +779,29 @@ public class JTypeOracle implements Serializable {
     }
   }
 
+  private <K, V> Set<V> get(Map<K, Set<V>> map, K key) {
+    Set<V> set = map.get(key);
+    if (set == null) {
+      return Collections.emptySet();
+    }
+    return set;
+  }
+
   private void getAllRealOverrides(JMethod method, Set<JMethod> results) {
-    for (JMethod possibleOverride : method.overrides) {
+    for (JMethod possibleOverride : method.getOverrides()) {
       results.add(possibleOverride);
     }
   }
 
   private void getAllVirtualOverrides(JMethod method,
       Set<JReferenceType> instantiatedTypes, Set<JMethod> results) {
-    Map<JClassType, Set<JMethod>> overrideMap = getOrCreateMap(virtualUpRefMap,
-        method);
-    for (JClassType classType : overrideMap.keySet()) {
-      if (isInstantiatedType(classType, instantiatedTypes)) {
-        Set<JMethod> set = overrideMap.get(classType);
-        results.addAll(set);
+    Map<JClassType, Set<JMethod>> overrideMap = virtualUpRefMap.get(method);
+    if (overrideMap != null) {
+      for (JClassType classType : overrideMap.keySet()) {
+        if (isInstantiatedType(classType, instantiatedTypes)) {
+          Set<JMethod> set = overrideMap.get(classType);
+          results.addAll(set);
+        }
       }
     }
   }
@@ -795,7 +809,7 @@ public class JTypeOracle implements Serializable {
   private <K, V> Set<V> getOrCreate(Map<K, Set<V>> map, K key) {
     Set<V> set = map.get(key);
     if (set == null) {
-      set = new HashSet<V>();
+      set = new IdentityHashSet<V>();
       map.put(key, set);
     }
     return set;
@@ -804,7 +818,7 @@ public class JTypeOracle implements Serializable {
   private <K, K2, V> Map<K2, V> getOrCreateMap(Map<K, Map<K2, V>> map, K key) {
     Map<K2, V> map2 = map.get(key);
     if (map2 == null) {
-      map2 = new HashMap<K2, V>();
+      map2 = new IdentityHashMap<K2, V>();
       map.put(key, map2);
     }
     return map2;
@@ -818,10 +832,13 @@ public class JTypeOracle implements Serializable {
    * Record the all of my super classes (and myself as a subclass of them).
    */
   private void recordSuperSubInfo(JClassType type) {
-    Set<JClassType> superSet = getOrCreate(superClassMap, type);
+    Set<JClassType> superSet = new IdentityHashSet<JClassType>();
     for (JClassType t = type.extnds; t != null; t = t.extnds) {
       superSet.add(t);
       add(subClassMap, t, type);
+    }
+    if (!superSet.isEmpty()) {
+      superClassMap.put(type, IdentitySets.normalize(superSet));
     }
   }
 
@@ -830,8 +847,11 @@ public class JTypeOracle implements Serializable {
    * them).
    */
   private void recordSuperSubInfo(JInterfaceType type) {
-    Set<JInterfaceType> superSet = getOrCreate(superInterfaceMap, type);
-    recordSuperSubInfo(type, superSet, type);
+    if (!type.implments.isEmpty()) {
+      Set<JInterfaceType> superSet = new IdentityHashSet<JInterfaceType>();
+      recordSuperSubInfo(type, superSet, type);
+      superInterfaceMap.put(type, IdentitySets.normalize(superSet));
+    }
   }
 
   /**

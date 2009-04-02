@@ -131,13 +131,13 @@ public class TypeTightener {
         if (!instance.hasSideEffects()) {
           JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
               null, x.getTarget());
-          newCall.getArgs().addAll(x.getArgs());
+          newCall.addArgs(x.getArgs());
           ctx.replaceMe(newCall);
         }
       } else if (!isStatic && instance.getType() == typeNull) {
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
-      } else if (isStaticImpl && method.params.size() > 0
-          && method.params.get(0).isThis() && x.getArgs().size() > 0
+      } else if (isStaticImpl && method.getParams().size() > 0
+          && method.getParams().get(0).isThis() && x.getArgs().size() > 0
           && x.getArgs().get(0).getType() == typeNull) {
         // bind null instance calls to the null method for static impls
         ctx.replaceMe(Pruner.transformToNullMethodCall(x, program));
@@ -217,7 +217,7 @@ public class TypeTightener {
       // All of the params in the target method are considered to be assigned by
       // the arguments from the caller
       Iterator<JExpression> argIt = x.getArgs().iterator();
-      ArrayList<JParameter> params = x.getTarget().params;
+      List<JParameter> params = x.getTarget().getParams();
       for (int i = 0; i < params.size(); ++i) {
         JParameter param = params.get(i);
         JExpression arg = argIt.next();
@@ -248,7 +248,7 @@ public class TypeTightener {
       // If this happens in JSNI, we can't make any type-tightening assumptions
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
-      for (JParameter param : method.params) {
+      for (JParameter param : method.getParams()) {
         addAssignment(param, new JParameterRef(program,
             program.createSourceInfoSynthetic(RecordVisitor.class,
                 "Fake assignment"), param));
@@ -281,15 +281,15 @@ public class TypeTightener {
         if (overrides.isEmpty()) {
           return true;
         }
-        for (int j = 0, c = x.params.size(); j < c; ++j) {
-          JParameter param = x.params.get(j);
+        for (int j = 0, c = x.getParams().size(); j < c; ++j) {
+          JParameter param = x.getParams().get(j);
           Set<JParameter> set = paramUpRefs.get(param);
           if (set == null) {
             set = new HashSet<JParameter>();
             paramUpRefs.put(param, set);
           }
           for (JMethod baseMethod : overrides) {
-            JParameter baseParam = baseMethod.params.get(j);
+            JParameter baseParam = baseMethod.getParams().get(j);
             set.add(baseParam);
           }
         }
@@ -310,9 +310,9 @@ public class TypeTightener {
           // The instance method has already been pruned.
           return true;
         }
-        assert (x.params.size() == staticImplFor.params.size() + 1);
-        for (int j = 0, c = x.params.size(); j < c; ++j) {
-          JParameter param = x.params.get(j);
+        assert (x.getParams().size() == staticImplFor.getParams().size() + 1);
+        for (int j = 0, c = x.getParams().size(); j < c; ++j) {
+          JParameter param = x.getParams().get(j);
           Set<JParameter> set = paramUpRefs.get(param);
           if (set == null) {
             set = new HashSet<JParameter>();
@@ -324,7 +324,7 @@ public class TypeTightener {
             assert (param.isThis());
             set.add(param);
           } else {
-            JParameter baseParam = staticImplFor.params.get(j - 1);
+            JParameter baseParam = staticImplFor.getParams().get(j - 1);
             set.add(baseParam);
           }
         }
@@ -571,7 +571,7 @@ public class TypeTightener {
       if (concreteMethod != null) {
         JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
             x.getInstance(), concreteMethod);
-        newCall.getArgs().addAll(x.getArgs());
+        newCall.addArgs(x.getArgs());
         ctx.replaceMe(newCall);
         target = concreteMethod;
         x = newCall;

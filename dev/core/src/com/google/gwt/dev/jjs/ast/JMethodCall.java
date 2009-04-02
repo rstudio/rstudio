@@ -16,15 +16,17 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.collect.Lists;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Java method call expression.
  */
 public class JMethodCall extends JExpression {
 
-  private ArrayList<JExpression> args = new ArrayList<JExpression>();
+  private List<JExpression> args = Collections.emptyList();
   private boolean cannotBePolymorphic = false;
   private JExpression instance;
   private final JMethod method;
@@ -71,12 +73,43 @@ public class JMethodCall extends JExpression {
     this.overrideReturnType = overrideReturnType;
   }
 
+  /**
+   * Inserts an argument at the specified index.
+   */
+  public void addArg(int index, JExpression toAdd) {
+    args = Lists.add(args, index, toAdd);
+  }
+
+  /**
+   * Adds an argument to this method.
+   */
+  public void addArg(JExpression toAdd) {
+    args = Lists.add(args, toAdd);
+  }
+
+  /**
+   * Adds an argument to this method.
+   */
+  public void addArgs(JExpression... toAdd) {
+    args = Lists.addAll(args, toAdd);
+  }
+
+  /**
+   * Adds arguments to this method.
+   */
+  public void addArgs(List<JExpression> toAdd) {
+    args = Lists.addAll(args, toAdd);
+  }
+
   public boolean canBePolymorphic() {
     return !cannotBePolymorphic && !staticDispatchOnly && !method.isFinal()
         && !method.isStatic();
   }
 
-  public ArrayList<JExpression> getArgs() {
+  /**
+   * Returns the call arguments.
+   */
+  public List<JExpression> getArgs() {
     return args;
   }
 
@@ -106,6 +139,20 @@ public class JMethodCall extends JExpression {
     return staticDispatchOnly;
   }
 
+  /**
+   * Removes the argument at the specified index.
+   */
+  public void removeArg(int index) {
+    args = Lists.remove(args, index);
+  }
+
+  /**
+   * Sets the argument at the specified index.
+   */
+  public void setArg(int index, JExpression arg) {
+    args = Lists.set(args, index, arg);
+  }
+
   public void setCannotBePolymorphic() {
     this.cannotBePolymorphic = true;
   }
@@ -119,7 +166,7 @@ public class JMethodCall extends JExpression {
       if (instance != null) {
         instance = visitor.accept(instance);
       }
-      visitor.accept(args);
+      args = visitor.acceptImmutable(args);
     }
     visitor.endVisit(this, ctx);
   }

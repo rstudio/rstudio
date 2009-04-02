@@ -25,9 +25,11 @@ import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsStringLiteral;
 import com.google.gwt.dev.js.ast.JsVisitor;
+import com.google.gwt.dev.util.collect.HashSet;
+import com.google.gwt.dev.util.collect.Lists;
+import com.google.gwt.dev.util.collect.Sets;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -36,19 +38,47 @@ import java.util.Set;
  */
 public class JsniMethodBody extends JAbstractMethodBody {
 
-  public final List<JsniFieldRef> jsniFieldRefs = new ArrayList<JsniFieldRef>();
-  public final List<JsniMethodRef> jsniMethodRefs = new ArrayList<JsniMethodRef>();
-  private final Set<String> stringLiterals = new HashSet<String>();
-
   private JsFunction jsFunction = null;
+  private List<JsniFieldRef> jsniFieldRefs = Collections.emptyList();
+  private List<JsniMethodRef> jsniMethodRefs = Collections.emptyList();
+
+  private Set<String> stringLiterals = Collections.emptySet();
 
   public JsniMethodBody(JProgram program, SourceInfo info) {
     super(program, info);
   }
 
+  /**
+   * Adds a reference from this method to a Java field.
+   */
+  public void addJsniRef(JsniFieldRef ref) {
+    jsniFieldRefs = Lists.add(jsniFieldRefs, ref);
+  }
+
+  /**
+   * Adds a reference from this method to a Java method.
+   */
+  public void addJsniRef(JsniMethodRef ref) {
+    jsniMethodRefs = Lists.add(jsniMethodRefs, ref);
+  }
+
   public JsFunction getFunc() {
     assert (this.jsFunction != null);
     return jsFunction;
+  }
+
+  /**
+   * Return this method's references to Java fields.
+   */
+  public List<JsniFieldRef> getJsniFieldRefs() {
+    return jsniFieldRefs;
+  }
+
+  /**
+   * Return this method's references to Java methods.
+   */
+  public List<JsniMethodRef> getJsniMethodRefs() {
+    return jsniMethodRefs;
   }
 
   public Set<String> getUsedStrings() {
@@ -63,19 +93,21 @@ public class JsniMethodBody extends JAbstractMethodBody {
   public void setFunc(JsFunction jsFunction) {
     assert (this.jsFunction == null);
     this.jsFunction = jsFunction;
+    final Set<String> result = new HashSet<String>();
     class RecordStrings extends JsVisitor {
       @Override
       public void endVisit(JsStringLiteral lit, JsContext<JsExpression> ctx) {
-        stringLiterals.add(lit.getValue());
+        result.add(lit.getValue());
       }
     }
     (new RecordStrings()).accept(jsFunction);
+    stringLiterals = Sets.normalize(result);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.accept(jsniFieldRefs);
-      visitor.accept(jsniMethodRefs);
+      jsniFieldRefs = visitor.acceptImmutable(jsniFieldRefs);
+      jsniMethodRefs = visitor.acceptImmutable(jsniMethodRefs);
     }
     visitor.endVisit(this, ctx);
   }

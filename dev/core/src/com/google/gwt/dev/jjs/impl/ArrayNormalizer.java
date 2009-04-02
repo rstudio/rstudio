@@ -66,9 +66,8 @@ public class ArrayNormalizer {
             // replace this assignment with a call to setCheck()
             JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
                 null, setCheckMethod);
-            call.getArgs().add(arrayRef.getInstance());
-            call.getArgs().add(arrayRef.getIndexExpr());
-            call.getArgs().add(x.getRhs());
+            call.addArgs(arrayRef.getInstance(), arrayRef.getIndexExpr(),
+                x.getRhs());
             ctx.replaceMe(call);
           }
         }
@@ -127,19 +126,16 @@ public class ArrayNormalizer {
       JLiteral queryIdLit = program.getLiteralInt(tryGetQueryId(arrayType));
       JExpression dim = x.dims.get(0);
       JType elementType = arrayType.getElementType();
-      call.getArgs().add(classLit);
-      call.getArgs().add(typeIdLit);
-      call.getArgs().add(queryIdLit);
-      call.getArgs().add(dim);
-      call.getArgs().add(getSeedTypeLiteralFor(elementType));
+      call.addArgs(classLit, typeIdLit, queryIdLit, dim,
+          getSeedTypeLiteralFor(elementType));
       ctx.replaceMe(call);
     }
 
     private void processDims(JNewArray x, Context ctx, JArrayType arrayType,
         int dims) {
       // override the type of the called method with the array's type
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          ArrayVisitor.class, "Creating dimensions");
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(ArrayVisitor.class,
+          "Creating dimensions");
       JMethodCall call = new JMethodCall(program, sourceInfo, null, initDims,
           arrayType);
       JsonArray classLitList = new JsonArray(program, sourceInfo);
@@ -163,20 +159,16 @@ public class ArrayNormalizer {
         dimList.exprs.add(x.dims.get(i));
         cur = curArrayType.getElementType();
       }
-      call.getArgs().add(classLitList);
-      call.getArgs().add(typeIdList);
-      call.getArgs().add(queryIdList);
-      call.getArgs().add(dimList);
-      call.getArgs().add(program.getLiteralInt(dims));
-      call.getArgs().add(getSeedTypeLiteralFor(cur));
+      call.addArgs(classLitList, typeIdList, queryIdList, dimList,
+          program.getLiteralInt(dims), getSeedTypeLiteralFor(cur));
       ctx.replaceMe(call);
     }
 
     private void processInitializers(JNewArray x, Context ctx,
         JArrayType arrayType) {
       // override the type of the called method with the array's type
-      SourceInfo sourceInfo = x.getSourceInfo().makeChild(
-          ArrayVisitor.class, "Array initializer");
+      SourceInfo sourceInfo = x.getSourceInfo().makeChild(ArrayVisitor.class,
+          "Array initializer");
       JMethodCall call = new JMethodCall(program, sourceInfo, null, initValues,
           arrayType);
       JLiteral classLit = x.getClassLiteral();
@@ -186,10 +178,7 @@ public class ArrayNormalizer {
       for (int i = 0; i < x.initializers.size(); ++i) {
         initList.exprs.add(x.initializers.get(i));
       }
-      call.getArgs().add(classLit);
-      call.getArgs().add(typeIdLit);
-      call.getArgs().add(queryIdLit);
-      call.getArgs().add(initList);
+      call.addArgs(classLit, typeIdLit, queryIdLit, initList);
       ctx.replaceMe(call);
     }
 

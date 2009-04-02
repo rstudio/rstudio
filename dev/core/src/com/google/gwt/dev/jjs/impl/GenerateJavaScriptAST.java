@@ -499,7 +499,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JBlock x, Context ctx) {
       JsBlock jsBlock = new JsBlock(x.getSourceInfo());
       List<JsStatement> stmts = jsBlock.getStatements();
-      popList(stmts, x.statements.size()); // stmts
+      popList(stmts, x.getStatements().size()); // stmts
       Iterator<JsStatement> iterator = stmts.iterator();
       while (iterator.hasNext()) {
         JsStatement stmt = iterator.next();
@@ -883,7 +883,7 @@ public class GenerateJavaScriptAST {
       }
 
       JsFunction jsFunc = (JsFunction) pop(); // body
-      List<JsParameter> params = popList(x.params.size()); // params
+      List<JsParameter> params = popList(x.getParams().size()); // params
 
       if (!x.isNative()) {
         // Setup params on the generated function. A native method already got
@@ -917,7 +917,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JMethodBody x, Context ctx) {
 
       JsBlock body = (JsBlock) pop();
-      List<JsNameRef> locals = popList(x.locals.size()); // locals
+      List<JsNameRef> locals = popList(x.getLocals().size()); // locals
 
       JsFunction jsFunc = methodBodyMap.get(x);
       jsFunc.setBody(body); // body
@@ -937,7 +937,7 @@ public class GenerateJavaScriptAST {
       JsVars vars = new JsVars(x.getSourceInfo());
       Set<String> alreadySeen = new HashSet<String>();
       for (int i = 0; i < locals.size(); ++i) {
-        JsName name = names.get(x.locals.get(i));
+        JsName name = names.get(x.getLocals().get(i));
         String ident = name.getIdent();
         if (!alreadySeen.contains(ident)) {
           alreadySeen.add(ident);
@@ -1297,7 +1297,7 @@ public class GenerateJavaScriptAST {
       accept(x.getExpr());
       jsSwitch.setExpr((JsExpression) pop()); // expr
 
-      List<JStatement> bodyStmts = x.getBody().statements;
+      List<JStatement> bodyStmts = x.getBody().getStatements();
       if (bodyStmts.size() > 0) {
         List<JsStatement> curStatements = null;
         for (int i = 0; i < bodyStmts.size(); ++i) {
@@ -1791,7 +1791,7 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JMethodBody x, Context ctx) {
-      Collections.sort(x.locals, hasNameSort);
+      x.sortLocals(hasNameSort);
     }
 
     @Override
@@ -1931,7 +1931,7 @@ public class GenerateJavaScriptAST {
     if (specialObfuscatedTypes.contains(x.getEnclosingType())) {
       return true;
     }
-    for (Object element : x.overrides) {
+    for (Object element : x.getOverrides()) {
       JMethod override = (JMethod) element;
       if (specialObfuscatedTypes.contains(override.getEnclosingType())) {
         return true;
@@ -1961,11 +1961,11 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameForPoly(JMethod x) {
-    if (x.overrides.isEmpty()) {
+    if (x.getOverrides().isEmpty()) {
       return mangleNameForPolyImpl(x);
     } else {
-      for (JMethod override : x.overrides) {
-        if (override.overrides.isEmpty()) {
+      for (JMethod override : x.getOverrides()) {
+        if (override.getOverrides().isEmpty()) {
           return mangleNameForPolyImpl(override);
         }
       }

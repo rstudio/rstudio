@@ -138,7 +138,7 @@ public class JsoDevirtualizer {
     JParameter thisParam = program.createParameter(sourceInfo,
         "this$static".toCharArray(), program.getTypeJavaLangObject(), true,
         true, newMethod);
-    for (JParameter oldParam : objectMethod.params) {
+    for (JParameter oldParam : objectMethod.getParams()) {
       program.createParameter(sourceInfo, oldParam.getName().toCharArray(),
           oldParam.getType(), true, false, newMethod);
     }
@@ -147,19 +147,19 @@ public class JsoDevirtualizer {
     // Build from bottom up.
     JMethodCall condition = new JMethodCall(program, sourceInfo, null,
         isJavaObjectMethod);
-    condition.getArgs().add(new JParameterRef(program, sourceInfo, thisParam));
+    condition.addArg(new JParameterRef(program, sourceInfo, thisParam));
 
     JMethodCall thenValue = new JMethodCall(program, sourceInfo,
         new JParameterRef(program, sourceInfo, thisParam), objectMethod);
-    for (JParameter param : newMethod.params) {
+    for (JParameter param : newMethod.getParams()) {
       if (param != thisParam) {
-        thenValue.getArgs().add(new JParameterRef(program, sourceInfo, param));
+        thenValue.addArg(new JParameterRef(program, sourceInfo, param));
       }
     }
 
     JMethodCall elseValue = new JMethodCall(program, sourceInfo, null, jsoImpl);
-    for (JParameter param : newMethod.params) {
-      elseValue.getArgs().add(new JParameterRef(program, sourceInfo, param));
+    for (JParameter param : newMethod.getParams()) {
+      elseValue.addArg(new JParameterRef(program, sourceInfo, param));
     }
 
     JConditional conditional = new JConditional(program, sourceInfo,
@@ -167,7 +167,7 @@ public class JsoDevirtualizer {
 
     JReturnStatement returnStatement = new JReturnStatement(program,
         sourceInfo, conditional);
-    ((JMethodBody) newMethod.getBody()).getStatements().add(returnStatement);
+    ((JMethodBody) newMethod.getBody()).getBlock().addStmt(returnStatement);
     return newMethod;
   }
 

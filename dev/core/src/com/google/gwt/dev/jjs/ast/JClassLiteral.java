@@ -53,8 +53,8 @@ public class JClassLiteral extends JLiteral {
     assert method != null;
 
     JMethodCall call = new JMethodCall(program, info, null, method);
-    call.getArgs().add(program.getLiteralString(info, getPackageName(typeName)));
-    call.getArgs().add(program.getLiteralString(info, getClassName(typeName)));
+    call.addArgs(program.getLiteralString(info, getPackageName(typeName)),
+        program.getLiteralString(info, getClassName(typeName)));
 
     if (type instanceof JClassType && !(type instanceof JArrayType)) {
       /*
@@ -73,14 +73,14 @@ public class JClassLiteral extends JLiteral {
         superclassLiteral = program.getLiteralNull();
       }
 
-      call.getArgs().add(superclassLiteral);
+      call.addArg(superclassLiteral);
 
       if (classType instanceof JEnumType) {
         JEnumType enumType = (JEnumType) classType;
         JMethod valuesMethod = null;
         for (JMethod methodIt : enumType.methods) {
           if ("values".equals(methodIt.getName())) {
-            if (methodIt.params.size() != 0) {
+            if (methodIt.getParams().size() != 0) {
               continue;
             }
             valuesMethod = methodIt;
@@ -93,15 +93,15 @@ public class JClassLiteral extends JLiteral {
         }
         JsniMethodRef jsniMethodRef = new JsniMethodRef(program, info, null,
             valuesMethod);
-        call.getArgs().add(jsniMethodRef);
+        call.addArg(jsniMethodRef);
       } else if (isEnumOrSubclass) {
         // A subclass of an enum class
-        call.getArgs().add(program.getLiteralNull());
+        call.addArg(program.getLiteralNull());
       }
     } else if (type instanceof JArrayType) {
       JArrayType arrayType = (JArrayType) type;
       JClassLiteral componentLiteral = program.getLiteralClass(arrayType.getElementType());
-      call.getArgs().add(componentLiteral);
+      call.addArg(componentLiteral);
     } else {
       assert (type instanceof JInterfaceType || type instanceof JPrimitiveType);
     }

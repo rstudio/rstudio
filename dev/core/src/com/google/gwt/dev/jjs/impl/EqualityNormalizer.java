@@ -110,7 +110,7 @@ public class EqualityNormalizer {
           JMethod isNullMethod = program.getIndexedMethod(methodName);
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               isNullMethod);
-          call.getArgs().add(lhsNullLit ? rhs : lhs);
+          call.addArg(lhsNullLit ? rhs : lhs);
           ctx.replaceMe(call);
         } else {
           // Replace with a call to Cast.jsEquals, which does a == internally.
@@ -123,8 +123,7 @@ public class EqualityNormalizer {
           JMethod eqMethod = program.getIndexedMethod(methodName);
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               eqMethod);
-          call.getArgs().add(lhs);
-          call.getArgs().add(rhs);
+          call.addArgs(lhs, rhs);
           ctx.replaceMe(call);
         }
       }
@@ -147,7 +146,7 @@ public class EqualityNormalizer {
       JMethod maskMethod = program.getIndexedMethod("Cast.maskUndefined");
       JMethodCall lhsCall = new JMethodCall(program, lhs.getSourceInfo(), null,
           maskMethod, lhs.getType());
-      lhsCall.getArgs().add(lhs);
+      lhsCall.addArg(lhs);
       return lhsCall;
     }
   }

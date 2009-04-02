@@ -46,7 +46,7 @@ public class AssertionNormalizer {
       JMethodCall rhs = new JMethodCall(program, x.getSourceInfo(), null,
           method);
       if (x.getArg() != null) {
-        rhs.getArgs().add(x.getArg());
+        rhs.addArg(x.getArg());
       }
       JBinaryOperation binOp = new JBinaryOperation(program, x.getSourceInfo(),
           program.getTypePrimitiveBoolean(), JBinaryOperator.OR, lhs, rhs);

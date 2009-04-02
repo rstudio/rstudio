@@ -17,8 +17,10 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.collect.Lists;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -37,15 +39,6 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     System.out.println(code);
   }
 
-  /**
-   * References to any methods which this method overrides. This should be an
-   * EXHAUSTIVE list, that is, if C overrides B overrides A, then C's overrides
-   * list will contain both A and B.
-   */
-  public final List<JMethod> overrides = new ArrayList<JMethod>();
-
-  public final ArrayList<JParameter> params = new ArrayList<JParameter>();
-  public final ArrayList<JClassType> thrownExceptions = new ArrayList<JClassType>();
   private JAbstractMethodBody body = null;
   private final JReferenceType enclosingType;
   private final boolean isAbstract;
@@ -54,6 +47,15 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   private final boolean isStatic;
   private final String name;
   private List<JType> originalParamTypes;
+
+  /**
+   * References to any methods which this method overrides. This should be an
+   * EXHAUSTIVE list, that is, if C overrides B overrides A, then C's overrides
+   * list will contain both A and B.
+   */
+  private List<JMethod> overrides = Collections.emptyList();
+
+  private List<JParameter> params = Collections.emptyList();
   private JType returnType;
   private boolean trace = false;
   private boolean traceFirst = true;
@@ -74,14 +76,35 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     this.isPrivate = isPrivate;
   }
 
+  /**
+   * Add a method that this method overrides.
+   */
+  public void addOverride(JMethod toAdd) {
+    overrides = Lists.add(overrides, toAdd);
+  }
+
+  /**
+   * Add methods that this method overrides.
+   */
+  public void addOverrides(List<JMethod> toAdd) {
+    overrides = Lists.addAll(overrides, toAdd);
+  }
+
+  /**
+   * Adds a parameter to this method.
+   */
+  public void addParam(JParameter x) {
+    params = Lists.add(params, x);
+  }
+
   public void freezeParamTypes() {
-    List<JType> paramTypes =  new ArrayList<JType>();
+    List<JType> paramTypes = new ArrayList<JType>();
     for (JParameter param : params) {
       paramTypes.add(param.getType());
     }
     setOriginalParamTypes(paramTypes);
   }
-  
+
   public JAbstractMethodBody getBody() {
     return body;
   }
@@ -99,6 +122,20 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
       return null;
     }
     return originalParamTypes;
+  }
+
+  /**
+   * Returns the transitive closure of all the methods this method overrides.
+   */
+  public List<JMethod> getOverrides() {
+    return overrides;
+  }
+
+  /**
+   * Returns the parameters of this method.
+   */
+  public List<JParameter> getParams() {
+    return params;
   }
 
   public JType getType() {
@@ -133,6 +170,13 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     return trace;
   }
 
+  /**
+   * Removes the parameter at the specified index.
+   */
+  public void removeParam(int index) {
+    params = Lists.remove(params, index);
+  }
+
   public void setBody(JAbstractMethodBody body) {
     if (body != null) {
       body.setMethod(null);
@@ -149,8 +193,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     if (originalParamTypes != null) {
       throw new InternalCompilerException("Param types already frozen");
     }
-    originalParamTypes = paramTypes;
-    
+    originalParamTypes = Lists.normalize(paramTypes);
 
     // Determine if we should trace this method.
     if (enclosingType != null) {
@@ -189,7 +232,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
       }
     }
     if (visitor.visit(this, ctx)) {
-      visitor.accept(params);
+      params = visitor.acceptImmutable(params);
       if (body != null) {
         body = (JAbstractMethodBody) visitor.accept(body);
       }

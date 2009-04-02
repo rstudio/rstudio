@@ -210,8 +210,8 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   @Override
   public boolean visit(JBlock x, Context ctx) {
     openBlock();
-    for (int i = 0; i < x.statements.size(); ++i) {
-      JStatement statement = x.statements.get(i);
+    for (int i = 0; i < x.getStatements().size(); ++i) {
+      JStatement statement = x.getStatements().get(i);
       needSemi = true;
       accept(statement);
       if (needSemi) {
@@ -1028,7 +1028,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
 
   protected void printParameterList(JMethod x) {
     lparen();
-    visitCollectionWithCommas(x.params.iterator());
+    visitCollectionWithCommas(x.getParams().iterator());
     rparen();
   }
 

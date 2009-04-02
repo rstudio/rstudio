@@ -456,7 +456,7 @@ public class JProgram extends JNode {
     JLocal x = new JLocal(this, info, String.valueOf(name), type, isFinal,
         enclosingMethodBody);
 
-    enclosingMethodBody.locals.add(x);
+    enclosingMethodBody.addLocal(x);
     return x;
   }
 
@@ -496,7 +496,7 @@ public class JProgram extends JNode {
     JParameter x = new JParameter(this, info, String.valueOf(name), type,
         isFinal, isThis, enclosingMethod);
 
-    enclosingMethod.params.add(x);
+    enclosingMethod.addParam(x);
     return x;
   }
 
@@ -661,7 +661,7 @@ public class JProgram extends JNode {
           fieldRef, alloc);
       JMethodBody clinitBody = (JMethodBody) typeSpecialClassLiteralHolder.methods.get(
           0).getBody();
-      clinitBody.getStatements().add(decl);
+      clinitBody.getBlock().addStmt(decl);
 
       SourceInfo literalInfo = createSourceInfoSynthetic(JProgram.class,
           "class literal for " + type.getName());
@@ -967,9 +967,9 @@ public class JProgram extends JNode {
   }
 
   /**
-   * If <code>method</code> is a static impl method, returns the instance method
-   * that <code>method</code> is the implementation of. Otherwise, returns
-   * <code>null</code>.
+   * If <code>method</code> is a static impl method, returns the instance
+   * method that <code>method</code> is the implementation of. Otherwise,
+   * returns <code>null</code>.
    */
   public JMethod staticImplFor(JMethod method) {
     return staticToInstanceMap.get(method);

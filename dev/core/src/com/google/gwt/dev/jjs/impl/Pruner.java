@@ -27,7 +27,6 @@ import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
-import com.google.gwt.dev.jjs.ast.JLocal;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
@@ -173,12 +172,10 @@ public class Pruner {
           newCall.setCannotBePolymorphic();
         }
 
-        ArrayList<JExpression> args = x.getArgs();
-        ArrayList<JParameter> originalParams = methodToOriginalParamsMap.get(method);
-
+        List<JParameter> originalParams = methodToOriginalParamsMap.get(method);
         JMultiExpression currentMulti = null;
-        for (int i = 0, c = args.size(); i < c; ++i) {
-          JExpression arg = args.get(i);
+        for (int i = 0, c = x.getArgs().size(); i < c; ++i) {
+          JExpression arg = x.getArgs().get(i);
           JParameter param = null;
           if (i < originalParams.size()) {
             param = originalParams.get(i);
@@ -188,10 +185,10 @@ public class Pruner {
             // If there is an existing multi, terminate it.
             if (currentMulti != null) {
               currentMulti.exprs.add(arg);
-              newCall.getArgs().add(currentMulti);
+              newCall.addArg(currentMulti);
               currentMulti = null;
             } else {
-              newCall.getArgs().add(arg);
+              newCall.addArg(arg);
             }
           } else if (arg.hasSideEffects()) {
             // The argument is only needed for side effects, add it to a multi.
@@ -204,7 +201,7 @@ public class Pruner {
 
         // Add any orphaned parameters on the end. Extra params are OK.
         if (currentMulti != null) {
-          newCall.getArgs().add(currentMulti);
+          newCall.addArg(currentMulti);
         }
 
         ctx.replaceMe(newCall);
@@ -414,12 +411,12 @@ public class Pruner {
             ? ((JsniMethodBody) x.getBody()).getFunc() : null;
 
         ArrayList<JParameter> originalParams = new ArrayList<JParameter>(
-            x.params);
+            x.getParams());
 
-        for (int i = 0; i < x.params.size(); ++i) {
-          JParameter param = x.params.get(i);
+        for (int i = 0; i < x.getParams().size(); ++i) {
+          JParameter param = x.getParams().get(i);
           if (!referencedNonTypes.contains(param)) {
-            x.params.remove(i);
+            x.removeParam(i);
             didChange = true;
             // Remove the associated JSNI parameter
             if (func != null) {
@@ -436,10 +433,9 @@ public class Pruner {
 
     @Override
     public boolean visit(JMethodBody x, Context ctx) {
-      for (Iterator<JLocal> it = x.locals.iterator(); it.hasNext();) {
-        JLocal local = it.next();
-        if (!referencedNonTypes.contains(local)) {
-          it.remove();
+      for (int i = 0; i < x.getLocals().size(); ++i) {
+        if (!referencedNonTypes.contains(x.getLocals().get(i))) {
+          x.removeLocal(i--);
           didChange = true;
         }
       }
@@ -575,7 +571,7 @@ public class Pruner {
     JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(), instance,
         program.getNullMethod(), primitiveTypeOrNullType(program, x.getType()));
     // Retain the original arguments, they will be evaluated for side effects.
-    newCall.getArgs().addAll(args);
+    newCall.addArgs(args);
     return newCall;
   }
 

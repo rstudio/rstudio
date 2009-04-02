@@ -94,7 +94,7 @@ public class JVisitor {
     return (JStatement) accept((JNode) node);
   }
 
-  public void accept(List<? extends JNode> list) {
+  public <T extends JNode> void accept(List<T> list) {
     int i = 0;
     try {
       for (int c = list.size(); i < c; ++i) {
@@ -105,8 +105,18 @@ public class JVisitor {
     }
   }
 
-  public void acceptWithInsertRemove(List<? extends JNode> list) {
+  public <T extends JNode> List<T> acceptImmutable(List<T> list) {
     accept(list);
+    return list;
+  }
+
+  public <T extends JNode> void acceptWithInsertRemove(List<T> list) {
+    accept(list);
+  }
+
+  public <T extends JNode> List<T> acceptWithInsertRemoveImmutable(List<T> list) {
+    accept(list);
+    return list;
   }
 
   public boolean didChange() {

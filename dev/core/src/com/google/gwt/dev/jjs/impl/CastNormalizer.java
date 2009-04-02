@@ -369,14 +369,14 @@ public class CastNormalizer {
           // Replace with Cast.charToString(c)
           JMethodCall call = new JMethodCall(program, expr.getSourceInfo(),
               null, program.getIndexedMethod("Cast.charToString"));
-          call.getArgs().add(expr);
+          call.addArg(expr);
           return call;
         }
       } else if (expr.getType() == program.getTypePrimitiveLong()) {
         // Replace with LongLib.toString(l)
         JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,
             program.getIndexedMethod("LongLib.toString"));
-        call.getArgs().add(expr);
+        call.addArg(expr);
         return call;
       }
       return expr;
@@ -404,7 +404,7 @@ public class CastNormalizer {
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             castMethod, type);
         x.setType(program.getTypePrimitiveDouble());
-        call.getArgs().add(x);
+        call.addArg(x);
         ctx.replaceMe(call);
       }
     }
@@ -445,7 +445,7 @@ public class CastNormalizer {
          */
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method, program.getTypeNull());
-        call.getArgs().add(expr);
+        call.addArg(expr);
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
         JExpression curExpr = expr;
@@ -471,10 +471,10 @@ public class CastNormalizer {
           // override the type of the called method with the target cast type
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               method, toType);
-          call.getArgs().add(curExpr);
+          call.addArg(curExpr);
           if (!isJsoCast) {
             JIntLiteral qId = program.getLiteralInt(queryIds.get(refType));
-            call.getArgs().add(qId);
+            call.addArg(qId);
           }
           replaceExpr = call;
         }
@@ -505,7 +505,7 @@ public class CastNormalizer {
             JMethod castMethod = program.getIndexedMethod("LongLib.toInt");
             JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
                 null, castMethod);
-            call.getArgs().add(expr);
+            call.addArg(expr);
             expr = call;
             fromType = tInt;
           } else if (tInt == toType) {
@@ -550,7 +550,7 @@ public class CastNormalizer {
           JMethod castMethod = program.getIndexedMethod(methodName);
           JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
               castMethod, toType);
-          call.getArgs().add(expr);
+          call.addArg(expr);
           replaceExpr = call;
         } else {
           // Just remove the cast
@@ -583,10 +583,10 @@ public class CastNormalizer {
         }
         JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
             method);
-        call.getArgs().add(x.getExpr());
+        call.addArg(x.getExpr());
         if (!isJsoCast) {
           JIntLiteral qId = program.getLiteralInt(queryIds.get(toType));
-          call.getArgs().add(qId);
+          call.addArg(qId);
         }
         ctx.replaceMe(call);
       }
