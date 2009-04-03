@@ -201,7 +201,8 @@ public class RequestCallbackAdapter<T> implements RequestCallback {
         caught = new InvocationException(encodedResponse);
       }
     } catch (com.google.gwt.user.client.rpc.SerializationException e) {
-      caught = new IncompatibleRemoteServiceException();
+      caught = new IncompatibleRemoteServiceException(
+          "The response could not be deserialized", e);
     } catch (Throwable e) {
       caught = e;
     } finally {

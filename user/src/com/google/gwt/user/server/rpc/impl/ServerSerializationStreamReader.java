@@ -537,8 +537,20 @@ public final class ServerSerializationStreamReader extends
       throw new SerializationException(e);
 
     } catch (InvocationTargetException e) {
-      throw new SerializationException(e);
+      /*
+       * HACK(scottb): temporary hack to print internal exceptions to the
+       * console while we try to pin down a flaky RPC test that fails very
+       * intermittently. The stack trace gets lost when we send this server
+       * exception back to the client, because we currently don't serialize
+       * cause and stacktrace across the wire. We end up with a useless
+       * client-side stacktrace that has no cause, and that's what JUnit sees.
+       * We can remove this spam if we serialize cause/stacktrace back to the
+       * client even if we haven't yet solve the flaky RPC test issue.
+       */
+      e.getTargetException().printStackTrace(System.out);
+      e.getTargetException().printStackTrace(System.err);
 
+      throw new SerializationException(e.getTargetException());
     } catch (NoSuchMethodException e) {
       throw new SerializationException(e);
     }
