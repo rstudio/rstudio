@@ -49,42 +49,11 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
     assertEquals(0, localeSet.size());
   }
 
-  public void testCurrencyNames() {
-    assertEquals("peso argentino", CurrencyList.get().lookupName("ARS"));
-    assertEquals("peso mexicano", CurrencyList.get().lookupName("MXN"));
-    assertEquals("dólar estadounidense", CurrencyList.get().lookupName("USD"));
-  }
-
   public void testDefaultCurrency() {
     CurrencyData data = CurrencyList.get().getDefault();
     assertEquals("MXN", data.getCurrencyCode());
     assertEquals("$", data.getCurrencySymbol());
     assertEquals(2, data.getDefaultFractionDigits());
-  }
-  
-  public void testOtherCurrency() {
-    CurrencyData ars = CurrencyList.get().lookup("ARS");
-    assertEquals("ARS", ars.getCurrencyCode());
-    assertEquals("Arg$", ars.getCurrencySymbol());
-    assertEquals(2, ars.getDefaultFractionDigits());
-    CurrencyData data = CurrencyList.get().lookup("MXN");
-    assertEquals("MXN", data.getCurrencyCode());
-    assertEquals("$", data.getCurrencySymbol());
-    assertEquals(2, data.getDefaultFractionDigits());
-    CurrencyData usd = CurrencyList.get().lookup("USD");
-    assertEquals("USD", usd.getCurrencyCode());
-    assertEquals("US$", usd.getCurrencySymbol());
-    assertEquals(2, usd.getDefaultFractionDigits());
-    boolean found = false;
-    for (CurrencyData it : CurrencyList.get()) {
-      if ("USD".equals(it.getCurrencyCode())) {
-        assertEquals("US$", it.getCurrencySymbol());
-        assertEquals(2, it.getDefaultFractionDigits());
-        found = true;
-        break;
-      }
-    }
-    assertTrue("Did not find USD in iterator", found);
   }
 
   public void testRegionalInheritance() {
