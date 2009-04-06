@@ -61,35 +61,30 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
     return treeSet.containsAll(c);
   }
 
+  @Override
   public boolean equals(Object o) {
     return treeSet.equals(o);
   }
 
   /**
    * Find all Artifacts assignable to some base type. The returned value will be
-   * a snapshot of the values in the ArtifactSet. The following two examples
-   * result in an equivalent set:
+   * a snapshot of the values in the ArtifactSet. An example of how this could
+   * be used:
    * 
    * <pre>
-   * SortedSet&lt;EmittedArtifact&gt; search = artifactSet.find(PublicResource.class);
-   * search.addAll(artifactSet.find(GeneratedResource.class);
+   *   for (EmittedArtifact ea : artifactSet.find(EmittedArtifact.class)) {
+   *     ...
+   *   }
    * </pre>
    * 
-   * or
-   * 
-   * <pre>
-   * SortedSet&lt;EmittedArtifact&gt; search = artifactSet.find(EmittedArtifact.class);
-   * </pre>
-   * 
-   * @param <A> a type bound possibly wider than the desired type of artifact
    * @param <T> the desired type of Artifact
    * @param artifactType the desired type of Artifact
    * @return all Artifacts in the ArtifactSet assignable to the desired type
    */
-  public <A extends Artifact<?>, T extends A> SortedSet<A> find(
+  public <T extends Artifact<? super T>> SortedSet<T> find(
       Class<T> artifactType) {
     // TODO make this sub-linear (but must retain order for styles/scripts!)
-    SortedSet<A> toReturn = new TreeSet<A>();
+    SortedSet<T> toReturn = new TreeSet<T>();
     for (Artifact<?> artifact : this) {
       if (artifactType.isInstance(artifact)) {
         toReturn.add(artifactType.cast(artifact));
@@ -113,6 +108,7 @@ public final class ArtifactSet implements SortedSet<Artifact<?>>, Serializable {
     }
   }
 
+  @Override
   public int hashCode() {
     return treeSet.hashCode();
   }
