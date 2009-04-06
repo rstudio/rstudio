@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.Correlation.Axis;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +37,10 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
    */
   private static final SourceInfo[] EMPTY_SOURCEINFO_ARRAY = new SourceInfo[0];
 
+  private static int numCorrelationAxes() {
+    return Axis.values().length;
+  }
+
   /**
    * Any Correlation associated with the SourceInfo.
    */
@@ -50,13 +53,15 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
 
   /**
    * Records the first Correlation on any given Axis applied to the SourceInfo.
+   * Each index of this array corresponds to the Correlation.Axis with the same
+   * ordinal().
    */
-  private final EnumMap<Axis, Correlation> primaryCorrelations;
+  private final Correlation[] primaryCorrelations;
 
   public SourceInfoCorrelation(SourceOrigin origin) {
     this.origin = origin;
     allCorrelations = new ArrayList<Correlation>();
-    primaryCorrelations = new EnumMap<Axis, Correlation>(Axis.class);
+    primaryCorrelations = new Correlation[numCorrelationAxes()];
   }
 
   private SourceInfoCorrelation(SourceInfoCorrelation parent, String mutation,
@@ -66,8 +71,10 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     this.origin = parent.origin;
 
     this.allCorrelations = new ArrayList<Correlation>(parent.allCorrelations);
-    this.primaryCorrelations = new EnumMap<Axis, Correlation>(
-        parent.primaryCorrelations);
+    primaryCorrelations = new Correlation[numCorrelationAxes()];
+    for (int i = 0; i < numCorrelationAxes(); i++) {
+      primaryCorrelations[i] = parent.primaryCorrelations[i];
+    }
 
     merge(additionalAncestors);
   }
@@ -79,8 +86,10 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
     if (!isAlreadyInAllCorrelations(c)) {
       allCorrelations.add(c);
     }
-    if (!primaryCorrelations.containsKey(c.getAxis())) {
-      primaryCorrelations.put(c.getAxis(), c);
+
+    int index = c.getAxis().ordinal();
+    if (primaryCorrelations[index] == null) {
+      primaryCorrelations[index] = c;
     }
   }
 
@@ -140,7 +149,7 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
    * <code>null</code> if no Correlation has been set on the given axis.
    */
   public Correlation getPrimaryCorrelation(Axis axis) {
-    return primaryCorrelations.get(axis);
+    return primaryCorrelations[axis.ordinal()];
   }
 
   /**
@@ -148,7 +157,13 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
    * has been set.
    */
   public Set<Correlation> getPrimaryCorrelations() {
-    return new HashSet<Correlation>(primaryCorrelations.values());
+    HashSet<Correlation> toReturn = new HashSet<Correlation>();
+    for (Correlation c : primaryCorrelations) {
+      if (c != null) {
+        toReturn.add(c);
+      }
+    }
+    return toReturn;
   }
 
   public int getStartLine() {
@@ -197,12 +212,12 @@ public class SourceInfoCorrelation implements SourceInfo, Serializable {
           allCorrelations.add(c);
         }
       }
-      if (primaryCorrelations.size() < Axis.values().length
-          && info instanceof SourceInfoCorrelation) {
-        EnumMap<Axis, Correlation> copy = new EnumMap<Axis, Correlation>(
-            ((SourceInfoCorrelation) info).primaryCorrelations);
-        copy.keySet().removeAll(primaryCorrelations.keySet());
-        primaryCorrelations.putAll(copy);
+
+      for (Correlation c : info.getPrimaryCorrelations()) {
+        int i = c.getAxis().ordinal();
+        if (primaryCorrelations[i] == null) {
+          primaryCorrelations[i] = c;
+        }
       }
     }
   }
