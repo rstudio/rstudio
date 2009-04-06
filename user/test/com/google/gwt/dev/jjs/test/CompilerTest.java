@@ -28,6 +28,10 @@ import java.util.EventListener;
 @SuppressWarnings("unused")
 public class CompilerTest extends GWTTestCase {
 
+  interface MyMap {
+    Object get(String key);
+  }
+
   interface Silly { }
 
   interface SillyComparable<T extends Silly> extends Comparable<T> {
@@ -319,6 +323,26 @@ public class CompilerTest extends GWTTestCase {
     }
     
     assertEquals(0, new MyFoo().compareTo(new MyFoo()));
+  }
+
+  /**
+   * Issue 3517. Sometimes JDT adds a bridge method when a subclass's method
+   * differs only by return type. In some versions of GWT, this has resulted in
+   * a bridge method overriding its own target, and eventually TypeTightener
+   * producing an infinite recursion.
+   */
+  public void testBridgeMethods4() {
+    abstract class MyMapAbstract<V> implements MyMap {
+      public String get(String key) {
+        return null;
+      }
+    }
+
+    final class MyMapImpl<V> extends MyMapAbstract<V> {
+    }
+
+    MyMapImpl<String> mmap = new MyMapImpl<String>();
+    assertNull(mmap.get("foo"));
   }
 
   public void testCastOptimizer() {

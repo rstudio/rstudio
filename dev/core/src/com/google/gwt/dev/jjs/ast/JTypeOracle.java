@@ -156,6 +156,11 @@ public class JTypeOracle implements Serializable {
       return false;
     }
 
+    // original return type must be identical
+    if (method1.getOriginalReturnType() != method2.getOriginalReturnType()) {
+      return false;
+    }
+
     // original parameter types must be identical
     List<JType> params1 = method1.getOriginalParamTypes();
     List<JType> params2 = method2.getOriginalParamTypes();

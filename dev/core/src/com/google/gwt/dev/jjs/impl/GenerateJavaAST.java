@@ -309,8 +309,8 @@ public class GenerateJavaAST {
      * </p>
      */
     public void addBridgeMethods(SourceTypeBinding clazzBinding) {
-      if (clazzBinding.isInterface() || clazzBinding.isAbstract()) {
-        // Only add bridges in concrete classes, to simplify matters.
+      if (clazzBinding.isInterface()) {
+        // Only add bridges in classes, to simplify matters.
         return;
       }
 
@@ -322,7 +322,8 @@ public class GenerateJavaAST {
        */
       if (clazzBinding.syntheticMethods() != null) {
         for (SyntheticMethodBinding synthmeth : clazzBinding.syntheticMethods()) {
-          if (synthmeth.purpose == SyntheticMethodBinding.BridgeMethod) {
+          if (synthmeth.purpose == SyntheticMethodBinding.BridgeMethod
+              && !synthmeth.isStatic()) {
             JMethod implmeth = (JMethod) typeMap.get(synthmeth.targetMethod);
 
             createBridgeMethod(clazz, synthmeth, implmeth);
@@ -1482,7 +1483,7 @@ public class GenerateJavaAST {
       MethodBinding b = x.binding;
       JMethod method = (JMethod) typeMap.get(b);
       try {
-        if (b.isImplementing() || b.isOverriding()) {
+        if (!b.isStatic() && (b.isImplementing() || b.isOverriding())) {
           tryFindUpRefs(method, b);
         }
 
@@ -2030,20 +2031,6 @@ public class GenerateJavaAST {
       }
     }
 
-    private boolean classHasMethodOverriding(JClassType clazz, JMethod over) {
-      for (JMethod meth : clazz.methods) {
-        if (meth.getOverrides().contains(over)) {
-          return true;
-        }
-      }
-
-      if (clazz.extnds != null && classHasMethodOverriding(clazz.extnds, over)) {
-        return true;
-      }
-
-      return false;
-    }
-
     /**
      * Create a bridge method. It calls a same-named method with the same
      * arguments, but with a different type signature.
@@ -2101,15 +2088,20 @@ public class GenerateJavaAST {
       JMethodBody body = (JMethodBody) bridgeMethod.getBody();
       body.getBlock().addStmt(callOrReturn);
 
-      // add overrides, but only for interface methods that the class does not
-      // already override
+      // Add overrides.
       List<JMethod> overrides = new ArrayList<JMethod>();
       tryFindUpRefs(bridgeMethod, overrides);
+      assert !overrides.isEmpty();
       for (JMethod over : overrides) {
-        if (!classHasMethodOverriding(clazz, over)) {
-          bridgeMethod.addOverride(over);
-          bridgeMethod.addOverrides(over.getOverrides());
-        }
+        bridgeMethod.addOverride(over);
+        /*
+         * TODO(scottb): with a diamond-shape inheritance hierarchy, it may be
+         * possible to get dups in this way. Really, method.overrides should
+         * probably just be an IdentitySet to avoid having to check contains in
+         * various places. Left as a todo because I don't think dups is super
+         * harmful.
+         */
+        bridgeMethod.addOverrides(over.getOverrides());
       }
     }
 
@@ -2369,8 +2361,8 @@ public class GenerateJavaAST {
      * expression. Beware that when autoboxing, the type of the expression is
      * not necessarily the same as the type of the box to be created. The JDT
      * figures out what the necessary conversion is, depending on the context
-     * the expression appears in, and stores it in <code>x.implicitConversion</code>,
-     * so extract it from there.
+     * the expression appears in, and stores it in
+     * <code>x.implicitConversion</code>, so extract it from there.
      */
     private JPrimitiveType implicitConversionTargetType(Expression x)
         throws InternalCompilerException {
@@ -2557,6 +2549,8 @@ public class GenerateJavaAST {
      * overrides/implements.
      */
     private void tryFindUpRefs(JMethod method, MethodBinding binding) {
+      // Should never get a parameterized instance here.
+      assert binding == binding.original();
       tryFindUpRefsRecursive(method, binding, binding.declaringClass);
     }
 
@@ -2595,11 +2589,18 @@ public class GenerateJavaAST {
      */
     private void tryFindUpRefsRecursive(JMethod method, MethodBinding binding,
         ReferenceBinding searchThisType) {
+      /*
+       * Always look for uprefs in the original, so we can correctly compare
+       * erased signatures. The general design for uprefs is to model what the
+       * JVM does in terms of matching up overrides based on binary match.
+       */
+      searchThisType = (ReferenceBinding) searchThisType.original();
 
       // See if this class has any uprefs, unless this class is myself
       if (binding.declaringClass != searchThisType) {
         for (MethodBinding tryMethod : searchThisType.getMethods(binding.selector)) {
-          if (binding.areParameterErasuresEqual(tryMethod)) {
+          if (binding.returnType.erasure() == tryMethod.returnType.erasure()
+              && binding.areParameterErasuresEqual(tryMethod)) {
             JMethod upRef = (JMethod) typeMap.get(tryMethod);
             if (!method.getOverrides().contains(upRef)) {
               method.addOverride(upRef);
@@ -2790,6 +2791,8 @@ public class GenerateJavaAST {
                 if (method.getName().equals(methodName)) {
                   String sig = JProgram.getJsniSig(method);
                   if (sig.equals(jsniSig)) {
+                    return method;
+                  } else if (sig.startsWith(jsniSig) && jsniSig.endsWith(")")) {
                     return method;
                   } else {
                     almostMatches.add(sig);

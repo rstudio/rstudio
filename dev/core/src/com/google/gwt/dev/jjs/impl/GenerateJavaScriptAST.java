@@ -405,10 +405,12 @@ public class GenerateJavaScriptAST {
 
       if (x instanceof JMethod) {
         sb.append('(');
-        for (JType t : ((JMethod) x).getOriginalParamTypes()) {
+        JMethod method = ((JMethod) x);
+        for (JType t : method.getOriginalParamTypes()) {
           sb.append(t.getJsniSignatureName());
         }
         sb.append(')');
+        sb.append(method.getOriginalReturnType().getJsniSignatureName());
       }
 
       SymbolData symbolData = StandardSymbolData.forMember(
@@ -1958,6 +1960,7 @@ public class GenerateJavaScriptAST {
       JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
     }
+    s += x.getOriginalReturnType().getJavahSignatureName();
     return s;
   }
 
@@ -1980,6 +1983,7 @@ public class GenerateJavaScriptAST {
       JType type = x.getOriginalParamTypes().get(i);
       s += type.getJavahSignatureName();
     }
+    s += x.getOriginalReturnType().getJavahSignatureName();
     return s;
   }
 

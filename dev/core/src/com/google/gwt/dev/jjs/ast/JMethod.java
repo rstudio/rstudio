@@ -47,6 +47,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   private final boolean isStatic;
   private final String name;
   private List<JType> originalParamTypes;
+  private JType originalReturnType;
 
   /**
    * References to any methods which this method overrides. This should be an
@@ -102,7 +103,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     for (JParameter param : params) {
       paramTypes.add(param.getType());
     }
-    setOriginalParamTypes(paramTypes);
+    setOriginalTypes(returnType, paramTypes);
   }
 
   public JAbstractMethodBody getBody() {
@@ -122,6 +123,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
       return null;
     }
     return originalParamTypes;
+  }
+
+  public JType getOriginalReturnType() {
+    return originalReturnType;
   }
 
   /**
@@ -189,10 +194,11 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     isFinal = true;
   }
 
-  public void setOriginalParamTypes(List<JType> paramTypes) {
+  public void setOriginalTypes(JType returnType, List<JType> paramTypes) {
     if (originalParamTypes != null) {
       throw new InternalCompilerException("Param types already frozen");
     }
+    originalReturnType = returnType;
     originalParamTypes = Lists.normalize(paramTypes);
 
     // Determine if we should trace this method.

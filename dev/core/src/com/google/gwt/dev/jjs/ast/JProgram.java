@@ -124,6 +124,7 @@ public class JProgram extends JNode {
       sb.append(type.getJsniSignatureName());
     }
     sb.append(")");
+    sb.append(method.getOriginalReturnType().getJsniSignatureName());
     return sb.toString();
   }
 

@@ -51,6 +51,7 @@ public class StandardMethodMember extends AbstractMemberWithDependencies
       sb.append(type.getJsniSignatureName());
     }
     sb.append(")");
+    sb.append(method.getOriginalReturnType().getJsniSignatureName());
     this.sourceName = sb.toString();
 
     SortedSet<String> aliases = new TreeSet<String>();

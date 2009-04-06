@@ -166,7 +166,7 @@ public class MakeCallsStatic {
       List<JType> originalParamTypes = new ArrayList<JType>();
       originalParamTypes.add(enclosingType);
       originalParamTypes.addAll(x.getOriginalParamTypes());
-      newMethod.setOriginalParamTypes(originalParamTypes);
+      newMethod.setOriginalTypes(x.getOriginalReturnType(), originalParamTypes);
 
       // Move the body of the instance method to the static method
       JAbstractMethodBody movedBody = x.getBody();
@@ -230,6 +230,9 @@ public class MakeCallsStatic {
    */
   private class FindStaticDispatchSitesVisitor extends JVisitor {
 
+    private JMethod currentMethod;
+    private ControlFlowAnalyzer initiallyLive;
+
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
       JMethod method = x.getTarget();
@@ -259,9 +262,36 @@ public class MakeCallsStatic {
         // The target method was already pruned (TypeTightener will fix this).
         return;
       }
+      
+      if (initiallyLive.getLiveFieldsAndMethods().contains(currentMethod)
+          && !initiallyLive.getLiveFieldsAndMethods().contains(x.getTarget())) {
+        /*
+         * Don't devirtualize calls from initial code to non-initial code.
+         */
+        return;
+      }
 
       // Let's do it!
       toBeMadeStatic.add(method);
+    }
+    
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      currentMethod = x;
+      return true;
+    }
+    
+    @Override
+    public boolean visit(JProgram x, Context ctx) {
+      // TODO(spoon) factor out this computation of the initially live stuff to
+      // a method in CodeSplitter
+      initiallyLive = new ControlFlowAnalyzer(x);
+      for (JMethod entry : x.entryMethods.get(0)) {
+        initiallyLive.traverseFrom(entry);
+      }
+      initiallyLive.traverseFromClassLiteralFactories();
+
+      return true;
     }
   }
 
