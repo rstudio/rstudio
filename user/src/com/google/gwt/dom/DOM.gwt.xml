@@ -44,4 +44,9 @@
     <when-type-is class="com.google.gwt.dom.client.DOMImpl"/>
     <when-property-is name="user.agent" value="gecko"/>
   </replace-with>
+
+  <replace-with class="com.google.gwt.dom.client.StyleInjector.StyleInjectorImplIE">
+    <when-type-is class="com.google.gwt.dom.client.StyleInjector.StyleInjectorImpl"/>
+    <when-property-is name="user.agent" value="ie6"/>
+  </replace-with>
 </module>

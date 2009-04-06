@@ -21,6 +21,7 @@ import com.google.gwt.dom.client.FormTests;
 import com.google.gwt.dom.client.MapTests;
 import com.google.gwt.dom.client.NodeTest;
 import com.google.gwt.dom.client.SelectTests;
+import com.google.gwt.dom.client.StyleInjectorTest;
 import com.google.gwt.dom.client.TableTests;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -40,6 +41,7 @@ public class DOMSuite {
     suite.addTestSuite(FormTests.class);
     suite.addTestSuite(MapTests.class);
     suite.addTestSuite(SelectTests.class);
+    suite.addTestSuite(StyleInjectorTest.class);
     suite.addTestSuite(TableTests.class);
 
     return suite;
