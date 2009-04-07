@@ -27,6 +27,7 @@ import org.mortbay.jetty.Request;
 import org.mortbay.jetty.RequestLog;
 import org.mortbay.jetty.Response;
 import org.mortbay.jetty.Server;
+import org.mortbay.jetty.HttpFields.Field;
 import org.mortbay.jetty.handler.RequestLogHandler;
 import org.mortbay.jetty.nio.SelectChannelConnector;
 import org.mortbay.jetty.webapp.WebAppClassLoader;
@@ -37,7 +38,7 @@ import org.mortbay.log.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Enumeration;
+import java.util.Iterator;
 
 /**
  * A {@link ServletContainerLauncher} for an embedded Jetty server.
@@ -87,17 +88,29 @@ public class JettyLauncher extends ServletContainerLauncher {
       if (response.getContentCount() > 0) {
         bytesString = " " + response.getContentCount() + " bytes";
       }
-      TreeLogger branch = logger.branch(logStatus, String.valueOf(status)
-          + " - " + request.getMethod() + ' ' + request.getUri() + " ("
-          + userString + request.getRemoteHost() + ')' + bytesString);
-      TreeLogger headers = branch.branch(logHeaders, "Request headers");
-      Enumeration<String> headerNames = request.getHeaderNames();
-      while (headerNames.hasMoreElements()) {
-        String hdr = headerNames.nextElement();
-        String hdrVal = request.getHeader(hdr);
-        headers.log(logHeaders, hdr + ": " + hdrVal);
+      if (logger.isLoggable(logStatus)) {
+        TreeLogger branch = logger.branch(logStatus, String.valueOf(status)
+            + " - " + request.getMethod() + ' ' + request.getUri() + " ("
+            + userString + request.getRemoteHost() + ')' + bytesString);
+        if (branch.isLoggable(logHeaders)) {
+          // Request headers
+          TreeLogger headers = branch.branch(logHeaders, "Request headers");
+          Iterator<Field> headerFields = request.getConnection().getRequestFields().getFields();
+          while (headerFields.hasNext()) {
+            Field headerField = headerFields.next();
+            headers.log(logHeaders, headerField.getName() + ": "
+                + headerField.getValue());
+          }
+          // Response headers
+          headers = branch.branch(logHeaders, "Response headers");
+          headerFields = response.getHttpFields().getFields();
+          while (headerFields.hasNext()) {
+            Field headerField = headerFields.next();
+            headers.log(logHeaders, headerField.getName() + ": "
+                + headerField.getValue());
+          }
+        }
       }
-      // TODO(jat): add response headers
     }
   }
 
@@ -237,8 +250,8 @@ public class JettyLauncher extends ServletContainerLauncher {
    * A {@link WebAppContext} tailored to GWT hosted mode. Features hot-reload
    * with a new {@link WebAppClassLoader} to pick up disk changes. The default
    * Jetty {@code WebAppContext} will create new instances of servlets, but it
-   * will not create a brand new {@link ClassLoader}. By creating a new
-   * {@code ClassLoader} each time, we re-read updated classes from disk.
+   * will not create a brand new {@link ClassLoader}. By creating a new {@code
+   * ClassLoader} each time, we re-read updated classes from disk.
    * 
    * Also provides special class filtering to isolate the web app from the GWT
    * hosting environment.
