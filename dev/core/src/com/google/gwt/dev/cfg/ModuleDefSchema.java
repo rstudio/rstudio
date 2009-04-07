@@ -791,8 +791,8 @@ public class ModuleDefSchema extends Schema {
         if (concreteType.isInstance(prop)) {
           return prop;
         }
-        logger.log(TreeLogger.ERROR, "The specified property '" + attr
-            + "' is not of the correct type; found '"
+        logger.log(TreeLogger.ERROR, "The specified property '"
+            + prop.getName() + "' is not of the correct type; found '"
             + prop.getClass().getSimpleName() + "' expecting '"
             + concreteType.getSimpleName() + "'");
       } else {
