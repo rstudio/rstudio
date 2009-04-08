@@ -40,34 +40,42 @@ public abstract class CorrelationFactory implements Serializable {
    * A dummy factory that always returns <code>null</code>.
    */
   public static final class DummyCorrelationFactory extends CorrelationFactory {
+    @Override
     public Correlation by(JField field) {
       return null;
     }
 
+    @Override
     public Correlation by(JMethod method) {
       return null;
     }
 
+    @Override
     public Correlation by(JReferenceType type) {
       return null;
     }
 
+    @Override
     public Correlation by(JsFunction function) {
       return null;
     }
 
+    @Override
     public Correlation by(JsName name) {
       return null;
     }
 
+    @Override
     public Correlation by(JsName name, boolean isAlias) {
       return null;
     }
 
+    @Override
     public Correlation by(Literal type) {
       return null;
     }
 
+    @Override
     public Correlation by(SourceOrigin origin) {
       return null;
     }
@@ -113,6 +121,7 @@ public abstract class CorrelationFactory implements Serializable {
         sb.append(type.getJsniSignatureName());
       }
       sb.append(")");
+      sb.append(method.getOriginalReturnType().getJsniSignatureName());
       return sb.toString();
     }
 
@@ -123,6 +132,7 @@ public abstract class CorrelationFactory implements Serializable {
     private final Map<Object, Correlation> canonicalMap = Collections.synchronizedMap(new ReferenceMap(
         ReferenceMap.WEAK, ReferenceMap.WEAK));
 
+    @Override
     public Correlation by(JField field) {
       Correlation toReturn = canonicalMap.get(field);
       if (toReturn == null) {
@@ -133,6 +143,7 @@ public abstract class CorrelationFactory implements Serializable {
       return toReturn;
     }
 
+    @Override
     public Correlation by(JMethod method) {
       Correlation toReturn = canonicalMap.get(method);
       if (toReturn == null) {
@@ -143,6 +154,7 @@ public abstract class CorrelationFactory implements Serializable {
       return toReturn;
     }
 
+    @Override
     public Correlation by(JReferenceType type) {
       Correlation toReturn = canonicalMap.get(type);
       if (toReturn == null) {
@@ -152,6 +164,7 @@ public abstract class CorrelationFactory implements Serializable {
       return toReturn;
     }
 
+    @Override
     public Correlation by(JsFunction function) {
       Correlation toReturn = canonicalMap.get(function);
       if (toReturn == null) {
@@ -165,6 +178,7 @@ public abstract class CorrelationFactory implements Serializable {
     /**
      * Creates a JS_NAME Correlation.
      */
+    @Override
     public Correlation by(JsName name) {
       return by(name, false);
     }
@@ -173,6 +187,7 @@ public abstract class CorrelationFactory implements Serializable {
      * Creates either a JS_NAME or JS_ALIAS correlation, based on the value of
      * <code>isAlias</code>.
      */
+    @Override
     public Correlation by(JsName name, boolean isAlias) {
       Correlation toReturn = canonicalMap.get(name);
       if (toReturn == null) {
@@ -183,11 +198,13 @@ public abstract class CorrelationFactory implements Serializable {
       return toReturn;
     }
 
+    @Override
     public Correlation by(Literal type) {
       assert LITERAL_CORRELATIONS.containsKey(type);
       return LITERAL_CORRELATIONS.get(type);
     }
 
+    @Override
     public Correlation by(SourceOrigin origin) {
       Correlation toReturn = canonicalMap.get(origin);
       if (toReturn == null) {
