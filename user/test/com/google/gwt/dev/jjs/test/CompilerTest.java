@@ -27,7 +27,6 @@ import java.util.EventListener;
  */
 @SuppressWarnings("unused")
 public class CompilerTest extends GWTTestCase {
-
   interface MyMap {
     Object get(String key);
   }
@@ -169,6 +168,84 @@ public class CompilerTest extends GWTTestCase {
       if (should_be_true) {
         CompilerTest.sideEffectChecker++;
       }
+    }
+  }
+
+  /**
+   * Used in test {@link #testPrivateOverride()}.
+   */
+  private static class TpoChild extends TpoParent {
+    @Override
+    public int foo() {
+      return callSuper();
+    }
+
+    private int callSuper() {
+      return super.foo();
+    }
+  }
+
+  /**
+   * Used in test {@link #testPrivateOverride()}.
+   */
+  private static class TpoGrandparent {
+    public int foo() {
+      return 0;
+    }
+  }
+
+  /**
+   * Used in test {@link #testPrivateOverride()}.
+   */
+  private static class TpoJsniChild extends TpoJsniParent {
+    @Override
+    public native int foo() /*-{
+      return this.@com.google.gwt.dev.jjs.test.CompilerTest$TpoJsniChild::callSuper()();
+    }-*/;
+
+    private int callSuper() {
+      return super.foo();
+    }
+  }
+
+  /**
+   * Used in test {@link #testPrivateOverride()}.
+   */
+  private static class TpoJsniGrandparent {
+    public int foo() {
+      return 0;
+    }
+  }
+
+  /**
+   * Used in test {@link #testPrivateOverride()}.
+   */
+  private static class TpoJsniParent extends TpoJsniGrandparent {
+    @Override
+    public native int foo() /*-{
+      // This should call callSuper in TpoJsniParent, not the one
+      // in TpoJsniChild      
+      return this.@com.google.gwt.dev.jjs.test.CompilerTest$TpoJsniParent::callSuper()();
+    }-*/;
+
+    private int callSuper() {
+      return super.foo();
+    }
+  }
+
+  /**
+   * Used in test {@link #testPrivateOverride()}.
+   */
+  private static class TpoParent extends TpoGrandparent {
+    @Override
+    public int foo() {
+      // This should call the callSuper in TpoJsniParent, not the one
+      // in TpoJsniChild
+      return callSuper();
+    }
+
+    private int callSuper() {
+      return super.foo();
     }
   }
 
@@ -903,6 +980,16 @@ public class CompilerTest extends GWTTestCase {
 
   public void testOuterSuperThisRefs() {
     new B();
+  }
+
+  /**
+   * Test that calling a private instance method does not accidentally call
+   * another private method that appears to override it. Private methods don't
+   * truly override each other.
+   */
+  public void testPrivateOverride() {
+    assertEquals(0, new TpoChild().foo());
+    assertEquals(0, new TpoJsniChild().foo());
   }
 
   public void testReturnStatementInCtor() {

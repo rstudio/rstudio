@@ -1978,13 +1978,25 @@ public class GenerateJavaScriptAST {
   }
 
   String mangleNameForPolyImpl(JMethod x) {
-    String s = getNameString(x) + "__";
+    StringBuffer sb = new StringBuffer();
+    if (x.isPrivate() && !x.isStatic()) {
+      /*
+       * Private instance methods in different classes should not override each
+       * other, so they must have distinct polymorphic names. Therefore, add the
+       * class name to the mangled name.
+       */
+      sb.append("private$");
+      sb.append(getNameString(x.getEnclosingType()));
+      sb.append("$");
+    }
+    sb.append(getNameString(x));
+    sb.append("__");
     for (int i = 0; i < x.getOriginalParamTypes().size(); ++i) {
       JType type = x.getOriginalParamTypes().get(i);
-      s += type.getJavahSignatureName();
+      sb.append(type.getJavahSignatureName());
     }
-    s += x.getOriginalReturnType().getJavahSignatureName();
-    return s;
+    sb.append(x.getOriginalReturnType().getJavahSignatureName());
+    return sb.toString();
   }
 
   String mangleNameSpecialObfuscate(JField x) {
