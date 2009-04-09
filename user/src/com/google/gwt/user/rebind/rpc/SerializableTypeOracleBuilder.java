@@ -461,18 +461,8 @@ public class SerializableTypeOracleBuilder {
     }
 
     if (field.isFinal()) {
-      Type logLevel;
-      if (isManuallySerializable(field.getEnclosingType())) {
-        /*
-         * If the type has a custom serializer, assume the programmer knows
-         * best.
-         */
-        logLevel = TreeLogger.DEBUG;
-      } else {
-        logLevel = TreeLogger.WARN;
-      }
       logger.branch(suppressNonStaticFinalFieldWarnings ? TreeLogger.DEBUG
-          : logLevel, "Field '" + field.toString()
+          : TreeLogger.WARN, "Field '" + field.toString()
           + "' will not be serialized because it is final", null);
       return false;
     }

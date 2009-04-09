@@ -38,7 +38,6 @@ import com.google.gwt.dev.javac.MockCompilationUnit;
 import com.google.gwt.dev.javac.TypeOracleTestingUtils;
 import com.google.gwt.dev.javac.impl.JavaResourceBase;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
-import com.google.gwt.dev.util.UnitTestTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 import com.google.gwt.user.rebind.rpc.testcases.client.AbstractSerializableTypes;
 import com.google.gwt.user.rebind.rpc.testcases.client.ClassWithTypeParameterThatErasesToObject;
@@ -105,13 +104,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
   private static final int EXPOSURE_DIRECT = TypeParameterExposureComputer.EXPOSURE_DIRECT;
 
   private static final int EXPOSURE_NONE = TypeParameterExposureComputer.EXPOSURE_NONE;
-
-  private static void addAnnotation(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package java.lang.annotation;\n");
-    code.append("public interface Annotation { }\n");
-    units.add(createMockCompilationUnit("java.lang.annotation.Annotation", code));
-  }
 
   private static void addGwtTransient(Set<CompilationUnit> units) {
     StringBuffer code = new StringBuffer();
@@ -182,24 +174,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     units.add(new SourceFileCompilationUnit(JavaResourceBase.MAP));
   }
 
-  private static void addSerializationStreamReader(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package com.google.gwt.user.client.rpc;\n");
-    code.append("public class SerializationStreamReader { }\n");
-    units.add(createMockCompilationUnit(
-        "com.google.gwt.user.client.rpc.SerializationStreamReader", code));
-  }
-
-  private static void addSerializationStreamWriter(Set<CompilationUnit> units) {
-    StringBuffer code = new StringBuffer();
-    code.append("package com.google.gwt.user.client.rpc;\n");
-    code.append("public class SerializationStreamWriter { }\n");
-    units.add(createMockCompilationUnit(
-        "com.google.gwt.user.client.rpc.SerializationStreamWriter", code));
-  }
-
   private static void addStandardClasses(Set<CompilationUnit> units) {
-    addAnnotation(units);
     addGwtTransient(units);
     addJavaIoSerializable(units);
     addJavaLangObject(units);
@@ -333,6 +308,7 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
 
   public SerializableTypeOracleBuilderTest() throws UnableToCompleteException {
     TreeLogger logger = createLogger();
+
     moduleDef = ModuleDefLoader.createSyntheticModule(logger,
         "com.google.gwt.user.rebind.rpc.testcases.RebindRPCTestCases.JUnit",
         new String[] {
@@ -1428,63 +1404,6 @@ public class SerializableTypeOracleBuilderTest extends TestCase {
     SerializableTypeOracle sto = stob.build(logger);
     assertInstantiable(sto, a);
     assertNotInstantiableOrFieldSerializable(sto, b);
-  }
-
-  /**
-   * Make sure that when serializing a class that has a custom field serializer,
-   * the warning about final fields is disabled. See issue 2931.
-   */
-  public void testManualSerializerWithFinalField() throws NotFoundException,
-      UnableToCompleteException {
-    Set<CompilationUnit> units = new HashSet<CompilationUnit>();
-    addStandardClasses(units);
-    addSerializationStreamReader(units);
-    addSerializationStreamWriter(units);
-
-    {
-      StringBuffer code = new StringBuffer();
-      code.append("import java.io.Serializable;\n");
-      code.append("class Bar implements Serializable { }\n");
-      units.add(createMockCompilationUnit("Bar", code));
-    }
-    {
-      StringBuffer code = new StringBuffer();
-      code.append("import java.io.Serializable;\n");
-      code.append("class Foo {\n");
-      code.append(" final Bar bar = new Bar();\n");
-      code.append("}\n");
-      units.add(createMockCompilationUnit("Foo", code));
-    }
-    {
-      StringBuffer code = new StringBuffer();
-      code.append("import com.google.gwt.user.client.rpc.SerializationStreamReader;\n");
-      code.append("import com.google.gwt.user.client.rpc.SerializationStreamWriter;\n");
-      code.append("class Foo_CustomFieldSerializer {\n");
-      code.append("  public static void serialize(SerializationStreamWriter ssw, Foo instance) {\n");
-      code.append("  }\n");
-      code.append("\n");
-      code.append("  public static void deserialize(SerializationStreamReader ssr, Foo instance) {\n");
-      code.append("  }\n");
-      code.append("}\n");
-      units.add(createMockCompilationUnit("Foo_CustomFieldSerializer", code));
-    }
-
-    UnitTestTreeLogger.Builder treeLoggerBuilder = new UnitTestTreeLogger.Builder();
-    treeLoggerBuilder.setLowestLogLevel(TreeLogger.WARN);
-    // expect no output
-    UnitTestTreeLogger logger = treeLoggerBuilder.createLogger();
-
-    TypeOracle to = TypeOracleTestingUtils.buildTypeOracle(logger, units);
-
-    JClassType foo = to.getType("Foo");
-
-    SerializableTypeOracleBuilder stob = createSerializableTypeOracleBuilder(
-        logger, to);
-    stob.addRootType(logger, foo);
-    SerializableTypeOracle so = stob.build(logger);
-
-    logger.assertCorrectLogEntries();
-    assertSerializableTypes(so, foo);
   }
 
   /**
