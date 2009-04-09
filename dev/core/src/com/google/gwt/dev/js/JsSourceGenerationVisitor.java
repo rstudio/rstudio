@@ -45,7 +45,7 @@ public class JsSourceGenerationVisitor extends JsToStringGenerationVisitor {
 
   @Override
   public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
-    printJsBlockOptionalTruncate(x, false);
+    printJsBlock(x, false, true);
     return false;
   }
 

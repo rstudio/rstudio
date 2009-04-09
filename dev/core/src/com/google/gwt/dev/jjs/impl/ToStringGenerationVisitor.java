@@ -88,6 +88,7 @@ import com.google.gwt.dev.jjs.ast.js.JsniMethodRef;
 import com.google.gwt.dev.jjs.ast.js.JsonArray;
 import com.google.gwt.dev.jjs.ast.js.JsonObject;
 import com.google.gwt.dev.jjs.ast.js.JsonObject.JsonPropInit;
+import com.google.gwt.dev.js.JsSourceGenerationVisitor;
 import com.google.gwt.dev.util.TextOutput;
 
 import java.util.Iterator;
@@ -739,10 +740,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   }
 
   @Override
-  public boolean visit(JsniMethodBody x, Context ctx) {
+  public boolean visit(final JsniMethodBody x, Context ctx) {
     print(" /*-");
-    String source = x.getFunc().getBody().toSource();
-    print(source.trim());
+    new JsSourceGenerationVisitor(this) {
+      {
+        printJsBlock(x.getFunc().getBody(), false, false);
+      }
+    };
     print("-*/");
     semi();
     return false;

@@ -179,7 +179,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   @Override
   public boolean visit(JsBlock x, JsContext<JsStatement> ctx) {
-    printJsBlockOptionalTruncate(x, true);
+    printJsBlock(x, true, true);
     return false;
   }
 
@@ -798,7 +798,7 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     p.newlineOpt();
   }
 
-  protected void printJsBlockOptionalTruncate(JsBlock x, boolean truncate) {
+  protected void printJsBlock(JsBlock x, boolean truncate, boolean finalNewline) {
     boolean needBraces = !x.isGlobalBlock();
 
     if (needBraces) {
@@ -849,9 +849,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     }
 
     if (needBraces) {
-      // Close braces.
-      //
-      _blockClose();
+      // _blockClose() modified
+      p.indentOut();
+      p.print('}');
+      if (finalNewline) {
+        _newlineOpt();
+      }
     }
     needSemi = false;
   }

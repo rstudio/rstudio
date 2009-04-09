@@ -20,6 +20,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.util.TextOutput;
@@ -48,10 +49,6 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
 
   @Override
   public boolean visit(JClassType x, Context ctx) {
-    // All classes are deemed "static" so the monolithic compile results can be
-    // copy/pasted into a single enclosing class.
-    print(CHARS_STATIC);
-
     super.visit(x, ctx);
 
     openBlock();
@@ -64,6 +61,13 @@ public class SourceGenerationVisitor extends ToStringGenerationVisitor {
     }
     for (int i = 0; i < x.methods.size(); ++i) {
       JMethod it = x.methods.get(i);
+      // Suppress empty clinit.
+      if (i == 0) {
+        JMethodBody body = (JMethodBody) it.getBody();
+        if (body.getBlock().getStatements().isEmpty()) {
+          continue;
+        }
+      }
       accept(it);
       newline();
       newline();
