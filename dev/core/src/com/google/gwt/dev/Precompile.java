@@ -497,6 +497,8 @@ public class Precompile {
   }
 
   public boolean run(TreeLogger logger) throws UnableToCompleteException {
+    boolean originalCompilationStateRetained = options.isCompilationStateRetained();
+
     for (String moduleName : options.getModuleNames()) {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
       Util.recursiveDelete(compilerWorkDir, true);
@@ -553,6 +555,18 @@ public class Precompile {
            */
           if (potentialFirstPerm != 0) {
             module.getCompilationState(branch).refresh(branch);
+          }
+
+          if (potentialFirstPerm + numPermsToPrecompile < potentialPermutations) {
+            /*
+             * On all iterations but the last, force retainCompilationState to
+             * be true. Otherwise, state will be discarded that is needed on
+             * later iterations.
+             */
+            options.setCompilationStateRetained(true);
+          } else {
+            // On the last iteration, use whatever the original setting was
+            options.setCompilationStateRetained(originalCompilationStateRetained);
           }
 
           Precompilation precompilation = precompile(branch, options, module,
