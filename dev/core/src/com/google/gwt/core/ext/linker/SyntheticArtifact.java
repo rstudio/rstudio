@@ -18,52 +18,37 @@ package com.google.gwt.core.ext.linker;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.dev.util.Util;
+import com.google.gwt.dev.util.DiskCache;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 /**
  * Artifacts created by {@link AbstractLinker}.
  */
 public class SyntheticArtifact extends EmittedArtifact {
-  private final File backing;
+  private static final DiskCache diskCache = new DiskCache();
+
   private final long lastModified;
+  private final long token;
 
   SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType,
-      String partialPath, byte[] data) throws UnableToCompleteException {
+      String partialPath, byte[] data) {
     this(logger, linkerType, partialPath, data, System.currentTimeMillis());
   }
 
-  SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType, String partialPath,
-      byte[] data, long lastModified) throws UnableToCompleteException {
+  SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType,
+      String partialPath, byte[] data, long lastModified) {
     super(linkerType, partialPath);
     assert data != null;
-
-    try {
-      backing = File.createTempFile("synthetic", ".artifact");
-      backing.deleteOnExit();
-      Util.writeBytesToFile(TreeLogger.NULL, backing, data);
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to write backing file for artifact "
-          + partialPath, e);
-      throw new UnableToCompleteException();
-    }
     this.lastModified = lastModified;
+    this.token = diskCache.writeByteArray(data);
   }
 
   @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
-    try {
-      return new FileInputStream(backing);
-    } catch (IOException e) {
-      logger.log(TreeLogger.ERROR, "Unable to read backing file for artifact "
-          + getPartialPath(), e);
-      throw new UnableToCompleteException();
-    }
+    return new ByteArrayInputStream(diskCache.readByteArray(token));
   }
 
   @Override

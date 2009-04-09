@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.util;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -97,6 +99,17 @@ public class DiskCache {
     }
   }
 
+  public <T> T readObject(long token, Class<T> type) {
+    try {
+      byte[] bytes = readByteArray(token);
+      ByteArrayInputStream in = new ByteArrayInputStream(bytes);
+      return Util.readStreamAsObject(in, type);
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(
+          "Unexpected exception deserializing from disk cache", e);
+    }
+  }
+
   /**
    * Read a String from disk.
    * 
@@ -123,6 +136,17 @@ public class DiskCache {
       return position;
     } catch (IOException e) {
       throw new RuntimeException("Unable to write to byte cache", e);
+    }
+  }
+
+  public long writeObject(Object object) {
+    try {
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      Util.writeObjectToStream(out, object);
+      return writeByteArray(out.toByteArray());
+    } catch (IOException e) {
+      throw new RuntimeException("Unexpected IOException on in-memory stream",
+          e);
     }
   }
 

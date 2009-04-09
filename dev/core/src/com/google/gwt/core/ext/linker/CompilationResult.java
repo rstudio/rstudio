@@ -65,11 +65,7 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
 
   @Override
   public final int hashCode() {
-    int hash = 17;
-    for (String js : getJavaScript()) {
-      hash = hash * 37 + js.hashCode();
-    }
-    return hash;
+    return getStrongName().hashCode();
   }
 
   @Override

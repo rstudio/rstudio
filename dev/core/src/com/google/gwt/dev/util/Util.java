@@ -658,7 +658,7 @@ public final class Util {
     }
   }
 
-  public static <T extends Serializable> T readStreamAsObject(
+  public static <T> T readStreamAsObject(
       InputStream inputStream, Class<T> type) throws ClassNotFoundException {
     ObjectInputStream objectInputStream = null;
     try {
@@ -1087,7 +1087,7 @@ public final class Util {
    * Serializes an object and writes it to a file.
    */
   public static void writeObjectAsFile(TreeLogger logger, File file,
-      Serializable... objects) throws UnableToCompleteException {
+      Object... objects) throws UnableToCompleteException {
     FileOutputStream stream = null;
     try {
       file.getParentFile().mkdirs();
@@ -1105,11 +1105,11 @@ public final class Util {
   /**
    * Serializes an object and writes it to a stream.
    */
-  public static void writeObjectToStream(OutputStream stream,
-      Serializable... objects) throws IOException {
+  public static void writeObjectToStream(OutputStream stream, Object... objects)
+      throws IOException {
     ObjectOutputStream objectStream = null;
     objectStream = new ObjectOutputStream(stream);
-    for (Serializable object : objects) {
+    for (Object object : objects) {
       objectStream.writeObject(object);
     }
     objectStream.flush();

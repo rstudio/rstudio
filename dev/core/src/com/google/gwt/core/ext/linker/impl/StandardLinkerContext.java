@@ -269,10 +269,13 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       FileBackedObject<PermutationResult> resultFile)
       throws UnableToCompleteException {
     PermutationResult permutationResult = resultFile.newInstance(logger);
-    String strongName = Util.computeStrongName(Util.getBytes(permutationResult.getJs()));
+
+    String[] js = permutationResult.getJs();
+    String strongName = Util.computeStrongName(Util.getBytes(js));
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
-      result = new StandardCompilationResult(null, strongName, resultFile);
+      result = new StandardCompilationResult(strongName, js,
+          permutationResult.getSymbolMap());
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
 

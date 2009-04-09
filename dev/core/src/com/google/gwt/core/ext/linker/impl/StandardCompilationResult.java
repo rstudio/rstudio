@@ -15,16 +15,12 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationResult;
 import com.google.gwt.core.ext.linker.SelectionProperty;
 import com.google.gwt.core.ext.linker.SymbolData;
-import com.google.gwt.dev.PermutationResult;
-import com.google.gwt.dev.util.FileBackedObject;
+import com.google.gwt.dev.util.DiskCache;
 
 import java.io.Serializable;
-import java.lang.ref.SoftReference;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -71,22 +67,23 @@ public class StandardCompilationResult extends CompilationResult {
    */
   public static final Comparator<SortedMap<SelectionProperty, String>> MAP_COMPARATOR = new MapComparator();
 
-  private transient SoftReference<String[]> js;
+  private static final DiskCache diskCache = new DiskCache();
 
-  private final FileBackedObject<PermutationResult> resultFile;
-
-  private transient SoftReference<SortedMap<SymbolData, String>> symbolMap;
+  private final long jsToken;
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
+
   private final String strongName;
 
-  public StandardCompilationResult(String[] js, String strongName,
-      FileBackedObject<PermutationResult> resultFile) {
+  private final long symbolMapToken;
+
+  public StandardCompilationResult(String strongName, String[] js,
+      SortedMap<SymbolData, String> symbolMap) {
     super(StandardLinkerContext.class);
-    this.js = new SoftReference<String[]>(js);
     this.strongName = strongName;
-    this.resultFile = resultFile;
+    jsToken = diskCache.writeObject(js);
+    symbolMapToken = diskCache.writeObject(symbolMap);
   }
 
   /**
@@ -102,18 +99,7 @@ public class StandardCompilationResult extends CompilationResult {
 
   @Override
   public String[] getJavaScript() {
-    String[] toReturn = null;
-    if (js != null) {
-      toReturn = js.get();
-    }
-
-    if (toReturn == null) {
-      PermutationResult result = loadPermutationResult();
-      toReturn = result.getJs();
-      js = new SoftReference<String[]>(toReturn);
-    }
-
-    return toReturn;
+    return diskCache.readObject(jsToken, String[].class);
   }
 
   @Override
@@ -127,27 +113,8 @@ public class StandardCompilationResult extends CompilationResult {
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public SortedMap<SymbolData, String> getSymbolMap() {
-    SortedMap<SymbolData, String> toReturn = null;
-    if (symbolMap != null) {
-      toReturn = symbolMap.get();
-    }
-
-    if (toReturn == null) {
-      PermutationResult result = loadPermutationResult();
-      toReturn = result.getSymbolMap();
-      symbolMap = new SoftReference<SortedMap<SymbolData, String>>(toReturn);
-    }
-
-    return toReturn;
-  }
-
-  private PermutationResult loadPermutationResult() {
-    try {
-      return resultFile.newInstance(TreeLogger.NULL);
-    } catch (UnableToCompleteException e) {
-      throw new RuntimeException(
-          "Unexpectedly unable to read PermutationResult");
-    }
+    return diskCache.readObject(symbolMapToken, SortedMap.class);
   }
 }
