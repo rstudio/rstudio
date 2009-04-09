@@ -261,7 +261,7 @@ public class MakeCallsStatic {
         // The target method was already pruned (TypeTightener will fix this).
         return;
       }
-      
+
       // Let's do it!
       toBeMadeStatic.add(method);
     }
@@ -273,6 +273,8 @@ public class MakeCallsStatic {
    * method instead.
    */
   private class RewriteCallSites extends JModVisitor {
+    private boolean currentMethodIsInitiallyLive;
+    private ControlFlowAnalyzer initiallyLive;
 
     /*
      * In cases where callers are directly referencing (effectively) final
@@ -287,7 +289,30 @@ public class MakeCallsStatic {
         return;
       }
 
+      if (currentMethodIsInitiallyLive
+          && !initiallyLive.getLiveFieldsAndMethods().contains(x.getTarget())) {
+        /*
+         * Don't devirtualize calls from initial code to non-initial code.
+         * TODO(spoon): similar prevention when the callee is exclusive to some
+         * split point and the caller is not.
+         */
+        return;
+      }
+
       ctx.replaceMe(makeStaticCall(x, newMethod));
+    }
+
+    @Override
+    public boolean visit(JMethod x, Context ctx) {
+      currentMethodIsInitiallyLive = initiallyLive.getLiveFieldsAndMethods().contains(
+          x);
+      return true;
+    }
+
+    @Override
+    public boolean visit(JProgram x, Context ctx) {
+      initiallyLive = CodeSplitter.computeInitiallyLive(x);
+      return true;
     }
   }
 

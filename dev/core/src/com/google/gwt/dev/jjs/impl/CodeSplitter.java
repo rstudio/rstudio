@@ -54,8 +54,8 @@ import java.util.concurrent.ArrayBlockingQueue;
  * Divides the code in a {@link JsProgram} into multiple fragments. The initial
  * fragment is sufficient to run all of the program's functionality except for
  * anything called in a callback supplied to
- * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback) GWT.runAsync()}.
- * The remaining code should be downloadable via
+ * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)
+ * GWT.runAsync()}. The remaining code should be downloadable via
  * {@link com.google.gwt.core.client.AsyncFragmentLoader#inject(int)}.
  * </p>
  * 
@@ -68,9 +68,9 @@ import java.util.concurrent.ArrayBlockingQueue;
  * </p>
  * 
  * <ul>
- * <li>a secondary base fragment, which is downloaded if this split point is
- * the first one reached. It contains enough code to continue running as soon as
- * it downloads.
+ * <li>a secondary base fragment, which is downloaded if this split point is the
+ * first one reached. It contains enough code to continue running as soon as it
+ * downloads.
  * <li>an exclusively live fragment, which is downloaded if this split point is
  * reached but is not the first one. It includes only that code that is
  * exclusively needed by this split point.
@@ -217,6 +217,16 @@ public class CodeSplitter {
    */
   private static String PROP_LOG_FRAGMENT_MAP = "gwt.jjs.logFragmentMap";
 
+  /**
+   * Compute the set of initially live code for this program. Such code must be
+   * included in the initial download of the program.
+   */
+  public static ControlFlowAnalyzer computeInitiallyLive(JProgram jprogram) {
+    ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(jprogram);
+    traverseEntry(jprogram, cfa, 0);
+    return cfa;
+  }
+
   public static void exec(TreeLogger logger, JProgram jprogram,
       JsProgram jsprogram, JavaToJavaScriptMap map) {
     if (jprogram.entryMethods.size() == 1) {
@@ -276,6 +286,25 @@ public class CodeSplitter {
     return (value == null) ? 0 : value;
   }
 
+  /**
+   * Traverse all code in the program that is reachable via split point
+   * <code>splitPoint</code>.
+   */
+  private static void traverseEntry(JProgram jprogram, ControlFlowAnalyzer cfa,
+      int splitPoint) {
+    for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
+      cfa.traverseFrom(entryMethod);
+    }
+    if (splitPoint == 0) {
+      /*
+       * Include class literal factories for simplicity. It is possible to move
+       * them out, if they are only needed by one fragment, but they are tiny,
+       * so it does not seem worth the complexity in the compiler.
+       */
+      cfa.traverseFromClassLiteralFactories();
+    }
+  }
+
   private static <T> Set<T> union(Set<? extends T> set1, Set<? extends T> set2) {
     Set<T> union = new HashSet<T>();
     union.addAll(set1);
@@ -327,8 +356,7 @@ public class CodeSplitter {
     fieldToLiteralOfClass = buildFieldToClassLiteralMap(jprogram);
     fragmentExtractor = new FragmentExtractor(jprogram, jsprogram, map);
 
-    initiallyLive = new ControlFlowAnalyzer(jprogram);
-    traverseEntry(initiallyLive, 0);
+    initiallyLive = computeInitiallyLive(jprogram);
 
     methodsInJavaScript = fragmentExtractor.findAllMethodsInJavaScript();
   }
@@ -461,8 +489,8 @@ public class CodeSplitter {
   /**
    * <p>
    * Patch up the fragment map to satisfy load-order dependencies, as described
-   * in the comment of {@link LivenessPredicate}. Load-order dependencies can
-   * be violated when an atom is mapped to 0 as a leftover, but it has some
+   * in the comment of {@link LivenessPredicate}. Load-order dependencies can be
+   * violated when an atom is mapped to 0 as a leftover, but it has some
    * load-order dependency on an atom that was put in an exclusive fragment.
    * </p>
    * 
@@ -665,22 +693,7 @@ public class CodeSplitter {
     }
   }
 
-  /**
-   * Traverse all code in the program that is reachable via fragment
-   * <code>frag</code>. This does not call
-   * {@link ControlFlowAnalyzer#finishTraversal()}.
-   */
   private void traverseEntry(ControlFlowAnalyzer cfa, int splitPoint) {
-    for (JMethod entryMethod : jprogram.entryMethods.get(splitPoint)) {
-      cfa.traverseFrom(entryMethod);
-    }
-    if (splitPoint == 0) {
-      /*
-       * Include class literal factories for simplicity. It is possible to move
-       * them out, if they are only needed by one fragment, but they are tiny,
-       * so it does not seem worth the complexity in the compiler.
-       */
-      cfa.traverseFromClassLiteralFactories();
-    }
+    traverseEntry(jprogram, cfa, splitPoint);
   }
 }
