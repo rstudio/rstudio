@@ -30,9 +30,8 @@ public class JEnumType extends JClassType {
 
   public final List<JEnumField> enumList = new ArrayList<JEnumField>();
 
-  public JEnumType(JProgram program, SourceInfo info, String name) {
-    super(program, info, name, false, false);
-    this.extnds = program.getTypeJavaLangEnum();
+  public JEnumType(SourceInfo info, String name) {
+    super(info, name, false, false);
   }
 
   @Override

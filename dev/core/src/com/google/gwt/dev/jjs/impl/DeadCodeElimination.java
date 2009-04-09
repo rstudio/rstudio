@@ -32,7 +32,6 @@ import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
-import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JForStatement;
 import com.google.gwt.dev.jjs.ast.JIfStatement;
@@ -318,7 +317,7 @@ public class DeadCodeElimination {
        */
       // We can inline the constant, but we might also need to evaluate an
       // instance and run a clinit.
-      JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
+      JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
 
       JExpression instance = x.getInstance();
       if (instance != null) {
@@ -348,7 +347,7 @@ public class DeadCodeElimination {
 
         // If false, replace the for statement with its initializers
         if (!booleanLiteral.getValue()) {
-          JBlock block = new JBlock(program, x.getSourceInfo());
+          JBlock block = new JBlock(x.getSourceInfo());
           block.addStmts(x.getInitializers());
           ctx.replaceMe(block);
         }
@@ -403,7 +402,7 @@ public class DeadCodeElimination {
         tryOptimizeStringCall(x, ctx, target);
       } else if (JProgram.isClinit(target)) {
         // Eliminate the call if the target is now empty.
-        if (!program.typeOracle.hasClinit(targetType)) {
+        if (!targetType.hasClinit()) {
           ctx.replaceMe(program.getLiteralNull());
         }
       }
@@ -463,8 +462,8 @@ public class DeadCodeElimination {
         lvalues.remove(x.getArg());
       }
       if (ignoringExpressionOutput.contains(x)) {
-        JPrefixOperation newOp = new JPrefixOperation(program,
-            x.getSourceInfo(), x.getOp(), x.getArg());
+        JPrefixOperation newOp = new JPrefixOperation(x.getSourceInfo(),
+            x.getOp(), x.getArg());
         ctx.replaceMe(newOp);
       }
     }
@@ -1176,19 +1175,12 @@ public class DeadCodeElimination {
     }
 
     private JMethodCall maybeCreateClinitCall(JFieldRef x) {
-      JMethodCall call;
-      JField field = x.getField();
-      if (field.isStatic()
-          && !field.isCompileTimeConstant()
-          && program.typeOracle.checkClinit(currentClass,
-              field.getEnclosingType())) {
-        JMethod clinit = field.getEnclosingType().methods.get(0);
+      if (x.hasClinit()) {
+        JMethod clinit = x.getField().getEnclosingType().methods.get(0);
         assert (JProgram.isClinit(clinit));
-        call = new JMethodCall(program, x.getSourceInfo(), null, clinit);
-      } else {
-        call = null;
+        return new JMethodCall(x.getSourceInfo(), null, clinit);
       }
-      return call;
+      return null;
     }
 
     private int numRemovableExpressions(JMultiExpression x) {
@@ -1264,7 +1256,7 @@ public class DeadCodeElimination {
         ctx.removeMe();
       } else {
         // empty block statement
-        ctx.replaceMe(new JBlock(program, stmt.getSourceInfo()));
+        ctx.replaceMe(new JBlock(stmt.getSourceInfo()));
       }
     }
 
@@ -1350,8 +1342,8 @@ public class DeadCodeElimination {
       if (bool) {
         ctx.replaceMe(exp);
       } else {
-        ctx.replaceMe(new JPrefixOperation(program, exp.getSourceInfo(),
-            JUnaryOperator.NOT, exp));
+        ctx.replaceMe(new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NOT,
+            exp));
       }
     }
 
@@ -1456,8 +1448,8 @@ public class DeadCodeElimination {
       if (original != null) {
         return original;
       }
-      return new JPrefixOperation(program, exp.getSourceInfo(),
-          JUnaryOperator.NEG, exp);
+      return new JPrefixOperation(exp.getSourceInfo(), JUnaryOperator.NEG,
+          exp);
     }
 
     private boolean simplifySub(JExpression lhs, JExpression rhs, Context ctx,
@@ -1475,8 +1467,8 @@ public class DeadCodeElimination {
 
     private void simplifyXor(JExpression lhs, JBooleanLiteral rhs, Context ctx) {
       if (rhs.getValue()) {
-        ctx.replaceMe(new JPrefixOperation(program, lhs.getSourceInfo(),
-            JUnaryOperator.NOT, lhs));
+        ctx.replaceMe(new JPrefixOperation(lhs.getSourceInfo(), JUnaryOperator.NOT,
+            lhs));
       } else {
         ctx.replaceMe(lhs);
       }
@@ -1677,17 +1669,17 @@ public class DeadCodeElimination {
 
         if (caseStatement.getExpr() != null) {
           // Create an if statement equivalent to the single-case switch.
-          JBinaryOperation compareOperation = new JBinaryOperation(program,
-              x.getSourceInfo(), program.getTypePrimitiveBoolean(),
-              JBinaryOperator.EQ, x.getExpr(), caseStatement.getExpr());
-          JBlock block = new JBlock(program, x.getSourceInfo());
+          JBinaryOperation compareOperation = new JBinaryOperation(x.getSourceInfo(),
+              program.getTypePrimitiveBoolean(), JBinaryOperator.EQ,
+              x.getExpr(), caseStatement.getExpr());
+          JBlock block = new JBlock(x.getSourceInfo());
           block.addStmt(statement);
-          JIfStatement ifStatement = new JIfStatement(program,
-              x.getSourceInfo(), compareOperation, block, null);
+          JIfStatement ifStatement = new JIfStatement(x.getSourceInfo(),
+              compareOperation, block, null);
           ctx.replaceMe(ifStatement);
         } else {
           // All we have is a default case; convert to a JBlock.
-          JBlock block = new JBlock(program, x.getSourceInfo());
+          JBlock block = new JBlock(x.getSourceInfo());
           block.addStmt(x.getExpr().makeStatement());
           block.addStmt(statement);
           ctx.replaceMe(block);

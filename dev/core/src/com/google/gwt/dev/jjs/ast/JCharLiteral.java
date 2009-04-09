@@ -16,19 +16,24 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java character literal expression.
  */
 public class JCharLiteral extends JValueLiteral {
 
+  public static final JCharLiteral NULL = new JCharLiteral(
+      SourceOrigin.UNKNOWN, (char) 0);
+
+  public static JCharLiteral get(char value) {
+    return (value == 0) ? NULL : new JCharLiteral(SourceOrigin.UNKNOWN, value);
+  }
+
   private final char value;
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JCharLiteral(JProgram program, SourceInfo sourceInfo, char value) {
-    super(program, sourceInfo);
+  public JCharLiteral(SourceInfo sourceInfo, char value) {
+    super(sourceInfo);
     this.value = value;
   }
 
@@ -39,13 +44,13 @@ public class JCharLiteral extends JValueLiteral {
       return value;
     } else if (valueObj instanceof Number) {
       Number number = (Number) valueObj;
-      return program.getLiteralChar((char) number.intValue());
+      return new JCharLiteral(value.getSourceInfo(), (char) number.intValue());
     }
     return null;
   }
 
   public JType getType() {
-    return program.getTypePrimitiveChar();
+    return JPrimitiveType.CHAR;
   }
 
   public char getValue() {
@@ -62,4 +67,7 @@ public class JCharLiteral extends JValueLiteral {
     visitor.endVisit(this, ctx);
   }
 
+  private Object readResolve() {
+    return (value == 0) ? NULL : this;
+  }
 }

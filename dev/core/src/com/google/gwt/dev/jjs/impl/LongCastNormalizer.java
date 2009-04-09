@@ -92,8 +92,8 @@ public class LongCastNormalizer {
       JExpression newLhs = checkAndReplace(x.getLhs(), lhsType);
       JExpression newRhs = checkAndReplace(x.getRhs(), rhsType);
       if (newLhs != x.getLhs() || newRhs != x.getRhs()) {
-        JBinaryOperation binOp = new JBinaryOperation(program,
-            x.getSourceInfo(), resultType, x.getOp(), newLhs, newRhs);
+        JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(),
+            resultType, x.getOp(), newLhs, newRhs);
         ctx.replaceMe(binOp);
       }
     }
@@ -103,8 +103,8 @@ public class LongCastNormalizer {
       JExpression newThen = checkAndReplace(x.getThenExpr(), x.getType());
       JExpression newElse = checkAndReplace(x.getElseExpr(), x.getType());
       if (newThen != x.getThenExpr() || newElse != x.getElseExpr()) {
-        JConditional newCond = new JConditional(program, x.getSourceInfo(),
-            x.getType(), x.getIfTest(), newThen, newElse);
+        JConditional newCond = new JConditional(x.getSourceInfo(), x.getType(),
+            x.getIfTest(), newThen, newElse);
         ctx.replaceMe(newCond);
       }
     }
@@ -115,8 +115,8 @@ public class LongCastNormalizer {
       if (init != null) {
         init = checkAndReplace(init, x.getVariableRef().getType());
         if (init != x.getInitializer()) {
-          JDeclarationStatement newStmt = new JDeclarationStatement(program,
-              x.getSourceInfo(), x.getVariableRef(), init);
+          JDeclarationStatement newStmt = new JDeclarationStatement(x.getSourceInfo(),
+              x.getVariableRef(), init);
           ctx.replaceMe(newStmt);
         }
       }
@@ -163,8 +163,8 @@ public class LongCastNormalizer {
       if (expr != null) {
         JExpression newExpr = checkAndReplace(expr, currentMethod.getType());
         if (expr != newExpr) {
-          JReturnStatement newStmt = new JReturnStatement(program,
-              x.getSourceInfo(), newExpr);
+          JReturnStatement newStmt = new JReturnStatement(x.getSourceInfo(),
+              newExpr);
           ctx.replaceMe(newStmt);
         }
       }

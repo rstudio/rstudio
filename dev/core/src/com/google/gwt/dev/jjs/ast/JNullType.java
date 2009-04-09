@@ -17,19 +17,23 @@ package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java null reference type.
  */
 public class JNullType extends JReferenceType {
 
-  public JNullType(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo, "<null>");
+  public static final JNullType INSTANCE = new JNullType(SourceOrigin.UNKNOWN);
+
+  private JNullType(SourceInfo sourceInfo) {
+    super(sourceInfo, "<null>");
   }
 
   @Override
   public String getClassLiteralFactoryMethod() {
-    throw new InternalCompilerException("Cannot get class literal for null type");
+    throw new InternalCompilerException(
+        "Cannot get class literal for null type");
   }
 
   public String getJavahSignatureName() {
@@ -38,6 +42,11 @@ public class JNullType extends JReferenceType {
 
   public String getJsniSignatureName() {
     return "N";
+  }
+
+  @Override
+  public boolean hasClinit() {
+    return false;
   }
 
   public boolean isAbstract() {
@@ -54,4 +63,7 @@ public class JNullType extends JReferenceType {
     visitor.endVisit(this, ctx);
   }
 
+  private Object readResolve() {
+    return INSTANCE;
+  }
 }

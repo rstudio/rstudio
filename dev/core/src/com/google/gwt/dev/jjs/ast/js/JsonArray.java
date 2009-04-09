@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -33,14 +32,15 @@ public class JsonArray extends JExpression {
 
   public List<JExpression> exprs = new ArrayList<JExpression>();
 
-  public JsonArray(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo);
+  private final JClassType jsoType;
+
+  public JsonArray(SourceInfo sourceInfo, JClassType jsoType) {
+    super(sourceInfo);
+    this.jsoType = jsoType;
   }
 
   public JType getType() {
-    // If JavaScriptObject type is not available, just return the Object type
-    JClassType jsoType = program.getJavaScriptObject();
-    return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
+    return jsoType;
   }
 
   public boolean hasSideEffects() {

@@ -16,19 +16,24 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java integer literal expression.
  */
 public class JIntLiteral extends JValueLiteral {
 
+  public static final JIntLiteral ZERO = new JIntLiteral(SourceOrigin.UNKNOWN,
+      0);
+
+  public static JIntLiteral get(int value) {
+    return (value == 0) ? ZERO : new JIntLiteral(SourceOrigin.UNKNOWN, value);
+  }
+
   private final int value;
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JIntLiteral(JProgram program, SourceInfo sourceInfo, int value) {
-    super(program, sourceInfo);
+  public JIntLiteral(SourceInfo sourceInfo, int value) {
+    super(sourceInfo);
     this.value = value;
   }
 
@@ -37,16 +42,16 @@ public class JIntLiteral extends JValueLiteral {
     Object valueObj = value.getValueObj();
     if (valueObj instanceof Character) {
       Character character = (Character) valueObj;
-      return program.getLiteralInt(character.charValue());
+      return new JIntLiteral(value.getSourceInfo(), character.charValue());
     } else if (valueObj instanceof Number) {
       Number number = (Number) valueObj;
-      return program.getLiteralInt(number.intValue());
+      return new JIntLiteral(value.getSourceInfo(), number.intValue());
     }
     return null;
   }
 
   public JType getType() {
-    return program.getTypePrimitiveInt();
+    return JPrimitiveType.INT;
   }
 
   public int getValue() {
@@ -63,4 +68,7 @@ public class JIntLiteral extends JValueLiteral {
     visitor.endVisit(this, ctx);
   }
 
+  private Object readResolve() {
+    return (value == 0) ? ZERO : this;
+  }
 }

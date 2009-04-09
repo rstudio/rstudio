@@ -25,9 +25,8 @@ public class JWhileStatement extends JStatement {
   private JStatement body;
   private JExpression testExpr;
 
-  public JWhileStatement(JProgram program, SourceInfo info,
-      JExpression testExpr, JStatement body) {
-    super(program, info);
+  public JWhileStatement(SourceInfo info, JExpression testExpr, JStatement body) {
+    super(info);
     this.testExpr = testExpr;
     this.body = body;
   }

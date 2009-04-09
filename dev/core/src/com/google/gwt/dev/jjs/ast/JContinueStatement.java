@@ -24,8 +24,8 @@ public class JContinueStatement extends JStatement {
 
   private final JLabel label;
 
-  public JContinueStatement(JProgram program, SourceInfo info, JLabel label) {
-    super(program, info);
+  public JContinueStatement(SourceInfo info, JLabel label) {
+    super(info);
     this.label = label;
   }
 

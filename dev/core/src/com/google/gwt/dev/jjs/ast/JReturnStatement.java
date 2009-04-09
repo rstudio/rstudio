@@ -24,8 +24,8 @@ public class JReturnStatement extends JStatement {
 
   private JExpression expr;
 
-  public JReturnStatement(JProgram program, SourceInfo info, JExpression expr) {
-    super(program, info);
+  public JReturnStatement(SourceInfo info, JExpression expr) {
+    super(info);
     this.expr = expr;
   }
 

@@ -52,7 +52,7 @@ public class JClassLiteral extends JLiteral {
 
     assert method != null;
 
-    JMethodCall call = new JMethodCall(program, info, null, method);
+    JMethodCall call = new JMethodCall(info, null, method);
     call.addArgs(program.getLiteralString(info, getPackageName(typeName)),
         program.getLiteralString(info, getClassName(typeName)));
 
@@ -91,8 +91,8 @@ public class JClassLiteral extends JLiteral {
           throw new InternalCompilerException(
               "Could not find enum values() method");
         }
-        JsniMethodRef jsniMethodRef = new JsniMethodRef(program, info, null,
-            valuesMethod);
+        JsniMethodRef jsniMethodRef = new JsniMethodRef(info, null,
+            valuesMethod, program.getJavaScriptObject());
         call.addArg(jsniMethodRef);
       } else if (isEnumOrSubclass) {
         // A subclass of an enum class
@@ -142,9 +142,8 @@ public class JClassLiteral extends JLiteral {
   /**
    * This constructor is only used by {@link JProgram}.
    */
-  JClassLiteral(JProgram program, SourceInfo sourceInfo, JType type,
-      JField field) {
-    super(program, sourceInfo);
+  JClassLiteral(SourceInfo sourceInfo, JType type, JField field) {
+    super(sourceInfo);
     refType = type;
     this.field = field;
   }

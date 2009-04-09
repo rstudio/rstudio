@@ -45,7 +45,7 @@ public class JsniMethodBody extends JAbstractMethodBody {
   private Set<String> stringLiterals = Collections.emptySet();
 
   public JsniMethodBody(JProgram program, SourceInfo info) {
-    super(program, info);
+    super(info);
   }
 
   /**

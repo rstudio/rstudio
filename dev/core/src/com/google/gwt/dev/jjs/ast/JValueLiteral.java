@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public abstract class JValueLiteral extends JLiteral {
 
-  public JValueLiteral(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo);
+  public JValueLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public abstract Object getValueObj();

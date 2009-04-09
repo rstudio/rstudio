@@ -41,7 +41,7 @@ public class AssertionRemover {
         ctx.removeMe();
       } else {
         // empty block statement
-        ctx.replaceMe(new JBlock(program, stmt.getSourceInfo()));
+        ctx.replaceMe(new JBlock(stmt.getSourceInfo()));
       }
     }
   }

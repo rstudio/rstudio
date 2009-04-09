@@ -24,8 +24,8 @@ public class JBreakStatement extends JStatement {
 
   private final JLabel label;
 
-  public JBreakStatement(JProgram program, SourceInfo info, JLabel label) {
-    super(program, info);
+  public JBreakStatement(SourceInfo info, JLabel label) {
+    super(info);
     this.label = label;
   }
 
@@ -45,7 +45,7 @@ public class JBreakStatement extends JStatement {
   @Override
   public boolean unconditionalControlBreak() {
     // It's only an unconditional break if the label is null, because a label
-    // can label the break statement itself!  We could handle this case.
+    // can label the break statement itself! We could handle this case.
     return label == null;
   }
 }

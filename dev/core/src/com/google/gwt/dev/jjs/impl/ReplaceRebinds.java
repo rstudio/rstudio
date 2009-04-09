@@ -56,8 +56,8 @@ public class ReplaceRebinds {
         JClassLiteral classLiteral = (JClassLiteral) arg;
         JReferenceType sourceType = (JReferenceType) classLiteral.getRefType();
         List<JClassType> allRebindResults = getAllPossibleRebindResults(sourceType);
-        JGwtCreate gwtCreate = new JGwtCreate(program, x.getSourceInfo(),
-            sourceType, allRebindResults);
+        JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), sourceType,
+            allRebindResults, program.getTypeJavaLangObject());
         if (allRebindResults.size() == 1) {
           // Just replace with the instantiation expression.
           ctx.replaceMe(gwtCreate.getInstantiationExpressions().get(0));

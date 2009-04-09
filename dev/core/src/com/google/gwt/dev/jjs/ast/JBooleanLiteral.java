@@ -16,19 +16,27 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java boolean literal expression.
  */
 public class JBooleanLiteral extends JValueLiteral {
 
+  public static final JBooleanLiteral FALSE = new JBooleanLiteral(
+      SourceOrigin.UNKNOWN, false);
+
+  private static final JBooleanLiteral TRUE = new JBooleanLiteral(
+      SourceOrigin.UNKNOWN, true);
+
+  public static JBooleanLiteral get(boolean value) {
+    return value ? TRUE : FALSE;
+  }
+
   private final boolean value;
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JBooleanLiteral(JProgram program, SourceInfo sourceInfo, boolean value) {
-    super(program, sourceInfo);
+  private JBooleanLiteral(SourceInfo sourceInfo, boolean value) {
+    super(sourceInfo);
     this.value = value;
   }
 
@@ -38,7 +46,7 @@ public class JBooleanLiteral extends JValueLiteral {
   }
 
   public JType getType() {
-    return program.getTypePrimitiveBoolean();
+    return JPrimitiveType.BOOLEAN;
   }
 
   public boolean getValue() {
@@ -55,4 +63,7 @@ public class JBooleanLiteral extends JValueLiteral {
     visitor.endVisit(this, ctx);
   }
 
+  private Object readResolve() {
+    return get(value);
+  }
 }

@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JInterfaceType extends JReferenceType {
 
-  JInterfaceType(JProgram program, SourceInfo info, String name) {
-    super(program, info, name);
+  JInterfaceType(SourceInfo info, String name) {
+    super(info, name);
   }
 
   @Override

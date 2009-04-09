@@ -22,9 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JPrefixOperation extends JUnaryOperation {
 
-  public JPrefixOperation(JProgram program, SourceInfo info,
-      JUnaryOperator op, JExpression arg) {
-    super(program, info, op, arg);
+  public JPrefixOperation(SourceInfo info, JUnaryOperator op, JExpression arg) {
+    super(info, op, arg);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

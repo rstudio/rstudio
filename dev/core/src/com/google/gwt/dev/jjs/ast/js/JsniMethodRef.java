@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
-import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -30,13 +30,14 @@ import com.google.gwt.dev.jjs.ast.JVisitor;
 public class JsniMethodRef extends JMethodCall {
 
   private final String ident;
+  private final JClassType jsoType;
 
-  public JsniMethodRef(JProgram program, SourceInfo info, String ident,
-      JMethod method) {
+  public JsniMethodRef(SourceInfo info, String ident, JMethod method,
+      JClassType jsoType) {
     // Just use a null literal as the qualifier on a non-static method
-    super(program, info, method.isStatic() ? null : program.getLiteralNull(),
-        method);
+    super(info, method.isStatic() ? null : JNullLiteral.INSTANCE, method);
     this.ident = ident;
+    this.jsoType = jsoType;
   }
 
   public String getIdent() {
@@ -45,9 +46,7 @@ public class JsniMethodRef extends JMethodCall {
 
   @Override
   public JType getType() {
-    // If JavaScriptObject type is not available, just return the Object type
-    JClassType jsoType = program.getJavaScriptObject();
-    return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
+    return jsoType;
   }
 
   @Override

@@ -22,13 +22,13 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public abstract class JExpression extends JNode implements HasType {
 
-  public JExpression(JProgram program, SourceInfo info) {
-    super(program, info);
+  public JExpression(SourceInfo info) {
+    super(info);
   }
 
   public abstract boolean hasSideEffects();
 
   public JExpressionStatement makeStatement() {
-    return new JExpressionStatement(program, getSourceInfo(), this);
+    return new JExpressionStatement(getSourceInfo(), this);
   }
 }

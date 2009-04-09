@@ -16,19 +16,33 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java double literal expression.
  */
 public class JDoubleLiteral extends JValueLiteral {
 
-  private final double value;
+  public static final JDoubleLiteral ZERO = new JDoubleLiteral(
+      SourceOrigin.UNKNOWN, Double.longBitsToDouble(0L));
+
+  public static JDoubleLiteral get(double value) {
+    return isZero(value) ? ZERO : new JDoubleLiteral(SourceOrigin.UNKNOWN,
+        value);
+  }
 
   /**
-   * These are only supposed to be constructed by JProgram.
+   * Does this value match the exact 0 bit pattern? (This precludes
+   * canonicalizing -0.0 as 0.0).
    */
-  JDoubleLiteral(JProgram program, SourceInfo sourceInfo, double value) {
-    super(program, sourceInfo);
+  private static boolean isZero(double value) {
+    return Double.doubleToRawLongBits(value) == 0L;
+  }
+
+  private final double value;
+
+  public JDoubleLiteral(SourceInfo sourceInfo, double value) {
+    super(sourceInfo);
     this.value = value;
   }
 
@@ -37,16 +51,16 @@ public class JDoubleLiteral extends JValueLiteral {
     Object valueObj = value.getValueObj();
     if (valueObj instanceof Character) {
       Character character = (Character) valueObj;
-      return program.getLiteralDouble(character.charValue());
+      return new JDoubleLiteral(value.getSourceInfo(), character.charValue());
     } else if (valueObj instanceof Number) {
       Number number = (Number) valueObj;
-      return program.getLiteralDouble(number.doubleValue());
+      return new JDoubleLiteral(value.getSourceInfo(), number.doubleValue());
     }
     return null;
   }
 
   public JType getType() {
-    return program.getTypePrimitiveDouble();
+    return JPrimitiveType.DOUBLE;
   }
 
   public double getValue() {
@@ -61,5 +75,9 @@ public class JDoubleLiteral extends JValueLiteral {
     if (visitor.visit(this, ctx)) {
     }
     visitor.endVisit(this, ctx);
+  }
+
+  private Object readResolve() {
+    return isZero(value) ? ZERO : this;
   }
 }

@@ -28,9 +28,9 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
   private final String name;
   private JType type;
 
-  JVariable(JProgram program, SourceInfo info, String name, JType type,
-      boolean isFinal) {
-    super(program, info);
+  JVariable(SourceInfo info, String name, JType type, boolean isFinal) {
+    super(info);
+    assert type != null;
     this.name = name;
     this.type = type;
     this.isFinal = isFinal;
@@ -43,7 +43,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
     }
     return null;
   }
-  
+
   public JDeclarationStatement getDeclarationStatement() {
     return declStmt;
   }
@@ -76,6 +76,7 @@ public abstract class JVariable extends JNode implements CanBeSetFinal,
   }
 
   public void setType(JType newType) {
+    assert newType != null;
     type = newType;
   }
 

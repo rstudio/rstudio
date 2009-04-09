@@ -25,13 +25,54 @@ import java.util.List;
  */
 public abstract class JReferenceType extends JType implements CanBeAbstract {
 
-  public List<JField> fields = new ArrayList<JField>();
-  public List<JMethod> methods = new ArrayList<JMethod>();
   public JClassType extnds;
+  public List<JField> fields = new ArrayList<JField>();
   public List<JInterfaceType> implments = new ArrayList<JInterfaceType>();
+  public List<JMethod> methods = new ArrayList<JMethod>();
 
-  public JReferenceType(JProgram program, SourceInfo info, String name) {
-    super(program, info, name, program.getLiteralNull());
+  /**
+   * Tracks whether this class has a dynamic clinit. Defaults to true until
+   * shown otherwise.
+   */
+  private boolean hasClinit = true;
+
+  public JReferenceType(SourceInfo info, String name) {
+    super(info, name, JNullLiteral.INSTANCE);
+  }
+
+  /**
+   * Returns <code>true</code> if a static field access of
+   * <code>targetType</code> from within this type should generate a clinit
+   * call. This will be true in cases where <code>targetType</code> has a live
+   * clinit method which we cannot statically know has already run. We can
+   * statically know the clinit method has already run when:
+   * <ol>
+   * <li><code>this == targetType</code></li>
+   * <li><code>this</code> is a subclass of <code>targetType</code>,
+   * because my clinit would have already run this <code>targetType</code>'s
+   * clinit; see JLS 12.4</li>
+   * </ol>
+   */
+  public boolean checkClinitTo(JReferenceType targetType) {
+    if (this == targetType) {
+      // Call to self (very common case).
+      return false;
+    }
+    if (targetType == null || !targetType.hasClinit()) {
+      // Target has no clinit (common case).
+      return false;
+    }
+
+    // See if I'm a subclass.
+    JClassType checkType = this.extnds;
+    while (checkType != null) {
+      if (checkType == targetType) {
+        // I am a subclass.
+        return false;
+      }
+      checkType = checkType.extnds;
+    }
+    return true;
   }
 
   @Override
@@ -44,13 +85,26 @@ public abstract class JReferenceType extends JType implements CanBeAbstract {
     return "L" + name.replace('.', '/') + ';';
   }
 
-  public JProgram getProgram() {
-    return program;
-  }
-
   public String getShortName() {
     int dotpos = name.lastIndexOf('.');
     return name.substring(dotpos + 1);
   }
 
+  /**
+   * Returns <code>true</code> when this method's clinit must be run
+   * dynamically.
+   */
+  public boolean hasClinit() {
+    return hasClinit;
+  }
+
+  /**
+   * Called when this class's clinit is empty or can be run at the top level.
+   */
+  void removeClinit() {
+    assert hasClinit();
+    JMethod clinitMethod = methods.get(0);
+    assert JProgram.isClinit(clinitMethod);
+    hasClinit = false;
+  }
 }

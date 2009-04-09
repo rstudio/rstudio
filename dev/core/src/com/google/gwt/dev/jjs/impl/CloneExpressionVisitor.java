@@ -103,15 +103,15 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JArrayRef x, Context ctx) {
-    expression = new JArrayRef(program, x.getSourceInfo(),
+    expression = new JArrayRef(x.getSourceInfo(),
         cloneExpression(x.getInstance()), cloneExpression(x.getIndexExpr()));
     return false;
   }
 
   @Override
   public boolean visit(JBinaryOperation x, Context ctx) {
-    expression = new JBinaryOperation(program, x.getSourceInfo(), x.getType(),
-        x.getOp(), cloneExpression(x.getLhs()), cloneExpression(x.getRhs()));
+    expression = new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(),
+        cloneExpression(x.getLhs()), cloneExpression(x.getRhs()));
     return false;
   }
 
@@ -123,8 +123,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JCastOperation x, Context ctx) {
-    expression = new JCastOperation(program, x.getSourceInfo(),
-        x.getCastType(), cloneExpression(x.getExpr()));
+    expression = new JCastOperation(x.getSourceInfo(), x.getCastType(),
+        cloneExpression(x.getExpr()));
     return false;
   }
 
@@ -142,15 +142,15 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JClassSeed x, Context ctx) {
-    expression = new JClassSeed(program, x.getSourceInfo(), x.getRefType());
+    expression = new JClassSeed(x.getSourceInfo(), x.getRefType(),
+        program.getTypeJavaLangObject());
     return false;
   }
 
   @Override
   public boolean visit(JConditional x, Context ctx) {
-    expression = new JConditional(program, x.getSourceInfo(), x.getType(),
-        cloneExpression(x.getIfTest()), cloneExpression(x.getThenExpr()),
-        cloneExpression(x.getElseExpr()));
+    expression = new JConditional(x.getSourceInfo(), x.getType(), cloneExpression(x.getIfTest()),
+        cloneExpression(x.getThenExpr()), cloneExpression(x.getElseExpr()));
     return false;
   }
 
@@ -162,8 +162,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JFieldRef x, Context ctx) {
-    expression = new JFieldRef(program, x.getSourceInfo(),
-        cloneExpression(x.getInstance()), x.getField(), x.getEnclosingType());
+    expression = new JFieldRef(x.getSourceInfo(), cloneExpression(x.getInstance()),
+        x.getField(), x.getEnclosingType());
     return false;
   }
 
@@ -182,9 +182,8 @@ public class CloneExpressionVisitor extends JVisitor {
     }
 
     // Use the clone constructor.
-    JGwtCreate gwtCreate = new JGwtCreate(program, x.getSourceInfo(),
-        x.getSourceType(), x.getResultTypes(), x.getType(),
-        cloneExpressions(x.getInstantiationExpressions()));
+    JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), x.getSourceType(),
+        x.getResultTypes(), x.getType(), cloneExpressions(x.getInstantiationExpressions()));
 
     expression = gwtCreate;
     return false;
@@ -192,7 +191,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JInstanceOf x, Context ctx) {
-    expression = new JInstanceOf(program, x.getSourceInfo(), x.getTestType(),
+    expression = new JInstanceOf(x.getSourceInfo(), x.getTestType(),
         cloneExpression(x.getExpr()));
     return false;
   }
@@ -205,7 +204,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JLocalRef x, Context ctx) {
-    expression = new JLocalRef(program, x.getSourceInfo(), x.getLocal());
+    expression = new JLocalRef(x.getSourceInfo(), x.getLocal());
     return false;
   }
 
@@ -217,7 +216,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JMethodCall x, Context ctx) {
-    JMethodCall newMethodCall = new JMethodCall(program, x.getSourceInfo(),
+    JMethodCall newMethodCall = new JMethodCall(x.getSourceInfo(),
         cloneExpression(x.getInstance()), x.getTarget());
     if (!x.canBePolymorphic()) {
       newMethodCall.setCannotBePolymorphic();
@@ -231,7 +230,7 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JMultiExpression x, Context ctx) {
-    JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
+    JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
     multi.exprs.addAll(cloneExpressions(x.exprs));
     expression = multi;
     return false;
@@ -239,15 +238,14 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JNewArray x, Context ctx) {
-    expression = new JNewArray(program, x.getSourceInfo(), x.getArrayType(),
-        cloneExpressions(x.dims), cloneExpressions(x.initializers),
-        x.getClassLiterals());
+    expression = new JNewArray(x.getSourceInfo(), x.getArrayType(), cloneExpressions(x.dims),
+        cloneExpressions(x.initializers), x.getClassLiterals());
     return false;
   }
 
   @Override
   public boolean visit(JNewInstance x, Context ctx) {
-    expression = new JNewInstance(program, x.getSourceInfo(), x.getClassType());
+    expression = new JNewInstance(x.getSourceInfo(), x.getClassType());
     return false;
   }
 
@@ -259,21 +257,19 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JParameterRef x, Context ctx) {
-    expression = new JParameterRef(program, x.getSourceInfo(), x.getParameter());
+    expression = new JParameterRef(x.getSourceInfo(), x.getParameter());
     return false;
   }
 
   @Override
   public boolean visit(JPostfixOperation x, Context ctx) {
-    expression = new JPostfixOperation(program, x.getSourceInfo(), x.getOp(),
-        cloneExpression(x.getArg()));
+    expression = new JPostfixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
     return false;
   }
 
   @Override
   public boolean visit(JPrefixOperation x, Context ctx) {
-    expression = new JPrefixOperation(program, x.getSourceInfo(), x.getOp(),
-        cloneExpression(x.getArg()));
+    expression = new JPrefixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
     return false;
   }
 

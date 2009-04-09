@@ -567,7 +567,7 @@ public class GenerateJavaScriptAST {
       List<JsFunction> jsFuncs = popList(x.methods.size()); // methods
       List<JsNode> jsFields = popList(x.fields.size()); // fields
 
-      if (typeOracle.hasClinit(x)) {
+      if (x.hasClinit()) {
         JsFunction superClinit = clinitMap.get(x.extnds);
         JsFunction myClinit = jsFuncs.get(0);
         handleClinit(myClinit, superClinit);
@@ -820,7 +820,7 @@ public class GenerateJavaScriptAST {
       List<JsVar> jsFields = popList(x.fields.size()); // fields
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
-      if (typeOracle.hasClinit(x)) {
+      if (x.hasClinit()) {
         JsFunction clinitFunc = jsFuncs.get(0);
         handleClinit(clinitFunc, null);
         globalStmts.add(clinitFunc.makeStmt());
@@ -1643,15 +1643,14 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JReferenceType enclosingType = x.getEnclosingType();
-      if (!typeOracle.checkClinit(currentMethod.getEnclosingType(),
-          enclosingType)) {
+      JReferenceType targetType = x.getEnclosingType();
+      if (!currentMethod.getEnclosingType().checkClinitTo(targetType)) {
         return null;
-      } else if (enclosingType.equals(program.getTypeClassLiteralHolder())) {
+      } else if (targetType.equals(program.getTypeClassLiteralHolder())) {
         return null;
       }
 
-      JMethod clinitMethod = enclosingType.methods.get(0);
+      JMethod clinitMethod = targetType.methods.get(0);
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "clinit invocation");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
@@ -1667,11 +1666,11 @@ public class GenerateJavaScriptAST {
         return null;
       }
       JReferenceType enclosingType = x.getEnclosingType();
-      if (!typeOracle.hasClinit(enclosingType)) {
+      if (enclosingType == null || !enclosingType.hasClinit()) {
         return null;
       }
       // avoid recursion sickness
-      if (x == enclosingType.methods.get(0)) {
+      if (JProgram.isClinit(x)) {
         return null;
       }
 
@@ -1752,7 +1751,7 @@ public class GenerateJavaScriptAST {
     public void endVisit(JMethodCall x, Context ctx) {
       JReferenceType sourceType = currentMethod.getEnclosingType();
       JReferenceType targetType = x.getTarget().getEnclosingType();
-      if (typeOracle.checkClinit(sourceType, targetType)) {
+      if (sourceType.checkClinitTo(targetType)) {
         crossClassTargets.add(x.getTarget());
       }
     }

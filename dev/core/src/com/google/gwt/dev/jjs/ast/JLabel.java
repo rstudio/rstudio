@@ -24,8 +24,8 @@ public class JLabel extends JNode implements HasName {
 
   private final String name;
 
-  public JLabel(JProgram program, SourceInfo info, String name) {
-    super(program, info);
+  public JLabel(SourceInfo info, String name) {
+    super(info);
     this.name = name;
   }
 

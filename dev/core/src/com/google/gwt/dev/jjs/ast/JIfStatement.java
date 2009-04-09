@@ -26,9 +26,9 @@ public class JIfStatement extends JStatement {
   private JExpression ifExpr;
   private JStatement thenStmt;
 
-  public JIfStatement(JProgram program, SourceInfo info, JExpression ifExpr,
-      JStatement thenStmt, JStatement elseStmt) {
-    super(program, info);
+  public JIfStatement(SourceInfo info, JExpression ifExpr, JStatement thenStmt,
+      JStatement elseStmt) {
+    super(info);
     this.ifExpr = ifExpr;
     this.thenStmt = thenStmt;
     this.elseStmt = elseStmt;

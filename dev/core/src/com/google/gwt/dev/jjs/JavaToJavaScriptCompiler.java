@@ -419,6 +419,7 @@ public class JavaToJavaScriptCompiler {
       typeMap = null;
       allTypeDeclarations = null;
 
+      Memory.maybeDumpMemory("AstOnly");
       maybeDumpAST(jprogram);
 
       // (3) Perform Java AST normalizations.
@@ -620,8 +621,8 @@ public class JavaToJavaScriptCompiler {
   }
 
   private static JMethodCall createReboundModuleLoad(TreeLogger logger,
-      JProgram program, JReferenceType reboundEntryType,
-      String originalMainClassName) throws UnableToCompleteException {
+      JReferenceType reboundEntryType, String originalMainClassName)
+      throws UnableToCompleteException {
     if (!(reboundEntryType instanceof JClassType)) {
       logger.log(TreeLogger.ERROR, "Module entry point class '"
           + originalMainClassName + "' must be a class", null);
@@ -654,7 +655,7 @@ public class JavaToJavaScriptCompiler {
 
     JExpression qualifier = null;
     if (!entryMethod.isStatic()) {
-      qualifier = JGwtCreate.createInstantiationExpression(program, sourceInfo,
+      qualifier = JGwtCreate.createInstantiationExpression(sourceInfo,
           entryClass);
 
       if (qualifier == null) {
@@ -667,7 +668,7 @@ public class JavaToJavaScriptCompiler {
         throw new UnableToCompleteException();
       }
     }
-    return new JMethodCall(program, sourceInfo, qualifier, entryMethod);
+    return new JMethodCall(sourceInfo, qualifier, entryMethod);
   }
 
   private static void findEntryPoints(TreeLogger logger,
@@ -695,8 +696,7 @@ public class JavaToJavaScriptCompiler {
 
       JMethod mainMethod = findMainMethod(mainType);
       if (mainMethod != null && mainMethod.isStatic()) {
-        JMethodCall onModuleLoadCall = new JMethodCall(program, null, null,
-            mainMethod);
+        JMethodCall onModuleLoadCall = new JMethodCall(null, null, mainMethod);
         block.addStmt(onModuleLoadCall.makeStatement());
         continue;
       }
@@ -715,7 +715,7 @@ public class JavaToJavaScriptCompiler {
           throw new UnableToCompleteException();
         }
 
-        JMethodCall onModuleLoadCall = createReboundModuleLoad(logger, program,
+        JMethodCall onModuleLoadCall = createReboundModuleLoad(logger,
             resultType, mainClassName);
         resultTypes.add((JClassType) resultType);
         entryCalls.add(onModuleLoadCall);
@@ -723,8 +723,8 @@ public class JavaToJavaScriptCompiler {
       if (resultTypes.size() == 1) {
         block.addStmt(entryCalls.get(0).makeStatement());
       } else {
-        JReboundEntryPoint reboundEntryPoint = new JReboundEntryPoint(program,
-            null, mainType, resultTypes, entryCalls);
+        JReboundEntryPoint reboundEntryPoint = new JReboundEntryPoint(null,
+            mainType, resultTypes, entryCalls);
         block.addStmt(reboundEntryPoint);
       }
     }
@@ -811,13 +811,13 @@ public class JavaToJavaScriptCompiler {
     JMethod isStatsAvailableMethod = program.getIndexedMethod("Stats.isStatsAvailable");
     JMethod onModuleStartMethod = program.getIndexedMethod("Stats.onModuleStart");
 
-    JMethodCall availableCall = new JMethodCall(program, sourceInfo, null,
+    JMethodCall availableCall = new JMethodCall(sourceInfo, null,
         isStatsAvailableMethod);
-    JMethodCall onModuleStartCall = new JMethodCall(program, sourceInfo, null,
+    JMethodCall onModuleStartCall = new JMethodCall(sourceInfo, null,
         onModuleStartMethod);
     onModuleStartCall.addArg(program.getLiteralString(sourceInfo, mainClassName));
 
-    JBinaryOperation amp = new JBinaryOperation(program, sourceInfo,
+    JBinaryOperation amp = new JBinaryOperation(sourceInfo,
         program.getTypePrimitiveBoolean(), JBinaryOperator.AND, availableCall,
         onModuleStartCall);
 

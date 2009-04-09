@@ -29,14 +29,16 @@ public class JArrayType extends JClassType {
   }
 
   private int dims;
+  private JType elementType;
   private JType leafType;
 
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JArrayType(JProgram program, JType leafType, int dims) {
-    super(program, leafType.getSourceInfo().makeChild(JArrayType.class,
-        "Array type"), calcName(leafType, dims), false, false);
+  JArrayType(JType elementType, JType leafType, int dims) {
+    super(leafType.getSourceInfo().makeChild(JArrayType.class, "Array type"),
+        calcName(leafType, dims), false, false);
+    this.elementType = elementType;
     this.leafType = leafType;
     this.dims = dims;
   }
@@ -51,10 +53,7 @@ public class JArrayType extends JClassType {
   }
 
   public JType getElementType() {
-    if (dims == 1) {
-      return leafType;
-    }
-    return program.getTypeArray(leafType, dims - 1);
+    return elementType;
   }
 
   public String getJavahSignatureName() {
@@ -72,9 +71,14 @@ public class JArrayType extends JClassType {
     }
     return s;
   }
-
+  
   public JType getLeafType() {
     return leafType;
+  }
+
+  @Override
+  public boolean hasClinit() {
+    return false;
   }
 
   public boolean isAbstract() {

@@ -57,7 +57,11 @@ public class SourceOrigin implements SourceInfo {
     }
   }
 
-  public static final SourceInfo UNKNOWN = new SourceOrigin("Unknown", 0);
+  public static final SourceInfo UNKNOWN = new SourceOrigin("Unknown", 0) {
+    private Object readResolve() {
+      return UNKNOWN;
+    }
+  };
 
   /**
    * Cache to reuse recently-created origins. This is very useful for JS nodes,

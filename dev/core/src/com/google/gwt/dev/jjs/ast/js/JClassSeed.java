@@ -19,7 +19,6 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JLiteral;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -33,10 +32,13 @@ public class JClassSeed extends JLiteral {
    * The class being referred to.
    */
   private final JClassType refType;
+  private final JClassType objectType;
 
-  public JClassSeed(JProgram program, SourceInfo sourceInfo, JClassType type) {
-    super(program, sourceInfo);
+  public JClassSeed(SourceInfo sourceInfo, JClassType type,
+      JClassType objectType) {
+    super(sourceInfo);
     refType = type;
+    this.objectType = objectType;
   }
 
   public JClassType getRefType() {
@@ -44,7 +46,7 @@ public class JClassSeed extends JLiteral {
   }
 
   public JType getType() {
-    return program.getTypeJavaLangObject();
+    return objectType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

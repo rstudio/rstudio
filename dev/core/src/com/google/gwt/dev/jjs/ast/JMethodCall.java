@@ -33,9 +33,8 @@ public class JMethodCall extends JExpression {
   private final JType overrideReturnType;
   private boolean staticDispatchOnly = false;
 
-  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
-      JMethod method) {
-    super(program, info);
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method) {
+    super(info);
     assert (method != null);
     assert (instance != null || method.isStatic());
     this.instance = instance;
@@ -44,9 +43,9 @@ public class JMethodCall extends JExpression {
     this.overrideReturnType = null;
   }
 
-  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
-      JMethod method, boolean staticDispatchOnly) {
-    super(program, info);
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
+      boolean staticDispatchOnly) {
+    super(info);
     this.instance = instance;
     this.method = method;
     this.staticDispatchOnly = staticDispatchOnly;
@@ -64,9 +63,9 @@ public class JMethodCall extends JExpression {
    * allows us to preserve type information during the latter phases of
    * compilation.
    */
-  public JMethodCall(JProgram program, SourceInfo info, JExpression instance,
-      JMethod method, JType overrideReturnType) {
-    super(program, info);
+  public JMethodCall(SourceInfo info, JExpression instance, JMethod method,
+      JType overrideReturnType) {
+    super(info);
     this.instance = instance;
     this.method = method;
     assert (overrideReturnType != null);

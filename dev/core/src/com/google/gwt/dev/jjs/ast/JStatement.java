@@ -18,14 +18,14 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 
 /**
- * Java program statement. 
+ * Java program statement.
  */
 public abstract class JStatement extends JNode {
 
-  public JStatement(JProgram program, SourceInfo info) {
-    super(program, info);
+  public JStatement(SourceInfo info) {
+    super(info);
   }
-  
+
   public boolean unconditionalControlBreak() {
     return false;
   }

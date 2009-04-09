@@ -104,8 +104,7 @@ public class AutoboxUtils {
       JClassType wrapperType) {
     // Add a cast to toBox if need be
     if (toBox.getType() != primitiveType) {
-      toBox = new JCastOperation(program, toBox.getSourceInfo(), primitiveType,
-          toBox);
+      toBox = new JCastOperation(toBox.getSourceInfo(), primitiveType, toBox);
     }
 
     // Find the correct valueOf() method.
@@ -133,8 +132,7 @@ public class AutoboxUtils {
     }
 
     // Create the boxing call.
-    JMethodCall call = new JMethodCall(program, toBox.getSourceInfo(), null,
-        valueOfMethod);
+    JMethodCall call = new JMethodCall(toBox.getSourceInfo(), null, valueOfMethod);
     call.addArg(toBox);
     return call;
   }

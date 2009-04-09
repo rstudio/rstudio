@@ -45,15 +45,14 @@ public class JNewArray extends JExpression implements HasSettableType {
       classLiterals.add(classLit);
       cur = ((JArrayType) cur).getElementType();
     }
-    return new JNewArray(program, info, arrayType, dims, null, classLiterals);
+    return new JNewArray(info, arrayType, dims, null, classLiterals);
   }
 
   public static JNewArray createInitializers(JProgram program, SourceInfo info,
       JArrayType arrayType, List<JExpression> initializers) {
     List<JClassLiteral> classLiterals = new ArrayList<JClassLiteral>();
     classLiterals.add(program.getLiteralClass(arrayType));
-    return new JNewArray(program, info, arrayType, null, initializers,
-        classLiterals);
+    return new JNewArray(info, arrayType, null, initializers, classLiterals);
   }
 
   public final List<JExpression> dims;
@@ -67,10 +66,10 @@ public class JNewArray extends JExpression implements HasSettableType {
    */
   private final List<JClassLiteral> classLiterals;
 
-  public JNewArray(JProgram program, SourceInfo info, JArrayType arrayType,
+  public JNewArray(SourceInfo info, JArrayType arrayType,
       List<JExpression> dims, List<JExpression> initializers,
       List<JClassLiteral> classLits) {
-    super(program, info);
+    super(info);
     this.arrayType = arrayType;
     this.dims = dims;
     this.initializers = initializers;

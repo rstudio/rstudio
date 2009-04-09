@@ -408,14 +408,14 @@ public class BuildTypeMap {
           "new".toCharArray(), type, type, false, true, true, false, false);
 
       // new Foo() : Create the instance
-      JNewInstance newInstance = new JNewInstance(program,
+      JNewInstance newInstance = new JNewInstance(
           type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
               "new instance"), type);
 
       // (new Foo()).Foo() : Invoke the constructor method on the instance
-      JMethodCall call = new JMethodCall(program,
-          type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-              "constructor invocation"), newInstance, constructor);
+      JMethodCall call = new JMethodCall(type.getSourceInfo().makeChild(
+          BuildDeclMapVisitor.class, "constructor invocation"), newInstance,
+          constructor);
       /*
        * If the type isn't static, make the first parameter a reference to the
        * instance of the enclosing class. It's the first instance to allow the
@@ -440,16 +440,16 @@ public class BuildTypeMap {
          * implicitly as the last argument to the constructor.
          */
         if (enclosingInstance != null && !i.hasNext()) {
-          call.addArg(new JParameterRef(program,
-              synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
-                  "enclosing instance"), enclosingInstance));
+          call.addArg(new JParameterRef(synthetic.getSourceInfo().makeChild(
+              BuildDeclMapVisitor.class, "enclosing instance"),
+              enclosingInstance));
         } else {
           JParameter syntheticParam = program.createParameter(
               synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
                   "Argument " + param.getName()),
               param.getName().toCharArray(), param.getType(), true, false,
               synthetic);
-          call.addArg(new JParameterRef(program,
+          call.addArg(new JParameterRef(
               syntheticParam.getSourceInfo().makeChild(
                   BuildDeclMapVisitor.class, "reference"), syntheticParam));
         }
@@ -459,7 +459,7 @@ public class BuildTypeMap {
       synthetic.freezeParamTypes();
 
       // return (new Foo()).Foo() : The only statement in the function
-      JReturnStatement ret = new JReturnStatement(program,
+      JReturnStatement ret = new JReturnStatement(
           synthetic.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
               "Return statement"), call);
 

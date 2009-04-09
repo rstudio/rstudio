@@ -16,17 +16,18 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java null literal expression.
  */
 public class JNullLiteral extends JValueLiteral {
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JNullLiteral(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo);
+  public static final JNullLiteral INSTANCE = new JNullLiteral(
+      SourceOrigin.UNKNOWN);
+
+  private JNullLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   @Override
@@ -35,7 +36,7 @@ public class JNullLiteral extends JValueLiteral {
   }
 
   public JType getType() {
-    return program.getTypeNull();
+    return JNullType.INSTANCE;
   }
 
   public Object getValueObj() {
@@ -46,5 +47,13 @@ public class JNullLiteral extends JValueLiteral {
     if (visitor.visit(this, ctx)) {
     }
     visitor.endVisit(this, ctx);
+  }
+
+  /**
+   * Note, if this ever becomes not-a-singleton, we'll need to check the
+   * SourceInfo == SourceOrigin.UNKNOWN.
+   */
+  private Object readResolve() {
+    return INSTANCE;
   }
 }

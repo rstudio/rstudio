@@ -22,12 +22,25 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JParameter extends JVariable implements HasEnclosingMethod {
 
+  public static JParameter create(SourceInfo info, String name, JType type,
+      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
+    assert (name != null);
+    assert (type != null);
+    assert (enclosingMethod != null);
+
+    JParameter x = new JParameter(info, name, type, isFinal, isThis,
+        enclosingMethod);
+
+    enclosingMethod.addParam(x);
+    return x;
+  }
+
   private final JMethod enclosingMethod;
   private final boolean isThis;
 
-  JParameter(JProgram program, SourceInfo info, String name, JType type,
-      boolean isFinal, boolean isThis, JMethod enclosingMethod) {
-    super(program, info, name, type, isFinal);
+  JParameter(SourceInfo info, String name, JType type, boolean isFinal,
+      boolean isThis, JMethod enclosingMethod) {
+    super(info, name, type, isFinal);
     this.enclosingMethod = enclosingMethod;
     this.isThis = isThis;
   }

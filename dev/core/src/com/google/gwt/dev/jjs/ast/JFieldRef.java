@@ -39,20 +39,21 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
 
   /**
    * An overridden type for this reference. Normally the type of a field
-   * reference is the same as the type of the field itself.  That default
-   * can be overridden by setting this field.
+   * reference is the same as the type of the field itself. That default can be
+   * overridden by setting this field.
    */
   private final JType overriddenType;
 
-  public JFieldRef(JProgram program, SourceInfo info, JExpression instance,
-      JField field, JReferenceType enclosingType) {
-    this(program, info, instance, field, enclosingType, null);
+  public JFieldRef(SourceInfo info, JExpression instance, JField field,
+      JReferenceType enclosingType) {
+    this(info, instance, field, enclosingType, null);
   }
-  
-  public JFieldRef(JProgram program, SourceInfo info, JExpression instance,
-      JField field, JReferenceType enclosingType, JType overriddenType) {
-    super(program, info, field);
+
+  public JFieldRef(SourceInfo info, JExpression instance, JField field,
+      JReferenceType enclosingType, JType overriddenType) {
+    super(info, field);
     assert (instance != null || field.isStatic());
+    assert (enclosingType != null);
     this.instance = instance;
     this.field = field;
     this.enclosingType = enclosingType;
@@ -70,7 +71,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   public JExpression getInstance() {
     return instance;
   }
-  
+
   @Override
   public JType getType() {
     if (overriddenType != null) {
@@ -79,18 +80,22 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     return super.getType();
   }
 
+  public boolean hasClinit() {
+    // A cross-class reference to a static, non constant field forces clinit
+    if (!field.isStatic()) {
+      return false;
+    }
+    if (field.isFinal() && field.isCompileTimeConstant()) {
+      return false;
+    }
+    return getEnclosingType().checkClinitTo(field.getEnclosingType());
+  }
+
   @Override
   public boolean hasSideEffects() {
-    // A cross-class reference to a static, non constant field forces clinit
-    if (field.isStatic()
-        && (!field.isFinal() || !field.isCompileTimeConstant())) {
-      if (program.typeOracle.checkClinit(enclosingType,
-          field.getEnclosingType())) {
-        // Therefore, we have side effects
-        return true;
-      }
+    if (hasClinit()) {
+      return true;
     }
-
     JExpression expr = instance;
     if (expr == null) {
       return false;

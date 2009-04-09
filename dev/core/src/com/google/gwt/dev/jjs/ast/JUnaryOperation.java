@@ -25,9 +25,8 @@ public abstract class JUnaryOperation extends JExpression {
   private JExpression arg;
   private final JUnaryOperator op;
 
-  public JUnaryOperation(JProgram program, SourceInfo info,
-      JUnaryOperator op, JExpression arg) {
-    super(program, info);
+  public JUnaryOperation(SourceInfo info, JUnaryOperator op, JExpression arg) {
+    super(info);
     this.op = op;
     this.arg = arg;
   }

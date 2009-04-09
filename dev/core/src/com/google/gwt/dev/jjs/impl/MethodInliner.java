@@ -148,8 +148,7 @@ public class MethodInliner {
 
     private JMethodCall createClinitCall(JMethodCall x) {
       JReferenceType targetEnclosingType = x.getTarget().getEnclosingType();
-      if (!program.typeOracle.checkClinit(currentMethod.getEnclosingType(),
-          targetEnclosingType)) {
+      if (!currentMethod.getEnclosingType().checkClinitTo(targetEnclosingType)) {
         // Access from this class to the target class won't trigger a clinit
         return null;
       }
@@ -170,7 +169,7 @@ public class MethodInliner {
         return null;
       }
 
-      return new JMethodCall(program, x.getSourceInfo(), null, clinit);
+      return new JMethodCall(x.getSourceInfo(), null, clinit);
     }
 
     /**
@@ -180,7 +179,7 @@ public class MethodInliner {
      */
     private JMultiExpression createMultiExpressionForInstanceAndClinit(
         JMethodCall x) {
-      JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
+      JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
 
       // Any instance expression goes first (this can happen even with statics).
       if (x.getInstance() != null) {
@@ -207,8 +206,7 @@ public class MethodInliner {
      */
     private JMultiExpression createMultiExpressionFromBody(JMethodBody body,
         boolean ignoringReturnValue) {
-      JMultiExpression multi = new JMultiExpression(program,
-          body.getSourceInfo());
+      JMultiExpression multi = new JMultiExpression(body.getSourceInfo());
       CloneCalleeExpressionVisitor cloner = new CloneCalleeExpressionVisitor();
 
       for (JStatement stmt : body.getStatements()) {
@@ -458,8 +456,7 @@ public class MethodInliner {
        * later, but in some cases it will force correct math evaluation.
        */
       if (clone.getType() != x.getType()) {
-        clone = new JCastOperation(program, clone.getSourceInfo(), x.getType(),
-            clone);
+        clone = new JCastOperation(clone.getSourceInfo(), x.getType(), clone);
       }
       ctx.replaceMe(clone);
     }

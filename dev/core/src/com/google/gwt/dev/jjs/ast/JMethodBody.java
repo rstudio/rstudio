@@ -30,9 +30,9 @@ public class JMethodBody extends JAbstractMethodBody {
   private JBlock block;
   private List<JLocal> locals = Collections.emptyList();
 
-  public JMethodBody(JProgram program, SourceInfo info) {
-    super(program, info);
-    block = new JBlock(program, info);
+  public JMethodBody(SourceInfo info) {
+    super(info);
+    block = new JBlock(info);
   }
 
   /**

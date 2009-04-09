@@ -101,8 +101,8 @@ public class MethodCallTightener {
        * Replace the call to the original method with a call to the same method
        * on the tighter type.
        */
-      JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
-          x.getInstance(), foundMethod);
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), x.getInstance(),
+          foundMethod);
       call.addArgs(x.getArgs());
       ctx.replaceMe(call);
     }

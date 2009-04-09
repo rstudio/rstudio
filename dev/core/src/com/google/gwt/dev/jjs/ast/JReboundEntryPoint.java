@@ -30,10 +30,9 @@ public class JReboundEntryPoint extends JStatement {
   private final List<JClassType> resultTypes;
   private final JReferenceType sourceType;
 
-  public JReboundEntryPoint(JProgram program, SourceInfo info,
-      JReferenceType sourceType, List<JClassType> resultTypes,
-      List<JExpression> entryCalls) {
-    super(program, info);
+  public JReboundEntryPoint(SourceInfo info, JReferenceType sourceType,
+      List<JClassType> resultTypes, List<JExpression> entryCalls) {
+    super(info);
     this.sourceType = sourceType;
     this.resultTypes = resultTypes;
     this.entryCalls = entryCalls;

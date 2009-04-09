@@ -65,11 +65,11 @@ public class CatchBlockNormalizer {
       SourceInfo catchInfo = x.getCatchBlocks().get(0).getSourceInfo();
 
       JLocal exObj = popTempLocal();
-      JLocalRef exRef = new JLocalRef(program, catchInfo, exObj);
-      JBlock newCatchBlock = new JBlock(program, catchInfo);
+      JLocalRef exRef = new JLocalRef(catchInfo, exObj);
+      JBlock newCatchBlock = new JBlock(catchInfo);
       // $e = Exceptions.caught($e)
       JMethod caughtMethod = program.getIndexedMethod("Exceptions.caught");
-      JMethodCall call = new JMethodCall(program, catchInfo, null, caughtMethod);
+      JMethodCall call = new JMethodCall(catchInfo, null, caughtMethod);
       call.addArg(exRef);
       JExpressionStatement asg = program.createAssignmentStmt(catchInfo, exRef,
           call);
@@ -82,21 +82,21 @@ public class CatchBlockNormalizer {
        * Go backwards so we can nest the else statements in the correct order!
        */
       // rethrow the current exception if no one caught it
-      JStatement cur = new JThrowStatement(program, catchInfo, exRef);
+      JStatement cur = new JThrowStatement(catchInfo, exRef);
       for (int i = x.getCatchBlocks().size() - 1; i >= 0; --i) {
         JBlock block = x.getCatchBlocks().get(i);
         JLocalRef arg = x.getCatchArgs().get(i);
         catchInfo = block.getSourceInfo();
         JReferenceType argType = (JReferenceType) arg.getType();
         // if ($e instanceof ArgType) { userVar = $e; <user code> }
-        JExpression ifTest = new JInstanceOf(program, catchInfo, argType, exRef);
+        JExpression ifTest = new JInstanceOf(catchInfo, argType, exRef);
         asg = program.createAssignmentStmt(catchInfo, arg, exRef);
         if (!block.getStatements().isEmpty()) {
           // Only bother adding the assignment if the block is non-empty
           block.addStmt(0, asg);
         }
         // nest the previous as an else for me
-        cur = new JIfStatement(program, catchInfo, ifTest, block, cur);
+        cur = new JIfStatement(catchInfo, ifTest, block, cur);
       }
 
       newCatchBlock.addStmt(cur);

@@ -27,8 +27,8 @@ import java.util.List;
  */
 public class JGwtCreate extends JExpression implements HasSettableType {
 
-  public static JExpression createInstantiationExpression(JProgram program,
-      SourceInfo info, JClassType classType) {
+  public static JExpression createInstantiationExpression(SourceInfo info,
+      JClassType classType) {
     /*
      * Find the appropriate (noArg) constructor. In our AST, constructors are
      * instance methods that should be qualified with a new expression.
@@ -46,15 +46,15 @@ public class JGwtCreate extends JExpression implements HasSettableType {
       return null;
     }
     // Call it, using a new expression as a qualifier
-    JNewInstance newInstance = new JNewInstance(program, info, classType);
-    return new JMethodCall(program, info, newInstance, noArgCtor);
+    JNewInstance newInstance = new JNewInstance(info, classType);
+    return new JMethodCall(info, newInstance, noArgCtor);
   }
 
   private static ArrayList<JExpression> createInstantiationExpressions(
-      JProgram program, SourceInfo info, List<JClassType> classTypes) {
+      SourceInfo info, List<JClassType> classTypes) {
     ArrayList<JExpression> exprs = new ArrayList<JExpression>();
     for (JClassType classType : classTypes) {
-      JExpression expr = createInstantiationExpression(program, info, classType);
+      JExpression expr = createInstantiationExpression(info, classType);
       assert expr != null;
       exprs.add(expr);
     }
@@ -74,20 +74,19 @@ public class JGwtCreate extends JExpression implements HasSettableType {
   /**
    * Public constructor used during AST creation.
    */
-  public JGwtCreate(JProgram program, SourceInfo info,
-      JReferenceType sourceType, List<JClassType> resultTypes) {
-    this(program, info, sourceType, resultTypes,
-        program.getTypeJavaLangObject(), createInstantiationExpressions(
-            program, info, resultTypes));
+  public JGwtCreate(SourceInfo info, JReferenceType sourceType,
+      List<JClassType> resultTypes, JType type) {
+    this(info, sourceType, resultTypes, type, createInstantiationExpressions(
+        info, resultTypes));
   }
 
   /**
    * Constructor used for cloning an existing node.
    */
-  public JGwtCreate(JProgram program, SourceInfo info,
-      JReferenceType sourceType, List<JClassType> resultTypes, JType type,
+  public JGwtCreate(SourceInfo info, JReferenceType sourceType,
+      List<JClassType> resultTypes, JType type,
       ArrayList<JExpression> instantiationExpressions) {
-    super(program, info);
+    super(info);
     this.sourceType = sourceType;
     this.resultTypes = resultTypes;
     this.type = type;

@@ -43,13 +43,12 @@ public class AssertionNormalizer {
       String methodName = "Exceptions.throwAssertionError"
           + getAssertMethodSuffix(x.getArg());
       JMethod method = program.getIndexedMethod(methodName);
-      JMethodCall rhs = new JMethodCall(program, x.getSourceInfo(), null,
-          method);
+      JMethodCall rhs = new JMethodCall(x.getSourceInfo(), null, method);
       if (x.getArg() != null) {
         rhs.addArg(x.getArg());
       }
-      JBinaryOperation binOp = new JBinaryOperation(program, x.getSourceInfo(),
-          program.getTypePrimitiveBoolean(), JBinaryOperator.OR, lhs, rhs);
+      JBinaryOperation binOp = new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+          JBinaryOperator.OR, lhs, rhs);
       ctx.replaceMe(binOp.makeStatement());
     }
   }

@@ -20,7 +20,6 @@ import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JNode;
-import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -40,9 +39,9 @@ public class JsonObject extends JExpression {
     public JExpression labelExpr;
     public JExpression valueExpr;
 
-    public JsonPropInit(JProgram program, SourceInfo sourceInfo, JExpression labelExpr,
+    public JsonPropInit(SourceInfo sourceInfo, JExpression labelExpr,
         JExpression valueExpr) {
-      super(program, sourceInfo);
+      super(sourceInfo);
       this.labelExpr = labelExpr;
       this.valueExpr = valueExpr;
     }
@@ -57,15 +56,15 @@ public class JsonObject extends JExpression {
   }
 
   public final List<JsonPropInit> propInits = new ArrayList<JsonPropInit>();
+  private final JClassType jsoType;
 
-  public JsonObject(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo);
+  public JsonObject(SourceInfo sourceInfo, JClassType jsoType) {
+    super(sourceInfo);
+    this.jsoType = jsoType;
   }
 
   public JType getType() {
-    // If JavaScriptObject type is not available, just return the Object type
-    JClassType jsoType = program.getJavaScriptObject();
-    return (jsoType != null) ? jsoType : program.getTypeJavaLangObject();
+    return jsoType;
   }
 
   public boolean hasSideEffects() {

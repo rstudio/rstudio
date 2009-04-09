@@ -58,8 +58,7 @@ public class JavaScriptObjectNormalizer {
     public void endVisit(JCastOperation x, Context ctx) {
       JType newType = translate(x.getCastType());
       if (newType != x.getCastType()) {
-        ctx.replaceMe(new JCastOperation(program, x.getSourceInfo(), newType,
-            x.getExpr()));
+        ctx.replaceMe(new JCastOperation(x.getSourceInfo(), newType, x.getExpr()));
       }
     }
 
@@ -80,8 +79,7 @@ public class JavaScriptObjectNormalizer {
     public void endVisit(JInstanceOf x, Context ctx) {
       JReferenceType newType = (JReferenceType) translate(x.getTestType());
       if (newType != x.getTestType()) {
-        ctx.replaceMe(new JInstanceOf(program, x.getSourceInfo(), newType,
-            x.getExpr()));
+        ctx.replaceMe(new JInstanceOf(x.getSourceInfo(), newType, x.getExpr()));
       }
     }
 
@@ -126,20 +124,19 @@ public class JavaScriptObjectNormalizer {
           /*
            * This is the special-case code to handle interfaces.
            */
-          JMultiExpression multi = new JMultiExpression(program, info);
+          JMultiExpression multi = new JMultiExpression(info);
           JExpression instance = maybeMakeTempAssignment(multi, x.getInstance());
 
           // instance.method(arg, arg)
-          JMethodCall localCall = new JMethodCall(program, info, instance,
-              x.getTarget());
+          JMethodCall localCall = new JMethodCall(info, instance, x.getTarget());
           localCall.addArgs(x.getArgs());
 
           // We need a second copy of the arguments for the else expression
           CloneExpressionVisitor cloner = new CloneExpressionVisitor(program);
 
           // instance.jsoMethod(arg, arg)
-          JMethodCall jsoCall = new JMethodCall(program, info,
-              cloner.cloneExpression(instance), jsoMethod);
+          JMethodCall jsoCall = new JMethodCall(info, cloner.cloneExpression(instance),
+              jsoMethod);
           jsoCall.addArgs(cloner.cloneExpressions(x.getArgs()));
 
           // Cast.isJavaScriptObject() ? instance.jsoMethod() :
@@ -155,8 +152,7 @@ public class JavaScriptObjectNormalizer {
            * ... otherwise, if there's only a JSO implementation, we'll just
            * call that directly.
            */
-          JMethodCall jsoCall = new JMethodCall(program, info, x.getInstance(),
-              jsoMethod);
+          JMethodCall jsoCall = new JMethodCall(info, x.getInstance(), jsoMethod);
           jsoCall.addArgs(x.getArgs());
           ctx.replaceMe(jsoCall);
         }
@@ -198,11 +194,10 @@ public class JavaScriptObjectNormalizer {
         JExpression notJsoExpr) {
       // Cast.isJavaScriptObjectOrString(instance)
       JMethod isJavaScriptObjectMethod = program.getIndexedMethod("Cast.isJavaScriptObjectOrString");
-      JMethodCall isJavaScriptObjectExpr = new JMethodCall(program, info, null,
-          isJavaScriptObjectMethod);
+      JMethodCall isJavaScriptObjectExpr = new JMethodCall(info, null, isJavaScriptObjectMethod);
       isJavaScriptObjectExpr.addArg(instance);
-      return new JConditional(program, info, conditionalType,
-          isJavaScriptObjectExpr, isJsoExpr, notJsoExpr);
+      return new JConditional(info, conditionalType, isJavaScriptObjectExpr,
+          isJsoExpr, notJsoExpr);
     }
 
     private JExpression maybeMakeTempAssignment(JMultiExpression multi,
@@ -220,9 +215,9 @@ public class JavaScriptObjectNormalizer {
             "maybeJsoInvocation".toCharArray(), instance.getType(), true,
             currentMethodBody.peek());
         multi.exprs.add(program.createAssignmentStmt(info,
-            new JLocalRef(program, info, local), instance).getExpr());
+            new JLocalRef(info, local), instance).getExpr());
 
-        instance = new JLocalRef(program, info, local);
+        instance = new JLocalRef(info, local);
       }
       return instance;
     }

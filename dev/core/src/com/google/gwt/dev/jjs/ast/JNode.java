@@ -28,21 +28,11 @@ import java.io.Serializable;
  */
 public abstract class JNode implements JVisitable, HasSourceInfo, Serializable {
 
-  protected final JProgram program;
   private final SourceInfo info;
 
-  protected JNode(JProgram program, SourceInfo info) {
+  protected JNode(SourceInfo info) {
     assert info != null : "SourceInfo must be provided for JNodes";
     this.info = info;
-    if (program == null) {
-      this.program = (JProgram) this;
-    } else {
-      this.program = program;
-    }
-  }
-
-  public JProgram getProgram() {
-    return program;
   }
 
   public SourceInfo getSourceInfo() {

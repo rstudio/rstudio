@@ -166,7 +166,7 @@ public class Pruner {
         // This must be a static method
         assert method.isStatic();
 
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+        JMethodCall newCall = new JMethodCall(x.getSourceInfo(),
             x.getInstance(), method);
         if (!x.canBePolymorphic()) {
           newCall.setCannotBePolymorphic();
@@ -193,7 +193,7 @@ public class Pruner {
           } else if (arg.hasSideEffects()) {
             // The argument is only needed for side effects, add it to a multi.
             if (currentMulti == null) {
-              currentMulti = new JMultiExpression(program, x.getSourceInfo());
+              currentMulti = new JMultiExpression(x.getSourceInfo());
             }
             currentMulti.exprs.add(arg);
           }
@@ -214,9 +214,8 @@ public class Pruner {
         String ident = x.getIdent();
         JField nullField = program.getNullField();
         program.jsniMap.put(ident, nullField);
-        JsniFieldRef nullFieldRef = new JsniFieldRef(program,
-            x.getSourceInfo(), ident, nullField, x.getEnclosingType(),
-            x.isLvalue());
+        JsniFieldRef nullFieldRef = new JsniFieldRef(x.getSourceInfo(), ident,
+            nullField, x.getEnclosingType(), x.isLvalue());
         ctx.replaceMe(nullFieldRef);
       }
     }
@@ -228,8 +227,8 @@ public class Pruner {
         String ident = x.getIdent();
         JMethod nullMethod = program.getNullMethod();
         program.jsniMap.put(ident, nullMethod);
-        JsniMethodRef nullMethodRef = new JsniMethodRef(program,
-            x.getSourceInfo(), ident, nullMethod);
+        JsniMethodRef nullMethodRef = new JsniMethodRef(x.getSourceInfo(),
+            ident, nullMethod, program.getJavaScriptObject());
         ctx.replaceMe(nullMethodRef);
       }
     }
@@ -267,7 +266,7 @@ public class Pruner {
     private JExpression makeReplacementForAssignment(SourceInfo info,
         JVariableRef variableRef, JExpression rhs) {
       // Replace with a multi, which may wind up empty.
-      JMultiExpression multi = new JMultiExpression(program, info);
+      JMultiExpression multi = new JMultiExpression(info);
 
       // If the lhs is a field ref, evaluate it first.
       if (variableRef instanceof JFieldRef) {
@@ -526,7 +525,7 @@ public class Pruner {
       instance = program.getLiteralNull();
     }
 
-    JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(), instance,
+    JFieldRef fieldRef = new JFieldRef(x.getSourceInfo(), instance,
         program.getNullField(), x.getEnclosingType(), primitiveTypeOrNullType(
             program, x.getType()));
     return fieldRef;
@@ -568,7 +567,7 @@ public class Pruner {
       instance = program.getLiteralNull();
     }
 
-    JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(), instance,
+    JMethodCall newCall = new JMethodCall(x.getSourceInfo(), instance,
         program.getNullMethod(), primitiveTypeOrNullType(program, x.getType()));
     // Retain the original arguments, they will be evaluated for side effects.
     newCall.addArgs(args);

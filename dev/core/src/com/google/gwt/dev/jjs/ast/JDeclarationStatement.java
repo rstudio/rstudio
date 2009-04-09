@@ -25,9 +25,9 @@ public class JDeclarationStatement extends JStatement {
   public JExpression initializer;
   private JVariableRef variableRef;
 
-  public JDeclarationStatement(JProgram program, SourceInfo info,
-      JVariableRef variableRef, JExpression intializer) {
-    super(program, info);
+  public JDeclarationStatement(SourceInfo info, JVariableRef variableRef,
+      JExpression intializer) {
+    super(info);
     this.variableRef = variableRef;
     this.initializer = intializer;
     CanHaveInitializer variable = variableRef.getTarget();

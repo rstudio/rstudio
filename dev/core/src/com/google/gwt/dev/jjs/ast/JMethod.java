@@ -64,10 +64,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  public JMethod(JProgram program, SourceInfo info, String name,
-      JReferenceType enclosingType, JType returnType, boolean isAbstract,
-      boolean isStatic, boolean isFinal, boolean isPrivate) {
-    super(program, info);
+  public JMethod(SourceInfo info, String name, JReferenceType enclosingType,
+      JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
+      boolean isPrivate) {
+    super(info);
     this.name = name;
     this.enclosingType = enclosingType;
     this.returnType = returnType;

@@ -24,11 +24,8 @@ public class JThisRef extends JExpression {
 
   private final JClassType classType;
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JThisRef(JProgram program, SourceInfo info, JClassType classType) {
-    super(program, info);
+  public JThisRef(SourceInfo info, JClassType classType) {
+    super(info);
     this.classType = classType;
   }
 

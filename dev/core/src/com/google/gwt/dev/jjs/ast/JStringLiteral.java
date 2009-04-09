@@ -22,14 +22,16 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JStringLiteral extends JValueLiteral {
 
+  private final JClassType stringType;
   private final String value;
 
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JStringLiteral(JProgram program, SourceInfo sourceInfo, String value) {
-    super(program, sourceInfo);
+  JStringLiteral(SourceInfo sourceInfo, String value, JClassType stringType) {
+    super(sourceInfo);
     this.value = value;
+    this.stringType = stringType;
   }
 
   @Override
@@ -38,7 +40,7 @@ public class JStringLiteral extends JValueLiteral {
   }
 
   public JType getType() {
-    return program.getTypeJavaLangString();
+    return stringType;
   }
 
   public String getValue() {

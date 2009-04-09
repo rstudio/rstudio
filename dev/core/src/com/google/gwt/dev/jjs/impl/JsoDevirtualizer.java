@@ -145,28 +145,28 @@ public class JsoDevirtualizer {
     newMethod.freezeParamTypes();
 
     // Build from bottom up.
-    JMethodCall condition = new JMethodCall(program, sourceInfo, null,
+    JMethodCall condition = new JMethodCall(sourceInfo, null,
         isJavaObjectMethod);
-    condition.addArg(new JParameterRef(program, sourceInfo, thisParam));
+    condition.addArg(new JParameterRef(sourceInfo, thisParam));
 
-    JMethodCall thenValue = new JMethodCall(program, sourceInfo,
-        new JParameterRef(program, sourceInfo, thisParam), objectMethod);
+    JMethodCall thenValue = new JMethodCall(sourceInfo, new JParameterRef(
+        sourceInfo, thisParam), objectMethod);
     for (JParameter param : newMethod.getParams()) {
       if (param != thisParam) {
-        thenValue.addArg(new JParameterRef(program, sourceInfo, param));
+        thenValue.addArg(new JParameterRef(sourceInfo, param));
       }
     }
 
-    JMethodCall elseValue = new JMethodCall(program, sourceInfo, null, jsoImpl);
+    JMethodCall elseValue = new JMethodCall(sourceInfo, null, jsoImpl);
     for (JParameter param : newMethod.getParams()) {
-      elseValue.addArg(new JParameterRef(program, sourceInfo, param));
+      elseValue.addArg(new JParameterRef(sourceInfo, param));
     }
 
-    JConditional conditional = new JConditional(program, sourceInfo,
-        objectMethod.getType(), condition, thenValue, elseValue);
+    JConditional conditional = new JConditional(sourceInfo, objectMethod.getType(),
+        condition, thenValue, elseValue);
 
-    JReturnStatement returnStatement = new JReturnStatement(program,
-        sourceInfo, conditional);
+    JReturnStatement returnStatement = new JReturnStatement(sourceInfo,
+        conditional);
     ((JMethodBody) newMethod.getBody()).getBlock().addStmt(returnStatement);
     return newMethod;
   }
@@ -187,7 +187,7 @@ public class JsoDevirtualizer {
       return;
     }
 
-    CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor();
+    CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor(program);
     for (JMethod method : virtualJsoMethods) {
       // Ensure staticImpls exist for any instance methods.
       JMethod jsoStaticImpl = program.getStaticImpl(method);

@@ -25,9 +25,8 @@ public abstract class JType extends JNode implements HasName, CanBeFinal {
   protected final String name;
   private final JLiteral defaultValue;
 
-  public JType(JProgram program, SourceInfo info, String name,
-      JLiteral defaultValue) {
-    super(program, info);
+  public JType(SourceInfo info, String name, JLiteral defaultValue) {
+    super(info);
     this.name = name;
     this.defaultValue = defaultValue;
   }

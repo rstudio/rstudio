@@ -22,8 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public abstract class JLiteral extends JExpression {
 
-  public JLiteral(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo);
+  public JLiteral(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public boolean hasSideEffects() {

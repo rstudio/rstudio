@@ -16,6 +16,7 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Represents an array dimension that was not specified in an array
@@ -23,15 +24,18 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JAbsentArrayDimension extends JLiteral {
 
+  public static final JExpression INSTANCE = new JAbsentArrayDimension(
+      SourceOrigin.UNKNOWN);
+
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  JAbsentArrayDimension(JProgram program, SourceInfo sourceInfo) {
-    super(program, sourceInfo);
+  JAbsentArrayDimension(SourceInfo sourceInfo) {
+    super(sourceInfo);
   }
 
   public JType getType() {
-    return program.getTypeVoid();
+    return JPrimitiveType.VOID;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {
@@ -40,4 +44,7 @@ public class JAbsentArrayDimension extends JLiteral {
     visitor.endVisit(this, ctx);
   }
 
+  private Object readResolve() {
+    return INSTANCE;
+  }
 }

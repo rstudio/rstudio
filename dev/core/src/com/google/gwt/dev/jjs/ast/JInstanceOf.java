@@ -25,9 +25,9 @@ public class JInstanceOf extends JExpression {
   private JExpression expr;
   private final JReferenceType testType;
 
-  public JInstanceOf(JProgram program, SourceInfo info,
-      JReferenceType testType, JExpression expression) {
-    super(program, info);
+  public JInstanceOf(SourceInfo info, JReferenceType testType,
+      JExpression expression) {
+    super(info);
     this.testType = testType;
     this.expr = expression;
   }
@@ -41,7 +41,7 @@ public class JInstanceOf extends JExpression {
   }
 
   public JType getType() {
-    return program.getTypePrimitiveBoolean();
+    return JPrimitiveType.BOOLEAN;
   }
 
   public boolean hasSideEffects() {

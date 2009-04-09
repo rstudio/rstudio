@@ -23,8 +23,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
 public abstract class JAbstractMethodBody extends JNode {
   protected JMethod method;
 
-  protected JAbstractMethodBody(JProgram program, SourceInfo info) {
-    super(program, info);
+  protected JAbstractMethodBody(SourceInfo info) {
+    super(info);
   }
 
   public JMethod getMethod() {
@@ -34,6 +34,6 @@ public abstract class JAbstractMethodBody extends JNode {
   public abstract boolean isNative();
 
   public void setMethod(JMethod method) {
-    this.method = method; 
+    this.method = method;
   }
 }

@@ -25,9 +25,8 @@ public class JDoStatement extends JStatement {
   private JStatement body;
   private JExpression testExpr;
 
-  public JDoStatement(JProgram program, SourceInfo info, JExpression testExpr,
-      JStatement body) {
-    super(program, info);
+  public JDoStatement(SourceInfo info, JExpression testExpr, JStatement body) {
+    super(info);
     this.testExpr = testExpr;
     this.body = body;
   }

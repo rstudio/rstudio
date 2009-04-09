@@ -16,19 +16,24 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java literal expression that evaluates to a Long.
  */
 public class JLongLiteral extends JValueLiteral {
 
+  public static final JLongLiteral ZERO = new JLongLiteral(
+      SourceOrigin.UNKNOWN, 0L);
+
+  public static JLongLiteral get(long value) {
+    return (value == 0) ? ZERO : new JLongLiteral(SourceOrigin.UNKNOWN, value);
+  }
+
   private final long value;
 
-  /**
-   * These are only supposed to be constructed by JProgram.
-   */
-  JLongLiteral(JProgram program, SourceInfo sourceInfo, long value) {
-    super(program, sourceInfo);
+  public JLongLiteral(SourceInfo sourceInfo, long value) {
+    super(sourceInfo);
     this.value = value;
   }
 
@@ -37,16 +42,16 @@ public class JLongLiteral extends JValueLiteral {
     Object valueObj = value.getValueObj();
     if (valueObj instanceof Character) {
       Character character = (Character) valueObj;
-      return program.getLiteralLong(character.charValue());
+      return new JLongLiteral(value.getSourceInfo(), character.charValue());
     } else if (valueObj instanceof Number) {
       Number number = (Number) valueObj;
-      return program.getLiteralLong(number.longValue());
+      return new JLongLiteral(value.getSourceInfo(), number.longValue());
     }
     return null;
   }
 
   public JType getType() {
-    return program.getTypePrimitiveLong();
+    return JPrimitiveType.LONG;
   }
 
   public long getValue() {
@@ -61,5 +66,9 @@ public class JLongLiteral extends JValueLiteral {
     if (visitor.visit(this, ctx)) {
     }
     visitor.endVisit(this, ctx);
+  }
+
+  private Object readResolve() {
+    return (value == 0L) ? ZERO : this;
   }
 }

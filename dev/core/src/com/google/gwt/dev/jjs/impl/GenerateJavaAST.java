@@ -383,8 +383,8 @@ public class GenerateJavaAST {
         if (currentClass.extnds != null) {
           JMethod myClinit = currentClass.methods.get(0);
           JMethod superClinit = currentClass.extnds.methods.get(0);
-          JMethodCall superClinitCall = new JMethodCall(program,
-              myClinit.getSourceInfo(), null, superClinit);
+          JMethodCall superClinitCall = new JMethodCall(myClinit.getSourceInfo(),
+              null, superClinit);
           JMethodBody body = (JMethodBody) myClinit.getBody();
           body.getBlock().addStmt(0, superClinitCall.makeStatement());
         }
@@ -469,14 +469,13 @@ public class GenerateJavaAST {
             JMethod nameMethod = program.getIndexedMethod("Class.getName");
 
             // this.hashCode()
-            JMethodCall hashCall = new JMethodCall(program, info,
-                program.getExprThisRef(info, (JClassType) currentClass),
+            JMethodCall hashCall = new JMethodCall(info, program.getExprThisRef(info, (JClassType) currentClass),
                 program.getIndexedMethod("Object.hashCode"));
 
             // "Class$" + hashCode()
-            JBinaryOperation op = new JBinaryOperation(program, info,
-                program.getTypeJavaLangString(), JBinaryOperator.ADD,
-                program.getLiteralString(info, "Class$"), hashCall);
+            JBinaryOperation op = new JBinaryOperation(info, program.getTypeJavaLangString(),
+                JBinaryOperator.ADD, program.getLiteralString(info, "Class$"),
+                hashCall);
 
             implementMethod(nameMethod, op);
 
@@ -676,8 +675,7 @@ public class GenerateJavaAST {
 
         // Call clinit; $clinit is always in position 0.
         JMethod clinitMethod = enclosingType.methods.get(0);
-        JMethodCall clinitCall = new JMethodCall(program, info, null,
-            clinitMethod);
+        JMethodCall clinitCall = new JMethodCall(info, null, clinitMethod);
         JMethodBody body = (JMethodBody) ctor.getBody();
         JBlock block = body.getBlock();
         block.addStmt(clinitCall.makeStatement());
@@ -743,8 +741,7 @@ public class GenerateJavaAST {
         if (!hasExplicitThis) {
           // $init is always in position 1 (clinit is in 0)
           JMethod initMethod = enclosingType.methods.get(1);
-          JMethodCall initCall = new JMethodCall(program, info, thisRef,
-              initMethod);
+          JMethodCall initCall = new JMethodCall(info, thisRef, initMethod);
           block.addStmt(initCall.makeStatement());
         }
 
@@ -763,7 +760,7 @@ public class GenerateJavaAST {
         currentMethod = null;
 
         // synthesize a return statement to emulate returning the new object
-        block.addStmt(new JReturnStatement(program, info, thisRef));
+        block.addStmt(new JReturnStatement(info, thisRef));
       } catch (Throwable e) {
         throw translateException(ctor, e);
       }
@@ -812,10 +809,10 @@ public class GenerateJavaAST {
           throw new InternalCompilerException(
               "String constructor error; no matching implementation.");
         }
-        call = new JMethodCall(program, makeSourceInfo(x), null, targetMethod);
+        call = new JMethodCall(makeSourceInfo(x), null, targetMethod);
       } else {
-        JNewInstance newInstance = new JNewInstance(program, info, newType);
-        call = new JMethodCall(program, info, newInstance, ctor);
+        JNewInstance newInstance = new JNewInstance(info, newType);
+        call = new JMethodCall(info, newInstance, ctor);
       }
 
       // Enums: hidden arguments for the name and id.
@@ -901,8 +898,8 @@ public class GenerateJavaAST {
 
     JExpression processExpression(ArrayReference x) {
       SourceInfo info = makeSourceInfo(x);
-      JArrayRef arrayRef = new JArrayRef(program, info,
-          dispProcessExpression(x.receiver), dispProcessExpression(x.position));
+      JArrayRef arrayRef = new JArrayRef(info, dispProcessExpression(x.receiver),
+          dispProcessExpression(x.position));
       return arrayRef;
     }
 
@@ -976,8 +973,7 @@ public class GenerateJavaAST {
     JExpression processExpression(CastExpression x) {
       SourceInfo info = makeSourceInfo(x);
       JType type = (JType) typeMap.get(x.resolvedType);
-      JCastOperation cast = new JCastOperation(program, info, type,
-          dispProcessExpression(x.expression));
+      JCastOperation cast = new JCastOperation(info, type, dispProcessExpression(x.expression));
       return cast;
     }
 
@@ -1043,8 +1039,8 @@ public class GenerateJavaAST {
       JExpression ifTest = dispProcessExpression(x.condition);
       JExpression thenExpr = dispProcessExpression(x.valueIfTrue);
       JExpression elseExpr = dispProcessExpression(x.valueIfFalse);
-      JConditional conditional = new JConditional(program, info, type, ifTest,
-          thenExpr, elseExpr);
+      JConditional conditional = new JConditional(info, type, ifTest, thenExpr,
+          elseExpr);
       return conditional;
     }
 
@@ -1093,8 +1089,7 @@ public class GenerateJavaAST {
       }
       SourceInfo info = makeSourceInfo(x);
       JExpression instance = dispProcessExpression(x.receiver);
-      JExpression fieldRef = new JFieldRef(program, info, instance, field,
-          currentClass);
+      JExpression fieldRef = new JFieldRef(info, instance, field, currentClass);
 
       if (x.genericCast != null) {
         JType castType = (JType) typeMap.get(x.genericCast);
@@ -1111,7 +1106,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.expression);
       JReferenceType testType = (JReferenceType) typeMap.get(x.type.resolvedType);
-      return new JInstanceOf(program, info, testType, expr);
+      return new JInstanceOf(info, testType, expr);
     }
 
     JExpression processExpression(MessageSend x) {
@@ -1138,7 +1133,7 @@ public class GenerateJavaAST {
         qualifier = dispProcessExpression(x.receiver);
       }
 
-      JMethodCall call = new JMethodCall(program, info, qualifier, method);
+      JMethodCall call = new JMethodCall(info, qualifier, method);
 
       // On a super ref, don't allow polymorphic dispatch. Oddly enough,
       // QualifiedSuperReference not derived from SuperReference!
@@ -1187,8 +1182,7 @@ public class GenerateJavaAST {
           throw new InternalCompilerException("Unexpected postfix operator");
       }
 
-      JPostfixOperation postOp = new JPostfixOperation(program, info, op,
-          dispProcessExpression(x.lhs));
+      JPostfixOperation postOp = new JPostfixOperation(info, op, dispProcessExpression(x.lhs));
       return postOp;
     }
 
@@ -1209,8 +1203,7 @@ public class GenerateJavaAST {
           throw new InternalCompilerException("Unexpected prefix operator");
       }
 
-      JPrefixOperation preOp = new JPrefixOperation(program, info, op,
-          dispProcessExpression(x.lhs));
+      JPrefixOperation preOp = new JPrefixOperation(info, op, dispProcessExpression(x.lhs));
       return preOp;
     }
 
@@ -1232,8 +1225,8 @@ public class GenerateJavaAST {
       MethodBinding b = x.binding;
       JMethod ctor = (JMethod) typeMap.get(b);
       JClassType enclosingType = (JClassType) ctor.getEnclosingType();
-      JNewInstance newInstance = new JNewInstance(program, info, enclosingType);
-      JMethodCall call = new JMethodCall(program, info, newInstance, ctor);
+      JNewInstance newInstance = new JNewInstance(info, enclosingType);
+      JMethodCall call = new JMethodCall(info, newInstance, ctor);
       JExpression qualifier = dispProcessExpression(x.enclosingInstance);
       List<JExpression> qualList = new ArrayList<JExpression>();
       qualList.add(qualifier);
@@ -1312,7 +1305,7 @@ public class GenerateJavaAST {
           } else {
             field = (JField) typeMap.get(fieldBinding);
           }
-          curRef = new JFieldRef(program, info, curRef, field, currentClass);
+          curRef = new JFieldRef(info, curRef, field, currentClass);
           if (x.otherGenericCasts != null && x.otherGenericCasts[i] != null) {
             JType castType = (JType) typeMap.get(x.otherGenericCasts[i]);
             curRef = maybeCast(castType, curRef);
@@ -1359,7 +1352,7 @@ public class GenerateJavaAST {
         JField field = (JField) variable;
         if (!field.isStatic()) {
           JExpression instance = createThisRef(info, field.getEnclosingType());
-          result = new JFieldRef(program, info, instance, field, currentClass);
+          result = new JFieldRef(info, instance, field, currentClass);
         }
       }
       if (result == null) {
@@ -1416,8 +1409,7 @@ public class GenerateJavaAST {
               "Unexpected operator for unary expression");
       }
 
-      JPrefixOperation preOp = new JPrefixOperation(program, info, op,
-          dispProcessExpression(x.expression));
+      JPrefixOperation preOp = new JPrefixOperation(info, op, dispProcessExpression(x.expression));
       return preOp;
     }
 
@@ -1459,8 +1451,8 @@ public class GenerateJavaAST {
         if (initializer != null) {
           SourceInfo info = makeSourceInfo(declaration);
           // JDeclarationStatement's ctor sets up the field's initializer.
-          JStatement decl = new JDeclarationStatement(program, info,
-              createVariableRef(info, field), initializer);
+          JStatement decl = new JDeclarationStatement(info, createVariableRef(info, field),
+              initializer);
           // will either be init or clinit
           currentMethodBody.getBlock().addStmt(decl);
         }
@@ -1523,7 +1515,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JExpression expr = dispProcessExpression(x.assertExpression);
       JExpression arg = dispProcessExpression(x.exceptionArgument);
-      return new JAssertStatement(program, info, expr, arg);
+      return new JAssertStatement(info, expr, arg);
     }
 
     JBlock processStatement(Block x) {
@@ -1532,7 +1524,7 @@ public class GenerateJavaAST {
       }
 
       SourceInfo info = makeSourceInfo(x);
-      JBlock block = new JBlock(program, info);
+      JBlock block = new JBlock(info);
       if (x.statements != null) {
         for (int i = 0, n = x.statements.length; i < n; ++i) {
           JStatement jstmt = dispProcessStatement(x.statements[i]);
@@ -1546,7 +1538,7 @@ public class GenerateJavaAST {
 
     JStatement processStatement(BreakStatement x) {
       SourceInfo info = makeSourceInfo(x);
-      return new JBreakStatement(program, info, getOrCreateLabel(info,
+      return new JBreakStatement(info, getOrCreateLabel(info,
           currentMethod, x.label));
     }
 
@@ -1558,16 +1550,15 @@ public class GenerateJavaAST {
         assert (expression instanceof JFieldRef);
         JFieldRef fieldRef = (JFieldRef) expression;
         JEnumField field = (JEnumField) fieldRef.getField();
-        return new JCaseStatement(program, info,
-            program.getLiteralInt(field.ordinal()));
+        return new JCaseStatement(info, program.getLiteralInt(field.ordinal()));
       } else {
-        return new JCaseStatement(program, info, (JLiteral) expression);
+        return new JCaseStatement(info, (JLiteral) expression);
       }
     }
 
     JStatement processStatement(ContinueStatement x) {
       SourceInfo info = makeSourceInfo(x);
-      return new JContinueStatement(program, info, getOrCreateLabel(info,
+      return new JContinueStatement(info, getOrCreateLabel(info,
           currentMethod, x.label));
     }
 
@@ -1575,7 +1566,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JExpression loopTest = dispProcessExpression(x.condition);
       JStatement loopBody = dispProcessStatement(x.action);
-      JDoStatement stmt = new JDoStatement(program, info, loopTest, loopBody);
+      JDoStatement stmt = new JDoStatement(info, loopTest, loopBody);
       return stmt;
     }
 
@@ -1592,7 +1583,7 @@ public class GenerateJavaAST {
       if (action instanceof JBlock) {
         body = (JBlock) action;
       } else {
-        body = new JBlock(program, info);
+        body = new JBlock(info);
         body.addStmt(action);
       }
 
@@ -1628,29 +1619,27 @@ public class GenerateJavaAST {
         initializers.add(createDeclaration(info, indexVar,
             program.getLiteralInt(0)));
         // int i$max = i$array.length
-        initializers.add(createDeclaration(info, maxVar, new JFieldRef(program,
-            info, createVariableRef(info, arrayVar),
-            program.getIndexedField("Array.length"), currentClass)));
+        initializers.add(createDeclaration(info, maxVar, new JFieldRef(info,
+            createVariableRef(info, arrayVar), program.getIndexedField("Array.length"),
+            currentClass)));
 
         // i$index < i$max
-        JExpression condition = new JBinaryOperation(program, info,
-            program.getTypePrimitiveBoolean(), JBinaryOperator.LT,
-            createVariableRef(info, indexVar), createVariableRef(info, maxVar));
+        JExpression condition = new JBinaryOperation(info, program.getTypePrimitiveBoolean(),
+            JBinaryOperator.LT, createVariableRef(info, indexVar),
+            createVariableRef(info, maxVar));
 
         // ++i$index
         List<JExpressionStatement> increments = new ArrayList<JExpressionStatement>(
             1);
-        increments.add(new JPrefixOperation(program, info, JUnaryOperator.INC,
-            createVariableRef(info, indexVar)).makeStatement());
+        increments.add(new JPrefixOperation(info, JUnaryOperator.INC, createVariableRef(info, indexVar)).makeStatement());
 
         // T elementVar = i$array[i$index];
-        elementDecl.initializer = new JArrayRef(program, info,
-            createVariableRef(info, arrayVar),
+        elementDecl.initializer = new JArrayRef(info, createVariableRef(info, arrayVar),
             createVariableRef(info, indexVar));
         body.addStmt(0, elementDecl);
 
-        result = new JForStatement(program, info, initializers, condition,
-            increments, body);
+        result = new JForStatement(info, initializers, condition, increments,
+            body);
       } else {
         /**
          * <pre>
@@ -1666,17 +1655,14 @@ public class GenerateJavaAST {
         List<JStatement> initializers = new ArrayList<JStatement>(1);
         // Iterator<T> i$iterator = collection.iterator()
         initializers.add(createDeclaration(info, iteratorVar, new JMethodCall(
-            program, info, dispProcessExpression(x.collection),
-            program.getIndexedMethod("Iterable.iterator"))));
+            info, dispProcessExpression(x.collection), program.getIndexedMethod("Iterable.iterator"))));
 
         // i$iterator.hasNext()
-        JExpression condition = new JMethodCall(program, info,
-            createVariableRef(info, iteratorVar),
+        JExpression condition = new JMethodCall(info, createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.hasNext"));
 
         // T elementVar = (T) i$iterator.next();
-        elementDecl.initializer = new JMethodCall(program, info,
-            createVariableRef(info, iteratorVar),
+        elementDecl.initializer = new JMethodCall(info, createVariableRef(info, iteratorVar),
             program.getIndexedMethod("Iterator.next"));
 
         // Perform any implicit reference type casts (due to generics).
@@ -1699,8 +1685,8 @@ public class GenerateJavaAST {
 
         body.addStmt(0, elementDecl);
 
-        result = new JForStatement(program, info, initializers, condition,
-            Collections.<JExpressionStatement> emptyList(), body);
+        result = new JForStatement(info, initializers, condition, Collections.<JExpressionStatement> emptyList(),
+            body);
       }
 
       // May need to box or unbox the element assignment.
@@ -1731,7 +1717,7 @@ public class GenerateJavaAST {
       JExpression expr = dispProcessExpression(x.condition);
       List<JExpressionStatement> incr = processExpressionStatements(x.increments);
       JStatement body = removeBody ? null : dispProcessStatement(x.action);
-      return new JForStatement(program, info, init, expr, incr, body);
+      return new JForStatement(info, init, expr, incr, body);
     }
 
     JStatement processStatement(IfStatement x) {
@@ -1747,8 +1733,7 @@ public class GenerateJavaAST {
           : dispProcessStatement(x.thenStatement);
       JStatement elseStmt = removeElse ? null
           : dispProcessStatement(x.elseStatement);
-      JIfStatement ifStmt = new JIfStatement(program, info, expr, thenStmt,
-          elseStmt);
+      JIfStatement ifStmt = new JIfStatement(info, expr, thenStmt, elseStmt);
       return ifStmt;
     }
 
@@ -1758,16 +1743,16 @@ public class GenerateJavaAST {
         return null;
       }
       SourceInfo info = makeSourceInfo(x);
-      return new JLabeledStatement(program, info, getOrCreateLabel(info,
+      return new JLabeledStatement(info, getOrCreateLabel(info,
           currentMethod, x.label), body);
     }
 
     JStatement processStatement(LocalDeclaration x) {
       SourceInfo info = makeSourceInfo(x);
       JLocal local = (JLocal) typeMap.get(x.binding);
-      JLocalRef localRef = new JLocalRef(program, info, local);
+      JLocalRef localRef = new JLocalRef(info, local);
       JExpression initializer = dispProcessExpression(x.initialization);
-      return new JDeclarationStatement(program, info, localRef, initializer);
+      return new JDeclarationStatement(info, localRef, initializer);
     }
 
     JStatement processStatement(ReturnStatement x) {
@@ -1780,11 +1765,10 @@ public class GenerateJavaAST {
          */
         JClassType enclosingType = (JClassType) currentMethod.getEnclosingType();
         assert (x.expression == null);
-        return new JReturnStatement(program, info, createThisRef(info,
+        return new JReturnStatement(info, createThisRef(info,
             enclosingType));
       } else {
-        return new JReturnStatement(program, info,
-            dispProcessExpression(x.expression));
+        return new JReturnStatement(info, dispProcessExpression(x.expression));
       }
     }
 
@@ -1793,12 +1777,11 @@ public class GenerateJavaAST {
       JExpression expression = dispProcessExpression(x.expression);
       if (expression.getType() instanceof JClassType) {
         // Must be an enum; synthesize a call to ordinal().
-        expression = new JMethodCall(program, info, expression,
-            program.getIndexedMethod("Enum.ordinal"));
+        expression = new JMethodCall(info, expression, program.getIndexedMethod("Enum.ordinal"));
       }
-      JBlock block = new JBlock(program, info);
+      JBlock block = new JBlock(info);
       block.addStmts(processStatements(x.statements));
-      return new JSwitchStatement(program, info, expression, block);
+      return new JSwitchStatement(info, expression, block);
     }
 
     JStatement processStatement(SynchronizedStatement x) {
@@ -1811,7 +1794,7 @@ public class GenerateJavaAST {
     JStatement processStatement(ThrowStatement x) {
       SourceInfo info = makeSourceInfo(x);
       JExpression toThrow = dispProcessExpression(x.exception);
-      return new JThrowStatement(program, info, toThrow);
+      return new JThrowStatement(info, toThrow);
     }
 
     JStatement processStatement(TryStatement x) {
@@ -1829,8 +1812,7 @@ public class GenerateJavaAST {
         }
       }
       JBlock finallyBlock = (JBlock) dispProcessStatement(x.finallyBlock);
-      return new JTryStatement(program, info, tryBlock, catchArgs, catchBlocks,
-          finallyBlock);
+      return new JTryStatement(info, tryBlock, catchArgs, catchBlocks, finallyBlock);
     }
 
     @SuppressWarnings("unused")
@@ -1847,8 +1829,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JExpression loopTest = dispProcessExpression(x.condition);
       JStatement loopBody = removeBody ? null : dispProcessStatement(x.action);
-      JWhileStatement stmt = new JWhileStatement(program, info, loopTest,
-          loopBody);
+      JWhileStatement stmt = new JWhileStatement(info, loopTest, loopBody);
       return stmt;
     }
 
@@ -1870,7 +1851,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JMethod ctor = (JMethod) typeMap.get(x.binding);
       JExpression trueQualifier = createThisRef(info, currentClass);
-      JMethodCall call = new JMethodCall(program, info, trueQualifier, ctor);
+      JMethodCall call = new JMethodCall(info, trueQualifier, ctor);
 
       addCallArgs(x.arguments, call, x.binding);
 
@@ -1936,7 +1917,7 @@ public class GenerateJavaAST {
       SourceInfo info = makeSourceInfo(x);
       JMethod ctor = (JMethod) typeMap.get(x.binding);
       JExpression trueQualifier = createThisRef(info, currentClass);
-      JMethodCall call = new JMethodCall(program, info, trueQualifier, ctor);
+      JMethodCall call = new JMethodCall(info, trueQualifier, ctor);
 
       assert (x.qualification == null);
 
@@ -1967,8 +1948,7 @@ public class GenerateJavaAST {
       if (classType.fields.size() > 0) {
         JField field = classType.fields.get(0);
         if (field.getName().startsWith("this$")) {
-          list.add(new JFieldRef(program, expr.getSourceInfo(), expr, field,
-              currentClass));
+          list.add(new JFieldRef(expr.getSourceInfo(), expr, field, currentClass));
         }
       }
     }
@@ -2060,17 +2040,17 @@ public class GenerateJavaAST {
       bridgeMethod.freezeParamTypes();
 
       // create a call
-      JMethodCall call = new JMethodCall(program,
+      JMethodCall call = new JMethodCall(program.createSourceInfoSynthetic(GenerateJavaAST.class,
+          "call to inherited method"),
+          program.getExprThisRef(
           program.createSourceInfoSynthetic(GenerateJavaAST.class,
-              "call to inherited method"), program.getExprThisRef(
-              program.createSourceInfoSynthetic(GenerateJavaAST.class,
-                  "part of a bridge method"), clazz), implmeth);
+              "part of a bridge method"), clazz), implmeth);
 
       for (int i = 0; i < bridgeMethod.getParams().size(); i++) {
         JParameter param = bridgeMethod.getParams().get(i);
-        JParameterRef paramRef = new JParameterRef(program,
-            program.createSourceInfoSynthetic(GenerateJavaAST.class,
-                "part of a bridge method"), param);
+        JParameterRef paramRef = new JParameterRef(program.createSourceInfoSynthetic(GenerateJavaAST.class,
+            "part of a bridge method"),
+            param);
         call.addArg(maybeCast(implmeth.getParams().get(i).getType(), paramRef));
       }
 
@@ -2079,9 +2059,9 @@ public class GenerateJavaAST {
       if (bridgeMethod.getType() == program.getTypeVoid()) {
         callOrReturn = call.makeStatement();
       } else {
-        callOrReturn = new JReturnStatement(program,
-            program.createSourceInfoSynthetic(GenerateJavaAST.class,
-                "part of a bridge method"), call);
+        callOrReturn = new JReturnStatement(program.createSourceInfoSynthetic(GenerateJavaAST.class,
+            "part of a bridge method"),
+            call);
       }
 
       // create a body that is just that call
@@ -2107,21 +2087,20 @@ public class GenerateJavaAST {
 
     private JDeclarationStatement createDeclaration(SourceInfo info,
         JLocal local, JExpression value) {
-      return new JDeclarationStatement(program, info, new JLocalRef(program,
-          info, local), value);
+      return new JDeclarationStatement(info, new JLocalRef(info,
+          local), value);
     }
 
     private JField createEnumValueMap(JEnumType type) {
       SourceInfo sourceInfo = type.getSourceInfo().makeChild(
           JavaASTGenerationVisitor.class, "enum value lookup map");
-      JsonObject map = new JsonObject(program, sourceInfo);
+      JsonObject map = new JsonObject(sourceInfo, program.getJavaScriptObject());
       for (JEnumField field : type.enumList) {
         // JSON maps require leading underscores to prevent collisions.
         JStringLiteral key = program.getLiteralString(field.getSourceInfo(),
             "_" + field.getName());
-        JFieldRef value = new JFieldRef(program, sourceInfo, null, field, type);
-        map.propInits.add(new JsonObject.JsonPropInit(program, sourceInfo, key,
-            value));
+        JFieldRef value = new JFieldRef(sourceInfo, null, field, type);
+        map.propInits.add(new JsonObject.JsonPropInit(sourceInfo, key, value));
       }
       JField mapField = program.createField(sourceInfo,
           "enum$map".toCharArray(), type, map.getType(), true,
@@ -2228,14 +2207,14 @@ public class GenerateJavaAST {
           throw new InternalCompilerException(
               "LocalRef referencing local in a different method.");
         }
-        return new JLocalRef(program, info, local);
+        return new JLocalRef(info, local);
       } else if (variable instanceof JParameter) {
         JParameter parameter = (JParameter) variable;
         if (parameter.getEnclosingMethod() != currentMethod) {
           throw new InternalCompilerException(
               "ParameterRef referencing param in a different method.");
         }
-        return new JParameterRef(program, info, parameter);
+        return new JParameterRef(info, parameter);
       } else if (variable instanceof JField) {
         JField field = (JField) variable;
         JExpression instance = null;
@@ -2248,7 +2227,7 @@ public class GenerateJavaAST {
                 "FieldRef referencing field in a different type.");
           }
         }
-        return new JFieldRef(program, info.makeChild(
+        return new JFieldRef(info.makeChild(
             JavaASTGenerationVisitor.class, "Reference",
             variable.getSourceInfo()), instance, field, currentClass);
       }
@@ -2299,7 +2278,7 @@ public class GenerateJavaAST {
       }
       JLabel jlabel = lblMap.get(sname);
       if (jlabel == null) {
-        jlabel = new JLabel(program, info, sname);
+        jlabel = new JLabel(info, sname);
         lblMap.put(sname, jlabel);
       }
       return jlabel;
@@ -2353,7 +2332,7 @@ public class GenerateJavaAST {
       }
 
       block.clear();
-      block.addStmt(new JReturnStatement(program, info, returnValue));
+      block.addStmt(new JReturnStatement(info, returnValue));
     }
 
     /*
@@ -2412,8 +2391,7 @@ public class GenerateJavaAST {
       if (expected != expression.getType()) {
         // Must be a generic; insert a cast operation.
         JReferenceType toType = (JReferenceType) expected;
-        return new JCastOperation(program, expression.getSourceInfo(), toType,
-            expression);
+        return new JCastOperation(expression.getSourceInfo(), toType, expression);
       } else {
         return expression;
       }
@@ -2480,8 +2458,8 @@ public class GenerateJavaAST {
         JBinaryOperator op, JType type, Expression arg1, Expression arg2) {
       JExpression exprArg1 = dispProcessExpression(arg1);
       JExpression exprArg2 = dispProcessExpression(arg2);
-      JBinaryOperation binaryOperation = new JBinaryOperation(program, info,
-          type, op, exprArg1, exprArg2);
+      JBinaryOperation binaryOperation = new JBinaryOperation(info, type,
+          op, exprArg1, exprArg2);
       return binaryOperation;
     }
 
@@ -2652,8 +2630,8 @@ public class GenerateJavaAST {
                 + primitiveType.getName() + " " + valueMethodName + "()'", null);
       }
 
-      JMethodCall unboxCall = new JMethodCall(program, toUnbox.getSourceInfo(),
-          toUnbox, valueMethod);
+      JMethodCall unboxCall = new JMethodCall(toUnbox.getSourceInfo(), toUnbox,
+          valueMethod);
       return unboxCall;
     }
 
@@ -2661,15 +2639,14 @@ public class GenerateJavaAST {
       // return Enum.valueOf(map, name);
       SourceInfo sourceInfo = mapField.getSourceInfo().makeChild(
           JavaASTGenerationVisitor.class, "enum accessor method");
-      JFieldRef mapRef = new JFieldRef(program, sourceInfo, null, mapField,
-          type);
+      JFieldRef mapRef = new JFieldRef(sourceInfo, null, mapField, type);
       JVariableRef nameRef = createVariableRef(sourceInfo,
           currentMethod.getParams().get(0));
       JMethod delegateTo = program.getIndexedMethod("Enum.valueOf");
-      JMethodCall call = new JMethodCall(program, sourceInfo, null, delegateTo);
+      JMethodCall call = new JMethodCall(sourceInfo, null, delegateTo);
       call.addArgs(mapRef, nameRef);
       currentMethodBody.getBlock().addStmt(
-          new JReturnStatement(program, sourceInfo, call));
+          new JReturnStatement(sourceInfo, call));
     }
 
     private void writeEnumValuesMethod(JEnumType type) {
@@ -2678,14 +2655,13 @@ public class GenerateJavaAST {
           JavaASTGenerationVisitor.class, "enum values method");
       List<JExpression> initializers = new ArrayList<JExpression>();
       for (JEnumField field : type.enumList) {
-        JFieldRef fieldRef = new JFieldRef(program, sourceInfo, null, field,
-            type);
+        JFieldRef fieldRef = new JFieldRef(sourceInfo, null, field, type);
         initializers.add(fieldRef);
       }
       JNewArray newExpr = JNewArray.createInitializers(program, sourceInfo,
           program.getTypeArray(type, 1), initializers);
       currentMethodBody.getBlock().addStmt(
-          new JReturnStatement(program, sourceInfo, newExpr));
+          new JReturnStatement(sourceInfo, newExpr));
     }
   }
 
@@ -2867,8 +2843,8 @@ public class GenerateJavaAST {
         }
 
         // Normal: create a jsniRef.
-        JsniFieldRef fieldRef = new JsniFieldRef(program, info,
-            nameRef.getIdent(), field, currentClass, ctx.isLvalue());
+        JsniFieldRef fieldRef = new JsniFieldRef(info, nameRef.getIdent(),
+            field, currentClass, ctx.isLvalue());
         nativeMethodBody.addJsniRef(fieldRef);
       }
 
@@ -2909,8 +2885,8 @@ public class GenerateJavaAST {
               + method.getName());
         }
 
-        JsniMethodRef methodRef = new JsniMethodRef(program, info,
-            nameRef.getIdent(), method);
+        JsniMethodRef methodRef = new JsniMethodRef(info, nameRef.getIdent(),
+            method, program.getJavaScriptObject());
         nativeMethodBody.addJsniRef(methodRef);
       }
 
@@ -2962,6 +2938,12 @@ public class GenerateJavaAST {
     @Override
     public void endVisit(JsniMethodBody x, Context ctx) {
       new JsniRefResolver(jsniMethodMap.get(x), x).accept(x.getFunc());
+    }
+    
+    @Override
+    public boolean visit(JClassType x, Context ctx) {
+      currentClass = x;
+      return true;
     }
   }
 

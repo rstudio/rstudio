@@ -68,8 +68,8 @@ public class ReplaceRunAsyncs {
         JMethod loadMethod = getRunAsyncMethod(loader);
         assert loadMethod != null;
 
-        JMethodCall methodCall = new JMethodCall(program, x.getSourceInfo(),
-            null, loadMethod);
+        JMethodCall methodCall = new JMethodCall(x.getSourceInfo(), null,
+            loadMethod);
         methodCall.addArg(asyncCallback);
 
         program.addEntryMethod(getOnLoadMethod(loader), entryNumber);

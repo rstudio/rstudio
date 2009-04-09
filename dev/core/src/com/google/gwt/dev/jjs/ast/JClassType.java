@@ -25,9 +25,9 @@ public class JClassType extends JReferenceType implements CanBeSetFinal {
   private final boolean isAbstract;
   private boolean isFinal;
 
-  public JClassType(JProgram program, SourceInfo info, String name,
-      boolean isAbstract, boolean isFinal) {
-    super(program, info, name);
+  public JClassType(SourceInfo info, String name, boolean isAbstract,
+      boolean isFinal) {
+    super(info, name);
     this.isAbstract = isAbstract;
     this.isFinal = isFinal;
   }

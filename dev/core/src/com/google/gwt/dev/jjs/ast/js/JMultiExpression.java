@@ -18,7 +18,7 @@ package com.google.gwt.dev.jjs.ast.js;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JExpression;
-import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -31,14 +31,14 @@ public class JMultiExpression extends JExpression {
 
   public ArrayList<JExpression> exprs = new ArrayList<JExpression>();
 
-  public JMultiExpression(JProgram program, SourceInfo info) {
-    super(program, info);
+  public JMultiExpression(SourceInfo info) {
+    super(info);
   }
 
   public JType getType() {
     int c = exprs.size();
     if (c == 0) {
-      return program.getTypeVoid();
+      return JPrimitiveType.VOID;
     } else {
       return exprs.get(c - 1).getType();
     }

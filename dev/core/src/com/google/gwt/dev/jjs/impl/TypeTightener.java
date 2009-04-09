@@ -18,10 +18,12 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.ast.CanBeAbstract;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JArrayRef;
+import com.google.gwt.dev.jjs.ast.JArrayType;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -105,7 +107,7 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JFieldRef fieldRef = new JFieldRef(program, x.getSourceInfo(), null,
+          JFieldRef fieldRef = new JFieldRef(x.getSourceInfo(), null,
               x.getField(), x.getEnclosingType());
           ctx.replaceMe(fieldRef);
         }
@@ -129,8 +131,8 @@ public class TypeTightener {
         // this doesn't really belong here, but while we're here let's remove
         // non-side-effect qualifiers to statics
         if (!instance.hasSideEffects()) {
-          JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
-              null, x.getTarget());
+          JMethodCall newCall = new JMethodCall(x.getSourceInfo(), null,
+              x.getTarget());
           newCall.addArgs(x.getArgs());
           ctx.replaceMe(newCall);
         }
@@ -249,7 +251,7 @@ public class TypeTightener {
       // Fake an assignment-to-self on all args to prevent tightening
       JMethod method = x.getTarget();
       for (JParameter param : method.getParams()) {
-        addAssignment(param, new JParameterRef(program,
+        addAssignment(param, new JParameterRef(
             program.createSourceInfoSynthetic(RecordVisitor.class,
                 "Fake assignment"), param));
       }
@@ -368,8 +370,8 @@ public class TypeTightener {
   public class TightenTypesVisitor extends JModVisitor {
 
     /**
-     * <code>true</code> if this visitor has changed the AST apart from calls to
-     * Context.
+     * <code>true</code> if this visitor has changed the AST apart from calls
+     * to Context.
      */
     private boolean myDidChange = false;
 
@@ -406,16 +408,29 @@ public class TypeTightener {
         ctx.replaceMe(x.getExpr());
       } else if (triviallyFalse) {
         // replace with a magic NULL cast
-        JCastOperation newOp = new JCastOperation(program, x.getSourceInfo(),
+        JCastOperation newOp = new JCastOperation(x.getSourceInfo(),
             program.getTypeNull(), x.getExpr());
         ctx.replaceMe(newOp);
       } else {
         // If possible, try to use a narrower cast
         JClassType concreteType = getSingleConcreteType(toType);
         if (concreteType != null) {
-          JCastOperation newOp = new JCastOperation(program, x.getSourceInfo(),
+          JCastOperation newOp = new JCastOperation(x.getSourceInfo(),
               concreteType, x.getExpr());
           ctx.replaceMe(newOp);
+        }
+      }
+    }
+
+    @Override
+    public void endVisit(JConditional x, Context ctx) {
+      if (x.getType() instanceof JReferenceType) {
+        JReferenceType newType = program.generalizeTypes(
+            (JReferenceType) x.getThenExpr().getType(),
+            (JReferenceType) x.getElseExpr().getType());
+        if (newType != x.getType()) {
+          x.setType(newType);
+          didChange = true;
         }
       }
     }
@@ -471,7 +486,7 @@ public class TypeTightener {
       if (triviallyTrue) {
         // replace with a simple null test
         JNullLiteral nullLit = program.getLiteralNull();
-        JBinaryOperation neq = new JBinaryOperation(program, x.getSourceInfo(),
+        JBinaryOperation neq = new JBinaryOperation(x.getSourceInfo(),
             program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ,
             x.getExpr(), nullLit);
         ctx.replaceMe(neq);
@@ -482,8 +497,8 @@ public class TypeTightener {
         // If possible, try to use a narrower cast
         JClassType concreteType = getSingleConcreteType(toType);
         if (concreteType != null) {
-          JInstanceOf newOp = new JInstanceOf(program, x.getSourceInfo(),
-              concreteType, x.getExpr());
+          JInstanceOf newOp = new JInstanceOf(x.getSourceInfo(), concreteType,
+              x.getExpr());
           ctx.replaceMe(newOp);
         }
       }
@@ -569,7 +584,7 @@ public class TypeTightener {
       JMethod target = x.getTarget();
       JMethod concreteMethod = getSingleConcreteMethod(target);
       if (concreteMethod != null) {
-        JMethodCall newCall = new JMethodCall(program, x.getSourceInfo(),
+        JMethodCall newCall = new JMethodCall(x.getSourceInfo(),
             x.getInstance(), concreteMethod);
         newCall.addArgs(x.getArgs());
         ctx.replaceMe(newCall);
@@ -657,6 +672,21 @@ public class TypeTightener {
       return null;
     }
 
+    private JArrayType nullifyArrayType(JArrayType arrayType) {
+      JType elementType = arrayType.getElementType();
+      if (elementType instanceof JReferenceType) {
+        JReferenceType refType = (JReferenceType) elementType;
+        if (!program.typeOracle.isInstantiatedType(refType)) {
+          return program.getTypeArray(JNullType.INSTANCE, 1);
+        } else if (elementType instanceof JArrayType) {
+          JArrayType newElementType = nullifyArrayType((JArrayType) elementType);
+          return program.getTypeArray(newElementType.getLeafType(),
+              newElementType.getDims() + 1);
+        }
+      }
+      return arrayType;
+    }
+
     /**
      * Tighten based on assignment, and for parameters, callArgs as well.
      */
@@ -675,6 +705,15 @@ public class TypeTightener {
         x.setType(typeNull);
         myDidChange = true;
         return;
+      }
+
+      if (refType instanceof JArrayType) {
+        JArrayType arrayType = (JArrayType) refType;
+        JArrayType newArrayType = nullifyArrayType(arrayType);
+        if (arrayType != newArrayType) {
+          x.setType(newArrayType);
+          myDidChange = true;
+        }
       }
 
       // tighten based on leaf types

@@ -113,7 +113,7 @@ public class Simplifier {
     if (original != null) {
       return original;
     }
-    return new JCastOperation(program, exp.getSourceInfo(), type, exp);
+    return new JCastOperation(sourceInfo, type, exp);
   }
 
   public JExpression cast(JType type, JExpression exp) {
@@ -127,7 +127,7 @@ public class Simplifier {
       // (a,b,c)?d:e -> a,b,(c?d:e)
       // TODO(spoon): do this outward multi movement for all AST nodes
       JMultiExpression condMulti = (JMultiExpression) condExpr;
-      JMultiExpression newMulti = new JMultiExpression(program, sourceInfo);
+      JMultiExpression newMulti = new JMultiExpression(sourceInfo);
       newMulti.exprs.addAll(allButLast(condMulti.exprs));
       newMulti.exprs.add(conditional(null, sourceInfo, type,
           last(condMulti.exprs), thenExpr, elseExpr));
@@ -145,37 +145,36 @@ public class Simplifier {
     } else if (thenExpr instanceof JBooleanLiteral) {
       if (((JBooleanLiteral) thenExpr).getValue()) {
         // e.g. (cond ? true : else) -> cond || else
-        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
-            type, JBinaryOperator.OR, condExpr, elseExpr);
+        JBinaryOperation binOp = new JBinaryOperation(sourceInfo, type,
+            JBinaryOperator.OR, condExpr, elseExpr);
         return binOp;
       } else {
         // e.g. (cond ? false : else) -> !cond && else
-        JPrefixOperation notCondExpr = new JPrefixOperation(program,
+        JPrefixOperation notCondExpr = new JPrefixOperation(
             condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
-        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
-            type, JBinaryOperator.AND, notCondExpr, elseExpr);
+        JBinaryOperation binOp = new JBinaryOperation(sourceInfo, type,
+            JBinaryOperator.AND, notCondExpr, elseExpr);
         return binOp;
       }
     } else if (elseExpr instanceof JBooleanLiteral) {
       if (((JBooleanLiteral) elseExpr).getValue()) {
         // e.g. (cond ? then : true) -> !cond || then
-        JPrefixOperation notCondExpr = new JPrefixOperation(program,
+        JPrefixOperation notCondExpr = new JPrefixOperation(
             condExpr.getSourceInfo(), JUnaryOperator.NOT, condExpr);
-        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
-            type, JBinaryOperator.OR, notCondExpr, thenExpr);
+        JBinaryOperation binOp = new JBinaryOperation(sourceInfo, type,
+            JBinaryOperator.OR, notCondExpr, thenExpr);
         return binOp;
       } else {
         // e.g. (cond ? then : false) -> cond && then
-        JBinaryOperation binOp = new JBinaryOperation(program, sourceInfo,
-            type, JBinaryOperator.AND, condExpr, thenExpr);
+        JBinaryOperation binOp = new JBinaryOperation(sourceInfo, type,
+            JBinaryOperator.AND, condExpr, thenExpr);
         return binOp;
       }
     } else {
       // e.g. (!cond ? then : else) -> (cond ? else : then)
       JExpression unflipped = maybeUnflipBoolean(condExpr);
       if (unflipped != null) {
-        return new JConditional(program, sourceInfo, type, unflipped, elseExpr,
-            thenExpr);
+        return new JConditional(sourceInfo, type, unflipped, elseExpr, thenExpr);
       }
     }
 
@@ -183,8 +182,7 @@ public class Simplifier {
     if (original != null) {
       return original;
     }
-    return new JConditional(program, sourceInfo, type, condExpr, thenExpr,
-        elseExpr);
+    return new JConditional(sourceInfo, type, condExpr, thenExpr, elseExpr);
   }
 
   public JStatement ifStatement(JIfStatement original, SourceInfo sourceInfo,
@@ -192,12 +190,12 @@ public class Simplifier {
     if (condExpr instanceof JMultiExpression) {
       // if(a,b,c) d else e -> {a; b; if(c) d else e; }
       JMultiExpression condMulti = (JMultiExpression) condExpr;
-      JBlock newBlock = new JBlock(program, sourceInfo);
+      JBlock newBlock = new JBlock(sourceInfo);
       for (JExpression expr : allButLast(condMulti.exprs)) {
         newBlock.addStmt(expr.makeStatement());
       }
-      newBlock.addStmt(ifStatement(null, sourceInfo,
-          last(condMulti.exprs), thenStmt, elseStmt));
+      newBlock.addStmt(ifStatement(null, sourceInfo, last(condMulti.exprs),
+          thenStmt, elseStmt));
       // TODO(spoon): immediately simplify the resulting block
       return newBlock;
     }
@@ -237,8 +235,8 @@ public class Simplifier {
     if (original != null) {
       return original;
     }
-    return new JIfStatement(program, condExpr.getSourceInfo(), condExpr,
-        thenStmt, elseStmt);
+    return new JIfStatement(condExpr.getSourceInfo(), condExpr, thenStmt,
+        elseStmt);
   }
 
   public JExpression not(JPrefixOperation original, SourceInfo sourceInfo,
@@ -246,7 +244,7 @@ public class Simplifier {
     if (arg instanceof JMultiExpression) {
       // !(a,b,c) -> (a,b,!c)
       JMultiExpression argMulti = (JMultiExpression) arg;
-      JMultiExpression newMulti = new JMultiExpression(program, sourceInfo);
+      JMultiExpression newMulti = new JMultiExpression(sourceInfo);
       newMulti.exprs.addAll(allButLast(argMulti.exprs));
       newMulti.exprs.add(not(null, sourceInfo, last(argMulti.exprs)));
       // TODO(spoon): immediately simplify the newMulti
@@ -277,9 +275,8 @@ public class Simplifier {
         newOp = JBinaryOperator.GTE;
       }
       if (newOp != null) {
-        JBinaryOperation newBinOp = new JBinaryOperation(program,
-            argOp.getSourceInfo(), argOp.getType(), newOp, argOp.getLhs(),
-            argOp.getRhs());
+        JBinaryOperation newBinOp = new JBinaryOperation(argOp.getSourceInfo(),
+            argOp.getType(), newOp, argOp.getLhs(), argOp.getRhs());
         return newBinOp;
       }
     } else if (arg instanceof JPrefixOperation) {
@@ -296,13 +293,12 @@ public class Simplifier {
     if (original != null) {
       return original;
     }
-    return new JPrefixOperation(program, arg.getSourceInfo(),
-        JUnaryOperator.NOT, arg);
+    return new JPrefixOperation(arg.getSourceInfo(), JUnaryOperator.NOT, arg);
   }
 
   private JStatement ensureBlock(JStatement stmt) {
     if (!(stmt instanceof JBlock)) {
-      JBlock block = new JBlock(program, stmt.getSourceInfo());
+      JBlock block = new JBlock(stmt.getSourceInfo());
       block.addStmt(stmt);
       stmt = block;
     }

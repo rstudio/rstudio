@@ -212,8 +212,6 @@ public class JTypeOracle implements Serializable {
 
   private final Set<JInterfaceType> dualImpl = new IdentityHashSet<JInterfaceType>();
 
-  private final Set<JReferenceType> hasClinitSet = new IdentityHashSet<JReferenceType>();
-
   private final Map<JClassType, Set<JInterfaceType>> implementsMap = new IdentityHashMap<JClassType, Set<JInterfaceType>>();
 
   private Set<JReferenceType> instantiatedTypes = null;
@@ -379,33 +377,6 @@ public class JTypeOracle implements Serializable {
     return false;
   }
 
-  /**
-   * Returns <code>true</code> if a static field access of <code>toType</code>
-   * from within <code>fromType</code> should generate a clinit call. This
-   * will be true in cases where <code>toType</code> has a live clinit method
-   * which we cannot statically know has already run. We can statically know the
-   * clinit method has already run when:
-   * <ol>
-   * <li><code>fromType == toType</code></li>
-   * <li><code>toType</code> is a superclass of <code>fromType</code>
-   * (because <code>toType</code>'s clinit would have already run
-   * <code>fromType</code>'s clinit; see JLS 12.4)</li>
-   * </ol>
-   */
-  public boolean checkClinit(JReferenceType fromType, JReferenceType toType) {
-    if (fromType == toType) {
-      return false;
-    }
-    if (!hasClinit(toType)) {
-      return false;
-    }
-    if (fromType instanceof JClassType && toType instanceof JClassType
-        && isSuperClass((JClassType) fromType, (JClassType) toType)) {
-      return false;
-    }
-    return true;
-  }
-
   public void computeBeforeAST() {
     javaLangObject = program.getTypeJavaLangObject();
     superClassMap.clear();
@@ -513,10 +484,6 @@ public class JTypeOracle implements Serializable {
     return Collections.unmodifiableMap(jsoSingleImpls);
   }
 
-  public boolean hasClinit(JReferenceType type) {
-    return hasClinitSet.contains(type);
-  }
-
   /**
    * Returns true if qType is an implemented interface of type, directly or
    * indirectly.
@@ -548,11 +515,12 @@ public class JTypeOracle implements Serializable {
    * associated JProgram.
    */
   public void recomputeAfterOptimizations() {
-    hasClinitSet.clear();
     Set<JReferenceType> computed = new IdentityHashSet<JReferenceType>();
     for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
       JReferenceType type = program.getDeclaredTypes().get(i);
-      computeHasClinit(type, computed);
+      if (type.hasClinit()) {
+        computeHasClinit(type, computed);
+      }
     }
 
     computeSingleJsoImplData();
@@ -597,20 +565,16 @@ public class JTypeOracle implements Serializable {
       Set<JReferenceType> computed) {
     if (computeHasClinitRecursive(type, computed,
         new IdentityHashSet<JReferenceType>())) {
-      hasClinitSet.add(type);
+      computed.add(type);
+    } else {
+      type.removeClinit();
     }
-    computed.add(type);
   }
 
   private boolean computeHasClinitRecursive(JReferenceType type,
       Set<JReferenceType> computed, Set<JReferenceType> alreadySeen) {
     // Track that we've been seen.
     alreadySeen.add(type);
-
-    // If we've been computed, hasClinitSet is accurate for me.
-    if (computed.contains(type)) {
-      return hasClinitSet.contains(type);
-    }
 
     JMethod method = type.methods.get(0);
     assert (JProgram.isClinit(method));
@@ -620,8 +584,24 @@ public class JTypeOracle implements Serializable {
       return true;
     }
     for (JReferenceType target : v.getClinitTargets()) {
+      if (!target.hasClinit()) {
+        // A false result is always accurate.
+        continue;
+      }
+
+      /*
+       * If target has a clinit, so do I; but only if target has already been
+       * recomputed this run.
+       */
+      if (target.hasClinit() && computed.contains(target)) {
+        return true;
+      }
+
+      /*
+       * Prevent recursion sickness: ignore this call for now since this call is
+       * being accounted for higher on the stack.
+       */
       if (alreadySeen.contains(target)) {
-        // Ignore this call for now.
         continue;
       }
 

@@ -25,9 +25,8 @@ public class JLabeledStatement extends JStatement {
   private JStatement body;
   private final JLabel label;
 
-  public JLabeledStatement(JProgram program, SourceInfo info, JLabel label,
-      JStatement body) {
-    super(program, info);
+  public JLabeledStatement(SourceInfo info, JLabel label, JStatement body) {
+    super(info);
     this.label = label;
     this.body = body;
   }

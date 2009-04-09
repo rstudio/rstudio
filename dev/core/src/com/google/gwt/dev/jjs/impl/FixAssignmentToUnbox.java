@@ -100,10 +100,8 @@ public class FixAssignmentToUnbox extends JModVisitor {
   }
 
   private final AutoboxUtils autoboxUtils;
-  private final JProgram program;
 
   private FixAssignmentToUnbox(JProgram program) {
-    this.program = program;
     this.autoboxUtils = new AutoboxUtils(program);
   }
 
@@ -120,7 +118,7 @@ public class FixAssignmentToUnbox extends JModVisitor {
       // unbox(x) = foo -> x = box(foo)
       JClassType boxedType = (JClassType) boxed.getType();
 
-      ctx.replaceMe(new JBinaryOperation(program, x.getSourceInfo(), boxedType,
+      ctx.replaceMe(new JBinaryOperation(x.getSourceInfo(), boxedType,
           JBinaryOperator.ASG, boxed, autoboxUtils.box(x.getRhs(), boxedType)));
       return;
     }
@@ -129,9 +127,8 @@ public class FixAssignmentToUnbox extends JModVisitor {
       // Assignment-to-cast-operation, e.g.
       // (Foo) x = foo -> x = foo
       JCastOperation cast = (JCastOperation) lhs;
-      JBinaryOperation newAsg = new JBinaryOperation(program,
-          x.getSourceInfo(), x.getType(), JBinaryOperator.ASG, cast.getExpr(),
-          x.getRhs());
+      JBinaryOperation newAsg = new JBinaryOperation(x.getSourceInfo(),
+          x.getType(), JBinaryOperator.ASG, cast.getExpr(), x.getRhs());
       ctx.replaceMe(newAsg);
     }
   }

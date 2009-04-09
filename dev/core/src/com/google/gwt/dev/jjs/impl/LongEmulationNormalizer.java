@@ -83,8 +83,8 @@ public class LongEmulationNormalizer {
       }
 
       JMethod method = program.getIndexedMethod("LongLib." + methodName);
-      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-          method, x.getType());
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method,
+          x.getType());
       call.addArgs(x.getLhs(), x.getRhs());
       ctx.replaceMe(call);
     }
@@ -107,8 +107,8 @@ public class LongEmulationNormalizer {
 
       String methodName = getEmulationMethod(x.getOp());
       JMethod method = program.getIndexedMethod("LongLib." + methodName);
-      JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-          method, x.getType());
+      JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method,
+          x.getType());
       call.addArg(x.getArg());
       ctx.replaceMe(call);
     }

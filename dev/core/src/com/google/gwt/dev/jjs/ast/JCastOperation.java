@@ -25,9 +25,8 @@ public class JCastOperation extends JExpression {
   private JExpression expr;
   private final JType castType;
 
-  public JCastOperation(JProgram program, SourceInfo info, JType castType,
-      JExpression expr) {
-    super(program, info);
+  public JCastOperation(SourceInfo info, JType castType, JExpression expr) {
+    super(info);
     this.castType = castType;
     this.expr = expr;
   }

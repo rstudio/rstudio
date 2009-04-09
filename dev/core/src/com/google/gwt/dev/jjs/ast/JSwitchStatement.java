@@ -25,9 +25,8 @@ public class JSwitchStatement extends JStatement {
   private final JBlock body;
   private JExpression expr;
 
-  public JSwitchStatement(JProgram program, SourceInfo info, JExpression expr,
-      JBlock body) {
-    super(program, info);
+  public JSwitchStatement(SourceInfo info, JExpression expr, JBlock body) {
+    super(info);
     this.expr = expr;
     this.body = body;
   }

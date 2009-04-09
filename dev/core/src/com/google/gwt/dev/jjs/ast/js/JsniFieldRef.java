@@ -19,7 +19,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
-import com.google.gwt.dev.jjs.ast.JProgram;
+import com.google.gwt.dev.jjs.ast.JNullLiteral;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
@@ -31,10 +31,10 @@ public class JsniFieldRef extends JFieldRef {
   private final String ident;
   private boolean isLvalue;
 
-  public JsniFieldRef(JProgram program, SourceInfo info, String ident,
-      JField field, JReferenceType enclosingType, boolean isLvalue) {
-    super(program, info, field.isStatic() ? null : program.getLiteralNull(),
-        field, enclosingType);
+  public JsniFieldRef(SourceInfo info, String ident, JField field,
+      JReferenceType enclosingType, boolean isLvalue) {
+    super(info, field.isStatic() ? null : JNullLiteral.INSTANCE, field,
+        enclosingType);
     this.ident = ident;
     this.isLvalue = isLvalue;
   }

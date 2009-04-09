@@ -24,8 +24,8 @@ public class JCaseStatement extends JStatement {
 
   private final JLiteral expr;
 
-  public JCaseStatement(JProgram program, SourceInfo info, JLiteral expr) {
-    super(program, info);
+  public JCaseStatement(SourceInfo info, JLiteral expr) {
+    super(info);
     this.expr = expr;
   }
 

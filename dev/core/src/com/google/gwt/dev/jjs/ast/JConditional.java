@@ -20,16 +20,16 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Conditional expression.
  */
-public class JConditional extends JExpression {
+public class JConditional extends JExpression implements HasSettableType {
 
   private JExpression elseExpr;
   private JExpression ifTest;
   private JExpression thenExpr;
-  private final JType type;
+  private JType type;
 
-  public JConditional(JProgram program, SourceInfo info, JType type,
-      JExpression ifTest, JExpression thenExpr, JExpression elseExpr) {
-    super(program, info);
+  public JConditional(SourceInfo info, JType type, JExpression ifTest,
+      JExpression thenExpr, JExpression elseExpr) {
+    super(info);
     this.type = type;
     this.ifTest = ifTest;
     this.thenExpr = thenExpr;
@@ -49,18 +49,16 @@ public class JConditional extends JExpression {
   }
 
   public JType getType() {
-    // TODO(later): allow multiple types for Type Flow?
-    if (type instanceof JReferenceType) {
-      return program.generalizeTypes((JReferenceType) thenExpr.getType(),
-          (JReferenceType) elseExpr.getType());
-    } else {
-      return type;
-    }
+    return type;
   }
 
   public boolean hasSideEffects() {
     return ifTest.hasSideEffects() || thenExpr.hasSideEffects()
         || elseExpr.hasSideEffects();
+  }
+
+  public void setType(JType newType) {
+    type = newType;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

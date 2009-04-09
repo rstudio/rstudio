@@ -27,9 +27,8 @@ public class JExpressionStatement extends JStatement {
   /**
    * Constructed via {@link JExpression#makeStatement()}.
    */
-  JExpressionStatement(JProgram program, SourceInfo info,
-      JExpression expr) {
-    super(program, info);
+  JExpressionStatement(SourceInfo info, JExpression expr) {
+    super(info);
     this.expr = expr;
   }
 

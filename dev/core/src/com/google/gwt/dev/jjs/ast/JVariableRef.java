@@ -24,8 +24,8 @@ public abstract class JVariableRef extends JExpression {
 
   protected JVariable target;
 
-  public JVariableRef(JProgram program, SourceInfo info, JVariable target) {
-    super(program, info);
+  public JVariableRef(SourceInfo info, JVariable target) {
+    super(info);
     this.target = target;
   }
 

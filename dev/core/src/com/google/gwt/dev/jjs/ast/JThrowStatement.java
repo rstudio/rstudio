@@ -24,8 +24,8 @@ public class JThrowStatement extends JStatement {
 
   private JExpression expr;
 
-  public JThrowStatement(JProgram program, SourceInfo info, JExpression expr) {
-    super(program, info);
+  public JThrowStatement(SourceInfo info, JExpression expr) {
+    super(info);
     this.expr = expr;
   }
 

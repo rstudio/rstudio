@@ -104,9 +104,9 @@ public class CastNormalizer {
 
       // the 0th entry is the "always false" entry
       classes.add(null);
-      jsonObjects.add(new JsonObject(program,
-          program.createSourceInfoSynthetic(AssignTypeIdsVisitor.class,
-              "always-false typeinfo entry")));
+      jsonObjects.add(new JsonObject(program.createSourceInfoSynthetic(AssignTypeIdsVisitor.class,
+          "always-false typeinfo entry"),
+          program.getJavaScriptObject()));
 
       /*
        * Do String first to reserve typeIds 1 and 2 for Object and String,
@@ -265,14 +265,14 @@ public class CastNormalizer {
       // Create a sparse lookup object.
       SourceInfo sourceInfo = program.createSourceInfoSynthetic(
           AssignTypeIdsVisitor.class, "typeinfo lookup");
-      JsonObject jsonObject = new JsonObject(program, sourceInfo);
+      JsonObject jsonObject = new JsonObject(sourceInfo, program.getJavaScriptObject());
       // Start at 1; 0 is Object and always true.
       for (int i = 1; i < nextQueryId; ++i) {
         if (yesArray[i] != null) {
           JIntLiteral labelExpr = program.getLiteralInt(i);
           JIntLiteral valueExpr = program.getLiteralInt(1);
-          jsonObject.propInits.add(new JsonPropInit(program, sourceInfo,
-              labelExpr, valueExpr));
+          jsonObject.propInits.add(new JsonPropInit(sourceInfo, labelExpr,
+              valueExpr));
         }
       }
 
@@ -342,17 +342,17 @@ public class CastNormalizer {
         JExpression newLhs = convertString(x.getLhs());
         JExpression newRhs = convertString(x.getRhs());
         if (newLhs != x.getLhs() || newRhs != x.getRhs()) {
-          JBinaryOperation newExpr = new JBinaryOperation(program,
-              x.getSourceInfo(), program.getTypeJavaLangString(),
-              JBinaryOperator.ADD, newLhs, newRhs);
+          JBinaryOperation newExpr = new JBinaryOperation(x.getSourceInfo(),
+              program.getTypeJavaLangString(), JBinaryOperator.ADD,
+              newLhs, newRhs);
           ctx.replaceMe(newExpr);
         }
       } else if (x.getOp() == JBinaryOperator.ASG_ADD) {
         JExpression newRhs = convertString(x.getRhs());
         if (newRhs != x.getRhs()) {
-          JBinaryOperation newExpr = new JBinaryOperation(program,
-              x.getSourceInfo(), program.getTypeJavaLangString(),
-              JBinaryOperator.ASG_ADD, x.getLhs(), newRhs);
+          JBinaryOperation newExpr = new JBinaryOperation(x.getSourceInfo(),
+              program.getTypeJavaLangString(), JBinaryOperator.ASG_ADD,
+              x.getLhs(), newRhs);
           ctx.replaceMe(newExpr);
         }
       }
@@ -367,15 +367,14 @@ public class CastNormalizer {
               new char[] {charLit.getValue()});
         } else {
           // Replace with Cast.charToString(c)
-          JMethodCall call = new JMethodCall(program, expr.getSourceInfo(),
-              null, program.getIndexedMethod("Cast.charToString"));
+          JMethodCall call = new JMethodCall(expr.getSourceInfo(), null,
+              program.getIndexedMethod("Cast.charToString"));
           call.addArg(expr);
           return call;
         }
       } else if (expr.getType() == program.getTypePrimitiveLong()) {
         // Replace with LongLib.toString(l)
-        JMethodCall call = new JMethodCall(program, expr.getSourceInfo(), null,
-            program.getIndexedMethod("LongLib.toString"));
+        JMethodCall call = new JMethodCall(expr.getSourceInfo(), null, program.getIndexedMethod("LongLib.toString"));
         call.addArg(expr);
         return call;
       }
@@ -401,8 +400,8 @@ public class CastNormalizer {
          */
         String methodName = "Cast.narrow_" + type.getName();
         JMethod castMethod = program.getIndexedMethod(methodName);
-        JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-            castMethod, type);
+        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, castMethod,
+            type);
         x.setType(program.getTypePrimitiveDouble());
         call.addArg(x);
         ctx.replaceMe(call);
@@ -443,8 +442,8 @@ public class CastNormalizer {
         /*
          * Override the type of the magic method with the null type.
          */
-        JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-            method, program.getTypeNull());
+        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method,
+            program.getTypeNull());
         call.addArg(expr);
         replaceExpr = call;
       } else if (toType instanceof JReferenceType) {
@@ -469,8 +468,8 @@ public class CastNormalizer {
             method = program.getIndexedMethod("Cast.dynamicCast");
           }
           // override the type of the called method with the target cast type
-          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-              method, toType);
+          JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method,
+              toType);
           call.addArg(curExpr);
           if (!isJsoCast) {
             JIntLiteral qId = program.getLiteralInt(queryIds.get(refType));
@@ -503,8 +502,8 @@ public class CastNormalizer {
              * do the narrowing conversion.
              */
             JMethod castMethod = program.getIndexedMethod("LongLib.toInt");
-            JMethodCall call = new JMethodCall(program, x.getSourceInfo(),
-                null, castMethod);
+            JMethodCall call = new JMethodCall(x.getSourceInfo(), null,
+                castMethod);
             call.addArg(expr);
             expr = call;
             fromType = tInt;
@@ -548,8 +547,8 @@ public class CastNormalizer {
 
         if (methodName != null) {
           JMethod castMethod = program.getIndexedMethod(methodName);
-          JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-              castMethod, toType);
+          JMethodCall call = new JMethodCall(x.getSourceInfo(), null, castMethod,
+              toType);
           call.addArg(expr);
           replaceExpr = call;
         } else {
@@ -567,9 +566,9 @@ public class CastNormalizer {
       if (program.typeOracle.canTriviallyCast(argType, toType)) {
         // trivially true if non-null; replace with a null test
         JNullLiteral nullLit = program.getLiteralNull();
-        JBinaryOperation eq = new JBinaryOperation(program, x.getSourceInfo(),
-            program.getTypePrimitiveBoolean(), JBinaryOperator.NEQ,
-            x.getExpr(), nullLit);
+        JBinaryOperation eq = new JBinaryOperation(x.getSourceInfo(), program.getTypePrimitiveBoolean(),
+            JBinaryOperator.NEQ, x.getExpr(),
+            nullLit);
         ctx.replaceMe(eq);
       } else {
         JMethod method;
@@ -581,8 +580,7 @@ public class CastNormalizer {
         } else {
           method = program.getIndexedMethod("Cast.instanceOf");
         }
-        JMethodCall call = new JMethodCall(program, x.getSourceInfo(), null,
-            method);
+        JMethodCall call = new JMethodCall(x.getSourceInfo(), null, method);
         call.addArg(x.getExpr());
         if (!isJsoCast) {
           JIntLiteral qId = program.getLiteralInt(queryIds.get(toType));

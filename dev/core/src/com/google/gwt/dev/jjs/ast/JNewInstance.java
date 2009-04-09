@@ -26,8 +26,8 @@ public class JNewInstance extends JExpression {
 
   private final JClassType classType;
 
-  public JNewInstance(JProgram program, SourceInfo info, JClassType classType) {
-    super(program, info);
+  public JNewInstance(SourceInfo info, JClassType classType) {
+    super(info);
     this.classType = classType;
   }
 

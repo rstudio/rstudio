@@ -28,8 +28,8 @@ public class JBlock extends JStatement {
 
   private List<JStatement> statements = Collections.emptyList();
 
-  public JBlock(JProgram program, SourceInfo info) {
-    super(program, info);
+  public JBlock(SourceInfo info) {
+    super(info);
   }
 
   /**

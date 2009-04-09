@@ -27,9 +27,9 @@ public class JBinaryOperation extends JExpression implements HasSettableType {
   private JExpression rhs;
   private JType type;
 
-  public JBinaryOperation(JProgram program, SourceInfo info, JType type,
-      JBinaryOperator op, JExpression lhs, JExpression rhs) {
-    super(program, info);
+  public JBinaryOperation(SourceInfo info, JType type, JBinaryOperator op,
+      JExpression lhs, JExpression rhs) {
+    super(info);
     this.op = op;
     this.type = type;
     this.lhs = lhs;

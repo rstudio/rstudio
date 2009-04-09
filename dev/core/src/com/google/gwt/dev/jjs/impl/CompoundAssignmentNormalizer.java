@@ -92,17 +92,16 @@ public abstract class CompoundAssignmentNormalizer {
        */
       enterTempUsageScope();
       ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
-          new JMultiExpression(program, x.getSourceInfo()));
+          new JMultiExpression(x.getSourceInfo()));
       JExpression newLhs = replacer.accept(x.getLhs());
       exitTempUsageScope();
 
-      JBinaryOperation operation = new JBinaryOperation(program,
-          x.getSourceInfo(), newLhs.getType(), op.getNonAssignmentOf(), newLhs,
-          x.getRhs());
+      JBinaryOperation operation = new JBinaryOperation(x.getSourceInfo(),
+          newLhs.getType(), op.getNonAssignmentOf(), newLhs, x.getRhs());
       // newLhs is cloned below because it was used in operation
-      JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
-          newLhs.getType(), JBinaryOperator.ASG,
-          cloner.cloneExpression(newLhs), operation);
+      JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), newLhs.getType(),
+          JBinaryOperator.ASG, cloner.cloneExpression(newLhs),
+          operation);
 
       JMultiExpression multiExpr = replacer.getMultiExpr();
       if (multiExpr.exprs.isEmpty()) {
@@ -136,7 +135,7 @@ public abstract class CompoundAssignmentNormalizer {
 
       // First, replace the arg with a non-side-effect causing one.
       enterTempUsageScope();
-      JMultiExpression multi = new JMultiExpression(program, x.getSourceInfo());
+      JMultiExpression multi = new JMultiExpression(x.getSourceInfo());
       ReplaceSideEffectsInLvalue replacer = new ReplaceSideEffectsInLvalue(
           multi);
       JExpression newArg = replacer.accept(x.getArg());
@@ -147,9 +146,9 @@ public abstract class CompoundAssignmentNormalizer {
       JLocal tempLocal = getTempLocal(expressionReturn.getType());
 
       // t = x
-      JLocalRef tempRef = new JLocalRef(program, x.getSourceInfo(), tempLocal);
-      JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
-          x.getType(), JBinaryOperator.ASG, tempRef, expressionReturn);
+      JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
+      JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), x.getType(),
+          JBinaryOperator.ASG, tempRef, expressionReturn);
       multi.exprs.add(asg);
 
       // x += 1
@@ -158,7 +157,7 @@ public abstract class CompoundAssignmentNormalizer {
       multi.exprs.add(accept(asg));
 
       // t
-      tempRef = new JLocalRef(program, x.getSourceInfo(), tempLocal);
+      tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
       multi.exprs.add(tempRef);
 
       ctx.replaceMe(multi);
@@ -213,8 +212,8 @@ public abstract class CompoundAssignmentNormalizer {
         one = program.getLiteralInt(1);
       }
       // arg is cloned below because the caller is allowed to use it somewhere
-      JBinaryOperation asg = new JBinaryOperation(program, arg.getSourceInfo(),
-          arg.getType(), newOp, cloner.cloneExpression(arg), one);
+      JBinaryOperation asg = new JBinaryOperation(arg.getSourceInfo(), arg.getType(),
+          newOp, cloner.cloneExpression(arg), one);
       return asg;
     }
   }
@@ -239,8 +238,8 @@ public abstract class CompoundAssignmentNormalizer {
       JExpression newInstance = possiblyReplace(x.getInstance());
       JExpression newIndexExpr = possiblyReplace(x.getIndexExpr());
       if (newInstance != x.getInstance() || newIndexExpr != x.getIndexExpr()) {
-        JArrayRef newExpr = new JArrayRef(program, x.getSourceInfo(),
-            newInstance, newIndexExpr);
+        JArrayRef newExpr = new JArrayRef(x.getSourceInfo(), newInstance,
+            newIndexExpr);
         ctx.replaceMe(newExpr);
       }
       return false;
@@ -251,8 +250,8 @@ public abstract class CompoundAssignmentNormalizer {
       if (x.getInstance() != null) {
         JExpression newInstance = possiblyReplace(x.getInstance());
         if (newInstance != x.getInstance()) {
-          JFieldRef newExpr = new JFieldRef(program, x.getSourceInfo(),
-              newInstance, x.getField(), x.getEnclosingType());
+          JFieldRef newExpr = new JFieldRef(x.getSourceInfo(), newInstance,
+              x.getField(), x.getEnclosingType());
           ctx.replaceMe(newExpr);
         }
       }
@@ -283,9 +282,9 @@ public abstract class CompoundAssignmentNormalizer {
       JLocal tempLocal = getTempLocal(x.getType());
 
       // Create an assignment for this temp and add it to multi.
-      JLocalRef tempRef = new JLocalRef(program, x.getSourceInfo(), tempLocal);
-      JBinaryOperation asg = new JBinaryOperation(program, x.getSourceInfo(),
-          x.getType(), JBinaryOperator.ASG, tempRef, x);
+      JLocalRef tempRef = new JLocalRef(x.getSourceInfo(), tempLocal);
+      JBinaryOperation asg = new JBinaryOperation(x.getSourceInfo(), x.getType(),
+          JBinaryOperator.ASG, tempRef, x);
       multi.exprs.add(asg);
       // Update me with the temp
       return cloner.cloneExpression(tempRef);

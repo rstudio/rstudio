@@ -16,19 +16,33 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.jjs.SourceOrigin;
 
 /**
  * Java literal typed as a float.
  */
 public class JFloatLiteral extends JValueLiteral {
 
-  private final float value;
+  public static final JFloatLiteral ZERO = new JFloatLiteral(
+      SourceOrigin.UNKNOWN, Float.intBitsToFloat(0));
+
+  public static JFloatLiteral get(float value) {
+    return isZero(value) ? ZERO
+        : new JFloatLiteral(SourceOrigin.UNKNOWN, value);
+  }
 
   /**
-   * These are only supposed to be constructed by JProgram.
+   * Does this value match the exact 0 bit pattern? (This precludes
+   * canonicalizing -0.0 as 0.0).
    */
-  JFloatLiteral(JProgram program, SourceInfo sourceInfo, float value) {
-    super(program, sourceInfo);
+  private static boolean isZero(float value) {
+    return Float.floatToRawIntBits(value) == 0;
+  }
+
+  private final float value;
+
+  public JFloatLiteral(SourceInfo sourceInfo, float value) {
+    super(sourceInfo);
     this.value = value;
   }
 
@@ -37,16 +51,16 @@ public class JFloatLiteral extends JValueLiteral {
     Object valueObj = value.getValueObj();
     if (valueObj instanceof Character) {
       Character character = (Character) valueObj;
-      return program.getLiteralFloat(character.charValue());
+      return new JFloatLiteral(value.getSourceInfo(), character.charValue());
     } else if (valueObj instanceof Number) {
       Number number = (Number) valueObj;
-      return program.getLiteralFloat(number.floatValue());
+      return new JFloatLiteral(value.getSourceInfo(), number.floatValue());
     }
     return null;
   }
 
   public JType getType() {
-    return program.getTypePrimitiveFloat();
+    return JPrimitiveType.FLOAT;
   }
 
   public float getValue() {
@@ -61,5 +75,9 @@ public class JFloatLiteral extends JValueLiteral {
     if (visitor.visit(this, ctx)) {
     }
     visitor.endVisit(this, ctx);
+  }
+
+  private Object readResolve() {
+    return isZero(value) ? ZERO : this;
   }
 }

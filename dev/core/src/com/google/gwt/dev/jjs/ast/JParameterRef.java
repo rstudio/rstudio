@@ -27,8 +27,8 @@ public class JParameterRef extends JVariableRef {
    */
   private final JParameter param;
 
-  public JParameterRef(JProgram program, SourceInfo info, JParameter param) {
-    super(program, info, param);
+  public JParameterRef(SourceInfo info, JParameter param) {
+    super(info, param);
     this.param = param;
   }
 

@@ -25,9 +25,8 @@ public class JAssertStatement extends JStatement {
   private JExpression testExpr;
   private JExpression arg;
 
-  public JAssertStatement(JProgram program, SourceInfo info,
-      JExpression testExpr, JExpression arg) {
-    super(program, info);
+  public JAssertStatement(SourceInfo info, JExpression testExpr, JExpression arg) {
+    super(info);
     this.testExpr = testExpr;
     this.arg = arg;
   }

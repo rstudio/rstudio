@@ -22,9 +22,8 @@ import com.google.gwt.dev.jjs.SourceInfo;
  */
 public class JPostfixOperation extends JUnaryOperation {
 
-  public JPostfixOperation(JProgram program, SourceInfo info,
-      JUnaryOperator op, JExpression arg) {
-    super(program, info, op, arg);
+  public JPostfixOperation(SourceInfo info, JUnaryOperator op, JExpression arg) {
+    super(info, op, arg);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

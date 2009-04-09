@@ -25,9 +25,8 @@ public class JArrayRef extends JExpression {
   private JExpression instance;
   private JExpression indexExpr;
 
-  public JArrayRef(JProgram program, SourceInfo info, JExpression instance,
-      JExpression indexExpr) {
-    super(program, info);
+  public JArrayRef(SourceInfo info, JExpression instance, JExpression indexExpr) {
+    super(info);
     this.instance = instance;
     this.indexExpr = indexExpr;
   }
@@ -42,23 +41,17 @@ public class JArrayRef extends JExpression {
 
   public JType getType() {
     JType type = instance.getType();
-    JNullType typeNull = program.getTypeNull();
-    if (type == typeNull) {
-      return typeNull;
+    if (type instanceof JNullType) {
+      return JNullType.INSTANCE;
     }
     JArrayType arrayType = (JArrayType) type;
-    JType elementType = arrayType.getElementType();
-    if (elementType instanceof JReferenceType
-        && !program.typeOracle.isInstantiatedType((JReferenceType) elementType)) {
-      return typeNull;
-    }
-    return elementType;
+    return arrayType.getElementType();
   }
 
   public boolean hasSideEffects() {
     // TODO: make the last test better when we have null tracking.
     return instance.hasSideEffects() || indexExpr.hasSideEffects()
-        || instance.getType() == program.getTypeNull();
+        || instance.getType() == JNullType.INSTANCE;
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

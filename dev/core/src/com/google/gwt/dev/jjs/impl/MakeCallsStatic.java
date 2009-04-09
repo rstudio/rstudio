@@ -113,19 +113,25 @@ public class MakeCallsStatic {
       @Override
       public void endVisit(JParameterRef x, Context ctx) {
         JParameter param = varMap.get(x.getTarget());
-        JParameterRef paramRef = new JParameterRef(x.getProgram(),
-            x.getSourceInfo().makeChild(RewriteMethodBody.class,
-                "Reference to devirtualized parameter"), param);
+        JParameterRef paramRef = new JParameterRef(x.getSourceInfo().makeChild(
+            RewriteMethodBody.class, "Reference to devirtualized parameter"),
+            param);
         ctx.replaceMe(paramRef);
       }
 
       @Override
       public void endVisit(JThisRef x, Context ctx) {
-        JParameterRef paramRef = new JParameterRef(x.getProgram(),
-            x.getSourceInfo().makeChild(RewriteMethodBody.class,
-                "Reference to devirtualized instance"), thisParam);
+        JParameterRef paramRef = new JParameterRef(x.getSourceInfo().makeChild(
+            RewriteMethodBody.class, "Reference to devirtualized instance"),
+            thisParam);
         ctx.replaceMe(paramRef);
       }
+    }
+
+    private JProgram program;
+
+    CreateStaticImplsVisitor(JProgram program) {
+      this.program = program;
     }
 
     @Override
@@ -144,21 +150,20 @@ public class MakeCallsStatic {
        * Don't use the JProgram helper because it auto-adds the new method to
        * its enclosing class.
        */
-      JProgram program = x.getProgram();
-      JMethod newMethod = new JMethod(program, sourceInfo.makeChild(
+      JMethod newMethod = new JMethod(sourceInfo.makeChild(
           CreateStaticImplsVisitor.class, "Devirtualized function"), newName,
           enclosingType, returnType, false, true, true, x.isPrivate());
 
       // Setup parameters; map from the old params to the new params
-      JParameter thisParam = program.createParameter(sourceInfo.makeChild(
-          CreateStaticImplsVisitor.class, "Instance parameter"),
-          "this$static".toCharArray(), enclosingType, true, true, newMethod);
+      JParameter thisParam = JParameter.create(sourceInfo.makeChild(
+          CreateStaticImplsVisitor.class, "Instance parameter"), "this$static",
+          enclosingType, true, true, newMethod);
       Map<JParameter, JParameter> varMap = new IdentityHashMap<JParameter, JParameter>();
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter oldVar = x.getParams().get(i);
-        JParameter newVar = program.createParameter(oldVar.getSourceInfo(),
-            oldVar.getName().toCharArray(), oldVar.getType(), oldVar.isFinal(),
-            false, newMethod);
+        JParameter newVar = JParameter.create(oldVar.getSourceInfo(),
+            oldVar.getName(), oldVar.getType(), oldVar.isFinal(), false,
+            newMethod);
         varMap.put(oldVar, newVar);
       }
 
@@ -175,23 +180,20 @@ public class MakeCallsStatic {
       // Create a new body for the instance method that delegates to the static
       SourceInfo delegateCallSourceInfo = sourceInfo.makeChild(
           CreateStaticImplsVisitor.class, "Degelgating to devirtualized method");
-      JMethodBody newBody = new JMethodBody(program, delegateCallSourceInfo);
+      JMethodBody newBody = new JMethodBody(delegateCallSourceInfo);
       x.setBody(newBody);
-      JMethodCall newCall = new JMethodCall(program, delegateCallSourceInfo,
-          null, newMethod);
-      newCall.addArg(
-          program.getExprThisRef(delegateCallSourceInfo, enclosingType));
+      JMethodCall newCall = new JMethodCall(delegateCallSourceInfo, null,
+          newMethod);
+      newCall.addArg(new JThisRef(delegateCallSourceInfo, enclosingType));
       for (int i = 0; i < x.getParams().size(); ++i) {
         JParameter param = x.getParams().get(i);
-        newCall.addArg(
-            new JParameterRef(program, delegateCallSourceInfo, param));
+        newCall.addArg(new JParameterRef(delegateCallSourceInfo, param));
       }
       JStatement statement;
       if (returnType == program.getTypeVoid()) {
         statement = newCall.makeStatement();
       } else {
-        statement = new JReturnStatement(program, delegateCallSourceInfo,
-            newCall);
+        statement = new JReturnStatement(delegateCallSourceInfo, newCall);
       }
       newBody.getBlock().addStmt(statement);
 
@@ -295,9 +297,8 @@ public class MakeCallsStatic {
 
   static JMethodCall makeStaticCall(JMethodCall x, JMethod newMethod) {
     // Update the call site
-    JMethodCall newCall = new JMethodCall(x.getProgram(),
-        x.getSourceInfo().makeChild(MakeCallsStatic.class,
-            "Devirtualized function call"), null, newMethod);
+    JMethodCall newCall = new JMethodCall(x.getSourceInfo().makeChild(
+        MakeCallsStatic.class, "Devirtualized function call"), null, newMethod);
 
     // The qualifier becomes the first arg
     newCall.addArg(x.getInstance());
@@ -317,7 +318,7 @@ public class MakeCallsStatic {
     FindStaticDispatchSitesVisitor finder = new FindStaticDispatchSitesVisitor();
     finder.accept(program);
 
-    CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor();
+    CreateStaticImplsVisitor creator = new CreateStaticImplsVisitor(program);
     for (JMethod method : toBeMadeStatic) {
       creator.accept(method);
     }
