@@ -180,6 +180,13 @@ class SerializabilityUtil {
     }
     if (containsCachedSerializerForClass(instanceType)) {
       // this class definitely has no custom serializer
+      /*
+       * HACK(scottb): temporary hack to confirm the flaky RPC test issue.
+       */
+      if (instanceType.getName().equals("java.lang.StackTraceElement")) {
+        System.out.println("Confirmed race condition with StackTraceElement");
+        System.err.println("Confirmed race condition with StackTraceElement");
+      }
       return null;
     }
     // compute whether this class has a custom serializer
