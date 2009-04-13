@@ -116,7 +116,7 @@ public class AsyncFragmentLoader {
       super("HTTP download failed with status " + statusCode);
       this.statusCode = statusCode;
     }
-    
+
     public int getStatusCode() {
       return statusCode;
     }
@@ -168,6 +168,12 @@ public class AsyncFragmentLoader {
   private static boolean baseLoading = false;
 
   private static final String HTTP_GET = "GET";
+
+  /**
+   * Some UA's like Safari will have a "0" status code when loading from file:
+   * URLs.
+   */
+  private static final int HTTP_STATUS_LOCAL = 0;
 
   private static final int HTTP_STATUS_OK = 200;
 
@@ -365,14 +371,16 @@ public class AsyncFragmentLoader {
         public void onReadyStateChange(XMLHttpRequest xhr) {
           if (xhr.getReadyState() == XMLHttpRequest.DONE) {
             xhr.clearOnReadyStateChange();
-            if (xhr.getStatus() == HTTP_STATUS_OK) {
+            if (xhr.getStatus() == HTTP_STATUS_OK
+                || xhr.getStatus() == HTTP_STATUS_LOCAL) {
               try {
                 installCode(xhr.getResponseText());
               } catch (RuntimeException e) {
                 loadErrorHandler.loadFailed(e);
               }
             } else {
-              loadErrorHandler.loadFailed(new HttpDownloadFailure(xhr.getStatus()));
+              loadErrorHandler.loadFailed(new HttpDownloadFailure(
+                  xhr.getStatus()));
             }
           }
         }
