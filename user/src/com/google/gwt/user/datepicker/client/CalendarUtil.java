@@ -97,15 +97,11 @@ public class CalendarUtil {
    * @return the different
    */
   public static int getDaysBetween(Date start, Date finish) {
-    if (hasTime(start)) {
-      start = copyDate(start);
-      resetTime(start);
-    }
-
-    if (hasTime(finish)) {
-      finish = copyDate(finish);
-      resetTime(finish);
-    }
+    // Convert the dates to the same time
+    start = copyDate(start);
+    resetTime(start);
+    finish = copyDate(finish);
+    resetTime(finish);
 
     long aTime = start.getTime();
     long bTime = finish.getTime();
@@ -127,6 +123,22 @@ public class CalendarUtil {
   }
 
   /**
+   * Check if two dates represent the same date of the same year, even if they
+   * have different times.
+   * 
+   * @param date0 a date
+   * @param date1 a second date
+   * @return true if the dates are the same
+   */
+  public static boolean isSameDate(Date date0, Date date1) {
+    assert date0 != null : "date0 cannot be null";
+    assert date1 != null : "date1 cannot be null";
+    return date0.getYear() == date1.getYear()
+        && date0.getMonth() == date1.getMonth()
+        && date0.getDate() == date1.getDate();
+  }
+
+  /**
    * Sets a date object to be at the beginning of the month and no time
    * specified.
    * 
@@ -135,11 +147,6 @@ public class CalendarUtil {
   public static void setToFirstDayOfMonth(Date date) {
     resetTime(date);
     date.setDate(1);
-  }
-
-  static boolean hasTime(Date start) {
-    return start.getHours() != 0 || start.getMinutes() != 0
-        || start.getSeconds() != 0;
   }
 
   /**
@@ -162,7 +169,9 @@ public class CalendarUtil {
     msec = (msec / 1000) * 1000;
     date.setTime(msec);
 
-    date.setHours(0);
+    // Daylight savings time occurs at midnight in some time zones, so we reset
+    // the time to noon instead.
+    date.setHours(12);
     date.setMinutes(0);
     date.setSeconds(0);
   }

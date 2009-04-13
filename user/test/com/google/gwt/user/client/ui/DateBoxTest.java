@@ -50,10 +50,10 @@ public class DateBoxTest extends WidgetTestBase {
     new DateValueChangeTester(db2) {
       @Override
       protected void fire(java.util.Date d) {
-        db2.getTextBox().setText(d.toString());
+        db2.getTextBox().setText(db2.getFormat().format(db2, d));
         NativeEvent e = Document.get().createBlurEvent();
         db2.getTextBox().getElement().dispatchEvent(e);
-      };
+      }
     }.run();
 
     // Checks that setting the date picker's date works correctly.
@@ -63,7 +63,7 @@ public class DateBoxTest extends WidgetTestBase {
       @Override
       protected void fire(java.util.Date d) {
         db3.getDatePicker().setValue(d, true);
-      };
+      }
     }.run();
   }
 }

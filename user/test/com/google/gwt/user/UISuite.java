@@ -85,6 +85,7 @@ import com.google.gwt.user.client.ui.WidgetOnLoadTest;
 import com.google.gwt.user.client.ui.WidgetSubclassingTest;
 import com.google.gwt.user.client.ui.WidgetTest;
 import com.google.gwt.user.client.ui.impl.ClippedImagePrototypeTest;
+import com.google.gwt.user.datepicker.client.CalendarUtilTest;
 import com.google.gwt.user.datepicker.client.DateChangeEventTest;
 import com.google.gwt.user.rebind.ui.ImageBundleGeneratorTest;
 import com.google.gwt.xml.client.XMLTest;
@@ -109,6 +110,7 @@ public class UISuite {
     suite.addTestSuite(CompositeTest.class);
     suite.addTestSuite(CookieTest.class);
     suite.addTestSuite(CustomButtonTest.class);
+    suite.addTestSuite(CalendarUtilTest.class);
     suite.addTestSuite(DateBoxTest.class);
     suite.addTestSuite(DatePickerTest.class);
     suite.addTestSuite(DeckPanelTest.class);

@@ -458,7 +458,8 @@ public class DatePicker extends Composite implements
     CalendarView r = getView();
     Date first = r.getFirstDate();
     Date last = r.getLastDate();
-    return (date != null && (first.equals(date) || last.equals(date) || (first.before(date) && last.after(date))));
+    return (date != null && (CalendarUtil.isSameDate(first, date)
+        || CalendarUtil.isSameDate(last, date) || (first.before(date) && last.after(date))));
   }
 
   @Override
