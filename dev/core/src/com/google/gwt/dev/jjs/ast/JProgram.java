@@ -767,9 +767,6 @@ public class JProgram extends JNode {
     return classLiteral;
   }
 
-  /**
-   * TODO: unreferenced; remove this and JClassSeed?
-   */
   public JClassSeed getLiteralClassSeed(JClassType type) {
     // could be interned
     return new JClassSeed(createSourceInfoSynthetic(JProgram.class,

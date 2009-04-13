@@ -547,7 +547,16 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JClassSeed x, Context ctx) {
-      push(names.get(x.getRefType()).makeRef(x.getSourceInfo()));
+      /*
+       * Uninstantiated types, JSOs, and Strings don't have seed functions.
+       */
+      if (!program.typeOracle.isInstantiatedType(x.getRefType())
+          || program.isJavaScriptObject(x.getRefType())
+          || x.getRefType().equals(program.getTypeJavaLangString())) {
+        push(jsProgram.getNullLiteral());
+      } else {
+        push(names.get(x.getRefType()).makeRef(x.getSourceInfo()));
+      }
     }
 
     @SuppressWarnings("unchecked")

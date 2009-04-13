@@ -105,6 +105,37 @@ public class ClassObjectTest extends GWTTestCase {
     }
   }
 
+  /**
+   * Tests specific to the disabled-metadata code-generation.
+   */
+  public void testDisabledClassMetadata() {
+    if (expectClassMetadata()) {
+      return;
+    }
+
+    /*
+     * IFoo is an interface and therefore uninstantiable, so it should have a
+     * purely numeric class ident.
+     */
+    String iFooName = IFoo.class.getName();
+    assertTrue("Expecting " + iFooName + " to start with Class$",
+        iFooName.startsWith("Class$"));
+    Integer.valueOf(iFooName.substring(6), 10);
+    // Make sure it has a stable name
+    assertEquals(iFooName, IFoo.class.getName());
+
+    String fooName = Foo.class.getName();
+
+    Object o = "Defeat type tightening";
+    o = new Foo();
+    String foo2Name = o.getClass().getName();
+    assertEquals(fooName, foo2Name);
+    assertTrue("Expecting " + fooName + " to start with Class$",
+        fooName.startsWith("Class$"));
+    assertTrue("Expecting " + fooName.substring(6) + " to be a function",
+        isFunction(fooName.substring(6)));
+  }
+
   public void testEnum() {
     Object o = Bar.BAR;
     assertEquals(Bar.class, o.getClass());
@@ -185,4 +216,12 @@ public class ClassObjectTest extends GWTTestCase {
   private Class<? extends Bar> getBarClass() {
     return Bar.class;
   }
+
+  /**
+   * This is fragile, because it assumes that the GWT functions are defined in
+   * the local window's scope.
+   */
+  private native boolean isFunction(String name)/*-{
+    return typeof window[name] == 'function';
+  }-*/;
 }

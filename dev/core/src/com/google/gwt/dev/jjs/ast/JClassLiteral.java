@@ -65,6 +65,9 @@ public class JClassLiteral extends JLiteral {
       assert (type instanceof JClassType);
       JClassType classType = (JClassType) type;
 
+      // createForClass wants a reference to the seed function
+      call.getArgs().add(program.getLiteralClassSeed(classType));
+
       JLiteral superclassLiteral;
 
       if (classType.extnds != null) {
