@@ -66,6 +66,15 @@ package com.google.gwt.dom.client;
   }-*/;
 
   @Override
+  public int getScrollLeft(Element elem) {
+    if (isRTL(elem)) {
+      return super.getScrollLeft(elem)
+          - (elem.getScrollWidth() - elem.getClientWidth());
+    }
+    return super.getScrollLeft(elem);
+  }
+
+  @Override
   public native void setInnerText(Element elem, String text) /*-{
     // Remove all children first.
     while (elem.firstChild) {
@@ -76,7 +85,15 @@ package com.google.gwt.dom.client;
       elem.appendChild(elem.ownerDocument.createTextNode(text));
     }
   }-*/;
-  
+
+  @Override
+  public void setScrollLeft(Element elem, int left) {
+    if (isRTL(elem)) {
+      left += elem.getScrollWidth() - elem.getClientWidth();
+    }
+    super.setScrollLeft(elem, left);
+  }
+
   private native int getAbsoluteLeftImpl(Element viewport, Element elem) /*-{
     var doc = elem.ownerDocument;
     var style = doc.defaultView.getComputedStyle(elem, null);
@@ -113,5 +130,10 @@ package com.google.gwt.dom.client;
     }
 
     return top + viewport.scrollTop;
+  }-*/;
+
+  private native boolean isRTL(Element elem) /*-{
+    var style = elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+    return style.direction == 'rtl';
   }-*/;
 }
