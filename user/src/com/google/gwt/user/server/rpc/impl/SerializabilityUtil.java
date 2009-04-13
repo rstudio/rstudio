@@ -48,6 +48,11 @@ class SerializabilityUtil {
    * A permanent cache of all computed CRCs on classes. This is safe to do
    * because a Class is guaranteed not to change within the lifetime of a
    * ClassLoader (and thus, this Map). Access must be synchronized.
+   * 
+   * NOTE: after synchronizing on this field, it's possible to additionally
+   * synchronize on {@link #classCustomSerializerCache} or
+   * {@link #classSerializableFieldsCache}, so be aware deadlock potential when
+   * changing this code.
    */
   private static final Map<Class<?>, String> classCRC32Cache = new IdentityHashMap<Class<?>, String>();
 
@@ -55,6 +60,9 @@ class SerializabilityUtil {
    * A permanent cache of all serializable fields on classes. This is safe to do
    * because a Class is guaranteed not to change within the lifetime of a
    * ClassLoader (and thus, this Map). Access must be synchronized.
+   * 
+   * NOTE: to prevent deadlock, you may NOT synchronize {@link #classCRC32Cache}
+   * after synchronizing on this field.
    */
   private static final Map<Class<?>, Field[]> classSerializableFieldsCache = new IdentityHashMap<Class<?>, Field[]>();
 
@@ -63,6 +71,9 @@ class SerializabilityUtil {
    * is safe to do because a Class is guaranteed not to change within the
    * lifetime of a ClassLoader (and thus, this Map). Access must be
    * synchronized.
+   * 
+   * NOTE: to prevent deadlock, you may NOT synchronize {@link #classCRC32Cache}
+   * after synchronizing on this field.
    */
   private static final Map<Class<?>, Class<?>> classCustomSerializerCache = new IdentityHashMap<Class<?>, Class<?>>();
 
@@ -97,25 +108,34 @@ class SerializabilityUtil {
     TYPES_WHOSE_IMPLEMENTATION_IS_EXCLUDED_FROM_SIGNATURES.add(Throwable.class);
   }
 
+  /**
+   * Returns the fields of a particular class that can be considered for
+   * serialization. The returned list will be sorted into a canonical order to
+   * ensure consistent answers.
+   * 
+   * TODO: this method needs a better name, I think.
+   */
   public static Field[] applyFieldSerializationPolicy(Class<?> clazz) {
-    Field[] serializableFields = getCachedSerializableFieldsForClass(clazz);
-    if (serializableFields == null) {
-      ArrayList<Field> fieldList = new ArrayList<Field>();
-      Field[] fields = clazz.getDeclaredFields();
-      for (Field field : fields) {
-        if (fieldQualifiesForSerialization(field)) {
-          fieldList.add(field);
+    Field[] serializableFields;
+    synchronized (classSerializableFieldsCache) {
+      serializableFields = classSerializableFieldsCache.get(clazz);
+      if (serializableFields == null) {
+        ArrayList<Field> fieldList = new ArrayList<Field>();
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+          if (fieldQualifiesForSerialization(field)) {
+            fieldList.add(field);
+          }
         }
+        serializableFields = fieldList.toArray(new Field[fieldList.size()]);
+
+        // sort the fields by name
+        Arrays.sort(serializableFields, 0, serializableFields.length,
+            FIELD_COMPARATOR);
+
+        classSerializableFieldsCache.put(clazz, serializableFields);
       }
-      serializableFields = fieldList.toArray(new Field[fieldList.size()]);
-
-      // sort the fields by name
-      Arrays.sort(serializableFields, 0, serializableFields.length,
-          FIELD_COMPARATOR);
-
-      putCachedSerializableFieldsForClass(clazz, serializableFields);
     }
-
     return serializableFields;
   }
 
@@ -140,17 +160,20 @@ class SerializabilityUtil {
   }
 
   public static String getSerializationSignature(Class<?> instanceType) {
-    String result = getCachedCRCForClass(instanceType);
-    if (result == null) {
-      CRC32 crc = new CRC32();
-      try {
-        generateSerializationSignature(instanceType, crc);
-      } catch (UnsupportedEncodingException e) {
-        throw new RuntimeException(
-            "Could not compute the serialization signature", e);
+    String result;
+    synchronized (classCRC32Cache) {
+      result = classCRC32Cache.get(instanceType);
+      if (result == null) {
+        CRC32 crc = new CRC32();
+        try {
+          generateSerializationSignature(instanceType, crc);
+        } catch (UnsupportedEncodingException e) {
+          throw new RuntimeException(
+              "Could not compute the serialization signature", e);
+        }
+        result = Long.toString(crc.getValue());
+        classCRC32Cache.put(instanceType, result);
       }
-      result = Long.toString(crc.getValue());
-      putCachedCRCForClass(instanceType, result);
     }
     return result;
   }
@@ -164,8 +187,9 @@ class SerializabilityUtil {
   }
 
   /**
-   * Returns the {@link Class} which can serialize the given instance type. Note
-   * that arrays never have custom field serializers.
+   * Returns the {@link Class} which can serialize the given instance type, or
+   * <code>null</code> if this class has no custom field serializer. Note that
+   * arrays never have custom field serializers.
    */
   public static Class<?> hasCustomFieldSerializer(Class<?> instanceType) {
     assert (instanceType != null);
@@ -173,26 +197,24 @@ class SerializabilityUtil {
       return null;
     }
 
-    Class<?> result = getCachedSerializerForClass(instanceType);
-    if (result != null) {
-      // this class has a custom serializer
-      return result;
-    }
-    if (containsCachedSerializerForClass(instanceType)) {
-      // this class definitely has no custom serializer
-      /*
-       * HACK(scottb): temporary hack to confirm the flaky RPC test issue.
-       */
-      if (instanceType.getName().equals("java.lang.StackTraceElement")) {
-        System.out.println("Confirmed race condition with StackTraceElement");
-        System.err.println("Confirmed race condition with StackTraceElement");
+    Class<?> result;
+    synchronized (classCustomSerializerCache) {
+      result = classCustomSerializerCache.get(instanceType);
+      if (result == null) {
+        result = computeHasCustomFieldSerializer(instanceType);
+        if (result == null) {
+          /*
+           * Use (result == instanceType) as a sentinel value when the class has
+           * no custom field serializer. We avoid using null as the sentinel
+           * value, because that would necessitate an additional containsKey()
+           * check in the most common case, inside the synchronized block.
+           */
+          result = instanceType;
+        }
+        classCustomSerializerCache.put(instanceType, result);
       }
-      return null;
     }
-    // compute whether this class has a custom serializer
-    result = computeHasCustomFieldSerializer(instanceType);
-    putCachedSerializerForClass(instanceType, result);
-    return result;
+    return (result == instanceType) ? null : result;
   }
 
   /**
@@ -217,12 +239,6 @@ class SerializabilityUtil {
     }
 
     return null;
-  }
-
-  private static boolean containsCachedSerializerForClass(Class<?> instanceType) {
-    synchronized (classCustomSerializerCache) {
-      return classCustomSerializerCache.containsKey(instanceType);
-    }
   }
 
   private static boolean excludeImplementationFromSerializationSignature(
@@ -282,24 +298,6 @@ class SerializabilityUtil {
     }
   }
 
-  private static String getCachedCRCForClass(Class<?> instanceType) {
-    synchronized (classCRC32Cache) {
-      return classCRC32Cache.get(instanceType);
-    }
-  }
-
-  private static Field[] getCachedSerializableFieldsForClass(Class<?> clazz) {
-    synchronized (classSerializableFieldsCache) {
-      return classSerializableFieldsCache.get(clazz);
-    }
-  }
-
-  private static Class<?> getCachedSerializerForClass(Class<?> instanceType) {
-    synchronized (classCustomSerializerCache) {
-      return classCustomSerializerCache.get(instanceType);
-    }
-  }
-
   private static Class<?> getCustomFieldSerializer(ClassLoader classLoader,
       String qualifiedSerialzierName) {
     try {
@@ -319,25 +317,5 @@ class SerializabilityUtil {
     return !Modifier.isStatic(fieldModifiers)
         && !Modifier.isTransient(fieldModifiers)
         && !Modifier.isFinal(fieldModifiers);
-  }
-
-  private static void putCachedCRCForClass(Class<?> instanceType, String crc32) {
-    synchronized (classCRC32Cache) {
-      classCRC32Cache.put(instanceType, crc32);
-    }
-  }
-
-  private static void putCachedSerializableFieldsForClass(Class<?> clazz,
-      Field[] serializableFields) {
-    synchronized (classSerializableFieldsCache) {
-      classSerializableFieldsCache.put(clazz, serializableFields);
-    }
-  }
-
-  private static void putCachedSerializerForClass(Class<?> instanceType,
-      Class<?> customFieldSerializer) {
-    synchronized (classCustomSerializerCache) {
-      classCustomSerializerCache.put(instanceType, customFieldSerializer);
-    }
   }
 }
