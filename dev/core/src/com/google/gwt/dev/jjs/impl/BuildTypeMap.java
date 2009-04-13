@@ -314,6 +314,61 @@ public class BuildTypeMap {
       return process(typeDeclaration);
     }
 
+    /**
+     * JS reports the error as a line number, to find the absolute position in
+     * the real source stream, we have to walk from the absolute JS start
+     * position until we have counted down enough lines. Then we use the column
+     * position to find the exact spot.
+     */
+    private int computeAbsoluteProblemPosition(char[] source, int start,
+        int end, int jsStartLine, SourceDetail detail) {
+      int linesToCount = detail.getLine() - jsStartLine;
+      int i = start;
+      while (linesToCount > 0 && i < end) {
+        switch (source[i]) {
+          case '\r':
+            // if skip an extra character if this is a CR/LF
+            if (i + 1 < end && source[i + 1] == '\n') {
+              ++i;
+            }
+            // intentional fall through
+          case '\n':
+            --linesToCount;
+            // intentional fall through
+          default:
+            ++i;
+        }
+      }
+
+      // Jump to the correct (1-based) column.
+      i += detail.getLineOffset() - 1;
+      return i;
+    }
+
+    private int countLines(char[] source, int p1, int p2) {
+      assert p1 >= 0 && p1 < source.length;
+      assert p2 >= 0 && p2 <= source.length;
+      assert p1 <= p2;
+
+      int lines = 0;
+      while (p1 < p2) {
+        switch (source[p1]) {
+          case '\r':
+            // if skip an extra character if this is a CR/LF
+            if (p1 + 1 < p2 && source[p1 + 1] == '\n') {
+              ++p1;
+            }
+            // intentional fall through
+          case '\n':
+            ++lines;
+            // intentional fall through
+          default:
+            ++p1;
+        }
+      }
+      return lines;
+    }
+
     private JField createEnumField(SourceInfo info, FieldBinding binding,
         JReferenceType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
@@ -708,10 +763,28 @@ public class BuildTypeMap {
         }
         syntheticFnHeader += param.getName();
       }
-      syntheticFnHeader += ')';
-      StringReader sr = new StringReader(syntheticFnHeader + ' ' + jsniCode);
+      syntheticFnHeader += ") ";
+      StringReader sr = new StringReader(syntheticFnHeader + jsniCode);
+
+      // Absolute start and end position of braces in original source.
+      int absoluteJsStartPos = methodDeclaration.bodyStart + startPos;
+      int absoluteJsEndPos = absoluteJsStartPos + jsniCode.length();
+
+      // Adjust the points the JS parser sees to account for the synth header.
+      int jsStartPos = absoluteJsStartPos - syntheticFnHeader.length();
+      int jsEndPos = absoluteJsEndPos - syntheticFnHeader.length();
+
+      // To compute the start line, count lines from point to point.
+      int jsLine = info.getStartLine()
+          + countLines(source, info.getStartPos(), absoluteJsStartPos);
+
+      SourceInfo jsInfo = program.createSourceInfo(jsStartPos, jsEndPos,
+          jsLine, info.getFileName());
+      jsInfo.copyMissingCorrelationsFrom(info);
+
       try {
-        List<JsStatement> result = JsParser.parse(info, jsProgram.getScope(), sr);
+        List<JsStatement> result = JsParser.parse(jsInfo, jsProgram.getScope(),
+            sr);
         JsExprStmt jsExprStmt = (JsExprStmt) result.get(0);
         JsFunction jsFunction = (JsFunction) jsExprStmt.getExpression();
         jsFunction.setFromJava(true);
@@ -726,38 +799,13 @@ public class BuildTypeMap {
             "Internal error parsing JSNI in method '" + newMethod
                 + "' in type '" + enclosingType.getName() + "'", e);
       } catch (JsParserException e) {
-        /*
-         * count the number of characters to the problem (from the start of the
-         * JSNI code)
-         */
-        SourceDetail detail = e.getSourceDetail();
-        int line = detail.getLine();
-        char[] chars = jsniCode.toCharArray();
-        int i = 0, n = chars.length;
-        while (line > 0) {
-          // CHECKSTYLE_OFF
-          switch (chars[i]) {
-            case '\r':
-              // if skip an extra character if this is a CR/LF
-              if (i + 1 < n && chars[i + 1] == '\n') {
-                ++i;
-              }
-              // intentional fall-through
-            case '\n':
-              --line;
-              // intentional fall-through
-            default:
-              ++i;
-          }
-          // CHECKSTYLE_ON
-        }
-
-        // TODO: check this
-        // Map into the original source stream;
-        i += startPos + detail.getLineOffset();
-        info = program.createSourceInfo(i, i, info.getStartLine()
-            + detail.getLine(), info.getFileName());
-        GenerateJavaAST.reportJsniError(info, methodDeclaration, e.getMessage());
+        int problemCharPos = computeAbsoluteProblemPosition(source,
+            absoluteJsStartPos, absoluteJsEndPos, jsInfo.getStartLine(),
+            e.getSourceDetail());
+        SourceInfo errorInfo = program.createSourceInfo(problemCharPos,
+            problemCharPos, e.getSourceDetail().getLine(), info.getFileName());
+        GenerateJavaAST.reportJsniError(errorInfo, methodDeclaration,
+            e.getMessage());
       }
     }
 
