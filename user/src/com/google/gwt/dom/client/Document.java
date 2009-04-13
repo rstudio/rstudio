@@ -889,6 +889,15 @@ public class Document extends Node {
   }
 
   /**
+   * Creates an &lt;input type='submit'&gt; element.
+   * 
+   * @return the newly created element
+   */
+  public final InputElement createSubmitInputElement() {
+    return DOMImpl.impl.createInputElement(this, "submit");
+  }
+
+  /**
    * Creates a &lt;table&gt; element.
    * 
    * @return the newly created element
@@ -1171,6 +1180,11 @@ public class Document extends Node {
 
   /**
    * The number of pixels that the document's content is scrolled from the left.
+   * 
+   * <p>
+   * If the document is in RTL mode, this method will return a negative value of
+   * the number of pixels scrolled from the right.
+   * </p>
    * 
    * @return the document's left scroll position
    */

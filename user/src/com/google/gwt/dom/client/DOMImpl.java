@@ -224,6 +224,10 @@ abstract class DOMImpl {
     return doc.getViewportElement().getScrollLeft();
   }
 
+  public native int getScrollLeft(Element elem) /*-{
+    return elem.scrollLeft || 0;
+  }-*/;
+
   public int getScrollTop(Document doc) {
     return doc.getViewportElement().getScrollTop();
   }
@@ -309,6 +313,10 @@ abstract class DOMImpl {
   public void setScrollLeft(Document doc, int left) {
     doc.getViewportElement().setScrollLeft(left);
   }
+
+  public native void setScrollLeft(Element elem, int left) /*-{
+    elem.scrollLeft = left;
+  }-*/;
 
   public void setScrollTop(Document doc, int top) {
     doc.getViewportElement().setScrollTop(top);

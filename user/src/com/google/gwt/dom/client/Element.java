@@ -303,10 +303,15 @@ public class Element extends Node {
 
   /**
    * The number of pixels that an element's content is scrolled from the left.
+   * 
+   * <p>
+   * If the element is in RTL mode, this method will return a negative value of
+   * the number of pixels scrolled from the right.
+   * </p>
    */
-  public final native int getScrollLeft() /*-{
-     return this.scrollLeft || 0;
-   }-*/;
+  public final int getScrollLeft() {
+    return DOMImpl.impl.getScrollLeft(this);
+  }
 
   /**
    * The number of pixels that an element's content is scrolled from the top.
@@ -492,9 +497,9 @@ public class Element extends Node {
   /**
    * The number of pixels that an element's content is scrolled to the left.
    */
-  public final native void setScrollLeft(int scrollLeft) /*-{
-     this.scrollLeft = scrollLeft;
-   }-*/;
+  public final void setScrollLeft(int scrollLeft) {
+    DOMImpl.impl.setScrollLeft(this, scrollLeft);
+  }
 
   /**
    * The number of pixels that an element's content is scrolled to the top.

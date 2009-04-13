@@ -125,6 +125,42 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
+   * Tests that scrollLeft behaves as expected in RTL mode.
+   */
+  public void testScrollLeftInRtl() {
+    final DivElement outer = Document.get().createDivElement();
+    final DivElement inner = Document.get().createDivElement();
+
+    outer.getStyle().setProperty("position", "absolute");
+    outer.getStyle().setProperty("top", "0px");
+    outer.getStyle().setProperty("left", "0px");
+    outer.getStyle().setProperty("overflow", "auto");
+    outer.getStyle().setProperty("width", "200px");
+    outer.getStyle().setProperty("height", "200px");
+
+    // Force scrolling on the outer div, because WebKit doesn't do this
+    // correctly in RTL mode.
+    outer.getStyle().setProperty("overflow", "scroll");
+
+    inner.getStyle().setProperty("marginTop", "800px");
+    inner.getStyle().setProperty("marginRight", "800px");
+
+    outer.appendChild(inner);
+    Document.get().getBody().appendChild(outer);
+    inner.setInnerText(":-)");
+    outer.setDir("rtl");
+
+    // The important thing is that setting and retrieving scrollLeft values in
+    // RTL mode works only for negative numbers, and that they round-trip
+    // correctly.
+    outer.setScrollLeft(-32);
+    assertEquals(-32, outer.getScrollLeft());
+
+    outer.setScrollLeft(32);
+    assertEquals(0, outer.getScrollLeft());
+  }
+
+  /**
    * getParentElement.
    */
   public void testGetParent() {

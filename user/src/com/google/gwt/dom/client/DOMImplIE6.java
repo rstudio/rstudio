@@ -193,6 +193,14 @@ class DOMImplIE6 extends DOMImpl {
     return elem.parentElement;
   }-*/;
 
+  @Override
+  public int getScrollLeft(Element elem) {
+    if (isRTL(elem)) {
+      return super.getScrollLeft(elem) - (elem.getScrollWidth() - elem.getClientWidth());
+    }
+    return super.getScrollLeft(elem);
+  }
+
   /*
    * The src may not be set yet because of funky logic in setImgSrc(). See
    * setImgSrc().
@@ -236,6 +244,14 @@ class DOMImplIE6 extends DOMImpl {
   public native void setInnerText(Element elem, String text) /*-{
     elem.innerText = text || '';
   }-*/;
+
+  @Override
+  public void setScrollLeft(Element elem, int left) {
+    if (isRTL(elem)) {
+      left += elem.getScrollWidth() - elem.getClientWidth();
+    }
+    super.setScrollLeft(elem, left);
+  }
 
   private native int getBoundingClientRectLeft(Element elem) /*-{
     // getBoundingClientRect() throws a JS exception if the elem is not attached
@@ -286,4 +302,8 @@ class DOMImplIE6 extends DOMImpl {
         doc.getBody().getOffsetWidth();
     }
   }
+
+  private native boolean isRTL(Element elem) /*-{
+    return elem.currentStyle.direction == 'rtl';
+  }-*/;
 }

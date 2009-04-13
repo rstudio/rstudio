@@ -155,6 +155,14 @@ class DOMImplSafari extends DOMImplStandard {
   }
 
   @Override
+  public int getScrollLeft(Element elem) {
+    if (isRTL(elem)) {
+      return super.getScrollLeft(elem) - (elem.getScrollWidth() - elem.getClientWidth());
+    }
+    return super.getScrollLeft(elem);
+  }
+
+  @Override
   public int getScrollTop(Document doc) {
     // Safari always applies document scrolling to the body element, even in
     // strict mode.
@@ -213,9 +221,21 @@ class DOMImplSafari extends DOMImplStandard {
   }
 
   @Override
+  public void setScrollLeft(Element elem, int left) {
+    if (isRTL(elem)) {
+      left += elem.getScrollWidth() - elem.getClientWidth();
+    }
+    super.setScrollLeft(elem, left);
+  }
+
+  @Override
   public void setScrollTop(Document doc, int top) {
     // Safari always applies document scrolling to the body element, even in
     // strict mode.
     doc.getBody().setScrollTop(top);
   }
+
+  private native boolean isRTL(Element elem) /*-{
+    return $wnd.getComputedStyle(elem).direction == 'rtl';
+  }-*/;
 }
