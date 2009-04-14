@@ -236,6 +236,6 @@ class DOMImplSafari extends DOMImplStandard {
   }
 
   private native boolean isRTL(Element elem) /*-{
-    return $wnd.getComputedStyle(elem).direction == 'rtl';
+    return elem.ownerDocument.defaultView.getComputedStyle(elem, '').direction == 'rtl';
   }-*/;
 }

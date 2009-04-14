@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dom.client;
 
+
 /**
  * Mozilla implementation of StandardBrowser.
  */
@@ -66,6 +67,15 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
+  public int getScrollLeft(Element elem) {
+    if (!isGecko19() && isRTL(elem)) {
+      return super.getScrollLeft(elem)
+          - (elem.getScrollWidth() - elem.getClientWidth());
+    }
+    return super.getScrollLeft(elem);
+  }
+
+  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     // For more information about compareDocumentPosition, see:
     // http://www.quirksmode.org/blog/archives/2006/01/contains_for_mo.html
@@ -76,6 +86,14 @@ class DOMImplMozilla extends DOMImplStandard {
   public native void setInnerText(Element elem, String text) /*-{
     elem.textContent = text || '';
   }-*/;
+
+  @Override
+  public void setScrollLeft(Element elem, int left) {
+    if (!isGecko19() && isRTL(elem)) {
+      left += elem.getScrollWidth() - elem.getClientWidth();
+    }
+    super.setScrollLeft(elem, left);
+  }
 
   @Override
   public native String toString(Element elem) /*-{
@@ -130,5 +148,21 @@ class DOMImplMozilla extends DOMImplStandard {
       return doc.getBoxObjectFor(elem).screenY -
         doc.getBoxObjectFor(doc.documentElement).screenY;
     }
+  }-*/;
+
+  private native boolean isGecko19() /*-{
+    var result = /rv:([0-9]+)\.([0-9]+)/.exec(navigator.userAgent.toLowerCase());
+    if (result && result.length == 3) {
+      var version = (parseInt(result[1]) * 1000) + parseInt(result[2]);
+      if (version >= 1009) {
+        return true;
+      }
+    }
+    return false;
+  }-*/;
+
+  private native boolean isRTL(Element elem) /*-{
+    var style = elem.ownerDocument.defaultView.getComputedStyle(elem, null);
+    return style.direction == 'rtl';
   }-*/;
 }

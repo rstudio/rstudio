@@ -142,13 +142,23 @@ public class ElementTest extends GWTTestCase {
     // correctly in RTL mode.
     outer.getStyle().setProperty("overflow", "scroll");
 
+    inner.getStyle().setProperty("position", "absolute");
+    inner.getStyle().setProperty("top", "0px");
+    inner.getStyle().setProperty("left", "0px");
+    inner.getStyle().setProperty("right", "0px");
     inner.getStyle().setProperty("marginTop", "800px");
     inner.getStyle().setProperty("marginRight", "800px");
 
     outer.appendChild(inner);
     Document.get().getBody().appendChild(outer);
-    inner.setInnerText(":-)");
     outer.setDir("rtl");
+
+    // FF2 does not render scroll bars reliably in RTL, so we set a large
+    // content to force the scroll bars.
+    String content = "ssssssssssssssssssssssssssssssssssssssssssssssssssss"
+        + "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss"
+        + "sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss";
+    inner.setInnerText(content);
 
     // The important thing is that setting and retrieving scrollLeft values in
     // RTL mode works only for negative numbers, and that they round-trip
