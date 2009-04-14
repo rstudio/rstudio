@@ -467,16 +467,17 @@ public class GenerateJavaAST {
                 JavaASTGenerationVisitor.class, "Disabled class metadata");
 
             JMethod nameMethod = program.getIndexedMethod("Class.getName");
-            JMethod simpleNameMethod = program.getIndexedMethod("Class.getSimpleName");
 
-            // this.getNameFromClassSeed()
-            JMethodCall seedCall = new JMethodCall(info,
-                program.getExprThisRef(info, (JClassType) currentClass),
-                program.getIndexedMethod("Class.getNameFromClassSeed"));
+            // this.hashCode()
+            JMethodCall hashCall = new JMethodCall(info, program.getExprThisRef(info, (JClassType) currentClass),
+                program.getIndexedMethod("Object.hashCode"));
 
-            implementMethod(nameMethod, seedCall);
-            implementMethod(simpleNameMethod, new CloneExpressionVisitor(
-                program).cloneExpression(seedCall));
+            // "Class$" + hashCode()
+            JBinaryOperation op = new JBinaryOperation(info, program.getTypeJavaLangString(),
+                JBinaryOperator.ADD, program.getLiteralString(info, "Class$"),
+                hashCall);
+
+            implementMethod(nameMethod, op);
 
             // Forget the superclass
             JMethod superclassMethod = program.getIndexedMethod("Class.getSuperclass");
