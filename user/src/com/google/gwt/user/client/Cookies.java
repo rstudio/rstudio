@@ -98,7 +98,8 @@ public class Cookies {
    * @param expires when the cookie expires
    * @param domain the domain to be associated with this cookie
    * @param path the path to be associated with this cookie
-   * @param secure <code>true</code> to make this a secure cookie
+   * @param secure <code>true</code> to make this a secure cookie (that is,
+   * only accessible over an SSL connection)
    */
   public static void setCookie(String name, String value, Date expires,
       String domain, String path, boolean secure) {
