@@ -30,7 +30,6 @@ import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.arg.ArgHandlerLocalWorkers;
 import com.google.gwt.dev.util.arg.ArgHandlerOutDir;
-import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerWorkDirOptional;
 import com.google.gwt.util.tools.ToolBase;
 import com.google.gwt.util.tools.Utility;
@@ -58,7 +57,6 @@ public class GWTCompiler {
       registerHandler(new ArgHandlerWorkDirOptional(options));
 
       registerHandler(new ArgHandlerLocalWorkers(options));
-      registerHandler(new ArgHandlerSoyc(options));
     }
 
     @Override

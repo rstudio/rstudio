@@ -53,6 +53,7 @@ import com.google.gwt.dev.util.arg.ArgHandlerEnableAssertions;
 import com.google.gwt.dev.util.arg.ArgHandlerGenDir;
 import com.google.gwt.dev.util.arg.ArgHandlerMaxPermsPerPrecompile;
 import com.google.gwt.dev.util.arg.ArgHandlerScriptStyle;
+import com.google.gwt.dev.util.arg.ArgHandlerSoyc;
 import com.google.gwt.dev.util.arg.ArgHandlerValidateOnlyFlag;
 import com.google.gwt.dev.util.arg.OptionDisableUpdateCheck;
 import com.google.gwt.dev.util.arg.OptionDumpSignatures;
@@ -101,6 +102,7 @@ public class Precompile {
       registerHandler(new ArgHandlerDisableUpdateCheck(options));
       registerHandler(new ArgHandlerDumpSignatures(options));
       registerHandler(new ArgHandlerMaxPermsPerPrecompile(options));
+      registerHandler(new ArgHandlerSoyc(options));
     }
 
     @Override
