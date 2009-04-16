@@ -120,8 +120,16 @@ public class Cookies {
           name = crumbs[i].substring(0, eqIdx);
           value = crumbs[i].substring(eqIdx + 1);
         }
-        name = decodeURIComponent(name);
-        value = decodeURIComponent(value);
+        try {
+          name = decodeURIComponent(name);
+        } catch (e) {
+          // ignore error, keep undecoded name
+        }
+        try {
+          value = decodeURIComponent(value);
+        } catch (e) {
+          // ignore error, keep undecoded value
+        }
         m.@java.util.Map::put(Ljava/lang/Object;Ljava/lang/Object;)(name,value);
       }
     }
