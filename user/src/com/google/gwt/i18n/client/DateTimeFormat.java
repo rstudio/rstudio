@@ -1705,6 +1705,9 @@ public class DateTimeFormat {
       case 'y': // 'y' - YEAR
         return subParseYear(text, pos, start, value, part, cal);
       case 'd': // 'd' - DATE
+        if (value <= 0) {
+          return false;
+        }
         cal.setDayOfMonth(value);
         return true;
       case 'S': // 'S' - FRACTIONAL_SECOND
@@ -1823,10 +1826,11 @@ public class DateTimeFormat {
       }
       cal.setMonth(value);
       return true;
-    } else {
+    } else if (value > 0) {
       cal.setMonth(value - 1);
       return true;
     }
+    return false;
   }
 
   /**

@@ -638,4 +638,25 @@ public class DateTimeParse_en_Test extends GWTTestCase {
     assertTrue(date.getDate() == 02);
   }
 
+  public void testInvalidDayAndMonth() {
+    DateTimeFormat fmt = DateTimeFormat.getFormat("MM/dd/yyyy");
+    try {
+      fmt.parseStrict("00/22/1999");
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success
+    }
+    try {
+      fmt.parseStrict("01/00/1999");
+      fail("Should have thrown an exception on failure to parse");
+    } catch (IllegalArgumentException e) {
+      // Success
+    }
+    try {
+      fmt.parseStrict("01/22/1999");
+      // success
+    } catch (IllegalArgumentException e) {
+      fail("Should succeed to parse");
+    }
+  }
 }
