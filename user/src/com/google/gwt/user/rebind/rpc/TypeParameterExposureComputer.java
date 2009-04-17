@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -82,8 +82,10 @@ class TypeParameterExposureComputer {
       boolean didChange = false;
       JClassType type = baseType;
       while (type != null) {
+        // any problems should already have been captured by our caller, so we
+        // make a throw-away ProblemReport here.
         if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
-            TreeLogger.NULL, type, true, typeFilter)) {
+            type, typeFilter, new ProblemReport())) {
           JField[] fields = type.getFields();
           for (JField field : fields) {
             if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
@@ -249,8 +251,10 @@ class TypeParameterExposureComputer {
           continue;
         }
 
+        // any problems should already have been captured by our caller, so we
+        // make a throw-away ProblemReport here.
         if (!SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
-            TreeLogger.NULL, subtype, true, typeFilter)) {
+            subtype, typeFilter, new ProblemReport())) {
           continue;
         }
 
@@ -267,7 +271,7 @@ class TypeParameterExposureComputer {
       JClassType type = baseType;
       while (type != null) {
         if (SerializableTypeOracleBuilder.shouldConsiderFieldsForSerialization(
-            TreeLogger.NULL, type, true, typeFilter)) {
+            type, typeFilter, new ProblemReport())) {
           JField[] fields = type.getFields();
           for (JField field : fields) {
             if (!SerializableTypeOracleBuilder.shouldConsiderForSerialization(
@@ -367,7 +371,7 @@ class TypeParameterExposureComputer {
   /**
    * Computes flow information for the specified type parameter. If it has
    * already been computed just return the value of the previous computation.
-   * 
+   *
    * @param type the generic type whose type parameter flow we are interested in
    * @param index the index of the type parameter whose flow we want to compute
    */
