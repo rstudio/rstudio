@@ -177,7 +177,7 @@ public class JsoDevirtualizer {
       return;
     }
 
-    for (JMethod method : jsoType.methods) {
+    for (JMethod method : jsoType.getMethods()) {
       if (!method.isStatic()) {
         virtualJsoMethods.add(method);
       }

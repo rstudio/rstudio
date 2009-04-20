@@ -129,8 +129,9 @@ public class JProgram extends JNode {
   }
 
   public static boolean isClinit(JMethod method) {
-    JReferenceType enclosingType = method.getEnclosingType();
-    if ((enclosingType != null) && (method == enclosingType.methods.get(0))) {
+    JDeclaredType enclosingType = method.getEnclosingType();
+    if ((enclosingType != null)
+        && (method == enclosingType.getMethods().get(0))) {
       assert (method.getName().equals("$clinit"));
       return true;
     } else {
@@ -174,7 +175,7 @@ public class JProgram extends JNode {
   private final Set<JArrayType> allArrayTypes = new TreeSet<JArrayType>(
       ARRAYTYPE_COMPARATOR);
 
-  private final List<JReferenceType> allTypes = new ArrayList<JReferenceType>();
+  private final List<JDeclaredType> allTypes = new ArrayList<JDeclaredType>();
 
   private final Map<JType, JClassLiteral> classLiterals = new IdentityHashMap<JType, JClassLiteral>();
 
@@ -194,7 +195,7 @@ public class JProgram extends JNode {
 
   private final Map<String, JMethod> indexedMethods = new HashMap<String, JMethod>();
 
-  private final Map<String, JReferenceType> indexedTypes = new HashMap<String, JReferenceType>();
+  private final Map<String, JDeclaredType> indexedTypes = new HashMap<String, JDeclaredType>();
 
   private final Map<JMethod, JMethod> instanceToStaticMap = new IdentityHashMap<JMethod, JMethod>();
 
@@ -226,13 +227,13 @@ public class JProgram extends JNode {
 
   private JClassType typeClass;
 
-  private Map<JClassType, Integer> typeIdMap = new HashMap<JClassType, Integer>();
+  private Map<JReferenceType, Integer> typeIdMap = new HashMap<JReferenceType, Integer>();
 
   private JClassType typeJavaLangEnum;
 
   private JClassType typeJavaLangObject;
 
-  private final Map<String, JReferenceType> typeNameMap = new HashMap<String, JReferenceType>();
+  private final Map<String, JDeclaredType> typeNameMap = new HashMap<String, JDeclaredType>();
 
   private JClassType typeSpecialClassLiteralHolder;
 
@@ -331,7 +332,7 @@ public class JProgram extends JNode {
   public JEnumType createEnum(SourceInfo info, char[][] name) {
     String sname = dotify(name);
     JEnumType x = new JEnumType(info, sname);
-    x.extnds = getTypeJavaLangEnum();
+    x.setSuperClass(getTypeJavaLangEnum());
 
     allTypes.add(x);
     putIntoTypeMap(sname, x);
@@ -347,19 +348,12 @@ public class JProgram extends JNode {
 
     String sname = String.valueOf(name);
     JEnumField x = new JEnumField(info, sname, ordinal, enclosingType, type);
-    List<JEnumField> enumList = enclosingType.enumList;
-    while (ordinal >= enumList.size()) {
-      enumList.add(null);
-    }
-
-    enumList.set(ordinal, x);
-
-    enclosingType.fields.add(x);
+    enclosingType.addField(x);
     return x;
   }
 
   public JField createField(SourceInfo info, char[] name,
-      JReferenceType enclosingType, JType type, boolean isStatic,
+      JDeclaredType enclosingType, JType type, boolean isStatic,
       Disposition disposition) {
     assert (name != null);
     assert (enclosingType != null);
@@ -373,7 +367,7 @@ public class JProgram extends JNode {
       indexedFields.put(enclosingType.getShortName() + '.' + sname, x);
     }
 
-    enclosingType.fields.add(x);
+    enclosingType.addField(x);
     return x;
   }
 
@@ -405,7 +399,7 @@ public class JProgram extends JNode {
   }
 
   public JMethod createMethod(SourceInfo info, char[] name,
-      JReferenceType enclosingType, JType returnType, boolean isAbstract,
+      JDeclaredType enclosingType, JType returnType, boolean isAbstract,
       boolean isStatic, boolean isFinal, boolean isPrivate, boolean isNative) {
     String sname = String.valueOf(name);
     assert (sname != null);
@@ -424,7 +418,7 @@ public class JProgram extends JNode {
       indexedMethods.put(enclosingType.getShortName() + '.' + sname, x);
     }
 
-    enclosingType.methods.add(x);
+    enclosingType.addMethod(x);
     return x;
   }
 
@@ -583,16 +577,16 @@ public class JProgram extends JNode {
         int distance1 = countSuperTypes(type1);
         int distance2 = countSuperTypes(type2);
         for (; distance1 > distance2; --distance1) {
-          type1 = type1.extnds;
+          type1 = type1.getSuperClass();
         }
 
         for (; distance1 < distance2; --distance2) {
-          type2 = type2.extnds;
+          type2 = type2.getSuperClass();
         }
 
         while (type1 != type2) {
-          type1 = type1.extnds;
-          type2 = type2.extnds;
+          type1 = type1.getSuperClass();
+          type2 = type2.getSuperClass();
         }
 
         return type1;
@@ -645,7 +639,7 @@ public class JProgram extends JNode {
     return correlator;
   }
 
-  public List<JReferenceType> getDeclaredTypes() {
+  public List<JDeclaredType> getDeclaredTypes() {
     return allTypes;
   }
 
@@ -661,7 +655,7 @@ public class JProgram extends JNode {
     return entryMethods.size();
   }
 
-  public JReferenceType getFromTypeMap(String qualifiedBinaryOrSourceName) {
+  public JDeclaredType getFromTypeMap(String qualifiedBinaryOrSourceName) {
     String srcTypeName = qualifiedBinaryOrSourceName.replace('$', '.');
 
     return typeNameMap.get(srcTypeName);
@@ -685,8 +679,8 @@ public class JProgram extends JNode {
     return method;
   }
 
-  public JReferenceType getIndexedType(String string) {
-    JReferenceType type = indexedTypes.get(string);
+  public JDeclaredType getIndexedType(String string) {
+    JDeclaredType type = indexedTypes.get(string);
     if (type == null) {
       throw new InternalCompilerException("Unable to locate index type: "
           + string);
@@ -738,14 +732,14 @@ public class JProgram extends JNode {
       JField field = new JField(info, type.getJavahSignatureName()
           + "_classLit", typeSpecialClassLiteralHolder, getTypeJavaLangClass(),
           true, Disposition.FINAL);
-      typeSpecialClassLiteralHolder.fields.add(field);
+      typeSpecialClassLiteralHolder.addField(field);
 
       // Initialize the field.
       JFieldRef fieldRef = new JFieldRef(info, null, field,
           typeSpecialClassLiteralHolder);
       JDeclarationStatement decl = new JDeclarationStatement(info, fieldRef,
           alloc);
-      JMethodBody clinitBody = (JMethodBody) typeSpecialClassLiteralHolder.methods.get(
+      JMethodBody clinitBody = (JMethodBody) typeSpecialClassLiteralHolder.getMethods().get(
           0).getBody();
       clinitBody.getBlock().addStmt(decl);
 
@@ -758,7 +752,7 @@ public class JProgram extends JNode {
       // Make sure the field hasn't been pruned.
       JField field = classLiteral.getField();
       if (optimizationsStarted
-          && !field.getEnclosingType().fields.contains(field)) {
+          && !field.getEnclosingType().getFields().contains(field)) {
         throw new InternalCompilerException(
             "Getting a class literal whose field holder has already been pruned; type '"
                 + type + " '");
@@ -870,7 +864,7 @@ public class JProgram extends JNode {
         elementType = getTypeArray(leafType, dimensions - 1);
       }
       arrayType = new JArrayType(elementType, leafType, dimensions);
-      arrayType.extnds = typeJavaLangObject;
+      arrayType.setSuperClass(typeJavaLangObject);
       allArrayTypes.add(arrayType);
 
       /*
@@ -929,8 +923,8 @@ public class JProgram extends JNode {
     }
   }
 
-  public int getTypeId(JClassType classType) {
-    Integer integer = typeIdMap.get(classType);
+  public int getTypeId(JReferenceType referenceType) {
+    Integer integer = typeIdMap.get(referenceType);
     if (integer == null) {
       return 0;
     }
@@ -994,10 +988,10 @@ public class JProgram extends JNode {
     return JPrimitiveType.VOID;
   }
 
-  public void initTypeInfo(List<JClassType> classes,
+  public void initTypeInfo(List<JReferenceType> types,
       List<JsonObject> jsonObjects) {
-    for (int i = 0, c = classes.size(); i < c; ++i) {
-      typeIdMap.put(classes.get(i), new Integer(i));
+    for (int i = 0, c = types.size(); i < c; ++i) {
+      typeIdMap.put(types.get(i), new Integer(i));
     }
     this.jsonTypeTable = jsonObjects;
   }
@@ -1014,9 +1008,8 @@ public class JProgram extends JNode {
     return staticToInstanceMap.containsKey(method);
   }
 
-  public void putIntoTypeMap(String qualifiedBinaryName, JReferenceType type) {
+  public void putIntoTypeMap(String qualifiedBinaryName, JDeclaredType type) {
     // Make it into a source type name.
-    //
     String srcTypeName = qualifiedBinaryName.replace('$', '.');
     typeNameMap.put(srcTypeName, type);
   }
@@ -1067,7 +1060,6 @@ public class JProgram extends JNode {
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
       visitor.accept(allTypes);
-      visitor.accept(new ArrayList<JArrayType>(allArrayTypes));
     }
     visitor.endVisit(this, ctx);
   }
@@ -1097,7 +1089,7 @@ public class JProgram extends JNode {
       }
     }
     int count = 0;
-    while ((type = type.extnds) != null) {
+    while ((type = type.getSuperClass()) != null) {
       ++count;
     }
     return count;

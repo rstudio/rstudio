@@ -44,11 +44,6 @@ public class JNullType extends JReferenceType {
     return "N";
   }
 
-  @Override
-  public boolean hasClinit() {
-    return false;
-  }
-
   public boolean isAbstract() {
     return false;
   }

@@ -140,7 +140,7 @@ public class MakeCallsStatic {
       JClassType enclosingType = (JClassType) x.getEnclosingType();
       JType returnType = x.getType();
       SourceInfo sourceInfo = x.getSourceInfo();
-      int myIndexInClass = enclosingType.methods.indexOf(x);
+      int myIndexInClass = enclosingType.getMethods().indexOf(x);
       assert (myIndexInClass > 0);
 
       // Create the new static method
@@ -221,7 +221,7 @@ public class MakeCallsStatic {
 
       // Add the new method as a static impl of the old method
       program.putStaticImpl(x, newMethod);
-      enclosingType.methods.add(myIndexInClass + 1, newMethod);
+      enclosingType.getMethods().add(myIndexInClass + 1, newMethod);
       return false;
     }
   }
@@ -257,7 +257,7 @@ public class MakeCallsStatic {
         return;
       }
 
-      if (!method.getEnclosingType().methods.contains(method)) {
+      if (!method.getEnclosingType().getMethods().contains(method)) {
         // The target method was already pruned (TypeTightener will fix this).
         return;
       }

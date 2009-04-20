@@ -129,8 +129,8 @@ public class Finalizer {
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      if (x.extnds != null) {
-        isSubclassed.add(x.extnds);
+      if (x.getSuperClass() != null) {
+        isSubclassed.add(x.getSuperClass());
       }
     }
 

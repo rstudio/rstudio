@@ -46,7 +46,7 @@ public class JTypeOracle implements Serializable {
    */
   private static final class CheckClinitVisitor extends JVisitor {
 
-    private final Set<JReferenceType> clinitTargets = new IdentityHashSet<JReferenceType>();
+    private final Set<JDeclaredType> clinitTargets = new IdentityHashSet<JDeclaredType>();
 
     /**
      * Tracks whether any live code is run in this clinit. This is only reliable
@@ -58,8 +58,8 @@ public class JTypeOracle implements Serializable {
      */
     private boolean hasLiveCode = false;
 
-    public JReferenceType[] getClinitTargets() {
-      return clinitTargets.toArray(new JReferenceType[clinitTargets.size()]);
+    public JDeclaredType[] getClinitTargets() {
+      return clinitTargets.toArray(new JDeclaredType[clinitTargets.size()]);
     }
 
     public boolean hasLiveCode() {
@@ -238,29 +238,6 @@ public class JTypeOracle implements Serializable {
     this.program = program;
   }
 
-  /**
-   * Collect all supertypes and superinterfaces for a type.
-   */
-  public Set<JReferenceType> allAssignableFrom(JReferenceType type) {
-    Set<JReferenceType> toReturn = new IdentityHashSet<JReferenceType>();
-    List<JReferenceType> q = new LinkedList<JReferenceType>();
-    q.add(type);
-
-    while (!q.isEmpty()) {
-      JReferenceType t = q.remove(0);
-
-      if (toReturn.add(t)) {
-        if (t.extnds != null) {
-          q.add(t.extnds);
-        }
-
-        q.addAll(t.implments);
-      }
-    }
-
-    return toReturn;
-  }
-
   public boolean canTheoreticallyCast(JReferenceType type, JReferenceType qType) {
     JClassType jlo = program.getTypeJavaLangObject();
     if (type == qType || type == jlo) {
@@ -427,7 +404,7 @@ public class JTypeOracle implements Serializable {
 
   public JMethod findConcreteImplementation(JMethod method,
       JClassType concreteType) {
-    for (JMethod m : concreteType.methods) {
+    for (JMethod m : concreteType.getMethods()) {
       if (getAllOverrides(m).contains(method)) {
         if (!m.isAbstract()) {
           return m;
@@ -515,9 +492,9 @@ public class JTypeOracle implements Serializable {
    * associated JProgram.
    */
   public void recomputeAfterOptimizations() {
-    Set<JReferenceType> computed = new IdentityHashSet<JReferenceType>();
+    Set<JDeclaredType> computed = new IdentityHashSet<JDeclaredType>();
     for (int i = 0; i < program.getDeclaredTypes().size(); ++i) {
-      JReferenceType type = program.getDeclaredTypes().get(i);
+      JDeclaredType type = program.getDeclaredTypes().get(i);
       if (type.hasClinit()) {
         computeHasClinit(type, computed);
       }
@@ -536,6 +513,29 @@ public class JTypeOracle implements Serializable {
   }
 
   /**
+   * Collect all supertypes and superinterfaces for a type.
+   */
+  private Set<JDeclaredType> allAssignableFrom(JDeclaredType type) {
+    Set<JDeclaredType> toReturn = new IdentityHashSet<JDeclaredType>();
+    List<JDeclaredType> q = new LinkedList<JDeclaredType>();
+    q.add(type);
+
+    while (!q.isEmpty()) {
+      JDeclaredType t = q.remove(0);
+
+      if (toReturn.add(t)) {
+        if (t.getSuperClass() != null) {
+          q.add(t.getSuperClass());
+        }
+
+        q.addAll(t.getImplements());
+      }
+    }
+
+    return toReturn;
+  }
+
+  /**
    * Compute all of the things I might conceivably implement, either through
    * super types or sub types.
    */
@@ -546,7 +546,7 @@ public class JTypeOracle implements Serializable {
     List<JClassType> subclasses = new ArrayList<JClassType>();
     subclasses.addAll(get(subClassMap, type));
     for (JClassType subclass : subclasses) {
-      for (JInterfaceType intf : subclass.implments) {
+      for (JInterfaceType intf : subclass.getImplements()) {
         couldImplementSet.add(intf);
         for (JInterfaceType isup : get(superInterfaceMap, intf)) {
           couldImplementSet.add(isup);
@@ -561,29 +561,28 @@ public class JTypeOracle implements Serializable {
     }
   }
 
-  private void computeHasClinit(JReferenceType type,
-      Set<JReferenceType> computed) {
+  private void computeHasClinit(JDeclaredType type, Set<JDeclaredType> computed) {
     if (computeHasClinitRecursive(type, computed,
-        new IdentityHashSet<JReferenceType>())) {
+        new IdentityHashSet<JDeclaredType>())) {
       computed.add(type);
     } else {
       type.removeClinit();
     }
   }
 
-  private boolean computeHasClinitRecursive(JReferenceType type,
-      Set<JReferenceType> computed, Set<JReferenceType> alreadySeen) {
+  private boolean computeHasClinitRecursive(JDeclaredType type,
+      Set<JDeclaredType> computed, Set<JDeclaredType> alreadySeen) {
     // Track that we've been seen.
     alreadySeen.add(type);
 
-    JMethod method = type.methods.get(0);
+    JMethod method = type.getMethods().get(0);
     assert (JProgram.isClinit(method));
     CheckClinitVisitor v = new CheckClinitVisitor();
     v.accept(method);
     if (v.hasLiveCode()) {
       return true;
     }
-    for (JReferenceType target : v.getClinitTargets()) {
+    for (JDeclaredType target : v.getClinitTargets()) {
       if (!target.hasClinit()) {
         // A false result is always accurate.
         continue;
@@ -625,7 +624,7 @@ public class JTypeOracle implements Serializable {
     list.add(type);
     list.addAll(get(superClassMap, type));
     for (JClassType superclass : list) {
-      for (JInterfaceType intf : superclass.implments) {
+      for (JInterfaceType intf : superclass.getImplements()) {
         implementsSet.add(intf);
         for (JInterfaceType isup : get(superInterfaceMap, intf)) {
           implementsSet.add(isup);
@@ -649,12 +648,12 @@ public class JTypeOracle implements Serializable {
       return;
     }
 
-    jsoType.implments.clear();
+    jsoType.clearImplements();
 
-    for (JReferenceType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       if (!program.isJavaScriptObject(type)) {
         if (type instanceof JClassType) {
-          dualImpl.addAll(type.implments);
+          dualImpl.addAll(type.getImplements());
         }
         continue;
       }
@@ -665,16 +664,16 @@ public class JTypeOracle implements Serializable {
         }
         JInterfaceType intr = (JInterfaceType) refType;
 
-        if (intr.methods.size() <= 1) {
+        if (intr.getMethods().size() <= 1) {
           /*
            * Record a tag interface as being implemented by JSO, since they
            * don't actually have any methods and we want to avoid spurious
            * messages about multiple JSO types implementing a common interface.
            */
-          assert intr.methods.size() == 0
-              || intr.methods.get(0).getName().equals("$clinit");
+          assert intr.getMethods().size() == 0
+              || intr.getMethods().get(0).getName().equals("$clinit");
           jsoSingleImpls.put(intr, program.getJavaScriptObject());
-          jsoType.implments.add(intr);
+          jsoType.addImplements(intr);
           continue;
         }
 
@@ -709,7 +708,7 @@ public class JTypeOracle implements Serializable {
    * pruned.
    */
   private void computeVirtualUpRefs(JClassType type) {
-    if (type.extnds == null || type.extnds == javaLangObject) {
+    if (type.getSuperClass() == null || type.getSuperClass() == javaLangObject) {
       return;
     }
 
@@ -718,7 +717,7 @@ public class JTypeOracle implements Serializable {
      * I define implementations for them. If I don't, then check all my super
      * classes to find virtual overrides.
      */
-    for (JInterfaceType intf : type.implments) {
+    for (JInterfaceType intf : type.getImplements()) {
       computeVirtualUpRefs(type, intf);
       for (JInterfaceType superIntf : get(superInterfaceMap, intf)) {
         computeVirtualUpRefs(type, superIntf);
@@ -732,8 +731,8 @@ public class JTypeOracle implements Serializable {
    * classes to find virtual overrides.
    */
   private void computeVirtualUpRefs(JClassType type, JInterfaceType intf) {
-    outer : for (JMethod intfMethod : intf.methods) {
-      for (JMethod classMethod : type.methods) {
+    outer : for (JMethod intfMethod : intf.getMethods()) {
+      for (JMethod classMethod : type.getMethods()) {
         if (methodsDoMatch(intfMethod, classMethod)) {
           // this class directly implements the interface method
           continue outer;
@@ -742,8 +741,8 @@ public class JTypeOracle implements Serializable {
 
       // this class does not directly implement the interface method
       // if any super classes do, create a virtual up ref
-      for (JClassType superType = type.extnds; superType != javaLangObject; superType = superType.extnds) {
-        for (JMethod superMethod : superType.methods) {
+      for (JClassType superType = type.getSuperClass(); superType != javaLangObject; superType = superType.getSuperClass()) {
+        for (JMethod superMethod : superType.getMethods()) {
           if (methodsDoMatch(intfMethod, superMethod)) {
             // this super class directly implements the interface method
             // create a virtual up ref
@@ -818,7 +817,7 @@ public class JTypeOracle implements Serializable {
    */
   private void recordSuperSubInfo(JClassType type) {
     Set<JClassType> superSet = new IdentityHashSet<JClassType>();
-    for (JClassType t = type.extnds; t != null; t = t.extnds) {
+    for (JClassType t = type.getSuperClass(); t != null; t = t.getSuperClass()) {
       superSet.add(t);
       add(subClassMap, t, type);
     }
@@ -832,7 +831,7 @@ public class JTypeOracle implements Serializable {
    * them).
    */
   private void recordSuperSubInfo(JInterfaceType type) {
-    if (!type.implments.isEmpty()) {
+    if (!type.getImplements().isEmpty()) {
       Set<JInterfaceType> superSet = new IdentityHashSet<JInterfaceType>();
       recordSuperSubInfo(type, superSet, type);
       superInterfaceMap.put(type, IdentitySets.normalize(superSet));
@@ -844,7 +843,7 @@ public class JTypeOracle implements Serializable {
    */
   private void recordSuperSubInfo(JInterfaceType base,
       Set<JInterfaceType> superSet, JInterfaceType cur) {
-    for (JInterfaceType intf : cur.implments) {
+    for (JInterfaceType intf : cur.getImplements()) {
       superSet.add(intf);
       add(subInterfaceMap, intf, base);
       recordSuperSubInfo(base, superSet, intf);

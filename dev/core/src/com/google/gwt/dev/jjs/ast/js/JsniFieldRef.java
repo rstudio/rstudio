@@ -17,10 +17,10 @@ package com.google.gwt.dev.jjs.ast.js;
 
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JVisitor;
 
 /**
@@ -32,7 +32,7 @@ public class JsniFieldRef extends JFieldRef {
   private boolean isLvalue;
 
   public JsniFieldRef(SourceInfo info, String ident, JField field,
-      JReferenceType enclosingType, boolean isLvalue) {
+      JDeclaredType enclosingType, boolean isLvalue) {
     super(info, field.isStatic() ? null : JNullLiteral.INSTANCE, field,
         enclosingType);
     this.ident = ident;

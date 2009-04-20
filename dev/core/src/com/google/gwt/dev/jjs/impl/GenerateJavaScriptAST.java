@@ -39,6 +39,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JField;
@@ -249,15 +250,15 @@ public class GenerateJavaScriptAST {
       recordSymbol(x, jsName);
 
       // My class scope
-      if (x.extnds == null) {
+      if (x.getSuperClass() == null) {
         myScope = objectScope;
       } else {
-        JsScope parentScope = classScopes.get(x.extnds);
+        JsScope parentScope = classScopes.get(x.getSuperClass());
         // Run my superclass first!
         if (parentScope == null) {
-          accept(x.extnds);
+          accept(x.getSuperClass());
         }
-        parentScope = classScopes.get(x.extnds);
+        parentScope = classScopes.get(x.getSuperClass());
         assert (parentScope != null);
         /*
          * WEIRD: we wedge the global interface scope in between object and all
@@ -564,11 +565,11 @@ public class GenerateJavaScriptAST {
 
       alreadyRan.add(x);
 
-      List<JsFunction> jsFuncs = popList(x.methods.size()); // methods
-      List<JsNode> jsFields = popList(x.fields.size()); // fields
+      List<JsFunction> jsFuncs = popList(x.getMethods().size()); // methods
+      List<JsNode> jsFields = popList(x.getFields().size()); // fields
 
       if (x.hasClinit()) {
-        JsFunction superClinit = clinitMap.get(x.extnds);
+        JsFunction superClinit = clinitMap.get(x.getSuperClass());
         JsFunction myClinit = jsFuncs.get(0);
         handleClinit(myClinit, superClinit);
         clinitMap.put(x, myClinit);
@@ -816,8 +817,8 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JInterfaceType x, Context ctx) {
-      List<JsFunction> jsFuncs = popList(x.methods.size()); // methods
-      List<JsVar> jsFields = popList(x.fields.size()); // fields
+      List<JsFunction> jsFuncs = popList(x.getMethods().size()); // methods
+      List<JsVar> jsFields = popList(x.getFields().size()); // fields
       List<JsStatement> globalStmts = jsProgram.getGlobalBlock().getStatements();
 
       if (x.hasClinit()) {
@@ -1208,8 +1209,8 @@ public class GenerateJavaScriptAST {
 
       // force super type to generate code first, this is required for prototype
       // chaining to work properly
-      if (x.extnds != null && !alreadyRan.contains(x)) {
-        accept(x.extnds);
+      if (x.getSuperClass() != null && !alreadyRan.contains(x)) {
+        accept(x.getSuperClass());
       }
 
       return true;
@@ -1358,7 +1359,7 @@ public class GenerateJavaScriptAST {
        * Must execute in clinit statement order, NOT field order, so that back
        * refs to super classes are preserved.
        */
-      JMethodBody clinitBody = (JMethodBody) program.getTypeClassLiteralHolder().methods.get(
+      JMethodBody clinitBody = (JMethodBody) program.getTypeClassLiteralHolder().getMethods().get(
           0).getBody();
       for (JStatement stmt : clinitBody.getStatements()) {
         if (stmt instanceof JDeclarationStatement) {
@@ -1494,9 +1495,10 @@ public class GenerateJavaScriptAST {
         JsNameRef lhs = prototype.makeRef(sourceInfo);
         lhs.setQualifier(seedFuncName.makeRef(sourceInfo));
         JsExpression rhs;
-        if (x.extnds != null) {
+        if (x.getSuperClass() != null) {
           JsNew newExpr = new JsNew(sourceInfo);
-          JsNameRef superPrototypeRef = names.get(x.extnds).makeRef(sourceInfo);
+          JsNameRef superPrototypeRef = names.get(x.getSuperClass()).makeRef(
+              sourceInfo);
           newExpr.setConstructorExpression(superPrototypeRef);
           rhs = newExpr;
         } else {
@@ -1527,7 +1529,7 @@ public class GenerateJavaScriptAST {
     private void generateToStringAlias(JClassType x,
         List<JsStatement> globalStmts) {
       JMethod toStringMeth = program.getIndexedMethod("Object.toString");
-      if (x.methods.contains(toStringMeth)) {
+      if (x.getMethods().contains(toStringMeth)) {
         SourceInfo sourceInfo = x.getSourceInfo().makeChild(
             GenerateJavaScriptVisitor.class, "_.toString");
         // _.toString = function(){return this.java_lang_Object_toString();}
@@ -1610,8 +1612,7 @@ public class GenerateJavaScriptAST {
     }
 
     private void generateVTables(JClassType x, List<JsStatement> globalStmts) {
-      for (int i = 0; i < x.methods.size(); ++i) {
-        JMethod method = x.methods.get(i);
+      for (JMethod method : x.getMethods()) {
         SourceInfo sourceInfo = method.getSourceInfo().makeChild(
             GenerateJavaScriptVisitor.class, "vtable assignment");
         if (!method.isStatic() && !method.isAbstract()) {
@@ -1643,14 +1644,14 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JReferenceType targetType = x.getEnclosingType();
+      JDeclaredType targetType = x.getEnclosingType();
       if (!currentMethod.getEnclosingType().checkClinitTo(targetType)) {
         return null;
       } else if (targetType.equals(program.getTypeClassLiteralHolder())) {
         return null;
       }
 
-      JMethod clinitMethod = targetType.methods.get(0);
+      JMethod clinitMethod = targetType.getMethods().get(0);
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "clinit invocation");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
@@ -1665,7 +1666,7 @@ public class GenerateJavaScriptAST {
       if (!x.isStatic() || program.isStaticImpl(x)) {
         return null;
       }
-      JReferenceType enclosingType = x.getEnclosingType();
+      JDeclaredType enclosingType = x.getEnclosingType();
       if (enclosingType == null || !enclosingType.hasClinit()) {
         return null;
       }
@@ -1674,7 +1675,7 @@ public class GenerateJavaScriptAST {
         return null;
       }
 
-      JMethod clinitMethod = enclosingType.methods.get(0);
+      JMethod clinitMethod = enclosingType.getMethods().get(0);
       SourceInfo sourceInfo = x.getSourceInfo().makeChild(
           GenerateJavaScriptVisitor.class, "clinit call");
       JsInvocation jsInvocation = new JsInvocation(sourceInfo);
@@ -1749,8 +1750,8 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JMethodCall x, Context ctx) {
-      JReferenceType sourceType = currentMethod.getEnclosingType();
-      JReferenceType targetType = x.getTarget().getEnclosingType();
+      JDeclaredType sourceType = currentMethod.getEnclosingType();
+      JDeclaredType targetType = x.getTarget().getEnclosingType();
       if (sourceType.checkClinitTo(targetType)) {
         crossClassTargets.add(x.getTarget());
       }
@@ -1774,21 +1775,14 @@ public class GenerateJavaScriptAST {
 
     @Override
     public void endVisit(JClassType x, Context ctx) {
-      Collections.sort(x.fields, hasNameSort);
-
-      // Sort the methods manually to avoid sorting clinit out of place!
-      List<JMethod> methods = x.methods;
-      JMethod a[] = methods.toArray(new JMethod[methods.size()]);
-      Arrays.sort(a, 1, a.length, hasNameSort);
-      for (int i = 1; i < a.length; i++) {
-        methods.set(i, a[i]);
-      }
+      x.sortFields(hasNameSort);
+      x.sortMethods(hasNameSort);
     }
 
     @Override
     public void endVisit(JInterfaceType x, Context ctx) {
-      Collections.sort(x.fields, hasNameSort);
-      Collections.sort(x.methods, hasNameSort);
+      x.sortFields(hasNameSort);
+      x.sortMethods(hasNameSort);
     }
 
     @Override
@@ -2036,12 +2030,12 @@ public class GenerateJavaScriptAST {
     final Map<JsName, JMethod> nameToMethodMap = new HashMap<JsName, JMethod>();
     final HashMap<JsName, JField> nameToFieldMap = new HashMap<JsName, JField>();
     final HashMap<JsName, JReferenceType> constructorNameToTypeMap = new HashMap<JsName, JReferenceType>();
-    for (JReferenceType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       JsName typeName = names.get(type);
       if (typeName != null) {
         constructorNameToTypeMap.put(typeName, type);
       }
-      for (JField field : type.fields) {
+      for (JField field : type.getFields()) {
         if (field.isStatic()) {
           JsName fieldName = names.get(field);
           if (fieldName != null) {
@@ -2049,7 +2043,7 @@ public class GenerateJavaScriptAST {
           }
         }
       }
-      for (JMethod method : type.methods) {
+      for (JMethod method : type.getMethods()) {
         JsName methodName = names.get(method);
         if (methodName != null) {
           nameToMethodMap.put(methodName, method);

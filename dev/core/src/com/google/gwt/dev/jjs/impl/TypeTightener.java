@@ -25,6 +25,7 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -180,7 +181,7 @@ public class TypeTightener {
     @Override
     public void endVisit(JClassType x, Context ctx) {
       if (program.typeOracle.isInstantiatedType(x)) {
-        for (JClassType cur = x; cur != null; cur = cur.extnds) {
+        for (JClassType cur = x; cur != null; cur = cur.getSuperClass()) {
           addImplementor(cur, x);
           addInterfacesImplementorRecursive(cur, x);
         }
@@ -308,7 +309,7 @@ public class TypeTightener {
          */
         JMethod staticImplFor = program.staticImplFor(x);
         if (staticImplFor == null
-            || !staticImplFor.getEnclosingType().methods.contains(staticImplFor)) {
+            || !staticImplFor.getEnclosingType().getMethods().contains(staticImplFor)) {
           // The instance method has already been pruned.
           return true;
         }
@@ -343,9 +344,9 @@ public class TypeTightener {
       add(target, implementor, implementors);
     }
 
-    private void addInterfacesImplementorRecursive(JReferenceType target,
+    private void addInterfacesImplementorRecursive(JDeclaredType target,
         JClassType implementor) {
-      for (JInterfaceType implment : target.implments) {
+      for (JInterfaceType implment : target.getImplements()) {
         addImplementor(implment, implementor);
         addInterfacesImplementorRecursive(implment, implementor);
       }

@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java class type reference expression.
  */
-public class JClassType extends JReferenceType implements CanBeSetFinal {
+public class JClassType extends JDeclaredType implements CanBeSetFinal {
 
   private final boolean isAbstract;
   private boolean isFinal;
@@ -42,8 +42,8 @@ public class JClassType extends JReferenceType implements CanBeSetFinal {
   }
 
   public JEnumType isEnumOrSubclass() {
-    if (extnds != null) {
-      return extnds.isEnumOrSubclass();
+    if (getSuperClass() != null) {
+      return getSuperClass().isEnumOrSubclass();
     }
     return null;
   }
@@ -58,10 +58,9 @@ public class JClassType extends JReferenceType implements CanBeSetFinal {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.acceptWithInsertRemove(fields);
-      visitor.acceptWithInsertRemove(methods);
+      fields = visitor.acceptWithInsertRemoveImmutable(fields);
+      methods = visitor.acceptWithInsertRemoveImmutable(methods);
     }
     visitor.endVisit(this, ctx);
   }
-
 }

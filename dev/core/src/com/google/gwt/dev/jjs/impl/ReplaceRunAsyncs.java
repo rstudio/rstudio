@@ -123,8 +123,8 @@ public class ReplaceRunAsyncs {
 
   private JMethod getOnLoadMethod(JClassType loaderType) {
     assert loaderType != null;
-    assert loaderType.methods != null;
-    for (JMethod method : loaderType.methods) {
+    assert loaderType.getMethods() != null;
+    for (JMethod method : loaderType.getMethods()) {
       if (method.getName().equals("onLoad")) {
         assert (method.isStatic());
         assert (method.getParams().size() == 0);
@@ -137,8 +137,8 @@ public class ReplaceRunAsyncs {
 
   private JMethod getRunAsyncMethod(JClassType loaderType) {
     assert loaderType != null;
-    assert loaderType.methods != null;
-    for (JMethod method : loaderType.methods) {
+    assert loaderType.getMethods() != null;
+    for (JMethod method : loaderType.getMethods()) {
       if (method.getName().equals("runAsync")) {
         assert (method.isStatic());
         assert (method.getParams().size() == 1);

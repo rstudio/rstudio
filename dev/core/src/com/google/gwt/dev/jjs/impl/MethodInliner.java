@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JExpressionStatement;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
@@ -28,7 +29,6 @@ import com.google.gwt.dev.jjs.ast.JModVisitor;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JParameterRef;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JReturnStatement;
 import com.google.gwt.dev.jjs.ast.JStatement;
 import com.google.gwt.dev.jjs.ast.JThisRef;
@@ -111,7 +111,7 @@ public class MethodInliner {
         List<JStatement> stmts = body.getStatements();
 
         if (method.getEnclosingType() != null
-            && method.getEnclosingType().methods.get(0) == method
+            && method.getEnclosingType().getMethods().get(0) == method
             && !stmts.isEmpty()) {
           // clinit() calls cannot be inlined unless they are empty
           possibleToInline = false;
@@ -147,7 +147,7 @@ public class MethodInliner {
     }
 
     private JMethodCall createClinitCall(JMethodCall x) {
-      JReferenceType targetEnclosingType = x.getTarget().getEnclosingType();
+      JDeclaredType targetEnclosingType = x.getTarget().getEnclosingType();
       if (!currentMethod.getEnclosingType().checkClinitTo(targetEnclosingType)) {
         // Access from this class to the target class won't trigger a clinit
         return null;
@@ -156,12 +156,12 @@ public class MethodInliner {
         // No clinit needed; target is really an instance method.
         return null;
       }
-      if (x.getTarget() == x.getTarget().getEnclosingType().methods.get(0)) {
+      if (x.getTarget() == x.getTarget().getEnclosingType().getMethods().get(0)) {
         // This is a clinit call, doesn't need another clinit
         return null;
       }
 
-      JMethod clinit = targetEnclosingType.methods.get(0);
+      JMethod clinit = targetEnclosingType.getMethods().get(0);
 
       // If the clinit is a non-native, empty body we can optimize it out here
       if (!clinit.isNative()

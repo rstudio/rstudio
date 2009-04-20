@@ -24,6 +24,7 @@ import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -102,13 +103,16 @@ public class ControlFlowAnalyzer {
       // Rescue my super array type
       if (leafType instanceof JReferenceType) {
         JReferenceType rLeafType = (JReferenceType) leafType;
-        if (rLeafType.extnds != null) {
-          JArrayType superArray = program.getTypeArray(rLeafType.extnds, dims);
+        if (rLeafType.getSuperClass() != null) {
+          JArrayType superArray = program.getTypeArray(
+              rLeafType.getSuperClass(), dims);
           rescue(superArray, true, isInstantiated);
         }
+      }
 
-        for (int i = 0; i < rLeafType.implments.size(); ++i) {
-          JInterfaceType intfType = rLeafType.implments.get(i);
+      if (leafType instanceof JDeclaredType) {
+        JDeclaredType dLeafType = (JDeclaredType) leafType;
+        for (JInterfaceType intfType : dLeafType.getImplements()) {
           JArrayType intfArray = program.getTypeArray(intfType, dims);
           rescue(intfArray, true, isInstantiated);
         }
@@ -188,15 +192,14 @@ public class ControlFlowAnalyzer {
       boolean isInstantiated = instantiatedTypes.contains(type);
 
       // Rescue my super type
-      rescue(type.extnds, true, isInstantiated);
+      rescue(type.getSuperClass(), true, isInstantiated);
 
       // Rescue my clinit (it won't ever be explicitly referenced)
-      rescue(type.methods.get(0));
+      rescue(type.getMethods().get(0));
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
       // However, if I'm instantiated, let's mark them as instantiated.
-      for (int i = 0; i < type.implments.size(); ++i) {
-        JInterfaceType intfType = type.implments.get(i);
+      for (JInterfaceType intfType : type.getImplements()) {
         rescue(intfType, false, isInstantiated);
       }
 
@@ -260,20 +263,18 @@ public class ControlFlowAnalyzer {
       assert (isReferenced || isInstantiated);
 
       // Rescue my clinit (it won't ever be explicitly referenced
-      rescue(type.methods.get(0));
+      rescue(type.getMethods().get(0));
 
       // JLS 12.4.1: don't rescue my super interfaces just because I'm rescued.
       // However, if I'm instantiated, let's mark them as instantiated.
       if (isInstantiated) {
-        for (int i = 0; i < type.implments.size(); ++i) {
-          JInterfaceType intfType = type.implments.get(i);
+        for (JInterfaceType intfType : type.getImplements()) {
           rescue(intfType, false, true);
         }
       }
 
       // visit any field initializers
-      for (int i = 0; i < type.fields.size(); ++i) {
-        JField it = type.fields.get(i);
+      for (JField it : type.getFields()) {
         accept(it);
       }
 
@@ -566,7 +567,8 @@ public class ControlFlowAnalyzer {
             JField field = (JField) var;
             accept(field.getInitializer());
             referencedTypes.add(field.getEnclosingType());
-            liveFieldsAndMethods.add(field.getEnclosingType().methods.get(0));
+            liveFieldsAndMethods.add(field.getEnclosingType().getMethods().get(
+                0));
           }
         }
       }
@@ -594,8 +596,7 @@ public class ControlFlowAnalyzer {
          * Characters must rescue String.valueOf(char)
          */
         if (stringValueOfChar == null) {
-          for (int i = 0; i < stringType.methods.size(); ++i) {
-            JMethod meth = stringType.methods.get(i);
+          for (JMethod meth : stringType.getMethods()) {
             if (meth.getName().equals("valueOf")) {
               List<JType> params = meth.getOriginalParamTypes();
               if (params.size() == 1) {
@@ -616,9 +617,9 @@ public class ControlFlowAnalyzer {
      * If the type is instantiable, rescue any of its virtual methods that a
      * previously seen method call could call.
      */
-    private void rescueMethodsIfInstantiable(JReferenceType type) {
+    private void rescueMethodsIfInstantiable(JDeclaredType type) {
       if (instantiatedTypes.contains(type)) {
-        for (JMethod method : type.methods) {
+        for (JMethod method : type.getMethods()) {
           if (!method.isStatic()) {
             if (methodsLiveExceptForInstantiability.contains(method)) {
               rescue(method);
@@ -798,8 +799,8 @@ public class ControlFlowAnalyzer {
 
   private void buildMethodsOverriding() {
     methodsThatOverrideMe = new HashMap<JMethod, List<JMethod>>();
-    for (JReferenceType type : program.getDeclaredTypes()) {
-      for (JMethod method : type.methods) {
+    for (JDeclaredType type : program.getDeclaredTypes()) {
+      for (JMethod method : type.getMethods()) {
         for (JMethod overridden : program.typeOracle.getAllOverrides(method)) {
           List<JMethod> overs = methodsThatOverrideMe.get(overridden);
           if (overs == null) {

@@ -18,6 +18,7 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
@@ -561,7 +562,7 @@ public class CodeSplitter {
   private void fixUpLoadOrderDependenciesForMethods(FragmentMap fragmentMap) {
     int numFixups = 0;
 
-    for (JReferenceType type : jprogram.getDeclaredTypes()) {
+    for (JDeclaredType type : jprogram.getDeclaredTypes()) {
       int typeFrag = getOrZero(fragmentMap.types, type);
 
       if (typeFrag != 0) {
@@ -569,7 +570,7 @@ public class CodeSplitter {
          * If the type is in an exclusive fragment, all its instance methods
          * must be in the same one.
          */
-        for (JMethod method : type.methods) {
+        for (JMethod method : type.getMethods()) {
           if (!method.isStatic() && methodsInJavaScript.contains(method)) {
             int methodFrag = getOrZero(fragmentMap.methods, method);
             if (methodFrag != typeFrag) {
@@ -596,13 +597,13 @@ public class CodeSplitter {
 
     while (!typesToCheck.isEmpty()) {
       JReferenceType type = typesToCheck.remove();
-      if (type.extnds != null) {
+      if (type.getSuperClass() != null) {
         int typeFrag = getOrZero(fragmentMap.types, type);
-        int supertypeFrag = getOrZero(fragmentMap.types, type.extnds);
+        int supertypeFrag = getOrZero(fragmentMap.types, type.getSuperClass());
         if (typeFrag != supertypeFrag && supertypeFrag != 0) {
           numFixups++;
-          fragmentMap.types.put(type.extnds, 0);
-          typesToCheck.add(type.extnds);
+          fragmentMap.types.put(type.getSuperClass(), 0);
+          typesToCheck.add(type.getSuperClass());
         }
       }
     }

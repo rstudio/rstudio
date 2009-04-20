@@ -20,7 +20,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 /**
  * Java interface type definition.
  */
-public class JInterfaceType extends JReferenceType {
+public class JInterfaceType extends JDeclaredType {
 
   JInterfaceType(SourceInfo info, String name) {
     super(info, name);
@@ -41,8 +41,8 @@ public class JInterfaceType extends JReferenceType {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.acceptWithInsertRemove(fields);
-      visitor.acceptWithInsertRemove(methods);
+      fields = visitor.acceptWithInsertRemoveImmutable(fields);
+      methods = visitor.acceptWithInsertRemoveImmutable(methods);
     }
     visitor.endVisit(this, ctx);
   }

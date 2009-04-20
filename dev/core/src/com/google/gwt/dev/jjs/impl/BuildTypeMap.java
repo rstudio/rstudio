@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JEnumType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JInterfaceType;
@@ -245,7 +246,7 @@ public class BuildTypeMap {
     public boolean visit(FieldDeclaration fieldDeclaration, MethodScope scope) {
       try {
         FieldBinding b = fieldDeclaration.binding;
-        JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+        JDeclaredType enclosingType = (JDeclaredType) typeMap.get(scope.enclosingSourceType());
         SourceInfo info = makeSourceInfo(fieldDeclaration, enclosingType);
         Expression initialization = fieldDeclaration.initialization;
         if (initialization != null
@@ -282,7 +283,7 @@ public class BuildTypeMap {
     public boolean visit(MethodDeclaration methodDeclaration, ClassScope scope) {
       try {
         MethodBinding b = methodDeclaration.binding;
-        JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.enclosingSourceType());
+        JDeclaredType enclosingType = (JDeclaredType) typeMap.get(scope.enclosingSourceType());
         SourceInfo info = makeSourceInfo(methodDeclaration, enclosingType);
         JMethod newMethod = processMethodBinding(b, enclosingType, info);
         mapParameters(newMethod, methodDeclaration);
@@ -380,7 +381,7 @@ public class BuildTypeMap {
     }
 
     private JField createField(SourceInfo info, FieldBinding binding,
-        JReferenceType enclosingType) {
+        JDeclaredType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
 
       boolean isCompileTimeConstant = binding.isStatic() && (binding.isFinal())
@@ -408,7 +409,7 @@ public class BuildTypeMap {
     }
 
     private JField createField(SyntheticArgumentBinding binding,
-        JReferenceType enclosingType) {
+        JDeclaredType enclosingType) {
       JType type = (JType) typeMap.get(binding.type);
       SourceInfo info = enclosingType.getSourceInfo().makeChild(
           BuildDeclMapVisitor.class, "Field " + String.valueOf(binding.name));
@@ -530,14 +531,14 @@ public class BuildTypeMap {
       JMethod method;
       MethodScope methodScope = scope.methodScope();
       if (methodScope.isInsideInitializer()) {
-        JReferenceType enclosingType = (JReferenceType) typeMap.get(scope.classScope().referenceContext.binding);
+        JDeclaredType enclosingType = (JDeclaredType) typeMap.get(scope.classScope().referenceContext.binding);
         if (methodScope.isStatic) {
           // clinit
-          method = enclosingType.methods.get(0);
+          method = enclosingType.getMethods().get(0);
         } else {
           // init
           assert (enclosingType instanceof JClassType);
-          method = enclosingType.methods.get(1);
+          method = enclosingType.getMethods().get(1);
         }
       } else {
         AbstractMethodDeclaration referenceMethod = methodScope.referenceMethod();
@@ -613,7 +614,7 @@ public class BuildTypeMap {
          */
         return false;
       }
-      JReferenceType type = (JReferenceType) typeMap.get(binding);
+      JDeclaredType type = (JDeclaredType) typeMap.get(binding);
       try {
         // Create an override for getClass().
         if (type instanceof JClassType
@@ -623,7 +624,7 @@ public class BuildTypeMap {
               type.getSourceInfo().makeChild(BuildDeclMapVisitor.class,
                   "Synthetic getClass()"), "getClass".toCharArray(), type,
               program.getTypeJavaLangClass(), false, false, false, false, false);
-          assert (type.methods.get(2) == getClassMethod);
+          assert (type.getMethods().get(2) == getClassMethod);
           getClassMethod.freezeParamTypes();
         }
 
@@ -653,7 +654,7 @@ public class BuildTypeMap {
           // TODO: handle separately?
           assert (binding.superclass().isClass() || binding.superclass().isEnum());
           JClassType superClass = (JClassType) typeMap.get(superClassBinding);
-          type.extnds = superClass;
+          type.setSuperClass(superClass);
         }
 
         ReferenceBinding[] superInterfaces = binding.superInterfaces();
@@ -661,7 +662,7 @@ public class BuildTypeMap {
           ReferenceBinding superInterfaceBinding = superInterfaces[i];
           assert (superInterfaceBinding.isInterface());
           JInterfaceType superInterface = (JInterfaceType) typeMap.get(superInterfaceBinding);
-          type.implments.add(superInterface);
+          type.addImplements(superInterface);
         }
 
         if (type instanceof JEnumType) {
@@ -706,7 +707,7 @@ public class BuildTypeMap {
     }
 
     private JMethod processMethodBinding(MethodBinding b,
-        JReferenceType enclosingType, SourceInfo info) {
+        JDeclaredType enclosingType, SourceInfo info) {
       JType returnType = (JType) typeMap.get(b.returnType);
       JMethod newMethod = program.createMethod(info, b.selector, enclosingType,
           returnType, b.isAbstract(), b.isStatic(), b.isFinal(), b.isPrivate(),
@@ -717,7 +718,7 @@ public class BuildTypeMap {
     }
 
     private void processNativeMethod(MethodDeclaration methodDeclaration,
-        SourceInfo info, JReferenceType enclosingType, JMethod newMethod) {
+        SourceInfo info, JDeclaredType enclosingType, JMethod newMethod) {
       // Handle JSNI block
       char[] source = methodDeclaration.compilationResult().getCompilationUnit().getContents();
       String jsniCode = String.valueOf(source, methodDeclaration.bodyStart,
@@ -912,7 +913,7 @@ public class BuildTypeMap {
         }
 
         SourceInfo info = makeSourceInfo(typeDeclaration);
-        JReferenceType newType;
+        JDeclaredType newType;
         if (binding.isClass()) {
           newType = program.createClass(info, name, binding.isAbstract(),
               binding.isFinal());

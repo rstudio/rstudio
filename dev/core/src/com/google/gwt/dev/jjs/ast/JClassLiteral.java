@@ -56,19 +56,12 @@ public class JClassLiteral extends JLiteral {
     call.addArgs(program.getLiteralString(info, getPackageName(typeName)),
         program.getLiteralString(info, getClassName(typeName)));
 
-    if (type instanceof JClassType && !(type instanceof JArrayType)) {
-      /*
-       * For non-array classes and enums, determine the class literal of the
-       * supertype, if there is one. Arrays are excluded because they always
-       * have Object as their superclass.
-       */
-      assert (type instanceof JClassType);
+    if (type instanceof JClassType) {
       JClassType classType = (JClassType) type;
 
       JLiteral superclassLiteral;
-
-      if (classType.extnds != null) {
-        superclassLiteral = program.getLiteralClass(classType.extnds);
+      if (classType.getSuperClass() != null) {
+        superclassLiteral = program.getLiteralClass(classType.getSuperClass());
       } else {
         superclassLiteral = program.getLiteralNull();
       }
@@ -78,7 +71,7 @@ public class JClassLiteral extends JLiteral {
       if (classType instanceof JEnumType) {
         JEnumType enumType = (JEnumType) classType;
         JMethod valuesMethod = null;
-        for (JMethod methodIt : enumType.methods) {
+        for (JMethod methodIt : enumType.getMethods()) {
           if ("values".equals(methodIt.getName())) {
             if (methodIt.getParams().size() != 0) {
               continue;

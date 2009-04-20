@@ -34,11 +34,11 @@ public class JGwtCreate extends JExpression implements HasSettableType {
      * instance methods that should be qualified with a new expression.
      */
     JMethod noArgCtor = null;
-    for (int i = 0; i < classType.methods.size(); ++i) {
-      JMethod ctor = classType.methods.get(i);
+    for (JMethod ctor : classType.getMethods()) {
       if (ctor.getName().equals(classType.getShortName())) {
         if (ctor.getParams().size() == 0) {
           noArgCtor = ctor;
+          break;
         }
       }
     }

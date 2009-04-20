@@ -19,7 +19,7 @@ import com.google.gwt.core.ext.soyc.ClassMember;
 import com.google.gwt.core.ext.soyc.FieldMember;
 import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.core.ext.soyc.MethodMember;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -47,7 +47,7 @@ public class StandardClassMember extends AbstractMemberWithDependencies
   /**
    * Constructed by {@link MemberFactory#get(JReferenceType)}.
    */
-  public StandardClassMember(MemberFactory factory, JReferenceType type) {
+  public StandardClassMember(MemberFactory factory, JDeclaredType type) {
     super(type.getSourceInfo());
 
     int index = type.getName().lastIndexOf('.');
@@ -58,28 +58,26 @@ public class StandardClassMember extends AbstractMemberWithDependencies
     }
     sourceName = type.getName().intern();
 
-    Set<JReferenceType> seen = new HashSet<JReferenceType>();
-    Set<JReferenceType> toTraverse = new HashSet<JReferenceType>();
+    Set<JDeclaredType> seen = new HashSet<JDeclaredType>();
+    Set<JDeclaredType> toTraverse = new HashSet<JDeclaredType>();
     toTraverse.add(type);
 
     SortedSet<ClassMember> overrides = new TreeSet<ClassMember>(
         Member.SOURCE_NAME_COMPARATOR);
 
     while (!toTraverse.isEmpty()) {
-      JReferenceType currentType = toTraverse.iterator().next();
+      JDeclaredType currentType = toTraverse.iterator().next();
       seen.add(currentType);
 
       if (currentType != type) {
         overrides.add(factory.get(currentType));
       }
 
-      if (currentType.extnds != null) {
-        toTraverse.add(currentType.extnds);
+      if (currentType.getSuperClass() != null) {
+        toTraverse.add(currentType.getSuperClass());
       }
 
-      if (currentType.implments != null) {
-        toTraverse.addAll(currentType.implments);
-      }
+      toTraverse.addAll(currentType.getImplements());
 
       toTraverse.removeAll(seen);
     }

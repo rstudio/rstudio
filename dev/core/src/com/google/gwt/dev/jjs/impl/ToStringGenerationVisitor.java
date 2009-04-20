@@ -289,19 +289,19 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     print(CHARS_CLASS);
     printTypeName(x);
     space();
-    if (x.extnds != null) {
+    if (x.getSuperClass() != null) {
       print(CHARS_EXTENDS);
-      printTypeName(x.extnds);
+      printTypeName(x.getSuperClass());
       space();
     }
 
-    if (x.implments.size() > 0) {
+    if (x.getImplements().size() > 0) {
       print(CHARS_IMPLEMENTS);
-      for (int i = 0, c = x.implments.size(); i < c; ++i) {
+      for (int i = 0, c = x.getImplements().size(); i < c; ++i) {
         if (i > 0) {
           print(CHARS_COMMA);
         }
-        printTypeName(x.implments.get(i));
+        printTypeName(x.getImplements().get(i));
       }
       space();
     }
@@ -523,13 +523,13 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     printTypeName(x);
     space();
 
-    if (x.implments.size() > 0) {
+    if (x.getImplements().size() > 0) {
       print(CHARS_EXTENDS);
-      for (int i = 0, c = x.implments.size(); i < c; ++i) {
+      for (int i = 0, c = x.getImplements().size(); i < c; ++i) {
         if (i > 0) {
           print(CHARS_COMMA);
         }
-        printTypeName(x.implments.get(i));
+        printTypeName(x.getImplements().get(i));
       }
       space();
     }

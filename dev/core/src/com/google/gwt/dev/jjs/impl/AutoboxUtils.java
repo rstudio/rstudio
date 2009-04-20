@@ -18,13 +18,13 @@ package com.google.gwt.dev.jjs.impl;
 import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.ast.JCastOperation;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -37,7 +37,7 @@ import java.util.Set;
 public class AutoboxUtils {
   private Set<JPrimitiveType> boxablePrimitiveTypes;
   private Map<JClassType, JPrimitiveType> boxClassToPrimitiveMap;
-  private Set<JReferenceType> boxTypes;
+  private Set<JDeclaredType> boxTypes;
   private final JProgram program;
   private Set<JMethod> unboxMethods;
 
@@ -109,7 +109,7 @@ public class AutoboxUtils {
 
     // Find the correct valueOf() method.
     JMethod valueOfMethod = null;
-    for (JMethod method : wrapperType.methods) {
+    for (JMethod method : wrapperType.getMethods()) {
       if ("valueOf".equals(method.getName())) {
         if (method.getParams().size() == 1) {
           JParameter param = method.getParams().get(0);
@@ -157,7 +157,7 @@ public class AutoboxUtils {
   }
 
   private void computeBoxTypes() {
-    boxTypes = new LinkedHashSet<JReferenceType>();
+    boxTypes = new LinkedHashSet<JDeclaredType>();
     for (JPrimitiveType prim : boxablePrimitiveTypes) {
       boxTypes.add(boxClassForPrimitive(prim));
     }
@@ -165,9 +165,9 @@ public class AutoboxUtils {
 
   private void computeUnboxMethods() {
     unboxMethods = new LinkedHashSet<JMethod>();
-    for (JReferenceType boxType : boxTypes) {
+    for (JDeclaredType boxType : boxTypes) {
       if (boxType != null) {
-        for (JMethod method : boxType.methods) {
+        for (JMethod method : boxType.getMethods()) {
           if (!method.isStatic() && method.getParams().isEmpty()
               && method.getName().endsWith("Value")
               && (method.getType() instanceof JPrimitiveType)) {

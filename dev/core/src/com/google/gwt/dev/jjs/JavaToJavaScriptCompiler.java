@@ -38,6 +38,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JBlock;
 import com.google.gwt.dev.jjs.ast.JClassType;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JGwtCreate;
@@ -124,8 +125,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 /**
- * Compiles the Java <code>JProgram</code> representation into its corresponding
- * JavaScript source.
+ * Compiles the Java <code>JProgram</code> representation into its
+ * corresponding JavaScript source.
  */
 public class JavaToJavaScriptCompiler {
 
@@ -298,17 +299,21 @@ public class JavaToJavaScriptCompiler {
 
         // get method dependencies
         DependencyRecorderImpl dr = new DependencyRecorderImpl();
-        File depFile = dr.recordDependencies(jprogram, options.getWorkDir(), permutationId, logger);
-        
+        File depFile = dr.recordDependencies(jprogram, options.getWorkDir(),
+            permutationId, logger);
+
         StoryRecorder sr = new StoryRecorderImpl();
-        File storyFile = sr.recordStories(jprogram, options.getWorkDir(), permutationId, logger, sourceInfoMaps, js);
-        
+        File storyFile = sr.recordStories(jprogram, options.getWorkDir(),
+            permutationId, logger, sourceInfoMaps, js);
+
         SplitPointRecorder spr = new SplitPointRecorderImpl();
-        File splitPointsFile = spr.recordSplitPoints(jprogram, options.getWorkDir(), permutationId, logger);
-        
+        File splitPointsFile = spr.recordSplitPoints(jprogram,
+            options.getWorkDir(), permutationId, logger);
+
         toReturn.getArtifacts().add(
-            new StandardCompilationAnalysis(logger, depFile, storyFile, splitPointsFile));
-      }    
+            new StandardCompilationAnalysis(logger, depFile, storyFile,
+                splitPointsFile));
+      }
       return toReturn;
     } catch (Throwable e) {
       throw logAndTranslateException(logger, e);
@@ -621,7 +626,7 @@ public class JavaToJavaScriptCompiler {
   }
 
   private static JMethodCall createReboundModuleLoad(TreeLogger logger,
-      JReferenceType reboundEntryType, String originalMainClassName)
+      JDeclaredType reboundEntryType, String originalMainClassName)
       throws UnableToCompleteException {
     if (!(reboundEntryType instanceof JClassType)) {
       logger.log(TreeLogger.ERROR, "Module entry point class '"
@@ -685,7 +690,7 @@ public class JavaToJavaScriptCompiler {
     JBlock block = body.getBlock();
     for (String mainClassName : mainClassNames) {
       block.addStmt(makeStatsCalls(program, mainClassName));
-      JReferenceType mainType = program.getFromTypeMap(mainClassName);
+      JDeclaredType mainType = program.getFromTypeMap(mainClassName);
 
       if (mainType == null) {
         logger.log(TreeLogger.ERROR,
@@ -707,7 +712,7 @@ public class JavaToJavaScriptCompiler {
       List<JClassType> resultTypes = new ArrayList<JClassType>();
       List<JExpression> entryCalls = new ArrayList<JExpression>();
       for (String resultTypeName : resultTypeNames) {
-        JReferenceType resultType = program.getFromTypeMap(resultTypeName);
+        JDeclaredType resultType = program.getFromTypeMap(resultTypeName);
         if (resultType == null) {
           logger.log(TreeLogger.ERROR,
               "Could not find module entry point class '" + resultTypeName
@@ -731,9 +736,8 @@ public class JavaToJavaScriptCompiler {
     program.addEntryMethod(bootStrapMethod);
   }
 
-  private static JMethod findMainMethod(JReferenceType referenceType) {
-    for (int j = 0; j < referenceType.methods.size(); ++j) {
-      JMethod method = referenceType.methods.get(j);
+  private static JMethod findMainMethod(JDeclaredType declaredType) {
+    for (JMethod method : declaredType.getMethods()) {
       if (method.getName().equals("onModuleLoad")) {
         if (method.getParams().size() == 0) {
           return method;
@@ -743,8 +747,8 @@ public class JavaToJavaScriptCompiler {
     return null;
   }
 
-  private static JMethod findMainMethodRecurse(JReferenceType referenceType) {
-    for (JReferenceType it = referenceType; it != null; it = it.extnds) {
+  private static JMethod findMainMethodRecurse(JDeclaredType declaredType) {
+    for (JDeclaredType it = declaredType; it != null; it = it.getSuperClass()) {
       JMethod result = findMainMethod(it);
       if (result != null) {
         return result;

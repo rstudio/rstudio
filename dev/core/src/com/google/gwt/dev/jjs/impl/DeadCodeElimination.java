@@ -28,6 +28,7 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JConditional;
 import com.google.gwt.dev.jjs.ast.JContinueStatement;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JDoStatement;
 import com.google.gwt.dev.jjs.ast.JDoubleLiteral;
 import com.google.gwt.dev.jjs.ast.JExpression;
@@ -397,7 +398,7 @@ public class DeadCodeElimination {
       }
 
       // Normal optimizations.
-      JReferenceType targetType = target.getEnclosingType();
+      JDeclaredType targetType = target.getEnclosingType();
       if (targetType == program.getTypeJavaLangString()) {
         tryOptimizeStringCall(x, ctx, target);
       } else if (JProgram.isClinit(target)) {
@@ -1176,7 +1177,7 @@ public class DeadCodeElimination {
 
     private JMethodCall maybeCreateClinitCall(JFieldRef x) {
       if (x.hasClinit()) {
-        JMethod clinit = x.getField().getEnclosingType().methods.get(0);
+        JMethod clinit = x.getField().getEnclosingType().getMethods().get(0);
         assert (JProgram.isClinit(clinit));
         return new JMethodCall(x.getSourceInfo(), null, clinit);
       }

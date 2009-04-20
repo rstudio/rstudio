@@ -25,7 +25,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   /**
    * The enclosing type of this reference.
    */
-  private final JReferenceType enclosingType;
+  private final JDeclaredType enclosingType;
 
   /**
    * The referenced field.
@@ -45,12 +45,12 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
   private final JType overriddenType;
 
   public JFieldRef(SourceInfo info, JExpression instance, JField field,
-      JReferenceType enclosingType) {
+      JDeclaredType enclosingType) {
     this(info, instance, field, enclosingType, null);
   }
 
   public JFieldRef(SourceInfo info, JExpression instance, JField field,
-      JReferenceType enclosingType, JType overriddenType) {
+      JDeclaredType enclosingType, JType overriddenType) {
     super(info, field);
     assert (instance != null || field.isStatic());
     assert (enclosingType != null);
@@ -60,7 +60,7 @@ public class JFieldRef extends JVariableRef implements HasEnclosingType {
     this.overriddenType = overriddenType;
   }
 
-  public JReferenceType getEnclosingType() {
+  public JDeclaredType getEnclosingType() {
     return enclosingType;
   }
 

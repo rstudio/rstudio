@@ -15,10 +15,11 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
+
 /**
  * Instances are shared.
  */
-public class JArrayType extends JClassType {
+public class JArrayType extends JReferenceType {
 
   private static String calcName(JType leafType, int dims) {
     String name = leafType.getName();
@@ -37,7 +38,7 @@ public class JArrayType extends JClassType {
    */
   JArrayType(JType elementType, JType leafType, int dims) {
     super(leafType.getSourceInfo().makeChild(JArrayType.class, "Array type"),
-        calcName(leafType, dims), false, false);
+        calcName(leafType, dims));
     this.elementType = elementType;
     this.leafType = leafType;
     this.dims = dims;
@@ -71,14 +72,9 @@ public class JArrayType extends JClassType {
     }
     return s;
   }
-  
+
   public JType getLeafType() {
     return leafType;
-  }
-
-  @Override
-  public boolean hasClinit() {
-    return false;
   }
 
   public boolean isAbstract() {
@@ -91,7 +87,6 @@ public class JArrayType extends JClassType {
 
   public void traverse(JVisitor visitor, Context ctx) {
     if (visitor.visit(this, ctx)) {
-      visitor.acceptWithInsertRemove(fields);
     }
     visitor.endVisit(this, ctx);
   }

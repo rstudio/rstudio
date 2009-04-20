@@ -16,8 +16,8 @@
 package com.google.gwt.dev.jjs.ast;
 
 import com.google.gwt.dev.jjs.SourceInfo;
+import com.google.gwt.dev.util.collect.Lists;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,15 +28,35 @@ public class JEnumType extends JClassType {
    * TODO: implement traverse?
    */
 
-  public final List<JEnumField> enumList = new ArrayList<JEnumField>();
+  private List<JEnumField> enumList = Lists.create();
 
   public JEnumType(SourceInfo info, String name) {
     super(info, name, false, false);
   }
 
   @Override
+  public void addField(JField field) {
+    if (field instanceof JEnumField) {
+      JEnumField enumField = (JEnumField) field;
+      int ordinal = enumField.ordinal();
+      while (ordinal >= enumList.size()) {
+        enumList = Lists.add(enumList, null);
+      }
+      enumList = Lists.set(enumList, ordinal, enumField);
+    }
+    super.addField(field);
+  }
+
+  @Override
   public String getClassLiteralFactoryMethod() {
     return "Class.createForEnum";
+  }
+
+  /**
+   * Returns the list of enum fields in this enum.
+   */
+  public List<JEnumField> getEnumList() {
+    return enumList;
   }
 
   @Override

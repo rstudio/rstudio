@@ -23,6 +23,7 @@ import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JDeclarationStatement;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JFieldRef;
@@ -321,21 +322,23 @@ public class Pruner {
       assert (referencedTypes.contains(type));
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (Iterator<JField> it = type.fields.iterator(); it.hasNext();) {
-        JField field = it.next();
+      for (int i = 0; i < type.getFields().size(); ++i) {
+        JField field = type.getFields().get(i);
         if (!referencedNonTypes.contains(field)
             || pruneViaNoninstantiability(isInstantiated, field)) {
-          it.remove();
+          type.removeField(i);
           didChange = true;
+          --i;
         }
       }
 
-      for (Iterator<JMethod> it = type.methods.iterator(); it.hasNext();) {
-        JMethod method = it.next();
+      for (int i = 0; i < type.getMethods().size(); ++i) {
+        JMethod method = type.getMethods().get(i);
         if (!methodIsReferenced(method)
             || pruneViaNoninstantiability(isInstantiated, method)) {
-          it.remove();
+          type.removeMethod(i);
           didChange = true;
+          --i;
         } else {
           accept(method);
         }
@@ -349,26 +352,24 @@ public class Pruner {
       boolean isReferenced = referencedTypes.contains(type);
       boolean isInstantiated = program.typeOracle.isInstantiatedType(type);
 
-      for (Iterator<JField> it = type.fields.iterator(); it.hasNext();) {
-        JField field = it.next();
+      for (int i = 0; i < type.getFields().size(); ++i) {
+        JField field = type.getFields().get(i);
         // all interface fields are static and final
         if (!isReferenced || !referencedNonTypes.contains(field)) {
-          it.remove();
+          type.removeField(i);
           didChange = true;
+          --i;
         }
       }
 
-      Iterator<JMethod> it = type.methods.iterator();
-      if (it.hasNext()) {
-        // start at index 1; never prune clinit directly out of the interface
-        it.next();
-      }
-      while (it.hasNext()) {
-        JMethod method = it.next();
+      // Start at index 1; never prune clinit directly out of the interface.
+      for (int i = 1; i < type.getMethods().size(); ++i) {
+        JMethod method = type.getMethods().get(i);
         // all other interface methods are instance and abstract
         if (!isInstantiated || !methodIsReferenced(method)) {
-          it.remove();
+          type.removeMethod(i);
           didChange = true;
+          --i;
         }
       }
 
@@ -400,8 +401,10 @@ public class Pruner {
          */
         JMethod staticImplFor = program.staticImplFor(x);
         // Unless the instance method has already been pruned, of course.
-        if (saveCodeGenTypes && staticImplFor != null
-            && staticImplFor.getEnclosingType().methods.contains(staticImplFor)) {
+        if (saveCodeGenTypes
+            && staticImplFor != null
+            && staticImplFor.getEnclosingType().getMethods().contains(
+                staticImplFor)) {
           // instance method is still live
           return true;
         }
@@ -446,8 +449,8 @@ public class Pruner {
       for (JMethod method : program.getAllEntryMethods()) {
         accept(method);
       }
-      for (Iterator<JReferenceType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
-        JReferenceType type = it.next();
+      for (Iterator<JDeclaredType> it = program.getDeclaredTypes().iterator(); it.hasNext();) {
+        JDeclaredType type = it.next();
         if (referencedTypes.contains(type)
             || program.typeOracle.isInstantiatedType(type)) {
           accept(type);
@@ -634,10 +637,9 @@ public class Pruner {
    * {@link JProgram#CODEGEN_TYPES_SET}.
    */
   private void traverseFromCodeGenTypes(ControlFlowAnalyzer livenessAnalyzer) {
-    for (JReferenceType type : program.codeGenTypes) {
+    for (JClassType type : program.codeGenTypes) {
       livenessAnalyzer.traverseFromReferenceTo(type);
-      for (int i = 0; i < type.methods.size(); ++i) {
-        JMethod method = type.methods.get(i);
+      for (JMethod method : type.getMethods()) {
         livenessAnalyzer.traverseFrom(method);
       }
     }

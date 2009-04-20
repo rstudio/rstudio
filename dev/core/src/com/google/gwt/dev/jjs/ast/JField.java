@@ -42,12 +42,12 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
     }
   }
 
-  private final JReferenceType enclosingType;
+  private final JDeclaredType enclosingType;
   private final boolean isCompileTimeConstant;
   private final boolean isStatic;
   private boolean isVolatile;
 
-  JField(SourceInfo info, String name, JReferenceType enclosingType,
+  JField(SourceInfo info, String name, JDeclaredType enclosingType,
       JType type, boolean isStatic, Disposition disposition) {
     super(info, name, type, disposition.isFinal());
     this.enclosingType = enclosingType;
@@ -57,7 +57,7 @@ public class JField extends JVariable implements CanBeStatic, HasEnclosingType,
     // Disposition is not cached because we can be set final later.
   }
 
-  public JReferenceType getEnclosingType() {
+  public JDeclaredType getEnclosingType() {
     return enclosingType;
   }
 

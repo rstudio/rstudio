@@ -40,7 +40,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   }
 
   private JAbstractMethodBody body = null;
-  private final JReferenceType enclosingType;
+  private final JDeclaredType enclosingType;
   private final boolean isAbstract;
   private boolean isFinal;
   private final boolean isPrivate;
@@ -64,7 +64,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   /**
    * These are only supposed to be constructed by JProgram.
    */
-  public JMethod(SourceInfo info, String name, JReferenceType enclosingType,
+  public JMethod(SourceInfo info, String name, JDeclaredType enclosingType,
       JType returnType, boolean isAbstract, boolean isStatic, boolean isFinal,
       boolean isPrivate) {
     super(info);
@@ -110,7 +110,7 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     return body;
   }
 
-  public JReferenceType getEnclosingType() {
+  public JDeclaredType getEnclosingType() {
     return enclosingType;
   }
 
