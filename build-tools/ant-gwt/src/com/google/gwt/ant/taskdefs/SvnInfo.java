@@ -164,13 +164,22 @@ public class SvnInfo extends Task {
     return output;
   }
 
+  /**
+   * Determine if this directory is a part of a .git repository.
+   * 
+   * @param dir working directory to start looking for the repository.
+   * @return <code>true</code> if a .git repo is found. Returns
+   *         <code>false</false> if a .git repo cannot be found, or if 
+   *         this directory is part of a subversion repository.
+   */
   static boolean looksLikeGit(File dir) {
-    dir = dir.getAbsoluteFile();
-    while (dir != null) {
-      if (new File(dir, ".git").isDirectory()) {
-        return true;
-      }
-      dir = dir.getParentFile();
+    if (looksLikeSvn(dir)) {
+      return false;
+    }
+    File gitDir = findGitDir(dir);
+
+    if (gitDir != null && gitDir.isDirectory()) {
+      return new File(gitDir, "svn").isDirectory();
     }
     return false;
   }
@@ -236,6 +245,36 @@ public class SvnInfo extends Task {
       return url.substring(0, url.length() - 1);
     }
     return url;
+  }
+
+  /**
+   * Find the GIT working directory.
+   * 
+   * First checks for the presence of the env variable GIT_DIR, then, looks up
+   * the the tree for a directory named '.git'.
+   * 
+   * @param dir Current working directory
+   * @return An object representing the .git directory. Returns
+   *         <code>null</code> if none can be found.
+   */
+  private static File findGitDir(File dir) {
+    String gitDirPath = System.getenv("GIT_DIR");
+    if (gitDirPath != null) {
+      File gitDir = new File(gitDirPath).getAbsoluteFile();
+      if (gitDir.isDirectory()) {
+        return gitDir;
+      }
+    }
+
+    dir = dir.getAbsoluteFile();
+    while (dir != null) {
+      File gitDir = new File(dir, ".git"); 
+      if (gitDir.isDirectory()) {
+        return gitDir;
+      }
+      dir = dir.getParentFile();
+    }
+    return null;
   }
 
   private String fileprop;
