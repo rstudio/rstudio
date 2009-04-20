@@ -38,12 +38,13 @@ public class GwtLocaleTest extends TestCase {
     assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
     GwtLocale zhHant = factory.fromString("zh_Hant");
     aliases = zhHant.getAliases();
-    assertEquals(aliases.get(0), zhHant);
+    assertEquals(aliases.get(0), factory.fromString("zh_TW"));
     assertContainsAndGetPosition(aliases, factory.fromString("zh_Hant_TW"));
     GwtLocale zhHans = factory.fromString("zh_Hans");
     aliases = zhHans.getAliases();
-    assertEquals(aliases.get(0), zhHans);
+    assertEquals(aliases.get(0), zhCN);
     assertContainsAndGetPosition(aliases, factory.fromString("zh_Hans_CN"));
+    assertContainsAndGetPosition(aliases, zhHans);
     GwtLocale en = factory.fromString("en");
     aliases = en.getAliases();
     assertEquals(aliases.get(0), en);
@@ -56,7 +57,11 @@ public class GwtLocaleTest extends TestCase {
     GwtLocale pt = factory.fromString("pt");
     aliases = pt.getAliases();
     assertContainsAndGetPosition(aliases, factory.fromString("pt_BR"));
+    GwtLocale iw = factory.fromString("iw");
+    aliases = iw.getAliases();
     GwtLocale he = factory.fromString("he");
+    assertEquals(aliases.get(0), he);
+    assertContainsAndGetPosition(aliases, factory.fromString("iw_Hebr"));
     aliases = he.getAliases();
     assertContainsAndGetPosition(aliases, factory.fromString("iw_Hebr"));
     GwtLocale id = factory.fromString("id");

@@ -37,6 +37,42 @@ public class GwtLocaleImpl implements GwtLocale {
   // the property provider to handle inheritance there.
 
   /**
+   * Maps deprecated language codes to the canonical code.  Strings are always
+   * in pairs, with the first being the canonical code and the second being
+   * a deprecated code which maps to it.
+   * 
+   * Source: http://www.loc.gov/standards/iso639-2/php/code_changes.php
+   * 
+   * TODO: consider building maps if this list grows much.
+   */
+  private static final String[] deprecatedLanguages = new String[] {
+    "he", "iw",   // Hebrew
+    "id", "in",   // Indonesian 
+    "jv", "jw",   // Javanese, typo in original publication 
+    "ro", "mo",   // Moldovian
+    "yi", "ji",   // Yiddish
+  };
+
+  /**
+   * Maps deprecated region codes to the canonical code.  Strings are always
+   * in pairs, with the first being the canonical code and the second being
+   * a deprecated code which maps to it.
+   * 
+   * Note that any mappings which split an old code into multiple new codes
+   * cannot be done automatically (such as cs -> rs/me) -- perhaps we could
+   * have a way of flagging region codes which are no longer valid and allow
+   * an appropriate warning message.
+   * 
+   * Source: http://en.wikipedia.org/wiki/ISO_3166-1
+   * 
+   * TODO: consider building maps if this list grows much.
+   */
+  private static final String[] deprecatedRegions = new String[] {
+    // East Timor - http://www.iso.org/iso/newsletter_v-5_east_timor.pdf
+    "TL", "TP",
+  };
+
+  /**
    * Add in the missing locale of a deprecated pair.
    * 
    * @param factory GwtLocaleFactory to create new instances with
@@ -45,36 +81,18 @@ public class GwtLocaleImpl implements GwtLocale {
    */
   private static void addDeprecatedPairs(GwtLocaleFactory factory,
       GwtLocale locale, List<GwtLocale> aliases) {
-    if ("he".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("iw", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("iw".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("he", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("id".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("in", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("in".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("id", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("mo".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("ro", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("ro".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("mo", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("jv".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("jw", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("jw".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("jv", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("ji".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("yi", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
-    } else if ("yi".equals(locale.getLanguage())) {
-      aliases.add(factory.fromComponents("ji", locale.getScript(),
-          locale.getRegion(), locale.getVariant()));
+    int n = deprecatedLanguages.length;
+    for (int i = 0; i < n; i += 2) {
+      if (deprecatedLanguages[i].equals(locale.getLanguage())) {
+        aliases.add(factory.fromComponents(deprecatedLanguages[i + 1],
+            locale.getScript(), locale.getRegion(), locale.getVariant()));
+        break;
+      }
+      if (deprecatedLanguages[i + 1].equals(locale.getLanguage())) {
+        aliases.add(factory.fromComponents(deprecatedLanguages[i],
+            locale.getScript(), locale.getRegion(), locale.getVariant()));
+        break;
+      }
     }
   }
 
@@ -159,10 +177,12 @@ public class GwtLocaleImpl implements GwtLocale {
         }
       }
     } else if ("no".equals(language)) {
-      if ("BOKMAL".equals(variant)) {
+      if (variant == null || "BOKMAL".equals(variant)) {
         aliases.add(factory.fromComponents("nb", script, region, null));
+        aliases.add(factory.fromComponents("no-bok", script, region, null));
       } else if ("NYNORSK".equals(variant)) {
         aliases.add(factory.fromComponents("nn", script, region, null));
+        aliases.add(factory.fromComponents("no-nyn", script, region, null));
       }
     } else if ("nb".equals(language)) {
       aliases.add(factory.fromComponents("no", script, region, "BOKMAL"));
@@ -262,7 +282,9 @@ public class GwtLocaleImpl implements GwtLocale {
     // TODO(jat): more locale aliases? better way to encode them?
     if (cachedAliases == null) {
       cachedAliases = new ArrayList<GwtLocale>();
+      GwtLocale canonicalForm = getCanonicalForm();
       Set<GwtLocale> seen = new HashSet<GwtLocale>();
+      cachedAliases.add(canonicalForm);
       ArrayList<GwtLocale> nextGroup = new ArrayList<GwtLocale>();
       nextGroup.add(this);
       // Account for default script
@@ -283,7 +305,9 @@ public class GwtLocaleImpl implements GwtLocale {
             continue;
           }
           seen.add(locale);
-          cachedAliases.add(locale);
+          if (!locale.equals(canonicalForm)) {
+            cachedAliases.add(locale);
+          }
           addDeprecatedPairs(factory, locale, nextGroup);
           addSpecialAliases(factory, locale, nextGroup);
         }
@@ -310,6 +334,77 @@ public class GwtLocaleImpl implements GwtLocale {
       buf.append(variant);
     }
     return buf.toString();
+  }
+
+  /**
+   * Returns this locale in canonical form:
+   * <ul>
+   *  <li>Deprecated language/region tags are replaced with official versions
+   *  <li>
+   * </ul>
+   * 
+   * @return GwtLocale instance 
+   */
+  public GwtLocale getCanonicalForm() {
+    String canonLanguage = language;
+    String canonScript = script;
+    String canonRegion = region;
+    String canonVariant = variant;
+    // Handle deprecated language codes
+    int n = deprecatedLanguages.length;
+    for (int i = 0; i < n; i += 2) {
+      if (deprecatedLanguages[i + 1].equals(canonLanguage)) {
+        canonLanguage = deprecatedLanguages[i];
+        break;
+      }
+    }
+    // Handle deprecated region codes
+    n = deprecatedRegions.length;
+    for (int i = 0; i < n; i += 2) {
+      if (deprecatedRegions[i + 1].equals(canonRegion)) {
+        canonRegion = deprecatedRegions[i];
+        break;
+      }
+    }
+    // Special-case Chinese default scripts
+    if ("zh".equals(canonLanguage)) {
+      if (canonRegion != null) {
+        if ("CN".equals(canonRegion) && "Hans".equals(canonScript)) {
+          canonScript = null;
+        } else if ("TW".equals(canonRegion) && "Hant".equals(canonScript)) {
+          canonScript = null;
+        }
+      } else if ("Hans".equals(canonScript)) {
+        canonRegion = "CN";
+        canonScript = null;
+      } else if ("Hant".equals(canonScript)) {
+        canonRegion = "TW";
+        canonScript = null;
+      }
+    }
+    // Special-case no->nb/nn split
+    if ("no-bok".equals(canonLanguage)) {
+      canonLanguage = "nb";
+      canonVariant = null;
+    } else if ("no-nyn".equals(canonLanguage)) {
+      canonLanguage = "nn";
+      canonVariant = null;
+    } else if ("no".equals(canonLanguage)) {
+      if (canonVariant == null || "BOKMAL".equals(canonVariant)) {
+        canonLanguage = "nb";
+        canonVariant = null;
+      } else if ("NYNORSK".equals(canonVariant)) {
+        canonLanguage = "nn";
+        canonVariant = null;
+      }
+    }
+    // Remove any default script for the language
+    if (canonScript != null && canonScript.equals(
+        DefaultLanguageScripts.getDefaultScript(canonLanguage))) {
+      canonScript = null;
+    }
+    return factory.fromComponents(canonLanguage, canonScript, canonRegion,
+        canonVariant);
   }
 
   public List<GwtLocale> getCompleteSearchList() {

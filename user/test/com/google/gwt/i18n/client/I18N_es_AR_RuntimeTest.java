@@ -28,13 +28,13 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Tests regional inheritance for es_MX.
+ * Tests regional inheritance for es_AR.
  */
-public class I18N_es_MX_RuntimeTest extends GWTTestCase {
+public class I18N_es_AR_RuntimeTest extends GWTTestCase {
 
   @Override
   public String getModuleName() {
-    return "com.google.gwt.i18n.I18NTest_es_MX_runtime";
+    return "com.google.gwt.i18n.I18NTest_es_AR_runtime";
   }
   
   public void testAvailableLocales() {
@@ -50,14 +50,14 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
   }
 
   public void testCurrencyNames() {
-    assertEquals("peso argentino", CurrencyList.get().lookupName("ARS"));
+    assertEquals("Peso Argentino", CurrencyList.get().lookupName("ARS"));
     assertEquals("peso mexicano", CurrencyList.get().lookupName("MXN"));
     assertEquals("dólar estadounidense", CurrencyList.get().lookupName("USD"));
   }
 
   public void testDefaultCurrency() {
     CurrencyData data = CurrencyList.get().getDefault();
-    assertEquals("MXN", data.getCurrencyCode());
+    assertEquals("ARS", data.getCurrencyCode());
     assertEquals("$", data.getCurrencySymbol());
     assertEquals(2, data.getDefaultFractionDigits());
   }
@@ -65,11 +65,11 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
   public void testOtherCurrency() {
     CurrencyData ars = CurrencyList.get().lookup("ARS");
     assertEquals("ARS", ars.getCurrencyCode());
-    assertEquals("Arg$", ars.getCurrencySymbol());
+    assertEquals("$", ars.getCurrencySymbol());
     assertEquals(2, ars.getDefaultFractionDigits());
     CurrencyData data = CurrencyList.get().lookup("MXN");
     assertEquals("MXN", data.getCurrencyCode());
-    assertEquals("$", data.getCurrencySymbol());
+    assertEquals("MEX$", data.getCurrencySymbol());
     assertEquals(2, data.getDefaultFractionDigits());
     CurrencyData usd = CurrencyList.get().lookup("USD");
     assertEquals("USD", usd.getCurrencyCode());
@@ -93,12 +93,12 @@ public class I18N_es_MX_RuntimeTest extends GWTTestCase {
     MyConstants cst = GWT.create(MyConstants.class);
     // Since our copile-time locale is es_419 (Latin America), we do
     // not get es_019 (Central America) in the inheritance chain for
-    // es_MX as only the compile-time locales are used for translation
+    // es_AR as only the compile-time locales are used for translation
     // inheritance.
     assertEquals("default", cst.getSourceLocale());
   }
   
   public void testRuntimeLocale() {
-    assertEquals("es_MX", LocaleInfo.getCurrentLocale().getLocaleName());
+    assertEquals("es_AR", LocaleInfo.getCurrentLocale().getLocaleName());
   }
 }
