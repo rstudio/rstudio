@@ -171,9 +171,10 @@ public class AsyncFragmentLoader {
 
   /**
    * Some UA's like Safari will have a "0" status code when loading from file:
-   * URLs.
+   * URLs. Additionally, the "0" status code is used sometimes if the server
+   * does not respond, e.g. if there is a connection refused.
    */
-  private static final int HTTP_STATUS_LOCAL = 0;
+  private static final int HTTP_STATUS_NON_HTTP = 0;
 
   private static final int HTTP_STATUS_OK = 200;
 
@@ -371,8 +372,9 @@ public class AsyncFragmentLoader {
         public void onReadyStateChange(XMLHttpRequest xhr) {
           if (xhr.getReadyState() == XMLHttpRequest.DONE) {
             xhr.clearOnReadyStateChange();
-            if (xhr.getStatus() == HTTP_STATUS_OK
-                || xhr.getStatus() == HTTP_STATUS_LOCAL) {
+            if ((xhr.getStatus() == HTTP_STATUS_OK || xhr.getStatus() == HTTP_STATUS_NON_HTTP)
+                && xhr.getResponseText() != null
+                && xhr.getResponseText().length() != 0) {
               try {
                 installCode(xhr.getResponseText());
               } catch (RuntimeException e) {
