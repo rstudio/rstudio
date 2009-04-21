@@ -260,6 +260,25 @@ public class HandlerManagerTest extends HandlerTestBase {
     assertFired(mouse1, adaptor1, mouse3);
   }
 
+  public void testRemoveUnhandledType() {
+    final HandlerManager manager = new HandlerManager("bogus source");
+    HandlerRegistration reg = manager.addHandler(MouseDownEvent.getType(),
+        mouse1);
+    reg.removeHandler();
+
+    if (!GWT.isScript()) {
+      try {
+        reg.removeHandler();
+        fail("Should have thrown assertion error");
+      } catch (AssertionError e) {
+        /* pass */
+      }
+    } else {
+      reg.removeHandler();
+      /* pass, we didn't hit an NPE */
+    }
+  }
+
   public void testReverseOrder() {
     // Add some handlers to a manager
     final HandlerManager manager = new HandlerManager("source1", true);

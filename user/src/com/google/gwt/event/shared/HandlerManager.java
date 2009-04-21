@@ -32,7 +32,7 @@ public class HandlerManager {
    * Interface for queued add/remove operations.
    */
   private interface AddOrRemoveCommand {
-    public void execute();
+    void execute();
   }
 
   /**
@@ -90,8 +90,8 @@ public class HandlerManager {
 
     private <H> void removeHandler(GwtEvent.Type<H> eventKey, H handler) {
       ArrayList<H> l = get(eventKey);
-      boolean result = l.remove(handler);
-      if (l.size() == 0) {
+      boolean result = (l == null) ? false : l.remove(handler);
+      if (result && l.size() == 0) {
         map.remove(eventKey);
       }
       assert result : "Tried to remove unknown handler: " + handler + " from "
