@@ -1324,26 +1324,15 @@ public class SerializableTypeOracleBuilder {
     if (possiblyInstantiableTypes.size() == 0) {
       String possibilities[] = new String[candidates.size()];
       for (int i = 0; i < possibilities.length; i++) {
-        JClassType subtype = candidates.get(i); 
-        List<String> auxiliaries = problems.getAuxiliaryMessagesForType(subtype);
-        List<String> errors = problems.getProblemsForType(subtype);
-        if (errors.isEmpty()) {
-          if (auxiliaries.isEmpty()) {
-            possibilities[i] = "   subtype " + 
-              subtype.getParameterizedQualifiedSourceName() +
-              " is not instantiable";
-          } else {
-            // message with have the form "FQCN some-problem-description"
-            possibilities[i] = "   subtype " + auxiliaries.get(0);
-            if (auxiliaries.size() > 1) {
-              possibilities[i] = possibilities[i] + ", etc.";
-            }
-          }
+        JClassType subtype = candidates.get(i);
+        String worstMessage = problems.getWorstMessageForType(subtype);
+        if (worstMessage == null) {
+          possibilities[i] = "   subtype " + 
+            subtype.getParameterizedQualifiedSourceName() +
+            " is not instantiable";
         } else {
-          possibilities[i] = "   subtype " + errors.get(0);
-          if (errors.size() > 1 || !auxiliaries.isEmpty()) {
-            possibilities[i] = possibilities[i] + ", etc.";
-          }
+          // message with have the form "FQCN some-problem-description"
+          possibilities[i] = "   subtype " + worstMessage;
         }
       }
       problems.add(baseType, baseType.getParameterizedQualifiedSourceName()

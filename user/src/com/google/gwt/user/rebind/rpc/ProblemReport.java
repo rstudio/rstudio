@@ -44,9 +44,43 @@ public class ProblemReport {
    */
   public enum Priority { FATAL, DEFAULT, AUXILIARY}
 
-  private Map<JClassType, List<String>> allProblems;
-  private Map<JClassType, List<String>> auxiliaries;
-  private Map<JClassType, List<String>> fatalProblems;
+  /**
+   * An individual report, which may require multiple entries (expressed as
+   * logs under a branchpoint), but relates to an individual issue.
+   */
+  public class Problem {
+    private String message;
+    private List<String> childMessages;
+
+    private Problem(String message, String[] children) {
+      this.message = message;
+      // most problems don't have sub-messages, so init at zero size
+      childMessages = new ArrayList<String>(children.length);
+      for (int i = 0; i < children.length; i++) {
+        childMessages.add(children[i]);
+      }
+    }
+
+    public void addChild(String message) {
+      childMessages.add(message);
+    }
+
+    public String getPrimaryMessage() {
+      return message;
+    }
+
+    public Iterable<String> getSubMessages() {
+      return childMessages;
+    }
+
+    public boolean hasSubMessages() {
+      return !childMessages.isEmpty();
+    }
+  }
+
+  private Map<JClassType, List<Problem>> allProblems;
+  private Map<JClassType, List<Problem>> auxiliaries;
+  private Map<JClassType, List<Problem>> fatalProblems;
   private JClassType contextType;
 
   /**
@@ -61,9 +95,9 @@ public class ProblemReport {
               o2.getParameterizedQualifiedSourceName());
         }
       };
-    allProblems = new TreeMap<JClassType, List<String>>(comparator);
-    auxiliaries = new TreeMap<JClassType, List<String>>(comparator);
-    fatalProblems = new TreeMap<JClassType, List<String>>(comparator);
+    allProblems = new TreeMap<JClassType, List<Problem>>(comparator);
+    auxiliaries = new TreeMap<JClassType, List<Problem>>(comparator);
+    fatalProblems = new TreeMap<JClassType, List<Problem>>(comparator);
     contextType = null;
   }
 
@@ -77,7 +111,7 @@ public class ProblemReport {
    * @param extraLines additional continuation lines for the message, usually
    *    for additional explanations.
    */
-  public void add(JClassType type, String message, Priority priority, 
+  public Problem add(JClassType type, String message, Priority priority, 
       String... extraLines) {
     String contextString = "";
     if (contextType != null) {
@@ -85,62 +119,34 @@ public class ProblemReport {
           contextType.getParameterizedQualifiedSourceName() + ")";
     }
     message = message + contextString;
-    for (String line : extraLines) {
-      message = message + "\n   " + line;
-    }
+    Problem entry = new Problem(message, extraLines);
     if (priority == Priority.AUXILIARY) {
-      addToMap(type, message, auxiliaries);
-      return;
+      addToMap(type, entry, auxiliaries);
+      return entry;
     }
 
     // both FATAL and DEFAULT problems go in allProblems...
-    addToMap(type, message, allProblems);
+    addToMap(type, entry, allProblems);
 
     // only FATAL problems go in fatalProblems...
     if (priority == Priority.FATAL) {
-      addToMap(type, message, fatalProblems);
+      addToMap(type, entry, fatalProblems);
     }
+    return entry;
   }
 
-  /**
-   * Returns list of auxiliary "problems" logged against a given type.
-   *
-   * @param type type to fetch problems for
-   * @return {@code null} if no auxiliaries were logged.  Otherwise, a list
-   *   of strings describing messages, including the context in which the
-   *   problem was found.
-   */
-  public List<String> getAuxiliaryMessagesForType(JClassType type) {
-    List<String> list = auxiliaries.get(type);
+  public String getWorstMessageForType(JClassType type) {
+    List<Problem> list = fatalProblems.get(type);
     if (list == null) {
-      list = new ArrayList<String>(0);
+      list = allProblems.get(type);
+      if (list == null) {
+        list = auxiliaries.get(type);
+      }
     }
-    return list;
-  }
-
-  /**
-   * Returns list of problems logged against a given type.
-   *
-   * @param type type to fetch problems for
-   * @return {@code null} if no problems were logged.  Otherwise, a list
-   *   of strings describing problems, including the context in which the
-   *   problem was found.
-   */
-  public List<String> getProblemsForType(JClassType type) {
-    List<String> list = allProblems.get(type);
     if (list == null) {
-      list = new ArrayList<String>(0);
+      return null;
     }
-    return list;
-  }
-
-  /**
-   * Returns the number of types against which problems were reported.
-   *
-   * @return number of problematic types
-   */
-  public int getProblemTypeCount() {
-    return allProblems.size();
+    return list.get(0).getPrimaryMessage() + (list.size() > 1 ? ", etc." : "");
   }
 
   /**
@@ -189,20 +195,53 @@ public class ProblemReport {
   }
 
   /**
+   * Test accessor returning list of auxiliary "problems" logged against a
+   * given type.
+   *
+   * @param type type to fetch problems for
+   * @return {@code null} if no auxiliaries were logged.  Otherwise, a list
+   *   of strings describing messages, including the context in which the
+   *   problem was found.
+   */
+  List<Problem> getAuxiliaryMessagesForType(JClassType type) {
+    List<Problem> list = auxiliaries.get(type);
+    if (list == null) {
+      list = new ArrayList<Problem>(0);
+    }
+    return list;
+  }
+
+  /**
+   * Test accessor returning list of problems logged against a given type.
+   *
+   * @param type type to fetch problems for
+   * @return {@code null} if no problems were logged.  Otherwise, a list
+   *   of strings describing problems, including the context in which the
+   *   problem was found.
+   */
+  List<Problem> getProblemsForType(JClassType type) {
+    List<Problem> list = allProblems.get(type);
+    if (list == null) {
+      list = new ArrayList<Problem>(0);
+    }
+    return list;
+  }
+
+  /**
    * Adds an entry to one of the problem maps.
    *
    * @param type the type to add
    * @param message the message to add for {@code type}
    * @param map the map to add to
    */
-  private void addToMap(JClassType type, String message,
-      Map<JClassType, List<String>> map) {
-    List<String> entry = map.get(type);
-    if (entry == null) {
-      entry = new ArrayList<String>();
-      map.put(type, entry);
+  private void addToMap(JClassType type, Problem problem,
+      Map<JClassType, List<Problem>> map) {
+    List<Problem> list = map.get(type);
+    if (list == null) {
+      list = new ArrayList<Problem>();
+      map.put(type, list);
     }
-    entry.add(message);
+    list.add(problem);
   }
 
   /**
@@ -213,10 +252,17 @@ public class ProblemReport {
    * @param problems the problems to log
    */
   private void doReport(TreeLogger logger, Type level,
-      Map<JClassType, List<String>> problems) {
+      Map<JClassType, List<Problem>> problems) {
     for (JClassType type : problems.keySet()) {
-      for (String message : problems.get(type)) {
-        logger.log(level, message);
+      for (Problem problem : problems.get(type)) {
+        if (problem.hasSubMessages()) {
+          TreeLogger sublogger = logger.branch(level, problem.getPrimaryMessage());
+          for (String sub : problem.getSubMessages()) {
+            sublogger.log(level, sub);
+          }
+        } else {
+          logger.log(level, problem.getPrimaryMessage());
+        }
       }
     }
   }
