@@ -394,8 +394,17 @@ public class LongLib {
   public static double[] shr(double[] a, int n) {
     n &= 63;
     double shiftFact = pwrAsDouble(n);
-    double newHigh = a[HIGH] / shiftFact;
+    double newHigh = Math.floor(a[HIGH] / shiftFact);
     double newLow = Math.floor(a[LOW] / shiftFact);
+
+    /*
+     * Doing the above floors separately on each component is safe. If n<32,
+     * a[HIGH]/shiftFact is guaranteed to be an integer already. For n>32,
+     * a[HIGH]/shiftFact will have fractional bits, but we need to discard them
+     * as they shift away. We will end up discarding all of a[LOW] in this case,
+     * as it divides out to entirely fractional.
+     */
+
     return create(newLow, newHigh);
   }
 

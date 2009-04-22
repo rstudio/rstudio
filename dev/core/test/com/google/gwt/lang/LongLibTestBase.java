@@ -272,10 +272,13 @@ public class LongLibTestBase extends TestCase {
         longFromBits(0x92341234, 0x45674567), 10));
     assertEquals(longFromBits(0xffe48d04, 0x8d1159d1), LongLib.shr(
         longFromBits(0x92341234, 0x45674567), 10));
+    assertEquals(LongLib.fromInt(67108863), LongLib.shr(longFromBits(0xFFFFFFF,
+        0xFFFFFFFF), 34));
     assertEquals(longFromBits(0x248d04, 0x8d1159d1), LongLib.shru(longFromBits(
         0x92341234, 0x45674567), 10));
 
     assertEquals(LongLib.fromInt(-1), LongLib.shr(LongLib.fromInt(-1), 10));
+    assertEquals(LongLib.fromInt(-1), LongLib.shr(LongLib.fromInt(-1), 63));
 
     assertEquals(LongLib.fromInt(-1 << 5), LongLib.shl(LongLib.fromInt(-1), 5));
     assertEquals(LongLib.fromInt(-1), LongLib.shl(LongLib.fromInt(-1), 0));
