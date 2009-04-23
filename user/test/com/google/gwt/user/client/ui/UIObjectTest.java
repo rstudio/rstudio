@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
@@ -69,6 +71,14 @@ public class UIObjectTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.user.DebugTest";
+  }
+  
+  public void testToString() {
+    UIObject u = new UIObject(){};
+    assertEquals("(null handle)", u.toString());
+    SpanElement span = Document.get().createSpanElement();
+    u.setElement(span);
+    assertEquals(span.toString(), u.toString());
   }
 
   public void testAccidentalPrimary() {

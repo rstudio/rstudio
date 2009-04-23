@@ -16,8 +16,8 @@
 package com.google.gwt.user.client.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 
 /**
  * The superclass for all user-interface objects. It simply wraps a DOM element,
@@ -723,7 +723,7 @@ public abstract class UIObject {
    */
   @Override
   public String toString() {
-    if (getElement() == null) {
+    if (element == null) {
       return "(null handle)";
     }
     return DOM.toString(getElement());
