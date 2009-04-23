@@ -74,11 +74,12 @@ public class UIObjectTest extends GWTTestCase {
   }
   
   public void testToString() {
-    UIObject u = new UIObject(){};
+    UIObject u = new UIObject() {
+    };
     assertEquals("(null handle)", u.toString());
     SpanElement span = Document.get().createSpanElement();
     u.setElement(span);
-    assertEquals(span.toString(), u.toString());
+    assertEquals(span.getString(), u.toString());
   }
 
   public void testAccidentalPrimary() {
