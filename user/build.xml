@@ -178,6 +178,7 @@
       <!-- remoteweb-test is a no-op unless gwt.remote.browsers is defined -->
       <antcall target="remoteweb-test"/>
       <antcall target="test.hosted"/>
+      <antcall target="test.hosted.emma"/>
       <antcall target="test.noserver"/>
       <antcall target="test.web"/>
       <antcall target="test.web.disableClassMetadata"/>
