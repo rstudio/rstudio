@@ -110,7 +110,7 @@
   </target>
 
   <target name="test.hosted.emma" depends="compile, compile.tests" description="Run all hosted-mode tests in emma mode.">
-    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.emma.tests" >
+    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="default.hosted.emma.tests" >
       <extraclasspaths>
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
         <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
@@ -122,12 +122,6 @@
     <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode" test.cases="default.hosted.tests" >
       <extraclasspaths>
         <pathelement location="${gwt.build}/out/dev/core/bin-test" />
-      </extraclasspaths>
-    </gwt.junit>
-    <gwt.junit test.args="${test.args}" test.out="${junit.out}/${build.host.platform}-hosted-mode-emma" test.cases="default.emma.tests" >
-      <extraclasspaths>
-        <pathelement location="${gwt.build}/out/dev/core/bin-test" />
-        <pathelement location="${gwt.tools.redist}/emma/emma.jar" />
       </extraclasspaths>
     </gwt.junit>
   </target>
