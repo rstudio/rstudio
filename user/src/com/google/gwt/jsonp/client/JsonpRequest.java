@@ -42,6 +42,16 @@ public class JsonpRequest<T> {
   private static final String CALLBACKS_NAME = "__gwt_jsonp__";
   private static final JavaScriptObject CALLBACKS = createCallbacksObject(CALLBACKS_NAME);
   
+  /**
+   * Creates a global object to store callbacks of pending requests.
+   *
+   * @param name The name of the global object.
+   * @return The created object.
+   */
+  private static native JavaScriptObject createCallbacksObject(String name) /*-{
+    return $wnd[name] = new Object();
+  }-*/;
+  
   private static native Node getDocumentElement() /*-{
     return $doc.documentElement;
   }-*/;
@@ -49,13 +59,13 @@ public class JsonpRequest<T> {
   private static String nextCallbackId() {
     return "I" + (callbackCounter++);
   }
-  
+
   private final String callbackId;
 
   private final int timeout;
-  
+
   private final AsyncCallback<T> callback;
-  
+
   /**
    * Whether the result is expected to be an integer or not
    */
@@ -70,16 +80,6 @@ public class JsonpRequest<T> {
    * Timer which keeps track of timeouts.
    */
   private Timer timer;
-
-  /**
-   * Creates a global object to store callbacks of pending requests.
-   *
-   * @param name The name of the global object.
-   * @return The created object.
-   */
-  private static native JavaScriptObject createCallbacksObject(String name) /*-{
-    return $wnd[name] = new Object();
-  }-*/;
 
   /**
    * Create a new JSONP request.
