@@ -504,6 +504,34 @@ public class NumberFormat {
     this(defaultNumberConstants, pattern, cdata, userSuppliedPattern);
   }
 
+  protected NumberConstants getNumberConstants() {
+    return numberConstants;
+  }
+
+  protected String getPositivePrefix() {
+    return positivePrefix;
+  }
+
+  protected String getPositiveSuffix() {
+    return positiveSuffix;
+  }
+
+  protected String getNegativePrefix() {
+    return negativePrefix;
+  }
+
+  protected String getNegativeSuffix() {
+    return negativeSuffix;
+  }
+
+  protected int getGroupingSize() {
+    return groupingSize;
+  }
+
+  protected boolean isDecimalSeparatorAlwaysShown() {
+    return decimalSeparatorAlwaysShown;
+  }
+
   /**
    * This method formats a double to produce a string.
    * 
