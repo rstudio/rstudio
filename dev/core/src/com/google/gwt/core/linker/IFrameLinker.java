@@ -93,6 +93,15 @@ public class IFrameLinker extends SelectionScriptLinker {
     return ".cache.html";
   }
 
+  /**
+   * Returns the subdirectory name to be used by getModulPrefix when requesting
+   * a runAsync module. The default implementation returns the value of
+   * FRAGMENT_SUDBIR. This has been factored out for test cases.
+   */
+  protected String getFragmentSubdir() {
+    return FRAGMENT_SUBDIR;
+  }
+
   @Override
   protected String getModulePrefix(TreeLogger logger, LinkerContext context,
       String strongName) {
@@ -123,7 +132,7 @@ public class IFrameLinker extends SelectionScriptLinker {
 
     return out.toString();
   }
-
+  
   @Override
   protected String getSelectionScriptTemplate(TreeLogger logger,
       LinkerContext context) {
@@ -157,7 +166,7 @@ public class IFrameLinker extends SelectionScriptLinker {
       out.print("function __gwtStartLoadingFragment(frag) {");
       out.indentIn();
       out.newlineOpt();
-      out.print("  return $moduleBase + '" + FRAGMENT_SUBDIR
+      out.print("  return $moduleBase + '" + getFragmentSubdir()
           + "/'  + $strongName + '/' + frag + '" + FRAGMENT_EXTENSION + "';");
       out.indentOut();
       out.newlineOpt();
