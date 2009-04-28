@@ -334,12 +334,12 @@ public class CodeSplitter {
     Map<Integer, JMethod> splitPointToLoadMethod = new HashMap<Integer, JMethod>();
     // These methods aren't indexed, so scan the whole program
 
-    for (JReferenceType type : program.getDeclaredTypes()) {
+    for (JDeclaredType type : program.getDeclaredTypes()) {
       Matcher matcher = LOADER_CLASS_PATTERN.matcher(type.getName());
       if (matcher.matches()) {
         int sp = Integer.parseInt(matcher.group(1));
         JMethod loadMethod = null;
-        for (JMethod meth : type.methods) {
+        for (JMethod meth : type.getMethods()) {
           if (meth.getName().equals(
               FragmentLoaderCreator.LOADER_METHOD_RUN_ASYNC)) {
             loadMethod = meth;
