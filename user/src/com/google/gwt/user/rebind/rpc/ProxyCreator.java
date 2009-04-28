@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.core.ext.linker.GeneratedResource;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.core.ext.typeinfo.JMethod;
 import com.google.gwt.core.ext.typeinfo.JPackage;
@@ -42,6 +43,7 @@ import com.google.gwt.user.client.rpc.impl.FailedRequest;
 import com.google.gwt.user.client.rpc.impl.FailingRequestBuilder;
 import com.google.gwt.user.client.rpc.impl.RemoteServiceProxy;
 import com.google.gwt.user.client.rpc.impl.RequestCallbackAdapter.ResponseReader;
+import com.google.gwt.user.linker.rpc.RpcPolicyFileArtifact;
 import com.google.gwt.user.rebind.ClassSourceFileComposerFactory;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
@@ -650,7 +652,14 @@ class ProxyCreator {
           serializationPolicyFileName);
       if (os != null) {
         os.write(serializationPolicyFileContents);
-        ctx.commitResource(logger, os);
+        GeneratedResource resource = ctx.commitResource(logger, os);
+
+        /*
+         * Record which proxy class created the resource. A manifest will be
+         * emitted by the RpcPolicyManifestLinker.
+         */
+        ctx.commitArtifact(logger, new RpcPolicyFileArtifact(
+            serviceIntf.getQualifiedSourceName(), resource));
       } else {
         logger.log(TreeLogger.TRACE,
             "SerializationPolicy file for RemoteService '"
