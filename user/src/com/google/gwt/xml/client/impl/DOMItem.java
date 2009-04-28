@@ -42,6 +42,13 @@ class DOMItem {
     }
     return false;
   }
+  
+  /**
+   * Returns the hash code for this DOMItem.
+   */
+  public int hashCode() {
+    return jsObject.hashCode();
+  }
 
   JavaScriptObject getJsObject() {
     return jsObject;
