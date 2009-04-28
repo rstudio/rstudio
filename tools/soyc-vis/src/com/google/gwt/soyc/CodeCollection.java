@@ -34,29 +34,13 @@ public class CodeCollection {
     codeType = type;
   }
 
-  public float getCumPartialSize() {
+  public float getCumPartialSize(SizeBreakdown breakdown) {
     cumPartialSize = 0f;
     for (String className : classes) {
-      if (!GlobalInformation.classToPartialSize.containsKey(className)) {
-        System.err.println("*** NO PARTIAL SIZE FOUND FOR CLASS " + className
-            + " *****");
-      } else {
-        cumPartialSize += GlobalInformation.classToPartialSize.get(className);
+      if (breakdown.classToPartialSize.containsKey(className)) {
+        cumPartialSize += breakdown.classToPartialSize.get(className);
       }
     }
     return cumPartialSize;
-  }
-
-  public int getCumSize() {
-    cumSize = 0;
-    for (String className : classes) {
-      if (!GlobalInformation.classToSize.containsKey(className)) {
-        System.err.println("*** NO SIZE FOUND FOR CLASS " + className
-            + " *****");
-      } else {
-        cumSize += GlobalInformation.classToSize.get(className);
-      }
-    }
-    return cumSize;
   }
 }

@@ -5,6 +5,9 @@
   <property name="gwt.root" location="../.." />
   <property name="project.tail" value="tools/soyc-vis" />
   <import file="${gwt.root}/common.ant.xml" />
+  
+  <!-- Platform shouldn't matter here, just picking one -->
+  <property.ensure name="gwt.dev.jar" location="${gwt.build.lib}/gwt-dev-linux.jar" />
 
   <target name="clean">
     <delete dir="build"/>
@@ -12,7 +15,11 @@
 
   <target name="compile">
     <mkdir dir="${javac.out}"/>
-    <javac srcdir="src" destdir="${javac.out}"/>
+    <javac srcdir="src" destdir="${javac.out}">
+      <classpath>
+        <pathelement location="${gwt.dev.jar}" />
+      </classpath>
+    </javac>
     <mkdir dir="${javac.out}/images"/>
     <copy todir="${javac.out}/images">
       <fileset dir="images"/>
