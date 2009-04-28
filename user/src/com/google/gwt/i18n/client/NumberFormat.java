@@ -504,34 +504,6 @@ public class NumberFormat {
     this(defaultNumberConstants, pattern, cdata, userSuppliedPattern);
   }
 
-  protected NumberConstants getNumberConstants() {
-    return numberConstants;
-  }
-
-  protected String getPositivePrefix() {
-    return positivePrefix;
-  }
-
-  protected String getPositiveSuffix() {
-    return positiveSuffix;
-  }
-
-  protected String getNegativePrefix() {
-    return negativePrefix;
-  }
-
-  protected String getNegativeSuffix() {
-    return negativeSuffix;
-  }
-
-  protected int getGroupingSize() {
-    return groupingSize;
-  }
-
-  protected boolean isDecimalSeparatorAlwaysShown() {
-    return decimalSeparatorAlwaysShown;
-  }
-
   /**
    * This method formats a double to produce a string.
    * 
@@ -614,7 +586,6 @@ public class NumberFormat {
    * @throws NumberFormatException if the text segment could not be converted into a number
    */
   public double parse(String text, int[] inOutPos) throws NumberFormatException {
-    int start = inOutPos[0];
     double ret = 0.0;
 
     boolean gotPositivePrefix = text.startsWith(positivePrefix, inOutPos[0]);
@@ -682,6 +653,34 @@ public class NumberFormat {
     }
 
     return ret;
+  }
+
+  protected int getGroupingSize() {
+    return groupingSize;
+  }
+
+  protected String getNegativePrefix() {
+    return negativePrefix;
+  }
+
+  protected String getNegativeSuffix() {
+    return negativeSuffix;
+  }
+
+  protected NumberConstants getNumberConstants() {
+    return numberConstants;
+  }
+
+  protected String getPositivePrefix() {
+    return positivePrefix;
+  }
+
+  protected String getPositiveSuffix() {
+    return positiveSuffix;
+  }
+
+  protected boolean isDecimalSeparatorAlwaysShown() {
+    return decimalSeparatorAlwaysShown;
   }
 
   /**
