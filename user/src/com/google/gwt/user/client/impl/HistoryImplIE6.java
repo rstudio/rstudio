@@ -19,9 +19,10 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
 
 /**
- * Internet Explorer 6 implementation HistoryImplFrame.
+ * History implementation for IE6 and IE7, which do not support the onhashchange
+ * event, and for which {@link HistoryImplTimer} will not work either.
  */
-class HistoryImplIE6 extends HistoryImplFrame {
+class HistoryImplIE6 extends HistoryImpl {
 
   /**
    * Sanitizes an untrusted string to be used in an HTML context. NOTE: This
@@ -37,6 +38,10 @@ class HistoryImplIE6 extends HistoryImplFrame {
     return DOM.getInnerHTML(div);
   }
 
+  private static native Element findHistoryFrame() /*-{
+    return $doc.getElementById('__gwt_historyFrame');
+  }-*/;
+
   /**
    * For IE6, reading from $wnd.location.hash drops part of the fragment if the
    * fragment contains a '?'. To avoid this bug, we use location.href instead.
@@ -48,22 +53,59 @@ class HistoryImplIE6 extends HistoryImplFrame {
     return (hashLoc > 0) ? href.substring(hashLoc) : "";
   }-*/;
 
+  private static native Element getTokenElement(Element historyFrame) /*-{
+    // Initialize the history iframe.  If '__gwt_historyToken' already exists, then
+    // we're probably backing into the app, so _don't_ set the iframe's location.
+    if (historyFrame.contentWindow) {
+      var doc = historyFrame.contentWindow.document;
+      return doc.getElementById('__gwt_historyToken');
+    }
+  }-*/;
+
+  protected Element historyFrame;
+
   @Override
   public boolean init() {
-    if (!super.init()) {
+    historyFrame = findHistoryFrame();
+    if (historyFrame == null) {
       return false;
     }
+
+    initHistoryToken();
+
+    // Initialize the history iframe. If a token element already exists, then
+    // we're probably backing into the app, so _don't_ create a new item.
+    Element tokenElement = getTokenElement(historyFrame);
+    if (tokenElement != null) {
+      setToken(getTokenElementContent(tokenElement));
+    } else {
+      navigateFrame(getToken());
+    }
+
+    injectGlobalHandler();
     initUrlCheckTimer();
     return true;
   }
 
   @Override
-  protected native String getTokenElementContent(Element tokenElement) /*-{
+  protected final void nativeUpdate(String historyToken) {
+    /*
+     * Must update the location hash since it isn't already correct.
+     */
+    updateHash(historyToken);
+    navigateFrame(historyToken);
+  }
+
+  @Override
+  protected final void nativeUpdateOnEvent(String historyToken) {
+    updateHash(historyToken);
+  }
+
+  private native String getTokenElementContent(Element tokenElement) /*-{
     return tokenElement.innerText;
   }-*/;
 
-  @Override
-  protected native void initHistoryToken() /*-{
+  private native void initHistoryToken() /*-{
     // Assume an empty token.
     var token = '';
     // Get the initial token from the url's hash component.
@@ -77,29 +119,6 @@ class HistoryImplIE6 extends HistoryImplFrame {
       }
     }
     @com.google.gwt.user.client.impl.HistoryImpl::setToken(Ljava/lang/String;)(token);
-  }-*/;
-
-  @Override
-  protected native void injectGlobalHandler() /*-{
-    var historyImplRef = this;
-
-    $wnd.__gwt_onHistoryLoad = function(token) {
-      historyImplRef.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
-    };
-  }-*/;
-
-  @Override
-  protected native void navigateFrame(String token) /*-{
-    var escaped = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)(token);
-    var doc = this.@com.google.gwt.user.client.impl.HistoryImplFrame::historyFrame.contentWindow.document;
-    doc.open();
-    doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + escaped + '</div></body></html>');
-    doc.close();
-  }-*/;
-
-  @Override
-  protected native void updateHash(String token) /*-{
-    $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
   }-*/;
 
   private native void initUrlCheckTimer() /*-{
@@ -122,7 +141,7 @@ class HistoryImplIE6 extends HistoryImplFrame {
           // if someone entered or linked to a bad url.
           $wnd.location.reload();
         }
-
+  
         var historyToken = @com.google.gwt.user.client.impl.HistoryImpl::getToken()();
         if (historyToken && (token != historyToken)) {
           $wnd.location.reload();
@@ -130,5 +149,25 @@ class HistoryImplIE6 extends HistoryImplFrame {
       }
     };
     urlChecker();
+  }-*/;
+
+  private native void injectGlobalHandler() /*-{
+    var historyImplRef = this;
+
+    $wnd.__gwt_onHistoryLoad = function(token) {
+      historyImplRef.@com.google.gwt.user.client.impl.HistoryImpl::newItemOnEvent(Ljava/lang/String;)(token);
+    };
+  }-*/;
+
+  private native void navigateFrame(String token) /*-{
+    var escaped = @com.google.gwt.user.client.impl.HistoryImplIE6::escapeHtml(Ljava/lang/String;)(token);
+    var doc = this.@com.google.gwt.user.client.impl.HistoryImplIE6::historyFrame.contentWindow.document;
+    doc.open();
+    doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + escaped + '</div></body></html>');
+    doc.close();
+  }-*/;
+
+  private native void updateHash(String token) /*-{
+    $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
   }-*/;
 }

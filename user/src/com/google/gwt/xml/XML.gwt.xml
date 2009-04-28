@@ -15,32 +15,34 @@
 <!-- XML parsing support.                                                   -->
 <!--                                                                        -->
 <module>
-	<inherits name="com.google.gwt.core.Core"/>
-	<inherits name="com.google.gwt.user.UserAgent"/>
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
 
-	<!-- Fall through to this rule for all other browsers -->
-	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplStandard">
-		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
-	</replace-with>
+  <!-- Fall through to this rule for all other browsers -->
+  <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplStandard">
+    <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+  </replace-with>
 
-	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplMozillaOld">
-		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
-		<when-property-is name="user.agent" value="gecko"/>
-	</replace-with>
+  <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplMozillaOld">
+    <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+    <when-property-is name="user.agent" value="gecko"/>
+  </replace-with>
 
-	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplOpera">
-		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
-		<when-property-is name="user.agent" value="opera"/>
-	</replace-with>
+  <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplOpera">
+    <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+    <when-property-is name="user.agent" value="opera"/>
+  </replace-with>
 
-	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplIE6">
-		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
-		<when-property-is name="user.agent" value="ie6"/>
-	</replace-with>
+  <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplIE6">
+    <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+    <any>
+      <when-property-is name="user.agent" value="ie6"/>
+      <when-property-is name="user.agent" value="ie8"/>
+    </any>
+  </replace-with>
 
-	<replace-with class="com.google.gwt.xml.client.impl.XMLParserImplSafari">
-		<when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
-		<when-property-is name="user.agent" value="safari"/>
-	</replace-with>
-	
+  <replace-with class="com.google.gwt.xml.client.impl.XMLParserImplSafari">
+    <when-type-is class="com.google.gwt.xml.client.impl.XMLParserImpl"/>
+    <when-property-is name="user.agent" value="safari"/>
+  </replace-with>
 </module>

@@ -15,45 +15,48 @@
 <!-- Deferred binding rules for browser selection.                          -->
 <!--                                                                        -->
 <module>
-	<inherits name="com.google.gwt.core.Core" />
-	<inherits name="com.google.gwt.user.UserAgent" />
+  <inherits name="com.google.gwt.core.Core" />
+  <inherits name="com.google.gwt.user.UserAgent" />
 
-	<!-- IE-specific implementation -->
-	<replace-with
-		class="com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6">
-		<when-type-is
-			class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
-		<when-property-is name="user.agent" value="ie6" />
-	</replace-with>
+  <!-- IE-specific implementation -->
+  <replace-with
+    class="com.google.gwt.user.client.ui.impl.RichTextAreaImplIE6">
+    <when-type-is
+      class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
+    <any>
+      <when-property-is name="user.agent" value="ie6" />
+      <when-property-is name="user.agent" value="ie8" />
+    </any>
+  </replace-with>
 
-	<!-- Mozilla-specific implementation -->
-	<replace-with
-		class="com.google.gwt.user.client.ui.impl.RichTextAreaImplMozilla">
-		<when-type-is
-			class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
-		<any>
-			<when-property-is name="user.agent" value="gecko1_8" />
-			<when-property-is name="user.agent" value="gecko" />
-		</any>
-	</replace-with>
+  <!-- Mozilla-specific implementation -->
+  <replace-with
+    class="com.google.gwt.user.client.ui.impl.RichTextAreaImplMozilla">
+    <when-type-is
+      class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
+    <any>
+      <when-property-is name="user.agent" value="gecko1_8" />
+      <when-property-is name="user.agent" value="gecko" />
+    </any>
+  </replace-with>
 
-	<!-- Safari-specific implementation -->
-	<replace-with
-		class="com.google.gwt.user.client.ui.impl.RichTextAreaImplSafari">
-		<when-type-is
-			class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
-		<any>
-			<when-property-is name="user.agent" value="safari" />
-		</any>
-	</replace-with>
+  <!-- Safari-specific implementation -->
+  <replace-with
+    class="com.google.gwt.user.client.ui.impl.RichTextAreaImplSafari">
+    <when-type-is
+      class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
+    <any>
+      <when-property-is name="user.agent" value="safari" />
+    </any>
+  </replace-with>
 
-	<!-- Opera-specific implementation -->
-	<replace-with
-		class="com.google.gwt.user.client.ui.impl.RichTextAreaImplOpera">
-		<when-type-is
-			class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
-		<any>
-			<when-property-is name="user.agent" value="opera" />
-		</any>
-	</replace-with>
+  <!-- Opera-specific implementation -->
+  <replace-with
+    class="com.google.gwt.user.client.ui.impl.RichTextAreaImplOpera">
+    <when-type-is
+      class="com.google.gwt.user.client.ui.impl.RichTextAreaImpl" />
+    <any>
+      <when-property-is name="user.agent" value="opera" />
+    </any>
+  </replace-with>
 </module>

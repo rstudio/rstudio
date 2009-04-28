@@ -14,6 +14,9 @@
 
   <replace-with class="com.google.gwt.user.client.ui.impl.HyperlinkImplIE">
     <when-type-is class="com.google.gwt.user.client.ui.impl.HyperlinkImpl"/>
-    <when-property-is name="user.agent" value="ie6"/>
+    <any>
+	    <when-property-is name="user.agent" value="ie6"/>
+	    <when-property-is name="user.agent" value="ie8"/>
+    </any>
   </replace-with>
 </module>

@@ -27,7 +27,7 @@
 	<inherits name="com.google.gwt.core.Core" />
 	<inherits name="com.google.gwt.user.UserAgent" />
 
-	<!-- IE needs a different implementation -->
+	<!-- IE6 needs a different implementation. IE8 does not. -->
 	<replace-with
 		class="com.google.gwt.user.client.ui.impl.ClippedImageImplIE6">
 		<when-type-is

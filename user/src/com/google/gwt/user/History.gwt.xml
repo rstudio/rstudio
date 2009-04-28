@@ -20,11 +20,6 @@
 	<inherits name="com.google.gwt.core.Core"/>
 	<inherits name="com.google.gwt.user.UserAgent"/>
 
-	<!-- Fall through to this rule for all other browsers. -->
-	<replace-with class="com.google.gwt.user.client.impl.HistoryImplStandard">
-		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
-	</replace-with>
-
   <!-- Mozilla has a slightly different history implementation than the     -->
   <!-- standard case.                                                       -->
   <replace-with class="com.google.gwt.user.client.impl.HistoryImplMozilla">
@@ -35,15 +30,16 @@
 		</any>
   </replace-with>
 
-  <!-- IE has a completely different history implementation. -->
-	<replace-with class="com.google.gwt.user.client.impl.HistoryImplIE6">
-		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
-		<when-property-is name="user.agent" value="ie6"/>
-	</replace-with>
-
-	<!-- Safari has yet another history implementation. -->
+	<!-- Safari has yet another slightly different implementation. -->
 	<replace-with class="com.google.gwt.user.client.impl.HistoryImplSafari">
 		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
 		<when-property-is name="user.agent" value="safari"/>
+	</replace-with>
+
+  <!-- IE6 has a completely different history implementation. IE8 used the -->
+  <!-- standard implementation. -->
+	<replace-with class="com.google.gwt.user.client.impl.HistoryImplIE6">
+		<when-type-is class="com.google.gwt.user.client.impl.HistoryImpl"/>
+		<when-property-is name="user.agent" value="ie6"/>
 	</replace-with>
 </module>

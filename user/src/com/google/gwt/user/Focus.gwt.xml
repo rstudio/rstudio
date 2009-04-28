@@ -17,29 +17,29 @@
 <!-- This module is typically inherited via com.google.gwt.user.User        -->
 <!--                                                                        -->
 <module>
-	<inherits name="com.google.gwt.core.Core"/>
-	<inherits name="com.google.gwt.user.UserAgent"/>
+  <inherits name="com.google.gwt.core.Core"/>
+  <inherits name="com.google.gwt.user.UserAgent"/>
 
-	<!-- old Mozilla needs a different implementation -->
-	<replace-with class="com.google.gwt.user.client.ui.impl.FocusImplOld">
-		<when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
-		<any>
-		    <when-property-is name="user.agent" value="gecko"/>
- 	    </any>
-	</replace-with>
+  <!-- old Mozilla needs a different implementation -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplOld">
+    <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
+    <any>
+      <when-property-is name="user.agent" value="gecko"/>
+    </any>
+  </replace-with>
 
-	<!--  Safari needs a different hidden input -->	
-	<replace-with class="com.google.gwt.user.client.ui.impl.FocusImplSafari">
-		<when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
-		<when-property-is name="user.agent" value="safari"/>
-	</replace-with>
+  <!--  Safari needs a different hidden input -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplSafari">
+    <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
+    <when-property-is name="user.agent" value="safari"/>
+  </replace-with>
 
-	<!-- IE's implementation traps exceptions on invalid setFocus() -->
-	<replace-with class="com.google.gwt.user.client.ui.impl.FocusImplIE6">
-		<when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
-		<any>
-		    <when-property-is name="user.agent" value="ie6"/>
- 	    </any>
-	</replace-with>
-
+  <!-- IE's implementation traps exceptions on invalid setFocus() -->
+  <replace-with class="com.google.gwt.user.client.ui.impl.FocusImplIE6">
+    <when-type-is class="com.google.gwt.user.client.ui.impl.FocusImpl"/>
+    <any>
+      <when-property-is name="user.agent" value="ie6"/>
+      <when-property-is name="user.agent" value="ie8"/>
+    </any>
+  </replace-with>
 </module>

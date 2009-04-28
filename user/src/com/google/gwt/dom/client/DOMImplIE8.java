@@ -1,5 +1,5 @@
 /*
- * Copyright 2008 Google Inc.
+ * Copyright 2009 Google Inc.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -13,11 +13,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-package com.google.gwt.user.client.impl;
+package com.google.gwt.dom.client;
 
-/**
- * Internet Explorer 6 implementation of
- * {@link com.google.gwt.user.client.impl.DOMImpl}.
- */
-class DOMImplIE6 extends DOMImplTrident {
+class DOMImplIE8 extends DOMImplTrident {
 }

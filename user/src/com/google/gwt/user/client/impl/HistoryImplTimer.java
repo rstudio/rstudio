@@ -16,9 +16,10 @@
 package com.google.gwt.user.client.impl;
 
 /**
- * Standard history implementation, currently used only on Opera browsers.
+ * Base class for history implementations that use a timer rather than the
+ * onhashchange event.
  */
-class HistoryImplStandard extends HistoryImpl {
+class HistoryImplTimer extends HistoryImpl {
 
   @Override
   public native boolean init() /*-{
@@ -49,17 +50,4 @@ class HistoryImplStandard extends HistoryImpl {
     $wnd.__checkHistory();
     return true;
   }-*/;
-
-  /**
-   * The standard updateHash implementation assigns to location.hash() with an
-   * encoded history token.
-   */
-  protected native void nativeUpdate(String historyToken) /*-{
-    $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(historyToken);
-  }-*/;
-
-  @Override
-  protected void nativeUpdateOnEvent(String historyToken) {
-    // Do nothing, the hash is already updated.
-  }
 }

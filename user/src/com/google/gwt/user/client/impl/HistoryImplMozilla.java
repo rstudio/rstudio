@@ -18,8 +18,8 @@ package com.google.gwt.user.client.impl;
 /**
  * History implementation for Mozilla-based browsers.
  */
-class HistoryImplMozilla extends HistoryImplStandard {
-  
+class HistoryImplMozilla extends HistoryImplTimer {
+
   @Override
   protected String decodeFragment(String encodedFragment) {
     // Mozilla browsers pre-decode the result of location.hash, so there's no

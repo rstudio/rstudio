@@ -20,11 +20,6 @@
   <inherits name="com.google.gwt.core.Core"/>
   <inherits name="com.google.gwt.user.UserAgent"/>
 
-  <!-- Fall through to this rule is the browser isn't IE or Mozilla -->
-  <replace-with class="com.google.gwt.user.client.ui.impl.PopupImpl">
-    <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
-  </replace-with>
-
   <!-- Mozilla needs a different implementation due to issue #410 -->
   <replace-with class="com.google.gwt.user.client.ui.impl.PopupImplMozilla">
     <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
@@ -33,8 +28,9 @@
       <when-property-is name="user.agent" value="gecko1_8"/>
     </any>
   </replace-with>
-  
-  <!-- IE has a completely different popup implementation -->
+
+  <!-- IE6 has a completely different popup implementation. It is no longer -->
+  <!-- necessary on IE8. -->
   <replace-with class="com.google.gwt.user.client.ui.impl.PopupImplIE6">
     <when-type-is class="com.google.gwt.user.client.ui.impl.PopupImpl"/>
     <when-property-is name="user.agent" value="ie6"/>
