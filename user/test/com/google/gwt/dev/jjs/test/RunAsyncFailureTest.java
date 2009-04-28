@@ -84,6 +84,7 @@ public class RunAsyncFailureTest extends GWTTestCase {
   }
 
   private native void log(String message) /*-{
-    $wnd.console.log(message);
+    // Enable this for testing on Safari/WebKit browsers
+    // $wnd.console.log(message);
   }-*/;
 }
