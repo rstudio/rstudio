@@ -248,62 +248,23 @@ public class Link {
   }
 
   /**
-   * <p>
-   * Computes and logs the "maximum total script size" for this permutation. The
-   * total script size for one sequence of split points reached is the sum of
-   * the scripts that are downloaded for that sequence. The maximum total script
-   * size is the maximum such size for all possible sequences of split points.
-   * </p>
+   * Logs the total script size for this permutation, as calculated by
+   * {@link CodeSplitter#totalScriptSize(int[])}.
    */
   private static void logScriptSize(TreeLogger logger, int permId,
       StandardCompilationResult compilation) {
-    /*
-     * The total script size is fully determined by the first split point that
-     * is reached; the order that the remaining are reached doesn't matter. To
-     * find the maximum, divide the sum into two parts: first add the initial
-     * and exclusive fragments, and then calculate the adjustment that should be
-     * applied depending on which split point comes first. Choose among these
-     * adjustments the one that is largest.
-     */
-
     String[] javaScript = compilation.getJavaScript();
-    int numSplitPoints = CodeSplitter.numSplitPointsForFragments(javaScript.length);
-    int maxTotalSize;
 
-    if (numSplitPoints == 0) {
-      maxTotalSize = javaScript[0].length();
-    } else {
-      // Add up the initial and exclusive fragments
-      maxTotalSize = javaScript[0].length();
-      for (int sp = 1; sp <= numSplitPoints; sp++) {
-        int excl = CodeSplitter.getExclusiveFragmentNumber(sp, numSplitPoints);
-        maxTotalSize += javaScript[excl].length();
-      }
-
-      // Find the largest adjustment for any split point
-      boolean first = true;
-      int adjustment = 0;
-
-      for (int sp = 1; sp <= numSplitPoints; sp++) {
-        int excl = CodeSplitter.getExclusiveFragmentNumber(sp, numSplitPoints);
-        int base = CodeSplitter.getBaseFragmentNumber(sp, numSplitPoints);
-        int leftovers = CodeSplitter.getLeftoversFragmentNumber(sp,
-            numSplitPoints);
-        int thisAdjustment = javaScript[base].length()
-            + javaScript[leftovers].length() - javaScript[excl].length();
-        if (first || (thisAdjustment > adjustment)) {
-          adjustment = thisAdjustment;
-        }
-        first = false;
-      }
-
-      maxTotalSize += adjustment;
+    int[] jsLengths = new int[javaScript.length];
+    for (int i = 0; i < javaScript.length; i++) {
+      jsLengths[i] = javaScript[i].length();
     }
+
+    int totalSize = CodeSplitter.totalScriptSize(jsLengths);
 
     logger.log(TreeLogger.TRACE, "Permutation " + permId + " (strong name "
         + compilation.getStrongName() + ") has an initial download size of "
-        + javaScript[0].length() + " and max total script size of "
-        + maxTotalSize);
+        + javaScript[0].length() + " and total script size of " + totalSize);
   }
 
   private final LinkOptionsImpl options;

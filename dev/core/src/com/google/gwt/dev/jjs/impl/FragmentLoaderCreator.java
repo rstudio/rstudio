@@ -44,6 +44,7 @@ public class FragmentLoaderCreator {
   public static final String ASYNC_FRAGMENT_LOADER = "com.google.gwt.core.client.AsyncFragmentLoader";
   public static final String ASYNC_LOADER_CLASS_PREFIX = "AsyncLoader";
   public static final String ASYNC_LOADER_PACKAGE = "com.google.gwt.lang.asyncloaders";
+  public static final String LOADER_METHOD_RUN_ASYNC = "runAsync";
   public static final String RUN_ASYNC_CALLBACK = "com.google.gwt.core.client.RunAsyncCallback";
   private static final String GWT_CLASS = FindDeferredBindingSitesVisitor.MAGIC_CLASS;
   private static final String PROP_RUN_ASYNC_NEVER_RUNS = "gwt.jjs.runAsyncNeverRuns";
@@ -160,7 +161,8 @@ public class FragmentLoaderCreator {
    * <code>GWT.runAsync</code> are replaced by calls to this method.
    */
   private void generateRunAsyncMethod(PrintWriter srcWriter) {
-    srcWriter.println("public static void runAsync(RunAsyncCallback callback) {");
+    srcWriter.println("public static void " + LOADER_METHOD_RUN_ASYNC
+        + "(RunAsyncCallback callback) {");
     srcWriter.println(getCallbackListSimpleName() + " newCallback = new "
         + getCallbackListSimpleName() + "();");
     srcWriter.println("newCallback.callback = callback;");

@@ -16,13 +16,17 @@
 package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
+import com.google.gwt.dev.jjs.InternalCompilerException;
+import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.JClassLiteral;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
+import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNode;
+import com.google.gwt.dev.jjs.ast.JPrimitiveType;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.jjs.ast.JStringLiteral;
@@ -40,15 +44,18 @@ import com.google.gwt.dev.js.ast.JsStatement;
 import com.google.gwt.dev.js.ast.JsVars;
 import com.google.gwt.dev.js.ast.JsVars.JsVar;
 import com.google.gwt.dev.util.PerfLogger;
+import com.google.gwt.dev.util.collect.HashMap;
+import com.google.gwt.dev.util.collect.HashSet;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -64,28 +71,30 @@ import java.util.concurrent.ArrayBlockingQueue;
  * The precise way the program is fragmented is an implementation detail that is
  * subject to change. Whenever the fragment strategy changes,
  * <code>AsyncFragmentLoader</code> must be updated in tandem. That said, the
- * current fragmentation strategy is to create an initial fragment and then
- * three more fragments for each split point. For each split point, there is:
+ * current fragmentation strategy is to create an initial fragment, a leftovers
+ * fragment, and one fragment per split point. Additionally, the splitter
+ * computes an initial load sequence. All runAsync calls in the initial load
+ * sequence are reached before any call not in the sequence. Further, any call
+ * in the sequence is reached before any call later in the sequence.
  * </p>
  * 
- * <ul>
- * <li>a secondary base fragment, which is downloaded if this split point is the
- * first one reached. It contains enough code to continue running as soon as it
- * downloads.
- * <li>an exclusively live fragment, which is downloaded if this split point is
- * reached but is not the first one. It includes only that code that is
- * exclusively needed by this split point.
- * <li>a leftovers fragment, which includes all code that is in none of: the
- * initial download, any exclusive fragment, or the secondary base fragment for
- * this split point.
- * </ul>
+ * <p>
+ * The fragment for a split point contains different things depending on whether
+ * it is in the initial load sequence or not. If it's in the initial load
+ * sequence, then the fragment includes the code newly live once that split
+ * point is crossed, that wasn't already live for the set of split points
+ * earlier in the sequence. For a split point not in the initial load sequence,
+ * the fragment contains only code exclusive to that split point, that is, code
+ * that cannot be reached except via that split point. All other code goes into
+ * the leftovers fragment.
+ * </p>
  */
 public class CodeSplitter {
   /**
    * A statement logger that immediately prints out everything live that it
    * sees.
    */
-  public class EchoStatementLogger implements StatementLogger {
+  private class EchoStatementLogger implements StatementLogger {
     public void logStatement(JsStatement stat, boolean isIncluded) {
       if (isIncluded) {
         if (stat instanceof JsExprStmt) {
@@ -119,10 +128,13 @@ public class CodeSplitter {
   }
 
   /**
-   * A map from program atoms to the fragment they should be placed in. An entry
-   * of 0 means it did not go into any fragment in particular.
+   * A map from program atoms to the split point, if any, that they are
+   * exclusive to. Atoms not exclusive to any split point are either mapped to 0
+   * or left out of the map entirely. Note that the map is incomplete; any entry
+   * not included has not been proven to be exclusive. Also, note that the
+   * initial load sequence is assumed to already be loaded.
    */
-  private static class FragmentMap {
+  private static class ExclusivityMap {
     public Map<JField, Integer> fields = new HashMap<JField, Integer>();
     public Map<JMethod, Integer> methods = new HashMap<JMethod, Integer>();
     public Map<String, Integer> strings = new HashMap<String, Integer>();
@@ -130,16 +142,15 @@ public class CodeSplitter {
   }
 
   /**
-   * A liveness predicate that is based on a fragment map. See
-   * {@link #mapFragments()}. Note that all non-zero fragments are assumed to
-   * load after fragment 0, and so everything in fragment 0 is always live.
+   * A liveness predicate that is based on an exclusivity map.
    */
-  private static class FragmentMapLivenessPredicate implements
+  private static class ExclusivityMapLivenessPredicate implements
       LivenessPredicate {
     private final int fragment;
-    private final FragmentMap fragmentMap;
+    private final ExclusivityMap fragmentMap;
 
-    public FragmentMapLivenessPredicate(FragmentMap fragmentMap, int fragment) {
+    public ExclusivityMapLivenessPredicate(ExclusivityMap fragmentMap,
+        int fragment) {
       this.fragmentMap = fragmentMap;
       this.fragment = fragment;
     }
@@ -175,46 +186,11 @@ public class CodeSplitter {
     }
   }
 
-  /**
-   * A liveness predicate that checks two separate underlying predicates.
-   */
-  private static class UnionLivenessPredicate implements LivenessPredicate {
-    private final LivenessPredicate pred1;
-    private final LivenessPredicate pred2;
-
-    public UnionLivenessPredicate(LivenessPredicate pred1,
-        LivenessPredicate pred2) {
-      this.pred1 = pred1;
-      this.pred2 = pred2;
-    }
-
-    public boolean isLive(JField field) {
-      return pred1.isLive(field) || pred2.isLive(field);
-    }
-
-    public boolean isLive(JMethod method) {
-      return pred1.isLive(method) || pred2.isLive(method);
-    }
-
-    public boolean isLive(JReferenceType type) {
-      return pred1.isLive(type) || pred2.isLive(type);
-    }
-
-    public boolean isLive(String literal) {
-      return pred1.isLive(literal) || pred2.isLive(literal);
-    }
-
-    public boolean miscellaneousStatementsAreLive() {
-      return pred1.miscellaneousStatementsAreLive()
-          || pred2.miscellaneousStatementsAreLive();
-    }
-  }
+  private static final Pattern LOADER_CLASS_PATTERN = Pattern.compile(FragmentLoaderCreator.ASYNC_LOADER_PACKAGE
+      + "." + FragmentLoaderCreator.ASYNC_LOADER_CLASS_PREFIX + "([0-9]+)");
 
   /**
    * A Java property that causes the fragment map to be logged.
-   * 
-   * TODO(spoon) save the logging data to an auxiliary compiler output and, if
-   * the logging is not too slow, always enable it.
    */
   private static String PROP_LOG_FRAGMENT_MAP = "gwt.jjs.logFragmentMap";
 
@@ -229,17 +205,14 @@ public class CodeSplitter {
   }
 
   public static void exec(TreeLogger logger, JProgram jprogram,
-      JsProgram jsprogram, JavaToJavaScriptMap map) {
+      JsProgram jsprogram, JavaToJavaScriptMap map,
+      LinkedHashSet<Integer> initialLoadSequence) {
     if (jprogram.entryMethods.size() == 1) {
       // Don't do anything if there is no call to runAsync
       return;
     }
 
-    new CodeSplitter(logger, jprogram, jsprogram, map).execImpl();
-  }
-
-  public static int getBaseFragmentNumber(int sp, int numSplitPoints) {
-    return numSplitPoints + 2 * sp - 1;
+    new CodeSplitter(logger, jprogram, jsprogram, map, initialLoadSequence).execImpl();
   }
 
   public static int getExclusiveFragmentNumber(int splitPoint,
@@ -247,17 +220,95 @@ public class CodeSplitter {
     return splitPoint;
   }
 
-  public static int getLeftoversFragmentNumber(int splitPoint,
-      int numSplitPoints) {
-    return numSplitPoints + 2 * splitPoint;
+  public static int getLeftoversFragmentNumber(int numSplitPoints) {
+    return numSplitPoints + 1;
   }
 
   /**
    * Infer the number of split points for a given number of code fragments.
    */
   public static int numSplitPointsForFragments(int codeFragments) {
-    assert (((codeFragments - 1) % 3) == 0);
-    return (codeFragments - 1) / 3;
+    assert (codeFragments != 2);
+
+    if (codeFragments == 1) {
+      return 0;
+    }
+
+    return codeFragments - 2;
+  }
+
+  /**
+   * Choose an initial load sequence of split points for the specified program.
+   * Do so by identifying split points whose code always load first, before any
+   * other split points. As a side effect, modifies
+   * {@link com.google.gwt.core.client.AsyncFragmentLoader#initialLoadSequence}
+   * in the program being compiled.
+   */
+  public static LinkedHashSet<Integer> pickInitialLoadSequence(
+      TreeLogger logger, JProgram program) {
+    LinkedHashSet<Integer> initialLoadSequence = new LinkedHashSet<Integer>();
+    int numSplitPoints = program.entryMethods.size() - 1;
+
+    if (numSplitPoints != 0) {
+      Map<Integer, JMethod> splitPointToMethod = findRunAsyncMethods(program);
+      assert (splitPointToMethod.size() == numSplitPoints);
+
+      ControlFlowAnalyzer cfa = computeInitiallyLive(program);
+
+      while (true) {
+        Set<Integer> nextSplitPoints = splitPointsReachable(cfa,
+            splitPointToMethod, numSplitPoints);
+        nextSplitPoints.removeAll(initialLoadSequence);
+
+        if (nextSplitPoints.size() != 1) {
+          break;
+        }
+
+        int nextSplitPoint = nextSplitPoints.iterator().next();
+        initialLoadSequence.add(nextSplitPoint);
+        CodeSplitter.traverseEntry(program, cfa, nextSplitPoint);
+      }
+
+      logInitialLoadSequence(logger, initialLoadSequence);
+      installInitialLoadSequenceField(program, initialLoadSequence);
+    }
+
+    return initialLoadSequence;
+  }
+
+  /**
+   * <p>
+   * Computes the "maximum total script size" for one permutation. The total
+   * script size for one sequence of split points reached is the sum of the
+   * scripts that are downloaded for that sequence. The maximum total script
+   * size is the maximum such size for all possible sequences of split points.
+   * </p>
+   * 
+   * @param jsLengths The lengths of the fragments for the compilation of one
+   *          permutation
+   */
+  public static int totalScriptSize(int[] jsLengths) {
+    /*
+     * The total script size is currently simple: it's the sum of all the
+     * individual script files.
+     */
+
+    int maxTotalSize;
+    int numSplitPoints = numSplitPointsForFragments(jsLengths.length);
+    if (numSplitPoints == 0) {
+      maxTotalSize = jsLengths[0];
+    } else {
+      // Add up the initial and exclusive fragments
+      maxTotalSize = jsLengths[0];
+      for (int sp = 1; sp <= numSplitPoints; sp++) {
+        int excl = getExclusiveFragmentNumber(sp, numSplitPoints);
+        maxTotalSize += jsLengths[excl];
+      }
+
+      // Add the leftovers
+      maxTotalSize += jsLengths[getLeftoversFragmentNumber(numSplitPoints)];
+    }
+    return maxTotalSize;
   }
 
   private static Map<JField, JClassLiteral> buildFieldToClassLiteralMap(
@@ -273,6 +324,33 @@ public class CodeSplitter {
     return map;
   }
 
+  /**
+   * Maps each split point number to its corresponding generated
+   * <code>runAsync</code> method. If that method has been discarded, then map
+   * the split point number to <code>null</code>.
+   */
+  private static Map<Integer, JMethod> findRunAsyncMethods(JProgram program)
+      throws NumberFormatException {
+    Map<Integer, JMethod> splitPointToLoadMethod = new HashMap<Integer, JMethod>();
+    // These methods aren't indexed, so scan the whole program
+
+    for (JReferenceType type : program.getDeclaredTypes()) {
+      Matcher matcher = LOADER_CLASS_PATTERN.matcher(type.getName());
+      if (matcher.matches()) {
+        int sp = Integer.parseInt(matcher.group(1));
+        JMethod loadMethod = null;
+        for (JMethod meth : type.methods) {
+          if (meth.getName().equals(
+              FragmentLoaderCreator.LOADER_METHOD_RUN_ASYNC)) {
+            loadMethod = meth;
+          }
+        }
+        splitPointToLoadMethod.put(sp, loadMethod);
+      }
+    }
+    return splitPointToLoadMethod;
+  }
+
   private static String fullNameString(JField field) {
     return field.getEnclosingType().getName() + "." + field.getName();
   }
@@ -285,6 +363,65 @@ public class CodeSplitter {
   private static <T> int getOrZero(Map<T, Integer> map, T key) {
     Integer value = map.get(key);
     return (value == null) ? 0 : value;
+  }
+
+  private static void installInitialLoadSequenceField(JProgram program,
+      LinkedHashSet<Integer> initialLoadSequence) {
+    JField initLoadSeqField = program.getIndexedField("AsyncFragmentLoader.initialLoadSequence");
+    SourceInfo info = program.createSourceInfoSynthetic(ReplaceRunAsyncs.class,
+        "array with initial load sequence");
+    List<JExpression> intExprs = new ArrayList<JExpression>();
+    for (int sp : initialLoadSequence) {
+      intExprs.add(program.getLiteralInt(sp));
+    }
+    /*
+     * Note: the following field is known to have a manually installed
+     * initializer, of new int[0].
+     */
+    initLoadSeqField.getDeclarationStatement().initializer = JNewArray.createInitializers(
+        program, info, program.getTypeArray(JPrimitiveType.INT, 1), intExprs);
+  }
+
+  private static void logInitialLoadSequence(TreeLogger logger,
+      LinkedHashSet<Integer> initialLoadSequence) {
+    StringBuffer message = new StringBuffer();
+    message.append("Initial load sequence of split points: ");
+    if (initialLoadSequence.isEmpty()) {
+      message.append("(none)");
+    } else {
+      boolean first = true;
+      for (int sp : initialLoadSequence) {
+        if (first) {
+          first = false;
+        } else {
+          message.append(", ");
+        }
+        message.append(sp);
+      }
+    }
+
+    logger.log(TreeLogger.TRACE, message.toString());
+  }
+
+  /**
+   * Find all split points reachable in the specified ControlFlowAnalyzer.
+   * 
+   * @param cfa the control-flow analyzer to search
+   * @param splitPointToMethod a map from split points to methods, computed with
+   *          {@link #findRunAsyncMethods(JProgram)}.
+   * @param numSplitPoints the number of split points in the program
+   */
+  private static Set<Integer> splitPointsReachable(ControlFlowAnalyzer cfa,
+      Map<Integer, JMethod> splitPointToMethod, int numSplitPoints) {
+    Set<Integer> nextSplitPoints = new HashSet<Integer>();
+
+    for (int sp = 1; sp <= numSplitPoints; sp++) {
+      if (cfa.getLiveFieldsAndMethods().contains(splitPointToMethod.get(sp))) {
+        nextSplitPoints.add(sp);
+      }
+    }
+
+    return nextSplitPoints;
   }
 
   /**
@@ -331,6 +468,7 @@ public class CodeSplitter {
 
   private final Map<JField, JClassLiteral> fieldToLiteralOfClass;
   private final FragmentExtractor fragmentExtractor;
+  private final LinkedHashSet<Integer> initialLoadSequence;
 
   /**
    * Code that is initially live when the program first downloads.
@@ -338,6 +476,12 @@ public class CodeSplitter {
   private final ControlFlowAnalyzer initiallyLive;
   private JProgram jprogram;
   private JsProgram jsprogram;
+
+  /**
+   * Computed during {@link #execImpl()}, so that intermediate steps of it can
+   * be used as they are created.
+   */
+  private ControlFlowAnalyzer liveAfterInitialSequence;
   private final TreeLogger logger;
   private final boolean logging;
   private JavaToJavaScriptMap map;
@@ -345,12 +489,14 @@ public class CodeSplitter {
   private final int numEntries;
 
   private CodeSplitter(TreeLogger logger, JProgram jprogram,
-      JsProgram jsprogram, JavaToJavaScriptMap map) {
+      JsProgram jsprogram, JavaToJavaScriptMap map,
+      LinkedHashSet<Integer> initialLoadSequence) {
     this.logger = logger.branch(TreeLogger.TRACE,
         "Splitting JavaScript for incremental download");
     this.jprogram = jprogram;
     this.jsprogram = jsprogram;
     this.map = map;
+    this.initialLoadSequence = initialLoadSequence;
 
     numEntries = jprogram.entryMethods.size();
     logging = Boolean.getBoolean(PROP_LOG_FRAGMENT_MAP);
@@ -363,18 +509,21 @@ public class CodeSplitter {
   }
 
   /**
-   * Create a new fragment and add it to the list.
+   * Create a new fragment and add it to the table of fragments.
    * 
+   * @param splitPoint The split point to associate this code with
    * @param alreadyLoaded The code that should be assumed to have already been
    *          loaded
-   * @param liveNow The code that needs to be live once this fragment loads
-   * @param statsToAppend Additional statements to append to the end of the new
+   * @param liveNow The code that is assumed live once this fragment loads;
+   *          anything in here but not in <code>alreadyLoaded</code> will be
+   *          included in the created fragment
+   * @param stmtsToAppend Additional statements to append to the end of the new
    *          fragment
    * @param fragmentStats The list of fragments to append to
    */
-  private void addFragment(LivenessPredicate alreadyLoaded,
-      LivenessPredicate liveNow, List<JsStatement> statsToAppend,
-      List<List<JsStatement>> fragmentStats) {
+  private void addFragment(int splitPoint, LivenessPredicate alreadyLoaded,
+      LivenessPredicate liveNow, List<JsStatement> stmtsToAppend,
+      Map<Integer, List<JsStatement>> fragmentStats) {
     if (logging) {
       System.out.println();
       System.out.println("==== Fragment " + fragmentStats.size() + " ====");
@@ -382,20 +531,26 @@ public class CodeSplitter {
     }
     List<JsStatement> stats = fragmentExtractor.extractStatements(liveNow,
         alreadyLoaded);
-    stats.addAll(statsToAppend);
-    fragmentStats.add(stats);
+    stats.addAll(stmtsToAppend);
+    fragmentStats.put(splitPoint, stats);
   }
 
   /**
-   * For each split point other than the initial one (0), compute a CFA that
-   * traces every other split point.
+   * For each split point other than those in the initial load sequence, compute
+   * a CFA that traces every other split point. For those that are in the
+   * initial load sequence, add a <code>null</code> to the list.
    */
   private List<ControlFlowAnalyzer> computeAllButOneCfas() {
     List<ControlFlowAnalyzer> allButOnes = new ArrayList<ControlFlowAnalyzer>(
         numEntries - 1);
 
     for (int entry = 1; entry < numEntries; entry++) {
-      ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(initiallyLive);
+      if (isInitial(entry)) {
+        allButOnes.add(null);
+        continue;
+      }
+      ControlFlowAnalyzer cfa = new ControlFlowAnalyzer(
+          liveAfterInitialSequence);
       traverseAllButEntry(cfa, entry);
       // Traverse leftoversFragmentHasLoaded, because it should not
       // go into any of the exclusive fragments.
@@ -418,13 +573,23 @@ public class CodeSplitter {
     return everything;
   }
 
+  /**
+   * Map each program atom as exclusive to some split point, whenever possible.
+   * Also fixes up load order problems that could result from splitting code
+   * based on this assumption.
+   */
+  private ExclusivityMap determineExclusivity() {
+    ExclusivityMap fragmentMap = new ExclusivityMap();
+
+    mapExclusiveAtoms(fragmentMap);
+    fixUpLoadOrderDependencies(fragmentMap);
+
+    return fragmentMap;
+  }
+
   private void execImpl() {
     PerfLogger.start("CodeSplitter");
-
-    FragmentMap fragmentMap = mapFragments();
-
-    List<List<JsStatement>> fragmentStats = new ArrayList<List<JsStatement>>(
-        3 * numEntries - 2);
+    Map<Integer, List<JsStatement>> fragmentStats = new HashMap<Integer, List<JsStatement>>();
 
     {
       /*
@@ -434,46 +599,59 @@ public class CodeSplitter {
       LivenessPredicate alreadyLoaded = new NothingAlivePredicate();
       LivenessPredicate liveNow = new CfaLivenessPredicate(initiallyLive);
       List<JsStatement> noStats = new ArrayList<JsStatement>();
-      addFragment(alreadyLoaded, liveNow, noStats, fragmentStats);
+      addFragment(0, alreadyLoaded, liveNow, noStats, fragmentStats);
     }
+
+    /*
+     * Compute the base fragments, for split points in the initial load
+     * sequence.
+     */
+    liveAfterInitialSequence = new ControlFlowAnalyzer(initiallyLive);
+    for (int sp : initialLoadSequence) {
+      LivenessPredicate alreadyLoaded = new CfaLivenessPredicate(
+          liveAfterInitialSequence);
+
+      ControlFlowAnalyzer liveAfterSp = new ControlFlowAnalyzer(
+          liveAfterInitialSequence);
+      traverseEntry(liveAfterSp, sp);
+      LivenessPredicate liveNow = new CfaLivenessPredicate(liveAfterSp);
+
+      List<JsStatement> statsToAppend = fragmentExtractor.createCallsToEntryMethods(sp);
+
+      addFragment(sp, alreadyLoaded, liveNow, statsToAppend, fragmentStats);
+
+      liveAfterInitialSequence = liveAfterSp;
+    }
+
+    ExclusivityMap fragmentMap = determineExclusivity();
 
     /*
      * Compute the exclusively live fragments. Each includes everything
      * exclusively live after entry point i.
      */
     for (int i = 1; i < numEntries; i++) {
-      LivenessPredicate alreadyLoaded = new FragmentMapLivenessPredicate(
+      if (isInitial(i)) {
+        continue;
+      }
+      LivenessPredicate alreadyLoaded = new ExclusivityMapLivenessPredicate(
           fragmentMap, 0);
-      LivenessPredicate liveNow = new FragmentMapLivenessPredicate(fragmentMap,
-          i);
+      LivenessPredicate liveNow = new ExclusivityMapLivenessPredicate(
+          fragmentMap, i);
       List<JsStatement> statsToAppend = fragmentExtractor.createCallsToEntryMethods(i);
-      addFragment(alreadyLoaded, liveNow, statsToAppend, fragmentStats);
+      addFragment(i, alreadyLoaded, liveNow, statsToAppend, fragmentStats);
     }
 
     /*
-     * Add secondary base fragments and their associated leftover fragments.
+     * Compute the leftovers fragment.
      */
-    for (int base = 1; base < numEntries; base++) {
-      ControlFlowAnalyzer baseCfa = new ControlFlowAnalyzer(initiallyLive);
-      traverseEntry(baseCfa, base);
-      LivenessPredicate baseLive = new CfaLivenessPredicate(baseCfa);
-
-      // secondary base
-      List<JsStatement> baseStatsToAppend = fragmentExtractor.createCallsToEntryMethods(base);
-      addFragment(new CfaLivenessPredicate(initiallyLive), baseLive,
-          baseStatsToAppend, fragmentStats);
-
-      // leftovers
-      LivenessPredicate globalLeftoversLive = new FragmentMapLivenessPredicate(
+    {
+      LivenessPredicate alreadyLoaded = new CfaLivenessPredicate(
+          liveAfterInitialSequence);
+      LivenessPredicate liveNow = new ExclusivityMapLivenessPredicate(
           fragmentMap, 0);
-      LivenessPredicate associatedExclusives = new FragmentMapLivenessPredicate(
-          fragmentMap, base);
-      // Be sure to add in anything in the exclusives for base that is
-      // not in its secondary base.
-      LivenessPredicate leftoversLive = new UnionLivenessPredicate(
-          globalLeftoversLive, associatedExclusives);
       List<JsStatement> statsToAppend = fragmentExtractor.createCallToLeftoversFragmentHasLoaded();
-      addFragment(baseLive, leftoversLive, statsToAppend, fragmentStats);
+      addFragment(numEntries, alreadyLoaded, liveNow, statsToAppend,
+          fragmentStats);
     }
 
     // now install the new statements in the program fragments
@@ -503,7 +681,7 @@ public class CodeSplitter {
    * happen, so it seems better to keep the compiler simpler.
    * </p>
    */
-  private void fixUpLoadOrderDependencies(FragmentMap fragmentMap) {
+  private void fixUpLoadOrderDependencies(ExclusivityMap fragmentMap) {
     fixUpLoadOrderDependenciesForMethods(fragmentMap);
     fixUpLoadOrderDependenciesForTypes(fragmentMap);
     fixUpLoadOrderDependenciesForClassLiterals(fragmentMap);
@@ -511,7 +689,7 @@ public class CodeSplitter {
   }
 
   private void fixUpLoadOrderDependenciesForClassLiterals(
-      FragmentMap fragmentMap) {
+      ExclusivityMap fragmentMap) {
     int numClassLitStrings = 0;
     int numFixups = 0;
     for (JField field : fragmentMap.fields.keySet()) {
@@ -535,7 +713,7 @@ public class CodeSplitter {
   }
 
   private void fixUpLoadOrderDependenciesForFieldsInitializedToStrings(
-      FragmentMap fragmentMap) {
+      ExclusivityMap fragmentMap) {
     int numFixups = 0;
     int numFieldStrings = 0;
 
@@ -559,7 +737,7 @@ public class CodeSplitter {
         + +numFieldStrings);
   }
 
-  private void fixUpLoadOrderDependenciesForMethods(FragmentMap fragmentMap) {
+  private void fixUpLoadOrderDependenciesForMethods(ExclusivityMap fragmentMap) {
     int numFixups = 0;
 
     for (JDeclaredType type : jprogram.getDeclaredTypes()) {
@@ -589,7 +767,7 @@ public class CodeSplitter {
             + jprogram.getDeclaredTypes().size());
   }
 
-  private void fixUpLoadOrderDependenciesForTypes(FragmentMap fragmentMap) {
+  private void fixUpLoadOrderDependenciesForTypes(ExclusivityMap fragmentMap) {
     int numFixups = 0;
     Queue<JReferenceType> typesToCheck = new ArrayBlockingQueue<JReferenceType>(
         jprogram.getDeclaredTypes().size());
@@ -614,12 +792,16 @@ public class CodeSplitter {
             + jprogram.getDeclaredTypes().size());
   }
 
+  private boolean isInitial(int entry) {
+    return initialLoadSequence.contains(entry);
+  }
+
   /**
-   * Map code to fragments. Do this by trying to find code atoms that are only
-   * needed by a single split point. Such code can be moved to the exclusively
-   * live fragment associated with that split point.
+   * Map atoms to exclusive fragments. Do this by trying to find code atoms that
+   * are only needed by a single split point. Such code can be moved to the
+   * exclusively live fragment associated with that split point.
    */
-  private void mapExclusiveAtoms(FragmentMap fragmentMap) {
+  private void mapExclusiveAtoms(ExclusivityMap fragmentMap) {
     List<ControlFlowAnalyzer> allButOnes = computeAllButOneCfas();
 
     ControlFlowAnalyzer everything = computeCompleteCfa();
@@ -638,6 +820,9 @@ public class CodeSplitter {
     allFields.addAll(everything.getFieldsWritten());
 
     for (int entry = 1; entry < numEntries; entry++) {
+      if (isInitial(entry)) {
+        continue;
+      }
       ControlFlowAnalyzer allButOne = allButOnes.get(entry - 1);
       Set<JNode> allLiveNodes = union(allButOne.getLiveFieldsAndMethods(),
           allButOne.getFieldsWritten());
@@ -649,21 +834,6 @@ public class CodeSplitter {
       updateMap(entry, fragmentMap.types, allButOne.getInstantiatedTypes(),
           everything.getInstantiatedTypes());
     }
-  }
-
-  /**
-   * Map each program atom to a fragment. Atoms are mapped to a non-zero
-   * fragment whenever they are known not to be needed whenever that fragment's
-   * split point has not been reached. Any atoms that cannot be so mapped are
-   * left in fragment zero.
-   */
-  private FragmentMap mapFragments() {
-    FragmentMap fragmentMap = new FragmentMap();
-
-    mapExclusiveAtoms(fragmentMap);
-    fixUpLoadOrderDependencies(fragmentMap);
-
-    return fragmentMap;
   }
 
   /**
