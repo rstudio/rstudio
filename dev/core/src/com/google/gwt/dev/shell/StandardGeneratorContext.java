@@ -148,6 +148,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       implements Generated {
 
     private PrintWriter pw;
+    private String strongHash; // cache so that refreshes work correctly
 
     public GeneratedUnitWithFile(File file, PrintWriter pw, String packageName) {
       super(file, packageName);
@@ -162,6 +163,7 @@ public class StandardGeneratorContext implements GeneratorContext {
     public void commit() {
       pw.close();
       pw = null;
+      strongHash = Util.computeStrongName(getSource().getBytes());
     }
 
     @Override
@@ -170,6 +172,15 @@ public class StandardGeneratorContext implements GeneratorContext {
         throw new IllegalStateException("source not committed");
       }
       return super.getSource();
+    }
+
+    /**
+     * The old source is not preserved across refreshes. We use a strongHash to
+     * avoid the memory overhead of storing the source.
+     */
+    @Override
+    public String getStrongHash() {
+      return strongHash;
     }
 
     @Override

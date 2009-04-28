@@ -294,7 +294,7 @@ public class CompilationState {
       CompilationUnit graveyardUnit = graveyardUnits.remove(typeName);
       if (graveyardUnit != null) {
         assert graveyardUnit.getState() == State.GRAVEYARD;
-        if (unit.getSource().equals(graveyardUnit.getSource())) {
+        if (unit.getStrongHash().equals(graveyardUnit.getStrongHash())) {
           usefulGraveyardUnits.put(typeName, graveyardUnit);
         } else {
           // The old unit is invalidated.
