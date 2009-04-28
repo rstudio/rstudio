@@ -35,7 +35,7 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
    * the code that should be run when the application starts up. The remaining
    * elements are loaded via
    * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)
-   * GWT.runAsync}. See {@link com.google.gwt.core.client.AsyncFragmentLoader
+   * GWT.runAsync}. See {@link com.google.gwt.core.client.impl.AsyncFragmentLoader
    * AsyncFragmentLoader} for details on the necessary linker support for
    * runAsync.
    */

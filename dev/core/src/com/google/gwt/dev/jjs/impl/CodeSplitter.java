@@ -64,7 +64,7 @@ import java.util.regex.Pattern;
  * anything called in a callback supplied to
  * {@link com.google.gwt.core.client.GWT#runAsync(com.google.gwt.core.client.RunAsyncCallback)
  * GWT.runAsync()}. The remaining code should be downloadable via
- * {@link com.google.gwt.core.client.AsyncFragmentLoader#inject(int)}.
+ * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#inject(int)}.
  * </p>
  * 
  * <p>
@@ -241,7 +241,7 @@ public class CodeSplitter {
    * Choose an initial load sequence of split points for the specified program.
    * Do so by identifying split points whose code always load first, before any
    * other split points. As a side effect, modifies
-   * {@link com.google.gwt.core.client.AsyncFragmentLoader#initialLoadSequence}
+   * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#initialLoadSequence}
    * in the program being compiled.
    */
   public static LinkedHashSet<Integer> pickInitialLoadSequence(

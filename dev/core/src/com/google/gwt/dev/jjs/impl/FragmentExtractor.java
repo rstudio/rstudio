@@ -204,7 +204,7 @@ public class FragmentExtractor {
 
   /**
    * Create a call to
-   * {@link com.google.gwt.lang.AsyncFragmentLoader#leftoversFragmentHasLoaded()}.
+   * {@link com.google.gwt.core.client.impl.AsyncFragmentLoader#leftoversFragmentHasLoaded()}.
    */
   public List<JsStatement> createCallToLeftoversFragmentHasLoaded() {
     JMethod loadedMethod = jprogram.getIndexedMethod("AsyncFragmentLoader.leftoversFragmentHasLoaded");

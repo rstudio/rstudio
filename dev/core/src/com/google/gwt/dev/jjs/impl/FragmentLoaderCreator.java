@@ -41,7 +41,7 @@ import java.util.List;
  * runAsync and how it works.
  */
 public class FragmentLoaderCreator {
-  public static final String ASYNC_FRAGMENT_LOADER = "com.google.gwt.core.client.AsyncFragmentLoader";
+  public static final String ASYNC_FRAGMENT_LOADER = "com.google.gwt.core.client.impl.AsyncFragmentLoader";
   public static final String ASYNC_LOADER_CLASS_PREFIX = "AsyncLoader";
   public static final String ASYNC_LOADER_PACKAGE = "com.google.gwt.lang.asyncloaders";
   public static final String LOADER_METHOD_RUN_ASYNC = "runAsync";
