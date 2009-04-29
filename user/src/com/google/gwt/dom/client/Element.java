@@ -28,7 +28,7 @@ public class Element extends Node {
    */
   public static Element as(JavaScriptObject o) {
     assert is(o);
-    return (Element)o;
+    return (Element) o;
   }
 
   /**
@@ -46,7 +46,7 @@ public class Element extends Node {
    */
   public static boolean is(JavaScriptObject o) {
     if (Node.is(o)) {
-      return is((Node)o);
+      return is((Node) o);
     }
     return false;
   }
@@ -516,15 +516,4 @@ public class Element extends Node {
      // on some browsers.
      this.title = title || '';
    }-*/;
-
-  /**
-   * Determines whether an element has an attribute with a given name.
-   * 
-   * @param name the name of the attribute
-   * @return whether this element has the specified attribute
-   */
-  public final boolean hasAttribute(String name) {
-    String value = this.getAttribute(name);
-    return value != null && value.length() > 0;
-  }
 }

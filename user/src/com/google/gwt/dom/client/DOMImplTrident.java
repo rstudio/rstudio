@@ -101,6 +101,7 @@ abstract class DOMImplTrident extends DOMImpl {
     return doc.createElement(html);
   }-*/;
 
+  @Override
   public native void dispatchEvent(Element target, NativeEvent evt) /*-{
     target.fireEvent("on" + evt.type, evt);
   }-*/;
@@ -208,6 +209,10 @@ abstract class DOMImplTrident extends DOMImpl {
     elem.innerText = text || '';
   }-*/;
 
+  protected native boolean isRTL(Element elem) /*-{
+    return elem.currentStyle.direction == 'rtl';
+  }-*/;
+
   private native int getBoundingClientRectLeft(Element elem) /*-{
     // getBoundingClientRect() throws a JS exception if the elem is not attached
     // to the document, so we wrap it in a try/catch block
@@ -240,9 +245,5 @@ abstract class DOMImplTrident extends DOMImpl {
    */
   private native int getClientTop(Element elem) /*-{
     return elem.clientTop;
-  }-*/;
-
-  protected native boolean isRTL(Element elem) /*-{
-    return elem.currentStyle.direction == 'rtl';
   }-*/;
 }
