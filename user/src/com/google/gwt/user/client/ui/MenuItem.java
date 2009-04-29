@@ -181,15 +181,15 @@ public class MenuItem extends UIObject implements HasHTML {
     }
   }
 
-  void setParentMenu(MenuBar parentMenu) {
-    this.parentMenu = parentMenu;
-  }
-
-  void setSelectionStyle(boolean selected) {
+  protected void setSelectionStyle(boolean selected) {
     if (selected) {
       addStyleDependentName(DEPENDENT_STYLENAME_SELECTED_ITEM);
     } else {
       removeStyleDependentName(DEPENDENT_STYLENAME_SELECTED_ITEM);
     }
+  }
+
+  void setParentMenu(MenuBar parentMenu) {
+    this.parentMenu = parentMenu;
   }
 }

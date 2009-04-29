@@ -429,6 +429,53 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     return isAnimationEnabled;
   }
 
+  /**
+   * Moves the menu selection down to the next item.  If there is no selection,
+   * selects the first item.  If there are no items at all, does nothing.
+   */
+  public void moveSelectionDown() {
+    if (selectFirstItemIfNoneSelected()) {
+      return;
+    }
+  
+    if (vertical) {
+      selectNextItem();
+    } else {
+      if (selectedItem.getSubMenu() != null
+          && !selectedItem.getSubMenu().getItems().isEmpty()
+          && (shownChildMenu == null || shownChildMenu.getSelectedItem() == null)) {
+        if (shownChildMenu == null) {
+          doItemAction(selectedItem, false);
+        }
+        selectedItem.getSubMenu().focus();
+      } else if (parentMenu != null) {
+        if (parentMenu.vertical) {
+          parentMenu.selectNextItem();
+        } else {
+          parentMenu.moveSelectionDown();
+        }
+      }
+    }
+  }
+
+  /**
+   * Moves the menu selection up to the previous item.  If there is no selection,
+   * selects the first item.  If there are no items at all, does nothing.
+   */
+  public void moveSelectionUp() {
+    if (selectFirstItemIfNoneSelected()) {
+      return;
+    }
+  
+    if ((shownChildMenu == null) && vertical) {
+      selectPrevItem();
+    } else if ((parentMenu != null) && parentMenu.vertical) {
+      parentMenu.selectPrevItem();
+    } else {
+      close();
+    }
+  }
+
   @Override
   public void onBrowserEvent(Event event) {
     MenuItem item = findItem(DOM.eventGetTarget(event));
@@ -481,11 +528,11 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
             eatEvent(event);
             break;
           case KeyCodes.KEY_UP:
-            moveUp();
+            moveSelectionUp();
             eatEvent(event);
             break;
           case KeyCodes.KEY_DOWN:
-            moveDown();
+            moveSelectionDown();
             eatEvent(event);
             break;
           case KeyCodes.KEY_ESCAPE:
@@ -891,31 +938,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
     DOM.setElementAttribute(getElement(), "hideFocus", "true");
   }
 
-  private void moveDown() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if (vertical) {
-      selectNextItem();
-    } else {
-      if (selectedItem.getSubMenu() != null
-          && !selectedItem.getSubMenu().getItems().isEmpty()
-          && (shownChildMenu == null || shownChildMenu.getSelectedItem() == null)) {
-        if (shownChildMenu == null) {
-          doItemAction(selectedItem, false);
-        }
-        selectedItem.getSubMenu().focus();
-      } else if (parentMenu != null) {
-        if (parentMenu.vertical) {
-          parentMenu.selectNextItem();
-        } else {
-          parentMenu.moveDown();
-        }
-      }
-    }
-  }
-
   private void moveToNextItem() {
     if (selectFirstItemIfNoneSelected()) {
       return;
@@ -954,20 +976,6 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
       } else {
         close();
       }
-    }
-  }
-
-  private void moveUp() {
-    if (selectFirstItemIfNoneSelected()) {
-      return;
-    }
-
-    if ((shownChildMenu == null) && vertical) {
-      selectPrevItem();
-    } else if ((parentMenu != null) && parentMenu.vertical) {
-      parentMenu.selectPrevItem();
-    } else {
-      close();
     }
   }
 
@@ -1097,19 +1105,19 @@ public class MenuBar extends Widget implements PopupListener, HasAnimation,
   }
 
   /**
-   * Selects the first item in the menu if no items are currently selected. This
-   * method assumes that the menu has at least 1 item.
+   * Selects the first item in the menu if no items are currently selected.
+   * Has no effect if there are no items.
    *
-   * @return true if no item was previously selected and the first item in the
-   *         list was selected, false otherwise
+   * @return true if no item was previously selected, false otherwise
    */
   private boolean selectFirstItemIfNoneSelected() {
     if (selectedItem == null) {
-      MenuItem nextItem = items.get(0);
-      selectItem(nextItem);
+      if (items.size() > 0) {
+        MenuItem nextItem = items.get(0);
+        selectItem(nextItem);
+      }
       return true;
     }
-
     return false;
   }
 
