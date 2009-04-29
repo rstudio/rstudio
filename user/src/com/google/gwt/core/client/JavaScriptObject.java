@@ -50,9 +50,16 @@ public class JavaScriptObject {
   }-*/;
 
   /**
+   * Helper for {@link #toString()}, for lighter "more production" code.
+   */
+  private static native String toStringSimple(JavaScriptObject obj) /*-{
+    return obj.toString ? obj.toString() : '[JavaScriptObject]';
+  }-*/;
+
+  /**
    * Helper for {@link #toString()}, when hosted mode or assertions are on.
    */
-  private final native static String toStringVerbose(JavaScriptObject obj) /*-{
+  private static native String toStringVerbose(JavaScriptObject obj) /*-{
     var defined = function(m) { return typeof m != 'undefined'; };
     var strip = function(s) { return s.replace(/\r\n/g, ""); };
     // Output nodes that have outerHTML
@@ -88,13 +95,6 @@ public class JavaScriptObject {
         return out;
       }
     }
-    return obj.toString ? obj.toString() : '[JavaScriptObject]';
-  }-*/;
-
-  /**
-   * Helper for {@link #toString()}, for lighter "more production" code.
-   */
-  private final static native String toStringSimple(JavaScriptObject obj) /*-{
     return obj.toString ? obj.toString() : '[JavaScriptObject]';
   }-*/;
 
