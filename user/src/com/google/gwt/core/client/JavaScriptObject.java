@@ -50,6 +50,55 @@ public class JavaScriptObject {
   }-*/;
 
   /**
+   * Helper for {@link #toString()}, when hosted mode or assertions are on.
+   */
+  private final native static String toStringVerbose(JavaScriptObject obj) /*-{
+    var defined = function(m) { return typeof m != 'undefined'; };
+    var strip = function(s) { return s.replace(/\r\n/g, ""); };
+    // Output nodes that have outerHTML
+    if (defined(obj.outerHTML))
+      return strip(obj.outerHTML);
+    // Output nodes that have innerHTML
+    if (defined(obj.innerHTML) && obj.cloneNode) {
+      $doc.createElement('div').appendChild(obj.cloneNode(true)).innerHTML;
+    }
+    // Output text nodes
+    if (defined(obj.nodeType) && obj.nodeType == 3) {
+      return "'" +
+        obj.data.replace(/ /g, "\u25ab").replace(/\u00A0/, "\u25aa") +
+        "'";
+    }
+    // Output IE's TextRange (this code specific to IE7)
+    if (typeof defined(obj.htmlText) && obj.collapse) {
+      var html = obj.htmlText;
+      if (html) {
+        return 'IETextRange [' + strip(html) + ']';
+      } else {
+        // NOTE: using pasteHTML to place a | where the range is collapsed
+        // if *very* useful when debugging. It also, however, in certain very
+        // subtle circumstances change the range being toStringed! If you
+        // see different behaviour in debug vs. release builds (or if logging
+        // ranges changes the behaviour, comment out the 4 of the 6 lines
+        // below containing dup.
+        var dup = obj.duplicate();
+        dup.pasteHTML('|');
+        var out = 'IETextRange ' + strip(obj.parentElement().outerHTML);
+        dup.moveStart('character', -1);
+        dup.pasteHTML('');
+        return out;
+      }
+    }
+    return obj.toString ? obj.toString() : '[JavaScriptObject]';
+  }-*/;
+
+  /**
+   * Helper for {@link #toString()}, for lighter "more production" code.
+   */
+  private final static native String toStringSimple(JavaScriptObject obj) /*-{
+    return obj.toString ? obj.toString() : '[JavaScriptObject]';
+  }-*/;
+
+  /**
    * Not directly instantiable. All subclasses must also define a protected,
    * empty, no-arg constructor.
    */
@@ -99,46 +148,16 @@ public class JavaScriptObject {
   }-*/;
 
   /**
-   * catch-all toString in lieu of a better mechanism.
-   * Basic assumption here is that this code is for debugging only!
+   * Makes a best-effort attempt to get a useful debugging string describing
+   * the given JavaScriptObject.  In web mode with assertions disabled, this
+   * will either call and return the JSO's toString() if one exists, or just
+   * return "[JavaScriptObject]".  In hosted mode, or with assertions enabled,
+   * some stronger effort is made to represent other types of JSOs, including
+   * inspecting for document nodes' outerHTML and innerHTML, etc.
    */
   @Override
-  public final native String toString() /*-{
-    var defined = function(m) { return typeof m != 'undefined'; };
-    var strip = function(s) { return s.replace(/\r\n/g, ""); };
-    // Output nodes that have outerHTML
-    if (defined(this.outerHTML))
-      return strip(this.outerHTML);
-    // Output nodes that have innerHTML
-    if (defined(this.innerHTML) && this.cloneNode) {
-      $doc.createElement('div').appendChild(this.cloneNode(true)).innerHTML;
-    }
-    // Output text nodes
-    if (defined(this.nodeType) && this.nodeType == 3) {
-      return "'" +
-        this.data.replace(/ /g, "\u25ab").replace(/\u00A0/, "\u25aa") +
-        "'";
-    }
-    // Output IE's TextRange (this code specific to IE7)
-    if (typeof defined(this.htmlText) && this.collapse) {
-      var html = this.htmlText;
-      if (html) {
-        return 'IETextRange [' + strip(html) + ']';
-      } else {
-        // NOTE(lars): using pasteHTML to place a | where the range is collapsed
-        // if *very* useful when debugging. It also, however, in certain very subtle
-        // circumstances change the range being toStringed! If you see different
-        // behaviour in debug vs. release builds (or if logging ranges changes the
-        // behaviour, comment out the 4 of the 6 lines below containing dup.
-        var dup = this.duplicate();
-        dup.pasteHTML('|');
-        var out = 'IETextRange ' + strip(this.parentElement().outerHTML);
-        dup.moveStart('character', -1);
-        dup.pasteHTML('');
-        return out;
-      }
-    }
-    return this.toString ? this.toString() : '[JavaScriptObject]';
-  }-*/;
-
+  public final String toString() {
+    return JavaScriptObject.class.desiredAssertionStatus() ?
+        toStringVerbose(this) : toStringSimple(this);
+  }
 }
