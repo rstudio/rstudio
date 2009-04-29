@@ -186,15 +186,6 @@ abstract class DOMImplTrident extends DOMImpl {
   }-*/;
 
   @Override
-  public int getScrollLeft(Element elem) {
-    if (isRTL(elem)) {
-      // IE8 returns increasingly *positive* values as you scroll left in RTL.
-      return -super.getScrollLeft(elem);
-    }
-    return super.getScrollLeft(elem);
-  }
-
-  @Override
   public native boolean isOrHasChild(Element parent, Element child) /*-{
     // An extra equality check is required due to the fact that
     // elem.contains(elem) is false if elem is not attached to the DOM.
@@ -216,15 +207,6 @@ abstract class DOMImplTrident extends DOMImpl {
   public native void setInnerText(Element elem, String text) /*-{
     elem.innerText = text || '';
   }-*/;
-
-  @Override
-  public void setScrollLeft(Element elem, int left) {
-    if (isRTL(elem)) {
-      // IE8 returns increasingly *positive* values as you scroll left in RTL.
-      left = -left;
-    }
-    super.setScrollLeft(elem, left);
-  }
 
   private native int getBoundingClientRectLeft(Element elem) /*-{
     // getBoundingClientRect() throws a JS exception if the elem is not attached

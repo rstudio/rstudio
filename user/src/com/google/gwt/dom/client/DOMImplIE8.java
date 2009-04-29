@@ -16,4 +16,22 @@
 package com.google.gwt.dom.client;
 
 class DOMImplIE8 extends DOMImplTrident {
+
+  @Override
+  public int getScrollLeft(Element elem) {
+    if (isRTL(elem)) {
+      // IE8 returns increasingly *positive* values as you scroll left in RTL.
+      return -super.getScrollLeft(elem);
+    }
+    return super.getScrollLeft(elem);
+  }
+
+  @Override
+  public void setScrollLeft(Element elem, int left) {
+    if (isRTL(elem)) {
+      // IE8 returns increasingly *positive* values as you scroll left in RTL.
+      left = -left;
+    }
+    super.setScrollLeft(elem, left);
+  }
 }
