@@ -15,5 +15,9 @@
  */
 package com.google.gwt.user.client.impl;
 
+/**
+ * Internet Explorer 8 implementation of
+ * {@link com.google.gwt.user.client.impl.DOMImpl}.
+ */
 public class DOMImplIE8 extends DOMImplTrident {
 }

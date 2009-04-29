@@ -19,6 +19,10 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.Event;
 
+/**
+ * Trident layout engine implementation of
+ * {@link com.google.gwt.user.client.impl.DOMImpl}.
+ */
 public abstract class DOMImplTrident extends DOMImpl {
 
   @SuppressWarnings("unused")
