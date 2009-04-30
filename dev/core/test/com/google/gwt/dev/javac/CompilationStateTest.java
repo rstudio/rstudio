@@ -22,6 +22,8 @@ import com.google.gwt.dev.javac.impl.MockJavaResource;
 import com.google.gwt.dev.javac.impl.MockResourceOracle;
 import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.resource.Resource;
+import com.google.gwt.dev.shell.StandardGeneratorContext.Generated;
+import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.log.AbstractTreeLogger;
 import com.google.gwt.dev.util.log.PrintWriterTreeLogger;
 
@@ -40,6 +42,45 @@ import java.util.Map.Entry;
  * Tests {@link CompilationState}.
  */
 public class CompilationStateTest extends TestCase {
+
+  private class GeneratedSourceFileCompilationUnit extends
+      SourceFileCompilationUnit implements Generated {
+
+    private final boolean modifySource;
+    private String strongHash;
+
+    public GeneratedSourceFileCompilationUnit(Resource sourceFile, boolean modifySource) {
+      super(sourceFile);
+      this.modifySource = modifySource;
+    }
+
+    public void abort() {
+    }
+
+    public void commit() {
+    }
+
+    @Override
+    public String getSource() {
+      String extraChars = "";
+      if (modifySource) {
+        extraChars = "\n";
+      }
+      return super.getSource() + extraChars;
+    }
+
+    public String getStrongHash() {
+      if (strongHash == null) {
+        strongHash = Util.computeStrongName(Util.getBytes(getSource()));
+      }
+      return strongHash;
+    }
+
+    @Override
+    public boolean isGenerated() {
+      return true;
+    }
+  }
 
   static void assertUnitsChecked(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
@@ -293,12 +334,8 @@ public class CompilationStateTest extends TestCase {
       MockJavaResource... sourceFiles) {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     for (MockJavaResource sourceFile : sourceFiles) {
-      units.add(new SourceFileCompilationUnit(sourceFile) {
-        @Override
-        public boolean isGenerated() {
-          return true;
-        }
-      });
+      // keep the same source
+      units.add(new GeneratedSourceFileCompilationUnit(sourceFile, false));
     }
     return units;
   }
@@ -307,18 +344,8 @@ public class CompilationStateTest extends TestCase {
       MockJavaResource... sourceFiles) {
     Set<CompilationUnit> units = new HashSet<CompilationUnit>();
     for (MockJavaResource sourceFile : sourceFiles) {
-      units.add(new SourceFileCompilationUnit(sourceFile) {
-        /* modified the source */
-        @Override
-        public String getSource() {
-          return super.getSource() + "\n";
-        }
-
-        @Override
-        public boolean isGenerated() {
-          return true;
-        }
-      });
+      // modify the source
+      units.add(new GeneratedSourceFileCompilationUnit(sourceFile, true));
     }
     return units;
   }
@@ -377,8 +404,8 @@ public class CompilationStateTest extends TestCase {
    * <ol>
    * <li>Check graveyardUnits before refresh. assert size is 0.</li>
    * <li>Refresh. assert size is 'graveyardUnitsSize'.</li>
-   * <li>Add generated cups. Confirm that the 'reusedTypes' and
-   * 'numInvalidated' match.</li>
+   * <li>Add generated cups. Confirm that the 'reusedTypes' and 'numInvalidated'
+   * match.</li>
    * </ol>
    * 
    * @param generatedCups generated CompilationUnits to be added.
