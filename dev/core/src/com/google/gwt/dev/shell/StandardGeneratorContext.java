@@ -129,7 +129,6 @@ public class StandardGeneratorContext implements GeneratorContext {
       return diskCache.readString(cacheToken);
     }
 
-    @Override
     public String getStrongHash() {
       if (strongHash == null) {
         strongHash = Util.computeStrongName(Util.getBytes(getSource()));
@@ -192,7 +191,6 @@ public class StandardGeneratorContext implements GeneratorContext {
      * The old source is not preserved across refreshes. We use a strongHash to
      * avoid the memory overhead of storing the source.
      */
-    @Override
     public String getStrongHash() {
       if (strongHash == null) {
         strongHash = Util.computeStrongName(Util.getBytes(getSource()));
