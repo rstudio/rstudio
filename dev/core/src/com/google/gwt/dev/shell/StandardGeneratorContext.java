@@ -58,10 +58,15 @@ public class StandardGeneratorContext implements GeneratorContext {
   /**
    * Extras added to {@link CompilationUnit}.
    */
-  interface Generated {
+  public static interface Generated {
     void abort();
 
     void commit();
+
+    /**
+     * Returns the strong hash of the source.
+     */
+    String getStrongHash();
 
     String getTypeName();
   }
@@ -81,6 +86,8 @@ public class StandardGeneratorContext implements GeneratorContext {
     private long cacheToken;
 
     private long creationTime;
+
+    private String strongHash; // cache so that refreshes work correctly
 
     private StringWriter sw;
 
@@ -120,6 +127,14 @@ public class StandardGeneratorContext implements GeneratorContext {
         throw new IllegalStateException("source not committed");
       }
       return diskCache.readString(cacheToken);
+    }
+
+    @Override
+    public String getStrongHash() {
+      if (strongHash == null) {
+        strongHash = Util.computeStrongName(Util.getBytes(getSource()));
+      }
+      return strongHash;
     }
 
     @Override
@@ -163,7 +178,6 @@ public class StandardGeneratorContext implements GeneratorContext {
     public void commit() {
       pw.close();
       pw = null;
-      strongHash = Util.computeStrongName(getSource().getBytes());
     }
 
     @Override
@@ -180,6 +194,9 @@ public class StandardGeneratorContext implements GeneratorContext {
      */
     @Override
     public String getStrongHash() {
+      if (strongHash == null) {
+        strongHash = Util.computeStrongName(Util.getBytes(getSource()));
+      }
       return strongHash;
     }
 

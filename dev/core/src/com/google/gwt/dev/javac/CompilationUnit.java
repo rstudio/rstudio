@@ -378,15 +378,6 @@ public abstract class CompilationUnit {
   public abstract String getSource();
 
   /**
-   * Returns the strong hash of the source. The default implementation simply
-   * returns the source. Subclasses can override this implementation if source
-   * might be overwritten.
-   */
-  public String getStrongHash() {
-    return getSource();
-  }
-
-  /**
    * Returns the fully-qualified name of the top level public type.
    */
   public abstract String getTypeName();

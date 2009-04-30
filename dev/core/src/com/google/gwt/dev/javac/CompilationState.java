@@ -22,6 +22,7 @@ import com.google.gwt.dev.javac.impl.SourceFileCompilationUnit;
 import com.google.gwt.dev.js.ast.JsProgram;
 import com.google.gwt.dev.resource.Resource;
 import com.google.gwt.dev.resource.ResourceOracle;
+import com.google.gwt.dev.shell.StandardGeneratorContext.Generated;
 import com.google.gwt.dev.util.PerfLogger;
 
 import java.util.Collection;
@@ -294,7 +295,10 @@ public class CompilationState {
       CompilationUnit graveyardUnit = graveyardUnits.remove(typeName);
       if (graveyardUnit != null) {
         assert graveyardUnit.getState() == State.GRAVEYARD;
-        if (unit.getStrongHash().equals(graveyardUnit.getStrongHash())) {
+        assert unit instanceof Generated;
+        assert graveyardUnit instanceof Generated;
+        if (((Generated) unit).getStrongHash().equals(
+            ((Generated) graveyardUnit).getStrongHash())) {
           usefulGraveyardUnits.put(typeName, graveyardUnit);
         } else {
           // The old unit is invalidated.
@@ -381,8 +385,7 @@ public class CompilationState {
     }
 
     // Divide resources into changed and unchanged.
-    Set<Resource> unchanged = new HashSet<Resource>(
-        cachedSourceFiles);
+    Set<Resource> unchanged = new HashSet<Resource>(cachedSourceFiles);
     unchanged.retainAll(newSourceFiles);
 
     Set<Resource> changed = new HashSet<Resource>(newSourceFiles);
