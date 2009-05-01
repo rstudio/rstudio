@@ -116,7 +116,17 @@
   group2: mediaOk;
 }
 
-
 .media3 {
   group: media;
+}
+
+/* Make sure merging inside sub-contexts works */
+@if (true) {
+  .a {group: one;}
+  .b {group: one;}
+}
+
+@media print {
+  .a {group: one;}
+  .b {group: one;}
 }

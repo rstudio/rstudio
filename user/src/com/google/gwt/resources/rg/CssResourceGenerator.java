@@ -309,7 +309,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
 
     private void visitInNewContext(List<CssNode> nodes) {
       MergeIdenticalSelectorsVisitor v = new MergeIdenticalSelectorsVisitor();
-      v.accept(nodes);
+      v.acceptWithInsertRemove(nodes);
       rulesInOrder.addAll(v.rulesInOrder);
     }
   }
@@ -371,7 +371,7 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
 
     private void visitInNewContext(List<CssNode> nodes) {
       MergeRulesByContentVisitor v = new MergeRulesByContentVisitor();
-      v.accept(nodes);
+      v.acceptWithInsertRemove(nodes);
       rulesInOrder.addAll(v.rulesInOrder);
     }
   }

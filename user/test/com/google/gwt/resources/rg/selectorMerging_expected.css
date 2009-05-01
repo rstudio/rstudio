@@ -61,7 +61,7 @@ media {
   media5 : true;
 }
 
-@if (true) {
+@media print {
   media {
     media3 : true;
   }
@@ -69,4 +69,15 @@ media {
 
 media {
   media3-block : false;
+}
+
+/* Make sure merging inside sub-contexts works */
+@if (true) {
+  .a {propOne: one;
+      propTwo: one;}
+}
+
+@media print {
+  .a {propOne: one;
+      propTwo: one;}
 }
