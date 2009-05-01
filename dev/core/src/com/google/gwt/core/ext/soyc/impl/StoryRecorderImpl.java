@@ -27,6 +27,7 @@ import com.google.gwt.core.ext.soyc.Story.Origin;
 import com.google.gwt.dev.jjs.Correlation;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.Correlation.Axis;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JProgram;
@@ -230,7 +231,7 @@ public class StoryRecorderImpl implements StoryRecorder {
 
           switch (c.getAxis()) {
             case CLASS: {
-              JReferenceType type = c.getType();
+              JDeclaredType type = c.getType();
               StandardClassMember member = memberFactory.get(type);
               membersByCorrelation.put(c, member);
               classesMutable.add(member);
@@ -238,7 +239,7 @@ public class StoryRecorderImpl implements StoryRecorder {
             }
             case FIELD: {
               JField field = c.getField();
-              JReferenceType type = c.getType();
+              JDeclaredType type = c.getType();
               StandardFieldMember member = memberFactory.get(field);
               memberFactory.get(type).addField(member);
               membersByCorrelation.put(c, member);
@@ -253,7 +254,7 @@ public class StoryRecorderImpl implements StoryRecorder {
             }
             case METHOD: {
               JMethod method = c.getMethod();
-              JReferenceType type = c.getType();
+              JDeclaredType type = c.getType();
               StandardMethodMember member = memberFactory.get(method);
               memberFactory.get(type).addMethod(member);
               membersByCorrelation.put(c, member);

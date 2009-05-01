@@ -15,9 +15,9 @@
  */
 package com.google.gwt.dev.jjs;
 
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsName;
 
@@ -270,9 +270,9 @@ public final class Correlation implements Serializable {
     }
   }
 
-  public JReferenceType getType() {
+  public JDeclaredType getType() {
     if (axis == Axis.CLASS) {
-      return (JReferenceType) astReference;
+      return (JDeclaredType) astReference;
     } else if (axis == Axis.METHOD) {
       return ((JMethod) astReference).getEnclosingType();
     } else if (axis == Axis.FIELD) {

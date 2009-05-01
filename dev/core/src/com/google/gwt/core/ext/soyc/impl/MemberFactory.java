@@ -16,6 +16,7 @@
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.soyc.Member;
+import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JReferenceType;
@@ -42,8 +43,8 @@ public class MemberFactory {
     return getOrCreate(method, StandardMethodMember.class, JMethod.class);
   }
 
-  public StandardClassMember get(JReferenceType type) {
-    return getOrCreate(type, StandardClassMember.class, JReferenceType.class);
+  public StandardClassMember get(JDeclaredType type) {
+    return getOrCreate(type, StandardClassMember.class, JDeclaredType.class);
   }
 
   public StandardFunctionMember get(JsFunction function) {
