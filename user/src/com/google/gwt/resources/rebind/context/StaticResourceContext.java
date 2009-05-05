@@ -16,6 +16,7 @@
 package com.google.gwt.resources.rebind.context;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
@@ -49,7 +50,9 @@ class StaticResourceContext extends AbstractResourceContext {
     // See if filename obfuscation should be enabled
     String enableRenaming = null;
     try {
-      enableRenaming = propertyOracle.getPropertyValue(logger, ENABLE_RENAMING);
+      ConfigurationProperty prop = propertyOracle.getConfigurationProperty(
+          ENABLE_RENAMING);
+      enableRenaming = prop.getValues().get(0);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Bad value for " + ENABLE_RENAMING, e);
       throw new UnableToCompleteException();
@@ -71,7 +74,6 @@ class StaticResourceContext extends AbstractResourceContext {
 
       // The name will be MD5.cache.ext
       outputName = strongName + ".cache." + extension;
-
     } else {
       outputName = suggestedFileName.substring(suggestedFileName.lastIndexOf('/') + 1);
     }

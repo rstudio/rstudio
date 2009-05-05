@@ -16,9 +16,11 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.Artifact;
@@ -74,6 +76,15 @@ public class StandardGeneratorContextTest extends TestCase {
     public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
         throws BadPropertyValueException {
       return new String[] {};
+    }
+
+    public ConfigurationProperty getConfigurationProperty(String name) {
+      return null;
+    }
+
+    public SelectionProperty getSelectionProperty(TreeLogger logger,
+        String name) {
+      return null;
     }
   }
 

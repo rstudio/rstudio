@@ -15,27 +15,76 @@
  */
 package com.google.gwt.dev.cfg;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Represents a module property which does not impact deferred-binding
  * decisions.
  */
 public class ConfigurationProperty extends Property {
-  private String value;
+  private final boolean allowMultipleValues;
+  private List<String> values = new ArrayList<String>();
 
   public ConfigurationProperty(String name) {
-    this(name, null);
+    this(name, false);
+  }
+  
+  public ConfigurationProperty(String name, boolean allowMultipleValues) {
+    super(name);
+    this.allowMultipleValues = allowMultipleValues;
+    if (!allowMultipleValues) {
+      values.add(null); // single-valued properties default to null
+    }
+  }
+  
+  public void addValue(String value) {
+    if (!allowMultipleValues) {
+      throw new IllegalStateException(
+          "Attempt to add a value to a single-valued ConfigurationProperty");
+    }
+    values.add(value);
   }
 
-  public ConfigurationProperty(String name, String value) {
-    super(name);
-    setValue(value);
+  public boolean allowsMultipleValues() {
+    return allowMultipleValues;
+  }
+  
+  public void clear() {
+    values.clear();
   }
 
   public String getValue() {
-    return value;
+    if (values.size() != 1) {
+      throw new IllegalStateException("size != 1");
+    }
+    return values.get(0);
+  }
+  
+  public List<String> getValues() {
+    ArrayList<String> v = new ArrayList<String>(values.size());
+    v.addAll(values);
+    return v;
+  }
+  
+  public boolean isMultiValued() {
+    return values.size() > 1;
   }
 
   public void setValue(String value) {
-    this.value = value;
+    if (values.size() == 0) {
+      values.add(value);
+    } else {
+      values.set(0, value);
+    }
+  }
+  
+  public void setValues(List<String> values) {
+    if (!allowMultipleValues && values.size() > 1) {
+      throw new IllegalStateException(
+      "Attempt to set > 1 value for a single-valued ConfigurationProperty");
+    }
+    this.values.clear();
+    this.values.addAll(values);
   }
 }

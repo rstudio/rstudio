@@ -16,8 +16,10 @@
 package com.google.gwt.dev.cfg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 
@@ -45,7 +47,15 @@ public class ConditionWhenPropertyIs extends Condition {
     String testValue;
     try {
       PropertyOracle propertyOracle = context.getPropertyOracle();
-      testValue = propertyOracle.getPropertyValue(logger, propName);
+      try {
+        SelectionProperty prop
+            = propertyOracle.getSelectionProperty(logger, propName);
+        testValue = prop.getCurrentValue();
+      } catch (BadPropertyValueException e) {
+        ConfigurationProperty prop
+            = propertyOracle.getConfigurationProperty(propName);
+        testValue = prop.getValues().get(0);
+      }
       logger.log(TreeLogger.DEBUG, "Property value is '" + testValue + "'",
           null);
       if (testValue.equals(value)) {

@@ -16,7 +16,9 @@
 package com.google.gwt.i18n.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.i18n.server.GwtLocaleFactoryImpl;
 import com.google.gwt.i18n.shared.GwtLocale;
@@ -24,7 +26,9 @@ import com.google.gwt.i18n.shared.GwtLocaleFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
 
 /**
  * Utility methods for dealing with locales.
@@ -114,7 +118,11 @@ public class LocaleUtils {
    */
   public static void init(TreeLogger logger, PropertyOracle propertyOracle) {
     try {
-      String localeName = propertyOracle.getPropertyValue(logger, PROP_LOCALE);
+      SelectionProperty localeProp
+          = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
+      String localeName = localeProp.getCurrentValue();
+      SortedSet<String> localeValues = localeProp.getPossibleValues();
+
       GwtLocale newCompileLocale = factory.fromString(localeName);
       if (newCompileLocale.equals(compileLocale)) {
         return;
@@ -123,17 +131,16 @@ public class LocaleUtils {
       allLocales.clear();
       allCompileLocales.clear();
       runtimeLocales.clear();
-      String[] localeValues = propertyOracle.getPropertyValueSet(logger,
-          PROP_LOCALE);
-      String rtLocaleNames = propertyOracle.getPropertyValue(logger,
-          PROP_RUNTIME_LOCALES);
       for (String localeValue : localeValues) {
         allCompileLocales.add(factory.fromString(localeValue));
       }
       allLocales.addAll(allCompileLocales);
-      if (rtLocaleNames != null && rtLocaleNames.length() > 0) {
-        String[] rtLocales = rtLocaleNames.split(",");
-        for (String rtLocale : rtLocales) {
+      
+      ConfigurationProperty prop
+          = propertyOracle.getConfigurationProperty(PROP_RUNTIME_LOCALES);
+      List<String> rtLocaleNames = prop.getValues();
+      if (rtLocaleNames != null) {
+        for (String rtLocale : rtLocaleNames) {
           GwtLocale locale = factory.fromString(rtLocale);
           // TODO(jat): remove use of labels
           existingLocales:

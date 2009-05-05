@@ -89,5 +89,6 @@
       currency data will support runtime locales - everything else will just
       reference the compile-time locale set in the "locale" property. 
    -->
+  <define-configuration-property name="runtime.locales" is-multi-valued="true"/>
   <set-configuration-property name="runtime.locales" value=""/>
 </module>

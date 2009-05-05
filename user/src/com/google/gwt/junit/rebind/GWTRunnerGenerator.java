@@ -17,6 +17,7 @@ package com.google.gwt.junit.rebind;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
@@ -76,8 +77,10 @@ public class GWTRunnerGenerator extends Generator {
 
     String moduleName;
     try {
-      moduleName = context.getPropertyOracle().getPropertyValue(logger,
-          "junit.moduleName");
+      ConfigurationProperty prop
+          = context.getPropertyOracle().getConfigurationProperty(
+              "junit.moduleName");
+      moduleName = prop.getValues().get(0);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR,
           "Could not resolve junit.moduleName property", e);

@@ -16,6 +16,7 @@
 package com.google.gwt.module.rebind;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
@@ -41,16 +42,17 @@ public class ConfigurationPropertiesGenerator extends Generator {
     if (out != null) {
       String propertyValue;
       try {
-        propertyValue = context.getPropertyOracle().getPropertyValue(logger,
-            "testProperty");
+        ConfigurationProperty prop = context.getPropertyOracle().
+            getConfigurationProperty("testProperty");
+        propertyValue = prop.getValues().get(0);
       } catch (BadPropertyValueException e) {
         logger.log(TreeLogger.ERROR, "testProperty not set", e);
         throw new UnableToCompleteException();
       }
 
       try {
-        context.getPropertyOracle().getPropertyValue(TreeLogger.NULL,
-            "bad_property");
+        ConfigurationProperty prop = context.getPropertyOracle().
+            getConfigurationProperty("bad_property");
         logger.log(TreeLogger.ERROR,
             "Did not get an exception trying to access fake property");
         throw new UnableToCompleteException();

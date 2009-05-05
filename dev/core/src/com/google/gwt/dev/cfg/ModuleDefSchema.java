@@ -50,9 +50,11 @@ public class ModuleDefSchema extends Schema {
 
     protected final String __add_linker_1_name = null;
 
-    protected final String __append_configuration_property_1_name = null;
+    protected final String __clear_configuration_property_1_name = null;
 
-    protected final String __append_configuration_property_2_value = null;
+    protected final String __define_configuration_property_1_name = null;
+
+    protected final String __define_configuration_property_2_is_multi_valued = null;
 
     protected final String __define_linker_1_name = null;
 
@@ -63,6 +65,10 @@ public class ModuleDefSchema extends Schema {
     protected final String __define_property_2_values = null;
 
     protected final String __entry_point_1_class = null;
+
+    protected final String __extend_configuration_property_1_name = null;
+
+    protected final String __extend_configuration_property_2_value = null;
 
     protected final String __extend_property_1_name = null;
 
@@ -134,27 +140,59 @@ public class ModuleDefSchema extends Schema {
       return null;
     }
 
-    protected Schema __append_configuration_property_begin(PropertyName name,
-        String value) throws UnableToCompleteException {
-
-      // Property must already exist
+    protected Schema __clear_configuration_property_begin(PropertyName name)
+        throws UnableToCompleteException {
+      // Don't allow configuration properties with the same name as a
+      // deferred-binding property.
       Property prop = moduleDef.getProperties().find(name.token);
-      if (prop == null || !(prop instanceof ConfigurationProperty)) {
-        logger.log(TreeLogger.ERROR, "The property " + name.token
-            + " must already exist as a configuration property");
+      if (prop == null) {
+        logger.log(TreeLogger.ERROR, "No property named " + name.token
+            + " has been defined");
+        throw new UnableToCompleteException();
+      } else if (!(prop instanceof ConfigurationProperty)) {
+        if (prop instanceof BindingProperty) {
+          logger.log(TreeLogger.ERROR, "The property " + name.token
+              + " is already defined as a deferred-binding property");
+        } else {
+          logger.log(TreeLogger.ERROR, "The property " + name.token
+              + " is already defined as a property of unknown type");
+        }
         throw new UnableToCompleteException();
       }
 
-      ConfigurationProperty configProp = (ConfigurationProperty) prop;
-      String oldValue = configProp.getValue();
-      if (oldValue == null) {
-        oldValue = "";
-      }
-      if (oldValue.length() > 0) {
-        oldValue += ",";
-      }
-      configProp.setValue(oldValue + value);
+      ((ConfigurationProperty) prop).clear();
 
+      // No children.
+      return null;
+    }
+
+    protected Schema __define_configuration_property_begin(PropertyName name,
+        String is_multi_valued) throws UnableToCompleteException {
+      boolean isMultiValued = toPrimitiveBoolean(is_multi_valued);
+      
+      // Don't allow configuration properties with the same name as a
+      // deferred-binding property.
+      Property existingProperty = moduleDef.getProperties().find(name.token);
+      if (existingProperty == null) {
+        // Create the property
+        existingProperty = moduleDef.getProperties().createConfiguration(
+            name.token, isMultiValued);
+      } else {
+        if (existingProperty instanceof ConfigurationProperty) {
+          logger.log(TreeLogger.ERROR, "The configuration property named "
+              + name.token + " may not be redefined.");
+        } else if (existingProperty instanceof BindingProperty) {
+          logger.log(TreeLogger.ERROR, "The property " + name.token
+              + " is already defined as a deferred-binding property");
+        } else {
+          // Future proofing if other subclasses are added.
+          logger.log(TreeLogger.ERROR, "May not replace property named "
+              + name.token + " of unknown type "
+              + existingProperty.getClass().getName());
+        }
+        throw new UnableToCompleteException();
+      }
+      
       // No children.
       return null;
     }
@@ -186,8 +224,8 @@ public class ModuleDefSchema extends Schema {
           logger.log(TreeLogger.ERROR, "The deferred-binding property named "
               + name.token + " may not be redefined.");
         } else if (existingProperty instanceof ConfigurationProperty) {
-          logger.log(TreeLogger.ERROR, "A configuration property named "
-              + name.token + " has already been set.");
+          logger.log(TreeLogger.ERROR, "The property " + name.token
+              + " is already defined as a configuration property");
         } else {
           // Future proofing if other subclasses are added.
           logger.log(TreeLogger.ERROR, "May not replace property named "
@@ -209,6 +247,28 @@ public class ModuleDefSchema extends Schema {
 
     protected Schema __entry_point_begin(String className) {
       moduleDef.addEntryPointTypeName(className);
+      return null;
+    }
+
+    protected Schema __extend_configuration_property_begin(PropertyName name,
+        String value) throws UnableToCompleteException {
+
+      // Property must already exist as a configuration property
+      Property prop = moduleDef.getProperties().find(name.token);
+      if ((prop == null) || !(prop instanceof ConfigurationProperty)) {
+        logger.log(TreeLogger.ERROR, "The property " + name.token
+            + " must already exist as a configuration property");
+        throw new UnableToCompleteException();
+      }
+
+      ConfigurationProperty configProp = (ConfigurationProperty) prop;
+      if (!configProp.allowsMultipleValues()) {
+        logger.log(TreeLogger.ERROR, "The property " + name.token
+            + " does not support multiple values");
+        throw new UnableToCompleteException();
+      }
+      configProp.addValue(value);
+
       return null;
     }
 
@@ -343,19 +403,27 @@ public class ModuleDefSchema extends Schema {
 
     protected Schema __set_configuration_property_begin(PropertyName name,
         String value) throws UnableToCompleteException {
-
-      // Don't allow configuration properties with the same name as a
-      // deferred-binding property.
-      Property prop = moduleDef.getProperties().find(name.token);
-      if (prop != null && !(prop instanceof ConfigurationProperty)) {
-        logger.log(TreeLogger.ERROR, "A deferred-binding property named "
-            + name.token + " has already been defined");
+      
+      Property existingProperty = moduleDef.getProperties().find(name.token);
+      if (existingProperty == null) {
+        // If a property is created by "set-configuration-property" without
+        // a previous "define-configuration-property", allow it for backwards
+        // compatibility but don't allow multiple values.
+        existingProperty = moduleDef.getProperties().createConfiguration(
+            name.token, false);
+      } else if (!(existingProperty instanceof ConfigurationProperty)) {
+        if (existingProperty instanceof BindingProperty) {
+          logger.log(TreeLogger.ERROR, "The property " + name.token
+              + " is already defined as a deferred-binding property");
+        } else {
+          // Future proofing if other subclasses are added.
+          logger.log(TreeLogger.ERROR, "May not replace property named "
+              + name.token + " of unknown type "
+              + existingProperty.getClass().getName());
+        }
         throw new UnableToCompleteException();
-      } else {
-        prop = moduleDef.getProperties().createConfiguration(name.token);
       }
-
-      ((ConfigurationProperty) prop).setValue(value);
+      ((ConfigurationProperty) existingProperty).setValue(value);
 
       // No children.
       return null;

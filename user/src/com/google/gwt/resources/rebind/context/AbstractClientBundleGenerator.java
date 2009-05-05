@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -121,8 +122,14 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
     public void addPermutationAxis(String propertyName)
         throws BadPropertyValueException {
-      oracle.getPropertyValue(TreeLogger.NULL, propertyName);
-      axes.add(propertyName);
+      // Ensure the property exists and add a permutation axis if the
+      // property is a deferred binding property.
+      try {
+        oracle.getSelectionProperty(TreeLogger.NULL, propertyName).getCurrentValue();
+        axes.add(propertyName);
+      } catch (BadPropertyValueException e) {
+        oracle.getConfigurationProperty(propertyName).getValues();
+      }
     }
   }
 
@@ -464,7 +471,8 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     try {
       PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
       for (String property : permutationAxes) {
-        String value = oracle.getPropertyValue(logger, property);
+        SelectionProperty prop = oracle.getSelectionProperty(logger, property);
+        String value = prop.getCurrentValue();
         toReturn.append("_" + value);
       }
     } catch (BadPropertyValueException e) {

@@ -17,6 +17,7 @@ package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.typeinfo.JArrayType;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -133,7 +134,9 @@ class Shared {
   private static boolean getBooleanProperty(TreeLogger logger,
       PropertyOracle propertyOracle, String propertyName, boolean defaultValue) {
     try {
-      String propVal = propertyOracle.getPropertyValue(logger, propertyName);
+      SelectionProperty prop
+         = propertyOracle.getSelectionProperty(logger, propertyName);
+      String propVal = prop.getCurrentValue();
       if (propVal != null && propVal.length() > 0) {
         return Boolean.valueOf(propVal);
       }

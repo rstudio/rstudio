@@ -17,6 +17,7 @@ package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
@@ -24,7 +25,10 @@ import com.google.gwt.dev.cfg.Properties;
 import com.google.gwt.dev.cfg.Property;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * Implements a {@link PropertyOracle} in terms of a module space, which makes
@@ -43,9 +47,32 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
     this.props = props;
   }
 
+  public com.google.gwt.core.ext.ConfigurationProperty
+      getConfigurationProperty(String propertyName)
+      throws BadPropertyValueException {
+    Property prop = getProperty(propertyName);
+    if (prop instanceof ConfigurationProperty) {
+      final ConfigurationProperty cprop = (ConfigurationProperty) prop;
+      final String name = cprop.getName();
+      final List<String> values = cprop.getValues();
+      return new com.google.gwt.core.ext.ConfigurationProperty() {
+        public String getName() {
+          return name;
+        }
+
+        public List<String> getValues() {
+          return values;
+        }
+      };
+    } else {
+      throw new BadPropertyValueException(propertyName);
+    }
+  }
+
   /**
    * Executes JavaScript to find the property value.
    */
+  @Deprecated
   public String getPropertyValue(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
@@ -75,6 +102,7 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
   /**
    * Returns the list of possible values for a property.
    */
+  @Deprecated
   public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     Property prop = getProperty(propertyName);
@@ -82,6 +110,36 @@ public class ModuleSpacePropertyOracle implements PropertyOracle {
       return ((BindingProperty) prop).getDefinedValues();
     }
     throw new BadPropertyValueException(propertyName);
+  }
+
+  public SelectionProperty getSelectionProperty(TreeLogger logger,
+      String propertyName) throws BadPropertyValueException {
+    Property prop = getProperty(propertyName);
+    if (prop instanceof BindingProperty) {
+      final BindingProperty cprop = (BindingProperty) prop;
+      final String name = cprop.getName();
+      final String value = computePropertyValue(logger, propertyName, cprop);
+      final SortedSet<String> possibleValues = new TreeSet<String>();
+      for (String v : cprop.getDefinedValues()) {
+        possibleValues.add(v);
+      }
+      return new com.google.gwt.core.ext.SelectionProperty() {
+        
+        public String getCurrentValue() {
+          return value;
+        }
+
+        public String getName() {
+          return name;
+        }
+
+        public SortedSet<String> getPossibleValues() {
+          return possibleValues;
+        }
+      };
+    } else {
+      throw new BadPropertyValueException(propertyName);
+    }
   }
 
   /**

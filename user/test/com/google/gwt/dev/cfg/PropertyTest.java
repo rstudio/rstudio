@@ -98,15 +98,15 @@ public class PropertyTest extends TestCase {
     BindingProperty d = properties.createBinding("deferred");
     assertSame(d, properties.createBinding("deferred"));
     try {
-      properties.createConfiguration("deferred");
+      properties.createConfiguration("deferred", false);
       fail("Should have thrown an IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       // OK
     }
 
     assertNull(properties.find("config"));
-    ConfigurationProperty c = properties.createConfiguration("config");
-    assertSame(c, properties.createConfiguration("config"));
+    ConfigurationProperty c = properties.createConfiguration("config", false);
+    assertSame(c, properties.createConfiguration("config", false));
     try {
       properties.createBinding("config");
       fail("Should have thrown an IllegalArgumentException");

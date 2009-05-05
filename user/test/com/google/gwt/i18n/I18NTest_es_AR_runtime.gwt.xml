@@ -20,6 +20,7 @@
 	<source path="client"/>
 	<extend-property name="locale" values="es_419"/>
 	<set-property name = "locale" value = "es_419"/>
-	<set-configuration-property name="runtime.locales" value="es_AR,es_MX"/>
+	<extend-configuration-property name="runtime.locales" value="es_AR"/>
+	<extend-configuration-property name="runtime.locales" value="es_MX"/>
 	<public path="public_es_AR"/>
 </module>

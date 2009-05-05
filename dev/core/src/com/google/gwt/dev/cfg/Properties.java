@@ -47,8 +47,8 @@ public class Properties implements Iterable<Property> {
    * Creates the specified configuration property, or returns an existing one by
    * the specified name if present.
    */
-  public ConfigurationProperty createConfiguration(String name) {
-    ConfigurationProperty prop = create(name, ConfigurationProperty.class);
+  public ConfigurationProperty createConfiguration(String name, boolean allowMultipleValues) {
+    ConfigurationProperty prop = create(name, allowMultipleValues, ConfigurationProperty.class);
     configProps.add(prop);
     return prop;
   }
@@ -90,6 +90,16 @@ public class Properties implements Iterable<Property> {
   }
 
   private <T extends Property> T create(String name, Class<T> clazz) {
+    return create(name, false, false, clazz);
+  }
+  
+  private <T extends Property> T create(String name, boolean flag, Class<T> clazz) {
+    return create(name, flag, true, clazz);
+  }
+  
+  private <T extends Property> T create(String name,
+      boolean flag, boolean useFlagArgument,
+      Class<T> clazz) {
     if (clazz == null) {
       throw new NullPointerException("clazz");
     } else if (name == null) {
@@ -109,7 +119,13 @@ public class Properties implements Iterable<Property> {
 
     Exception ex = null;
     try {
-      T newInstance = clazz.getConstructor(String.class).newInstance(name);
+      T newInstance;
+      if (useFlagArgument) {
+        newInstance = clazz.getConstructor(String.class,
+            boolean.class).newInstance(name, flag);
+      } else {
+        newInstance = clazz.getConstructor(String.class).newInstance(name);
+      }
       map.put(name, newInstance);
       return newInstance;
     } catch (NoSuchMethodException e) {

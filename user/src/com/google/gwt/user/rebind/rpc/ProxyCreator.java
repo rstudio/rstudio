@@ -17,7 +17,9 @@ package com.google.gwt.user.rebind.rpc;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
+import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.GeneratedResource;
@@ -230,11 +232,13 @@ class ProxyCreator {
     Map<JMethod, JMethod> syncMethToAsyncMethMap = rsav.validate(logger,
         serviceIntf, serviceAsync);
 
+    final PropertyOracle propertyOracle = context.getPropertyOracle();
+    
     // Determine the set of serializable types
     SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
-        logger, context.getPropertyOracle(), typeOracle);
+        logger, propertyOracle, typeOracle);
     SerializableTypeOracleBuilder typesSentToBrowserBuilder = new SerializableTypeOracleBuilder(
-        logger, context.getPropertyOracle(), typeOracle);
+        logger, propertyOracle, typeOracle);
     try {
       addRequiredRoots(logger, typeOracle, typesSentFromBrowserBuilder);
       addRequiredRoots(logger, typeOracle, typesSentToBrowserBuilder);
@@ -247,8 +251,10 @@ class ProxyCreator {
     }
 
     try {
-      elideTypeNames = Boolean.parseBoolean(context.getPropertyOracle().getPropertyValue(
-          logger, TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC));
+      ConfigurationProperty prop
+          = context.getPropertyOracle().getConfigurationProperty(
+              TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC);
+      elideTypeNames = Boolean.parseBoolean(prop.getValues().get(0));
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Configuration property "
           + TypeSerializerCreator.GWT_ELIDE_TYPE_NAMES_FROM_RPC

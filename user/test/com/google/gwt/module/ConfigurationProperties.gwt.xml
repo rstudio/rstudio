@@ -13,6 +13,8 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 <module>
+  <define-configuration-property name="testProperty"
+    is-multi-valued="false" />
   <set-configuration-property name="testProperty"
     value="Hello World!" />
   <generate-with

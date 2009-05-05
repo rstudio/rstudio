@@ -33,6 +33,7 @@
     <!--
         If this is ever turned on by default, fix up RPCSuiteWithElision 
     -->
+    <define-configuration-property name="gwt.elideTypeNamesFromRPC" is-multi-valued="false" />
     <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="false" />
 
 	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">

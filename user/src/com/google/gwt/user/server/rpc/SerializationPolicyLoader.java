@@ -41,11 +41,11 @@ public final class SerializationPolicyLoader {
       + "[true | false], [true | false], [true | false], [true | false], typeId, signature";
 
   /**
-   * Returns the serialization policy file name from the from the serialization
+   * Returns the serialization policy file name from the serialization
    * policy strong name.
    * 
    * @param serializationPolicyStrongName the serialization policy strong name
-   * @return the serialization policy file name from the from the serialization
+   * @return the serialization policy file name from the serialization
    *         policy strong name
    */
   public static String getSerializationPolicyFileName(

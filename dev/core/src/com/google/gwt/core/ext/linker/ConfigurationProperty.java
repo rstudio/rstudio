@@ -15,6 +15,8 @@
  */
 package com.google.gwt.core.ext.linker;
 
+import java.util.List;
+
 /**
  * Represents a configuration property. These properties do not affect
  * deferred-binding decisions, but may affect the behavior of Linkers and
@@ -31,9 +33,22 @@ public interface ConfigurationProperty {
    * Returns the name of the configuration property.
    */
   String getName();
+  
+  /**
+   * Returns the defined value for the configuration property.  If the property
+   * has multiple values, this returns the first value only.
+   */
+  @Deprecated
+  String getValue();
+  
+  /**
+   * Returns the defined values for the configuration property as a List
+   * of Strings.
+   */
+  List<String> getValues();
 
   /**
-   * Returns the defined value for the configuration property.
+   * Returns true if this property has more than one value.
    */
-  String getValue();
+  boolean hasMultipleValues();
 }

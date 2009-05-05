@@ -17,6 +17,7 @@ package com.google.gwt.resources.ext;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JMethod;
@@ -118,7 +119,8 @@ public final class ResourceGeneratorUtil {
     String locale;
     try {
       PropertyOracle oracle = context.getGeneratorContext().getPropertyOracle();
-      locale = oracle.getPropertyValue(logger, "locale");
+      SelectionProperty prop = oracle.getSelectionProperty(logger, "locale");
+      locale = prop.getCurrentValue();
     } catch (BadPropertyValueException e) {
       locale = null;
     }

@@ -20,6 +20,9 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 
 import java.io.Serializable;
+import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 /**
  * An implementation of {@link PropertyOracle} that contains property values,
@@ -38,6 +41,35 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     this.orderedProps = orderedProps;
     this.orderedPropValues = orderedPropValues;
     this.configProps = configProps;
+    
+    // Reject illegal values at construction time
+    int len = orderedProps.length;
+    for (int i = 0; i < len; i++) {
+      BindingProperty prop = orderedProps[i];
+      String value = orderedPropValues[i];
+      if (!prop.isAllowedValue(value)) {
+        throw new IllegalArgumentException("Property " + prop.getName()
+            + " cannot have value " + value);
+      }
+    }
+  }
+
+  public com.google.gwt.core.ext.ConfigurationProperty getConfigurationProperty(
+      String propertyName) throws BadPropertyValueException {
+    for (final ConfigurationProperty prop : configProps) {
+      if (prop.getName().equals(propertyName)) {
+        return new com.google.gwt.core.ext.ConfigurationProperty() {
+          public String getName() {
+            return prop.getName();
+          }
+
+          public List<String> getValues() {
+            return prop.getValues();
+          }
+        };
+      }
+    }
+    throw new BadPropertyValueException(propertyName);
   }
 
   public BindingProperty[] getOrderedProps() {
@@ -48,6 +80,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     return orderedPropValues;
   }
 
+  @Deprecated
   public String getPropertyValue(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     // In practice there will probably be so few properties that a linear
@@ -78,6 +111,7 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
     throw new BadPropertyValueException(propertyName);
   }
 
+  @Deprecated
   public String[] getPropertyValueSet(TreeLogger logger, String propertyName)
       throws BadPropertyValueException {
     for (int i = 0; i < orderedProps.length; i++) {
@@ -91,6 +125,43 @@ public class StaticPropertyOracle implements PropertyOracle, Serializable {
 
     // Didn't find it.
     //
+    throw new BadPropertyValueException(propertyName);
+  }
+
+  public com.google.gwt.core.ext.SelectionProperty getSelectionProperty(
+      TreeLogger logger, String propertyName)
+      throws BadPropertyValueException {
+    // In practice there will probably be so few properties that a linear
+    // search is at least as fast as a map lookup by name would be.
+    // If that turns out not to be the case, the ctor could build a
+    // name-to-index map.
+    for (int i = 0; i < orderedProps.length; i++) {
+      final BindingProperty prop = orderedProps[i];
+      final String name = prop.getName();
+      if (name.equals(propertyName)) {
+        final String value = orderedPropValues[i];
+        String[] values = prop.getDefinedValues();
+        final TreeSet<String> possibleValues = new TreeSet<String>();
+        for (String v : values) {
+          possibleValues.add(v);
+        }
+
+        return new com.google.gwt.core.ext.SelectionProperty() {
+          public String getCurrentValue() {
+            return value;
+          }
+
+          public String getName() {
+            return name;
+          }
+
+          public SortedSet<String> getPossibleValues() {
+            return possibleValues;
+          }
+        };
+      }
+    }
+
     throw new BadPropertyValueException(propertyName);
   }
 }

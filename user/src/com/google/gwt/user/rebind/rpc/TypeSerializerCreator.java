@@ -19,6 +19,7 @@ package com.google.gwt.user.rebind.rpc;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
@@ -139,9 +140,10 @@ public class TypeSerializerCreator {
         + " for TypeSerializerCreator createMethodMap");
 
     try {
-      String value = context.getPropertyOracle().getPropertyValue(logger,
-          GWT_ELIDE_TYPE_NAMES_FROM_RPC);
-      elideTypeNames = Boolean.parseBoolean(value);
+      ConfigurationProperty prop
+          = context.getPropertyOracle().getConfigurationProperty(
+              GWT_ELIDE_TYPE_NAMES_FROM_RPC);
+      elideTypeNames = Boolean.parseBoolean(prop.getValues().get(0));
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "The configuration property "
           + GWT_ELIDE_TYPE_NAMES_FROM_RPC

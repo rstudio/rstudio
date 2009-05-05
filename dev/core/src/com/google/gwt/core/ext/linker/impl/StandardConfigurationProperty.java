@@ -17,6 +17,8 @@ package com.google.gwt.core.ext.linker.impl;
 
 import com.google.gwt.core.ext.linker.ConfigurationProperty;
 
+import java.util.List;
+
 /**
  * The standard implementation of {@link ConfigurationProperty} from a
  * {@link com.google.gwt.dev.cfg.ConfigurationProperty}.
@@ -24,19 +26,33 @@ import com.google.gwt.core.ext.linker.ConfigurationProperty;
 public class StandardConfigurationProperty implements ConfigurationProperty {
 
   private final String name;
-  private final String value;
+  private final List<String> values;
 
   public StandardConfigurationProperty(
       com.google.gwt.dev.cfg.ConfigurationProperty p) {
-    this.name = p.getName();
-    this.value = p.getValue();
+    name = p.getName();
+    values = p.getValues();
+    
+    if (values == null || values.size() == 0) {
+      throw new IllegalArgumentException("values is null or empty");
+    }
   }
 
   public String getName() {
     return name;
   }
 
+  @Deprecated
   public String getValue() {
-    return value;
+    // values should always have at least one entry
+    return values.get(0);
+  }
+
+  public List<String> getValues() {
+    return values;
+  }
+
+  public boolean hasMultipleValues() {
+    return values.size() > 1;
   }
 }

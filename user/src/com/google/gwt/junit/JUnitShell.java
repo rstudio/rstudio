@@ -668,8 +668,9 @@ public class JUnitShell extends GWTShell {
       currentModule.clearEntryPoints();
       currentModule.addEntryPointTypeName(GWTRunner.class.getName());
       // Squirrel away the name of the active module for GWTRunnerGenerator
-      ConfigurationProperty moduleNameProp = currentModule.getProperties().createConfiguration(
-          "junit.moduleName");
+      ConfigurationProperty moduleNameProp
+          = currentModule.getProperties().createConfiguration(
+              "junit.moduleName", false);
       moduleNameProp.setValue(moduleName);
       runStyle.maybeCompileModule(syntheticModuleName);
     }

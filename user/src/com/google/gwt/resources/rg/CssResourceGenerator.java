@@ -16,8 +16,10 @@
 package com.google.gwt.resources.rg;
 
 import com.google.gwt.core.ext.BadPropertyValueException;
+import com.google.gwt.core.ext.ConfigurationProperty;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -219,7 +221,16 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       } else {
         try {
           String propertyName = x.getPropertyName();
-          String propValue = oracle.getPropertyValue(logger, propertyName);
+          String propValue = null;
+          try {
+            SelectionProperty selProp
+                = oracle.getSelectionProperty(logger, propertyName);
+            propValue = selProp.getCurrentValue();
+          } catch (BadPropertyValueException e) {
+            ConfigurationProperty confProp
+                = oracle.getConfigurationProperty(propertyName);
+            propValue = confProp.getValues().get(0);
+          }
 
           /*
            * If the deferred binding property's value is in the list of values
@@ -1229,8 +1240,9 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
        */
       try {
         PropertyOracle propertyOracle = context.getGeneratorContext().getPropertyOracle();
-        String propertyValue = propertyOracle.getPropertyValue(logger,
+        ConfigurationProperty prop = propertyOracle.getConfigurationProperty(
             "CssResource.strictAccessors");
+        String propertyValue = prop.getValues().get(0);
         if (Boolean.valueOf(propertyValue)) {
           logger.log(TreeLogger.WARN, "CssResource.forceStrict is true, but "
               + method.getName() + "() is missing the @Strict annotation.");
@@ -1264,16 +1276,20 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       throws UnableToCompleteException {
     try {
       PropertyOracle propertyOracle = context.getGeneratorContext().getPropertyOracle();
-      String style = propertyOracle.getPropertyValue(logger,
-          "CssResource.style").toLowerCase();
+      ConfigurationProperty styleProp
+          = propertyOracle.getConfigurationProperty("CssResource.style");
+      String style = styleProp.getValues().get(0);
       prettyOutput = style.equals("pretty");
 
-      String merge = propertyOracle.getPropertyValue(logger,
-          "CssResource.mergeEnabled").toLowerCase();
+      ConfigurationProperty mergeProp
+          = propertyOracle.getConfigurationProperty("CssResource.mergeEnabled");
+      String merge = mergeProp.getValues().get(0);
       enableMerge = merge.equals("true");
 
-      classPrefix = propertyOracle.getPropertyValue(logger,
-          "CssResource.obfuscationPrefix");
+      ConfigurationProperty classPrefixProp
+          = propertyOracle.getConfigurationProperty(
+              "CssResource.obfuscationPrefix");
+      classPrefix = classPrefixProp.getValues().get(0);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.WARN, "Unable to query module property", e);
       throw new UnableToCompleteException();

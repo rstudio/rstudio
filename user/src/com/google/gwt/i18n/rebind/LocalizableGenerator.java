@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.BadPropertyValueException;
 import com.google.gwt.core.ext.Generator;
 import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
+import com.google.gwt.core.ext.SelectionProperty;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
@@ -87,7 +88,9 @@ public class LocalizableGenerator extends Generator {
       // If the locale is not specified by the user as a request parameter
       // or via a meta tag, or if the locale is formatted incorrectly,
       // getPropertyValue() will return "default".
-      locale = propertyOracle.getPropertyValue(logger, PROP_LOCALE);
+      SelectionProperty localeProp
+          = propertyOracle.getSelectionProperty(logger, PROP_LOCALE);
+      locale = localeProp.getCurrentValue();
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Could not parse specified locale", e);
       throw new UnableToCompleteException();
