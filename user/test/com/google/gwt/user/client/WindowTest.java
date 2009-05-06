@@ -116,6 +116,11 @@ public class WindowTest extends GWTTestCase {
     assertEquals(map.get("d").get(0), "d=d");
     assertEquals(map.get("f").get(0), "2");
     assertEquals(map.get("f").get(1), "1");
+
+    // Values escaped with hex codes should work too.
+    map = Window.Location.buildListParamMap(
+    "?foo=bar%20baz%3aqux");
+    assertEquals(map.get("foo").get(0), "bar baz:qux");
   }
 
   /**

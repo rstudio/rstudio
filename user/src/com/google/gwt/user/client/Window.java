@@ -270,7 +270,7 @@ public class Window {
             values = new ArrayList<String>();
             out.put(kv[0], values);
           }
-          values.add(kv.length > 1 ? URL.decode(kv[1]) : "");
+          values.add(kv.length > 1 ? URL.decodeComponent(kv[1]) : "");
         }
       }
 
@@ -292,7 +292,7 @@ public class Window {
           for (String kvPair : qs.split("&")) {
             String[] kv = kvPair.split("=", 2);
             if (kv.length > 1) {
-              paramMap.put(kv[0], URL.decode(kv[1]));
+              paramMap.put(kv[0], URL.decodeComponent(kv[1]));
             } else {
               paramMap.put(kv[0], "");
             }
