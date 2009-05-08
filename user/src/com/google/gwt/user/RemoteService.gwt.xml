@@ -35,6 +35,17 @@
     -->
     <define-configuration-property name="gwt.elideTypeNamesFromRPC" is-multi-valued="false" />
     <set-configuration-property name="gwt.elideTypeNamesFromRPC" value="false" />
+    
+  <!--
+      Contains regular expressions, optionally prefixed with '+' or '-'.
+      Each type being considered for serialization is tested against the
+      list of expressions in order, and if there is a match it is added to the
+      blacklist (if the prefix is '-' or no prefix is present), or removed (if
+      the prefix is '+').  If multiple entries in the list match a supplied
+      class, then the last one 'wins.'  For generic types, the regular
+      expression is applied to just the base class's fully qualified name.
+  -->
+  <define-configuration-property name="rpc.blacklist" is-multi-valued="true" />
 
 	<generate-with class="com.google.gwt.user.rebind.rpc.ServiceInterfaceProxyGenerator">
 		<when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>

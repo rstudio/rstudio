@@ -33,8 +33,12 @@ public class StandardConfigurationProperty implements ConfigurationProperty {
     name = p.getName();
     values = p.getValues();
     
-    if (values == null || values.size() == 0) {
-      throw new IllegalArgumentException("values is null or empty");
+    if (values == null) {
+      throw new IllegalArgumentException("values is null");
+    }
+    if (!p.allowsMultipleValues() && values.size() != 1) {
+      throw new IllegalArgumentException(
+          "p is single-valued but values.size != 1");
     }
   }
 

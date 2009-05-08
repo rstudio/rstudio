@@ -234,11 +234,17 @@ class ProxyCreator {
 
     final PropertyOracle propertyOracle = context.getPropertyOracle();
     
+    // Load the blacklist/whitelist
+    TypeFilter blacklistTypeFilter = new BlacklistTypeFilter(logger, propertyOracle);
+
     // Determine the set of serializable types
     SerializableTypeOracleBuilder typesSentFromBrowserBuilder = new SerializableTypeOracleBuilder(
         logger, propertyOracle, typeOracle);
+    typesSentFromBrowserBuilder.setTypeFilter(blacklistTypeFilter);
     SerializableTypeOracleBuilder typesSentToBrowserBuilder = new SerializableTypeOracleBuilder(
         logger, propertyOracle, typeOracle);
+    typesSentToBrowserBuilder.setTypeFilter(blacklistTypeFilter);
+
     try {
       addRequiredRoots(logger, typeOracle, typesSentFromBrowserBuilder);
       addRequiredRoots(logger, typeOracle, typesSentToBrowserBuilder);
@@ -267,9 +273,25 @@ class ProxyCreator {
     // output.
     OutputStream pathInfo = context.tryCreateResource(logger,
         serviceIntf.getQualifiedSourceName() + ".rpc.log");
+    PrintWriter writer = new PrintWriter(pathInfo);
+    
     typesSentFromBrowserBuilder.setLogOutputStream(pathInfo);
-    SerializableTypeOracle typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
-    SerializableTypeOracle typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
+    typesSentToBrowserBuilder.setLogOutputStream(pathInfo);
+    
+    writer.write("====================================\n");
+    writer.write("Types potentially sent from browser:\n");
+    writer.write("====================================\n\n");
+    writer.flush();
+    SerializableTypeOracle typesSentFromBrowser
+        = typesSentFromBrowserBuilder.build(logger);
+    
+    writer.write("===================================\n");
+    writer.write("Types potentially sent from server:\n");
+    writer.write("===================================\n\n");
+    writer.flush();
+    SerializableTypeOracle typesSentToBrowser
+        = typesSentToBrowserBuilder.build(logger);
+    
     if (pathInfo != null) {
       context.commitResource(logger, pathInfo).setPrivate(true);
     }
