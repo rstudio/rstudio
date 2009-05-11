@@ -32,6 +32,8 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.AttributeConverter;
 import com.google.gwt.dev.util.xml.Schema;
 
+import com.sun.tools.example.debug.expr.Token;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
@@ -46,6 +48,7 @@ import java.util.Set;
  * Configures a module definition object using XML.
  */
 public class ModuleDefSchema extends Schema {
+  
   private final class BodySchema extends Schema {
 
     protected final String __add_linker_1_name = null;
@@ -139,7 +142,7 @@ public class ModuleDefSchema extends Schema {
       moduleDef.addLinker(name.name);
       return null;
     }
-
+    
     protected Schema __clear_configuration_property_begin(PropertyName name)
         throws UnableToCompleteException {
       // Don't allow configuration properties with the same name as a
@@ -177,11 +180,47 @@ public class ModuleDefSchema extends Schema {
         // Create the property
         existingProperty = moduleDef.getProperties().createConfiguration(
             name.token, isMultiValued);
+        if (!propertyDefinitions.containsKey(name.token)) {
+          propertyDefinitions.put(name.token, moduleName);
+        }
+      } else if (existingProperty instanceof ConfigurationProperty) {
+        // Allow redefinition only if the 'is-multi-valued' setting is identical
+        // The previous definition may have been explicit, via
+        // <define-configuration-property>, or implicit, via
+        // <set-configuration-property>.  In the latter case, the
+        // value of the 'is-multi-valued' attribute was taken as false.
+        String originalDefinition = propertyDefinitions.get(name.token);
+        if (((ConfigurationProperty) existingProperty).allowsMultipleValues()
+            != isMultiValued) {
+          if (originalDefinition != null) {
+            logger.log(TreeLogger.ERROR, "The configuration property named "
+                + name.token
+                + " is already defined with a different 'is-multi-valued' setting");
+          } else {
+            logger.log(TreeLogger.ERROR, "The configuration property named "
+                + name.token
+                + " is already defined implicitly by 'set-configuration-property'"
+                + " in " + propertySettings.get(name.token)
+                + " with 'is-multi-valued' set to 'false'");
+          }
+          throw new UnableToCompleteException();
+        } else {
+          if (originalDefinition != null) {
+            logger.log(TreeLogger.WARN,
+                "Ignoring identical definition of the configuration property named "
+                + name.token + " (originally defined in "
+                + originalDefinition
+                + ", redefined in " + moduleName + ")");
+          } else {
+            logger.log(TreeLogger.WARN,
+                "Definition of already set configuration property named "
+                + name.token + " in " + moduleName
+                + " (set in " + propertySettings.get(name.token)
+                + ").  This may be disallowed in the future.");
+          }
+        }
       } else {
-        if (existingProperty instanceof ConfigurationProperty) {
-          logger.log(TreeLogger.ERROR, "The configuration property named "
-              + name.token + " may not be redefined.");
-        } else if (existingProperty instanceof BindingProperty) {
+        if (existingProperty instanceof BindingProperty) {
           logger.log(TreeLogger.ERROR, "The property " + name.token
               + " is already defined as a deferred-binding property");
         } else {
@@ -411,6 +450,16 @@ public class ModuleDefSchema extends Schema {
         // compatibility but don't allow multiple values.
         existingProperty = moduleDef.getProperties().createConfiguration(
             name.token, false);
+        if (!propertySettings.containsKey(name.token)) {
+          propertySettings.put(name.token, moduleName);
+        }
+
+        logger.log(TreeLogger.WARN,
+            "Setting configuration property named "
+            + name.token + " in "
+            + moduleName
+            + " that has not been previously defined."
+            + "  This may be disallowed in the future.");
       } else if (!(existingProperty instanceof ConfigurationProperty)) {
         if (existingProperty instanceof BindingProperty) {
           logger.log(TreeLogger.ERROR, "The property " + name.token
@@ -1001,6 +1050,20 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
+  /**
+   * Map of property names to the modules that defined them explicitly using
+   * <define-configuration-property>, used to generate warning messages.
+   */
+  private static final HashMap<String,String> propertyDefinitions
+      = new HashMap<String,String>();
+ 
+  /**
+   * Map of property names to the modules that defined them implicitly using
+   * <set-configuration-property>, used to generate warning messages.
+   */
+  private static final HashMap<String,String> propertySettings
+      = new HashMap<String,String>();
+
   private static final Map<String, Object> singletonsByName = new HashMap<String, Object>();
 
   private static void addPrefix(String[] strings, String prefix) {
@@ -1016,9 +1079,8 @@ public class ModuleDefSchema extends Schema {
   private static boolean toPrimitiveBoolean(String s) {
     return "yes".equalsIgnoreCase(s) || "true".equalsIgnoreCase(s);
   }
-
+  
   protected final String __module_1_rename_to = "";
-
   private final PropertyAttrCvt bindingPropAttrCvt = new PropertyAttrCvt(
       BindingProperty.class);
   private final BodySchema bodySchema;
@@ -1034,6 +1096,7 @@ public class ModuleDefSchema extends Schema {
   private final ModuleDefLoader loader;
   private final TreeLogger logger;
   private final ModuleDef moduleDef;
+  private final String moduleName;
   private final String modulePackageAsPath;
   private final URL moduleURL;
   private final NullableNameAttrCvt nullableNameAttrCvt = new NullableNameAttrCvt();
@@ -1042,9 +1105,10 @@ public class ModuleDefSchema extends Schema {
   private final PropertyValueAttrCvt propValueAttrCvt = new PropertyValueAttrCvt();
 
   public ModuleDefSchema(TreeLogger logger, ModuleDefLoader loader,
-      URL moduleURL, String modulePackageAsPath, ModuleDef toConfigure) {
+      String moduleName, URL moduleURL, String modulePackageAsPath, ModuleDef toConfigure) {
     this.logger = logger;
     this.loader = loader;
+    this.moduleName = moduleName;
     this.moduleURL = moduleURL;
     this.modulePackageAsPath = modulePackageAsPath;
     assert (modulePackageAsPath.endsWith("/") || modulePackageAsPath.equals(""));

@@ -238,8 +238,8 @@ public final class ModuleDefLoader {
     Reader r = null;
     try {
       r = Util.createReader(logger, moduleURL);
-      ModuleDefSchema schema = new ModuleDefSchema(logger, this, moduleURL,
-          moduleDir, moduleDef);
+      ModuleDefSchema schema = new ModuleDefSchema(logger, this, moduleName,
+          moduleURL, moduleDir, moduleDef);
       ReflectiveParser.parse(logger, schema, r);
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Unexpected error while processing XML", e);
