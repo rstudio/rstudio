@@ -15,19 +15,32 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
 
 /**
- * A mutually-exclusive selection radio button widget.
+ * A mutually-exclusive selection radio button widget. Fires {@link ClickEvent}s
+ * when the radio button is clicked, and {@link ValueChangeEvent}s when the
+ * button becomes checked. Note, however, that browser limitations prevent
+ * ValueChangeEvents from being sent when the radio button is cleared as a side
+ * effect of another in the group being clicked.
  * 
  * <p>
  * <img class='gallery' src='RadioButton.png'/>
  * </p>
  * 
- * <h3>CSS Style Rules</h3>
- * <ul class='css'>
- * <li>.gwt-RadioButton { }</li>
- * </ul>
+ * <h3>CSS Style Rules</h3> 
+ * <dl>
+ * <dt>.gwt-RadioButton</dt> 
+ * <dd>the outer element</dd>
+ * </dl>
  * 
  * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.RadioButtonExample}
@@ -35,20 +48,84 @@ import com.google.gwt.user.client.DOM;
  */
 public class RadioButton extends CheckBox {
 
+  private Boolean oldValue;
+
   /**
    * Creates a new radio associated with a particular group name. All radio
    * buttons associated with the same group name belong to a mutually-exclusive
    * set.
    * 
-   * Radio buttons are grouped by their name attribute, so changing their
-   * name using the setName() method will also change their associated
-   * group.
+   * Radio buttons are grouped by their name attribute, so changing their name
+   * using the setName() method will also change their associated group.
    * 
    * @param name the group name with which to associate the radio button
    */
   public RadioButton(String name) {
     super(DOM.createInputRadio(name));
     setStyleName("gwt-RadioButton");
+
+    sinkEvents(Event.getTypeInt(MouseUpEvent.getType().getName()));
+    sinkEvents(Event.getTypeInt(BlurEvent.getType().getName()));
+    sinkEvents(Event.getTypeInt(KeyDownEvent.getType().getName()));
+  }
+
+  /**
+   * Overridden to send ValueChangeEvents only when appropriate.
+   */
+  @Override
+  public void onBrowserEvent(Event event) {
+    switch (DOM.eventGetType(event)) {
+      case Event.ONMOUSEUP:
+      case Event.ONBLUR:
+      case Event.ONKEYDOWN:
+        // Note the old value for onValueChange purposes (in ONCLICK case)
+        oldValue = getValue();
+        break;
+
+      case Event.ONCLICK:
+        EventTarget target = event.getEventTarget();
+        if (Element.is(target) && labelElem.isOrHasChild(Element.as(target))) {
+
+          // They clicked the label. Note our pre-click value, and
+          // short circuit event routing so that other click handlers
+          // don't hear about it
+          oldValue = getValue();
+          return;
+        }
+
+        // It's not the label. Let our handlers hear about the
+        // click...
+        super.onBrowserEvent(event);
+        // ...and now maybe tell them about the change
+        ValueChangeEvent.fireIfNotEqual(RadioButton.this, oldValue, getValue());
+        return;
+    }
+
+    super.onBrowserEvent(event);
+  }
+
+  @Override
+  public void sinkEvents(int eventBitsToAdd) {
+    // Like CheckBox, we want to hear about inputElem. We
+    // also want to know what's going on with the label, to
+    // make sure onBrowserEvent is able to record value changes
+    // initiated by label events
+    if (isOrWasAttached()) {
+      Event.sinkEvents(inputElem, eventBitsToAdd
+          | Event.getEventsSunk(inputElem));
+      Event.sinkEvents(labelElem, eventBitsToAdd
+          | Event.getEventsSunk(labelElem));
+    } else {
+      super.sinkEvents(eventBitsToAdd);
+    }
+  }
+
+  /**
+   * No-op. CheckBox's click handler is no good for radio button, so don't use
+   * it. Our event handling is all done in {@link #onBrowserEvent}
+   */
+  @Override
+  protected void ensureDomEventHandlers() {
   }
 
   /**
@@ -56,9 +133,8 @@ public class RadioButton extends CheckBox {
    * with the given HTML label. All radio buttons associated with the same group
    * name belong to a mutually-exclusive set.
    * 
-   * Radio buttons are grouped by their name attribute, so changing their
-   * name using the setName() method will also change their associated
-   * group.
+   * Radio buttons are grouped by their name attribute, so changing their name
+   * using the setName() method will also change their associated group.
    * 
    * @param name the group name with which to associate the radio button
    * @param label this radio button's label
@@ -74,9 +150,8 @@ public class RadioButton extends CheckBox {
    * buttons associated with the same group name belong to a mutually-exclusive
    * set.
    * 
-   * Radio buttons are grouped by their name attribute, so changing their
-   * name using the setName() method will also change their associated
-   * group.
+   * Radio buttons are grouped by their name attribute, so changing their name
+   * using the setName() method will also change their associated group.
    * 
    * @param name name the group with which to associate the radio button
    * @param label this radio button's label
@@ -94,19 +169,18 @@ public class RadioButton extends CheckBox {
   /**
    * Change the group name of this radio button.
    * 
-   * Radio buttons are grouped by their name attribute, so changing their
-   * name using the setName() method will also change their associated
-   * group.
+   * Radio buttons are grouped by their name attribute, so changing their name
+   * using the setName() method will also change their associated group.
    * 
-   * If changing this group name results in a new radio group with
-   * multiple radio buttons selected, this radio button will remain
-   * selected and the other radio buttons will be unselected.
-   *  
+   * If changing this group name results in a new radio group with multiple
+   * radio buttons selected, this radio button will remain selected and the
+   * other radio buttons will be unselected.
+   * 
    * @param name name the group with which to associate the radio button
    */
   @Override
   public void setName(String name) {
-    // Just changing the radio button name tends to break groupiness, 
+    // Just changing the radio button name tends to break groupiness,
     // so we have to replace it. Note that replaceInputElement is careful
     // not to propagate name when it propagates everything else
     super.replaceInputElement(DOM.createInputRadio(name));

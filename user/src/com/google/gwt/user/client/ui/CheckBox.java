@@ -20,10 +20,6 @@ import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -56,10 +52,9 @@ import com.google.gwt.user.client.EventListener;
  * </p>
  */
 public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
-  private InputElement inputElem;
-  private LabelElement labelElem;
+  InputElement inputElem;
+  LabelElement labelElem;
   private boolean valueChangeHandlerInitialized;
-  private boolean valueBeforeClick;
 
   /**
    * Creates a check box with no label.
@@ -118,29 +113,21 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
       ValueChangeHandler<Boolean> handler) {
     // Is this the first value change handler? If so, time to add handlers
     if (!valueChangeHandlerInitialized) {
-
-      this.addKeyUpHandler(new KeyUpHandler() {
-        public void onKeyUp(KeyUpEvent event) {
-          valueBeforeClick = getValue();
-        }
-      });
-
-      this.addMouseUpHandler(new MouseUpHandler() {
-        public void onMouseUp(MouseUpEvent event) {
-          valueBeforeClick = getValue();
-        }
-      });
-
-      this.addClickHandler(new ClickHandler() {
-        public void onClick(ClickEvent event) {
-          ValueChangeEvent.fireIfNotEqual(CheckBox.this, valueBeforeClick,
-              getValue());
-        }
-      });
-
+      ensureDomEventHandlers();
       valueChangeHandlerInitialized = true;
     }
     return addHandler(handler, ValueChangeEvent.getType());
+  }
+
+  protected void ensureDomEventHandlers() {
+    addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        // Checkboxes always toggle their value, no need to compare
+        // with old value. Radio buttons are not so lucky, see
+        // overrides in RadioButton
+        ValueChangeEvent.fire(CheckBox.this, getValue());
+      }
+    });
   }
 
   /**
@@ -329,15 +316,13 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     }
   }
 
-  // Unlike other widgets the CheckBox sinks on its constituent elements, not
-  // their wrapper element.
+  // Unlike other widgets the CheckBox sinks on its inputElement, not
+  // its wrapper
   @Override
   public void sinkEvents(int eventBitsToAdd) {
     if (isOrWasAttached()) {
       Event.sinkEvents(inputElem, 
           eventBitsToAdd | Event.getEventsSunk(inputElem));
-      Event.sinkEvents(labelElem, 
-          eventBitsToAdd | Event.getEventsSunk(labelElem));
     } else {
       super.sinkEvents(eventBitsToAdd);
     }

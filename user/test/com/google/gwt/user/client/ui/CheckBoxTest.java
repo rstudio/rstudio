@@ -17,7 +17,9 @@ package com.google.gwt.user.client.ui;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
@@ -29,8 +31,7 @@ import com.google.gwt.user.client.Element;
  * Tests the CheckBox Widget.
  */
 public class CheckBoxTest extends GWTTestCase {
-
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings("deprecation")  
   static class ListenerTester implements ClickListener {
     static int fired = 0;
     static HandlerManager manager;
@@ -44,8 +45,9 @@ public class CheckBoxTest extends GWTTestCase {
     public void onClick(Widget sender) {
       ++fired;
     }
-  }
 
+  }
+  
   private static class Handler implements ValueChangeHandler<Boolean> {
     Boolean received = null;
 
@@ -166,6 +168,53 @@ public class CheckBoxTest extends GWTTestCase {
     assertEquals(ListenerTester.fired, 0);
   }
 
+  public void testCheckboxClick() {
+    final int[] clickCount = {0};
+
+    CheckBox check = new CheckBox();
+    Element newInput = DOM.createInputCheck();
+    check.replaceInputElement(newInput);
+
+    check.setText("Burger");
+    check.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent arg0) {
+        clickCount[0]++;
+      }
+    });
+    RootPanel.get().add(check);
+
+    NativeEvent e = Document.get().createClickEvent(0, 25, 25, 25, 25, false, 
+        false, false, false);
+
+    newInput.dispatchEvent(e);
+    assertEquals(1, clickCount[0]);
+  }
+  
+  public void testLabelClick() {
+    final int[] clickCount = {0};
+
+    CheckBox check = new CheckBox();
+    Element newInput = DOM.createInputCheck();
+    check.replaceInputElement(newInput);
+
+    check.setText("Burger");
+    check.addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent arg0) {
+        clickCount[0]++;
+      }
+    });
+    RootPanel.get().add(check);
+
+    NativeEvent e = Document.get().createClickEvent(0, 25, 25, 25, 25, false, 
+        false, false, false);
+
+    // click the label, which is next to the checkbox
+    // http://code.google.com/p/google-web-toolkit/issues/detail?id=3508
+
+    newInput.getNextSiblingElement().dispatchEvent(e);
+    assertEquals(1, clickCount[0]);
+  }
+  
   public void testReplaceInputElement() {
     cb.setValue(true);
     cb.setTabIndex(1234);
@@ -192,8 +241,6 @@ public class CheckBoxTest extends GWTTestCase {
 
     elm.setChecked(true);
     assertTrue(cb.getValue());
-
-    // TODO: When event creation is in, test that click on the new element works
   }
 
   @SuppressWarnings("deprecation")
@@ -225,6 +272,11 @@ public class CheckBoxTest extends GWTTestCase {
     } catch (IllegalArgumentException e) {
       /* pass */
     }
+    
+    // Note that we cannot test this with a simulated click, the way
+    // we do for the click handlers. IE does not change the value of
+    // the native checkbox on simulated click event, and there's 
+    // naught to be done about it.
   }
 
   @Override
