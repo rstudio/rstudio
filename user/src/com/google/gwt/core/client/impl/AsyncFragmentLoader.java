@@ -319,7 +319,7 @@ public class AsyncFragmentLoader {
    */
   private static boolean haveInitialFragmentsLoaded() {
     return remainingInitialFragments != null
-        && remainingInitialFragments.length() > 0;
+        && remainingInitialFragments.length() == 0;
   }
 
   private static boolean isInitial(int splitPoint) {
