@@ -165,7 +165,7 @@ public final class Util {
 
   public static void copy(InputStream is, OutputStream os) throws IOException {
     try {
-      byte[] buf = new byte[8 * 1024];
+      byte[] buf = new byte[32 * 1024];
       int i;
       while ((i = is.read(buf)) != -1) {
         os.write(buf, 0, i);
