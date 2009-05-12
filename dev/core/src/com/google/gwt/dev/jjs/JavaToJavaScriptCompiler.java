@@ -492,7 +492,7 @@ public class JavaToJavaScriptCompiler {
        * Don't bother optimizing early if there's only one permutation.
        */
       if (!singlePermutation) {
-        draftOptimize(jprogram);
+        optimizeLoop(jprogram, false);
       }
 
       Set<String> rebindRequests = new HashSet<String>();
@@ -515,15 +515,14 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
-    PerfLogger.start("draft optimize");
-    Pruner.exec(jprogram, true);
+    optimizeLoop(jprogram, false);
+
     /*
      * Ensure that references to dead clinits are removed. Otherwise, the
      * application won't run reliably.
      */
     jprogram.typeOracle.recomputeAfterOptimizations();
     DeadCodeElimination.exec(jprogram);
-    PerfLogger.end();
   }
 
   protected static void optimize(JJSOptions options, JProgram jprogram)
@@ -536,52 +535,54 @@ public class JavaToJavaScriptCompiler {
     jprogram.beginOptimizations();
 
     PerfLogger.start("optimize");
-    boolean didChange;
     do {
       if (Thread.interrupted()) {
         PerfLogger.end();
         throw new InterruptedException();
       }
-
       maybeDumpAST(jprogram);
-
-      PerfLogger.start("optimize loop");
-
-      // Recompute clinits each time, they can become empty.
-      jprogram.typeOracle.recomputeAfterOptimizations();
-      didChange = false;
-
-      // Remove unreferenced types, fields, methods, [params, locals]
-      didChange = Pruner.exec(jprogram, true) || didChange;
-      // finalize locals, params, fields, methods, classes
-      didChange = Finalizer.exec(jprogram) || didChange;
-      // rewrite non-polymorphic calls as static calls; update all call sites
-      didChange = MakeCallsStatic.exec(jprogram) || didChange;
-
-      // type flow tightening
-      // - fields, locals based on assignment
-      // - params based on assignment and call sites
-      // - method bodies based on return statements
-      // - polymorphic methods based on return types of all implementors
-      // - optimize casts and instance of
-      didChange = TypeTightener.exec(jprogram) || didChange;
-
-      // tighten method call bindings
-      didChange = MethodCallTightener.exec(jprogram) || didChange;
-
-      // dead code removal??
-      didChange = DeadCodeElimination.exec(jprogram) || didChange;
-
-      if (options.isAggressivelyOptimize()) {
-        // inlining
-        didChange = MethodInliner.exec(jprogram) || didChange;
-      }
-      // prove that any types that have been culled from the main tree are
-      // unreferenced due to type tightening?
-
-      PerfLogger.end();
-    } while (didChange);
+    } while (optimizeLoop(jprogram, options.isAggressivelyOptimize()));
     PerfLogger.end();
+  }
+
+  protected static boolean optimizeLoop(JProgram jprogram,
+      boolean isAggressivelyOptimize) {
+    PerfLogger.start("optimize loop");
+
+    // Recompute clinits each time, they can become empty.
+    jprogram.typeOracle.recomputeAfterOptimizations();
+    boolean didChange = false;
+
+    // Remove unreferenced types, fields, methods, [params, locals]
+    didChange = Pruner.exec(jprogram, true) || didChange;
+    // finalize locals, params, fields, methods, classes
+    didChange = Finalizer.exec(jprogram) || didChange;
+    // rewrite non-polymorphic calls as static calls; update all call sites
+    didChange = MakeCallsStatic.exec(jprogram) || didChange;
+
+    // type flow tightening
+    // - fields, locals based on assignment
+    // - params based on assignment and call sites
+    // - method bodies based on return statements
+    // - polymorphic methods based on return types of all implementors
+    // - optimize casts and instance of
+    didChange = TypeTightener.exec(jprogram) || didChange;
+
+    // tighten method call bindings
+    didChange = MethodCallTightener.exec(jprogram) || didChange;
+
+    // dead code removal??
+    didChange = DeadCodeElimination.exec(jprogram) || didChange;
+
+    if (isAggressivelyOptimize) {
+      // inlining
+      didChange = MethodInliner.exec(jprogram) || didChange;
+    }
+    // prove that any types that have been culled from the main tree are
+    // unreferenced due to type tightening?
+
+    PerfLogger.end();
+    return didChange;
   }
 
   private static JavaToJavaScriptMap addStringLiteralMap(
