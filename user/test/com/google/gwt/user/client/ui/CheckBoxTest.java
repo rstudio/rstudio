@@ -45,7 +45,6 @@ public class CheckBoxTest extends GWTTestCase {
     public void onClick(Widget sender) {
       ++fired;
     }
-
   }
   
   private static class Handler implements ValueChangeHandler<Boolean> {

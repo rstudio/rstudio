@@ -119,17 +119,6 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     return addHandler(handler, ValueChangeEvent.getType());
   }
 
-  protected void ensureDomEventHandlers() {
-    addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent event) {
-        // Checkboxes always toggle their value, no need to compare
-        // with old value. Radio buttons are not so lucky, see
-        // overrides in RadioButton
-        ValueChangeEvent.fire(CheckBox.this, getValue());
-      }
-    });
-  }
-
   /**
    * Returns the value property of the input element that backs this widget.
    * This is the value that will be associated with the CheckBox name and
@@ -326,6 +315,17 @@ public class CheckBox extends ButtonBase implements HasName, HasValue<Boolean> {
     } else {
       super.sinkEvents(eventBitsToAdd);
     }
+  }
+
+  protected void ensureDomEventHandlers() {
+    addClickHandler(new ClickHandler() {
+      public void onClick(ClickEvent event) {
+        // Checkboxes always toggle their value, no need to compare
+        // with old value. Radio buttons are not so lucky, see
+        // overrides in RadioButton
+        ValueChangeEvent.fire(CheckBox.this, getValue());
+      }
+    });
   }
 
   /**

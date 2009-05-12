@@ -18,7 +18,6 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.BlurEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -70,65 +69,6 @@ public class RadioButton extends CheckBox {
   }
 
   /**
-   * Overridden to send ValueChangeEvents only when appropriate.
-   */
-  @Override
-  public void onBrowserEvent(Event event) {
-    switch (DOM.eventGetType(event)) {
-      case Event.ONMOUSEUP:
-      case Event.ONBLUR:
-      case Event.ONKEYDOWN:
-        // Note the old value for onValueChange purposes (in ONCLICK case)
-        oldValue = getValue();
-        break;
-
-      case Event.ONCLICK:
-        EventTarget target = event.getEventTarget();
-        if (Element.is(target) && labelElem.isOrHasChild(Element.as(target))) {
-
-          // They clicked the label. Note our pre-click value, and
-          // short circuit event routing so that other click handlers
-          // don't hear about it
-          oldValue = getValue();
-          return;
-        }
-
-        // It's not the label. Let our handlers hear about the
-        // click...
-        super.onBrowserEvent(event);
-        // ...and now maybe tell them about the change
-        ValueChangeEvent.fireIfNotEqual(RadioButton.this, oldValue, getValue());
-        return;
-    }
-
-    super.onBrowserEvent(event);
-  }
-
-  @Override
-  public void sinkEvents(int eventBitsToAdd) {
-    // Like CheckBox, we want to hear about inputElem. We
-    // also want to know what's going on with the label, to
-    // make sure onBrowserEvent is able to record value changes
-    // initiated by label events
-    if (isOrWasAttached()) {
-      Event.sinkEvents(inputElem, eventBitsToAdd
-          | Event.getEventsSunk(inputElem));
-      Event.sinkEvents(labelElem, eventBitsToAdd
-          | Event.getEventsSunk(labelElem));
-    } else {
-      super.sinkEvents(eventBitsToAdd);
-    }
-  }
-
-  /**
-   * No-op. CheckBox's click handler is no good for radio button, so don't use
-   * it. Our event handling is all done in {@link #onBrowserEvent}
-   */
-  @Override
-  protected void ensureDomEventHandlers() {
-  }
-
-  /**
    * Creates a new radio associated with a particular group, and initialized
    * with the given HTML label. All radio buttons associated with the same group
    * name belong to a mutually-exclusive set.
@@ -167,6 +107,41 @@ public class RadioButton extends CheckBox {
   }
 
   /**
+   * Overridden to send ValueChangeEvents only when appropriate.
+   */
+  @Override
+  public void onBrowserEvent(Event event) {
+    switch (DOM.eventGetType(event)) {
+      case Event.ONMOUSEUP:
+      case Event.ONBLUR:
+      case Event.ONKEYDOWN:
+        // Note the old value for onValueChange purposes (in ONCLICK case)
+        oldValue = getValue();
+        break;
+
+      case Event.ONCLICK:
+        EventTarget target = event.getEventTarget();
+        if (Element.is(target) && labelElem.isOrHasChild(Element.as(target))) {
+
+          // They clicked the label. Note our pre-click value, and
+          // short circuit event routing so that other click handlers
+          // don't hear about it
+          oldValue = getValue();
+          return;
+        }
+
+        // It's not the label. Let our handlers hear about the
+        // click...
+        super.onBrowserEvent(event);
+        // ...and now maybe tell them about the change
+        ValueChangeEvent.fireIfNotEqual(RadioButton.this, oldValue, getValue());
+        return;
+    }
+
+    super.onBrowserEvent(event);
+  }
+
+  /**
    * Change the group name of this radio button.
    * 
    * Radio buttons are grouped by their name attribute, so changing their name
@@ -184,5 +159,29 @@ public class RadioButton extends CheckBox {
     // so we have to replace it. Note that replaceInputElement is careful
     // not to propagate name when it propagates everything else
     super.replaceInputElement(DOM.createInputRadio(name));
+  }
+
+  @Override
+  public void sinkEvents(int eventBitsToAdd) {
+    // Like CheckBox, we want to hear about inputElem. We
+    // also want to know what's going on with the label, to
+    // make sure onBrowserEvent is able to record value changes
+    // initiated by label events
+    if (isOrWasAttached()) {
+      Event.sinkEvents(inputElem, eventBitsToAdd
+          | Event.getEventsSunk(inputElem));
+      Event.sinkEvents(labelElem, eventBitsToAdd
+          | Event.getEventsSunk(labelElem));
+    } else {
+      super.sinkEvents(eventBitsToAdd);
+    }
+  }
+
+  /**
+   * No-op. CheckBox's click handler is no good for radio button, so don't use
+   * it. Our event handling is all done in {@link #onBrowserEvent}
+   */
+  @Override
+  protected void ensureDomEventHandlers() {
   }
 }
