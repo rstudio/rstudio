@@ -87,7 +87,7 @@ public class LongTest extends GWTTestCase {
     assertEquals(63, Long.numberOfTrailingZeros(Long.MIN_VALUE));
     assertEquals(20, Long.numberOfTrailingZeros(-0x7ff00000L));
   }
-
+ 
   public void testParse() {
     assertEquals(0L, Long.parseLong("0"));
     assertEquals(100000000000L, Long.parseLong("100000000000"));
@@ -108,6 +108,44 @@ public class LongTest extends GWTTestCase {
     try {
       // Issue 2636
       new Long("");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      // issue 3647
+      Long.parseLong("-");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      // issue 3647
+      new Long("-");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      Long.parseLong(" -");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      new Long(" -");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      Long.parseLong("- ");
+      fail("expected NumberFormatException");
+    } catch (NumberFormatException ex) {
+      // expected
+    }
+    try {
+      new Long("- ");
       fail("expected NumberFormatException");
     } catch (NumberFormatException ex) {
       // expected

@@ -122,6 +122,9 @@ public final class Long extends Number implements Comparable<Long> {
     if (orig.charAt(0) == '-') {
       neg = true;
       s = orig.substring(1);
+      if (s.equals("")) { // orig = "-"
+        throw NumberFormatException.forInputString(orig);
+      }
     } else {
       s = orig;
     }
