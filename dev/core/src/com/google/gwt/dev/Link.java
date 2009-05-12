@@ -253,6 +253,10 @@ public class Link {
    */
   private static void logScriptSize(TreeLogger logger, int permId,
       StandardCompilationResult compilation) {
+    if (!logger.isLoggable(TreeLogger.TRACE)) {
+      return;
+    }
+
     String[] javaScript = compilation.getJavaScript();
 
     int[] jsLengths = new int[javaScript.length];
