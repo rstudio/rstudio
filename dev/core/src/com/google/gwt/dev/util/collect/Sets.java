@@ -119,7 +119,7 @@ public class Sets {
         }
         return set;
       default:
-        // ArrayList
+        // HashSet
         set.remove(toRemove);
         return set;
     }

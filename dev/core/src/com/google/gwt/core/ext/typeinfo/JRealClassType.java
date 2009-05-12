@@ -15,8 +15,8 @@
  */
 package com.google.gwt.core.ext.typeinfo;
 
+import com.google.gwt.dev.util.collect.IdentitySets;
 import com.google.gwt.dev.util.collect.Lists;
-import com.google.gwt.dev.util.collect.Sets;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.Set;
  */
 public class JRealClassType extends JClassType {
 
-  private Set<JClassType> allSubtypes = Sets.create();
+  private Set<JClassType> allSubtypes = IdentitySets.create();
 
   private final Annotations annotations = new Annotations();
 
@@ -410,8 +410,7 @@ public class JRealClassType extends JClassType {
   }
 
   protected void acceptSubtype(JClassType me) {
-    // TODO(scottb): revisit
-    allSubtypes = Sets.add(allSubtypes, me);
+    allSubtypes = IdentitySets.add(allSubtypes, me);
     notifySuperTypesOf(me);
   }
 
@@ -477,8 +476,7 @@ public class JRealClassType extends JClassType {
   }
 
   protected void removeSubtype(JClassType me) {
-    // TODO(scottb): revisit
-    allSubtypes = Sets.remove(allSubtypes, me);
+    allSubtypes = IdentitySets.remove(allSubtypes, me);
 
     if (superclass != null) {
       superclass.removeSubtype(me);

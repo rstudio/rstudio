@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
@@ -30,14 +31,6 @@ import java.util.NoSuchElementException;
  * @param <E> the element type
  */
 public class HashSet<E> extends AbstractSet<E> implements Serializable {
-
-  /**
-   * In the interest of memory-savings, we start with the smallest feasible
-   * power-of-two table size that can hold three items without rehashing. If we
-   * started with a size of 2, we'd have to expand as soon as the second item
-   * was added.
-   */
-  private static final int INITIAL_TABLE_SIZE = 4;
 
   private class SetIterator implements Iterator<E> {
     private int index = 0;
@@ -82,17 +75,25 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
     }
   }
 
+  /**
+   * In the interest of memory-savings, we start with the smallest feasible
+   * power-of-two table size that can hold three items without rehashing. If we
+   * started with a size of 2, we'd have to expand as soon as the second item
+   * was added.
+   */
+  private static final int INITIAL_TABLE_SIZE = 4;
+
   private static final Object NULL_ITEM = new Serializable() {
     Object readResolve() {
       return NULL_ITEM;
     }
   };
 
-  private static Object maskNull(Object o) {
+  static Object maskNull(Object o) {
     return (o == null) ? NULL_ITEM : o;
   }
 
-  private static Object unmaskNull(Object o) {
+  static Object unmaskNull(Object o) {
     return (o == NULL_ITEM) ? null : o;
   }
 
@@ -170,6 +171,30 @@ public class HashSet<E> extends AbstractSet<E> implements Serializable {
   @Override
   public int size() {
     return size;
+  }
+
+  @Override
+  public Object[] toArray() {
+    return toArray(new Object[size]);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public <T> T[] toArray(T[] a) {
+    if (a.length < size) {
+      a = (T[]) Array.newInstance(a.getClass().getComponentType(), size);
+    }
+    int index = 0;
+    for (int i = 0; i < table.length; ++i) {
+      Object e = table[i];
+      if (e != null) {
+        a[index++] = (T) unmaskNull(e);
+      }
+    }
+    while (index < a.length) {
+      a[index++] = null;
+    }
+    return a;
   }
 
   /**

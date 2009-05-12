@@ -408,11 +408,11 @@ public class HashMap<K, V> implements Map<K, V>, Serializable {
     }
   };
 
-  private static Object maskNullKey(Object k) {
+  static Object maskNullKey(Object k) {
     return (k == null) ? NULL_KEY : k;
   }
 
-  private static Object unmaskNullKey(Object k) {
+  static Object unmaskNullKey(Object k) {
     return (k == NULL_KEY) ? null : k;
   }
 
