@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.HasChangeHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.ChangeListener} interface.
@@ -46,7 +49,8 @@ public interface SourcesChangeEvents {
    * @param listener the listener interface to remove
    *
    * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #addChangeHandler} instead
+   * method on the object returned by {@link HasChangeHandlers#addChangeHandler}
+   * instead
    */
   @Deprecated
   void removeChangeListener(ChangeListener listener);

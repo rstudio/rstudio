@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.KeyboardListener} interface.

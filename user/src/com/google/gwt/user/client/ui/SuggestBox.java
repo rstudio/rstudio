@@ -367,7 +367,7 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
    * source Widget for these events will be the SuggestBox.
    * 
    * @param listener the listener interface to add
-   * @deprecated use {@link getTextBox}().addFocusHandler/addBlurHandler() instead
+   * @deprecated use {@link #getTextBox}().addFocusHandler/addBlurHandler() instead
    */
   @Deprecated
   public void addFocusListener(final FocusListener listener) {

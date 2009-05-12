@@ -548,7 +548,7 @@ public class Event extends NativeEvent {
    * Gets the element from which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOVER}).
    * 
-   * @deprecated use {@link NativeEvent#getRelatedTarget()} instead
+   * @deprecated use {@link NativeEvent#getRelatedEventTarget()} instead
    * @return the element from which the mouse pointer was moved
    */
   @Deprecated
@@ -593,7 +593,7 @@ public class Event extends NativeEvent {
    * Gets the element to which the mouse pointer was moved (only valid for
    * {@link Event#ONMOUSEOUT}).
    * 
-   * @deprecated use {@link NativeEvent#getRelatedTarget()} instead
+   * @deprecated use {@link NativeEvent#getRelatedEventTarget()} instead
    * @return the element to which the mouse pointer was moved
    */
   @Deprecated

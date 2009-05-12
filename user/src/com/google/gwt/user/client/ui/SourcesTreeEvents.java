@@ -15,14 +15,17 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasOpenHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
- * {@link com.google.gwt.user.client.ui.TreeListener} interface.
+ * {@link TreeListener} interface.
  * 
- * @deprecated use
- *             {@link com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers},
- *             {@link com.google.gwt.event.logical.shared.HasOpenHandlers} and
- *             {@link com.google.gwt.event.dom.client.HasClickHandlers} instead
+ * @deprecated use {@link HasBeforeSelectionHandlers},
+ * {@link HasOpenHandlers} and {@link HasClickHandlers} instead
  */
 @Deprecated
 public interface SourcesTreeEvents {
@@ -32,9 +35,9 @@ public interface SourcesTreeEvents {
    * 
    * @param listener the listener interface to add
    * @deprecated use {@link 
-   * com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers#addBeforeSelectionHandler},
-   * {@link com.google.gwt.event.logical.shared.HasOpenHandlers#addOpenHandler} and
-   * {@link com.google.gwt.event.dom.client.HasClickHandlers#addClickHandler} instead
+   * HasBeforeSelectionHandlers#addBeforeSelectionHandler},
+   * {@link HasOpenHandlers#addOpenHandler} and
+   * {@link HasClickHandlers#addClickHandler} instead
    */
   @Deprecated
   void addTreeListener(TreeListener listener);

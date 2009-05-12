@@ -64,7 +64,7 @@ public class ToggleButton extends CustomButton {
    * 
    * @param upImage image for the default (up) face of the button
    * @param listener the click listener
-   * @deprecated Use {@link #ToggleButton(Image, ClickHandler} instead
+   * @deprecated Use {@link #ToggleButton(Image, ClickHandler)} instead
    */
   @Deprecated
   public ToggleButton(Image upImage, ClickListener listener) {
@@ -98,7 +98,7 @@ public class ToggleButton extends CustomButton {
    * @param upImage image for the default(up) face of the button
    * @param downImage image for the down face of the button
    * @param listener clickListener
-   * @deprecated Use {@link #ToggleButton(Image, Image, ClickHandler} instead
+   * @deprecated Use {@link #ToggleButton(Image, Image, ClickHandler)} instead
    */
   @Deprecated
   public ToggleButton(Image upImage, Image downImage, ClickListener listener) {
@@ -132,7 +132,7 @@ public class ToggleButton extends CustomButton {
    * 
    * @param upText the text for the default (up) face of the button
    * @param listener the click listener
-   * @deprecated Use {@link #ToggleButton(String, ClickHandler} instead
+   * @deprecated Use {@link #ToggleButton(String, ClickHandler)} instead
    */
   @Deprecated
   public ToggleButton(String upText, ClickListener listener) {

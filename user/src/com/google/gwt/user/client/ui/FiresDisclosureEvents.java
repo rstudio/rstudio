@@ -15,6 +15,8 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface fires the events defined by the
  * {@link DisclosureHandler} interface.
@@ -39,8 +41,8 @@ public interface FiresDisclosureEvents {
    * Removes a previously added handler interface.
    * 
    * @param handler the handler to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
-   * the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
    */
   @Deprecated
   void removeEventHandler(DisclosureHandler handler);

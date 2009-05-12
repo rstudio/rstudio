@@ -15,14 +15,16 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
- * {@link com.google.gwt.user.client.ui.TabListener} interface.
+ * {@link TabListener} interface.
  * 
- * @deprecated use {@link com.google.gwt.event.logical.shared.SelectionHandler}
- *             and
- *             {@link com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers}
- *             instead
+ * @deprecated use {@link HasSelectionHandlers} and
+ * {@link HasBeforeSelectionHandlers} instead
  */
 @Deprecated
 public interface SourcesTabEvents {
@@ -31,11 +33,9 @@ public interface SourcesTabEvents {
    * Adds a listener interface to receive click events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use (@link
-   * com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers#addBeforeSelectionHandler}
-   * and {@link
-   * com.google.gwt.event.logical.shared.SelectionHandler#addSelectionHandler}
-   * instead
+   * @deprecated use
+   * {@link HasBeforeSelectionHandlers#addBeforeSelectionHandler}
+   * and {@link HasSelectionHandlers#addSelectionHandler} instead
    */
   @Deprecated
   void addTabListener(TabListener listener);

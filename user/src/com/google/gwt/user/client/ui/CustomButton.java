@@ -386,7 +386,7 @@ public abstract class CustomButton extends ButtonBase {
    * @param upImage image for the default (up) face of the button
    * @param downImage image for the down face of the button
    * @param listener clickListener
-   * @deprecated Use {@link #CustomButton(Image, Image, ClickHandler} instead
+   * @deprecated Use {@link #CustomButton(Image, Image, ClickHandler)} instead
    */
   @Deprecated
   public CustomButton(Image upImage, Image downImage, ClickListener listener) {

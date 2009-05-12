@@ -302,7 +302,7 @@ public class Tree extends Widget implements HasWidgets, SourcesTreeEvents,
   }
 
   /**
-   * @deprecate Use {@link #addFocusHandler} instead
+   * @deprecated Use {@link #addFocusHandler} instead
    */
   @Deprecated
   public void addFocusListener(FocusListener listener) {

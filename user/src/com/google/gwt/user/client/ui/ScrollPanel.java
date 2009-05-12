@@ -92,7 +92,7 @@ public class ScrollPanel extends SimplePanel implements SourcesScrollEvents,
 
   /**
    * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link addScrollHandler} instead
+   * method on the object returned by {@link #addScrollHandler} instead
    */
   @Deprecated
   public void removeScrollListener(ScrollListener listener) {

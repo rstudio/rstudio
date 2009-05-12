@@ -15,13 +15,18 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
+
 /**
  * A widget that implements this interface fires the events defined by the
  * {@link com.google.gwt.user.client.ui.FormHandler} interface.
  * 
- * @deprecated This interface was specific to {@link FormPanel}; it is not generally useful and will be removed in a future version.
- *             Use {@link FormPanel#addSubmitHandler(com.google.gwt.user.client.ui.FormPanel.SubmitHandler) FormPanel.addSubmitHandler} and
- *             {@link com.google.gwt.user.client.ui.FormPanel#addSubmitCompleteHandler(com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler) FormPanel.addSubmitCompleteHandler} instead
+ * @deprecated This interface was specific to {@link FormPanel}; it is not
+ * generally useful and will be removed in a future version.
+ * Use {@link FormPanel#addSubmitHandler(SubmitHandler)} and
+ * {@link FormPanel#addSubmitCompleteHandler(FormPanel.SubmitCompleteHandler)}
+ * instead
  */
 @Deprecated
 public interface FiresFormEvents {
@@ -29,8 +34,8 @@ public interface FiresFormEvents {
   /**
    * Adds a handler interface to receive click events.
    * 
-   * @deprecated Use {@link FormPanel#addSubmitCompleteHandler FormPanel.addSubmitCompleteHandler} and
-   *             {@link FormPanel#addSubmitHandler FormPanel.addSubmitHandler} instead
+   * @deprecated Use {@link FormPanel#addSubmitCompleteHandler} and
+   * {@link FormPanel#addSubmitHandler} instead
    * @param handler the handler interface to add
    */
   @Deprecated
@@ -40,8 +45,8 @@ public interface FiresFormEvents {
    * Removes a previously added handler interface.
    * 
    * @param handler the handler interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler} method on 
-   * the object returned by an add*Handler method instead
+   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * method on the object returned by an add*Handler method instead
    */
   @Deprecated
   void removeFormHandler(FormHandler handler);

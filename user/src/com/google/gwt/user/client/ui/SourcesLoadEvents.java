@@ -15,12 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.HasErrorHandlers;
+import com.google.gwt.event.dom.client.HasLoadHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
- * {@link com.google.gwt.user.client.ui.LoadListener} interface.
+ * {@link LoadListener} interface.
  * 
- * @deprecated use {@link com.google.gwt.event.dom.client.HasErrorHandlers} and
- *             {@link com.google.gwt.event.dom.client.HasLoadHandlers} instead
+ * @deprecated use {@link HasErrorHandlers} and {@link HasLoadHandlers} instead
  */
 @Deprecated
 public interface SourcesLoadEvents {
@@ -39,7 +42,8 @@ public interface SourcesLoadEvents {
    * 
    * @param listener the listener interface to remove
    * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link HasLoadHandlers#addLoadListener} instead
+   * method on the object returned by {@link HasLoadHandlers#addLoadHandler}
+   * instead
    */
   @Deprecated
   void removeLoadListener(LoadListener listener);

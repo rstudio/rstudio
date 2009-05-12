@@ -147,7 +147,7 @@ public interface AsyncProxy<T> {
 
   /**
    * The callback used by
-   * {@link AsyncProxy#setAsyncProxyCallback(AsyncProxyCallback)}.
+   * {@link AsyncProxy#setProxyCallback(ProxyCallback)}.
    * 
    * @param <T> the interface parameterization of AsyncProxy.
    */

@@ -15,12 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
- * {@link com.google.gwt.user.client.ui.PopupListener} interface.
+ * {@link PopupListener} interface.
  * 
- * @deprecated use {@link com.google.gwt.event.logical.shared.HasCloseHandlers}
- *             instead
+ * @deprecated use {@link HasCloseHandlers} instead
  */
 @Deprecated
 public interface SourcesPopupEvents {
@@ -29,8 +31,7 @@ public interface SourcesPopupEvents {
    * Adds a listener interface to receive popup events.
    * 
    * @param listener the listener interface to add.
-   * @deprecated use {@link com.google.gwt.event.logical.shared.HasCloseHandlers#addCloseHandler}
-   *             instead
+   * @deprecated use {@link HasCloseHandlers#addCloseHandler} instead
    */
   @Deprecated
   void addPopupListener(PopupListener listener);
@@ -40,8 +41,7 @@ public interface SourcesPopupEvents {
    * 
    * @param listener the listener interface to remove.
    * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link
-   * com.google.gwt.event.logical.shared.HasCloseHandlers#addCloseHandler}
+   * method on the object returned by {@link HasCloseHandlers#addCloseHandler}
    * instead
    */
   @Deprecated

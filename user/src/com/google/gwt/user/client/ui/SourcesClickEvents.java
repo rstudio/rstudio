@@ -15,6 +15,9 @@
  */
 package com.google.gwt.user.client.ui;
 
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
+
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.ClickListener} interface.
@@ -39,7 +42,8 @@ public interface SourcesClickEvents {
    * 
    * @param listener the listener interface to remove
    * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link #addClickHandler} instead
+   * method on the object returned by {@link HasClickHandlers#addClickHandler}
+   * instead
    */
   @Deprecated
   void removeClickListener(ClickListener listener);

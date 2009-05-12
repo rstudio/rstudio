@@ -131,7 +131,7 @@ public final class GWT {
   /**
    * Returns the permutation's strong name. This can be used to distinguish
    * between different permutations of the same module. In hosted mode, this
-   * method will return {@value #HOSTED_MODE_PERMUTATION_ID}.
+   * method will return {@value #HOSTED_MODE_PERMUTATION_STRONG_NAME}.
    */
   public static String getPermutationStrongName() {
     if (GWT.isScript()) {

@@ -94,7 +94,7 @@ public class TextBoxBase extends FocusWidget implements SourcesChangeEvents,
   }
 
   /**
-   * @deprecated Use {@link addChangeHandler} instead
+   * @deprecated Use {@link #addChangeHandler} instead
    */
   @Deprecated
   public void addChangeListener(ChangeListener listener) {
