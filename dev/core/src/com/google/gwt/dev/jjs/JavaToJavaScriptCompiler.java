@@ -339,7 +339,6 @@ public class JavaToJavaScriptCompiler {
    * @param logger the logger to use
    * @param module the module to compile
    * @param rpo the RebindPermutationOracle
-   * @param fragmentLoaderCreator a FragmentLoaderCreator
    * @param declEntryPts the set of entry classes declared in a GWT module;
    *          these will be automatically rebound
    * @param additionalRootTypes additional classes that should serve as code
@@ -352,8 +351,8 @@ public class JavaToJavaScriptCompiler {
    *           {@link OutOfMemoryError} occurs
    */
   public static UnifiedAst precompile(TreeLogger logger, ModuleDef module,
-      RebindPermutationOracle rpo, FragmentLoaderCreator fragmentLoaderCreator,
-      String[] declEntryPts, String[] additionalRootTypes, JJSOptions options,
+      RebindPermutationOracle rpo, String[] declEntryPts,
+      String[] additionalRootTypes, JJSOptions options,
       boolean singlePermutation) throws UnableToCompleteException {
 
     if (additionalRootTypes == null) {
@@ -381,7 +380,7 @@ public class JavaToJavaScriptCompiler {
     //
     CompilationUnitDeclaration[] goldenCuds = WebModeCompilerFrontEnd.getCompilationUnitDeclarations(
         logger, allRootTypes.toArray(new String[0]),
-        module.getCompilationState(logger), rpo, fragmentLoaderCreator);
+        module.getCompilationState(logger), rpo);
 
     // Free up memory.
     if (!options.isCompilationStateRetained()) {

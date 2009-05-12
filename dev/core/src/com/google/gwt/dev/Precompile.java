@@ -35,8 +35,8 @@ import com.google.gwt.dev.jjs.JJSOptionsImpl;
 import com.google.gwt.dev.jjs.JavaToJavaScriptCompiler;
 import com.google.gwt.dev.jjs.JsOutputOption;
 import com.google.gwt.dev.jjs.UnifiedAst;
-import com.google.gwt.dev.jjs.impl.FragmentLoaderCreator;
 import com.google.gwt.dev.shell.CheckForUpdates;
+import com.google.gwt.dev.shell.StandardGeneratorContext;
 import com.google.gwt.dev.shell.StandardRebindOracle;
 import com.google.gwt.dev.shell.CheckForUpdates.UpdateResult;
 import com.google.gwt.dev.util.Memory;
@@ -255,6 +255,7 @@ public class Precompile {
   private static class DistillerRebindPermutationOracle implements
       RebindPermutationOracle {
 
+    private StandardGeneratorContext generatorContext;
     private Permutation[] permutations;
     private StaticPropertyOracle[] propertyOracles;
     private RebindOracle[] rebindOracles;
@@ -265,6 +266,8 @@ public class Precompile {
       permutations = new Permutation[perms.size()];
       propertyOracles = new StaticPropertyOracle[perms.size()];
       rebindOracles = new RebindOracle[perms.size()];
+      generatorContext = new StandardGeneratorContext(compilationState, module,
+          genDir, generatorResourcesDir, generatorArtifacts);
       BindingProperty[] orderedProps = perms.getOrderedProperties();
       SortedSet<ConfigurationProperty> configPropSet = module.getProperties().getConfigurationProperties();
       ConfigurationProperty[] configProps = configPropSet.toArray(new ConfigurationProperty[configPropSet.size()]);
@@ -273,9 +276,8 @@ public class Precompile {
         String[] orderedPropValues = perms.getOrderedPropertyValues(i);
         propertyOracles[i] = new StaticPropertyOracle(orderedProps,
             orderedPropValues, configProps);
-        rebindOracles[i] = new StandardRebindOracle(compilationState,
-            propertyOracles[i], module, rules, genDir, generatorResourcesDir,
-            generatorArtifacts);
+        rebindOracles[i] = new StandardRebindOracle(propertyOracles[i], rules,
+            generatorContext);
         permutations[i] = new Permutation(i, propertyOracles[i]);
       }
     }
@@ -296,6 +298,10 @@ public class Precompile {
         permutations[i].putRebindAnswer(requestTypeName, resultTypeName);
       }
       return Util.toArray(String.class, answers);
+    }
+
+    public StandardGeneratorContext getGeneratorContext() {
+      return generatorContext;
     }
 
     public int getPermuationCount() {
@@ -420,12 +426,8 @@ public class Precompile {
           module, compilationState, generatorArtifacts,
           new PropertyPermutations(module.getProperties()), genDir,
           generatorResourcesDir);
-      FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
-          compilationState, module, genDir, generatorResourcesDir,
-          generatorArtifacts);
-      JavaToJavaScriptCompiler.precompile(logger, module, rpo,
-          fragmentLoaderCreator, declEntryPts, additionalRootTypes, jjsOptions,
-          true);
+      JavaToJavaScriptCompiler.precompile(logger, module, rpo, declEntryPts,
+          additionalRootTypes, jjsOptions, true);
       return true;
     } catch (UnableToCompleteException e) {
       // Already logged.
@@ -459,12 +461,9 @@ public class Precompile {
           generatedArtifacts,
           new PropertyPermutations(module.getProperties(), firstPerm, numPerms),
           genDir, generatorResourcesDir);
-      FragmentLoaderCreator fragmentLoaderCreator = new FragmentLoaderCreator(
-          compilationState, module, genDir, generatorResourcesDir,
-          generatedArtifacts);
       PerfLogger.start("Precompile");
       UnifiedAst unifiedAst = JavaToJavaScriptCompiler.precompile(logger,
-          module, rpo, fragmentLoaderCreator, declEntryPts, null, jjsOptions,
+          module, rpo, declEntryPts, null, jjsOptions,
           rpo.getPermuationCount() == 1);
       PerfLogger.end();
 

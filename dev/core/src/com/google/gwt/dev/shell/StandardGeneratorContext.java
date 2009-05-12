@@ -263,7 +263,7 @@ public class StandardGeneratorContext implements GeneratorContext {
 
   private final Map<OutputStream, PendingResource> pendingResourcesByOutputStream = new IdentityHashMap<OutputStream, PendingResource>();
 
-  private final PropertyOracle propOracle;
+  private transient PropertyOracle propOracle;
 
   private final PublicOracle publicOracle;
 
@@ -274,10 +274,9 @@ public class StandardGeneratorContext implements GeneratorContext {
    * available in the supplied type oracle although it isn't strictly required.
    */
   public StandardGeneratorContext(CompilationState compilationState,
-      PropertyOracle propOracle, PublicOracle publicOracle, File genDir,
-      File generatorResourcesDir, ArtifactSet allGeneratedArtifacts) {
+      PublicOracle publicOracle, File genDir, File generatorResourcesDir,
+      ArtifactSet allGeneratedArtifacts) {
     this.compilationState = compilationState;
-    this.propOracle = propOracle;
     this.publicOracle = publicOracle;
     this.genDir = genDir;
     this.generatorResourcesDir = generatorResourcesDir;
@@ -425,6 +424,14 @@ public class StandardGeneratorContext implements GeneratorContext {
     this.currentGenerator = currentGenerator;
   }
 
+  /**
+   * Sets the current transient property oracle to answer current property
+   * questions.
+   */
+  public void setPropertyOracle(PropertyOracle propOracle) {
+    this.propOracle = propOracle;
+  }
+
   public final PrintWriter tryCreate(TreeLogger logger, String packageName,
       String simpleTypeName) {
     String typeName;
@@ -442,12 +449,8 @@ public class StandardGeneratorContext implements GeneratorContext {
       return null;
     }
 
-    // Has anybody tried to create this type during this iteration?
+    // Type recently generated?
     if (newlyGeneratedTypeNames.contains(typeName)) {
-      final String msg = "A request to create type '"
-          + typeName
-          + "' was received while the type itself was being created; this might be a generator or configuration bug";
-      logger.log(TreeLogger.WARN, msg, null);
       return null;
     }
 

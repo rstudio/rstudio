@@ -37,6 +37,7 @@ import org.eclipse.jdt.internal.compiler.lookup.TypeBinding;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -51,12 +52,10 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
   public static CompilationUnitDeclaration[] getCompilationUnitDeclarations(
       TreeLogger logger, String[] seedTypeNames,
       CompilationState compilationState,
-      RebindPermutationOracle rebindPermOracle,
-      FragmentLoaderCreator fragmentLoaderCreator)
+      RebindPermutationOracle rebindPermOracle)
       throws UnableToCompleteException {
-    return new WebModeCompilerFrontEnd(compilationState, rebindPermOracle,
-        fragmentLoaderCreator).getCompilationUnitDeclarations(logger,
-        seedTypeNames);
+    return new WebModeCompilerFrontEnd(compilationState, rebindPermOracle).getCompilationUnitDeclarations(
+        logger, seedTypeNames);
   }
 
   private final FragmentLoaderCreator fragmentLoaderCreator;
@@ -69,11 +68,11 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
    * compiler than WebModeCompilerFrontEnd currently has.
    */
   private WebModeCompilerFrontEnd(CompilationState compilationState,
-      RebindPermutationOracle rebindPermOracle,
-      FragmentLoaderCreator fragmentLoaderCreator) {
+      RebindPermutationOracle rebindPermOracle) {
     super(compilationState, false);
     this.rebindPermOracle = rebindPermOracle;
-    this.fragmentLoaderCreator = fragmentLoaderCreator;
+    this.fragmentLoaderCreator = new FragmentLoaderCreator(
+        rebindPermOracle.getGeneratorContext());
   }
 
   /**
@@ -177,61 +176,18 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
     FindDeferredBindingSitesVisitor v = new FindDeferredBindingSitesVisitor();
     cud.traverse(v, cud.scope);
     Map<String, MessageSendSite> requestedTypes = v.getSites();
+    Map<String, String[]> rebindAnswers = new HashMap<String, String[]>();
+    boolean doFinish = false;
 
     // For each, ask the host for every possible deferred binding answer.
     for (String reqType : requestedTypes.keySet()) {
       MessageSendSite site = requestedTypes.get(reqType);
-
       try {
         String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
             logger, reqType);
-        // Check that each result is instantiable.
-        for (int i = 0; i < resultTypes.length; ++i) {
-          String typeName = resultTypes[i];
-
-          // This causes the compiler to find the additional type, possibly
-          // winding its back to ask for the compilation unit from the source
-          // oracle.
-          ReferenceBinding type = resolvePossiblyNestedType(typeName);
-
-          // Sanity check rebind results.
-          if (type == null) {
-            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-                "Rebind result '" + typeName + "' could not be found");
-            continue;
-          }
-          if (!type.isClass()) {
-            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-                "Rebind result '" + typeName + "' must be a class");
-            continue;
-          }
-          if (type.isAbstract()) {
-            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-                "Rebind result '" + typeName + "' cannot be abstract");
-            continue;
-          }
-          if (type.isNestedType() && !type.isStatic()) {
-            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-                "Rebind result '" + typeName
-                    + "' cannot be a non-static nested class");
-            continue;
-          }
-          if (type.isLocalType()) {
-            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-                "Rebind result '" + typeName + "' cannot be a local class");
-            continue;
-          }
-          // Look for a noArg ctor.
-          MethodBinding noArgCtor = type.getExactConstructor(TypeBinding.NO_PARAMETERS);
-          if (noArgCtor == null) {
-            FindDeferredBindingSitesVisitor.reportRebindProblem(site,
-                "Rebind result '" + typeName
-                    + "' has no default (zero argument) constructors");
-            continue;
-          }
-          dependentTypeNames.add(typeName);
-        }
+        rebindAnswers.put(reqType, resultTypes);
         Collections.addAll(dependentTypeNames, resultTypes);
+        doFinish = true;
       } catch (UnableToCompleteException e) {
         FindDeferredBindingSitesVisitor.reportRebindProblem(site,
             "Failed to resolve '" + reqType + "' via deferred binding");
@@ -247,18 +203,81 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
      * between loaders and runAsync sites will be made in ReplaceRunAsyncs.
      */
     for (MessageSendSite site : v.getRunAsyncSites()) {
-      FragmentLoaderCreator loaderCreator = fragmentLoaderCreator;
       String resultType;
       try {
-        resultType = loaderCreator.create(logger);
+        resultType = fragmentLoaderCreator.create(logger);
         dependentTypeNames.add(resultType);
+        doFinish = true;
       } catch (UnableToCompleteException e) {
         FindDeferredBindingSitesVisitor.reportRebindProblem(site,
             "Failed to create a runAsync fragment loader");
       }
     }
 
+    if (doFinish) {
+      try {
+        rebindPermOracle.getGeneratorContext().finish(logger);
+      } catch (UnableToCompleteException e) {
+        throw new RuntimeException("Unable to commit generated files", e);
+      }
+    }
+
+    // Sanity check all rebind answers.
+    for (String reqType : requestedTypes.keySet()) {
+      MessageSendSite site = requestedTypes.get(reqType);
+      String[] resultTypes = rebindAnswers.get(reqType);
+      // Check that each result is instantiable.
+      for (String typeName : resultTypes) {
+        checkRebindResultInstantiable(site, typeName);
+      }
+    }
+
     return dependentTypeNames.toArray(Empty.STRINGS);
+  }
+
+  private void checkRebindResultInstantiable(MessageSendSite site,
+      String typeName) {
+    /*
+     * This causes the compiler to find the additional type, possibly winding
+     * its back to ask for the compilation unit from the source oracle.
+     */
+    ReferenceBinding type = resolvePossiblyNestedType(typeName);
+
+    // Sanity check rebind results.
+    if (type == null) {
+      FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+          "Rebind result '" + typeName + "' could not be found");
+      return;
+    }
+    if (!type.isClass()) {
+      FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+          "Rebind result '" + typeName + "' must be a class");
+      return;
+    }
+    if (type.isAbstract()) {
+      FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+          "Rebind result '" + typeName + "' cannot be abstract");
+      return;
+    }
+    if (type.isNestedType() && !type.isStatic()) {
+      FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+          "Rebind result '" + typeName
+              + "' cannot be a non-static nested class");
+      return;
+    }
+    if (type.isLocalType()) {
+      FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+          "Rebind result '" + typeName + "' cannot be a local class");
+      return;
+    }
+    // Look for a noArg ctor.
+    MethodBinding noArgCtor = type.getExactConstructor(TypeBinding.NO_PARAMETERS);
+    if (noArgCtor == null) {
+      FindDeferredBindingSitesVisitor.reportRebindProblem(site,
+          "Rebind result '" + typeName
+              + "' has no default (zero argument) constructors");
+      return;
+    }
   }
 
   /**

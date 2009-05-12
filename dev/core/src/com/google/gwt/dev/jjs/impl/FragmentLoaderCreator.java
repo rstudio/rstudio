@@ -19,16 +19,12 @@ import com.google.gwt.core.ext.GeneratorContext;
 import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
-import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.dev.cfg.BindingProperty;
 import com.google.gwt.dev.cfg.ConfigurationProperty;
-import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.cfg.StaticPropertyOracle;
-import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jdt.FindDeferredBindingSitesVisitor;
 import com.google.gwt.dev.shell.StandardGeneratorContext;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.util.List;
 
@@ -51,31 +47,26 @@ public class FragmentLoaderCreator {
   private static final String UNCAUGHT_EXCEPTION_HANDLER_CLASS = GWT_CLASS
       + ".UncaughtExceptionHandler";
 
-  private final ArtifactSet artifactSet;
-  private final CompilationState compilationState;
-  private int entryNumber;
-  private final File genDir;
-  private final File outDir;
-  private final PublicOracle publicOracle;
+  private final StandardGeneratorContext context;
+  private int entryNumber = 0;
+  private final PropertyOracle propOracle;
 
   /**
    * Construct a FragmentLoaderCreator. The reason it needs so many parameters
    * is that it uses generator infrastructure.
    */
-  public FragmentLoaderCreator(CompilationState compilationState,
-      PublicOracle publicOracle, File genDir, File moduleOutDir,
-      ArtifactSet artifactSet) {
-    this.compilationState = compilationState;
-    this.publicOracle = publicOracle;
-    this.genDir = genDir;
-    this.outDir = moduleOutDir;
-    this.artifactSet = artifactSet;
+  public FragmentLoaderCreator(StandardGeneratorContext context) {
+    // An empty property oracle is fine, because fragment loaders aren't
+    // affected by properties anyway
+    this.propOracle = new StaticPropertyOracle(new BindingProperty[0],
+        new String[0], new ConfigurationProperty[0]);
+    this.context = context;
   }
 
   public String create(TreeLogger logger) throws UnableToCompleteException {
-    chooseEntryNumber();
-    StandardGeneratorContext context = makeGeneratorContext();
-
+    // First entry is 1.
+    ++entryNumber;
+    context.setPropertyOracle(propOracle);
     PrintWriter loaderWriter = getSourceWriterForLoader(logger, context);
     if (loaderWriter == null) {
       logger.log(TreeLogger.ERROR, "Failed to create island loader named "
@@ -97,20 +88,7 @@ public class FragmentLoaderCreator {
     writeCallbackListClass(logger, context);
     writeLoaderSuperclass(logger, context);
 
-    context.finish(logger);
-
     return getLoaderQualifiedName();
-  }
-
-  /**
-   * Pick the lowest-numbered entry number that has not yet had loaders
-   * generated.
-   */
-  private void chooseEntryNumber() {
-    entryNumber = 1;
-    while (compilationState.getTypeOracle().findType(getLoaderQualifiedName()) != null) {
-      entryNumber++;
-    }
   }
 
   private void generateLoaderFields(PrintWriter srcWriter) {
@@ -212,7 +190,8 @@ public class FragmentLoaderCreator {
         + FindDeferredBindingSitesVisitor.MAGIC_CLASS
         + ".getUncaughtExceptionHandler();");
 
-    srcWriter.println("  " + getCallbackListSimpleName() + " next = callbacksHead;");
+    srcWriter.println("  " + getCallbackListSimpleName()
+        + " next = callbacksHead;");
     srcWriter.println("  callbacksHead = callbacksHead.next;");
     srcWriter.println("  if (callbacksHead == null) {");
     srcWriter.println("    callbacksTail = null;");
@@ -286,16 +265,6 @@ public class FragmentLoaderCreator {
     return printWriter;
   }
 
-  private StandardGeneratorContext makeGeneratorContext() {
-    // An empty property oracle is fine, because fragment loaders aren't
-    // affected by properties anyway
-    PropertyOracle propOracle = new StaticPropertyOracle(
-        new BindingProperty[0], new String[0], new ConfigurationProperty[0]);
-    StandardGeneratorContext context = new StandardGeneratorContext(
-        compilationState, propOracle, publicOracle, genDir, outDir, artifactSet);
-    return context;
-  }
-
   private void writeCallbackListClass(TreeLogger logger, GeneratorContext ctx)
       throws UnableToCompleteException {
     PrintWriter printWriter = ctx.tryCreate(logger, getPackage(),
@@ -318,10 +287,10 @@ public class FragmentLoaderCreator {
 
   /**
    * Create a stand-in superclass of the actual loader. This is used to keep the
-   * liveness analyzer from thinking the real <code>runCallbacks()</code> method
-   * is available until <code>onLoad</code> has been called and the real loader
-   * instantiated. A little work on TypeTightener could prevent the need for
-   * this class.
+   * liveness analyzer from thinking the real <code>runCallbacks()</code>
+   * method is available until <code>onLoad</code> has been called and the
+   * real loader instantiated. A little work on TypeTightener could prevent the
+   * need for this class.
    */
   private void writeLoaderSuperclass(TreeLogger logger, GeneratorContext ctx)
       throws UnableToCompleteException {

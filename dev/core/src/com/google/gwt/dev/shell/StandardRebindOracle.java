@@ -19,14 +19,11 @@ import com.google.gwt.core.ext.PropertyOracle;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.dev.cfg.PublicOracle;
 import com.google.gwt.dev.cfg.Rule;
 import com.google.gwt.dev.cfg.Rules;
-import com.google.gwt.dev.javac.CompilationState;
 import com.google.gwt.dev.jdt.RebindOracle;
 import com.google.gwt.dev.util.Util;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,24 +42,21 @@ public class StandardRebindOracle implements RebindOracle {
    */
   private final class Rebinder {
 
-    private final StandardGeneratorContext genCtx;
-
     private final Set<Rule> usedRules = new HashSet<Rule>();
 
     private final List<String> usedTypeNames = new ArrayList<String>();
 
-    public Rebinder() {
-      genCtx = new StandardGeneratorContext(compilationState, propOracle,
-          publicOracle, genDir, generatorResourcesDir, allGeneratedArtifacts);
-    }
-
     public String rebind(TreeLogger logger, String typeName,
         ArtifactAcceptor artifactAcceptor) throws UnableToCompleteException {
 
+      genCtx.setPropertyOracle(propOracle);
       String result = tryRebind(logger, typeName);
-      ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
-      if (!newlyGeneratedArtifacts.isEmpty() && artifactAcceptor != null) {
-        artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+      if (artifactAcceptor != null) {
+        // Go ahead and call finish() to accept new artifacts.
+        ArtifactSet newlyGeneratedArtifacts = genCtx.finish(logger);
+        if (!newlyGeneratedArtifacts.isEmpty()) {
+          artifactAcceptor.accept(logger, newlyGeneratedArtifacts);
+        }
       }
       if (result == null) {
         result = typeName;
@@ -128,32 +122,19 @@ public class StandardRebindOracle implements RebindOracle {
     }
   }
 
-  private final ArtifactSet allGeneratedArtifacts;
-
   private final Map<String, String> cache = new HashMap<String, String>();
 
-  private final CompilationState compilationState;
-
-  private final File genDir;
-
-  private final File generatorResourcesDir;
+  private final StandardGeneratorContext genCtx;
 
   private final PropertyOracle propOracle;
 
-  private final PublicOracle publicOracle;
-
   private final Rules rules;
 
-  public StandardRebindOracle(CompilationState compilationState,
-      PropertyOracle propOracle, PublicOracle publicOracle, Rules rules,
-      File genDir, File generatorResourcesDir, ArtifactSet allGeneratedArtifacts) {
-    this.compilationState = compilationState;
+  public StandardRebindOracle(PropertyOracle propOracle, Rules rules,
+      StandardGeneratorContext genCtx) {
     this.propOracle = propOracle;
-    this.publicOracle = publicOracle;
     this.rules = rules;
-    this.genDir = genDir;
-    this.generatorResourcesDir = generatorResourcesDir;
-    this.allGeneratedArtifacts = allGeneratedArtifacts;
+    this.genCtx = genCtx;
   }
 
   public String rebind(TreeLogger logger, String typeName)

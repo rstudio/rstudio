@@ -154,8 +154,9 @@ public class StandardGeneratorContextTest extends TestCase {
   public StandardGeneratorContextTest() {
     tempGenDir = createTempDir("gwt-gen-");
     tempOutDir = createTempDir("gwt-out-");
-    genCtx = new StandardGeneratorContext(mockCompilationState, mockPropOracle,
+    genCtx = new StandardGeneratorContext(mockCompilationState,
         mockPublicOracle, tempGenDir, tempOutDir, artifactSet);
+    genCtx.setPropertyOracle(mockPropOracle);
     genCtx.setCurrentGenerator(Generator.class);
   }
 

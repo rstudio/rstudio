@@ -17,6 +17,7 @@ package com.google.gwt.dev.jdt;
 
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.shell.StandardGeneratorContext;
 
 /**
  * Abstract the process of determining all of the possible deferred binding
@@ -29,4 +30,9 @@ public interface RebindPermutationOracle {
    */
   String[] getAllPossibleRebindAnswers(TreeLogger logger, String sourceTypeName)
       throws UnableToCompleteException;
+
+  /**
+   * Returns the global StandardGeneratorContext.
+   */
+  StandardGeneratorContext getGeneratorContext();
 }
