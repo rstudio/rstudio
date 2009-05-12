@@ -187,12 +187,17 @@ public class JavaToJavaScriptCompiler {
       ResolveRebinds.exec(jprogram, rebindAnswers);
 
       // (4) Optimize the normalized Java AST for each permutation.
-      optimize(options, jprogram);
-      
+      if (options.isDraftCompile()) {
+        draftOptimize(jprogram);
+      } else {
+        optimize(options, jprogram);
+      }
+
       // (4.5) Choose an initial load order sequence for runAsync's
       LinkedHashSet<Integer> initialLoadSequence = new LinkedHashSet<Integer>();
       if (options.isAggressivelyOptimize() && options.isRunAsyncEnabled()) {
-        initialLoadSequence = CodeSplitter.pickInitialLoadSequence(logger, jprogram);
+        initialLoadSequence = CodeSplitter.pickInitialLoadSequence(logger,
+            jprogram);
       }
 
       // (5) "Normalize" the high-level Java tree into a lower-level tree more
@@ -466,15 +471,17 @@ public class JavaToJavaScriptCompiler {
       JavaScriptObjectNormalizer.exec(jprogram);
 
       /*
-       * (4) Optimize the normalized Java AST for the common AST. By doing
-       * optimizations early in the multiple permutation scenario, we're saving
-       * work. However, we can't fully optimize because we don't yet know the
+       * (4) Minimally optimize the normalized Java AST for the common AST. By
+       * doing a few optimizations early in the multiple permutation scenario,
+       * we can save some work. However, we don't do full optimizations because
+       * our optimizer is currently superlinear, which can lead to net losses
+       * for big apps. We can't fully optimize because we don't yet know the
        * deferred binding decisions.
        * 
        * Don't bother optimizing early if there's only one permutation.
        */
       if (!singlePermutation) {
-        optimize(options, jprogram);
+        draftOptimize(jprogram);
       }
 
       Set<String> rebindRequests = new HashSet<String>();
@@ -489,6 +496,25 @@ public class JavaToJavaScriptCompiler {
     }
   }
 
+  protected static void draftOptimize(JProgram jprogram) {
+    /*
+     * Record the beginning of optimizations; this turns on certain checks that
+     * guard against problematic late construction of things like class
+     * literals.
+     */
+    jprogram.beginOptimizations();
+
+    PerfLogger.start("draft optimize");
+    Pruner.exec(jprogram, true);
+    /*
+     * Ensure that references to dead clinits are removed. Otherwise, the
+     * application won't run reliably.
+     */
+    jprogram.typeOracle.recomputeAfterOptimizations();
+    DeadCodeElimination.exec(jprogram);
+    PerfLogger.end();
+  }
+
   protected static void optimize(JJSOptions options, JProgram jprogram)
       throws InterruptedException {
     /*
@@ -498,13 +524,17 @@ public class JavaToJavaScriptCompiler {
      */
     jprogram.beginOptimizations();
 
+    PerfLogger.start("optimize");
     boolean didChange;
     do {
       if (Thread.interrupted()) {
+        PerfLogger.end();
         throw new InterruptedException();
       }
 
       maybeDumpAST(jprogram);
+
+      PerfLogger.start("optimize loop");
 
       // Recompute clinits each time, they can become empty.
       jprogram.typeOracle.recomputeAfterOptimizations();
@@ -537,16 +567,10 @@ public class JavaToJavaScriptCompiler {
       }
       // prove that any types that have been culled from the main tree are
       // unreferenced due to type tightening?
-    } while (didChange && !options.isDraftCompile());
 
-    if (options.isDraftCompile()) {
-      /*
-       * Ensure that references to dead clinits are removed. Otherwise, the
-       * application won't run reliably.
-       */
-      jprogram.typeOracle.recomputeAfterOptimizations();
-      DeadCodeElimination.exec(jprogram);
-    }
+      PerfLogger.end();
+    } while (didChange);
+    PerfLogger.end();
   }
 
   private static JavaToJavaScriptMap addStringLiteralMap(
