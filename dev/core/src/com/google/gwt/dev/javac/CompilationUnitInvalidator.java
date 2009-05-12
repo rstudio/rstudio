@@ -60,7 +60,7 @@ public class CompilationUnitInvalidator {
    * @return <code>true</code> if any units changed state
    */
   public static boolean invalidateUnitsWithErrors(TreeLogger logger,
-      Set<CompilationUnit> units) {
+      Collection<CompilationUnit> units) {
     logger = logger.branch(TreeLogger.TRACE, "Removing units with errors");
     // Start by removing units with a known problem.
     boolean anyRemoved = false;
@@ -135,7 +135,7 @@ public class CompilationUnitInvalidator {
    *          set that reference each other
    */
   public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
-      Set<CompilationUnit> unitsToCheck) {
+      Collection<CompilationUnit> unitsToCheck) {
     invalidateUnitsWithInvalidRefs(logger, unitsToCheck,
         Collections.<CompilationUnit> emptySet());
   }
@@ -151,7 +151,8 @@ public class CompilationUnitInvalidator {
    *          may be empty)
    */
   public static void invalidateUnitsWithInvalidRefs(TreeLogger logger,
-      Set<CompilationUnit> unitsToCheck, Set<CompilationUnit> knownUnits) {
+      Collection<CompilationUnit> unitsToCheck,
+      Collection<CompilationUnit> knownUnits) {
     logger = logger.branch(TreeLogger.TRACE, "Removing invalidated units");
 
     Set<String> knownValidRefs = new HashSet<String>();
@@ -195,7 +196,7 @@ public class CompilationUnitInvalidator {
   }
 
   public static void validateCompilationUnits(InvalidatorState state,
-      Set<CompilationUnit> units, Set<String> validBinaryTypeNames) {
+      Collection<CompilationUnit> units, Set<String> validBinaryTypeNames) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         CompilationUnitDeclaration jdtCud = unit.getJdtCud();

@@ -35,8 +35,8 @@ import org.eclipse.jdt.internal.compiler.util.Util;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Adapts compilation units containing JSNI-accessible code by rewriting the
@@ -156,7 +156,7 @@ public class JsniCollector {
   }
 
   public static void collectJsniMethods(TreeLogger logger,
-      Set<CompilationUnit> units, JsProgram program) {
+      Collection<CompilationUnit> units, JsProgram program) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED) {
         String loc = unit.getDisplayLocation();

@@ -83,6 +83,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -266,7 +267,7 @@ public class TypeOracleMediator {
   /**
    * Adds new units to an existing TypeOracle.
    */
-  public void addNewUnits(TreeLogger logger, Set<CompilationUnit> units) {
+  public void addNewUnits(TreeLogger logger, Collection<CompilationUnit> units) {
     // Perform a shallow pass to establish identity for new and old types.
     for (CompilationUnit unit : units) {
       switch (unit.getState()) {
@@ -328,7 +329,7 @@ public class TypeOracleMediator {
   /**
    * Full refresh based on new units.
    */
-  public void refresh(TreeLogger logger, Set<CompilationUnit> units) {
+  public void refresh(TreeLogger logger, Collection<CompilationUnit> units) {
     logger = logger.branch(TreeLogger.DEBUG, "Refreshing TypeOracle");
     binaryMapper.clear();
     typeOracle.reset();

@@ -64,6 +64,7 @@ import com.google.gwt.dev.util.arg.OptionValidateOnly;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedMap;
@@ -413,7 +414,7 @@ public class Precompile {
       String[] additionalRootTypes = null;
       if (declEntryPts.length == 0) {
         // No declared entry points, just validate all visible classes.
-        Set<CompilationUnit> compilationUnits = compilationState.getCompilationUnits();
+        Collection<CompilationUnit> compilationUnits = compilationState.getCompilationUnits();
         additionalRootTypes = new String[compilationUnits.size()];
         int i = 0;
         for (CompilationUnit unit : compilationUnits) {

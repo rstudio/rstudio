@@ -438,10 +438,11 @@ public class CompilationStateTest extends TestCase {
   private void validateCompilationState(String... generatedTypeNames) {
     // Save off the reflected collections.
     Map<String, CompilationUnit> unitMap = state.getCompilationUnitMap();
-    Set<CompilationUnit> units = state.getCompilationUnits();
+    Collection<CompilationUnit> units = state.getCompilationUnits();
 
     // Validate that the collections are consistent with each other.
-    assertEquals(new HashSet<CompilationUnit>(unitMap.values()), units);
+    assertEquals(new HashSet<CompilationUnit>(unitMap.values()),
+        new HashSet<CompilationUnit>(units));
 
     // Save off a mutable copy of the source map and generated types to compare.
     Map<String, Resource> sourceMap = new HashMap<String, Resource>(

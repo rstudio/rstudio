@@ -49,7 +49,7 @@ public class CompilationState {
     return result;
   }
 
-  private static void markSurvivorsChecked(Set<CompilationUnit> units) {
+  private static void markSurvivorsChecked(Collection<CompilationUnit> units) {
     for (CompilationUnit unit : units) {
       if (unit.getState() == State.COMPILED
           || unit.getState() == State.GRAVEYARD) {
@@ -86,7 +86,7 @@ public class CompilationState {
   /**
    * Unmodifiable view of all units.
    */
-  private Set<CompilationUnit> exposedUnits = Collections.emptySet();
+  private final Collection<CompilationUnit> exposedUnits = Collections.unmodifiableCollection(unitMap.values());
 
   private CompilationUnitInvalidator.InvalidatorState invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
 
@@ -144,7 +144,7 @@ public class CompilationState {
       }
     }
     unitMap.clear();
-    updateExposedUnits();
+    invalidateClassFileMaps();
     jdtCompiler = null;
     mediator = new TypeOracleMediator();
     invalidatorState = new CompilationUnitInvalidator.InvalidatorState();
@@ -181,7 +181,7 @@ public class CompilationState {
   /**
    * Returns an unmodifiable view of the set of compilation units.
    */
-  public Set<CompilationUnit> getCompilationUnits() {
+  public Collection<CompilationUnit> getCompilationUnits() {
     return exposedUnits;
   }
 
@@ -220,11 +220,11 @@ public class CompilationState {
     }
 
     refreshFromSourceOracle();
-    updateExposedUnits();
+    invalidateClassFileMaps();
 
     // Don't log about invalidated units via refresh.
-    Set<CompilationUnit> allUnitsPlusGraveyard = concatSet(
-        getCompilationUnits(), graveyardUnits.values());
+    Set<CompilationUnit> allUnitsPlusGraveyard = concatSet(unitMap.values(),
+        graveyardUnits.values());
     CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(TreeLogger.NULL,
         allUnitsPlusGraveyard);
     removeInvalidatedGraveyardUnits(graveyardUnits);
@@ -233,7 +233,8 @@ public class CompilationState {
      * Only retain state for units marked as CHECKED; because CHECKED units
      * won't be revalidated.
      */
-    Set<CompilationUnit> toRetain = new HashSet<CompilationUnit>(exposedUnits);
+    Set<CompilationUnit> toRetain = new HashSet<CompilationUnit>(
+        unitMap.values());
     for (Iterator<CompilationUnit> it = toRetain.iterator(); it.hasNext();) {
       CompilationUnit unit = it.next();
       if (unit.getState() != State.CHECKED) {
@@ -243,10 +244,9 @@ public class CompilationState {
     invalidatorState.retainAll(toRetain);
 
     jdtCompiler = new JdtCompiler();
-    compile(logger, getCompilationUnits(),
-        Collections.<CompilationUnit> emptySet());
-    mediator.refresh(logger, getCompilationUnits());
-    markSurvivorsChecked(getCompilationUnits());
+    compile(logger, unitMap.values(), Collections.<CompilationUnit> emptySet());
+    mediator.refresh(logger, unitMap.values());
+    markSurvivorsChecked(unitMap.values());
   }
 
   /**
@@ -273,9 +273,9 @@ public class CompilationState {
     for (CompilationUnit generatedUnit : usefulGeneratedCups) {
       unitMap.put(generatedUnit.getTypeName(), generatedUnit);
     }
-    updateExposedUnits();
+    invalidateClassFileMaps();
 
-    compile(logger, usefulGeneratedCups, getCompilationUnits());
+    compile(logger, usefulGeneratedCups, unitMap.values());
     mediator.addNewUnits(logger, usefulGeneratedCups);
     markSurvivorsChecked(usefulGeneratedCups);
   }
@@ -320,7 +320,7 @@ public class CompilationState {
       Set<CompilationUnit> allGraveyardUnits = concatSet(
           graveyardUnits.values(), usefulGraveyardUnits.values());
       CompilationUnitInvalidator.invalidateUnitsWithInvalidRefs(
-          TreeLogger.NULL, allGraveyardUnits, exposedUnits);
+          TreeLogger.NULL, allGraveyardUnits, unitMap.values());
 
       removeInvalidatedGraveyardUnits(graveyardUnits);
       removeInvalidatedGraveyardUnits(usefulGraveyardUnits);
@@ -332,8 +332,8 @@ public class CompilationState {
    * Compile units and update their internal state. Invalidate any units with
    * compile errors.
    */
-  private void compile(TreeLogger logger, Set<CompilationUnit> newUnits,
-      Set<CompilationUnit> existingUnits) {
+  private void compile(TreeLogger logger, Collection<CompilationUnit> newUnits,
+      Collection<CompilationUnit> existingUnits) {
     PerfLogger.start("CompilationState.compile");
     if (jdtCompiler.doCompile(newUnits)) {
       logger = logger.branch(TreeLogger.DEBUG,
@@ -362,10 +362,16 @@ public class CompilationState {
     PerfLogger.end();
   }
 
+  private void invalidateClassFileMaps() {
+    // TODO: see if we can call this in fewer places.
+    exposedClassFileMap = null;
+    exposedClassFileMapBySource = null;
+  }
+
   private void rebuildClassMaps() {
     HashMap<String, CompiledClass> classFileMap = new HashMap<String, CompiledClass>();
     HashMap<String, CompiledClass> classFileMapBySource = new HashMap<String, CompiledClass>();
-    for (CompilationUnit unit : getCompilationUnits()) {
+    for (CompilationUnit unit : unitMap.values()) {
       if (unit.isCompiled()) {
         for (CompiledClass compiledClass : unit.getCompiledClasses()) {
           classFileMap.put(compiledClass.getBinaryName(), compiledClass);
@@ -425,12 +431,5 @@ public class CompilationState {
         it.remove();
       }
     }
-  }
-
-  private void updateExposedUnits() {
-    exposedUnits = Collections.unmodifiableSet(new HashSet<CompilationUnit>(
-        unitMap.values()));
-    exposedClassFileMap = null;
-    exposedClassFileMapBySource = null;
   }
 }
