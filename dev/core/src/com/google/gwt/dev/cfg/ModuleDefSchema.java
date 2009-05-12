@@ -32,8 +32,6 @@ import com.google.gwt.dev.util.Util;
 import com.google.gwt.dev.util.xml.AttributeConverter;
 import com.google.gwt.dev.util.xml.Schema;
 
-import com.sun.tools.example.debug.expr.Token;
-
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URL;
