@@ -18,7 +18,10 @@ package com.google.gwt.core.ext.linker;
 import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
+import com.google.gwt.dev.util.Util;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -44,6 +47,20 @@ public abstract class EmittedArtifact extends Artifact<EmittedArtifact> {
     super(linker);
     assert partialPath != null;
     this.partialPath = partialPath;
+  }
+
+  /**
+   * Provides access to the contents of the EmittedResource as a byte buffer.
+   */
+  public byte[] getBytes(TreeLogger logger) throws UnableToCompleteException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    try {
+      Util.copy(getContents(logger), baos);
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to read stream", e);
+      throw new UnableToCompleteException();
+    }
+    return baos.toByteArray();
   }
 
   /**

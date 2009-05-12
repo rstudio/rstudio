@@ -47,6 +47,11 @@ public class StandardPublicResource extends PublicResource {
     }
 
     @Override
+    public byte[] getBytes(TreeLogger logger) throws UnableToCompleteException {
+      return data;
+    }
+
+    @Override
     public InputStream getContents(TreeLogger logger)
         throws UnableToCompleteException {
       return new ByteArrayInputStream(data);

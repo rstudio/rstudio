@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 
 /**
  * The standard implementation of {@link GeneratedResource}.
@@ -35,6 +36,19 @@ public class StandardGeneratedResource extends GeneratedResource {
       String partialPath, File file) {
     super(StandardLinkerContext.class, generatorType, partialPath);
     this.file = file;
+  }
+
+  @Override
+  public byte[] getBytes(TreeLogger logger) throws UnableToCompleteException {
+    try {
+      RandomAccessFile raf = new RandomAccessFile(file, "r");
+      byte[] buf = new byte[(int) raf.length()];
+      raf.readFully(buf);
+      return buf;
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to read file", e);
+      throw new UnableToCompleteException();
+    }
   }
 
   @Override

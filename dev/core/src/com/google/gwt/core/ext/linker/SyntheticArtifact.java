@@ -46,6 +46,11 @@ public class SyntheticArtifact extends EmittedArtifact {
   }
 
   @Override
+  public byte[] getBytes(TreeLogger logger) throws UnableToCompleteException {
+    return diskCache.readByteArray(token);
+  }
+
+  @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
     return new ByteArrayInputStream(diskCache.readByteArray(token));

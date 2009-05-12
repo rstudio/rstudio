@@ -56,14 +56,17 @@ import com.google.gwt.dev.util.Util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -109,6 +112,25 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       return o1.getName().compareTo(o2.getName());
     }
   };
+
+  /**
+   * A faster bulk version of {@link File#mkdirs()} that takes advantage of
+   * cached state to avoid a lot of file system access.
+   */
+  private static void mkdirs(File dir, Set<String> createdDirs) {
+    if (dir == null) {
+      return;
+    }
+    String path = dir.getPath();
+    if (createdDirs.contains(path)) {
+      return;
+    }
+    if (!dir.exists()) {
+      mkdirs(dir.getParentFile(), createdDirs);
+      dir.mkdir();
+    }
+    createdDirs.add(path);
+  }
 
   private final ArtifactSet artifacts = new ArtifactSet();
 
@@ -435,30 +457,47 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
   public void produceOutputDirectory(TreeLogger logger, ArtifactSet artifacts,
       File outputPath, File extraPath) throws UnableToCompleteException {
 
+    outputPath = outputPath.getAbsoluteFile();
+    if (extraPath != null) {
+      extraPath = extraPath.getAbsoluteFile();
+    }
+
     logger = logger.branch(TreeLogger.TRACE, "Linking compilation into "
         + outputPath.getPath(), null);
 
+    Set<String> createdDirs = new HashSet<String>();
     for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-              TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-                  "Emitting resource " + artifact.getPartialPath(), null);
+      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
+          "Emitting resource " + artifact.getPartialPath(), null);
 
-              File outFile;
-              if (artifact.isPrivate()) {
-                if (extraPath == null) {
-                  continue;
-                }
-                outFile = new File(getExtraPathForLinker(extraPath,
-                    artifact.getLinker()), artifact.getPartialPath());
-              } else {
-                outFile = new File(outputPath, artifact.getPartialPath());
-              }
+      File outFile;
+      if (artifact.isPrivate()) {
+        if (extraPath == null) {
+          continue;
+        }
+        outFile = new File(getExtraPathForLinker(extraPath,
+            artifact.getLinker()), artifact.getPartialPath());
+      } else {
+        outFile = new File(outputPath, artifact.getPartialPath());
+      }
 
-              if (!outFile.exists()
-                  || (outFile.lastModified() <= artifact.getLastModified())) {
-        Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
-                outFile.setLastModified(artifact.getLastModified());
-              }
-            }
+      if (!outFile.exists()
+          || (outFile.lastModified() <= artifact.getLastModified())) {
+        mkdirs(outFile.getParentFile(), createdDirs);
+        try {
+          RandomAccessFile raf = new RandomAccessFile(outFile, "rw");
+          byte[] bytes = artifact.getBytes(artifactLogger);
+          raf.setLength(bytes.length);
+          raf.write(bytes);
+          raf.close();
+        } catch (IOException e) {
+          logger.log(TreeLogger.ERROR, "Unable to create file '"
+              + outFile.getAbsolutePath() + "'", e);
+          throw new UnableToCompleteException();
+        }
+        outFile.setLastModified(artifact.getLastModified());
+      }
+    }
     for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)) {
       TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
           "Emitting soyc resources.", null);
