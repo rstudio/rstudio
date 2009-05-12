@@ -380,6 +380,7 @@ public class JavaToJavaScriptCompiler {
       String[] all = rpo.getAllPossibleRebindAnswers(logger, element);
       Collections.addAll(allRootTypes, all);
     }
+    rpo.getGeneratorContext().finish(logger);
     Collections.addAll(allRootTypes, additionalRootTypes);
     allRootTypes.addAll(JProgram.CODEGEN_TYPES_SET);
     allRootTypes.addAll(JProgram.INDEX_TYPES_SET);
