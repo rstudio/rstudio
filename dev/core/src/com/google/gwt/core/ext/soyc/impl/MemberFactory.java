@@ -19,7 +19,6 @@ import com.google.gwt.core.ext.soyc.Member;
 import com.google.gwt.dev.jjs.ast.JDeclaredType;
 import com.google.gwt.dev.jjs.ast.JField;
 import com.google.gwt.dev.jjs.ast.JMethod;
-import com.google.gwt.dev.jjs.ast.JReferenceType;
 import com.google.gwt.dev.js.ast.JsFunction;
 
 import java.lang.reflect.Constructor;
