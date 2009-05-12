@@ -130,6 +130,20 @@ public class FlexTableTest extends HTMLTableTestBase {
     ft.clear();
   }
 
+  public void testRemoveAllRows() {
+    FlexTable table = new FlexTable();
+    for (int row = 0; row < 4; row++) {
+      table.setHTML(row, 0, row + ":0");
+      table.setHTML(row, 1, row + ":1");
+      table.setWidget(row, 2, new Button(row + ":2"));
+      table.setWidget(row, 3, new Button(row + ":3"));
+    }
+
+    assertEquals(4, table.getRowCount());
+    table.removeAllRows();
+    assertEquals(0, table.getRowCount());
+  }
+
   public void secondarySetHeightTest() {
     FlexTable ft = new FlexTable();
     FlexCellFormatter cellFormatter = (FlexCellFormatter) ft.getCellFormatter();

@@ -172,6 +172,16 @@ public class FlexTable extends HTMLTable {
     return super.insertRow(beforeRow);
   }
 
+  /**
+   * Remove all rows in this table.
+   */
+  public void removeAllRows() {
+    int numRows = getRowCount();
+    for (int i = 0; i < numRows; i++) {
+      removeRow(0);
+    }
+  }
+
   @Override
   public void removeCell(int row, int col) {
     super.removeCell(row, col);

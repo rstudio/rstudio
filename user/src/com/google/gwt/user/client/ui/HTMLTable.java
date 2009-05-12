@@ -713,12 +713,19 @@ public abstract class HTMLTable extends Panel implements SourcesTableEvents,
    */
   @Override
   public void clear() {
+    clear(false);
+  }
+
+  /**
+   * Removes all widgets from this table, optionally clearing the inner HTML of
+   * each cell.  Note that this method does not remove any cells or rows.
+   * 
+   * @param clearInnerHTML should the cell's inner html be cleared?
+   */
+  public void clear(boolean clearInnerHTML) {
     for (int row = 0; row < getRowCount(); ++row) {
       for (int col = 0; col < getCellCount(row); ++col) {
-        Widget child = getWidgetImpl(row, col);
-        if (child != null) {
-          remove(child);
-        }
+        cleanCell(row, col, clearInnerHTML);
       }
     }
   }

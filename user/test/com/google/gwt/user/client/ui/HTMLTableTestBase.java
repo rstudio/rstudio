@@ -74,6 +74,46 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     fail("should have throw an index out of bounds");
   }
 
+  public void testClearWidgetsAndHtml() {
+    HTMLTable table = getTable(4, 4);
+    for (int row = 0; row < 4; row++) {
+      table.setHTML(row, 0, row + ":0");
+      table.setHTML(row, 1, row + ":1");
+      table.setWidget(row, 2, new Button(row + ":2"));
+      table.setWidget(row, 3, new Button(row + ":3"));
+    }
+
+    table.clear(true);
+    for (int row = 0; row < 4; row++) {
+      assertEquals("", table.getHTML(row, 0).trim());
+      assertEquals("", table.getHTML(row, 1).trim());
+      assertEquals("", table.getHTML(row, 2).trim());
+      assertNull(table.getWidget(row, 2));
+      assertEquals("", table.getHTML(row, 3).trim());
+      assertNull(table.getWidget(row, 3));
+    }
+  }
+
+  public void testClearWidgetsOnly() {
+    HTMLTable table = getTable(4, 4);
+    for (int row = 0; row < 4; row++) {
+      table.setHTML(row, 0, row + ":0");
+      table.setHTML(row, 1, row + ":1");
+      table.setWidget(row, 2, new Button(row + ":2"));
+      table.setWidget(row, 3, new Button(row + ":3"));
+    }
+
+    table.clear();
+    for (int row = 0; row < 4; row++) {
+      assertEquals(row + ":0", table.getHTML(row, 0));
+      assertEquals(row + ":1", table.getHTML(row, 1));
+      assertEquals("", table.getHTML(row, 2).trim());
+      assertNull(table.getWidget(row, 2));
+      assertEquals("", table.getHTML(row, 3).trim());
+      assertNull(table.getWidget(row, 3));
+    }
+  }
+
   public void testDebugId() {
     HTMLTable table = getTable(4, 3);
     for (int row = 0; row < 4; row++) {
@@ -88,7 +128,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
     CellFormatter formatter = table.getCellFormatter();
     for (int row = 0; row < 4; row++) {
       for (int cell = 0; cell < 3; cell++) {
-        Element cellElem = formatter.getElement(row, cell); 
+        Element cellElem = formatter.getElement(row, cell);
         UIObjectTest.assertDebugId("myTable-" + row + "-" + cell, cellElem);
       }
     }
