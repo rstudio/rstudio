@@ -190,31 +190,6 @@ public class CheckBoxTest extends GWTTestCase {
     assertEquals(1, clickCount[0]);
   }
   
-  public void testLabelClick() {
-    final int[] clickCount = {0};
-
-    CheckBox check = new CheckBox();
-    Element newInput = DOM.createInputCheck();
-    check.replaceInputElement(newInput);
-
-    check.setText("Burger");
-    check.addClickHandler(new ClickHandler() {
-      public void onClick(ClickEvent arg0) {
-        clickCount[0]++;
-      }
-    });
-    RootPanel.get().add(check);
-
-    NativeEvent e = Document.get().createClickEvent(0, 25, 25, 25, 25, false, 
-        false, false, false);
-
-    // click the label, which is next to the checkbox
-    // http://code.google.com/p/google-web-toolkit/issues/detail?id=3508
-
-    newInput.getNextSiblingElement().dispatchEvent(e);
-    assertEquals(1, clickCount[0]);
-  }
-  
   public void testReplaceInputElement() {
     cb.setValue(true);
     cb.setTabIndex(1234);
