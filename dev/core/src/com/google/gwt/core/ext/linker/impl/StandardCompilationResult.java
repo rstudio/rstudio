@@ -76,14 +76,14 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final String strongName;
 
-  private final long symbolMapToken;
+  private final long symbolToken;
 
   public StandardCompilationResult(String strongName, String[] js,
-      SortedMap<SymbolData, String> symbolMap) {
+      byte[] serializedSymbolMap) {
     super(StandardLinkerContext.class);
     this.strongName = strongName;
     jsToken = diskCache.writeObject(js);
-    symbolMapToken = diskCache.writeObject(symbolMap);
+    symbolToken = diskCache.writeByteArray(serializedSymbolMap);
   }
 
   /**
@@ -113,8 +113,7 @@ public class StandardCompilationResult extends CompilationResult {
   }
 
   @Override
-  @SuppressWarnings("unchecked")
-  public SortedMap<SymbolData, String> getSymbolMap() {
-    return diskCache.readObject(symbolMapToken, SortedMap.class);
+  public SymbolData[] getSymbolMap() {
+    return diskCache.readObject(symbolToken, SymbolData[].class);
   }
 }

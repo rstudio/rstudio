@@ -18,6 +18,10 @@ package com.google.gwt.core.ext.linker.impl;
 import com.google.gwt.core.ext.linker.SymbolData;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InvalidObjectException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -26,47 +30,46 @@ import java.net.URISyntaxException;
  */
 public class StandardSymbolData implements SymbolData {
 
-  public static SymbolData forClass(String className, String fileName,
+  public static StandardSymbolData forClass(String className, String uriString,
       int lineNumber) {
-    URI uri = inferUriFromFileName(fileName);
-    return new StandardSymbolData(className, null, null, uri, lineNumber);
+    return new StandardSymbolData(className, null, null, uriString, lineNumber);
   }
 
-  public static SymbolData forMember(String className, String memberName,
-      String jsniIdent, String fileName, int lineNumber) {
-    URI uri = inferUriFromFileName(fileName);
-    return new StandardSymbolData(className, jsniIdent, memberName, uri,
+  public static StandardSymbolData forMember(String className,
+      String memberName, String methodSig, String uriString, int lineNumber) {
+    return new StandardSymbolData(className, memberName, methodSig, uriString,
         lineNumber);
   }
 
-  private static URI inferUriFromFileName(String fileName) {
+  public static String toUriString(String fileName) {
     File f = new File(fileName);
     if (f.exists()) {
-      return f.toURI();
+      return f.toURI().toASCIIString();
     } else {
       try {
-        return new URI(fileName);
+        return new URI(fileName).toASCIIString();
       } catch (URISyntaxException e) {
         return null;
       }
     }
   }
 
-  private final String className;
-  private final String jsniIdent;
-  private final String memberName;
-  private final int sourceLine;
-  private final URI sourceUri;
+  private String className;
+  private String memberName;
+  private String methodSig;
+  private int sourceLine;
+  private String sourceUri;
+  private String symbolName;
 
-  private StandardSymbolData(String className, String jsniIdent,
-      String memberName, URI sourceUri, int sourceLine) {
+  private StandardSymbolData(String className, String memberName,
+      String methodSig, String sourceUri, int sourceLine) {
     assert className != null && className.length() > 0 : "className";
-    assert !(jsniIdent == null ^ memberName == null) : "jsniIdent ^ memberName";
+    assert memberName != null || methodSig == null : "methodSig without memberName";
     assert sourceLine >= -1 : "sourceLine: " + sourceLine;
 
     this.className = className;
-    this.jsniIdent = jsniIdent;
     this.memberName = memberName;
+    this.methodSig = methodSig;
     this.sourceUri = sourceUri;
     this.sourceLine = sourceLine;
   }
@@ -76,7 +79,13 @@ public class StandardSymbolData implements SymbolData {
   }
 
   public String getJsniIdent() {
-    return jsniIdent;
+    if (memberName == null) {
+      return null;
+    }
+    if (methodSig == null) {
+      return className + "::" + memberName;
+    }
+    return className + "::" + memberName + methodSig;
   }
 
   public String getMemberName() {
@@ -87,8 +96,12 @@ public class StandardSymbolData implements SymbolData {
     return sourceLine;
   }
 
-  public URI getSourceUri() {
+  public String getSourceUri() {
     return sourceUri;
+  }
+
+  public String getSymbolName() {
+    return symbolName;
   }
 
   public boolean isClass() {
@@ -96,15 +109,66 @@ public class StandardSymbolData implements SymbolData {
   }
 
   public boolean isField() {
-    return jsniIdent != null && !jsniIdent.contains("(");
+    return memberName != null && methodSig == null;
   }
 
   public boolean isMethod() {
-    return jsniIdent != null && jsniIdent.contains("(");
+    return methodSig != null;
+  }
+
+  public void setSymbolName(String symbolName) {
+    this.symbolName = symbolName;
   }
 
   @Override
   public String toString() {
-    return jsniIdent != null ? jsniIdent : className;
+    return methodSig != null ? methodSig : className;
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException,
+      ClassNotFoundException {
+    className = (String) in.readObject();
+    switch (in.read()) {
+      case 0:
+        break;
+      case 1:
+        memberName = in.readUTF();
+        break;
+      case 2:
+        memberName = in.readUTF();
+        methodSig = in.readUTF();
+        break;
+      default:
+        throw new InvalidObjectException("Unexpected input");
+    }
+    sourceLine = in.readInt();
+    sourceUri = (String) in.readObject();
+    symbolName = in.readUTF();
+  }
+
+  /**
+   * Implemented by hand for speed (over using reflection) because there are so
+   * many of these. Note that {@link #className} and {@link #sourceUri} are done
+   * as writeObject because the actual String instances are very likely to be
+   * shared among many instances of this class, so the same objects can be
+   * reused in the stream. The other String fields are done as UTF because it's
+   * slightly faster and the String objects are unlikely to be shared among
+   * instances.
+   */
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    out.writeObject(className);
+    if (isClass()) {
+      out.write(0);
+    } else if (isField()) {
+      out.write(1);
+      out.writeUTF(memberName);
+    } else {
+      out.write(2);
+      out.writeUTF(memberName);
+      out.writeUTF(methodSig);
+    }
+    out.writeInt(sourceLine);
+    out.writeObject(sourceUri);
+    out.writeUTF(symbolName);
   }
 }

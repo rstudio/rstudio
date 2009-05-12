@@ -275,7 +275,7 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     StandardCompilationResult result = resultsByStrongName.get(strongName);
     if (result == null) {
       result = new StandardCompilationResult(strongName, js,
-          permutationResult.getSymbolMap());
+          permutationResult.getSerializedSymbolMap());
       resultsByStrongName.put(result.getStrongName(), result);
       artifacts.add(result);
 
@@ -439,26 +439,26 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
         + outputPath.getPath(), null);
 
     for (EmittedArtifact artifact : artifacts.find(EmittedArtifact.class)) {
-      TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
-          "Emitting resource " + artifact.getPartialPath(), null);
+              TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
+                  "Emitting resource " + artifact.getPartialPath(), null);
 
-      File outFile;
-      if (artifact.isPrivate()) {
-        if (extraPath == null) {
-          continue;
-        }
-        outFile = new File(getExtraPathForLinker(extraPath,
-            artifact.getLinker()), artifact.getPartialPath());
-      } else {
-        outFile = new File(outputPath, artifact.getPartialPath());
-      }
+              File outFile;
+              if (artifact.isPrivate()) {
+                if (extraPath == null) {
+                  continue;
+                }
+                outFile = new File(getExtraPathForLinker(extraPath,
+                    artifact.getLinker()), artifact.getPartialPath());
+              } else {
+                outFile = new File(outputPath, artifact.getPartialPath());
+              }
 
-      if (!outFile.exists()
-          || (outFile.lastModified() <= artifact.getLastModified())) {
+              if (!outFile.exists()
+                  || (outFile.lastModified() <= artifact.getLastModified())) {
         Util.copy(artifactLogger, artifact.getContents(artifactLogger), outFile);
-        outFile.setLastModified(artifact.getLastModified());
-      }
-    }
+                outFile.setLastModified(artifact.getLastModified());
+              }
+            }
     for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)) {
       TreeLogger artifactLogger = logger.branch(TreeLogger.DEBUG,
           "Emitting soyc resources.", null);

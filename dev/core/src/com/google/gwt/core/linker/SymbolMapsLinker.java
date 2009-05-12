@@ -29,7 +29,6 @@ import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
-import java.net.URI;
 import java.util.Map;
 import java.util.SortedMap;
 
@@ -110,31 +109,28 @@ public class SymbolMapsLinker extends AbstractLinker {
     }
 
     pw.println("# jsName, jsniIdent, className, memberName, sourceUri, sourceLine");
-    for (Map.Entry<SymbolData, String> entry : result.getSymbolMap().entrySet()) {
-      SymbolData symbol = entry.getKey();
+    for (SymbolData symbol : result.getSymbolMap()) {
+      StringBuilder sb = new StringBuilder(1024);
+      sb.append(symbol.getSymbolName());
 
-      pw.print(entry.getValue());
-
-      print(pw, symbol.getJsniIdent());
-      print(pw, symbol.getClassName());
-      print(pw, symbol.getMemberName());
-      print(pw, symbol.getSourceUri());
-      print(pw, String.valueOf(symbol.getSourceLine()));
-      pw.println();
-    }
-  }
-
-  private void print(PrintWriter pw, String value) {
-    pw.print(",");
-    if (value != null) {
-      pw.print(value);
-    }
-  }
-
-  private void print(PrintWriter pw, URI uri) {
-    pw.print(",");
-    if (uri != null) {
-      pw.print(uri.toASCIIString());
+      sb.append(',');
+      sb.append(symbol.getJsniIdent());
+      sb.append(',');
+      sb.append(symbol.getClassName());
+      sb.append(',');
+      String memberName = symbol.getMemberName();
+      if (memberName != null) {
+        sb.append(memberName);
+      }
+      sb.append(',');
+      String sourceUri = symbol.getSourceUri();
+      if (sourceUri != null) {
+        sb.append(sourceUri);
+      }
+      sb.append(',');
+      sb.append(symbol.getSourceLine());
+      sb.append('\n');
+      pw.write(sb.toString());
     }
   }
 }

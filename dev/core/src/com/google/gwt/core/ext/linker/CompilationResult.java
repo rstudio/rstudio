@@ -56,12 +56,12 @@ public abstract class CompilationResult extends Artifact<CompilationResult> {
   public abstract String getStrongName();
 
   /**
-   * Returns a map of obfuscated symbol names in the compilation to metadata
-   * about the symbol. This data can allow for on-the-fly deobfuscation of stack
-   * trace information or to allow server components to have in-depth knowledge
-   * of the runtime structure of compiled objects.
+   * Returns a sorted array of obfuscated symbol names in the compilation to
+   * metadata about the symbol. This data can allow for on-the-fly deobfuscation
+   * of stack trace information or to allow server components to have in-depth
+   * knowledge of the runtime structure of compiled objects.
    */
-  public abstract SortedMap<SymbolData, String> getSymbolMap();
+  public abstract SymbolData[] getSymbolMap();
 
   @Override
   public final int hashCode() {

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.impl;
 
-import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.dev.jjs.HasSourceInfo;
 import com.google.gwt.dev.jjs.InternalCompilerException;
@@ -153,6 +152,14 @@ public class GenerateJavaScriptAST {
   private class CreateNamesAndScopesVisitor extends JVisitor {
 
     private final JField arrayLengthField = program.getIndexedField("Array.length");
+
+    /**
+     * Cache of computed Java source file names to URI strings for symbol
+     * export. By using a cache we also ensure the miminum number of String
+     * instances are serialized.
+     */
+    private final Map<String, String> fileNameToUriString = new HashMap<String, String>();
+
     private final Stack<JsScope> scopeStack = new Stack<JsScope>();
 
     @Override
@@ -365,6 +372,23 @@ public class GenerateJavaScriptAST {
       return false;
     }
 
+    /**
+     * Generate a file name URI string for a source info, for symbol data
+     * export.
+     */
+    private String makeUriString(HasSourceInfo x) {
+      String fileName = x.getSourceInfo().getFileName();
+      if (fileName == null) {
+        return null;
+      }
+      String uriString = fileNameToUriString.get(fileName);
+      if (uriString == null) {
+        uriString = StandardSymbolData.toUriString(fileName);
+        fileNameToUriString.put(fileName, uriString);
+      }
+      return uriString;
+    }
+
     private JsScope peek() {
       return scopeStack.peek();
     }
@@ -378,18 +402,14 @@ public class GenerateJavaScriptAST {
     }
 
     private void recordSymbol(JReferenceType x, JsName jsName) {
-      SymbolData symbolData = StandardSymbolData.forClass(x.getName(),
-          x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine());
+      StandardSymbolData symbolData = StandardSymbolData.forClass(x.getName(),
+          makeUriString(x), x.getSourceInfo().getStartLine());
       assert !symbolTable.containsKey(symbolData);
       symbolTable.put(symbolData, jsName);
     }
 
     private <T extends HasEnclosingType & HasName & HasSourceInfo> void recordSymbol(
         T x, JsName jsName) {
-      StringBuilder sb = new StringBuilder();
-      sb.append(x.getEnclosingType().getName());
-      sb.append("::");
-
       /*
        * NB: The use of x.getName() can produce confusion in cases where a type
        * has both polymorphic and static dispatch for a method, because you
@@ -402,9 +422,10 @@ public class GenerateJavaScriptAST {
        * begin with a dollar-sign and whose first parameter is the enclosing
        * type.
        */
-      sb.append(x.getName());
 
+      String methodSig;
       if (x instanceof JMethod) {
+        StringBuilder sb = new StringBuilder();
         sb.append('(');
         JMethod method = ((JMethod) x);
         for (JType t : method.getOriginalParamTypes()) {
@@ -412,14 +433,17 @@ public class GenerateJavaScriptAST {
         }
         sb.append(')');
         sb.append(method.getOriginalReturnType().getJsniSignatureName());
+        methodSig = sb.toString();
+      } else {
+        methodSig = null;
       }
 
-      SymbolData symbolData = StandardSymbolData.forMember(
-          x.getEnclosingType().getName(), x.getName(), sb.toString(),
-          x.getSourceInfo().getFileName(), x.getSourceInfo().getStartLine());
+      StandardSymbolData symbolData = StandardSymbolData.forMember(
+          x.getEnclosingType().getName(), x.getName(), methodSig,
+          makeUriString(x), x.getSourceInfo().getStartLine());
       assert !symbolTable.containsKey(symbolData) : "Duplicate symbol "
           + "recorded " + jsName.getIdent() + " for " + x.getName()
-          + " and key " + sb.toString();
+          + " and key " + symbolData.getJsniIdent();
       symbolTable.put(symbolData, jsName);
     }
   }
@@ -1800,7 +1824,7 @@ public class GenerateJavaScriptAST {
   }
 
   public static JavaToJavaScriptMap exec(JProgram program, JsProgram jsProgram,
-      JsOutputOption output, Map<SymbolData, JsName> symbolTable) {
+      JsOutputOption output, Map<StandardSymbolData, JsName> symbolTable) {
     GenerateJavaScriptAST generateJavaScriptAST = new GenerateJavaScriptAST(
         program, jsProgram, output, symbolTable);
     return generateJavaScriptAST.execImpl();
@@ -1861,6 +1885,11 @@ public class GenerateJavaScriptAST {
   private final Set<JReferenceType> specialObfuscatedTypes = new HashSet<JReferenceType>();
 
   /**
+   * Maps JsNames to machine-usable identifiers.
+   */
+  private final Map<StandardSymbolData, JsName> symbolTable;
+
+  /**
    * Contains JsNames for all globals, such as static fields and methods.
    */
   private final JsScope topScope;
@@ -1871,13 +1900,8 @@ public class GenerateJavaScriptAST {
 
   private final Map<JsStatement, JMethod> vtableInitForMethodMap = new HashMap<JsStatement, JMethod>();
 
-  /**
-   * Maps JsNames to machine-usable identifiers.
-   */
-  private final Map<SymbolData, JsName> symbolTable;
-
   private GenerateJavaScriptAST(JProgram program, JsProgram jsProgram,
-      JsOutputOption output, Map<SymbolData, JsName> symbolTable) {
+      JsOutputOption output, Map<StandardSymbolData, JsName> symbolTable) {
     this.program = program;
     typeOracle = program.typeOracle;
     this.jsProgram = jsProgram;

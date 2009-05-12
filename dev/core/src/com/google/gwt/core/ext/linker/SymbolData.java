@@ -16,7 +16,6 @@
 package com.google.gwt.core.ext.linker;
 
 import java.io.Serializable;
-import java.net.URI;
 import java.util.Comparator;
 
 /**
@@ -71,11 +70,16 @@ public interface SymbolData extends Serializable {
   int getSourceLine();
 
   /**
-   * Returns a URI representing the location of the source. This method will
-   * return <code>null</code> if the symbol was derived from a transient or
-   * unknown source.
+   * Returns a URI string representing the location of the source. This method
+   * will return <code>null</code> if the symbol was derived from a transient
+   * or unknown source.
    */
-  URI getSourceUri();
+  String getSourceUri();
+
+  /**
+   * Returns the JavaScript symbol this data maps to.
+   */
+  String getSymbolName();
 
   /**
    * Returns <code>true</code> if the symbol represents a class.

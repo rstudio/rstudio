@@ -20,6 +20,7 @@ import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
+import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
 import com.google.gwt.core.ext.soyc.Range;
 import com.google.gwt.core.ext.soyc.SplitPointRecorder;
 import com.google.gwt.core.ext.soyc.StoryRecorder;
@@ -103,12 +104,14 @@ import com.google.gwt.dev.util.Empty;
 import com.google.gwt.dev.util.Memory;
 import com.google.gwt.dev.util.PerfLogger;
 import com.google.gwt.dev.util.TextOutput;
+import com.google.gwt.dev.util.Util;
 
 import org.eclipse.jdt.core.compiler.IProblem;
 import org.eclipse.jdt.internal.compiler.CompilationResult;
 import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -121,7 +124,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -134,12 +136,18 @@ public class JavaToJavaScriptCompiler {
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
     private final String[] js;
-    private final SortedMap<SymbolData, String> symbolMap;
+    private final byte[] serializedSymbolMap;
 
-    public PermutationResultImpl(String[] js,
-        SortedMap<SymbolData, String> symbolMap) {
+    public PermutationResultImpl(String[] js, SymbolData[] symbolMap) {
       this.js = js;
-      this.symbolMap = symbolMap;
+      try {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Util.writeObjectToStream(baos, (Object) symbolMap);
+        this.serializedSymbolMap = baos.toByteArray();
+      } catch (IOException e) {
+        throw new RuntimeException("Should never happen with in-memory stream",
+            e);
+      }
     }
 
     public ArtifactSet getArtifacts() {
@@ -150,8 +158,8 @@ public class JavaToJavaScriptCompiler {
       return js;
     }
 
-    public SortedMap<SymbolData, String> getSymbolMap() {
-      return symbolMap;
+    public byte[] getSerializedSymbolMap() {
+      return serializedSymbolMap;
     }
   }
 
@@ -181,7 +189,7 @@ public class JavaToJavaScriptCompiler {
       JProgram jprogram = ast.getJProgram();
       JsProgram jsProgram = ast.getJsProgram();
       JJSOptions options = unifiedAst.getOptions();
-      Map<SymbolData, JsName> symbolTable = new TreeMap<SymbolData, JsName>(
+      Map<StandardSymbolData, JsName> symbolTable = new TreeMap<StandardSymbolData, JsName>(
           new SymbolData.ClassIdentComparator());
 
       ResolveRebinds.exec(jprogram, rebindAnswers);
@@ -305,9 +313,8 @@ public class JavaToJavaScriptCompiler {
         }
       }
 
-      SortedMap<SymbolData, String> symbolMap = makeSymbolMap(symbolTable);
-
-      PermutationResult toReturn = new PermutationResultImpl(js, symbolMap);
+      PermutationResult toReturn = new PermutationResultImpl(js,
+          makeSymbolMap(symbolTable));
       if (sourceInfoMaps != null) {
 
         // get method dependencies
@@ -859,19 +866,17 @@ public class JavaToJavaScriptCompiler {
     return amp.makeStatement();
   }
 
-  private static SortedMap<SymbolData, String> makeSymbolMap(
-      Map<SymbolData, JsName> symbolTable) {
+  private static SymbolData[] makeSymbolMap(
+      Map<StandardSymbolData, JsName> symbolTable) {
 
-    SortedMap<SymbolData, String> toReturn = new TreeMap<SymbolData, String>(
-        new SymbolData.ClassIdentComparator());
-
-    for (Map.Entry<SymbolData, JsName> entry : symbolTable.entrySet()) {
-      assert !toReturn.containsKey(entry.getKey()) : "Duplicate key for "
-          + entry.getKey().toString();
-      toReturn.put(entry.getKey(), entry.getValue().getShortIdent());
+    SymbolData[] result = new SymbolData[symbolTable.size()];
+    int i = 0;
+    for (Map.Entry<StandardSymbolData, JsName> entry : symbolTable.entrySet()) {
+      StandardSymbolData symbolData = entry.getKey();
+      symbolData.setSymbolName(entry.getValue().getShortIdent());
+      result[i++] = symbolData;
     }
-
-    return toReturn;
+    return result;
   }
 
   private static void maybeDumpAST(JProgram jprogram) {
