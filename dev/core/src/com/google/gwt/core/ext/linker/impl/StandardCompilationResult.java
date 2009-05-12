@@ -69,7 +69,7 @@ public class StandardCompilationResult extends CompilationResult {
 
   private static final DiskCache diskCache = new DiskCache();
 
-  private final long jsToken;
+  private final long jsToken[];
 
   private final SortedSet<SortedMap<SelectionProperty, String>> propertyValues = new TreeSet<SortedMap<SelectionProperty, String>>(
       MAP_COMPARATOR);
@@ -78,11 +78,14 @@ public class StandardCompilationResult extends CompilationResult {
 
   private final long symbolToken;
 
-  public StandardCompilationResult(String strongName, String[] js,
+  public StandardCompilationResult(String strongName, byte[][] js,
       byte[] serializedSymbolMap) {
     super(StandardLinkerContext.class);
     this.strongName = strongName;
-    jsToken = diskCache.writeObject(js);
+    jsToken = new long[js.length];
+    for (int i = 0; i < jsToken.length; ++i) {
+      jsToken[i] = diskCache.writeByteArray(js[i]);
+    }
     symbolToken = diskCache.writeByteArray(serializedSymbolMap);
   }
 
@@ -99,7 +102,11 @@ public class StandardCompilationResult extends CompilationResult {
 
   @Override
   public String[] getJavaScript() {
-    return diskCache.readObject(jsToken, String[].class);
+    String[] js = new String[jsToken.length];
+    for (int i = 0; i < jsToken.length; ++i) {
+      js[i] = diskCache.readString(jsToken[i]);
+    }
+    return js;
   }
 
   @Override

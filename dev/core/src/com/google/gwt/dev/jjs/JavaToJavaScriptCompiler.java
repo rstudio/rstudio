@@ -135,11 +135,15 @@ public class JavaToJavaScriptCompiler {
 
   private static class PermutationResultImpl implements PermutationResult {
     private final ArtifactSet artifacts = new ArtifactSet();
-    private final String[] js;
+    private final byte[][] js;
     private final byte[] serializedSymbolMap;
 
     public PermutationResultImpl(String[] js, SymbolData[] symbolMap) {
-      this.js = js;
+      byte[][] bytes = new byte[js.length][];
+      for (int i = 0; i < js.length; ++i) {
+        bytes[i] = Util.getBytes(js[i]);
+      }
+      this.js = bytes;
       try {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Util.writeObjectToStream(baos, (Object) symbolMap);
@@ -154,7 +158,7 @@ public class JavaToJavaScriptCompiler {
       return artifacts;
     }
 
-    public String[] getJs() {
+    public byte[][] getJs() {
       return js;
     }
 

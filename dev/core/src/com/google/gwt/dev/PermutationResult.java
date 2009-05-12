@@ -30,9 +30,9 @@ public interface PermutationResult extends Serializable {
   ArtifactSet getArtifacts();
 
   /**
-   * The compiled JavaScript code.
+   * The compiled JavaScript code as UTF8 bytes.
    */
-  String[] getJs();
+  byte[][] getJs();
 
   /**
    * The symbol map for the permutation.
