@@ -33,6 +33,13 @@ public class Text extends Node {
   }
 
   /**
+   * Deletes data at the given [offset, length] range.
+   */
+  public final native void deleteData(int offset, int length) /*-{
+    this.deleteData(offset, length);
+  }-*/;
+
+  /**
    * The character data of this text node.
    */
   public final native String getData() /*-{
@@ -47,9 +54,32 @@ public class Text extends Node {
   }-*/;
 
   /**
+   * Inserts character data at the given offset.
+   */
+  public final native void insertData(int offset, String data) /*-{
+    this.insertData(offset, data);
+  }-*/;
+
+  /**
+   * Replaces data at the given [offset, length] range with the given string.
+   */
+  public final native void replaceData(int offset, int length, String data) /*-{
+    this.replaceData(offset, length, data);
+  }-*/;
+
+  /**
    * The character data of this text node.
    */
   public final native void setData(String data) /*-{
     this.data = data;
+  }-*/;
+
+  /**
+   * Splits the data in this node into two separate text nodes. The text
+   * before the split offset is kept in this node, and a new sibling node is
+   * created to contain the text after the offset.
+   */
+  public final native Text splitText(int offset) /*-{
+    return this.splitText(offset);
   }-*/;
 }

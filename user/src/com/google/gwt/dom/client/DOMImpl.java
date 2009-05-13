@@ -210,13 +210,15 @@ abstract class DOMImpl {
     return sib;
   }-*/;
 
-  public native Element getParentElement(Element elem) /*-{
-    var parent = elem.parentNode;
-    if (parent == null) {
-      return null;
-    }
-    if (parent.nodeType != 1)
+  public native int getNodeType(Node node) /*-{
+    return node.nodeType;
+  }-*/;
+
+  public native Element getParentElement(Node node) /*-{
+    var parent = node.parentNode;
+    if (!parent || parent.nodeType != 1) {
       parent = null;
+    }
     return parent;
   }-*/;
 
@@ -232,6 +234,10 @@ abstract class DOMImpl {
     return doc.getViewportElement().getScrollTop();
   }
 
+  public native String getTagName(Element elem) /*-{
+    return elem.tagName;
+  }-*/;
+
   public native String imgGetSrc(Element img) /*-{
     return img.src;
   }-*/;
@@ -240,7 +246,7 @@ abstract class DOMImpl {
     img.src = src;
   }-*/;
 
-  public abstract boolean isOrHasChild(Element parent, Element child);
+  public abstract boolean isOrHasChild(Node parent, Node child);
 
   public native void scrollIntoView(Element elem) /*-{
     var left = elem.offsetLeft, top = elem.offsetTop;
@@ -324,5 +330,9 @@ abstract class DOMImpl {
 
   public native String toString(Element elem) /*-{
     return elem.outerHTML;
+  }-*/;
+
+  public native boolean hasAttribute(Element elem, String name) /*-{
+    return elem.hasAttribute(name);
   }-*/;
 }

@@ -27,6 +27,27 @@ abstract class DOMImplTrident extends DOMImpl {
   private static EventTarget currentEventTarget;
 
   @Override
+  public Element createElement(Document doc, String tagName) {
+    if (tagName.contains(":")) {
+      // Special implementation for tag names with namespace-prefixes. The only
+      // way to get IE to reliably create namespace-prefixed elements is
+      // through innerHTML.
+      Element container = ensureContainer(doc);
+      container.setInnerHTML("<" + tagName + "/>");
+
+      // Remove the element before returning it, so that there's no chance of
+      // it getting clobbered later.
+      Element elem = container.getFirstChildElement();
+      container.removeChild(elem);
+      return elem;
+    }
+
+    // No prefix. Just use the default implementation (don't use super impl
+    // here in case it changes at some point in the future).
+    return createElementInternal(doc, tagName);
+  }
+
+  @Override
   public native NativeEvent createHtmlEvent(Document doc, String type, boolean canBubble,
       boolean cancelable) /*-{
     // NOTE: IE doesn't support changing bubbling and canceling behavior (this
@@ -181,13 +202,36 @@ abstract class DOMImplTrident extends DOMImpl {
     return elem.innerText;
   }-*/;
 
-  @Override
-  public native Element getParentElement(Element elem) /*-{
-    return elem.parentElement;
-  }-*/;
+  public String getTagName(Element elem) {
+    String tagName = getTagNameInternal(elem);
+    String scopeName = getScopeNameInternal(elem);
+
+    if ("html".equalsIgnoreCase(scopeName)
+        || "undefined".equalsIgnoreCase(scopeName)) {
+      return tagName;
+    }
+
+    return scopeName + ":" + tagName;
+  }
 
   @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
+  public native boolean isOrHasChild(Node parent, Node child) /*-{
+    // Element.contains() doesn't work with non-Element nodes on IE, so we have
+    // to deal explicitly with non-Element nodes here.
+
+    // Only Element (1) and Document (9) can contain other nodes.
+    if ((parent.nodeType != 1) && (parent.nodeType != 9)) {
+      return parent == child;
+    }
+
+    // If the child is not an Element, check its parent instead.
+    if (child.nodeType != 1) {
+      child = child.parentNode;
+      if (!child) {
+        return false;
+      }
+    }
+
     // An extra equality check is required due to the fact that
     // elem.contains(elem) is false if elem is not attached to the DOM.
     return (parent === child) || parent.contains(child);
@@ -211,6 +255,18 @@ abstract class DOMImplTrident extends DOMImpl {
 
   protected native boolean isRTL(Element elem) /*-{
     return elem.currentStyle.direction == 'rtl';
+  }-*/;
+
+  private native Element createElementInternal(Document doc, String tagName) /*-{
+    return doc.createElement(tagName);
+  }-*/;
+
+  // IE needs a container div *for each document* for use by createElement().
+  private native Element ensureContainer(Document doc) /*-{
+    if (!doc.__gwt_container) {
+      doc.__gwt_container = doc.createElement('div');
+    }
+    return doc.__gwt_container;
   }-*/;
 
   private native int getBoundingClientRectLeft(Element elem) /*-{
@@ -245,5 +301,13 @@ abstract class DOMImplTrident extends DOMImpl {
    */
   private native int getClientTop(Element elem) /*-{
     return elem.clientTop;
+  }-*/;
+
+  private native String getScopeNameInternal(Element elem) /*-{
+    return elem.scopeName;
+  }-*/;
+
+  private native String getTagNameInternal(Element elem) /*-{
+    return elem.tagName;
   }-*/;
 }

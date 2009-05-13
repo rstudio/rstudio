@@ -170,7 +170,7 @@ class DOMImplSafari extends DOMImplStandard {
   }
 
   @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
+  public native boolean isOrHasChild(Node parent, Node child) /*-{
     while (child) {
       if (parent == child) {
         return true;

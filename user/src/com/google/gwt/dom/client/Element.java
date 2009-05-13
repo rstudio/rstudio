@@ -62,6 +62,45 @@ public class Element extends Node {
   }
 
   /**
+   * Adds a name to this element's class property. If the name is already
+   * present, this method has no effect.
+   * 
+   * @param the class name to be added
+   * @see #setClassName(String)
+   */
+  public final void addClassName(String className) {
+    assert (className != null) : "Unexpectedly null class name";
+
+    className = className.trim();
+    assert (className.length() != 0) : "Unexpectedly empty class name";
+
+    // Get the current style string.
+    String oldClassName = getClassName();
+    int idx = oldClassName.indexOf(className);
+
+    // Calculate matching index.
+    while (idx != -1) {
+      if (idx == 0 || oldClassName.charAt(idx - 1) == ' ') {
+        int last = idx + className.length();
+        int lastPos = oldClassName.length();
+        if ((last == lastPos)
+            || ((last < lastPos) && (oldClassName.charAt(last) == ' '))) {
+          break;
+        }
+      }
+      idx = oldClassName.indexOf(className, idx + 1);
+    }
+
+    // Only add the style if it's not already present.
+    if (idx == -1) {
+      if (oldClassName.length() > 0) {
+        oldClassName += " ";
+      }
+      setClassName(oldClassName + className);
+    }
+  }
+
+  /**
    * Dispatched the given event with this element as its target. The event will
    * go through all phases of the browser's normal event dispatch mechanism.
    * 
@@ -79,11 +118,27 @@ public class Element extends Node {
   }
 
   /**
+   * Gets an element's absolute bottom coordinate in the document's coordinate
+   * system.
+   */
+  public final int getAbsoluteBottom() {
+    return getAbsoluteTop() + getOffsetHeight();
+  }
+
+  /**
    * Gets an element's absolute left coordinate in the document's coordinate
    * system.
    */
   public final int getAbsoluteLeft() {
     return DOMImpl.impl.getAbsoluteLeft(this);
+  }
+
+  /**
+   * Gets an element's absolute right coordinate in the document's coordinate
+   * system.
+   */
+  public final int getAbsoluteRight() {
+    return getAbsoluteLeft() + getOffsetWidth();
   }
 
   /**
@@ -248,13 +303,6 @@ public class Element extends Node {
    }-*/;
 
   /**
-   * The parent element of this element.
-   */
-  public final Element getParentElement() {
-    return DOMImpl.impl.getParentElement(this);
-  }
-
-  /**
    * Gets a boolean property from this element.
    * 
    * @param name the name of the property to be retrieved
@@ -283,6 +331,26 @@ public class Element extends Node {
   public final native int getPropertyInt(String name) /*-{
      return parseInt(this[name]) || 0;
    }-*/;
+
+  /**
+   * Gets a JSO property from this element.
+   *
+   * @param name the name of the property to be retrieved
+   * @return the property value
+   */
+  public final native JavaScriptObject getPropertyJSO(String name) /*-{
+    return this[name] || null;
+  }-*/;
+
+  /**
+   * Gets an object property from this element.
+   *
+   * @param name the name of the property to be retrieved
+   * @return the property value
+   */
+  public final native Object getPropertyObject(String name) /*-{
+    return this[name] || null;
+  }-*/;
 
   /**
    * Gets a property from this element.
@@ -347,11 +415,14 @@ public class Element extends Node {
    }-*/;
 
   /**
-   * The name of the element.
+   * Gets the element's full tag name, including the namespace-prefix if
+   * present.
+   * 
+   * @return the element's tag name
    */
-  public final native String getTagName() /*-{
-     return this.tagName;
-   }-*/;
+  public final String getTagName() {
+    return DOMImpl.impl.getTagName(this);
+  }
 
   /**
    * The element's advisory title.
@@ -361,13 +432,29 @@ public class Element extends Node {
    }-*/;
 
   /**
-   * Determine whether an element is equal to, or the child of, this element.
+   * Determines whether an element has an attribute with a given name.
+   *
+   * <p>
+   * Note that IE, prior to version 8, will return false-positives for names
+   * that collide with element properties (e.g., style, width, and so forth).
+   * </p>
    * 
-   * @param child the potential child element
-   * @return <code>true</code> if the relationship holds
+   * @param name the name of the attribute
+   * @return <code>true</code> if this element has the specified attribute
    */
-  public final boolean isOrHasChild(Element child) {
-    return DOMImpl.impl.isOrHasChild(this, child);
+  public final boolean hasAttribute(String name) {
+    return DOMImpl.impl.hasAttribute(this, name);
+  }
+
+  /**
+   * Determines whether this element has the given tag name.
+   * 
+   * @param tagName the tag name, including namespace-prefix (if present)
+   * @return <code>true</code> if the element has the given tag name
+   */
+  public final boolean hasTagName(String tagName) {
+    assert tagName != null : "tagName must not be null";
+    return tagName.equals(getTagName());
   }
 
   /**
@@ -376,6 +463,67 @@ public class Element extends Node {
   public final native void removeAttribute(String name) /*-{
      this.removeAttribute(name);
    }-*/;
+
+  /**
+   * Removes a name from this element's class property. If the name is not
+   * present, this method has no effect.
+   * 
+   * @param the class name to be added
+   * @see #setClassName(String)
+   */
+  public final void removeClassName(String className) {
+    assert (className != null) : "Unexpectedly null class name";
+
+    className = className.trim();
+    assert (className.length() != 0) : "Unexpectedly empty class name";
+
+    // Get the current style string.
+    String oldStyle = getClassName();
+    int idx = oldStyle.indexOf(className);
+
+    // Calculate matching index.
+    while (idx != -1) {
+      if (idx == 0 || oldStyle.charAt(idx - 1) == ' ') {
+        int last = idx + className.length();
+        int lastPos = oldStyle.length();
+        if ((last == lastPos)
+            || ((last < lastPos) && (oldStyle.charAt(last) == ' '))) {
+          break;
+        }
+      }
+      idx = oldStyle.indexOf(className, idx + 1);
+    }
+
+    // Don't try to remove the style if it's not there.
+    if (idx != -1) {
+      // Get the leading and trailing parts, without the removed name.
+      String begin = oldStyle.substring(0, idx).trim();
+      String end = oldStyle.substring(idx + className.length()).trim();
+
+      // Some contortions to make sure we don't leave extra spaces.
+      String newClassName;
+      if (begin.length() == 0) {
+        newClassName = end;
+      } else if (end.length() == 0) {
+        newClassName = begin;
+      } else {
+        newClassName = begin + " " + end;
+      }
+
+      setClassName(newClassName);
+    }
+  }
+
+  /**
+   * Replace one class name with another.
+   *
+   * @param oldClassName the class name to be replaced
+   * @param newClassName the class name to replace it
+   */
+  public final void replaceClassName(String oldClassName, String newClassName) {
+    removeClassName(oldClassName);
+    addClassName(newClassName);
+  }
 
   /**
    * Scrolls this element into view.
@@ -483,6 +631,26 @@ public class Element extends Node {
   public final native void setPropertyInt(String name, int value) /*-{
      this[name] = value;
    }-*/;
+
+  /**
+   * Sets a JSO property on this element.
+   *
+   * @param name the name of the property to be set
+   * @param value the new property value
+   */
+  public final native void setPropertyJSO(String name, JavaScriptObject value) /*-{
+    this[name] = value;
+  }-*/;
+
+  /**
+   * Sets an object property on this element.
+   *
+   * @param name the name of the property to be set
+   * @param value the new property value
+   */
+  public final native void setPropertyObject(String name, Object value) /*-{
+    this[name] = value;
+  }-*/;
 
   /**
    * Sets a property on this element.

@@ -93,6 +93,27 @@ public class Node extends JavaScriptObject {
   }-*/;
 
   /**
+   * Gets the child node at the given index.
+   * 
+   * @param index the index of the node to be retrieved
+   * @return the child node at the given index
+   */
+  public final Node getChild(int index) {
+    assert (index >= 0) && (index < getChildCount()) : "Child index out of bounds";
+
+    return getChildNodes().getItem(index);
+  }
+
+  /**
+   * Gets the number of child nodes contained within this node.
+   * 
+   * @return the number of child nodes
+   */
+  public final int getChildCount() {
+    return getChildNodes().getLength();
+  }
+
+  /**
    * A NodeList that contains all children of this node. If there are no
    * children, this is a NodeList containing no nodes.
    */
@@ -153,6 +174,15 @@ public class Node extends JavaScriptObject {
   }-*/;
 
   /**
+   * Gets the parent element of this node.
+   * 
+   * @return this node's parent element, or <code>null</code> if none exists
+   */
+  public final Element getParentElement() {
+    return DOMImpl.impl.getParentElement(this);
+  }
+
+  /**
    * The parent of this node. All nodes except Document may have a parent.
    * However, if a node has just been created and not yet added to the tree, or
    * if it has been removed from the tree, this is null.
@@ -177,6 +207,35 @@ public class Node extends JavaScriptObject {
   }-*/;
 
   /**
+   * Determines whether this node has a parent element.
+   * 
+   * @return true if the node has a parent element
+   */
+  public final boolean hasParentElement() {
+    return getParentElement() != null;
+  }
+
+  /**
+   * Inserts the node newChild after the existing child node refChild. If
+   * refChild is <code>null</code>, insert newChild at the end of the list of children.
+   * 
+   * @param newChild The node to insert
+   * @param refChild The reference node (that is, the node after which the new
+   *          node must be inserted), or <code>null</code>
+   * @return The node being inserted
+   */
+  public final Node insertAfter(Node newChild, Node refChild) {
+    assert (newChild != null) : "Cannot add a null child node";
+
+    Node next = (refChild == null) ? null : refChild.getNextSibling();
+    if (next == null) {
+      return appendChild(newChild);
+    } else {
+      return insertBefore(newChild, next);
+    }
+  }
+
+  /**
    * Inserts the node newChild before the existing child node refChild. If
    * refChild is <code>null</code>, insert newChild at the end of the list of children.
    * 
@@ -190,6 +249,30 @@ public class Node extends JavaScriptObject {
   }-*/;
 
   /**
+   * Inserts the given child as the first child of this node.
+   * 
+   * @param child the child to be inserted
+   * @return The node being inserted
+   */
+  public final Node insertFirst(Node child) {
+    assert (child != null) : "Cannot add a null child node";
+
+    return insertBefore(child, getFirstChild());
+  }
+
+  /**
+   * Determine whether a node is equal to, or the child of, this node.
+   * 
+   * @param child the potential child element
+   * @return <code>true</code> if the relationship holds
+   */
+  public final boolean isOrHasChild(Node child) {
+    assert (child != null) : "Child cannot be null";
+
+    return DOMImpl.impl.isOrHasChild(this, child);
+  }
+
+  /**
    * Removes the child node indicated by oldChild from the list of children, and
    * returns it.
    * 
@@ -199,6 +282,16 @@ public class Node extends JavaScriptObject {
   public final native Node removeChild(Node oldChild) /*-{
     return this.removeChild(oldChild);
   }-*/;
+
+  /**
+   * Removes this node from its parent node if it is attached to one.
+   */
+  public final void removeFromParent() {
+    Element parent = getParentElement();
+    if (parent != null) {
+      parent.removeChild(this);
+    }
+  }
 
   /**
    * Replaces the child node oldChild with newChild in the list of children, and

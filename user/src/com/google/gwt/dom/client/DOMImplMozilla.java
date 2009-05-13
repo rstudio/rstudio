@@ -67,6 +67,21 @@ class DOMImplMozilla extends DOMImplStandard {
   }-*/;
 
   @Override
+  public native int getNodeType(Node node) /*-{
+    try {
+      return node.nodeType;
+    } catch (e) {
+      // Give up on 'Permission denied to get property HTMLDivElement.nodeType'
+      // '0' is not a valid node type, which is appropriate in this case, since
+      // the node in question is completely inaccessible.
+      //
+      // See https://bugzilla.mozilla.org/show_bug.cgi?id=208427
+      // and http://code.google.com/p/google-web-toolkit/issues/detail?id=1909
+      return 0;
+    }
+  }-*/;
+
+  @Override
   public int getScrollLeft(Element elem) {
     if (!isGecko19() && isRTL(elem)) {
       return super.getScrollLeft(elem)
@@ -76,7 +91,7 @@ class DOMImplMozilla extends DOMImplStandard {
   }
 
   @Override
-  public native boolean isOrHasChild(Element parent, Element child) /*-{
+  public native boolean isOrHasChild(Node parent, Node child) /*-{
     // For more information about compareDocumentPosition, see:
     // http://www.quirksmode.org/blog/archives/2006/01/contains_for_mo.html
     return (parent === child) || !!(parent.compareDocumentPosition(child) & 16);

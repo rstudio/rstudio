@@ -22,7 +22,9 @@ import com.google.gwt.dom.client.MapTests;
 import com.google.gwt.dom.client.NodeTest;
 import com.google.gwt.dom.client.SelectTests;
 import com.google.gwt.dom.client.StyleInjectorTest;
+import com.google.gwt.dom.client.StyleTest;
 import com.google.gwt.dom.client.TableTests;
+import com.google.gwt.dom.client.TextTest;
 import com.google.gwt.junit.tools.GWTTestSuite;
 
 import junit.framework.Test;
@@ -41,8 +43,10 @@ public class DOMSuite {
     suite.addTestSuite(FormTests.class);
     suite.addTestSuite(MapTests.class);
     suite.addTestSuite(SelectTests.class);
+    suite.addTestSuite(StyleTest.class);
     suite.addTestSuite(StyleInjectorTest.class);
     suite.addTestSuite(TableTests.class);
+    suite.addTestSuite(TextTest.class);
 
     return suite;
   }

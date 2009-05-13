@@ -251,54 +251,10 @@ public abstract class UIObject {
       throw new IllegalArgumentException(EMPTY_STYLENAME_MSG);
     }
 
-    // Get the current style string.
-    String oldStyle = getStyleName(elem);
-    int idx = oldStyle.indexOf(style);
-
-    // Calculate matching index.
-    while (idx != -1) {
-      if (idx == 0 || oldStyle.charAt(idx - 1) == ' ') {
-        int last = idx + style.length();
-        int lastPos = oldStyle.length();
-        if ((last == lastPos)
-            || ((last < lastPos) && (oldStyle.charAt(last) == ' '))) {
-          break;
-        }
-      }
-      idx = oldStyle.indexOf(style, idx + 1);
-    }
-
     if (add) {
-      // Only add the style if it's not already present.
-      if (idx == -1) {
-        if (oldStyle.length() > 0) {
-          oldStyle += " ";
-        }
-        DOM.setElementProperty(
-            elem.<com.google.gwt.user.client.Element> cast(), "className",
-            oldStyle + style);
-      }
+      elem.addClassName(style);
     } else {
-      // Don't try to remove the style if it's not there.
-      if (idx != -1) {
-        // Get the leading and trailing parts, without the removed name.
-        String begin = oldStyle.substring(0, idx).trim();
-        String end = oldStyle.substring(idx + style.length()).trim();
-
-        // Some contortions to make sure we don't leave extra spaces.
-        String newClassName;
-        if (begin.length() == 0) {
-          newClassName = end;
-        } else if (end.length() == 0) {
-          newClassName = begin;
-        } else {
-          newClassName = begin + " " + end;
-        }
-
-        DOM.setElementProperty(
-            elem.<com.google.gwt.user.client.Element> cast(), "className",
-            newClassName);
-      }
+      elem.removeClassName(style);
     }
   }
 

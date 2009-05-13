@@ -15,7 +15,7 @@
  */
 package com.google.gwt.dom.client;
 
-import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -28,6 +28,43 @@ public class ElementTest extends GWTTestCase {
   @Override
   public String getModuleName() {
     return "com.google.gwt.dom.DOMTest";
+  }
+
+  public void testAddRemoveReplaceClassName() {
+    DivElement div = Document.get().createDivElement();
+
+    div.setClassName("foo");
+    assertEquals("foo", div.getClassName());
+
+    div.addClassName("bar");
+    assertEquals("foo bar", div.getClassName());
+
+    div.addClassName("baz");
+    assertEquals("foo bar baz", div.getClassName());
+
+    div.replaceClassName("bar", "tintin");
+    assertTrue(div.getClassName().contains("tintin"));
+    assertFalse(div.getClassName().contains("bar"));
+  }
+
+  /**
+   * firstChildElement, nextSiblingElement.
+   */
+  public void testChildElements() {
+    Document doc = Document.get();
+    DivElement parent = doc.createDivElement();
+    DivElement div0 = doc.createDivElement();
+    DivElement div1 = doc.createDivElement();
+
+    parent.appendChild(doc.createTextNode("foo"));
+    parent.appendChild(div0);
+    parent.appendChild(doc.createTextNode("bar"));
+    parent.appendChild(div1);
+
+    Element fc = parent.getFirstChildElement();
+    Element ns = fc.getNextSiblingElement();
+    assertEquals(div0, fc);
+    assertEquals(div1, ns);
   }
 
   /**
@@ -57,8 +94,59 @@ public class ElementTest extends GWTTestCase {
     Document.get().getBody().removeChild(div);
   }
 
+  public void testEmptyClassNameAssertion() {
+    DivElement div = Document.get().createDivElement();
+
+    if (getClass().desiredAssertionStatus()) {
+      div.setClassName("primary");
+      try {
+        div.addClassName("");
+        fail();
+      } catch (AssertionError e) {
+        // This *should* throw.
+      }
+
+      try {
+        div.addClassName(" ");
+        fail();
+      } catch (AssertionError e) {
+        // This *should* throw.
+      }
+
+      try {
+        div.addClassName(null);
+        fail();
+      } catch (AssertionError e) {
+        // This *should* throw.
+      }
+
+      try {
+        div.removeClassName("");
+        fail();
+      } catch (AssertionError e) {
+        // This *should* throw.
+      }
+
+      try {
+        div.removeClassName(" ");
+        fail();
+      } catch (AssertionError e) {
+        // This *should* throw.
+      }
+
+      try {
+        div.removeClassName(null);
+        fail();
+      } catch (AssertionError e) {
+        // This *should* throw.
+      }
+
+      assertEquals("primary", div.getClassName());
+    }
+  }
+
   /**
-   * getAbsolute[Left|Top].
+   * getAbsolute[Left|Top|Right|Bottom].
    */
   public void testGetAbsolutePosition() {
     final int border = 8;
@@ -67,8 +155,10 @@ public class ElementTest extends GWTTestCase {
 
     final int top = 15;
     final int left = 14;
+    final int width = 128;
+    final int height = 64;
 
-    Document doc = Document.get();
+    final Document doc = Document.get();
     final DivElement elem = doc.createDivElement();
     doc.getBody().appendChild(elem);
 
@@ -79,16 +169,37 @@ public class ElementTest extends GWTTestCase {
 
     elem.getStyle().setPropertyPx("top", top - doc.getBodyOffsetLeft());
     elem.getStyle().setPropertyPx("left", left - doc.getBodyOffsetTop());
+    elem.getStyle().setPropertyPx("width", width);
+    elem.getStyle().setPropertyPx("height", height);
 
-    delayTestFinish(1000);
     DeferredCommand.addCommand(new Command() {
       public void execute() {
-        assertEquals(top + margin, elem.getAbsoluteTop());
-        assertEquals(left + margin, elem.getAbsoluteLeft());
-        finishTest();
+        int absLeft = left + margin;
+        int absTop = top + margin;
+        int interiorDecorations = (border * 2) + (padding * 2);
+
+        assertEquals(absLeft, elem.getAbsoluteLeft());
+        assertEquals(absTop, elem.getAbsoluteTop());
+
+        if (isIE() && !doc.isCSS1Compat()) {
+          // In IE/quirk, the interior decorations are considered part of the
+          // width/height, so there's no need to account for them here.
+          assertEquals(absLeft + width, elem.getAbsoluteRight());
+          assertEquals(absTop + height, elem.getAbsoluteBottom());
+        } else {
+          assertEquals(absLeft + width + interiorDecorations,
+              elem.getAbsoluteRight());
+          assertEquals(absTop + height + interiorDecorations,
+              elem.getAbsoluteBottom());
+        }
       }
     });
   }
+
+  private native boolean isIE() /*-{
+    var ua = navigator.userAgent.toLowerCase();
+    return ua.indexOf("msie") != -1;
+  }-*/;
 
   /**
    * scroll[Left|Top], scrollIntoView.
@@ -122,6 +233,152 @@ public class ElementTest extends GWTTestCase {
     // Ensure that we are no longer scrolled.
     assertEquals(outer.getScrollTop(), 0);
     assertEquals(outer.getScrollLeft(), 0);
+  }
+
+  /**
+   * getElementsByTagName.
+   */
+  public void testGetElementsByTagName() {
+    DivElement div = Document.get().createDivElement();
+    div.setInnerHTML("<span><button>foo</button><span><button>bar</button></span></span>");
+
+    NodeList<Element> nodes = div.getElementsByTagName("button");
+    assertEquals(2, nodes.getLength());
+    assertEquals("foo", nodes.getItem(0).getInnerText());
+    assertEquals("bar", nodes.getItem(1).getInnerText());
+  }
+
+  public void testHasAttribute() {
+    DivElement div = Document.get().createDivElement();
+
+    // Assert that a raw element doesn't incorrectly report that it has any
+    // unspecified built-in attributes (this is a problem on IE<8 if you're not
+    // careful in implementing hasAttribute()).
+    assertFalse(div.hasAttribute("class"));
+    assertFalse(div.hasAttribute("style"));
+    assertFalse(div.hasAttribute("title"));
+    assertFalse(div.hasAttribute("id"));
+
+    // Ensure that setting HTML-defined attributes is properly reported by
+    // hasAttribute().
+    div.setId("foo");
+    assertTrue(div.hasAttribute("id"));
+
+    // Ensure that setting *custom* attributes is properly reported by
+    // hasAttribute().
+    assertFalse(div.hasAttribute("foo"));
+    div.setAttribute("foo", "bar");
+    assertTrue(div.hasAttribute("foo"));
+
+    // Ensure that a null attribute argument always returns null.
+    assertFalse(div.hasAttribute(null));
+  }
+
+  /**
+   * Tests HeadingElement.as() (it has slightly more complex assertion logic
+   * than most).
+   */
+  public void testHeadingElementAs() {
+    DivElement placeHolder = Document.get().createDivElement();
+
+    for (int i = 0; i < 6; ++i) {
+      placeHolder.setInnerHTML("<H" + (i + 1) + "/>");
+      assertNotNull(HeadingElement.as(placeHolder.getFirstChildElement()));
+    }
+
+    if (getClass().desiredAssertionStatus()) {
+      Element notHeading = Document.get().createDivElement();
+      try {
+        HeadingElement.as(notHeading);
+        fail("Expected assertion failure");
+      } catch (AssertionError e) {
+        // this *should* happen.
+      }
+    }
+  }
+
+  /**
+   * Document.createElement('ns:tag'), getTagName().
+   */
+  public void testNamespaces() {
+    Element elem = Document.get().createElement("myns:elem");
+    assertEquals("myns:elem", elem.getTagName().toLowerCase());
+  }
+
+  /**
+   * className, id, tagName, title, dir, lang.
+   */
+  public void testNativeProperties() {
+    DivElement div = Document.get().createDivElement();
+
+    assertEquals("div", div.getTagName().toLowerCase());
+
+    div.setClassName("myClass");
+    assertEquals(div.getClassName(), "myClass");
+
+    div.setId("myId");
+    assertEquals(div.getId(), "myId");
+
+    div.setTitle("myTitle");
+    assertEquals(div.getTitle(), "myTitle");
+
+    div.setDir("rtl");
+    assertEquals(div.getDir(), "rtl");
+
+    div.setLang("fr-FR");
+    assertEquals(div.getLang(), "fr-FR");
+  }
+
+  /**
+   * offset[Left|Top|Width|Height], offsetParent.
+   */
+  public void testOffsets() {
+    DivElement outer = Document.get().createDivElement();
+    DivElement middle = Document.get().createDivElement();
+    DivElement inner = Document.get().createDivElement();
+
+    Document.get().getBody().appendChild(outer);
+    outer.appendChild(middle);
+    middle.appendChild(inner);
+
+    outer.getStyle().setProperty("position", "absolute");
+    inner.getStyle().setProperty("position", "relative");
+    inner.getStyle().setPropertyPx("left", 19);
+    inner.getStyle().setPropertyPx("top", 23);
+    inner.getStyle().setPropertyPx("width", 29);
+    inner.getStyle().setPropertyPx("height", 31);
+
+    assertEquals(outer, inner.getOffsetParent());
+    assertEquals(19, inner.getOffsetLeft());
+    assertEquals(23, inner.getOffsetTop());
+    assertEquals(29, inner.getOffsetWidth());
+    assertEquals(31, inner.getOffsetHeight());
+  }
+
+  /**
+   * setProperty*, getProperty*.
+   */
+  public void testProperties() {
+    DivElement div = Document.get().createDivElement();
+
+    div.setPropertyString("foo", "bar");
+    assertEquals("bar", div.getPropertyString("foo"));
+
+    div.setPropertyInt("foo", 42);
+    assertEquals(42, div.getPropertyInt("foo"));
+
+    div.setPropertyBoolean("foo", true);
+    div.setPropertyBoolean("bar", false);
+    assertEquals(true, div.getPropertyBoolean("foo"));
+    assertEquals(false, div.getPropertyBoolean("bar"));
+
+    Object obj = new Object();
+    div.setPropertyObject("baz", obj);
+    assertEquals(obj, div.getPropertyObject("baz"));
+
+    JavaScriptObject jso = createTrivialJSO();
+    div.setPropertyJSO("tintin", jso);
+    assertEquals(jso, div.getPropertyJSO("tintin"));
   }
 
   /**
@@ -171,63 +428,18 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * getParentElement.
+   * innerHTML.
    */
-  public void testGetParent() {
-    Element element = Document.get().getBody();
-    int i = 0;
-    while (i < 10 && element != null) {
-      element = element.getParentElement();
-      i++;
-    }
-
-    // If we got here we looped "forever" or passed, as no exception was thrown.
-    if (i == 10) {
-      fail("Cyclic parent structure detected.");
-    }
-
-    // If we get here, we pass, because we encountered no errors going to the
-    // top of the parent hierarchy.
-  }
-
-  /**
-   * firstChildElement, nextSiblingElement.
-   */
-  public void testChildElements() {
-    Document doc = Document.get();
-    DivElement parent = doc.createDivElement();
-    DivElement div0 = doc.createDivElement();
-    DivElement div1 = doc.createDivElement();
-
-    parent.appendChild(doc.createTextNode("foo"));
-    parent.appendChild(div0);
-    parent.appendChild(doc.createTextNode("bar"));
-    parent.appendChild(div1);
-
-    Element fc = parent.getFirstChildElement();
-    Element ns = fc.getNextSiblingElement();
-    assertEquals(div0, fc);
-    assertEquals(div1, ns);
-  }
-
-  /**
-   * isOrHasChild.
-   */
-  public void testIsOrHasChild() {
+  public void testSetInnerHTML() {
     DivElement div = Document.get().createDivElement();
-    DivElement childDiv = Document.get().createDivElement();
+    div.setInnerHTML("<button><img src='foo.gif'></button>");
 
-    assertFalse(div.isOrHasChild(childDiv));
-    assertTrue(div.isOrHasChild(div));
+    Element button = div.getFirstChildElement();
+    Element img = button.getFirstChildElement();
 
-    div.appendChild(childDiv);
-    assertTrue(div.isOrHasChild(childDiv));
-    assertFalse(childDiv.isOrHasChild(div));
-
-    Document.get().getBody().appendChild(div);
-    assertTrue(div.isOrHasChild(childDiv));
-    assertTrue(div.isOrHasChild(div));
-    assertFalse(childDiv.isOrHasChild(div));
+    assertEquals("button", button.getTagName().toLowerCase());
+    assertEquals("img", img.getTagName().toLowerCase());
+    assertTrue(((ImageElement) img).getSrc().endsWith("foo.gif"));
   }
 
   /**
@@ -255,63 +467,6 @@ public class ElementTest extends GWTTestCase {
     // child nodes should be deleted, including any text nodes, for all
     // supported browsers.
     assertTrue(tdElem.getChildNodes().getLength() == 0);
-  }
-
-  /**
-   * innerHTML.
-   */
-  public void testSetInnerHTML() {
-    DivElement div = Document.get().createDivElement();
-    div.setInnerHTML("<button><img src='foo.gif'></button>");
-
-    Element button = div.getFirstChildElement();
-    Element img = button.getFirstChildElement();
-
-    assertEquals("button", button.getTagName().toLowerCase());
-    assertEquals("img", img.getTagName().toLowerCase());
-    assertTrue(((ImageElement) img).getSrc().endsWith("foo.gif"));
-  }
-
-  /**
-   * setProperty*, getProperty*.
-   */
-  public void testProperties() {
-    DivElement div = Document.get().createDivElement();
-
-    div.setPropertyString("foo", "bar");
-    assertEquals("bar", div.getPropertyString("foo"));
-
-    div.setPropertyInt("foo", 42);
-    assertEquals(42, div.getPropertyInt("foo"));
-
-    div.setPropertyBoolean("foo", true);
-    div.setPropertyBoolean("bar", false);
-    assertEquals(true, div.getPropertyBoolean("foo"));
-    assertEquals(false, div.getPropertyBoolean("bar"));
-  }
-
-  /**
-   * className, id, tagName, title, dir, lang.
-   */
-  public void testNativeProperties() {
-    DivElement div = Document.get().createDivElement();
-
-    assertEquals("div", div.getTagName().toLowerCase());
-
-    div.setClassName("myClass");
-    assertEquals(div.getClassName(), "myClass");
-
-    div.setId("myId");
-    assertEquals(div.getId(), "myId");
-
-    div.setTitle("myTitle");
-    assertEquals(div.getTitle(), "myTitle");
-
-    div.setDir("rtl");
-    assertEquals(div.getDir(), "rtl");
-
-    div.setLang("fr-FR");
-    assertEquals(div.getLang(), "fr-FR");
   }
 
   /**
@@ -362,65 +517,7 @@ public class ElementTest extends GWTTestCase {
     }
   }
 
-  /**
-   * offset[Left|Top|Width|Height], offsetParent.
-   */
-  public void testOffsets() {
-    DivElement outer = Document.get().createDivElement();
-    DivElement middle = Document.get().createDivElement();
-    DivElement inner = Document.get().createDivElement();
-
-    Document.get().getBody().appendChild(outer);
-    outer.appendChild(middle);
-    middle.appendChild(inner);
-
-    outer.getStyle().setProperty("position", "absolute");
-    inner.getStyle().setProperty("position", "relative");
-    inner.getStyle().setPropertyPx("left", 19);
-    inner.getStyle().setPropertyPx("top", 23);
-    inner.getStyle().setPropertyPx("width", 29);
-    inner.getStyle().setPropertyPx("height", 31);
-
-    assertEquals(outer, inner.getOffsetParent());
-    assertEquals(19, inner.getOffsetLeft());
-    assertEquals(23, inner.getOffsetTop());
-    assertEquals(29, inner.getOffsetWidth());
-    assertEquals(31, inner.getOffsetHeight());
-  }
-
-  /**
-   * getElementsByTagName.
-   */
-  public void testGetElementsByTagName() {
-    DivElement div = Document.get().createDivElement();
-    div.setInnerHTML("<span><button>foo</button><span><button>bar</button></span></span>");
-
-    NodeList<Element> nodes = div.getElementsByTagName("button");
-    assertEquals(2, nodes.getLength());
-    assertEquals("foo", nodes.getItem(0).getInnerText());
-    assertEquals("bar", nodes.getItem(1).getInnerText());
-  }
-
-  /**
-   * Tests HeadingElement.as() (it has slightly more complex assertion logic
-   * than most).
-   */
-  public void testHeadingElementAs() {
-    DivElement placeHolder = Document.get().createDivElement();
-
-    for (int i = 0; i < 6; ++i) {
-      placeHolder.setInnerHTML("<H" + (i + 1) + "/>");
-      assertNotNull(HeadingElement.as(placeHolder.getFirstChildElement()));
-    }
-
-    if (!GWT.isScript()) {
-      Element notHeading = Document.get().createDivElement();
-      try {
-        HeadingElement.as(notHeading);
-        fail("Expected assertion failure");
-      } catch (AssertionError e) {
-        // this *should* happen.
-      }
-    }
-  }
+  private native JavaScriptObject createTrivialJSO() /*-{
+    return {};
+  }-*/;
 }
