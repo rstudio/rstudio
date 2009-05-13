@@ -15,14 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.HasScrollHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link ScrollListener} interface.
  * 
- * @deprecated use {@link HasScrollHandlers} instead
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasScrollHandlers}
+ * instead
  */
 @Deprecated
 public interface SourcesScrollEvents {
@@ -31,7 +29,9 @@ public interface SourcesScrollEvents {
    * Adds a listener interface to receive scroll events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use {@link HasScrollHandlers#addScrollHandler} instead
+   * @deprecated use
+   * {@link com.google.gwt.event.dom.client.HasScrollHandlers#addScrollHandler}
+   * instead
    */
   @Deprecated
   void addScrollListener(ScrollListener listener);
@@ -40,8 +40,10 @@ public interface SourcesScrollEvents {
    * Removes a previously added scroll listener.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link HasScrollHandlers#addScrollHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
+   * method on the object returned by
+   * {@link com.google.gwt.event.dom.client.HasScrollHandlers#addScrollHandler}
    * instead
    */
   @Deprecated

@@ -15,15 +15,11 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.HasAllFocusHandlers;
-import com.google.gwt.event.dom.client.HasFocusHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.FocusListener} interface.
  * 
- * @deprecated use {@link HasAllFocusHandlers} instead
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasAllFocusHandlers} instead
  */
 @Deprecated
 public interface SourcesFocusEvents {
@@ -41,8 +37,10 @@ public interface SourcesFocusEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link HasFocusHandlers#addFocusHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
+   * method on the object returned by
+   * {@link com.google.gwt.event.dom.client.HasFocusHandlers#addFocusHandler}
    * instead
    */
   @Deprecated

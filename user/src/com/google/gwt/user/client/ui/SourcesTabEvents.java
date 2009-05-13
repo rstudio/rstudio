@@ -15,16 +15,14 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link TabListener} interface.
  * 
- * @deprecated use {@link HasSelectionHandlers} and
- * {@link HasBeforeSelectionHandlers} instead
+ * @deprecated use {@link com.google.gwt.event.logical.shared.HasSelectionHandlers}
+ * and
+ * {@link com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers}
+ * instead
  */
 @Deprecated
 public interface SourcesTabEvents {
@@ -34,8 +32,10 @@ public interface SourcesTabEvents {
    * 
    * @param listener the listener interface to add
    * @deprecated use
-   * {@link HasBeforeSelectionHandlers#addBeforeSelectionHandler}
-   * and {@link HasSelectionHandlers#addSelectionHandler} instead
+   * {@link com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers#addBeforeSelectionHandler}
+   * and
+   * {@link com.google.gwt.event.logical.shared.HasSelectionHandlers#addSelectionHandler}
+   * instead
    */
   @Deprecated
   void addTabListener(TabListener listener);
@@ -44,7 +44,8 @@ public interface SourcesTabEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by and add*Handler method instead
    */
   @Deprecated

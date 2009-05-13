@@ -15,14 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface fires the events defined by the
  * {@link SuggestionHandler} interface.
  * 
- * @deprecated Use {@link HasSelectionHandlers} instead.
+ * @deprecated Use
+ * {@link com.google.gwt.event.logical.shared.HasSelectionHandlers} instead.
  */
 @Deprecated
 public interface FiresSuggestionEvents {
@@ -40,7 +38,8 @@ public interface FiresSuggestionEvents {
    * Removes a previously added handler interface.
    * 
    * @param handler the handler to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by an add*Handler method instead
    */
   @Deprecated

@@ -15,20 +15,15 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.HasChangeHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.ChangeListener} interface.
  * 
  * @deprecated we have now separated dom and logical change events. Use
- *             {@link com.google.gwt.event.dom.client.HasChangeHandlers} if the
- *             change listener was triggered by a dom change event or
- *             {@link com.google.gwt.event.logical.shared.HasValueChangeHandlers}
- *             if it was based on a logical event
- * 
- * 
+ * {@link com.google.gwt.event.dom.client.HasChangeHandlers} if the
+ * change listener was triggered by a dom change event or
+ * {@link com.google.gwt.event.logical.shared.HasValueChangeHandlers}
+ * if it was based on a logical event
  */
 @Deprecated
 public interface SourcesChangeEvents {
@@ -37,8 +32,7 @@ public interface SourcesChangeEvents {
    * Adds a listener interface to receive change events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use <code>addChangeHandler</code> or
-   *             <code>addValueChangeHandler</code> instead
+   * @deprecated use addChangeHandler or addValueChangeHandler instead
    */
   @Deprecated
   void addChangeListener(ChangeListener listener);
@@ -48,8 +42,10 @@ public interface SourcesChangeEvents {
    * 
    * @param listener the listener interface to remove
    *
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
-   * method on the object returned by {@link HasChangeHandlers#addChangeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
+   * method on the object returned by
+   * {@link com.google.gwt.event.dom.client.HasChangeHandlers#addChangeHandler}
    * instead
    */
   @Deprecated

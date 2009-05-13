@@ -15,14 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.HasAllMouseHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link MouseListener} interface.
  * 
- * @deprecated use {@link HasAllMouseHandlers} instead
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasAllMouseHandlers}
+ * instead
  */
 @Deprecated
 public interface SourcesMouseEvents {
@@ -31,7 +29,8 @@ public interface SourcesMouseEvents {
    * Adds a listener interface to receive mouse events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use add* methods of {@link HasAllMouseHandlers} instead
+   * @deprecated use add* methods of
+   * {@link com.google.gwt.event.dom.client.HasAllMouseHandlers} instead
    */
   @Deprecated
   void addMouseListener(MouseListener listener);
@@ -40,7 +39,8 @@ public interface SourcesMouseEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by an add*Handler method instead
    */
   @Deprecated

@@ -15,16 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
-
 /**
  * A widget that implements this interface fires the events defined by the
  * {@link com.google.gwt.user.client.ui.FormHandler} interface.
  * 
  * @deprecated This interface was specific to {@link FormPanel}; it is not
  * generally useful and will be removed in a future version.
- * Use {@link FormPanel#addSubmitHandler(SubmitHandler)} and
+ * Use {@link FormPanel#addSubmitHandler(FormPanel.SubmitHandler)} and
  * {@link FormPanel#addSubmitCompleteHandler(FormPanel.SubmitCompleteHandler)}
  * instead
  */
@@ -45,7 +42,8 @@ public interface FiresFormEvents {
    * Removes a previously added handler interface.
    * 
    * @param handler the handler interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by an add*Handler method instead
    */
   @Deprecated

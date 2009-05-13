@@ -15,15 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link com.google.gwt.user.client.ui.KeyboardListener} interface.
  * 
- * @deprecated use
- *             {@link com.google.gwt.event.dom.client.HasAllKeyHandlers}
- *             instead
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasAllKeyHandlers}
+ * instead
  */
 @Deprecated
 public interface SourcesKeyboardEvents {
@@ -32,9 +29,8 @@ public interface SourcesKeyboardEvents {
    * Adds a listener interface to receive keyboard events.
    * 
    * @param listener the listener interface to add
-   * @deprecated use
-   *             <code>addKeyPressHandler/addKeyDownKeyDownHandler/addKeyUpHandler</code>
-   *             instead
+   * @deprecated use addKeyPressHandler/addKeyDownKeyDownHandler/addKeyUpHandler
+   * instead
    */
   @Deprecated
   void addKeyboardListener(KeyboardListener listener);
@@ -43,7 +39,8 @@ public interface SourcesKeyboardEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by an add*Handler method instead
    */
   @Deprecated

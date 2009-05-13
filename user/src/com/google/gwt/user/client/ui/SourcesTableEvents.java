@@ -15,16 +15,13 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link TableListener} interface.
  * 
- * @deprecated use {@link HasClickHandlers} instead. Event sources should
- * implement methods similar to {@link HTMLTable#getCellForEvent(ClickEvent)}
+ * @deprecated use {@link com.google.gwt.event.dom.client.HasClickHandlers}
+ * instead. Event sources should implement methods similar to
+ * {@link HTMLTable#getCellForEvent(com.google.gwt.event.dom.client.ClickEvent)}
  */
 @Deprecated
 public interface SourcesTableEvents {
@@ -42,7 +39,8 @@ public interface SourcesTableEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by an add*Handler method instead
    */
   @Deprecated

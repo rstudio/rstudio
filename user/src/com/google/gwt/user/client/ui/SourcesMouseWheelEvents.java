@@ -15,14 +15,12 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.event.dom.client.HasMouseWheelHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
-
 /**
  * A widget that implements this interface sources the events defined by the
  * {@link MouseWheelListener} interface.
  * 
- * @deprecated Use {@link HasMouseWheelHandlers} instead
+ * @deprecated Use {@link com.google.gwt.event.dom.client.HasMouseWheelHandlers}
+ * instead
  */
 @Deprecated
 public interface SourcesMouseWheelEvents {
@@ -31,7 +29,9 @@ public interface SourcesMouseWheelEvents {
    * Adds a listener interface to receive mouse events.
    * 
    * @param listener the listener interface to add
-   * @deprecated Use {@link HasMouseWheelHandlers#addMouseWheelHandler} instead
+   * @deprecated Use
+   * {@link com.google.gwt.event.dom.client.HasMouseWheelHandlers#addMouseWheelHandler}
+   * instead
    */
   @Deprecated
   void addMouseWheelListener(MouseWheelListener listener);
@@ -40,9 +40,11 @@ public interface SourcesMouseWheelEvents {
    * Removes a previously added listener interface.
    * 
    * @param listener the listener interface to remove
-   * @deprecated Use the {@link HandlerRegistration#removeHandler}
+   * @deprecated Use the
+   * {@link com.google.gwt.event.shared.HandlerRegistration#removeHandler}
    * method on the object returned by
-   * {@link HasMouseWheelHandlers#addMouseWheelHandler} instead
+   * {@link com.google.gwt.event.dom.client.HasMouseWheelHandlers#addMouseWheelHandler}
+   * instead
    */
   @Deprecated
   void removeMouseWheelListener(MouseWheelListener listener);
