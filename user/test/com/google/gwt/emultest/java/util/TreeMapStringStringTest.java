@@ -16,9 +16,11 @@
 package com.google.gwt.emultest.java.util;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Tests <code>TreeMap</code> with Strings and the natural comparator.
@@ -118,6 +120,15 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
     assertEquals("lastKey", "dd", subMap.lastKey());
   }
 
+  // checks for compatibility with real Jre's Entry.toString(): issue 3422
+  public void testTreeMapEntryToString() {
+    Map<String, String> treeMap = new TreeMap<String, String>();
+    treeMap.put("bar", "barValue");
+
+    assertEquals("bar=barValue",
+        treeMap.entrySet().iterator().next().toString());
+  }
+  
   @Override
   protected Object getConflictingKey() {
     return new Integer(1);

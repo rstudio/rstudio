@@ -234,7 +234,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
 
     @Override
     public String toString() {
-      return (isRed ? "R: " : "B: ") + key + "=" + value;
+      // for compatibility with the real Jre: issue 3422
+      return key + "=" + value;
     }
   }
 
