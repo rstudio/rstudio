@@ -95,7 +95,7 @@ public class Grid extends HTMLTable {
   @Override
   public boolean clearCell(int row, int column) {
     Element td = getCellFormatter().getElement(row, column);
-    boolean b = super.internalClearCell(td, false);
+    boolean b = internalClearCell(td, false);
     DOM.setInnerHTML(td, "&nbsp;");
     return b;
   }

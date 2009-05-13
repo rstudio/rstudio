@@ -289,7 +289,7 @@ public class DeckPanel extends ComplexPanel implements HasAnimation {
     DOM.insertChild(getElement(), container, beforeIndex);
 
     // See add(Widget) for important comments
-    super.insert(w, container, beforeIndex, true);
+    insert(w, container, beforeIndex, true);
     finishWidgetInitialization(container, w);
   }
 

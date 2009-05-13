@@ -60,6 +60,6 @@ public class DelegatingChangeListenerCollection extends
   }
 
   public void onChange(Widget sender) {
-    super.fireChange(owner);
+    fireChange(owner);
   }
 }

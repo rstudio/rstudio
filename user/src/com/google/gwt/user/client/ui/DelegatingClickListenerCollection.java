@@ -60,6 +60,6 @@ public class DelegatingClickListenerCollection extends ClickListenerCollection
   }
 
   public void onClick(Widget sender) {
-    super.fireClick(owner);
+    fireClick(owner);
   }
 }

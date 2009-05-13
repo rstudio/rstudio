@@ -52,7 +52,7 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
   public void add(Widget w) {
     Element td = createAlignedTd();
     DOM.appendChild(tableRow, td);
-    super.add(w, td);
+    add(w, td);
   }
 
   public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -85,7 +85,7 @@ public class HorizontalPanel extends CellPanel implements HasAlignment {
      */
     Element td = createAlignedTd();
     DOM.insertChild(tableRow, td, beforeIndex);
-    super.insert(w, td, beforeIndex, false);
+    insert(w, td, beforeIndex, false);
   }
 
   @Override

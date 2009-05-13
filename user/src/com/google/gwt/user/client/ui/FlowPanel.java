@@ -47,7 +47,7 @@ public class FlowPanel extends ComplexPanel {
 
   @Override
   public void clear() {
-    super.doLogicalClear();
+    doLogicalClear();
 
     // Remove all existing child nodes.
     Node child = getElement().getFirstChild();

@@ -60,10 +60,10 @@ public class DelegatingFocusListenerCollection extends FocusListenerCollection
   }
 
   public void onFocus(Widget sender) {
-    super.fireFocus(owner);
+    fireFocus(owner);
   }
 
   public void onLostFocus(Widget sender) {
-    super.fireLostFocus(owner);
+    fireLostFocus(owner);
   }
 }

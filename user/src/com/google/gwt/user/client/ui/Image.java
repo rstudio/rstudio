@@ -404,11 +404,11 @@ public class Image extends Widget implements SourcesLoadEvents,
   }
 
   public HandlerRegistration addErrorHandler(ErrorHandler handler) {
-    return super.addHandler(handler, ErrorEvent.getType());
+    return addHandler(handler, ErrorEvent.getType());
   }
 
   public HandlerRegistration addLoadHandler(LoadHandler handler) {
-    return super.addHandler(handler, LoadEvent.getType());
+    return addHandler(handler, LoadEvent.getType());
   }
 
   /**

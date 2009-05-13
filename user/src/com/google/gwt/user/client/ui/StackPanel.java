@@ -144,7 +144,7 @@ public class StackPanel extends ComplexPanel {
 
     // Now that the DOM is connected, call insert (this ensures that onLoad() is
     // not fired until the child widget is attached to the DOM).
-    super.insert(w, tdb, beforeIndex, false);
+    insert(w, tdb, beforeIndex, false);
 
     // Update indices of all elements to the right.
     updateIndicesFrom(beforeIndex);

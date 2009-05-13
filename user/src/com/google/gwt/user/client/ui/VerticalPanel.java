@@ -50,7 +50,7 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
     Element td = createAlignedTd();
     DOM.appendChild(tr, td);
     DOM.appendChild(getBody(), tr);
-    super.add(w, td);
+    add(w, td);
   }
 
   public HorizontalAlignmentConstant getHorizontalAlignment() {
@@ -85,7 +85,7 @@ public class VerticalPanel extends CellPanel implements HasAlignment {
      * the index.
      */
     DOM.insertChild(getBody(), tr, beforeIndex);
-    super.insert(w, td, beforeIndex, false);
+    insert(w, td, beforeIndex, false);
   }
 
   @Override

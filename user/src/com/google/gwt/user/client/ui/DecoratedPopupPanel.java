@@ -130,7 +130,7 @@ public class DecoratedPopupPanel extends PopupPanel {
     decPanel = new DecoratorPanel(rowStyles, 1);
     decPanel.setStyleName("");
     setStylePrimaryName(DEFAULT_STYLENAME);
-    super.setWidget(decPanel);
+    setWidget(decPanel);
     setStyleName(getContainerElement(), "popupContent", false);
     setStyleName(decPanel.getContainerElement(), prefix + "Content", true);
   }

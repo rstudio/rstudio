@@ -127,7 +127,7 @@ public class FlexTable extends HTMLTable {
   @Override
   public int getCellCount(int row) {
     checkRowBounds(row);
-    return super.getDOMCellCount(getBodyElement(), row);
+    return getDOMCellCount(getBodyElement(), row);
   }
 
   /**
