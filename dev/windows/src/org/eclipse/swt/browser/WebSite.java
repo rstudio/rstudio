@@ -38,8 +38,9 @@ public WebSite(Composite parent, int style, String progId) {
  */
 public boolean startGears() {
   // Get the classID of the Gears BHO.
+  GUID appClsid = null;
   try {
-    GUID appClsid = getClassID("gears.BHO");
+    appClsid = getClassID("gears.BHO");
     if (appClsid == null) {
       return false;
     }
