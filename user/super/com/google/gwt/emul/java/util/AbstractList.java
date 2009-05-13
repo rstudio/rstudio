@@ -218,7 +218,7 @@ public abstract class AbstractList<E> extends AbstractCollection<E> implements
   }
 
   public ListIterator<E> listIterator() {
-    return new ListIteratorImpl();
+    return listIterator(0);
   }
 
   public ListIterator<E> listIterator(int from) {
