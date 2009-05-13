@@ -165,7 +165,7 @@
       Run hosted and web mode tests for the platform on which this build
       is executing
     -->
-    <limit failonerror="true" hours="2">
+    <limit failonerror="true" hours="3">
     <parallel threadsPerProcessor="${gwt.threadsPerProcessor}">
       <!-- selenium-test is a no-op unless gwt.selenium.hosts is defined -->
       <antcall target="selenium-test"/>
