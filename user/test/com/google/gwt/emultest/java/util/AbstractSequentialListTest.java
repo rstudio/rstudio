@@ -39,23 +39,19 @@ public class AbstractSequentialListTest extends EmulTestBase {
 
         int position = index;
 
-        @Override
         public void add(E e) {
           internalList.add(position, e);
           position++;
         }
 
-        @Override
         public boolean hasNext() {
           return position < internalList.size();
         }
 
-        @Override
         public boolean hasPrevious() {
           return position > 0;
         }
 
-        @Override
         public E next() {
           E el = internalList.get(position);
           position++;
@@ -66,31 +62,26 @@ public class AbstractSequentialListTest extends EmulTestBase {
           return el;
         }
 
-        @Override
         public int nextIndex() {
           throw new UnsupportedOperationException(
               "nextIndex operation not supported");
         }
 
-        @Override
         public E previous() {
           throw new UnsupportedOperationException(
               "previous operation not supported");
         }
 
-        @Override
         public int previousIndex() {
           throw new UnsupportedOperationException(
               "previousIndex operation not supported");
         }
 
-        @Override
         public void remove() {
           throw new UnsupportedOperationException(
               "remove operation not supported");
         }
 
-        @Override
         public void set(E e) {
           throw new UnsupportedOperationException("set operation not supported");
         }
