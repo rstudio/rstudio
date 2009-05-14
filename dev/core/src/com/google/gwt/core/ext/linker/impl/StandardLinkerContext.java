@@ -171,7 +171,13 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
     }
 
     // Get the primary linker.
-    sortedLinkers.add(module.getActivePrimaryLinker());
+    Class<? extends Linker> primary = module.getActivePrimaryLinker();
+    if (primary == null) {
+      logger.log(logger.ERROR, "Primary linker is null.  Does your module " +
+          "inherit from com.google.gwt.core.Core or com.google.gwt.user.User?");
+    } else {
+      sortedLinkers.add(module.getActivePrimaryLinker());
+    }
 
     // Get all the post-linkers IN REVERSE ORDER.
     {
