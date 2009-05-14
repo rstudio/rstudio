@@ -84,10 +84,15 @@ public class StyleTest extends GWTTestCase {
     assertEquals(Cursor.WAIT, style.getCursor());
     style.setCursor(Cursor.HELP);
     assertEquals(Cursor.HELP, style.getCursor());
+
+    // These aren't supported on old mozilla, so testing them will break.
+    // TODO: re-enable these cases when we finally drop linux hosted mode.
+    /*
     style.setCursor(Cursor.COL_RESIZE);
     assertEquals(Cursor.COL_RESIZE, style.getCursor());
     style.setCursor(Cursor.ROW_RESIZE);
     assertEquals(Cursor.ROW_RESIZE, style.getCursor());
+    */
   }
 
   public void testDisplay() {
@@ -100,8 +105,13 @@ public class StyleTest extends GWTTestCase {
     assertEquals(Display.BLOCK, style.getDisplay());
     style.setDisplay(Display.INLINE);
     assertEquals(Display.INLINE, style.getDisplay());
+
+    // Not supported on old mozilla, so testing it will break.
+    // TODO: re-enable these cases when we finally drop linux hosted mode.
+    /*
     style.setDisplay(Display.INLINE_BLOCK);
     assertEquals(Display.INLINE_BLOCK, style.getDisplay());
+    */
   }
 
   public void testFontStyle() {
