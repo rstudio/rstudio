@@ -960,8 +960,23 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
         state.found = true;
         state.value = found.value;
       }
-      found.key = node.key;
-      found.value = node.value;
+      /**
+       * put the "node" values in "found" (the node with key K) and cut "node"
+       * out. However, we do not want to corrupt "found" -- issue 3423. So
+       * create a new node "newNode" to replace the "found" node.
+       * 
+       * TODO: (jat's suggestion) Consider using rebalance to move the deleted
+       * node to a leaf to avoid the extra traversal in replaceNode.
+       */
+      if (node != found) {
+        Node<K, V> newNode = new Node<K, V>(node.key, node.value);
+        replaceNode(head, found, newNode);
+        if (parent == found) {
+          parent = newNode;
+        }
+      }
+
+      // cut "node" out
       parent.child[parent.child[RIGHT] == node ? RIGHT : LEFT] = node.child[node.child[LEFT] == null
           ? RIGHT : LEFT];
       size--;
@@ -972,6 +987,28 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
       root.isRed = false;
     }
     return state.found;
+  }
+
+  /**
+   * replace 'node' with 'newNode' in the tree rooted at 'head'. Could have
+   * avoided this traversal if each node maintained a parent pointer.
+   */
+  private void replaceNode(Node<K, V> head, Node<K, V> node, Node<K, V> newNode) {
+    Node<K, V> parent = head;
+    int direction = (parent.key == null || cmp.compare(node.key, parent.key) > 0)
+        ? RIGHT : LEFT; // parent.key == null handles the fake root node
+    while (parent.child[direction] != node) {
+      parent = parent.child[direction];
+      assert parent != null;
+      direction = cmp.compare(node.key, parent.key) > 0 ? RIGHT : LEFT;
+    }
+    // replace node with newNode
+    parent.child[direction] = newNode;
+    newNode.isRed = node.isRed;
+    newNode.child[LEFT] = node.child[LEFT];
+    newNode.child[RIGHT] = node.child[RIGHT];
+    node.child[LEFT] = null;
+    node.child[RIGHT] = null;
   }
 
   /**
@@ -1019,4 +1056,5 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     save.isRed = false;
     return save;
   }
+
 }

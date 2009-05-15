@@ -21,6 +21,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.Map.Entry;
 
 /**
  * Tests <code>TreeMap</code> with Strings and the natural comparator.
@@ -120,6 +121,23 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
     assertEquals("lastKey", "dd", subMap.lastKey());
   }
 
+  // checks for compatibility with real Jre's EntrySet.remove(): issue 3423
+  public void testTreeMapEntrySetRemove() {
+    Map<String, String> treeMap = new TreeMap<String, String>();
+    treeMap.put("foo", "fooValue");
+    treeMap.put("bar", "barValue");
+
+    Iterator<Entry<String, String>> entryIterator =
+treeMap.entrySet().iterator();
+    Entry<String, String> entry = entryIterator.next();
+    assertEquals("entry: " + entry, "bar", entry.getKey());
+
+    entry = entryIterator.next();
+    assertEquals("before remove(): " + entry, "foo", entry.getKey());
+    entryIterator.remove();
+    assertEquals("after remove(): " + entry, "foo", entry.getKey());
+  }
+  
   // checks for compatibility with real Jre's Entry.toString(): issue 3422
   public void testTreeMapEntryToString() {
     Map<String, String> treeMap = new TreeMap<String, String>();
@@ -127,6 +145,19 @@ public class TreeMapStringStringTest extends TreeMapTest<String, String> {
 
     assertEquals("bar=barValue",
         treeMap.entrySet().iterator().next().toString());
+  }
+  
+  public void testTreeMapRemove() {
+    Map<String, String> treeMap = new TreeMap<String, String>();
+    treeMap.put("foo", "fooValue");
+    treeMap.put("bar", "barValue");
+    
+    Iterator<Entry<String, String>> entryIterator = treeMap.entrySet().iterator();
+    entryIterator.next();
+    Entry<String, String> secondEntry = entryIterator.next();
+    assertEquals("before removeKey: ", "foo", secondEntry.getKey());
+    treeMap.remove("foo");
+    assertEquals("after removeKey: ", "foo", secondEntry.getKey());
   }
   
   @Override
