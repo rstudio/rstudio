@@ -241,6 +241,13 @@ if (!$legacyHosted) {
   }
 }
 
+// The module to be loaded can be specified either through the url query
+// parameter (as done by the legacy HostedModeTemplate.js), or by specifying
+// window.__gwt_module (as done by IFrameTemplate.js). When the former approach
+// is removed, we can drop the 'query' part of this logic.
 query = window.location.search.substring(1);
 if (query && $wnd[query]) setTimeout($wnd[query].onScriptLoad, 1);
+
+var module  = window.__gwt_module;
+if (module && $wnd[module]) setTimeout($wnd[module].onScriptLoad, 1);
 --></script></body></html>
