@@ -316,7 +316,7 @@ public class AsyncFragmentLoader {
   private static native String gwtStartLoadingFragment(int fragment,
       LoadErrorHandler loadErrorHandler) /*-{
     function loadFailed(e) {
-      loadErrorHandler.@com.google.gwt.core.client.AsyncFragmentLoader$LoadErrorHandler::loadFailed(Ljava/lang/Throwable;)(e);
+      loadErrorHandler.@com.google.gwt.core.client.impl.AsyncFragmentLoader$LoadErrorHandler::loadFailed(Ljava/lang/Throwable;)(e);
     }
     return __gwtStartLoadingFragment(fragment, loadFailed);
   }-*/;
