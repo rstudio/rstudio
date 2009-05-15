@@ -200,7 +200,7 @@ public class InputElement extends Element {
    * implementation dependent.
    */
   public final native boolean isChecked() /*-{
-    return this.checked;
+    return !!this.checked;
   }-*/;
 
   /**
@@ -212,7 +212,7 @@ public class InputElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-checked">W3C HTML Specification</a>
    */
   public final native boolean isDefaultChecked() /*-{
-    return this.defaultChecked;
+    return !!this.defaultChecked;
   }-*/;
 
   /**
@@ -221,7 +221,7 @@ public class InputElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native boolean isDisabled() /*-{
-    return this.disabled;
+    return !!this.disabled;
   }-*/;
 
   /**
@@ -231,7 +231,7 @@ public class InputElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly">W3C HTML Specification</a>
    */
   public final native boolean isReadOnly() /*-{
-    return this.readOnly;
+    return !!this.readOnly;
   }-*/;
 
   /**
@@ -410,6 +410,6 @@ public class InputElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native boolean useMap() /*-{
-    return this.useMap;
+    return !!this.useMap;
   }-*/;
 }

@@ -78,8 +78,11 @@ public class TextAreaElement extends Element {
     return this.defaultValue;
   }-*/;
 
+  /**
+   * @deprecated use {@link #isDisabled()} instead
+   */
   public final native boolean getDisabled() /*-{
-    return this.disabled;
+    return !!this.disabled;
   }-*/;
 
   /**
@@ -99,8 +102,11 @@ public class TextAreaElement extends Element {
     return this.name;
   }-*/;
 
+  /**
+   * @deprecated use {@link #isReadOnly()} instead.
+   */
   public final native boolean getReadOnly() /*-{
-    return this.readOnly;
+    return !!this.readOnly;
   }-*/;
 
   /**
@@ -145,7 +151,7 @@ public class TextAreaElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native boolean isDisabled() /*-{
-    return this.disabled;
+    return !!this.disabled;
   }-*/;
 
   /**
@@ -154,7 +160,7 @@ public class TextAreaElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-readonly">W3C HTML Specification</a>
    */
   public final native boolean isReadOnly() /*-{
-    return this.readOnly;
+    return !!this.readOnly;
   }-*/;
 
   /**

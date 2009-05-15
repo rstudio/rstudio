@@ -57,6 +57,7 @@ public class ButtonElement extends Element {
    * The control is unavailable in this context.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   * @deprecated use {@link #isDisabled()} instead.
    */
   public final native String getDisabled() /*-{
      return this.disabled;
@@ -107,6 +108,15 @@ public class ButtonElement extends Element {
    }-*/;
 
   /**
+   * The control is unavailable in this context.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   */
+  public final native boolean isDisabled() /*-{
+     return !!this.disabled;
+   }-*/;
+
+  /**
    * A single character access key to give access to the form control.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-accesskey">W3C HTML Specification</a>
@@ -119,6 +129,16 @@ public class ButtonElement extends Element {
    * The control is unavailable in this context.
    * 
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   */
+  public final native void setDisabled(boolean disabled) /*-{
+     this.disabled = disabled;
+   }-*/;
+
+  /**
+   * The control is unavailable in this context.
+   * 
+   * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
+   * @deprecated use {@link #setDisabled(boolean)} instead
    */
   public final native void setDisabled(String disabled) /*-{
      this.disabled = disabled;

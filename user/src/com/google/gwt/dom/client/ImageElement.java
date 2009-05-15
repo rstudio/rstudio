@@ -80,7 +80,7 @@ public class ImageElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-ismap">W3C HTML Specification</a>
    */
   public final native boolean isMap() /*-{
-     return this.isMap;
+     return !!this.isMap;
    }-*/;
   
   /**
@@ -144,6 +144,6 @@ public class ImageElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/struct/objects.html#adef-usemap">W3C HTML Specification</a>
    */
   public final native boolean useMap() /*-{
-     return this.useMap;
+     return !!this.useMap;
    }-*/;
 }

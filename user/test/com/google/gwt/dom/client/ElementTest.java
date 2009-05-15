@@ -68,6 +68,21 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
+   * Test round-trip of the 'disabled' property.
+   */
+  public void testDisabled() {
+    ButtonElement button = Document.get().createButtonElement();
+    assertFalse(button.isDisabled());
+    button.setDisabled(true);
+    assertTrue(button.isDisabled());
+
+    InputElement input = Document.get().createTextInputElement();
+    assertFalse(input.isDisabled());
+    input.setDisabled(true);
+    assertTrue(input.isDisabled());
+  }
+
+  /**
    * [get|set|remove]Attribute.
    */
   public void testElementAttribute() {
@@ -195,11 +210,6 @@ public class ElementTest extends GWTTestCase {
       }
     });
   }
-
-  private native boolean isIE() /*-{
-    var ua = navigator.userAgent.toLowerCase();
-    return ua.indexOf("msie") != -1;
-  }-*/;
 
   /**
    * scroll[Left|Top], scrollIntoView.
@@ -519,5 +529,10 @@ public class ElementTest extends GWTTestCase {
 
   private native JavaScriptObject createTrivialJSO() /*-{
     return {};
+  }-*/;
+
+  private native boolean isIE() /*-{
+    var ua = navigator.userAgent.toLowerCase();
+    return ua.indexOf("msie") != -1;
   }-*/;
 }

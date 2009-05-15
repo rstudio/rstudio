@@ -41,9 +41,10 @@ public class StyleElement extends Element {
 
   /**
    * Enables/disables the style sheet.
+   * @deprecated use {@link #isDisabled()} instead
    */
   public final native boolean getDisabled() /*-{
-     return this.disabled;
+     return !!this.disabled;
    }-*/;
 
   /**
@@ -62,6 +63,13 @@ public class StyleElement extends Element {
    */
   public final native String getType() /*-{
      return this.type;
+   }-*/;
+
+  /**
+   * Enables/disables the style sheet.
+   */
+  public final native boolean isDisabled() /*-{
+     return !!this.disabled;
    }-*/;
 
   /**

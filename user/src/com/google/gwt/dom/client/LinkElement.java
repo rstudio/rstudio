@@ -41,9 +41,10 @@ public class LinkElement extends Element {
   /**
    * Enables/disables the link. This is currently only used for style sheet
    * links, and may be used to activate or deactivate style sheets.
+   * @deprecated use {@link #isDisabled()} instead.
    */
   public final native boolean getDisabled() /*-{
-    return this.disabled;
+    return !!this.disabled;
   }-*/;
 
   /**
@@ -99,6 +100,14 @@ public class LinkElement extends Element {
   public final native String getType() /*-{
      return this.type;
    }-*/;
+
+  /**
+   * Enables/disables the link. This is currently only used for style sheet
+   * links, and may be used to activate or deactivate style sheets.
+   */
+  public final native boolean isDisabled() /*-{
+    return !!this.disabled;
+  }-*/;
 
   /**
    * Enables/disables the link. This is currently only used for style sheet

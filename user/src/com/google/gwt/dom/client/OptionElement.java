@@ -85,7 +85,7 @@ public class OptionElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-selected">W3C HTML Specification</a>
    */
   public final native boolean isDefaultSelected() /*-{
-    return this.defaultSelected;
+    return !!this.defaultSelected;
   }-*/;
 
   /**
@@ -94,7 +94,7 @@ public class OptionElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-disabled">W3C HTML Specification</a>
    */
   public final native boolean isDisabled() /*-{
-    return this.disabled;
+    return !!this.disabled;
   }-*/;
 
   /**
@@ -104,7 +104,7 @@ public class OptionElement extends Element {
    * of the element.
    */
   public final native boolean isSelected() /*-{
-    return this.selected;
+    return !!this.selected;
   }-*/;
 
   /**

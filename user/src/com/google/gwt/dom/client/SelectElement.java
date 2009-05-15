@@ -166,7 +166,7 @@ public class SelectElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/interact/forms.html#adef-multiple">W3C HTML Specification</a>
    */
   public final native boolean isMultiple() /*-{
-     return this.multiple;
+     return !!this.multiple;
    }-*/;
 
   /**

@@ -106,7 +106,7 @@ public class IFrameElement extends Element {
    * @see <a href="http://www.w3.org/TR/1999/REC-html401-19991224/present/frames.html#adef-noresize">W3C HTML Specification</a>
    */
   public final native boolean isNoResize() /*-{
-     return this.noResize;
+     return !!this.noResize;
    }-*/;
 
   /**
