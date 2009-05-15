@@ -15,7 +15,6 @@
  */
 package com.google.gwt.user.client.ui;
 
-import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.DOM;
 
 import java.util.Iterator;
@@ -23,12 +22,7 @@ import java.util.Iterator;
 /**
  * A test for {@link VerticalPanel}.
  */
-public class VerticalPanelTest extends GWTTestCase {
-
-  @Override
-  public String getModuleName() {
-    return "com.google.gwt.user.DebugTest";
-  }
+public class VerticalPanelTest extends AbstractCellPanelTest {
 
   public void testAttachDetachOrder() {
     HasWidgetsTester.testAll(new VerticalPanel());
@@ -87,5 +81,14 @@ public class VerticalPanelTest extends GWTTestCase {
     assertEquals(2, p.getWidgetCount());
     assertEquals(0, p.getWidgetIndex(tb));
     assertEquals(1, p.getWidgetIndex(l));
+  }
+
+  @Override
+  protected CellPanel createCellPanel() {
+    VerticalPanel p = new VerticalPanel();
+    p.add(new Label("a"));
+    p.add(new Label("b"));
+    p.add(new Label("c"));
+    return p;
   }
 }

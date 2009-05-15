@@ -65,8 +65,10 @@ public abstract class CellPanel extends ComplexPanel {
    * @param height the cell's height, in CSS units
    */
   public void setCellHeight(Widget w, String height) {
-    Element td = DOM.getParent(w.getElement());
-    DOM.setElementProperty(td, "height", height);
+    Element td = getWidgetTd(w);
+    if (td != null) {
+      td.setPropertyString("height", height);
+    }
   }
 
   /**
@@ -106,8 +108,10 @@ public abstract class CellPanel extends ComplexPanel {
    * @param width the cell's width, in CSS units
    */
   public void setCellWidth(Widget w, String width) {
-    Element td = DOM.getParent(w.getElement());
-    DOM.setElementProperty(td, "width", width);
+    Element td = getWidgetTd(w);
+    if (td != null) {
+      td.setPropertyString("width", width);
+    }
   }
 
   /**
