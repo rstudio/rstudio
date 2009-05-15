@@ -48,10 +48,13 @@ import java.util.Queue;
  * provide functions for fragment loading for any compilation that includes more
  * than one fragment. Linkers should always provide a function
  * <code>__gwtStartLoadingFragment</code>. This function is called by
- * AsyncFragmentLoader with an integer fragment number that needs to be
- * downloaded. If the mechanism for loading the contents of fragments is
- * provided by the linker, this function should return <code>null</code> or
- * <code>undefined</code>.
+ * AsyncFragmentLoader with two arguments: an integer fragment number that needs
+ * to be downloaded, and a one-argument loadFailed function that can be called
+ * if the load fails. If the load fails, that function should be called with a
+ * descriptive exception as the argument. If the mechanism for loading the
+ * contents of fragments is provided by the linker, the
+ * <code>__gwtStartLoadingFragment</code> function should return
+ * <code>null</code> or <code>undefined</code>.
  * </p>
  * <p>
  * Alternatively, the function can return a URL designating from where the code
@@ -310,8 +313,12 @@ public class AsyncFragmentLoader {
    * a URL that should be downloaded to get the code. If it starts the download
    * itself, it can synchronously load it, e.g. from cache, if that makes sense.
    */
-  private static native String gwtStartLoadingFragment(int fragment) /*-{
-    return __gwtStartLoadingFragment(fragment);
+  private static native String gwtStartLoadingFragment(int fragment,
+      LoadErrorHandler loadErrorHandler) /*-{
+    function loadFailed(e) {
+      loadErrorHandler.@com.google.gwt.core.client.AsyncFragmentLoader$LoadErrorHandler::loadFailed(Ljava/lang/Throwable;)(e);
+    }
+    return __gwtStartLoadingFragment(fragment, loadFailed);
   }-*/;
 
   /**
@@ -362,7 +369,7 @@ public class AsyncFragmentLoader {
 
   private static void startLoadingFragment(int fragment,
       final LoadErrorHandler loadErrorHandler) {
-    String fragmentUrl = gwtStartLoadingFragment(fragment);
+    String fragmentUrl = gwtStartLoadingFragment(fragment, loadErrorHandler);
 
     if (fragmentUrl != null) {
       // use XHR
