@@ -17,6 +17,7 @@ package com.google.gwt.user.client.impl;
 
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Element;
+import com.google.gwt.user.client.Window.Location;
 
 /**
  * History implementation for IE6 and IE7, which do not support the onhashchange
@@ -63,6 +64,7 @@ class HistoryImplIE6 extends HistoryImpl {
   }-*/;
 
   protected Element historyFrame;
+  private boolean reloadedWindow;
 
   @Override
   public boolean init() {
@@ -105,6 +107,23 @@ class HistoryImplIE6 extends HistoryImpl {
     return tokenElement.innerText;
   }-*/;
 
+  /**
+   * The URL check timer sometimes reloads the window to work around an IE bug.
+   * However, the user might cancel the page navigation, resulting in a mismatch
+   * between the current history token and the URL hash value.
+   * 
+   * @return true if a canceled window reload was handled
+   */
+  @SuppressWarnings("unused")
+  private boolean handleWindowReloadCanceled() {
+    if (reloadedWindow) {
+      reloadedWindow = false;
+      updateHash(getToken());
+      return true;
+    }
+    return false;
+  }
+
   private native void initHistoryToken() /*-{
     // Assume an empty token.
     var token = '';
@@ -131,6 +150,13 @@ class HistoryImplIE6 extends HistoryImpl {
     var historyImplRef = this;
     var urlChecker = function() {
       $wnd.setTimeout(urlChecker, 250);
+
+      // Reset the hash if the user cancels a window reload triggered by the 
+      // urlChecker.
+      if (historyImplRef.@com.google.gwt.user.client.impl.HistoryImplIE6::handleWindowReloadCanceled()()) {
+        return;
+      }
+
       var hash = @com.google.gwt.user.client.impl.HistoryImplIE6::getLocationHash()();
       if (hash.length > 0) {
         var token = '';
@@ -139,12 +165,12 @@ class HistoryImplIE6 extends HistoryImpl {
         } catch (e) {
           // If there's a bad hash, always reload. This could only happen if
           // if someone entered or linked to a bad url.
-          $wnd.location.reload();
+          historyImplRef.@com.google.gwt.user.client.impl.HistoryImplIE6::reloadWindow()();
         }
   
         var historyToken = @com.google.gwt.user.client.impl.HistoryImpl::getToken()();
         if (historyToken && (token != historyToken)) {
-          $wnd.location.reload();
+          historyImplRef.@com.google.gwt.user.client.impl.HistoryImplIE6::reloadWindow()();
         }
       }
     };
@@ -166,6 +192,12 @@ class HistoryImplIE6 extends HistoryImpl {
     doc.write('<html><body onload="if(parent.__gwt_onHistoryLoad)parent.__gwt_onHistoryLoad(__gwt_historyToken.innerText)"><div id="__gwt_historyToken">' + escaped + '</div></body></html>');
     doc.close();
   }-*/;
+
+  @SuppressWarnings("unused")
+  private void reloadWindow() {
+    reloadedWindow = true;
+    Location.reload();
+  }
 
   private native void updateHash(String token) /*-{
     $wnd.location.hash = this.@com.google.gwt.user.client.impl.HistoryImpl::encodeFragment(Ljava/lang/String;)(token);
