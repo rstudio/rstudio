@@ -1,12 +1,12 @@
 /*
  * Copyright 2008 Google Inc.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
  * the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
@@ -33,7 +33,7 @@ import java.io.File;
 
 /**
  * The main executable class for the hosted mode shell.
- * 
+ *
  * @deprecated Use {@link HostedMode} instead
  */
 @Deprecated
@@ -104,6 +104,10 @@ public class GWTShell extends SwtHostedModeBase {
     }
 
     public File getOutDir() {
+      if (System.getProperty("com.google.gwt.shell.outdir") != null) {
+        // deprecated old property way to set outputs
+        return new File(System.getProperty("com.google.gwt.shell.outdir"));
+      }
       return outDir;
     }
 
@@ -113,9 +117,7 @@ public class GWTShell extends SwtHostedModeBase {
 
     @Override
     public File getWorkDir() {
-      if (System.getProperty("com.google.gwt.shell.outdir") != null) {
-        return new File(System.getProperty("com.google.gwt.shell.outdir"));
-      }
+      File workdir = new File(getOutDir(), ".gwt-tmp");
       return new File(getOutDir(), ".gwt-tmp");
     }
 
@@ -139,12 +141,6 @@ public class GWTShell extends SwtHostedModeBase {
      */
     GWTShell gwtShell = new GWTShell();
     ArgProcessor argProcessor = new ArgProcessor(gwtShell.options, false, false);
-
-    // deprecated old property way to set outputs
-    if (System.getProperty("com.google.gwt.shell.outdir") != null) {
-      gwtShell.options.setOutDir(new File(System.getProperty("com.google.gwt.shell.outdir")));
-      gwtShell.options.setWorkDir(new File(System.getProperty("com.google.gwt.shell.outdir")));
-    }
 
     if (argProcessor.processArgs(args)) {
       gwtShell.run();
@@ -255,7 +251,7 @@ public class GWTShell extends SwtHostedModeBase {
   protected boolean initModule(String moduleName) {
     /*
      * Not used in legacy mode due to GWTShellServlet playing this role.
-     * 
+     *
      * TODO: something smarter here and actually make GWTShellServlet less
      * magic?
      */
