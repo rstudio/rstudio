@@ -58,14 +58,15 @@ public class SymbolMapsLinker extends AbstractLinker {
 
     artifacts = new ArtifactSet(artifacts);
 
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
     for (CompilationResult result : artifacts.find(CompilationResult.class)) {
-      ByteArrayOutputStream out = new ByteArrayOutputStream();
       PrintWriter pw = new PrintWriter(out);
 
       doWriteSymbolMap(logger, result, pw);
       pw.close();
 
       doEmitSymbolMap(logger, artifacts, result, out);
+      out.reset();
     }
 
     return artifacts;
@@ -109,12 +110,16 @@ public class SymbolMapsLinker extends AbstractLinker {
     }
 
     pw.println("# jsName, jsniIdent, className, memberName, sourceUri, sourceLine");
+    StringBuilder sb = new StringBuilder(1024);
+    char[] buf = new char[1024];
     for (SymbolData symbol : result.getSymbolMap()) {
-      StringBuilder sb = new StringBuilder(1024);
       sb.append(symbol.getSymbolName());
 
       sb.append(',');
-      sb.append(symbol.getJsniIdent());
+      String jsniIdent = symbol.getJsniIdent();
+      if (jsniIdent != null) {
+        sb.append(jsniIdent);
+      }
       sb.append(',');
       sb.append(symbol.getClassName());
       sb.append(',');
@@ -130,7 +135,18 @@ public class SymbolMapsLinker extends AbstractLinker {
       sb.append(',');
       sb.append(symbol.getSourceLine());
       sb.append('\n');
-      pw.write(sb.toString());
+
+      int sbLen = sb.length();
+      if (buf.length < sbLen) {
+        int bufLen = buf.length;
+        while (bufLen < sbLen) {
+          bufLen <<= 1;
+        }
+        buf = new char[bufLen];
+      }
+      sb.getChars(0, sbLen, buf, 0);
+      pw.write(buf, 0, sbLen);
+      sb.setLength(0);
     }
   }
 }
