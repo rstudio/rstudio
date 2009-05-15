@@ -27,6 +27,15 @@ public class MouseWheelEvent extends MouseEvent<MouseWheelHandler> {
   private static final Type<MouseWheelHandler> TYPE = new Type<MouseWheelHandler>(
       "mousewheel", new MouseWheelEvent());
 
+  static {
+    /**
+     * Hidden type used to ensure DOMMouseScroll gets registered in the type map.
+     * This is the special name used on Mozilla browsers for what everyone else
+     * calls 'mousewheel'.
+     */
+    new Type<MouseWheelHandler>("DOMMouseScroll", new MouseWheelEvent());
+  }
+
   /**
    * Gets the event type associated with mouse wheel events.
    * 
