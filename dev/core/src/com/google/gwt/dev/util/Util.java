@@ -83,6 +83,18 @@ public final class Util {
       '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D',
       'E', 'F'};
 
+  /**
+   * The size of a {@link #threadLocalBuf}, which should be large enough for
+   * efficient data transfer but small enough to fit easily into the L2 cache of
+   * most modern processors.
+   */
+  private static final int THREAD_LOCAL_BUF_SIZE = 16 * 1024;
+
+  /**
+   * Stores reusable thread local buffers for efficient data transfer.
+   */
+  private static final ThreadLocal<byte[]> threadLocalBuf = new ThreadLocal<byte[]>();
+
   public static byte[] append(byte[] xs, byte x) {
     int n = xs.length;
     byte[] t = new byte[n + 1];
@@ -165,11 +177,7 @@ public final class Util {
 
   public static void copy(InputStream is, OutputStream os) throws IOException {
     try {
-      byte[] buf = new byte[32 * 1024];
-      int i;
-      while ((i = is.read(buf)) != -1) {
-        os.write(buf, 0, i);
-      }
+      copyNoClose(is, os);
     } finally {
       Utility.close(is);
       Utility.close(os);
@@ -238,6 +246,23 @@ public final class Util {
     }
   }
 
+  /**
+   * Copies all of the bytes from the input stream to the output stream until
+   * the input stream is EOF. Does not close either stream.
+   */
+  public static void copyNoClose(InputStream is, OutputStream os)
+      throws IOException {
+    byte[] buf = takeThreadLocalBuf();
+    try {
+      int i;
+      while ((i = is.read(buf)) != -1) {
+        os.write(buf, 0, i);
+      }
+    } finally {
+      releaseThreadLocalBuf(buf);
+    }
+  }
+
   public static Reader createReader(TreeLogger logger, URL url)
       throws UnableToCompleteException {
     try {
@@ -277,7 +302,7 @@ public final class Util {
     }
   }
 
-/**
+  /**
    * Escapes '&', '<', '>', '"', and '\'' to their XML entity equivalents.
    */
   public static String escapeXml(String unescaped) {
@@ -817,6 +842,15 @@ public final class Util {
     return toReturn;
   }
 
+  /**
+   * Release a buffer previously returned from {@link #takeThreadLocalBuf()}.
+   * The released buffer may then be reused.
+   */
+  public static void releaseThreadLocalBuf(byte[] buf) {
+    assert buf.length == THREAD_LOCAL_BUF_SIZE;
+    threadLocalBuf.set(buf);
+  }
+
   public static File removeExtension(File file) {
     String name = file.getName();
     int lastDot = name.lastIndexOf('.');
@@ -856,6 +890,24 @@ public final class Util {
       path = path.substring(0, path.length() - 1);
     }
     return path;
+  }
+
+  /**
+   * Get a large byte buffer local to this thread. Currently this is set to a
+   * 16k buffer, which is small enough to fit into the L2 cache on modern
+   * processors. The contents of the returned buffer are undefined. Calling
+   * {@link #releaseThreadLocalBuf(byte[])} on the returned buffer allows
+   * subsequent callers to reuse the buffer later, avoiding unncessary
+   * allocations and GC.
+   */
+  public static byte[] takeThreadLocalBuf() {
+    byte[] buf = threadLocalBuf.get();
+    if (buf == null) {
+      buf = new byte[THREAD_LOCAL_BUF_SIZE];
+    } else {
+      threadLocalBuf.set(null);
+    }
+    return buf;
   }
 
   /**

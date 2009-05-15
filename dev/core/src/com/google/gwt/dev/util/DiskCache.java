@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -86,7 +87,7 @@ public class DiskCache {
    *          {@link #writeByteArray(byte[])}
    * @return the bytes that were written
    */
-  public byte[] readByteArray(long token) {
+  public synchronized byte[] readByteArray(long token) {
     try {
       atEnd = false;
       file.seek(token);
@@ -128,7 +129,7 @@ public class DiskCache {
    * 
    * @return a handle to retrieve it later
    */
-  public long writeByteArray(byte[] bytes) {
+  public synchronized long writeByteArray(byte[] bytes) {
     try {
       if (!atEnd) {
         file.seek(file.length());
@@ -162,8 +163,36 @@ public class DiskCache {
     return writeByteArray(Util.getBytes(str));
   }
 
+  /**
+   * Reads bytes of data back from disk and writes them into the specified
+   * output stream.
+   */
+  public synchronized void writeTo(long token, OutputStream out) {
+    byte[] buf = Util.takeThreadLocalBuf();
+    try {
+      atEnd = false;
+      file.seek(token);
+      int length = file.readInt();
+      int bufLen = buf.length;
+      while (length > bufLen) {
+        int read = file.read(buf, 0, bufLen);
+        length -= read;
+        out.write(buf, 0, read);
+      }
+      while (length > 0) {
+        int read = file.read(buf, 0, length);
+        length -= read;
+        out.write(buf, 0, read);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to read from byte cache", e);
+    } finally {
+      Util.releaseThreadLocalBuf(buf);
+    }
+  }
+
   @Override
-  protected void finalize() throws Throwable {
+  protected synchronized void finalize() throws Throwable {
     if (file != null) {
       file.setLength(0);
       file.close();

@@ -55,8 +55,8 @@ import com.google.gwt.dev.util.FileBackedObject;
 import com.google.gwt.dev.util.Util;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -491,13 +491,11 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
           || (outFile.lastModified() <= artifact.getLastModified())) {
         mkdirs(outFile.getParentFile(), createdDirs);
         try {
-          RandomAccessFile raf = new RandomAccessFile(outFile, "rw");
-          byte[] bytes = artifact.getBytes(artifactLogger);
-          raf.setLength(bytes.length);
-          raf.write(bytes);
-          raf.close();
+          FileOutputStream out = new FileOutputStream(outFile);
+          artifact.writeTo(artifactLogger, out);
+          out.close();
         } catch (IOException e) {
-          logger.log(TreeLogger.ERROR, "Unable to create file '"
+          artifactLogger.log(TreeLogger.ERROR, "Unable to create file '"
               + outFile.getAbsolutePath() + "'", e);
           throw new UnableToCompleteException();
         }
@@ -529,10 +527,6 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       Class<? extends Linker> linkerType) {
     assert linkerShortNames.containsKey(linkerType) : linkerType.getName()
         + " unknown";
-    File toReturn = new File(extraPath, linkerShortNames.get(linkerType));
-    if (!toReturn.exists()) {
-      toReturn.mkdirs();
-    }
-    return toReturn;
+    return new File(extraPath, linkerShortNames.get(linkerType));
   }
 }

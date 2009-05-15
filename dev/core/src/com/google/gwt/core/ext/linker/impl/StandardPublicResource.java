@@ -25,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
 
 /**
@@ -47,11 +48,6 @@ public class StandardPublicResource extends PublicResource {
     }
 
     @Override
-    public byte[] getBytes(TreeLogger logger) throws UnableToCompleteException {
-      return data;
-    }
-
-    @Override
     public InputStream getContents(TreeLogger logger)
         throws UnableToCompleteException {
       return new ByteArrayInputStream(data);
@@ -60,6 +56,17 @@ public class StandardPublicResource extends PublicResource {
     @Override
     public long getLastModified() {
       return lastModified;
+    }
+
+    @Override
+    public void writeTo(TreeLogger logger, OutputStream out)
+        throws UnableToCompleteException {
+      try {
+        out.write(data);
+      } catch (IOException e) {
+        logger.log(TreeLogger.ERROR, "Unable to write to stream", e);
+        throw new UnableToCompleteException();
+      }
     }
   }
 

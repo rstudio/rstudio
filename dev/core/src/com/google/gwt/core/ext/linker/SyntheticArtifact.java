@@ -22,6 +22,7 @@ import com.google.gwt.dev.util.DiskCache;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Artifacts created by {@link AbstractLinker}.
@@ -46,11 +47,6 @@ public class SyntheticArtifact extends EmittedArtifact {
   }
 
   @Override
-  public byte[] getBytes(TreeLogger logger) throws UnableToCompleteException {
-    return diskCache.readByteArray(token);
-  }
-
-  @Override
   public InputStream getContents(TreeLogger logger)
       throws UnableToCompleteException {
     return new ByteArrayInputStream(diskCache.readByteArray(token));
@@ -59,5 +55,11 @@ public class SyntheticArtifact extends EmittedArtifact {
   @Override
   public long getLastModified() {
     return lastModified;
+  }
+
+  @Override
+  public void writeTo(TreeLogger logger, OutputStream out)
+      throws UnableToCompleteException {
+    diskCache.writeTo(token, out);
   }
 }
