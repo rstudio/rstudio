@@ -24,10 +24,17 @@ import com.google.gwt.i18n.client.HasDirection;
 /**
  * A widget that represents a simple &lt;a&gt; element.
  * 
+ * <p>
+ * If you want use this anchor only for changing history states, use
+ * {@link Hyperlink} instead.
+ * </p>
+ * 
  * <h3>CSS Style Rules</h3>
  * <ul class='css'>
  * <li>.gwt-Anchor { }</li>
  * </ul>
+ * 
+ * @see Hyperlink
  */
 public class Anchor extends FocusWidget implements HasHorizontalAlignment,
     HasName, HasText, HasHTML, HasWordWrap, HasDirection {

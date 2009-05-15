@@ -33,6 +33,11 @@ import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
  * without reloading the page.
  * 
  * <p>
+ * If you want an HTML hyperlink (&lt;a&gt; tag) without interacting with the
+ * history system, use {@link Anchor} instead.
+ * </p>
+ * 
+ * <p>
  * Being a true hyperlink, it is also possible for the user to "right-click,
  * open link in new window", which will cause the application to be loaded in a
  * new window at the state specified by the hyperlink.
@@ -50,6 +55,8 @@ import com.google.gwt.user.client.ui.impl.HyperlinkImpl;
  * <p>
  * <h3>Example</h3> {@example com.google.gwt.examples.HistoryExample}
  * </p>
+ * 
+ * @see Anchor
  */
 @SuppressWarnings("deprecation")
 public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
@@ -89,7 +96,9 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    * Creates a hyperlink with its text and target history token specified.
    * 
    * @param text the hyperlink's text
-   * @param targetHistoryToken the history token to which it will link
+   * @param targetHistoryToken the history token to which it will link, which
+   *     may not be null (use {@link Anchor} instead if you don't need history
+   *     processing)
    */
   public Hyperlink(String text, String targetHistoryToken) {
     this();
@@ -109,12 +118,20 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
     setStyleName("gwt-Hyperlink");
   }
 
+  /**
+   * @deprecated Use {@link Anchor#addClickHandler} instead and call
+   *     History.newItem from the handler if you need to process the
+   *     click before the history token is set.
+   */
+  @Deprecated
   public HandlerRegistration addClickHandler(ClickHandler handler) {
     return addHandler(handler, ClickEvent.getType());
   }
 
   /**
-   * @deprecated Use {@link #addClickHandler} instead
+   * @deprecated Use {@link Anchor#addClickHandler} instead and call
+   *     History.newItem from the handler if you need to process the
+   *     click before the history token is set.
    */
   @Deprecated
   public void addClickListener(ClickListener listener) {
@@ -166,9 +183,12 @@ public class Hyperlink extends Widget implements HasHTML, SourcesClickEvents,
    * token that will be passed to {@link History#newItem} when this link is
    * clicked.
    * 
-   * @param targetHistoryToken the new target history token
+   * @param targetHistoryToken the new history token, which may not be null (use
+   *        {@link Anchor} instead if you don't need history processing)
    */
   public void setTargetHistoryToken(String targetHistoryToken) {
+    assert targetHistoryToken != null
+      : "targetHistoryToken must not be null, consider using Anchor instead";
     this.targetHistoryToken = targetHistoryToken;
     DOM.setElementProperty(anchorElem, "href", "#" + targetHistoryToken);
   }
