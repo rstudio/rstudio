@@ -219,7 +219,7 @@ public class HostedMode extends SwtHostedModeBase {
 
     @Deprecated
     public void setOutDir(File outDir) {
-      this.outDir = outDir;     
+      this.outDir = outDir;
     }
 
     public void setServletContainerLauncher(ServletContainerLauncher scl) {
@@ -457,19 +457,24 @@ public class HostedMode extends SwtHostedModeBase {
     TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG, "Linking module '"
         + module.getName() + "'");
 
-    // TODO: move the module-specific computations to a helper function.
-    File moduleOutDir = new File(options.getWarDir(), module.getName());
-    File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
-        options.getExtraDir(), module.getName());
-
     // Create a new active linker stack for the fresh link.
     StandardLinkerContext linkerStack = new StandardLinkerContext(linkLogger,
         module, options);
     linkerStacks.put(module.getName(), linkerStack);
 
     ArtifactSet artifacts = linkerStack.invokeLink(linkLogger);
-    linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
-        moduleExtraDir);
+    produceOutput(linkLogger, linkerStack, artifacts, module);
+  }
+
+  private void produceOutput(TreeLogger logger,
+      StandardLinkerContext linkerStack, ArtifactSet artifacts, ModuleDef module)
+      throws UnableToCompleteException {
+    File moduleOutDir = new File(options.getWarDir(), module.getName());
+    linkerStack.produceOutputDirectory(logger, artifacts, moduleOutDir);
+    if (options.getExtraDir() != null) {
+      File moduleExtraDir = new File(options.getExtraDir(), module.getName());
+      linkerStack.produceExtraDirectory(logger, artifacts, moduleExtraDir);
+    }
   }
 
   /**
@@ -486,19 +491,13 @@ public class HostedMode extends SwtHostedModeBase {
     TreeLogger linkLogger = logger.branch(TreeLogger.DEBUG,
         "Relinking module '" + module.getName() + "'");
 
-    // TODO: move the module-specific computations to a helper function.
-    File moduleOutDir = new File(options.getWarDir(), module.getName());
-    File moduleExtraDir = (options.getExtraDir() == null) ? null : new File(
-        options.getExtraDir(), module.getName());
-
     // Find the existing linker stack.
     StandardLinkerContext linkerStack = linkerStacks.get(module.getName());
     assert linkerStack != null;
 
     ArtifactSet artifacts = linkerStack.invokeRelink(linkLogger,
         newlyGeneratedArtifacts);
-    linkerStack.produceOutputDirectory(linkLogger, artifacts, moduleOutDir,
-        moduleExtraDir);
+    produceOutput(linkLogger, linkerStack, artifacts, module);
   }
 
   private void validateServletTags(TreeLogger logger,

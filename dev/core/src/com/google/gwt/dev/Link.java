@@ -200,24 +200,37 @@ public class Link {
     File moduleExtraDir = new File(outDir, module.getName() + "-aux");
     Util.recursiveDelete(moduleOutDir, true);
     Util.recursiveDelete(moduleExtraDir, true);
-    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir,
-        moduleExtraDir);
+    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir);
+    linkerContext.produceExtraDirectory(logger, artifacts, moduleExtraDir);
     logger.log(TreeLogger.INFO, "Link succeeded");
   }
 
   private static void doProduceOutput(TreeLogger logger, ArtifactSet artifacts,
       StandardLinkerContext linkerContext, ModuleDef module, File outDir,
       File extraDir) throws UnableToCompleteException {
-    // TODO: move the module-specific computations to a helper function.
-    File moduleOutDir = new File(outDir, module.getName());
-    File moduleExtraDir = (extraDir == null) ? null : new File(extraDir,
-        module.getName());
-    Util.recursiveDelete(moduleOutDir, true);
-    if (moduleExtraDir != null) {
-      Util.recursiveDelete(moduleExtraDir, true);
+    String outPath = outDir.getPath();
+    if (!outDir.isDirectory()
+        && (outPath.endsWith(".war") || outPath.endsWith(".jar") || outPath.endsWith(".zip"))) {
+      linkerContext.produceOutputZip(logger, artifacts, outDir,
+          module.getName() + '/');
+    } else {
+      File moduleOutDir = new File(outDir, module.getName());
+      Util.recursiveDelete(moduleOutDir, true);
+      linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir);
     }
-    linkerContext.produceOutputDirectory(logger, artifacts, moduleOutDir,
-        moduleExtraDir);
+
+    if (extraDir != null) {
+      String extraPath = extraDir.getPath();
+      if (!extraDir.isDirectory()
+          && (extraPath.endsWith(".war") || extraPath.endsWith(".jar") || extraPath.endsWith(".zip"))) {
+        linkerContext.produceExtraZip(logger, artifacts, extraDir,
+            module.getName() + '/');
+      } else {
+        File moduleExtraDir = new File(extraDir, module.getName());
+        Util.recursiveDelete(moduleExtraDir, true);
+        linkerContext.produceExtraDirectory(logger, artifacts, moduleExtraDir);
+      }
+    }
     logger.log(TreeLogger.INFO, "Link succeeded");
   }
 
