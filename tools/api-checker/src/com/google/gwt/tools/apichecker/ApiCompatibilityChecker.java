@@ -26,6 +26,8 @@ import com.google.gwt.util.tools.ArgHandlerFlag;
 import com.google.gwt.util.tools.ArgHandlerString;
 import com.google.gwt.util.tools.ToolBase;
 
+import org.apache.tools.ant.types.ZipScanner;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
@@ -294,9 +296,9 @@ public class ApiCompatibilityChecker extends ToolBase {
    * file-system.
    */
   private static class SourceFileCompilationUnits extends CompilationUnits {
-    private final Set<String> excludedPaths;
     private final Set<File> includedPaths;
     private Set<CompilationUnit> units = null;
+    private final ZipScanner excludeScanner;
 
     SourceFileCompilationUnits(String dirRoot,
         Set<String> includedPathsAsString, Set<String> excludedPathsAsString,
@@ -311,11 +313,21 @@ public class ApiCompatibilityChecker extends ToolBase {
             + includedPath));
       }
 
-      excludedPaths = new HashSet<String>();
+      String fullExcludedPaths[] = new String[excludedPathsAsString.size()];
+      int count = 0;
+      String dirRootCanonicalPath = getFileFromName("dirRoot: ", dirRoot).getCanonicalPath();
       for (String excludedPath : excludedPathsAsString) {
-        excludedPaths.add(getFileFromName("excluded file: ",
-            dirRoot + excludedPath).getCanonicalPath());
+        fullExcludedPaths[count++] = dirRootCanonicalPath + "/" + excludedPath;
       }
+
+      // initialize the ant scanner
+      excludeScanner = new ZipScanner();
+      if (fullExcludedPaths.length > 0) {
+        excludeScanner.setIncludes(fullExcludedPaths);
+      }
+      excludeScanner.addDefaultExcludes();
+      excludeScanner.setCaseSensitive(true);
+      excludeScanner.init();
     }
 
     @Override
@@ -337,7 +349,7 @@ public class ApiCompatibilityChecker extends ToolBase {
       if (fileName.indexOf(pattern) == 0) {
         fileName = fileName.substring(pattern.length());
       }
-      return excludedPaths.contains(fileName);
+      return excludeScanner.match(fileName);
     }
 
     private void updateCompilationUnitsInPath(File sourcePathEntry)

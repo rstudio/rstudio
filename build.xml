@@ -96,6 +96,7 @@
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev-*.jar" />
         <pathelement path="${java.class.path}"/>
+        <pathelement location="${gwt.tools.lib}/lib/apache/ant-1.6.5.jar" />
       </classpath>
       <arg value="-configFile"/>
       <arg file="${gwt.build.out}/userApi.conf"/>
