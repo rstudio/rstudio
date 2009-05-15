@@ -40,9 +40,43 @@ public interface SymbolData extends Serializable {
    */
   class ClassIdentComparator implements Comparator<SymbolData>, Serializable {
     public int compare(SymbolData o1, SymbolData o2) {
-      String s1 = o1.isClass() ? o1.getClassName() : o1.getJsniIdent();
-      String s2 = o2.isClass() ? o2.getClassName() : o2.getJsniIdent();
-      return s1.compareTo(s2);
+      if (o1 == o2) {
+        return 0;
+      }
+      int result = o1.getClassName().compareTo(o2.getClassName());
+      if (result != 0) {
+        return result;
+      }
+
+      // A Class sorts before any member of that class.
+      if (o1.isClass()) {
+        if (o2.isClass()) {
+          return 0;
+        } else {
+          return -1;
+        }
+      } else if (o2.isClass()) {
+        return 1;
+      }
+
+      result = o1.getMemberName().compareTo(o2.getMemberName());
+      if (result != 0) {
+        return result;
+      }
+
+      // A Field sorts before any Method that has the same name.
+      if (o1.isField()) {
+        if (o2.isField()) {
+          return 0;
+        } else {
+          return -1;
+        }
+      } else if (o2.isField()) {
+        return 1;
+      }
+
+      // Must compare jsni signatures to distinguish overloaded methods.
+      return o1.getJsniIdent().compareTo(o2.getJsniIdent());
     }
   }
 
