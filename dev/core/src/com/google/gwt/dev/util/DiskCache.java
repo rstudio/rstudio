@@ -107,6 +107,9 @@ public class DiskCache {
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(
           "Unexpected exception deserializing from disk cache", e);
+    } catch (IOException e) {
+      throw new RuntimeException(
+          "Unexpected exception deserializing from disk cache", e);
     }
   }
 

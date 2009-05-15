@@ -71,14 +71,12 @@ public class FileBackedObject<T extends Serializable> implements Serializable {
    */
   public T newInstance(TreeLogger logger) throws UnableToCompleteException {
     try {
-      T toReturn = Util.readFileAsObject(backingFile, clazz);
-      if (toReturn == null) {
-        logger.log(TreeLogger.ERROR, "Unable to instantiate object");
-        throw new UnableToCompleteException();
-      }
-      return toReturn;
+      return Util.readFileAsObject(backingFile, clazz);
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Missing class definition", e);
+      throw new UnableToCompleteException();
+    } catch (IOException e) {
+      logger.log(TreeLogger.ERROR, "Unable to instantiate object", e);
       throw new UnableToCompleteException();
     }
   }

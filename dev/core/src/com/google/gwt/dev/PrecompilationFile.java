@@ -120,22 +120,15 @@ public class PrecompilationFile {
 
   public Precompilation newInstance(TreeLogger logger)
       throws UnableToCompleteException {
-    Precompilation toReturn;
-
     try {
-      toReturn = Util.readStreamAsObject(jarFile.getInputStream(zipEntry),
+      return Util.readStreamAsObject(jarFile.getInputStream(zipEntry),
           Precompilation.class);
     } catch (IOException e) {
-      toReturn = null;
+      logger.log(TreeLogger.ERROR, "Unable to instantiate object", e);
+      throw new UnableToCompleteException();
     } catch (ClassNotFoundException e) {
       logger.log(TreeLogger.ERROR, "Missing class definition", e);
       throw new UnableToCompleteException();
     }
-
-    if (toReturn == null) {
-      logger.log(TreeLogger.ERROR, "Unable to instantiate object");
-      throw new UnableToCompleteException();
-    }
-    return toReturn;
   }
 }

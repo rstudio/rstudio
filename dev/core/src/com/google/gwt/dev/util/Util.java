@@ -615,13 +615,11 @@ public final class Util {
   }
 
   public static <T extends Serializable> T readFileAsObject(File file,
-      Class<T> type) throws ClassNotFoundException {
+      Class<T> type) throws ClassNotFoundException, IOException {
     FileInputStream fileInputStream = null;
     try {
       fileInputStream = new FileInputStream(file);
       return readStreamAsObject(fileInputStream, type);
-    } catch (IOException e) {
-      return null;
     } finally {
       Utility.close(fileInputStream);
     }
@@ -658,14 +656,12 @@ public final class Util {
     }
   }
 
-  public static <T> T readStreamAsObject(
-      InputStream inputStream, Class<T> type) throws ClassNotFoundException {
+  public static <T> T readStreamAsObject(InputStream inputStream, Class<T> type)
+      throws ClassNotFoundException, IOException {
     ObjectInputStream objectInputStream = null;
     try {
       objectInputStream = new ObjectInputStream(inputStream);
       return type.cast(objectInputStream.readObject());
-    } catch (IOException e) {
-      return null;
     } finally {
       Utility.close(objectInputStream);
     }
