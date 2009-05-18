@@ -217,7 +217,8 @@ abstract class OophmHostedModeBase extends HostedModeBase {
     if (prependPackage) {
       name = PACKAGE_PATH + name;
     }
-    URL url = cl.getResource(name);
+    
+    URL url = (name == null) ? null : cl.getResource(name);
     if (url != null) {
       ImageIcon image = new ImageIcon(url);
       return image;
