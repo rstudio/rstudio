@@ -26,7 +26,8 @@ public class NumberFormatExample implements EntryPoint {
     // Currency
     fmt = NumberFormat.getCurrencyFormat();
     formatted = fmt.format(123456.7899);
-    // prints $123,456.79 in the default locale
+    // prints US$123,456.79 in the default locale or $123,456.79 in the en_US
+    // locale
     GWT.log("Formatted currency is" + formatted, null);
     
     // Custom format
