@@ -57,9 +57,10 @@ public class SplitPointRecorderImpl implements SplitPointRecorder {
     File splitPointsFile = new File(workDir, "splitPoints"
         + Integer.toString(permutationId) + ".xml.gz");
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
+      splitPointsFile.getParentFile().mkdirs();
       stream = new FileOutputStream(splitPointsFile, true);
       writer = new OutputStreamWriter(new GZIPOutputStream(stream), "UTF-8");
-      splitPointsFile.getParentFile().mkdirs();
       pw = new PrintWriter(writer);
       htmlOut = new HtmlTextOutput(pw, false);
 
@@ -80,9 +81,10 @@ public class SplitPointRecorderImpl implements SplitPointRecorder {
         htmlOut.newline();
         htmlOut.indentIn();
         htmlOut.indentIn();
-        for (Integer splitPointCount : splitPointMap.keySet()) {
+        for (Map.Entry<Integer, String> entry : splitPointMap.entrySet()) {
+          Integer splitPointCount = entry.getKey();
           curLine = "<splitpoint id=\"" + splitPointCount + "\" location=\""
-              + splitPointMap.get(splitPointCount) + "\"/>";
+              + entry.getValue() + "\"/>";
           htmlOut.printRaw(curLine);
           htmlOut.newline();
         }

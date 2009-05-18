@@ -74,7 +74,7 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
   @Override
   public Collection<PermutationWorker> getWorkers(TreeLogger logger,
       UnifiedAst unifiedAst, int numWorkers) throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.SPAM,
+    logger.log(TreeLogger.SPAM,
         "Creating ThreadedPermutationWorkers");
 
     numWorkers = Math.min(numWorkers, Integer.getInteger(MAX_THREADS_PROPERTY,
@@ -95,7 +95,7 @@ public class ThreadedPermutationWorkerFactory extends PermutationWorkerFactory {
 
   @Override
   public void init(TreeLogger logger) throws UnableToCompleteException {
-    logger = logger.branch(TreeLogger.SPAM,
+    logger.log(TreeLogger.SPAM,
         "Initializing ThreadedPermutationWorkerFactory");
   }
 

@@ -65,7 +65,7 @@ public class Element extends Node {
    * Adds a name to this element's class property. If the name is already
    * present, this method has no effect.
    * 
-   * @param the class name to be added
+   * @param className the class name to be added
    * @see #setClassName(String)
    */
   public final void addClassName(String className) {
@@ -468,7 +468,7 @@ public class Element extends Node {
    * Removes a name from this element's class property. If the name is not
    * present, this method has no effect.
    * 
-   * @param the class name to be added
+   * @param className the class name to be added
    * @see #setClassName(String)
    */
   public final void removeClassName(String className) {

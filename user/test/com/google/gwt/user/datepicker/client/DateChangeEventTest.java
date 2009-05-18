@@ -33,7 +33,7 @@ import java.util.Date;
  */
 public class DateChangeEventTest extends TestCase {
 
-  private class MockWidget implements HasValue<Date> {
+  private static class MockWidget implements HasValue<Date> {
     private final HandlerManager handlers = new HandlerManager(this);
     private Date value;
 

@@ -30,7 +30,7 @@ public class PopupTest extends GWTTestCase {
   /**
    * Expose otherwise private or protected methods.
    */
-  private class TestablePopupPanel extends PopupPanel {
+  private static class TestablePopupPanel extends PopupPanel {
     private int onLoadCount;
 
     @Override

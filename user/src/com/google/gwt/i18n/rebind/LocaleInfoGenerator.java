@@ -168,8 +168,8 @@ public class LocaleInfoGenerator extends Generator {
           displayName = displayNames.getProperty(localeName);
         }
         if (displayName != null && displayName.length() != 0) {
-          localeName.replace("\"", "\\\"");
-          displayName.replace("\"", "\\\"");
+          localeName = quoteQuotes(localeName);
+          displayName = quoteQuotes(displayName);
           if (needComma) {
             writer.println(",");
           }
@@ -191,7 +191,6 @@ public class LocaleInfoGenerator extends Generator {
     if (!runtimeLocales.isEmpty()) {
       className += "_runtimeSelection";
     }
-    String qualName = packageName + "." + className;
 
     pw = context.tryCreate(logger, packageName, className);
     if (pw != null) {
@@ -319,5 +318,9 @@ public class LocaleInfoGenerator extends Generator {
       localeMap.put(generatedClass, locales);
     }
     locales.add(locale);
+  }
+  
+  private String quoteQuotes(String val) {
+    return val.replace("\"", "\\\"");
   }
 }

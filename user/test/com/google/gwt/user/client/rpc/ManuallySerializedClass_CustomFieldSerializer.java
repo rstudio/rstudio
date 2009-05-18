@@ -27,7 +27,7 @@ public class ManuallySerializedClass_CustomFieldSerializer {
     instance.setB(streamReader.readInt());
     instance.setC(streamReader.readInt());
     instance.setString(streamReader.readString());
-    instance.setStackTraceElement((StackTraceElement)streamReader.readObject());
+    instance.setStackTraceElement((StackTraceElement) streamReader.readObject());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,

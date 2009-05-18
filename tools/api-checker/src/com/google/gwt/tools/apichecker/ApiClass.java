@@ -84,9 +84,22 @@ final class ApiClass implements Comparable<ApiClass>, ApiElement {
   public int compareTo(ApiClass other) {
     return getName().compareTo(other.getName());
   }
-
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ApiClass)) {
+      return false;
+    }
+    return this.getName().equals(((ApiClass) o).getName());
+  }
+  
   public String getRelativeSignature() {
     return classType.getQualifiedSourceName();
+  }
+
+  @Override
+  public int hashCode() {
+    return this.getName().hashCode();
   }
 
   @Override

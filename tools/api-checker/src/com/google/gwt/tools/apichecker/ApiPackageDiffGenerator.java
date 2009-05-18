@@ -55,6 +55,19 @@ final class ApiPackageDiffGenerator implements
   public int compareTo(ApiPackageDiffGenerator other) {
     return this.getName().compareTo(other.getName());
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ApiPackageDiffGenerator)) {
+      return false;
+    }
+    return this.getName().equals(((ApiPackageDiffGenerator) o).getName());
+  }
+
+  @Override
+  public int hashCode() {
+    return this.getName().hashCode();
+  }
 
   void computeApiDiff() throws NotFoundException {
     Set<String> newClassNames = newPackage.getApiClassNames();

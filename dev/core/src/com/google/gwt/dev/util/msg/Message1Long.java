@@ -28,12 +28,12 @@ public final class Message1Long extends Message1 {
   }
 
   public TreeLogger branch(TreeLogger logger, long x, Throwable caught) {
-    Long xl = new Long(x);
+    Long xl = Long.valueOf(x);
     return branch1(logger, xl, getFormatter(xl), caught);
   }
 
   public void log(TreeLogger logger, long x, Throwable caught) {
-    Long xl = new Long(x);
+    Long xl = Long.valueOf(x);
     log1(logger, xl, getFormatter(xl), caught);
   }
 

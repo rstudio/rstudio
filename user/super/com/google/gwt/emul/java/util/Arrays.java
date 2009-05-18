@@ -1175,7 +1175,7 @@ public class Arrays {
             b.append(deepToString(objArray, tempSet));
           }
         } else if (obj instanceof boolean[]) {
-          b.append(toString((byte[]) obj));
+          b.append(toString((boolean[]) obj));
         } else if (obj instanceof byte[]) {
           b.append(toString((byte[]) obj));
         } else if (obj instanceof char[]) {

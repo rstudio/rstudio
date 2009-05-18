@@ -273,27 +273,34 @@ class ProxyCreator {
     // output.
     OutputStream pathInfo = context.tryCreateResource(logger,
         serviceIntf.getQualifiedSourceName() + ".rpc.log");
-    PrintWriter writer = new PrintWriter(pathInfo);
-    
-    typesSentFromBrowserBuilder.setLogOutputStream(pathInfo);
-    typesSentToBrowserBuilder.setLogOutputStream(pathInfo);
-    
-    writer.write("====================================\n");
-    writer.write("Types potentially sent from browser:\n");
-    writer.write("====================================\n\n");
-    writer.flush();
-    SerializableTypeOracle typesSentFromBrowser
-        = typesSentFromBrowserBuilder.build(logger);
-    
-    writer.write("===================================\n");
-    writer.write("Types potentially sent from server:\n");
-    writer.write("===================================\n\n");
-    writer.flush();
-    SerializableTypeOracle typesSentToBrowser
-        = typesSentToBrowserBuilder.build(logger);
-    
-    if (pathInfo != null) {
-      context.commitResource(logger, pathInfo).setPrivate(true);
+    PrintWriter writer = null;
+    SerializableTypeOracle typesSentFromBrowser;
+    SerializableTypeOracle typesSentToBrowser;    
+    try {
+      writer = new PrintWriter(pathInfo);
+
+      typesSentFromBrowserBuilder.setLogOutputStream(pathInfo);
+      typesSentToBrowserBuilder.setLogOutputStream(pathInfo);
+
+      writer.write("====================================\n");
+      writer.write("Types potentially sent from browser:\n");
+      writer.write("====================================\n\n");
+      writer.flush();
+      typesSentFromBrowser = typesSentFromBrowserBuilder.build(logger);
+
+      writer.write("===================================\n");
+      writer.write("Types potentially sent from server:\n");
+      writer.write("===================================\n\n");
+      writer.flush();
+      typesSentToBrowser = typesSentToBrowserBuilder.build(logger);
+      
+      if (pathInfo != null) {
+        context.commitResource(logger, pathInfo).setPrivate(true);
+      }
+    } finally {
+      if (writer != null) {
+        writer.close();
+      }
     }
 
     TypeSerializerCreator tsc = new TypeSerializerCreator(logger,

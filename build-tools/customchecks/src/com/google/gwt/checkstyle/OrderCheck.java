@@ -41,7 +41,7 @@ public class OrderCheck extends Check {
   /**
    * Encapsulate the state in each class scope in order to handle inner classes.
    */
-  private class ScopeState {
+  private static class ScopeState {
     /**
      * Current state.
      */

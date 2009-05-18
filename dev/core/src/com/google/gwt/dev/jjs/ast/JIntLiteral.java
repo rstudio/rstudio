@@ -58,8 +58,9 @@ public class JIntLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
-    return new Integer(value);
+    return Integer.valueOf(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

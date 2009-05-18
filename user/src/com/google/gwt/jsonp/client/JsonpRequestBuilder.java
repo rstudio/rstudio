@@ -18,7 +18,6 @@ package com.google.gwt.jsonp.client;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-
 /**
  * Class to send cross domain requests to an http server. The server will receive a request
  * including a callback url parameter, which should be used to return the response as following:

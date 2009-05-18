@@ -73,7 +73,7 @@ public class ImageBundleGenerator extends Generator {
     boolean isResourcePresent(String resName);
   }
 
-  private class JMethodOracleImpl implements JMethodOracle {
+  private static class JMethodOracleImpl implements JMethodOracle {
     private final JMethod delegate;
 
     public JMethodOracleImpl(JMethod delegate) {

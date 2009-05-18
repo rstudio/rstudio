@@ -150,7 +150,7 @@ public class CreateEventTest extends GWTTestCase {
    * An event listener that asserts that events are received properly for the
    * img element.
    */
-  private class ImgEventListener implements EventListener {
+  private static class ImgEventListener implements EventListener {
     private boolean imgReceived;
     private final String eventType;
 

@@ -48,9 +48,12 @@ public class RemoteServiceServlet extends HttpServlet implements
    */
   protected static final String STRONG_NAME_HEADER = "X-GWT-Permutation";
 
-  private final ThreadLocal<HttpServletRequest> perThreadRequest = new ThreadLocal<HttpServletRequest>();
+  // ThreadLocal is not serializable, so mark these fields as transient and
+  // recreate them upon deserialization.
+  
+  private transient ThreadLocal<HttpServletRequest> perThreadRequest;
 
-  private final ThreadLocal<HttpServletResponse> perThreadResponse = new ThreadLocal<HttpServletResponse>();
+  private transient ThreadLocal<HttpServletResponse> perThreadResponse;
 
   /**
    * A cache of moduleBaseURL and serialization policy strong name to
@@ -74,11 +77,16 @@ public class RemoteServiceServlet extends HttpServlet implements
   @Override
   public final void doPost(HttpServletRequest request,
       HttpServletResponse response) {
+    // Ensure the thread-local data fields have been initialized
+    
     try {
       // Store the request & response objects in thread-local storage.
       //
-      perThreadRequest.set(request);
-      perThreadResponse.set(response);
+      synchronized (this) {
+        validateThreadLocalData();
+        perThreadRequest.set(request);
+        perThreadResponse.set(response);
+      }
 
       // Read the request fully.
       //
@@ -304,14 +312,17 @@ public class RemoteServiceServlet extends HttpServlet implements
   protected final String getPermutationStrongName() {
     return getThreadLocalRequest().getHeader(STRONG_NAME_HEADER);
   }
-
+  
   /**
    * Gets the <code>HttpServletRequest</code> object for the current call. It is
    * stored thread-locally so that simultaneous invocations can have different
    * request objects.
    */
   protected final HttpServletRequest getThreadLocalRequest() {
-    return perThreadRequest.get();
+    synchronized (this) {
+      validateThreadLocalData();
+      return perThreadRequest.get();
+    }
   }
 
   /**
@@ -320,7 +331,10 @@ public class RemoteServiceServlet extends HttpServlet implements
    * different response objects.
    */
   protected final HttpServletResponse getThreadLocalResponse() {
-    return perThreadResponse.get();
+    synchronized (this) {
+      validateThreadLocalData();
+      return perThreadResponse.get();
+    }
   }
 
   /**
@@ -395,6 +409,22 @@ public class RemoteServiceServlet extends HttpServlet implements
     synchronized (serializationPolicyCache) {
       serializationPolicyCache.put(moduleBaseURL + strongName,
           serializationPolicy);
+    }
+  }
+
+  /**
+   * Initializes the perThreadRequest and perThreadResponse fields if they are
+   * null. This will occur the first time they are accessed after an instance of
+   * this class is constructed or deserialized.  This method should be called
+   * from within a 'synchronized(this) {}' block in order to ensure that
+   * only one thread creates the objects.
+   */
+  private void validateThreadLocalData() {
+    if (perThreadRequest == null) {
+      perThreadRequest = new ThreadLocal<HttpServletRequest>();
+    }
+    if (perThreadResponse == null) {
+      perThreadResponse = new ThreadLocal<HttpServletResponse>();
     }
   }
 

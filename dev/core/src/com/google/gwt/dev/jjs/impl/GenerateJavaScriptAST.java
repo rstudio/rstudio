@@ -1793,7 +1793,7 @@ public class GenerateJavaScriptAST {
     }
   }
 
-  private class SortVisitor extends JVisitor {
+  private static class SortVisitor extends JVisitor {
 
     private final HasNameSort hasNameSort = new HasNameSort();
 

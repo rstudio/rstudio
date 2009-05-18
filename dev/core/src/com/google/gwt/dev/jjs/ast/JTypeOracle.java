@@ -781,10 +781,10 @@ public class JTypeOracle implements Serializable {
       Set<JReferenceType> instantiatedTypes, Set<JMethod> results) {
     Map<JClassType, Set<JMethod>> overrideMap = virtualUpRefMap.get(method);
     if (overrideMap != null) {
-      for (JClassType classType : overrideMap.keySet()) {
+      for (Map.Entry<JClassType, Set<JMethod>> entry : overrideMap.entrySet()) {
+        JClassType classType = entry.getKey();
         if (isInstantiatedType(classType, instantiatedTypes)) {
-          Set<JMethod> set = overrideMap.get(classType);
-          results.addAll(set);
+          results.addAll(entry.getValue());
         }
       }
     }

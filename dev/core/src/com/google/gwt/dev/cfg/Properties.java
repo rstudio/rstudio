@@ -76,7 +76,8 @@ public class Properties implements Iterable<Property> {
    * Count the total number of permutations that this property set supports.
    */
   public int numPermutations() {
-    BindingProperty[] bindingPropsArray = bindingProps.toArray(new BindingProperty[0]);
+    BindingProperty[] bindingPropsArray = bindingProps.toArray(
+        new BindingProperty[bindingProps.size()]);
 
     int count = 1;
 

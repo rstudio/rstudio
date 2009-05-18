@@ -179,6 +179,7 @@ public final class Utility {
     boolean alreadyExisted = dir.exists();
 
     if (create) {
+      // No need to check mkdirs result because we check for dir.exists()
       dir.mkdirs();
     }
 
@@ -257,6 +258,8 @@ public final class Utility {
     if (baseDir == null) {
       baseDir = new File(System.getProperty("java.io.tmpdir"));
     }
+    // No need to check the result of this mkdirs call because
+    // we will detect the subsequent failure
     baseDir.mkdirs();
 
     // Try this a few times due to non-atomic delete+mkdir operations.

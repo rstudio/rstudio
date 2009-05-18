@@ -55,7 +55,7 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public ReturnOrException getProperty(BrowserChannel channel, int refId,
+  public ExceptionOrReturnValue getProperty(BrowserChannel channel, int refId,
       int dispId) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
@@ -74,13 +74,13 @@ public class OophmSessionHandler extends SessionHandler {
       JsValueOOPHM jsval = (JsValueOOPHM) dispObj.getField(dispId);
       Value retVal = serverChannel.convertFromJsValue(localObjects, jsval);
       branch.log(TreeLogger.SPAM, "result is " + retVal, null);
-      return new ReturnOrException(false, retVal);
+      return new ExceptionOrReturnValue(false, retVal);
     } catch (Throwable t) {
       JsValueOOPHM jsval = new JsValueOOPHM();
       JsValueGlue.set(jsval, moduleSpace.getIsolatedClassLoader(),
           t.getClass(), t);
       Value retVal = serverChannel.convertFromJsValue(localObjects, jsval);
-      return new ReturnOrException(true, retVal);
+      return new ExceptionOrReturnValue(true, retVal);
     }
   }
 
@@ -88,7 +88,7 @@ public class OophmSessionHandler extends SessionHandler {
    * Invoke a method on a server object in from client code.
    */
   @Override
-  public ReturnOrException invoke(BrowserChannel channel, Value thisVal,
+  public ExceptionOrReturnValue invoke(BrowserChannel channel, Value thisVal,
       int methodDispatchId, Value[] args) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ObjectsTable localObjects = serverChannel.getJavaObjectsExposedInBrowser();
@@ -150,7 +150,7 @@ public class OophmSessionHandler extends SessionHandler {
           t.getClass(), t);
     }
     Value retVal = serverChannel.convertFromJsValue(localObjects, jsRetVal);
-    return new ReturnOrException(exception, retVal);
+    return new ExceptionOrReturnValue(exception, retVal);
   }
 
   @Override
@@ -180,7 +180,7 @@ public class OophmSessionHandler extends SessionHandler {
   }
 
   @Override
-  public ReturnOrException setProperty(BrowserChannel channel, int refId,
+  public ExceptionOrReturnValue setProperty(BrowserChannel channel, int refId,
       int dispId, Value newValue) {
     BrowserChannelServer serverChannel = (BrowserChannelServer) channel;
     ModuleSpace moduleSpace = moduleMap.get(serverChannel);
@@ -198,13 +198,13 @@ public class OophmSessionHandler extends SessionHandler {
       serverChannel.convertToJsValue(moduleSpace.getIsolatedClassLoader(),
           localObjects, newValue, jsval);
       dispObj.setField(dispId, jsval);
-      return new ReturnOrException(false, newValue);
+      return new ExceptionOrReturnValue(false, newValue);
     } catch (Throwable t) {
       JsValueOOPHM jsval = new JsValueOOPHM();
       JsValueGlue.set(jsval, moduleSpace.getIsolatedClassLoader(),
           t.getClass(), t);
       Value retVal = serverChannel.convertFromJsValue(localObjects, jsval);
-      return new ReturnOrException(true, retVal);
+      return new ExceptionOrReturnValue(true, retVal);
     }
   }
 

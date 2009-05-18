@@ -1083,6 +1083,7 @@ public class CompilerTest extends GWTTestCase {
     switch (i) {
       case 1:
         i = 2;
+        // fallthrough
       case 2:
         break;
       case 3:

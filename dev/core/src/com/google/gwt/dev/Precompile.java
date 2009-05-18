@@ -504,6 +504,7 @@ public class Precompile {
     for (String moduleName : options.getModuleNames()) {
       File compilerWorkDir = options.getCompilerWorkDir(moduleName);
       Util.recursiveDelete(compilerWorkDir, true);
+      // No need to check mkdirs result because an IOException will occur anyway
       compilerWorkDir.mkdirs();
 
       JarOutputStream precompilationJar;

@@ -328,7 +328,7 @@ public class Link {
         precompileOptions = precompilation.getUnifiedAst().getOptions();
       }
 
-      Permutation[] perms = permsList.toArray(new Permutation[0]);
+      Permutation[] perms = permsList.toArray(new Permutation[permsList.size()]);
 
       List<FileBackedObject<PermutationResult>> resultFiles = new ArrayList<FileBackedObject<PermutationResult>>(
           perms.length);

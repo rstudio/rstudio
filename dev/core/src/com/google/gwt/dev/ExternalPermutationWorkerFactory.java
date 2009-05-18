@@ -208,6 +208,11 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
   public static final String JVM_ARGS_PROPERTY = "gwt.jjs.javaArgs";
 
   /**
+   * Random number generator used for keys to worker threads.
+   */
+  private static Random random = new Random();
+
+  /**
    * Launches an external worker and returns the cookie that worker should
    * return via the network connection.
    */
@@ -242,7 +247,7 @@ public class ExternalPermutationWorkerFactory extends PermutationWorkerFactory {
     }
 
     byte[] cookieBytes = new byte[16];
-    (new Random()).nextBytes(cookieBytes);
+    random.nextBytes(cookieBytes);
     String cookie = Util.toHexString(cookieBytes);
 
     // Cook up the classpath, main class, and extra args

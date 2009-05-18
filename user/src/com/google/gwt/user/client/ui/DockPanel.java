@@ -304,15 +304,13 @@ public class DockPanel extends CellPanel implements HasAlignment {
       DockLayoutConstant dir = ((LayoutData) child.getLayoutData()).direction;
 
       // Get a debug id
-      Integer count = dirCount.get(dir);
-      if (count == null) {
-        count = new Integer(1);
-      }
-      String debugID = generateDebugId(dir, count.intValue());
+      Integer countObj = dirCount.get(dir);
+      int count = countObj == null ? 1 : countObj.intValue();
+      String debugID = generateDebugId(dir, count);
       ensureDebugId(DOM.getParent(child.getElement()), baseID, debugID);
 
       // Increment the count
-      dirCount.put(dir, count.intValue() + 1);
+      dirCount.put(dir, count + 1);
     }
   }
 

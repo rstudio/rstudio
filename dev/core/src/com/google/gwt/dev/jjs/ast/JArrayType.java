@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs.ast;
 
-
 /**
  * Instances are shared.
  */

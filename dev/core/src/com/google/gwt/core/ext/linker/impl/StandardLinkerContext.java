@@ -132,19 +132,24 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
    * A faster bulk version of {@link File#mkdirs()} that takes advantage of
    * cached state to avoid a lot of file system access.
    */
-  private static void mkdirs(File dir, Set<String> createdDirs) {
+  private static boolean mkdirs(File dir, Set<String> createdDirs) {
     if (dir == null) {
-      return;
+      return true;
     }
     String path = dir.getPath();
     if (createdDirs.contains(path)) {
-      return;
+      return true;
     }
     if (!dir.exists()) {
-      mkdirs(dir.getParentFile(), createdDirs);
-      dir.mkdir();
+      if (!mkdirs(dir.getParentFile(), createdDirs)) {
+        return false;
+      }
+      if (!dir.mkdir()) {
+        return false;
+      }
     }
     createdDirs.add(path);
+    return true;
   }
 
   /**
@@ -644,17 +649,21 @@ public class StandardLinkerContext extends Linker implements LinkerContext {
       File outFile, Set<String> createdDirs) throws UnableToCompleteException {
     if (!outFile.exists()
         || (outFile.lastModified() <= artifact.getLastModified())) {
-      mkdirs(outFile.getParentFile(), createdDirs);
-      try {
-        FileOutputStream out = new FileOutputStream(outFile);
-        artifact.writeTo(logger, out);
-        out.close();
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Unable to create file '"
-            + outFile.getAbsolutePath() + "'", e);
-        throw new UnableToCompleteException();
+      if (!mkdirs(outFile.getParentFile(), createdDirs)) {
+        logger.log(TreeLogger.ERROR, "Unable to create directory for file '"
+            + outFile.getAbsolutePath() + "'");
+      } else {
+        try {
+          FileOutputStream out = new FileOutputStream(outFile);
+          artifact.writeTo(logger, out);
+          out.close();
+        } catch (IOException e) {
+          logger.log(TreeLogger.ERROR, "Unable to create file '"
+              + outFile.getAbsolutePath() + "'", e);
+          throw new UnableToCompleteException();
+        }
+        outFile.setLastModified(artifact.getLastModified());
       }
-      outFile.setLastModified(artifact.getLastModified());
     }
   }
 

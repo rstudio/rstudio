@@ -21,7 +21,6 @@ import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.JavaSerializable
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClass;
 import com.google.gwt.user.client.rpc.InheritanceTestSetFactory.SerializableClassWithTransientField;
 
-
 /**
  * Async service interface used by the
  * {@link com.google.gwt.user.client.rpc.InheritanceTest InheritanceTest} unit

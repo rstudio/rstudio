@@ -72,15 +72,17 @@ public class RunStyleSelenium extends RunStyleRemote {
     for (int i = 0; i < targets.length; ++i) {
       Matcher matcher = pattern.matcher(targetsIn[i]);
       if (!matcher.matches()) {
-        throw new JUnitFatalLaunchException("Unable to parse Selenium target "
-            + targetsIn[i] + " (expected format is [host]:[port]/[browser])");
+        throw new JUnitFatalLaunchException("Unable to parse Selenium target " + targetsIn[i]
+            + " (expected format is [host]:[port]/[browser])");
       }
-      RCSelenium instance = new RCSelenium(matcher.group(3), matcher.group(1),
-          Integer.parseInt(matcher.group(2)));
+      RCSelenium instance =
+          new RCSelenium(matcher.group(3), matcher.group(1), Integer.parseInt(matcher.group(2)));
       targets[i] = instance;
     }
 
-    return new RunStyleSelenium(shell, targets);
+    RunStyleSelenium runStyle = new RunStyleSelenium(shell, targets);
+    runStyle.start();
+    return runStyle;
   }
 
   private RCSelenium remotes[];
@@ -100,8 +102,7 @@ public class RunStyleSelenium extends RunStyleRemote {
    */
   private final Object wasInterruptedLock = new Object();
 
-  public RunStyleSelenium(final JUnitShell shell, RCSelenium targets[]) {
-
+  protected RunStyleSelenium(final JUnitShell shell, RCSelenium targets[]) {
     super(shell);
     this.remotes = targets;
 
@@ -115,34 +116,16 @@ public class RunStyleSelenium extends RunStyleRemote {
             try {
               remote.getSelenium().stop();
             } catch (SeleniumException se) {
-              shell.getTopLogger().log(TreeLogger.WARN,
-                  "Error stoping selenium session", se);
+              shell.getTopLogger().log(TreeLogger.WARN, "Error stoping selenium session", se);
             }
           }
         }
       }
     });
-
-    // Crank up the keep-alive thread. This will periodically check for failure
-    // of the Selenium session and stop the test if something goes wrong.
-    Thread keepAliveThread = new Thread() {
-      @Override
-      public void run() {
-        do {
-          try {
-            Thread.sleep(1000);
-          } catch (InterruptedException ignored) {
-          }
-        } while (doKeepAlives());
-      }
-    };
-    keepAliveThread.setDaemon(true);
-    keepAliveThread.start();
   }
 
   @Override
-  public synchronized void launchModule(String moduleName)
-      throws UnableToCompleteException {
+  public synchronized void launchModule(String moduleName) throws UnableToCompleteException {
     // Get the localhost address.
     String domain;
     try {
@@ -156,8 +139,7 @@ public class RunStyleSelenium extends RunStyleRemote {
     for (RCSelenium remote : remotes) {
       try {
         shell.getTopLogger().log(TreeLogger.TRACE,
-            "Starting with domain: " + domain 
-            + " Opening URL: " + getMyUrl(moduleName)); 
+            "Starting with domain: " + domain + " Opening URL: " + getMyUrl(moduleName));
         remote.createSelenium(domain);
         remote.getSelenium().start();
         remote.getSelenium().open(getMyUrl(moduleName));
@@ -173,6 +155,27 @@ public class RunStyleSelenium extends RunStyleRemote {
     synchronized (wasInterruptedLock) {
       return wasInterrupted;
     }
+  }
+
+  /**
+   * Create the keep-alive thread.
+   */
+  protected void start() {
+    // This will periodically check for failure of the Selenium session and stop
+    // the test if something goes wrong.
+    Thread keepAliveThread = new Thread() {
+      @Override
+      public void run() {
+        do {
+          try {
+            Thread.sleep(1000);
+          } catch (InterruptedException ignored) {
+          }
+        } while (doKeepAlives());
+      }
+    };
+    keepAliveThread.setDaemon(true);
+    keepAliveThread.start();
   }
 
   private synchronized boolean doKeepAlives() {

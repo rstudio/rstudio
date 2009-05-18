@@ -57,7 +57,7 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static Integer decode(String s) throws NumberFormatException {
-    return new Integer((int) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
+    return Integer.valueOf((int) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**
@@ -216,12 +216,12 @@ public final class Integer extends Number implements Comparable<Integer> {
   }
 
   public static Integer valueOf(String s) throws NumberFormatException {
-    return new Integer(Integer.parseInt(s));
+    return Integer.valueOf(Integer.parseInt(s));
   }
 
   public static Integer valueOf(String s, int radix)
       throws NumberFormatException {
-    return new Integer(Integer.parseInt(s, radix));
+    return Integer.valueOf(Integer.parseInt(s, radix));
   }
 
   private static String toPowerOfTwoString(int value, int shift) {

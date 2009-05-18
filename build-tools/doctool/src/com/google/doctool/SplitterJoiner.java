@@ -185,81 +185,83 @@ public class SplitterJoiner {
   }
 
   private static void split(String[] files) throws IOException {
-    BufferedReader reader = null;
     String prefix = null;
     File inputFile = null;
 
     for (int i = 0; i < files.length; i++) {
+      BufferedReader reader = null;
+      try {
+        // Open the reader.
+        //                
+        String file = files[i];
+        inputFile = new File(file);
+        if (!inputFile.exists()) {
+          System.err.println("Error: Cannot find input file "
+              + inputFile.getPath());
+          return;
+        }
+        reader = new BufferedReader(new FileReader(inputFile));
 
-      // Close the current reader, if any.
-      //
-      if (reader != null) {
-        reader.close();
-      }
-
-      // Open the next reader.
-      //                
-      String file = files[i];
-      inputFile = new File(file);
-      if (!inputFile.exists()) {
-        System.err.println("Error: Cannot find input file "
-            + inputFile.getPath());
-        return;
-      }
-      reader = new BufferedReader(new FileReader(inputFile));
-
-      // Parse the input
-      //
-      File outFile = null;
-      PrintWriter writer = null;
-      String line = reader.readLine();
-      while (line != null) {
-        if (prefix == null) {
-          // Learn the prefix.
-          //
-          prefix = line.trim();
-          if (prefix.length() == 0) {
-            // The first line with anything on it counts as the prefix.
-            // 
-            prefix = null;
-          }
-        } else if (line.startsWith(prefix)) {
-          // Close the current writer.
-          //
-          if (writer != null) {
-            writer.close();
-          }
-
-          // Create the next writer.
-          //
-          String outPath = line.substring(prefix.length()).trim();
-          outFile = new File(outPath);
-          if (!outFile.isAbsolute()) {
-            // Make the created file relative to the input file.
+        // Parse the input
+        //
+        File outFile = null;
+        PrintWriter writer = null;
+        String line = reader.readLine();
+        while (line != null) {
+          if (prefix == null) {
+            // Learn the prefix.
             //
-            File absoluteParentDir = inputFile.getCanonicalFile().getParentFile();
-            outFile = new File(absoluteParentDir, outPath);
-            outFile.getParentFile().mkdirs();
+            prefix = line.trim();
+            if (prefix.length() == 0) {
+              // The first line with anything on it counts as the prefix.
+              // 
+              prefix = null;
+            }
+          } else if (line.startsWith(prefix)) {
+            // Close the current writer.
+            //
+            if (writer != null) {
+              writer.close();
+            }
+
+            // Create the next writer.
+            //
+            String outPath = line.substring(prefix.length()).trim();
+            outFile = new File(outPath);
+            if (!outFile.isAbsolute()) {
+              // Make the created file relative to the input file.
+              //
+              File absoluteParentDir = inputFile.getCanonicalFile().getParentFile();
+              outFile = new File(absoluteParentDir, outPath);
+              // Ignore result since the next line will fail if the directory
+              // doesn't exist.
+              outFile.getParentFile().mkdirs();
+            }
+
+            writer = new PrintWriter(new FileWriter(outFile), true);
+
+            writer.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
+
+          } else if (writer != null) {
+            // Write this line to the current file.
+            //
+            writer.println(line);
+          } else {
+            // Ignored -- haven't yet seen a starting prefix.
+            //
           }
 
-          writer = new PrintWriter(new FileWriter(outFile), true);
-
-          writer.println("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">");
-
-        } else if (writer != null) {
-          // Write this line to the current file.
-          //
-          writer.println(line);
-        } else {
-          // Ignored -- haven't yet seen a starting prefix.
-          //
+          line = reader.readLine();
         }
 
-        line = reader.readLine();
-      }
-
-      if (writer != null) {
-        writer.close();
+        if (writer != null) {
+          writer.close();
+        }
+      } finally {
+        // Close the current reader, if any.
+        if (reader != null) {
+          reader.close();
+        }
       }
     }
   }

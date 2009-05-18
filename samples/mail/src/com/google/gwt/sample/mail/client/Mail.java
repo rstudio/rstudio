@@ -42,7 +42,7 @@ public class Mail implements EntryPoint, ResizeHandler {
   private static final Images images = GWT.create(Images.class);
 
   /**
-   * An aggragate image bundle that pulls together all the images for this
+   * An aggregate image bundle that pulls together all the images for this
    * application into a single bundle.
    */
   public interface Images extends Shortcuts.Images, TopPanel.Images {

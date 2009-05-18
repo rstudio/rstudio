@@ -67,7 +67,7 @@ public class JsonpRequestTest extends GWTTestCase {
   /**
    * Checks that a timeout happens.
    */
-  private class AssertTimeoutException<T> implements AsyncCallback<T> {
+  private class AssertTimeoutExceptionCallback<T> implements AsyncCallback<T> {
     public void onFailure(Throwable throwable) {
       assertTrue(throwable instanceof TimeoutException);
       finishTest();
@@ -165,7 +165,7 @@ public class JsonpRequestTest extends GWTTestCase {
   }
 
   public void testTimeout() {
-    jsonp.requestString(echoTimeout(), new AssertTimeoutException<String>());
+    jsonp.requestString(echoTimeout(), new AssertTimeoutExceptionCallback<String>());
     delayTestFinish(2000);
   }
 

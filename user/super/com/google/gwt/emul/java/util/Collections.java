@@ -358,8 +358,18 @@ public class Collections {
       return sortedMap.comparator();
     }
 
+    @Override
+    public boolean equals(Object o) {
+      return sortedMap.equals(o);
+    }
+
     public K firstKey() {
       return sortedMap.firstKey();
+    }
+
+    @Override
+    public int hashCode() {
+      return sortedMap.hashCode();
     }
 
     public SortedMap<K, V> headMap(K toKey) {
@@ -369,11 +379,11 @@ public class Collections {
     public K lastKey() {
       return sortedMap.lastKey();
     }
-
+    
     public SortedMap<K, V> subMap(K fromKey, K toKey) {
       return new UnmodifiableSortedMap<K, V>(sortedMap.subMap(fromKey, toKey));
     }
-
+    
     public SortedMap<K, V> tailMap(K fromKey) {
       return new UnmodifiableSortedMap<K, V>(sortedMap.tailMap(fromKey));
     }
@@ -392,9 +402,19 @@ public class Collections {
     public Comparator<? super E> comparator() {
       return sortedSet.comparator();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+      return sortedSet.equals(o);
+    }
 
     public E first() {
       return sortedSet.first();
+    }
+    
+    @Override
+    public int hashCode() {
+      return sortedSet.hashCode();
     }
 
     public SortedSet<E> headSet(E toElement) {

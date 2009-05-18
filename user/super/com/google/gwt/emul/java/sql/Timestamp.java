@@ -89,6 +89,7 @@ public class Timestamp extends java.util.Date {
         || (getTime() == ts.getTime() && getNanos() < ts.getNanos());
   }
 
+  @Override
   public int compareTo(java.util.Date o) {
     // JavaDoc says a ClassCastException is correct behavior
     return compareTo((Timestamp) o);
@@ -99,8 +100,10 @@ public class Timestamp extends java.util.Date {
     return delta == 0 ? getNanos() - o.getNanos() : delta;
   }
 
+  @Override
   public boolean equals(Object ts) {
     // Timestamps can't be compared to java.util.Date
+    // This is known to not be symmetric, which follows the JRE.
     return ts instanceof Timestamp ? equals((Timestamp) ts) : false;
   }
 
@@ -112,10 +115,12 @@ public class Timestamp extends java.util.Date {
     return nanos;
   }
 
+  @Override
   public long getTime() {
     return super.getTime();
   }
 
+  @Override
   public int hashCode() {
     // This is correct, per the Javadoc
     return super.hashCode();
@@ -131,11 +136,13 @@ public class Timestamp extends java.util.Date {
     super.setTime((getTime() / 1000) * 1000 + (nanos / 1000000));
   }
 
+  @Override
   public void setTime(long time) {
     super.setTime(time);
     nanos = (((int) (time % 1000)) * 1000000);
   }
 
+  @Override
   public String toString() {
     return String.valueOf(1900 + getYear()) + "-" + padTwo(1 + getMonth())
         + "-" + padTwo(getDate()) + " " + padTwo(getHours()) + ":"

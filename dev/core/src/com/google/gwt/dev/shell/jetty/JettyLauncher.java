@@ -256,7 +256,7 @@ public class JettyLauncher extends ServletContainerLauncher {
    * Also provides special class filtering to isolate the web app from the GWT
    * hosting environment.
    */
-  protected final class WebAppContextWithReload extends WebAppContext {
+  protected static final class WebAppContextWithReload extends WebAppContext {
 
     /**
      * Specialized {@link WebAppClassLoader} that allows outside resources to be

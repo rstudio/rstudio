@@ -903,6 +903,13 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     return node != null && node.isRed;
   }
 
+  /**
+   * Remove a key from the tree, returning whether it was found and its value.
+   * 
+   * @param key key to remove
+   * @param state return state, not null
+   * @return true if the value was found
+   */
   private boolean removeWithState(K key, State<V> state) {
     if (root == null) {
       return false;
@@ -956,10 +963,8 @@ public class TreeMap<K, V> extends AbstractMap<K, V> implements
     }
 
     if (found != null) {
-      if (state != null) {
-        state.found = true;
-        state.value = found.value;
-      }
+      state.found = true;
+      state.value = found.value;
       /**
        * put the "node" values in "found" (the node with key K) and cut "node"
        * out. However, we do not want to corrupt "found" -- issue 3423. So

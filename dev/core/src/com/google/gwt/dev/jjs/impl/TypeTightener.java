@@ -115,9 +115,6 @@ public class TypeTightener {
       } else if (!isStatic && instance.getType() == typeNull
           && x.getField() != program.getNullField()) {
         // Change any dereference of null to use the null field
-        if (!instance.hasSideEffects()) {
-          instance = program.getLiteralNull();
-        }
         ctx.replaceMe(Pruner.transformToNullFieldRef(x, program));
       }
     }

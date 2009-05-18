@@ -282,7 +282,7 @@ public final class VerticalSplitPanel extends SplitPanel {
    * 
    * @return the widget, <code>null</code> if there is not one
    */
-  public final Widget getBottomWidget() {
+  public Widget getBottomWidget() {
     return getWidget(BOTTOM);
   }
 
@@ -291,7 +291,7 @@ public final class VerticalSplitPanel extends SplitPanel {
    * 
    * @return the widget, <code>null</code> if there is not one
    */
-  public final Widget getTopWidget() {
+  public Widget getTopWidget() {
     return getWidget(TOP);
   }
 
@@ -300,7 +300,7 @@ public final class VerticalSplitPanel extends SplitPanel {
    * 
    * @param w the widget
    */
-  public final void setBottomWidget(Widget w) {
+  public void setBottomWidget(Widget w) {
     setWidget(BOTTOM, w);
   }
 
@@ -310,7 +310,7 @@ public final class VerticalSplitPanel extends SplitPanel {
   }
 
   @Override
-  public final void setSplitPosition(String pos) {
+  public void setSplitPosition(String pos) {
     lastSplitPosition = pos;
     final Element topElem = getElement(TOP);
     setHeight(topElem, pos);
@@ -322,7 +322,7 @@ public final class VerticalSplitPanel extends SplitPanel {
    * 
    * @param w the widget
    */
-  public final void setTopWidget(Widget w) {
+  public void setTopWidget(Widget w) {
     setWidget(TOP, w);
   }
 
@@ -365,12 +365,12 @@ public final class VerticalSplitPanel extends SplitPanel {
   }
 
   @Override
-  final void onSplitterResize(int x, int y) {
+  void onSplitterResize(int x, int y) {
     impl.onSplitterResize(initialTopHeight + y - initialThumbPos);
   }
 
   @Override
-  final void onSplitterResizeStarted(int x, int y) {
+  void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = y;
     initialTopHeight = getOffsetHeight(getElement(TOP));
   }

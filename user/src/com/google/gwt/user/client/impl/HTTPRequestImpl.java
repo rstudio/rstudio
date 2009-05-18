@@ -27,6 +27,8 @@ public class HTTPRequestImpl {
   static JavaScriptObject nullFunc;
   
   public HTTPRequestImpl() {
+    // TODO - consider moving this to clinit or creating it on the fly rather
+    // than assigning it to a static
     nullFunc = JavaScriptObject.createFunction();
   }
   

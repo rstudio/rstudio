@@ -55,6 +55,9 @@ public class SourceOrigin implements SourceInfo {
     public int getStartPos() {
       return startPos;
     }
+    
+    // super.equals and hashCode call getStartPos() and getEndPos(),
+    // so there is no need to implement them in this subclass
   }
 
   public static final SourceInfo UNKNOWN = new SourceOrigin("Unknown", 0) {

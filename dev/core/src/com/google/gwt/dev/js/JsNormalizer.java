@@ -40,16 +40,19 @@ public class JsNormalizer {
   /**
    * Resolves any unresolved JsNameRefs.
    */
-  private class JsNormalizing extends JsModVisitor {
+  private static class JsNormalizing extends JsModVisitor {
 
+    @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
       maybeShuffleModifyingBinary(x, ctx);
     }
 
+    @Override
     public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
       maybeShuffleModifyingUnary(x, ctx);
     }
 
+    @Override
     public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
       maybeShuffleModifyingUnary(x, ctx);
     }

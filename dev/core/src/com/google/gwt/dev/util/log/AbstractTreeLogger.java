@@ -122,6 +122,9 @@ public abstract class AbstractTreeLogger extends TreeLogger {
     AbstractTreeLogger childLogger = doBranch();
 
     // Set up the child logger.
+    //
+    // Unsynchronized operations on childLogger are safe since no other
+    // thread could have a reference to it yet.
     childLogger.logLevel = logLevel;
 
     // Take a snapshot of the index that the branched child should have.

@@ -16,7 +16,6 @@
 
 package com.google.gwt.i18n.client.impl.plurals;
 
-
 /**
  * Plural forms for Polish are 1, paucal (few), and n.
  */

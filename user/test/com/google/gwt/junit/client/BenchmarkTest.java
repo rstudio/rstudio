@@ -135,8 +135,8 @@ public class BenchmarkTest extends Benchmark {
    * Tests {@link Setup} and {@link Teardown}.
    * 
    */
-  @Setup("setup")
-  @Teardown("teardown")
+  @Setup("customSetup")
+  @Teardown("customTeardown")
   public void testSetupAndTeardown() {
     assertEquals("setup", stateString);
     stateString = "running";
@@ -165,12 +165,12 @@ public class BenchmarkTest extends Benchmark {
     assertTrue(intTwo >= 10 && intTwo <= 1000 && intTwo % 10 == 0);
   }
 
-  protected void setup() {
+  protected void customSetup() {
     assertNull(stateString);
     stateString = "setup";
   }
 
-  protected void teardown() {
+  protected void customTeardown() {
     assertNotNull(stateString);
     assertTrue(stateString.equals("running") || stateString.equals("setup"));
     stateString = null;

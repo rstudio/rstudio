@@ -20,5 +20,5 @@ package com.google.gwt.user.client.rpc;
  */
 public interface InheritanceTestServiceSubtypeAsync extends
     InheritanceTestServiceAsync {
-  public void foo(AsyncCallback callback);
+  void foo(AsyncCallback callback);
 }

@@ -17,12 +17,13 @@ package com.google.gwt.dev.jjs.impl;
 
 import com.google.gwt.dev.jjs.ast.HasName;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 /**
  * Comparator for <code>HasName</code> instances.
  */
-public class HasNameSort implements Comparator<HasName> {
+public class HasNameSort implements Comparator<HasName>, Serializable {
   public int compare(HasName h1, HasName h2) {
     return h1.getName().compareTo(h2.getName());
   }

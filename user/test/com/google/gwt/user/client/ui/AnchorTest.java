@@ -26,7 +26,7 @@ import com.google.gwt.user.client.DOM;
  * Tests for {@link Anchor}.
  */
 public class AnchorTest extends GWTTestCase {
-  private final class TestClickHandler implements ClickHandler {
+  private static final class TestClickHandler implements ClickHandler {
     private int clicks = 0;
     private Object lastSender;
 
@@ -78,7 +78,7 @@ public class AnchorTest extends GWTTestCase {
   }
 
   @Deprecated
-  private final class TestClickListener implements ClickListener {
+  private static final class TestClickListener implements ClickListener {
     private int clicks = 0;
     private Widget lastSender;
 

@@ -63,6 +63,10 @@ import javax.swing.tree.TreeSelectionModel;
 
 /**
  * Swing widget containing a tree logger.
+ * 
+ * <p>
+ * This class should not be serialized.
+ * </p>
  */
 public class SwingLoggerPanel extends JPanel implements TreeSelectionListener {
 

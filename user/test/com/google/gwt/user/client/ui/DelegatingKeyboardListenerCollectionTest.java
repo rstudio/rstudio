@@ -28,7 +28,7 @@ public class DelegatingKeyboardListenerCollectionTest extends GWTTestCase
    * A {@link Widget} that uses the {@link DelegatingKeyboardListenerCollection}
    * to save its list of keyboard events.
    */
-  public class DelegatingWidget extends Widget {
+  public static class DelegatingWidget extends Widget {
     // The delegating collection of keyboard listeners
     private DelegatingKeyboardListenerCollection keyboardListeners;
 

@@ -41,7 +41,7 @@ import java.util.MissingResourceException;
 /**
  * Example file.
  */
-@ShowcaseRaw( {"ColorConstants.java", "ColorConstants.properties"})
+@ShowcaseRaw({"ColorConstants.java", "ColorConstants.properties"})
 public class CwConstantsWithLookupExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.

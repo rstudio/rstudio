@@ -149,9 +149,9 @@ public final class CompilingClassLoader extends ClassLoader implements
          */
         if (singleJsoImplTypes.contains(canonicalizeClassName(className))) {
           logger.log(TreeLogger.WARN,
-              "Invalid JSNI reference to SingleJsoImpl interface ("
-              + className + "); consider using a trampoline. "
-              + "Expect subsequent failures.", new NoSuchFieldError(
+              "Invalid JSNI reference to SingleJsoImpl interface (" + className
+                  + "); consider using a trampoline. "
+                  + "Expect subsequent failures.", new NoSuchFieldError(
                   jsniMemberRef));
           return -1;
         }
@@ -484,16 +484,26 @@ public final class CompilingClassLoader extends ClassLoader implements
     File dir = new File(CLASS_DUMP_PATH + File.separator
         + packageName.replace('.', File.separatorChar));
     if (!dir.exists()) {
+      // No need to check mkdirs result because an IOException will occur anyway
       dir.mkdirs();
     }
 
     File file = new File(dir, className + ".class");
+    FileOutputStream fileOutput = null;
     try {
-      FileOutputStream fileOutput = new FileOutputStream(file);
+      fileOutput = new FileOutputStream(file);
       fileOutput.write(bytes);
       fileOutput.close();
     } catch (IOException e) {
       e.printStackTrace();
+    } finally {
+      if (fileOutput != null) {
+        try {
+          fileOutput.close();
+        } catch (IOException e) {
+          // oh well, we tried
+        }
+      }
     }
   }
 

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.i18n.rebind.keygen;
 
-
 /**
  * Key generator using the fully-qualified method name.
  */

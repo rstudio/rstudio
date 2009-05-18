@@ -180,8 +180,9 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
     boolean doFinish = false;
 
     // For each, ask the host for every possible deferred binding answer.
-    for (String reqType : requestedTypes.keySet()) {
-      MessageSendSite site = requestedTypes.get(reqType);
+    for (Map.Entry<String, MessageSendSite> entry : requestedTypes.entrySet()) {
+      String reqType = entry.getKey();
+      MessageSendSite site = entry.getValue();
       try {
         String[] resultTypes = rebindPermOracle.getAllPossibleRebindAnswers(
             logger, reqType);
@@ -223,8 +224,9 @@ public class WebModeCompilerFrontEnd extends AbstractCompiler {
     }
 
     // Sanity check all rebind answers.
-    for (String reqType : requestedTypes.keySet()) {
-      MessageSendSite site = requestedTypes.get(reqType);
+    for (Map.Entry<String, MessageSendSite> entry : requestedTypes.entrySet()) {
+      String reqType = entry.getKey();
+      MessageSendSite site = entry.getValue();
       String[] resultTypes = rebindAnswers.get(reqType);
       // Check that each result is instantiable.
       for (String typeName : resultTypes) {

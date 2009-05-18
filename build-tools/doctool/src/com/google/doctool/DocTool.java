@@ -308,7 +308,7 @@ public class DocTool {
         fos.write(buf, 0, i);
       }
       return true;
-    } catch (Exception e) {
+    } catch (IOException e) {
       return false;
     } finally {
       close(fis);
@@ -501,8 +501,7 @@ public class DocTool {
       in = getClass().getClassLoader().getResourceAsStream(filename);
       try {
         if (in == null) {
-          err.println("Cannot find file: " + filename);
-          System.exit(-1); // yuck
+          throw new RuntimeException("Cannot find file: " + filename);
         }
         StringWriter sw = new StringWriter();
         int ch;

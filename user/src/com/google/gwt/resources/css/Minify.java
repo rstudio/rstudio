@@ -39,7 +39,12 @@ public class Minify extends ToolBase {
    * See {@link #printHelp()} for usage.
    */
   public static void main(String[] args) {
-    (new Minify()).exec(args);
+    Minify m = new Minify();
+    if (m.exec(args)) {
+      System.exit(0);
+    } else {
+      System.exit(-1);
+    }
   }
 
   private final PrintWriterTreeLogger logger = new PrintWriterTreeLogger(
@@ -56,7 +61,7 @@ public class Minify extends ToolBase {
     return "Minify a CSS file";
   }
 
-  private void exec(String[] args) {
+  private boolean exec(String[] args) {
     registerHandler(new ArgHandlerExtra() {
 
       @Override
@@ -103,12 +108,12 @@ public class Minify extends ToolBase {
     });
 
     if (!processArgs(args)) {
-      System.exit(-1);
+      return false;
     }
 
     if (source == null) {
       printHelp();
-      System.exit(-1);
+      return false;
     }
 
     try {
@@ -120,6 +125,6 @@ public class Minify extends ToolBase {
       logger.log(TreeLogger.ERROR, "Unable to compile CSS");
     }
 
-    System.exit(0);
+    return true;
   }
 }

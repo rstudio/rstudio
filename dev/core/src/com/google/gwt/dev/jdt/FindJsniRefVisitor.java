@@ -154,6 +154,7 @@ public class FindJsniRefVisitor extends ASTVisitor {
       }
       try {
         reader.reset();
+        // Ignore return value, since we know the index is valid.
         reader.skip(idx);
       } catch (IOException e) {
         throw new InternalCompilerException(e.getMessage(), e);

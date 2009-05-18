@@ -211,8 +211,8 @@ public final class ApiDiffGenerator {
       }
     }
     Collection<ApiChange> prunedCollection = new HashSet<ApiChange>();
-    for (Integer hashCode : apiChangeMap.keySet()) {
-      prunedCollection.addAll(apiChangeMap.get(hashCode));
+    for (Collection<ApiChange> changes : apiChangeMap.values()) {
+      prunedCollection.addAll(changes);
     }
     return prunedCollection;
   }

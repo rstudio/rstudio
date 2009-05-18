@@ -28,12 +28,12 @@ public final class Message2StringInt extends Message2 {
   }
 
   public TreeLogger branch(TreeLogger logger, String s, int x, Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     return branch2(logger, s, xi, getFormatter(s), getFormatter(xi), caught);
   }
 
   public void log(TreeLogger logger, String s, int x, Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     log2(logger, s, xi, getFormatter(s), getFormatter(xi), caught);
   }
 

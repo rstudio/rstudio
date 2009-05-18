@@ -94,6 +94,9 @@ class AnnotationProxyFactory {
 
     @Override
     public boolean equals(Object other) {
+      // This is not actually an asymmetric equals implementation, as this
+      // method gets called for our proxy instance rather than on the handler
+      // itself.
       if (proxy == other) {
         return true;
       }

@@ -73,9 +73,10 @@ public abstract class AbstractResourceOrientedTestBase extends TestCase {
       Map<AbstractResource, PathPrefix> results = new IdentityHashMap<AbstractResource, PathPrefix>();
       Map<AbstractResource, PathPrefix> rs = cpe.findApplicableResources(
           logger, pathPrefixSet);
-      for (AbstractResource r : rs.keySet()) {
+      for (Map.Entry<AbstractResource, PathPrefix> entry : rs.entrySet()) {
+        AbstractResource r = entry.getKey();
         if (r.getPath().indexOf(".svn/") < 0) {
-          results.put(r, rs.get(r));
+          results.put(r, entry.getValue());
         }
       }
       return results;

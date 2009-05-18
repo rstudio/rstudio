@@ -42,7 +42,7 @@ class SwtGeckoGlue {
     Throwable rethrow = null;
     try {
       Object retVal = XPCOMVtblCall.invoke(null, new Object[] {
-          new Integer(1), new Integer(nsISupports)});
+          Integer.valueOf(1), new Integer(nsISupports)});
       return ((Integer) retVal).intValue();
     } catch (IllegalArgumentException e) {
       rethrow = e;
@@ -62,7 +62,7 @@ class SwtGeckoGlue {
     Throwable rethrow = null;
     try {
       Object retVal = XPCOMVtblCall.invoke(null, new Object[] {
-          new Integer(2), new Integer(nsISupports)});
+          Integer.valueOf(2), new Integer(nsISupports)});
       return ((Integer) retVal).intValue();
     } catch (IllegalArgumentException e) {
       rethrow = e;

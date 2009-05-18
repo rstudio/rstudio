@@ -232,9 +232,6 @@ public class JsParser {
       case TokenStream.HOOK:
         return mapConditional(node);
 
-      case TokenStream.NAME:
-        return mapName(node);
-
       case TokenStream.STRING:
         return program.getStringLiteral(sourceInfoStack.peek().makeChild(
             JsParser.class, "JS String literal"), node.getString());
@@ -284,6 +281,7 @@ public class JsParser {
       case TokenStream.SETNAME:
         return mapBinaryOperation(JsBinaryOperator.ASG, node);
 
+      case TokenStream.NAME:
       case TokenStream.BINDNAME:
         return mapName(node);
 

@@ -436,7 +436,8 @@ public class DefaultFiltersTest extends TestCase {
         }
         return scanner.match(path);
       }
-    }, tag != null ? tag : "includes: " + includes + ", excludes: " + excludes);
+    }, tag != null ? tag : "includes: " + Arrays.toString(includes)
+        + ", excludes: " + Arrays.toString(excludes));
   }
 
   private ResourceFilter getFilterWithCatchAll(String includesList[],

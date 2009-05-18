@@ -58,7 +58,6 @@ public class JsArrayNumber extends JavaScriptObject {
     return this.length;
   }-*/;
 
-
   /**
    * Pushes the given number onto the end of the array.
    */

@@ -183,11 +183,10 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
   }
 
   public void setBody(JAbstractMethodBody body) {
-    if (body != null) {
-      body.setMethod(null);
-    }
     this.body = body;
-    body.setMethod(this);
+    if (body != null) {
+      body.setMethod(this);
+    }
   }
 
   public void setFinal() {

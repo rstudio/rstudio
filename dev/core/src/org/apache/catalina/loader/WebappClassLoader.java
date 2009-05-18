@@ -1811,6 +1811,8 @@ public class WebappClassLoader
                                         (".class"))) {
                                     resourceFile = new File
                                         (loaderDir, jarEntry2.getName());
+                                    // No need to check mkdirs result because an
+                                    // IOException will occur anyway
                                     resourceFile.getParentFile().mkdirs();
                                     FileOutputStream os = null;
                                     InputStream is = null;

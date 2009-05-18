@@ -16,7 +16,6 @@
 
 package com.google.gwt.i18n.client.impl.plurals;
 
-
 /**
  * Plural forms for Belarusian are x1 (but not x11), x2-x4 (but not x12-x14), and n.
  */

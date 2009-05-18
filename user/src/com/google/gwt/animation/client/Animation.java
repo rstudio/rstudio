@@ -136,6 +136,10 @@ public abstract class Animation {
     }
 
     // Add to the list of animations
+
+    // We use a static list of animations and a single timer, and create them
+    // only if we are the only active animation.  This is safe since JS is
+    // single-threaded.
     if (animations == null) {
       animations = new ArrayList<Animation>();
       animationTimer = new Timer() {

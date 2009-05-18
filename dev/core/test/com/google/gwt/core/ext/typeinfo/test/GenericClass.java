@@ -58,7 +58,7 @@ public class GenericClass<T extends Serializable> implements Comparable<T>,
   /**
    * Field of an inner class that is enclosed in a parameterized type.
    */
-  GenericClass<Integer>.NonGenericInnerClass nonGenericInnerClassField;
+  transient GenericClass<Integer>.NonGenericInnerClass nonGenericInnerClassField;
 
   /**
    * NOTE: The following is disabled because it violates an assumption in TOB

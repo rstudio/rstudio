@@ -31,11 +31,25 @@ public abstract class Property implements Comparable<Property>, Serializable {
   public int compareTo(Property o) {
     return name.compareTo(o.name);
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof Property)) {
+      return false;
+    }
+    return name.equals(((Property) o).name);
+  }
 
   public String getName() {
     return name;
   }
+  
+  @Override
+  public int hashCode() {
+    return name.hashCode();
+  }
 
+  @Override
   public String toString() {
     return name;
   }

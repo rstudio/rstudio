@@ -49,7 +49,7 @@ public class BrowserWidgetMoz extends BrowserWidget {
           return false;
         }
 
-        Object key = new Integer(scriptObject);
+        Object key = Integer.valueOf(scriptObject);
         // Attach a new ModuleSpace to make it programmable.
         ModuleSpaceHost msh = getHost().createModuleSpaceHost(logger,
             BrowserWidgetMoz.this, moduleName);
@@ -87,7 +87,7 @@ public class BrowserWidgetMoz extends BrowserWidget {
       try {
         Integer key = null;
         if (scriptObject != 0) {
-          key = new Integer(scriptObject);
+          key = Integer.valueOf(scriptObject);
         }
         doUnload(key);
         return true;

@@ -176,8 +176,8 @@ public class ModuleDefSchema extends Schema {
       Property existingProperty = moduleDef.getProperties().find(name.token);
       if (existingProperty == null) {
         // Create the property
-        existingProperty = moduleDef.getProperties().createConfiguration(
-            name.token, isMultiValued);
+        moduleDef.getProperties().createConfiguration(name.token,
+            isMultiValued);
         if (!propertyDefinitions.containsKey(name.token)) {
           propertyDefinitions.put(name.token, moduleName);
         }
@@ -739,7 +739,7 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private final class IncludeExcludeSchema extends Schema {
+  private static final class IncludeExcludeSchema extends Schema {
 
     protected final String __exclude_1_name = null;
 
@@ -951,7 +951,7 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private class PropertyProviderBodySchema extends Schema {
+  private static class PropertyProviderBodySchema extends Schema {
 
     private StringBuffer script;
 
@@ -1022,7 +1022,7 @@ public class ModuleDefSchema extends Schema {
     }
   }
 
-  private class ScriptReadyBodySchema extends Schema {
+  private static class ScriptReadyBodySchema extends Schema {
 
     private StringBuffer script;
 

@@ -74,6 +74,7 @@ import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 import com.google.gwt.user.rebind.SourceWriter;
 import com.google.gwt.user.rebind.StringSourceWriter;
 
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
@@ -258,7 +259,8 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
     }
   }
 
-  static class JClassOrderComparator implements Comparator<JClassType> {
+  static class JClassOrderComparator implements Comparator<JClassType>,
+      Serializable {
     public int compare(JClassType o1, JClassType o2) {
       return o1.getQualifiedSourceName().compareTo(o2.getQualifiedSourceName());
     }
@@ -1185,12 +1187,12 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       for (Class<? extends CssResource> clazz : imp.value()) {
         JClassType importType = context.getGeneratorContext().getTypeOracle().findType(
             clazz.getName().replace('$', '.'));
+        assert importType != null;
         String prefix = importType.getSimpleSourceName();
         ImportedWithPrefix exp = importType.getAnnotation(ImportedWithPrefix.class);
         if (exp != null) {
           prefix = exp.value();
         }
-        assert importType != null;
 
         if (replacementsWithPrefix.put(prefix + "-",
             computeReplacementsForType(importType)) != null) {

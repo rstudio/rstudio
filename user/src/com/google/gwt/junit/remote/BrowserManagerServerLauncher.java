@@ -110,7 +110,7 @@ class BrowserManagerServerLauncher extends ToolBase {
     }
   }
 
-  private class BMSEntry {
+  private static class BMSEntry {
     final String browserPath;
     final String registrationKey;
 

@@ -117,7 +117,6 @@ public class GWTShell extends SwtHostedModeBase {
 
     @Override
     public File getWorkDir() {
-      File workdir = new File(getOutDir(), ".gwt-tmp");
       return new File(getOutDir(), ".gwt-tmp");
     }
 

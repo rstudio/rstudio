@@ -32,14 +32,12 @@ public class IntRange implements Iterable<Integer> {
 
     Operator operator;
 
-    int start;
-
     int step;
 
     int value;
 
     IntRangeIterator(IntRange r) {
-      this.value = this.start = r.start;
+      this.value = r.start;
       this.end = r.end;
       this.operator = r.operator;
       if (operator == null) {

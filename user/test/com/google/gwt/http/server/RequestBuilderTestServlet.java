@@ -127,7 +127,7 @@ public class RequestBuilderTestServlet extends HttpServlet {
       throws IOException {
     BufferedReader reader = request.getReader();
     String content = reader.readLine();
-    if (content.equals("<html><body>Put Me</body></html>")) {
+    if (content != null && content.equals("<html><body>Put Me</body></html>")) {
       response.getWriter().print(RequestBuilderTest.SERVLET_PUT_RESPONSE);
       response.setStatus(HttpServletResponse.SC_OK);
     } else {

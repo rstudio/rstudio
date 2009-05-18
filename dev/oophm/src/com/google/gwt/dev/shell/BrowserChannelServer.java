@@ -24,7 +24,8 @@ import java.net.Socket;
 /**
  * 
  */
-public class BrowserChannelServer extends BrowserChannel implements Runnable {
+public final class BrowserChannelServer extends BrowserChannel
+    implements Runnable {
 
   public static final String JSO_CLASS = "com.google.gwt.core.client.JavaScriptObject";
 

@@ -56,8 +56,8 @@ public class SimpleRPC implements EntryPoint {
 
     // Should print a table of key value pairs.
     List<Integer> indexes = new ArrayList<Integer>();
-    indexes.add(new Integer(0));
-    indexes.add(new Integer(2));
+    indexes.add(Integer.valueOf(0));
+    indexes.add(Integer.valueOf(2));
     simpleRPCService.getMultipleStrings(indexes, getMultipleStringsCallback);
   }
 

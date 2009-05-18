@@ -38,13 +38,15 @@ public class JAnnotationType extends JRealClassType {
   @Override
   public JAnnotationMethod[] getMethods() {
     JMethod[] methodArray = super.getMethods();
-    return Arrays.asList(methodArray).toArray(new JAnnotationMethod[0]);
+    return Arrays.asList(methodArray).toArray(
+        new JAnnotationMethod[methodArray.length]);
   }
 
   @Override
   public JAnnotationMethod[] getOverridableMethods() {
     JMethod[] methodArray = super.getOverridableMethods();
-    return Arrays.asList(methodArray).toArray(new JAnnotationMethod[0]);
+    return Arrays.asList(methodArray).toArray(
+        new JAnnotationMethod[methodArray.length]);
   }
 
   @Override

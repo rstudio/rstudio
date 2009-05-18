@@ -46,7 +46,7 @@ public class Node extends JavaScriptObject {
    */
   public static Node as(JavaScriptObject o) {
     assert is(o);
-    return (Node)o;
+    return (Node) o;
   }
 
   /**

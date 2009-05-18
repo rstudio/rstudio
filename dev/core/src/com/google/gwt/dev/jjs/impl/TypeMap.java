@@ -106,8 +106,6 @@ public class TypeMap {
       BaseTypeBinding baseTypeBinding = (BaseTypeBinding) binding;
       // see org.eclipse.jdt.internal.compiler.lookup.TypeIds constants
       switch (baseTypeBinding.id) {
-        case TypeIds.T_undefined:
-          return null;
         case TypeIds.T_JavaLangObject:
           // here for consistency, should already be cached
           return program.getTypeJavaLangObject();
@@ -134,6 +132,7 @@ public class TypeMap {
           return program.getTypeJavaLangString();
         case TypeIds.T_null:
           return program.getTypeNull();
+        case TypeIds.T_undefined:
         default:
           return null;
       }

@@ -43,7 +43,7 @@ import java.util.Map.Entry;
  */
 public class CompilationStateTest extends TestCase {
 
-  private class GeneratedSourceFileCompilationUnit extends
+  private static class GeneratedSourceFileCompilationUnit extends
       SourceFileCompilationUnit implements Generated {
 
     private final boolean modifySource;

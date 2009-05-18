@@ -279,7 +279,7 @@ public class CompilePerms {
         subPermsList.add(precompilation.getPermutation(perm));
       }
     }
-    return subPermsList.toArray(new Permutation[0]);
+    return subPermsList.toArray(new Permutation[subPermsList.size()]);
   }
 
   private final CompilePermsOptionsImpl options;

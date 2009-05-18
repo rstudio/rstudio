@@ -53,6 +53,7 @@ public class FileResourceTest extends TestCase {
      * Touch the file at more than one second to ensure there's a noticeable
      * difference on every platform.
      */
+    // Ignore failure of setLastModified 
     f.setLastModified(f.lastModified() + 1500);
 
     // Should be stale now.

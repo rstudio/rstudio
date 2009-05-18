@@ -33,7 +33,7 @@ public final class Short extends Number implements Comparable<Short> {
   }
 
   public static Short decode(String s) throws NumberFormatException {
-    return new Short((short) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
+    return Short.valueOf((short) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**
@@ -73,11 +73,11 @@ public final class Short extends Number implements Comparable<Short> {
   }
 
   public static Short valueOf(String s) throws NumberFormatException {
-    return new Short(Short.parseShort(s));
+    return Short.valueOf(Short.parseShort(s));
   }
 
   public static Short valueOf(String s, int radix) throws NumberFormatException {
-    return new Short(Short.parseShort(s, radix));
+    return Short.valueOf(Short.parseShort(s, radix));
   }
 
   private final transient short value;

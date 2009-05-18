@@ -233,21 +233,20 @@ public class JClassTypeTest extends TestCase {
 
     boolean wasFound = false;
 
-    JClassType expectedType = oracle.getType(expectedTypeName);
-    JClassType searchType = oracle.getType(searchTypeName);
     JType[] paramTypes = new JType[paramTypeNames.length];
     for (int i = 0; i < paramTypeNames.length; i++) {
       String paramTypeName = paramTypeNames[i];
       paramTypes[i] = oracle.parse(paramTypeName);
     }
 
+    JClassType expectedType = oracle.getType(expectedTypeName);
+    JClassType searchType = oracle.getType(searchTypeName);
     JMethod[] leafMethods = searchType.getOverridableMethods();
     for (int i = 0; i < leafMethods.length; i++) {
       JMethod method = leafMethods[i];
       if (method.getName().equals(methodName)) {
         if (method.hasParamTypes(paramTypes)) {
-          String typeName = method.getEnclosingType().getQualifiedSourceName();
-          assertEquals(expectedTypeName, typeName);
+          assertEquals(expectedType, method.getEnclosingType());
           wasFound = true;
           break;
         }

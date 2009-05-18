@@ -58,8 +58,9 @@ public class JLongLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
-    return new Long(value);
+    return Long.valueOf(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

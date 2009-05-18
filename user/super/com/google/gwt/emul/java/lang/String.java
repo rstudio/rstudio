@@ -141,6 +141,7 @@ public final class String implements Comparable<String>, CharSequence,
         hashCode += str.charAt(i);
       }
       // force to 32-bits
+      // TODO: make a JSNI call in case JDT gets smart about removing this
       hashCode |= 0;
       return hashCode;
     }

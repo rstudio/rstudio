@@ -16,7 +16,6 @@
 
 package com.google.gwt.i18n.client.impl.plurals;
 
-
 /**
  * Plural forms for Papiamento are 1 and n, with 0 treated as plural.
  */

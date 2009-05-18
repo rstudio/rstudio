@@ -85,7 +85,6 @@ class BlacklistTypeFilter implements TypeFilter {
     return "BlacklistTypeFilter";
   }
   
-
   public boolean isAllowed(JClassType type) {
     String name = getBaseTypeName(type);
     // For types not handled by getBaseTypeName just return true.

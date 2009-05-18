@@ -547,12 +547,12 @@ public final class HorizontalSplitPanel extends SplitPanel {
   }
 
   @Override
-  final void onSplitterResize(int x, int y) {
+  void onSplitterResize(int x, int y) {
     impl.onSplitResize(initialLeftWidth + x - initialThumbPos);
   }
 
   @Override
-  final void onSplitterResizeStarted(int x, int y) {
+  void onSplitterResizeStarted(int x, int y) {
     initialThumbPos = x;
     initialLeftWidth = getOffsetWidth(getElement(LEFT));
   }

@@ -55,7 +55,7 @@ public abstract class AbstractImagePrototype {
    */
   public static class ImagePrototypeElement extends Element {
     protected ImagePrototypeElement() {
-    };
+    }
   }
 
   /**

@@ -15,7 +15,6 @@
  */
 package com.google.gwt.event.shared;
 
-
 /**
  * An object that implements this interface has a collection of event handlers
  * associated with it.

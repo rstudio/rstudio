@@ -15,7 +15,6 @@
  */
 package com.google.gwt.i18n.rebind.keygen;
 
-
 /**
  * Key generator using just the method name as the lookup key. Note: this is
  * prone to collisions if multiple Messages classes are aggregated for

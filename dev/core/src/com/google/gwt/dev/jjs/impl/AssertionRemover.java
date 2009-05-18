@@ -30,8 +30,9 @@ public class AssertionRemover {
   /**
    * Removes all asserts.
    */
-  private class AssertRemoveVisitor extends JModVisitor {
+  private static class AssertRemoveVisitor extends JModVisitor {
 
+    @Override
     public void endVisit(JAssertStatement x, Context ctx) {
       removeMe(x, ctx);
     }

@@ -54,8 +54,6 @@ public class CookieTest extends GWTTestCase {
     assertEquals(Cookies.getCookie("notpresent"), null);
   }
   
-  
-  
   /*
    * Test that the cookie will expire correctly after a set amount of time,
    * but does not expire before that time. 

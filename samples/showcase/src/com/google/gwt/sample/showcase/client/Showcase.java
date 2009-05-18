@@ -148,7 +148,7 @@ public class Showcase implements EntryPoint {
   /**
    * The current style theme.
    */
-  public static String CUR_THEME = ShowcaseConstants.STYLE_THEMES[0];
+  static String CUR_THEME = ShowcaseConstants.STYLE_THEMES[0];
 
   /**
    * Get the URL of the page, without an hash of query string.

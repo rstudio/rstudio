@@ -31,13 +31,13 @@ public final class Message3IntMethodString extends Message3 {
 
   public TreeLogger branch(TreeLogger logger, int x, Method m, String s,
       Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     return branch3(logger, xi, m, s, getFormatter(xi), getFormatter(m),
         getFormatter(s), caught);
   }
 
   public void log(TreeLogger logger, int x, Method m, String s, Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     log3(logger, xi, m, s, getFormatter(xi), getFormatter(m), getFormatter(s),
         caught);
   }

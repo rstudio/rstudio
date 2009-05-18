@@ -240,7 +240,7 @@ public class ModuleDef implements PublicOracle {
     return name;
   }
 
-  public CompilationState getCompilationState(TreeLogger logger)
+  public synchronized CompilationState getCompilationState(TreeLogger logger)
       throws UnableToCompleteException {
     if (lazyCompilationState == null) {
       lazyCompilationState = new CompilationState(logger, lazySourceOracle);
@@ -355,7 +355,7 @@ public class ModuleDef implements PublicOracle {
    * Override the module's apparent name. Setting this value to
    * <code>null<code> will disable the name override.
    */
-  public void setNameOverride(String nameOverride) {
+  public synchronized void setNameOverride(String nameOverride) {
     this.nameOverride = nameOverride;
   }
 
@@ -365,8 +365,8 @@ public class ModuleDef implements PublicOracle {
    * 
    * NOTE: this method is for testing only.
    * 
-   * @param partialPath
-   * @return
+   * @param partialPath the partial path of the source file
+   * @return the resource for the requested source file
    */
   synchronized Resource findSourceFile(String partialPath) {
     return lazySourceOracle.getResourceMap().get(partialPath);

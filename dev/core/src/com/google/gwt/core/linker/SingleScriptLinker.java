@@ -95,7 +95,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
     // Find the single CompilationResult
     Set<CompilationResult> results = artifacts.find(CompilationResult.class);
     if (results.size() != 1) {
-      logger = logger.branch(TreeLogger.ERROR,
+      logger.log(TreeLogger.ERROR,
           "The module must have exactly one distinct"
               + " permutation when using the " + getDescription() + " Linker.",
           null);
@@ -108,7 +108,7 @@ public class SingleScriptLinker extends SelectionScriptLinker {
 
     String[] js = result.getJavaScript();
     if (js.length != 1) {
-      logger = logger.branch(TreeLogger.ERROR,
+      logger.log(TreeLogger.ERROR,
           "The module must not have multiple fragments when using the "
               + getDescription() + " Linker.", null);
       throw new UnableToCompleteException();

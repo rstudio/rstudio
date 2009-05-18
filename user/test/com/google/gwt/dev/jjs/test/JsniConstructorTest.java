@@ -67,7 +67,7 @@ public class JsniConstructorTest extends GWTTestCase {
     }
 
     public String toString() {
-      return null;
+      return "";
     }
   }
 

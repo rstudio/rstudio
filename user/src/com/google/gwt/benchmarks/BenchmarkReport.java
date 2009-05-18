@@ -142,7 +142,7 @@ public class BenchmarkReport {
   /**
    * Parses .java source files to get source code for methods.
    */
-  private class Parser {
+  private static class Parser {
 
     /**
      * Maps classes to the contents of their source files.
@@ -171,7 +171,8 @@ public class BenchmarkReport {
         if (sourceContents == null) {
           classSources.put(clazz, null);
           String msg = "An unknown I/O exception occured while trying to read "
-              + sourceFile.getAbsolutePath();
+              + (sourceFile == null ? "class " + clazz + " (not found)" :
+                sourceFile.getAbsolutePath());
           logger.log(TreeLogger.WARN, msg, null);
         } else {
           classSources.put(clazz, new String(sourceContents));

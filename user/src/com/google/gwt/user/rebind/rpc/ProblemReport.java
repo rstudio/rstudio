@@ -48,7 +48,7 @@ public class ProblemReport {
    * An individual report, which may require multiple entries (expressed as
    * logs under a branchpoint), but relates to an individual issue.
    */
-  public class Problem {
+  public static class Problem {
     private String message;
     private List<String> childMessages;
 
@@ -253,8 +253,8 @@ public class ProblemReport {
    */
   private void doReport(TreeLogger logger, Type level,
       Map<JClassType, List<Problem>> problems) {
-    for (JClassType type : problems.keySet()) {
-      for (Problem problem : problems.get(type)) {
+    for (List<Problem> problemList : problems.values()) {
+      for (Problem problem : problemList) {
         if (problem.hasSubMessages()) {
           TreeLogger sublogger = logger.branch(level, problem.getPrimaryMessage());
           for (String sub : problem.getSubMessages()) {

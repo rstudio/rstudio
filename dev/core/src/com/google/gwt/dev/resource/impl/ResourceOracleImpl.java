@@ -24,6 +24,7 @@ import com.google.gwt.dev.util.msg.Message1String;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -142,6 +143,21 @@ public class ResourceOracleImpl implements ResourceOracle {
       // Compare priorities of the path prefixes, high number == high priority.
       return this.pathPrefix.getPriority() - other.pathPrefix.getPriority();
     }
+    
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof ResourceData)) {
+        return false;
+      }
+      ResourceData other = (ResourceData) o;
+      return this.pathPrefix.getPriority() == other.pathPrefix.getPriority()
+          && this.resource.wasRerooted() == other.resource.wasRerooted();
+    }
+    
+    @Override
+    public int hashCode() {
+      return (pathPrefix.getPriority() << 1) + (resource.wasRerooted() ? 1 : 0);
+    }
 
     @Override
     public String toString() {
@@ -185,16 +201,26 @@ public class ResourceOracleImpl implements ResourceOracle {
 
   private static void addAllClassPathEntries(TreeLogger logger,
       ClassLoader classLoader, List<ClassPathEntry> classPath) {
-    Set<URL> seenEntries = new HashSet<URL>();
+    // URL is expensive in collections, so we use URI instead
+    // See: http://michaelscharf.blogspot.com/2006/11/javaneturlequals-and-hashcode-make.html
+    Set<URI> seenEntries = new HashSet<URI>();
     for (; classLoader != null; classLoader = classLoader.getParent()) {
       if (classLoader instanceof URLClassLoader) {
         URLClassLoader urlClassLoader = (URLClassLoader) classLoader;
         URL[] urls = urlClassLoader.getURLs();
         for (URL url : urls) {
-          if (seenEntries.contains(url)) {
+          URI uri;
+          try {
+            uri = url.toURI();
+          } catch (URISyntaxException e) {
+            logger.log(TreeLogger.WARN, "Error processing classpath URL '"
+                + url + "'", e);
             continue;
           }
-          seenEntries.add(url);
+          if (seenEntries.contains(uri)) {
+            continue;
+          }
+          seenEntries.add(uri);
           Throwable caught;
           try {
             ClassPathEntry entry = createEntryForUrl(logger, url);
@@ -346,8 +372,9 @@ public class ResourceOracleImpl implements ResourceOracle {
      * no changes.
      */
     boolean didChange = internalMap.size() != newInternalMap.size();
-    for (String resourcePath : newInternalMap.keySet()) {
-      ResourceData newData = newInternalMap.get(resourcePath);
+    for (Map.Entry<String, ResourceData> entry : newInternalMap.entrySet()) {
+      String resourcePath = entry.getKey();
+      ResourceData newData = entry.getValue();
       ResourceData oldData = internalMap.get(resourcePath);
       if (shouldUseNewResource(logger, oldData, newData)) {
         didChange = true;

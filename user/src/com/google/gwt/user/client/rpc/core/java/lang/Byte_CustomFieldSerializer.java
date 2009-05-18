@@ -31,7 +31,7 @@ public final class Byte_CustomFieldSerializer {
 
   public static Byte instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
-    return new Byte(streamReader.readByte());
+    return Byte.valueOf(streamReader.readByte());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,

@@ -75,7 +75,8 @@ public abstract class SelectionScriptLinker extends AbstractLinker {
 
     // If it can be parsed as a URL, then it's probably absolute.
     try {
-      URL testUrl = new URL(src);
+      // Just check to see if it can be parsed, no need to store the result.
+      new URL(src);
 
       // Let's guess that it is absolute (thus, not relative).
       return false;

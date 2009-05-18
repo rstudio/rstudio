@@ -61,6 +61,11 @@ import java.util.logging.Logger;
  * be adapted for that purpose one day.)
  * </p>
  * 
+ * <p>
+ * This class is not actually serializable as-is, because timer is not
+ * serializable.
+ * </p>
+ * 
  * see http://bugs.sun.com/bugdatabase/view_bug.do;:YfiG?bug_id=4062587
  */
 public class BrowserManagerServer extends UnicastRemoteObject implements
@@ -74,7 +79,7 @@ public class BrowserManagerServer extends UnicastRemoteObject implements
   /**
    * Entry in the launchCommandQueue to use when tasks are serialized.
    */
-  private class LaunchCommand {
+  private static class LaunchCommand {
     long keepAliveMsecs;
     int token;
     String url;

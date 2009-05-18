@@ -57,8 +57,9 @@ public class JCharLiteral extends JValueLiteral {
     return value;
   }
 
+  @Override
   public Object getValueObj() {
-    return new Character(value);
+    return Character.valueOf(value);
   }
 
   public void traverse(JVisitor visitor, Context ctx) {

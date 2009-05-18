@@ -51,7 +51,7 @@ public class DiskCache {
         try {
           DiskCache diskCache = ref.get();
           if (diskCache != null) {
-            diskCache.finalize();
+            diskCache.close();
           }
         } catch (Throwable e) {
         }
@@ -193,6 +193,10 @@ public class DiskCache {
 
   @Override
   protected synchronized void finalize() throws Throwable {
+    close();
+  }
+
+  private void close() throws Throwable {
     if (file != null) {
       file.setLength(0);
       file.close();

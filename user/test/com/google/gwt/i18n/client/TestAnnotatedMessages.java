@@ -80,12 +80,12 @@ public interface TestAnnotatedMessages extends Messages {
   String getTimeDate(Date value);
 
   @DefaultMessage("{0} widgets")
-  @PluralText( {"one", "A widget"})
+  @PluralText({"one", "A widget"})
   String pluralWidgetsOther(@PluralCount
   int count);
 
   @DefaultMessage("{1} {0}")
-  @PluralText( {"one", "A {0}"})
+  @PluralText({"one", "A {0}"})
   String twoParamPlural(String name, @PluralCount
   int count);
 }

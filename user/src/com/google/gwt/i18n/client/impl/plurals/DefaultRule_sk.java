@@ -16,7 +16,6 @@
 
 package com.google.gwt.i18n.client.impl.plurals;
 
-
 /**
  * Plural forms for Slovak are 1, 2-4, and n.
  */

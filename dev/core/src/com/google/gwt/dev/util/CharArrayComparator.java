@@ -15,12 +15,13 @@
  */
 package com.google.gwt.dev.util;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 /**
  * Performs a case-sensitive comparison of char arrays.
  */
-public class CharArrayComparator implements Comparator<char[]> {
+public class CharArrayComparator implements Comparator<char[]>, Serializable {
 
   public static final CharArrayComparator INSTANCE = new CharArrayComparator();
 

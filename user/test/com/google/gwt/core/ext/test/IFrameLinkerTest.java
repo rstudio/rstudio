@@ -15,7 +15,6 @@
  */
 package com.google.gwt.core.ext.test;
 
-
 /**
  * Tests the iframe-based linker.
  */

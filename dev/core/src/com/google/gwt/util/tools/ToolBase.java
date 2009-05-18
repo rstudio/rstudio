@@ -128,11 +128,7 @@ public abstract class ToolBase {
         System.err.print(tag);
         String[] tagArgs = handler.getTagArgs();
         for (String tagArg : tagArgs) {
-          if (handler.isRequired()) {
-            System.err.print(" " + tagArg);
-          } else {
-            System.err.print(" " + tagArg);
-          }
+          System.err.print(" " + tagArg);
         }
         System.err.print(handler.isRequired() ? "" : "]");
       }

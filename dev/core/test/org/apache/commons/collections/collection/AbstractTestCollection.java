@@ -1108,7 +1108,7 @@ public abstract class AbstractTestCollection extends AbstractTestObject {
 
         resetFull();
         try {
-            array = collection.toArray(new Void[0]);
+            array = collection.toArray(new Void[collection.size()]);
             fail("toArray(new Void[0]) should raise ArrayStore");
         } catch (ArrayStoreException e) {
             // expected
@@ -1123,7 +1123,7 @@ public abstract class AbstractTestCollection extends AbstractTestObject {
         }
         verify();
         
-        array = collection.toArray(new Object[0]);
+        array = collection.toArray(new Object[collection.size()]);
         a = collection.toArray();
         assertEquals("toArrays should be equal", 
                      Arrays.asList(array), Arrays.asList(a));

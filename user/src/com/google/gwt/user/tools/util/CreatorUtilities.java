@@ -22,6 +22,8 @@ import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -140,9 +142,14 @@ public class CreatorUtilities {
      * that the current class loader will contain the same gwt.xml module def
      * files.
      */
-    URL urlArray[] = urlList.toArray(new URL[urlList.size()]);
-    URLClassLoader classLoader = new URLClassLoader(urlArray,
-        CreatorUtilities.class.getClassLoader());
+    final URL urlArray[] = urlList.toArray(new URL[urlList.size()]);
+    URLClassLoader classLoader = AccessController.doPrivileged(
+        new PrivilegedAction<URLClassLoader>() {
+      public URLClassLoader run() {
+        return new URLClassLoader(urlArray,
+            CreatorUtilities.class.getClassLoader());
+      }
+    });
     if (moduleList != null) {
       for (String module : moduleList) {
         String modulePath = module.replace(".", "/")

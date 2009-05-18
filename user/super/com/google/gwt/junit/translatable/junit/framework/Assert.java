@@ -60,11 +60,11 @@ public class Assert {
   }
 
   public static void assertEquals(String str, byte obj1, byte obj2) {
-    assertEquals(str, new Byte(obj1), new Byte(obj2));
+    assertEquals(str, Byte.valueOf(obj1), Byte.valueOf(obj2));
   }
 
   public static void assertEquals(String str, char obj1, char obj2) {
-    assertEquals(str, new Character(obj1), new Character(obj2));
+    assertEquals(str, Character.valueOf(obj1), Character.valueOf(obj2));
   }
 
   public static void assertEquals(String str, double obj1, double obj2,
@@ -112,7 +112,7 @@ public class Assert {
   }
 
   public static void assertEquals(String str, short obj1, short obj2) {
-    assertEquals(str, new Short(obj1), new Short(obj2));
+    assertEquals(str, Short.valueOf(obj1), Short.valueOf(obj2));
   }
 
   public static void assertEquals(String obj1, String obj2) {

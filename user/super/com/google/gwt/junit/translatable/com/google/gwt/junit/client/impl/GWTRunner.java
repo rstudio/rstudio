@@ -101,6 +101,8 @@ public abstract class GWTRunner implements EntryPoint {
    */
   private boolean serverless = false;
 
+  // TODO(FINDBUGS): can this be a private constructor to avoid multiple
+  // instances?
   public GWTRunner() {
     sInstance = this;
 

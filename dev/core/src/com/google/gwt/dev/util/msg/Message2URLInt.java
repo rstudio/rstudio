@@ -30,12 +30,12 @@ public final class Message2URLInt extends Message2 {
   }
 
   public TreeLogger branch(TreeLogger logger, URL u, int x, Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     return branch2(logger, u, xi, getFormatter(u), getFormatter(xi), caught);
   }
 
   public void log(TreeLogger logger, URL u, int x, Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     log2(logger, u, xi, getFormatter(u), getFormatter(xi), caught);
   }
 }

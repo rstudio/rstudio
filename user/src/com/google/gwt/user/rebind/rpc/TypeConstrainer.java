@@ -207,12 +207,13 @@ public class TypeConstrainer {
           constraints);
     }
 
-    assert (type1Generic == null);
-    assert (type2Generic == null);
-    assert (type1Wild == null);
-    assert (type2Wild == null);
-    assert (type1Raw == null);
-    assert (type2Raw == null);
+    // The following assertions are known to be true, given the tests above.
+//    assert (type1Generic == null);
+//    assert (type2Generic == null);
+//    assert (type1Wild == null);
+//    assert (type2Wild == null);
+//    assert (type1Raw == null);
+//    assert (type2Raw == null);
 
     if (type1 == type2) {
       return true;

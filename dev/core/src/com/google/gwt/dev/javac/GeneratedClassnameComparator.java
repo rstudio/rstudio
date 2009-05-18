@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.javac;
 
+import java.io.Serializable;
 import java.util.Comparator;
 
 /**
@@ -27,7 +28,7 @@ import java.util.Comparator;
  * <li> Foo$1 < Foo$2 < Foo$1$1 < Foo$1$2 < Foo$2$1 < Foo$2$2 < Foo$2$Baz
  * </pre>
  */
-class GeneratedClassnameComparator implements Comparator<String> {
+class GeneratedClassnameComparator implements Comparator<String>, Serializable {
 
   public int compare(String arg0, String arg1) {
     String pattern = "\\$";

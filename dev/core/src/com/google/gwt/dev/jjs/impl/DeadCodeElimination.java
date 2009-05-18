@@ -1627,6 +1627,9 @@ public class DeadCodeElimination {
         } else if (result instanceof Integer) {
           ctx.replaceMe(program.getLiteralInt(((Integer) result).intValue()));
         }
+      } catch (RuntimeException e) {
+        // Don't eat RuntimeExceptions
+        throw e;
       } catch (Exception e) {
         // If the call threw an exception, just don't optimize
       }
@@ -1697,7 +1700,7 @@ public class DeadCodeElimination {
         return Boolean.valueOf(((JBooleanLiteral) maybeLit).getValue());
       }
       if (type == char.class && maybeLit instanceof JCharLiteral) {
-        return new Character(((JCharLiteral) maybeLit).getValue());
+        return Character.valueOf(((JCharLiteral) maybeLit).getValue());
       }
       if (type == double.class && maybeLit instanceof JDoubleLiteral) {
         return new Double(((JDoubleLiteral) maybeLit).getValue());
@@ -1706,15 +1709,16 @@ public class DeadCodeElimination {
         return new Float(((JIntLiteral) maybeLit).getValue());
       }
       if (type == int.class && maybeLit instanceof JIntLiteral) {
-        return new Integer(((JIntLiteral) maybeLit).getValue());
+        return Integer.valueOf(((JIntLiteral) maybeLit).getValue());
       }
       if (type == long.class && maybeLit instanceof JLongLiteral) {
-        return new Long(((JLongLiteral) maybeLit).getValue());
+        return Long.valueOf(((JLongLiteral) maybeLit).getValue());
       }
       if (type == String.class && maybeLit instanceof JStringLiteral) {
         return ((JStringLiteral) maybeLit).getValue();
       }
-      if (type == Object.class && maybeLit instanceof JValueLiteral) {
+      if (type == Object.class) {
+        // We already know it is a JValueLiteral instance
         return ((JValueLiteral) maybeLit).getValueObj();
       }
       return null;

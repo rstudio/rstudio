@@ -209,7 +209,6 @@ public class SuggestBox extends Composite implements HasText, HasFocus,
     }
   }
 
-
   /**
    * Class for menu items in a SuggestionMenu. A SuggestionMenuItem differs from
    * a MenuItem in that each item is backed by a Suggestion object. The text of

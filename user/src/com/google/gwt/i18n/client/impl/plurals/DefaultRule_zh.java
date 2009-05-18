@@ -16,7 +16,6 @@
 
 package com.google.gwt.i18n.client.impl.plurals;
 
-
 /**
  * Usually, there are no plural forms in Chinese.  When they are used,
  * plural forms are 1 and n, with 0 treated as plural.

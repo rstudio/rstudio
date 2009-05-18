@@ -46,6 +46,7 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
     return sb.toString();
   }
 
+  // TODO: variable never read, remove?
   private final ApiDiffGenerator apiDiffGenerator;
   private final String className;
   private HashMap<ApiField, Set<ApiChange>> intersectingFields = null;
@@ -96,6 +97,19 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
    */
   public int compareTo(ApiClassDiffGenerator other) {
     return getName().compareTo(other.getName());
+  }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ApiClassDiffGenerator)) {
+      return false;
+    }
+    return this.getName().equals(((ApiClassDiffGenerator) o).getName());
+  }
+
+  @Override
+  public int hashCode() {
+    return this.getName().hashCode();
   }
 
   // TODO(amitmanjhi): handle methods with variable length arguments
@@ -268,9 +282,9 @@ final class ApiClassDiffGenerator implements Comparable<ApiClassDiffGenerator> {
       onlyInExisting.addAll(methodsInExisting);
       Map<ApiAbstractMethod, ApiChange> incompatibilityMap = getOverloadedMethodIncompatibility(
           methodsInNew, methodsInExisting);
-      for (ApiAbstractMethod existingMethod : incompatibilityMap.keySet()) {
-        addProperty(intersectingElements, existingMethod,
-            incompatibilityMap.get(existingMethod));
+      for (Map.Entry<ApiAbstractMethod, ApiChange> entry
+          : incompatibilityMap.entrySet()) {
+        addProperty(intersectingElements, entry.getKey(), entry.getValue());
       }
 
       /*

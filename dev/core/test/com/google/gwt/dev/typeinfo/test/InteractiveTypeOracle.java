@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class InteractiveTypeOracle {
 
@@ -202,7 +203,8 @@ public class InteractiveTypeOracle {
 
     public boolean process(TreeLogger logger, String[] args) {
       TreeLogger sublogger = null;
-      String[] cmdTokens = handlers.keySet().toArray(new String[0]);
+      Set<String> keySet = handlers.keySet();
+      String[] cmdTokens = keySet.toArray(new String[keySet.size()]);
       for (int i = 0; i < cmdTokens.length; i++) {
         String cmdToken = cmdTokens[i];
         if (sublogger == null) {

@@ -458,7 +458,7 @@ public class ApiCompatibilityChecker extends ToolBase {
         logger.setMaxDetail(checker.type);
         logger.log(TreeLogger.INFO, "gwtDevJar = " + checker.gwtDevJar
             + ", userJar = " + checker.gwtUserJar + ", refjars = "
-            + checker.refJars + ", logLevel = " + checker.type
+            + Arrays.toString(checker.refJars) + ", logLevel = " + checker.type
             + ", printAllApi = " + checker.printAllApi, null);
 
         Set<String> excludedPackages = checker.getSetOfExcludedPackages(checker.configProperties);
@@ -511,13 +511,15 @@ public class ApiCompatibilityChecker extends ToolBase {
           System.exit(apiDifferences.size() == 0 ? 0 : 1);
         }
       }
-
-    } catch (Exception e) {
+    } catch (Throwable t) {
       // intercepting all exceptions in main, because I have to exit with -1 so
       // that the build breaks.
-      e.printStackTrace();
-      System.err.println("To view the help for this tool, execute this tool without any arguments");
-      System.exit(-1);
+      try {
+        t.printStackTrace();
+        System.err.println("To view the help for this tool, execute this tool without any arguments");
+      } finally {
+        System.exit(-1);
+      }
     }
   }
 

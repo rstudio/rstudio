@@ -38,6 +38,15 @@ public class OriginImpl implements Origin, Comparable<OriginImpl> {
     }
     return lineNum - o.lineNum;
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof OriginImpl)) {
+      return false;
+    }
+    OriginImpl other = (OriginImpl) o;
+    return location.equals(other.location) && lineNum == other.lineNum;
+  }
 
   public int getLineNumber() {
     return lineNum;
@@ -45,6 +54,11 @@ public class OriginImpl implements Origin, Comparable<OriginImpl> {
 
   public String getLocation() {
     return location;
+  }
+  
+  @Override
+  public int hashCode() {
+    return location.hashCode() ^ lineNum;
   }
 
   @Override

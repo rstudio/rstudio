@@ -16,7 +16,7 @@
 package com.google.gwt.dev.shell;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ReturnOrException;
+import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.ExceptionOrReturnValue;
 import com.google.gwt.dev.shell.BrowserChannel.SessionHandler.SpecialDispatchId;
 import com.google.gwt.dev.shell.BrowserChannel.Value.ValueType;
 import com.google.gwt.util.tools.Utility;
@@ -116,11 +116,11 @@ public abstract class BrowserChannel {
      * Wrapper to return both a return value/exception and a flag as to whether
      * an exception was thrown or not.
      */
-    public static class ReturnOrException {
+    public static class ExceptionOrReturnValue {
       private final boolean isException;
       private final Value returnValue;
 
-      public ReturnOrException(boolean isException, Value returnValue) {
+      public ExceptionOrReturnValue(boolean isException, Value returnValue) {
         this.isException = isException;
         this.returnValue = returnValue;
       }
@@ -145,16 +145,16 @@ public abstract class BrowserChannel {
 
     public abstract void freeValue(BrowserChannel channel, int[] ids);
 
-    public abstract ReturnOrException getProperty(BrowserChannel channel,
+    public abstract ExceptionOrReturnValue getProperty(BrowserChannel channel,
         int refId, int dispId);
 
-    public abstract ReturnOrException invoke(BrowserChannel channel,
+    public abstract ExceptionOrReturnValue invoke(BrowserChannel channel,
         Value thisObj, int dispId, Value[] args);
 
     public abstract TreeLogger loadModule(TreeLogger logger,
         BrowserChannel channel, String moduleName, String userAgent);
 
-    public abstract ReturnOrException setProperty(BrowserChannel channel,
+    public abstract ExceptionOrReturnValue setProperty(BrowserChannel channel,
         int refId, int dispId, Value newValue);
 
     public abstract void unloadModule(BrowserChannel channel, String moduleName);
@@ -879,7 +879,7 @@ public abstract class BrowserChannel {
     }
 
     public static void send(BrowserChannel channel,
-        ReturnOrException returnOrException) throws IOException {
+        ExceptionOrReturnValue returnOrException) throws IOException {
       send(channel, returnOrException.isException(),
           returnOrException.getReturnValue());
     }
@@ -1286,7 +1286,7 @@ public abstract class BrowserChannel {
       BrowserChannelException {
     final InvokeSpecialMessage ismsg = InvokeSpecialMessage.receive(this);
     Value[] args = ismsg.getArgs();
-    ReturnOrException retExc = null;
+    ExceptionOrReturnValue retExc = null;
     switch (ismsg.getDispatchId()) {
       case GetProperty:
         assert args.length == 2;

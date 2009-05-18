@@ -63,7 +63,7 @@ public class JUnitMessageQueue {
   /**
    * The lock used to synchronize access to clientStatuses.
    */
-  private Object clientStatusesLock = new Object();
+  private final Object clientStatusesLock = new Object();
 
   /**
    * The current test to execute.

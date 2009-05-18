@@ -71,7 +71,6 @@ public class MemberShadowingTest extends GWTTestCase {
     public int a;
   }
 
-  
   /**
    * TODO: document me.
    */

@@ -33,7 +33,7 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static Byte decode(String s) throws NumberFormatException {
-    return new Byte((byte) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
+    return Byte.valueOf((byte) __decodeAndValidateInt(s, MIN_VALUE, MAX_VALUE));
   }
 
   /**
@@ -69,11 +69,11 @@ public final class Byte extends Number implements Comparable<Byte> {
   }
 
   public static Byte valueOf(String s) throws NumberFormatException {
-    return new Byte(Byte.parseByte(s));
+    return Byte.valueOf(Byte.parseByte(s));
   }
 
   public static Byte valueOf(String s, int radix) throws NumberFormatException {
-    return new Byte(Byte.parseByte(s, radix));
+    return Byte.valueOf(Byte.parseByte(s, radix));
   }
 
   private final transient byte value;

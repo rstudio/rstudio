@@ -1748,7 +1748,7 @@ public class DeveloperGuide {
            * Would match the file 'new_file_icon.png', 'new_file_icon.gif', or
            * 'new_file_icon.png' located in the same package as this type.
            */
-          public AbstractImagePrototype new_file_icon();
+          AbstractImagePrototype new_file_icon();
 
           /**
            * Would match the file 'open_file_icon.gif' located in the same
@@ -1756,7 +1756,7 @@ public class DeveloperGuide {
            * 
            * @gwt.resource open_file_icon.gif
            */
-          public AbstractImagePrototype openFileIcon();
+          AbstractImagePrototype openFileIcon();
 
           /**
            * Would match the file 'savefile.gif' located in the package
@@ -1765,7 +1765,7 @@ public class DeveloperGuide {
            * 
            * @gwt.resource com/mycompany/mygwtapp/icons/savefile.gif
            */
-          public AbstractImagePrototype saveFileIcon();
+          AbstractImagePrototype saveFileIcon();
         }
       }
 
@@ -1821,8 +1821,8 @@ public class DeveloperGuide {
 
         public void useLocalizedImageBundle() {
           // Create a locale-sensitive MailImageBundleFactory
-          MailImageBundleFactory mailImageBundleFactory = (MailImageBundleFactory) GWT
-              .create(MailImageBundleFactory.class);
+          MailImageBundleFactory mailImageBundleFactory =
+            (MailImageBundleFactory) GWT.create(MailImageBundleFactory.class);
 
           // This will return a locale-sensitive MailImageBundle, since we are using
           // a locale-sensitive factory to create it.
@@ -1847,14 +1847,14 @@ public class DeveloperGuide {
            *
            * @gwt.resource compose_new_message_icon.gif
            */
-          public AbstractImagePrototype composeNewMessageIcon();
+          AbstractImagePrototype composeNewMessageIcon();
 
           /**
            * The default 'Help' icon if no locale-specific image is specified.
            * Will match 'help_icon.png', 'help_icon.gif', or 'help_icon.jpg' in
            * the same package as this type.
            */
-          public AbstractImagePrototype help_icon();
+          AbstractImagePrototype help_icon();
         }
 
         /**
@@ -1869,7 +1869,7 @@ public class DeveloperGuide {
            *
            * @gwt.resource compose_new_message_icon_en.gif
            */
-          public AbstractImagePrototype composeNewMessageIcon();
+          AbstractImagePrototype composeNewMessageIcon();
         }
 
         /**
@@ -1882,14 +1882,14 @@ public class DeveloperGuide {
            *
            * @gwt.resource compose_new_message_icon_fr.gif
            */
-          public AbstractImagePrototype composeNewMessageIcon();
+          AbstractImagePrototype composeNewMessageIcon();
 
           /**
            * The French version of the 'Help' icon.
            *
            * @gwt.resource help_icon_fr.gif
            */
-          public AbstractImagePrototype help_icon();
+          AbstractImagePrototype help_icon();
         }
 
         /**
@@ -1897,7 +1897,7 @@ public class DeveloperGuide {
          */
         public interface MailImageBundleFactory extends Localizable {
 
-          public MailImageBundle createImageBundle();
+          MailImageBundle createImageBundle();
         }
 
         /**
@@ -2063,16 +2063,16 @@ public class DeveloperGuide {
       public class ParamType2 {
       }
 
-      public ReturnType methodName(ParamType1 param1, ParamType2 param2);
+      ReturnType methodName(ParamType1 param1, ParamType2 param2);
 
-      public void methodName(ParamType1 param1, ParamType2 param2,
+      void methodName(ParamType1 param1, ParamType2 param2,
           AsyncCallback callback);
 
       /**
        * @skip
        */
       public interface MyService extends RemoteService {
-        public String myMethod(String s);
+        String myMethod(String s);
       }
 
       /**
@@ -2085,14 +2085,13 @@ public class DeveloperGuide {
           // Do something interesting with 's' here on the server.
           return s;
         }
-
       }
 
       /**
        * @skip
        */
       interface MyServiceAsync {
-        public void myMethod(String s, AsyncCallback callback);
+        void myMethod(String s, AsyncCallback callback);
       }
     }
 
@@ -2220,12 +2219,12 @@ public class DeveloperGuide {
         // (3) Create an asynchronous callback to handle the result.
         //
         AsyncCallback callback = new AsyncCallback() {
-          public void onSuccess(Object result) {
-            // do some UI stuff to show success
-          }
-
           public void onFailure(Throwable caught) {
             // do some UI stuff to show failure
+          }
+          
+          public void onSuccess(Object result) {
+            // do some UI stuff to show success
           }
         };
 
@@ -2372,7 +2371,6 @@ public class DeveloperGuide {
          */
         List reverseListAndConvertToStrings(List c);
       }
-
     }
 
     /**
@@ -3379,7 +3377,6 @@ public class DeveloperGuide {
      */
     public static class JsniExceptions {
     }
-
   }
 
   /**

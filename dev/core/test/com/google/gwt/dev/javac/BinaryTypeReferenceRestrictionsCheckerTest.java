@@ -53,7 +53,7 @@ public class BinaryTypeReferenceRestrictionsCheckerTest extends TestCase {
   /**
    * Mocks a binary type
    */
-  class MockBinaryType implements IBinaryType {
+  static class MockBinaryType implements IBinaryType {
     private final String qualifiedTypeName;
 
     MockBinaryType(String typeName) {

@@ -92,7 +92,7 @@ public class DialogBox extends DecoratedPopupPanel implements HasHTML, HasText,
   public interface Caption extends HasAllMouseHandlers {
   }
 
-  private class CaptionImpl extends HTML implements Caption {
+  private static class CaptionImpl extends HTML implements Caption {
   }
 
   private class MouseHandler implements MouseDownHandler, MouseUpHandler,

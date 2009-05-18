@@ -25,6 +25,8 @@ import com.google.gwt.user.rebind.AbstractGeneratorClassCreator;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 /**
  * Creator for methods of the form Map getX() .
@@ -100,16 +102,16 @@ class ConstantsMapMethodCreator extends AbstractLocalizableMethodCreator {
 
     indent();
     indent();
-    for (String key : map.keySet()) {
-      println(wrap(key) + ", ");
+    Set<Entry<String, String>> entries = map.entrySet();
+    for (Entry<String, String> entry : entries) {
+      println(wrap(entry.getKey()) + ", ");
     }
     outdent();
     println("},");
     indent();
     println("new String[] {");
-    for (String key : map.keySet()) {
-      String value = map.get(key);
-      println(wrap(value) + ",");
+    for (Entry<String, String> entry : entries) {
+      println(wrap(entry.getValue()) + ", ");
     }
     outdent();
     println("});");

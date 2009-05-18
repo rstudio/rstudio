@@ -383,7 +383,7 @@ public class MethodInliner {
    * <li>field references</li>
    * </ul>
    */
-  private class OrderVisitor extends ExpressionAnalyzer {
+  private static class OrderVisitor extends ExpressionAnalyzer {
     private int currentIndex = 0;
     private final List<JParameter> parameters;
     private boolean succeeded = true;

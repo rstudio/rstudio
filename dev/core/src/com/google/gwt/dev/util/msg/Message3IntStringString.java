@@ -29,14 +29,14 @@ public final class Message3IntStringString extends Message3 {
 
   public TreeLogger branch(TreeLogger logger, int x, String s1, String s2,
       Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     return branch3(logger, xi, s1, s2, getFormatter(xi), getFormatter(s1),
         getFormatter(s2), caught);
   }
 
   public void log(TreeLogger logger, int x, String s1, String s2,
       Throwable caught) {
-    Integer xi = new Integer(x);
+    Integer xi = Integer.valueOf(x);
     log3(logger, xi, s1, s2, getFormatter(xi), getFormatter(s1),
         getFormatter(s2), caught);
   }

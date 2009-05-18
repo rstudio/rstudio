@@ -63,7 +63,7 @@ public class JdtCompiler {
     }
 
     public char[] getContents() {
-      return unit.getSource().toString().toCharArray();
+      return unit.getSource().toCharArray();
     }
 
     public char[] getFileName() {
@@ -113,7 +113,7 @@ public class JdtCompiler {
   /**
    * Hook point to accept results.
    */
-  private class ICompilerRequestorImpl implements ICompilerRequestor {
+  private static class ICompilerRequestorImpl implements ICompilerRequestor {
     public void acceptResult(CompilationResult result) {
     }
   }

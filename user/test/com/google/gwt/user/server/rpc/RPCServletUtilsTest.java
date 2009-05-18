@@ -71,7 +71,7 @@ public class RPCServletUtilsTest extends TestCase {
     }
   }
 
-  class MockServletInputStream extends ServletInputStream {
+  static class MockServletInputStream extends ServletInputStream {
     private boolean readOnce = false;
     final private String value;
 

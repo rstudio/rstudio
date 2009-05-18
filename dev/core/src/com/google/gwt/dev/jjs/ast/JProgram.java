@@ -991,7 +991,7 @@ public class JProgram extends JNode {
   public void initTypeInfo(List<JReferenceType> types,
       List<JsonObject> jsonObjects) {
     for (int i = 0, c = types.size(); i < c; ++i) {
-      typeIdMap.put(types.get(i), new Integer(i));
+      typeIdMap.put(types.get(i), Integer.valueOf(i));
     }
     this.jsonTypeTable = jsonObjects;
   }

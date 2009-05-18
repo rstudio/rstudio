@@ -352,9 +352,8 @@ class UintMap implements Serializable {
         else {
             // Need to consume empty entry: check occupation level
             if (keys == null || occupiedCount * 4 >= (1 << power) * 3) {
-                // Too litle unused entries: rehash
+                // Too few unused entries: rehash
                 rehashTable(intType);
-                keys = this.keys;
                 return insertNewKey(key);
             }
             ++occupiedCount;

@@ -126,8 +126,9 @@ class LocalizableLinkageCreator extends AbstractSourceCreator {
     for (GwtLocale search : locale.getCompleteSearchList()) {
       result = matchingClasses.get(search.toString());
       if (result != null) {
+        className = result.getQualifiedSourceName();
         implCache.put(baseName + locale.toString(), className);
-        return result.getQualifiedSourceName();
+        return className;
       }
     }
     // No classes matched.

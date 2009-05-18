@@ -51,7 +51,6 @@ public class CharacterTest extends GWTTestCase {
     }
   }
 
-
   /**
    * Helper class which applies some arbitrary char mutation function
    * to a string and returns it.

@@ -244,8 +244,6 @@ public final class ApiContainer {
     }
   }
 
-
-
   private boolean isAnySubtypeAnApiClass(JClassType classType) {
     JClassType subTypes[] = classType.getSubtypes();
     for (JClassType tempType : subTypes) {

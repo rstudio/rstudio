@@ -148,6 +148,8 @@ abstract class CellGridImpl<V> extends Grid {
   }
 
   public Cell getCell(Element element) {
+    // This cast is always valid because both Element types are JSOs and have
+    // no new fields are added in the subclass.
     return elementToCell.get((com.google.gwt.user.client.Element) element);
   }
 

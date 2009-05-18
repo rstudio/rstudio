@@ -25,7 +25,7 @@ import java.util.NoSuchElementException;
  */
 class WidgetIterators {
 
-  private static final Widget[] copyWidgetArray(final Widget[] widgets) {
+  private static Widget[] copyWidgetArray(final Widget[] widgets) {
     final Widget[] clone = new Widget[widgets.length];
     for (int i = 0; i < widgets.length; i++) {
       clone[i] = widgets[i];

@@ -57,6 +57,14 @@ public class TimeSlot implements IsSerializable, Comparable<TimeSlot> {
     return 0;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof TimeSlot)) {
+      return false;
+    }
+    return compareTo((TimeSlot) obj) == 0;
+  }
+  
   public int getDayOfWeek() {
     return zeroBasedDayOfWeek;
   }
@@ -72,6 +80,11 @@ public class TimeSlot implements IsSerializable, Comparable<TimeSlot> {
 
   public int getStartMinutes() {
     return startMinutes;
+  }
+
+  @Override
+  public int hashCode() {
+    return endMinutes + 7 * startMinutes + 31 * zeroBasedDayOfWeek;
   }
 
   public void setDayOfWeek(int zeroBasedDayOfWeek) {

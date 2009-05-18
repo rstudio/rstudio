@@ -206,6 +206,7 @@ public final class Util {
   public static void copy(TreeLogger logger, InputStream is, File out)
       throws UnableToCompleteException {
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
       out.getParentFile().mkdirs();
       copy(logger, is, new FileOutputStream(out));
     } catch (FileNotFoundException e) {
@@ -779,7 +780,8 @@ public final class Util {
   }
 
   /**
-   * Selectively deletes a file or recursively deletes a directory.
+   * Selectively deletes a file or recursively deletes a directory.  Note that
+   * it is possible that files remain if file.delete() fails.
    * 
    * @param file the file to delete, or if this is a directory, the directory
    *          that serves as the root of a recursive deletion
@@ -1091,6 +1093,7 @@ public final class Util {
     FileOutputStream f = null;
     Throwable caught;
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
       where.getParentFile().mkdirs();
       f = new FileOutputStream(where);
       for (int i = 0; i < what.length; i++) {
@@ -1115,6 +1118,7 @@ public final class Util {
     OutputStreamWriter writer = null;
     BufferedWriter buffered = null;
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
       file.getParentFile().mkdirs();
       stream = new FileOutputStream(file);
       writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
@@ -1138,6 +1142,7 @@ public final class Util {
       Object... objects) throws UnableToCompleteException {
     FileOutputStream stream = null;
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
       file.getParentFile().mkdirs();
       stream = new FileOutputStream(file);
       writeObjectToStream(stream, objects);
@@ -1171,6 +1176,7 @@ public final class Util {
       stream = new FileOutputStream(file);
       writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
       buffered = new BufferedWriter(writer);
+      // No need to check mkdirs result because an IOException will occur anyway
       file.getParentFile().mkdirs();
       buffered.write(string);
     } catch (IOException e) {
@@ -1192,6 +1198,7 @@ public final class Util {
       stream = new FileOutputStream(file);
       writer = new OutputStreamWriter(stream, DEFAULT_ENCODING);
       buffered = new BufferedWriter(writer);
+      // No need to check mkdirs result because an IOException will occur anyway
       file.getParentFile().mkdirs();
       buffered.write(string);
     } catch (IOException e) {

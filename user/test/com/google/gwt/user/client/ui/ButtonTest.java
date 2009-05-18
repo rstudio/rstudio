@@ -29,7 +29,7 @@ public class ButtonTest extends GWTTestCase {
     return "com.google.gwt.user.User";
   }
 
-  private class H implements ClickHandler {
+  private static class H implements ClickHandler {
     boolean clicked;
     EventTarget target;
 

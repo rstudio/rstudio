@@ -31,7 +31,7 @@ public final class Character_CustomFieldSerializer {
 
   public static Character instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
-    return new Character(streamReader.readChar());
+    return Character.valueOf(streamReader.readChar());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,

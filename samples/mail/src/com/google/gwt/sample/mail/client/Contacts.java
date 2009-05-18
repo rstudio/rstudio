@@ -43,7 +43,7 @@ public class Contacts extends Composite {
   /**
    * Simple data structure representing a contact.
    */
-  private class Contact {
+  private static class Contact {
     public String email;
     public String name;
 

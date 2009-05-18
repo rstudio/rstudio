@@ -72,9 +72,10 @@ public class DependencyRecorderImpl implements
     File appendDepFile = new File(workDir, "dependencies" + permutationId
         + ".xml.gz");
     try {
+      // No need to check mkdirs result because an IOException will occur anyway
+      appendDepFile.getParentFile().mkdirs();
       FileOutputStream stream = new FileOutputStream(appendDepFile, true);
       writer = new OutputStreamWriter(new GZIPOutputStream(stream), "UTF-8");
-      appendDepFile.getParentFile().mkdirs();
       pw = new PrintWriter(writer);
       htmlOut = new HtmlTextOutput(pw, false);
     } catch (Throwable e) {

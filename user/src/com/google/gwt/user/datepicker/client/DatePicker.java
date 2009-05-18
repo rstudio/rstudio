@@ -192,7 +192,7 @@ public class DatePicker extends Composite implements
   /**
    * A date highlighted event that copied on read.
    */
-  private class DateHighlightEvent extends HighlightEvent<Date> {
+  private static class DateHighlightEvent extends HighlightEvent<Date> {
     protected DateHighlightEvent(Date highlighted) {
       super(highlighted);
     }
@@ -203,7 +203,7 @@ public class DatePicker extends Composite implements
     }
   }
 
-  private class DateStyler {
+  private static class DateStyler {
     private Map<String, String> info = new HashMap<String, String>();
 
     public String getStyleName(Date d) {

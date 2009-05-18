@@ -31,7 +31,7 @@ public final class Short_CustomFieldSerializer {
 
   public static Short instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
-    return new Short(streamReader.readShort());
+    return Short.valueOf(streamReader.readShort());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,

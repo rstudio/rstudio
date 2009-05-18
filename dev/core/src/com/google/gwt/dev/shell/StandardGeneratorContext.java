@@ -464,6 +464,7 @@ public class StandardGeneratorContext implements GeneratorContext {
       gcup = new GeneratedUnit(sw, typeName);
     } else {
       File dir = new File(genDir, packageName.replace('.', File.separatorChar));
+      // No need to check mkdirs result because an IOException will occur anyway
       dir.mkdirs();
       File srcFile = new File(dir, simpleTypeName + ".java");
       if (srcFile.exists()) {

@@ -31,7 +31,7 @@ public final class Integer_CustomFieldSerializer {
 
   public static Integer instantiate(SerializationStreamReader streamReader)
       throws SerializationException {
-    return new Integer(streamReader.readInt());
+    return Integer.valueOf(streamReader.readInt());
   }
 
   public static void serialize(SerializationStreamWriter streamWriter,

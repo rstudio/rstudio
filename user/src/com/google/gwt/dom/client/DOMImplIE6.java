@@ -83,11 +83,11 @@ class DOMImplIE6 extends DOMImplTrident {
    * 
    * @return the zoom multiple
    */
-  @SuppressWarnings("unused")
   private double getZoomMultiple(Document doc) {
     if (doc.getCompatMode().equals("CSS1Compat")) {
       return 1;
     } else {
+      // TODO(FINDBUGS): is integer division correct?
       return doc.getBody().getParentElement().getOffsetWidth() /
         doc.getBody().getOffsetWidth();
     }

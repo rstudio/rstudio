@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dom.client;
 
-
 /**
  * Mozilla implementation of StandardBrowser.
  */

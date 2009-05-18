@@ -43,7 +43,8 @@ public interface RequestCallback {
    * normally.  A {@link com.google.gwt.http.client.RequestTimeoutException RequestTimeoutException} is
    * one example of the type of error that a request may encounter.
    * 
-   * @param request the request object which has experienced the error condition
+   * @param request the request object which has experienced the error
+   *     condition, may be null if the request was never generated
    * @param exception the error that was encountered
    */
   void onError(Request request, Throwable exception);

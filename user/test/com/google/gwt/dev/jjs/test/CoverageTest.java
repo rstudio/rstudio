@@ -308,12 +308,16 @@ public class CoverageTest extends CoverageBase {
       switch (j) {
         case 1:
           ++i;
+          // fallthrough
         case 2:
           i += 2;
+          // fallthrough
         case 3:
           i += 3;
+          // fallthrough
         case 4:
           i += 4;
+          // fallthrough
         default:
           i += 0;
       }

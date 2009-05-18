@@ -20,6 +20,7 @@ import com.google.gwt.user.client.Element;
 import com.google.gwt.user.client.ui.HTMLTable.CellFormatter;
 import com.google.gwt.user.client.ui.HTMLTable.RowFormatter;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -46,7 +47,7 @@ public abstract class HTMLTableTestBase extends GWTTestCase {
    */
   protected static void assertEquals(Object[] array, List<?> target) {
     if (target.size() != array.length) {
-      fail(target + " should be the same length as" + array);
+      fail(target + " should be the same length as" + Arrays.toString(array));
     }
     for (int i = 0; i < array.length; i++) {
       assertEquals(target.get(i), array[i]);

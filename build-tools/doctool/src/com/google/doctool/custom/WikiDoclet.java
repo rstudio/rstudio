@@ -136,6 +136,8 @@ public class WikiDoclet {
   private void process(RootDoc root) {
     try {
       File outFile = new File(outputFile);
+      // Ignore result since the next line will fail if the directory doesn't
+      // exist.
       outFile.getParentFile().mkdirs();
       FileWriter fw = new FileWriter(outFile);
       PrintWriter pw = new PrintWriter(fw, true);

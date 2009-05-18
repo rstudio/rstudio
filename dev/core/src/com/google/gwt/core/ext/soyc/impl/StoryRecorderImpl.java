@@ -64,6 +64,8 @@ public class StoryRecorderImpl implements StoryRecorder {
     public final Range range;
 
     public RangeInfo(Range range, SourceInfo info) {
+      assert range != null;
+      assert info != null;
       this.range = range;
       this.info = info;
     }
@@ -116,9 +118,10 @@ public class StoryRecorderImpl implements StoryRecorder {
     File storiesFile = new File(workDir, "stories"
         + Integer.toString(permutationId) + ".xml.gz");
     try {
+      // No need to check mkdirs result because an IOException will occur anyway 
+      storiesFile.getParentFile().mkdirs();
       stream = new FileOutputStream(storiesFile, true);
       writer = new OutputStreamWriter(new GZIPOutputStream(stream), "UTF-8");
-      storiesFile.getParentFile().mkdirs();
       pw = new PrintWriter(writer);
       htmlOut = new HtmlTextOutput(pw, false);
 
@@ -444,6 +447,7 @@ public class StoryRecorderImpl implements StoryRecorder {
 
   private void recordStory(SourceInfo info, int fragment, int length,
       Range range) {
+    assert info != null;
     assert storyCache != null;
 
     if (fragment > curHighestFragment) {
@@ -456,15 +460,13 @@ public class StoryRecorderImpl implements StoryRecorder {
       SortedSet<Member> members = new TreeSet<Member>(
           Member.TYPE_AND_SOURCE_NAME_COMPARATOR);
 
-      if (info != null) {
-        for (Correlation c : info.getAllCorrelations()) {
-          Member m = membersByCorrelation.get(c);
-          if (m != null) {
-            members.add(m);
-          }
+      for (Correlation c : info.getAllCorrelations()) {
+        Member m = membersByCorrelation.get(c);
+        if (m != null) {
+          members.add(m);
         }
       }
-
+        
       SortedSet<Origin> origins = new TreeSet<Origin>();
       for (Correlation c : info.getAllCorrelations(Axis.ORIGIN)) {
         origins.add(new OriginImpl(c.getOrigin()));

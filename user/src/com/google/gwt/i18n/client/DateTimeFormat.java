@@ -366,7 +366,7 @@ public class DateTimeFormat {
   /**
    * Class PatternPart holds a "compiled" pattern part.
    */
-  private class PatternPart {
+  private static class PatternPart {
     public String text;
     public int count; // 0 has a special meaning, it stands for literal
     public boolean abutStart;

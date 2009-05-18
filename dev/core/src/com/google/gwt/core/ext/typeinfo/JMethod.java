@@ -27,10 +27,6 @@ public class JMethod extends JAbstractMethod {
 
   private JType returnType;
 
-  public JMethod(JClassType enclosingType, String name) {
-    this(enclosingType, name, null, null);
-  }
-
   public JMethod(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
       JTypeParameter[] jtypeParameters) {

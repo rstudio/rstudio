@@ -111,10 +111,29 @@ public class CheckForUpdates {
       }
       return 0;
     }
-
+    
+    @Override
+    public boolean equals(Object o) {
+      if (!(o instanceof GwtVersion)) {
+        return false;
+      }
+      GwtVersion other = (GwtVersion) o;
+      for (int i = 0; i <= 2; ++i) {
+        if (version[i] != other.version[i]) {
+          return false;
+        }
+      }
+      return true;
+    }
+    
     public int getPart(int part) {
       // TODO: something besides IORE here?
       return version[part];
+    }
+
+    @Override
+    public int hashCode() {
+      return (version[0] * 31 + version[1]) * 31 + version[2];
     }
 
     public boolean isNoNagVersion() {

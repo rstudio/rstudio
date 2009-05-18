@@ -51,9 +51,22 @@ final class ApiPackage implements Comparable<ApiPackage>, ApiElement {
   public int compareTo(ApiPackage other) {
     return this.getName().compareTo(other.getName());
   }
+  
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ApiPackage)) {
+      return false;
+    }
+    return this.getName().equals(((ApiPackage) o).getName());
+  }
 
   public String getRelativeSignature() {
     return name;
+  }
+
+  @Override
+  public int hashCode() {
+    return this.getName().hashCode();
   }
 
   @Override

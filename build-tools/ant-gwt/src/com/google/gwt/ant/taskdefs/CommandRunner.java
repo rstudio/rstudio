@@ -56,6 +56,14 @@ class CommandRunner {
     } catch (InterruptedException e) {
       throw new BuildException("Interrupted waiting for command: "
           + makeCmdString(cmd), e);
+    } finally {
+      if (lnr != null) {
+        try {
+          lnr.close();
+        } catch (IOException e) {
+          // do nothing
+        }
+      }
     }
   }
 

@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * Example file.
  */
-@ShowcaseRaw( {"ExampleConstants.java", "ExampleConstants.properties"})
+@ShowcaseRaw({"ExampleConstants.java", "ExampleConstants.properties"})
 public class CwConstantsExample extends ContentWidget {
   /**
    * The constants used in this Content Widget.

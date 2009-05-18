@@ -266,9 +266,9 @@ public class ApiCompatibilityUnitTest extends TestCase {
     logger.setMaxDetail(TreeLogger.ERROR);
 
     Set<CompilationUnit> set1 = new HashSet<CompilationUnit>();
-    for (String type : existingTypesToSourcesMap.keySet()) {
-      set1.add(new StaticCompilationUnit(type,
-          existingTypesToSourcesMap.get(type)));
+    for (Map.Entry<String, String> entry
+        : existingTypesToSourcesMap.entrySet()) {
+      set1.add(new StaticCompilationUnit(entry.getKey(), entry.getValue()));
     }
     Set<String> emptyList = Collections.emptySet();
     Set<CompilationUnit> set2 = new HashSet<CompilationUnit>();

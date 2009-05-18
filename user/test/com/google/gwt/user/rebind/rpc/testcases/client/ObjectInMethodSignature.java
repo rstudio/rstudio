@@ -14,7 +14,6 @@
  * the License.
  */
 
-
 package com.google.gwt.user.rebind.rpc.testcases.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;

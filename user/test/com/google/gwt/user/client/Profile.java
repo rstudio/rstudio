@@ -24,16 +24,20 @@ import com.google.gwt.user.client.ui.RootPanel;
  * TODO: document me.
  */
 public abstract class Profile extends GWTTestCase {
+  
+  /**
+   * An enumeration defining the possible report types.
+   */
+  public enum ReportType {
+    REPORT_TO_BROWSER, REPORT_TO_EXCEL, REPORT_TO_WIKI
+  }
 
-  public static String REPORT_TO_BROWSER = "Report to Browser";
-  public static String REPORT_TO_EXCEL = "Report to Excel";
-  public static String REPORT_TO_WIKI = "Report to Wiki";
   private static String browser;
-  private static String reportType = REPORT_TO_WIKI;
+  private static ReportType reportType = ReportType.REPORT_TO_WIKI;
   private static double time;
 
-  public static void setReportType(String s) {
-    reportType = s;
+  public static void setReportType(ReportType type) {
+    reportType = type;
   }
 
   private void browserTiming(String s) {
@@ -51,16 +55,20 @@ public abstract class Profile extends GWTTestCase {
 
   protected void timing(String s) {
     double elapsed = Duration.currentTimeMillis() - time;
-    if (reportType == REPORT_TO_BROWSER) {
-      browserTiming(s);
-    } else if (reportType == REPORT_TO_WIKI) {
-      this.addCheckpoint("|" + browser + "|" + s + "|" + elapsed
-          + " milliseconds|");
-    } else if (reportType == REPORT_TO_EXCEL) {
-      s = s.replace('|', '\t');
-      this.addCheckpoint(browser + "\t" + s + "\t" + elapsed);
-    } else {
-      throw new IllegalStateException("Should not ever get here");
+    switch (reportType) {
+      case REPORT_TO_BROWSER:
+        browserTiming(s);
+        break;
+      case REPORT_TO_WIKI:
+        this.addCheckpoint("|" + browser + "|" + s + "|" + elapsed
+            + " milliseconds|");
+        break;
+      case REPORT_TO_EXCEL:
+        s = s.replace('|', '\t');
+        this.addCheckpoint(browser + "\t" + s + "\t" + elapsed);
+        break;
+      default:
+        throw new IllegalStateException("Should not ever get here");
     }
   }
 

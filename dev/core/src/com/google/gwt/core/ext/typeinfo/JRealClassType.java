@@ -394,8 +394,10 @@ public class JRealClassType extends JClassType {
       realSuperType = type.isParameterized().getBaseType();
     } else if (type.isRawType() != null) {
       realSuperType = type.isRawType().getGenericType();
-    } else {
+    } else if (type instanceof JRealClassType) {
       realSuperType = (JRealClassType) type;
+    } else {
+      throw new IllegalArgumentException("Unknown type for " + type);
     }
     annotations.setParent(realSuperType.annotations);
   }

@@ -52,7 +52,7 @@ public class RemoteServiceServletTest extends TestCase {
   private static class Foo implements IsSerializable {
   }
 
-  private class MockHttpServletRequestContextPath extends
+  private static class MockHttpServletRequestContextPath extends
       MockHttpServletRequest {
     private String contextPath;
 
@@ -62,7 +62,7 @@ public class RemoteServiceServletTest extends TestCase {
     }
   }
 
-  private class MockServletConfig implements ServletConfig {
+  private static class MockServletConfig implements ServletConfig {
     private ServletContext context;
 
     public MockServletConfig(ServletContext context) {

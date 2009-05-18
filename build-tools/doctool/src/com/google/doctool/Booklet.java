@@ -75,10 +75,9 @@ public class Booklet {
   }
 
   public static String slurpSource(SourcePosition position) {
-    FileReader fr = null;
+    BufferedReader br = null;
     try {
-      fr = new FileReader(position.file());
-      BufferedReader br = new BufferedReader(fr);
+      br = new BufferedReader(new FileReader(position.file()));
       for (int i = 0, n = position.line() - 1; i < n; ++i) {
         br.readLine();
       }
@@ -125,8 +124,8 @@ public class Booklet {
       e.printStackTrace();
     } finally {
       try {
-        if (fr != null) {
-          fr.close();
+        if (br != null) {
+          br.close();
         }
       } catch (IOException e) {
         e.printStackTrace();
@@ -806,6 +805,8 @@ public class Booklet {
     try {
       initialRootDoc = rootDoc;
       File outputFile = new File(outputPath);
+      // Ignore result since the next line will fail if the directory doesn't
+      // exist.
       outputFile.getParentFile().mkdirs();
       FileWriter fw = new FileWriter(outputFile);
       pw = new PrintWriter(fw, true);

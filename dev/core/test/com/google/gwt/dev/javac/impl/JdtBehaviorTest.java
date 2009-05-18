@@ -53,7 +53,7 @@ public class JdtBehaviorTest extends TestCase {
   /**
    * Hook-point if we need to modify the compiler behavior.
    */
-  private class CompilerImpl extends Compiler {
+  private static class CompilerImpl extends Compiler {
 
     public CompilerImpl(INameEnvironment environment,
         ICompilerRequestor requestor) {
@@ -140,7 +140,7 @@ public class JdtBehaviorTest extends TestCase {
     }
   }
 
-  private class ResourceAdapter implements ICompilationUnit {
+  private static class ResourceAdapter implements ICompilationUnit {
 
     private final MockResource sourceFile;
 
