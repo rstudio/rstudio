@@ -198,17 +198,24 @@ public class ApiCompatibilityChecker extends ToolBase {
    * Class that specifies a set of {@link CompilationUnit} read from jar files.
    */
   private static class JarFileCompilationUnits extends CompilationUnits {
-    private final Set<String> excludedPaths;
     private final Set<String> includedPaths;
     private final JarFile jarFiles[];
     private Set<CompilationUnit> units = null;
+    private final ZipScanner excludeScanner;
 
     JarFileCompilationUnits(JarFile[] jarFiles, Set<String> includedPaths,
         Set<String> excludedPaths, TreeLogger logger) {
       super(logger);
       this.jarFiles = jarFiles;
       this.includedPaths = includedPaths;
-      this.excludedPaths = excludedPaths;
+
+      // initialize the ant scanner
+      excludeScanner = new ZipScanner();
+      List<String> list = new ArrayList<String>(excludedPaths);
+      excludeScanner.setIncludes(list.toArray(new String[0]));
+      excludeScanner.addDefaultExcludes();
+      excludeScanner.setCaseSensitive(true);
+      excludeScanner.init();
     }
 
     @Override
@@ -276,17 +283,14 @@ public class ApiCompatibilityChecker extends ToolBase {
     }
 
     private boolean isIncluded(String fileName) {
-      int index = fileName.length();
-      do {
-        fileName = fileName.substring(0, index);
-        if (includedPaths.contains(fileName)) {
+      if (excludeScanner.match(fileName)) {
+        return false;
+      }
+      for (String includedPath : includedPaths) {
+        if (fileName.startsWith(includedPath)) {
           return true;
         }
-        if (excludedPaths.contains(fileName)) {
-          return false;
-        }
-        index = fileName.lastIndexOf("/");
-      } while (index != -1);
+      }
       return false;
     }
   }
@@ -769,7 +773,7 @@ public class ApiCompatibilityChecker extends ToolBase {
     sb.append("name             specifies how the api should be refered to in the output\n");
     sb.append("dirRoot          optional argument that specifies the base directory of all other file/directory names\n");
     sb.append("sourceFiles      a colon-separated list of files/directories that specify the roots of the the filesystem trees to be included.\n");
-    sb.append("excludeFiles     a colon-separated lists of files/directories that specify the roots of the filesystem trees to be excluded");
+    sb.append("excludeFiles     a colon-separated lists of ant patterns to exclude");
 
     sb.append("\n\n");
     sb.append("Example api.conf file:\n");
@@ -779,7 +783,7 @@ public class ApiCompatibilityChecker extends ToolBase {
     sb.append("\n");
     sb.append("sourceFiles_old  dev/core/super:user/super:user/src");
     sb.append("\n");
-    sb.append("excludeFiles_old user/super/com/google/gwt/junit");
+    sb.append("excludeFiles_old user/super/com/google/gwt/junit/*.java");
     sb.append("\n\n");
 
     sb.append("name_new         gwtEmulatorCopy");
@@ -788,7 +792,7 @@ public class ApiCompatibilityChecker extends ToolBase {
     sb.append("\n");
     sb.append("sourceFiles_new  dev/core:user/super:user/src");
     sb.append("\n");
-    sb.append("excludeFiles_new user/super/com/google/gwt/junit");
+    sb.append("excludeFiles_new user/super/com/google/gwt/junit/*.java");
     sb.append("\n\n");
 
     System.err.println(sb.toString());

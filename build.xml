@@ -8,8 +8,6 @@
 
   <property name="gwt.apicheck.config" 
     location="tools/api-checker/config/gwt15_16userApi.conf"/>
-  <property name="gwt.apicheck.oldroot" 
-    value="../gwt-1.5"/>
 
   <target name="buildonly" depends="dev, user, servlet, jni" description="Build without docs/samples">
     <gwt.ant dir="distro-source" />
@@ -83,10 +81,6 @@
     <copy tofile="${gwt.build.out}/userApi.conf" filtering="false"
           file="${gwt.apicheck.config}"
           overwrite="true">
-      <filterset>
-        <filter token="OLDROOT" 
-          value="${gwt.apicheck.oldroot}"/>
-      </filterset>
     </copy>
     <java failonerror="true" fork="true"
           classname="com.google.gwt.tools.apichecker.ApiCompatibilityChecker">
@@ -96,10 +90,14 @@
         <pathelement location="${gwt.build.out}/tools/api-checker/bin"/>
         <fileset dir="${gwt.build.lib}" includes="gwt-user.jar,gwt-dev-*.jar" />
         <pathelement path="${java.class.path}"/>
-        <pathelement location="${gwt.tools.lib}/lib/apache/ant-1.6.5.jar" />
+        <pathelement location="${gwt.tools.lib}/apache/ant-1.6.5.jar" />
       </classpath>
+      <arg value="-refJar"/>
+      <arg value="${gwt.root}/tools/api-checker/reference/gwt-dev-modified.jar:${gwt.root}/tools/api-checker/reference/gwt-user-modified.jar"/>
       <arg value="-configFile"/>
       <arg file="${gwt.build.out}/userApi.conf"/>
+      <arg value="-logLevel"/>
+      <arg value="ERROR"/>
     </java>
   </target>
   
