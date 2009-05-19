@@ -42,7 +42,8 @@ public class Element extends Node {
 
   /**
    * Determines whether the given {@link JavaScriptObject} can be cast to an
-   * {@link Element}.
+   * {@link Element}. A <code>null</code> object will cause this method to
+   * return <code>false</code>.
    */
   public static boolean is(JavaScriptObject o) {
     if (Node.is(o)) {
@@ -53,9 +54,11 @@ public class Element extends Node {
 
   /**
    * Determine whether the given {@link Node} can be cast to an {@link Element}.
+   * A <code>null</code> node will cause this method to return
+   * <code>false</code>.
    */
   public static boolean is(Node node) {
-    return node.getNodeType() == Node.ELEMENT_NODE;
+    return (node != null) && (node.getNodeType() == Node.ELEMENT_NODE);
   }
 
   protected Element() {

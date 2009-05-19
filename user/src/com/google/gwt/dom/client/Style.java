@@ -1146,6 +1146,13 @@ public class Style extends JavaScriptObject {
   }
 
   /**
+   * Sets the color CSS property.
+   */
+  public final void setColor(String value) {
+    setProperty(STYLE_COLOR, value);
+  }
+
+  /**
    * Sets the cursor CSS property.
    */
   public final void setCursor(Cursor value) {

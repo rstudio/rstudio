@@ -88,8 +88,9 @@ class DOMImplIE6 extends DOMImplTrident {
       return 1;
     } else {
       // TODO(FINDBUGS): is integer division correct?
-      return doc.getBody().getParentElement().getOffsetWidth() /
-        doc.getBody().getOffsetWidth();
+      int bodyOffset = doc.getBody().getOffsetWidth();
+      return bodyOffset == 0 ? 1
+          : doc.getBody().getParentElement().getOffsetWidth() / bodyOffset;
     }
   }
 }

@@ -191,8 +191,17 @@ e.g. "gwt-dev-linux.jar".
 * Apache Tomcat
   License: Apache License v. 2.0 (above)
   Source code availability: http://tomcat.apache.org
-    modifications are at org/apache/tomcat within gwt-dev.jar
+    modifications are at org/apache/tomcat/ within gwt-dev.jar
 
+* Apache Tapestry
+  License: Apache License v. 2.0 (above)
+  Source code availability: http://tapestry.apache.org
+
+* ASM 3.1
+  License: (custom)
+    http://asm.objectweb.org/license.html
+  Source code availability: com/google/gwt/dev/asm/ within gwt-dev.jar
+  
 * Browser Detect v2.1.6
   License: Creative Commons Attribution 1.0
     http://creativecommons.org/licenses/by/1.0/
@@ -213,7 +222,12 @@ e.g. "gwt-dev-linux.jar".
     Linux: http://download.eclipse.org/eclipse/downloads/drops/R-3.2.1-200609210945/download.php?dropFile=swt-3.2.1-gtk-linux-x86.zip
     Windows: http://download.eclipse.org/eclipse/downloads/drops/R-3.2.1-200609210945/download.php?dropFile=swt-3.2.1-win32-win32-x86.zip
     Mac: http://download.eclipse.org/eclipse/downloads/drops/R-3.2.1-200609210945/download.php?dropFile=swt-3.2.1-carbon-macosx.zip
-    modifications are at org/eclipse/swt within gwt-dev.jar
+    modifications are at org/eclipse/swt/ within gwt-dev.jar
+
+* Jetty
+  License: Apache License v. 2.0 (above)
+  Source code availability:
+    http://mortbay.org/jetty/
 
 * JFreeChart
   License: GNU Lesser General Public License v. 2.1
@@ -231,10 +245,4 @@ e.g. "gwt-dev-linux.jar".
     http://www.mozilla.org/MPL/MPL-1.1.txt
   Source code availability: 
     http://developer.mozilla.org/en/docs/Download_Mozilla_Source_Code
-
-* WebKit 418.9 (Mac only)
-  License: GNU Lesser General Public License v. 2.1
-    http://www.gnu.org/licenses/lgpl.html
-  Source code availability: 
-    http://webkit.org/building/checkout.html
 

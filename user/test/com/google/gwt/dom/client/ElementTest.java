@@ -535,4 +535,18 @@ public class ElementTest extends GWTTestCase {
     var ua = navigator.userAgent.toLowerCase();
     return ua.indexOf("msie") != -1;
   }-*/;
+
+  /**
+   * Tests Element.is() and Element.as().
+   */
+  public void testIsAndAs() {
+    assertFalse(Element.is(Document.get()));
+
+    Node div = Document.get().createDivElement();
+    assertTrue(Element.is(div));
+    assertEquals("div", Element.as(div).getTagName().toLowerCase());
+
+    // Element.is(null) is allowed and should return false.
+    assertFalse(Element.is(null));
+  }
 }

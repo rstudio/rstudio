@@ -73,6 +73,10 @@ public class CompileTaskRunner {
 
       return success[0];
     } else {
+      // Compile tasks without -treeLogger should run headless.
+      if (System.getProperty("java.awt.headless") == null) {
+        System.setProperty("java.awt.headless", "true");
+      }
       PrintWriterTreeLogger logger = new PrintWriterTreeLogger();
       logger.setMaxDetail(options.getLogLevel());
       return doRun(logger, task);

@@ -19,6 +19,9 @@ import com.google.gwt.dev.jjs.InternalCompilerException;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.collect.Lists;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +42,12 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
     System.out.println(code);
   }
 
-  private JAbstractMethodBody body = null;
+
+  /**
+   * Special serialization treatment.
+   */
+  private transient JAbstractMethodBody body = null;
+
   private final JDeclaredType enclosingType;
   private final boolean isAbstract;
   private boolean isFinal;
@@ -250,5 +258,25 @@ public final class JMethod extends JNode implements HasEnclosingType, HasName,
         trace(title, after);
       }
     }
+  }
+
+  /**
+   * See {@link #writeBody(ObjectOutputStream)}.
+   * 
+   * @see #writeBody(ObjectOutputStream)
+   */
+  void readBody(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    body = (JAbstractMethodBody) stream.readObject();
+  }
+
+  /**
+   * After all types, fields, and methods are written to the stream, this method
+   * writes method bodies to the stream.
+   * 
+   * @see JProgram#writeObject(ObjectOutputStream)
+   */
+  void writeBody(ObjectOutputStream stream) throws IOException {
+    stream.writeObject(body);
   }
 }

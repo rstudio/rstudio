@@ -11,11 +11,14 @@ This product includes software developed by:
    - Java Development Tools (http://www.eclipse.org/jdt/)
    - Standard Widget Toolkit (http://www.eclipse.org/swt/) with modifications
  - The JFreeChart project (http://www.jfree.org/jfreechart/)
+ - Mort Bay Consulting (http://www.mortbay.com/)
+   - Jetty 6.1.11 (http://mortbay.org/jetty/)
  - The Mozilla Foundation (http://www.mozilla.org/).
    - Mozilla 1.7.12 (http://www.mozilla.org/releases/mozilla1.7.12/)
    - Rhino (http://www.mozilla.org/rhino/) with modifications
+ - ObjectWeb (http://www.objectweb.org/)
+   - ASM (http://asm.objectweb.org/) with modifications
  - The OpenQA Project (http://openqa.org/)
    - Selenium-RC (http://selenium-rc.openqa.org/)
- - The WebKit Open Source Project (http://www.webkit.org)
 
 For source availability and license information see COPYING.

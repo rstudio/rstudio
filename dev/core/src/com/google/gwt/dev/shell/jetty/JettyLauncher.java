@@ -265,14 +265,31 @@ public class JettyLauncher extends ServletContainerLauncher {
      */
     private class WebAppClassLoaderExtension extends WebAppClassLoader {
 
+      private static final String META_INF_SERVICES = "META-INF/services/";
+
       public WebAppClassLoaderExtension() throws IOException {
         super(bootStrapOnlyClassLoader, WebAppContextWithReload.this);
       }
 
       @Override
       public URL findResource(String name) {
+        // Specifically for META-INF/services/javax.xml.parsers.SAXParserFactory
+        String checkName = name;
+        if (checkName.startsWith(META_INF_SERVICES)) {
+          checkName = checkName.substring(META_INF_SERVICES.length());
+        }
+
+        // For a system path, load from the outside world.
+        URL found;
+        if (isSystemPath(checkName)) {
+          found = systemClassLoader.getResource(name);
+          if (found != null) {
+            return found;
+          }
+        }
+
         // Always check this ClassLoader first.
-        URL found = super.findResource(name);
+        found = super.findResource(name);
         if (found != null) {
           return found;
         }
@@ -281,17 +298,6 @@ public class JettyLauncher extends ServletContainerLauncher {
         found = systemClassLoader.getResource(name);
         if (found == null) {
           return null;
-        }
-
-        // Specifically for META-INF/services/javax.xml.parsers.SAXParserFactory
-        String checkName = name;
-        if (checkName.startsWith("META-INF/services/")) {
-          checkName = checkName.substring("META-INF/services/".length());
-        }
-
-        // For system/server path, just return it quietly.
-        if (isServerPath(checkName) || isSystemPath(checkName)) {
-          return found;
         }
 
         // Warn, add containing URL to our own ClassLoader, and retry the call.
@@ -319,14 +325,21 @@ public class JettyLauncher extends ServletContainerLauncher {
 
       @Override
       protected Class<?> findClass(String name) throws ClassNotFoundException {
+        // For system path, always prefer the outside world.
+        if (isSystemPath(name)) {
+          try {
+            return systemClassLoader.loadClass(name);
+          } catch (ClassNotFoundException e) {
+          }
+        }
+
         try {
           return super.findClass(name);
         } catch (ClassNotFoundException e) {
-        }
-
-        // For system/server path, just try the outside world quietly.
-        if (isServerPath(name) || isSystemPath(name)) {
-          return systemClassLoader.loadClass(name);
+          // Don't allow server classes to be loaded from the outside.
+          if (isServerPath(name)) {
+            throw e;
+          }
         }
 
         // See if the outside world has a URL for it.
@@ -434,6 +447,15 @@ public class JettyLauncher extends ServletContainerLauncher {
     // Suppress spammy Jetty log initialization.
     System.setProperty("org.mortbay.log.class", JettyNullLogger.class.getName());
     Log.getLog();
+
+    /*
+     * Make JDT the default Ant compiler so that JSP compilation just works
+     * out-of-the-box. If we don't set this, it's very, very difficult to make
+     * JSP compilation work.
+     */
+    String antJavaC = System.getProperty("build.compiler",
+        "org.eclipse.jdt.core.JDTCompilerAdapter");
+    System.setProperty("build.compiler", antJavaC);
   }
 
   @Override

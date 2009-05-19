@@ -185,10 +185,10 @@ public class Compiler {
           }
         } else {
           long compileStart = System.currentTimeMillis();
-          logger = logger.branch(TreeLogger.INFO, "Compiling module "
-              + moduleName);
+          TreeLogger branch = logger.branch(TreeLogger.INFO,
+              "Compiling module " + moduleName);
 
-          Precompilation precompilation = Precompile.precompile(logger,
+          Precompilation precompilation = Precompile.precompile(branch,
               options, module, options.getGenDir(), compilerWorkDir,
               options.getDumpSignatureFile());
 
@@ -199,7 +199,7 @@ public class Compiler {
           Permutation[] allPerms = precompilation.getPermutations();
           List<FileBackedObject<PermutationResult>> resultFiles = CompilePerms.makeResultFiles(
               options.getCompilerWorkDir(moduleName), allPerms);
-          CompilePerms.compile(logger, precompilation, allPerms,
+          CompilePerms.compile(branch, precompilation, allPerms,
               options.getLocalWorkers(), resultFiles);
 
           ArtifactSet generatedArtifacts = precompilation.getGeneratedArtifacts();
@@ -214,7 +214,7 @@ public class Compiler {
 
           long compileDone = System.currentTimeMillis();
           long delta = compileDone - compileStart;
-          logger.log(TreeLogger.INFO, "Compilation succeeded -- "
+          branch.log(TreeLogger.INFO, "Compilation succeeded -- "
               + String.format("%.3f", delta / 1000d) + "s");
         }
       }

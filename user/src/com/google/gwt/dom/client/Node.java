@@ -50,10 +50,12 @@ public class Node extends JavaScriptObject {
   }
 
   /**
-   * Determines whether the given {@link JavaScriptObject} is a DOM node.
+   * Determines whether the given {@link JavaScriptObject} is a DOM node. A
+   * <code>null</code> object will cause this method to return
+   * <code>false</code>.
    */
   public static native boolean is(JavaScriptObject o) /*-{
-    return !!o.nodeType;
+    return (!!o) && (!!o.nodeType);
   }-*/;
 
   protected Node() {

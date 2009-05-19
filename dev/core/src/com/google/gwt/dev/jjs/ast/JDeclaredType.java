@@ -18,6 +18,9 @@ package com.google.gwt.dev.jjs.ast;
 import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.util.collect.Lists;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -28,14 +31,14 @@ import java.util.List;
 public abstract class JDeclaredType extends JReferenceType {
 
   /**
-   * This type's fields.
+   * This type's fields. Special serialization treatment.
    */
-  protected List<JField> fields = Lists.create();
+  protected transient List<JField> fields = Lists.create();
 
   /**
-   * This type's methods.
+   * This type's methods. Special serialization treatment.
    */
-  protected List<JMethod> methods = Lists.create();
+  protected transient List<JMethod> methods = Lists.create();
 
   /**
    * Tracks whether this class has a dynamic clinit. Defaults to true until
@@ -219,6 +222,30 @@ public abstract class JDeclaredType extends JReferenceType {
   }
 
   /**
+   * See {@link #writeMembers(ObjectOutputStream)}.
+   * 
+   * @see #writeMembers(ObjectOutputStream)
+   */
+  @SuppressWarnings("unchecked")
+  void readMembers(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    fields = (List<JField>) stream.readObject();
+    methods = (List<JMethod>) stream.readObject();
+  }
+
+  /**
+   * See {@link #writeMethodBodies(ObjectOutputStream).
+   * 
+   * @see #writeMethodBodies(ObjectOutputStream)
+   */
+  void readMethodBodies(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    for (JMethod method : methods) {
+      method.readBody(stream);
+    }
+  }
+
+  /**
    * Called when this class's clinit is empty or can be run at the top level.
    */
   void removeClinit() {
@@ -226,5 +253,29 @@ public abstract class JDeclaredType extends JReferenceType {
     JMethod clinitMethod = methods.get(0);
     assert JProgram.isClinit(clinitMethod);
     hasClinit = false;
+  }
+
+  /**
+   * After all types are written to the stream without transient members, this
+   * method actually writes fields and methods to the stream, which establishes
+   * type identity for them.
+   * 
+   * @see JProgram#writeObject(ObjectOutputStream)
+   */
+  void writeMembers(ObjectOutputStream stream) throws IOException {
+    stream.writeObject(fields);
+    stream.writeObject(methods);
+  }
+
+  /**
+   * After all types, fields, and methods are written to the stream, this method
+   * writes method bodies to the stream.
+   * 
+   * @see JProgram#writeObject(ObjectOutputStream)
+   */
+  void writeMethodBodies(ObjectOutputStream stream) throws IOException {
+    for (JMethod method : methods) {
+      method.writeBody(stream);
+    }
   }
 }
