@@ -7,7 +7,7 @@
   <property name="target" value="build" />
 
   <property name="gwt.apicheck.config" 
-    location="tools/api-checker/config/gwt15_16userApi.conf"/>
+    location="tools/api-checker/config/gwt16_20userApi.conf"/>
 
   <target name="buildonly" depends="dev, user, servlet, jni" description="Build without docs/samples">
     <gwt.ant dir="distro-source" />
