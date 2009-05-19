@@ -116,6 +116,11 @@ public class Settings {
       break; // No setting wanted the remaining arguments
     }
 
+    if (settings.resources.get() == null) {
+      throw new ArgumentListException("Missing option -resources: "
+          + Settings.settingsHelp());
+    }
+
     if (remainingArguments.isEmpty()) {
       throw new ArgumentListException("Must specify the stories file");
     }

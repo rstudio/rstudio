@@ -27,6 +27,8 @@ import java.util.TreeSet;
  */
 public class GlobalInformation {
 
+  public static String backupLocation = "(Source location not known)";
+  
   public static Boolean displayDependencies = false;
   public static Boolean displaySplitPoints = false;
 

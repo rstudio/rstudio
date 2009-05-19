@@ -45,35 +45,27 @@ import javax.xml.parsers.SAXParserFactory;
 public class SoycDashboard {
 
   public static void main(String[] args) {
-    System.out.println("Generating the Story of Your Compile...");
     try {
+      System.out.println("Generating the Story of Your Compile...");
       GlobalInformation.settings = Settings.fromArgumentList(args);
-    } catch (Settings.ArgumentListException e) {
-      System.err.println(e.getMessage());
-      System.err.println("Usage: java com.google.gwt.soyc.SoycDashboard [options] report0.xml[.gz] [dependencies0.xml[.gz]] [splitpoints0.xml[.gz]]");
-      System.err.println("Options:");
-      System.err.println(Settings.settingsHelp());
-      System.exit(1);
-    }
 
-    Settings settings = GlobalInformation.settings;
-    GlobalInformation.displayDependencies = (settings.depFileName != null);
-    GlobalInformation.displaySplitPoints = (settings.splitPointsFileName != null);
+      Settings settings = GlobalInformation.settings;
+      GlobalInformation.displayDependencies = (settings.depFileName != null);
+      GlobalInformation.displaySplitPoints = (settings.splitPointsFileName != null);
 
-    MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm = new MakeTopLevelHtmlForPerm();
+      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm = new MakeTopLevelHtmlForPerm();
 
-    if (GlobalInformation.displayDependencies == true) {
-      /**
-       * handle dependencies
-       */
+      if (GlobalInformation.displayDependencies == true) {
+        /**
+         * handle dependencies
+         */
+        Map<String, ArrayList<String>> dependencies = new TreeMap<String, ArrayList<String>>();
+        DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
 
-      Map<String, ArrayList<String>> dependencies = new TreeMap<String, ArrayList<String>>();
-      DefaultHandler depHandler = parseXMLDocumentDependencies(dependencies);
+        // start parsing
+        SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
+        depFactoryMain.setNamespaceAware(true);
 
-      // start parsing
-      SAXParserFactory depFactoryMain = SAXParserFactory.newInstance();
-      depFactoryMain.setNamespaceAware(true);
-      try {
         SAXParser saxParser = depFactoryMain.newSAXParser();
         InputStream in = new FileInputStream(settings.depFileName);
         if (settings.depFileName.endsWith(".gz")) {
@@ -81,34 +73,21 @@ public class SoycDashboard {
         }
         in = new BufferedInputStream(in);
         saxParser.parse(in, depHandler);
-      } catch (ParserConfigurationException e) {
-        throw new RuntimeException("Could not parse document. ", e);
-      } catch (SAXException e) {
-        throw new RuntimeException("Could not create SAX parser. ", e);
-      } catch (FileNotFoundException e) {
-        throw new RuntimeException("Could not open file. ", e);
-      } catch (IOException e) {
-        throw new RuntimeException("Could not open file. ", e);
-      }
 
-      try {
         makeTopLevelHtmlForPerm.makeDependenciesHtml(dependencies);
-      } catch (IOException e) {
-        throw new RuntimeException("Cannot open file. ", e);
       }
-    }
 
-    if (GlobalInformation.displaySplitPoints == true) {
-      /**
-       * handle runAsync split points
-       */
+      if (GlobalInformation.displaySplitPoints == true) {
+        /**
+         * handle runAsync split points
+         */
 
-      DefaultHandler splitPointHandler = parseXMLDocumentSplitPoints();
+        DefaultHandler splitPointHandler = parseXMLDocumentSplitPoints();
 
-      // start parsing
-      SAXParserFactory splitPointsFactoryMain = SAXParserFactory.newInstance();
-      splitPointsFactoryMain.setNamespaceAware(true);
-      try {
+        // start parsing
+        SAXParserFactory splitPointsFactoryMain = SAXParserFactory.newInstance();
+        splitPointsFactoryMain.setNamespaceAware(true);
+
         SAXParser saxParser = splitPointsFactoryMain.newSAXParser();
         InputStream in = new FileInputStream(settings.splitPointsFileName);
         if (settings.depFileName.endsWith(".gz")) {
@@ -116,28 +95,18 @@ public class SoycDashboard {
         }
         in = new BufferedInputStream(in);
         saxParser.parse(in, splitPointHandler);
-      } catch (ParserConfigurationException e) {
-        throw new RuntimeException("Could not parse document. ", e);
-      } catch (SAXException e) {
-        throw new RuntimeException("Could not create SAX parser. ", e);
-      } catch (FileNotFoundException e) {
-        throw new RuntimeException("Could not open file. ", e);
-      } catch (IOException e) {
-        throw new RuntimeException("Could not open file. ", e);
       }
-    }
 
-    /**
-     * handle everything else
-     */
+      /**
+       * handle everything else
+       */
 
-    // make the parser handler
-    DefaultHandler handler = parseXMLDocument();
+      // make the parser handler
+      DefaultHandler handler = parseXMLDocument();
 
-    // start parsing
-    SAXParserFactory factoryMain = SAXParserFactory.newInstance();
-    factoryMain.setNamespaceAware(true);
-    try {
+      // start parsing
+      SAXParserFactory factoryMain = SAXParserFactory.newInstance();
+      factoryMain.setNamespaceAware(true);
       SAXParser saxParser = factoryMain.newSAXParser();
       InputStream in = new FileInputStream(settings.storiesFileName);
       if (settings.storiesFileName.endsWith(".gz")) {
@@ -145,36 +114,47 @@ public class SoycDashboard {
       }
       in = new BufferedInputStream(in);
       saxParser.parse(in, handler);
+
+      // add to "All Other Code" if none of the special categories apply
+      for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
+        updateAllOtherCodeType(breakdown.nameToCodeColl);
+      }
+
+      // now we need to aggregate numbers
+      GlobalInformation.computePackageSizes();
+      GlobalInformation.computePartialPackageSizes();
+
+      // clean up the RPC categories
+      for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
+        foldInRPCHeuristic(breakdown.nameToCodeColl);
+      }
+
+      // generate all the html files
+      for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
+        makeHTMLFiles(makeTopLevelHtmlForPerm, breakdown);
+      }
+
+      System.out.println("Finished creating reports. To see the dashboard, open SoycDashboard-index.html in your browser.");
+
     } catch (ParserConfigurationException e) {
-      throw new RuntimeException("Could not parse document. ", e);
+      System.err.println("Could not parse document. " + e.getMessage());
+      System.exit(1);
     } catch (SAXException e) {
-      throw new RuntimeException("Could not create SAX parser. ", e);
+      System.err.println("Could not create SAX parser. " + e.getMessage());
+      System.exit(1);
     } catch (FileNotFoundException e) {
-      throw new RuntimeException("Could not open file. ", e);
+      System.err.println("Cannot open file " + e.getMessage());
+      System.exit(1);
     } catch (IOException e) {
-      throw new RuntimeException("Could not open file. ", e);
+      System.err.println("Error creating html file. " + e.getMessage());
+      System.exit(1);
+    } catch (Settings.ArgumentListException e) {
+      System.err.println(e.getMessage());
+      System.err.println("Usage: java com.google.gwt.soyc.SoycDashboard options stories0.xml[.gz] [dependencies0.xml[.gz]] [splitpoints0.xml[.gz]]");
+      System.err.println("Options:");
+      System.err.println(Settings.settingsHelp());
+      System.exit(1);
     }
-
-    // add to "All Other Code" if none of the special categories apply
-    for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-      updateAllOtherCodeType(breakdown.nameToCodeColl);
-    }
-
-    // now we need to aggregate numbers
-    GlobalInformation.computePackageSizes();
-    GlobalInformation.computePartialPackageSizes();
-
-    // clean up the RPC categories
-    for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-      foldInRPCHeuristic(breakdown.nameToCodeColl);
-    }
-
-    // generate all the html files
-    for (SizeBreakdown breakdown : GlobalInformation.allSizeBreakdowns()) {
-      makeHTMLFiles(makeTopLevelHtmlForPerm, breakdown);
-    }
-
-    System.out.println("Finished creating reports. To see the dashboard, open SoycDashboard-index.html in your browser.");
   }
 
   /*
@@ -229,20 +209,15 @@ public class SoycDashboard {
    * generates all the HTML files
    */
   private static void makeHTMLFiles(
-      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown) {
-    try {
-      makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown);
-      MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
-      MakeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
-      MakeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
-      makeTopLevelHtmlForPerm.makeSplitPointClassesHtmls();
-      MakeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
-      MakeTopLevelHtmlForPerm.makeTopLevelShell();
-    } catch (IOException e) {
-      // TODO(spoon) pass all internal IOExceptions back to the top, so the
-      // give-up logic is in just one place
-      throw new RuntimeException("Cannot open file. ", e);
-    }
+      MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown)
+      throws IOException {
+    makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown);
+    MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
+    MakeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
+    MakeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
+    makeTopLevelHtmlForPerm.makeSplitPointClassesHtmls();
+    MakeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
+    MakeTopLevelHtmlForPerm.makeTopLevelShell();
   }
 
   private static DefaultHandler parseXMLDocument() {
@@ -667,7 +642,7 @@ public class SoycDashboard {
             }
 
             if (backupLocation.compareTo("") == 0) {
-              backupLocation = "com.google.gwt.dev.js.ast.JsProgram: Line 0";
+              backupLocation = GlobalInformation.backupLocation;
             }
             if ((((value.startsWith("'")) && (value.endsWith("'"))) || ((value.startsWith("\"")) && (value.endsWith("\""))))
                 && (mostAppropriateCategory.compareTo("") == 0)) {

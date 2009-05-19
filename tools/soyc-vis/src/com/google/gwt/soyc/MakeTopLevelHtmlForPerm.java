@@ -378,69 +378,73 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
 
       for (String literal : nameToLitColl.get(literalType).literalToLocations.keySet()) {
-
-        if (literal.trim().compareTo("") == 0) {
-          literal = "[whitespace only string]";
-        }
-
-        String newLiteral = "";
-        if (literal.length() > 80) {
-          int i;
-          for (i = 80; i < literal.length(); i = i + 80) {
-            String part1 = literal.substring(i - 80, i);
-            newLiteral = newLiteral + part1 + " ";
+        
+        if ((literalType.compareTo("string") != 0)||(nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo("otherStrings") != 0)){
+          
+          
+          if (literal.trim().compareTo("") == 0) {
+            literal = "[whitespace only string]";
           }
-          if (i - 80 > 0) {
-            newLiteral = newLiteral + literal.substring(i - 80);
-          }
-        } else {
-          newLiteral = literal;
-        }
-
-        String escliteral = escapeXml(newLiteral);
-
-        outFile.println("<tr>");
-        outFile.println("<td width=\"40%\">" + escliteral + "</td>");
-
-        int ct = 0;
-        if ((nameToLitColl.containsKey(literalType))
-            && (nameToLitColl.get(literalType).literalToLocations.containsKey(literal))) {
-          for (String location : nameToLitColl.get(literalType).literalToLocations.get(literal)) {
-
-            if (ct > 0) {
-              outFile.println("<tr>");
-              outFile.println("<td width=\"40%\"> </td>");
+  
+          String newLiteral = "";
+          if (literal.length() > 80) {
+            int i;
+            for (i = 80; i < literal.length(); i = i + 80) {
+              String part1 = literal.substring(i - 80, i);
+              newLiteral = newLiteral + part1 + " ";
             }
-
-            String newLocation = "";
-            if (location.length() > 80) {
-              int i;
-              for (i = 80; i < location.length(); i = i + 80) {
-                String part1 = location.substring(i - 80, i);
-                newLocation = newLocation + part1 + " ";
+            if (i - 80 > 0) {
+              newLiteral = newLiteral + literal.substring(i - 80);
+            }
+          } else {
+            newLiteral = literal;
+          }
+  
+          String escliteral = escapeXml(newLiteral);
+  
+          outFile.println("<tr>");
+          outFile.println("<td width=\"40%\">" + escliteral + "</td>");
+  
+          int ct = 0;
+          if ((nameToLitColl.containsKey(literalType))
+              && (nameToLitColl.get(literalType).literalToLocations.containsKey(literal))) {
+            for (String location : nameToLitColl.get(literalType).literalToLocations.get(literal)) {
+  
+              if (ct > 0) {
+                outFile.println("<tr>");
+                outFile.println("<td width=\"40%\"> </td>");
               }
-              if (i - 80 > 0) {
-                newLocation = newLocation + location.substring(i - 80);
+  
+              String newLocation = "";
+              if (location.length() > 80) {
+                int i;
+                for (i = 80; i < location.length(); i = i + 80) {
+                  String part1 = location.substring(i - 80, i);
+                  newLocation = newLocation + part1 + " ";
+                }
+                if (i - 80 > 0) {
+                  newLocation = newLocation + location.substring(i - 80);
+                }
+              } else {
+                newLocation = location;
               }
-            } else {
-              newLocation = location;
+  
+              outFile.println("<td width=\"40%\">" + newLocation + "</td>");
+  
+              if (ct > 0) {
+                outFile.println("</tr>");
+              }
+              ct++;
             }
-
-            outFile.println("<td width=\"40%\">" + newLocation + "</td>");
-
-            if (ct > 0) {
-              outFile.println("</tr>");
-            }
-            ct++;
+          } else {
+            System.err.println("either literalType " + literalType
+                + " not known, or no location for literal " + literal);
           }
-        } else {
-          System.err.println("either literalType " + literalType
-              + " not known, or no location for literal " + literal);
+  
+          outFile.println("</tr>");
         }
-
-        outFile.println("</tr>");
       }
-
+      
       outFile.println("</table>");
       outFile.println("<center>");
 
@@ -479,81 +483,94 @@ public class MakeTopLevelHtmlForPerm {
       outFile.println("<h2>Literals of type \"" + literalType + "\"</h2>");
       addHeaderWithBreakdownContext(breakdown, outFile);
       outFile.println("</center>");
-
-      outFile.println("<center>");
-      outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
-
-      for (String literal : nameToLitColl.get("string").stringLiteralToType.keySet()) {
-
-        if (nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo(
-            literalType) == 0) {
-
-          if (literal.trim().compareTo("") == 0) {
-            literal = "[whitespace only string]";
-          }
-
-          String newLiteral = "";
-          if (literal.length() > 80) {
-            int i;
-            for (i = 80; i < literal.length(); i = i + 80) {
-              String part1 = literal.substring(i - 80, i);
-              newLiteral = newLiteral + part1 + " ";
-            }
-            if (i - 80 > 0) {
-              newLiteral = newLiteral + literal.substring(i - 80);
-            }
-          } else {
-            newLiteral = literal;
-          }
-
-          String escliteral = escapeXml(newLiteral);
-
-          outFile.println("<tr>");
-          outFile.println("<td width=\"40%\">" + escliteral + "</td>");
-
-          int ct = 0;
-
-          if (nameToLitColl.get("string").literalToLocations.containsKey(literal)) {
-
-            for (String location : nameToLitColl.get("string").literalToLocations.get(literal)) {
-
-              if (ct > 0) {
-                outFile.println("<tr>");
-                outFile.println("<td width=\"40%\"> </td>");
-              }
-
-              String newLocation = "";
-              if (location.length() > 80) {
-                int i;
-                for (i = 80; i < location.length(); i = i + 80) {
-                  String part1 = location.substring(i - 80, i);
-                  newLocation = newLocation + part1 + " ";
-                }
-                if (i - 80 > 0) {
-                  newLocation = newLocation + location.substring(i - 80);
-                }
-              } else {
-                newLocation = location;
-              }
-
-              outFile.println("<td width=\"40%\">" + newLocation + "</td>");
-
-              if (ct > 0) {
-                outFile.println("</tr>");
-              }
-              ct++;
-            }
-          } else {
-            System.err.println("no location given for string literal: "
-                + literal);
-          }
-          outFile.println("</tr>");
-        }
+      
+      if (literalType.compareTo("otherStrings") == 0){
+        outFile.println("<center>");
+        outFile.println("(JavaScript variable names are not displayed.)");
+        outFile.println("</center>");
       }
 
-      outFile.println("</table>");
-      outFile.println("<center>");
-
+      else{
+        outFile.println("<center>");
+        outFile.println("<table border=\"1\" width=\"80%\" style=\"font-size: 11pt;\" bgcolor=\"white\">");
+  
+        for (String literal : nameToLitColl.get("string").stringLiteralToType.keySet()) {
+  
+          if (nameToLitColl.get("string").stringLiteralToType.get(literal).compareTo(
+              literalType) == 0) {
+  
+            if (literal.trim().compareTo("") == 0) {
+              literal = "[whitespace only string]";
+            }
+  
+            String newLiteral = "";
+            if (literal.length() > 80) {
+              int i;
+              for (i = 80; i < literal.length(); i = i + 80) {
+                String part1 = literal.substring(i - 80, i);
+                newLiteral = newLiteral + part1 + " ";
+              }
+              if (i - 80 > 0) {
+                newLiteral = newLiteral + literal.substring(i - 80);
+              }
+            } else {
+              newLiteral = literal;
+            }
+  
+            String escliteral = escapeXml(newLiteral);
+  
+            outFile.println("<tr>");
+            outFile.println("<td width=\"40%\">" + escliteral + "</td>");
+  
+            int ct = 0;
+  
+            if (nameToLitColl.get("string").literalToLocations.containsKey(literal)) {
+  
+              for (String location : nameToLitColl.get("string").literalToLocations.get(literal)) {
+  
+                if ((location.indexOf("Line 0") == -1)&&(location.compareTo(GlobalInformation.backupLocation) != 0)){ //i.e., if we actually know the location
+                  if (ct > 0) {
+                    outFile.println("<tr>");
+                    outFile.println("<td width=\"40%\"> </td>");
+                  }
+    
+                  String newLocation = "";
+                  if (location.length() > 80){
+                    int i;
+                    for (i = 80; i < location.length(); i = i + 80) {
+                      String part1 = location.substring(i - 80, i);
+                      newLocation = newLocation + part1 + " ";
+                    }
+                    if (i - 80 > 0) {
+                      newLocation = newLocation + location.substring(i - 80);
+                    }
+                  } else {
+                    newLocation = location;
+                  }
+    
+                  outFile.println("<td width=\"40%\"> " + newLocation + " </td>");
+    
+                  if (ct > 0) {
+                    outFile.println("</tr>");
+                  }
+                  ct++;
+                }
+              }
+              if (ct == 0){
+                outFile.println("<td width=\"40%\"> " + GlobalInformation.backupLocation + " </td>");
+              }
+            } else {
+              System.err.println("no location given for string literal: "
+                  + literal);
+            }
+            outFile.println("</tr>");
+          }
+        }
+  
+        outFile.println("</table>");
+        outFile.println("<center>");
+      }
+        
       outFile.println("</div>");
       outFile.println("</body>");
       outFile.println("</html>");
