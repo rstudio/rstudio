@@ -212,25 +212,33 @@ public class StringTest extends GWTTestCase {
   public void testHashCode() {
     String[] testStrings = {
         "watch", "unwatch", "toString", "toSource", "eval", "valueOf",
-        "constructor", "__proto__"};
-    int[] savedHash = new int[testStrings.length];
+        "constructor", "__proto__", "polygenelubricants", "xy", "x", "" };
+    int[] javaHashes = {
+        112903375, -274141738, -1776922004, -1781441930, 3125404, 231605032,
+        -1588406278, 2139739112, Integer.MIN_VALUE, 3841, 120, 0 };
+
     for (int i = 0; i < testStrings.length; ++i) {
-      savedHash[i] = testStrings[i].hashCode();
+      String testString = testStrings[i];
+      int expectedHash = javaHashes[i];
+
+      // verify that the hash codes of these strings match their java
+      // counterparts
+      assertEquals("Unexpected hash for string " + testString, expectedHash,
+          testString.hashCode());
 
       /*
        * Verify that the resulting hash code is numeric, since this is not
        * enforced in web mode.
        */
-      String str = Integer.toString(savedHash[i]);
+      String str = Integer.toString(expectedHash);
       for (int j = 0; j < str.length(); ++j) {
         char ch = str.charAt(j);
         assertTrue("Bad character '" + ch + "' (U+0" + Integer.toHexString(ch)
             + ")", ch == '-' || ch == ' ' || Character.isDigit(ch));
       }
-    }
-    // verify the hash codes are constant for a given string
-    for (int i = 0; i < testStrings.length; ++i) {
-      assertEquals(savedHash[i], testStrings[i].hashCode());
+
+      // get hashes again to verify the values are constant for a given string
+      assertEquals(expectedHash, testStrings[i].hashCode());
     }
   }
 
