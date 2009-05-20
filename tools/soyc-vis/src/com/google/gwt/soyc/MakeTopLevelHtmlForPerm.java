@@ -149,21 +149,21 @@ public class MakeTopLevelHtmlForPerm {
     }
     String inputFileName = "roundedCorners.css";
     File inputFile = new File(classPath + inputFileName);
-    File outputFile = new File("roundedCorners.css");
+    File outputFile = getOutFile("roundedCorners.css");
     copyFileOrDirectory(inputFile, outputFile, classPath, inputFileName, false);
 
     inputFileName = "classLevel.css";
     File inputFile2 = new File(classPath + inputFileName);
-    File outputFile2 = new File("classLevel.css");
+    File outputFile2 = getOutFile("classLevel.css");
     copyFileOrDirectory(inputFile2, outputFile2, classPath, inputFileName,
         false);
 
     inputFileName = "images";
     File inputDir = new File(classPath + "images");
-    File outputDir = new File("images");
+    File outputDir = getOutFile("images");
     copyFileOrDirectory(inputDir, outputDir, classPath, inputFileName, true);
 
-    final PrintWriter outFile = new PrintWriter(shellFileName(breakdown));
+    final PrintWriter outFile = new PrintWriter(getOutFile(shellFileName(breakdown)));
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">");
     outFile.println("<html>");
     outFile.println("<head>");
@@ -279,7 +279,7 @@ public class MakeTopLevelHtmlForPerm {
         }
       }
 
-      final PrintWriter outFile = new PrintWriter(outFileName);
+      final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
 
       outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
       outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -351,8 +351,8 @@ public class MakeTopLevelHtmlForPerm {
     for (String literalType : nameToLitColl.keySet()) {
 
       String outFileName = literalType + "Lits.html";
-      final PrintWriter outFile = new PrintWriter(breakdown.getId() + "_"
-          + outFileName);
+      final PrintWriter outFile = new PrintWriter(getOutFile(breakdown.getId()
+          + "_" + outFileName));
 
       outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
       outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -461,8 +461,8 @@ public class MakeTopLevelHtmlForPerm {
 
     for (String literalType : nameToLitColl.get("string").stringTypeToSize.keySet()) {
       String outFileName = literalType + "Strings.html";
-      final PrintWriter outFile = new PrintWriter(breakdown.getId() + "_"
-          + outFileName);
+      final PrintWriter outFile = new PrintWriter(getOutFile(breakdown.getId()
+          + "_" + outFileName));
 
       outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
       outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -579,7 +579,8 @@ public class MakeTopLevelHtmlForPerm {
   }
 
   public void makeTopLevelShell() throws IOException {
-    PrintWriter outFile = new PrintWriter("SoycDashboard-index.html");
+    PrintWriter outFile = new PrintWriter(
+        getOutFile("SoycDashboard-index.html"));
 
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">");
     outFile.println("<html>");
@@ -703,6 +704,15 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
+  /**
+   * Return a {@link File} object for a file to be emitted into the output
+   * directory.
+   */
+  private static File getOutFile(String localFileName) {
+    File outDir = new File(GlobalInformation.settings.out.get());
+    return new File(outDir, localFileName);
+  }
+
   private static String makeCodeTypeHtml(SizeBreakdown breakdown,
       Map<String, CodeCollection> nameToCodeColl) throws IOException {
     String outFileName = breakdown.getId() + "_codeTypeBreakdown.html";
@@ -725,7 +735,7 @@ public class MakeTopLevelHtmlForPerm {
       }
     }
 
-    final PrintWriter outFile = new PrintWriter(outFileName);
+    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
 
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
     outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -802,7 +812,7 @@ public class MakeTopLevelHtmlForPerm {
       }
     }
 
-    final PrintWriter outFile = new PrintWriter(outFileName);
+    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
 
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
     outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -874,7 +884,7 @@ public class MakeTopLevelHtmlForPerm {
       }
     }
 
-    final PrintWriter outFile = new PrintWriter(outFileName);
+    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
 
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
     outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -934,7 +944,7 @@ public class MakeTopLevelHtmlForPerm {
   private String makeStringLiteralsHtml(SizeBreakdown breakdown,
       Map<String, LiteralsCollection> nameToLitColl) throws IOException {
     String outFileName = breakdown.getId() + "_stringLiteralsBreakdown.html";
-    final PrintWriter outFile = new PrintWriter(outFileName);
+    final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
 
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
     outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -1053,7 +1063,7 @@ public class MakeTopLevelHtmlForPerm {
 
         String outFileName = origOutFileName + filename(curPackageName)
             + ".html";
-        outFile = new PrintWriter(outFileName);
+        outFile = new PrintWriter(getOutFile(outFileName));
 
         outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
         outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -1146,8 +1156,8 @@ public class MakeTopLevelHtmlForPerm {
         }
       }
 
-      PrintWriter outFile = new PrintWriter(classesInPackageFileName(breakdown,
-          packageName));
+      PrintWriter outFile = new PrintWriter(
+          getOutFile(classesInPackageFileName(breakdown, packageName)));
 
       outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
       outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");
@@ -1292,7 +1302,7 @@ public class MakeTopLevelHtmlForPerm {
         String outFileName = "splitPoint-" + filename(curSplitPointLocation)
             + "-Classes.html";
 
-        final PrintWriter outFile = new PrintWriter(outFileName);
+        final PrintWriter outFile = new PrintWriter(getOutFile(outFileName));
 
         outFile.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"");
         outFile.println("\"http://www.w3.org/TR/html4/strict.dtd\">");

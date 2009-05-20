@@ -21,6 +21,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.BufferedInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -54,6 +55,8 @@ public class SoycDashboard {
       GlobalInformation.displaySplitPoints = (settings.splitPointsFileName != null);
 
       MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm = new MakeTopLevelHtmlForPerm();
+
+      new File(settings.out.get()).mkdir();
 
       if (GlobalInformation.displayDependencies == true) {
         /**

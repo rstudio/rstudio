@@ -157,6 +157,8 @@ public class Settings {
 
   public String depFileName;
 
+  public final Setting<String> out = addSetting(new StringSetting("-out",
+      "dir", ".", "output directory"));
   public final Setting<String> resources = addSetting(new StringSetting(
       "-resources", "jarfile", null,
       " directory or jar file with CSS, etc., resources"));
