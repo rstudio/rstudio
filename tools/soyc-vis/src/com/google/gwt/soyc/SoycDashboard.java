@@ -212,12 +212,12 @@ public class SoycDashboard {
       MakeTopLevelHtmlForPerm makeTopLevelHtmlForPerm, SizeBreakdown breakdown)
       throws IOException {
     makeTopLevelHtmlForPerm.makePackageClassesHtmls(breakdown);
-    MakeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
-    MakeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
-    MakeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
+    makeTopLevelHtmlForPerm.makeCodeTypeClassesHtmls(breakdown);
+    makeTopLevelHtmlForPerm.makeLiteralsClassesTableHtmls(breakdown);
+    makeTopLevelHtmlForPerm.makeStringLiteralsClassesTableHtmls(breakdown);
     makeTopLevelHtmlForPerm.makeSplitPointClassesHtmls();
-    MakeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
-    MakeTopLevelHtmlForPerm.makeTopLevelShell();
+    makeTopLevelHtmlForPerm.makeBreakdownShell(breakdown);
+    makeTopLevelHtmlForPerm.makeTopLevelShell();
   }
 
   private static DefaultHandler parseXMLDocument() {

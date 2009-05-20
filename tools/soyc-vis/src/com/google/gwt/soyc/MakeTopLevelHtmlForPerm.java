@@ -131,7 +131,7 @@ public class MakeTopLevelHtmlForPerm {
     return escaped;
   }
 
-  public static void makeBreakdownShell(SizeBreakdown breakdown)
+  public void makeBreakdownShell(SizeBreakdown breakdown)
       throws IOException {
     // this will contain the place holder iframes where the actual information
     // is going to go.
@@ -249,7 +249,7 @@ public class MakeTopLevelHtmlForPerm {
     outFile.close();
   }
 
-  public static void makeCodeTypeClassesHtmls(SizeBreakdown breakdown)
+  public void makeCodeTypeClassesHtmls(SizeBreakdown breakdown)
       throws IOException {
     HashMap<String, CodeCollection> nameToCodeColl = breakdown.nameToCodeColl;
 
@@ -344,7 +344,7 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
-  public static void makeLiteralsClassesTableHtmls(SizeBreakdown breakdown)
+  public void makeLiteralsClassesTableHtmls(SizeBreakdown breakdown)
       throws IOException {
     Map<String, LiteralsCollection> nameToLitColl = breakdown.nameToLitColl;
 
@@ -455,7 +455,7 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
-  public static void makeStringLiteralsClassesTableHtmls(SizeBreakdown breakdown)
+  public void makeStringLiteralsClassesTableHtmls(SizeBreakdown breakdown)
       throws IOException {
     Map<String, LiteralsCollection> nameToLitColl = breakdown.nameToLitColl;
 
@@ -578,7 +578,7 @@ public class MakeTopLevelHtmlForPerm {
     }
   }
 
-  public static void makeTopLevelShell() throws IOException {
+  public void makeTopLevelShell() throws IOException {
     PrintWriter outFile = new PrintWriter("SoycDashboard-index.html");
 
     outFile.println("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML//EN\">");
@@ -781,7 +781,7 @@ public class MakeTopLevelHtmlForPerm {
     return outFileName;
   }
 
-  private static String makeLiteralsHtml(SizeBreakdown breakdown,
+  private String makeLiteralsHtml(SizeBreakdown breakdown,
       Map<String, LiteralsCollection> nameToLitColl) throws IOException {
     String outFileName = breakdown.getId() + "_literalsBreakdown.html";
     float maxSize = 0f;
@@ -858,7 +858,7 @@ public class MakeTopLevelHtmlForPerm {
     return outFileName;
   }
 
-  private static String makePackageHtml(SizeBreakdown breakdown)
+  private String makePackageHtml(SizeBreakdown breakdown)
       throws FileNotFoundException {
     String outFileName = breakdown.getId() + "_" + "packageBreakdown.html";
     Map<String, Float> packageToPartialSize = breakdown.packageToPartialSize;
@@ -931,7 +931,7 @@ public class MakeTopLevelHtmlForPerm {
     return outFileName;
   }
 
-  private static String makeStringLiteralsHtml(SizeBreakdown breakdown,
+  private String makeStringLiteralsHtml(SizeBreakdown breakdown,
       Map<String, LiteralsCollection> nameToLitColl) throws IOException {
     String outFileName = breakdown.getId() + "_stringLiteralsBreakdown.html";
     final PrintWriter outFile = new PrintWriter(outFileName);
