@@ -79,7 +79,7 @@ public class CookieTest extends GWTTestCase {
         assertEquals(Cookies.getCookie("shouldNotExpire"), "forever");
         Cookies.removeCookie("shouldNotExpire");
         assertNull(Cookies.getCookie("shouldNotExpire"));
-        
+
         // Finish the test
         finishTest();
       }
@@ -87,21 +87,21 @@ public class CookieTest extends GWTTestCase {
     timer.schedule(5010);
     delayTestFinish(6 * 1000);
   }
-  
+
   /**
    * Test that removing cookies works correctly.
    */
   public void testRemoveCookie() {
     // First clear all cookies
     clearCookies();
-    
+
     // Set a few cookies
     Cookies.setCookie("test1", "value1");
     Cookies.setCookie("test2", "value2");
     Cookies.setCookie("test3", "value3");
     Collection<String> cookies = Cookies.getCookieNames();
     assertEquals(3, cookies.size());
-    
+
     // Remove a cookie
     Cookies.removeCookie("test2");
     assertEquals("value1", Cookies.getCookie("test1"));
@@ -121,15 +121,147 @@ public class CookieTest extends GWTTestCase {
     assertEquals(null, Cookies.getCookie("test3"));
     cookies = Cookies.getCookieNames();
     assertEquals(0, cookies.size());
+
+    // Add/remove URI encoded cookies
+    Cookies.setCookie("test1-test1", "value1 value1");
+    Cookies.removeCookie("test1-test1");
+    cookies = Cookies.getCookieNames();
+    assertEquals(0, cookies.size());
+
+    // Add/remove cookies that are not URI encoded
+    Cookies.setUriEncode(false);
+    Cookies.setCookie("test1+test1", "value1+value1");
+    Cookies.removeCookie("test1+test1");
+    cookies = Cookies.getCookieNames();
+    assertEquals(0, cookies.size());
+
+    // Make sure unencoded cookies with bogus format are not added
+    try {
+      Cookies.setCookie("test1=test1", "value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+    try {
+      Cookies.setCookie("test1;test1", "value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+    try {
+      Cookies.setCookie("test1,test1", "value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+    try {
+      Cookies.setCookie("test1 test1", "value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+    try {
+      Cookies.setCookie("$test1", "value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+    try {
+      Cookies.setCookie("test1", "value1;value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+    try {
+      Cookies.setCookie("test1", "value1=value1");
+      fail("Should have thrown an IllegalArgumentException for bad cookie format.");
+    } catch (IllegalArgumentException e) {
+      // Success.
+    }
+
   }
-  
+
   /**
    * Clear out all existing cookies.
    */
-  private void clearCookies() { 
+  private void clearCookies() {
     Collection<String> cookies = Cookies.getCookieNames();
     for (String cookie : cookies) {
       Cookies.removeCookie(cookie);
     }
+  }
+
+  /**
+   * Test that removing cookies with a path works correctly.
+   * 
+   * Note that we do not verify failure to remove a cookie set with a path but
+   * removed without one as browser behavior differs.
+   */
+  public void testRemoveCookiePath() {
+    // First clear all cookies
+    clearCookies();
+
+    // Test first without UriEncoding
+    Cookies.setUriEncode(false);
+
+    // Set a few cookies
+    Cookies.setCookie("test1+test1", "value1", null, null, "/", false);
+    Cookies.setCookie("test2", "value2+value2", null, null, "/", false);
+    Cookies.setCookie("test3", "value3", null, null, "/", false);
+    Collection<String> cookies = Cookies.getCookieNames();
+    assertEquals(3, cookies.size());
+
+    // Remove a cookie
+    Cookies.removeCookie("test2", "/");
+    assertEquals("value1", Cookies.getCookie("test1+test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals("value3", Cookies.getCookie("test3"));
+
+    // Remove another cookie
+    Cookies.removeCookie("test1+test1", "/");
+    assertEquals(null, Cookies.getCookie("test1+test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals("value3", Cookies.getCookie("test3"));
+
+    // Remove last cookie
+    Cookies.removeCookie("test3", "/");
+    assertEquals(null, Cookies.getCookie("test1+test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals(null, Cookies.getCookie("test3"));
+    cookies = Cookies.getCookieNames();
+    assertEquals(0, cookies.size());
+
+    // First clear all cookies
+    clearCookies();
+
+    // Test with UriEncoding
+    Cookies.setUriEncode(true);
+
+    // Set a few cookies
+    Cookies.setCookie("test1+test1", "value1", null, null, "/", false);
+    Cookies.setCookie("test2", "value2+value2", null, null, "/", false);
+    Cookies.setCookie("test3", "value3", null, null, "/", false);
+    cookies = Cookies.getCookieNames();
+    assertEquals(3, cookies.size());
+
+    // Remove a cookie
+    Cookies.removeCookie("test2", "/");
+    assertEquals("value1", Cookies.getCookie("test1+test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals("value3", Cookies.getCookie("test3"));
+
+    // Remove another cookie
+    Cookies.removeCookie("test1+test1", "/");
+    assertEquals(null, Cookies.getCookie("test1+test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals("value3", Cookies.getCookie("test3"));
+
+    // Remove last cookie
+    Cookies.removeCookie("test3", "/");
+    assertEquals(null, Cookies.getCookie("test1+test1"));
+    assertEquals(null, Cookies.getCookie("test2"));
+    assertEquals(null, Cookies.getCookie("test3"));
+    cookies = Cookies.getCookieNames();
+    assertEquals(0, cookies.size());
   }
 }

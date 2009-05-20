@@ -40,10 +40,34 @@ public class Cookies {
   static String rawCookies;
 
   /**
+   * Flag that indicates whether cookies should be URIencoded (when set) and
+   * URIdecoded (when retrieved). Defaults to URIencoding.
+   */
+  private static boolean uriEncoding = true;
+
+  /**
+   * Gets the URIencode flag
+   */
+  public static boolean getUriEncode() {
+    return uriEncoding;
+  }
+
+  /**
+   * Updates the URIencode flag and empties the cached cookies set
+   */
+  public static void setUriEncode(boolean encode) {
+    if (encode != uriEncoding) {
+      uriEncoding = encode;
+      cachedCookies = null;
+    }
+  }
+
+  /**
    * Gets the cookie associated with the given name.
    * 
    * @param name the name of the cookie to be retrieved
-   * @return the cookie's value, or <code>null</code> if the cookie doesn't exist
+   * @return the cookie's value, or <code>null</code> if the cookie doesn't
+   *         exist
    */
   public static String getCookie(String name) {
     Map<String, String> cookiesMap = ensureCookies();
@@ -64,9 +88,40 @@ public class Cookies {
    * 
    * @param name the name of the cookie to be removed
    */
-  public static native void removeCookie(String name) /*-{
-    $doc.cookie = name + "=;expires=Fri, 02-Jan-1970 00:00:00 GMT"; 
-  }-*/;
+  public static void removeCookie(String name) {
+    if (uriEncoding) {
+      uriEncode(name);
+    }
+    removeCookieNative(name);
+  }
+
+  /**
+   * Native method to remove a cookie
+   */
+  private static native void removeCookieNative(String name) /*-{
+        $doc.cookie = name + "=;expires=Fri, 02-Jan-1970 00:00:00 GMT"; 
+      }-*/;
+
+  /**
+   * Removes the cookie associated with the given name.
+   * 
+   * @param name the name of the cookie to be removed
+   * @param path the path to be associated with this cookie (which should match
+   *          the path given in {@link #setCookie})
+   */
+  public static void removeCookie(String name, String path) {
+    if (uriEncoding) {
+      uriEncode(name);
+    }
+    removeCookieNative(name, path);
+  }
+
+  /**
+   * Native method to remove a cookie with a path
+   */
+  public static native void removeCookieNative(String name, String path) /*-{
+       $doc.cookie = name + "=;path=" + path + ";expires=Fri, 02-Jan-1970 00:00:00 GMT"; 
+     }-*/;
 
   /**
    * Sets a cookie. The cookie will expire when the current browser session is
@@ -76,7 +131,7 @@ public class Cookies {
    * @param value the cookie's value
    */
   public static void setCookie(String name, String value) {
-    setCookieImpl(name, value, 0, null, null, false);
+    setCookie(name, value, null, null, null, false);
   }
 
   /**
@@ -91,49 +146,97 @@ public class Cookies {
   }
 
   /**
-   * Sets a cookie.
+   * Sets a cookie. If uriEncoding is false, it checks the validity of name and
+   * value. Name: Must conform to RFC 2965. Not allowed: = , ; white space. Also
+   * can't begin with $. Value: No = or ;
    * 
    * @param name the cookie's name
    * @param value the cookie's value
    * @param expires when the cookie expires
    * @param domain the domain to be associated with this cookie
    * @param path the path to be associated with this cookie
-   * @param secure <code>true</code> to make this a secure cookie (that is,
-   * only accessible over an SSL connection)
+   * @param secure <code>true</code> to make this a secure cookie (that is, only
+   *          accessible over an SSL connection)
    */
   public static void setCookie(String name, String value, Date expires,
       String domain, String path, boolean secure) {
-    setCookieImpl(name, value, (expires == null) ? 0 : expires.getTime(), domain, path, secure);
+    if (uriEncoding) {
+      uriEncode(name);
+      uriEncode(value);
+    } else if (!isValidCookieName(name) || !isValidCookieValue(value)) {
+      throw new IllegalArgumentException("Illegal cookie format.");
+    }
+    setCookieImpl(name, value, (expires == null) ? 0 : expires.getTime(),
+        domain, path, secure);
   }
 
-  static native void loadCookies(HashMap<String, String> m) /*-{
-    var docCookie = $doc.cookie;
-    if (docCookie && docCookie != '') {
-      var crumbs = docCookie.split('; ');
-      for (var i = 0; i < crumbs.length; ++i) {
-        var name, value;
-        var eqIdx = crumbs[i].indexOf('=');
-        if (eqIdx == -1) {
-          name = crumbs[i];
-          value = '';
-        } else {
-          name = crumbs[i].substring(0, eqIdx);
-          value = crumbs[i].substring(eqIdx + 1);
-        }
-        try {
-          name = decodeURIComponent(name);
-        } catch (e) {
-          // ignore error, keep undecoded name
-        }
-        try {
-          value = decodeURIComponent(value);
-        } catch (e) {
-          // ignore error, keep undecoded value
-        }
-        m.@java.util.Map::put(Ljava/lang/Object;Ljava/lang/Object;)(name,value);
-      }
+  /*
+   * Checks whether a cookie name is valid: can't contain =;, or whitespace.
+   * Can't begin with $.
+   * 
+   * @param name the cookie's name
+   */
+  private static boolean isValidCookieName(String name) {
+    if (uriEncoding) {
+      // check not necessary
+      return true;
+    } else if (name.contains("=") || name.contains(";") || name.contains(",")
+        || name.startsWith("$") || name.matches(".*\\s+.*")) {
+      return false;
+    } else
+      return true;
+  }
+
+  /*
+   * Checks whether a cookie value is valid: can't contain = or ;
+   * 
+   * @param value the cookie's value
+   */
+  private static boolean isValidCookieValue(String value) {
+    if (uriEncoding) {
+      // check not necessary
+      return true;
     }
-  }-*/;
+    if (value.contains("=") || value.contains(";")) {
+      return false;
+    } else
+      return true;
+  }
+
+  private static native String uriEncode(String s) /*-{
+       return encodeURIComponent(s);
+     }-*/;
+
+  static native void loadCookies(HashMap<String, String> m) /*-{
+        var docCookie = $doc.cookie;
+        if (docCookie && docCookie != '') {
+          var crumbs = docCookie.split('; ');
+          for (var i = 0; i < crumbs.length; ++i) {
+            var name, value;
+            var eqIdx = crumbs[i].indexOf('=');
+            if (eqIdx == -1) {
+              name = crumbs[i];
+              value = '';
+            } else {
+              name = crumbs[i].substring(0, eqIdx);
+              value = crumbs[i].substring(eqIdx + 1);
+            }
+            if (@com.google.gwt.user.client.Cookies::uriEncoding) {
+              try {
+                name = decodeURIComponent(name);
+              } catch (e) {
+                // ignore error, keep undecoded name
+              }
+              try {
+                value = decodeURIComponent(value);
+              } catch (e) {
+                // ignore error, keep undecoded value
+              }
+            }
+            m.@java.util.Map::put(Ljava/lang/Object;Ljava/lang/Object;)(name,value);
+          }
+        }
+      }-*/;
 
   private static HashMap<String, String> ensureCookies() {
     if (cachedCookies == null || needsRefresh()) {
@@ -144,31 +247,31 @@ public class Cookies {
   }
 
   private static native boolean needsRefresh() /*-{
-    var docCookie = $doc.cookie;
-        
-    // Check to see if cached cookies need to be invalidated.
-    if (docCookie != @com.google.gwt.user.client.Cookies::rawCookies) {  
-      @com.google.gwt.user.client.Cookies::rawCookies = docCookie;
-      return true;
-    } else {
-      return false;
-    } 
-  }-*/;
+        var docCookie = $doc.cookie;
+            
+        // Check to see if cached cookies need to be invalidated.
+        if (docCookie != @com.google.gwt.user.client.Cookies::rawCookies) {  
+          @com.google.gwt.user.client.Cookies::rawCookies = docCookie;
+          return true;
+        } else {
+          return false;
+        } 
+      }-*/;
 
   private static native void setCookieImpl(String name, String value,
       double expires, String domain, String path, boolean secure) /*-{
-    var c = encodeURIComponent(name) + '=' + encodeURIComponent(value);
-    if ( expires )
-      c += ';expires=' + (new Date(expires)).toGMTString();
-    if (domain)
-      c += ';domain=' + domain;
-    if (path)
-      c += ';path=' + path;
-    if (secure)
-      c += ';secure';
+        var c = name + '=' + value;
+        if ( expires )
+          c += ';expires=' + (new Date(expires)).toGMTString();
+        if (domain)
+          c += ';domain=' + domain;
+        if (path)
+          c += ';path=' + path;
+        if (secure)
+          c += ';secure';
 
-    $doc.cookie = c;
-  }-*/;
+        $doc.cookie = c;
+      }-*/;
 
   private Cookies() {
   }
