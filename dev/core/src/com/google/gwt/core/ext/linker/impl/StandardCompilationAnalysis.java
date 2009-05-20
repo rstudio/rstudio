@@ -15,11 +15,9 @@
  */
 package com.google.gwt.core.ext.linker.impl;
 
-import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.CompilationAnalysis;
-
-import java.io.File;
+import com.google.gwt.core.ext.linker.SyntheticArtifact;
+import com.google.gwt.core.linker.SoycReportLinker;
 
 /**
  * An implementation of CompilationAnalysis. This class transforms SourceInfos
@@ -29,48 +27,54 @@ import java.io.File;
 public class StandardCompilationAnalysis extends CompilationAnalysis {
 
   /**
+   * A SOYC artifact. The existence of this class is an implementation detail.
+   */
+  public static class SoycArtifact extends SyntheticArtifact {
+    public SoycArtifact(String partialPath, byte[] bytes) {
+      super(SoycReportLinker.class, partialPath, bytes);
+      setPrivate(true);
+    }
+  }
+
+  /**
    * File containing method-level control-flow dependencies (corresponding to
    * the current report).
    */
-  private File depFile;
+  private SoycArtifact depFile;
 
   /**
    * File containing split points.
    */
-  private File splitPointsFile;
+  private SoycArtifact splitPointsFile;
 
   /**
    * File containing stories.
    */
-  private File storiesFile;
+  private SoycArtifact storiesFile;
 
   /**
    * Constructed by PermutationCompiler.
    */
-  public StandardCompilationAnalysis(TreeLogger logger, File depFile,
-      File storiesFile, File splitPointsFile) throws UnableToCompleteException {
+  public StandardCompilationAnalysis(SoycArtifact dependencies,
+      SoycArtifact stories, SoycArtifact splitPoints) {
     super(StandardLinkerContext.class);
-    logger = logger.branch(TreeLogger.INFO, "Creating CompilationAnalysis");
-
-    this.depFile = depFile;
-    this.storiesFile = storiesFile;
-    this.splitPointsFile = splitPointsFile;
-
-    logger.log(TreeLogger.INFO, "Done");
+    this.depFile = dependencies;
+    this.storiesFile = stories;
+    this.splitPointsFile = splitPoints;
   }
 
   @Override
-  public File getDepFile() {
+  public SoycArtifact getDepFile() {
     return depFile;
   }
 
   @Override
-  public File getSplitPointsFile() {
+  public SoycArtifact getSplitPointsFile() {
     return splitPointsFile;
   }
 
   @Override
-  public File getStoriesFile() {
+  public SoycArtifact getStoriesFile() {
     return storiesFile;
   }
 }

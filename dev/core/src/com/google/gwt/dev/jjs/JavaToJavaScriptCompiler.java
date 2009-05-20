@@ -21,12 +21,11 @@ import com.google.gwt.core.ext.linker.ArtifactSet;
 import com.google.gwt.core.ext.linker.SymbolData;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
 import com.google.gwt.core.ext.linker.impl.StandardSymbolData;
+import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis.SoycArtifact;
 import com.google.gwt.core.ext.soyc.Range;
-import com.google.gwt.core.ext.soyc.SplitPointRecorder;
-import com.google.gwt.core.ext.soyc.StoryRecorder;
-import com.google.gwt.core.ext.soyc.impl.DependencyRecorderImpl;
-import com.google.gwt.core.ext.soyc.impl.SplitPointRecorderImpl;
-import com.google.gwt.core.ext.soyc.impl.StoryRecorderImpl;
+import com.google.gwt.core.ext.soyc.impl.DependencyRecorder;
+import com.google.gwt.core.ext.soyc.impl.SplitPointRecorder;
+import com.google.gwt.core.ext.soyc.impl.StoryRecorder;
 import com.google.gwt.dev.PermutationResult;
 import com.google.gwt.dev.cfg.ModuleDef;
 import com.google.gwt.dev.jdt.RebindPermutationOracle;
@@ -112,7 +111,6 @@ import org.eclipse.jdt.internal.compiler.ast.CompilationUnitDeclaration;
 import org.eclipse.jdt.internal.compiler.ast.TypeDeclaration;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -319,24 +317,31 @@ public class JavaToJavaScriptCompiler {
 
       PermutationResult toReturn = new PermutationResultImpl(js,
           makeSymbolMap(symbolTable));
+
       if (sourceInfoMaps != null) {
+        // Free up memory.
+        symbolTable = null;
 
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
         // get method dependencies
-        DependencyRecorderImpl dr = new DependencyRecorderImpl();
-        File depFile = dr.recordDependencies(jprogram, options.getWorkDir(),
-            permutationId, logger);
+        StoryRecorder.recordStories(logger, baos, sourceInfoMaps, js);
+        SoycArtifact stories = new SoycArtifact("stories" + permutationId
+            + ".xml.gz", baos.toByteArray());
+        // Free up memory.
+        js = null;
 
-        StoryRecorder sr = new StoryRecorderImpl();
-        File storyFile = sr.recordStories(jprogram, options.getWorkDir(),
-            permutationId, logger, sourceInfoMaps, js);
+        baos.reset();
+        DependencyRecorder.recordDependencies(logger, baos, jprogram);
+        SoycArtifact dependencies = new SoycArtifact("dependencies"
+            + permutationId + ".xml.gz", baos.toByteArray());
 
-        SplitPointRecorder spr = new SplitPointRecorderImpl();
-        File splitPointsFile = spr.recordSplitPoints(jprogram,
-            options.getWorkDir(), permutationId, logger);
+        baos.reset();
+        SplitPointRecorder.recordSplitPoints(jprogram, baos, logger);
+        SoycArtifact splitPoints = new SoycArtifact("splitPoints"
+            + permutationId + ".xml.gz", baos.toByteArray());
 
         toReturn.getArtifacts().add(
-            new StandardCompilationAnalysis(logger, depFile, storyFile,
-                splitPointsFile));
+            new StandardCompilationAnalysis(dependencies, stories, splitPoints));
       }
       return toReturn;
     } catch (Throwable e) {

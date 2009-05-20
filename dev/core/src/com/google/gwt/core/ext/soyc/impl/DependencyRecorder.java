@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
@@ -23,8 +22,7 @@ import com.google.gwt.dev.jjs.impl.ControlFlowAnalyzer;
 import com.google.gwt.dev.util.HtmlTextOutput;
 import com.google.gwt.util.tools.Utility;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -33,12 +31,24 @@ import java.util.zip.GZIPOutputStream;
 /**
  * The control-flow dependency recorder for SOYC.
  */
-public class DependencyRecorderImpl implements
+public class DependencyRecorder implements
     ControlFlowAnalyzer.DependencyRecorder {
+
+  /**
+   * Used to record dependencies of a program.
+   */
+  public static void recordDependencies(TreeLogger logger, OutputStream out,
+      JProgram jprogram) {
+    new DependencyRecorder().recordDependenciesImpl(logger, out, jprogram);
+  }
 
   private HtmlTextOutput htmlOut;
   private PrintWriter pw;
+
   private OutputStreamWriter writer;
+
+  private DependencyRecorder() {
+  }
 
   /**
    * Used to record the dependencies of a specific method.
@@ -48,20 +58,14 @@ public class DependencyRecorderImpl implements
    */
   public void methodIsLiveBecause(JMethod liveMethod,
       ArrayList<JMethod> dependencyChain) {
-    printMethodDependency(liveMethod, dependencyChain);
+    printMethodDependency(dependencyChain);
   }
 
   /**
    * Used to record dependencies of a program.
-   * 
-   * @param jprogram
-   * @param workDir
-   * @param permutationId
-   * @param logger
-   * @return The file that the dependencies are recorded in
    */
-  public File recordDependencies(JProgram jprogram, File workDir,
-      int permutationId, TreeLogger logger) {
+  protected void recordDependenciesImpl(TreeLogger logger, OutputStream out,
+      JProgram jprogram) {
 
     logger = logger.branch(TreeLogger.INFO,
         "Creating Dependencies file for SOYC");
@@ -69,13 +73,8 @@ public class DependencyRecorderImpl implements
     ControlFlowAnalyzer dependencyAnalyzer = new ControlFlowAnalyzer(jprogram);
     dependencyAnalyzer.setDependencyRecorder(this);
 
-    File appendDepFile = new File(workDir, "dependencies" + permutationId
-        + ".xml.gz");
     try {
-      // No need to check mkdirs result because an IOException will occur anyway
-      appendDepFile.getParentFile().mkdirs();
-      FileOutputStream stream = new FileOutputStream(appendDepFile, true);
-      writer = new OutputStreamWriter(new GZIPOutputStream(stream), "UTF-8");
+      writer = new OutputStreamWriter(new GZIPOutputStream(out), "UTF-8");
       pw = new PrintWriter(writer);
       htmlOut = new HtmlTextOutput(pw, false);
     } catch (Throwable e) {
@@ -91,8 +90,6 @@ public class DependencyRecorderImpl implements
     Utility.close(writer);
 
     logger.log(TreeLogger.INFO, "Done");
-
-    return appendDepFile;
   }
 
   /**
@@ -101,8 +98,7 @@ public class DependencyRecorderImpl implements
    * @param liveMethod
    * @param dependencyChain
    */
-  private void printMethodDependency(JMethod liveMethod,
-      ArrayList<JMethod> dependencyChain) {
+  private void printMethodDependency(ArrayList<JMethod> dependencyChain) {
     String curLine;
     for (int i = dependencyChain.size() - 1; i >= 0; i--) {
       JMethod curMethod = dependencyChain.get(i);

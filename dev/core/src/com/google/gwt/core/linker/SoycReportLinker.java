@@ -20,51 +20,15 @@ import com.google.gwt.core.ext.LinkerContext;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.linker.ArtifactSet;
-import com.google.gwt.core.ext.linker.EmittedArtifact;
 import com.google.gwt.core.ext.linker.LinkerOrder;
 import com.google.gwt.core.ext.linker.LinkerOrder.Order;
 import com.google.gwt.core.ext.linker.impl.StandardCompilationAnalysis;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Converts SOYC report files into emitted private artifacts.
  */
 @LinkerOrder(Order.POST)
 public class SoycReportLinker extends Linker {
-
-  private static class SoycArtifact extends EmittedArtifact {
-    private final File file;
-
-    public SoycArtifact(String partialPath, File file) {
-      super(SoycReportLinker.class, partialPath);
-      this.file = file;
-    }
-
-    @Override
-    public InputStream getContents(TreeLogger logger)
-        throws UnableToCompleteException {
-      try {
-        return new FileInputStream(file);
-      } catch (IOException e) {
-        logger.log(TreeLogger.ERROR, "Unable to open file", e);
-        throw new UnableToCompleteException();
-      }
-    }
-
-    @Override
-    public long getLastModified() {
-      return file.lastModified();
-    }
-
-    @Override
-    public boolean isPrivate() {
-      return true;
-    }
-  }
 
   @Override
   public String getDescription() {
@@ -76,14 +40,9 @@ public class SoycReportLinker extends Linker {
       ArtifactSet artifacts) throws UnableToCompleteException {
     ArtifactSet results = new ArtifactSet(artifacts);
     for (StandardCompilationAnalysis soycFiles : artifacts.find(StandardCompilationAnalysis.class)) {
-      File depFile = soycFiles.getDepFile();
-      results.add(new SoycArtifact(depFile.getName(), depFile));
-
-      File storiesFile = soycFiles.getStoriesFile();
-      results.add(new SoycArtifact(storiesFile.getName(), storiesFile));
-
-      File splitPointsFile = soycFiles.getSplitPointsFile();
-      results.add(new SoycArtifact(splitPointsFile.getName(), splitPointsFile));
+      results.add(soycFiles.getDepFile());
+      results.add(soycFiles.getStoriesFile());
+      results.add(soycFiles.getSplitPointsFile());
     }
     return results;
   }

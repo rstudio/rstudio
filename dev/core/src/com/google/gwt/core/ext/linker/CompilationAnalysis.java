@@ -17,8 +17,6 @@ package com.google.gwt.core.ext.linker;
 
 import com.google.gwt.core.ext.Linker;
 
-import java.io.File;
-
 /**
  * Represents analysis data for a CompilationResult.
  */
@@ -31,17 +29,17 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
   /**
    * @return a file of dependencies
    */
-  public abstract File getDepFile();
+  public abstract EmittedArtifact getDepFile();
 
   /**
    * @return a file of split points
    */
-  public abstract File getSplitPointsFile();
+  public abstract EmittedArtifact getSplitPointsFile();
 
   /**
    * @return a file of stories
    */
-  public abstract File getStoriesFile();
+  public abstract EmittedArtifact getStoriesFile();
 
   @Override
   public final int hashCode() {
@@ -50,9 +48,9 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
     assert (getStoriesFile() != null);
     assert (getSplitPointsFile() != null);
 
-    return 17 * (37 + getDepFile().getName().hashCode())
-        + (37 + getStoriesFile().getName().hashCode())
-        + (37 + getSplitPointsFile().getName().hashCode());
+    return 17 * (37 + getDepFile().getPartialPath().hashCode())
+        + (37 + getStoriesFile().getPartialPath().hashCode())
+        + (37 + getSplitPointsFile().getPartialPath().hashCode());
   }
 
   @Override
@@ -64,15 +62,16 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
       return 1;
     } else if ((getDepFile() != null) && (o.getDepFile() == null)) {
       return -1;
-    } else if (getDepFile().getName().compareTo(o.getDepFile().getName()) == 0) {
+    } else if (getDepFile().getPartialPath().compareTo(
+        o.getDepFile().getPartialPath()) == 0) {
       if ((getStoriesFile() == null) && (o.getStoriesFile() == null)) {
         return 0;
       } else if ((getStoriesFile() == null) && (o.getStoriesFile() != null)) {
         return 1;
       } else if ((getStoriesFile() != null) && (o.getStoriesFile() == null)) {
         return -1;
-      } else if (getStoriesFile().getName().compareTo(
-          o.getStoriesFile().getName()) == 0) {
+      } else if (getStoriesFile().getPartialPath().compareTo(
+          o.getStoriesFile().getPartialPath()) == 0) {
         if ((getSplitPointsFile() == null) && (o.getSplitPointsFile() == null)) {
           return 0;
         }
@@ -82,15 +81,16 @@ public abstract class CompilationAnalysis extends Artifact<CompilationAnalysis> 
             && (o.getSplitPointsFile() == null)) {
           return -1;
         } else {
-          return getSplitPointsFile().getName().compareTo(
-              o.getSplitPointsFile().getName());
+          return getSplitPointsFile().getPartialPath().compareTo(
+              o.getSplitPointsFile().getPartialPath());
         }
       } else {
-        return getStoriesFile().getName().compareTo(
-            o.getStoriesFile().getName());
+        return getStoriesFile().getPartialPath().compareTo(
+            o.getStoriesFile().getPartialPath());
       }
     } else {
-      return getDepFile().getName().compareTo(o.getDepFile().getName());
+      return getDepFile().getPartialPath().compareTo(
+          o.getDepFile().getPartialPath());
     }
   }
 

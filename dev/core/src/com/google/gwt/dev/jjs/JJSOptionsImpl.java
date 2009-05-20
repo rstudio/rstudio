@@ -15,7 +15,6 @@
  */
 package com.google.gwt.dev.jjs;
 
-import java.io.File;
 import java.io.Serializable;
 
 /**
@@ -32,7 +31,6 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
   private JsOutputOption output = JsOutputOption.OBFUSCATED;
   private boolean runAsyncEnabled = true;
   private boolean soycEnabled = false;
-  private File workDir;
 
   public JJSOptionsImpl() {
   }
@@ -51,15 +49,10 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
     setOutput(other.getOutput());
     setRunAsyncEnabled(other.isRunAsyncEnabled());
     setSoycEnabled(other.isSoycEnabled());
-    setWorkDir(other.getWorkDir());
   }
 
   public JsOutputOption getOutput() {
     return output;
-  }
-
-  public File getWorkDir() {
-    return workDir;
   }
 
   public boolean isAggressivelyOptimize() {
@@ -128,9 +121,5 @@ public class JJSOptionsImpl implements JJSOptions, Serializable {
 
   public void setSoycEnabled(boolean enabled) {
     soycEnabled = enabled;
-  }
-
-  public void setWorkDir(File workDir) {
-    this.workDir = workDir;
   }
 }

@@ -19,9 +19,14 @@ import com.google.gwt.core.ext.Linker;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.dev.util.DiskCache;
+import com.google.gwt.dev.util.Util;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
 /**
@@ -31,14 +36,14 @@ public class SyntheticArtifact extends EmittedArtifact {
   private static final DiskCache diskCache = new DiskCache();
 
   private final long lastModified;
-  private final long token;
+  private transient long token;
 
-  SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType,
+  public SyntheticArtifact(Class<? extends Linker> linkerType,
       String partialPath, byte[] data) {
-    this(logger, linkerType, partialPath, data, System.currentTimeMillis());
+    this(linkerType, partialPath, data, System.currentTimeMillis());
   }
 
-  SyntheticArtifact(TreeLogger logger, Class<? extends Linker> linkerType,
+  public SyntheticArtifact(Class<? extends Linker> linkerType,
       String partialPath, byte[] data, long lastModified) {
     super(linkerType, partialPath);
     assert data != null;
@@ -61,5 +66,18 @@ public class SyntheticArtifact extends EmittedArtifact {
   public void writeTo(TreeLogger logger, OutputStream out)
       throws UnableToCompleteException {
     diskCache.writeTo(token, out);
+  }
+
+  private void readObject(ObjectInputStream stream) throws IOException,
+      ClassNotFoundException {
+    stream.defaultReadObject();
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    Util.copyNoClose(stream, baos);
+    token = diskCache.writeByteArray(baos.toByteArray());
+  }
+
+  private void writeObject(ObjectOutputStream stream) throws IOException {
+    stream.defaultWriteObject();
+    diskCache.writeTo(token, stream);
   }
 }

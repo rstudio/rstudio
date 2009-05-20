@@ -13,17 +13,14 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package com.google.gwt.core.ext.soyc.impl;
 
 import com.google.gwt.core.ext.TreeLogger;
-import com.google.gwt.core.ext.soyc.SplitPointRecorder;
 import com.google.gwt.dev.jjs.ast.JProgram;
 import com.google.gwt.dev.util.HtmlTextOutput;
 import com.google.gwt.util.tools.Utility;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Map;
@@ -32,38 +29,26 @@ import java.util.zip.GZIPOutputStream;
 /**
  * Records split points to a file for SOYC reports.
  */
-public class SplitPointRecorderImpl implements SplitPointRecorder {
-
-  private FileOutputStream stream;
-  private OutputStreamWriter writer;
-  private PrintWriter pw;
-  private HtmlTextOutput htmlOut;
+public class SplitPointRecorder {
 
   /**
    * Used to record (runAsync) split points of a program.
    * 
    * @param jprogram
-   * @param workDir
-   * @param permutationId
+   * @param out
    * @param logger
-   * @return The file that the dependencies are recorded in
    */
-  public File recordSplitPoints(JProgram jprogram, File workDir,
-      int permutationId, TreeLogger logger) {
+  public static void recordSplitPoints(JProgram jprogram, OutputStream out,
+      TreeLogger logger) {
 
     logger = logger.branch(TreeLogger.INFO,
         "Creating Split Point Map file for SOYC");
 
-    File splitPointsFile = new File(workDir, "splitPoints"
-        + Integer.toString(permutationId) + ".xml.gz");
     try {
-      // No need to check mkdirs result because an IOException will occur anyway
-      splitPointsFile.getParentFile().mkdirs();
-      stream = new FileOutputStream(splitPointsFile, true);
-      writer = new OutputStreamWriter(new GZIPOutputStream(stream), "UTF-8");
-      pw = new PrintWriter(writer);
-      htmlOut = new HtmlTextOutput(pw, false);
-
+      OutputStreamWriter writer = new OutputStreamWriter(new GZIPOutputStream(
+          out), "UTF-8");
+      PrintWriter pw = new PrintWriter(writer);
+      HtmlTextOutput htmlOut = new HtmlTextOutput(pw, false);
       String curLine = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
       htmlOut.printRaw(curLine);
       htmlOut.newline();
@@ -109,7 +94,8 @@ public class SplitPointRecorderImpl implements SplitPointRecorder {
     } catch (Throwable e) {
       logger.log(TreeLogger.ERROR, "Could not open dependency file.", e);
     }
+  }
 
-    return splitPointsFile;
+  private SplitPointRecorder() {
   }
 }

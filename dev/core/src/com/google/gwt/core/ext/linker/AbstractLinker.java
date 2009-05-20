@@ -38,7 +38,7 @@ public abstract class AbstractLinker extends Linker {
    */
   protected final SyntheticArtifact emitBytes(TreeLogger logger, byte[] what,
       String partialPath) throws UnableToCompleteException {
-    return new SyntheticArtifact(logger, getClass(), partialPath, what);
+    return new SyntheticArtifact(getClass(), partialPath, what);
   }
 
   /**
@@ -53,7 +53,7 @@ public abstract class AbstractLinker extends Linker {
    */
   protected final SyntheticArtifact emitBytes(TreeLogger logger, byte[] what,
       String partialPath, long lastModified) throws UnableToCompleteException {
-    return new SyntheticArtifact(logger, getClass(), partialPath, what, lastModified);
+    return new SyntheticArtifact(getClass(), partialPath, what, lastModified);
   }
 
   /**
