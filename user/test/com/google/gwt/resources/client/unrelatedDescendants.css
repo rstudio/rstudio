@@ -18,3 +18,9 @@
 .MyCssResourceA-local .gwt-MyCssResourceB-local {
   background: green;
 }
+
+/* These selectors are not to be obfuscated */
+@external .foo, bar;
+.foo, .bar {
+  background: red;
+}

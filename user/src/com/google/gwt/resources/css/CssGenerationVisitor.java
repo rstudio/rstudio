@@ -19,6 +19,7 @@ import com.google.gwt.dev.util.TextOutput;
 import com.google.gwt.resources.css.ast.Context;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
+import com.google.gwt.resources.css.ast.CssExternalSelectors;
 import com.google.gwt.resources.css.ast.CssIf;
 import com.google.gwt.resources.css.ast.CssMediaRule;
 import com.google.gwt.resources.css.ast.CssNoFlip;
@@ -124,6 +125,19 @@ public class CssGenerationVisitor extends CssVisitor {
   public boolean visit(CssEval x, Context ctx) {
     // These are not valid CSS
     out.printOpt("/* CssEval */");
+    out.newlineOpt();
+    return false;
+  }
+
+  @Override
+  public boolean visit(CssExternalSelectors x, Context ctx) {
+    // These are not valid CSS
+    out.printOpt("/* @external");
+    for (String className : x.getClasses()) {
+      out.printOpt(" ");
+      out.printOpt(className);
+    }
+    out.printOpt("; */");
     out.newlineOpt();
     return false;
   }

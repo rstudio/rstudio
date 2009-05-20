@@ -18,7 +18,10 @@ package com.google.gwt.resources.css.ast;
 import java.util.List;
 
 /**
- * The base class for visiting a CSS tree.
+ * The base class for visiting a CSS tree. Traversal is initiated with a call to
+ * one of the <code>accept</code> methods. The default behavior of the
+ * <code>visit</code> methods is to return <code>true</code> to indicate that
+ * the calling node should traverse its descendant nodes.
  */
 public class CssVisitor {
   protected static final Context UNMODIFIABLE_CONTEXT = new Context() {
@@ -66,6 +69,9 @@ public class CssVisitor {
   public void endVisit(CssEval x, Context ctx) {
   }
 
+  public void endVisit(CssExternalSelectors x, Context ctx) {
+  }
+
   public void endVisit(CssIf x, Context ctx) {
   }
 
@@ -101,6 +107,10 @@ public class CssVisitor {
   }
 
   public boolean visit(CssEval x, Context ctx) {
+    return true;
+  }
+
+  public boolean visit(CssExternalSelectors x, Context ctx) {
     return true;
   }
 

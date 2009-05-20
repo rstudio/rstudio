@@ -268,7 +268,8 @@ public abstract class AbstractClientBundleGenerator extends Generator {
 
       try {
         rhs = rg.createAssignment(logger.branch(TreeLogger.DEBUG,
-            "Creating assignment for " + m.getName()), resourceContext, m);
+            "Creating assignment for " + m.getName() + "()"), resourceContext,
+            m);
       } catch (UnableToCompleteException e) {
         fail = true;
         continue;

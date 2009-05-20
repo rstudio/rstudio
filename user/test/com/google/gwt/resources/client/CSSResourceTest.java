@@ -23,7 +23,7 @@ import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.resources.client.CssResource.Strict;
 
 /**
- * 
+ * Contains various full-stack tests of the CssResource system.
  */
 public class CSSResourceTest extends GWTTestCase {
 
@@ -46,6 +46,10 @@ public class CSSResourceTest extends GWTTestCase {
     float rawFloat();
 
     int rawInt();
+  }
+
+  interface HasDescendants extends CssResource {
+    String foo();
   }
 
   interface MyCssResource extends CssResource, MyNonCssResource {
@@ -71,6 +75,8 @@ public class CSSResourceTest extends GWTTestCase {
    * Check type inheritance.
    */
   interface MyCssResourceWithSprite extends MyCssResource {
+    String externalA();
+
     String extraSpriteClass();
 
     String multiClassA();
@@ -105,7 +111,7 @@ public class CSSResourceTest extends GWTTestCase {
     @Source("unrelatedDescendants.css")
     @Import(value = {MyCssResourceA.class, MyCssResourceB.class})
     @Strict
-    CssResource descendants();
+    HasDescendants descendants();
 
     @Source("16x16.png")
     ImageResource spriteMethod();
@@ -223,6 +229,12 @@ public class CSSResourceTest extends GWTTestCase {
 
     // Check commonly-used CSS3 constructs
     assertTrue(text.contains("background-color:rgba(0,0,0,0.5);"));
+
+    // Check external references
+    assertEquals("externalA", css.externalA());
+    assertTrue(text.contains(".externalA ." + css.replacement()));
+    assertTrue(text.contains(".externalB"));
+    assertTrue(text.contains(".externalC"));
   }
 
   public void testDefines() {
@@ -254,7 +266,10 @@ public class CSSResourceTest extends GWTTestCase {
 
     String text = r1.descendants().getText();
     report(text);
+    assertEquals("foo", r1.descendants().foo());
     assertTrue(text.contains("." + r1.a().local() + " ." + r1.b().local()));
+    assertTrue(text.contains("." + r1.descendants().foo()));
+    assertTrue(text.contains(".bar"));
   }
 
   public void testSiblingCSS() {

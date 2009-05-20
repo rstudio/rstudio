@@ -131,6 +131,14 @@ public class CssNodeCloner extends CssVisitor {
     return true;
   }
 
+  @Override
+  public boolean visit(CssExternalSelectors x, Context ctx) {
+    CssExternalSelectors newExternals = new CssExternalSelectors();
+    newExternals.getClasses().addAll(x.getClasses());
+    addToNodes(newExternals);
+    return true;
+  }
+
   /**
    * A CssIf has two lists of nodes, so we want to handle traversal in this
    * visitor.

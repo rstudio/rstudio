@@ -208,3 +208,7 @@ div-with-literal {
 .css3Color {
   background-color: rgba(0, 0, 0, 0.5); 
 }
+
+/* The @external parser attempts to be flexible */
+@external externalA, .externalB externalC;
+.externalA .replacement, .externalB, .externalC {border: GREEN;}

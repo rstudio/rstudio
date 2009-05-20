@@ -19,6 +19,7 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.resources.css.ast.CssDef;
 import com.google.gwt.resources.css.ast.CssEval;
+import com.google.gwt.resources.css.ast.CssExternalSelectors;
 import com.google.gwt.resources.css.ast.CssIf;
 import com.google.gwt.resources.css.ast.CssMediaRule;
 import com.google.gwt.resources.css.ast.CssNoFlip;
@@ -71,6 +72,7 @@ import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -407,6 +409,16 @@ public class GenerateCssAst {
 
       CssEval eval = new CssEval(parts[1], parts[2]);
       addNode(eval);
+    }
+
+    void parseExternal(String atRule) throws CSSException {
+      // @external .foo, bar; Drop the dots and commas
+      String[] parts = atRule.substring(10, atRule.length() - 1).replaceAll(
+          "(, *)|( +)", " ").replaceAll("\\.", "").split(" ");
+
+      CssExternalSelectors externals = new CssExternalSelectors();
+      Collections.addAll(externals.getClasses(), parts);
+      addNode(externals);
     }
 
     void parseIf(String atRule) throws CSSException {
