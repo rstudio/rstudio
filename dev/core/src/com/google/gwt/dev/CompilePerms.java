@@ -184,7 +184,8 @@ public class CompilePerms {
       Permutation permutation, UnifiedAst unifiedAst)
       throws UnableToCompleteException {
     return JavaToJavaScriptCompiler.compilePermutation(logger, unifiedAst,
-        permutation.getRebindAnswers(), permutation.getId());
+        permutation.getRebindAnswers(), permutation.getPropertyOracles(),
+        permutation.getId());
   }
 
   /**

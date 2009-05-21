@@ -1,5 +1,5 @@
 <!--                                                                        -->
-<!-- Copyright 2007 Google Inc.                                             -->
+<!-- Copyright 2009 Google Inc.                                             -->
 <!-- Licensed under the Apache License, Version 2.0 (the "License"); you    -->
 <!-- may not use this file except in compliance with the License. You may   -->
 <!-- may obtain a copy of the License at                                    -->
@@ -12,14 +12,15 @@
 <!-- implied. License for the specific language governing permissions and   -->
 <!-- limitations under the License.                                         -->
 
+<!-- Compiler parameters that can be overridden for test cases .    -->
+<!--                                                                        -->
 <module>
-  <inherits name='com.google.gwt.junit.JUnit' />
-  <inherits name='org.apache.commons.Collections' />
-  <source path='java' />
-
   <!--
-    Specify some tighter compiler settings so that those compiler paths
-    are tested by the normal GWT regression suite
+    This is the maximum number of variables in any var statement GWT
+    will emit. This avoids a bug in some browsers including
+    the initial beta of Safari 4. See Issue 3455. If it is set to -1,
+    then there is no limit.
   -->
-  <set-configuration-property name='compiler.max.vars.per.var' value='10' />
+  <define-configuration-property name='compiler.max.vars.per.var' is-multi-valued='false' />
+  <set-configuration-property name='compiler.max.vars.per.var' value='2400' />
 </module>
