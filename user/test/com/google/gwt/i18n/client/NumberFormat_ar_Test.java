@@ -47,6 +47,20 @@ public class NumberFormat_ar_Test extends GWTTestCase {
         fmt.format(-314.0));
   }
   
+  public void testForceLatin() {
+    assertFalse(NumberFormat.forcedLatinDigits());
+    NumberFormat.setForcedLatinDigits(true);
+    assertTrue(NumberFormat.forcedLatinDigits());
+    NumberFormat decLatin = NumberFormat.getDecimalFormat();
+    assertEquals("1\u00A0003,14", decLatin.format(1003.14));
+    assertEquals("1\u00A0003,14-", decLatin.format(-1003.14));
+    NumberFormat.setForcedLatinDigits(false);
+    assertFalse(NumberFormat.forcedLatinDigits());
+    assertEquals("3,14", decLatin.format(3.14));
+    NumberFormat decArabic = NumberFormat.getDecimalFormat();
+    assertEquals("\u0663\u066B\u0661\u0664", decArabic.format(3.14));
+  }
+  
   public void testParse() {
     NumberFormat fmt = NumberFormat.getDecimalFormat();
     assertEquals(3.14, fmt.parse("\u0663\u066B\u0661\u0664"));

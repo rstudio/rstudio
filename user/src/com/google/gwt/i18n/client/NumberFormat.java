@@ -306,28 +306,52 @@ import com.google.gwt.i18n.client.impl.CurrencyList;
  */
 public class NumberFormat {
 
-  // Sets of constants as defined for the default locale.
-  private static final NumberConstants defaultNumberConstants = LocaleInfo.getCurrentLocale().getNumberConstants();
+  // Sets of constants as defined for the current locale from CLDR.
+  protected static final NumberConstants localizedNumberConstants = LocaleInfo.getCurrentLocale().getNumberConstants();
 
-  // Constants for characters used in programmatic (unlocalized) patterns.
-  private static final char PATTERN_ZERO_DIGIT = '0';
-  private static final char PATTERN_GROUPING_SEPARATOR = ',';
-  private static final char PATTERN_DECIMAL_SEPARATOR = '.';
-  private static final char PATTERN_PER_MILLE = '\u2030';
-  private static final char PATTERN_PERCENT = '%';
-  private static final char PATTERN_DIGIT = '#';
-  private static final char PATTERN_SEPARATOR = ';';
-  private static final char PATTERN_EXPONENT = 'E';
-  private static final char PATTERN_MINUS = '-';
-  private static final char CURRENCY_SIGN = '\u00A4';
-  private static final char QUOTE = '\'';
+  /**
+   * Current NumberConstants interface to use, see
+   * {@link #setForcedLatinDigits(boolean)} for changing it.
+   */
+  protected static NumberConstants defaultNumberConstants = localizedNumberConstants;
 
   // Cached instances of standard formatters.
-  private static NumberFormat cachedDecimalFormat;
-  private static NumberFormat cachedScientificFormat;
-  private static NumberFormat cachedPercentFormat;
   private static NumberFormat cachedCurrencyFormat;
+  private static NumberFormat cachedDecimalFormat;
+  private static NumberFormat cachedPercentFormat;
+  private static NumberFormat cachedScientificFormat;
 
+  // Number constants mapped to use latin digits/separators.
+  private static NumberConstants latinNumberConstants = null;
+
+  // Localized characters for dot and comma in number patterns, used to produce
+  // the latin mapping for arbitrary locales.  Any separator not in either of
+  // these strings will be mapped to non-breaking space (U+00A0).
+  private static final String LOCALIZED_COMMA_EQUIVALENTS = ".\u060C\u066B\u3001\uFE10\uFE11\uFE50\uFE51\uFF0C\uFF64";
+  private static final String LOCALIZED_DOT_EQUIVALENTS = ".\u2024\u3002\uFE12\uFE52\uFF0E\uFF61";
+
+  // Constants for characters used in programmatic (unlocalized) patterns.
+  private static final char CURRENCY_SIGN = '\u00A4';
+  private static final char PATTERN_DECIMAL_SEPARATOR = '.';
+  private static final char PATTERN_DIGIT = '#';
+  private static final char PATTERN_EXPONENT = 'E';
+  private static final char PATTERN_GROUPING_SEPARATOR = ',';
+  private static final char PATTERN_MINUS = '-';
+  private static final char PATTERN_PER_MILLE = '\u2030';
+  private static final char PATTERN_PERCENT = '%';
+  private static final char PATTERN_SEPARATOR = ';';
+  private static final char PATTERN_ZERO_DIGIT = '0';
+
+  private static final char QUOTE = '\'';
+
+  /**
+   * @return true if all new NumberFormat instances will use latin digits
+   *     and related characters rather than the localized ones. 
+   */
+  public static boolean forcedLatinDigits() {
+    return defaultNumberConstants != localizedNumberConstants;
+  }
+  
   /**
    * Provides the standard currency format for the default locale.
    * 
@@ -341,7 +365,7 @@ public class NumberFormat {
     }
     return cachedCurrencyFormat;
   }
-
+  
   /**
    * Provides the standard currency format for the default locale using a
    * specified currency.
@@ -427,49 +451,184 @@ public class NumberFormat {
     return cachedScientificFormat;
   }
 
-  // Locale specific symbol collection.
-  private final NumberConstants numberConstants;
+  /**
+   * Specify whether all new NumberFormat instances will use latin digits
+   * and related characters rather than the localized ones.
+   *  
+   * @param useLatinDigits true if latin digits/etc should be used, false if
+   *    localized digits/etc should be used.
+   */
+  public static void setForcedLatinDigits(boolean useLatinDigits) {
+    // Invalidate cached formats if changing
+    if (useLatinDigits != forcedLatinDigits()) {
+      cachedCurrencyFormat = null;
+      cachedDecimalFormat = null;
+      cachedPercentFormat = null;
+      cachedScientificFormat = null;
+    }
+    if (useLatinDigits) {
+      if (latinNumberConstants == null) {
+        latinNumberConstants = createLatinNumberConstants(
+            localizedNumberConstants);
+      }
+      defaultNumberConstants = latinNumberConstants;
+    } else {
+      defaultNumberConstants = localizedNumberConstants;
+    }
+  }
 
-  private int maximumIntegerDigits = 40;
-  private int minimumIntegerDigits = 1;
-  private int maximumFractionDigits = 3; // invariant, >= minFractionDigits.
-  private int minimumFractionDigits = 0;
-  private int minExponentDigits;
+  /**
+   * Create a delocalized NumberConstants instance from a localized one.
+   * 
+   * @param orig localized NumberConstants instance
+   * @return NumberConstants instance using latin digits/etc
+   */
+  protected static NumberConstants createLatinNumberConstants(final NumberConstants orig) {
+    final String groupingSeparator = remapSeparator(
+        orig.groupingSeparator());
+    final String decimalSeparator = remapSeparator(
+        orig.decimalSeparator());
+    final String monetaryGroupingSeparator = remapSeparator(
+        orig.monetaryGroupingSeparator());
+    final String monetarySeparator = remapSeparator(
+        orig.monetarySeparator());
+    return new NumberConstants() {
+      public String currencyPattern() {
+        return orig.currencyPattern();
+      }
 
-  private String positivePrefix = "";
-  private String positiveSuffix = "";
-  private String negativePrefix = "-";
-  private String negativeSuffix = "";
+      public String decimalPattern() {
+        return orig.decimalPattern();
+      }
 
-  // The multiplier for use in percent, per mille, etc.
-  private int multiplier = 1;
+      public String decimalSeparator() {
+        return decimalSeparator;
+      }
 
-  // The number of digits between grouping separators in the integer
-  // portion of a number.
-  private int groupingSize = 3;
+      public String defCurrencyCode() {
+        return orig.defCurrencyCode();
+      }
 
-  // Forces the decimal separator to always appear in a formatted number.
-  private boolean decimalSeparatorAlwaysShown = false;
+      public String exponentialSymbol() {
+        return orig.exponentialSymbol();
+      }
 
-  private boolean isCurrencyFormat = false;
+      public String groupingSeparator() {
+        return groupingSeparator;
+      }
 
-  // True to force the use of exponential (i.e. scientific) notation.
-  private boolean useExponentialNotation = false;
+      public String infinity() {
+        return orig.infinity();
+      }
 
-  // Currency setting.
-  private final String currencySymbol;
+      public String minusSign() {
+        return orig.minusSign();
+      }
+
+      public String monetaryGroupingSeparator() {
+        return monetaryGroupingSeparator;
+      }
+
+      public String monetarySeparator() {
+        return monetarySeparator;
+      }
+
+      public String notANumber() {
+        return orig.notANumber();
+      }
+
+      public String percent() {
+        return orig.percent();
+      }
+
+      public String percentPattern() {
+        return orig.percentPattern();
+      }
+
+      public String perMill() {
+        return orig.perMill();
+      }
+
+      public String plusSign() {
+        return orig.plusSign();
+      }
+
+      public String scientificPattern() {
+        return orig.scientificPattern();
+      }
+
+      public String zeroDigit() {
+        return "0";
+      }      
+    };
+  }
+
+  /**
+   * Remap a localized separator to an equivalent latin one.
+   * 
+   * @param separator
+   * @return delocalized separator character
+   */
+  protected static String remapSeparator(String separator) {
+    char ch = separator.length() > 0 ? separator.charAt(0) : 0xFFFF;
+    if (LOCALIZED_DOT_EQUIVALENTS.indexOf(ch) >= 0) {
+      return ".";
+    }
+    if (LOCALIZED_COMMA_EQUIVALENTS.indexOf(ch) >= 0) {
+      return ",";
+    }
+    return "\u00A0";
+  }
 
   // The currency code.
   private final String currencyCode;
 
+  // Currency setting.
+  private final String currencySymbol;
+
+  // Forces the decimal separator to always appear in a formatted number.
+  private boolean decimalSeparatorAlwaysShown = false;
+
+  // The number of digits between grouping separators in the integer
+  // portion of a number.
+  private int groupingSize = 3;
+  
+  private boolean isCurrencyFormat = false;
+  
+  private int maximumFractionDigits = 3; // invariant, >= minFractionDigits.
+  private int maximumIntegerDigits = 40;
+  private int minExponentDigits;
+  private int minimumFractionDigits = 0;
+  private int minimumIntegerDigits = 1;
+
+  // The multiplier for use in percent, per mille, etc.
+  private int multiplier = 1;
+
+  private String negativePrefix = "-";
+
+  private String negativeSuffix = "";
+
+  // Locale specific symbol collection.
+  private final NumberConstants numberConstants;
+
   // The pattern to use for formatting and parsing.
   private final String pattern;
+
+  private String positivePrefix = "";
+
+  private String positiveSuffix = "";
+
+  // True to force the use of exponential (i.e. scientific) notation.
+  private boolean useExponentialNotation = false;
 
   /**
    * Constructs a format object based on the specified settings.
    * 
    * @param numberConstants the locale-specific number constants to use for this
-   *          format
+   *          format -- **NOTE** subclasses passing their own instance here
+   *          should pay attention to {@link #forcedLatinDigits()} and remap
+   *          localized symbols using
+   *          {@link #createLatinNumberConstants(NumberConstants)}
    * @param pattern pattern that specify how number should be formatted
    * @param cdata currency data that should be used
    * @param userSuppliedPattern true if the pattern was supplied by the user
