@@ -18,6 +18,7 @@ package com.google.gwt.user.client.ui;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.MouseUpEvent;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -63,7 +64,8 @@ public class RadioButton extends CheckBox {
   public RadioButton(String name) {
     super(DOM.createInputRadio(name));
     setStyleName("gwt-RadioButton");
-
+    
+    sinkEvents(Event.getTypeInt(ClickEvent.getType().getName()));
     sinkEvents(Event.getTypeInt(MouseUpEvent.getType().getName()));
     sinkEvents(Event.getTypeInt(BlurEvent.getType().getName()));
     sinkEvents(Event.getTypeInt(KeyDownEvent.getType().getName()));
