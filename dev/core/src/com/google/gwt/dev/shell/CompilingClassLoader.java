@@ -993,7 +993,7 @@ public final class CompilingClassLoader extends ClassLoader implements
       if (unit != null) {
         anonymousClassMap = unit.getAnonymousClassMap();
       }
-      byte[] newBytes = classRewriter.rewrite(className, classBytes,
+      byte[] newBytes = classRewriter.rewrite(this, className, classBytes,
           anonymousClassMap);
       if (CLASS_DUMP) {
         if (!Arrays.equals(classBytes, newBytes)) {

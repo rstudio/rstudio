@@ -23,9 +23,9 @@ import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,8 +62,57 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     @Override
     public void visitMethodInsn(int opcode, String owner, String name,
         String desc) {
-      if (singleJsoImplTypes.contains(owner)) {
-        name = owner.replace('/', '_') + "_" + name;
+      if (opcode == Opcodes.INVOKEINTERFACE) {
+        if (singleJsoImplTypes.contains(owner)) {
+          // Simple case; referring directly to a SingleJso interface.
+          name = owner.replace('/', '_') + "_" + name;
+          assert mangledNamesToImplementations.containsKey(name) : "Missing "
+              + name;
+
+        } else {
+          /*
+           * Might be referring to a subtype of a SingleJso interface:
+           * 
+           * interface IA { void foo() }
+           * 
+           * interface JA extends JSO implements IA;
+           * 
+           * interface IB extends IA {}
+           * 
+           * void bar() { ((IB) object).foo(); }
+           */
+          for (String intf : computeAllInterfaces(owner)) {
+            if (singleJsoImplTypes.contains(intf)) {
+              /*
+               * Check that it really should be mangled and is not a reference
+               * to a method defined in a non-singleJso super-interface. If
+               * there are two super-interfaces that define methods with
+               * identical names and descriptors, the choice of implementation
+               * is undefined.
+               */
+              String maybeMangled = intf.replace('/', '_') + "_" + name;
+              Method method = mangledNamesToImplementations.get(maybeMangled);
+              if (method != null) {
+                /*
+                 * Found a method with the right name, but we need to check the
+                 * parameters and the return type. In order to do this, we'll
+                 * look at the arguments and return type of the target method,
+                 * removing the first argument, which is the instance.
+                 */
+                assert method.getArgumentTypes().length >= 1;
+                Type[] argumentTypes = new Type[method.getArgumentTypes().length - 1];
+                System.arraycopy(method.getArgumentTypes(), 1, argumentTypes,
+                    0, argumentTypes.length);
+                String maybeDescriptor = Type.getMethodDescriptor(
+                    method.getReturnType(), argumentTypes);
+                if (maybeDescriptor.equals(desc)) {
+                  name = maybeMangled;
+                  break;
+                }
+              }
+            }
+          }
+        }
       }
 
       super.visitMethodInsn(opcode, owner, name, desc);
@@ -76,10 +125,13 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
   private final Set<String> singleJsoImplTypes;
   private boolean inSingleJsoImplInterfaceType;
 
-  public RewriteSingleJsoImplDispatches(ClassVisitor v,
+  private final ClassLoader ccl;
+
+  public RewriteSingleJsoImplDispatches(ClassVisitor v, ClassLoader ccl,
       Set<String> singleJsoImplTypes,
       SortedMap<String, Method> mangledNamesToImplementations) {
     super(v);
+    this.ccl = ccl;
     this.singleJsoImplTypes = Collections.unmodifiableSet(singleJsoImplTypes);
     this.mangledNamesToImplementations = Collections.unmodifiableSortedMap(mangledNamesToImplementations);
   }
@@ -89,6 +141,15 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
       String superName, String[] interfaces) {
     assert currentTypeName == null;
     super.visit(version, access, name, signature, superName, interfaces);
+
+    /*
+     * This visitor would mangle JSO$ since it acts as a roll-up of all
+     * SingleJso types and the result would be repeated method definitions due
+     * to the trampoline methods this visitor would create.
+     */
+    if (name.equals(HostedModeClassRewriter.JAVASCRIPTOBJECT_IMPL_DESC)) {
+      return;
+    }
 
     currentTypeName = name;
     inSingleJsoImplInterfaceType = singleJsoImplTypes.contains(name);
@@ -100,8 +161,7 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
      * original methods.
      */
     if (interfaces != null && (access & Opcodes.ACC_INTERFACE) == 0) {
-      List<String> toStub = new ArrayList<String>();
-      Collections.addAll(toStub, interfaces);
+      Set<String> toStub = computeAllInterfaces(interfaces);
       toStub.retainAll(singleJsoImplTypes);
 
       for (String stubIntr : toStub) {
@@ -144,6 +204,29 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     }
 
     return new MyMethodVisitor(mv);
+  }
+
+  private Set<String> computeAllInterfaces(String... interfaces) {
+    Set<String> toReturn = new HashSet<String>();
+    List<String> q = new LinkedList<String>();
+    Collections.addAll(q, interfaces);
+
+    while (!q.isEmpty()) {
+      String intf = q.remove(0);
+      if (toReturn.add(intf)) {
+        try {
+          Class<?> intfClass = Class.forName(intf.replace('/', '.'), false, ccl);
+          for (Class<?> i : intfClass.getInterfaces()) {
+            q.add(i.getName().replace('.', '/'));
+          }
+        } catch (ClassNotFoundException e) {
+          assert false : intf;
+          e.printStackTrace();
+        }
+      }
+    }
+
+    return toReturn;
   }
 
   /**

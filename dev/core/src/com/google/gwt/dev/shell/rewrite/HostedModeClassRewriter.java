@@ -183,12 +183,13 @@ public class HostedModeClassRewriter {
   /**
    * Performs rewriting transformations on a class.
    * 
+   * @param ccl the ClassLoader requesting the rewrite
    * @param className the name of the class
    * @param classBytes the bytes of the class
    * @param anonymousClassMap a map between the anonymous class names of java
    *          compiler used to compile code and jdt. Emma-specific.
    */
-  public byte[] rewrite(String className, byte[] classBytes,
+  public byte[] rewrite(ClassLoader ccl, String className, byte[] classBytes,
       Map<String, String> anonymousClassMap) {
     String desc = toDescriptor(className);
     assert (!jsoIntfDescs.contains(desc));
@@ -200,7 +201,7 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
-    v = new RewriteSingleJsoImplDispatches(v, singleJsoImplTypes,
+    v = new RewriteSingleJsoImplDispatches(v, ccl, singleJsoImplTypes,
         mangledNamesToImplementations);
 
     v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);
