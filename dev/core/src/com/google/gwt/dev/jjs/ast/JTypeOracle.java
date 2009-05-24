@@ -692,7 +692,15 @@ public class JTypeOracle implements Serializable {
           assert intr.getMethods().size() == 0
               || intr.getMethods().get(0).getName().equals("$clinit");
           jsoSingleImpls.put(intr, program.getJavaScriptObject());
+
+          /*
+           * Pretend JSO had always implemented the tag interface. This helps
+           * simplify cast operations.
+           */
           jsoType.addImplements(intr);
+          add(couldBeImplementedMap, intr, jsoType);
+          add(isImplementedMap, intr, jsoType);
+          add(implementsMap, jsoType, intr);
           continue;
         }
 

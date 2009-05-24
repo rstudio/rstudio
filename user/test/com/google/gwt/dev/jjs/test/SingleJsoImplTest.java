@@ -70,6 +70,13 @@ public class SingleJsoImplTest extends GWTTestCase {
     String foo();
   }
 
+  interface CreatedWithCastToTag {
+  }
+
+  interface CreatedWithCastToTagSub extends CreatedWithCastToTag {
+    String foo();
+  }
+
   interface Divider extends Multiplier {
     int divide(int a, int b);
   }
@@ -89,6 +96,12 @@ public class SingleJsoImplTest extends GWTTestCase {
    * the CreatedWithCast test isn't short-circuited due to type tightening.
    */
   static class JavaCreatedWithCast implements CreatedWithCast {
+    public String foo() {
+      return "foo";
+    }
+  }
+
+  static class JavaCreatedWithCastToTag implements CreatedWithCastToTagSub {
     public String foo() {
       return "foo";
     }
@@ -206,6 +219,16 @@ public class SingleJsoImplTest extends GWTTestCase {
   static class JsoCreatedWithCast extends JavaScriptObject implements
       CreatedWithCast {
     protected JsoCreatedWithCast() {
+    }
+
+    public final String foo() {
+      return "foo";
+    }
+  }
+
+  static class JsoCreatedWithCastToTag extends JavaScriptObject implements
+      CreatedWithCastToTagSub {
+    protected JsoCreatedWithCastToTag() {
     }
 
     public final String foo() {
@@ -483,7 +506,16 @@ public class SingleJsoImplTest extends GWTTestCase {
    * compiler would assume there are types that implement the interface.
    */
   public void testCreatedWithCast() {
-    Object o = (CreatedWithCast) JavaScriptObject.createObject();
+    try {
+      Object a = (CreatedWithCast) JavaScriptObject.createObject();
+    } catch (ClassCastException e) {
+      fail("a");
+    }
+    try {
+      Object b = (CreatedWithCastToTag) JavaScriptObject.createObject();
+    } catch (ClassCastException e) {
+      fail("b");
+    }
   }
 
   public void testDualCase() {

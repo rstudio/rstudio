@@ -27,7 +27,6 @@ import com.google.gwt.dev.jjs.ast.JClassType;
 import com.google.gwt.dev.jjs.ast.JExpression;
 import com.google.gwt.dev.jjs.ast.JInstanceOf;
 import com.google.gwt.dev.jjs.ast.JIntLiteral;
-import com.google.gwt.dev.jjs.ast.JInterfaceType;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
@@ -412,12 +411,6 @@ public class CastNormalizer {
    */
   private class ReplaceTypeChecksVisitor extends JModVisitor {
 
-    private final Set<JInterfaceType> dualImpls;
-
-    public ReplaceTypeChecksVisitor(JProgram program) {
-      dualImpls = program.typeOracle.getInterfacesWithJavaAndJsoImpls();
-    }
-
     @Override
     public void endVisit(JCastOperation x, Context ctx) {
       JExpression replaceExpr;
@@ -455,10 +448,10 @@ public class CastNormalizer {
           JMethod method;
           boolean isJsoCast = program.isJavaScriptObject(toType);
           if (isJsoCast) {
-            // A cast to JSO
+            // A cast to a concrete JSO subtype
             method = program.getIndexedMethod("Cast.dynamicCastJso");
-          } else if (dualImpls.contains(toType)) {
-            // A cast that may succeed when the object is a JSO
+          } else if (program.typeOracle.getSingleJsoImpls().containsKey(toType)) {
+            // An interface that should succeed when the object is a JSO
             method = program.getIndexedMethod("Cast.dynamicCastAllowJso");
           } else {
             // A regular cast
@@ -569,11 +562,12 @@ public class CastNormalizer {
         ctx.replaceMe(eq);
       } else {
         JMethod method;
-        boolean isJsoCast = program.isJavaScriptObject(toType);
-        if (isJsoCast) {
-          method = program.getIndexedMethod("Cast.instanceOfJso");
-        } else if (dualImpls.contains(toType)) {
+        boolean isJsoCast = false;
+        if (program.typeOracle.getSingleJsoImpls().containsKey(toType)) {
           method = program.getIndexedMethod("Cast.instanceOfOrJso");
+        } else if (program.isJavaScriptObject(toType)) {
+          isJsoCast = true;
+          method = program.getIndexedMethod("Cast.instanceOfJso");
         } else {
           method = program.getIndexedMethod("Cast.instanceOf");
         }
@@ -618,7 +612,7 @@ public class CastNormalizer {
       assigner.computeTypeIds();
     }
     {
-      ReplaceTypeChecksVisitor replacer = new ReplaceTypeChecksVisitor(program);
+      ReplaceTypeChecksVisitor replacer = new ReplaceTypeChecksVisitor();
       replacer.accept(program);
     }
   }
