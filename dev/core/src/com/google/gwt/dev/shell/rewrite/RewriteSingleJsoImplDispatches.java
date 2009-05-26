@@ -15,6 +15,8 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
+import com.google.gwt.core.ext.typeinfo.JClassType;
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.asm.ClassAdapter;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.MethodAdapter;
@@ -22,6 +24,8 @@ import com.google.gwt.dev.asm.MethodVisitor;
 import com.google.gwt.dev.asm.Opcodes;
 import com.google.gwt.dev.asm.Type;
 import com.google.gwt.dev.asm.commons.Method;
+import com.google.gwt.dev.util.collect.Maps;
+import com.google.gwt.dev.util.collect.Sets;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -121,17 +125,17 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
 
   private String currentTypeName;
   private final Set<String> implementedMethods = new HashSet<String>();
+  private boolean inSingleJsoImplInterfaceType;
+  private Map<String, Set<String>> intfNamesToAllInterfaces = Maps.create();
   private final SortedMap<String, Method> mangledNamesToImplementations;
   private final Set<String> singleJsoImplTypes;
-  private boolean inSingleJsoImplInterfaceType;
+  private final TypeOracle typeOracle;
 
-  private final ClassLoader ccl;
-
-  public RewriteSingleJsoImplDispatches(ClassVisitor v, ClassLoader ccl,
+  public RewriteSingleJsoImplDispatches(ClassVisitor v, TypeOracle typeOracle,
       Set<String> singleJsoImplTypes,
       SortedMap<String, Method> mangledNamesToImplementations) {
     super(v);
-    this.ccl = ccl;
+    this.typeOracle = typeOracle;
     this.singleJsoImplTypes = Collections.unmodifiableSet(singleJsoImplTypes);
     this.mangledNamesToImplementations = Collections.unmodifiableSortedMap(mangledNamesToImplementations);
   }
@@ -206,27 +210,47 @@ public class RewriteSingleJsoImplDispatches extends ClassAdapter {
     return new MyMethodVisitor(mv);
   }
 
-  private Set<String> computeAllInterfaces(String... interfaces) {
-    Set<String> toReturn = new HashSet<String>();
-    List<String> q = new LinkedList<String>();
-    Collections.addAll(q, interfaces);
+  private Set<String> computeAllInterfaces(String intfName) {
+    Set<String> toReturn = intfNamesToAllInterfaces.get(intfName);
+    if (toReturn != null) {
+      return toReturn;
+    }
+
+    toReturn = Sets.create();
+    List<JClassType> q = new LinkedList<JClassType>();
+    JClassType intf = typeOracle.findType(intfName.replace('/', '.').replace(
+        '$', '.'));
+    assert intf != null : "Could not find interface " + intfName;
+    q.add(intf);
 
     while (!q.isEmpty()) {
-      String intf = q.remove(0);
-      if (toReturn.add(intf)) {
-        try {
-          Class<?> intfClass = Class.forName(intf.replace('/', '.'), false, ccl);
-          for (Class<?> i : intfClass.getInterfaces()) {
-            q.add(i.getName().replace('.', '/'));
-          }
-        } catch (ClassNotFoundException e) {
-          assert false : intf;
-          e.printStackTrace();
-        }
+      intf = q.remove(0);
+      String resourceName = getResourceName(intf);
+      if (!toReturn.contains(resourceName)) {
+        toReturn = Sets.add(toReturn, resourceName);
+        Collections.addAll(q, intf.getImplementedInterfaces());
       }
     }
 
+    intfNamesToAllInterfaces = Maps.put(intfNamesToAllInterfaces, intfName,
+        toReturn);
     return toReturn;
+  }
+
+  private Set<String> computeAllInterfaces(String[] interfaces) {
+    Set<String> toReturn = new HashSet<String>();
+    for (String intfName : interfaces) {
+      toReturn.addAll(computeAllInterfaces(intfName));
+    }
+    return toReturn;
+  }
+
+  private String getResourceName(JClassType type) {
+    if (type.getEnclosingType() != null) {
+      return getResourceName(type.getEnclosingType()) + "$"
+          + type.getSimpleSourceName();
+    }
+    return type.getQualifiedSourceName().replace('.', '/');
   }
 
   /**

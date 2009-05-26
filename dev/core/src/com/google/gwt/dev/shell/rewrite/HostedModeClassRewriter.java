@@ -15,6 +15,7 @@
  */
 package com.google.gwt.dev.shell.rewrite;
 
+import com.google.gwt.core.ext.typeinfo.TypeOracle;
 import com.google.gwt.dev.asm.ClassReader;
 import com.google.gwt.dev.asm.ClassVisitor;
 import com.google.gwt.dev.asm.ClassWriter;
@@ -183,14 +184,14 @@ public class HostedModeClassRewriter {
   /**
    * Performs rewriting transformations on a class.
    * 
-   * @param ccl the ClassLoader requesting the rewrite
+   * @param typeOracle a typeOracle modeling the user classes
    * @param className the name of the class
    * @param classBytes the bytes of the class
    * @param anonymousClassMap a map between the anonymous class names of java
    *          compiler used to compile code and jdt. Emma-specific.
    */
-  public byte[] rewrite(ClassLoader ccl, String className, byte[] classBytes,
-      Map<String, String> anonymousClassMap) {
+  public byte[] rewrite(TypeOracle typeOracle, String className,
+      byte[] classBytes, Map<String, String> anonymousClassMap) {
     String desc = toDescriptor(className);
     assert (!jsoIntfDescs.contains(desc));
 
@@ -201,7 +202,7 @@ public class HostedModeClassRewriter {
     // v = new CheckClassAdapter(v);
     // v = new TraceClassVisitor(v, new PrintWriter(System.out));
 
-    v = new RewriteSingleJsoImplDispatches(v, ccl, singleJsoImplTypes,
+    v = new RewriteSingleJsoImplDispatches(v, typeOracle, singleJsoImplTypes,
         mangledNamesToImplementations);
 
     v = new RewriteRefsToJsoClasses(v, jsoIntfDescs, mapper);
