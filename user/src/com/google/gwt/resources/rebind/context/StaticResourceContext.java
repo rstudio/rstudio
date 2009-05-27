@@ -23,11 +23,9 @@ import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.core.ext.typeinfo.JClassType;
 import com.google.gwt.dev.util.Util;
-import com.google.gwt.resources.ext.ResourceGeneratorUtil;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.URL;
 
 class StaticResourceContext extends AbstractResourceContext {
   /**
@@ -50,8 +48,7 @@ class StaticResourceContext extends AbstractResourceContext {
     // See if filename obfuscation should be enabled
     String enableRenaming = null;
     try {
-      ConfigurationProperty prop = propertyOracle.getConfigurationProperty(
-          ENABLE_RENAMING);
+      ConfigurationProperty prop = propertyOracle.getConfigurationProperty(ENABLE_RENAMING);
       enableRenaming = prop.getValues().get(0);
     } catch (BadPropertyValueException e) {
       logger.log(TreeLogger.ERROR, "Bad value for " + ENABLE_RENAMING, e);
@@ -103,20 +100,6 @@ class StaticResourceContext extends AbstractResourceContext {
 
     // Return a Java expression
     return "GWT.getModuleBaseURL() + \"" + outputName + "\"";
-  }
-
-  public String deploy(URL resource, boolean xhrCompatible)
-      throws UnableToCompleteException {
-    String fileName = ResourceGeneratorUtil.baseName(resource);
-    byte[] bytes = Util.readURLAsBytes(resource);
-    try {
-      return deploy(fileName, resource.openConnection().getContentType(),
-          bytes, xhrCompatible);
-    } catch (IOException e) {
-      getLogger().log(TreeLogger.ERROR,
-          "Unable to determine mime type of resource", e);
-      throw new UnableToCompleteException();
-    }
   }
 
   public boolean supportsDataUrls() {

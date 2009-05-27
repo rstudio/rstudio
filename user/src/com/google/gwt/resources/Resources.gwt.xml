@@ -23,13 +23,31 @@
   <define-property name="ClientBundle.enableInlining" values="true,false" />
   <set-property name="ClientBundle.enableInlining" value="true" />
 
-  <!-- Specify the default behavior -->
+  <!-- Specify the default behavior which should work on all browsers -->
   <generate-with
     class="com.google.gwt.resources.rebind.context.StaticClientBundleGenerator">
 
     <!-- We have to specify on which types to execute the Generator -->
     <when-type-assignable
       class="com.google.gwt.resources.client.ClientBundle" />
+  </generate-with>
+
+  <!-- Last-matches wins, so this will selectively override the previous rule -->
+  <generate-with
+    class="com.google.gwt.resources.rebind.context.MhtmlClientBundleGenerator">
+
+    <!-- We have a number of conditions that must be satisfied -->
+    <all>
+      <!-- Is inlining enabled? -->
+      <when-property-is name="ClientBundle.enableInlining" value="true" />
+
+      <!-- Again, it's necessary to specify which types the generator runs on -->
+      <when-type-assignable
+        class="com.google.gwt.resources.client.ClientBundle" />
+
+      <!-- Do this only with IE6 browsers -->
+      <when-property-is name="user.agent" value="ie6" />
+    </all>
   </generate-with>
 
   <!-- Last-matches wins, so this will selectively override the previous rule -->
@@ -51,6 +69,7 @@
         <when-property-is name="user.agent" value="opera" />
         <when-property-is name="user.agent" value="gecko" />
         <when-property-is name="user.agent" value="gecko1_8" />
+        <when-property-is name="user.agent" value="ie8" />
       </any>
     </all>
   </generate-with>

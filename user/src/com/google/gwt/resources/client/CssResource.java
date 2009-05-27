@@ -90,8 +90,7 @@ import java.lang.annotation.Target;
  * </li>
  * </ul>
  * 
- * @see <a
- *      href="http://code.google.com/p/google-web-toolkit-incubator/wiki/CssResource"
+ * @see <a href="http://code.google.com/p/google-web-toolkit/wiki/CssResource"
  *      >CssResource design doc</a>
  */
 @ResourceGeneratorType(CssResourceGenerator.class)

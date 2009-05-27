@@ -170,6 +170,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     FieldsImpl fields = new FieldsImpl();
     RequirementsImpl requirements = new RequirementsImpl(
         generatorContext.getPropertyOracle());
+    doAddFieldsAndRequirements(logger, generatorContext, fields, requirements);
 
     /*
      * Initialize the ResourceGenerators and prepare them for subsequent code
@@ -230,6 +231,7 @@ public abstract class AbstractClientBundleGenerator extends Generator {
     }
 
     finish(logger, resourceContext, generators.keySet());
+    doFinish();
 
     // Return the name of the concrete class
     return createdClassName;
@@ -241,7 +243,23 @@ public abstract class AbstractClientBundleGenerator extends Generator {
    * custom logic in the resource generation pass.
    */
   protected abstract AbstractResourceContext createResourceContext(
-      TreeLogger logger, GeneratorContext context, JClassType resourceBundleType);
+      TreeLogger logger, GeneratorContext context, JClassType resourceBundleType)
+      throws UnableToCompleteException;
+
+  /**
+   * Provides a hook for subtypes to add additional fields or requirements to
+   * the bundle.
+   */
+  protected void doAddFieldsAndRequirements(TreeLogger logger,
+      GeneratorContext context, ClientBundleFields fields,
+      ClientBundleRequirements requirements) throws UnableToCompleteException {
+  }
+
+  /**
+   * Provides a hook for finalizing generated resources.
+   */
+  protected void doFinish() throws UnableToCompleteException {
+  }
 
   /**
    * Create fields and assignments for a single ResourceGenerator.
