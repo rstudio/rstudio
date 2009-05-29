@@ -176,6 +176,9 @@ public class JsVisitor {
   public void endVisit(JsLabel x, JsContext<JsStatement> ctx) {
   }
 
+  public void endVisit(JsNameOf x, JsContext<JsExpression> ctx) {
+  }
+
   public void endVisit(JsNameRef x, JsContext<JsExpression> ctx) {
   }
 
@@ -321,6 +324,10 @@ public class JsVisitor {
   }
 
   public boolean visit(JsLabel x, JsContext<JsStatement> ctx) {
+    return true;
+  }
+
+  public boolean visit(JsNameOf x, JsContext<JsExpression> ctx) {
     return true;
   }
 

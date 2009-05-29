@@ -35,10 +35,11 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static <T> Class<T> createForArray(String packageName, String className, Class<?> componentType) {
+  static <T> Class<T> createForArray(String packageName, String className,
+      String seedName, Class<?> componentType) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    clazz.typeName = packageName + className;
+    setName(clazz, packageName, className, seedName);
     clazz.modifiers = ARRAY;
     clazz.superclass = Object.class;
     clazz.componentType = componentType;
@@ -51,10 +52,10 @@ public final class Class<T> {
    * @skip
    */
   static <T> Class<T> createForClass(String packageName, String className,
-      Class<? super T> superclass) {
+      String seedName, Class<? super T> superclass) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    clazz.typeName = packageName + className;
+    setName(clazz, packageName, className, seedName);
     clazz.superclass = superclass;
     return clazz;
   }
@@ -65,10 +66,11 @@ public final class Class<T> {
    * @skip
    */
   static <T> Class<T> createForEnum(String packageName, String className,
-      Class<? super T> superclass, JavaScriptObject enumConstantsFunc) {
+      String seedName, Class<? super T> superclass,
+      JavaScriptObject enumConstantsFunc) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    clazz.typeName = packageName + className;
+    setName(clazz, packageName, className, seedName);
     clazz.modifiers = (enumConstantsFunc != null) ? ENUM : 0;
     clazz.superclass = clazz.enumSuperclass = superclass;
     clazz.enumConstantsFunc = enumConstantsFunc;
@@ -83,7 +85,7 @@ public final class Class<T> {
   static <T> Class<T> createForInterface(String packageName, String className) {
     // Initialize here to avoid method inliner
     Class<T> clazz = new Class<T>();
-    clazz.typeName = packageName + className;
+    setName(clazz, packageName, className, null);
     clazz.modifiers = INTERFACE;
     return clazz;
   }
@@ -93,21 +95,37 @@ public final class Class<T> {
    * 
    * @skip
    */
-  static Class<?> createForPrimitive(String packageName, String className) {
+  static Class<?> createForPrimitive(String packageName, String className,
+      String seedName) {
     // Initialize here to avoid method inliner
     Class<?> clazz = new Class<Object>();
-    clazz.typeName = packageName + className;
+    setName(clazz, packageName, className, seedName);
     clazz.modifiers = PRIMITIVE;
     return clazz;
   }
-  
+
+  static boolean isClassMetadataEnabled() {
+    // This body may be replaced by the compiler
+    return true;
+  }
+
+  static void setName(Class<?> clazz, String packageName, String className,
+      String seedName) {
+    if (clazz.isClassMetadataEnabled()) {
+      clazz.typeName = packageName + className;
+    } else {
+      clazz.typeName = "Class$"
+          + (seedName != null ? seedName : clazz.hashCode());
+    }
+  }
+
   int modifiers;
 
   private Class<?> componentType;
 
   @SuppressWarnings("unused")
   private JavaScriptObject enumConstantsFunc;
-  
+
   private Class<? super T> enumSuperclass;
 
   private String typeName;
@@ -123,8 +141,8 @@ public final class Class<T> {
   }
 
   public boolean desiredAssertionStatus() {
-    // This body is ignored by the JJS compiler and a new one is 
-    // synthesized at compile-time based on the actual compilation arguments.  
+    // This body is ignored by the JJS compiler and a new one is
+    // synthesized at compile-time based on the actual compilation arguments.
     return false;
   }
 
@@ -145,13 +163,15 @@ public final class Class<T> {
   }
 
   public String getName() {
-    // This body may be replaced by the compiler
     return typeName;
   }
 
   public Class<? super T> getSuperclass() {
-    // This body may be replaced by the compiler
-    return superclass;
+    if (isClassMetadataEnabled()) {
+      return superclass;
+    } else {
+      return null;
+    }
   }
 
   public boolean isArray() {

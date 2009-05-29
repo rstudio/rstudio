@@ -237,6 +237,9 @@ public class JVisitor {
   public void endVisit(JMultiExpression x, Context ctx) {
   }
 
+  public void endVisit(JNameOf x, Context ctx) {
+  }
+
   public void endVisit(JNewArray x, Context ctx) {
   }
 
@@ -458,6 +461,10 @@ public class JVisitor {
   }
 
   public boolean visit(JMultiExpression x, Context ctx) {
+    return true;
+  }
+
+  public boolean visit(JNameOf x, Context ctx) {
     return true;
   }
 

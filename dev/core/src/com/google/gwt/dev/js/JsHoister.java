@@ -22,13 +22,14 @@ import com.google.gwt.dev.js.ast.JsBinaryOperation;
 import com.google.gwt.dev.js.ast.JsBooleanLiteral;
 import com.google.gwt.dev.js.ast.JsConditional;
 import com.google.gwt.dev.js.ast.JsContext;
-import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsExpression;
 import com.google.gwt.dev.js.ast.JsFunction;
 import com.google.gwt.dev.js.ast.JsInvocation;
+import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
+import com.google.gwt.dev.js.ast.JsNumberLiteral;
 import com.google.gwt.dev.js.ast.JsObjectLiteral;
 import com.google.gwt.dev.js.ast.JsPostfixOperation;
 import com.google.gwt.dev.js.ast.JsPrefixOperation;
@@ -78,7 +79,8 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsBinaryOperation x, JsContext<JsExpression> ctx) {
-      JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(), x.getOperator());
+      JsBinaryOperation toReturn = new JsBinaryOperation(x.getSourceInfo(),
+          x.getOperator());
       toReturn.setArg2(stack.pop());
       toReturn.setArg1(stack.pop());
       stack.push(toReturn);
@@ -122,6 +124,11 @@ final class JsHoister {
         params.add(0, stack.pop());
       }
       toReturn.setQualifier(stack.pop());
+      stack.push(toReturn);
+    }
+
+    public void endVisit(JsNameOf x, JsContext<JsExpression> ctx) {
+      JsNameOf toReturn = new JsNameOf(x.getSourceInfo(), x.getName());
       stack.push(toReturn);
     }
 
@@ -174,7 +181,8 @@ final class JsHoister {
          * rather than expecting it to be on the stack and having to perform
          * narrowing casts at all stack.pop() invocations.
          */
-        JsPropertyInitializer newInit = new JsPropertyInitializer(x.getSourceInfo());
+        JsPropertyInitializer newInit = new JsPropertyInitializer(
+            x.getSourceInfo());
         newInit.setValueExpr(stack.pop());
         newInit.setLabelExpr(stack.pop());
 
@@ -185,14 +193,16 @@ final class JsHoister {
 
     @Override
     public void endVisit(JsPostfixOperation x, JsContext<JsExpression> ctx) {
-      JsPostfixOperation toReturn = new JsPostfixOperation(x.getSourceInfo(), x.getOperator());
+      JsPostfixOperation toReturn = new JsPostfixOperation(x.getSourceInfo(),
+          x.getOperator());
       toReturn.setArg(stack.pop());
       stack.push(toReturn);
     }
 
     @Override
     public void endVisit(JsPrefixOperation x, JsContext<JsExpression> ctx) {
-      JsPrefixOperation toReturn = new JsPrefixOperation(x.getSourceInfo(), x.getOperator());
+      JsPrefixOperation toReturn = new JsPrefixOperation(x.getSourceInfo(),
+          x.getOperator());
       toReturn.setArg(stack.pop());
       stack.push(toReturn);
     }

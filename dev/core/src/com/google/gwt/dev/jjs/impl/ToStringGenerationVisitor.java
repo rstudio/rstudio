@@ -59,6 +59,7 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNode;
@@ -123,6 +124,7 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
   protected static final char[] CHARS_IMPLEMENTS = "implements ".toCharArray();
   protected static final char[] CHARS_INSTANCEOF = " instanceof ".toCharArray();
   protected static final char[] CHARS_INTERFACE = "interface ".toCharArray();
+  protected static final char[] CHARS_NAMEOF = " JNameOf ".toCharArray();
   protected static final char[] CHARS_NATIVE = "native ".toCharArray();
   protected static final char[] CHARS_NEW = "new ".toCharArray();
   protected static final char[] CHARS_NULL = "null".toCharArray();
@@ -626,6 +628,15 @@ public class ToStringGenerationVisitor extends TextOutputVisitor {
     lparen();
     visitCollectionWithCommas(x.exprs.iterator());
     rparen();
+    return false;
+  }
+
+  @Override
+  public boolean visit(JNameOf x, Context ctx) {
+    print(CHARS_SLASHSTAR);
+    print(CHARS_NAMEOF);
+    print(CHARS_STARSLASH);
+    printStringLiteral(x.getNode().getName());
     return false;
   }
 

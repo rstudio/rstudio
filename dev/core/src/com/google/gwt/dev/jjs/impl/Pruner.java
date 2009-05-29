@@ -19,6 +19,7 @@ import com.google.gwt.dev.jjs.SourceInfo;
 import com.google.gwt.dev.jjs.ast.CanBeStatic;
 import com.google.gwt.dev.jjs.ast.Context;
 import com.google.gwt.dev.jjs.ast.HasEnclosingType;
+import com.google.gwt.dev.jjs.ast.HasName;
 import com.google.gwt.dev.jjs.ast.JBinaryOperation;
 import com.google.gwt.dev.jjs.ast.JBinaryOperator;
 import com.google.gwt.dev.jjs.ast.JClassType;
@@ -32,6 +33,7 @@ import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
 import com.google.gwt.dev.jjs.ast.JModVisitor;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNode;
 import com.google.gwt.dev.jjs.ast.JParameter;
 import com.google.gwt.dev.jjs.ast.JPrimitiveType;
@@ -135,6 +137,19 @@ public class Pruner {
         // The field is gone; replace x by a null field reference.
         JFieldRef fieldRef = transformToNullFieldRef(x, program);
         ctx.replaceMe(fieldRef);
+      }
+    }
+
+    @Override
+    public void endVisit(JNameOf x, Context ctx) {
+      HasName node = x.getNode();
+      JReferenceType isType = node instanceof JReferenceType
+          ? (JReferenceType) node : null;
+      if (isType == null && !referencedNonTypes.contains(node)) {
+        ctx.replaceMe(program.getLiteralNull());
+      } else if (isType != null
+          && !program.typeOracle.isInstantiatedType(isType)) {
+        ctx.replaceMe(program.getLiteralNull());
       }
     }
 

@@ -35,6 +35,7 @@ import com.google.gwt.dev.jjs.ast.JIntLiteral;
 import com.google.gwt.dev.jjs.ast.JLocalRef;
 import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JNullLiteral;
@@ -110,8 +111,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JBinaryOperation x, Context ctx) {
-    expression = new JBinaryOperation(x.getSourceInfo(), x.getType(), x.getOp(),
-        cloneExpression(x.getLhs()), cloneExpression(x.getRhs()));
+    expression = new JBinaryOperation(x.getSourceInfo(), x.getType(),
+        x.getOp(), cloneExpression(x.getLhs()), cloneExpression(x.getRhs()));
     return false;
   }
 
@@ -149,8 +150,9 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JConditional x, Context ctx) {
-    expression = new JConditional(x.getSourceInfo(), x.getType(), cloneExpression(x.getIfTest()),
-        cloneExpression(x.getThenExpr()), cloneExpression(x.getElseExpr()));
+    expression = new JConditional(x.getSourceInfo(), x.getType(),
+        cloneExpression(x.getIfTest()), cloneExpression(x.getThenExpr()),
+        cloneExpression(x.getElseExpr()));
     return false;
   }
 
@@ -162,8 +164,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JFieldRef x, Context ctx) {
-    expression = new JFieldRef(x.getSourceInfo(), cloneExpression(x.getInstance()),
-        x.getField(), x.getEnclosingType());
+    expression = new JFieldRef(x.getSourceInfo(),
+        cloneExpression(x.getInstance()), x.getField(), x.getEnclosingType());
     return false;
   }
 
@@ -183,7 +185,8 @@ public class CloneExpressionVisitor extends JVisitor {
 
     // Use the clone constructor.
     JGwtCreate gwtCreate = new JGwtCreate(x.getSourceInfo(), x.getSourceType(),
-        x.getResultTypes(), x.getType(), cloneExpressions(x.getInstantiationExpressions()));
+        x.getResultTypes(), x.getType(),
+        cloneExpressions(x.getInstantiationExpressions()));
 
     expression = gwtCreate;
     return false;
@@ -237,9 +240,16 @@ public class CloneExpressionVisitor extends JVisitor {
   }
 
   @Override
+  public boolean visit(JNameOf x, Context ctx) {
+    expression = new JNameOf(x.getSourceInfo(), program, x.getNode());
+    return false;
+  }
+
+  @Override
   public boolean visit(JNewArray x, Context ctx) {
-    expression = new JNewArray(x.getSourceInfo(), x.getArrayType(), cloneExpressions(x.dims),
-        cloneExpressions(x.initializers), x.getClassLiterals());
+    expression = new JNewArray(x.getSourceInfo(), x.getArrayType(),
+        cloneExpressions(x.dims), cloneExpressions(x.initializers),
+        x.getClassLiterals());
     return false;
   }
 
@@ -263,13 +273,15 @@ public class CloneExpressionVisitor extends JVisitor {
 
   @Override
   public boolean visit(JPostfixOperation x, Context ctx) {
-    expression = new JPostfixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
+    expression = new JPostfixOperation(x.getSourceInfo(), x.getOp(),
+        cloneExpression(x.getArg()));
     return false;
   }
 
   @Override
   public boolean visit(JPrefixOperation x, Context ctx) {
-    expression = new JPrefixOperation(x.getSourceInfo(), x.getOp(), cloneExpression(x.getArg()));
+    expression = new JPrefixOperation(x.getSourceInfo(), x.getOp(),
+        cloneExpression(x.getArg()));
     return false;
   }
 

@@ -41,6 +41,7 @@ import com.google.gwt.dev.js.ast.JsIf;
 import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNullLiteral;
@@ -526,6 +527,12 @@ public class JsToStringGenerationVisitor extends JsVisitor {
     _colon();
     _spaceOpt();
     accept(x.getStmt());
+    return false;
+  }
+
+  @Override
+  public boolean visit(JsNameOf x, JsContext<JsExpression> ctx) {
+    printStringLiteral(x.getName().getShortIdent());
     return false;
   }
 
@@ -1103,9 +1110,8 @@ public class JsToStringGenerationVisitor extends JsVisitor {
   }
 
   /**
-   * Decide whether, if <code>op</code> is printed followed by
-   * <code>arg</code>, there needs to be a space between the operator and
-   * expression.
+   * Decide whether, if <code>op</code> is printed followed by <code>arg</code>,
+   * there needs to be a space between the operator and expression.
    * 
    * @return <code>true</code> if a space needs to be printed
    */
@@ -1201,9 +1207,9 @@ public class JsToStringGenerationVisitor extends JsVisitor {
 
   /**
    * Adapted from
-   * {@link com.google.gwt.dev.js.rhino.ScriptRuntime#escapeString(String)}.
-   * The difference is that we quote with either &quot; or &apos; depending on
-   * which one is used less inside the string.
+   * {@link com.google.gwt.dev.js.rhino.ScriptRuntime#escapeString(String)}. The
+   * difference is that we quote with either &quot; or &apos; depending on which
+   * one is used less inside the string.
    */
   private void printStringLiteral(String value) {
 

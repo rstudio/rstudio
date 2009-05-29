@@ -464,26 +464,9 @@ public class GenerateJavaAST {
           implementMethod(method, program.getLiteralBoolean(enableAsserts));
 
           if (disableClassMetadata) {
-            SourceInfo info = currentClass.getSourceInfo().makeChild(
-                JavaASTGenerationVisitor.class, "Disabled class metadata");
-
-            JMethod nameMethod = program.getIndexedMethod("Class.getName");
-
-            // this.hashCode()
-            JMethodCall hashCall = new JMethodCall(info,
-                program.getExprThisRef(info, (JClassType) currentClass),
-                program.getIndexedMethod("Object.hashCode"));
-
-            // "Class$" + hashCode()
-            JBinaryOperation op = new JBinaryOperation(info,
-                program.getTypeJavaLangString(), JBinaryOperator.ADD,
-                program.getLiteralString(info, "Class$"), hashCall);
-
-            implementMethod(nameMethod, op);
-
-            // Forget the superclass
-            JMethod superclassMethod = program.getIndexedMethod("Class.getSuperclass");
-            implementMethod(superclassMethod, program.getLiteralNull());
+            JMethod isMetadataEnabledMethod = program.getIndexedMethod("Class.isClassMetadataEnabled");
+            implementMethod(isMetadataEnabledMethod,
+                program.getLiteralBoolean(false));
           }
         }
 
@@ -2347,8 +2330,8 @@ public class GenerateJavaAST {
      * expression. Beware that when autoboxing, the type of the expression is
      * not necessarily the same as the type of the box to be created. The JDT
      * figures out what the necessary conversion is, depending on the context
-     * the expression appears in, and stores it in <code>x.implicitConversion</code>,
-     * so extract it from there.
+     * the expression appears in, and stores it in
+     * <code>x.implicitConversion</code>, so extract it from there.
      */
     private JPrimitiveType implicitConversionTargetType(Expression x)
         throws InternalCompilerException {
@@ -2560,7 +2543,8 @@ public class GenerateJavaAST {
 
       // recurse super class
       if (searchThisType.getSuperClass() != null) {
-        tryFindUpRefsRecursive(method, searchThisType.getSuperClass(), overrides);
+        tryFindUpRefsRecursive(method, searchThisType.getSuperClass(),
+            overrides);
       }
 
       // recurse super interfaces

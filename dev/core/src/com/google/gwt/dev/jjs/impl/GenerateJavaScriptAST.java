@@ -56,6 +56,7 @@ import com.google.gwt.dev.jjs.ast.JLongLiteral;
 import com.google.gwt.dev.jjs.ast.JMethod;
 import com.google.gwt.dev.jjs.ast.JMethodBody;
 import com.google.gwt.dev.jjs.ast.JMethodCall;
+import com.google.gwt.dev.jjs.ast.JNameOf;
 import com.google.gwt.dev.jjs.ast.JNewArray;
 import com.google.gwt.dev.jjs.ast.JNewInstance;
 import com.google.gwt.dev.jjs.ast.JParameter;
@@ -106,6 +107,7 @@ import com.google.gwt.dev.js.ast.JsInvocation;
 import com.google.gwt.dev.js.ast.JsLabel;
 import com.google.gwt.dev.js.ast.JsModVisitor;
 import com.google.gwt.dev.js.ast.JsName;
+import com.google.gwt.dev.js.ast.JsNameOf;
 import com.google.gwt.dev.js.ast.JsNameRef;
 import com.google.gwt.dev.js.ast.JsNew;
 import com.google.gwt.dev.js.ast.JsNode;
@@ -1033,6 +1035,13 @@ public class GenerateJavaScriptAST {
         cur = jsProgram.getUndefinedLiteral();
       }
       push(cur);
+    }
+
+    @Override
+    public void endVisit(JNameOf x, Context ctx) {
+      JsName name = names.get(x.getNode());
+      assert name != null : "Missing JsName for " + x.getNode().getName();
+      push(new JsNameOf(x.getSourceInfo(), name));
     }
 
     @Override

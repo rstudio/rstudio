@@ -56,7 +56,27 @@ public class JClassLiteral extends JLiteral {
     call.addArgs(program.getLiteralString(info, getPackageName(typeName)),
         program.getLiteralString(info, getClassName(typeName)));
 
+    if (type instanceof JArrayType) {
+      // There's only one seed function for all arrays
+      JDeclaredType arrayType = program.getIndexedType("Array");
+      call.addArg(new JNameOf(info, program, arrayType));
+
+    } else if (type instanceof JDeclaredType) {
+      // Add the name of the seed function for non-array reference types
+      call.addArg(new JNameOf(info, program, type));
+
+    } else if (type instanceof JPrimitiveType) {
+      // And give primitive types an illegal, though meaningful, value
+      call.addArg(program.getLiteralString(info, " "
+          + type.getJavahSignatureName()));
+    }
+
     if (type instanceof JClassType) {
+      /*
+       * For non-array classes and enums, determine the class literal of the
+       * supertype, if there is one. Arrays are excluded because they always
+       * have Object as their superclass.
+       */
       JClassType classType = (JClassType) type;
 
       JLiteral superclassLiteral;
