@@ -245,6 +245,20 @@ public class NumberFormat_en_Test extends GWTTestCase {
     assertEquals("1234567890", str);
   }
 
+  public void testForceLatin() {
+    assertFalse(NumberFormat.forcedLatinDigits());
+    NumberFormat.setForcedLatinDigits(true);
+    assertTrue(NumberFormat.forcedLatinDigits());
+    NumberFormat decLatin = NumberFormat.getDecimalFormat();
+    assertEquals("1,003.14", decLatin.format(1003.14));
+    assertEquals("-1,003.14", decLatin.format(-1003.14));
+    NumberFormat.setForcedLatinDigits(false);
+    assertFalse(NumberFormat.forcedLatinDigits());
+    assertEquals("3.14", decLatin.format(3.14));
+    NumberFormat unforced = NumberFormat.getDecimalFormat();
+    assertEquals("3.14", unforced.format(3.14));
+  }
+  
   public void testNegative() {
     String str;
     
