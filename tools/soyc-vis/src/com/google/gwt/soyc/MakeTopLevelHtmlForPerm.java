@@ -101,7 +101,7 @@ public class MakeTopLevelHtmlForPerm {
         }
         if ((jarEntry.getName().compareTo(inputFileName) != 0)
             && (jarEntry.getName().startsWith(inputFileName))) {
-          File newDstPath = new File(jarEntry.getName());
+          File newDstPath = getOutFile(jarEntry.getName());
           copyFileOrDirectoryFromJar(jarFileName, jarEntry.getName(),
               newDstPath, false);
         }
