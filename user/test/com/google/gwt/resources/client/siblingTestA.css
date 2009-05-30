@@ -15,6 +15,7 @@
  */
  
 /* This is the first half of the sibling test. */
+@external other;
 .replacement { background:red; }
 .replacement-not-java-ident {color: blue;}
 .local {background: green; }

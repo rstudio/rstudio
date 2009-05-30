@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
+import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.resources.client.CssResource.Strict;
 
@@ -29,6 +30,7 @@ public class CSSResourceTest extends GWTTestCase {
 
   interface ConcatenatedResources extends ClientBundle {
     @Source(value = {"concatenatedA.css", "concatenatedB.css"})
+    @Strict
     CssResource css();
   }
 
@@ -94,18 +96,22 @@ public class CSSResourceTest extends GWTTestCase {
     Resources INSTANCE = GWT.create(Resources.class);
 
     @Source("siblingTestA.css")
+    @Strict
     MyCssResourceA a();
 
     @Source("siblingTestB.css")
+    @Strict
     MyCssResourceB b();
 
     @Source("test.css")
+    @NotStrict
     MyCssResourceWithSprite css();
 
     @Source("32x32.png")
     DataResource dataMethod();
 
     // Test default extensions
+    @Strict
     CssWithDefines deftest();
 
     @Source("unrelatedDescendants.css")
@@ -131,9 +137,11 @@ public class CSSResourceTest extends GWTTestCase {
 
   interface SiblingResources extends ClientBundle {
     @Source("siblingTestA.css")
+    @Strict
     MyCssResourceA a();
 
     @Source("siblingTestB.css")
+    @Strict
     MyCssResourceB b();
   }
 

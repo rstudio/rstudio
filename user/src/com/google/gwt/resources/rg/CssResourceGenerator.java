@@ -38,6 +38,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.CssResource.ClassName;
 import com.google.gwt.resources.client.CssResource.Import;
 import com.google.gwt.resources.client.CssResource.ImportedWithPrefix;
+import com.google.gwt.resources.client.CssResource.NotStrict;
 import com.google.gwt.resources.client.CssResource.Shared;
 import com.google.gwt.resources.client.CssResource.Strict;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
@@ -215,6 +216,9 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
         for (String s : unknownClasses) {
           errorLogger.log(TreeLogger.ERROR, s);
         }
+        errorLogger.log(TreeLogger.INFO, "Fix by adding String accessor "
+            + "method(s) to the CssResource interface for obfuscated classes, "
+            + "or using an @external declaration for unobfuscated classes.");
       }
 
       if (stop) {
@@ -1504,12 +1508,22 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
 
   private boolean isStrict(TreeLogger logger, ResourceContext context,
       JMethod method) {
-    boolean strict = method.getAnnotation(Strict.class) != null;
-    if (!strict) {
+    Strict strictAnnotation = method.getAnnotation(Strict.class);
+    NotStrict nonStrictAnnotation = method.getAnnotation(NotStrict.class);
+    boolean strict = false;
+
+    if (strictAnnotation != null && nonStrictAnnotation != null) {
+      // Both annotations
+      logger.log(TreeLogger.WARN, "Contradictory annotations "
+          + Strict.class.getName() + " and " + NotStrict.class.getName()
+          + " applied to the CssResource accessor method; assuming strict");
+      strict = true;
+
+    } else if (strictAnnotation == null && nonStrictAnnotation == null) {
+      // Neither annotation
+
       /*
-       * The developer may choose to force strict behavior onto the system. If
-       * the method does not already have an @Strict annotation, print a
-       * warning.
+       * Fall back to using the to-be-deprecated strictAccessor property.
        */
       try {
         PropertyOracle propertyOracle = context.getGeneratorContext().getPropertyOracle();
@@ -1524,7 +1538,24 @@ public class CssResourceGenerator extends AbstractResourceGenerator {
       } catch (BadPropertyValueException e) {
         // Ignore
       }
+
+      if (!strict) {
+        // This is a temporary warning during the transitional phase
+        logger.log(TreeLogger.WARN, "Accessor does not specify "
+            + Strict.class.getName() + " or " + NotStrict.class.getName()
+            + ". The default behavior will change from non-strict "
+            + "to strict in a future revision.");
+      }
+
+    } else if (nonStrictAnnotation != null) {
+      // Only the non-strict annotation
+      strict = false;
+
+    } else if (strictAnnotation != null) {
+      // Only the strict annotation
+      strict = true;
     }
+
     return strict;
   }
 

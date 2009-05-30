@@ -13,6 +13,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+ 
+ /* Ensure that @external carries over between concatenations. */
+ @external partA partB;
 .partA {
   background: blue;
 }

@@ -175,6 +175,18 @@ public interface CssResource extends ResourcePrototype {
   }
 
   /**
+   * The presence of this annotation on a CssResource accessor method indicates
+   * that any class selectors that do not correspond with a String accessor
+   * method in the return type or an {@code @external} declaration should not
+   * trigger a compilation error. This annotation is not recommended for new
+   * code.
+   */
+  @Documented
+  @Target(ElementType.METHOD)
+  public @interface NotStrict {
+  }
+
+  /**
    * Indicates that the String accessor methods defined in a CssResource will
    * return the same values across all implementations of that type.
    * <p>
