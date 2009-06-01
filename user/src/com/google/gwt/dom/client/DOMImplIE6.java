@@ -24,14 +24,14 @@ class DOMImplIE6 extends DOMImplTrident {
   @Override
   public int getAbsoluteLeft(Element elem) {
     Document doc = elem.getOwnerDocument();
-    return (int) Math.floor(super.getAbsoluteLeft(elem)
+    return (int) Math.floor(getBoundingClientRectLeft(elem)
         / getZoomMultiple(doc) + doc.getScrollLeft());
   }
 
   @Override
   public int getAbsoluteTop(Element elem) {
     Document doc = elem.getOwnerDocument();
-    return (int) Math.floor(super.getAbsoluteTop(elem)
+    return (int) Math.floor(getBoundingClientRectTop(elem)
         / getZoomMultiple(doc) + doc.getScrollTop());
   }
 

@@ -166,16 +166,6 @@ abstract class DOMImplTrident extends DOMImpl {
     return "[event" + evt.type + "]";
   }-*/;
 
-  @Override
-  public int getAbsoluteLeft(Element elem) {
-    return getBoundingClientRectLeft(elem);
-  }
-
-  @Override
-  public int getAbsoluteTop(Element elem) {
-    return getBoundingClientRectTop(elem);
-  }
-
   /**
    * IE returns a numeric type for some attributes that are really properties,
    * such as offsetWidth.  We need to coerce these to strings to prevent a
@@ -253,6 +243,26 @@ abstract class DOMImplTrident extends DOMImpl {
     elem.innerText = text || '';
   }-*/;
 
+  protected native int getBoundingClientRectLeft(Element elem) /*-{
+    // getBoundingClientRect() throws a JS exception if the elem is not attached
+    // to the document, so we wrap it in a try/catch block
+    try {
+      return elem.getBoundingClientRect().left;
+    } catch (e) {
+      return 0;
+    }
+  }-*/;
+
+  protected native int getBoundingClientRectTop(Element elem) /*-{
+    // getBoundingClientRect() throws a JS exception if the elem is not attached
+    // to the document, so we wrap it in a try/catch block
+    try {
+      return elem.getBoundingClientRect().top;
+    } catch (e) {
+      return 0;
+    }
+  }-*/;
+
   protected native boolean isRTL(Element elem) /*-{
     return elem.currentStyle.direction == 'rtl';
   }-*/;
@@ -267,26 +277,6 @@ abstract class DOMImplTrident extends DOMImpl {
       doc.__gwt_container = doc.createElement('div');
     }
     return doc.__gwt_container;
-  }-*/;
-
-  private native int getBoundingClientRectLeft(Element elem) /*-{
-    // getBoundingClientRect() throws a JS exception if the elem is not attached
-    // to the document, so we wrap it in a try/catch block
-    try {
-      return elem.getBoundingClientRect().left;
-    } catch (e) {
-      return 0;
-    }
-  }-*/;
-
-  private native int getBoundingClientRectTop(Element elem) /*-{
-    // getBoundingClientRect() throws a JS exception if the elem is not attached
-    // to the document, so we wrap it in a try/catch block
-    try {
-      return elem.getBoundingClientRect().top;
-    } catch (e) {
-      return 0;
-    }
   }-*/;
 
   /**

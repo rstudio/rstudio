@@ -16,6 +16,8 @@
 package com.google.gwt.dom.client;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DeferredCommand;
@@ -212,37 +214,28 @@ public class ElementTest extends GWTTestCase {
   }
 
   /**
-   * scroll[Left|Top], scrollIntoView.
+   * scroll[Left|Top], getAbsolute[Left|Top].
    */
-  public void testGetAbsolutePositionWhenScrolled() {
-    final DivElement outer = Document.get().createDivElement();
-    final DivElement inner = Document.get().createDivElement();
+  public void testGetAbsolutePositionWhenBodyScrolled() {
+    Document doc = Document.get();
+    BodyElement body = doc.getBody();
 
-    outer.getStyle().setProperty("position", "absolute");
-    outer.getStyle().setProperty("top", "0px");
-    outer.getStyle().setProperty("left", "0px");
-    outer.getStyle().setProperty("overflow", "auto");
-    outer.getStyle().setProperty("width", "200px");
-    outer.getStyle().setProperty("height", "200px");
+    DivElement div = doc.createDivElement();
+    body.appendChild(div);
 
-    inner.getStyle().setProperty("marginTop", "800px");
-    inner.getStyle().setProperty("marginLeft", "800px");
+    div.setInnerText("foo");
+    div.getStyle().setPosition(Position.ABSOLUTE);
+    div.getStyle().setLeft(1000, Unit.PX);
+    div.getStyle().setTop(1000, Unit.PX);
 
-    outer.appendChild(inner);
-    Document.get().getBody().appendChild(outer);
-    inner.setInnerText(":-)");
-    inner.scrollIntoView();
+    int absLeft = div.getAbsoluteLeft();
+    int absTop = div.getAbsoluteTop();
 
-    // Ensure that we are scrolled.
-    assertTrue(outer.getScrollTop() > 0);
-    assertTrue(outer.getScrollLeft() > 0);
+    body.setScrollLeft(10000);
+    body.setScrollTop(10000);
 
-    outer.setScrollLeft(0);
-    outer.setScrollTop(0);
-
-    // Ensure that we are no longer scrolled.
-    assertEquals(outer.getScrollTop(), 0);
-    assertEquals(outer.getScrollLeft(), 0);
+    assertEquals(absLeft, div.getAbsoluteLeft());
+    assertEquals(absTop, div.getAbsoluteTop());
   }
 
   /**
@@ -305,6 +298,20 @@ public class ElementTest extends GWTTestCase {
         // this *should* happen.
       }
     }
+  }
+
+  /**
+   * Tests Element.is() and Element.as().
+   */
+  public void testIsAndAs() {
+    assertFalse(Element.is(Document.get()));
+
+    Node div = Document.get().createDivElement();
+    assertTrue(Element.is(div));
+    assertEquals("div", Element.as(div).getTagName().toLowerCase());
+
+    // Element.is(null) is allowed and should return false.
+    assertFalse(Element.is(null));
   }
 
   /**
@@ -389,6 +396,40 @@ public class ElementTest extends GWTTestCase {
     JavaScriptObject jso = createTrivialJSO();
     div.setPropertyJSO("tintin", jso);
     assertEquals(jso, div.getPropertyJSO("tintin"));
+  }
+
+  /**
+   * scroll[Left|Top], scrollIntoView.
+   */
+  public void testScrollIntoView() {
+    final DivElement outer = Document.get().createDivElement();
+    final DivElement inner = Document.get().createDivElement();
+
+    outer.getStyle().setProperty("position", "absolute");
+    outer.getStyle().setProperty("top", "0px");
+    outer.getStyle().setProperty("left", "0px");
+    outer.getStyle().setProperty("overflow", "auto");
+    outer.getStyle().setProperty("width", "200px");
+    outer.getStyle().setProperty("height", "200px");
+
+    inner.getStyle().setProperty("marginTop", "800px");
+    inner.getStyle().setProperty("marginLeft", "800px");
+
+    outer.appendChild(inner);
+    Document.get().getBody().appendChild(outer);
+    inner.setInnerText(":-)");
+    inner.scrollIntoView();
+
+    // Ensure that we are scrolled.
+    assertTrue(outer.getScrollTop() > 0);
+    assertTrue(outer.getScrollLeft() > 0);
+
+    outer.setScrollLeft(0);
+    outer.setScrollTop(0);
+
+    // Ensure that we are no longer scrolled.
+    assertEquals(outer.getScrollTop(), 0);
+    assertEquals(outer.getScrollLeft(), 0);
   }
 
   /**
@@ -535,18 +576,4 @@ public class ElementTest extends GWTTestCase {
     var ua = navigator.userAgent.toLowerCase();
     return ua.indexOf("msie") != -1;
   }-*/;
-
-  /**
-   * Tests Element.is() and Element.as().
-   */
-  public void testIsAndAs() {
-    assertFalse(Element.is(Document.get()));
-
-    Node div = Document.get().createDivElement();
-    assertTrue(Element.is(div));
-    assertEquals("div", Element.as(div).getTagName().toLowerCase());
-
-    // Element.is(null) is allowed and should return false.
-    assertFalse(Element.is(null));
-  }
 }
