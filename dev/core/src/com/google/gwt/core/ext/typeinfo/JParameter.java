@@ -31,6 +31,11 @@ public class JParameter implements HasAnnotations, HasMetaData {
   private JType type;
 
   private final JAbstractMethod enclosingMethod;
+  
+  public JParameter(JAbstractMethod enclosingMethod, JType type,
+      String name) {
+    this(enclosingMethod, type, name, null);
+  }
 
   public JParameter(JAbstractMethod enclosingMethod, JType type, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations) {

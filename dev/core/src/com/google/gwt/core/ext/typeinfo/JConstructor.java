@@ -23,6 +23,10 @@ import java.util.Map;
  */
 public class JConstructor extends JAbstractMethod {
   private final JClassType enclosingType;
+  
+  public JConstructor(JClassType enclosingType, String name) {
+    this(enclosingType, name, null, null);
+  }
 
   public JConstructor(JClassType enclosingType, String name,
       Map<Class<? extends Annotation>, Annotation> declaredAnnotations,
